@@ -1,0 +1,199 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../core/api/api_client.dart';
+import '../../core/api/hivora_repository.dart';
+import '../../core/i18n/i18n.dart';
+import '../../core/models/core_models.dart';
+import '../../core/models/work_models.dart';
+import '../../core/responsive/responsive.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/widgets/app_avatar.dart';
+import '../../core/widgets/soft_card.dart';
+
+/// Weekly timesheet matrix (user x day), YouTrack-style.
+class TimesheetScreen extends StatefulWidget {
+  const TimesheetScreen({super.key});
+
+  @override
+  State<TimesheetScreen> createState() => _TimesheetScreenState();
+}
+
+class _TimesheetScreenState extends State<TimesheetScreen> {
+  late DateTime _from;
+  late DateTime _to;
+  List<TimesheetRow> _rows = const [];
+  Map<String, DirectoryUser> _users = const {};
+  Map<String, Project> _projects = const {};
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _from = now.subtract(Duration(days: now.weekday - 1));
+    _to = _from.add(const Duration(days: 6));
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final repository = context.read<HivoraRepository>();
+    try {
+      final results = await Future.wait([
+        repository.timesheet(_from, _to),
+        repository.users(),
+        repository.projects(),
+      ]);
+      _rows = results[0] as List<TimesheetRow>;
+      _users = {
+        for (final user in results[1] as List<DirectoryUser>) user.id: user
+      };
+      _projects = {
+        for (final project in results[2] as List<Project>) project.id: project
+      };
+      setState(() => _loading = false);
+    } on ApiFailure catch (failure) {
+      setState(() {
+        _loading = false;
+        _error = failure.message;
+      });
+    }
+  }
+
+  void _shiftWeek(int direction) {
+    setState(() {
+      _from = _from.add(Duration(days: 7 * direction));
+      _to = _to.add(Duration(days: 7 * direction));
+    });
+    _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = MaterialLocalizations.of(context);
+    final days = [
+      for (var i = 0; i <= _to.difference(_from).inDays; i++)
+        _from.add(Duration(days: i)),
+    ];
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(context.pageGutter),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  context.t('timesheet.title'),
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+              IconButton(
+                onPressed: () => _shiftWeek(-1),
+                icon: const Icon(Icons.chevron_left_rounded),
+              ),
+              Text(
+                '${localizations.formatShortDate(_from)} – ${localizations.formatShortDate(_to)}',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              IconButton(
+                onPressed: () => _shiftWeek(1),
+                icon: const Icon(Icons.chevron_right_rounded),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.all(60),
+              child: Center(
+                  child: CircularProgressIndicator(color: AppColors.navy)),
+            )
+          else if (_error != null)
+            Padding(
+              padding: const EdgeInsets.all(40),
+              child: Text(context.t(_error!),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppColors.textSecondary)),
+            )
+          else if (_rows.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(40),
+              child: Text(context.t('timesheet.empty'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppColors.textSecondary)),
+            )
+          else
+            SoftCard(
+              padding: const EdgeInsets.all(8),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  headingTextStyle: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                      color: AppColors.textPrimary),
+                  columns: [
+                    DataColumn(label: Text(context.t('timesheet.member'))),
+                    DataColumn(label: Text(context.t('timesheet.project'))),
+                    for (final day in days)
+                      DataColumn(
+                          label: Text(localizations.formatShortDate(day))),
+                    DataColumn(label: Text(context.t('timesheet.total'))),
+                  ],
+                  rows: [
+                    for (final row in _rows)
+                      DataRow(cells: [
+                        DataCell(Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AppAvatar(
+                              name: _users[row.userId]?.displayName ?? '?',
+                              radius: 12,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(_users[row.userId]?.displayName ?? row.userId),
+                          ],
+                        )),
+                        DataCell(Text(_projects[row.projectId]?.key ?? '–')),
+                        for (final day in days)
+                          DataCell(Text(_formatCell(row, day))),
+                        DataCell(Text(
+                          _formatMinutes(row.totalMinutes),
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        )),
+                      ]),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _formatCell(TimesheetRow row, DateTime day) {
+    final minutes = row.minutesPerDay.entries
+        .where((entry) =>
+            entry.key.year == day.year &&
+            entry.key.month == day.month &&
+            entry.key.day == day.day)
+        .fold<int>(0, (sum, entry) => sum + entry.value);
+    return minutes == 0 ? '–' : _formatMinutes(minutes);
+  }
+
+  String _formatMinutes(int minutes) {
+    final hours = minutes ~/ 60;
+    final rest = minutes % 60;
+    if (hours == 0) return '${rest}m';
+    return rest == 0 ? '${hours}h' : '${hours}h ${rest}m';
+  }
+}

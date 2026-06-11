@@ -1,0 +1,233 @@
+{
+  "common": {
+    "seeAll": "Alle anzeigen",
+    "retry": "Erneut versuchen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "create": "Erstellen",
+    "edit": "Bearbeiten",
+    "empty": "Hier ist noch nichts"
+  },
+  "errors": {
+    "required": "Dieses Feld ist erforderlich",
+    "invalidEmail": "Bitte eine gültige E-Mail-Adresse eingeben",
+    "invalidUsername": "3–40 Zeichen: Buchstaben, Ziffern, . _ -",
+    "passwordTooShort": "Mindestens 10 Zeichen erforderlich",
+    "invalidNumber": "Bitte eine gültige Zahl eingeben",
+    "invalidProjectKey": "2–10 Zeichen, beginnend mit einem Buchstaben",
+    "connection": "Server nicht erreichbar. Bitte Verbindung prüfen.",
+    "unexpected": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
+  },
+  "connect": {
+    "title": "Mit deinem Server verbinden",
+    "subtitle": "Hivora ist self-hosted. Gib die URL des Hivora-Servers deiner Organisation ein, um zu starten.",
+    "serverUrl": "Server-URL",
+    "invalidUrl": "Bitte eine gültige http(s)-URL eingeben",
+    "action": "Verbinden",
+    "failed": "Verbindung zu diesem Server fehlgeschlagen. Bitte URL prüfen."
+  },
+  "setup": {
+    "title": "Server einrichten",
+    "subtitle": "Dieser Server wurde noch nicht eingerichtet. Lege die Organisation und das erste Administratorkonto an.",
+    "organization": "Name der Organisation",
+    "displayName": "Anzeigename",
+    "email": "E-Mail",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "action": "Einrichtung abschließen"
+  },
+  "onboarding": {
+    "skip": "Überspringen",
+    "next": "Weiter",
+    "start": "Los geht's",
+    "projects": {
+      "title": "Projekte",
+      "body": "Organisiere deine Arbeit und verfolge Aufgaben nach deinen Regeln – mit eigenen Workflows pro Projekt."
+    },
+    "time": {
+      "title": "Zeiterfassung",
+      "body": "Erfasse und berichte aufgewendete Zeit über Projekte und verschiedene Tätigkeitsarten hinweg."
+    },
+    "gantt": {
+      "title": "Gantt-Diagramme",
+      "body": "Erstelle und aktualisiere Projektpläne auf einer interaktiven Zeitachse mit Abhängigkeiten."
+    },
+    "timesheets": {
+      "title": "Stundenzettel",
+      "body": "Verfolge die Arbeitszeit für dich und dein Team, Woche für Woche."
+    },
+    "boards": {
+      "title": "Agile Boards",
+      "body": "Plane und priorisiere die Entwicklung auf einem Board, das den Prozess deines Teams abbildet."
+    },
+    "reports": {
+      "title": "Berichte",
+      "body": "Sammle und verdichte aufschlussreiche Informationen über deine Projekte."
+    },
+    "dashboards": {
+      "title": "Dashboards",
+      "body": "Behalte die Aktivität in allen Projekten im Blick – Aufgaben, Fortschritt und Performance."
+    },
+    "knowledge": {
+      "title": "Wissensdatenbank",
+      "body": "Baue eine Artikelsammlung auf, die alles abdeckt, was dein Team wissen muss."
+    }
+  },
+  "auth": {
+    "subtitle": "Melde dich an, um fortzufahren",
+    "identifier": "E-Mail oder Benutzername",
+    "password": "Passwort",
+    "signIn": "Anmelden",
+    "or": "oder",
+    "continueWith": "Weiter mit {{provider}}",
+    "invalidCredentials": "Ungültige Zugangsdaten",
+    "tooManyAttempts": "Zu viele Fehlversuche. Bitte später erneut versuchen."
+  },
+  "update": {
+    "title": "Update erforderlich",
+    "body": "Deine App-Version {{current}} ist älter als die vom Server geforderte Mindestversion {{required}}. Bitte aktualisiere die App, um fortzufahren."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "projects": "Projekte",
+    "issues": "Aufgaben",
+    "board": "Board",
+    "gantt": "Gantt",
+    "timesheet": "Stundenzettel",
+    "reports": "Berichte",
+    "knowledge": "Wissen",
+    "notifications": "Mitteilungen",
+    "settings": "Einstellungen",
+    "myTasks": "Meine Aufgaben",
+    "more": "Mehr"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Dein Tag auf einen Blick",
+    "todayTask": "Heutige Aufgaben",
+    "noTasks": "Keine dringenden Aufgaben für heute — genieß den Tag!",
+    "projectCompleted": "Projektfortschritt",
+    "totalIssues": "Gesamt {{count}}",
+    "done": "Erledigt",
+    "inProgress": "In Arbeit",
+    "backlog": "Backlog",
+    "rankPerformance": "Team-Ranking",
+    "noRanking": "Noch keine erledigten Aufgaben in den letzten 30 Tagen.",
+    "points": "{{count}} Pkt.",
+    "trackerDetail": "Zeit-Tracker"
+  },
+  "issues": {
+    "new": "Neue Aufgabe",
+    "edit": "Aufgabe bearbeiten",
+    "project": "Projekt",
+    "title": "Titel",
+    "description": "Beschreibung",
+    "type": "Typ",
+    "priority": "Priorität",
+    "searchHint": "Aufgaben durchsuchen…",
+    "empty": "Keine Aufgaben gefunden",
+    "timeTracking": "Zeiterfassung",
+    "logTime": "Zeit erfassen",
+    "spent": "{{spent}} von {{estimate}} aufgewendet",
+    "comments": "Kommentare",
+    "addComment": "Kommentar hinzufügen…",
+    "deleteTitle": "Aufgabe löschen?",
+    "deleteBody": "{{id}} wird dauerhaft gelöscht, inklusive Kommentaren und Arbeitseinträgen.",
+    "changeState": "Status ändern"
+  },
+  "type": {
+    "task": "Aufgabe",
+    "bug": "Fehler",
+    "feature": "Feature",
+    "epic": "Epic"
+  },
+  "priority": {
+    "showstopper": "Showstopper",
+    "critical": "Kritisch",
+    "major": "Hohe Priorität",
+    "normal": "Normal",
+    "minor": "Gering"
+  },
+  "time": {
+    "hours": "Stunden",
+    "minutes": "Minuten",
+    "activityType": "Tätigkeitsart",
+    "note": "Notiz (optional)"
+  },
+  "projects": {
+    "title": "Projekte",
+    "new": "Neues Projekt",
+    "empty": "Noch keine Projekte. Lege das erste an!",
+    "members": "{{count}} Mitglieder",
+    "name": "Projektname",
+    "key": "Projektkürzel",
+    "keyHelp": "Kurzcode für Aufgaben-IDs, z. B. ASTA → ASTA-42"
+  },
+  "board": {
+    "title": "Agile Board",
+    "allSprints": "Alle Sprints",
+    "empty": "Noch keine Boards vorhanden.",
+    "create": "Board erstellen",
+    "needsProject": "Bitte zuerst ein Projekt anlegen.",
+    "defaultName": "Team-Board"
+  },
+  "gantt": {
+    "title": "Gantt",
+    "empty": "Keine geplanten Aufgaben. Setze Start- und Fälligkeitsdatum, um sie auf der Zeitachse zu sehen."
+  },
+  "timesheet": {
+    "title": "Stundenzettel",
+    "empty": "In dieser Woche wurden keine Arbeitszeiten erfasst.",
+    "member": "Mitglied",
+    "project": "Projekt",
+    "total": "Gesamt"
+  },
+  "reports": {
+    "title": "Berichte",
+    "empty": "Für diesen Bericht liegen noch keine Daten vor.",
+    "issues-by-state": "Aufgaben nach Status",
+    "issues-by-priority": "Aufgaben nach Priorität",
+    "issues-by-assignee": "Aufgaben nach Bearbeiter",
+    "time-per-activity": "Zeit pro Tätigkeit (30 Tage)"
+  },
+  "knowledge": {
+    "title": "Wissensdatenbank",
+    "new": "Neuer Artikel",
+    "edit": "Artikel bearbeiten",
+    "empty": "Noch keine Artikel. Teile das Wissen deines Teams!",
+    "articleTitle": "Titel",
+    "content": "Inhalt (Markdown)"
+  },
+  "notifications": {
+    "title": "Mitteilungen",
+    "empty": "Du bist auf dem neuesten Stand!"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "logout": "Abmelden",
+    "language": "Sprache",
+    "privacyPolicy": "Datenschutzerklärung",
+    "adminArea": "Adminbereich",
+    "about": "Über",
+    "appVersion": "App-Version",
+    "serverVersion": "Server-Version",
+    "organization": "Organisation"
+  },
+  "admin": {
+    "title": "Adminbereich",
+    "subtitle": "Servereinstellungen wirken sofort – kein Neustart nötig.",
+    "saved": "Einstellungen gespeichert",
+    "sso": "Single Sign-On",
+    "ssoHint": "Verbinde deinen Identity Provider (z. B. Synology SSO via OpenID Connect oder SAML).",
+    "emailIngest": "E-Mail zu Ticket",
+    "emailIngestHint": "Fragt ein IMAP-Postfach ab und macht aus neuen E-Mails automatisch Aufgaben.",
+    "users": "Benutzer",
+    "newUser": "Neuer Benutzer",
+    "activate": "Aktivieren",
+    "deactivate": "Deaktivieren",
+    "toggleAdmin": "Adminrolle umschalten",
+    "isAdmin": "Administrator",
+    "secretHint": "Leer lassen, um den gespeicherten Wert zu behalten"
+  }
+}

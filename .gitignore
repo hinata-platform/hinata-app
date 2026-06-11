@@ -27,3 +27,7 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Release signing (never commit)
+android/key.properties
+android/upload-keystore.jks

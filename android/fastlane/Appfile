@@ -1,0 +1,2 @@
+json_key_data(ENV["PLAY_JSON_KEY"]) # Play service account JSON (secret)
+package_name("hivora.asta.hn")

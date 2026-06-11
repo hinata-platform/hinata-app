@@ -1,0 +1,159 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../core/blocs/app_config_bloc.dart';
+import '../../core/i18n/i18n.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/widgets/soft_card.dart';
+
+/// First screen: the app cannot run without a server, so we ask for its URL
+/// and only continue once /api/v1/meta answers.
+class ConnectScreen extends StatefulWidget {
+  const ConnectScreen({super.key});
+
+  @override
+  State<ConnectScreen> createState() => _ConnectScreenState();
+}
+
+class _ConnectScreenState extends State<ConnectScreen> {
+  final _controller = TextEditingController(text: 'https://');
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: BlocBuilder<AppConfigBloc, AppConfigState>(
+                builder: (context, state) {
+                  final connecting = state.status == AppConfigStatus.connecting;
+                  return SoftCard(
+                    padding: const EdgeInsets.all(32),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const _BrandMark(),
+                          const SizedBox(height: 24),
+                          Text(
+                            context.t('connect.title'),
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            context.t('connect.subtitle'),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: AppColors.textSecondary),
+                          ),
+                          const SizedBox(height: 24),
+                          TextFormField(
+                            controller: _controller,
+                            enabled: !connecting,
+                            keyboardType: TextInputType.url,
+                            autofillHints: const [AutofillHints.url],
+                            decoration: InputDecoration(
+                              hintText: 'https://hivora.example.org',
+                              prefixIcon: const Icon(Icons.dns_rounded),
+                              labelText: context.t('connect.serverUrl'),
+                            ),
+                            validator: (value) {
+                              final uri = Uri.tryParse(value?.trim() ?? '');
+                              if (uri == null ||
+                                  uri.host.isEmpty ||
+                                  !(uri.isScheme('http') || uri.isScheme('https'))) {
+                                return context.t('connect.invalidUrl');
+                              }
+                              return null;
+                            },
+                            onFieldSubmitted: (_) => _submit(),
+                          ),
+                          if (state.errorKey != null) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              context.t(state.errorKey!),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: AppColors.danger),
+                            ),
+                          ],
+                          const SizedBox(height: 24),
+                          FilledButton(
+                            onPressed: connecting ? null : _submit,
+                            child: connecting
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white),
+                                  )
+                                : Text(context.t('connect.action')),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _submit() {
+    if (_formKey.currentState?.validate() ?? false) {
+      context
+          .read<AppConfigBloc>()
+          .add(ServerUrlSubmitted(_controller.text.trim()));
+    }
+  }
+}
+
+class _BrandMark extends StatelessWidget {
+  const _BrandMark();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            color: AppColors.navy,
+            borderRadius: BorderRadius.circular(22),
+          ),
+          alignment: Alignment.center,
+          child: const Text(
+            'H',
+            style: TextStyle(
+              color: AppColors.lavender,
+              fontSize: 36,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Hivora',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+        ),
+      ],
+    );
+  }
+}

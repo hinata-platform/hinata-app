@@ -1,0 +1,84 @@
+name: hivora
+description: "Hivora - open source, self-hosted project management."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State management (Bloc family)
+  bloc: ^9.1.0
+  flutter_bloc: ^9.1.0
+  hydrated_bloc: ^10.1.0
+  bloc_concurrency: ^0.3.0
+  replay_bloc: ^0.3.0
+  equatable: ^2.0.7
+
+  # Routing
+  go_router: ^16.0.0
+
+  # Networking & storage
+  dio: ^5.7.0
+  shared_preferences: ^2.3.0
+  path_provider: ^2.1.0
+
+  # Internationalization (i18next)
+  i18next: ^0.7.0
+  intl: any
+
+  # UX
+  animations: ^2.0.11
+  wolt_modal_sheet: ^0.11.0
+  fl_chart: ^1.1.1
+
+  # Platform integration
+  url_launcher: ^6.3.0
+  app_links: ^6.3.0
+  package_info_plus: ^9.0.0
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  bloc_test: ^10.0.0
+  flutter_native_splash: ^2.4.0
+  flutter_launcher_icons: ^0.14.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/i18n/en/
+    - assets/i18n/de/
+    - assets/branding/
+
+# --- Generated native splash (run: dart run flutter_native_splash:create) ---
+flutter_native_splash:
+  color: "#F2F1F8"
+  color_dark: "#1E1C3A"
+  image: assets/branding/splash_icon.png
+  android_12:
+    color: "#F2F1F8"
+    image: assets/branding/splash_icon.png
+  web: true
+
+# --- Generated app icons (run: dart run flutter_launcher_icons) ---
+flutter_launcher_icons:
+  android: true
+  ios: true
+  web:
+    generate: true
+  macos:
+    generate: true
+  image_path: assets/branding/app_icon.png
+  adaptive_icon_background: "#2D2B55"
+  adaptive_icon_foreground: assets/branding/app_icon_foreground.png
+  remove_alpha_ios: true

@@ -1,0 +1,31 @@
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:i18next/i18next.dart';
+
+/// Central i18next wiring. Translations live in `assets/i18n/<lang>/common.json`.
+abstract final class I18n {
+  static const supportedLocales = [Locale('en'), Locale('de')];
+
+  static const localeNames = {'en': 'English (UK)', 'de': 'Deutsch (Deutschland)'};
+
+  static List<LocalizationsDelegate<dynamic>> delegates() => [
+        I18NextLocalizationDelegate(
+          locales: supportedLocales,
+          dataSource:
+              AssetBundleLocalizationDataSource(bundlePath: 'assets/i18n'),
+          options: I18NextOptions(fallbackNamespaces: const ['common']),
+        ),
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ];
+}
+
+extension I18nContext on BuildContext {
+  /// Translate [key] from the `common` namespace, e.g. `context.t('nav.dashboard')`.
+  String t(String key, {Map<String, dynamic>? variables, int? count}) {
+    final i18next = I18Next.of(this);
+    if (i18next == null) return key;
+    return i18next.t('common:$key', variables: variables, count: count);
+  }
+}

@@ -1,0 +1,30 @@
+default_platform(:android)
+
+platform :android do
+  desc "Build the app bundle and upload it to the Play Store internal track"
+  lane :internal do
+    Dir.chdir("../..") do
+      sh("flutter", "build", "appbundle", "--release")
+    end
+    upload_to_play_store(
+      track: "internal",
+      aab: "../build/app/outputs/bundle/release/app-release.aab",
+      release_status: "draft",
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+
+  desc "Promote the latest internal build to production"
+  lane :promote do
+    upload_to_play_store(
+      track: "internal",
+      track_promote_to: "production",
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+end

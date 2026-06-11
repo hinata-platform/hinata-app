@@ -1,0 +1,233 @@
+{
+  "common": {
+    "seeAll": "See all",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "create": "Create",
+    "edit": "Edit",
+    "empty": "Nothing here yet"
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid e-mail address",
+    "invalidUsername": "3-40 characters: letters, digits, . _ -",
+    "passwordTooShort": "At least 10 characters required",
+    "invalidNumber": "Please enter a valid number",
+    "invalidProjectKey": "2-10 characters, starting with a letter",
+    "connection": "Could not reach the server. Please check your connection.",
+    "unexpected": "Something went wrong. Please try again."
+  },
+  "connect": {
+    "title": "Connect to your server",
+    "subtitle": "Hivora is self-hosted. Enter the URL of your organization's Hivora server to get started.",
+    "serverUrl": "Server URL",
+    "invalidUrl": "Please enter a valid http(s) URL",
+    "action": "Connect",
+    "failed": "Could not connect to this server. Please verify the URL."
+  },
+  "setup": {
+    "title": "Set up your server",
+    "subtitle": "This server hasn't been configured yet. Create the organization and the first administrator account.",
+    "organization": "Organization name",
+    "displayName": "Display name",
+    "email": "E-mail",
+    "username": "Username",
+    "password": "Password",
+    "action": "Complete setup"
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "start": "Get started",
+    "projects": {
+      "title": "Projects",
+      "body": "Organize your efforts and track issues on your own terms — with custom workflows per project."
+    },
+    "time": {
+      "title": "Time Tracking",
+      "body": "Monitor and report time spent on different projects and various activity types."
+    },
+    "gantt": {
+      "title": "Gantt Charts",
+      "body": "Create and update your project plans on an interactive timeline with dependencies."
+    },
+    "timesheets": {
+      "title": "Timesheets",
+      "body": "Track work activity for yourself and the members of your team, week by week."
+    },
+    "boards": {
+      "title": "Agile Boards",
+      "body": "Plan and prioritize your development on a board that mirrors your team's process."
+    },
+    "reports": {
+      "title": "Reports",
+      "body": "Collect and summarize insightful bits of information about your projects."
+    },
+    "dashboards": {
+      "title": "Dashboards",
+      "body": "Monitor activity in all of your projects at a glance — tasks, progress and performance."
+    },
+    "knowledge": {
+      "title": "Knowledge Base",
+      "body": "Build a collection of articles that cover everything your team needs to know."
+    }
+  },
+  "auth": {
+    "subtitle": "Sign in to continue",
+    "identifier": "E-mail or username",
+    "password": "Password",
+    "signIn": "Sign in",
+    "or": "or",
+    "continueWith": "Continue with {{provider}}",
+    "invalidCredentials": "Invalid credentials",
+    "tooManyAttempts": "Too many failed attempts. Please try again later."
+  },
+  "update": {
+    "title": "Update required",
+    "body": "Your app version {{current}} is older than the minimum version {{required}} required by this server. Please update the app to continue."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "issues": "Issues",
+    "board": "Board",
+    "gantt": "Gantt",
+    "timesheet": "Timesheet",
+    "reports": "Reports",
+    "knowledge": "Knowledge",
+    "notifications": "Notifications",
+    "settings": "Settings",
+    "myTasks": "My Tasks",
+    "more": "More"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Your day at a glance",
+    "todayTask": "Today Task",
+    "noTasks": "No urgent tasks for today — enjoy!",
+    "projectCompleted": "Project Completed",
+    "totalIssues": "Total {{count}}",
+    "done": "Done",
+    "inProgress": "In Progress",
+    "backlog": "Backlog",
+    "rankPerformance": "Rank Performance",
+    "noRanking": "No resolved issues in the last 30 days yet.",
+    "points": "{{count}} pts",
+    "trackerDetail": "Tracker Detail"
+  },
+  "issues": {
+    "new": "New issue",
+    "edit": "Edit issue",
+    "project": "Project",
+    "title": "Title",
+    "description": "Description",
+    "type": "Type",
+    "priority": "Priority",
+    "searchHint": "Search issues…",
+    "empty": "No issues found",
+    "timeTracking": "Time tracking",
+    "logTime": "Log time",
+    "spent": "Spent {{spent}} of {{estimate}}",
+    "comments": "Comments",
+    "addComment": "Add a comment…",
+    "deleteTitle": "Delete issue?",
+    "deleteBody": "{{id}} will be permanently deleted, including comments and work items.",
+    "changeState": "Change state"
+  },
+  "type": {
+    "task": "Task",
+    "bug": "Bug",
+    "feature": "Feature",
+    "epic": "Epic"
+  },
+  "priority": {
+    "showstopper": "Showstopper",
+    "critical": "Critical",
+    "major": "High Priority",
+    "normal": "Normal",
+    "minor": "Minor"
+  },
+  "time": {
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "activityType": "Activity type",
+    "note": "Note (optional)"
+  },
+  "projects": {
+    "title": "Projects",
+    "new": "New project",
+    "empty": "No projects yet. Create the first one!",
+    "members": "{{count}} members",
+    "name": "Project name",
+    "key": "Project key",
+    "keyHelp": "Short code used for issue IDs, e.g. ASTA → ASTA-42"
+  },
+  "board": {
+    "title": "Agile Board",
+    "allSprints": "All sprints",
+    "empty": "No agile boards yet.",
+    "create": "Create board",
+    "needsProject": "Create a project first.",
+    "defaultName": "Team Board"
+  },
+  "gantt": {
+    "title": "Gantt",
+    "empty": "No scheduled issues. Set start and due dates on issues to see them on the timeline."
+  },
+  "timesheet": {
+    "title": "Timesheet",
+    "empty": "No work items recorded in this week.",
+    "member": "Member",
+    "project": "Project",
+    "total": "Total"
+  },
+  "reports": {
+    "title": "Reports",
+    "empty": "No data for this report yet.",
+    "issues-by-state": "Issues by state",
+    "issues-by-priority": "Issues by priority",
+    "issues-by-assignee": "Issues by assignee",
+    "time-per-activity": "Time per activity (30 days)"
+  },
+  "knowledge": {
+    "title": "Knowledge Base",
+    "new": "New article",
+    "edit": "Edit article",
+    "empty": "No articles yet. Share your team's knowledge!",
+    "articleTitle": "Title",
+    "content": "Content (Markdown)"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "You're all caught up!"
+  },
+  "settings": {
+    "title": "Settings",
+    "logout": "Sign out",
+    "language": "Language",
+    "privacyPolicy": "Privacy policy",
+    "adminArea": "Admin area",
+    "about": "About",
+    "appVersion": "App version",
+    "serverVersion": "Server version",
+    "organization": "Organization"
+  },
+  "admin": {
+    "title": "Admin area",
+    "subtitle": "Server settings take effect immediately — no restart required.",
+    "saved": "Settings saved",
+    "sso": "Single Sign-On",
+    "ssoHint": "Connect your identity provider (e.g. Synology SSO via OpenID Connect or SAML).",
+    "emailIngest": "E-mail to ticket",
+    "emailIngestHint": "Polls an IMAP mailbox and turns new e-mails into issues.",
+    "users": "Users",
+    "newUser": "New user",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "toggleAdmin": "Toggle admin role",
+    "isAdmin": "Administrator",
+    "secretHint": "Leave blank to keep the stored value"
+  }
+}
