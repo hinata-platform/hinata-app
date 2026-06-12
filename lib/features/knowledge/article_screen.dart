@@ -52,7 +52,7 @@ class _ArticleScreenState extends State<ArticleScreen> {
             builder: (context) {
               final article = state.data!;
               return SingleChildScrollView(
-                padding: EdgeInsets.all(context.pageGutter),
+                padding: context.pagePadding,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [

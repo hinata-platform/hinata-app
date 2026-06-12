@@ -21,7 +21,7 @@ class SettingsScreen extends StatelessWidget {
     final config = context.watch<AppConfigBloc>().state;
     final locale = context.watch<LocaleCubit>().state;
     return ListView(
-      padding: EdgeInsets.all(context.pageGutter),
+      padding: context.pagePadding,
       children: [
         SectionHeader(title: context.t('settings.title')),
         const SizedBox(height: 12),

@@ -81,7 +81,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
         _from.add(Duration(days: i)),
     ];
     return SingleChildScrollView(
-      padding: EdgeInsets.all(context.pageGutter),
+      padding: context.pagePadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

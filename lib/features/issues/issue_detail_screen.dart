@@ -63,7 +63,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
               final detail = state.data!;
               final issue = detail.issue;
               return SingleChildScrollView(
-                padding: EdgeInsets.all(context.pageGutter),
+                padding: context.pagePadding,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [

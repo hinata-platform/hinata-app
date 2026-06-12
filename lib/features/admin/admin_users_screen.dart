@@ -312,8 +312,8 @@ class _UserTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding:
-          EdgeInsets.symmetric(horizontal: context.pageGutter, vertical: 8),
+      padding: EdgeInsets.fromLTRB(
+          context.pageGutter, 8, context.pageGutter, 8 + context.bottomGutter),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,

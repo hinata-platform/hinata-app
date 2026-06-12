@@ -52,7 +52,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 final notifications = state.data!;
                 return ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.all(context.pageGutter),
+                  padding: context.pagePadding,
                   children: [
                     SectionHeader(title: context.t('notifications.title')),
                     const SizedBox(height: 12),

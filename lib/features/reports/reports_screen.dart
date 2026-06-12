@@ -8,6 +8,8 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 
 /// Distribution reports per project (state / priority / assignee) plus
@@ -75,52 +77,56 @@ class _ReportsScreenState extends State<ReportsScreen> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(context.pageGutter),
+      padding: context.pagePadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          PageHead(
+            title: context.t('reports.title'),
+            subtitle: context.t('reports.subtitle'),
+          ),
+          const SizedBox(height: 16),
           Wrap(
-            spacing: 12,
-            runSpacing: 8,
+            spacing: 10,
+            runSpacing: 10,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text(
-                context.t('reports.title'),
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w800),
-              ),
               if (_projects.isNotEmpty)
-                DropdownButton<String>(
-                  value: _projectId,
+                _PickerBox(
+                  child: DropdownButton<String>(
+                    value: _projectId,
+                    underline: const SizedBox.shrink(),
+                    isDense: true,
+                    borderRadius: BorderRadius.circular(12),
+                    items: [
+                      for (final project in _projects)
+                        DropdownMenuItem(
+                            value: project.id, child: Text(project.name)),
+                    ],
+                    onChanged: (value) {
+                      _projectId = value;
+                      _load();
+                    },
+                  ),
+                ),
+              _PickerBox(
+                child: DropdownButton<String>(
+                  value: _report,
                   underline: const SizedBox.shrink(),
-                  borderRadius: BorderRadius.circular(16),
+                  isDense: true,
+                  borderRadius: BorderRadius.circular(12),
                   items: [
-                    for (final project in _projects)
+                    for (final report in _reports)
                       DropdownMenuItem(
-                          value: project.id, child: Text(project.name)),
+                        value: report,
+                        child: Text(context.t('reports.$report')),
+                      ),
                   ],
                   onChanged: (value) {
-                    _projectId = value;
+                    _report = value ?? _report;
                     _load();
                   },
                 ),
-              DropdownButton<String>(
-                value: _report,
-                underline: const SizedBox.shrink(),
-                borderRadius: BorderRadius.circular(16),
-                items: [
-                  for (final report in _reports)
-                    DropdownMenuItem(
-                      value: report,
-                      child: Text(context.t('reports.$report')),
-                    ),
-                ],
-                onChanged: (value) {
-                  _report = value ?? _report;
-                  _load();
-                },
               ),
             ],
           ),
@@ -168,6 +174,26 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// White hairline-bordered wrapper that gives the dropdowns the v2 look.
+class _PickerBox extends StatelessWidget {
+  const _PickerBox({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 240),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        border: Border.all(color: AppColors.hairline),
+      ),
+      child: DropdownButtonHideUnderline(child: child),
     );
   }
 }

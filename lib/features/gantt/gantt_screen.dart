@@ -8,6 +8,8 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 
 /// Interactive project timeline. Bars are positioned on a day grid;
@@ -65,29 +67,16 @@ class _GanttScreenState extends State<GanttScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding:
-              EdgeInsets.fromLTRB(context.pageGutter, 16, context.pageGutter, 8),
-          child: Wrap(
-            spacing: 12,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Text(
-                context.t('gantt.title'),
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w800),
-              ),
+          padding: EdgeInsets.fromLTRB(
+              context.pageGutter, 22, context.pageGutter, 14),
+          child: PageHead(
+            title: context.t('gantt.title'),
+            subtitle: context.t('gantt.subtitle'),
+            actions: [
               if (_projects.isNotEmpty)
-                DropdownButton<String>(
-                  value: _projectId,
-                  underline: const SizedBox.shrink(),
-                  borderRadius: BorderRadius.circular(16),
-                  items: [
-                    for (final project in _projects)
-                      DropdownMenuItem(
-                          value: project.id, child: Text(project.name)),
-                  ],
+                _ProjectPicker(
+                  projects: _projects,
+                  selected: _projectId,
                   onChanged: (value) {
                     _projectId = value;
                     _load();
@@ -133,7 +122,7 @@ class _GanttScreenState extends State<GanttScreen> {
     final totalDays = end.difference(start).inDays + 1;
 
     return Padding(
-      padding: EdgeInsets.all(context.pageGutter),
+      padding: context.pagePadding,
       child: SoftCard(
         padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
@@ -175,6 +164,61 @@ class _GanttScreenState extends State<GanttScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact white dropdown for choosing the active project.
+class _ProjectPicker extends StatelessWidget {
+  const _ProjectPicker({
+    required this.projects,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final List<Project> projects;
+  final String? selected;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = selected != null
+        ? projects.where((p) => p.id == selected).firstOrNull?.name ??
+            projects.first.name
+        : projects.first.name;
+    return PopupMenuButton<String>(
+      initialValue: selected,
+      onSelected: onChanged,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      offset: const Offset(0, 44),
+      itemBuilder: (_) => [
+        for (final p in projects)
+          PopupMenuItem(value: p.id, child: Text(p.name)),
+      ],
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 220),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          border: Border.all(color: AppColors.hairline),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600)),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.expand_more_rounded,
+                size: 16, color: AppColors.inkSoft),
+          ],
         ),
       ),
     );
@@ -242,31 +286,52 @@ class _GanttBar extends StatelessWidget {
             .difference(task.startDate!)
             .inDays +
         1;
-    final color = task.resolved ? AppColors.accentTeal : AppColors.accentPurple;
+    final color = task.resolved
+        ? AppColors.stDone
+        : AppColors.stateColor(task.state.toUpperCase());
     return Padding(
       padding: EdgeInsets.only(left: startOffset * dayWidth),
       child: GestureDetector(
         onTap: onTap,
         child: Tooltip(
-          message: '${task.readableId} · ${task.state} · ${task.progressPercent}%',
+          message:
+              '${task.readableId} · ${task.state} · ${task.progressPercent}%',
           child: Container(
             width: duration * dayWidth,
-            height: 22,
+            height: 24,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.25),
-              borderRadius: BorderRadius.circular(11),
+              color: color,
+              borderRadius: BorderRadius.circular(7),
             ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: FractionallySizedBox(
-                widthFactor: (task.progressPercent / 100).clamp(0.02, 1.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(11),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FractionallySizedBox(
+                    widthFactor: (task.progressPercent / 100).clamp(0.0, 1.0),
+                    child: Container(
+                        color: Colors.white.withValues(alpha: 0.22)),
                   ),
                 ),
-              ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 9),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      task.readableId,
+                      maxLines: 1,
+                      overflow: TextOverflow.clip,
+                      style: const TextStyle(
+                        fontFamily: AppTheme.fontMono,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

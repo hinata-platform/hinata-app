@@ -9,8 +9,9 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
-import '../../core/widgets/status_widgets.dart';
 
 // ─────────────────────────── BoardScreen ──────────────────────────────────
 // Shown at /board — lists all boards across projects; can filter by project.
@@ -181,7 +182,8 @@ class _BoardScreenState extends State<BoardScreen> {
           )
         else
           SliverPadding(
-            padding: EdgeInsets.all(context.pageGutter),
+            padding: EdgeInsets.fromLTRB(context.pageGutter, context.pageGutter,
+                context.pageGutter, context.pageGutter + context.bottomGutter),
             sliver: SliverGrid(
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: context.gridColumns(minTileWidth: 280),
@@ -285,57 +287,40 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       );
     }
     final view = _view!;
+    final activeSprint = _sprintId != null
+        ? view.sprints.where((s) => s.id == _sprintId).firstOrNull
+        : view.sprints.firstOrNull;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding:
-              EdgeInsets.fromLTRB(context.pageGutter, 16, context.pageGutter, 8),
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
+          padding: EdgeInsets.fromLTRB(
+              context.pageGutter, 22, context.pageGutter, 8),
+          child: PageHead(
+            title: view.board.name,
+            subtitle: context.t('board.agileBoard'),
+            actions: [
+              GhostButton(
+                icon: Icons.arrow_back_rounded,
+                label: context.t('board.boards'),
+                onPressed: () =>
+                    context.canPop() ? context.pop() : context.go('/board'),
+              ),
+            ],
+          ),
+        ),
+        // sprint chip + sprint selector
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
+          child: Row(
             children: [
-              // Back link
-              InkWell(
-                onTap: () => context.canPop() ? context.pop() : context.go('/board'),
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.arrow_back_rounded,
-                          size: 18, color: AppColors.inkSoft),
-                      const SizedBox(width: 4),
-                      Text(context.t('board.boards'),
-                          style: const TextStyle(
-                              fontSize: 13, color: AppColors.inkSoft)),
-                    ],
-                  ),
-                ),
-              ),
-              Text(
-                view.board.name,
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w800),
-              ),
+              if (activeSprint != null)
+                Flexible(child: _SprintChip(sprint: activeSprint)),
+              const Spacer(),
               if (view.sprints.isNotEmpty)
-                DropdownButton<String?>(
-                  value: _sprintId,
-                  hint: Text(context.t('board.allSprints')),
-                  underline: const SizedBox.shrink(),
-                  borderRadius: BorderRadius.circular(16),
-                  items: [
-                    DropdownMenuItem(
-                        value: null,
-                        child: Text(context.t('board.allSprints'))),
-                    for (final sprint in view.sprints)
-                      DropdownMenuItem(
-                          value: sprint.id, child: Text(sprint.name)),
-                  ],
+                _SprintSelector(
+                  sprints: view.sprints,
+                  selected: _sprintId,
                   onChanged: (value) {
                     _sprintId = value;
                     _load();
@@ -344,10 +329,12 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 14),
         Expanded(
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.all(context.pageGutter),
+            padding: EdgeInsets.fromLTRB(context.pageGutter, 0,
+                context.pageGutter, context.pageGutter + context.bottomGutter),
             itemCount: view.columns.length,
             separatorBuilder: (_, _) => const SizedBox(width: 16),
             itemBuilder: (context, index) {
@@ -360,6 +347,121 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ─────────────────────────── Sprint chip & selector ───────────────────────
+
+class _SprintChip extends StatelessWidget {
+  const _SprintChip({required this.sprint});
+  final Sprint sprint;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+        border: Border.all(color: AppColors.hairline),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+            decoration: BoxDecoration(
+              color: AppColors.accentSoft,
+              borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.bolt_rounded, size: 13, color: AppColors.accentStrong),
+                SizedBox(width: 4),
+                Text('Active',
+                    style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.accentStrong)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(sprint.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 13.5)),
+                if ((sprint.goal ?? '').isNotEmpty)
+                  Text(sprint.goal!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 11.5, color: AppColors.inkSoft)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SprintSelector extends StatelessWidget {
+  const _SprintSelector({
+    required this.sprints,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final List<Sprint> sprints;
+  final String? selected;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = selected != null
+        ? sprints.where((s) => s.id == selected).firstOrNull?.name ??
+            context.t('board.allSprints')
+        : context.t('board.allSprints');
+    return PopupMenuButton<String?>(
+      initialValue: selected,
+      onSelected: onChanged,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      offset: const Offset(0, 40),
+      itemBuilder: (_) => [
+        PopupMenuItem(value: null, child: Text(context.t('board.allSprints'))),
+        for (final s in sprints)
+          PopupMenuItem(value: s.id, child: Text(s.name)),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          border: Border.all(color: AppColors.hairline),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.bolt_outlined, size: 15, color: AppColors.inkSoft),
+            const SizedBox(width: 7),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 12.5, fontWeight: FontWeight.w600)),
+            const SizedBox(width: 4),
+            const Icon(Icons.expand_more_rounded,
+                size: 16, color: AppColors.inkSoft),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -634,54 +736,84 @@ class _BoardColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     final overWip =
         column.wipLimit != null && column.issues.length > column.wipLimit!;
+    final dotColor = column.states.isNotEmpty
+        ? AppColors.stateColor(column.states.first.toUpperCase())
+        : AppColors.stBacklog;
+    final countLabel = column.wipLimit != null
+        ? '${column.issues.length}/${column.wipLimit}'
+        : '${column.issues.length}';
+
     return SizedBox(
       width: 300,
       child: DragTarget<Issue>(
         onAcceptWithDetails: (details) => onAccept(details.data),
         builder: (context, candidates, rejected) {
-          return Container(
-            padding: const EdgeInsets.all(12),
+          final dropping = candidates.isNotEmpty;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: candidates.isNotEmpty
-                  ? AppColors.pastelLavender.withValues(alpha: 0.5)
-                  : AppColors.surfaceMuted,
-              borderRadius: BorderRadius.circular(24),
+              color: dropping ? AppColors.accentSoft : AppColors.canvas2,
+              borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+              border: dropping
+                  ? Border.all(color: AppColors.accentLine, width: 2)
+                  : Border.all(color: Colors.transparent, width: 2),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding: const EdgeInsets.fromLTRB(8, 6, 8, 12),
                   child: Row(
                     children: [
+                      Container(
+                        width: 9,
+                        height: 9,
+                        decoration: BoxDecoration(
+                            color: dotColor, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 9),
                       Expanded(
                         child: Text(
                           column.name,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 14),
+                              fontWeight: FontWeight.w700, fontSize: 13),
                         ),
                       ),
-                      PillChip(
-                        label: column.wipLimit != null
-                            ? '${column.issues.length}/${column.wipLimit}'
-                            : '${column.issues.length}',
-                        background: overWip
-                            ? AppColors.danger.withValues(alpha: 0.15)
-                            : Colors.white,
-                        foreground: overWip
-                            ? AppColors.danger
-                            : AppColors.textPrimary,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: overWip
+                              ? AppColors.dangerSoft
+                              : AppColors.surface,
+                          borderRadius: BorderRadius.circular(99),
+                          border: Border.all(
+                              color: overWip
+                                  ? AppColors.danger.withValues(alpha: 0.3)
+                                  : AppColors.hairline),
+                        ),
+                        child: Text(
+                          countLabel,
+                          style: TextStyle(
+                              fontFamily: AppTheme.fontMono,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: overWip
+                                  ? AppColors.danger
+                                  : AppColors.inkSoft),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Expanded(
+                Flexible(
                   child: ListView.separated(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
                     itemCount: column.issues.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    separatorBuilder: (_, _) => const SizedBox(height: 9),
                     itemBuilder: (context, index) {
                       final issue = column.issues[index];
                       return LongPressDraggable<Issue>(
@@ -689,23 +821,37 @@ class _BoardColumn extends StatelessWidget {
                         feedback: Material(
                           color: Colors.transparent,
                           child: SizedBox(
-                            width: 270,
+                            width: 276,
                             child: _BoardCard(issue: issue, dragging: true),
                           ),
                         ),
                         childWhenDragging: Opacity(
-                            opacity: 0.35,
-                            child: _BoardCard(issue: issue)),
+                            opacity: 0.35, child: _BoardCard(issue: issue)),
                         child: _BoardCard(issue: issue),
                       );
                     },
                   ),
                 ),
+                const SizedBox(height: 8),
+                _ColumnAddButton(label: context.t('board.addIssue')),
               ],
             ),
           );
         },
       ),
+    );
+  }
+}
+
+class _ColumnAddButton extends StatelessWidget {
+  const _ColumnAddButton({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: DottedAddButton(label: label),
     );
   }
 }
@@ -718,36 +864,152 @@ class _BoardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
-      padding: const EdgeInsets.all(14),
-      onTap: dragging ? null : () => context.go('/issues/${issue.id}'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            issue.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style:
-                const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-          ),
-          const SizedBox(height: 8),
-          Row(
+    final accent = AppColors.stateColor(issue.state.toUpperCase());
+    final due = dueLabel(issue.dueDate);
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        border: Border.all(color: AppColors.hairline),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x0D191637),
+              blurRadius: 2,
+              offset: Offset(0, 1)),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: dragging ? null : () => context.go('/issues/${issue.id}'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                issue.readableId,
-                style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700),
+              Container(height: 2, color: accent),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        TypeGlyph(type: issue.type, size: 18),
+                        const SizedBox(width: 8),
+                        IdMono(issue.readableId),
+                        const Spacer(),
+                        PriorityFlag(priority: issue.priority),
+                      ],
+                    ),
+                    const SizedBox(height: 9),
+                    Text(
+                      issue.title,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          height: 1.4),
+                    ),
+                    if (issue.tags.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 5,
+                        runSpacing: 5,
+                        children: [
+                          for (final t in issue.tags.take(3)) LabelTag(t),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 11),
+                    Row(
+                      children: [
+                        if (issue.estimateMinutes != null &&
+                            issue.estimateMinutes! > 0)
+                          _MiniMeta(
+                            icon: Icons.timelapse_rounded,
+                            text: fmtDuration(issue.spentMinutes),
+                          ),
+                        if (due != null) ...[
+                          if (issue.estimateMinutes != null)
+                            const SizedBox(width: 10),
+                          _MiniMeta(
+                            icon: Icons.calendar_today_rounded,
+                            text: due.text,
+                            color: due.late ? AppColors.danger : null,
+                          ),
+                        ],
+                        const Spacer(),
+                        if (issue.assigneeId != null)
+                          HiveAvatar(name: issue.assigneeId!, size: 24),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              const Spacer(),
-              Icon(Icons.flag_rounded,
-                  size: 14, color: priorityColor(issue.priority)),
             ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniMeta extends StatelessWidget {
+  const _MiniMeta({required this.icon, required this.text, this.color});
+  final IconData icon;
+  final String text;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? AppColors.inkFaint;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: c),
+        const SizedBox(width: 4),
+        Text(text,
+            style: TextStyle(
+                fontFamily: AppTheme.fontMono, fontSize: 11, color: c)),
+      ],
+    );
+  }
+}
+
+/// Dashed "Add issue" button used at the foot of board columns.
+class DottedAddButton extends StatelessWidget {
+  const DottedAddButton({super.key, required this.label, this.onTap});
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          border: Border.all(color: AppColors.hairline),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 9),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.add_rounded, size: 15, color: AppColors.inkFaint),
+              const SizedBox(width: 7),
+              Text(label,
+                  style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.inkFaint)),
+            ],
+          ),
+        ),
       ),
     );
   }

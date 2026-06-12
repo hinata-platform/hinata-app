@@ -37,6 +37,21 @@ extension ResponsiveContext on BuildContext {
         LayoutSize.expanded => 16 * Breakpoints.phi * Breakpoints.phi,
       };
 
+  /// Extra bottom padding scrollable page content should add so its last items
+  /// can scroll clear of the floating bottom nav. The compact shell injects the
+  /// nav's footprint into [MediaQuery] padding; on wider layouts (no bottom nav)
+  /// this is just the device's bottom inset.
+  double get bottomGutter => MediaQuery.paddingOf(this).bottom;
+
+  /// Standard scroll-content padding: even [pageGutter] on every side plus
+  /// [bottomGutter] of clearance so the last items scroll clear of the nav.
+  EdgeInsets get pagePadding => EdgeInsets.fromLTRB(
+        pageGutter,
+        pageGutter,
+        pageGutter,
+        pageGutter + bottomGutter,
+      );
+
   /// Number of columns for card grids derived from available width.
   int gridColumns({double minTileWidth = 320}) {
     final usable = screenWidth - pageGutter * 2;

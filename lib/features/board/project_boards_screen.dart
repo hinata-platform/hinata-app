@@ -185,7 +185,11 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
                   )
                 else
                   SliverPadding(
-                    padding: EdgeInsets.all(context.pageGutter),
+                    padding: EdgeInsets.fromLTRB(
+                        context.pageGutter,
+                        context.pageGutter,
+                        context.pageGutter,
+                        context.pageGutter + context.bottomGutter),
                     sliver: SliverGrid(
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: context.gridColumns(minTileWidth: 280),

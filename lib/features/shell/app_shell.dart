@@ -543,10 +543,24 @@ class _CompactShellState extends State<_CompactShell> {
       // nav — the translucent BackdropFilter blurs whatever passes underneath.
       body: Stack(
         children: [
-          // Full-bleed content. Screens that need their last items clear of the
-          // glass add their own bottom padding (~78px + safe-area).
+          // Full-bleed content scrolls *behind* the glass nav. We inject the
+          // nav's footprint into MediaQuery.padding.bottom so screens can pad
+          // their scroll content clear of it (via context.bottomGutter) while
+          // the content still blurs through the translucent glass.
           Positioned.fill(
-            child: SafeArea(bottom: false, child: widget.child),
+            child: Builder(builder: (context) {
+              final mq = MediaQuery.of(context);
+              // Mirrors _LiquidGlassNav: container(64) + padding-bottom(14)
+              // + device safe-area = total pixel footprint.
+              final navFootprint = 78 + mq.viewPadding.bottom;
+              return MediaQuery(
+                data: mq.copyWith(
+                  padding: mq.padding.copyWith(bottom: navFootprint),
+                  viewPadding: mq.viewPadding.copyWith(bottom: navFootprint),
+                ),
+                child: SafeArea(bottom: false, child: widget.child),
+              );
+            }),
           ),
           // Glass nav floats on top — NOT in bottomNavigationBar,
           // so its rounded corners and BackdropFilter are never clipped.

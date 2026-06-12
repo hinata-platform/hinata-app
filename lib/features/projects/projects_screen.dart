@@ -7,10 +7,15 @@ import '../../core/api/api_client.dart';
 import '../../core/api/hivora_repository.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/i18n/i18n.dart';
+import '../../core/models/core_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
+
+typedef _ProjectsData = ({List<Project> projects, Map<String, String> names});
 
 class ProjectsScreen extends StatefulWidget {
   const ProjectsScreen({super.key});
@@ -20,12 +25,20 @@ class ProjectsScreen extends StatefulWidget {
 }
 
 class _ProjectsScreenState extends State<ProjectsScreen> {
-  late final FetchCubit<List<Project>> _cubit;
+  late final FetchCubit<_ProjectsData> _cubit;
 
   @override
   void initState() {
     super.initState();
-    _cubit = FetchCubit(context.read<HivoraRepository>().projects)..load();
+    _cubit = FetchCubit<_ProjectsData>(() async {
+      final repo = context.read<HivoraRepository>();
+      final results = await Future.wait([repo.projects(), repo.users()]);
+      final projects = results[0] as List<Project>;
+      final users = results[1] as List<DirectoryUser>;
+      final names = {for (final u in users) u.id: u.displayName};
+      return (projects: projects, names: names);
+    })
+      ..load();
   }
 
   @override
@@ -38,22 +51,30 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _cubit,
-      child: BlocBuilder<FetchCubit<List<Project>>, FetchState<List<Project>>>(
+      child: BlocBuilder<FetchCubit<_ProjectsData>, FetchState<_ProjectsData>>(
         builder: (context, state) {
-          final projects = state.data ?? const <Project>[];
+          final projects = state.data?.projects ?? const <Project>[];
+          final names = state.data?.names ?? const <String, String>{};
           return RefreshIndicator(
             onRefresh: _cubit.load,
+            color: AppColors.accent,
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
                 SliverPadding(
                   padding: EdgeInsets.fromLTRB(
-                      context.pageGutter, 16, context.pageGutter, 8),
+                      context.pageGutter, 24, context.pageGutter, 16),
                   sliver: SliverToBoxAdapter(
-                    child: SectionHeader(
+                    child: PageHead(
                       title: context.t('projects.title'),
-                      actionLabel: context.t('projects.new'),
-                      onAction: _showCreate,
+                      subtitle: context.t('projects.activeSummary',
+                          variables: {'count': '${projects.length}'}),
+                      actions: [
+                        PrimaryButton(
+                          label: context.t('projects.new'),
+                          onPressed: _showCreate,
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -72,17 +93,19 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   )
                 else
                   SliverPadding(
-                    padding: EdgeInsets.all(context.pageGutter),
+                    padding: EdgeInsets.fromLTRB(context.pageGutter, 0,
+                        context.pageGutter,
+                        context.pageGutter + context.bottomGutter),
                     sliver: SliverGrid(
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: context.gridColumns(minTileWidth: 300),
-                        mainAxisSpacing: 16,
-                        crossAxisSpacing: 16,
-                        mainAxisExtent: 150,
+                        mainAxisSpacing: 18,
+                        crossAxisSpacing: 18,
+                        mainAxisExtent: 210,
                       ),
                       delegate: SliverChildBuilderDelegate(
-                        (context, index) =>
-                            _ProjectCard(project: projects[index], index: index),
+                        (context, index) => _ProjectCard(
+                            project: projects[index], names: names),
                         childCount: projects.length,
                       ),
                     ),
@@ -114,129 +137,142 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   }
 }
 
+/// Parses a project's stored hex color (e.g. "#AEC6F4") to a Color, with a
+/// stable hue fallback derived from the project key.
+Color _projectColor(Project project) {
+  final raw = project.color.replaceAll('#', '').trim();
+  if (raw.length == 6) {
+    final value = int.tryParse(raw, radix: 16);
+    if (value != null) return Color(0xFF000000 | value);
+  }
+  return hiveHueColor(project.key);
+}
+
 class _ProjectCard extends StatelessWidget {
-  const _ProjectCard({required this.project, required this.index});
+  const _ProjectCard({required this.project, required this.names});
 
   final Project project;
-  final int index;
+  final Map<String, String> names;
 
   @override
   Widget build(BuildContext context) {
+    final color = _projectColor(project);
+    final leadName =
+        project.leadId != null ? names[project.leadId!] : null;
+    final memberNames = project.memberIds
+        .map((id) => names[id] ?? id)
+        .toList(growable: false);
+    final subtitle = leadName != null
+        ? '${project.key} · ${context.t('projects.lead')} ${leadName.split(' ').first}'
+        : project.key;
+
     return SoftCard(
-      color: AppColors.pastelFor(index),
       onTap: () => context.go('/issues?projectId=${project.id}'),
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(100),
+                  color: AppColors.soft(color),
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                alignment: Alignment.center,
                 child: Text(
                   project.key,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w800, fontSize: 12),
+                  style: TextStyle(
+                      fontFamily: AppTheme.fontMono,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: color),
                 ),
               ),
-              const Spacer(),
-              Text(
-                context.t('projects.members',
-                    variables: {'count': '${project.memberIds.length}'}),
-                style: const TextStyle(
-                    fontSize: 11, color: AppColors.textSecondary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(project.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    Text(subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontFamily: AppTheme.fontMono,
+                            fontSize: 11.5,
+                            color: AppColors.inkFaint)),
+                  ],
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            project.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
-          ),
-          if ((project.description ?? '').isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Expanded(
-              child: Text(
-                project.description!,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    color: AppColors.textPrimary, fontSize: 13, height: 1.4),
-              ),
-            ),
-          ] else
-            const Spacer(),
-          const SizedBox(height: 8),
-          // Quick-action row: Issues | Boards
+          const SizedBox(height: 14),
           Row(
             children: [
-              _QuickAction(
-                icon: Icons.task_alt_rounded,
-                label: context.t('nav.issues'),
-                onTap: () =>
-                    context.go('/issues?projectId=${project.id}'),
+              _Stat(
+                value: '${project.memberIds.length}',
+                label: context.t('projects.membersLabel'),
               ),
-              const SizedBox(width: 8),
-              _QuickAction(
-                icon: Icons.view_kanban_rounded,
-                label: context.t('nav.board'),
-                onTap: () => context.go(
-                  '/projects/${project.id}/boards',
-                  extra: project.name,
-                ),
+              const SizedBox(width: 20),
+              _Stat(
+                value: '${project.workflowStates.length}',
+                label: context.t('projects.statesLabel'),
               ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          HiveProgress(value: _completion(project), color: color),
+          const Spacer(),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              if (memberNames.isNotEmpty)
+                HiveAvatarStack(names: memberNames, size: 26),
+              const Spacer(),
+              const Icon(Icons.arrow_forward_rounded,
+                  size: 16, color: AppColors.inkSoft),
             ],
           ),
         ],
       ),
     );
   }
+
+  // Resolved-state ratio gives a rough completion proxy when no counts exist.
+  double _completion(Project project) {
+    if (project.workflowStates.isEmpty) return 0.0;
+    return (project.resolvedStates.length / project.workflowStates.length)
+        .clamp(0.0, 1.0);
+  }
 }
 
-class _QuickAction extends StatelessWidget {
-  const _QuickAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
+class _Stat extends StatelessWidget {
+  const _Stat({required this.value, required this.label});
+  final String value;
   final String label;
-  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 13, color: AppColors.navy),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.navy),
-            ),
-          ],
-        ),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(value,
+            style: const TextStyle(
+                fontFamily: AppTheme.fontBrand,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: AppColors.ink)),
+        Text(label,
+            style: const TextStyle(fontSize: 11, color: AppColors.inkSoft)),
+      ],
     );
   }
 }

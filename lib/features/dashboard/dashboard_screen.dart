@@ -11,7 +11,7 @@ import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/widgets/app_avatar.dart';
+import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../issues/issue_form.dart';
@@ -23,7 +23,8 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) =>
-          FetchCubit<DashboardData>(context.read<HivoraRepository>().dashboard)..load(),
+          FetchCubit<DashboardData>(context.read<HivoraRepository>().dashboard)
+            ..load(),
       child: const _DashboardView(),
     );
   }
@@ -46,54 +47,62 @@ class _DashboardView extends StatelessWidget {
             onRetry: () => context.read<FetchCubit<DashboardData>>().load(),
             builder: (context) {
               final data = state.data!;
+              final wide = !context.isCompact;
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.all(context.pageGutter),
-                child: context.isCompact
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _Header(onCreate: () => showIssueForm(context)),
-                          const SizedBox(height: 16),
-                          _TodayTasks(issues: data.todayTasks),
-                          const SizedBox(height: 16),
-                          _CompletionCard(completion: data.completion),
-                          const SizedBox(height: 16),
-                          _RankCard(ranking: data.ranking),
-                          const SizedBox(height: 16),
-                          _TrackerCard(tracker: data.tracker),
-                        ],
-                      )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _Header(onCreate: () => showIssueForm(context)),
-                          const SizedBox(height: 20),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
+                padding: EdgeInsets.fromLTRB(context.pageGutter, 24,
+                    context.pageGutter, context.pageGutter + context.bottomGutter),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _Header(onCreate: () => showIssueForm(context)),
+                    const SizedBox(height: 20),
+                    _KpiRow(
+                        completion: data.completion,
+                        today: data.todayTasks.length),
+                    const SizedBox(height: 18),
+                    if (wide) ...[
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
                                 flex: 3,
-                                child: _TodayTasks(issues: data.todayTasks),
-                              ),
-                              const SizedBox(width: 20),
-                              Expanded(
+                                child: _FocusCard(issues: data.todayTasks)),
+                            const SizedBox(width: 18),
+                            Expanded(
                                 flex: 2,
-                                child: _CompletionCard(completion: data.completion),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(child: _RankCard(ranking: data.ranking)),
-                              const SizedBox(width: 20),
-                              Expanded(child: _TrackerCard(tracker: data.tracker)),
-                            ],
-                          ),
-                        ],
+                                child: _CompletionCard(
+                                    completion: data.completion)),
+                          ],
+                        ),
                       ),
+                      const SizedBox(height: 18),
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                                flex: 3,
+                                child: _TrackerCard(tracker: data.tracker)),
+                            const SizedBox(width: 18),
+                            Expanded(
+                                flex: 2,
+                                child: _LeaderboardCard(ranking: data.ranking)),
+                          ],
+                        ),
+                      ),
+                    ] else ...[
+                      _FocusCard(issues: data.todayTasks),
+                      const SizedBox(height: 16),
+                      _CompletionCard(completion: data.completion),
+                      const SizedBox(height: 16),
+                      _TrackerCard(tracker: data.tracker),
+                      const SizedBox(height: 16),
+                      _LeaderboardCard(ranking: data.ranking),
+                    ],
+                  ],
+                ),
               );
             },
           ),
@@ -105,43 +114,143 @@ class _DashboardView extends StatelessWidget {
 
 class _Header extends StatelessWidget {
   const _Header({required this.onCreate});
-
   final VoidCallback onCreate;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                context.t('dashboard.title'),
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              Text(
-                context.t('dashboard.subtitle'),
-                style: const TextStyle(color: AppColors.inkSoft, fontSize: 13),
-              ),
-            ],
+    return PageHead(
+      title: context.t('dashboard.title'),
+      subtitle: context.t('dashboard.subtitle'),
+      actions: [
+        if (!context.isCompact)
+          GhostButton(
+            icon: Icons.tune_rounded,
+            label: context.t('dashboard.customize'),
+            onPressed: () => context.go('/settings'),
           ),
-        ),
-        FilledButton.icon(
+        PrimaryButton(
+          label: context.t('issues.new'),
           onPressed: onCreate,
-          icon: const Icon(Icons.add_rounded, size: 18),
-          label: Text(context.t('issues.new')),
         ),
       ],
     );
   }
 }
 
-// ─────────────────────────── Today's tasks ─────────────────────────────────
+// ─────────────────────────── KPI row ───────────────────────────────────────
 
-class _TodayTasks extends StatelessWidget {
-  const _TodayTasks({required this.issues});
+class _KpiRow extends StatelessWidget {
+  const _KpiRow({required this.completion, required this.today});
 
+  final ProjectCompletion completion;
+  final int today;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      _Kpi(
+        label: context.t('dashboard.kpiToday'),
+        value: '$today',
+        icon: Icons.inbox_rounded,
+        hue: AppColors.stTodo,
+      ),
+      _Kpi(
+        label: context.t('dashboard.inProgress'),
+        value: '${completion.inProgress}',
+        icon: Icons.hourglass_top_rounded,
+        hue: AppColors.stProgress,
+      ),
+      _Kpi(
+        label: context.t('dashboard.backlog'),
+        value: '${completion.backlog}',
+        icon: Icons.layers_rounded,
+        hue: AppColors.stBacklog,
+      ),
+      _Kpi(
+        label: context.t('dashboard.done'),
+        value: '${completion.done}',
+        icon: Icons.check_circle_rounded,
+        hue: AppColors.stDone,
+      ),
+    ];
+    final columns = context.isCompact ? 2 : 4;
+    return LayoutBuilder(builder: (context, c) {
+      const gap = 18.0;
+      final width = ((c.maxWidth - gap * (columns - 1)) / columns) - 0.5;
+      return Wrap(
+        spacing: gap,
+        runSpacing: gap,
+        children: [
+          for (final k in items) SizedBox(width: width, child: k),
+        ],
+      );
+    });
+  }
+}
+
+class _Kpi extends StatelessWidget {
+  const _Kpi({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.hue,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color hue;
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: AppColors.soft(hue),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Icon(icon, size: 15, color: hue),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.inkSoft)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(value,
+              style: const TextStyle(
+                  fontFamily: AppTheme.fontBrand,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w700,
+                  height: 1,
+                  letterSpacing: -0.5,
+                  color: AppColors.ink)),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────── Focus list ────────────────────────────────────
+
+class _FocusCard extends StatelessWidget {
+  const _FocusCard({required this.issues});
   final List<Issue> issues;
 
   @override
@@ -150,116 +259,78 @@ class _TodayTasks extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SectionHeader(
+          _CardHead(
             title: context.t('dashboard.todayTask'),
             actionLabel: context.t('common.seeAll'),
             onAction: () => context.go('/issues'),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           if (issues.isEmpty)
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                context.t('dashboard.noTasks'),
-                style: const TextStyle(color: AppColors.inkSoft),
-              ),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Text(context.t('dashboard.noTasks'),
+                  style: const TextStyle(color: AppColors.inkSoft)),
             )
           else
-            SizedBox(
-              height: 190,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: issues.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 12),
-                itemBuilder: (context, index) =>
-                    _TaskCard(issue: issues[index], index: index),
+            for (final issue in issues.take(5))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _FocusItem(issue: issue),
               ),
-            ),
         ],
       ),
     );
   }
 }
 
-/// Accent color palette for task cards — warm tints that work with the new
-/// paper canvas (replaces the old pastel set).
-const _taskCardColors = [
-  Color(0xFFF3E9D2), // amber soft
-  Color(0xFFE9EEF8), // blue tint
-  Color(0xFFE8F5EE), // green tint
-  Color(0xFFF3ECF8), // purple tint
-];
-
-class _TaskCard extends StatelessWidget {
-  const _TaskCard({required this.issue, required this.index});
-
+class _FocusItem extends StatelessWidget {
+  const _FocusItem({required this.issue});
   final Issue issue;
-  final int index;
 
   @override
   Widget build(BuildContext context) {
-    final progress = issue.estimateMinutes != null && issue.estimateMinutes! > 0
-        ? (issue.spentMinutes / issue.estimateMinutes!).clamp(0.0, 1.0)
-        : 0.0;
-    final cardColor = _taskCardColors[index % _taskCardColors.length];
-    final priorityCol = AppColors.priorityColor(issue.priority);
-    return SizedBox(
-      width: 220,
-      child: SoftCard(
-        color: cardColor,
-        onTap: () => context.go('/issues/${issue.id}'),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final progress =
+        (issue.estimateMinutes != null && issue.estimateMinutes! > 0)
+            ? (issue.spentMinutes / issue.estimateMinutes!).clamp(0.0, 1.0)
+            : 0.0;
+    final due = dueLabel(issue.dueDate);
+    return InkWell(
+      onTap: () => context.go('/issues/${issue.id}'),
+      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          border: Border.all(color: AppColors.hairline2),
+        ),
+        child: Row(
           children: [
-            PillChip(
-              label: context.t('priority.${issue.priority.toLowerCase()}'),
-              background: AppColors.soft(priorityCol),
-              foreground: priorityCol,
-            ),
-            const SizedBox(height: 12),
+            TypeGlyph(type: issue.type),
+            const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                issue.title,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.ink),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: TweenAnimationBuilder<double>(
-                      duration: const Duration(milliseconds: 800),
-                      curve: const Cubic(0.22, 1, 0.36, 1),
-                      tween: Tween(begin: 0, end: progress),
-                      builder: (_, value, _) => LinearProgressIndicator(
-                        value: value,
-                        minHeight: 5,
-                        backgroundColor: Colors.white.withValues(alpha: 0.6),
-                        valueColor:
-                            const AlwaysStoppedAnimation(AppColors.accent),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  issue.readableId,
+              child: Text(issue.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontFamily: AppTheme.fontMono,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.inkSoft,
-                  ),
-                ),
-              ],
+                      fontSize: 13.5, fontWeight: FontWeight.w600)),
             ),
+            const SizedBox(width: 10),
+            if (issue.estimateMinutes != null && issue.estimateMinutes! > 0)
+              SizedBox(width: 56, child: HiveProgress(value: progress)),
+            if (due != null) ...[
+              const SizedBox(width: 10),
+              Text(due.text,
+                  style: TextStyle(
+                      fontFamily: AppTheme.fontMono,
+                      fontSize: 11.5,
+                      color: due.late ? AppColors.danger : AppColors.inkSoft)),
+            ],
+            const SizedBox(width: 10),
+            IdMono(issue.readableId),
+            const SizedBox(width: 10),
+            if (issue.assigneeId != null)
+              HiveAvatar(name: issue.assigneeId!, size: 24),
           ],
         ),
       ),
@@ -271,43 +342,81 @@ class _TaskCard extends StatelessWidget {
 
 class _CompletionCard extends StatelessWidget {
   const _CompletionCard({required this.completion});
-
   final ProjectCompletion completion;
 
   @override
   Widget build(BuildContext context) {
-    final entries = [
+    final segs = [
       (context.t('dashboard.done'), completion.donePercent, AppColors.stDone),
-      (
-        context.t('dashboard.inProgress'),
-        completion.inProgressPercent,
-        AppColors.stProgress
-      ),
-      (
-        context.t('dashboard.backlog'),
-        completion.backlogPercent,
-        AppColors.stBacklog
-      ),
+      (context.t('dashboard.inProgress'), completion.inProgressPercent,
+          AppColors.stProgress),
+      (context.t('dashboard.backlog'), completion.backlogPercent,
+          AppColors.stBacklog),
     ];
     final doneRounded = (completion.donePercent * 100).round();
     return SoftCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SectionHeader(
+          _CardHead(
             title: context.t('dashboard.projectCompleted'),
             actionLabel: context.t('dashboard.totalIssues',
                 variables: {'count': '${completion.total}'}),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
             children: [
-              // Legend
+              SizedBox(
+                width: 130,
+                height: 130,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    PieChart(
+                      PieChartData(
+                        sectionsSpace: 3,
+                        centerSpaceRadius: 40,
+                        startDegreeOffset: -90,
+                        sections: [
+                          for (final (_, percent, color) in segs)
+                            PieChartSectionData(
+                              value: percent <= 0 ? 0.001 : percent,
+                              color: color,
+                              radius: 14,
+                              showTitle: false,
+                            ),
+                        ],
+                      ),
+                    ),
+                    TweenAnimationBuilder<int>(
+                      duration: const Duration(milliseconds: 900),
+                      curve: hiveEase,
+                      tween: IntTween(begin: 0, end: doneRounded),
+                      builder: (_, value, _) => Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('$value%',
+                              style: const TextStyle(
+                                  fontFamily: AppTheme.fontBrand,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1,
+                                  color: AppColors.ink)),
+                          Text(context.t('dashboard.resolvedLabel'),
+                              style: const TextStyle(
+                                  fontSize: 10.5, color: AppColors.inkSoft)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (final (label, percent, color) in entries)
+                    for (final (label, percent, color) in segs)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         child: Row(
@@ -318,81 +427,22 @@ class _CompletionCard extends StatelessWidget {
                               decoration: BoxDecoration(
                                   color: color, shape: BoxShape.circle),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 9),
                             Expanded(
                               child: Text(label,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                      color: AppColors.inkSoft, fontSize: 12)),
+                                      fontSize: 12.5,
+                                      color: AppColors.inkSoft)),
                             ),
-                            Text(
-                              '${(percent * 100).round()}%',
-                              style: const TextStyle(
-                                  fontFamily: AppTheme.fontMono,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.ink),
-                            ),
+                            Text('${(percent * 100).round()}%',
+                                style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.ink)),
                           ],
                         ),
                       ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              // Donut with centered label
-              SizedBox(
-                width: 120,
-                height: 120,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    PieChart(
-                      PieChartData(
-                        sectionsSpace: 4,
-                        centerSpaceRadius: 36,
-                        startDegreeOffset: -90,
-                        sections: [
-                          for (final (_, percent, color) in entries)
-                            PieChartSectionData(
-                              value: percent <= 0 ? 0.001 : percent,
-                              color: color,
-                              radius: 18,
-                              showTitle: false,
-                            ),
-                        ],
-                      ),
-                    ),
-                    TweenAnimationBuilder<int>(
-                      duration: const Duration(milliseconds: 900),
-                      curve: const Cubic(0.22, 1, 0.36, 1),
-                      tween: IntTween(begin: 0, end: doneRounded),
-                      builder: (_, value, _) => Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '$value%',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontFamily: AppTheme.fontMono,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.ink,
-                              height: 1,
-                            ),
-                          ),
-                          const Text(
-                            'done',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: AppColors.inkSoft,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -404,88 +454,36 @@ class _CompletionCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────── Rank leaderboard ──────────────────────────────
-
-class _RankCard extends StatelessWidget {
-  const _RankCard({required this.ranking});
-
-  final List<RankEntry> ranking;
-
-  @override
-  Widget build(BuildContext context) {
-    return SoftCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SectionHeader(title: context.t('dashboard.rankPerformance')),
-          const SizedBox(height: 4),
-          if (ranking.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(context.t('dashboard.noRanking'),
-                  style: const TextStyle(color: AppColors.inkSoft)),
-            ),
-          for (final entry in ranking.take(5))
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: AppAvatar(
-                name: entry.displayName,
-                radius: 16,
-              ),
-              title: Text(entry.displayName,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.ink)),
-              subtitle: entry.title != null
-                  ? Text(entry.title!,
-                      style: const TextStyle(
-                          color: AppColors.inkSoft, fontSize: 11))
-                  : null,
-              trailing: Text(
-                context.t('dashboard.points',
-                    variables: {'count': '${entry.points}'}),
-                style: const TextStyle(
-                  fontFamily: AppTheme.fontMono,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.ink,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────── Weekly tracker bars ───────────────────────────
+// ─────────────────────────── Weekly tracker ────────────────────────────────
 
 class _TrackerCard extends StatelessWidget {
   const _TrackerCard({required this.tracker});
-
   final List<TrackerDay> tracker;
 
   @override
   Widget build(BuildContext context) {
-    final maxMinutes =
-        tracker.fold<int>(60, (m, d) => d.focusMinutes > m ? d.focusMinutes : m);
+    final maxMinutes = tracker.fold<int>(
+        60, (m, d) => d.focusMinutes > m ? d.focusMinutes : m);
+    final total = tracker.fold<int>(0, (s, d) => s + d.focusMinutes);
     const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
     return SoftCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SectionHeader(
+          _CardHead(
             title: context.t('dashboard.trackerDetail'),
-            actionLabel: context.t('common.seeAll'),
-            onAction: () => context.go('/timesheet'),
+            actionLabel: context.t('dashboard.tracked',
+                variables: {'time': fmtDuration(total)}),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           SizedBox(
-            height: 160,
+            height: 150,
             child: BarChart(
               BarChartData(
                 maxY: maxMinutes / 60,
                 gridData: const FlGridData(show: false),
                 borderData: FlBorderData(show: false),
+                barTouchData: BarTouchData(enabled: false),
                 titlesData: FlTitlesData(
                   leftTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false)),
@@ -496,7 +494,7 @@ class _TrackerCard extends StatelessWidget {
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 28,
+                      reservedSize: 26,
                       getTitlesWidget: (value, meta) {
                         final i = value.toInt();
                         if (i < 0 || i >= tracker.length) {
@@ -504,14 +502,11 @@ class _TrackerCard extends StatelessWidget {
                         }
                         return SideTitleWidget(
                           meta: meta,
-                          child: Text(
-                            days[(tracker[i].date.weekday - 1) % 7],
-                            style: const TextStyle(
-                              fontFamily: AppTheme.fontMono,
-                              fontSize: 11,
-                              color: AppColors.inkSoft,
-                            ),
-                          ),
+                          child: Text(days[(tracker[i].date.weekday - 1) % 7],
+                              style: const TextStyle(
+                                  fontFamily: AppTheme.fontMono,
+                                  fontSize: 10.5,
+                                  color: AppColors.inkFaint)),
                         );
                       },
                     ),
@@ -524,8 +519,8 @@ class _TrackerCard extends StatelessWidget {
                       barRods: [
                         BarChartRodData(
                           toY: tracker[i].focusMinutes / 60,
-                          width: 18,
-                          borderRadius: BorderRadius.circular(6),
+                          width: 16,
+                          borderRadius: BorderRadius.circular(99),
                           color: i.isEven ? AppColors.accent : AppColors.navy,
                           backDrawRodData: BackgroundBarChartRodData(
                             show: true,
@@ -541,6 +536,131 @@ class _TrackerCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─────────────────────────── Leaderboard ───────────────────────────────────
+
+class _LeaderboardCard extends StatelessWidget {
+  const _LeaderboardCard({required this.ranking});
+  final List<RankEntry> ranking;
+
+  @override
+  Widget build(BuildContext context) {
+    final shown = ranking.take(5).toList();
+    return SoftCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardHead(title: context.t('dashboard.rankPerformance')),
+          const SizedBox(height: 6),
+          if (shown.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(context.t('dashboard.noRanking'),
+                  style: const TextStyle(color: AppColors.inkSoft)),
+            ),
+          for (final (i, entry) in shown.indexed)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              decoration: BoxDecoration(
+                border: i == shown.length - 1
+                    ? null
+                    : const Border(
+                        bottom: BorderSide(color: AppColors.hairline2)),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 18,
+                    child: Text('${i + 1}',
+                        style: const TextStyle(
+                            fontFamily: AppTheme.fontMono,
+                            fontSize: 12,
+                            color: AppColors.inkFaint)),
+                  ),
+                  HiveAvatar(name: entry.displayName, size: 30),
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(entry.displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.w600)),
+                        if (entry.title != null)
+                          Text(entry.title!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 11, color: AppColors.inkSoft)),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    context.t('dashboard.points',
+                        variables: {'count': '${entry.points}'}),
+                    style: const TextStyle(
+                        fontFamily: AppTheme.fontMono,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.accentStrong),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────── Card header ───────────────────────────────────
+
+class _CardHead extends StatelessWidget {
+  const _CardHead({required this.title, this.actionLabel, this.onAction});
+
+  final String title;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(title,
+              style: const TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.1,
+                  color: AppColors.ink)),
+        ),
+        if (actionLabel != null)
+          onAction != null
+              ? GestureDetector(
+                  onTap: onAction,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(actionLabel!,
+                          style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.accentStrong)),
+                      const SizedBox(width: 3),
+                      const Icon(Icons.arrow_forward_rounded,
+                          size: 13, color: AppColors.accentStrong),
+                    ],
+                  ),
+                )
+              : Text(actionLabel!,
+                  style: const TextStyle(
+                      fontSize: 12.5, color: AppColors.inkFaint)),
+      ],
     );
   }
 }

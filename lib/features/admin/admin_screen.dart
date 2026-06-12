@@ -260,7 +260,8 @@ class _MobileListView extends StatelessWidget {
             ),
           ),
         ],
-        const SliverToBoxAdapter(child: SizedBox(height: 32)),
+        SliverToBoxAdapter(
+            child: SizedBox(height: 32 + context.bottomGutter)),
       ],
     );
   }
@@ -409,7 +410,7 @@ class _MobileDetailView extends StatelessWidget {
         // ── Scrollable content ───────────────────────────────────
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + context.bottomGutter),
             child: _sectionBody(section),
           ),
         ),

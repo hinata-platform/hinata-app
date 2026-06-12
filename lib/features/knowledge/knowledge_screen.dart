@@ -8,6 +8,8 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/status_widgets.dart';
 import 'article_editor.dart';
@@ -54,17 +56,25 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
                     articles.where((article) => article.parentId == null).toList();
                 return ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.all(context.pageGutter),
+                  padding: EdgeInsets.fromLTRB(context.pageGutter, 24,
+                      context.pageGutter,
+                      context.pageGutter + context.bottomGutter),
                   children: [
-                    SectionHeader(
+                    PageHead(
                       title: context.t('knowledge.title'),
-                      actionLabel: context.t('knowledge.new'),
-                      onAction: () async {
-                        final saved = await showArticleEditor(context);
-                        if (saved != null) _cubit.load();
-                      },
+                      subtitle: context.t('knowledge.summary',
+                          variables: {'count': '${articles.length}'}),
+                      actions: [
+                        PrimaryButton(
+                          label: context.t('knowledge.new'),
+                          onPressed: () async {
+                            final saved = await showArticleEditor(context);
+                            if (saved != null) _cubit.load();
+                          },
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 20),
                     if (roots.isEmpty)
                       Padding(
                         padding: const EdgeInsets.all(40),
@@ -103,31 +113,73 @@ class _ArticleNode extends StatelessWidget {
   Widget build(BuildContext context) {
     final children =
         all.where((candidate) => candidate.parentId == article.id).toList();
+    final updated = article.updatedAt;
+    final meta = [
+      if (article.tags.isNotEmpty) article.tags.first,
+      if (updated != null) context.t('knowledge.updated', variables: {
+        'when': '${updated.year}-${updated.month.toString().padLeft(2, '0')}-${updated.day.toString().padLeft(2, '0')}'
+      }),
+    ].join(' · ');
     return Padding(
-      padding: EdgeInsets.only(left: depth * 20.0, bottom: 10),
+      padding: EdgeInsets.only(left: depth * 20.0, bottom: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SoftCard(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
             onTap: () => context.go('/knowledge/${article.id}'),
             child: Row(
               children: [
-                const Icon(Icons.description_rounded,
-                    color: AppColors.accentPurple, size: 20),
-                const SizedBox(width: 12),
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: AppColors.accentSoft,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.description_outlined,
+                      color: AppColors.accentStrong, size: 18),
+                ),
+                const SizedBox(width: 14),
                 Expanded(
-                  child: Text(
-                    article.title,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        article.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      if (meta.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(meta,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 11.5, color: AppColors.inkSoft)),
+                      ],
+                    ],
                   ),
                 ),
-                if (children.isNotEmpty)
-                  PillChip(
-                    label: '${children.length}',
-                    background: AppColors.surfaceMuted,
+                if (children.isNotEmpty) ...[
+                  const SizedBox(width: 10),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.subject_rounded,
+                          size: 13, color: AppColors.inkFaint),
+                      const SizedBox(width: 4),
+                      Text('${children.length}',
+                          style: const TextStyle(
+                              fontFamily: AppTheme.fontMono,
+                              fontSize: 11.5,
+                              color: AppColors.inkFaint)),
+                    ],
                   ),
+                ],
               ],
             ),
           ),
