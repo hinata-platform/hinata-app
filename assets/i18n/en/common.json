@@ -219,6 +219,13 @@
   "reports": {
     "title": "Reports",
     "subtitle": "Project insights",
+    "forProject": "Insights · {{project}}",
+    "totalIssues": "Total issues",
+    "export": "Export",
+    "exportCsv": "Export as CSV",
+    "exportJson": "Export as JSON",
+    "exported": "{{format}} export opened",
+    "copied": "{{format}} copied to clipboard",
     "empty": "No data for this report yet.",
     "issues-by-state": "Issues by state",
     "issues-by-priority": "Issues by priority",

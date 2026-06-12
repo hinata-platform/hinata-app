@@ -219,6 +219,13 @@
   "reports": {
     "title": "Berichte",
     "subtitle": "Projekt-Einblicke",
+    "forProject": "Einblicke · {{project}}",
+    "totalIssues": "Aufgaben gesamt",
+    "export": "Exportieren",
+    "exportCsv": "Als CSV exportieren",
+    "exportJson": "Als JSON exportieren",
+    "exported": "{{format}}-Export geöffnet",
+    "copied": "{{format}} in Zwischenablage kopiert",
     "empty": "Für diesen Bericht liegen noch keine Daten vor.",
     "issues-by-state": "Aufgaben nach Status",
     "issues-by-priority": "Aufgaben nach Priorität",
