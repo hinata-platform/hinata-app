@@ -41,11 +41,20 @@ class ReportPdfData {
 
 PdfColor _c(Color c) => PdfColor.fromInt(c.toARGB32());
 
+/// The Hivora hex signet (pointy-top hexagon + centre bar), amber stroke.
+/// Tiny and simple, so it always renders in the PDF SVG engine — used as the
+/// branding fallback when no org logo is configured/available.
+const _hivoraMarkSvg =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">'
+    '<g fill="none" stroke="#D9A032" stroke-width="11" '
+    'stroke-linecap="round" stroke-linejoin="round">'
+    '<path d="M60 14 99.8 37v46L60 106 20.2 83V37Z"/>'
+    '<path d="M20.2 60h79.6"/></g></svg>';
+
 const _navy = PdfColor.fromInt(0xFF2D2B55);
 const _ink = PdfColor.fromInt(0xFF23223F);
 const _inkSoft = PdfColor.fromInt(0xFF6B6A85);
 const _inkFaint = PdfColor.fromInt(0xFF9A99B0);
-const _accent = PdfColor.fromInt(0xFFD9A032);
 const _accentStrong = PdfColor.fromInt(0xFFB9831F);
 const _canvas2 = PdfColor.fromInt(0xFFEFEEE8);
 const _hairline = PdfColor.fromInt(0xFFE7E5DE);
@@ -148,7 +157,11 @@ bool _looksLikeSvg(Uint8List bytes) {
 }
 
 pw.Widget _header(ReportPdfData data, String generated, pw.Widget? logo) {
-  return pw.Container(
+  // The navy band carries the report title. The org logo (typically a dark or
+  // coloured mark made for white backgrounds) is placed ABOVE the band on the
+  // white page so it stays visible — rendering it inside the navy band tended
+  // to make dark logos disappear.
+  final band = pw.Container(
     padding: const pw.EdgeInsets.all(20),
     decoration: const pw.BoxDecoration(
       color: _navy,
@@ -161,36 +174,25 @@ pw.Widget _header(ReportPdfData data, String generated, pw.Widget? logo) {
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              if (logo != null)
-                pw.ConstrainedBox(
-                  constraints: const pw.BoxConstraints(
-                      maxHeight: 36, maxWidth: 220),
-                  child: pw.FittedBox(
-                      fit: pw.BoxFit.contain,
-                      alignment: pw.Alignment.centerLeft,
-                      child: logo),
-                )
-              else
+              if (logo == null) ...[
                 pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
                   children: [
-                    pw.Container(
-                      width: 10,
-                      height: 18,
-                      decoration: const pw.BoxDecoration(
-                        color: _accent,
-                        borderRadius:
-                            pw.BorderRadius.all(pw.Radius.circular(2)),
-                      ),
+                    pw.SizedBox(
+                      width: 26,
+                      height: 26,
+                      child: pw.SvgImage(svg: _hivoraMarkSvg),
                     ),
-                    pw.SizedBox(width: 8),
+                    pw.SizedBox(width: 9),
                     pw.Text('hivora',
                         style: pw.TextStyle(
                             color: PdfColors.white,
-                            fontSize: 18,
+                            fontSize: 19,
                             fontWeight: pw.FontWeight.bold)),
                   ],
                 ),
-              pw.SizedBox(height: 10),
+                pw.SizedBox(height: 10),
+              ],
               pw.Text('Project report',
                   style: pw.TextStyle(
                       color: PdfColors.white,
@@ -217,6 +219,26 @@ pw.Widget _header(ReportPdfData data, String generated, pw.Widget? logo) {
         ),
       ],
     ),
+  );
+
+  if (logo == null) return band;
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 16, left: 2),
+        child: pw.ConstrainedBox(
+          constraints:
+              const pw.BoxConstraints(maxHeight: 46, maxWidth: 260),
+          child: pw.FittedBox(
+            fit: pw.BoxFit.contain,
+            alignment: pw.Alignment.centerLeft,
+            child: logo,
+          ),
+        ),
+      ),
+      band,
+    ],
   );
 }
 
