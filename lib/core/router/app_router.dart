@@ -62,6 +62,15 @@ GoRouter buildRouter({
       final authStatus = auth.state.status;
       final location = routerState.matchedLocation;
 
+      // The SSO callback carries a one-time token pair in its query string.
+      // On a web login the whole app reloads at this URL, so AppConfig is still
+      // (re)connecting — without this guard the config switch below would bounce
+      // us to /connect and discard the tokens before SsoCallbackScreen reads
+      // them. Hold the route until the tokens have signed the user in.
+      if (location == '/auth-callback' && authStatus != AuthStatus.authenticated) {
+        return null;
+      }
+
       switch (config) {
         case AppConfigStatus.initial:
         case AppConfigStatus.connecting:
