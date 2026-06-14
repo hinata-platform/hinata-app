@@ -246,7 +246,10 @@
   "gantt": {
     "title": "Zeitachse",
     "subtitle": "Gantt-Ansicht mit Abhängigkeiten",
-    "empty": "Keine geplanten Aufgaben. Setze Start- und Fälligkeitsdatum, um sie auf der Zeitachse zu sehen."
+    "empty": "Keine geplanten Aufgaben. Setze Start- und Fälligkeitsdatum, um sie auf der Zeitachse zu sehen.",
+    "today": "Heute",
+    "week": "Woche",
+    "month": "Monat"
   },
   "timesheet": {
     "title": "Stundenzettel",

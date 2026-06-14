@@ -246,7 +246,10 @@
   "gantt": {
     "title": "Timeline",
     "subtitle": "Gantt view with dependencies",
-    "empty": "No scheduled issues. Set start and due dates on issues to see them on the timeline."
+    "empty": "No scheduled issues. Set start and due dates on issues to see them on the timeline.",
+    "today": "Today",
+    "week": "Week",
+    "month": "Month"
   },
   "timesheet": {
     "title": "Timesheet",
