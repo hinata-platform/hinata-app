@@ -426,7 +426,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
             onClose: () => Navigator.of(context).maybePop(),
           ),
         Padding(
-          padding: EdgeInsets.fromLTRB(20, inSheet ? 8 : 4, 20, 24),
+          padding: EdgeInsets.fromLTRB(20, inSheet ? 16 : 16, 20, 24),
           child: LayoutBuilder(
             builder: (context, c) {
               final left = <Widget>[
@@ -635,9 +635,10 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
             onTap: _pickPriority,
             child: PriorityFlag(priority: issue.priority, withLabel: true),
           ),
-          // Type (read-only)
+          // Type
           _DetailRow(
             label: context.t('issues.type'),
+            onTap: _pickType,
             child: TypeBadge(type: issue.type),
           ),
           // Sprint
@@ -795,6 +796,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
       color: Colors.transparent,
       borderRadius: BorderRadius.zero,
       border: Border.all(color: Colors.transparent),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -915,6 +917,17 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
       ],
     );
     if (chosen != null) await _patch({'priority': chosen});
+  }
+
+  Future<void> _pickType() async {
+    const types = ['TASK', 'BUG', 'FEATURE', 'EPIC'];
+    final chosen = await _showOptions<String>(
+      title: context.t('issues.type'),
+      options: [
+        for (final t in types) (value: t, child: TypeBadge(type: t)),
+      ],
+    );
+    if (chosen != null) await _patch({'type': chosen});
   }
 
   static const _noSprint = '__none__';
