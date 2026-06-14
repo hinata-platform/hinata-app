@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
@@ -132,7 +133,7 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
                   const SliverFillRemaining(
                     child: Center(
                         child:
-                            CircularProgressIndicator(color: AppColors.navy)),
+                            HiveLoader()),
                   )
                 else if (state.errorKey != null && boardList.isEmpty)
                   SliverFillRemaining(
@@ -356,7 +357,7 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
                   ? const SizedBox(
                       width: 22,
                       height: 22,
-                      child: CircularProgressIndicator(
+                      child: HiveLoader(
                           strokeWidth: 2,
                           color: Color(0xFF2A2410)),
                     )

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
@@ -138,7 +139,7 @@ class _CreateSaveBar extends StatelessWidget {
                             key: ValueKey('saving'),
                             width: 22,
                             height: 22,
-                            child: CircularProgressIndicator(
+                            child: HiveLoader(
                                 strokeWidth: 2, color: Colors.white),
                           ),
                         IssueCreatePhase.success => const Icon(

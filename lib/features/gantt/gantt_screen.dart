@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -92,7 +93,7 @@ class _GanttScreenState extends State<GanttScreen> {
 
   Widget _body(BuildContext context) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.navy));
+      return const Center(child: HiveLoader());
     }
     if (_error != null) {
       return Center(

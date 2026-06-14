@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
@@ -66,7 +67,7 @@ class _AdminUsersSectionState extends State<AdminUsersSection> {
           const Padding(
             padding: EdgeInsets.all(24),
             child:
-                Center(child: CircularProgressIndicator(color: AppColors.navy)),
+                Center(child: HiveLoader()),
           )
         else if (_error != null)
           Padding(
@@ -261,7 +262,7 @@ class _CreateUserBodyState extends State<_CreateUserBody> {
                   ? const SizedBox(
                       width: 22,
                       height: 22,
-                      child: CircularProgressIndicator(
+                      child: HiveLoader(
                           strokeWidth: 2, color: Colors.white),
                     )
                   : Text(context.t('common.create')),

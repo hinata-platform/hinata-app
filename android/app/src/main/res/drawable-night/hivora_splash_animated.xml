@@ -18,7 +18,7 @@
                 <path
                     android:name="hex"
                     android:pathData="M60,14 L99.8,37 L99.8,83 L60,106 L20.2,83 L20.2,37 Z"
-                    android:strokeColor="#A9CDF3"
+                    android:strokeColor="#D9A032"
                     android:strokeWidth="11"
                     android:strokeLineCap="round"
                     android:strokeLineJoin="round"
@@ -26,7 +26,7 @@
                 <path
                     android:name="bar"
                     android:pathData="M20.2,60 L99.8,60"
-                    android:strokeColor="#A9CDF3"
+                    android:strokeColor="#D9A032"
                     android:strokeWidth="11"
                     android:strokeLineCap="round"
                     android:trimPathEnd="0" />

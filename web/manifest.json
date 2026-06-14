@@ -3,9 +3,9 @@
     "short_name": "hivora",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F4F3EF",
+    "theme_color": "#D9A032",
+    "description": "Hivora - open source, self-hosted project management.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

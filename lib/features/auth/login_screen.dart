@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -140,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ? const SizedBox(
                                     width: 22,
                                     height: 22,
-                                    child: CircularProgressIndicator(
+                                    child: HiveLoader(
                                         strokeWidth: 2, color: Colors.white),
                                   )
                                 : Text(context.t('auth.signIn')),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
@@ -94,7 +95,7 @@ class _BoardScreenState extends State<BoardScreen> {
   Widget build(BuildContext context) {
     if (_loading && _boards.isEmpty && _error == null) {
       return const Center(
-          child: CircularProgressIndicator(color: AppColors.navy));
+          child: HiveLoader());
     }
     if (_error != null && _boards.isEmpty) {
       return Center(
@@ -286,7 +287,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   Widget build(BuildContext context) {
     if (_loading && _view == null) {
       return const Center(
-          child: CircularProgressIndicator(color: AppColors.navy));
+          child: HiveLoader());
     }
     if (_error != null && _view == null) {
       return Center(
@@ -713,7 +714,7 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
                   ? const SizedBox(
                       width: 22,
                       height: 22,
-                      child: CircularProgressIndicator(
+                      child: HiveLoader(
                           strokeWidth: 2, color: Color(0xFF2A2410)),
                     )
                   : Text(context.t('common.create')),

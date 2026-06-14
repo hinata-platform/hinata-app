@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/blocs/app_config_bloc.dart';
@@ -98,7 +99,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                                 ? const SizedBox(
                                     width: 22,
                                     height: 22,
-                                    child: CircularProgressIndicator(
+                                    child: HiveLoader(
                                         strokeWidth: 2, color: Colors.white),
                                   )
                                 : Text(context.t('connect.action')),

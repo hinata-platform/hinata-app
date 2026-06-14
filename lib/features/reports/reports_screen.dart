@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../core/widgets/hive_loader.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -297,7 +298,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     if (_loading) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 80),
-        child: Center(child: CircularProgressIndicator(color: AppColors.navy)),
+        child: Center(child: HiveLoader()),
       );
     }
     if (_error != null) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -124,7 +125,7 @@ class _AdminScreenState extends State<AdminScreen> {
   Widget build(BuildContext context) {
     if (_loading) {
       return const Center(
-          child: CircularProgressIndicator(color: AppColors.navy));
+          child: HiveLoader());
     }
     if (_error != null) {
       return Center(
@@ -385,7 +386,7 @@ class _MobileDetailView extends StatelessWidget {
                     child: SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(
+                      child: HiveLoader(
                           strokeWidth: 2, color: AppColors.navy),
                     ),
                   )
@@ -584,7 +585,7 @@ class _DesktopSectionContent extends StatelessWidget {
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(
+                        child: HiveLoader(
                             strokeWidth: 2, color: AppColors.navy),
                       )
                     : FilledButton.icon(

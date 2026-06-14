@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
@@ -236,8 +237,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         Expanded(
           child: _loading
               ? const Center(
-                  child: CircularProgressIndicator(
-                      color: AppColors.navy))
+                  child: HiveLoader())
               : _error != null
                   ? Center(
                       child: Column(
@@ -793,7 +793,7 @@ class _CreateUserFormState extends State<_CreateUserForm> {
                   ? const SizedBox(
                       width: 22,
                       height: 22,
-                      child: CircularProgressIndicator(
+                      child: HiveLoader(
                           strokeWidth: 2, color: Colors.white),
                     )
                   : Text(context.t('common.create')),

@@ -6,7 +6,7 @@
         <item name="android:windowFullscreen">false</item>
         <item name="android:windowDrawsSystemBarBackgrounds">false</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
-        <item name="android:windowSplashScreenBackground">#1E1C3A</item>
+        <item name="android:windowSplashScreenBackground">#131119</item>
         <!-- Hivora: animiertes Logo statt statischem Icon (Night-Variante in Hellblau) -->
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/hivora_splash_animated</item>
         <item name="android:windowSplashScreenAnimationDuration">1200</item>

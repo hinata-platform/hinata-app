@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
@@ -115,7 +116,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
             const Padding(
               padding: EdgeInsets.all(60),
               child: Center(
-                  child: CircularProgressIndicator(color: AppColors.navy)),
+                  child: HiveLoader()),
             )
           else if (_error != null)
             Padding(

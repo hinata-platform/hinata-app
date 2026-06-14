@@ -27,7 +27,7 @@
     </scenes>
     <resources>
         <namedColor name="LaunchBackground">
-            <color red="0.949" green="0.945" blue="0.973" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.957" green="0.953" blue="0.937" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
     </resources>
 </document>

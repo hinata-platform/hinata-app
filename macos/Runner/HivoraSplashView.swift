@@ -24,13 +24,16 @@ final class HivoraSplashView: NSView {
     private var isDark: Bool {
         effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
     }
+    private var markColor: NSColor {
+        NSColor(red: 0.851, green: 0.627, blue: 0.196, alpha: 1) // #D9A032 honey-amber
+    }
     private var inkColor: NSColor {
-        isDark ? NSColor(red: 0.663, green: 0.804, blue: 0.953, alpha: 1) // #A9CDF3
-               : NSColor(red: 0.176, green: 0.169, blue: 0.333, alpha: 1) // #2D2B55
+        isDark ? NSColor(red: 0.925, green: 0.922, blue: 0.953, alpha: 1) // #ECEBF3
+               : NSColor(red: 0.137, green: 0.133, blue: 0.247, alpha: 1) // #23223F
     }
     private var bgColor: NSColor {
-        isDark ? NSColor(red: 0.118, green: 0.110, blue: 0.227, alpha: 1) // #1E1C3A
-               : NSColor(red: 0.949, green: 0.945, blue: 0.973, alpha: 1) // #F2F1F8
+        isDark ? NSColor(red: 0.075, green: 0.067, blue: 0.098, alpha: 1) // #131119
+               : NSColor(red: 0.957, green: 0.953, blue: 0.937, alpha: 1) // #F4F3EF
     }
 
     override init(frame frameRect: NSRect) {
@@ -40,7 +43,7 @@ final class HivoraSplashView: NSView {
 
         for shapeLayer in [hexLayer, barLayer] {
             shapeLayer.fillColor = nil
-            shapeLayer.strokeColor = inkColor.cgColor
+            shapeLayer.strokeColor = markColor.cgColor
             shapeLayer.lineCap = .round
             shapeLayer.lineJoin = .round
             shapeLayer.strokeEnd = 0

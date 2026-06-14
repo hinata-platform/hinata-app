@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/blocs/auth_bloc.dart';
@@ -45,7 +46,7 @@ class _SsoCallbackScreenState extends State<SsoCallbackScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(),
+            const HiveLoader(),
             const SizedBox(height: 16),
             Text(context.t('auth.signingIn')),
           ],

@@ -29,13 +29,16 @@ final class HivoraSplashView: UIView {
     private var isDark: Bool {
         traitCollection.userInterfaceStyle == .dark
     }
+    private var markColor: UIColor {
+        UIColor(red: 0.851, green: 0.627, blue: 0.196, alpha: 1) // #D9A032 honey-amber
+    }
     private var inkColor: UIColor {
-        isDark ? UIColor(red: 0.663, green: 0.804, blue: 0.953, alpha: 1) // #A9CDF3
-               : UIColor(red: 0.176, green: 0.169, blue: 0.333, alpha: 1) // #2D2B55
+        isDark ? UIColor(red: 0.925, green: 0.922, blue: 0.953, alpha: 1) // #ECEBF3
+               : UIColor(red: 0.137, green: 0.133, blue: 0.247, alpha: 1) // #23223F
     }
     private var bgColor: UIColor {
-        isDark ? UIColor(red: 0.118, green: 0.110, blue: 0.227, alpha: 1) // #1E1C3A
-               : UIColor(red: 0.949, green: 0.945, blue: 0.973, alpha: 1) // #F2F1F8
+        isDark ? UIColor(red: 0.075, green: 0.067, blue: 0.098, alpha: 1) // #131119
+               : UIColor(red: 0.957, green: 0.953, blue: 0.937, alpha: 1) // #F4F3EF
     }
 
     override init(frame: CGRect) {
@@ -44,7 +47,7 @@ final class HivoraSplashView: UIView {
 
         for layer in [hexLayer, barLayer] {
             layer.fillColor = nil
-            layer.strokeColor = inkColor.cgColor
+            layer.strokeColor = markColor.cgColor
             layer.lineCap = .round
             layer.lineJoin = .round
             layer.strokeEnd = 0

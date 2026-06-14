@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../i18n/i18n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import 'hive_loader.dart';
 
 /// Small rounded pill, e.g. "High Priority" or a workflow state.
 class PillChip extends StatelessWidget {
@@ -89,7 +90,7 @@ class AsyncView extends StatelessWidget {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(40),
-          child: CircularProgressIndicator(color: AppColors.accent),
+          child: HiveLoader(),
         ),
       );
     }

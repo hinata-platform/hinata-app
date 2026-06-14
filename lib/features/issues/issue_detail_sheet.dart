@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import '../../core/widgets/hive_loader.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
@@ -397,7 +398,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     if (_loading && _issue == null) {
       return const SizedBox(
         height: 260,
-        child: Center(child: CircularProgressIndicator(color: AppColors.navy)),
+        child: Center(child: HiveLoader()),
       );
     }
     if (_error != null && _issue == null) {
@@ -1424,7 +1425,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     if (_loading) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 48),
-        child: Center(child: CircularProgressIndicator(color: AppColors.navy)),
+        child: Center(child: HiveLoader()),
       );
     }
     return Form(
@@ -1821,7 +1822,7 @@ class _RouteTopBar extends StatelessWidget {
             const SizedBox(
               width: 14,
               height: 14,
-              child: CircularProgressIndicator(
+              child: HiveLoader(
                 strokeWidth: 2,
                 color: AppColors.accent,
               ),
