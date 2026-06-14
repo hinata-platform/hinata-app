@@ -54,6 +54,15 @@ GoRouter buildRouter({
   required AuthBloc auth,
   required AppStorage storage,
 }) {
+  // Gate screens the user is bounced through while the app boots (connects,
+  // onboards, authenticates). A deep-linked destination requested before the
+  // app is ready gets parked here so it can be restored afterwards instead of
+  // being lost to the default /dashboard.
+  const gates = {
+    '/connect', '/setup', '/onboarding', '/login', '/update', '/auth-callback',
+  };
+  String? pendingDeepLink;
+
   return GoRouter(
     initialLocation: '/dashboard',
     refreshListenable: _MergedRefresh([appConfig.stream, auth.stream]),
@@ -61,6 +70,14 @@ GoRouter buildRouter({
       final config = appConfig.state.status;
       final authStatus = auth.state.status;
       final location = routerState.matchedLocation;
+
+      // Remember a real (non-gate) destination that we're about to bounce off a
+      // gate, so we can return to it once the app is ready + authenticated.
+      void parkIfDeepLink() {
+        if (!gates.contains(location) && location != '/dashboard') {
+          pendingDeepLink = routerState.uri.toString();
+        }
+      }
 
       // The SSO callback carries a one-time token pair in its query string.
       // On a web login the whole app reloads at this URL, so AppConfig is still
@@ -75,7 +92,9 @@ GoRouter buildRouter({
         case AppConfigStatus.initial:
         case AppConfigStatus.connecting:
         case AppConfigStatus.needsServerUrl:
-          return location == '/connect' ? null : '/connect';
+          if (location == '/connect') return null;
+          parkIfDeepLink();
+          return '/connect';
         case AppConfigStatus.updateRequired:
           return location == '/update' ? null : '/update';
         case AppConfigStatus.needsSetup:
@@ -84,18 +103,24 @@ GoRouter buildRouter({
           break;
       }
       if (!storage.onboardingDone) {
-        return location == '/onboarding' ? null : '/onboarding';
+        if (location == '/onboarding') return null;
+        parkIfDeepLink();
+        return '/onboarding';
       }
       if (authStatus != AuthStatus.authenticated) {
         // /auth-callback carries the SSO token pair and signs the user in.
         const allowed = {'/login', '/auth-callback'};
-        return allowed.contains(location) ? null : '/login';
+        if (allowed.contains(location)) return null;
+        parkIfDeepLink();
+        return '/login';
       }
-      // Authenticated and ready: keep users away from gate screens.
-      const gates = {
-        '/connect', '/setup', '/onboarding', '/login', '/update', '/auth-callback',
-      };
-      if (gates.contains(location)) return '/dashboard';
+      // Authenticated and ready: send the user to their parked deep link (if
+      // any), otherwise keep them away from the gate screens.
+      if (gates.contains(location)) {
+        final target = pendingDeepLink;
+        pendingDeepLink = null;
+        return target ?? '/dashboard';
+      }
       return null;
     },
     routes: [
