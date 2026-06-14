@@ -1115,6 +1115,533 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
+// ─────────────────────────── Option picker ─────────────────────────────────
+
+/// Bottom-sheet single-choice picker (shared by the create body). Mirrors the
+/// detail sheet's inline `_showOptions`.
+Future<T?> _pickOption<T>(
+  BuildContext context, {
+  required String title,
+  required List<({T value, Widget child})> options,
+}) {
+  return showModalBottomSheet<T>(
+    context: context,
+    useRootNavigator: true,
+    backgroundColor: AppColors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (sheetContext) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            child: Text(title,
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          ),
+          for (final o in options)
+            InkWell(
+              onTap: () => Navigator.of(sheetContext).pop(o.value),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                child: Align(alignment: Alignment.centerLeft, child: o.child),
+              ),
+            ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    ),
+  );
+}
+
+// ─────────────────────────── Create body ───────────────────────────────────
+
+/// The same two-column layout as [IssueDetailBody], but for CREATING an issue:
+/// title + Markdown description on the left, an editable details card
+/// (project · status · assignee · priority · type · sprint · dates) on the
+/// right, and a full-width save button at the bottom. Hosted by `showIssueForm`.
+class IssueCreateBody extends StatefulWidget {
+  const IssueCreateBody({
+    super.key,
+    this.projectId,
+    this.initialState,
+    required this.onCreated,
+  });
+
+  final String? projectId;
+  final String? initialState;
+  final ValueChanged<Issue> onCreated;
+
+  @override
+  State<IssueCreateBody> createState() => IssueCreateBodyState();
+}
+
+class IssueCreateBodyState extends State<IssueCreateBody> {
+  HivoraRepository get _repo => context.read<HivoraRepository>();
+
+  final _titleCtrl = TextEditingController();
+  final _descCtrl = TextEditingController();
+
+  List<Project> _projects = const [];
+  List<DirectoryUser> _users = const [];
+  List<Sprint> _sprints = const [];
+
+  String? _projectId;
+  String? _state;
+  String? _assigneeId;
+  String _priority = 'NORMAL';
+  String _type = 'TASK';
+  String? _sprintId;
+  DateTime? _startDate;
+  DateTime? _dueDate;
+
+  bool _loading = true;
+  bool _saving = false;
+  String? _error;
+
+  static const _none = '__none__';
+
+  Project? get _project =>
+      _projects.where((p) => p.id == _projectId).firstOrNull;
+  Map<String, String> get _names =>
+      {for (final u in _users) u.id: u.displayName};
+
+  @override
+  void initState() {
+    super.initState();
+    _projectId = widget.projectId;
+    _state = widget.initialState;
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _descCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final results = await Future.wait([_repo.projects(), _repo.users()]);
+      _projects = results[0] as List<Project>;
+      _users = results[1] as List<DirectoryUser>;
+      _projectId ??= _projects.firstOrNull?.id;
+      await _loadProjectScoped();
+      if (mounted) setState(() => _loading = false);
+    } on ApiFailure catch (failure) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = failure.message;
+        });
+      }
+    }
+  }
+
+  /// Loads sprints + a default status for the selected project.
+  Future<void> _loadProjectScoped() async {
+    _state ??= _project?.workflowStates.firstOrNull;
+    _sprints = const [];
+    final pid = _projectId;
+    if (pid == null) return;
+    try {
+      final boards = await _repo.boards(projectId: pid);
+      if (boards.isNotEmpty) {
+        final view = await _repo.boardView(boards.first.id);
+        _sprints = view.sprints;
+      }
+    } catch (_) {
+      _sprints = const [];
+    }
+  }
+
+  Future<void> _onProjectChanged(String id) async {
+    setState(() {
+      _projectId = id;
+      _state = null; // reset to the new project's default
+      _sprintId = null;
+    });
+    await _loadProjectScoped();
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _save() async {
+    final title = _titleCtrl.text.trim();
+    if (title.isEmpty || _projectId == null) {
+      setState(() => _error = context.t('errors.required'));
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      final created = await _repo.createIssue({
+        'projectId': _projectId,
+        'title': title,
+        'description': _descCtrl.text,
+        'type': _type,
+        'priority': _priority,
+        if (_state != null) 'state': _state,
+        if (_assigneeId != null) 'assigneeId': _assigneeId,
+        if (_sprintId != null) 'sprintId': _sprintId,
+        if (_startDate != null)
+          'startDate': _startDate!.toIso8601String().substring(0, 10),
+        if (_dueDate != null)
+          'dueDate': _dueDate!.toIso8601String().substring(0, 10),
+      });
+      widget.onCreated(created);
+    } on ApiFailure catch (failure) {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _error = failure.message;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 48),
+        child: Center(child: CircularProgressIndicator(color: AppColors.navy)),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          LayoutBuilder(builder: (context, c) {
+            final left = _contentCard();
+            final right = _detailsCard();
+            if (c.maxWidth >= 680) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 3, child: left),
+                  const SizedBox(width: 18),
+                  Expanded(flex: 2, child: right),
+                ],
+              );
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [left, const SizedBox(height: 14), right],
+            );
+          }),
+          if (_error != null) ...[
+            const SizedBox(height: 14),
+            Text(_error!,
+                style: const TextStyle(color: AppColors.danger),
+                textAlign: TextAlign.center),
+          ],
+          const SizedBox(height: 18),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.navy,
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(48),
+            ),
+            onPressed: _saving ? null : _save,
+            child: _saving
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
+                  )
+                : Text(context.t('common.save')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionLabel(String text) => Text(
+        text.toUpperCase(),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+          color: AppColors.inkFaint,
+        ),
+      );
+
+  Widget _contentCard() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionLabel(context.t('issues.title')),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _titleCtrl,
+          maxLines: null,
+          style: const TextStyle(
+              fontFamily: AppTheme.fontBrand,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              height: 1.25),
+          decoration: InputDecoration(
+            isCollapsed: true,
+            border: InputBorder.none,
+            hintText: context.t('issues.title'),
+          ),
+        ),
+        const SizedBox(height: 18),
+        _sectionLabel(context.t('issues.description')),
+        const SizedBox(height: 8),
+        MarkdownEditorField(
+          controller: _descCtrl,
+          hintText: context.t('issues.description'),
+        ),
+      ],
+    );
+  }
+
+  Widget _detailsCard() {
+    final assigneeName = _assigneeId != null ? _names[_assigneeId] : null;
+    final sprintName =
+        _sprints.where((s) => s.id == _sprintId).firstOrNull?.name;
+    return SoftCard(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(context.t('issues.details'),
+              style:
+                  const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 6),
+          _DetailRow(
+            label: context.t('issues.project'),
+            onTap: _pickProject,
+            child: Text(
+              _project != null
+                  ? '${_project!.key} – ${_project!.name}'
+                  : context.t('errors.required'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+          _DetailRow(
+            label: context.t('issues.status'),
+            onTap: (_project?.workflowStates.isEmpty ?? true) ? null : _pickStatus,
+            child: _state != null
+                ? StateDotBadge(state: _state!)
+                : Text(context.t('issues.noValue'),
+                    style: TextStyle(fontSize: 13, color: AppColors.inkFaint)),
+          ),
+          _DetailRow(
+            label: context.t('issues.assignee'),
+            onTap: _pickAssignee,
+            child: _person(assigneeName, fallback: context.t('issues.unassigned')),
+          ),
+          _DetailRow(
+            label: context.t('issues.priority'),
+            onTap: _pickPriority,
+            child: PriorityFlag(priority: _priority, withLabel: true),
+          ),
+          _DetailRow(
+            label: context.t('issues.type'),
+            onTap: _pickType,
+            child: TypeBadge(type: _type),
+          ),
+          _DetailRow(
+            label: context.t('issues.sprint'),
+            onTap: _sprints.isEmpty ? null : _pickSprint,
+            child: Text(
+              sprintName ?? context.t('issues.noSprint'),
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color:
+                      sprintName != null ? AppColors.stTodo : AppColors.inkFaint),
+            ),
+          ),
+          _DetailRow(
+            label: context.t('issues.startDate'),
+            onTap: () => _pickDate(isStart: true),
+            child: _dateValue(_startDate, isStart: true),
+          ),
+          _DetailRow(
+            label: context.t('issues.dueDate'),
+            onTap: () => _pickDate(isStart: false),
+            last: true,
+            child: _dateValue(_dueDate, isStart: false),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _person(String? name, {required String fallback}) {
+    if (name == null || name.isEmpty) {
+      return Text(fallback,
+          style: TextStyle(fontSize: 13, color: AppColors.inkFaint));
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        HiveAvatar(name: name, size: 22),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style:
+                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+        ),
+      ],
+    );
+  }
+
+  Widget _dateValue(DateTime? date, {required bool isStart}) {
+    if (date == null) {
+      return Text(context.t('issues.noValue'),
+          style: TextStyle(fontSize: 13, color: AppColors.inkFaint));
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          MaterialLocalizations.of(context).formatMediumDate(date),
+          style: TextStyle(
+              fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink),
+        ),
+        const SizedBox(width: 6),
+        GestureDetector(
+          onTap: () => setState(() {
+            if (isStart) {
+              _startDate = null;
+            } else {
+              _dueDate = null;
+            }
+          }),
+          child:
+              Icon(Icons.close_rounded, size: 15, color: AppColors.inkFaint),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickProject() async {
+    final chosen = await _pickOption<String>(
+      context,
+      title: context.t('issues.project'),
+      options: [
+        for (final p in _projects)
+          (
+            value: p.id,
+            child: Text('${p.key} – ${p.name}',
+                overflow: TextOverflow.ellipsis)
+          ),
+      ],
+    );
+    if (chosen != null && chosen != _projectId) await _onProjectChanged(chosen);
+  }
+
+  Future<void> _pickStatus() async {
+    final states = _project?.workflowStates ?? const <String>[];
+    final chosen = await _pickOption<String>(
+      context,
+      title: context.t('issues.status'),
+      options: [for (final s in states) (value: s, child: StateDotBadge(state: s))],
+    );
+    if (chosen != null) setState(() => _state = chosen);
+  }
+
+  Future<void> _pickPriority() async {
+    const priorities = ['SHOWSTOPPER', 'CRITICAL', 'MAJOR', 'NORMAL', 'MINOR'];
+    final chosen = await _pickOption<String>(
+      context,
+      title: context.t('issues.priority'),
+      options: [
+        for (final p in priorities)
+          (value: p, child: PriorityFlag(priority: p, withLabel: true)),
+      ],
+    );
+    if (chosen != null) setState(() => _priority = chosen);
+  }
+
+  Future<void> _pickType() async {
+    const types = ['TASK', 'BUG', 'FEATURE', 'EPIC'];
+    final chosen = await _pickOption<String>(
+      context,
+      title: context.t('issues.type'),
+      options: [for (final t in types) (value: t, child: TypeBadge(type: t))],
+    );
+    if (chosen != null) setState(() => _type = chosen);
+  }
+
+  Future<void> _pickSprint() async {
+    final chosen = await _pickOption<String>(
+      context,
+      title: context.t('issues.sprint'),
+      options: [
+        (
+          value: _none,
+          child: Text(context.t('issues.noSprint'),
+              style: TextStyle(color: AppColors.inkFaint))
+        ),
+        for (final s in _sprints) (value: s.id, child: Text(s.name)),
+      ],
+    );
+    if (chosen != null) {
+      setState(() => _sprintId = chosen == _none ? null : chosen);
+    }
+  }
+
+  Future<void> _pickAssignee() async {
+    final chosen = await _pickOption<String>(
+      context,
+      title: context.t('issues.assignee'),
+      options: [
+        (
+          value: _none,
+          child: Text(context.t('issues.unassigned'),
+              style: TextStyle(color: AppColors.inkFaint))
+        ),
+        for (final u in _users)
+          (value: u.id, child: _person(u.displayName, fallback: '')),
+      ],
+    );
+    if (chosen != null) {
+      setState(() => _assigneeId = chosen == _none ? null : chosen);
+    }
+  }
+
+  Future<void> _pickDate({required bool isStart}) async {
+    final current = isStart ? _startDate : _dueDate;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: current ?? DateTime.now(),
+      firstDate: DateTime(2015),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          _startDate = picked;
+        } else {
+          _dueDate = picked;
+        }
+      });
+    }
+  }
+}
+
 // ─────────────────────────── Top bar ───────────────────────────────────────
 
 class _RouteTopBar extends StatelessWidget {
