@@ -11,12 +11,16 @@ class SoftCard extends StatelessWidget {
     required this.child,
     this.color,
     this.padding = const EdgeInsets.all(20),
+    this.borderRadius,
+    this.border,
     this.onTap,
   });
 
   final Widget child;
   final Color? color;
   final EdgeInsetsGeometry padding;
+  final BoxBorder? border;
+  final BorderRadius? borderRadius;
   final VoidCallback? onTap;
 
   @override
@@ -24,19 +28,19 @@ class SoftCard extends StatelessWidget {
     final bg = color ?? AppColors.surface;
     return Material(
       color: bg,
-      borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+      borderRadius: borderRadius ?? BorderRadius.circular(AppTheme.radiusCard),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-          border: Border.all(color: AppColors.hairline),
+          borderRadius: borderRadius ?? BorderRadius.circular(AppTheme.radiusCard),
+          border: border ?? Border.all(color: AppColors.hairline),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          borderRadius: borderRadius ?? BorderRadius.circular(AppTheme.radiusCard),
           child: onTap == null
               ? Padding(padding: padding, child: child)
               : InkWell(
                   onTap: onTap,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+                  borderRadius: borderRadius ?? BorderRadius.circular(AppTheme.radiusCard),
                   child: Padding(padding: padding, child: child),
                 ),
         ),
