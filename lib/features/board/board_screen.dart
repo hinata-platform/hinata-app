@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -1015,37 +1017,100 @@ class _MiniMeta extends StatelessWidget {
 }
 
 /// Dashed "Add issue" button used at the foot of board columns.
-class DottedAddButton extends StatelessWidget {
+class DottedAddButton extends StatefulWidget {
   const DottedAddButton({super.key, required this.label, this.onTap});
   final String label;
   final VoidCallback? onTap;
 
   @override
+  State<DottedAddButton> createState() => _DottedAddButtonState();
+}
+
+class _DottedAddButtonState extends State<DottedAddButton> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(color: AppColors.hairline),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 9),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.add_rounded, size: 15, color: AppColors.inkFaint),
-              const SizedBox(width: 7),
-              Text(label,
-                  style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.inkFaint)),
-            ],
+    final radius = BorderRadius.circular(AppTheme.radiusControl);
+    final accent = _hovered ? AppColors.accentStrong : AppColors.inkFaint;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: radius,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            color: _hovered ? AppColors.accentSoft : null,
+          ),
+          child: CustomPaint(
+            painter: _DashedBorderPainter(
+              color: _hovered ? AppColors.accent : AppColors.hairline,
+              radius: AppTheme.radiusControl,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add_rounded, size: 15, color: accent),
+                  const SizedBox(width: 7),
+                  Text(widget.label,
+                      style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: accent)),
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+/// Paints a rounded-rectangle border made of evenly spaced dashes.
+class _DashedBorderPainter extends CustomPainter {
+  _DashedBorderPainter({required this.color, required this.radius});
+
+  final Color color;
+  final double radius;
+  static const double dashWidth = 5;
+  static const double dashGap = 4;
+  static const double strokeWidth = 1.3;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    final inset = strokeWidth / 2;
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(inset, inset, size.width - strokeWidth,
+          size.height - strokeWidth),
+      Radius.circular(radius),
+    );
+
+    final path = Path()..addRRect(rrect);
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final end = math.min(distance + dashWidth, metric.length);
+        canvas.drawPath(metric.extractPath(distance, end), paint);
+        distance = end + dashGap;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter old) =>
+      old.color != color || old.radius != radius;
 }
