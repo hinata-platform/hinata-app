@@ -3,36 +3,79 @@ import 'package:flutter/material.dart';
 /// Hivora "Hive" design tokens — redesign 2026.
 /// Navy nav-rail · warm-paper workspace · honey-amber signature accent.
 ///
+/// Neutral surface/ink tokens are theme-aware: they resolve against the
+/// currently active [brightness] (driven from the app's [ThemeMode] in
+/// `app.dart`). Brand/accent/status hues stay constant across light & dark so
+/// the honey-amber signature reads identically in both modes.
+///
 /// Hex values are derived from an oklch model (constant L/C, varied hue) so
-/// status & accent tints stay perceptually harmonious. The web prototype keeps
-/// the live oklch(); these are the closest sRGB equivalents for Flutter.
+/// status & accent tints stay perceptually harmonious.
 abstract final class AppColors {
-  // ---- brand & ink ----
+  // ---- active brightness (drives the neutral getters below) ----
+  // Set once per frame from the resolved theme in `app.dart`'s MaterialApp
+  // builder. Defaults to light so the very first build (and any non-widget
+  // access) is well-defined.
+  static Brightness brightness = Brightness.light;
+  static bool get _dark => brightness == Brightness.dark;
+
+  // ---- brand (constant across themes) ----
   static const navy = Color(0xFF2D2B55); // primary action
   static const navyDeep = Color(0xFF1E1C3A);
-  static const ink = Color(0xFF23223F); // primary text
-  static const inkSoft = Color(0xFF6B6A85); // secondary text
-  static const inkFaint = Color(0xFF9A99B0); // tertiary / hints
 
-  // ---- workspace surfaces (warm paper, NOT the old pastel-lavender) ----
-  static const canvas = Color(0xFFF4F3EF); // app background
-  static const canvas2 = Color(0xFFEFEEE8); // recessed (board columns)
-  static const surface = Color(0xFFFFFFFF); // cards
-  static const surfaceMuted = Color(0xFFFAF9F6);
-  static const hairline = Color(0xFFE7E5DE); // card borders
-  static const hairline2 = Color(0xFFEFEDE6);
+  // ---- ink / text (theme-aware) ----
+  static const inkLight = Color(0xFF23223F);
+  static const inkDark = Color(0xFFECEBF3);
+  static Color get ink => _dark ? inkDark : inkLight; // primary text
 
-  // ---- nav rail (deep navy) ----
+  static const inkSoftLight = Color(0xFF6B6A85);
+  static const inkSoftDark = Color(0xFFA8A6C2);
+  static Color get inkSoft => _dark ? inkSoftDark : inkSoftLight; // secondary
+
+  static const inkFaintLight = Color(0xFF9A99B0);
+  static const inkFaintDark = Color(0xFF6F6D88);
+  static Color get inkFaint => _dark ? inkFaintDark : inkFaintLight; // hints
+
+  // ---- workspace surfaces (theme-aware) ----
+  static const canvasLight = Color(0xFFF4F3EF); // warm paper
+  static const canvasDark = Color(0xFF131119); // warm-tinted near-black
+  static Color get canvas => _dark ? canvasDark : canvasLight; // app background
+
+  static const canvas2Light = Color(0xFFEFEEE8);
+  static const canvas2Dark = Color(0xFF0E0D14);
+  static Color get canvas2 => _dark ? canvas2Dark : canvas2Light; // recessed
+
+  static const surfaceLight = Color(0xFFFFFFFF);
+  static const surfaceDark = Color(0xFF1C1B25);
+  static Color get surface => _dark ? surfaceDark : surfaceLight; // cards
+
+  static const surfaceMutedLight = Color(0xFFFAF9F6);
+  static const surfaceMutedDark = Color(0xFF232231);
+  static Color get surfaceMuted => _dark ? surfaceMutedDark : surfaceMutedLight;
+
+  static const hairlineLight = Color(0xFFE7E5DE);
+  static const hairlineDark = Color(0xFF2E2D3B);
+  static Color get hairline => _dark ? hairlineDark : hairlineLight; // borders
+
+  static const hairline2Light = Color(0xFFEFEDE6);
+  static const hairline2Dark = Color(0xFF27262F);
+  static Color get hairline2 => _dark ? hairline2Dark : hairline2Light;
+
+  // ---- nav rail (deep navy in both themes) ----
   static const rail = Color(0xFF211F3D);
   static const rail2 = Color(0xFF1A1830);
   static const railInk = Color(0xFFC9C7E0);
   static const railFaint = Color(0xFF807EA0);
 
-  // ---- signature honey-amber accent (hue 70) ----
+  // ---- signature honey-amber accent (hue 70, constant across themes) ----
   static const accent = Color(0xFFD9A032); // oklch(.74 .135 70)
   static const accentStrong = Color(0xFFB9831F); // oklch(.66 .145 70)
-  static const accentSoft = Color(0xFFF3E9D2); // oklch(.94 .045 70)
   static const accentLine = Color(0xFFE4CE96); // oklch(.86 .07 70)
+
+  // Soft accent fill (active pill / unread highlight). Theme-aware: an opaque
+  // cream tint in light, a translucent amber wash on dark surfaces.
+  static const accentSoftLight = Color(0xFFF3E9D2); // oklch(.94 .045 70)
+  static const accentSoftDark = Color(0x29D9A032); // ~16% amber over dark
+  static Color get accentSoft => _dark ? accentSoftDark : accentSoftLight;
 
   // ---- workflow status (varied hue, constant L/C ~ oklch .6 .13) ----
   static const stBacklog = Color(0xFF7E81AE); // hue 255, muted slate
@@ -54,17 +97,17 @@ abstract final class AppColors {
   static const warning = Color(0xFFD9A032);
 
   // ---- compatibility aliases (migrate screens progressively) ----
-  static const textPrimary = ink;
-  static const textSecondary = inkSoft;
+  static Color get textPrimary => ink;
+  static Color get textSecondary => inkSoft;
   static const textOnDark = Colors.white;
   static const navyDark = navyDeep;
   static const lavender = stReview; // closest purple equivalent
-  static const background = canvas;
-  static const backgroundEnd = canvas2;
+  static Color get background => canvas;
+  static Color get backgroundEnd => canvas2;
   // pastel palette → warm tints matching the new paper canvas
   static const pastelBlue = Color(0xFFE9EEF8);
   static const pastelLavender = Color(0xFFEFEBF8);
-  static const pastelPeach = Color(0xFFF3E9D2); // = accentSoft
+  static const pastelPeach = Color(0xFFF3E9D2); // = accentSoftLight
   static const pastelMint = Color(0xFFE4F2EC);
   static const pastels = [pastelBlue, pastelLavender, pastelPeach, pastelMint];
   static Color pastelFor(int index) => pastels[index % pastels.length];
@@ -104,5 +147,6 @@ abstract final class AppColors {
       };
 
   /// Soft tint of any base color for badge / chip backgrounds (~oklch .96 tint).
-  static Color soft(Color base) => Color.alphaBlend(base.withValues(alpha: 0.12), surface);
+  static Color soft(Color base) =>
+      Color.alphaBlend(base.withValues(alpha: 0.12), surface);
 }

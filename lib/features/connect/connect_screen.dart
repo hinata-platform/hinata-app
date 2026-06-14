@@ -59,7 +59,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                           Text(
                             context.t('connect.subtitle'),
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: AppColors.textSecondary),
+                            style: TextStyle(color: AppColors.textSecondary),
                           ),
                           const SizedBox(height: 24),
                           TextFormField(

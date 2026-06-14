@@ -308,7 +308,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(context.t(_error!),
-                  style: const TextStyle(color: AppColors.inkSoft)),
+                  style: TextStyle(color: AppColors.inkSoft)),
               const SizedBox(height: 12),
               OutlinedButton(
                   onPressed: _loadReports,
@@ -323,7 +323,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         padding: const EdgeInsets.symmetric(vertical: 60),
         child: Center(
             child: Text(context.t('projects.empty'),
-                style: const TextStyle(color: AppColors.inkSoft))),
+                style: TextStyle(color: AppColors.inkSoft))),
       );
     }
 
@@ -497,7 +497,7 @@ class _BurndownCard extends StatelessWidget {
               Expanded(child: _SectionTitle(context.t('reports.burndown'))),
               Text(
                 context.t('reports.remaining', variables: {'count': '$remaining'}),
-                style: const TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
               ),
             ],
           ),
@@ -514,7 +514,7 @@ class _BurndownCard extends StatelessWidget {
                   show: true,
                   drawVerticalLine: false,
                   horizontalInterval: (maxY / 4).clamp(1, double.infinity),
-                  getDrawingHorizontalLine: (_) => const FlLine(
+                  getDrawingHorizontalLine: (_) => FlLine(
                       color: AppColors.hairline2, strokeWidth: 1),
                 ),
                 titlesData: FlTitlesData(
@@ -540,7 +540,7 @@ class _BurndownCard extends StatelessWidget {
                             isStart
                                 ? context.t('reports.windowStart')
                                 : context.t('reports.windowEnd'),
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontFamily: AppTheme.fontMono,
                                 fontSize: 10,
                                 color: AppColors.inkFaint),
@@ -616,7 +616,7 @@ class _BarReportCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 18),
               child: Text(context.t('reports.empty'),
-                  style: const TextStyle(color: AppColors.inkFaint)),
+                  style: TextStyle(color: AppColors.inkFaint)),
             )
           else
             for (final d in data)
@@ -647,7 +647,7 @@ class _BarReportCard extends StatelessWidget {
                       child: Text(
                         durationValues ? fmtDuration(d.value) : '${d.value}',
                         textAlign: TextAlign.right,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontFamily: AppTheme.fontMono,
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
@@ -680,7 +680,7 @@ class _SummaryCard extends StatelessWidget {
             child: Column(
               children: [
                 Text('$total',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontFamily: AppTheme.fontBrand,
                         fontSize: 44,
                         fontWeight: FontWeight.w700,
@@ -692,7 +692,7 @@ class _SummaryCard extends StatelessWidget {
                   projectName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12.5, color: AppColors.inkSoft),
                 ),
               ],
@@ -714,7 +714,7 @@ class _SectionTitle extends StatelessWidget {
     return Text(title,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
+        style: TextStyle(
             fontSize: 14.5,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.1,
@@ -771,10 +771,10 @@ class _ExportButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.download_rounded, size: 16, color: AppColors.ink),
+            Icon(Icons.download_rounded, size: 16, color: AppColors.ink),
             const SizedBox(width: 8),
             Text(context.t('reports.export'),
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink)),
@@ -830,7 +830,7 @@ class _ProjectPicker extends StatelessWidget {
                       fontSize: 13, fontWeight: FontWeight.w600)),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.expand_more_rounded,
+            Icon(Icons.expand_more_rounded,
                 size: 16, color: AppColors.inkSoft),
           ],
         ),

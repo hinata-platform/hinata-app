@@ -40,6 +40,7 @@ class _DashboardView extends StatelessWidget {
       builder: (context, state) {
         return RefreshIndicator(
           color: AppColors.accent,
+          edgeOffset: context.topGutter,
           onRefresh: () => context.read<FetchCubit<DashboardData>>().load(),
           child: AsyncView(
             isLoading: state.isLoading,
@@ -51,8 +52,11 @@ class _DashboardView extends StatelessWidget {
               final wide = !context.isCompact;
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(context.pageGutter, 24,
-                    context.pageGutter, context.pageGutter + context.bottomGutter),
+                padding: EdgeInsets.fromLTRB(
+                    context.pageGutter,
+                    24 + context.topGutter,
+                    context.pageGutter,
+                    context.pageGutter + context.bottomGutter),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -226,7 +230,7 @@ class _Kpi extends StatelessWidget {
                 child: Text(label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: AppColors.inkSoft)),
@@ -235,7 +239,7 @@ class _Kpi extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(value,
-              style: const TextStyle(
+              style: TextStyle(
                   fontFamily: AppTheme.fontBrand,
                   fontSize: 30,
                   fontWeight: FontWeight.w700,
@@ -270,7 +274,7 @@ class _FocusCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(context.t('dashboard.noTasks'),
-                  style: const TextStyle(color: AppColors.inkSoft)),
+                  style: TextStyle(color: AppColors.inkSoft)),
             )
           else
             for (final issue in issues.take(5))
@@ -401,14 +405,14 @@ class _CompletionCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text('$value%',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontFamily: AppTheme.fontBrand,
                                   fontSize: 24,
                                   fontWeight: FontWeight.w700,
                                   height: 1,
                                   color: AppColors.ink)),
                           Text(context.t('dashboard.resolvedLabel'),
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 10.5, color: AppColors.inkSoft)),
                         ],
                       ),
@@ -436,12 +440,12 @@ class _CompletionCard extends StatelessWidget {
                             Expanded(
                               child: Text(label,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 12.5,
                                       color: AppColors.inkSoft)),
                             ),
                             Text('${(percent * 100).round()}%',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.ink)),
@@ -508,7 +512,7 @@ class _TrackerCard extends StatelessWidget {
                         return SideTitleWidget(
                           meta: meta,
                           child: Text(days[(tracker[i].date.weekday - 1) % 7],
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontFamily: AppTheme.fontMono,
                                   fontSize: 10.5,
                                   color: AppColors.inkFaint)),
@@ -564,7 +568,7 @@ class _LeaderboardCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text(context.t('dashboard.noRanking'),
-                  style: const TextStyle(color: AppColors.inkSoft)),
+                  style: TextStyle(color: AppColors.inkSoft)),
             ),
           for (final (i, entry) in shown.indexed)
             Container(
@@ -572,7 +576,7 @@ class _LeaderboardCard extends StatelessWidget {
               decoration: BoxDecoration(
                 border: i == shown.length - 1
                     ? null
-                    : const Border(
+                    : Border(
                         bottom: BorderSide(color: AppColors.hairline2)),
               ),
               child: Row(
@@ -580,7 +584,7 @@ class _LeaderboardCard extends StatelessWidget {
                   SizedBox(
                     width: 18,
                     child: Text('${i + 1}',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontFamily: AppTheme.fontMono,
                             fontSize: 12,
                             color: AppColors.inkFaint)),
@@ -600,7 +604,7 @@ class _LeaderboardCard extends StatelessWidget {
                           Text(entry.title!,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 11, color: AppColors.inkSoft)),
                       ],
                     ),
@@ -638,7 +642,7 @@ class _CardHead extends StatelessWidget {
       children: [
         Expanded(
           child: Text(title,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 14.5,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.1,
@@ -663,7 +667,7 @@ class _CardHead extends StatelessWidget {
                   ),
                 )
               : Text(actionLabel!,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12.5, color: AppColors.inkFaint)),
       ],
     );

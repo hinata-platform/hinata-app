@@ -100,13 +100,13 @@ class AsyncView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.cloud_off_rounded,
+              Icon(Icons.cloud_off_rounded,
                   size: 40, color: AppColors.inkFaint),
               const SizedBox(height: 12),
               Text(
                 context.t(errorKey!),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.inkSoft),
+                style: TextStyle(color: AppColors.inkSoft),
               ),
               if (onRetry != null) ...[
                 const SizedBox(height: 16),
@@ -125,7 +125,7 @@ class AsyncView extends StatelessWidget {
           child: Text(
             context.t(emptyKey),
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.inkSoft),
+            style: TextStyle(color: AppColors.inkSoft),
           ),
         ),
       );

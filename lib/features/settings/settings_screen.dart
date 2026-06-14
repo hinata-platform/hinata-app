@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/locale_cubit.dart';
+import '../../core/blocs/theme_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
@@ -20,6 +21,7 @@ class SettingsScreen extends StatelessWidget {
     final user = context.watch<AuthBloc>().state.user;
     final config = context.watch<AppConfigBloc>().state;
     final locale = context.watch<LocaleCubit>().state;
+    final themeMode = context.watch<ThemeCubit>().state;
     return ListView(
       padding: context.pagePadding,
       children: [
@@ -40,7 +42,7 @@ class SettingsScreen extends StatelessWidget {
                           style: const TextStyle(
                               fontWeight: FontWeight.w800, fontSize: 16)),
                       Text(user.email,
-                          style: const TextStyle(
+                          style: TextStyle(
                               color: AppColors.textSecondary, fontSize: 13)),
                     ],
                   ),
@@ -77,6 +79,12 @@ class SettingsScreen extends StatelessWidget {
                     }
                   },
                 ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.brightness_6_rounded,
+                    color: AppColors.navy),
+                title: Text(context.t('settings.theme')),
+                trailing: _ThemeModeSelector(mode: themeMode),
               ),
               if ((config.meta?.privacyPolicyUrl ?? '').isNotEmpty)
                 ListTile(
@@ -125,6 +133,57 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
+/// Compact System / Light / Dark segmented control bound to [ThemeCubit].
+class _ThemeModeSelector extends StatelessWidget {
+  const _ThemeModeSelector({required this.mode});
+
+  final ThemeMode mode;
+
+  @override
+  Widget build(BuildContext context) {
+    final options = <(ThemeMode, IconData, String)>[
+      (ThemeMode.system, Icons.brightness_auto_rounded, 'settings.themeSystem'),
+      (ThemeMode.light, Icons.light_mode_rounded, 'settings.themeLight'),
+      (ThemeMode.dark, Icons.dark_mode_rounded, 'settings.themeDark'),
+    ];
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.hairline),
+      ),
+      padding: const EdgeInsets.all(3),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final (m, icon, labelKey) in options)
+            Tooltip(
+              message: context.t(labelKey),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => context.read<ThemeCubit>().setMode(m),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: m == mode ? AppColors.accentSoft : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 18,
+                    color: m == mode ? AppColors.accentStrong : AppColors.inkSoft,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _VersionRow extends StatelessWidget {
   const _VersionRow({required this.label, required this.value});
 
@@ -139,7 +198,7 @@ class _VersionRow extends StatelessWidget {
         children: [
           Expanded(
             child: Text(label,
-                style: const TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: AppColors.textSecondary)),
           ),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
         ],

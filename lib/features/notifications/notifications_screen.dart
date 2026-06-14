@@ -63,7 +63,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           context.t('notifications.empty'),
                           textAlign: TextAlign.center,
                           style:
-                              const TextStyle(color: AppColors.textSecondary),
+                              TextStyle(color: AppColors.textSecondary),
                         ),
                       ),
                     for (final notification in notifications)
@@ -103,7 +103,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                         notification.body!,
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                             color: AppColors.textSecondary,
                                             fontSize: 13),
                                       ),

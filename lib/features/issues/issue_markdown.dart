@@ -55,7 +55,7 @@ class _MarkdownTextState extends State<MarkdownText> {
   Widget build(BuildContext context) {
     _disposeRecognizers();
     final base = widget.baseStyle ??
-        const TextStyle(fontSize: 14, height: 1.55, color: AppColors.ink);
+        TextStyle(fontSize: 14, height: 1.55, color: AppColors.ink);
     final blocks = <Widget>[];
     final lines = widget.data.replaceAll('\r\n', '\n').split('\n');
 
@@ -88,7 +88,7 @@ class _MarkdownTextState extends State<MarkdownText> {
 
       // Horizontal rule.
       if (RegExp(r'^(-{3,}|\*{3,}|_{3,})$').hasMatch(trimmed)) {
-        blocks.add(const Padding(
+        blocks.add(Padding(
           padding: EdgeInsets.symmetric(vertical: 10),
           child: Divider(height: 1, color: AppColors.hairline),
         ));
@@ -257,7 +257,7 @@ class _MarkdownTextState extends State<MarkdownText> {
             if (lang != null && lang.isNotEmpty)
               Container(
                 padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   border: Border(bottom: BorderSide(color: AppColors.hairline)),
                 ),
                 child: Text(
@@ -318,7 +318,7 @@ class MarkdownEditorField extends StatelessWidget {
         children: [
           // Toolbar
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border:
                   Border(bottom: BorderSide(color: AppColors.hairline2)),
             ),

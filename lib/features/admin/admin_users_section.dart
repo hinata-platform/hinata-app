@@ -72,7 +72,7 @@ class _AdminUsersSectionState extends State<AdminUsersSection> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(context.t(_error!),
-                style: const TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: AppColors.textSecondary)),
           )
         else
           for (final user in _users)

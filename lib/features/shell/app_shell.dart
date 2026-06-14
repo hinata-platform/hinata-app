@@ -104,7 +104,16 @@ class _WideShell extends StatelessWidget {
             child: Column(
               children: [
                 _HivoraTopBar(location: location, compact: false),
-                Expanded(child: child),
+                // The top bar already consumes the status-bar inset, so zero the
+                // top padding for the content — keeps context.topGutter at 0 on
+                // wide layouts (no overlay app bar there).
+                Expanded(
+                  child: MediaQuery.removePadding(
+                    context: context,
+                    removeTop: true,
+                    child: child,
+                  ),
+                ),
               ],
             ),
           ),
@@ -499,12 +508,12 @@ class _HivoraTopBar extends StatelessWidget {
       (d) => _isActive(location, d.route),
       orElse: () => const _Destination('/', 'nav.dashboard', Icons.home_rounded),
     );
-    final segStyle = const TextStyle(fontSize: 13, color: AppColors.inkSoft);
-    final curStyle = const TextStyle(
+    final segStyle = TextStyle(fontSize: 13, color: AppColors.inkSoft);
+    final curStyle = TextStyle(
         fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink);
 
     return DecoratedBox(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.canvas,
         border: Border(bottom: BorderSide(color: AppColors.hairline)),
       ),
@@ -528,7 +537,7 @@ class _HivoraTopBar extends StatelessWidget {
                   children: [
                     if (!compact) ...[
                       Text(context.t('appbar.workspace'), style: segStyle),
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.symmetric(horizontal: 8),
                         child: Icon(Icons.chevron_right_rounded,
                             size: 16, color: AppColors.inkFaint),
@@ -584,7 +593,7 @@ class _TopSearchField extends StatelessWidget {
         color: AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-          side: const BorderSide(color: AppColors.hairline),
+          side: BorderSide(color: AppColors.hairline),
         ),
         child: InkWell(
           onTap: () {},
@@ -593,14 +602,14 @@ class _TopSearchField extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
             child: Row(
               children: [
-                const Icon(Icons.search_rounded,
+                Icon(Icons.search_rounded,
                     size: 16, color: AppColors.inkFaint),
                 const SizedBox(width: 9),
                 Expanded(
                   child: Text(
                     context.t('appbar.search'),
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13, color: AppColors.inkFaint),
                   ),
                 ),
@@ -613,7 +622,7 @@ class _TopSearchField extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(color: AppColors.hairline),
                   ),
-                  child: const Text(
+                  child: Text(
                     '⌘K',
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
@@ -889,7 +898,7 @@ class _NotifPopoverCard extends StatelessWidget {
                   children: [
                     Text(
                       context.t('notifications.title'),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 13.5,
                           color: AppColors.ink),
@@ -914,7 +923,7 @@ class _NotifPopoverCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Divider(height: 1, color: AppColors.hairline2),
+              Divider(height: 1, color: AppColors.hairline2),
               // List (max 10 latest)
               if (latest.isEmpty)
                 Padding(
@@ -923,7 +932,7 @@ class _NotifPopoverCard extends StatelessWidget {
                   child: Text(
                     context.t('notifications.empty'),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: AppColors.inkSoft, fontSize: 13),
                   ),
                 )
@@ -936,7 +945,7 @@ class _NotifPopoverCard extends StatelessWidget {
                       padding: EdgeInsets.zero,
                       itemCount: latest.length,
                       separatorBuilder: (_, _) =>
-                          const Divider(height: 1, color: AppColors.hairline2),
+                          Divider(height: 1, color: AppColors.hairline2),
                       itemBuilder: (_, i) => _NotifRow(
                         notification: latest[i],
                         onTap: () => onTapNotification(latest[i]),
@@ -944,7 +953,7 @@ class _NotifPopoverCard extends StatelessWidget {
                     ),
                   ),
                 ),
-              const Divider(height: 1, color: AppColors.hairline2),
+              Divider(height: 1, color: AppColors.hairline2),
               // Fixed footer → full notifications page
               InkWell(
                 onTap: onViewAll,
@@ -955,13 +964,13 @@ class _NotifPopoverCard extends StatelessWidget {
                     children: [
                       Text(
                         context.t('notifications.viewAll'),
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                             color: AppColors.inkSoft),
                       ),
                       const SizedBox(width: 6),
-                      const Icon(Icons.arrow_forward_rounded,
+                      Icon(Icons.arrow_forward_rounded,
                           size: 15, color: AppColors.inkSoft),
                     ],
                   ),
@@ -1032,7 +1041,7 @@ class _NotifRow extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             ago,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 11, color: AppColors.inkFaint),
                           ),
                         ],
@@ -1044,7 +1053,7 @@ class _NotifRow extends StatelessWidget {
                         notification.body!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 12,
                             color: AppColors.inkSoft,
                             height: 1.4),
@@ -1129,6 +1138,9 @@ class _PopInState extends State<_PopIn> with SingleTickerProviderStateMixin {
 
 // ─────────────────────────── Compact Shell (Liquid-Glass) ─────────────────
 
+/// Content height of the compact glass app bar (excludes the status-bar inset).
+const double _kCompactBarHeight = 52;
+
 class _CompactShell extends StatefulWidget {
   const _CompactShell({required this.location, required this.child});
 
@@ -1180,52 +1192,295 @@ class _CompactShellState extends State<_CompactShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      body: Column(
+      // Content fills the whole screen and scrolls *behind* the translucent
+      // glass app bar and the floating glass nav. We inject both bars'
+      // footprints into MediaQuery.padding so screens clear them via
+      // context.topGutter / context.bottomGutter while still blurring through.
+      body: Stack(
         children: [
-          // Fixed top bar (brand + search + notifications + settings) — its
-          // action icons stay visible on every screen size.
-          _HivoraTopBar(location: widget.location, compact: true),
-          // Content fills the rest and scrolls *behind* the floating glass nav —
-          // the translucent BackdropFilter blurs whatever passes underneath.
-          Expanded(
+          Positioned.fill(
+            child: Builder(builder: (context) {
+              final mq = MediaQuery.of(context);
+              // Glass app bar: status-bar inset + bar content height.
+              final topFootprint = _kCompactBarHeight + mq.viewPadding.top;
+              // Floating nav: container(64) + padding-bottom(14) + safe-area.
+              final navFootprint = 78 + mq.viewPadding.bottom;
+              return MediaQuery(
+                data: mq.copyWith(
+                  padding: mq.padding.copyWith(
+                    top: topFootprint,
+                    bottom: navFootprint,
+                  ),
+                  viewPadding: mq.viewPadding.copyWith(
+                    top: topFootprint,
+                    bottom: navFootprint,
+                  ),
+                ),
+                // Keep left/right safe-area handling; top/bottom flow through as
+                // gutters so content can scroll behind the bars.
+                child: SafeArea(
+                  top: false,
+                  bottom: false,
+                  child: widget.child,
+                ),
+              );
+            }),
+          ),
+          // Black gradient scrim rising from the bottom up to the nav so content
+          // dissolves beneath the floating glass pill.
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: IgnorePointer(child: _BottomNavScrim()),
+          ),
+          // Floating liquid-glass nav — NOT in bottomNavigationBar, so its
+          // rounded corners and BackdropFilter are never clipped.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _LiquidGlassNav(index: _selectedIndex, onTap: _onTap),
+          ),
+          // Transparent glass app bar with a top-down scrim — overlays content.
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: _GlassTopBar(location: widget.location),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Transparent liquid-glass app bar for the compact (mobile) shell. Blurs the
+/// content scrolling beneath it and lays a subtle top-down black scrim so the
+/// status bar and title stay legible. Centered page title, brand mark on the
+/// left, the always-visible action icons (search · notifications · settings)
+/// grouped in a glass capsule on the right.
+class _GlassTopBar extends StatelessWidget {
+  const _GlassTopBar({required this.location});
+
+  final String location;
+
+  @override
+  Widget build(BuildContext context) {
+    final topInset = MediaQuery.viewPaddingOf(context).top;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final all = [..._primary, ..._secondary];
+    final current = all.firstWhere(
+      (d) => _isActive(location, d.route),
+      orElse: () =>
+          const _Destination('/', 'nav.dashboard', Icons.home_rounded),
+    );
+    // Black scrim, strongest under the status bar, fading to nothing at the
+    // bar's lower edge. Subtle in light (keeps dark status-bar icons legible),
+    // stronger in dark.
+    final scrimTop = dark ? 0.55 : 0.18;
+    final height = topInset + _kCompactBarHeight;
+
+    return SizedBox(
+      height: height,
+      child: Stack(
+        children: [
+          // Progressive blur: heavy at the top, fading to perfectly sharp at the
+          // lower edge — so the bar dissolves into the content instead of ending
+          // on a hard cut-off line.
+          Positioned.fill(
+            child: _ProgressiveBlur(maxSigma: dark ? 26 : 22),
+          ),
+          // Matching darkening scrim (also fades to transparent at the bottom).
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: scrimTop),
+                    Colors.black.withValues(alpha: scrimTop * 0.4),
+                    Colors.black.withValues(alpha: 0),
+                  ],
+                  stops: const [0.0, 0.6, 1.0],
+                ),
+              ),
+            ),
+          ),
+          // Bar content sits below the status bar inset.
+          Positioned(
+            top: topInset,
+            left: 0,
+            right: 0,
+            height: _kCompactBarHeight,
             child: Stack(
               children: [
-                // We inject the nav's footprint into MediaQuery.padding.bottom so
-                // screens can pad their scroll content clear of it (via
-                // context.bottomGutter) while the content still blurs through.
-                Positioned.fill(
-                  child: Builder(builder: (context) {
-                    final mq = MediaQuery.of(context);
-                    // Mirrors _LiquidGlassNav: container(64) + padding-bottom(14)
-                    // + device safe-area = total pixel footprint.
-                    final navFootprint = 78 + mq.viewPadding.bottom;
-                    return MediaQuery(
-                      data: mq.copyWith(
-                        padding: mq.padding.copyWith(bottom: navFootprint),
-                        viewPadding:
-                            mq.viewPadding.copyWith(bottom: navFootprint),
+                // Centered page title. The horizontal reserve clears the brand
+                // mark (left) and the 3-icon action capsule (right) so a long
+                // title ellipsizes instead of ever overlapping them.
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 136),
+                    child: Text(
+                      context.t(current.labelKey),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontBrand,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                        color: AppColors.ink,
                       ),
-                      // Top inset already consumed by the top bar above.
-                      child: SafeArea(
-                          top: false, bottom: false, child: widget.child),
-                    );
-                  }),
+                    ),
+                  ),
                 ),
-                // Glass nav floats on top — NOT in bottomNavigationBar,
-                // so its rounded corners and BackdropFilter are never clipped.
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: _LiquidGlassNav(
-                    index: _selectedIndex,
-                    onTap: _onTap,
+                // Brand mark, left.
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 16),
+                    child: HexMark(size: 24, color: AppColors.accent),
+                  ),
+                ),
+                // Action capsule, right.
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 10),
+                    child: _GlassActionCapsule(location: location),
                   ),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A vertical *gradient* backdrop blur: the blur is strongest at the top and
+/// eases to zero at the bottom, so the frosted region melts into the sharp
+/// content beneath it (no hard cut-off edge).
+///
+/// Implemented as a stack of thin horizontal slices each running its own
+/// [BackdropFilter] with a decreasing sigma. A single masked BackdropFilter
+/// can't do this — a BackdropFilter has no backdrop to sample once it's wrapped
+/// in a ShaderMask's layer — so slicing is the reliable primitive-only route.
+class _ProgressiveBlur extends StatelessWidget {
+  const _ProgressiveBlur({required this.maxSigma});
+
+  final double maxSigma;
+
+  /// Number of blur bands. More = smoother gradient, but each is a separate
+  /// (costly) BackdropFilter; 8 reads as continuous on a ~100px bar.
+  static const int _slices = 8;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRect(
+      child: Column(
+        children: [
+          for (var i = 0; i < _slices; i++)
+            Expanded(
+              child: _BlurSlice(
+                // i=0 → full sigma at the top; last slice → ~0 (sharp).
+                sigma: maxSigma * (1 - i / (_slices - 1)),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BlurSlice extends StatelessWidget {
+  const _BlurSlice({required this.sigma});
+
+  final double sigma;
+
+  @override
+  Widget build(BuildContext context) {
+    // Below ~0.3 a blur is imperceptible; skip the filter so the bottom slices
+    // stay genuinely sharp and cheap.
+    if (sigma < 0.3) return const SizedBox.expand();
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+        child: const SizedBox.expand(),
+      ),
+    );
+  }
+}
+
+/// Translucent rounded capsule grouping the persistent top-bar actions
+/// (search · notifications · settings) — mirrors the iOS liquid-glass action
+/// pill. Theme-aware frosted fill.
+class _GlassActionCapsule extends StatelessWidget {
+  const _GlassActionCapsule({required this.location});
+
+  final String location;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Container(
+          decoration: BoxDecoration(
+            color: dark ? const Color(0x26FFFFFF) : const Color(0x4DFFFFFF),
+            borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+            border: Border.all(
+              color: dark ? const Color(0x33FFFFFF) : const Color(0x59FFFFFF),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _TopSearchField(compact: true),
+              _NotificationBell(active: location.startsWith('/notifications')),
+              _TopIconButton(
+                icon: Icons.settings_rounded,
+                tooltip: context.t('nav.settings'),
+                active: location.startsWith('/settings'),
+                onTap: () => context.go('/settings'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Black gradient that fades up from the bottom edge to behind the floating
+/// nav, so scrolling content dissolves beneath it (the liquid-glass scrim).
+class _BottomNavScrim extends StatelessWidget {
+  const _BottomNavScrim();
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final pad = MediaQuery.viewPaddingOf(context).bottom;
+    return SizedBox(
+      height: 96 + pad,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.black.withValues(alpha: 0),
+              Colors.black.withValues(alpha: dark ? 0.42 : 0.12),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1241,82 +1496,120 @@ class _LiquidGlassNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final pad = MediaQuery.viewPaddingOf(context).bottom;
     final reducedMotion = MediaQuery.disableAnimationsOf(context);
+    final dark = Theme.of(context).brightness == Brightness.dark;
+
+    // Frosted glass: a bright specular top easing into a thinner film at the
+    // bottom — the liquid-glass body, over the blurred content (light or dark).
+    final fill = dark
+        ? const [Color(0x40FFFFFF), Color(0x1AFFFFFF), Color(0x0FFFFFFF)]
+        : const [Color(0xA6FFFFFF), Color(0x66FFFFFF), Color(0x4DFFFFFF)];
+    final borderColor = dark ? const Color(0x40FFFFFF) : const Color(0x8AFFFFFF);
+    final shadowColor = dark ? const Color(0x73000000) : const Color(0x332D2B55);
+
     return Padding(
       padding: EdgeInsets.fromLTRB(14, 0, 14, 14 + pad),
       // Shadow lives OUTSIDE ClipRRect so it is never clipped away.
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(26),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Color(0x332D2B55),
-              blurRadius: 28,
+              color: shadowColor,
+              blurRadius: 30,
               spreadRadius: -4,
-              offset: Offset(0, 10),
+              offset: const Offset(0, 12),
             ),
           ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(26),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+            filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
             child: Container(
               height: 64,
               padding: const EdgeInsets.all(8),
-              // Semi-transparent so the blurred content shows through.
-              // 0x55 ≈ 33 % white — adjust lower for more glass, higher for more solid.
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0x80FFFFFF), Color(0x55FFFFFF)],
+                  colors: fill,
+                  stops: const [0.0, 0.55, 1.0],
                 ),
-                border: Border.all(
-                  color: const Color(0x70FFFFFF),
-                  width: 1,
-                ),
+                border: Border.all(color: borderColor, width: 1),
               ),
-            child: LayoutBuilder(builder: (context, c) {
-              final tabW = c.maxWidth / _bottomTabs.length;
-              return Stack(
-                children: [
-                  AnimatedPositioned(
-                    duration: reducedMotion
-                        ? Duration.zero
-                        : const Duration(milliseconds: 500),
-                    curve: const Cubic(0.5, 1.5, 0.4, 1),
-                    left: index * tabW,
-                    width: tabW,
-                    top: 0,
-                    bottom: 0,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 5),
-                      decoration: BoxDecoration(
-                        color: AppColors.accentSoft,
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      for (var i = 0; i < _bottomTabs.length; i++)
-                        Expanded(
-                          child: _GlassTab(
-                            data: _bottomTabs[i],
-                            active: i == index,
-                            onTap: () => onTap(i),
+              child: LayoutBuilder(builder: (context, c) {
+                final tabW = c.maxWidth / _bottomTabs.length;
+                return Stack(
+                  children: [
+                    // Specular rim: a thin bright highlight hugging the top edge.
+                    Positioned(
+                      top: 0,
+                      left: 14,
+                      right: 14,
+                      height: 1,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.white.withValues(alpha: 0),
+                              Colors.white.withValues(alpha: dark ? 0.45 : 0.85),
+                              Colors.white.withValues(alpha: 0),
+                            ],
                           ),
                         ),
-                    ],
-                  ),
-                ],
-              );
-            }),
+                      ),
+                    ),
+                    AnimatedPositioned(
+                      duration: reducedMotion
+                          ? Duration.zero
+                          : const Duration(milliseconds: 500),
+                      curve: const Cubic(0.5, 1.5, 0.4, 1),
+                      left: index * tabW,
+                      width: tabW,
+                      top: 0,
+                      bottom: 0,
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 5),
+                        decoration: BoxDecoration(
+                          // Honey-amber active indicator (kept per request).
+                          color: AppColors.accentSoft,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: AppColors.accent
+                                .withValues(alpha: dark ? 0.50 : 0.32),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.accent
+                                  .withValues(alpha: dark ? 0.28 : 0.18),
+                              blurRadius: 12,
+                              spreadRadius: -2,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        for (var i = 0; i < _bottomTabs.length; i++)
+                          Expanded(
+                            child: _GlassTab(
+                              data: _bottomTabs[i],
+                              active: i == index,
+                              onTap: () => onTap(i),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                );
+              }),
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 }
 
@@ -1330,7 +1623,11 @@ class _GlassTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? AppColors.accentStrong : AppColors.inkSoft;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    // Honey-amber active accent (brighter on dark for contrast); muted ink idle.
+    final color = active
+        ? (dark ? AppColors.accent : AppColors.accentStrong)
+        : AppColors.inkSoft;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -1345,6 +1642,8 @@ class _GlassTab extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             context.t(data.labelKey),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
@@ -1394,7 +1693,7 @@ class _MoreSheet extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: AppColors.surface.withValues(alpha: 0.96),
-            border: const Border(top: BorderSide(color: AppColors.hairline)),
+            border: Border(top: BorderSide(color: AppColors.hairline)),
           ),
           child: SafeArea(
             child: Column(
@@ -1431,7 +1730,7 @@ class _MoreSheet extends StatelessWidget {
                           children: [
                             Text(
                               user?.displayName ?? '',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
                                 color: AppColors.ink,
@@ -1440,7 +1739,7 @@ class _MoreSheet extends StatelessWidget {
                             if (subtitle.isNotEmpty)
                               Text(
                                 subtitle,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   color: AppColors.inkSoft,
                                 ),
@@ -1450,13 +1749,13 @@ class _MoreSheet extends StatelessWidget {
                       ),
                       IconButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close_rounded,
+                        icon: Icon(Icons.close_rounded,
                             size: 20, color: AppColors.inkSoft),
                       ),
                     ],
                   ),
                 ),
-                const Divider(height: 1, color: AppColors.hairline),
+                Divider(height: 1, color: AppColors.hairline),
                 const SizedBox(height: 12),
                 // Compact 3-column grid — fixed row height so tiles never bloat
                 GridView.builder(

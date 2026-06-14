@@ -79,15 +79,15 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
                 SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                      context.pageGutter, 16, context.pageGutter, 8),
+                  padding: EdgeInsets.fromLTRB(context.pageGutter,
+                      16 + context.topGutter, context.pageGutter, 8),
                   sliver: SliverToBoxAdapter(
                     child: Row(
                       children: [
                         InkWell(
                           onTap: () => context.pop(),
                           borderRadius: BorderRadius.circular(8),
-                          child: const Padding(
+                          child: Padding(
                             padding: EdgeInsets.all(4),
                             child: Icon(Icons.arrow_back_rounded,
                                 size: 20, color: AppColors.inkSoft),
@@ -101,7 +101,7 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
                             children: [
                               Text(
                                 widget.projectName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 12,
                                     color: AppColors.inkSoft,
                                     fontWeight: FontWeight.w500),
@@ -146,7 +146,7 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(context.t(state.errorKey!),
-                              style: const TextStyle(
+                              style: TextStyle(
                                   color: AppColors.textSecondary)),
                           const SizedBox(height: 12),
                           OutlinedButton(
@@ -162,11 +162,11 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.view_kanban_rounded,
+                          Icon(Icons.view_kanban_rounded,
                               size: 56, color: AppColors.textSecondary),
                           const SizedBox(height: 12),
                           Text(context.t('board.emptyProject'),
-                              style: const TextStyle(
+                              style: TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 15)),
                           const SizedBox(height: 20),
@@ -270,7 +270,7 @@ class _BoardCard extends StatelessWidget {
                 foreground: AppColors.textSecondary,
               ),
               const Spacer(),
-              const Icon(Icons.arrow_forward_rounded,
+              Icon(Icons.arrow_forward_rounded,
                   size: 14, color: AppColors.inkSoft),
             ],
           ),
@@ -327,7 +327,7 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
             Text(
               context.t('board.forProject',
                   variables: {'project': widget.projectName}),
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 13, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 20),

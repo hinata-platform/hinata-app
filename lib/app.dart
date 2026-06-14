@@ -10,9 +10,11 @@ import 'core/api/hivora_repository.dart';
 import 'core/blocs/app_config_bloc.dart';
 import 'core/blocs/auth_bloc.dart';
 import 'core/blocs/locale_cubit.dart';
+import 'core/blocs/theme_cubit.dart';
 import 'core/i18n/i18n.dart';
 import 'core/router/app_router.dart';
 import 'core/storage/app_storage.dart';
+import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 
 class HivoraApp extends StatefulWidget {
@@ -90,17 +92,32 @@ class _HivoraAppState extends State<HivoraApp> {
           BlocProvider.value(value: _appConfig),
           BlocProvider.value(value: _auth),
           BlocProvider(create: (_) => LocaleCubit()),
+          BlocProvider(create: (_) => ThemeCubit()),
         ],
-        child: BlocBuilder<LocaleCubit, Locale>(
-          builder: (context, locale) {
-            return MaterialApp.router(
-              title: 'Hivora',
-              debugShowCheckedModeBanner: false,
-              theme: AppTheme.light(),
-              locale: locale,
-              supportedLocales: I18n.supportedLocales,
-              localizationsDelegates: I18n.delegates(),
-              routerConfig: _router,
+        child: BlocBuilder<ThemeCubit, ThemeMode>(
+          builder: (context, themeMode) {
+            return BlocBuilder<LocaleCubit, Locale>(
+              builder: (context, locale) {
+                return MaterialApp.router(
+                  title: 'Hivora',
+                  debugShowCheckedModeBanner: false,
+                  theme: AppTheme.light(),
+                  darkTheme: AppTheme.dark(),
+                  themeMode: themeMode,
+                  locale: locale,
+                  supportedLocales: I18n.supportedLocales,
+                  localizationsDelegates: I18n.delegates(),
+                  routerConfig: _router,
+                  // Sync the runtime brightness that drives AppColors' neutral
+                  // getters with whatever theme MaterialApp actually resolved
+                  // (handles ThemeMode.system following the OS). Runs above the
+                  // router subtree each build, so screens read fresh values.
+                  builder: (context, child) {
+                    AppColors.brightness = Theme.of(context).brightness;
+                    return child ?? const SizedBox.shrink();
+                  },
+                );
+              },
             );
           },
         ),

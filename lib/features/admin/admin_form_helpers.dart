@@ -52,7 +52,7 @@ class AdminSectionCard extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
                             color: AppColors.ink),
@@ -60,7 +60,7 @@ class AdminSectionCard extends StatelessWidget {
                       if (subtitle != null)
                         Text(
                           subtitle!,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12, color: AppColors.inkSoft),
                         ),
                     ],
@@ -69,7 +69,7 @@ class AdminSectionCard extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1, color: AppColors.hairline),
+          Divider(height: 1, color: AppColors.hairline),
           // Fields
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
@@ -198,7 +198,7 @@ class AdminToggle extends StatelessWidget {
                 fontWeight: FontWeight.w600, fontSize: 14)),
         subtitle: subtitle != null
             ? Text(subtitle!,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 12, color: AppColors.inkSoft))
             : null,
         value: value,
@@ -282,7 +282,7 @@ class _ProviderTileState extends State<ProviderTile> {
                         )),
                     if (widget.subtitle != null)
                       Text(widget.subtitle!,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 11,
                               color: AppColors.inkFaint)),
                   ],

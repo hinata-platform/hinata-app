@@ -119,7 +119,7 @@ class _AdminSecuritySectionState extends State<AdminSecuritySection> {
               Expanded(
                 child: Text(
                   context.t('admin.owaspNote'),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12,
                       color: AppColors.inkSoft,
                       height: 1.5),

@@ -127,7 +127,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         Container(
           padding: EdgeInsets.symmetric(
               horizontal: context.pageGutter, vertical: 12),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.surface,
             border:
                 Border(bottom: BorderSide(color: AppColors.hairline)),
@@ -137,7 +137,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               InkWell(
                 onTap: () => context.pop(),
                 borderRadius: BorderRadius.circular(8),
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.all(4),
                   child: Icon(Icons.arrow_back_rounded,
                       size: 20, color: AppColors.inkSoft),
@@ -149,10 +149,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(context.t('admin.title'),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11, color: AppColors.inkSoft)),
                   Text(context.t('admin.users'),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
                           color: AppColors.ink)),
@@ -191,7 +191,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   onChanged: (v) => setState(() => _query = v),
                   decoration: InputDecoration(
                     hintText: context.t('admin.searchUsers'),
-                    prefixIcon: const Icon(Icons.search_rounded,
+                    prefixIcon: Icon(Icons.search_rounded,
                         size: 18, color: AppColors.inkSoft),
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 10),
@@ -231,7 +231,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 child: Text(
                   context.t('admin.userCount',
                       variables: {'count': '${_filtered.length}'}),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12, color: AppColors.inkSoft),
                 ),
               ),
@@ -251,7 +251,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(context.t(_error!),
-                              style: const TextStyle(
+                              style: TextStyle(
                                   color: AppColors.textSecondary)),
                           const SizedBox(height: 12),
                           OutlinedButton(
@@ -266,11 +266,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.people_outline_rounded,
+                              Icon(Icons.people_outline_rounded,
                                   size: 48, color: AppColors.inkFaint),
                               const SizedBox(height: 12),
                               Text(context.t('admin.noUsers'),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       color: AppColors.inkSoft)),
                             ],
                           ),
@@ -332,7 +332,7 @@ class _UserTable extends StatelessWidget {
           children: [
             // Header
             TableRow(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.surfaceMuted,
                 border: Border(
                     bottom: BorderSide(color: AppColors.hairline)),
@@ -349,7 +349,7 @@ class _UserTable extends StatelessWidget {
             for (final user in users)
               TableRow(
                 decoration: BoxDecoration(
-                  border: const Border(
+                  border: Border(
                       bottom: BorderSide(color: AppColors.hairline)),
                   color: user['active'] != true
                       ? const Color(0xFFFAF9F6)
@@ -380,7 +380,7 @@ class _UserTable extends StatelessWidget {
                               ),
                               Text(
                                 '@${(user['username'] as String?) ?? ''}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 11,
                                     color: AppColors.inkSoft),
                                 overflow: TextOverflow.ellipsis,
@@ -442,7 +442,7 @@ class _TH extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
       child: Text(
         text.toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'IBMPlexMono',
           fontSize: 10,
           fontWeight: FontWeight.w600,
@@ -465,7 +465,11 @@ class _UserCardList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: EdgeInsets.all(context.pageGutter),
+      padding: EdgeInsets.fromLTRB(
+          context.pageGutter,
+          context.pageGutter + context.topGutter,
+          context.pageGutter,
+          context.pageGutter + context.bottomGutter),
       itemCount: users.length,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, i) {
@@ -518,7 +522,7 @@ class _UserCardList extends StatelessWidget {
                     ),
                     Text(
                       (user['email'] as String?) ?? '',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 12,
                           color: AppColors.inkSoft),
                       overflow: TextOverflow.ellipsis,
@@ -623,7 +627,7 @@ class _UserActions extends StatelessWidget {
     final isAdmin =
         ((user['roles'] as List<dynamic>?) ?? []).contains('ADMIN');
     return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert_rounded,
+      icon: Icon(Icons.more_vert_rounded,
           size: 18, color: AppColors.inkSoft),
       shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

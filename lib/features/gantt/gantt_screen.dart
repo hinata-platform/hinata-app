@@ -97,7 +97,7 @@ class _GanttScreenState extends State<GanttScreen> {
     if (_error != null) {
       return Center(
           child: Text(context.t(_error!),
-              style: const TextStyle(color: AppColors.textSecondary)));
+              style: TextStyle(color: AppColors.textSecondary)));
     }
     if (_tasks.isEmpty) {
       return Center(
@@ -106,7 +106,7 @@ class _GanttScreenState extends State<GanttScreen> {
           child: Text(
             context.t('gantt.empty'),
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
         ),
       );
@@ -216,7 +216,7 @@ class _ProjectPicker extends StatelessWidget {
                       fontSize: 13, fontWeight: FontWeight.w600)),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.expand_more_rounded,
+            Icon(Icons.expand_more_rounded,
                 size: 16, color: AppColors.inkSoft),
           ],
         ),

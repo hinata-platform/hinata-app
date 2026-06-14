@@ -109,7 +109,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               context.t(page.bodyKey),
                               textAlign: TextAlign.center,
                               style:
-                                  const TextStyle(color: AppColors.textSecondary, height: 1.5),
+                                  TextStyle(color: AppColors.textSecondary, height: 1.5),
                             ),
                           ],
                         ),

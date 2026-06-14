@@ -61,7 +61,7 @@ class _SetupScreenState extends State<SetupScreen> {
                       const SizedBox(height: 8),
                       Text(
                         context.t('setup.subtitle'),
-                        style: const TextStyle(color: AppColors.textSecondary),
+                        style: TextStyle(color: AppColors.textSecondary),
                       ),
                       const SizedBox(height: 24),
                       _field(_organization, 'setup.organization', Icons.apartment_rounded),

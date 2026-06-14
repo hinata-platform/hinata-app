@@ -103,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Text(
                             context.t('auth.subtitle'),
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: AppColors.textSecondary),
+                            style: TextStyle(color: AppColors.textSecondary),
                           ),
                           const SizedBox(height: 28),
                           TextFormField(
@@ -155,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       const EdgeInsets.symmetric(horizontal: 12),
                                   child: Text(
                                     context.t('auth.or'),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         color: AppColors.textSecondary),
                                   ),
                                 ),

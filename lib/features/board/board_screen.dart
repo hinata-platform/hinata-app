@@ -101,7 +101,7 @@ class _BoardScreenState extends State<BoardScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(context.t(_error!),
-                style: const TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: AppColors.textSecondary)),
             const SizedBox(height: 12),
             OutlinedButton(
                 onPressed: _load, child: Text(context.t('common.retry'))),
@@ -114,8 +114,8 @@ class _BoardScreenState extends State<BoardScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         SliverPadding(
-          padding: EdgeInsets.fromLTRB(
-              context.pageGutter, 16, context.pageGutter, 8),
+          padding: EdgeInsets.fromLTRB(context.pageGutter,
+              16 + context.topGutter, context.pageGutter, 8),
           sliver: SliverToBoxAdapter(
             child: Row(
               children: [
@@ -162,11 +162,11 @@ class _BoardScreenState extends State<BoardScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.view_kanban_rounded,
+                  Icon(Icons.view_kanban_rounded,
                       size: 56, color: AppColors.textSecondary),
                   const SizedBox(height: 12),
                   Text(context.t('board.empty'),
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: AppColors.textSecondary, fontSize: 15)),
                   const SizedBox(height: 20),
                   FilledButton.icon(
@@ -293,7 +293,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(context.t(_error!),
-                style: const TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: AppColors.textSecondary)),
             const SizedBox(height: 12),
             OutlinedButton(
                 onPressed: _load, child: Text(context.t('common.retry'))),
@@ -309,8 +309,8 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(
-              context.pageGutter, 22, context.pageGutter, 8),
+          padding: EdgeInsets.fromLTRB(context.pageGutter,
+              22 + context.topGutter, context.pageGutter, 8),
           child: PageHead(
             title: view.board.name,
             subtitle: context.t('board.agileBoard'),
@@ -424,7 +424,7 @@ class _SprintChip extends StatelessWidget {
                   Text(sprint.goal!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11.5, color: AppColors.inkSoft)),
               ],
             ),
@@ -472,13 +472,13 @@ class _SprintSelector extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.bolt_outlined, size: 15, color: AppColors.inkSoft),
+            Icon(Icons.bolt_outlined, size: 15, color: AppColors.inkSoft),
             const SizedBox(width: 7),
             Text(label,
                 style: const TextStyle(
                     fontSize: 12.5, fontWeight: FontWeight.w600)),
             const SizedBox(width: 4),
-            const Icon(Icons.expand_more_rounded,
+            Icon(Icons.expand_more_rounded,
                 size: 16, color: AppColors.inkSoft),
           ],
         ),
@@ -547,14 +547,14 @@ class _BoardListCard extends StatelessWidget {
               projectNames,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 11, color: AppColors.textSecondary),
             ),
           const SizedBox(height: 4),
           Align(
             alignment: Alignment.centerRight,
             child:
-                const Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.inkSoft),
+                Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.inkSoft),
           ),
         ],
       ),
@@ -611,7 +611,7 @@ class _ProjectFilterChip extends StatelessWidget {
             Text(label,
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
             const SizedBox(width: 4),
-            const Icon(Icons.expand_more_rounded,
+            Icon(Icons.expand_more_rounded,
                 size: 16, color: AppColors.inkSoft),
           ],
         ),
@@ -1034,10 +1034,10 @@ class DottedAddButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.add_rounded, size: 15, color: AppColors.inkFaint),
+              Icon(Icons.add_rounded, size: 15, color: AppColors.inkFaint),
               const SizedBox(width: 7),
               Text(label,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
                       color: AppColors.inkFaint)),

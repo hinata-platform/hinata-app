@@ -100,6 +100,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
           return RefreshIndicator(
             onRefresh: _cubit.load,
             color: AppColors.accent,
+            edgeOffset: context.topGutter,
             child: AsyncView(
               isLoading: state.isLoading,
               hasData: state.hasData,
@@ -109,8 +110,8 @@ class _IssuesScreenState extends State<IssuesScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
                   SliverPadding(
-                    padding: EdgeInsets.fromLTRB(
-                        context.pageGutter, 24, context.pageGutter, 16),
+                    padding: EdgeInsets.fromLTRB(context.pageGutter,
+                        24 + context.topGutter, context.pageGutter, 16),
                     sliver: SliverToBoxAdapter(
                       child: PageHead(
                         title: context.t('nav.issues'),
@@ -165,7 +166,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
                         child: Center(
                           child: Text(context.t('issues.empty'),
                               style:
-                                  const TextStyle(color: AppColors.inkSoft)),
+                                  TextStyle(color: AppColors.inkSoft)),
                         ),
                       ),
                     )
@@ -276,19 +277,19 @@ class _SearchField extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Row(
         children: [
-          const Icon(Icons.search_rounded, size: 16, color: AppColors.inkFaint),
+          Icon(Icons.search_rounded, size: 16, color: AppColors.inkFaint),
           const SizedBox(width: 9),
           Expanded(
             child: TextField(
               controller: controller,
               onChanged: onChanged,
-              style: const TextStyle(fontSize: 13, color: AppColors.ink),
+              style: TextStyle(fontSize: 13, color: AppColors.ink),
               decoration: InputDecoration(
                 isDense: true,
                 border: InputBorder.none,
                 hintText: hint,
                 hintStyle:
-                    const TextStyle(fontSize: 13, color: AppColors.inkFaint),
+                    TextStyle(fontSize: 13, color: AppColors.inkFaint),
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
               ),
             ),
@@ -306,7 +307,7 @@ class _IssueTableHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const style = TextStyle(
+    final style = TextStyle(
       fontSize: 11,
       fontWeight: FontWeight.w600,
       letterSpacing: 0.6,
@@ -461,7 +462,7 @@ class IssueRow extends StatelessWidget {
           Expanded(
             flex: 3,
             child: name.isEmpty
-                ? const Text('—', style: TextStyle(color: AppColors.inkFaint))
+                ? Text('—', style: TextStyle(color: AppColors.inkFaint))
                 : Row(
                     children: [
                       HiveAvatar(name: name, size: 24),
@@ -470,7 +471,7 @@ class IssueRow extends StatelessWidget {
                         child: Text(name.split(' ').first,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 12.5, color: AppColors.inkSoft)),
                       ),
                     ],
@@ -493,7 +494,7 @@ class IssueRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 18),
-          const Icon(Icons.chevron_right_rounded,
+          Icon(Icons.chevron_right_rounded,
               size: 18, color: AppColors.inkFaint),
         ],
       ),

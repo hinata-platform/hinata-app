@@ -43,11 +43,19 @@ extension ResponsiveContext on BuildContext {
   /// this is just the device's bottom inset.
   double get bottomGutter => MediaQuery.paddingOf(this).bottom;
 
+  /// Extra top padding scrollable page content should add so its first items
+  /// rest just below the translucent app bar (and can scroll *behind* it). The
+  /// compact shell injects the glass app bar's footprint into [MediaQuery]
+  /// padding; on wider layouts the desktop top bar already consumes the status
+  /// bar inset, so this is 0 there.
+  double get topGutter => MediaQuery.paddingOf(this).top;
+
   /// Standard scroll-content padding: even [pageGutter] on every side plus
-  /// [bottomGutter] of clearance so the last items scroll clear of the nav.
+  /// [topGutter]/[bottomGutter] clearance so content rests below the glass app
+  /// bar and the last items scroll clear of the floating nav.
   EdgeInsets get pagePadding => EdgeInsets.fromLTRB(
         pageGutter,
-        pageGutter,
+        pageGutter + topGutter,
         pageGutter,
         pageGutter + bottomGutter,
       );

@@ -58,12 +58,13 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           return RefreshIndicator(
             onRefresh: _cubit.load,
             color: AppColors.accent,
+            edgeOffset: context.topGutter,
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
                 SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                      context.pageGutter, 24, context.pageGutter, 16),
+                  padding: EdgeInsets.fromLTRB(context.pageGutter,
+                      24 + context.topGutter, context.pageGutter, 16),
                   sliver: SliverToBoxAdapter(
                     child: PageHead(
                       title: context.t('projects.title'),
@@ -88,7 +89,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     child: Center(
                       child: Text(context.t('projects.empty'),
                           style:
-                              const TextStyle(color: AppColors.textSecondary)),
+                              TextStyle(color: AppColors.textSecondary)),
                     ),
                   )
                 else
@@ -205,7 +206,7 @@ class _ProjectCard extends StatelessWidget {
                     Text(subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontFamily: AppTheme.fontMono,
                             fontSize: 11.5,
                             color: AppColors.inkFaint)),
@@ -237,7 +238,7 @@ class _ProjectCard extends StatelessWidget {
               if (memberNames.isNotEmpty)
                 HiveAvatarStack(names: memberNames, size: 26),
               const Spacer(),
-              const Icon(Icons.arrow_forward_rounded,
+              Icon(Icons.arrow_forward_rounded,
                   size: 16, color: AppColors.inkSoft),
             ],
           ),
@@ -265,13 +266,13 @@ class _Stat extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(value,
-            style: const TextStyle(
+            style: TextStyle(
                 fontFamily: AppTheme.fontBrand,
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink)),
         Text(label,
-            style: const TextStyle(fontSize: 11, color: AppColors.inkSoft)),
+            style: TextStyle(fontSize: 11, color: AppColors.inkSoft)),
       ],
     );
   }

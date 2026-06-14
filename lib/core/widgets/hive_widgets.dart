@@ -208,7 +208,7 @@ class LabelTag extends StatelessWidget {
         border: Border.all(color: AppColors.hairline2),
       ),
       child: Text(label,
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.inkSoft)),
     );
   }
@@ -305,7 +305,7 @@ class HiveAvatar extends StatelessWidget {
             ? DecorationImage(image: NetworkImage(imageUrl!), fit: BoxFit.cover)
             : null,
         boxShadow: ring
-            ? const [BoxShadow(color: AppColors.surface, spreadRadius: 2)]
+            ? [BoxShadow(color: AppColors.surface, spreadRadius: 2)]
             : null,
       ),
       alignment: Alignment.center,
@@ -359,7 +359,7 @@ class HiveAvatarStack extends StatelessWidget {
               child: Container(
                 width: size,
                 height: size,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.canvas2,
                   shape: BoxShape.circle,
                   boxShadow: [BoxShadow(color: AppColors.surface, spreadRadius: 2)],
@@ -406,7 +406,7 @@ class PageHead extends StatelessWidget {
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: AppTheme.fontBrand,
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
@@ -420,7 +420,7 @@ class PageHead extends StatelessWidget {
                 Text(subtitle!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13.5, color: AppColors.inkSoft)),
               ],
             ],
@@ -477,7 +477,7 @@ class GhostButton extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.ink,
-        side: const BorderSide(color: AppColors.hairline),
+        side: BorderSide(color: AppColors.hairline),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
         textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         shape: RoundedRectangleBorder(

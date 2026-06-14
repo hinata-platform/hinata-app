@@ -20,12 +20,34 @@ abstract final class AppTheme {
   static const fontUi = 'IBMPlexSans';   // body / dense UI
   static const fontMono = 'IBMPlexMono'; // ids, metrics
 
-  static ThemeData light() {
+  static ThemeData light() => _build(Brightness.light);
+  static ThemeData dark() => _build(Brightness.dark);
+
+  /// Builds the Material theme for [brightness]. Neutral surface/ink values are
+  /// read from the explicit per-theme [AppColors] constants (NOT the runtime
+  /// `AppColors.<token>` getters) so each [ThemeData] is deterministic
+  /// regardless of which mode is currently active when it's constructed.
+  static ThemeData _build(Brightness brightness) {
+    final dark = brightness == Brightness.dark;
+
+    final canvas = dark ? AppColors.canvasDark : AppColors.canvasLight;
+    final surface = dark ? AppColors.surfaceDark : AppColors.surfaceLight;
+    final surfaceMuted =
+        dark ? AppColors.surfaceMutedDark : AppColors.surfaceMutedLight;
+    final ink = dark ? AppColors.inkDark : AppColors.inkLight;
+    final inkSoft = dark ? AppColors.inkSoftDark : AppColors.inkSoftLight;
+    final inkFaint = dark ? AppColors.inkFaintDark : AppColors.inkFaintLight;
+    final hairline = dark ? AppColors.hairlineDark : AppColors.hairlineLight;
+    final hairline2 = dark ? AppColors.hairline2Dark : AppColors.hairline2Light;
+    final accentSoft =
+        dark ? AppColors.accentSoftDark : AppColors.accentSoftLight;
+
     final scheme = ColorScheme.fromSeed(
       seedColor: AppColors.navy,
-      primary: AppColors.navy,
+      brightness: brightness,
+      primary: dark ? AppColors.accent : AppColors.navy,
       secondary: AppColors.accent,
-      surface: AppColors.surface,
+      surface: surface,
       error: AppColors.danger,
     );
     final base = ThemeData(
@@ -34,18 +56,18 @@ abstract final class AppTheme {
       fontFamily: fontUi,
     );
     final text = base.textTheme
-        .apply(bodyColor: AppColors.ink, displayColor: AppColors.ink)
+        .apply(bodyColor: ink, displayColor: ink)
         .copyWith(
           headlineSmall: base.textTheme.headlineSmall?.copyWith(
             fontFamily: fontBrand,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.5,
-            color: AppColors.ink,
+            color: ink,
           ),
           titleLarge: base.textTheme.titleLarge?.copyWith(
             fontFamily: fontBrand,
             fontWeight: FontWeight.w700,
-            color: AppColors.ink,
+            color: ink,
           ),
         );
 
@@ -55,21 +77,21 @@ abstract final class AppTheme {
         );
 
     return base.copyWith(
-      scaffoldBackgroundColor: AppColors.canvas,
+      scaffoldBackgroundColor: canvas,
       textTheme: text,
-      dividerColor: AppColors.hairline,
-      appBarTheme: const AppBarTheme(
+      dividerColor: hairline,
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
-        foregroundColor: AppColors.ink,
+        foregroundColor: ink,
         elevation: 0,
         centerTitle: false,
       ),
       cardTheme: CardThemeData(
-        color: AppColors.surface,
+        color: surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusCard),
-          side: const BorderSide(color: AppColors.hairline),
+          side: BorderSide(color: hairline),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -87,10 +109,10 @@ abstract final class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.ink,
-          backgroundColor: AppColors.surface,
+          foregroundColor: ink,
+          backgroundColor: surface,
           minimumSize: const Size(44, 44),
-          side: const BorderSide(color: AppColors.hairline),
+          side: BorderSide(color: hairline),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusControl),
           ),
@@ -98,31 +120,32 @@ abstract final class AppTheme {
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: AppColors.navy),
+        style: TextButton.styleFrom(
+            foregroundColor: dark ? AppColors.accent : AppColors.navy),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        border: border(AppColors.hairline),
-        enabledBorder: border(AppColors.hairline),
+        border: border(hairline),
+        enabledBorder: border(hairline),
         focusedBorder: border(AppColors.accent, 1.5),
-        hintStyle: const TextStyle(color: AppColors.inkFaint),
+        hintStyle: TextStyle(color: inkFaint),
       ),
       chipTheme: base.chipTheme.copyWith(
-        backgroundColor: AppColors.surfaceMuted,
-        side: const BorderSide(color: AppColors.hairline2),
+        backgroundColor: surfaceMuted,
+        side: BorderSide(color: hairline2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        labelStyle: const TextStyle(color: AppColors.inkSoft, fontSize: 11),
+        labelStyle: TextStyle(color: inkSoft, fontSize: 11),
       ),
-      dividerTheme: const DividerThemeData(
-        color: AppColors.hairline,
+      dividerTheme: DividerThemeData(
+        color: hairline,
         thickness: 1,
         space: 1,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.accentSoft,
+        backgroundColor: surface,
+        indicatorColor: accentSoft,
         labelTextStyle: WidgetStatePropertyAll(
           text.labelSmall?.copyWith(fontWeight: FontWeight.w600),
         ),

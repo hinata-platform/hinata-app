@@ -122,14 +122,14 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
               padding: const EdgeInsets.all(40),
               child: Text(context.t(_error!),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textSecondary)),
+                  style: TextStyle(color: AppColors.textSecondary)),
             )
           else if (_rows.isEmpty)
             Padding(
               padding: const EdgeInsets.all(40),
               child: Text(context.t('timesheet.empty'),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textSecondary)),
+                  style: TextStyle(color: AppColors.textSecondary)),
             )
           else
             SoftCard(
@@ -137,7 +137,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
-                  headingTextStyle: const TextStyle(
+                  headingTextStyle: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 12,
                       color: AppColors.textPrimary),

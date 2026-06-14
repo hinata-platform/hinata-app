@@ -45,6 +45,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
         builder: (context, state) {
           return RefreshIndicator(
             onRefresh: _cubit.load,
+            edgeOffset: context.topGutter,
             child: AsyncView(
               isLoading: state.isLoading,
               hasData: state.hasData,
@@ -56,7 +57,9 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
                     articles.where((article) => article.parentId == null).toList();
                 return ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(context.pageGutter, 24,
+                  padding: EdgeInsets.fromLTRB(
+                      context.pageGutter,
+                      24 + context.topGutter,
                       context.pageGutter,
                       context.pageGutter + context.bottomGutter),
                   children: [
@@ -82,7 +85,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
                           context.t('knowledge.empty'),
                           textAlign: TextAlign.center,
                           style:
-                              const TextStyle(color: AppColors.textSecondary),
+                              TextStyle(color: AppColors.textSecondary),
                         ),
                       ),
                     for (final root in roots)
@@ -158,7 +161,7 @@ class _ArticleNode extends StatelessWidget {
                         Text(meta,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 11.5, color: AppColors.inkSoft)),
                       ],
                     ],
@@ -169,11 +172,11 @@ class _ArticleNode extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.subject_rounded,
+                      Icon(Icons.subject_rounded,
                           size: 13, color: AppColors.inkFaint),
                       const SizedBox(width: 4),
                       Text('${children.length}',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontFamily: AppTheme.fontMono,
                               fontSize: 11.5,
                               color: AppColors.inkFaint)),

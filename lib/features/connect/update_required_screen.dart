@@ -47,7 +47,7 @@ class UpdateRequiredScreen extends StatelessWidget {
                         'required': minVersion,
                       }),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.textSecondary, height: 1.5),
+                      style: TextStyle(color: AppColors.textSecondary, height: 1.5),
                     ),
                   ],
                 ),

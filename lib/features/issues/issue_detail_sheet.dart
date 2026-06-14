@@ -126,14 +126,14 @@ class _SheetActions extends StatelessWidget {
         IconButton(
           tooltip: context.t('issues.copyLink'),
           onPressed: onCopyLink,
-          icon: const Icon(Icons.link_rounded,
+          icon: Icon(Icons.link_rounded,
               size: 20, color: AppColors.inkSoft),
         ),
         _IssueOverflowMenu(onEdit: onEdit, onDelete: onDelete),
         IconButton(
           tooltip: context.t('common.cancel'),
           onPressed: onClose,
-          icon: const Icon(Icons.close_rounded,
+          icon: Icon(Icons.close_rounded,
               size: 20, color: AppColors.inkSoft),
         ),
         const SizedBox(width: 4),
@@ -153,7 +153,7 @@ class _IssueOverflowMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
       tooltip: '',
-      icon: const Icon(Icons.more_horiz_rounded,
+      icon: Icon(Icons.more_horiz_rounded,
           size: 22, color: AppColors.inkSoft),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onSelected: (value) => value == 'edit' ? onEdit() : onDelete(),
@@ -162,7 +162,7 @@ class _IssueOverflowMenu extends StatelessWidget {
           value: 'edit',
           child: Row(
             children: [
-              const Icon(Icons.edit_rounded, size: 18, color: AppColors.inkSoft),
+              Icon(Icons.edit_rounded, size: 18, color: AppColors.inkSoft),
               const SizedBox(width: 10),
               Text(context.t('issues.edit')),
             ],
@@ -396,7 +396,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(context.t(_error!),
-                  style: const TextStyle(color: AppColors.inkSoft)),
+                  style: TextStyle(color: AppColors.inkSoft)),
               const SizedBox(height: 12),
               OutlinedButton(
                   onPressed: _load, child: Text(context.t('common.retry'))),
@@ -485,6 +485,9 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
         height: 1.25);
 
     return SoftCard(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.zero,
+      border: Border.all(color: Colors.transparent),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -538,7 +541,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
                     TextButton(
                       onPressed: () => setState(() => _editingDesc = false),
                       child: Text(context.t('common.cancel'),
-                          style: const TextStyle(color: AppColors.inkSoft)),
+                          style: TextStyle(color: AppColors.inkSoft)),
                     ),
                   ],
                 ),
@@ -552,7 +555,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
                   ? MarkdownText(issue.description!)
                   : Text(
                       context.t('issues.noDescription'),
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: AppColors.inkFaint,
                           fontStyle: FontStyle.italic),
                     ),
@@ -564,7 +567,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
 
   Widget _sectionLabel(String text) => Text(
         text.toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.8,
@@ -670,7 +673,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
   Widget _person(String? name, {required String fallback}) {
     if (name == null || name.isEmpty) {
       return Text(fallback,
-          style: const TextStyle(fontSize: 13, color: AppColors.inkFaint));
+          style: TextStyle(fontSize: 13, color: AppColors.inkFaint));
     }
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -691,21 +694,21 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
   Widget _dateValue(DateTime? date, {required bool isStart}) {
     if (date == null) {
       return Text(context.t('issues.noValue'),
-          style: const TextStyle(fontSize: 13, color: AppColors.inkFaint));
+          style: TextStyle(fontSize: 13, color: AppColors.inkFaint));
     }
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           MaterialLocalizations.of(context).formatMediumDate(date),
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink),
         ),
         const SizedBox(width: 6),
         GestureDetector(
           onTap: () => _patch(
               {isStart ? 'clearStartDate' : 'clearDueDate': true}),
-          child: const Icon(Icons.close_rounded,
+          child: Icon(Icons.close_rounded,
               size: 15, color: AppColors.inkFaint),
         ),
       ],
@@ -746,7 +749,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
               'spent': fmtDuration(issue.spentMinutes),
               'estimate': fmtDuration(issue.estimateMinutes),
             }),
-            style: const TextStyle(color: AppColors.inkSoft, fontSize: 13),
+            style: TextStyle(color: AppColors.inkSoft, fontSize: 13),
           ),
           for (final item in _workItems.take(8))
             Padding(
@@ -767,7 +770,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
                     Text(
                       MaterialLocalizations.of(context)
                           .formatShortDate(item.date!),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11.5, color: AppColors.inkFaint),
                     ),
                 ],
@@ -782,6 +785,9 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     final filter = _activityFilter;
     final showComposer = filter != _ActivityFilter.history;
     return SoftCard(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.zero,
+      border: Border.all(color: Colors.transparent),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -874,7 +880,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
         padding: const EdgeInsets.symmetric(vertical: 22),
         child: Center(
           child: Text(message,
-              style: const TextStyle(color: AppColors.inkFaint, fontSize: 13)),
+              style: TextStyle(color: AppColors.inkFaint, fontSize: 13)),
         ),
       );
 
@@ -913,7 +919,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
         (
           value: _noSprint,
           child: Text(context.t('issues.noSprint'),
-              style: const TextStyle(color: AppColors.inkFaint))
+              style: TextStyle(color: AppColors.inkFaint))
         ),
         for (final s in _sprints) (value: s.id, child: Text(s.name)),
       ],
@@ -1065,7 +1071,7 @@ class _DetailRow extends StatelessWidget {
         decoration: BoxDecoration(
           border: last
               ? null
-              : const Border(
+              : Border(
                   bottom: BorderSide(color: AppColors.hairline2)),
         ),
         child: Row(
@@ -1074,13 +1080,13 @@ class _DetailRow extends StatelessWidget {
             SizedBox(
               width: 104,
               child: Text(label,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12.5, color: AppColors.inkSoft)),
             ),
             const SizedBox(width: 12),
             Expanded(child: Align(alignment: Alignment.centerLeft, child: child)),
             if (onTap != null)
-              const Icon(Icons.unfold_more_rounded,
+              Icon(Icons.unfold_more_rounded,
                   size: 16, color: AppColors.inkFaint),
           ],
         ),
@@ -1116,7 +1122,7 @@ class _RouteTopBar extends StatelessWidget {
         children: [
           IconButton(
             onPressed: onClose,
-            icon: const Icon(Icons.arrow_back_rounded,
+            icon: Icon(Icons.arrow_back_rounded,
                 size: 20, color: AppColors.inkSoft),
           ),
           IdMono(issue.readableId, color: AppColors.inkSoft),
@@ -1135,7 +1141,7 @@ class _RouteTopBar extends StatelessWidget {
           IconButton(
             tooltip: context.t('issues.copyLink'),
             onPressed: onCopyLink,
-            icon: const Icon(Icons.link_rounded,
+            icon: Icon(Icons.link_rounded,
                 size: 20, color: AppColors.inkSoft),
           ),
           _IssueOverflowMenu(onEdit: onEdit, onDelete: onDelete),
@@ -1322,7 +1328,7 @@ class _CommentTile extends StatelessWidget {
                       Text(
                         MaterialLocalizations.of(context)
                             .formatShortDate(comment.createdAt!.toLocal()),
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 11.5, color: AppColors.inkFaint),
                       ),
                     ],
@@ -1330,7 +1336,7 @@ class _CommentTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(comment.text,
-                    style: const TextStyle(
+                    style: TextStyle(
                         height: 1.5, fontSize: 13, color: AppColors.inkSoft)),
               ],
             ),
@@ -1384,11 +1390,11 @@ class _ActivityTile extends StatelessWidget {
                   TextSpan(children: [
                     TextSpan(
                         text: actorName,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.w700, color: AppColors.ink)),
                     TextSpan(text: ' $action'),
                   ]),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13, height: 1.4, color: AppColors.inkSoft),
                 ),
                 if (activity.createdAt != null) ...[
@@ -1396,7 +1402,7 @@ class _ActivityTile extends StatelessWidget {
                   Text(
                     MaterialLocalizations.of(context)
                         .formatShortDate(activity.createdAt!.toLocal()),
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 11.5, color: AppColors.inkFaint),
                   ),
                 ],
@@ -1422,7 +1428,7 @@ class _ActivityTile extends StatelessWidget {
       children: [
         if (from != null) _ChangeChip(from),
         if (from != null)
-          const Icon(Icons.arrow_forward_rounded,
+          Icon(Icons.arrow_forward_rounded,
               size: 14, color: AppColors.inkFaint),
         if (to != null) _ChangeChip(to),
       ],
@@ -1491,7 +1497,7 @@ class _ChangeChip extends StatelessWidget {
         border: Border.all(color: AppColors.hairline),
       ),
       child: Text(text,
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
               color: AppColors.ink)),
@@ -1561,11 +1567,11 @@ class _PeoplePickerState extends State<_PeoplePicker> {
                   fillColor: AppColors.surfaceMuted,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-                    borderSide: const BorderSide(color: AppColors.hairline),
+                    borderSide: BorderSide(color: AppColors.hairline),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-                    borderSide: const BorderSide(color: AppColors.hairline),
+                    borderSide: BorderSide(color: AppColors.hairline),
                   ),
                 ),
               ),
@@ -1576,7 +1582,7 @@ class _PeoplePickerState extends State<_PeoplePicker> {
                 children: [
                   if (widget.onAssignMe != null && q.isEmpty)
                     ListTile(
-                      leading: const CircleAvatar(
+                      leading: CircleAvatar(
                         backgroundColor: AppColors.accentSoft,
                         child: Icon(Icons.person_rounded,
                             color: AppColors.accentStrong, size: 18),
@@ -1588,7 +1594,7 @@ class _PeoplePickerState extends State<_PeoplePicker> {
                     ),
                   if (q.isEmpty)
                     ListTile(
-                      leading: const CircleAvatar(
+                      leading: CircleAvatar(
                         backgroundColor: AppColors.canvas2,
                         child: Icon(Icons.block_rounded,
                             color: AppColors.inkSoft, size: 18),
@@ -1616,7 +1622,7 @@ class _PeoplePickerState extends State<_PeoplePicker> {
                       child: Center(
                         child: Text(context.t('issues.empty'),
                             style:
-                                const TextStyle(color: AppColors.inkFaint)),
+                                TextStyle(color: AppColors.inkFaint)),
                       ),
                     ),
                 ],

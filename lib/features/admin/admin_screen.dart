@@ -130,11 +130,11 @@ class _AdminScreenState extends State<AdminScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off_rounded,
+            Icon(Icons.cloud_off_rounded,
                 size: 48, color: AppColors.inkFaint),
             const SizedBox(height: 12),
             Text(context.t(_error!),
-                style: const TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: AppColors.textSecondary)),
             const SizedBox(height: 12),
             OutlinedButton(
                 onPressed: _load, child: Text(context.t('common.retry'))),
@@ -196,13 +196,13 @@ class _MobileListView extends StatelessWidget {
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+            padding: EdgeInsets.fromLTRB(20, 20 + context.topGutter, 20, 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   context.t('admin.title'),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 22,
                       color: AppColors.ink),
@@ -210,7 +210,7 @@ class _MobileListView extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   context.t('admin.subtitle'),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13, color: AppColors.inkSoft),
                 ),
               ],
@@ -246,7 +246,7 @@ class _MobileListView extends StatelessWidget {
                 children: [
                   for (int i = 0; i < entry.value.length; i++) ...[
                     if (i > 0)
-                      const Divider(
+                      Divider(
                           height: 1,
                           indent: 56,
                           color: AppColors.hairline),
@@ -300,7 +300,7 @@ class _MobileNavTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   context.t(meta.labelKey),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
                       color: AppColors.ink),
@@ -358,7 +358,7 @@ class _MobileDetailView extends StatelessWidget {
         Container(
           height: 56,
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.surface,
             border:
                 Border(bottom: BorderSide(color: AppColors.hairline)),
@@ -367,7 +367,7 @@ class _MobileDetailView extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: onBack,
-                icon: const Icon(Icons.arrow_back_rounded,
+                icon: Icon(Icons.arrow_back_rounded,
                     size: 20, color: AppColors.inkSoft),
                 tooltip: context.t('admin.title'),
               ),
@@ -375,7 +375,7 @@ class _MobileDetailView extends StatelessWidget {
               Expanded(
                 child: Text(
                   _title(context),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
                       color: AppColors.ink),
@@ -459,7 +459,7 @@ class _WideAdminShell extends StatelessWidget {
         // ── Left nav rail ─────────────────────────────────────────
         Container(
           width: 220,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.surface,
             border:
                 Border(right: BorderSide(color: AppColors.hairline)),
@@ -474,7 +474,7 @@ class _WideAdminShell extends StatelessWidget {
                   children: [
                     Text(
                       context.t('admin.title'),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
                           color: AppColors.ink),
@@ -482,13 +482,13 @@ class _WideAdminShell extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       context.t('admin.subtitle'),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11, color: AppColors.inkSoft),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1, color: AppColors.hairline),
+              Divider(height: 1, color: AppColors.hairline),
               const SizedBox(height: 8),
               Expanded(
                 child: _buildNavList(context),
@@ -568,7 +568,7 @@ class _DesktopSectionContent extends StatelessWidget {
         Container(
           height: 56,
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.canvas,
             border:
                 Border(bottom: BorderSide(color: AppColors.hairline)),
@@ -578,7 +578,7 @@ class _DesktopSectionContent extends StatelessWidget {
               Expanded(
                 child: Text(
                   _title(context),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
                       color: AppColors.ink),
@@ -718,7 +718,7 @@ class _NavItem extends StatelessWidget {
                   ),
                 ),
                 if (isUsers)
-                  const Icon(Icons.open_in_new_rounded,
+                  Icon(Icons.open_in_new_rounded,
                       size: 12, color: AppColors.inkFaint),
               ],
             ),
@@ -749,7 +749,7 @@ class _AuditLogPlaceholder extends StatelessWidget {
                 color: AppColors.canvas2,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.history_rounded,
+              child: Icon(Icons.history_rounded,
                   size: 36, color: AppColors.inkSoft),
             ),
             const SizedBox(height: 20),
@@ -764,7 +764,7 @@ class _AuditLogPlaceholder extends StatelessWidget {
             Text(
               context.t('admin.auditLogHint'),
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 13,
                   color: AppColors.inkSoft,
                   height: 1.5),
