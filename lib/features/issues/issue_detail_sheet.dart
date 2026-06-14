@@ -453,9 +453,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
                 const SizedBox(height: 14),
                 _timeCard(issue),
               ];
-              // While editing the description, drop to a single full-width
-              // column so the Markdown editor gets the whole width.
-              if (c.maxWidth >= 680 && !_editingDesc) {
+              if (c.maxWidth >= 680) {
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
