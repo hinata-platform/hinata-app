@@ -98,6 +98,9 @@ class _HivoraAppState extends State<HivoraApp> {
           builder: (context, themeMode) {
             return BlocBuilder<LocaleCubit, Locale>(
               builder: (context, locale) {
+                // Keep the API client's Accept-Language in sync so the server
+                // localizes its error messages to the user's chosen language.
+                widget.apiClient.localeCode = locale.languageCode;
                 return MaterialApp.router(
                   title: 'Hivora',
                   debugShowCheckedModeBanner: false,

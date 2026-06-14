@@ -23,9 +23,18 @@ abstract final class I18n {
 
 extension I18nContext on BuildContext {
   /// Translate [key] from the `common` namespace, e.g. `context.t('nav.dashboard')`.
+  ///
+  /// When [key] isn't a known translation key, i18next echoes it back prefixed
+  /// with the namespace (`common:...`). That happens for server-side error
+  /// messages, which arrive already localized (the backend honours our
+  /// `Accept-Language` header) and should be shown verbatim. So on a miss we
+  /// return the raw [key] instead of the namespaced fallback.
   String t(String key, {Map<String, dynamic>? variables, int? count}) {
     final i18next = I18Next.of(this);
     if (i18next == null) return key;
-    return i18next.t('common:$key', variables: variables, count: count);
+    final result =
+        i18next.t('common:$key', variables: variables, count: count);
+    if (result == 'common:$key' || result == key) return key;
+    return result;
   }
 }

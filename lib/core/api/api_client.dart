@@ -34,6 +34,8 @@ class ApiClient {
         if (token != null && !options.path.contains('/auth/refresh')) {
           options.headers['Authorization'] = 'Bearer $token';
         }
+        // Tell the server which language to localize error messages in.
+        options.headers['Accept-Language'] = localeCode;
         handler.next(options);
       },
       onError: (error, handler) async {
@@ -64,6 +66,10 @@ class ApiClient {
 
   /// Invoked when the session can no longer be refreshed.
   void Function()? onSessionExpired;
+
+  /// Language code sent as `Accept-Language` so the server localizes error
+  /// messages. Kept in sync with the app's [LocaleCubit] (see HivoraApp).
+  String localeCode = 'en';
 
   String get baseUrl => _storage.serverUrl ?? '';
 
