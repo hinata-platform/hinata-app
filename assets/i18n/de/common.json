@@ -7,7 +7,8 @@
     "delete": "Löschen",
     "create": "Erstellen",
     "edit": "Bearbeiten",
-    "empty": "Hier ist noch nichts"
+    "empty": "Hier ist noch nichts",
+    "continueAction": "Weiter"
   },
   "errors": {
     "required": "Dieses Feld ist erforderlich",
@@ -445,6 +446,12 @@
     "removeAdmin": "Admin entfernen",
     "toggleAdmin": "Adminrolle umschalten",
     "isAdmin": "Administrator",
-    "secretHint": "Leer lassen, um den gespeicherten Wert zu behalten"
+    "secretHint": "Leer lassen, um den gespeicherten Wert zu behalten",
+    "deleteUser": "Benutzer löschen",
+    "deleteConfirmTitle": "{{name}} löschen?",
+    "deleteConfirmBody": "Dadurch wird das Konto dauerhaft gelöscht und alle Zugänge werden entzogen. Zugewiesene Aufgaben werden freigegeben. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "deleteFinalTitle": "Dauerhaftes Löschen bestätigen",
+    "deleteFinalBody": "Gib zur Bestätigung den Benutzernamen {{username}} unten ein. {{name}} wird dauerhaft gelöscht.",
+    "userDeleted": "{{name}} wurde gelöscht"
   }
 }

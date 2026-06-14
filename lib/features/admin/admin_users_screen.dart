@@ -5,6 +5,7 @@ import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/api/hivora_repository.dart';
+import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
@@ -31,6 +32,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   String? _error;
   String _query = '';
   _UserFilter _filter = _UserFilter.all;
+
+  /// The signed-in admin — used to forbid self-deletion in the UI.
+  String? get _currentUserId => context.read<AuthBloc>().state.user?.id;
 
   @override
   void initState() {
@@ -93,6 +97,60 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       await context
           .read<HivoraRepository>()
           .adminUpdateUser(user['id'] as String, patch);
+      _load();
+    } on ApiFailure catch (failure) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(failure.message)));
+      }
+    }
+  }
+
+  /// Permanently deletes a user behind a two-step confirmation: a warning
+  /// dialog, then a type-the-username confirmation. Both must be passed.
+  Future<void> _confirmAndDelete(Map<String, dynamic> user) async {
+    final name = (user['displayName'] as String?)?.trim().isNotEmpty == true
+        ? user['displayName'] as String
+        : (user['username'] as String?) ?? '';
+    final username = (user['username'] as String?) ?? '';
+
+    // Step 1 — warning + intent.
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.t('admin.deleteConfirmTitle', variables: {'name': name})),
+        content: Text(ctx.t('admin.deleteConfirmBody')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(ctx.t('common.cancel')),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(ctx.t('common.continueAction')),
+          ),
+        ],
+      ),
+    );
+    if (proceed != true || !mounted) return;
+
+    // Step 2 — irreversible confirmation by typing the username.
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => _DeleteConfirmDialog(name: name, username: username),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await context
+          .read<HivoraRepository>()
+          .adminDeleteUser(user['id'] as String);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                context.t('admin.userDeleted', variables: {'name': name}))));
+      }
       _load();
     } on ApiFailure catch (failure) {
       if (mounted) {
@@ -274,10 +332,14 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                   ? _UserCardList(
                                       users: _filtered,
                                       onPatch: _patch,
+                                      onDelete: _confirmAndDelete,
+                                      currentUserId: _currentUserId,
                                     )
                                   : _UserTable(
                                       users: _filtered,
                                       onPatch: _patch,
+                                      onDelete: _confirmAndDelete,
+                                      currentUserId: _currentUserId,
                                     ),
                         ),
         ),
@@ -298,10 +360,17 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 // ─────────────────────────── Desktop table ───────────────────────────────
 
 class _UserTable extends StatelessWidget {
-  const _UserTable({required this.users, required this.onPatch});
+  const _UserTable({
+    required this.users,
+    required this.onPatch,
+    required this.onDelete,
+    required this.currentUserId,
+  });
 
   final List<Map<String, dynamic>> users;
   final void Function(Map<String, dynamic>, Map<String, dynamic>) onPatch;
+  final void Function(Map<String, dynamic>) onDelete;
+  final String? currentUserId;
 
   @override
   Widget build(BuildContext context) {
@@ -415,7 +484,12 @@ class _UserTable extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 6),
-                    child: _UserActions(user: user, onPatch: onPatch),
+                    child: _UserActions(
+                      user: user,
+                      onPatch: onPatch,
+                      onDelete: onDelete,
+                      isSelf: user['id'] == currentUserId,
+                    ),
                   ),
                 ],
               ),
@@ -451,10 +525,17 @@ class _TH extends StatelessWidget {
 // ─────────────────────────── Mobile card list ─────────────────────────────
 
 class _UserCardList extends StatelessWidget {
-  const _UserCardList({required this.users, required this.onPatch});
+  const _UserCardList({
+    required this.users,
+    required this.onPatch,
+    required this.onDelete,
+    required this.currentUserId,
+  });
 
   final List<Map<String, dynamic>> users;
   final void Function(Map<String, dynamic>, Map<String, dynamic>) onPatch;
+  final void Function(Map<String, dynamic>) onDelete;
+  final String? currentUserId;
 
   @override
   Widget build(BuildContext context) {
@@ -533,7 +614,12 @@ class _UserCardList extends StatelessWidget {
                   ],
                 ),
               ),
-              _UserActions(user: user, onPatch: onPatch),
+              _UserActions(
+                user: user,
+                onPatch: onPatch,
+                onDelete: onDelete,
+                isSelf: user['id'] == currentUserId,
+              ),
             ],
           ),
         );
@@ -610,10 +696,17 @@ class _StatusBadge extends StatelessWidget {
 }
 
 class _UserActions extends StatelessWidget {
-  const _UserActions({required this.user, required this.onPatch});
+  const _UserActions({
+    required this.user,
+    required this.onPatch,
+    required this.onDelete,
+    required this.isSelf,
+  });
 
   final Map<String, dynamic> user;
   final void Function(Map<String, dynamic>, Map<String, dynamic>) onPatch;
+  final void Function(Map<String, dynamic>) onDelete;
+  final bool isSelf;
 
   @override
   Widget build(BuildContext context) {
@@ -672,6 +765,24 @@ class _UserActions extends StatelessWidget {
             ],
           ),
         ),
+        // Self-deletion is forbidden by the server too; hidden here for clarity.
+        if (!isSelf) ...[
+          const PopupMenuDivider(),
+          PopupMenuItem(
+            value: 'delete',
+            child: Row(
+              children: [
+                const Icon(Icons.delete_outline_rounded,
+                    size: 16, color: AppColors.danger),
+                const SizedBox(width: 8),
+                Text(
+                  context.t('admin.deleteUser'),
+                  style: const TextStyle(color: AppColors.danger),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
       onSelected: (action) {
         switch (action) {
@@ -679,8 +790,84 @@ class _UserActions extends StatelessWidget {
             onPatch(user, {'active': !active});
           case 'toggle_admin':
             onPatch(user, {'admin': !isAdmin});
+          case 'delete':
+            onDelete(user);
         }
       },
+    );
+  }
+}
+
+// ─────────────────────── Type-to-confirm delete dialog ────────────────────
+
+/// Second confirmation step: the admin must type the exact username before the
+/// destructive action is enabled — the standard guard against accidental
+/// deletion of the wrong account.
+class _DeleteConfirmDialog extends StatefulWidget {
+  const _DeleteConfirmDialog({required this.name, required this.username});
+
+  final String name;
+  final String username;
+
+  @override
+  State<_DeleteConfirmDialog> createState() => _DeleteConfirmDialogState();
+}
+
+class _DeleteConfirmDialogState extends State<_DeleteConfirmDialog> {
+  final _controller = TextEditingController();
+  bool _matches = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(() {
+      final match = _controller.text.trim() == widget.username;
+      if (match != _matches) setState(() => _matches = match);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(context.t('admin.deleteFinalTitle')),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(context.t('admin.deleteFinalBody',
+              variables: {'name': widget.name, 'username': widget.username})),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            autocorrect: false,
+            enableSuggestions: false,
+            decoration: InputDecoration(
+              labelText: context.t('admin.colUser'),
+              hintText: widget.username,
+              isDense: true,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(context.t('common.cancel')),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+          onPressed:
+              _matches ? () => Navigator.of(context).pop(true) : null,
+          child: Text(context.t('admin.deleteUser')),
+        ),
+      ],
     );
   }
 }

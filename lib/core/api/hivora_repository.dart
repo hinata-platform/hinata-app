@@ -303,4 +303,7 @@ class HivoraRepository {
 
   Future<void> adminUpdateUser(String id, Map<String, dynamic> patch) =>
       _api.patch('/api/v1/admin/users/$id', body: patch);
+
+  Future<void> adminDeleteUser(String id) =>
+      _api.delete('/api/v1/admin/users/$id');
 }

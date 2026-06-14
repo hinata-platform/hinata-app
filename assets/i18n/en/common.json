@@ -7,7 +7,8 @@
     "delete": "Delete",
     "create": "Create",
     "edit": "Edit",
-    "empty": "Nothing here yet"
+    "empty": "Nothing here yet",
+    "continueAction": "Continue"
   },
   "errors": {
     "required": "This field is required",
@@ -445,6 +446,12 @@
     "removeAdmin": "Remove admin",
     "toggleAdmin": "Toggle admin role",
     "isAdmin": "Administrator",
-    "secretHint": "Leave blank to keep the stored value"
+    "secretHint": "Leave blank to keep the stored value",
+    "deleteUser": "Delete user",
+    "deleteConfirmTitle": "Delete {{name}}?",
+    "deleteConfirmBody": "This permanently deletes the account and revokes all access. Assigned issues will be unassigned. This action cannot be undone.",
+    "deleteFinalTitle": "Confirm permanent deletion",
+    "deleteFinalBody": "To confirm, type the username {{username}} below. {{name}} will be permanently deleted.",
+    "userDeleted": "{{name}} was deleted"
   }
 }
