@@ -542,13 +542,17 @@ class _Results extends StatelessWidget {
         }
       }
     } else if (controller.flatLength == 0) {
-      children.add(_EmptyDeep(
-        tokens: tokens,
-        icon: Icons.search_off_rounded,
-        title: context.t('search.noMatch',
-            variables: {'q': controller.query.trim()}),
-        subtitle: context.t('search.noMatchSub'),
-      ));
+      // Only surface "no matches" for a real query — a blank scoped query just
+      // awaits its suggestions (don't flash an empty-state).
+      if (controller.query.trim().isNotEmpty) {
+        children.add(_EmptyDeep(
+          tokens: tokens,
+          icon: Icons.search_off_rounded,
+          title: context.t('search.noMatch',
+              variables: {'q': controller.query.trim()}),
+          subtitle: context.t('search.noMatchSub'),
+        ));
+      }
     } else {
       for (final group in controller.groups) {
         children.add(_GroupLabel(
