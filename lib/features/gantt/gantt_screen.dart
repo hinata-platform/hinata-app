@@ -126,7 +126,7 @@ class _GanttScreenState extends State<GanttScreen> {
       children: [
         Padding(
           padding: EdgeInsets.fromLTRB(
-              context.pageGutter, 22, context.pageGutter, 14),
+              context.pageGutter, 22 + context.topGutter, context.pageGutter, 14),
           child: PageHead(
             title: context.t('gantt.title'),
             subtitle: context.t('gantt.subtitle'),
@@ -206,7 +206,8 @@ class _GanttScreenState extends State<GanttScreen> {
     _maybeInitialScroll(todayX, timelineWidth);
 
     return Padding(
-      padding: context.pagePadding,
+      padding: EdgeInsets.fromLTRB(context.pageGutter, 0, context.pageGutter,
+          context.pageGutter + context.bottomGutter),
       child: SoftCard(
         padding: EdgeInsets.zero,
         child: Stack(
