@@ -17,7 +17,7 @@ import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/honeycomb_background.dart';
 import '../../core/widgets/app_avatar.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show GlassBottomBar, GlassBottomBarTab;
+    show GlassAppBar, GlassBottomBar, GlassBottomBarTab, GlassIconButton;
 import 'page_chrome.dart';
 
 class _Destination {
@@ -1444,89 +1444,47 @@ class _GlassTopBar extends StatelessWidget {
               ),
             ),
           ),
-          // Bar content sits below the status bar inset.
-          Positioned(
-            top: topInset,
-            left: 0,
-            right: 0,
-            height: _kCompactBarHeight,
-            child: Stack(
-              children: [
-                // Centered page title. The horizontal reserve clears the brand
-                // mark (left) and the 3-icon action capsule (right) so a long
-                // title ellipsizes instead of ever overlapping them.
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 136),
-                    child: Text(
-                      titleText,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: AppTheme.fontBrand,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.3,
-                        color: AppColors.ink,
-                      ),
+          // The bar itself is the package's GlassAppBar — a transparent layout
+          // container (leading · centered title · actions) that handles its own
+          // status-bar SafeArea. Glass comes from its children: a package
+          // GlassIconButton for the back affordance and our frosted action
+          // capsule (which carries the notification-bell popover).
+          GlassAppBar(
+            backgroundColor: Colors.transparent,
+            centerTitle: true,
+            preferredSize: const Size.fromHeight(_kCompactBarHeight),
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            leading: onBack != null
+                ? Tooltip(
+                    message: MaterialLocalizations.of(context).backButtonTooltip,
+                    child: GlassIconButton(
+                      icon: Icon(Icons.arrow_back_rounded, color: AppColors.ink),
+                      onPressed: onBack,
+                      size: 40,
+                      // Self-contained: no app-wide LiquidGlassLayer needed.
+                      useOwnLayer: true,
                     ),
+                  )
+                : const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: HexMark(size: 24, color: AppColors.accent),
                   ),
-                ),
-                // Left: back button on sub-pages, brand mark on primary pages.
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: onBack != null
-                      ? Padding(
-                          padding: const EdgeInsets.only(left: 6),
-                          child: _GlassBackButton(onTap: onBack),
-                        )
-                      : const Padding(
-                          padding: EdgeInsets.only(left: 16),
-                          child: HexMark(size: 24, color: AppColors.accent),
-                        ),
-                ),
-                // Action capsule, right.
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 10),
-                    child: _GlassActionCapsule(location: location),
-                  ),
-                ),
-              ],
+            title: Text(
+              titleText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: AppTheme.fontBrand,
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+                color: AppColors.ink,
+              ),
             ),
+            actions: [_GlassActionCapsule(location: location)],
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Circular ghost back button shown on the left of the glass app bar for
-/// sub-pages (replacing the brand mark).
-class _GlassBackButton extends StatelessWidget {
-  const _GlassBackButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: MaterialLocalizations.of(context).backButtonTooltip,
-      child: Material(
-        color: Colors.transparent,
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: SizedBox(
-            width: 40,
-            height: 40,
-            child: Icon(Icons.arrow_back_rounded,
-                size: 22, color: AppColors.ink),
-          ),
-        ),
       ),
     );
   }
