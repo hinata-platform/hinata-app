@@ -5,7 +5,7 @@
 
 <!-- Tagline -->
 <p align="center">
-  <b>Open-source, self-hosted project &amp; issue tracking — the Flutter app for the <a href="../Hivora-Server">Hivora Server</a>.</b><br>
+  <b>Open-source, self-hosted project &amp; issue tracking — the Flutter app for the <a href="https://github.com/Ahmadre/Hivora-Server">Hivora Server</a>.</b><br>
   <sub>One codebase · Android · iOS · Web · macOS · no user or board limits, ever.</sub>
 </p>
 
