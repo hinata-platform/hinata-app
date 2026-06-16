@@ -18,6 +18,7 @@
 </p>
 
 <p align="center">
+  <a href="#-screenshots">Screenshots</a> ·
   <a href="#-how-it-works">How it works</a> ·
   <a href="#-features">Features</a> ·
   <a href="#-architecture">Architecture</a> ·
@@ -36,8 +37,33 @@ through golden-ratio-derived breakpoints (no fixed pixel widths), and the UI
 ships in **English (UK)** and **Deutsch (Deutschland)** via i18next — with error
 messages localized **by the server** through the `Accept-Language` header.
 
-> 🎨 **Design language** — navy nav rail · warm-paper workspace · a signature
-> honey-amber accent (`#D9A032`) that reads identically in light and dark mode.
+> 🎨 **Design language** — a navy navigation rail, a warm-paper workspace and a
+> signature honey-amber accent (`#D9A032`) that reads identically in light and
+> dark mode, accented with subtle **liquid-glass** surfaces on the mobile nav,
+> the ⌘K palette and the attachment lightbox.
+
+---
+
+## 📸 Screenshots
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/dashboard.png" alt="Dashboard — today's focus, completion, weekly tracking and team performance"></td>
+    <td width="50%"><img src="docs/screenshots/board.png" alt="Agile board — drag &amp; drop columns with WIP limits and sprint header"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>Dashboard</b> — today's focus, completion, weekly tracking, team ranking</sub></td>
+    <td align="center"><sub><b>Agile board</b> — calm columns, WIP limits, live sprint header</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/sprints.png" alt="Sprint planning — backlog ordering, capacity and story points"></td>
+    <td width="50%"><img src="docs/screenshots/reports.png" alt="Reports — burndown, velocity, cycle time and type distribution"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>Sprints</b> — plan, run &amp; review with capacity and points</sub></td>
+    <td align="center"><sub><b>Reports</b> — burndown, velocity, cycle time, distributions</sub></td>
+  </tr>
+</table>
 
 ---
 
@@ -57,24 +83,29 @@ messages localized **by the server** through the `Accept-Language` header.
 
 <table>
   <tr>
-    <td>📊 <b>Dashboard</b><br><sub>today's tasks, completion, ranking, tracker</sub></td>
-    <td>📁 <b>Projects</b><br><sub>per-project workflows &amp; keys</sub></td>
-    <td>🐛 <b>Issues</b><br><sub>comments, attachments, time logging</sub></td>
+    <td>📊 <b>Dashboard</b><br><sub>today's focus, completion, ranking, weekly tracker</sub></td>
+    <td>📁 <b>Projects &amp; teams</b><br><sub>per-project workflows, keys &amp; members</sub></td>
+    <td>🐛 <b>Issues</b><br><sub>comments, attachments, subtasks, time logging</sub></td>
   </tr>
   <tr>
-    <td>📋 <b>Agile board</b><br><sub>drag &amp; drop, WIP limits</sub></td>
-    <td>📈 <b>Gantt</b><br><sub>timeline &amp; dependencies</sub></td>
-    <td>⏱️ <b>Timesheets</b><br><sub>weekly time tracking</sub></td>
+    <td>📋 <b>Agile board</b><br><sub>drag &amp; drop, WIP limits, Board / Backlog / Timeline views</sub></td>
+    <td>🏃 <b>Sprints</b><br><sub>plan, run &amp; review · capacity, points, burndown</sub></td>
+    <td>📈 <b>Gantt / Timeline</b><br><sub>dependencies, start/due dates, progress</sub></td>
   </tr>
   <tr>
-    <td>📑 <b>Reports</b><br><sub>distributions &amp; trends</sub></td>
+    <td>⏱️ <b>Timesheets</b><br><sub>weekly time tracking by activity</sub></td>
+    <td>📑 <b>Reports</b><br><sub>burndown, velocity, cycle time, distributions</sub></td>
+    <td>🏷️ <b>Reusable labels</b><br><sub>multi-select picker, project-wide tags</sub></td>
+  </tr>
+  <tr>
+    <td>📎 <b>Attachments</b><br><sub>drag-drop grid, glass lightbox, live (SSE) sync</sub></td>
     <td>📚 <b>Knowledge base</b><br><sub>hierarchical Markdown</sub></td>
     <td>🔔 <b>Notifications</b><br><sub>in-app &amp; e-mail</sub></td>
   </tr>
   <tr>
-    <td>⚙️ <b>Settings</b><br><sub>language, privacy, versions</sub></td>
+    <td>🔍 <b>Command palette</b><br><sub>⌘K global search · recents &amp; triggers</sub></td>
+    <td>⚙️ <b>Settings</b><br><sub>language, theme &amp; dark mode, privacy, versions</sub></td>
     <td>🛠️ <b>Admin</b><br><sub>SSO, mail-to-ticket, users</sub></td>
-    <td>🔍 <b>Command palette</b><br><sub>⌘K global search</sub></td>
   </tr>
 </table>
 
@@ -88,6 +119,7 @@ flowchart LR
     BLOC --> REPO["📦 HivoraRepository"]
     REPO --> API["🌐 ApiClient<br/>(dio + token refresh)"]
     API -->|"REST /api/v1<br/>Accept-Language"| SRV["☕ Hivora Server"]
+    SRV -.->|"SSE live updates"| BLOC
     ROUTER["🧭 go_router<br/>auth-aware redirects"] -.-> UI
     I18N["🌍 i18next<br/>en · de"] -.-> UI
 ```
@@ -104,14 +136,20 @@ flowchart LR
 | **i18n** | i18next (`assets/i18n/{en,de}/common.json`) |
 | **Networking** | dio (automatic token refresh, `Accept-Language`) |
 | **Modals** | wolt_modal_sheet (sheet on phones, dialog on desktop) |
-| **Charts** | fl_chart |
+| **Charts** | fl_chart (burndown, velocity, completion) |
+| **Glass UI** | `liquid_glass_widgets` (vendored under `packages/`, MIT) |
+| **Attachments** | file_picker · desktop_drop · cross_file |
+| **Export** | pdf · printing |
 
 ```text
 lib/
-  core/        theme, responsive system, i18n, api, models, blocs, router, widgets
-  features/    connect, setup, onboarding, auth, shell, dashboard, projects,
-               issues, board, gantt, timesheet, reports, knowledge,
-               notifications, settings, admin
+  core/        theme, responsive system, i18n, api, models, blocs,
+               router, storage, widgets
+  features/    connect, setup, onboarding, auth, shell, dashboard,
+               projects, issues, board, sprint, gantt, timesheet,
+               reports, knowledge, search, notifications, settings, admin
+packages/
+  liquid_glass_widgets/   vendored glass surfaces (full control)
 ```
 </details>
 
