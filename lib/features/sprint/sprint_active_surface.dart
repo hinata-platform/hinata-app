@@ -8,7 +8,6 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../board/board_filter.dart';
 import 'widgets/glass_sprint_header.dart';
-import 'widgets/sprint_widgets.dart';
 
 /// Active-sprint surface: the Liquid-Glass sprint header above a sprint-scoped
 /// Kanban board (To Do → In Progress → In Review → Done, WIP limits, drag).
@@ -19,74 +18,33 @@ class SprintActiveSurface extends StatelessWidget {
     required this.columns,
     required this.issues,
     required this.filter,
-    required this.names,
     required this.onOpenIssue,
     required this.onMoveState,
-    required this.onComplete,
-    required this.headerCollapsed,
-    required this.onToggleHeader,
   });
 
   final Sprint sprint;
   final List<BoardColumnView> columns;
   final List<Issue> issues;
   final BoardFilter filter;
-  final Map<String, String> names;
   final void Function(Issue) onOpenIssue;
   final void Function(Issue, String) onMoveState;
-  final VoidCallback onComplete;
-  final bool headerCollapsed;
-  final VoidCallback onToggleHeader;
 
   bool _isBacklogColumn(BoardColumnView c) =>
       c.name.trim().toLowerCase() == 'backlog' ||
       c.states.any((s) => s.toUpperCase() == 'BACKLOG');
-
-  List<CapacityPerson> _capacityStrip() {
-    final map = <String, ({int done, int total})>{};
-    for (final i in issues) {
-      final id = i.assigneeId ?? '';
-      final cur = map[id] ?? (done: 0, total: 0);
-      final p = pointsOf(i);
-      map[id] = (done: cur.done + (i.resolved ? p : 0), total: cur.total + p);
-    }
-    final out = [
-      for (final e in map.entries)
-        (
-          userId: e.key,
-          name: (names[e.key] ?? '?').split(' ').first,
-          done: e.value.done,
-          total: e.value.total,
-        ),
-    ]..sort((a, b) => b.total.compareTo(a.total));
-    return out;
-  }
 
   @override
   Widget build(BuildContext context) {
     final gutter = context.pageGutter;
     final boardColumns =
         columns.where((c) => !_isBacklogColumn(c)).toList(growable: false);
-    final committed = sumPoints(issues);
-    final donePts = sumPoints(issues.where((i) => i.resolved));
-    final issuesDone = issues.where((i) => i.resolved).length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
           padding: EdgeInsets.fromLTRB(gutter, 0, gutter, 12),
-          child: GlassSprintHeader(
-            sprint: sprint,
-            committed: committed,
-            donePoints: donePts,
-            issuesDone: issuesDone,
-            issuesTotal: issues.length,
-            capacity: _capacityStrip(),
-            onComplete: onComplete,
-            collapsed: headerCollapsed,
-            onToggleCollapsed: onToggleHeader,
-          ),
+          child: GlassSprintHeader(sprint: sprint),
         ),
         Expanded(
           child: boardColumns.isEmpty

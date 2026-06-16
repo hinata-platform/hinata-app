@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/hivora_repository.dart';
 import '../../core/i18n/i18n.dart';
-import '../../core/storage/app_storage.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
@@ -69,10 +68,6 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
 
   bool _loading = true;
   String? _error;
-
-  // Active-sprint glass header collapse state (persisted app-wide).
-  late bool _headerCollapsed =
-      context.read<AppStorage>().sprintHeaderCollapsed;
 
   // Shared people/criteria filter for the Planning + Active surfaces.
   BoardFilter _filter = BoardFilter.empty;
@@ -261,11 +256,6 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
 
   /// Resolves [key] against i18n only after confirming the widget is still
   /// mounted, so [context] is never read across an async gap.
-  void _toggleHeader() {
-    setState(() => _headerCollapsed = !_headerCollapsed);
-    context.read<AppStorage>().setSprintHeaderCollapsed(_headerCollapsed);
-  }
-
   void _toastKey(String key, {Map<String, dynamic>? vars}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -633,12 +623,8 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
           columns: widget.view.columns,
           issues: _activeIssues,
           filter: _filter,
-          names: widget.names,
           onOpenIssue: widget.onOpenIssue,
           onMoveState: _moveIssueState,
-          onComplete: () => _completeSprint(sprint),
-          headerCollapsed: _headerCollapsed,
-          onToggleHeader: _toggleHeader,
         );
       case _Tab.insights:
         final sprint = _activeSprint;

@@ -12,7 +12,6 @@ class AppStorage {
   static const _kOnboardingDone = 'onboarding_done';
   static const _kLocale = 'locale';
   static const _kRecentSearch = 'hivora.recentSearch.v1';
-  static const _kSprintHeadCollapsed = 'hivora.sprintHead.collapsed';
 
   /// Maximum number of recent global-search queries kept on device.
   static const recentSearchMax = 6;
@@ -43,13 +42,6 @@ class AppStorage {
 
   String? get locale => _prefs.getString(_kLocale);
   Future<void> setLocale(String code) => _prefs.setString(_kLocale, code);
-
-  /// Whether the active-sprint glass header is collapsed (persisted like the
-  /// reference's `hv-sprint-head` flag).
-  bool get sprintHeaderCollapsed =>
-      _prefs.getBool(_kSprintHeadCollapsed) ?? false;
-  Future<void> setSprintHeaderCollapsed(bool collapsed) =>
-      _prefs.setBool(_kSprintHeadCollapsed, collapsed);
 
   /// Recent global-search queries, most-recent first (max [recentSearchMax]).
   List<String> get recentSearches =>
