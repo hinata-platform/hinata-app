@@ -434,6 +434,8 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
               decoration: InputDecoration(
                 isCollapsed: true,
                 border: InputBorder.none,
+                filled: false,
+                errorBorder: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
                 hintText: context.t(
