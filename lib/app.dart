@@ -112,11 +112,21 @@ class _HivoraAppState extends State<HivoraApp> {
                   localizationsDelegates: I18n.delegates(),
                   routerConfig: _router,
                   // Sync the runtime brightness that drives AppColors' neutral
-                  // getters with whatever theme MaterialApp actually resolved
-                  // (handles ThemeMode.system following the OS). Runs above the
-                  // router subtree each build, so screens read fresh values.
+                  // getters with the user's chosen ThemeMode (following the OS
+                  // for ThemeMode.system). We resolve this from the mode/platform
+                  // directly rather than Theme.of(context).brightness: MaterialApp
+                  // *animates* between the light/dark ThemeData and that discrete
+                  // brightness flag only flips at the animation midpoint, which
+                  // would make AppColors' neutral colors lag the switch by ~100ms.
+                  // Runs above the router subtree each build, so screens that read
+                  // AppColors get the correct value on the very first frame.
                   builder: (context, child) {
-                    AppColors.brightness = Theme.of(context).brightness;
+                    AppColors.brightness = switch (themeMode) {
+                      ThemeMode.light => Brightness.light,
+                      ThemeMode.dark => Brightness.dark,
+                      ThemeMode.system =>
+                        MediaQuery.platformBrightnessOf(context),
+                    };
                     return child ?? const SizedBox.shrink();
                   },
                 );

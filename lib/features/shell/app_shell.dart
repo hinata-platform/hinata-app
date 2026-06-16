@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/api/hivora_repository.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
+import '../../core/blocs/theme_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
 import '../../core/models/core_models.dart';
@@ -103,6 +104,14 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    // The shell is persistent (it outlives route changes) and paints
+    // theme-aware surfaces by reading AppColors' static getters — which don't
+    // trigger rebuilds on their own. Subscribe to the inputs that resolve the
+    // active brightness so the whole shell subtree re-runs build (and re-reads
+    // AppColors) the moment the theme flips: the chosen ThemeMode, plus the OS
+    // brightness for ThemeMode.system.
+    context.watch<ThemeCubit>();
+    MediaQuery.platformBrightnessOf(context);
     return PageChromeScope(
       controller: _chrome,
       child: ResponsiveBuilder(
