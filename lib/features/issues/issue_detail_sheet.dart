@@ -96,7 +96,6 @@ Future<void> showIssueDetailSheet(
         ),
         trailingNavBarWidget: _SheetActions(
           onCopyLink: () => bodyKey.currentState?.copyIssueLink(),
-          onEdit: () => bodyKey.currentState?.beginTitleEdit(),
           onDelete: () => bodyKey.currentState?.confirmDeleteIssue(),
           onClose: () => Navigator.of(modalContext).maybePop(),
         ),
@@ -117,18 +116,15 @@ Future<void> showIssueDetailSheet(
   ).whenComplete(header.dispose);
 }
 
-/// Copy-link · overflow menu (edit / delete) · close — rendered in the wolt
-/// top bar. All secondary actions live in the 3-dot menu.
+/// Copy-link · delete · close — rendered in the wolt top bar.
 class _SheetActions extends StatelessWidget {
   const _SheetActions({
     required this.onCopyLink,
-    required this.onEdit,
     required this.onDelete,
     required this.onClose,
   });
 
   final VoidCallback onCopyLink;
-  final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onClose;
 
@@ -142,60 +138,21 @@ class _SheetActions extends StatelessWidget {
           onPressed: onCopyLink,
           icon: Icon(Icons.link_rounded, size: 20, color: AppColors.inkSoft),
         ),
-        _IssueOverflowMenu(onEdit: onEdit, onDelete: onDelete),
+        IconButton(
+          tooltip: context.t('common.delete'),
+          onPressed: onDelete,
+          icon: const Icon(
+            Icons.delete_outline_rounded,
+            size: 20,
+            color: AppColors.danger,
+          ),
+        ),
         IconButton(
           tooltip: context.t('common.cancel'),
           onPressed: onClose,
           icon: Icon(Icons.close_rounded, size: 20, color: AppColors.inkSoft),
         ),
         const SizedBox(width: 16),
-      ],
-    );
-  }
-}
-
-/// Shared 3-dot menu holding the edit + delete actions.
-class _IssueOverflowMenu extends StatelessWidget {
-  const _IssueOverflowMenu({required this.onEdit, required this.onDelete});
-
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return PopupMenuButton<String>(
-      tooltip: '',
-      icon: Icon(Icons.more_horiz_rounded, size: 22, color: AppColors.inkSoft),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onSelected: (value) => value == 'edit' ? onEdit() : onDelete(),
-      itemBuilder: (_) => [
-        PopupMenuItem(
-          value: 'edit',
-          child: Row(
-            children: [
-              Icon(Icons.edit_rounded, size: 18, color: AppColors.inkSoft),
-              const SizedBox(width: 10),
-              Text(context.t('issues.edit')),
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: 'delete',
-          child: Row(
-            children: [
-              const Icon(
-                Icons.delete_outline_rounded,
-                size: 18,
-                color: AppColors.danger,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                context.t('common.delete'),
-                style: const TextStyle(color: AppColors.danger),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -441,7 +398,6 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
             issue: issue,
             busy: _busy,
             onCopyLink: copyIssueLink,
-            onEdit: beginTitleEdit,
             onDelete: () => _confirmDelete(issue),
             onClose: () => Navigator.of(context).maybePop(),
           ),
@@ -1995,7 +1951,6 @@ class _RouteTopBar extends StatelessWidget {
     required this.issue,
     required this.busy,
     required this.onCopyLink,
-    required this.onEdit,
     required this.onDelete,
     required this.onClose,
   });
@@ -2003,7 +1958,6 @@ class _RouteTopBar extends StatelessWidget {
   final Issue issue;
   final bool busy;
   final VoidCallback onCopyLink;
-  final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onClose;
 
@@ -2038,7 +1992,15 @@ class _RouteTopBar extends StatelessWidget {
             onPressed: onCopyLink,
             icon: Icon(Icons.link_rounded, size: 20, color: AppColors.inkSoft),
           ),
-          _IssueOverflowMenu(onEdit: onEdit, onDelete: onDelete),
+          IconButton(
+            tooltip: context.t('common.delete'),
+            onPressed: onDelete,
+            icon: const Icon(
+              Icons.delete_outline_rounded,
+              size: 20,
+              color: AppColors.danger,
+            ),
+          ),
         ],
       ),
     );
