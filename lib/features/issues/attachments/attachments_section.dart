@@ -932,37 +932,45 @@ class _DropOverlay extends StatelessWidget {
           style: BorderStyle.solid,
         ),
       ),
+      // Scale the contents down when the zone is shorter than the icon+label
+      // stack (e.g. the compact empty dropzone) so the overlay never overflows.
       child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.accent.withValues(alpha: 0.5),
-                    blurRadius: 22,
-                    offset: const Offset(0, 8),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.accent.withValues(alpha: 0.5),
+                        blurRadius: 22,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Icon(Icons.cloud_upload_outlined,
-                  size: 22, color: AppColors.accentStrong),
+                  child: Icon(Icons.cloud_upload_outlined,
+                      size: 22, color: AppColors.accentStrong),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  context.t('issues.attachments.dropHere'),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.accentStrong,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              context.t('issues.attachments.dropHere'),
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppColors.accentStrong,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
