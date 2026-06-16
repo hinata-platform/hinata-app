@@ -463,8 +463,6 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
             ),
           ),
         ],
-        const Spacer(),
-        _AddButton(onTap: _pick, label: context.t('issues.attachments.add')),
       ],
     );
   }
