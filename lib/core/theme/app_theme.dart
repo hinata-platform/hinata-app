@@ -157,6 +157,7 @@ abstract final class AppTheme {
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.navyDeep,
         behavior: SnackBarBehavior.floating,
+        width: 360,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusControl),
         ),
