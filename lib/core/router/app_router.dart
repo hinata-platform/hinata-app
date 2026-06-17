@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -156,40 +156,40 @@ GoRouter buildRouter({
         routes: [
           GoRoute(
             path: '/dashboard',
-            pageBuilder: (_, state) => _fadeUpPage(state, const DashboardScreen()),
+            pageBuilder: (_, state) => _transition(state, const DashboardScreen()),
           ),
           GoRoute(
             path: '/projects',
-            pageBuilder: (_, state) => _fadeUpPage(state, const ProjectsScreen()),
+            pageBuilder: (_, state) => _transition(state, const ProjectsScreen()),
           ),
           GoRoute(
             path: '/issues',
-            pageBuilder: (_, state) => _fadeUpPage(
+            pageBuilder: (_, state) => _transition(
               state,
               IssuesScreen(projectId: state.uri.queryParameters['projectId']),
             ),
           ),
           GoRoute(
             path: '/issues/:id',
-            pageBuilder: (_, state) => _fadeUpPage(
+            pageBuilder: (_, state) => _transition(
               state,
               IssueDetailScreen(issueId: state.pathParameters['id']!),
             ),
           ),
           GoRoute(
             path: '/board',
-            pageBuilder: (_, state) => _fadeUpPage(state, const BoardScreen()),
+            pageBuilder: (_, state) => _transition(state, const BoardScreen()),
           ),
           GoRoute(
             path: '/boards/:id',
-            pageBuilder: (_, state) => _fadeUpPage(
+            pageBuilder: (_, state) => _transition(
               state,
               KanbanBoardScreen(boardId: state.pathParameters['id']!),
             ),
           ),
           GoRoute(
             path: '/projects/:id/boards',
-            pageBuilder: (_, state) => _fadeUpPage(
+            pageBuilder: (_, state) => _transition(
               state,
               ProjectBoardsScreen(
                 projectId: state.pathParameters['id']!,
@@ -199,23 +199,23 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/gantt',
-            pageBuilder: (_, state) => _fadeUpPage(state, const GanttScreen()),
+            pageBuilder: (_, state) => _transition(state, const GanttScreen()),
           ),
           GoRoute(
             path: '/timesheet',
-            pageBuilder: (_, state) => _fadeUpPage(state, const TimesheetScreen()),
+            pageBuilder: (_, state) => _transition(state, const TimesheetScreen()),
           ),
           GoRoute(
             path: '/reports',
-            pageBuilder: (_, state) => _fadeUpPage(state, const ReportsScreen()),
+            pageBuilder: (_, state) => _transition(state, const ReportsScreen()),
           ),
           GoRoute(
             path: '/knowledge',
-            pageBuilder: (_, state) => _fadeUpPage(state, const KnowledgeScreen()),
+            pageBuilder: (_, state) => _transition(state, const KnowledgeScreen()),
           ),
           GoRoute(
             path: '/knowledge/:id',
-            pageBuilder: (_, state) => _fadeUpPage(
+            pageBuilder: (_, state) => _transition(
               state,
               ArticleScreen(articleId: state.pathParameters['id']!),
             ),
@@ -223,19 +223,19 @@ GoRouter buildRouter({
           GoRoute(
             path: '/notifications',
             pageBuilder: (_, state) =>
-                _fadeUpPage(state, const NotificationsScreen()),
+                _transition(state, const NotificationsScreen()),
           ),
           GoRoute(
             path: '/settings',
-            pageBuilder: (_, state) => _fadeUpPage(state, const SettingsScreen()),
+            pageBuilder: (_, state) => _transition(state, const SettingsScreen()),
           ),
           GoRoute(
             path: '/admin',
-            pageBuilder: (_, state) => _fadeUpPage(state, const AdminScreen()),
+            pageBuilder: (_, state) => _transition(state, const AdminScreen()),
           ),
           GoRoute(
             path: '/admin/users',
-            pageBuilder: (_, state) => _fadeUpPage(state, const AdminUsersScreen()),
+            pageBuilder: (_, state) => _transition(state, const AdminUsersScreen()),
           ),
         ],
       ),
@@ -243,34 +243,32 @@ GoRouter buildRouter({
   );
 }
 
-/// v2 page transition: a short, soft rise-up + fade for the incoming page.
+/// v2 page transition: a soft vertical "fade through" — content rises from
+/// just below and fades in, with no overlap of the old and new pages.
 ///
 /// Replaces the platform default (a horizontal Cupertino slide on macOS/desktop
 /// where the new page flies in from the right and the old one slides out left,
-/// briefly overlapping). Here the new page eases up a hair from below while
-/// fading in; the outgoing page stays put underneath and is simply covered, so
-/// there is no horizontal overlap. Quick (220ms in / 160ms out) and gentle.
-CustomTransitionPage<void> _fadeUpPage(GoRouterState state, Widget child) =>
+/// briefly overlapping).
+///
+/// The earlier hand-rolled crossfade only faded the *incoming* page, so the
+/// outgoing page sat fully opaque underneath and the two visibly overlapped
+/// mid-transition. [SharedAxisTransition] (vertical) instead coordinates both
+/// pages on a shared timeline: the outgoing page fades + drifts up and out
+/// first, then the incoming page fades + rises in — they are never both visible
+/// at once. `fillColor` is transparent so the canvas (not an opaque box) shows
+/// through during the brief hand-off.
+CustomTransitionPage<void> _transition(GoRouterState state, Widget child) =>
     CustomTransitionPage<void>(
       key: state.pageKey,
-      transitionDuration: const Duration(milliseconds: 220),
-      reverseTransitionDuration: const Duration(milliseconds: 160),
+      transitionDuration: const Duration(milliseconds: 280),
+      reverseTransitionDuration: const Duration(milliseconds: 180),
       child: child,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        final eased = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeInCubic,
-        );
-        return FadeTransition(
-          opacity: eased,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.025),
-              end: Offset.zero,
-            ).animate(eased),
-            child: child,
-          ),
-        );
-      },
+      transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+          SharedAxisTransition(
+        animation: animation,
+        secondaryAnimation: secondaryAnimation,
+        transitionType: SharedAxisTransitionType.vertical,
+        fillColor: Colors.transparent,
+        child: child,
+      ),
     );
