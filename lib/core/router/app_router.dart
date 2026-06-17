@@ -253,7 +253,7 @@ GoRouter buildRouter({
 CustomTransitionPage<void> _fadeUpPage(GoRouterState state, Widget child) =>
     CustomTransitionPage<void>(
       key: state.pageKey,
-      transitionDuration: const Duration(milliseconds: 300),
+      transitionDuration: const Duration(milliseconds: 220),
       reverseTransitionDuration: const Duration(milliseconds: 160),
       child: child,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
