@@ -323,13 +323,8 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     for (final c in _view?.columns ?? const <BoardColumnView>[]) ...c.issues,
   ];
 
-  bool _isBacklogColumn(BoardColumnView c) =>
-      c.name.trim().toLowerCase() == 'backlog' ||
-      c.states.any((s) => s.toUpperCase() == 'BACKLOG');
-
   List<BoardColumnView> get _kanbanColumns =>
       (_view?.columns ?? const <BoardColumnView>[])
-          .where((c) => !_isBacklogColumn(c))
           .toList();
 
   List<String> get _peopleIds {
