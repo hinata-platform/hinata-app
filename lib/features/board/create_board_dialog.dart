@@ -41,8 +41,7 @@ class _CreateBoardBody extends StatefulWidget {
 class _CreateBoardBodyState extends State<_CreateBoardBody> {
   final _name = TextEditingController();
   BoardType _type = BoardType.kanban;
-  late String _projectId =
-      widget.initialProjectId ?? widget.projects.first.id;
+  late String _projectId = widget.initialProjectId ?? widget.projects.first.id;
   bool _saving = false;
   String? _error;
 
@@ -135,8 +134,9 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: AppColors.surface.withValues(alpha: 0.7),
-                      borderRadius:
-                          BorderRadius.circular(AppTheme.radiusControl),
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.radiusControl,
+                      ),
                       border: Border.all(color: AppColors.hairline),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 13),
@@ -144,8 +144,9 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
                       child: DropdownButton<String>(
                         value: _projectId,
                         isExpanded: true,
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusControl),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusControl,
+                        ),
                         items: [
                           for (final p in widget.projects)
                             DropdownMenuItem(value: p.id, child: Text(p.name)),

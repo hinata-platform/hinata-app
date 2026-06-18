@@ -190,11 +190,7 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
           _Opt(
             value: BoardFilter.noSprint,
             label: context.t('issues.noSprint'),
-            leading: Icon(
-              LucideIcons.ban,
-              size: 18,
-              color: AppColors.inkFaint,
-            ),
+            leading: Icon(LucideIcons.ban, size: 18, color: AppColors.inkFaint),
           ),
           for (final id in widget.options.sprints)
             _Opt(
@@ -303,7 +299,10 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
 
   Widget _shadowed(SearchTokens tokens, BorderRadius radius, Widget child) =>
       GlassPanelShadow(
-          radius: radius, shadows: tokens.panelShadow, child: child);
+        radius: radius,
+        shadows: tokens.panelShadow,
+        child: child,
+      );
 
   Widget _glassPanel(SearchTokens tokens) {
     final dark = Theme.of(context).brightness == Brightness.dark;
@@ -328,7 +327,10 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
       quality: GlassQuality.premium,
       clipBehavior: Clip.antiAlias,
       shape: const LiquidRoundedSuperellipse(borderRadius: 20),
-      settings: liquidGlassPanelSettings(glassFill: tokens.glassFill, dark: dark),
+      settings: liquidGlassPanelSettings(
+        glassFill: tokens.glassFill,
+        dark: dark,
+      ),
       child: content,
     );
   }

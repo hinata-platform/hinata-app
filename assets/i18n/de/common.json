@@ -367,7 +367,11 @@
     "typeKanban": "Kanban",
     "typeKanbanDesc": "Kontinuierlicher Fluss — ohne feste Zeitintervalle. Aufgaben werden nacheinander durch die Spalten gezogen.",
     "typeScrum": "Scrum",
-    "typeScrumDesc": "Projektmanagement in festen Sprints (2–4 Wochen). Aufgaben aus dem Backlog je Sprint einplanen."
+    "typeScrumDesc": "Projektmanagement in festen Sprints (2–4 Wochen). Aufgaben aus dem Backlog je Sprint einplanen.",
+    "renameBoard": "Board umbenennen",
+    "renameTitle": "Board umbenennen",
+    "renameSubtitle": "Gib diesem Board einen neuen Namen.",
+    "manageBoard": "Board-Optionen"
   },
   "gantt": {
     "title": "Zeitachse",

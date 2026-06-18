@@ -233,6 +233,11 @@ class _ProjectCard extends StatelessWidget {
     // Mobile shows the compact gear in the corner; larger views show the
     // full-width "Settings" button in the footer instead.
     final compact = context.isCompact;
+    // Only project leads (and platform admins) may open project settings —
+    // regular members work on the project but never see its configuration.
+    final me = context.read<AuthBloc>().state.user;
+    final canManage = me != null &&
+        (me.isAdmin || project.leadIds.contains(me.id));
     final color = _projectColor(project);
     final glyphColor = project.archived
         ? HSLColor.fromColor(color).withSaturation(0.25).toColor()
@@ -278,7 +283,7 @@ class _ProjectCard extends StatelessWidget {
                   children: [
                     // Leave room for the corner gear only when it's shown.
                     Padding(
-                      padding: EdgeInsets.only(right: compact ? 26 : 0),
+                      padding: EdgeInsets.only(right: compact && canManage ? 26 : 0),
                       child: Text(
                         project.name,
                         maxLines: 1,
@@ -342,7 +347,7 @@ class _ProjectCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
               ],
-              if (!compact) _SettingsButton(onTap: onSettings),
+              if (!compact && canManage) _SettingsButton(onTap: onSettings),
             ],
           ),
         ],
@@ -352,7 +357,7 @@ class _ProjectCard extends StatelessWidget {
     final stacked = Stack(
       children: [
         card,
-        if (compact)
+        if (compact && canManage)
           Positioned(top: 10, right: 10, child: _GearButton(onTap: onSettings)),
       ],
     );

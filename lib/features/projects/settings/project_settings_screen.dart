@@ -3,9 +3,11 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/hivora_repository.dart';
+import '../../../core/blocs/auth_bloc.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/core_models.dart';
 import '../../../core/models/work_models.dart';
@@ -108,6 +110,16 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
       final project = results[0] as Project;
       final users = results[1] as List<DirectoryUser>;
       final usage = results[2] as Map<String, int>;
+      // Settings are lead/admin-only. A member who deep-links here is bounced
+      // back to the project's issues (the server also rejects any save).
+      if (!mounted) return;
+      final me = context.read<AuthBloc>().state.user;
+      final canManage =
+          me != null && (me.isAdmin || project.leadIds.contains(me.id));
+      if (!canManage) {
+        context.go('/issues?projectId=${widget.projectId}');
+        return;
+      }
       setState(() {
         _saved = project;
         _draft = project;

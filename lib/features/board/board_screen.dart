@@ -9,8 +9,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/api/hivora_repository.dart';
+import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
+import '../../core/models/team_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
@@ -18,13 +20,13 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/project_palette.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
-import '../deletion/delete_flows.dart';
 import '../issues/issue_detail_sheet.dart';
 import '../issues/issue_form.dart';
 import '../issues/issues_screen.dart' show IssueRow;
 import '../shell/page_chrome.dart';
 import '../sprint/sprint_board_view.dart';
 import 'board_filter.dart';
+import 'board_manage_menu.dart';
 import 'create_board_dialog.dart';
 import 'board_filter_popup.dart';
 import 'board_people_strip.dart';
@@ -44,9 +46,28 @@ class BoardScreen extends StatefulWidget {
 class _BoardScreenState extends State<BoardScreen> {
   List<AgileBoard> _boards = const [];
   List<Project> _projects = const [];
+  List<Team> _teams = const [];
   String? _projectFilter;
   bool _loading = true;
   String? _error;
+
+  /// Owner / project-lead / team-lead / platform-admin may manage a board.
+  bool _canManageBoard(AgileBoard board) {
+    final me = context.read<AuthBloc>().state.user;
+    if (me == null) return false;
+    if (me.isAdmin || board.ownerId == me.id) return true;
+    for (final pid in board.projectIds) {
+      final project = _projects.where((p) => p.id == pid).firstOrNull;
+      if (project != null && project.leadIds.contains(me.id)) return true;
+      final teamLead = _teams.any(
+        (t) =>
+            t.projectIds.contains(pid) &&
+            (t.membershipOf(me.id)?.isAdmin ?? false),
+      );
+      if (teamLead) return true;
+    }
+    return false;
+  }
 
   @override
   void initState() {
@@ -64,9 +85,11 @@ class _BoardScreenState extends State<BoardScreen> {
       final results = await Future.wait([
         repo.projects(),
         repo.boards(projectId: _projectFilter),
+        repo.teams(),
       ]);
       _projects = results[0] as List<Project>;
       _boards = results[1] as List<AgileBoard>;
+      _teams = results[2] as List<Team>;
       setState(() => _loading = false);
     } on ApiFailure catch (failure) {
       setState(() {
@@ -173,7 +196,9 @@ class _BoardScreenState extends State<BoardScreen> {
             hasScrollBody: false,
             child: Padding(
               padding: EdgeInsets.symmetric(
-                  horizontal: context.pageGutter, vertical: 24),
+                horizontal: context.pageGutter,
+                vertical: 24,
+              ),
               child: Center(
                 child: HiveEmptyState(
                   title: context.t('board.title'),
@@ -211,7 +236,8 @@ class _BoardScreenState extends State<BoardScreen> {
                   board: _boards[index],
                   index: index,
                   projects: _projects,
-                  onDeleted: _load,
+                  canManage: _canManageBoard(_boards[index]),
+                  onChanged: _load,
                 ),
                 childCount: _boards.length,
               ),
@@ -241,6 +267,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   String? _sprintId;
   BoardView? _view;
   bool _loading = true;
+  bool _canManage = false;
   String? _error;
 
   BoardViewMode _mode = BoardViewMode.board;
@@ -270,15 +297,19 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
         repo.boardView(widget.boardId, sprintId: _sprintId),
         repo.users(),
         repo.projects(),
+        repo.teams(),
       ]);
       final view = results[0] as BoardView;
       final users = results[1] as List<DirectoryUser>;
       final projects = results[2] as List<Project>;
+      final teams = results[3] as List<Team>;
       final backlog = await _loadBacklog(repo, view.board.projectIds);
       if (!mounted) return;
       final boardProjectIds = view.board.projectIds.toSet();
+      final canManage = _resolveCanManage(view.board, projects, teams);
       setState(() {
         _view = view;
+        _canManage = canManage;
         _names = {for (final u in users) u.id: u.displayName};
         _projectNames = {for (final p in projects) p.id: p.name};
         _projectLabels = [
@@ -326,8 +357,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   ];
 
   List<BoardColumnView> get _kanbanColumns =>
-      (_view?.columns ?? const <BoardColumnView>[])
-          .toList();
+      (_view?.columns ?? const <BoardColumnView>[]).toList();
 
   List<String> get _peopleIds {
     final seen = <String>{};
@@ -478,16 +508,56 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
 
   /// Deletes the open board, then leaves for the boards overview (a fresh route
   /// so the list no longer shows it).
-  Future<void> _deleteThisBoard() async {
-    final view = _view;
-    if (view == null) return;
-    final deleted = await showDeleteBoardFlow(
-      context,
-      boardId: widget.boardId,
-      boardName: view.board.name,
-    );
-    if (deleted == true && mounted) context.go('/board');
+  /// Owner / project-lead / team-lead / platform-admin may manage this board.
+  bool _resolveCanManage(
+    AgileBoard board,
+    List<Project> projects,
+    List<Team> teams,
+  ) {
+    final me = context.read<AuthBloc>().state.user;
+    if (me == null) return false;
+    if (me.isAdmin || board.ownerId == me.id) return true;
+    for (final pid in board.projectIds) {
+      final project = projects.where((p) => p.id == pid).firstOrNull;
+      if (project != null && project.leadIds.contains(me.id)) return true;
+      if (teams.any(
+        (t) =>
+            t.projectIds.contains(pid) &&
+            (t.membershipOf(me.id)?.isAdmin ?? false),
+      )) {
+        return true;
+      }
+    }
+    return false;
   }
+
+  Future<void> _openManageMenu(BuildContext anchor) {
+    final view = _view;
+    if (view == null) return Future.value();
+    return openBoardManageMenu(
+      anchor,
+      board: view.board,
+      onChanged: _load,
+      onDeleted: () async {
+        if (mounted) context.go('/board');
+      },
+    );
+  }
+
+  Widget _manageButton() => Builder(
+    builder: (btnContext) => IconButton(
+      tooltip: context.t('board.manageBoard'),
+      padding: EdgeInsets.zero,
+      visualDensity: VisualDensity.compact,
+      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+      onPressed: () => _openManageMenu(btnContext),
+      icon: Icon(
+        LucideIcons.ellipsisVertical,
+        size: 16,
+        color: AppColors.inkSoft,
+      ),
+    ),
+  );
 
   Widget _header(BoardView view) {
     final projectLabel = view.board.projectIds
@@ -505,7 +575,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
           PageHead(
             title: view.board.name,
             subtitle: subtitle,
-            actions: [_BoardCardMenu(onDelete: _deleteThisBoard)],
+            actions: [if (_canManage) _manageButton()],
           ),
           const SizedBox(height: 12),
           // Right-aligned, collapsible, responsive-label switcher (mobile).
@@ -526,8 +596,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
           selected: _viewModes.indexOf(_mode).clamp(0, _viewModes.length - 1),
           onChanged: (i) => setState(() => _mode = _viewModes[i]),
         ),
-        const SizedBox(width: 8),
-        _BoardCardMenu(onDelete: _deleteThisBoard),
+        if (_canManage) ...[const SizedBox(width: 8), _manageButton()],
       ],
     );
   }
@@ -555,8 +624,9 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     ),
   };
 
-  List<SegmentItem> _switcherItems() =>
-      [for (final mode in _viewModes) _itemFor(mode)];
+  List<SegmentItem> _switcherItems() => [
+    for (final mode in _viewModes) _itemFor(mode),
+  ];
 
   // ---- meta area: sprint header + people strip + filter ----
 
@@ -770,7 +840,11 @@ class _BoardFilterButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(LucideIcons.slidersHorizontal, size: 16, color: AppColors.inkSoft),
+              Icon(
+                LucideIcons.slidersHorizontal,
+                size: 16,
+                color: AppColors.inkSoft,
+              ),
               const SizedBox(width: 7),
               Text(
                 context.t('board.filterButton'),
@@ -1065,11 +1139,7 @@ class _ActivePill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            LucideIcons.zap,
-            size: 13,
-            color: AppColors.accentStrong,
-          ),
+          const Icon(LucideIcons.zap, size: 13, color: AppColors.accentStrong),
           const SizedBox(width: 4),
           Text(
             context.t('board.active'),
@@ -1231,22 +1301,15 @@ class _BoardListCard extends StatelessWidget {
     required this.board,
     required this.index,
     required this.projects,
-    required this.onDeleted,
+    required this.canManage,
+    required this.onChanged,
   });
 
   final AgileBoard board;
   final int index;
   final List<Project> projects;
-  final Future<void> Function() onDeleted;
-
-  Future<void> _delete(BuildContext context) async {
-    final deleted = await showDeleteBoardFlow(
-      context,
-      boardId: board.id,
-      boardName: board.name,
-    );
-    if (deleted == true) await onDeleted();
-  }
+  final bool canManage;
+  final Future<void> Function() onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -1270,7 +1333,10 @@ class _BoardListCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(100),
@@ -1279,9 +1345,7 @@ class _BoardListCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      board.isScrum
-                          ? LucideIcons.zap
-                          : LucideIcons.columns3,
+                      board.isScrum ? LucideIcons.zap : LucideIcons.columns3,
                       size: 13,
                       color: AppColors.navy,
                     ),
@@ -1300,7 +1364,28 @@ class _BoardListCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              _BoardCardMenu(onDelete: () => _delete(context)),
+              if (canManage)
+                Builder(
+                  builder: (btnContext) => IconButton(
+                    tooltip: context.t('board.manageBoard'),
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints(
+                      minWidth: 28,
+                      minHeight: 28,
+                    ),
+                    onPressed: () => openBoardManageMenu(
+                      btnContext,
+                      board: board,
+                      onChanged: onChanged,
+                    ),
+                    icon: Icon(
+                      LucideIcons.ellipsisVertical,
+                      size: 16,
+                      color: AppColors.inkSoft,
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 10),
@@ -1330,41 +1415,6 @@ class _BoardListCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Overflow (⋮) menu on a board card with a single "Delete board" action. The
-/// menu absorbs the tap so it doesn't trigger the card's navigation.
-class _BoardCardMenu extends StatelessWidget {
-  const _BoardCardMenu({required this.onDelete});
-
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return PopupMenuButton<String>(
-      tooltip: '',
-      padding: EdgeInsets.zero,
-      icon: Icon(
-        LucideIcons.ellipsisVertical,
-        size: 16,
-        color: AppColors.inkSoft,
-      ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onSelected: (_) => onDelete(),
-      itemBuilder: (context) => [
-        PopupMenuItem<String>(
-          value: 'delete',
-          child: Row(
-            children: [
-              const Icon(LucideIcons.trash2, size: 15, color: AppColors.danger),
-              const SizedBox(width: 10),
-              Text(context.t('board.deleteBoard')),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
@@ -1421,7 +1471,6 @@ class _ProjectFilterChip extends StatelessWidget {
     );
   }
 }
-
 
 // ─────────────────────────── Kanban column ────────────────────────────────
 
@@ -1578,7 +1627,9 @@ class _BoardColumnState extends State<_BoardColumn> {
                                 childWhenDragging: Opacity(
                                   opacity: 0.35,
                                   child: _BoardCard(
-                                      issue: issue, palette: widget.palette),
+                                    issue: issue,
+                                    palette: widget.palette,
+                                  ),
                                 ),
                                 child: _BoardCard(
                                   issue: issue,

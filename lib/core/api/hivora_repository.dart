@@ -271,6 +271,13 @@ class HivoraRepository {
         as Map<String, dynamic>,
   );
 
+  /// Renames a board (management action — server enforces owner/lead/admin).
+  Future<AgileBoard> renameBoard(String boardId, String name) async =>
+      AgileBoard.fromJson(
+        await _api.patch('/api/v1/boards/$boardId', body: {'name': name})
+            as Map<String, dynamic>,
+      );
+
   Future<BoardView> boardView(String boardId, {String? sprintId}) async =>
       BoardView.fromJson(
         await _api.get(

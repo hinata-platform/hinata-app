@@ -8,15 +8,17 @@ import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/api/hivora_repository.dart';
+import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/i18n/i18n.dart';
+import '../../core/models/team_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/status_widgets.dart';
-import '../deletion/delete_flows.dart';
 import '../shell/page_chrome.dart';
+import 'board_manage_menu.dart';
 
 /// Lists all boards for a single project and allows creating new ones.
 class ProjectBoardsScreen extends StatefulWidget {
@@ -33,16 +35,38 @@ class ProjectBoardsScreen extends StatefulWidget {
   State<ProjectBoardsScreen> createState() => _ProjectBoardsScreenState();
 }
 
+typedef _BoardsData = ({List<AgileBoard> boards, bool canManageProject});
+
 class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
-  late final FetchCubit<List<AgileBoard>> _cubit;
+  late final FetchCubit<_BoardsData> _cubit;
 
   @override
   void initState() {
     super.initState();
-    _cubit = FetchCubit(
-      () =>
-          context.read<HivoraRepository>().boards(projectId: widget.projectId),
-    )..load();
+    _cubit = FetchCubit<_BoardsData>(() async {
+      final repo = context.read<HivoraRepository>();
+      final me = context.read<AuthBloc>().state.user;
+      final results = await Future.wait([
+        repo.boards(projectId: widget.projectId),
+        repo.project(widget.projectId),
+        repo.teams(),
+      ]);
+      final boards = results[0] as List<AgileBoard>;
+      final project = results[1] as Project;
+      final teams = results[2] as List<Team>;
+      // Project/team leads (and platform admins) may manage every board of this
+      // project; the board owner is handled per-card.
+      final canManageProject =
+          me != null &&
+          (me.isAdmin ||
+              project.leadIds.contains(me.id) ||
+              teams.any(
+                (t) =>
+                    t.projectIds.contains(widget.projectId) &&
+                    (t.membershipOf(me.id)?.isAdmin ?? false),
+              ));
+      return (boards: boards, canManageProject: canManageProject);
+    })..load();
   }
 
   @override
@@ -72,170 +96,161 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
     if (created != null) _cubit.load();
   }
 
-  Future<void> _deleteBoard(AgileBoard board) async {
-    final deleted = await showDeleteBoardFlow(
-      context,
-      boardId: board.id,
-      boardName: board.name,
-    );
-    if (deleted == true) _cubit.load();
-  }
+  Future<void> _openBoardMenu(BuildContext anchor, AgileBoard board) =>
+      openBoardManageMenu(anchor, board: board, onChanged: _cubit.load);
 
   @override
   Widget build(BuildContext context) {
+    final myId = context.read<AuthBloc>().state.user?.id;
     return PageChrome(
       title: widget.projectName.isNotEmpty
           ? widget.projectName
           : context.t('board.boards'),
       child: BlocProvider.value(
         value: _cubit,
-        child:
-            BlocBuilder<
-              FetchCubit<List<AgileBoard>>,
-              FetchState<List<AgileBoard>>
-            >(
-              builder: (context, state) {
-                final boardList = state.data ?? const <AgileBoard>[];
-                return RefreshIndicator(
-                  onRefresh: _cubit.load,
-                  child: CustomScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    slivers: [
-                      SliverPadding(
-                        padding: EdgeInsets.fromLTRB(
-                          context.pageGutter,
-                          16 + context.topGutter,
-                          context.pageGutter,
-                          8,
-                        ),
-                        sliver: SliverToBoxAdapter(
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      widget.projectName,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.inkSoft,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    Text(
-                                      context.t('board.boards'),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              FilledButton.icon(
-                                onPressed: _showCreate,
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: AppColors.accent,
-                                  foregroundColor: const Color(0xFF2A2410),
-                                  textStyle: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                icon: const Icon(LucideIcons.plus, size: 18),
-                                label: Text(context.t('board.newBoard')),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (state.isLoading && boardList.isEmpty)
-                        const SliverFillRemaining(
-                          child: Center(child: HiveLoader()),
-                        )
-                      else if (state.errorKey != null && boardList.isEmpty)
-                        SliverFillRemaining(
-                          child: Center(
+        child: BlocBuilder<FetchCubit<_BoardsData>, FetchState<_BoardsData>>(
+          builder: (context, state) {
+            final boardList = state.data?.boards ?? const <AgileBoard>[];
+            final canManageProject = state.data?.canManageProject ?? false;
+            return RefreshIndicator(
+              onRefresh: _cubit.load,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      context.pageGutter,
+                      16 + context.topGutter,
+                      context.pageGutter,
+                      8,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: Row(
+                        children: [
+                          Expanded(
                             child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  context.t(state.errorKey!),
+                                  widget.projectName,
                                   style: TextStyle(
-                                    color: AppColors.textSecondary,
+                                    fontSize: 12,
+                                    color: AppColors.inkSoft,
+                                    fontWeight: FontWeight.w500,
                                   ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 12),
-                                OutlinedButton(
-                                  onPressed: _cubit.load,
-                                  child: Text(context.t('common.retry')),
+                                Text(
+                                  context.t('board.boards'),
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),
                           ),
-                        )
-                      else if (boardList.isEmpty)
-                        SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: context.pageGutter, vertical: 24),
-                            child: Center(
-                              child: HiveEmptyState(
-                                title: context.t('board.title'),
-                                message: context.t('board.emptyProject'),
-                                action: FilledButton.icon(
-                                  onPressed: _showCreate,
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: AppColors.accent,
-                                    foregroundColor: const Color(0xFF2A2410),
-                                  ),
-                                  icon: const Icon(LucideIcons.plus, size: 18),
-                                  label: Text(context.t('board.newBoard')),
-                                ),
+                          FilledButton.icon(
+                            onPressed: _showCreate,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.accent,
+                              foregroundColor: const Color(0xFF2A2410),
+                              textStyle: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
                               ),
                             ),
+                            icon: const Icon(LucideIcons.plus, size: 18),
+                            label: Text(context.t('board.newBoard')),
                           ),
-                        )
-                      else
-                        SliverPadding(
-                          padding: EdgeInsets.fromLTRB(
-                            context.pageGutter,
-                            context.pageGutter,
-                            context.pageGutter,
-                            context.pageGutter + context.bottomGutter,
-                          ),
-                          sliver: SliverGrid(
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: context.gridColumns(
-                                    minTileWidth: 280,
-                                  ),
-                                  mainAxisSpacing: 16,
-                                  crossAxisSpacing: 16,
-                                  mainAxisExtent: 140,
-                                ),
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) => _BoardCard(
-                                board: boardList[index],
-                                index: index,
-                                onDelete: () => _deleteBoard(boardList[index]),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (state.isLoading && boardList.isEmpty)
+                    const SliverFillRemaining(
+                      child: Center(child: HiveLoader()),
+                    )
+                  else if (state.errorKey != null && boardList.isEmpty)
+                    SliverFillRemaining(
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              context.t(state.errorKey!),
+                              style: TextStyle(color: AppColors.textSecondary),
+                            ),
+                            const SizedBox(height: 12),
+                            OutlinedButton(
+                              onPressed: _cubit.load,
+                              child: Text(context.t('common.retry')),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else if (boardList.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: context.pageGutter,
+                          vertical: 24,
+                        ),
+                        child: Center(
+                          child: HiveEmptyState(
+                            title: context.t('board.title'),
+                            message: context.t('board.emptyProject'),
+                            action: FilledButton.icon(
+                              onPressed: _showCreate,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.accent,
+                                foregroundColor: const Color(0xFF2A2410),
                               ),
-                              childCount: boardList.length,
+                              icon: const Icon(LucideIcons.plus, size: 18),
+                              label: Text(context.t('board.newBoard')),
                             ),
                           ),
                         ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                      ),
+                    )
+                  else
+                    SliverPadding(
+                      padding: EdgeInsets.fromLTRB(
+                        context.pageGutter,
+                        context.pageGutter,
+                        context.pageGutter,
+                        context.pageGutter + context.bottomGutter,
+                      ),
+                      sliver: SliverGrid(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: context.gridColumns(
+                            minTileWidth: 280,
+                          ),
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                          mainAxisExtent: 140,
+                        ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final board = boardList[index];
+                          final canManage =
+                              canManageProject ||
+                              (myId != null && board.ownerId == myId);
+                          return _BoardCard(
+                            board: board,
+                            index: index,
+                            canManage: canManage,
+                            onMenu: (anchor) => _openBoardMenu(anchor, board),
+                          );
+                        }, childCount: boardList.length),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -245,12 +260,14 @@ class _BoardCard extends StatelessWidget {
   const _BoardCard({
     required this.board,
     required this.index,
-    required this.onDelete,
+    required this.canManage,
+    required this.onMenu,
   });
 
   final AgileBoard board;
   final int index;
-  final VoidCallback onDelete;
+  final bool canManage;
+  final void Function(BuildContext anchor) onMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -293,32 +310,26 @@ class _BoardCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              PopupMenuButton<String>(
-                tooltip: '',
-                padding: EdgeInsets.zero,
-                icon: Icon(
-                  LucideIcons.ellipsisVertical,
-                  size: 16,
-                  color: AppColors.inkSoft,
-                ),
-                onSelected: (_) => onDelete(),
-                itemBuilder: (context) => [
-                  PopupMenuItem<String>(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        const Icon(
-                          LucideIcons.trash2,
-                          size: 15,
-                          color: AppColors.danger,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(context.t('board.deleteBoard')),
-                      ],
+              // Manage menu (rename / delete) — only for the board owner, project
+              // leads, team leads or platform admins.
+              if (canManage)
+                Builder(
+                  builder: (btnContext) => IconButton(
+                    tooltip: context.t('board.manageBoard'),
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints(
+                      minWidth: 28,
+                      minHeight: 28,
+                    ),
+                    onPressed: () => onMenu(btnContext),
+                    icon: Icon(
+                      LucideIcons.ellipsisVertical,
+                      size: 16,
+                      color: AppColors.inkSoft,
                     ),
                   ),
-                ],
-              ),
+                ),
             ],
           ),
           const SizedBox(height: 10),
@@ -340,11 +351,7 @@ class _BoardCard extends StatelessWidget {
                 foreground: AppColors.textSecondary,
               ),
               const Spacer(),
-              Icon(
-                LucideIcons.arrowRight,
-                size: 14,
-                color: AppColors.inkSoft,
-              ),
+              Icon(LucideIcons.arrowRight, size: 14, color: AppColors.inkSoft),
             ],
           ),
         ],

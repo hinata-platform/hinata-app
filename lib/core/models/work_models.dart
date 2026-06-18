@@ -490,6 +490,7 @@ class AgileBoard extends Equatable {
     this.type = BoardType.kanban,
     this.projectIds = const [],
     this.activeSprintId,
+    this.ownerId,
   });
 
   final String id;
@@ -499,6 +500,9 @@ class AgileBoard extends Equatable {
 
   /// Sprint shown by default; when set the board is a "sprint board".
   final String? activeSprintId;
+
+  /// User id of the member who created the board; they may always manage it.
+  final String? ownerId;
 
   bool get isScrum => type == BoardType.scrum;
 
@@ -510,10 +514,11 @@ class AgileBoard extends Equatable {
         : BoardType.kanban,
     projectIds: _stringList(json['projectIds']),
     activeSprintId: json['activeSprintId'] as String?,
+    ownerId: json['ownerId'] as String?,
   );
 
   @override
-  List<Object?> get props => [id, name, type, activeSprintId];
+  List<Object?> get props => [id, name, type, activeSprintId, ownerId];
 }
 
 class BoardColumnView extends Equatable {

@@ -367,7 +367,11 @@
     "typeKanban": "Kanban",
     "typeKanbanDesc": "Continuous flow — no fixed timeboxes. Pull tasks across columns one after another.",
     "typeScrum": "Scrum",
-    "typeScrumDesc": "Project management in fixed sprints (2–4 weeks). Plan work from the backlog into each sprint."
+    "typeScrumDesc": "Project management in fixed sprints (2–4 weeks). Plan work from the backlog into each sprint.",
+    "renameBoard": "Rename board",
+    "renameTitle": "Rename board",
+    "renameSubtitle": "Give this board a new name.",
+    "manageBoard": "Board options"
   },
   "gantt": {
     "title": "Timeline",
