@@ -4,11 +4,12 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show GlassContainer, LiquidGlassSettings, LiquidRoundedSuperellipse;
+    show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
 
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/glass_panel.dart';
 import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../search/search_tokens.dart';
@@ -301,13 +302,8 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
   }
 
   Widget _shadowed(SearchTokens tokens, BorderRadius radius, Widget child) =>
-      DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: radius,
-          boxShadow: tokens.panelShadow,
-        ),
-        child: child,
-      );
+      GlassPanelShadow(
+          radius: radius, shadows: tokens.panelShadow, child: child);
 
   Widget _glassPanel(SearchTokens tokens) {
     final dark = Theme.of(context).brightness == Brightness.dark;
@@ -329,17 +325,10 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
     );
     return GlassContainer(
       useOwnLayer: true,
+      quality: GlassQuality.premium,
       clipBehavior: Clip.antiAlias,
       shape: const LiquidRoundedSuperellipse(borderRadius: 20),
-      settings: LiquidGlassSettings(
-        glassColor: tokens.tint,
-        blur: 18,
-        thickness: 16,
-        saturation: 1.9,
-        whitenStrength: dark ? 0.04 : 0.0,
-        whitenGated: false,
-        shadowElevation: 0,
-      ),
+      settings: liquidGlassPanelSettings(glassFill: tokens.glassFill, dark: dark),
       child: content,
     );
   }

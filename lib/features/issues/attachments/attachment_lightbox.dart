@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show GlassContainer, LiquidGlassSettings, LiquidRoundedSuperellipse;
+    show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/glass_panel.dart';
 import '../../search/search_tokens.dart';
 import 'attachment_kind.dart';
 
@@ -136,24 +137,20 @@ class _LightboxScaffoldState extends State<_LightboxScaffold> {
 
     final panel = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxW, maxHeight: maxH),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: tokens.panelShadow,
-        ),
+      child: GlassPanelShadow(
+        radius: BorderRadius.circular(22),
+        shadows: tokens.panelShadow,
         child: GlassContainer(
           useOwnLayer: true,
+          quality: GlassQuality.premium,
           clipBehavior: Clip.antiAlias,
           shape: LiquidRoundedSuperellipse(borderRadius: 22),
-          settings: LiquidGlassSettings(
-            glassColor: tokens.tint,
-            blur: 34,
-            thickness: 18,
-            saturation: 1.9,
-            whitenStrength:
-                Theme.of(context).brightness == Brightness.dark ? 0.05 : 0.0,
-            whitenGated: false,
-            shadowElevation: 0,
+          // A touch more frost than the standard panel — this chrome sits
+          // over full-bleed photos.
+          settings: liquidGlassPanelSettings(
+            glassFill: tokens.glassFill,
+            dark: Theme.of(context).brightness == Brightness.dark,
+            blur: 12,
           ),
           child: Material(
             type: MaterialType.transparency,

@@ -3,11 +3,12 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show GlassContainer, LiquidGlassSettings, LiquidRoundedSuperellipse;
+    show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/glass_panel.dart';
 import '../../search/search_tokens.dart';
 
 /// Phone breakpoint for the sprint modals (matches the app's φ-stepped phone bp
@@ -54,24 +55,17 @@ class _GlassModalScaffold extends StatelessWidget {
 
     final panel = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxW, maxHeight: maxH),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(26),
-          boxShadow: tokens.panelShadow,
-        ),
+      child: GlassPanelShadow(
+        radius: BorderRadius.circular(26),
+        shadows: tokens.panelShadow,
         child: GlassContainer(
           useOwnLayer: true,
+          quality: GlassQuality.premium,
           clipBehavior: Clip.antiAlias,
           shape: LiquidRoundedSuperellipse(borderRadius: 26),
-          settings: LiquidGlassSettings(
-            glassColor: tokens.tint,
-            blur: 18,
-            thickness: 16,
-            saturation: 1.9,
-            whitenStrength:
-                Theme.of(context).brightness == Brightness.dark ? 0.04 : 0.0,
-            whitenGated: false,
-            shadowElevation: 0,
+          settings: liquidGlassPanelSettings(
+            glassFill: tokens.glassFill,
+            dark: Theme.of(context).brightness == Brightness.dark,
           ),
           child: Material(
             type: MaterialType.transparency,

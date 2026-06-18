@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show GlassContainer, LiquidGlassSettings, LiquidRoundedSuperellipse;
+    show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -13,6 +13,7 @@ import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/hue_colors.dart';
+import '../../../core/widgets/glass_panel.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../search/search_tokens.dart';
 import '../../deletion/delete_flows.dart';
@@ -715,24 +716,16 @@ class _SaveBar extends StatelessWidget {
   Widget _bar(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final tokens = SearchTokens.of(Theme.of(context).brightness);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-        boxShadow: tokens.panelShadow,
-      ),
+    return GlassPanelShadow(
+      radius: BorderRadius.circular(30),
+      shadows: tokens.panelShadow,
       child: GlassContainer(
         useOwnLayer: true,
+        quality: GlassQuality.premium,
         clipBehavior: Clip.antiAlias,
         shape: const LiquidRoundedSuperellipse(borderRadius: 30),
-        settings: LiquidGlassSettings(
-          glassColor: tokens.tint,
-          blur: 18,
-          thickness: 16,
-          saturation: 1.9,
-          whitenStrength: dark ? 0.04 : 0.0,
-          whitenGated: false,
-          shadowElevation: 0,
-        ),
+        settings:
+            liquidGlassPanelSettings(glassFill: tokens.glassFill, dark: dark),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(18, 10, 12, 10),
           child: Row(

@@ -6,17 +6,14 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show
-        GlassContainer,
-        GlassQuality,
-        LiquidGlassSettings,
-        LiquidRoundedSuperellipse;
+    show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
 
 import '../../core/api/hivora_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/storage/app_storage.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/glass_panel.dart';
 import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_widgets.dart';
 import 'global_search_controller.dart';
@@ -271,20 +268,11 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
     );
   }
 
-  /// Drop shadow behind the (transparent) glass; the package container draws
-  /// no elevation of its own (allowElevation defaults false).
-  ///
-  /// Painted clipped to the region *outside* the panel — mirroring CSS outer
-  /// `box-shadow`, which is never drawn under the element's own box. A plain
-  /// [BoxDecoration] shadow would paint the dark navy blur behind the whole
-  /// panel; since the glass is translucent *and* backdrop-samples what's behind
-  /// it, that navy would bleed up through the surface and give the palette a
-  /// bluish cast. Cutting the panel area out keeps the glass clean (§3.1).
+  /// Drop shadow behind the (transparent) glass, clipped to outside the panel
+  /// so the dark blur can't bleed up through it. See [GlassPanelShadow].
   Widget _shadowed(SearchTokens tokens, BorderRadius radius, Widget child) {
-    return CustomPaint(
-      painter: _PanelShadowPainter(radius: radius, shadows: tokens.panelShadow),
-      child: child,
-    );
+    return GlassPanelShadow(
+      radius: radius, shadows: tokens.panelShadow, child: child);
   }
 
   Widget _glassPanel(SearchTokens tokens,
@@ -328,20 +316,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
       quality: GlassQuality.premium,
       clipBehavior: Clip.antiAlias,
       shape: LiquidRoundedSuperellipse(borderRadius: mobile ? 0 : radius),
-      settings: LiquidGlassSettings(
-        glassColor: tokens.glassFill,
-        blur: 6,
-        thickness: 22,
-        refractiveIndex: 1.2,
-        chromaticAberration: 0.04,
-        saturation: 1.6,
-        lightIntensity: 0.7,
-        glowIntensity: 0.6,
-        // Dark glass gets a slight frost lift; light relies on the tint.
-        whitenStrength: dark ? 0.04 : 0.0,
-        whitenGated: false,
-        shadowElevation: 0, // we paint our own clipped drop shadow
-      ),
+      settings: liquidGlassPanelSettings(glassFill: tokens.glassFill, dark: dark),
       child: content,
     );
 
@@ -1290,39 +1265,6 @@ class _PointerGlareState extends State<_PointerGlare> {
       ),
     );
   }
-}
-
-/// Drop shadow for the panel, painted only *outside* the rounded panel rect so
-/// the dark navy blur never shows through the translucent glass (see
-/// [_GlobalSearchDialogState._shadowed]). Matches CSS outer `box-shadow`.
-class _PanelShadowPainter extends CustomPainter {
-  _PanelShadowPainter({required this.radius, required this.shadows});
-  final BorderRadius radius;
-  final List<BoxShadow> shadows;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rrect = radius.toRRect(Offset.zero & size);
-    // even-odd: everything in the big rect EXCEPT the panel area → "outside".
-    final outside = Path()
-      ..fillType = PathFillType.evenOdd
-      ..addRect(Rect.fromLTRB(
-          -2000, -2000, size.width + 2000, size.height + 2000))
-      ..addRRect(rrect);
-    canvas.save();
-    canvas.clipPath(outside);
-    for (final s in shadows) {
-      canvas.drawRRect(
-        rrect.shift(s.offset).inflate(s.spreadRadius),
-        s.toPaint(),
-      );
-    }
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(_PanelShadowPainter old) =>
-      old.radius != radius || old.shadows != shadows;
 }
 
 /// 1px specular rim: bright top-left → dim → bright bottom-right at 140°.
