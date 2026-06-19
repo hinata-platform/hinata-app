@@ -379,7 +379,8 @@ class _MemberPickerState extends State<_MemberPicker> {
             ),
           ),
         ),
-        Flexible(
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
           child: filtered.isEmpty
               ? Padding(
                   padding: const EdgeInsets.symmetric(vertical: 40),
