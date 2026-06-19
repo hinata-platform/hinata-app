@@ -29,7 +29,7 @@ LiquidGlassSettings liquidGlassPanelSettings({
     lightIntensity: 0.7,
     glowIntensity: 0.6,
     // Dark glass gets a slight frost lift; light relies on the tint.
-    whitenStrength: dark ? 0.04 : 0.0,
+    whitenStrength: dark ? 0.04 : 0.04,
     whitenGated: false,
     shadowElevation: 0, // the panel paints its own clipped drop shadow
   );
