@@ -156,13 +156,17 @@ GoRouter buildRouter({
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
       GoRoute(
         path: '/invite',
-        builder: (_, state) =>
-            AcceptInviteScreen(token: state.uri.queryParameters['token'] ?? ''),
+        builder: (_, state) => AcceptInviteScreen(
+          token: state.uri.queryParameters['token'] ?? '',
+          server: state.uri.queryParameters['server'],
+        ),
       ),
       GoRoute(
         path: '/reset-password',
-        builder: (_, state) =>
-            ResetPasswordScreen(token: state.uri.queryParameters['token'] ?? ''),
+        builder: (_, state) => ResetPasswordScreen(
+          token: state.uri.queryParameters['token'] ?? '',
+          server: state.uri.queryParameters['server'],
+        ),
       ),
       GoRoute(
         path: '/auth-callback',

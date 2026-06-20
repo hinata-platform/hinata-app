@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:path_provider/path_provider.dart';
@@ -11,6 +12,10 @@ import 'core/storage/app_storage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Clean path-based URLs on the web (e.g. /invite instead of /#/invite). No-op
+  // off the web. Email deep links and SSO callbacks rely on this.
+  usePathUrlStrategy();
 
   HydratedBloc.storage = await HydratedStorage.build(
     storageDirectory: kIsWeb

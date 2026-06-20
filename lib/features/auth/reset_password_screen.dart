@@ -5,18 +5,23 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/api/hinata_repository.dart';
+import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
+import '../../core/storage/app_storage.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/soft_card.dart';
 
-/// Lands here from the `hinata://reset-password` deep link. Lets the user choose
-/// a new password in the app's UI, then signs them in.
+/// Lands here from the reset deep link (web URL or `hinata://reset-password`).
+/// Lets the user choose a new password in the app's UI, then signs them in.
+/// [server] (carried by the link) points a freshly opened web/app at the right
+/// backend.
 class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key, required this.token});
+  const ResetPasswordScreen({super.key, required this.token, this.server});
 
   final String token;
+  final String? server;
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -29,6 +34,23 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _submitting = false;
   bool _obscure = true;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _applyServer();
+  }
+
+  /// Point a freshly opened web/app at the backend named in the link.
+  Future<void> _applyServer() async {
+    final server = widget.server;
+    if (server == null || server.isEmpty) return;
+    final storage = context.read<AppStorage>();
+    if (storage.serverUrl != server) {
+      await storage.setServerUrl(server);
+      if (mounted) context.read<AppConfigBloc>().add(ServerUrlSubmitted(server));
+    }
+  }
 
   @override
   void dispose() {

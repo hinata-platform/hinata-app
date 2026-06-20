@@ -5,18 +5,23 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/api/hinata_repository.dart';
+import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
+import '../../core/storage/app_storage.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/soft_card.dart';
 
-/// Lands here from the `hinata://invite` deep link. Validates the invitation,
-/// lets the invitee set a password in the app's UI, then signs them in.
+/// Lands here from the invitation deep link (web URL or `hinata://invite`).
+/// Validates the invitation, lets the invitee set a password in the app's UI,
+/// then signs them in. [server] (carried by the link) points a freshly opened
+/// web/app at the right backend.
 class AcceptInviteScreen extends StatefulWidget {
-  const AcceptInviteScreen({super.key, required this.token});
+  const AcceptInviteScreen({super.key, required this.token, this.server});
 
   final String token;
+  final String? server;
 
   @override
   State<AcceptInviteScreen> createState() => _AcceptInviteScreenState();
@@ -36,7 +41,24 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
   @override
   void initState() {
     super.initState();
-    _loadInfo();
+    _init();
+  }
+
+  Future<void> _init() async {
+    await _applyServer();
+    await _loadInfo();
+  }
+
+  /// Point a freshly opened web/app at the backend named in the link before any
+  /// API call resolves.
+  Future<void> _applyServer() async {
+    final server = widget.server;
+    if (server == null || server.isEmpty) return;
+    final storage = context.read<AppStorage>();
+    if (storage.serverUrl != server) {
+      await storage.setServerUrl(server);
+      if (mounted) context.read<AppConfigBloc>().add(ServerUrlSubmitted(server));
+    }
   }
 
   @override
