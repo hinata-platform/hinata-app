@@ -97,6 +97,15 @@ class _GlassPopupMenuState<T> extends State<GlassPopupMenu<T>> {
         ? (box.localToGlobal(Offset.zero) & box.size)
         : Rect.zero;
 
+    // Capture the callback up-front: when this anchor lives inside a hover-gated
+    // subtree (e.g. a tree row's action menu that only renders while hovered),
+    // opening the dialog moves the pointer off the row, which unmounts the
+    // anchor — and therefore this State — before the dialog returns. The owner
+    // of [onSelected] (the parent screen) is still alive and guards its own
+    // async work, so we must invoke it regardless of *our* mounted state; an
+    // earlier `&& mounted` check here silently dropped the selection.
+    final onSelected = widget.onSelected;
+
     final selected = await showGeneralDialog<_MenuResult<T>>(
       context: context,
       barrierDismissible: true,
@@ -113,7 +122,7 @@ class _GlassPopupMenuState<T> extends State<GlassPopupMenu<T>> {
       transitionBuilder: (_, _, _, child) => child,
     );
 
-    if (selected != null && mounted) widget.onSelected(selected.value);
+    if (selected != null) onSelected(selected.value);
   }
 
   @override
