@@ -190,30 +190,42 @@ bool _isActive(String location, String navRoute) {
 
 // ─────────────────────────── Wide Shell (Navy Rail) ───────────────────────
 
-class _WideShell extends StatelessWidget {
+class _WideShell extends StatefulWidget {
   const _WideShell({required this.location, required this.child});
 
   final String location;
   final Widget child;
 
   @override
+  State<_WideShell> createState() => _WideShellState();
+}
+
+class _WideShellState extends State<_WideShell> {
+  // Desktop-only manual collapse. Medium widths are always collapsed (no room
+  // to expand), so the toggle is offered only on the full layout.
+  bool _collapsed = false;
+
+  @override
   Widget build(BuildContext context) {
     final isMedium = context.layoutSize == LayoutSize.medium;
-    final railWidth = isMedium ? 76.0 : 244.0;
+    final collapsed = isMedium || _collapsed;
+    final railWidth = collapsed ? 76.0 : 244.0;
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
       body: Row(
         children: [
           _NavRail(
-            location: location,
-            collapsed: isMedium,
+            location: widget.location,
+            collapsed: collapsed,
             width: railWidth,
+            canToggle: !isMedium,
+            onToggle: () => setState(() => _collapsed = !_collapsed),
           ),
           Expanded(
             child: Column(
               children: [
-                _HinataTopBar(location: location, compact: false),
+                _HinataTopBar(location: widget.location, compact: false),
                 // The top bar already consumes the status-bar inset, so zero the
                 // top padding for the content — keeps context.topGutter at 0 on
                 // wide layouts (no overlay app bar there).
@@ -221,7 +233,7 @@ class _WideShell extends StatelessWidget {
                   child: MediaQuery.removePadding(
                     context: context,
                     removeTop: true,
-                    child: child,
+                    child: widget.child,
                   ),
                 ),
               ],
@@ -238,11 +250,17 @@ class _NavRail extends StatelessWidget {
     required this.location,
     required this.collapsed,
     required this.width,
+    this.canToggle = false,
+    this.onToggle,
   });
 
   final String location;
   final bool collapsed;
   final double width;
+
+  /// Whether to show the manual collapse/expand control (desktop only).
+  final bool canToggle;
+  final VoidCallback? onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -377,6 +395,12 @@ class _NavRail extends StatelessWidget {
 
             const Spacer(),
 
+            // Collapse / expand toggle — desktop only, sits above the user.
+            if (canToggle && onToggle != null) _CollapseToggle(
+              collapsed: collapsed,
+              onToggle: onToggle!,
+            ),
+
             if (!collapsed)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -436,6 +460,61 @@ class _NavRail extends StatelessWidget {
         ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Desktop rail collapse/expand control. Full-width labelled row when expanded,
+/// a centered icon button when collapsed. Sits just above the user button.
+class _CollapseToggle extends StatelessWidget {
+  const _CollapseToggle({required this.collapsed, required this.onToggle});
+
+  final bool collapsed;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = collapsed
+        ? LucideIcons.panelLeftOpen
+        : LucideIcons.panelLeftClose;
+    if (collapsed) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: _RailIconButton(
+          icon: icon,
+          active: false,
+          tooltip: 'Expand sidebar',
+          onTap: onToggle,
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: onToggle,
+          borderRadius: BorderRadius.circular(8),
+          hoverColor: Colors.white.withValues(alpha: 0.06),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            child: Row(
+              children: [
+                Icon(icon, size: 18, color: AppColors.railFaint),
+                const SizedBox(width: 10),
+                Text(
+                  'Collapse',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.railFaint,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

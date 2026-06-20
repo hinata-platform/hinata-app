@@ -638,8 +638,12 @@ class HinataRepository {
 
   // --- Knowledge base -------------------------------------------------------
 
-  Future<List<Article>> articles({String? projectId}) async =>
-      ((await _api.get('/api/v1/articles', query: {'projectId': ?projectId}))
+  /// Lists articles. [all] fetches every article (the whole knowledge base
+  /// across projects + org-wide); otherwise scoped by [projectId] (or org-wide
+  /// when null).
+  Future<List<Article>> articles({String? projectId, bool all = false}) async =>
+      ((await _api.get('/api/v1/articles',
+                  query: {'projectId': ?projectId, if (all) 'all': true}))
               as List<dynamic>)
           .map((a) => Article.fromJson(a as Map<String, dynamic>))
           .toList();
@@ -653,19 +657,47 @@ class HinataRepository {
     required String title,
     String? content,
     String? projectId,
+    String? teamId,
     String? parentId,
+    String? space,
+    String? icon,
+    List<String>? tags,
   }) async {
     final body = {
       'title': title,
       'content': ?content,
       'projectId': ?projectId,
+      'teamId': ?teamId,
       'parentId': ?parentId,
+      'space': ?space,
+      'icon': ?icon,
+      'tags': ?tags,
     };
     final data = id == null
         ? await _api.post('/api/v1/articles', body: body)
         : await _api.patch('/api/v1/articles/$id', body: body);
     return Article.fromJson(data as Map<String, dynamic>);
   }
+
+  /// Moves an article under a new parent (or to the space root when [parentId]
+  /// is null — sent explicitly, unlike [saveArticle] which omits nulls) and/or
+  /// into a different [space]. Content/tags/icon are left untouched.
+  Future<Article> moveArticle(
+    String id, {
+    required String title,
+    String? parentId,
+    String? space,
+  }) async {
+    final data = await _api.patch('/api/v1/articles/$id', body: {
+      'title': title,
+      'parentId': parentId,
+      'space': ?space,
+    });
+    return Article.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<void> deleteArticle(String id) async =>
+      _api.delete('/api/v1/articles/$id');
 
   // --- Dashboard, reports, notifications ------------------------------------
 

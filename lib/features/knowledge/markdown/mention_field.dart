@@ -4,20 +4,9 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_avatar.dart';
-import '../data/knowledge_models.dart';
-import '../knowledge_scope.dart';
+import '../data/knowledge_models.dart' show lucideIcon;
 import '../knowledge_tokens.dart';
-
-/// A candidate row in the `@`-mention menu.
-class _MentionItem {
-  _MentionItem(this.kind, this.id, this.title, this.sub, {this.issue, this.icon});
-  final String kind; // issue | doc | user
-  final String id;
-  final String title;
-  final String sub;
-  final KbIssue? issue;
-  final String? icon; // doc icon
-}
+import 'smart_link_resolver.dart';
 
 /// A `TextField` with a Jira/Confluence-style `@`-mention autocomplete.
 ///
@@ -69,7 +58,7 @@ class MentionFieldState extends State<MentionField> {
   final GlobalKey _fieldKey = GlobalKey();
   OverlayEntry? _menu;
 
-  List<_MentionItem> _items = const [];
+  List<MentionCandidate> _items = const [];
   int _sel = 0;
   int _from = 0; // index of the '@'
 
@@ -127,43 +116,10 @@ class MentionFieldState extends State<MentionField> {
     _showMenu();
   }
 
-  List<_MentionItem> _build(String rawQuery) {
-    final repo = KnowledgeScope.of(context).repo;
-    final q = rawQuery.toLowerCase();
-    final res = <_MentionItem>[];
-
-    void addArticles() {
-      for (final a in repo.articles) {
-        final sp = repo.spaceById(a.spaceId);
-        final hay = '${a.title} ${sp?.name ?? ''}'.toLowerCase();
-        if (q.isEmpty || hay.contains(q)) {
-          res.add(_MentionItem('doc', a.id, a.title, sp?.name ?? '', icon: a.icon));
-        }
-      }
-    }
-
-    void addIssues() {
-      for (final it in repo.issues) {
-        final id = repo.issuePubId(it);
-        final hay = '$id ${it.title}'.toLowerCase();
-        if (q.isEmpty || hay.contains(q)) {
-          res.add(_MentionItem('issue', id, it.title, id, issue: it));
-        }
-      }
-    }
-
-    if (widget.commentMode) {
-      addArticles();
-      addIssues();
-    } else {
-      addIssues();
-      addArticles();
-    }
-    for (final u in repo.users) {
-      if (q.isEmpty || u.name.toLowerCase().contains(q)) {
-        res.add(_MentionItem('user', u.id, u.name, u.title));
-      }
-    }
+  List<MentionCandidate> _build(String rawQuery) {
+    final res = SmartLinkScope.of(
+      context,
+    ).mentions(rawQuery, commentMode: widget.commentMode);
     return res.length > _max ? res.sublist(0, _max) : res;
   }
 
@@ -221,7 +177,7 @@ class MentionFieldState extends State<MentionField> {
     );
   }
 
-  void _pick(_MentionItem it) {
+  void _pick(MentionCandidate it) {
     final token = switch (it.kind) {
       'issue' => '{{issue:${it.id}}}',
       'doc' => '{{doc:${it.id}}}',
@@ -266,7 +222,8 @@ class MentionFieldState extends State<MentionField> {
   /// overlay-global coordinates.
   Offset _caretGlobal() {
     final box = _fieldKey.currentContext?.findRenderObject() as RenderBox?;
-    final overlayBox = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final overlayBox =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
     if (box == null || !box.hasSize) return Offset.zero;
     const padH = 12.0, padV = 10.0;
     final caret = _ctrl.selection.baseOffset.clamp(0, _ctrl.text.length);
@@ -276,14 +233,17 @@ class MentionFieldState extends State<MentionField> {
       maxLines: null,
     )..layout(maxWidth: (box.size.width - padH * 2).clamp(0, double.infinity));
     final local = painter.getOffsetForCaret(
-        TextPosition(offset: caret), Rect.zero);
+      TextPosition(offset: caret),
+      Rect.zero,
+    );
     final scrollDy = _scroll.hasClients ? _scroll.offset : 0.0;
     final fieldLocal = Offset(local.dx + padH, local.dy + padV - scrollDy + 22);
     return box.localToGlobal(fieldLocal, ancestor: overlayBox);
   }
 
   Widget _menuBuilder(BuildContext _) {
-    final overlayBox = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final overlayBox =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
     final anchor = _caretGlobal();
     const w = 320.0;
     var left = anchor.dx;
@@ -317,37 +277,40 @@ class MentionFieldState extends State<MentionField> {
   }
 
   TextStyle _textStyle() => TextStyle(
-        fontFamily: widget.monospace ? AppTheme.fontMono : AppTheme.fontUi,
-        fontSize: widget.monospace ? 13.5 : 14,
-        height: 1.7,
-        color: AppColors.ink,
-      );
+    fontFamily: widget.monospace ? AppTheme.fontMono : AppTheme.fontUi,
+    fontSize: widget.monospace ? 13.5 : 14,
+    height: 1.7,
+    color: AppColors.ink,
+  );
 
   @override
   Widget build(BuildContext context) {
     return TextField(
-          key: _fieldKey,
-          controller: _ctrl,
-          focusNode: _focus,
-          scrollController: _scroll,
-          autofocus: widget.autofocus,
-          minLines: widget.expands ? null : widget.minLines,
-          maxLines: widget.expands ? null : widget.maxLines,
-          expands: widget.expands,
-          keyboardType: TextInputType.multiline,
-          textAlignVertical: TextAlignVertical.top,
-          style: _textStyle(),
-          cursorColor: AppColors.accent,
-          decoration: InputDecoration(
-            isCollapsed: true,
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            filled: false,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            hintText: widget.hintText,
-            hintStyle: TextStyle(color: AppColors.inkFaint),
-          ),
+      key: _fieldKey,
+      controller: _ctrl,
+      focusNode: _focus,
+      scrollController: _scroll,
+      autofocus: widget.autofocus,
+      minLines: widget.expands ? null : widget.minLines,
+      maxLines: widget.expands ? null : widget.maxLines,
+      expands: widget.expands,
+      keyboardType: TextInputType.multiline,
+      textAlignVertical: TextAlignVertical.top,
+      style: _textStyle(),
+      cursorColor: AppColors.accent,
+      decoration: InputDecoration(
+        isCollapsed: true,
+        border: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        focusedBorder: InputBorder.none,
+        filled: false,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
+        hintText: widget.hintText,
+        hintStyle: TextStyle(color: AppColors.inkFaint),
+      ),
     );
   }
 }
@@ -361,10 +324,10 @@ class _MentionMenu extends StatelessWidget {
     required this.reduceMotion,
   });
 
-  final List<_MentionItem> items;
+  final List<MentionCandidate> items;
   final int selected;
   final ValueChanged<int> onHover;
-  final ValueChanged<_MentionItem> onPick;
+  final ValueChanged<MentionCandidate> onPick;
   final bool reduceMotion;
 
   @override
@@ -392,19 +355,24 @@ class _MentionMenu extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 6, 10, 5),
-              child: Text('LINK TO…',
-                  style: TextStyle(
-                      fontSize: 10.5,
-                      letterSpacing: 0.7,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.inkFaint)),
+              child: Text(
+                'LINK TO…',
+                style: TextStyle(
+                  fontSize: 10.5,
+                  letterSpacing: 0.7,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.inkFaint,
+                ),
+              ),
             ),
             if (items.isEmpty)
               Padding(
                 padding: const EdgeInsets.all(12),
-                child: Text('No matches',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.inkFaint, fontSize: 13)),
+                child: Text(
+                  'No matches',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.inkFaint, fontSize: 13),
+                ),
               ),
             Flexible(
               child: ListView.builder(
@@ -421,7 +389,7 @@ class _MentionMenu extends StatelessWidget {
     return card;
   }
 
-  Widget _row(_MentionItem it, int i) {
+  Widget _row(MentionCandidate it, int i) {
     final isSel = i == selected;
     return MouseRegion(
       onEnter: (_) => onHover(i),
@@ -444,16 +412,21 @@ class _MentionMenu extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(it.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w600)),
-                    Text(it.sub,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            fontSize: 11, color: AppColors.inkSoft)),
+                    Text(
+                      it.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      it.sub,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11, color: AppColors.inkSoft),
+                    ),
                   ],
                 ),
               ),
@@ -464,12 +437,15 @@ class _MentionMenu extends StatelessWidget {
                   color: AppColors.surfaceMuted,
                   borderRadius: BorderRadius.circular(5),
                 ),
-                child: Text(it.kind.toUpperCase(),
-                    style: TextStyle(
-                        fontSize: 9.5,
-                        letterSpacing: 0.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.inkFaint)),
+                child: Text(
+                  it.kind.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 9.5,
+                    letterSpacing: 0.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.inkFaint,
+                  ),
+                ),
               ),
             ],
           ),
@@ -478,7 +454,7 @@ class _MentionMenu extends StatelessWidget {
     );
   }
 
-  Widget _leading(_MentionItem it) {
+  Widget _leading(MentionCandidate it) {
     if (it.kind == 'user') return AppAvatar(name: it.title, radius: 10);
     if (it.kind == 'doc') {
       return Container(
@@ -492,8 +468,7 @@ class _MentionMenu extends StatelessWidget {
         child: Icon(lucideIcon(it.icon), size: 14, color: KbTokens.accent),
       );
     }
-    final tm = typeMeta(it.issue!.type);
-    final color = KbTokens.issueChipColor(tm.hue);
+    final color = it.issueColor ?? KbTokens.accent;
     return Container(
       width: 22,
       height: 22,
@@ -502,7 +477,7 @@ class _MentionMenu extends StatelessWidget {
         borderRadius: BorderRadius.circular(KbTokens.radiusChip),
       ),
       alignment: Alignment.center,
-      child: Icon(lucideIcon(tm.icon), size: 14, color: color),
+      child: Icon(lucideIcon(it.issueType), size: 14, color: color),
     );
   }
 }

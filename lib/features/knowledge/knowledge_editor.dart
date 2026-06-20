@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/markdown_toolbar.dart';
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
 import 'knowledge_scope.dart';
@@ -50,6 +51,10 @@ class _KnowledgeEditorState extends State<KnowledgeEditor> {
   late final TextEditingController _body =
       TextEditingController(text: widget.initialBody);
   final FocusNode _bodyFocus = FocusNode();
+  late final MarkdownEditingActions _actions = MarkdownEditingActions(
+    _body,
+    _bodyFocus,
+  );
   late String _spaceId = widget.spaceId;
   String _tab = 'write'; // write | preview (narrow only)
   final List<TapGestureRecognizer> _recognizerSink = [];
@@ -73,88 +78,6 @@ class _KnowledgeEditorState extends State<KnowledgeEditor> {
     _bodyFocus.dispose();
     super.dispose();
   }
-
-  // ── toolbar helpers (mirror the reference) ──
-  void _surround(String before, String after, String placeholder) {
-    final v = _body.value;
-    final s = v.selection.start < 0 ? v.text.length : v.selection.start;
-    final e = v.selection.end < 0 ? v.text.length : v.selection.end;
-    final sel = e > s ? v.text.substring(s, e) : placeholder;
-    final next = v.text.replaceRange(s, e, '$before$sel$after');
-    _body.value = TextEditingValue(
-      text: next,
-      selection: TextSelection(
-          baseOffset: s + before.length, extentOffset: s + before.length + sel.length),
-    );
-    _bodyFocus.requestFocus();
-  }
-
-  void _linePrefix(String prefix) {
-    final v = _body.value;
-    final s = v.selection.start < 0 ? v.text.length : v.selection.start;
-    final e = v.selection.end < 0 ? v.text.length : v.selection.end;
-    final lineStart = v.text.lastIndexOf('\n', s - 1) + 1;
-    final block = v.text.substring(lineStart, e);
-    final fixed = block
-        .split('\n')
-        .asMap()
-        .entries
-        .map((entry) => prefix.replaceFirst('%', '${entry.key + 1}') + entry.value)
-        .join('\n');
-    final next = v.text.replaceRange(lineStart, e, fixed);
-    _body.value = TextEditingValue(
-      text: next,
-      selection: TextSelection.collapsed(offset: lineStart + fixed.length),
-    );
-    _bodyFocus.requestFocus();
-  }
-
-  void _insertBlock(String text) {
-    final v = _body.value;
-    final s = v.selection.start < 0 ? v.text.length : v.selection.start;
-    final pre = (s > 0 && v.text[s - 1] != '\n') ? '\n\n' : '';
-    final next = v.text.replaceRange(s, s, '$pre$text');
-    final caret = s + pre.length + text.length;
-    _body.value = TextEditingValue(
-      text: next,
-      selection: TextSelection.collapsed(offset: caret),
-    );
-    _bodyFocus.requestFocus();
-  }
-
-  void _insertMention() {
-    final v = _body.value;
-    final s = v.selection.start < 0 ? v.text.length : v.selection.start;
-    final next = v.text.replaceRange(s, s, '@');
-    _body.value = TextEditingValue(
-      text: next,
-      selection: TextSelection.collapsed(offset: s + 1),
-    );
-    _bodyFocus.requestFocus();
-  }
-
-  List<_Tool> get _tools => [
-        _Tool('heading-1', 'Heading 1', () => _linePrefix('# ')),
-        _Tool('heading-2', 'Heading 2', () => _linePrefix('## ')),
-        _Tool('heading-3', 'Heading 3', () => _linePrefix('### ')),
-        const _Tool.sep(),
-        _Tool('bold', 'Bold', () => _surround('**', '**', 'bold')),
-        _Tool('italic', 'Italic', () => _surround('*', '*', 'italic')),
-        _Tool('strikethrough', 'Strikethrough', () => _surround('~~', '~~', 'strike')),
-        _Tool('code', 'Inline code', () => _surround('`', '`', 'code')),
-        const _Tool.sep(),
-        _Tool('list', 'Bullet list', () => _linePrefix('- ')),
-        _Tool('list-ordered', 'Numbered list', () => _linePrefix('%. ')),
-        _Tool('list-checks', 'Task list', () => _linePrefix('- [ ] ')),
-        _Tool('quote', 'Quote', () => _linePrefix('> ')),
-        const _Tool.sep(),
-        _Tool('link', 'Link', () => _surround('[', '](https://)', 'text')),
-        _Tool('square-code', 'Code block', () => _insertBlock('```ts\n\n```')),
-        _Tool('table', 'Table',
-            () => _insertBlock('| Column | Column |\n| --- | --- |\n| Cell | Cell |')),
-        _Tool('info', 'Info panel', () => _insertBlock(':::info\n\n:::')),
-        _Tool('at-sign', 'Mention / link (@)', _insertMention),
-      ];
 
   void _save() => widget.onSave(
       EditorResult(_title.text.trim(), _body.text, _spaceId));
@@ -246,37 +169,10 @@ class _KnowledgeEditorState extends State<KnowledgeEditor> {
     );
   }
 
-  Widget _toolbar(bool split) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
-        border: Border(bottom: BorderSide(color: AppColors.hairline)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Wrap(
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                for (final t in _tools)
-                  t.isSep
-                      ? Container(
-                          width: 1,
-                          height: 20,
-                          margin: const EdgeInsets.symmetric(horizontal: 5),
-                          color: AppColors.hairline,
-                        )
-                      : _ToolButton(tool: t),
-              ],
-            ),
-          ),
-          if (!split) _tabs(),
-        ],
-      ),
-    );
-  }
+  Widget _toolbar(bool split) => MarkdownToolbar(
+    actions: _actions,
+    trailing: split ? null : _tabs(),
+  );
 
   Widget _tabs() {
     Widget tab(String id, String label) {
@@ -376,41 +272,6 @@ class _KnowledgeEditorState extends State<KnowledgeEditor> {
           else
             ...parsed.nodes,
         ],
-      ),
-    );
-  }
-}
-
-class _Tool {
-  const _Tool(this.icon, this.tooltip, this.action) : isSep = false;
-  const _Tool.sep()
-      : icon = '',
-        tooltip = '',
-        action = _noop,
-        isSep = true;
-  final String icon;
-  final String tooltip;
-  final VoidCallback action;
-  final bool isSep;
-  static void _noop() {}
-}
-
-class _ToolButton extends StatelessWidget {
-  const _ToolButton({required this.tool});
-  final _Tool tool;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tool.tooltip,
-      child: InkWell(
-        onTap: tool.action,
-        borderRadius: BorderRadius.circular(8),
-        child: SizedBox(
-          width: 32,
-          height: 32,
-          child: Icon(lucideIcon(tool.icon), size: 17, color: AppColors.inkSoft),
-        ),
       ),
     );
   }

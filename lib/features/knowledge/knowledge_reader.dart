@@ -9,6 +9,7 @@ import 'data/knowledge_repository.dart';
 import 'knowledge_scope.dart';
 import 'knowledge_tokens.dart';
 import 'markdown/markdown_renderer.dart';
+import 'markdown/smart_link_resolver.dart';
 
 enum AsideMode { side, below, none }
 
@@ -114,7 +115,7 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
     final sp = repo.spaceById(a.spaceId);
     final author = repo.userById(a.authorId);
     final parent = a.parentId == null ? null : repo.articleById(a.parentId!);
-    final linked = repo.linkedIssues(a.body);
+    final linkedIds = repo.issueIdsIn(a.body);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,12 +255,12 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
         // body
         ...parsed.nodes,
         // linked issues
-        if (linked.isNotEmpty) _linkedIssues(repo, linked),
+        if (linkedIds.isNotEmpty) _linkedIssues(linkedIds),
       ],
     );
   }
 
-  Widget _linkedIssues(KnowledgeRepository repo, List<KbIssue> linked) {
+  Widget _linkedIssues(List<String> linkedIds) {
     return Container(
       margin: const EdgeInsets.only(top: 38),
       padding: const EdgeInsets.only(top: 22),
@@ -286,7 +287,7 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
                   border: Border.all(color: AppColors.hairline),
                 ),
                 child: Text(
-                  '${linked.length}',
+                  '${linkedIds.length}',
                   style: TextStyle(
                     fontFamily: AppTheme.fontMono,
                     fontSize: 11,
@@ -309,10 +310,10 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
                 spacing: gap,
                 runSpacing: gap,
                 children: [
-                  for (final it in linked)
+                  for (final id in linkedIds)
                     SizedBox(
                       width: tileW,
-                      child: _IssueCard(repo: repo, issue: it),
+                      child: _IssueCard(id: id),
                     ),
                 ],
               );
@@ -493,24 +494,22 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
 }
 
 /// One "Linked issues" card: type glyph · id · state · title · assignee.
+/// Resolves [id] (a readable id) against the real backend via [SmartLinkScope];
+/// falls back to an id-only card while issues are still loading / not found.
 class _IssueCard extends StatelessWidget {
-  const _IssueCard({required this.repo, required this.issue});
-  final KnowledgeRepository repo;
-  final KbIssue issue;
+  const _IssueCard({required this.id});
+  final String id;
 
   @override
   Widget build(BuildContext context) {
-    final tm = typeMeta(issue.type);
-    final sm = stateMeta(issue.state);
-    final color = KbTokens.issueChipColor(tm.hue);
-    final assignee = issue.assigneeId == null
-        ? null
-        : repo.userById(issue.assigneeId!);
+    final resolver = SmartLinkScope.of(context);
+    final it = resolver.issue(id);
+    final color = it?.typeColor ?? KbTokens.accent;
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(KbTokens.radiusCard),
       child: InkWell(
-        onTap: () => KnowledgeScope.of(context).openIssue(issue),
+        onTap: () => resolver.openIssue(id),
         borderRadius: BorderRadius.circular(KbTokens.radiusCard),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -528,7 +527,11 @@ class _IssueCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 alignment: Alignment.center,
-                child: Icon(lucideIcon(tm.icon), size: 16, color: color),
+                child: Icon(
+                  lucideIcon(it?.typeIcon ?? 'circle-check'),
+                  size: 16,
+                  color: color,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -538,7 +541,7 @@ class _IssueCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          repo.issuePubId(issue),
+                          id,
                           style: TextStyle(
                             fontFamily: AppTheme.fontMono,
                             fontSize: 11.5,
@@ -546,33 +549,35 @@ class _IssueCard extends StatelessWidget {
                             color: AppColors.inkSoft,
                           ),
                         ),
-                        const SizedBox(width: 9),
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: KbTokens.stateDot(sm.hue),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            sm.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: KbTokens.stateInk(sm.hue),
+                        if (it != null) ...[
+                          const SizedBox(width: 9),
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: it.stateColor,
+                              shape: BoxShape.circle,
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              it.stateName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: it.stateColor,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      issue.title,
+                      it?.title ?? 'Open issue',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 13, height: 1.3),
@@ -581,7 +586,8 @@ class _IssueCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              if (assignee != null) AppAvatar(name: assignee.name, radius: 11),
+              if (it?.assigneeName != null)
+                AppAvatar(name: it!.assigneeName!, radius: 11),
             ],
           ),
         ),

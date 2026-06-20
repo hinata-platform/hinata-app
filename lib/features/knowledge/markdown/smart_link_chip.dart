@@ -3,17 +3,19 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_avatar.dart';
-import '../data/knowledge_models.dart';
-import '../data/knowledge_repository.dart';
-import '../knowledge_scope.dart';
+import '../data/knowledge_models.dart' show lucideIcon;
 import '../knowledge_tokens.dart';
+import 'smart_link_resolver.dart';
 
 /// Inline, clickable, hoverable smart-link chip rendered from a `{{…}}` token.
 ///
-/// - `issue`  → type glyph + public id, tinted by issue type; opens the issue
-///              slide-over. Missing target → a danger "broken link" chip.
+/// - `issue`  → type glyph + public id, tinted by issue type; opens the issue.
+///              Missing target → a danger "broken link" chip.
 /// - `doc`    → article icon + title, honey accent; opens the article.
 /// - `user`   → avatar + first name on a soft accent fill.
+///
+/// Resolution is delegated to the ambient [SmartLinkResolver] (see
+/// [SmartLinkScope]) so the same chip works in the KB and in a real issue.
 ///
 /// On hover (desktop) / long-press (touch) a floating [_SmartPreview] card is
 /// shown, anchored to the chip and flipped above when it would overflow the
@@ -38,7 +40,7 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
     super.dispose();
   }
 
-  KnowledgeRepository get _repo => KnowledgeScope.of(context).repo;
+  SmartLinkResolver get _resolver => SmartLinkScope.of(context);
 
   void _showPreview() {
     if (_entry != null) return;
@@ -77,15 +79,13 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
   }
 
   void _open() {
-    final scope = KnowledgeScope.of(context);
-    if (widget.kind == 'issue') {
-      final issue = _repo.issueByPubId(widget.id);
-      if (issue != null) scope.openIssue(issue);
-    } else if (widget.kind == 'doc') {
-      if (_repo.articleById(widget.id) != null) scope.openArticle(widget.id);
-    } else if (widget.kind == 'user') {
-      final user = _repo.userById(widget.id);
-      if (user != null) scope.openUser(user);
+    switch (widget.kind) {
+      case 'issue':
+        _resolver.openIssue(widget.id);
+      case 'doc':
+        _resolver.openDoc(widget.id);
+      case 'user':
+        _resolver.openPerson(widget.id);
     }
   }
 
@@ -115,7 +115,7 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
   Widget _buildChip() {
     switch (widget.kind) {
       case 'user':
-        final u = _repo.userById(widget.id);
+        final u = _resolver.person(widget.id);
         if (u == null) return _broken('@unknown');
         return _chipShell(
           background: AppColors.accentSoft,
@@ -128,15 +128,13 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
           ],
         );
       case 'issue':
-        final it = _repo.issueByPubId(widget.id);
+        final it = _resolver.issue(widget.id);
         if (it == null) return _broken(widget.id);
-        final meta = typeMeta(it.type);
-        final color = KbTokens.issueChipColor(meta.hue);
         return _chipShell(
           background: AppColors.surfaceMuted,
-          border: _hovered ? color : AppColors.hairline,
+          border: _hovered ? it.typeColor : AppColors.hairline,
           children: [
-            Icon(lucideIcon(meta.icon), size: 13, color: color),
+            Icon(lucideIcon(it.typeIcon), size: 13, color: it.typeColor),
             const SizedBox(width: 4),
             Text(
               widget.id,
@@ -151,7 +149,7 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
         );
       case 'doc':
       default:
-        final a = _repo.articleById(widget.id);
+        final a = _resolver.doc(widget.id);
         if (a == null) return _broken('Missing article');
         return _chipShell(
           background: AppColors.surfaceMuted,
@@ -166,18 +164,14 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
   }
 
   Widget _label(String text, Color color) => ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 240),
-        child: Text(
-          text,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
-        ),
-      );
+    constraints: const BoxConstraints(maxWidth: 240),
+    child: Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color),
+    ),
+  );
 
   Widget _chipShell({
     required Color background,
@@ -198,78 +192,87 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
   }
 
   Widget _broken(String label) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-        decoration: BoxDecoration(
-          color: AppColors.dangerSoft,
-          borderRadius: BorderRadius.circular(KbTokens.radiusChip),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(lucideIcon('unlink'), size: 12, color: AppColors.danger),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.danger,
-                ),
-              ),
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+    decoration: BoxDecoration(
+      color: AppColors.dangerSoft,
+      borderRadius: BorderRadius.circular(KbTokens.radiusChip),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(lucideIcon('unlink'), size: 12, color: AppColors.danger),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.danger,
             ),
-          ],
+          ),
         ),
-      );
+      ],
+    ),
+  );
 
   // ── preview content ──
   Widget? _buildPreviewCard() {
     if (widget.kind == 'issue') {
-      final it = _repo.issueByPubId(widget.id);
+      final it = _resolver.issue(widget.id);
       if (it == null) return null;
-      final tm = typeMeta(it.type);
-      final sm = stateMeta(it.state);
-      final assignee = it.assigneeId == null ? null : _repo.userById(it.assigneeId!);
-      final pm = priorityMeta(it.priority);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
-              _typeGlyph(tm),
+              _typeGlyph(it.typeIcon, it.typeColor),
               const SizedBox(width: 9),
-              Text(widget.id,
-                  style: TextStyle(
-                      fontFamily: AppTheme.fontMono,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.inkSoft)),
+              Text(
+                widget.id,
+                style: TextStyle(
+                  fontFamily: AppTheme.fontMono,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.inkSoft,
+                ),
+              ),
               const Spacer(),
-              _stateChip(sm),
+              _stateChip(it.stateName, it.stateColor),
             ],
           ),
           const SizedBox(height: 8),
-          Text(it.title,
-              style: const TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w600,
-                  height: 1.3,
-                  letterSpacing: -0.1)),
+          Text(
+            it.title,
+            style: const TextStyle(
+              fontSize: 14.5,
+              fontWeight: FontWeight.w600,
+              height: 1.3,
+              letterSpacing: -0.1,
+            ),
+          ),
           const SizedBox(height: 9),
           Wrap(
             spacing: 12,
             runSpacing: 6,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              if (assignee != null)
-                _metaItem(AppAvatar(name: assignee.name, radius: 9),
-                    assignee.firstName),
+              if (it.assigneeName != null)
+                _metaItem(
+                  AppAvatar(name: it.assigneeName!, radius: 9),
+                  it.assigneeName!.split(' ').first,
+                ),
               _metaItem(
-                  Icon(lucideIcon(pm.icon), size: 13, color: AppColors.inkSoft),
-                  pm.label),
+                Icon(
+                  lucideIcon(it.priorityIcon),
+                  size: 13,
+                  color: AppColors.inkSoft,
+                ),
+                it.priorityLabel,
+              ),
               if (it.tags.isNotEmpty) _tag(it.tags.first),
             ],
           ),
@@ -277,11 +280,8 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
         ],
       );
     }
-    final a = _repo.articleById(widget.id);
+    final a = _resolver.doc(widget.id);
     if (a == null) return null;
-    final sp = _repo.spaceById(a.spaceId);
-    final author = _repo.userById(a.authorId);
-    final excerpt = _excerpt(a.body);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -299,43 +299,63 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
               child: Icon(lucideIcon(a.icon), size: 15, color: KbTokens.accent),
             ),
             const SizedBox(width: 9),
-            if (sp != null)
+            if (a.spaceName != null)
               Flexible(
-                child: Text(sp.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: KbTokens.spaceChipText(sp.hue))),
+                child: Text(
+                  a.spaceName!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: a.spaceColor ?? KbTokens.accent,
+                  ),
+                ),
               ),
           ],
         ),
         const SizedBox(height: 8),
-        Text(a.title,
-            style: const TextStyle(
-                fontSize: 14.5,
-                fontWeight: FontWeight.w600,
-                height: 1.3,
-                letterSpacing: -0.1)),
-        const SizedBox(height: 7),
-        Text('$excerpt…',
+        Text(
+          a.title,
+          style: const TextStyle(
+            fontSize: 14.5,
+            fontWeight: FontWeight.w600,
+            height: 1.3,
+            letterSpacing: -0.1,
+          ),
+        ),
+        if (a.excerpt.isNotEmpty) ...[
+          const SizedBox(height: 7),
+          Text(
+            '${a.excerpt}…',
             style: TextStyle(
-                fontSize: 12.5, color: AppColors.inkSoft, height: 1.5)),
+              fontSize: 12.5,
+              color: AppColors.inkSoft,
+              height: 1.5,
+            ),
+          ),
+        ],
         const SizedBox(height: 10),
         Wrap(
           spacing: 12,
           runSpacing: 6,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            if (author != null)
+            if (a.authorName != null)
               _metaItem(
-                  AppAvatar(name: author.name, radius: 9), author.firstName),
-            _metaItem(
+                AppAvatar(name: a.authorName!, radius: 9),
+                a.authorName!.split(' ').first,
+              ),
+            if (a.updated != null)
+              _metaItem(
                 Icon(lucideIcon('clock'), size: 13, color: AppColors.inkFaint),
-                '${a.updated} ago'),
-            _metaItem(Icon(lucideIcon('eye'), size: 13, color: AppColors.inkFaint),
-                '${a.reads}'),
+                '${a.updated} ago',
+              ),
+            if (a.reads != null)
+              _metaItem(
+                Icon(lucideIcon('eye'), size: 13, color: AppColors.inkFaint),
+                '${a.reads}',
+              ),
           ],
         ),
         _footer('Open article'),
@@ -343,8 +363,7 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
     );
   }
 
-  Widget _typeGlyph(TypeMeta tm) {
-    final color = KbTokens.issueChipColor(tm.hue);
+  Widget _typeGlyph(String icon, Color color) {
     return Container(
       width: 20,
       height: 20,
@@ -353,81 +372,81 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
         borderRadius: BorderRadius.circular(6),
       ),
       alignment: Alignment.center,
-      child: Icon(lucideIcon(tm.icon), size: 13, color: color),
+      child: Icon(lucideIcon(icon), size: 13, color: color),
     );
   }
 
-  Widget _stateChip(StateMeta sm) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(
-                color: KbTokens.stateDot(sm.hue), shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 5),
-          Text(sm.name,
-              style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
-                  color: KbTokens.stateInk(sm.hue))),
-        ],
-      );
+  Widget _stateChip(String name, Color color) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 7,
+        height: 7,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      ),
+      const SizedBox(width: 5),
+      Text(
+        name,
+        style: TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    ],
+  );
 
   Widget _metaItem(Widget leading, String text) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          leading,
-          const SizedBox(width: 5),
-          Text(text,
-              style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft)),
-        ],
-      );
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      leading,
+      const SizedBox(width: 5),
+      Text(text, style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft)),
+    ],
+  );
 
   Widget _tag(String label) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceMuted,
-          borderRadius: BorderRadius.circular(KbTokens.radiusChip),
-          border: Border.all(color: AppColors.hairline2),
-        ),
-        child: Text(label,
-            style: TextStyle(fontSize: 11, color: AppColors.inkSoft)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+    decoration: BoxDecoration(
+      color: AppColors.surfaceMuted,
+      borderRadius: BorderRadius.circular(KbTokens.radiusChip),
+      border: Border.all(color: AppColors.hairline2),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(fontSize: 11, color: AppColors.inkSoft),
+    ),
+  );
 
   Widget _footer(String label) => Padding(
-        padding: const EdgeInsets.only(top: 11),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    padding: const EdgeInsets.only(top: 11),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Divider(height: 1, color: AppColors.hairline2),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Divider(height: 1, color: AppColors.hairline2),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(lucideIcon('corner-down-left'),
-                    size: 13, color: KbTokens.accent),
-                const SizedBox(width: 6),
-                Text(label,
-                    style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: KbTokens.accent)),
-              ],
+            Icon(
+              lucideIcon('corner-down-left'),
+              size: 13,
+              color: KbTokens.accent,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: KbTokens.accent,
+              ),
             ),
           ],
         ),
-      );
-
-  static String _excerpt(String body) {
-    final cleaned = body
-        .replaceAll(RegExp(r'\{\{[^}]+\}\}'), '')
-        .replaceAll(RegExp(r'[#>*`|\-]'), '')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    return cleaned.length > 120 ? cleaned.substring(0, 120) : cleaned;
-  }
+      ],
+    ),
+  );
 }
 
 /// The floating card shell: surface, hairline, card radius, pop shadow + the
@@ -444,8 +463,9 @@ class _SmartPreview extends StatefulWidget {
 class _SmartPreviewState extends State<_SmartPreview>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 160))
-    ..forward();
+    vsync: this,
+    duration: const Duration(milliseconds: 160),
+  )..forward();
 
   @override
   void dispose() {
@@ -481,7 +501,9 @@ class _SmartPreviewState extends State<_SmartPreview>
       builder: (context, child) => Opacity(
         opacity: _c.value,
         child: Transform.translate(
-            offset: Offset(0, -4 * (1 - _c.value)), child: child),
+          offset: Offset(0, -4 * (1 - _c.value)),
+          child: child,
+        ),
       ),
       child: card,
     );

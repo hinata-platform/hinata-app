@@ -6,6 +6,7 @@ import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_loader.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../core/api/api_client.dart';
@@ -19,10 +20,18 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/hue_colors.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
+import '../knowledge/data/knowledge_models.dart' show KbArticle, lucideIcon;
+import '../knowledge/data/knowledge_repository.dart';
+import '../knowledge/knowledge_tokens.dart';
+import '../knowledge/markdown/markdown_renderer.dart';
+import '../knowledge/markdown/mention_field.dart';
+import '../knowledge/markdown/smart_link_resolver.dart';
 import '../sprint/modals/estimate_dialog.dart' show showStoryPointsDialog;
 import '../sprint/modals/glass_modal.dart' show showGlassModal;
 import 'attachments/attachments_section.dart';
+import 'issue_description_editor.dart';
 import 'issue_labels.dart';
+import 'issue_link_resolver.dart';
 import 'issue_markdown.dart';
 import 'work_log_sheet.dart';
 
@@ -189,6 +198,7 @@ class IssueDetailBody extends StatefulWidget {
 
 class IssueDetailBodyState extends State<IssueDetailBody> {
   final _comment = TextEditingController();
+  final _commentFocus = FocusNode();
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
 
@@ -197,6 +207,12 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
   List<IssueActivity> _activity = const [];
   List<WorkItem> _workItems = const [];
   Project? _project;
+  // Cross-feature smart-links: project issues (keyed by readable id) feed the
+  // comment composer's `@`-menu and resolve `{{issue:…}}` chips; KB articles
+  // that mention this issue are its "Documented in" backlinks.
+  Map<String, Issue> _projectIssues = const {};
+  List<KbArticle> _documentedIn = const [];
+  KnowledgeRepository get _knowledge => context.read<KnowledgeRepository>();
   // Labels deleted this session — guards against the stale _project list
   // re-suggesting a label that was just removed from the project.
   final Set<String> _deletedLabels = {};
@@ -231,6 +247,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
   @override
   void dispose() {
     _comment.dispose();
+    _commentFocus.dispose();
     _titleCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
@@ -264,6 +281,20 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
         _sprints = await _repo.sprintsForProject(issue.projectId);
       } catch (_) {
         _sprints = const [];
+      }
+      // Project issues power the comment `@`-menu + `{{issue:…}}` chip previews;
+      // KB backlinks come from the shared seed. Both best-effort.
+      try {
+        final res = await _repo.issues(projectId: issue.projectId, size: 200);
+        _projectIssues = {for (final i in res.issues) i.readableId: i};
+      } catch (_) {
+        _projectIssues = const {};
+      }
+      try {
+        await _knowledge.init();
+        _documentedIn = _knowledge.articlesForIssue(issue.readableId);
+      } catch (_) {
+        _documentedIn = const [];
       }
       widget.header?.value = issue;
       if (mounted) setState(() => _loading = false);
@@ -400,75 +431,144 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     // own. Both are intrinsically sized — the route wraps this in a scroll view,
     // the sheet scrolls its own content.
     final inSheet = widget.header != null;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (!inSheet)
-          _RouteTopBar(
-            issue: issue,
-            busy: _busy,
-            stateColor: _projStateColor(_project, issue.state),
-            onCopyLink: copyIssueLink,
-            onDelete: () => _confirmDelete(issue),
-            onClose: () => Navigator.of(context).maybePop(),
-          ),
-        Padding(
-          padding: EdgeInsets.fromLTRB(20, inSheet ? 16 : 16, 20, 24),
-          child: LayoutBuilder(
-            builder: (context, c) {
-              final left = <Widget>[
-                _contentCard(issue),
-                const SizedBox(height: 14),
-                _attachmentsSection(issue),
-                const SizedBox(height: 14),
-                _activityCard(),
-              ];
-              final right = <Widget>[
-                _detailsCard(issue),
-                const SizedBox(height: 14),
-                _timeCard(issue),
-              ];
-              if (c.maxWidth >= 680) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: left,
-                      ),
-                    ),
-                    const SizedBox(width: 18),
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: right,
-                      ),
-                    ),
-                  ],
-                );
-              }
-              // Stacked (phone): content, details, time, activity.
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+    final documented = _documentedInSection();
+    return SmartLinkScope(
+      resolver: _buildResolver(issue),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!inSheet)
+            _RouteTopBar(
+              issue: issue,
+              busy: _busy,
+              stateColor: _projStateColor(_project, issue.state),
+              onCopyLink: copyIssueLink,
+              onDelete: () => _confirmDelete(issue),
+              onClose: () => Navigator.of(context).maybePop(),
+            ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(20, inSheet ? 16 : 16, 20, 24),
+            child: LayoutBuilder(
+              builder: (context, c) {
+                final left = <Widget>[
                   _contentCard(issue),
                   const SizedBox(height: 14),
                   _attachmentsSection(issue),
+                  if (documented != null) ...[
+                    const SizedBox(height: 14),
+                    documented,
+                  ],
                   const SizedBox(height: 14),
+                  _activityCard(),
+                ];
+                final right = <Widget>[
                   _detailsCard(issue),
                   const SizedBox(height: 14),
                   _timeCard(issue),
-                  const SizedBox(height: 14),
-                  _activityCard(),
-                ],
-              );
-            },
+                ];
+                if (c.maxWidth >= 680) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: left,
+                        ),
+                      ),
+                      const SizedBox(width: 18),
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: right,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                // Stacked (phone): content, details, time, activity.
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _contentCard(issue),
+                    const SizedBox(height: 14),
+                    _attachmentsSection(issue),
+                    if (documented != null) ...[
+                      const SizedBox(height: 14),
+                      documented,
+                    ],
+                    const SizedBox(height: 14),
+                    _detailsCard(issue),
+                    const SizedBox(height: 14),
+                    _timeCard(issue),
+                    const SizedBox(height: 14),
+                    _activityCard(),
+                  ],
+                );
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+
+  // ── smart-link wiring ────────────────────────────────────────────────────
+
+  /// Resolver for the chips/`@`-menu: issues+people from the backend, articles
+  /// from the shared KB seed. Rebuilt per frame (cheap) so it always reflects
+  /// the freshly-loaded project issues / users.
+  IssueLinkResolver _buildResolver(Issue issue) => IssueLinkResolver(
+    issuesByReadable: {issue.readableId: issue, ..._projectIssues},
+    users: _users,
+    knowledgeRepo: _knowledge,
+    stateColorFor: (s) =>
+        _projStateColor(_project, s) ?? AppColors.stateColor(s),
+    onOpenIssue: _openLinkedIssue,
+    onOpenDoc: _openArticle,
+  );
+
+  /// Opens the real issue for a readable id (e.g. `HIV-208`): tries the loaded
+  /// project issues first, then a backend search; toasts if there is no match.
+  Future<void> _openLinkedIssue(String readableId) async {
+    if (readableId == _issue?.readableId) return; // already open
+    var match = _projectIssues[readableId];
+    if (match == null) {
+      try {
+        final res = await _repo.issues(query: readableId, size: 20);
+        match = res.issues.where((i) => i.readableId == readableId).firstOrNull;
+      } on ApiFailure catch (failure) {
+        _toast(failure.message);
+        return;
+      }
+    }
+    if (!mounted) return;
+    if (match == null) {
+      _toast('Issue $readableId not found');
+      return;
+    }
+    await showIssueDetailSheet(context, issueId: match.id);
+  }
+
+  /// Opens a KB article (doc smart-link) on the `/knowledge/:id` route. When the
+  /// issue is shown as a modal sheet, close it first so the article isn't buried.
+  void _openArticle(String articleId) {
+    final router = GoRouter.of(context);
+    if (widget.header != null) {
+      Navigator.of(context, rootNavigator: true).maybePop();
+    }
+    router.push('/knowledge/$articleId');
+  }
+
+  /// "Documented in": KB articles that reference this issue, or null when none.
+  Widget? _documentedInSection() {
+    if (_documentedIn.isEmpty) return null;
+    return _DocumentedIn(
+      articles: _documentedIn,
+      knowledge: _knowledge,
+      onOpen: _openArticle,
     );
   }
 
@@ -515,10 +615,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                MarkdownEditorField(
-                  controller: _descCtrl,
-                  hintText: context.t('issues.description'),
-                ),
+                IssueDescriptionEditor(controller: _descCtrl),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -546,7 +643,14 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
               behavior: HitTestBehavior.opaque,
               onDoubleTap: _beginDescEdit,
               child: (issue.description ?? '').isNotEmpty
-                  ? MarkdownText(issue.description!)
+                  // KB parser so `{{issue}}`/`{{doc}}`/`{{user}}` smart-links
+                  // render as chips alongside the markdown.
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: KbMarkdownParser(
+                        fontSize: 14,
+                      ).parse(issue.description!).nodes,
+                    )
                   : Text(
                       context.t('issues.noDescription'),
                       style: TextStyle(
@@ -887,33 +991,60 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
           ),
           const SizedBox(height: 14),
           ..._activityItems(filter),
-          if (showComposer) ...[
-            const SizedBox(height: 4),
-            Row(
+          if (showComposer) ...[const SizedBox(height: 4), _commentComposer()],
+        ],
+      ),
+    );
+  }
+
+  /// Comment composer with `@`-smart-link autocomplete (issues · articles ·
+  /// people). Mirrors the KB editor's box; `⌘↵` or the button submits.
+  Widget _commentComposer() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+        border: Border.all(color: AppColors.hairline),
+      ),
+      child: Column(
+        children: [
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 44, maxHeight: 160),
+            child: MentionField(
+              controller: _comment,
+              focusNode: _commentFocus,
+              commentMode: true,
+              minLines: 1,
+              maxLines: 6,
+              hintText: context.t('issues.addComment'),
+              onSubmit: _submitComment,
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: AppColors.hairline2)),
+            ),
+            padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+            child: Row(
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _comment,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      hintText: context.t('issues.addComment'),
-                    ),
-                    onSubmitted: (_) => _submitComment(),
-                  ),
+                Text(
+                  context.t('issues.commentHint'),
+                  style: TextStyle(fontSize: 11, color: AppColors.inkFaint),
                 ),
-                const SizedBox(width: 10),
-                IconButton.filled(
-                  style: IconButton.styleFrom(backgroundColor: AppColors.navy),
+                const Spacer(),
+                FilledButton(
                   onPressed: _submitComment,
-                  icon: const Icon(
-                    LucideIcons.send,
-                    color: Colors.white,
-                    size: 18,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.navy,
+                    visualDensity: VisualDensity.compact,
+                    minimumSize: const Size(0, 34),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                   ),
+                  child: Text(context.t('issues.comment')),
                 ),
               ],
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -2340,13 +2471,12 @@ class _CommentTile extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 3),
-                Text(
-                  comment.text,
-                  style: TextStyle(
-                    height: 1.5,
+                // Render smart-link tokens ({{issue}}/{{doc}}/{{user}}) as chips.
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: KbMarkdownParser(
                     fontSize: 13,
-                    color: AppColors.inkSoft,
-                  ),
+                  ).parse(comment.text).nodes,
                 ),
               ],
             ),
@@ -2532,6 +2662,121 @@ class _ChangeChip extends StatelessWidget {
           fontSize: 11.5,
           fontWeight: FontWeight.w600,
           color: AppColors.ink,
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────── "Documented in" cross-reference ───────────────────────
+
+/// Knowledge-base backlinks: the KB articles whose body references this issue
+/// (`{{issue:<readableId>}}`). Each row opens the article.
+class _DocumentedIn extends StatelessWidget {
+  const _DocumentedIn({
+    required this.articles,
+    required this.knowledge,
+    required this.onOpen,
+  });
+
+  final List<KbArticle> articles;
+  final KnowledgeRepository knowledge;
+  final void Function(String articleId) onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(lucideIcon('link-2'), size: 16, color: KbTokens.accent),
+              const SizedBox(width: 8),
+              const Text(
+                'Documented in',
+                style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceMuted,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+                  border: Border.all(color: AppColors.hairline),
+                ),
+                child: Text(
+                  '${articles.length}',
+                  style: TextStyle(
+                    fontFamily: AppTheme.fontMono,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.inkFaint,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          for (final a in articles) _row(a),
+        ],
+      ),
+    );
+  }
+
+  Widget _row(KbArticle a) {
+    final sp = knowledge.spaceById(a.spaceId);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+        child: InkWell(
+          onTap: () => onOpen(a.id),
+          borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+              border: Border.all(color: AppColors.hairline),
+            ),
+            child: Row(
+              children: [
+                Icon(lucideIcon(a.icon), size: 17, color: KbTokens.accent),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        a.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (sp != null)
+                        Text(
+                          sp.name,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.inkSoft,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  lucideIcon('chevron-right'),
+                  size: 16,
+                  color: AppColors.inkFaint,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

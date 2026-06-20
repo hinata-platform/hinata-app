@@ -8,17 +8,37 @@ class Article extends Equatable {
     required this.title,
     this.content,
     this.projectId,
+    this.teamId,
     this.parentId,
+    this.space,
+    this.icon,
+    this.authorId,
     this.tags = const [],
+    this.sortOrder = 0,
+    this.createdAt,
     this.updatedAt,
   });
 
   final String id;
   final String title;
   final String? content;
+
+  /// Project the article is scoped to (visible only with project access).
   final String? projectId;
+
+  /// Team the article belongs to (team-wide, no project). Null otherwise.
+  final String? teamId;
   final String? parentId;
+
+  /// Knowledge-base space (e.g. "Engineering"); null for ungrouped articles.
+  final String? space;
+
+  /// Lucide icon name (kebab-case) for the article glyph.
+  final String? icon;
+  final String? authorId;
   final List<String> tags;
+  final int sortOrder;
+  final DateTime? createdAt;
   final DateTime? updatedAt;
 
   factory Article.fromJson(Map<String, dynamic> json) => Article(
@@ -26,15 +46,23 @@ class Article extends Equatable {
         title: json['title'] as String? ?? '',
         content: json['content'] as String?,
         projectId: json['projectId'] as String?,
+        teamId: json['teamId'] as String?,
         parentId: json['parentId'] as String?,
+        space: json['space'] as String?,
+        icon: json['icon'] as String?,
+        authorId: json['authorId'] as String?,
         tags: ((json['tags'] as List<dynamic>?) ?? const []).cast<String>(),
+        sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
+        createdAt: json['createdAt'] is String
+            ? DateTime.tryParse(json['createdAt'] as String)
+            : null,
         updatedAt: json['updatedAt'] is String
             ? DateTime.tryParse(json['updatedAt'] as String)
             : null,
       );
 
   @override
-  List<Object?> get props => [id, title, parentId, updatedAt];
+  List<Object?> get props => [id, title, parentId, space, updatedAt];
 }
 
 class AppNotification extends Equatable {

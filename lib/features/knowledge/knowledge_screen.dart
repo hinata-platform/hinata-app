@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/api/api_client.dart';
+import '../../core/api/hinata_repository.dart';
+import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
+import '../issues/issue_detail_sheet.dart';
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
 import 'knowledge_editor.dart';
 import 'knowledge_home.dart';
-import 'knowledge_issue_sheet.dart';
+import 'knowledge_link_resolver.dart';
 import 'knowledge_reader.dart';
 import 'knowledge_scope.dart';
 import 'knowledge_tokens.dart';
 import 'knowledge_tree.dart';
+import 'markdown/smart_link_resolver.dart';
 
 /// Confluence-style Knowledge Base shell: spaces home, nested article tree,
 /// reader with TOC/aside/linked-issues, and a full markdown editor with
@@ -33,17 +40,31 @@ class KnowledgeScreen extends StatefulWidget {
 enum _Mode { home, article, edit, newDoc }
 
 class _KnowledgeScreenState extends State<KnowledgeScreen> {
-  final KnowledgeRepository _repo = KnowledgeRepository();
+  // Shared app-wide store (provided in app.dart).
+  late final KnowledgeRepository _repo = context.read<KnowledgeRepository>();
   bool _ready = false;
+
+  // Real backend issues + member names so `{{issue:…}}` tokens and the `@`-menu
+  // resolve against genuine issues (keyed by readable id), not seed data.
+  Map<String, Issue> _issuesByReadable = const {};
+  Map<String, String> _userNames = const {};
 
   _Mode _mode = _Mode.home;
   String? _selectedId;
   late String _spaceId = _repo.spaces.first.id;
   final _scrollKey = GlobalKey();
 
+  // Reader panel collapse (desktop fullscreen reading) + pending parent for the
+  // "new sub-page" create flow.
+  bool _treeCollapsed = false;
+  bool _asideCollapsed = false;
+  String? _pendingParentId;
+
   @override
   void initState() {
     super.initState();
+    // The shared repo is init'd at app start; re-run is idempotent and ensures
+    // persisted edits are overlaid before we gate the first frame.
     _repo.init().then((_) {
       if (!mounted) return;
       final initial = widget.initialArticleId;
@@ -55,13 +76,34 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
       }
       setState(() => _ready = true);
     });
+    _loadBackendIssues();
   }
 
-  @override
-  void dispose() {
-    _repo.dispose();
-    super.dispose();
+  /// Pulls real issues (across all visible projects) and member names so smart
+  /// links and the `@`-mention menu resolve to genuine backend issues.
+  Future<void> _loadBackendIssues() async {
+    final repository = context.read<HinataRepository>();
+    try {
+      final res = await repository.issues(size: 500);
+      final users = await repository.users();
+      if (!mounted) return;
+      setState(() {
+        _issuesByReadable = {for (final i in res.issues) i.readableId: i};
+        _userNames = {for (final u in users) u.id: u.displayName};
+      });
+    } catch (_) {
+      // Best-effort: the menu simply shows no issues until a retry/navigation.
+    }
   }
+
+  SmartLinkResolver _buildResolver() => KnowledgeLinkResolver(
+    repo: _repo,
+    issuesByReadable: _issuesByReadable,
+    stateColorFor: AppColors.stateColor,
+    nameFor: (id) => id == null ? null : _userNames[id],
+    onOpenArticle: _openArticle,
+    onOpenIssue: _openRealIssue,
+  );
 
   KbArticle? get _current =>
       _selectedId == null ? null : _repo.articleById(_selectedId!);
@@ -88,37 +130,108 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
     });
   }
 
-  void _openIssue(KbIssue issue) {
-    showKnowledgeIssueSheet(context,
-        repo: _repo, issue: issue, onOpenArticle: _openArticle);
-  }
-
-  void _home() => setState(() {
-        _mode = _Mode.home;
-        _selectedId = null;
-      });
-
-  void _save(EditorResult r) {
-    final title = r.title.trim().isEmpty ? 'Untitled' : r.title.trim();
-    if (_mode == _Mode.newDoc) {
-      final a = _repo.createArticle(
-          title: title, body: r.body, spaceId: r.spaceId);
-      setState(() {
-        _selectedId = a.id;
-        _spaceId = a.spaceId;
-        _mode = _Mode.article;
-      });
-      _toast('Article published');
-    } else if (_current != null) {
-      _repo.saveEdit(_current!.id,
-          title: title, body: r.body, spaceId: r.spaceId);
-      setState(() => _mode = _Mode.article);
-      _toast('Changes saved');
+  /// Resolves a readable id (e.g. `HIV-208`) to the backend issue and opens the
+  /// real issue sheet; toasts if there is no matching issue.
+  Future<void> _openRealIssue(String readableId) async {
+    final repository = context.read<HinataRepository>();
+    try {
+      final res = await repository.issues(query: readableId, size: 20);
+      final match = res.issues
+          .where((i) => i.readableId == readableId)
+          .firstOrNull;
+      if (!mounted) return;
+      if (match == null) {
+        _toast('Issue $readableId not found');
+        return;
+      }
+      await showIssueDetailSheet(context, issueId: match.id);
+    } on ApiFailure catch (failure) {
+      if (mounted) _toast(failure.message);
     }
   }
 
-  void _toast(String msg) => ScaffoldMessenger.of(context)
-      .showSnackBar(SnackBar(content: Text(msg)));
+  void _home() => setState(() {
+    _mode = _Mode.home;
+    _selectedId = null;
+  });
+
+  // ── folder-style tree actions ─────────────────────────────────────────────
+
+  /// Start a new sub-page under [parentId] (Confluence-style nesting).
+  void _newChild(String parentId) {
+    setState(() {
+      _pendingParentId = parentId;
+      _spaceId = _repo.articleById(parentId)?.spaceId ?? _spaceId;
+      _mode = _Mode.newDoc;
+    });
+  }
+
+  Future<void> _moveArticle(
+    String id, {
+    String? parentId,
+    required String spaceId,
+  }) async {
+    try {
+      await _repo.moveArticle(id, parentId: parentId, spaceId: spaceId);
+      if (mounted) setState(() => _spaceId = spaceId);
+    } on ApiFailure catch (failure) {
+      if (mounted) _toast(failure.message);
+    }
+  }
+
+  Future<void> _deleteArticle(String id) async {
+    try {
+      await _repo.deleteArticle(id);
+      if (!mounted) return;
+      setState(() {
+        if (_selectedId == id) {
+          _selectedId = null;
+          _mode = _Mode.home;
+        }
+      });
+      _toast('Article deleted');
+    } on ApiFailure catch (failure) {
+      if (mounted) _toast(failure.message);
+    }
+  }
+
+  Future<void> _save(EditorResult r) async {
+    final title = r.title.trim().isEmpty ? 'Untitled' : r.title.trim();
+    try {
+      if (_mode == _Mode.newDoc) {
+        final parentId = _pendingParentId;
+        final a = await _repo.createArticle(
+          title: title,
+          body: r.body,
+          spaceId: r.spaceId,
+          parentId: parentId,
+        );
+        if (!mounted) return;
+        setState(() {
+          _pendingParentId = null;
+          _selectedId = a.id;
+          _spaceId = a.spaceId;
+          _mode = _Mode.article;
+        });
+        _toast('Article published');
+      } else if (_current != null) {
+        await _repo.saveEdit(
+          _current!.id,
+          title: title,
+          body: r.body,
+          spaceId: r.spaceId,
+        );
+        if (!mounted) return;
+        setState(() => _mode = _Mode.article);
+        _toast('Changes saved');
+      }
+    } on ApiFailure catch (failure) {
+      if (mounted) _toast(failure.message);
+    }
+  }
+
+  void _toast(String msg) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 
   void _openTreeDrawer() {
     showModalBottomSheet<void>(
@@ -146,6 +259,12 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
                 Navigator.of(sheetCtx).pop();
                 _openSpace(id);
               },
+              onNewChild: (pid) {
+                Navigator.of(sheetCtx).pop();
+                _newChild(pid);
+              },
+              onMove: _moveArticle,
+              onDelete: _deleteArticle,
             ),
           ),
         ),
@@ -156,26 +275,30 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
   @override
   Widget build(BuildContext context) {
     if (!_ready) {
-      return const Center(child: Padding(padding: EdgeInsets.all(40), child: HiveLoader()));
+      return const Center(
+        child: Padding(padding: EdgeInsets.all(40), child: HiveLoader()),
+      );
     }
     return KnowledgeScope(
       repo: _repo,
       openArticle: _openArticle,
-      openIssue: _openIssue,
       openUser: (_) {},
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final w = constraints.maxWidth;
-          final bp = w < KbTokens.bpMid
-              ? _Bp.narrow
-              : w < KbTokens.bpWide
-                  ? _Bp.mid
-                  : _Bp.wide;
-          if (_mode == _Mode.edit || _mode == _Mode.newDoc) {
-            return _editorView(constraints.maxHeight);
-          }
-          return _mainView(bp);
-        },
+      child: SmartLinkScope(
+        resolver: _buildResolver(),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final w = constraints.maxWidth;
+            final bp = w < KbTokens.bpMid
+                ? _Bp.narrow
+                : w < KbTokens.bpWide
+                ? _Bp.mid
+                : _Bp.wide;
+            if (_mode == _Mode.edit || _mode == _Mode.newDoc) {
+              return _editorView(constraints.maxHeight);
+            }
+            return _mainView(bp);
+          },
+        ),
       ),
     );
   }
@@ -195,7 +318,10 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
         PrimaryButton(
           label: 'New article',
           icon: lucideIcon('plus'),
-          onPressed: () => setState(() => _mode = _Mode.newDoc),
+          onPressed: () => setState(() {
+            _pendingParentId = null;
+            _mode = _Mode.newDoc;
+          }),
         ),
       ],
     );
@@ -231,13 +357,17 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
   }
 
   Widget _articleLayout(_Bp bp, bool showTree) {
+    // Aside collapses to none when the user wants a wider/fullscreen read.
+    final asideMode = _asideCollapsed
+        ? AsideMode.none
+        : switch (bp) {
+            _Bp.wide => AsideMode.side,
+            _Bp.mid => AsideMode.below,
+            _Bp.narrow => AsideMode.none,
+          };
     final reader = KnowledgeReader(
       article: _current!,
-      asideMode: switch (bp) {
-        _Bp.wide => AsideMode.side,
-        _Bp.mid => AsideMode.below,
-        _Bp.narrow => AsideMode.none,
-      },
+      asideMode: asideMode,
       onEdit: () => setState(() => _mode = _Mode.edit),
     );
 
@@ -257,22 +387,32 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
                   borderRadius: BorderRadius.circular(KbTokens.radiusControl),
                   onTap: _openTreeDrawer,
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 9,
+                    ),
                     decoration: BoxDecoration(
-                      borderRadius:
-                          BorderRadius.circular(KbTokens.radiusControl),
+                      borderRadius: BorderRadius.circular(
+                        KbTokens.radiusControl,
+                      ),
                       border: Border.all(color: AppColors.hairline),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(lucideIcon('panel-left'),
-                            size: 16, color: AppColors.inkSoft),
+                        Icon(
+                          lucideIcon('panel-left'),
+                          size: 16,
+                          color: AppColors.inkSoft,
+                        ),
                         const SizedBox(width: 8),
-                        Text(_repo.spaceById(_spaceId)?.name ?? '',
-                            style: const TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.w600)),
+                        Text(
+                          _repo.spaceById(_spaceId)?.name ?? '',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -288,18 +428,61 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: KbTokens.treeWidth,
-          child: KnowledgeTree(
-            repo: _repo,
-            spaceId: _spaceId,
-            selectedId: _selectedId,
-            onSelect: _openArticle,
-            onSpaceChange: _openSpace,
+        if (!_treeCollapsed) ...[
+          SizedBox(
+            width: KbTokens.treeWidth,
+            child: KnowledgeTree(
+              repo: _repo,
+              spaceId: _spaceId,
+              selectedId: _selectedId,
+              onSelect: _openArticle,
+              onSpaceChange: _openSpace,
+              onNewChild: _newChild,
+              onMove: _moveArticle,
+              onDelete: _deleteArticle,
+            ),
+          ),
+          const SizedBox(width: 28),
+        ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _readerControls(bp),
+              const SizedBox(height: 4),
+              reader,
+            ],
           ),
         ),
-        const SizedBox(width: 28),
-        Expanded(child: reader),
+      ],
+    );
+  }
+
+  /// Collapse/expand controls flanking the reader: the left "pages" toggle sits
+  /// on the left edge (next to the tree it hides), the right "details" toggle on
+  /// the right edge (next to the aside) — so an article can be read full-bleed.
+  Widget _readerControls(_Bp bp) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _PanelToggle(
+          icon: _treeCollapsed
+              ? LucideIcons.panelLeftOpen
+              : LucideIcons.panelLeftClose,
+          tooltip: _treeCollapsed ? 'Show pages' : 'Hide pages',
+          onTap: () => setState(() => _treeCollapsed = !_treeCollapsed),
+        ),
+        // Right edge: only the wide layout has a side aside to collapse.
+        if (bp == _Bp.wide)
+          _PanelToggle(
+            icon: _asideCollapsed
+                ? LucideIcons.panelRightOpen
+                : LucideIcons.panelRightClose,
+            tooltip: _asideCollapsed ? 'Show details' : 'Hide details',
+            onTap: () => setState(() => _asideCollapsed = !_asideCollapsed),
+          )
+        else
+          const SizedBox.shrink(),
       ],
     );
   }
@@ -324,28 +507,37 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
                 borderRadius: BorderRadius.circular(KbTokens.radiusControl),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-                  onTap: () =>
-                      setState(() => _mode = isNew ? _Mode.home : _Mode.article),
+                  onTap: () => setState(() {
+                    _pendingParentId = null;
+                    _mode = isNew ? _Mode.home : _Mode.article;
+                  }),
                   child: Container(
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      borderRadius:
-                          BorderRadius.circular(KbTokens.radiusControl),
+                      borderRadius: BorderRadius.circular(
+                        KbTokens.radiusControl,
+                      ),
                       border: Border.all(color: AppColors.hairline),
                     ),
-                    child: Icon(lucideIcon('arrow-left'),
-                        size: 18, color: AppColors.inkSoft),
+                    child: Icon(
+                      lucideIcon('arrow-left'),
+                      size: 18,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              Text(isNew ? 'New article' : 'Editing',
-                  style: const TextStyle(
-                      fontFamily: AppTheme.fontBrand,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.2)),
+              Text(
+                isNew ? 'New article' : 'Editing',
+                style: const TextStyle(
+                  fontFamily: AppTheme.fontBrand,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -356,8 +548,10 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
               initialBody: isNew ? '' : current?.body ?? '',
               spaceId: _spaceId,
               onSave: _save,
-              onCancel: () =>
-                  setState(() => _mode = isNew ? _Mode.home : _Mode.article),
+              onCancel: () => setState(() {
+                _pendingParentId = null;
+                _mode = isNew ? _Mode.home : _Mode.article;
+              }),
             ),
           ),
         ],
@@ -367,3 +561,40 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
 }
 
 enum _Bp { narrow, mid, wide }
+
+/// Compact bordered icon button used by the reader's panel-collapse controls.
+class _PanelToggle extends StatelessWidget {
+  const _PanelToggle({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+          child: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+              border: Border.all(color: AppColors.hairline),
+            ),
+            child: Icon(icon, size: 17, color: AppColors.inkSoft),
+          ),
+        ),
+      ),
+    );
+  }
+}

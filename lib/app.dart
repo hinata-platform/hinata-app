@@ -16,6 +16,7 @@ import 'core/router/app_router.dart';
 import 'core/storage/app_storage.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'features/knowledge/data/knowledge_repository.dart';
 
 class HinataApp extends StatefulWidget {
   const HinataApp({
@@ -37,17 +38,25 @@ class _HinataAppState extends State<HinataApp> {
   late final AppConfigBloc _appConfig;
   late final AuthBloc _auth;
   late final GoRouter _router;
+  // Shared backend-backed Knowledge Base store: the KB screen and the real
+  // issue detail both resolve smart-links / "Documented in" against this single
+  // instance. Loaded lazily on first use (post-auth), not at startup.
+  late final KnowledgeRepository _knowledge = KnowledgeRepository(
+    widget.repository,
+  );
   StreamSubscription<Uri>? _linkSubscription;
 
   @override
   void initState() {
     super.initState();
-    _appConfig = AppConfigBloc(repository: widget.repository, storage: widget.storage)
-      ..add(const AppConfigStarted());
+    _appConfig = AppConfigBloc(
+      repository: widget.repository,
+      storage: widget.storage,
+    )..add(const AppConfigStarted());
     _auth = AuthBloc(repository: widget.repository, storage: widget.storage)
       ..add(const AuthChecked());
-    widget.apiClient.onSessionExpired =
-        () => _auth.add(const LogoutRequested());
+    widget.apiClient.onSessionExpired = () =>
+        _auth.add(const LogoutRequested());
     _router = buildRouter(
       appConfig: _appConfig,
       auth: _auth,
@@ -116,6 +125,7 @@ class _HinataAppState extends State<HinataApp> {
         RepositoryProvider.value(value: widget.storage),
         RepositoryProvider.value(value: widget.apiClient),
         RepositoryProvider.value(value: widget.repository),
+        RepositoryProvider.value(value: _knowledge),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -154,8 +164,9 @@ class _HinataAppState extends State<HinataApp> {
                     AppColors.brightness = switch (themeMode) {
                       ThemeMode.light => Brightness.light,
                       ThemeMode.dark => Brightness.dark,
-                      ThemeMode.system =>
-                        MediaQuery.platformBrightnessOf(context),
+                      ThemeMode.system => MediaQuery.platformBrightnessOf(
+                        context,
+                      ),
                     };
                     return child ?? const SizedBox.shrink();
                   },

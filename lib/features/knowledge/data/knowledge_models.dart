@@ -26,45 +26,6 @@ class KbUser {
   String get firstName => name.split(' ').first;
 }
 
-/// A project — only its key + hue matter here (used to derive issue ids).
-class KbProject {
-  const KbProject({
-    required this.id,
-    required this.key,
-    required this.name,
-    required this.hue,
-  });
-
-  final String id;
-  final String key;
-  final String name;
-  final int hue;
-}
-
-/// An issue a `{{issue:KEY-N}}` token resolves to. The public id is
-/// `projectKey-number` (e.g. `HIV-241`).
-class KbIssue {
-  const KbIssue({
-    required this.number,
-    required this.projectId,
-    required this.title,
-    required this.type,
-    required this.priority,
-    required this.state,
-    required this.assigneeId,
-    this.tags = const [],
-  });
-
-  final int number;
-  final String projectId;
-  final String title;
-  final String type; // STORY | TASK | BUG | EPIC
-  final String priority; // URGENT | HIGH | NORMAL | LOW
-  final String state; // BACKLOG | TODO | IN_PROGRESS | IN_REVIEW | DONE
-  final String? assigneeId;
-  final List<String> tags;
-}
-
 /// A wiki space (Engineering · Product · Design · Operations).
 class KbSpace {
   const KbSpace({
@@ -349,6 +310,12 @@ IconData lucideIcon(String? name) {
       return LucideIcons.layoutGrid;
     case 'plus':
       return LucideIcons.plus;
+    case 'ellipsis':
+      return LucideIcons.ellipsis;
+    case 'trash-2':
+      return LucideIcons.trash2;
+    case 'folder-plus':
+      return LucideIcons.folderPlus;
     case 'file-text':
     default:
       return LucideIcons.fileText;
