@@ -270,7 +270,7 @@
       "title": "Anhänge",
       "add": "Dateien hinzufügen",
       "emptyTitle": "Dateien hier ablegen oder zum Hochladen klicken",
-      "emptyHint": "Bilder werden direkt angezeigt · beliebiger Dateityp · bis zu {{size}} MB",
+      "emptyHint": "Bilder, PDFs & Text werden direkt angezeigt · beliebiger Dateityp · bis zu {{size}} MB",
       "dropHere": "Zum Anhängen ablegen",
       "download": "Herunterladen",
       "remove": "Entfernen",

@@ -156,6 +156,16 @@ abstract final class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.navyDeep,
+        // The surface is deep navy in both themes, so the content must stay
+        // light — otherwise dark mode inherits a dark on-surface text colour and
+        // the message reads near-invisible.
+        contentTextStyle: const TextStyle(
+          color: Color(0xFFECEBF3),
+          fontFamily: fontUi,
+          fontSize: 13.5,
+          fontWeight: FontWeight.w500,
+        ),
+        actionTextColor: AppColors.accent,
         behavior: SnackBarBehavior.floating,
         width: 360,
         shape: RoundedRectangleBorder(

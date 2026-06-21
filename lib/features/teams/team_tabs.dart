@@ -147,15 +147,29 @@ class TeamOverviewTab extends StatelessWidget {
       children: [
         LayoutBuilder(
           builder: (context, c) {
-            final cols = c.maxWidth < 520 ? 1 : 3;
-            return GridView.count(
-              crossAxisCount: cols,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 14,
-              crossAxisSpacing: 14,
-              childAspectRatio: cols == 1 ? 5.2 : 2.4,
-              children: kpis,
+            // Let each card size to its own content so text/scale changes never
+            // clip — a fixed grid aspect ratio overflowed on phones.
+            if (c.maxWidth < 520) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < kpis.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 14),
+                    kpis[i],
+                  ],
+                ],
+              );
+            }
+            return IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < kpis.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 14),
+                    Expanded(child: kpis[i]),
+                  ],
+                ],
+              ),
             );
           },
         ),

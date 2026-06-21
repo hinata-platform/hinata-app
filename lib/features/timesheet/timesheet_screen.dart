@@ -10,6 +10,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
+import '../../core/widgets/hive_widgets.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_avatar.dart';
 import '../../core/widgets/soft_card.dart';
@@ -88,31 +89,15 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  context.t('timesheet.title'),
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.w800),
-                ),
-              ),
-              IconButton(
-                onPressed: () => _shiftWeek(-1),
-                icon: const Icon(LucideIcons.chevronLeft),
-              ),
-              Text(
-                '${localizations.formatShortDate(_from)} – ${localizations.formatShortDate(_to)}',
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-              IconButton(
-                onPressed: () => _shiftWeek(1),
-                icon: const Icon(LucideIcons.chevronRight),
-              ),
-            ],
-          ),
+          if (context.isCompact) ...[
+            PageHead(title: context.t('timesheet.title')),
+            const SizedBox(height: 12),
+            _weekNav(localizations),
+          ] else
+            PageHead(
+              title: context.t('timesheet.title'),
+              actions: [_weekNav(localizations)],
+            ),
           const SizedBox(height: 16),
           if (_loading)
             const Padding(
@@ -178,6 +163,28 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _weekNav(MaterialLocalizations localizations) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          onPressed: () => _shiftWeek(-1),
+          icon: const Icon(LucideIcons.chevronLeft),
+        ),
+        Text(
+          '${localizations.formatShortDate(_from)} – ${localizations.formatShortDate(_to)}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        IconButton(
+          onPressed: () => _shiftWeek(1),
+          icon: const Icon(LucideIcons.chevronRight),
+        ),
+      ],
     );
   }
 

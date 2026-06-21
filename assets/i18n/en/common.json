@@ -270,7 +270,7 @@
       "title": "Attachments",
       "add": "Add files",
       "emptyTitle": "Drop files here, or click to upload",
-      "emptyHint": "Images preview inline · any file type · up to {{size}} MB",
+      "emptyHint": "Images, PDFs & text preview inline · any file type · up to {{size}} MB",
       "dropHere": "Drop to attach",
       "download": "Download",
       "remove": "Remove",

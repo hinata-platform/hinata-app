@@ -440,9 +440,15 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
         onDownload: (it) => _downloadById(it.id, it.name),
       );
     } else {
+      // PDFs and text/JSON/CSV preview inline too — resolve the presigned URL
+      // so the lightbox can fetch the content. Other types just show a card.
+      final previewable = kindIsPdf(kind) ||
+          isTextPreviewable(tapped.fileName, tapped.contentType);
+      final url = previewable ? await _resolveUrl(tapped.id) : null;
+      if (!mounted) return;
       await showAttachmentLightbox(
         context,
-        items: [_toLightboxItem(tapped, null)],
+        items: [_toLightboxItem(tapped, url)],
         initialIndex: 0,
         onDownload: (it) => _downloadById(it.id, it.name),
       );
@@ -457,14 +463,15 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
     await _download(att);
   }
 
-  LightboxItem _toLightboxItem(IssueAttachment a, String? imageUrl) {
+  LightboxItem _toLightboxItem(IssueAttachment a, String? url) {
     final kind = kindFromName(a.fileName, a.contentType);
     return LightboxItem(
       id: a.id,
       name: a.fileName,
       kind: kind,
       size: a.size,
-      imageUrl: imageUrl,
+      url: url,
+      mime: a.contentType,
       subtitle: _subtitle(a),
     );
   }
@@ -947,9 +954,10 @@ class _TileAction extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: Colors.white.withValues(alpha: 0.86),
+        color: AppColors.surface.withValues(alpha: 0.92),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: AppColors.hairline.withValues(alpha: 0.6)),
         ),
         elevation: 1,
         child: InkWell(

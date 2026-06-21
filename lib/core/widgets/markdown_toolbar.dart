@@ -219,20 +219,94 @@ class MarkdownToolbar extends StatelessWidget {
         children: [
           // Single row of commands that scrolls horizontally so every option
           // stays reachable on narrow screens instead of wrapping to a second
-          // line. The optional [trailing] stays pinned (non-scrolling) on the
-          // right.
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: children,
-              ),
-            ),
-          ),
+          // line. A faded edge hints that more commands lie off-screen. The
+          // optional [trailing] stays pinned (non-scrolling) on the right.
+          Expanded(child: _ScrollFadeRow(children: children)),
           ?trailing,
         ],
+      ),
+    );
+  }
+}
+
+/// Horizontally-scrolling row that overlays a soft fade on whichever edge has
+/// content scrolled past it — the cue that the toolbar can be scrolled.
+class _ScrollFadeRow extends StatefulWidget {
+  const _ScrollFadeRow({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  State<_ScrollFadeRow> createState() => _ScrollFadeRowState();
+}
+
+class _ScrollFadeRowState extends State<_ScrollFadeRow> {
+  final _controller = ScrollController();
+  bool _atStart = true;
+  bool _atEnd = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_sync);
+    // Positions aren't attached until after first layout.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _sync());
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _sync() {
+    if (!_controller.hasClients) return;
+    final p = _controller.position;
+    final atStart = p.pixels <= p.minScrollExtent + 0.5;
+    final atEnd = p.pixels >= p.maxScrollExtent - 0.5;
+    if (atStart != _atStart || atEnd != _atEnd) {
+      setState(() {
+        _atStart = atStart;
+        _atEnd = atEnd;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Re-sync on size changes (e.g. orientation / available width).
+    return NotificationListener<ScrollMetricsNotification>(
+      onNotification: (_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _sync());
+        return false;
+      },
+      child: ShaderMask(
+        shaderCallback: (rect) {
+          // dstIn keeps content where the shader is opaque and fades it where
+          // the shader is transparent. Only the edges with more content to
+          // reveal get faded.
+          return LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [
+              _atStart ? Colors.black : Colors.transparent,
+              Colors.black,
+              Colors.black,
+              _atEnd ? Colors.black : Colors.transparent,
+            ],
+            stops: const [0.0, 0.06, 0.94, 1.0],
+          ).createShader(rect);
+        },
+        blendMode: BlendMode.dstIn,
+        child: SingleChildScrollView(
+          controller: _controller,
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: widget.children,
+          ),
+        ),
       ),
     );
   }

@@ -25,6 +25,27 @@ AttachmentKindMeta kindMeta(String kind) => _kindMeta[kind] ?? _kindMeta['file']
 
 bool kindIsImage(String kind) => kind == 'image';
 
+bool kindIsPdf(String kind) => kind == 'pdf';
+
+/// Extensions we can render inline as plain text in the lightbox. These are a
+/// superset of what the server actually accepts (text/plain, text/csv,
+/// application/json) so previews keep working if the whitelist grows.
+const Set<String> kTextPreviewExtensions = {
+  'txt', 'text', 'log', 'md', 'markdown', 'json', 'jsonc', 'geojson',
+  'csv', 'tsv', 'xml', 'yaml', 'yml', 'toml', 'ini', 'cfg', 'conf',
+  'properties', 'env', 'html', 'htm', 'css',
+};
+
+/// Whether [name]/[mime] is previewable as plain text inline. Switches on MIME
+/// first (covers text/* and application/json), then falls back to extension.
+bool isTextPreviewable(String name, [String? mime]) {
+  if (mime != null && (mime.startsWith('text/') || mime == 'application/json')) {
+    return true;
+  }
+  final ext = name.contains('.') ? name.split('.').last.toLowerCase() : '';
+  return kTextPreviewExtensions.contains(ext);
+}
+
 /// Mirrors `kindFromName()`: switch on MIME first, then file extension.
 String kindFromName(String name, [String? mime]) {
   final ext = name.contains('.') ? name.split('.').last.toLowerCase() : '';

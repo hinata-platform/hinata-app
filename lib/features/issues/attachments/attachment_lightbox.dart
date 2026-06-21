@@ -1,10 +1,13 @@
+import 'dart:convert';
 import 'dart:ui' as ui;
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
+import 'package:printing/printing.dart';
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
@@ -13,15 +16,21 @@ import '../../../core/widgets/glass_panel.dart';
 import '../../search/search_tokens.dart';
 import 'attachment_kind.dart';
 
-/// One entry shown in the lightbox. [imageUrl] is a resolved (presigned) URL for
-/// images; non-images render a type card instead.
+/// Largest text file we'll fetch and render inline. Bigger files fall back to
+/// the type card so we never pull a huge blob into memory just for a preview.
+const int kMaxTextPreviewBytes = 2 * 1024 * 1024;
+
+/// One entry shown in the lightbox. [url] is a resolved (presigned) URL used to
+/// fetch the content for inline previews (images, PDFs, text); types we can't
+/// preview render a type card instead.
 class LightboxItem {
   const LightboxItem({
     required this.id,
     required this.name,
     required this.kind,
     required this.size,
-    this.imageUrl,
+    this.url,
+    this.mime,
     this.subtitle,
   });
 
@@ -29,10 +38,31 @@ class LightboxItem {
   final String name;
   final String kind;
   final int size;
-  final String? imageUrl;
+  final String? url;
+  final String? mime;
   final String? subtitle;
 
-  bool get isImage => kindIsImage(kind) && imageUrl != null;
+  bool get isImage => kindIsImage(kind) && url != null;
+
+  bool get isPdf => kindIsPdf(kind) && url != null;
+
+  bool get isText =>
+      url != null &&
+      size <= kMaxTextPreviewBytes &&
+      isTextPreviewable(name, mime);
+}
+
+/// Fetches an attachment's raw bytes from its presigned URL. A bare Dio client
+/// (no auth interceptors) — the URL is already signed for direct storage access,
+/// exactly like `Image.network` does for image previews.
+final Dio _previewHttp = Dio();
+
+Future<Uint8List> _fetchBytes(String url) async {
+  final res = await _previewHttp.get<List<int>>(
+    url,
+    options: Options(responseType: ResponseType.bytes),
+  );
+  return Uint8List.fromList(res.data ?? const []);
 }
 
 /// Opens the Liquid-Glass image lightbox (radius 22, blurred scrim, spring
@@ -358,7 +388,7 @@ class _StagePage extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: Image.network(
-              item.imageUrl!,
+              item.url!,
               fit: BoxFit.contain,
               loadingBuilder: (_, child, progress) => progress == null
                   ? child
@@ -372,7 +402,138 @@ class _StagePage extends StatelessWidget {
         ),
       );
     }
+    if (item.isPdf) return _PdfPage(item: item);
+    if (item.isText) return _TextPage(item: item);
     return _FileCard(item: item);
+  }
+}
+
+/// Renders a PDF inline by rasterizing its pages (via the `printing` package's
+/// platform renderer) into a vertically scrollable preview. The toolbar/actions
+/// are hidden — download lives in the lightbox bar.
+class _PdfPage extends StatefulWidget {
+  const _PdfPage({required this.item});
+  final LightboxItem item;
+
+  @override
+  State<_PdfPage> createState() => _PdfPageState();
+}
+
+class _PdfPageState extends State<_PdfPage> {
+  // Fetch once; PdfPreview's build callback can fire repeatedly on relayout.
+  late final Future<Uint8List> _bytes = _fetchBytes(widget.item.url!);
+  bool _failed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_failed) return _FileCard(item: widget.item);
+    return PdfPreview(
+      build: (_) => _bytes,
+      useActions: false,
+      canChangePageFormat: false,
+      canChangeOrientation: false,
+      canDebug: false,
+      allowPrinting: false,
+      allowSharing: false,
+      scrollViewDecoration: const BoxDecoration(color: Color(0x0F23223F)),
+      pdfPreviewPageDecoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF14122D).withValues(alpha: 0.18),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      loadingWidget: const Padding(
+        padding: EdgeInsets.all(40),
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+      onError: (context, error) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _failed = true);
+        });
+        return _FileCard(item: widget.item);
+      },
+    );
+  }
+}
+
+/// Fetches a text/JSON/CSV file and renders it as scrollable, selectable
+/// monospace text. JSON is pretty-printed when it parses cleanly.
+class _TextPage extends StatefulWidget {
+  const _TextPage({required this.item});
+  final LightboxItem item;
+
+  @override
+  State<_TextPage> createState() => _TextPageState();
+}
+
+class _TextPageState extends State<_TextPage> {
+  late final Future<String> _text = _load();
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  Future<String> _load() async {
+    final bytes = await _fetchBytes(widget.item.url!);
+    // allowMalformed so a stray byte doesn't blow up the whole preview.
+    final raw = utf8.decode(bytes, allowMalformed: true);
+    return _maybePrettyJson(widget.item, raw);
+  }
+
+  static String _maybePrettyJson(LightboxItem item, String raw) {
+    final isJson = (item.mime == 'application/json') ||
+        item.name.toLowerCase().endsWith('.json');
+    if (!isJson) return raw;
+    try {
+      return const JsonEncoder.withIndent('  ').convert(jsonDecode(raw));
+    } catch (_) {
+      return raw; // not valid JSON — show it verbatim
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: _text,
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return const Padding(
+            padding: EdgeInsets.all(40),
+            child: Center(
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          );
+        }
+        if (snap.hasError) return _FileCard(item: widget.item);
+        final text = snap.data ?? '';
+        if (text.trim().isEmpty) return _FileCard(item: widget.item);
+        return ColoredBox(
+          color: const Color(0x0F23223F),
+          child: Scrollbar(
+            controller: _scroll,
+            child: SingleChildScrollView(
+              controller: _scroll,
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+              child: SelectableText(
+                text,
+                style: const TextStyle(
+                  fontFamily: AppTheme.fontMono,
+                  fontSize: 12.5,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -454,10 +615,10 @@ class _GlassIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.6),
+      color: AppColors.surface.withValues(alpha: 0.6),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: const Color(0xFF23223F).withValues(alpha: 0.1)),
+        side: BorderSide(color: AppColors.hairline.withValues(alpha: 0.6)),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
@@ -490,9 +651,9 @@ class _NavButton extends StatelessWidget {
       child: IgnorePointer(
         ignoring: !enabled,
         child: Material(
-          color: Colors.white.withValues(alpha: 0.55),
-          shape: const CircleBorder(
-            side: BorderSide(color: Color(0x80FFFFFF)),
+          color: AppColors.surface.withValues(alpha: 0.55),
+          shape: CircleBorder(
+            side: BorderSide(color: AppColors.hairline.withValues(alpha: 0.7)),
           ),
           child: InkWell(
             customBorder: const CircleBorder(),

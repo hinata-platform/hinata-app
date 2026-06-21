@@ -152,21 +152,11 @@ class _BoardScreenState extends State<BoardScreen> {
             8,
           ),
           sliver: SliverToBoxAdapter(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    context.t('board.title'),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (_projects.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: _ProjectFilterChip(
+            child: _BoardsListHeader(
+              title: context.t('board.title'),
+              filter: _projects.isEmpty
+                  ? null
+                  : _ProjectFilterChip(
                       projects: _projects,
                       selected: _projectFilter,
                       onChanged: (id) {
@@ -174,21 +164,7 @@ class _BoardScreenState extends State<BoardScreen> {
                         _load();
                       },
                     ),
-                  ),
-                FilledButton.icon(
-                  onPressed: _showCreate,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                    foregroundColor: const Color(0xFF2A2410),
-                    textStyle: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                  icon: const Icon(LucideIcons.plus, size: 18),
-                  label: Text(context.t('board.newBoard')),
-                ),
-              ],
+              onCreate: _showCreate,
             ),
           ),
         ),
@@ -244,6 +220,78 @@ class _BoardScreenState extends State<BoardScreen> {
               ),
             ),
           ),
+      ],
+    );
+  }
+}
+
+/// Header for the boards-list screen.
+///
+/// On compact (phone) layouts the title gets a full-width row of its own and the
+/// project filter + create button wrap onto a second row, so the title is never
+/// squeezed to an ellipsis. On wider layouts everything sits inline.
+class _BoardsListHeader extends StatelessWidget {
+  const _BoardsListHeader({
+    required this.title,
+    required this.filter,
+    required this.onCreate,
+  });
+
+  final String title;
+  final Widget? filter;
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) {
+    final titleText = Text(
+      title,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.w700,
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+    final createButton = FilledButton.icon(
+      onPressed: onCreate,
+      style: FilledButton.styleFrom(
+        backgroundColor: AppColors.accent,
+        foregroundColor: const Color(0xFF2A2410),
+        textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+      ),
+      icon: const Icon(LucideIcons.plus, size: 18),
+      label: Text(context.t('board.newBoard')),
+    );
+
+    if (context.isCompact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          titleText,
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (filter != null)
+                Flexible(child: filter!)
+              else
+                const SizedBox.shrink(),
+              const SizedBox(width: 8),
+              createButton,
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(child: titleText),
+        if (filter != null)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: filter!,
+          ),
+        createButton,
       ],
     );
   }
@@ -1455,9 +1503,16 @@ class _ProjectFilterChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              label,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
             const SizedBox(width: 4),
             Icon(LucideIcons.chevronDown, size: 16, color: AppColors.inkSoft),
