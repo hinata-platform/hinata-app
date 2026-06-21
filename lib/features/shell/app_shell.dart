@@ -20,7 +20,12 @@ import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/honeycomb_background.dart';
 import '../../core/widgets/app_avatar.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show GlassAppBar, GlassBottomBar, GlassBottomBarTab, GlassIconButton;
+    show
+        GlassAppBar,
+        GlassBottomBar,
+        GlassBottomBarTab,
+        GlassIconButton,
+        LiquidGlassSettings;
 import '../search/global_search_dialog.dart';
 import 'page_chrome.dart';
 
@@ -1471,12 +1476,31 @@ class _CompactShellState extends State<_CompactShell> {
                 verticalPadding: 16,
                 selectedIndex: _selectedIndex,
                 onTabSelected: _onTap,
+                // The package default glassColor is a translucent WHITE
+                // (0x3DFFFFFF). In light mode that reads as clean frost, but in
+                // dark mode it turns the bar milky-white. Mirror the iOS-26 /
+                // GitHub aesthetic by tinting the glass black in dark mode while
+                // keeping the white frost in light mode. Other values match the
+                // package's kBottomBarGlassDefaults so the refraction is intact.
+                settings: dark
+                    ? const LiquidGlassSettings(
+                        thickness: 30,
+                        blur: 3,
+                        chromaticAberration: 0.3,
+                        lightIntensity: 0.6,
+                        refractiveIndex: 1.59,
+                        saturation: 0.7,
+                        ambientStrength: 1,
+                        lightAngle: 2.356194490192345, // 0.75π — Apple key light
+                        glassColor: Color(0x4D0A0A0A),
+                      )
+                    : null,
                 // Honey-amber indicator (translucent so the glass shows through).
                 indicatorColor: AppColors.accent
                     .withValues(alpha: dark ? 0.30 : 0.22),
                 selectedIconColor:
                     dark ? AppColors.accent : AppColors.accentStrong,
-                unselectedIconColor: AppColors.inkSoft,
+                unselectedIconColor: dark ? AppColors.inkDark : AppColors.ink,
                 tabs: [
                   for (final d in _bottomTabs)
                     GlassBottomBarTab(
