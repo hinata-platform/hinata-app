@@ -387,13 +387,13 @@ class _MobileDetailView extends StatelessWidget {
               border: Border(bottom: BorderSide(color: AppColors.hairline)),
             ),
             child: saving
-                ? const Padding(
-                    padding: EdgeInsets.all(12),
+                ? Padding(
+                    padding: const EdgeInsets.all(12),
                     child: SizedBox(
                       width: 20,
                       height: 20,
                       child: HiveLoader(
-                          strokeWidth: 2, color: AppColors.navy),
+                          strokeWidth: 2, color: AppColors.brandInk),
                     ),
                   )
                 : TextButton.icon(
@@ -401,7 +401,7 @@ class _MobileDetailView extends StatelessWidget {
                     icon: const Icon(LucideIcons.save, size: 16),
                     label: Text(context.t('common.save')),
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.navy,
+                      foregroundColor: AppColors.brandInk,
                       textStyle: const TextStyle(
                           fontWeight: FontWeight.w700, fontSize: 13),
                     ),
@@ -596,11 +596,11 @@ class _DesktopSectionContent extends StatelessWidget {
               ),
               if (_hasSave)
                 saving
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: HiveLoader(
-                            strokeWidth: 2, color: AppColors.navy),
+                            strokeWidth: 2, color: AppColors.brandInk),
                       )
                     : FilledButton.icon(
                         onPressed: onSave,

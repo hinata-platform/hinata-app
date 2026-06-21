@@ -172,6 +172,7 @@ class SettingRow extends StatelessWidget {
     this.trailing,
     this.icon,
     this.stack = false,
+    this.onTap,
   });
 
   final String label;
@@ -181,6 +182,10 @@ class SettingRow extends StatelessWidget {
 
   /// When true, the trailing control wraps below the text (narrow widths).
   final bool stack;
+
+  /// When set, the whole row becomes tappable (ListTile-style) with a ripple
+  /// that spans the full card width — not just the text/trailing controls.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -207,37 +212,57 @@ class SettingRow extends StatelessWidget {
       ],
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 9),
-      child: stack
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    if (icon != null) ...[
-                      Icon(icon, size: 16, color: AppColors.inkSoft),
-                      const SizedBox(width: 10),
-                    ],
-                    Expanded(child: text),
+    final body = stack
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, size: 16, color: AppColors.inkSoft),
+                    const SizedBox(width: 10),
                   ],
-                ),
-                if (trailing != null) ...[
-                  const SizedBox(height: 10),
-                  Align(alignment: Alignment.centerLeft, child: trailing!),
+                  Expanded(child: text),
                 ],
+              ),
+              if (trailing != null) ...[
+                const SizedBox(height: 10),
+                Align(alignment: Alignment.centerLeft, child: trailing!),
               ],
-            )
-          : Row(
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, size: 16, color: AppColors.inkSoft),
-                  const SizedBox(width: 10),
-                ],
-                Expanded(child: text),
-                if (trailing != null) ...[const SizedBox(width: 12), trailing!],
+            ],
+          )
+        : Row(
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 16, color: AppColors.inkSoft),
+                const SizedBox(width: 10),
               ],
-            ),
+              Expanded(child: text),
+              if (trailing != null) ...[const SizedBox(width: 12), trailing!],
+            ],
+          );
+
+    if (onTap == null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        child: body,
+      );
+    }
+
+    // Tappable variant (ListTile-style): the whole row responds to taps with a
+    // ripple. The padding lives inside the InkWell so the ink covers the full
+    // row height, and matches the default row's vertical inset + horizontal
+    // alignment so a tappable row sits flush with its static siblings.
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 9),
+          child: body,
+        ),
+      ),
     );
   }
 }

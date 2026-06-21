@@ -143,7 +143,10 @@ class ModalFooter extends StatelessWidget {
     required this.primaryLabel,
     required this.onPrimary,
     this.primaryIcon,
-    this.leading,
+    this.leadingIcon,
+    this.leadingLabel,
+    this.onLeading,
+    this.leadingDanger = false,
     this.danger = false,
     this.busy = false,
   });
@@ -151,61 +154,102 @@ class ModalFooter extends StatelessWidget {
   final String primaryLabel;
   final VoidCallback? onPrimary;
   final IconData? primaryIcon;
-  final Widget? leading;
+
+  /// Optional left-aligned secondary action (e.g. Back / Remove). Rendered as
+  /// an icon + label when there's room, and collapses to an icon-only button
+  /// on narrow (mobile) footers so the label never wraps.
+  final IconData? leadingIcon;
+  final String? leadingLabel;
+  final VoidCallback? onLeading;
+  final bool leadingDanger;
+
   final bool danger;
   final bool busy;
 
+  Widget? _buildLeading(BuildContext context, {required bool compact}) {
+    if (onLeading == null || leadingIcon == null) return null;
+    final color = leadingDanger ? AppColors.danger : AppColors.inkSoft;
+    final onPressed = busy ? null : onLeading;
+    if (compact) {
+      return IconButton(
+        onPressed: onPressed,
+        tooltip: leadingLabel,
+        visualDensity: VisualDensity.compact,
+        icon: Icon(leadingIcon, size: 18, color: color),
+      );
+    }
+    return TextButton.icon(
+      onPressed: onPressed,
+      icon: Icon(leadingIcon, size: 16, color: color),
+      label: Text(
+        leadingLabel ?? '',
+        style: TextStyle(color: color, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // A single expander between the (optional) leading action and the
-        // trailing buttons guarantees Cancel + primary sit flush against the
-        // right gutter (two competing flex widgets left a gap).
-        if (leading != null)
-          Expanded(
-            child: Align(alignment: Alignment.centerLeft, child: leading!),
-          )
-        else
-          const Spacer(),
-        TextButton(
-          onPressed: busy ? null : () => Navigator.of(context).maybePop(),
-          child: Text(
-            context.t('common.cancel'),
-            style: TextStyle(
-              color: AppColors.inkSoft,
-              fontWeight: FontWeight.w600,
+    return LayoutBuilder(
+      builder: (context, c) {
+        // Below this the leading label would wrap against Cancel + primary, so
+        // collapse it to an icon. Desktop modals (560px) stay labelled.
+        final compact = c.maxWidth < 420;
+        final leading = _buildLeading(context, compact: compact);
+        return Row(
+          children: [
+            // A single expander between the (optional) leading action and the
+            // trailing buttons guarantees Cancel + primary sit flush against
+            // the right gutter (two competing flex widgets left a gap).
+            if (leading != null)
+              Expanded(
+                child: Align(alignment: Alignment.centerLeft, child: leading),
+              )
+            else
+              const Spacer(),
+            TextButton(
+              onPressed: busy ? null : () => Navigator.of(context).maybePop(),
+              child: Text(
+                context.t('common.cancel'),
+                style: TextStyle(
+                  color: AppColors.inkSoft,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        FilledButton.icon(
-          onPressed: busy ? null : onPrimary,
-          style: FilledButton.styleFrom(
-            backgroundColor: danger ? AppColors.danger : AppColors.navy,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-            textStyle: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+            const SizedBox(width: 8),
+            FilledButton.icon(
+              onPressed: busy ? null : onPrimary,
+              style: FilledButton.styleFrom(
+                backgroundColor: danger ? AppColors.danger : AppColors.navy,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 13,
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                ),
+              ),
+              icon: busy
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Icon(primaryIcon ?? LucideIcons.check, size: 16),
+              label: Text(primaryLabel, overflow: TextOverflow.ellipsis),
             ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            ),
-          ),
-          icon: busy
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : Icon(primaryIcon ?? LucideIcons.check, size: 16),
-          label: Text(primaryLabel, overflow: TextOverflow.ellipsis),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

@@ -1224,6 +1224,7 @@ class _AccountScreenState extends State<AccountScreen> {
           SettingRow(
             label: context.t('settings.adminArea'),
             icon: LucideIcons.shieldUser,
+            onTap: () => context.go('/admin'),
             trailing: IconButton(
               icon: const Icon(LucideIcons.chevronRight),
               onPressed: () => context.go('/admin'),

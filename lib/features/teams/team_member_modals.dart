@@ -163,23 +163,9 @@ class _AddMembersBodyState extends State<_AddMembersBody> with _ProjectLookup {
         ],
       ),
       footer: ModalFooter(
-        leading: stepTwo
-            ? TextButton.icon(
-                onPressed: _busy ? null : () => setState(() => _step = 1),
-                icon: Icon(
-                  LucideIcons.arrowLeft,
-                  size: 16,
-                  color: AppColors.inkSoft,
-                ),
-                label: Text(
-                  context.t('teams.back'),
-                  style: TextStyle(
-                    color: AppColors.inkSoft,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              )
-            : null,
+        leadingIcon: stepTwo ? LucideIcons.arrowLeft : null,
+        leadingLabel: stepTwo ? context.t('teams.back') : null,
+        onLeading: stepTwo ? () => setState(() => _step = 1) : null,
         primaryLabel: stepTwo
             ? context.t(
                 'teams.addCount',
@@ -416,23 +402,12 @@ class _ManageMemberBodyState extends State<_ManageMemberBody>
         ],
       ),
       footer: ModalFooter(
-        leading: _isLastAdmin
+        leadingIcon: _isLastAdmin ? null : LucideIcons.userMinus,
+        leadingLabel: _isLastAdmin
             ? null
-            : TextButton.icon(
-                onPressed: _busy ? null : _remove,
-                icon: Icon(
-                  LucideIcons.userMinus,
-                  size: 16,
-                  color: AppColors.danger,
-                ),
-                label: Text(
-                  context.t(widget.isSelf ? 'teams.leave' : 'teams.remove'),
-                  style: const TextStyle(
-                    color: AppColors.danger,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+            : context.t(widget.isSelf ? 'teams.leave' : 'teams.remove'),
+        onLeading: _isLastAdmin ? null : _remove,
+        leadingDanger: true,
         primaryLabel: context.t('common.save'),
         busy: _busy,
         onPrimary: _save,
