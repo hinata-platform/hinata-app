@@ -37,6 +37,13 @@ tool/.venv/
 tool/__pycache__/
 docs/screenshots/raw/
 
+# Firebase / Google credentials (client config + service accounts) — AStA-specific
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+**/service-account*.json
+**/google-services.json
+**/GoogleService-Info.plist
+
 # Secret files
 *.p12
 *.p8

@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.ahmadre.hinata",
+      "sha256_cert_fingerprints": [
+        "8A:14:4A:9A:AA:9F:6A:C9:A6:6C:DD:D0:10:36:12:5C:F5:49:06:41:58:FB:34:A9:C6:C3:26:4B:A7:8A:08:56",
+        "05:14:25:25:CB:7C:23:19:9F:4D:95:2D:74:F4:97:76:71:89:12:5B:63:86:FD:AB:7C:8F:32:6B:61:14:E5:07"
+      ]
+    }
+  }
+]

@@ -1,0 +1,16 @@
+# Keep the Docker build context small. The web image only needs the Dart/Flutter
+# sources + web/ + deploy/; native build outputs and tooling are irrelevant.
+.git
+.github
+.dart_tool
+build
+.fvm
+ios/Pods
+ios/.symlinks
+android/.gradle
+android/app/build
+*.iml
+.idea
+.vscode
+coverage
+test

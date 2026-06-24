@@ -1,0 +1,14 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["T852K29HWS.com.ahmadre.hinata"],
+        "components": [
+          { "/": "/issues/*", "comment": "Issue detail deep links" },
+          { "/": "/invite*", "comment": "Invitation email flow" },
+          { "/": "/reset-password*", "comment": "Password reset email flow" }
+        ]
+      }
+    ]
+  }
+}

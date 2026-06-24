@@ -102,18 +102,36 @@ class _HinataAppState extends State<HinataApp> {
   }
 
   Future<void> _handleUri(Uri uri) async {
-    if (uri.scheme != 'hinata') return;
-    switch (uri.host) {
-      case 'auth-callback':
-        final access = uri.queryParameters['access_token'];
-        final refresh = uri.queryParameters['refresh_token'];
-        if (access != null && refresh != null) {
-          _auth.add(SsoTokensReceived(access, refresh));
-        }
-      case 'invite':
+    // Custom-scheme links (hinata://…) — SSO callback + token email flows.
+    if (uri.scheme == 'hinata') {
+      switch (uri.host) {
+        case 'auth-callback':
+          final access = uri.queryParameters['access_token'];
+          final refresh = uri.queryParameters['refresh_token'];
+          if (access != null && refresh != null) {
+            _auth.add(SsoTokensReceived(access, refresh));
+          }
+        case 'invite':
+          await _openTokenFlow(uri, '/invite');
+        case 'reset-password':
+          await _openTokenFlow(uri, '/reset-password');
+      }
+      return;
+    }
+
+    // Universal / App Links (https) from the production web domain. Verified
+    // against /.well-known/{assetlinks.json,apple-app-site-association}, these
+    // carry the same in-app routes as the website (e.g. /issues/MOB-9), so we
+    // forward the path straight to the router. The token flows still need their
+    // server-URL handoff, so they keep going through _openTokenFlow.
+    if (uri.scheme == 'https' || uri.scheme == 'http') {
+      if (uri.path.startsWith('/invite')) {
         await _openTokenFlow(uri, '/invite');
-      case 'reset-password':
+      } else if (uri.path.startsWith('/reset-password')) {
         await _openTokenFlow(uri, '/reset-password');
+      } else if (uri.path.isNotEmpty && uri.path != '/') {
+        _router.go(uri.hasQuery ? '${uri.path}?${uri.query}' : uri.path);
+      }
     }
   }
 

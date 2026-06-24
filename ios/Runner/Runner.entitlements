@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Universal Links (Option B): lets verified https links from the production
+	     web domain open the app. Apple fetches
+	     https://track.asta.hn/.well-known/apple-app-site-association and matches
+	     it against this app's appID (T852K29HWS.com.ahmadre.hinata).
+	     NOTE: the matching provisioning profile must have the Associated Domains
+	     capability enabled (Apple Developer portal / fastlane match). -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:track.asta.hn</string>
+	</array>
+</dict>
+</plist>

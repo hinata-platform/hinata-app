@@ -83,12 +83,22 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
   final HinataRepository repository;
   final AppStorage storage;
 
+  /// Compile-time default backend, baked in via
+  /// `--dart-define=HINATA_DEFAULT_SERVER=https://api.track.asta.hn`. Used when no
+  /// server URL has been chosen yet (e.g. the hosted web build), so users land
+  /// straight in the app instead of the connect screen. Empty ⇒ show /connect.
+  static const String _defaultServer =
+      String.fromEnvironment('HINATA_DEFAULT_SERVER');
+
   Future<void> _onStarted(AppConfigStarted event, Emitter<AppConfigState> emit) async {
     final info = await PackageInfo.fromPlatform();
     final version = info.version;
     if (storage.serverUrl == null) {
-      emit(state.copyWith(status: AppConfigStatus.needsServerUrl, appVersion: version));
-      return;
+      if (_defaultServer.isEmpty) {
+        emit(state.copyWith(status: AppConfigStatus.needsServerUrl, appVersion: version));
+        return;
+      }
+      await storage.setServerUrl(_defaultServer);
     }
     emit(state.copyWith(status: AppConfigStatus.connecting, appVersion: version));
     await _verify(emit);

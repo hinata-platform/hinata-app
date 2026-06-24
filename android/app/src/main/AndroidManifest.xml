@@ -35,6 +35,20 @@
                 <data android:scheme="hinata" android:host="invite"/>
                 <data android:scheme="hinata" android:host="reset-password"/>
             </intent-filter>
+            <!-- Android App Links (Option B): verified https deep links from the
+                 production web domain open the app directly. autoVerify checks
+                 https://track.asta.hn/.well-known/assetlinks.json against this
+                 app's signing certificate. Scoped to the routes the app handles
+                 (issue detail + the token email flows). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="track.asta.hn"/>
+                <data android:pathPrefix="/issues"/>
+                <data android:pathPrefix="/invite"/>
+                <data android:pathPrefix="/reset-password"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
