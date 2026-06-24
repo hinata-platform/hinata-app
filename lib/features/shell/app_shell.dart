@@ -1,3 +1,4 @@
+import 'dart:math' show pow;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -25,7 +26,6 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
         GlassBottomBar,
         GlassBottomBarTab,
         GlassContainer,
-        GlassIconButton,
         GlassQuality,
         LiquidGlassSettings,
         LiquidRoundedSuperellipse;
@@ -1632,18 +1632,25 @@ class _GlassTopBar extends StatelessWidget {
     // Black scrim, strongest under the status bar, fading to nothing at the
     // bar's lower edge. Subtle in light (keeps dark status-bar icons legible),
     // stronger in dark.
-    final scrimTop = dark ? 0.55 : 0.18;
+    //
+    // The bar reads content through a *progressive* backdrop blur — heavy at the
+    // status-bar edge, easing to perfectly sharp at the bottom (the iOS-26 look,
+    // cf. Instagram's profile header). The pill/buttons on top must NOT add
+    // their own BackdropFilter: a filter sampling an already-blurred backdrop is
+    // what produced the pixelated / "layered" blocks. Instead they are
+    // translucent frosted surfaces that simply let this one blur show through.
+    final scrimTop = dark ? 0.5 : 0.16;
     final height = topInset + _kCompactBarHeight;
 
     return SizedBox(
       height: height,
       child: Stack(
         children: [
-          // Progressive blur: heavy at the top, fading to perfectly sharp at the
-          // lower edge — so the bar dissolves into the content instead of ending
-          // on a hard cut-off line.
-          Positioned.fill(child: _ProgressiveBlur(maxSigma: dark ? 26 : 22)),
-          // Matching darkening scrim (also fades to transparent at the bottom).
+          // Smooth progressive blur: strongest at the top, fading to sharp at the
+          // bottom edge so the bar dissolves into the content beneath it.
+          Positioned.fill(child: _ProgressiveBlur(maxSigma: dark ? 30 : 26)),
+          // Darkening scrim (fades to transparent at the bottom edge so the bar
+          // dissolves into the content instead of ending on a hard cut-off).
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -1662,9 +1669,10 @@ class _GlassTopBar extends StatelessWidget {
           ),
           // The bar itself is the package's GlassAppBar — a transparent layout
           // container (leading · centered title · actions) that handles its own
-          // status-bar SafeArea. Glass comes from its children: a package
-          // GlassIconButton for the back affordance and our frosted action
-          // capsule (which carries the notification-bell popover).
+          // status-bar SafeArea. Its children are translucent frosted surfaces
+          // that let the progressive blur above show through (no nested
+          // BackdropFilter): a back affordance and the action capsule (which
+          // carries the notification-bell popover).
           GlassAppBar(
             backgroundColor: Colors.transparent,
             centerTitle: true,
@@ -1675,12 +1683,9 @@ class _GlassTopBar extends StatelessWidget {
                     message: MaterialLocalizations.of(
                       context,
                     ).backButtonTooltip,
-                    child: GlassIconButton(
-                      icon: Icon(LucideIcons.arrowLeft, color: AppColors.ink),
-                      onPressed: onBack,
-                      size: 40,
-                      // Self-contained: no app-wide LiquidGlassLayer needed.
-                      useOwnLayer: true,
+                    child: _FrostedCircleButton(
+                      icon: LucideIcons.arrowLeft,
+                      onTap: onBack,
                     ),
                   )
                 : const Padding(
@@ -1708,36 +1713,172 @@ class _GlassTopBar extends StatelessWidget {
   }
 }
 
-/// A vertical *gradient* backdrop blur: the blur is strongest at the top and
-/// eases to zero at the bottom, so the frosted region melts into the sharp
-/// content beneath it (no hard cut-off edge).
+/// Rounded capsule grouping the persistent top-bar actions
+/// (search · notifications · settings) — the iOS-26 action pill.
 ///
-/// Implemented as a stack of thin horizontal slices each running its own
-/// [BackdropFilter] with a decreasing sigma. A single masked BackdropFilter
-/// can't do this — a BackdropFilter has no backdrop to sample once it's wrapped
-/// in a ShaderMask's layer — so slicing is the reliable primitive-only route.
+/// Deliberately a *frosted* surface (translucent fill + hairline border +
+/// specular top highlight) with NO [BackdropFilter] of its own: the bar already
+/// runs one progressive blur ([_ProgressiveBlur]) behind it, which shows through
+/// the translucent fill. Stacking a second backdrop filter here would re-sample
+/// that already-blurred (downsampled) backdrop and produce the pixelated /
+/// "layered" blocks — exactly the artefact this avoids.
+class _GlassActionCapsule extends StatelessWidget {
+  const _GlassActionCapsule({required this.location});
+
+  final String location;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return _FrostedSurface(
+      borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+      dark: dark,
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _TopSearchField(compact: true),
+          _NotificationBell(active: location.startsWith('/notifications')),
+          _TopIconButton(
+            icon: LucideIcons.settings,
+            tooltip: context.t('nav.settings'),
+            active: location.startsWith('/settings'),
+            onTap: () => context.go('/settings'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A translucent frosted surface — the visual "glass" used by the top-bar
+/// pill/buttons. It carries NO blur of its own; it relies on the bar's single
+/// progressive [BackdropFilter] showing through the semi-transparent fill, then
+/// adds the hairline edge + top specular highlight that read as a glass rim.
+/// Keeping the blur in ONE place is what keeps the surface crisp (no nested
+/// backdrop sampling → no pixelation).
+class _FrostedSurface extends StatelessWidget {
+  const _FrostedSurface({
+    required this.child,
+    required this.borderRadius,
+    required this.dark,
+    this.padding,
+  });
+
+  final Widget child;
+  final BorderRadius borderRadius;
+  final bool dark;
+  final EdgeInsetsGeometry? padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        // Light frost lift in dark, a brighter wash in light — translucent so
+        // the progressive blur behind stays visible through the surface.
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: dark
+              ? const [Color(0x33FFFFFF), Color(0x1FFFFFFF)]
+              : const [Color(0x6BFFFFFF), Color(0x4DFFFFFF)],
+        ),
+        border: Border.all(
+          color: dark ? const Color(0x40FFFFFF) : const Color(0x66FFFFFF),
+          width: 0.6,
+        ),
+      ),
+      child: Padding(
+        padding: padding ?? EdgeInsets.zero,
+        child: child,
+      ),
+    );
+  }
+}
+
+/// 40×40 frosted circular button (used for the top-bar back affordance) — same
+/// no-own-blur frosted treatment as [_FrostedSurface].
+class _FrostedCircleButton extends StatelessWidget {
+  const _FrostedCircleButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return _FrostedSurface(
+      borderRadius: BorderRadius.circular(20),
+      dark: dark,
+      child: Material(
+        type: MaterialType.transparency,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Icon(icon, size: 18, color: AppColors.ink),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Smooth vertical *gradient* backdrop blur: strongest at the top, easing to
+/// perfectly sharp at the bottom, so the frosted bar dissolves into the content
+/// beneath it (no hard cut-off edge) — the iOS-26 top-of-screen blur.
+///
+/// ## Why this is smooth AND cheap
+///
+/// A true gradient blur isn't expressible with a single primitive: a custom
+/// fragment shader can't sample the backdrop (no Flutter API), and wrapping a
+/// [BackdropFilter] in a [ShaderMask] breaks it (the filter samples an empty
+/// backdrop inside the mask's save-layer). So we approximate the gradient with
+/// many thin horizontal slices of increasing sigma.
+///
+/// The trick that makes it premium-quality:
+///
+/// 1. **No banding** — enough slices ([_slices]) that the sigma step between
+///    neighbours falls below the perceptible threshold, so the discrete strips
+///    read as one continuous gradient.
+/// 2. **No pixelation** — every slice is a [BackdropFilter.grouped] sharing one
+///    [BackdropGroup] key, so they all blur the *same original* backdrop
+///    snapshot. They never sample each other, so there's no compounded /
+///    down-sampled "blur of a blur" (which is what produced the earlier blocky
+///    artefacts).
+/// 3. **Performant** — the shared [BackdropGroup] lets the engine capture the
+///    backdrop a single time for the whole stack instead of once per slice.
 class _ProgressiveBlur extends StatelessWidget {
   const _ProgressiveBlur({required this.maxSigma});
 
   final double maxSigma;
 
-  /// Number of blur bands. More = smoother gradient, but each is a separate
-  /// (costly) BackdropFilter; 8 reads as continuous on a ~100px bar.
-  static const int _slices = 8;
+  /// Slice count. High enough that the per-step sigma delta is sub-perceptual
+  /// (~1px), so no visible bands. Cheap thanks to the shared [BackdropGroup].
+  static const int _slices = 28;
 
   @override
   Widget build(BuildContext context) {
     return ClipRect(
-      child: Column(
-        children: [
-          for (var i = 0; i < _slices; i++)
-            Expanded(
-              child: _BlurSlice(
-                // i=0 → full sigma at the top; last slice → ~0 (sharp).
-                sigma: maxSigma * (1 - i / (_slices - 1)),
+      child: BackdropGroup(
+        child: Column(
+          children: [
+            for (var i = 0; i < _slices; i++)
+              Expanded(
+                child: _BlurSlice(
+                  // t: 0 at the top → 1 at the bottom. A gentle (^1.2) falloff
+                  // keeps the blur strong across the status bar AND the
+                  // title/pill row — like the reference — then eases to sharp
+                  // near the bottom edge, so the pill still reads as glass.
+                  sigma: maxSigma * pow(1 - (i / (_slices - 1)), 1.2).toDouble(),
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1754,52 +1895,11 @@ class _BlurSlice extends StatelessWidget {
     // stay genuinely sharp and cheap.
     if (sigma < 0.3) return const SizedBox.expand();
     return ClipRect(
-      child: BackdropFilter(
+      // .grouped → shares the BackdropGroup's single backdrop capture and never
+      // samples sibling slices (no compounded blur → no pixelation).
+      child: BackdropFilter.grouped(
         filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
         child: const SizedBox.expand(),
-      ),
-    );
-  }
-}
-
-/// Translucent rounded capsule grouping the persistent top-bar actions
-/// (search · notifications · settings) — mirrors the iOS liquid-glass action
-/// pill. Theme-aware frosted fill.
-class _GlassActionCapsule extends StatelessWidget {
-  const _GlassActionCapsule({required this.location});
-
-  final String location;
-
-  @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          decoration: BoxDecoration(
-            color: dark ? const Color(0x26FFFFFF) : const Color(0x4DFFFFFF),
-            borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-            border: Border.all(
-              color: dark ? const Color(0x33FFFFFF) : const Color(0x59FFFFFF),
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _TopSearchField(compact: true),
-              _NotificationBell(active: location.startsWith('/notifications')),
-              _TopIconButton(
-                icon: LucideIcons.settings,
-                tooltip: context.t('nav.settings'),
-                active: location.startsWith('/settings'),
-                onTap: () => context.go('/settings'),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

@@ -234,11 +234,24 @@ class _GlassBottomSheet extends StatelessWidget {
       ),
     );
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(10, 0, 10, 10 + keyboard),
-        child: Align(alignment: Alignment.bottomCenter, child: panel),
+    // With `isScrollControlled`, the bottom-sheet body stretches to the full
+    // screen height, so the `Align` leaves a tall transparent gap above the
+    // panel that belongs to the sheet — not the modal barrier. Without an
+    // explicit handler, taps in that gap (or the side gutters) fall on the
+    // sheet and do nothing instead of dismissing. Catch them here; the panel
+    // wraps its own taps so its content stays interactive.
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => Navigator.of(context).maybePop(),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(10, 0, 10, 10 + keyboard),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: GestureDetector(onTap: () {}, child: panel),
+          ),
+        ),
       ),
     );
   }

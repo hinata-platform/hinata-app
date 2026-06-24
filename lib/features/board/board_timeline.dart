@@ -109,15 +109,37 @@ class _BoardTimelineState extends State<BoardTimeline> {
 
     return Padding(
       padding: widget.padding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (dated.isNotEmpty)
-            Expanded(child: _chart(context, dated))
-          else
-            const SizedBox.shrink(),
-          if (undated.isNotEmpty) _undatedSection(context, undated),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Cap the undated list so a long one can't push past the viewport.
+          // It still shrink-wraps to its content when short, leaving the rest
+          // of the height to the chart; it scrolls only once it hits the cap.
+          final undatedCap = constraints.maxHeight.isFinite
+              ? constraints.maxHeight * 0.4
+              : double.infinity;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (dated.isNotEmpty) ...[
+                Expanded(child: _chart(context, dated)),
+                if (undated.isNotEmpty)
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: undatedCap),
+                    child: SingleChildScrollView(
+                      child: _undatedSection(context, undated),
+                    ),
+                  ),
+              ] else if (undated.isNotEmpty)
+                // No dated rows: the undated list is the only content, so let
+                // it take the whole viewport and scroll instead of overflowing.
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: _undatedSection(context, undated),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

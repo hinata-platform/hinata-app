@@ -468,13 +468,12 @@ class IssueRow extends StatelessWidget {
             const SizedBox(height: 10),
             Row(
               children: [
-                Flexible(
+                Expanded(
                   child: StateDotBadge(
                     state: issue.state,
                     color: palette?.stateColor(issue.state),
                   ),
                 ),
-                const Spacer(),
                 if (name.isNotEmpty) HiveAvatar(name: name, size: 22),
                 if (due != null) ...[
                   const SizedBox(width: 10),
