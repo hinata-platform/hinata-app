@@ -7,7 +7,9 @@ WORKDIR /app
 ARG HINATA_DEFAULT_SERVER=https://api.track.asta.hn
 
 # Warm the pub cache on the dependency manifest before copying the full source.
-COPY pubspec.yaml pubspec.lock ./
+# pubspec.lock is gitignored in this repo, so it isn't present in the CI build
+# context — copy only the manifest and let `pub get` resolve.
+COPY pubspec.yaml ./
 RUN flutter pub get
 
 COPY . .
