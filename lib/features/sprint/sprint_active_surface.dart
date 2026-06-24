@@ -189,6 +189,14 @@ class _SprintColumn extends StatelessWidget {
         ? '${issues.length}/${column.wipLimit}'
         : '${issues.length}';
 
+    // Touch platforms get no drag — it fights the scroll gesture; state changes
+    // happen in the issue detail sheet instead.
+    final platform = Theme.of(context).platform;
+    final isTouch =
+        platform == TargetPlatform.iOS ||
+        platform == TargetPlatform.android ||
+        platform == TargetPlatform.fuchsia;
+
     return SizedBox(
       width: 300,
       child: DragTarget<Issue>(
@@ -281,6 +289,12 @@ class _SprintColumn extends StatelessWidget {
                             final card = _SprintCard(
                               issue: issue,
                               accent: dotColor,
+                              onOpen: () => onOpenIssue(issue),
+                            );
+                            if (isTouch) return card;
+                            final dragCard = _SprintCard(
+                              issue: issue,
+                              accent: dotColor,
                             );
                             return Draggable<Issue>(
                               data: issue,
@@ -288,17 +302,13 @@ class _SprintColumn extends StatelessWidget {
                               maxSimultaneousDrags: 1,
                               feedback: Material(
                                 color: Colors.transparent,
-                                child: SizedBox(width: 276, child: card),
+                                child: SizedBox(width: 276, child: dragCard),
                               ),
                               childWhenDragging: Opacity(
                                 opacity: 0.35,
-                                child: card,
+                                child: dragCard,
                               ),
-                              child: _SprintCard(
-                                issue: issue,
-                                accent: dotColor,
-                                onOpen: () => onOpenIssue(issue),
-                              ),
+                              child: card,
                             );
                           },
                         ),

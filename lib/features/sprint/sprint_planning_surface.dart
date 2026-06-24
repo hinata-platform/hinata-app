@@ -201,7 +201,9 @@ class _SearchField extends StatefulWidget {
 }
 
 class _SearchFieldState extends State<_SearchField> {
-  late final TextEditingController _c = TextEditingController(text: widget.query);
+  late final TextEditingController _c = TextEditingController(
+    text: widget.query,
+  );
 
   @override
   void dispose() {
@@ -217,7 +219,11 @@ class _SearchFieldState extends State<_SearchField> {
       style: const TextStyle(fontSize: 13),
       decoration: InputDecoration(
         isDense: true,
-        prefixIcon: Icon(LucideIcons.search, size: 18, color: AppColors.inkFaint),
+        prefixIcon: Icon(
+          LucideIcons.search,
+          size: 18,
+          color: AppColors.inkFaint,
+        ),
         prefixIconConstraints: const BoxConstraints(minWidth: 38),
         hintText: context.t('sprint.filterIssues'),
         filled: true,
@@ -289,7 +295,9 @@ class _SprintGroupState extends State<_SprintGroup> {
             border: Border.all(
               color: dropping
                   ? AppColors.accentLine
-                  : (widget.isActive ? AppColors.accentLine : AppColors.hairline),
+                  : (widget.isActive
+                        ? AppColors.accentLine
+                        : AppColors.hairline),
               width: dropping ? 2 : 1,
             ),
           ),
@@ -301,7 +309,8 @@ class _SprintGroupState extends State<_SprintGroup> {
                 isActive: widget.isActive,
                 issues: widget.issues,
                 collapsed: _collapsed,
-                onToggleCollapse: () => setState(() => _collapsed = !_collapsed),
+                onToggleCollapse: () =>
+                    setState(() => _collapsed = !_collapsed),
                 action: widget.action,
               ),
               if (!_collapsed)
@@ -369,8 +378,11 @@ class _SprintGroupHeader extends StatelessWidget {
             child: AnimatedRotation(
               duration: const Duration(milliseconds: 180),
               turns: collapsed ? -0.25 : 0,
-              child: Icon(LucideIcons.chevronDown,
-                  size: 18, color: AppColors.inkSoft),
+              child: Icon(
+                LucideIcons.chevronDown,
+                size: 18,
+                color: AppColors.inkSoft,
+              ),
             ),
           ),
         ),
@@ -407,8 +419,10 @@ class _SprintGroupHeader extends StatelessWidget {
     final issuesLabel = Text(
       issues.length == 1
           ? context.t('sprint.issueOne', variables: {'count': '1'})
-          : context.t('sprint.issuesMany',
-              variables: {'count': '${issues.length}'}),
+          : context.t(
+              'sprint.issuesMany',
+              variables: {'count': '${issues.length}'},
+            ),
       style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
     );
 
@@ -588,8 +602,11 @@ class _BacklogGroupState extends State<_BacklogGroup> {
                         child: AnimatedRotation(
                           duration: const Duration(milliseconds: 180),
                           turns: _collapsed ? -0.25 : 0,
-                          child: Icon(LucideIcons.chevronDown,
-                              size: 18, color: AppColors.inkSoft),
+                          child: Icon(
+                            LucideIcons.chevronDown,
+                            size: 18,
+                            color: AppColors.inkSoft,
+                          ),
                         ),
                       ),
                     ),
@@ -604,11 +621,15 @@ class _BacklogGroupState extends State<_BacklogGroup> {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusPill,
+                        ),
                         border: Border.all(color: AppColors.hairline),
                       ),
                       child: Text(
@@ -640,8 +661,10 @@ class _BacklogGroupState extends State<_BacklogGroup> {
                         _EmptyDropHint(
                           text: widget.query.isEmpty
                               ? context.t('sprint.backlogEmpty')
-                              : context.t('sprint.noMatches',
-                                  variables: {'query': widget.query}),
+                              : context.t(
+                                  'sprint.noMatches',
+                                  variables: {'query': widget.query},
+                                ),
                         )
                       else
                         for (final issue in widget.issues)
@@ -700,6 +723,14 @@ class _DraggableRow extends StatelessWidget {
       onOpen: onOpen,
       onEstimate: onEstimate,
     );
+    // Touch platforms get no drag — it fights the scroll gesture. Sprint
+    // assignment happens via multi-select + bulk move or the detail sheet.
+    final platform = Theme.of(context).platform;
+    final isTouch =
+        platform == TargetPlatform.iOS ||
+        platform == TargetPlatform.android ||
+        platform == TargetPlatform.fuchsia;
+    if (isTouch) return row;
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -893,14 +924,19 @@ class _BulkBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.18),
+                  ),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     hint: Text(
                       context.t('sprint.moveTo'),
-                      style: const TextStyle(color: Colors.white, fontSize: 12.5),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12.5,
+                      ),
                     ),
                     dropdownColor: AppColors.navy,
                     isDense: true,

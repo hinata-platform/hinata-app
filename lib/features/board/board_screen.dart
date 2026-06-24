@@ -1746,6 +1746,14 @@ class _BoardColumnState extends State<_BoardColumn> {
                                 const SizedBox(height: 9),
                             itemBuilder: (context, index) {
                               final issue = issues[index];
+                              final card = _BoardCard(
+                                issue: issue,
+                                palette: widget.palette,
+                                onOpen: () => widget.onOpenIssue(issue),
+                              );
+                              // Touch platforms: no drag — it fights the scroll
+                              // gesture. State changes happen in the detail sheet.
+                              if (isTouch) return card;
                               return Draggable<Issue>(
                                 data: issue,
                                 dragAnchorStrategy: childDragAnchorStrategy,
@@ -1768,11 +1776,7 @@ class _BoardColumnState extends State<_BoardColumn> {
                                     palette: widget.palette,
                                   ),
                                 ),
-                                child: _BoardCard(
-                                  issue: issue,
-                                  palette: widget.palette,
-                                  onOpen: () => widget.onOpenIssue(issue),
-                                ),
+                                child: card,
                               );
                             },
                           ),
