@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
+import '../../core/responsive/responsive.dart';
 import '../../core/storage/app_storage.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -422,6 +423,25 @@ class _WelcomeSlide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The brand hero scales up on wider canvases so it never reads as a small
+    // phone artefact stranded in the middle of a desktop window.
+    final tile = switch (context.layoutSize) {
+      LayoutSize.compact => 132.0,
+      LayoutSize.medium => 168.0,
+      LayoutSize.expanded => 200.0,
+    };
+    final glowSize = tile * 1.6;
+    final word = switch (context.layoutSize) {
+      LayoutSize.compact => 42.0,
+      LayoutSize.medium => 54.0,
+      LayoutSize.expanded => 66.0,
+    };
+    final tagline = switch (context.layoutSize) {
+      LayoutSize.compact => 14.5,
+      LayoutSize.medium => 17.0,
+      LayoutSize.expanded => 19.0,
+    };
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.only(bottom: 60),
@@ -429,8 +449,8 @@ class _WelcomeSlide extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              width: 210,
-              height: 210,
+              width: glowSize,
+              height: glowSize,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -449,8 +469,8 @@ class _WelcomeSlide extends StatelessWidget {
                       );
                     },
                     child: Container(
-                      width: 210,
-                      height: 210,
+                      width: glowSize,
+                      height: glowSize,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
@@ -461,16 +481,20 @@ class _WelcomeSlide extends StatelessWidget {
                     ),
                   ),
                   // glass tile + brand mark
-                  _GlassTile(size: 132, radius: 38, child: HexMark(size: 70)),
+                  _GlassTile(
+                    size: tile,
+                    radius: tile * 0.29,
+                    child: HexMark(size: tile * 0.53),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 28),
+            SizedBox(height: tile * 0.21),
             Text(
               'hinata',
               style: TextStyle(
                 fontFamily: AppTheme.fontBrand,
-                fontSize: 42,
+                fontSize: word,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -2,
                 color: Colors.white,
@@ -481,7 +505,7 @@ class _WelcomeSlide extends StatelessWidget {
               context.t('onboarding.tagline'),
               style: TextStyle(
                 fontFamily: AppTheme.fontUi,
-                fontSize: 14.5,
+                fontSize: tagline,
                 color: _white(0.4),
               ),
             ),
@@ -507,57 +531,138 @@ class _FeatureSlide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return switch (context.layoutSize) {
+      // Phone: visual on top, centred text below.
+      LayoutSize.compact => _stacked(context, scale: 1, cardWidth: null),
+      // Tablet portrait: same stack, scaled up and tighter to a max width.
+      LayoutSize.medium => _stacked(context, scale: 1.28, cardWidth: 440),
+      // Desktop / tablet landscape: two-column hero.
+      LayoutSize.expanded => _split(context),
+    };
+  }
+
+  Widget _stacked(
+    BuildContext context, {
+    required double scale,
+    required double? cardWidth,
+  }) {
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 380),
+          constraints: BoxConstraints(maxWidth: cardWidth ?? 380),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _GlassCard(child: card),
-              const SizedBox(height: 28),
-              Text(
-                context.t(labelKey).toUpperCase(),
-                style: const TextStyle(
-                  fontFamily: AppTheme.fontUi,
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1.1,
-                  color: _amber,
+              cardWidth == null
+                  ? _GlassCard(child: card)
+                  : _scaledCard(maxWidth: cardWidth),
+              SizedBox(height: 28 * scale),
+              _text(context, scale: scale, align: TextAlign.center),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _split(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 980),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 48),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                flex: 5,
+                child: _text(
+                  context,
+                  scale: 1.4,
+                  align: TextAlign.left,
+                  crossAxis: CrossAxisAlignment.start,
+                  bodyMaxWidth: 380,
                 ),
               ),
-              const SizedBox(height: 7),
-              Text(
-                context.t(titleKey),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFamily: AppTheme.fontBrand,
-                  fontSize: 31,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.8,
-                  height: 1.1,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 11),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 290),
-                child: Text(
-                  context.t(bodyKey),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: AppTheme.fontUi,
-                    fontSize: 13.5,
-                    height: 1.7,
-                    color: _white(0.48),
-                  ),
+              const SizedBox(width: 56),
+              Expanded(
+                flex: 6,
+                child: Align(
+                  alignment: Alignment.center,
+                  child: _scaledCard(maxWidth: 480),
                 ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  /// The mini-UI card is authored at a fixed 360px "design width"; on wider
+  /// layouts we scale that whole composition uniformly so the inner type stays
+  /// in proportion instead of stretching the columns and shrinking the text.
+  Widget _scaledCard({required double maxWidth}) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: FittedBox(
+        fit: BoxFit.contain,
+        child: SizedBox(width: 360, child: _GlassCard(child: card)),
+      ),
+    );
+  }
+
+  Widget _text(
+    BuildContext context, {
+    required double scale,
+    required TextAlign align,
+    CrossAxisAlignment crossAxis = CrossAxisAlignment.center,
+    double bodyMaxWidth = 290,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: crossAxis,
+      children: [
+        Text(
+          context.t(labelKey).toUpperCase(),
+          style: TextStyle(
+            fontFamily: AppTheme.fontUi,
+            fontSize: 10.5 * scale,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.1,
+            color: _amber,
+          ),
+        ),
+        SizedBox(height: 7 * scale),
+        Text(
+          context.t(titleKey),
+          textAlign: align,
+          style: TextStyle(
+            fontFamily: AppTheme.fontBrand,
+            fontSize: 31 * scale,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.8,
+            height: 1.1,
+            color: Colors.white,
+          ),
+        ),
+        SizedBox(height: 11 * scale),
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: bodyMaxWidth),
+          child: Text(
+            context.t(bodyKey),
+            textAlign: align,
+            style: TextStyle(
+              fontFamily: AppTheme.fontUi,
+              fontSize: 13.5 * scale,
+              height: 1.7,
+              color: _white(0.48),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
