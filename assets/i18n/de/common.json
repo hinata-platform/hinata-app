@@ -94,9 +94,21 @@
     "skip": "Überspringen",
     "next": "Weiter",
     "start": "Los geht's",
+    "continue": "Weiter",
+    "getStarted": "Loslegen",
+    "tagline": "Wo dein Team das Licht findet.",
+    "label": "Funktion",
     "projects": {
       "title": "Projekte",
       "body": "Organisiere deine Arbeit und verfolge Aufgaben nach deinen Regeln – mit eigenen Workflows pro Projekt."
+    },
+    "sprints": {
+      "title": "Sprints",
+      "body": "Plane fokussierte Zwei-Wochen-Zyklen. Sieh in Echtzeit genau, wo dein Team steht."
+    },
+    "teams": {
+      "title": "Teams",
+      "body": "Sieh, wer woran arbeitet. Bleibt synchron – ohne den Lärm."
     },
     "time": {
       "title": "Zeiterfassung",

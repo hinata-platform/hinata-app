@@ -94,9 +94,21 @@
     "skip": "Skip",
     "next": "Next",
     "start": "Get started",
+    "continue": "Continue",
+    "getStarted": "Get Started",
+    "tagline": "Where your team finds the light.",
+    "label": "Feature",
     "projects": {
       "title": "Projects",
-      "body": "Organize your efforts and track issues on your own terms — with custom workflows per project."
+      "body": "Organize work and track issues on your own terms — with custom workflows per project."
+    },
+    "sprints": {
+      "title": "Sprints",
+      "body": "Plan focused two-week cycles. See exactly where your team stands — in real time."
+    },
+    "teams": {
+      "title": "Teams",
+      "body": "See who's working on what. Stay in sync without the noise."
     },
     "time": {
       "title": "Time Tracking",
