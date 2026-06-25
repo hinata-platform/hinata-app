@@ -856,7 +856,7 @@ class _UserTableRow extends StatelessWidget {
               onTap: () => actions.openDrawer(u),
               child: Row(
                 children: [
-                  UserAvatar(name: u.name, size: 34),
+                  UserAvatar(name: u.name, imageUrl: u.avatarUrl, size: 34),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -1010,7 +1010,7 @@ class _UserCard extends StatelessWidget {
                   onTap: () => actions.openDrawer(u),
                   child: Row(
                     children: [
-                      UserAvatar(name: u.name, size: 40),
+                      UserAvatar(name: u.name, imageUrl: u.avatarUrl, size: 40),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(

@@ -16,11 +16,13 @@ class BoardPeopleStrip extends StatefulWidget {
     required this.names,
     required this.selected,
     required this.onToggle,
+    this.avatars = const {},
     this.size = 30,
   });
 
   final List<String> userIds;
   final Map<String, String> names;
+  final Map<String, String> avatars;
   final Set<String> selected;
   final ValueChanged<String> onToggle;
   final double size;
@@ -64,6 +66,7 @@ class _BoardPeopleStripState extends State<BoardPeopleStrip> {
               top: 3,
               child: _PersonAvatar(
                 name: widget.names[ids[i]] ?? ids[i],
+                imageUrl: widget.avatars[ids[i]],
                 size: size,
                 selected: widget.selected.contains(ids[i]),
                 dimmed: anySelected && !widget.selected.contains(ids[i]),
@@ -91,9 +94,11 @@ class _PersonAvatar extends StatelessWidget {
     required this.onEnter,
     required this.onExit,
     required this.onTap,
+    this.imageUrl,
   });
 
   final String name;
+  final String? imageUrl;
   final double size;
   final bool selected;
   final bool dimmed;
@@ -135,7 +140,7 @@ class _PersonAvatar extends StatelessWidget {
                     BoxShadow(color: AppColors.surface, spreadRadius: 1.6),
                   ],
                 ),
-                child: HiveAvatar(name: name, size: size),
+                child: HiveAvatar(name: name, imageUrl: imageUrl, size: size),
               ),
             ),
           ),

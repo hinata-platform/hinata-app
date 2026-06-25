@@ -25,6 +25,7 @@ typedef _IssuesData = ({
   List<Issue> issues,
   int total,
   Map<String, String> names,
+  Map<String, String> avatars,
   ProjectPalette palette,
 });
 
@@ -60,10 +61,15 @@ class _IssuesScreenState extends State<IssuesScreen> {
       final users = results[1] as List<DirectoryUser>;
       final projects = results[2] as List<Project>;
       final names = {for (final u in users) u.id: u.displayName};
+      final avatars = {
+        for (final u in users)
+          if (u.avatarUrl != null && u.avatarUrl!.isNotEmpty) u.id: u.avatarUrl!,
+      };
       return (
         issues: page.issues,
         total: page.total,
         names: names,
+        avatars: avatars,
         palette: ProjectPalette.fromProjects(projects),
       );
     })..load();
@@ -118,6 +124,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
         builder: (context, state) {
           final all = state.data?.issues ?? const <Issue>[];
           final names = state.data?.names ?? const <String, String>{};
+          final avatars = state.data?.avatars ?? const <String, String>{};
           final palette = state.data?.palette ?? ProjectPalette.empty;
           final list = _apply(all);
           return RefreshIndicator(
@@ -222,6 +229,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
                               child: IssueRow(
                                 issue: issue,
                                 assignee: names[issue.assigneeId],
+                                assigneeAvatar: avatars[issue.assigneeId],
                                 palette: palette,
                               ),
                             ),
@@ -403,12 +411,14 @@ class IssueRow extends StatelessWidget {
     super.key,
     required this.issue,
     this.assignee,
+    this.assigneeAvatar,
     this.onTap,
     this.palette,
   });
 
   final Issue issue;
   final String? assignee;
+  final String? assigneeAvatar;
   final VoidCallback? onTap;
   final ProjectPalette? palette;
 
@@ -474,7 +484,8 @@ class IssueRow extends StatelessWidget {
                     color: palette?.stateColor(issue.state),
                   ),
                 ),
-                if (name.isNotEmpty) HiveAvatar(name: name, size: 22),
+                if (name.isNotEmpty)
+                  HiveAvatar(name: name, imageUrl: assigneeAvatar, size: 22),
                 if (due != null) ...[
                   const SizedBox(width: 10),
                   Text(
@@ -556,7 +567,7 @@ class IssueRow extends StatelessWidget {
                 ? Text('—', style: TextStyle(color: AppColors.inkFaint))
                 : Row(
                     children: [
-                      HiveAvatar(name: name, size: 24),
+                      HiveAvatar(name: name, imageUrl: assigneeAvatar, size: 24),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(

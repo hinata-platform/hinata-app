@@ -434,11 +434,16 @@ class HiveAvatarStack extends StatelessWidget {
   const HiveAvatarStack({
     super.key,
     required this.names,
+    this.imageUrls = const [],
     this.size = 26,
     this.max = 4,
   });
 
   final List<String> names;
+
+  /// Optional avatar image URLs, parallel to [names] (null/short entries fall
+  /// back to initials).
+  final List<String?> imageUrls;
   final double size;
   final int max;
 
@@ -457,7 +462,12 @@ class HiveAvatarStack extends StatelessWidget {
           for (var i = 0; i < shown.length; i++)
             Positioned(
               left: i * (size - overlap),
-              child: HiveAvatar(name: shown[i], size: size, ring: true),
+              child: HiveAvatar(
+                name: shown[i],
+                imageUrl: i < imageUrls.length ? imageUrls[i] : null,
+                size: size,
+                ring: true,
+              ),
             ),
           if (extra > 0)
             Positioned(

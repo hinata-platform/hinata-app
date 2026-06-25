@@ -318,6 +318,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
 
   BoardViewMode _mode = BoardViewMode.board;
   Map<String, String> _names = const {};
+  Map<String, String> _avatars = const {};
   Map<String, String> _projectNames = const {};
   List<String> _projectLabels = const [];
   ProjectPalette _palette = ProjectPalette.empty;
@@ -360,6 +361,11 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       setState(() {
         _view = view;
         _names = {for (final u in users) u.id: u.displayName};
+        _avatars = {
+          for (final u in users)
+            if (u.avatarUrl != null && u.avatarUrl!.isNotEmpty)
+              u.id: u.avatarUrl!,
+        };
         _projectNames = {for (final p in projects) p.id: p.name};
         _projectLabels = [
           for (final p in projects)
@@ -500,6 +506,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     filter: _filter,
     options: _options,
     names: _names,
+    avatars: _avatars,
     sprintNames: _sprintNames,
     epicNames: _epicNames,
     onChanged: (f) => setState(() => _filter = f),
@@ -538,6 +545,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
         child: ScrumBoardView(
           view: view,
           names: _names,
+          avatars: _avatars,
           projectNames: _projectNames,
           onOpenIssue: _openIssue,
         ),
@@ -682,6 +690,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     final people = BoardPeopleStrip(
       userIds: _peopleIds,
       names: _names,
+      avatars: _avatars,
       selected: _filter.assignees,
       onToggle: (id) => setState(
         () => _filter = _filter.toggle(BoardFilterFacet.assignee, id),
@@ -761,6 +770,8 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
           column: column,
           issues: issues,
           palette: _palette,
+          names: _names,
+          avatars: _avatars,
           onAccept: (issue) => _moveIssue(issue, column),
           onAddIssue: () => _addIssue(column),
           onOpenIssue: _openIssue,
@@ -807,6 +818,8 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
         laneMode: true,
         issues: issues,
         palette: _palette,
+        names: _names,
+        avatars: _avatars,
         onAccept: (issue) => _moveIssue(issue, column),
         onAddIssue: () => _addIssue(column),
         onOpenIssue: _openIssue,
@@ -865,6 +878,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
                 child: IssueRow(
                   issue: issue,
                   assignee: _names[issue.assigneeId],
+                  assigneeAvatar: _avatars[issue.assigneeId],
                   onTap: () => _openIssue(issue),
                 ),
               ),
@@ -1549,6 +1563,8 @@ class _BoardColumn extends StatefulWidget {
     required this.column,
     required this.issues,
     required this.palette,
+    required this.names,
+    required this.avatars,
     required this.onAccept,
     required this.onAddIssue,
     required this.onOpenIssue,
@@ -1558,6 +1574,8 @@ class _BoardColumn extends StatefulWidget {
   final BoardColumnView column;
   final List<Issue> issues;
   final ProjectPalette palette;
+  final Map<String, String> names;
+  final Map<String, String> avatars;
   final void Function(Issue) onAccept;
   final VoidCallback onAddIssue;
   final void Function(Issue) onOpenIssue;
@@ -1692,6 +1710,9 @@ class _BoardColumnState extends State<_BoardColumn> {
                               final card = _BoardCard(
                                 issue: issue,
                                 palette: widget.palette,
+                                assigneeName: widget.names[issue.assigneeId],
+                                assigneeAvatar:
+                                    widget.avatars[issue.assigneeId],
                                 onOpen: () => widget.onOpenIssue(issue),
                               );
                               // Touch platforms: no drag — it fights the scroll
@@ -1708,6 +1729,10 @@ class _BoardColumnState extends State<_BoardColumn> {
                                     child: _BoardCard(
                                       issue: issue,
                                       palette: widget.palette,
+                                      assigneeName:
+                                          widget.names[issue.assigneeId],
+                                      assigneeAvatar:
+                                          widget.avatars[issue.assigneeId],
                                       dragging: true,
                                     ),
                                   ),
@@ -1717,6 +1742,9 @@ class _BoardColumnState extends State<_BoardColumn> {
                                   child: _BoardCard(
                                     issue: issue,
                                     palette: widget.palette,
+                                    assigneeName: widget.names[issue.assigneeId],
+                                    assigneeAvatar:
+                                        widget.avatars[issue.assigneeId],
                                   ),
                                 ),
                                 child: card,
@@ -1756,12 +1784,16 @@ class _BoardCard extends StatelessWidget {
   const _BoardCard({
     required this.issue,
     required this.palette,
+    this.assigneeName,
+    this.assigneeAvatar,
     this.dragging = false,
     this.onOpen,
   });
 
   final Issue issue;
   final ProjectPalette palette;
+  final String? assigneeName;
+  final String? assigneeAvatar;
   final bool dragging;
   final VoidCallback? onOpen;
 
@@ -1849,7 +1881,11 @@ class _BoardCard extends StatelessWidget {
                         ],
                         const Spacer(),
                         if (issue.assigneeId != null)
-                          HiveAvatar(name: issue.assigneeId!, size: 24),
+                          HiveAvatar(
+                            name: assigneeName ?? issue.assigneeId!,
+                            imageUrl: assigneeAvatar,
+                            size: 24,
+                          ),
                       ],
                     ),
                   ],

@@ -27,6 +27,7 @@ Future<void> openBoardFilter(
   required BoardFilter filter,
   required BoardFilterOptions options,
   required Map<String, String> names,
+  Map<String, String> avatars = const {},
   required Map<String, String> sprintNames,
   Map<String, String> epicNames = const {},
   required ValueChanged<BoardFilter> onChanged,
@@ -47,6 +48,7 @@ Future<void> openBoardFilter(
       initial: filter,
       options: options,
       names: names,
+      avatars: avatars,
       sprintNames: sprintNames,
       epicNames: epicNames,
       onChanged: onChanged,
@@ -69,6 +71,7 @@ class _BoardFilterDialog extends StatefulWidget {
     required this.initial,
     required this.options,
     required this.names,
+    required this.avatars,
     required this.sprintNames,
     required this.epicNames,
     required this.onChanged,
@@ -78,6 +81,7 @@ class _BoardFilterDialog extends StatefulWidget {
   final BoardFilter initial;
   final BoardFilterOptions options;
   final Map<String, String> names;
+  final Map<String, String> avatars;
   final Map<String, String> sprintNames;
   final Map<String, String> epicNames;
   final ValueChanged<BoardFilter> onChanged;
@@ -143,6 +147,7 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
   /// Builds the option list for the active scope.
   List<_Opt> _optionsFor(BoardFilterFacet f) {
     String name(String id) => widget.names[id] ?? id;
+    String? avatar(String id) => widget.avatars[id];
     switch (f) {
       case BoardFilterFacet.state:
         return [
@@ -180,7 +185,7 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
             _Opt(
               value: id,
               label: name(id),
-              leading: HiveAvatar(name: name(id), size: 20),
+              leading: HiveAvatar(name: name(id), imageUrl: avatar(id), size: 20),
             ),
         ];
       case BoardFilterFacet.author:
@@ -189,7 +194,7 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
             _Opt(
               value: id,
               label: name(id),
-              leading: HiveAvatar(name: name(id), size: 20),
+              leading: HiveAvatar(name: name(id), imageUrl: avatar(id), size: 20),
             ),
         ];
       case BoardFilterFacet.sprint:

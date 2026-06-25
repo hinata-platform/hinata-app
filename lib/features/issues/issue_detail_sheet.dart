@@ -1095,6 +1095,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
                   _person(null, fallback: context.t('issues.unassigned'))
                 else if (issue.assigneeIds.length == 1)
                   _person(_names[issue.assigneeIds.first],
+                      imageUrl: _avatars[issue.assigneeIds.first],
                       fallback: context.t('issues.unassigned'))
                 else
                   // Multiple assignees: a compact stacked avatar group (matches
@@ -1102,6 +1103,9 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
                   HiveAvatarStack(
                     names: [
                       for (final aid in issue.assigneeIds) _names[aid] ?? '?',
+                    ],
+                    imageUrls: [
+                      for (final aid in issue.assigneeIds) _avatars[aid],
                     ],
                     size: 28,
                   ),
@@ -1186,6 +1190,9 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
             last: true,
             child: _person(
               reporterName,
+              imageUrl: issue.reporterId != null
+                  ? _avatars[issue.reporterId!]
+                  : null,
               fallback: context.t('issues.unassigned'),
             ),
           ),
@@ -1212,7 +1219,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     );
   }
 
-  Widget _person(String? name, {required String fallback}) {
+  Widget _person(String? name, {required String fallback, String? imageUrl}) {
     if (name == null || name.isEmpty) {
       return Text(
         fallback,
@@ -1222,7 +1229,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        HiveAvatar(name: name, size: 22),
+        HiveAvatar(name: name, imageUrl: imageUrl, size: 22),
         const SizedBox(width: 8),
         Flexible(
           child: Text(
@@ -2786,7 +2793,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     );
   }
 
-  Widget _person(String? name, {required String fallback}) {
+  Widget _person(String? name, {required String fallback, String? imageUrl}) {
     if (name == null || name.isEmpty) {
       return Text(
         fallback,
@@ -2796,7 +2803,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        HiveAvatar(name: name, size: 22),
+        HiveAvatar(name: name, imageUrl: imageUrl, size: 22),
         const SizedBox(width: 8),
         Flexible(
           child: Text(

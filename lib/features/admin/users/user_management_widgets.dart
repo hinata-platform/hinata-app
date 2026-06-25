@@ -10,6 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/glass_panel.dart';
 import '../../../core/widgets/glass_popup_menu.dart';
+import '../../../core/widgets/hive_widgets.dart';
 import '../../search/search_tokens.dart';
 import '../../sprint/modals/glass_modal.dart' show showGlassBottomSheet;
 
@@ -104,37 +105,26 @@ bool isIdle(DateTime? t) =>
 // ─────────────────────────── Avatar ──────────────────────────────────────
 
 class UserAvatar extends StatelessWidget {
-  const UserAvatar({super.key, required this.name, this.size = 36});
+  const UserAvatar({
+    super.key,
+    required this.name,
+    this.imageUrl,
+    this.size = 36,
+  });
 
   final String name;
+  final String? imageUrl;
   final double size;
 
   @override
   Widget build(BuildContext context) {
-    final parts = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((p) => p.isNotEmpty)
-        .toList();
-    final initials = parts.isEmpty
-        ? '?'
-        : (parts.length == 1
-                  ? parts.first.characters.first
-                  : parts.first.characters.first + parts.last.characters.first)
-              .toUpperCase();
-    return Container(
-      width: size,
-      height: size,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(color: userColor(name), shape: BoxShape.circle),
-      child: Text(
-        initials,
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
-          fontSize: size * 0.4,
-        ),
-      ),
+    // Delegate to HiveAvatar so the profile picture (authenticated /avatar URL)
+    // loads with a clean initials fallback; keep the admin board's user colour.
+    return HiveAvatar(
+      name: name,
+      imageUrl: imageUrl,
+      size: size,
+      background: userColor(name),
     );
   }
 }
@@ -814,7 +804,7 @@ class UserDrawerBody extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  UserAvatar(name: u.name, size: 52),
+                  UserAvatar(name: u.name, imageUrl: u.avatarUrl, size: 52),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(

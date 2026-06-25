@@ -158,7 +158,7 @@ Widget _previewList(List<AdminUser> users) {
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(
             children: [
-              UserAvatar(name: u.name, size: 28),
+              UserAvatar(name: u.name, imageUrl: u.avatarUrl, size: 28),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(

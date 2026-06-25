@@ -349,7 +349,11 @@ class _ActivityRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        HiveAvatar(name: actorName, size: 28),
+        HiveAvatar(
+          name: actorName,
+          imageUrl: data.usersById[activity.actorId]?.avatarUrl,
+          size: 28,
+        ),
         const SizedBox(width: 11),
         Expanded(
           child: RichText(
@@ -512,7 +516,7 @@ class _MemberRow extends StatelessWidget {
           final narrow = c.maxWidth < 460;
           final identity = Row(
             children: [
-              HiveAvatar(name: name, size: 38),
+              HiveAvatar(name: name, imageUrl: user?.avatarUrl, size: 38),
               const SizedBox(width: 13),
               Expanded(
                 child: Column(
@@ -747,16 +751,19 @@ class _ProjectRow extends StatelessWidget {
         ? data.usersById[project.leadId!]
         : null;
     // Members whose access covers this project.
-    final withAccess = data.team.members
-        .where((m) {
-          final a = m.access;
-          if (m.isAdmin || a.scope == AccessScope.all) return true;
-          if (a.scope == AccessScope.some) {
-            return a.projectIds.contains(project.id);
-          }
-          return false;
-        })
+    final withAccessMembers = data.team.members.where((m) {
+      final a = m.access;
+      if (m.isAdmin || a.scope == AccessScope.all) return true;
+      if (a.scope == AccessScope.some) {
+        return a.projectIds.contains(project.id);
+      }
+      return false;
+    }).toList();
+    final withAccess = withAccessMembers
         .map((m) => data.usersById[m.userId]?.displayName ?? m.userId)
+        .toList();
+    final withAccessAvatars = withAccessMembers
+        .map((m) => data.usersById[m.userId]?.avatarUrl)
         .toList();
 
     return SoftCard(
@@ -814,7 +821,12 @@ class _ProjectRow extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (withAccess.isNotEmpty)
-                HiveAvatarStack(names: withAccess, size: 24, max: 3),
+                HiveAvatarStack(
+                  names: withAccess,
+                  imageUrls: withAccessAvatars,
+                  size: 24,
+                  max: 3,
+                ),
               if (manage) ...[
                 const SizedBox(width: 8),
                 IconButton(

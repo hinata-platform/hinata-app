@@ -25,6 +25,7 @@ typedef _ProjectsData = ({
   List<Project> active,
   List<Project> archived,
   Map<String, String> names,
+  Map<String, String> avatars,
 });
 
 class ProjectsScreen extends StatefulWidget {
@@ -52,7 +53,16 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       final archived = results[1] as List<Project>;
       final users = results[2] as List<DirectoryUser>;
       final names = {for (final u in users) u.id: u.displayName};
-      return (active: active, archived: archived, names: names);
+      final avatars = {
+        for (final u in users)
+          if (u.avatarUrl != null && u.avatarUrl!.isNotEmpty) u.id: u.avatarUrl!,
+      };
+      return (
+        active: active,
+        archived: archived,
+        names: names,
+        avatars: avatars,
+      );
     })..load();
   }
 
@@ -71,6 +81,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           final active = state.data?.active ?? const <Project>[];
           final archived = state.data?.archived ?? const <Project>[];
           final names = state.data?.names ?? const <String, String>{};
+          final avatars = state.data?.avatars ?? const <String, String>{};
           final projects = _showArchived ? archived : active;
           return RefreshIndicator(
             onRefresh: _cubit.load,
@@ -172,6 +183,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                         (context, index) => _ProjectCard(
                           project: projects[index],
                           names: names,
+                          avatars: avatars,
                           onSettings: () => _openSettings(projects[index]),
                         ),
                         childCount: projects.length,
@@ -221,11 +233,13 @@ class _ProjectCard extends StatelessWidget {
   const _ProjectCard({
     required this.project,
     required this.names,
+    required this.avatars,
     required this.onSettings,
   });
 
   final Project project;
   final Map<String, String> names;
+  final Map<String, String> avatars;
   final VoidCallback onSettings;
 
   @override
@@ -245,6 +259,9 @@ class _ProjectCard extends StatelessWidget {
     final leadName = project.leadId != null ? names[project.leadId!] : null;
     final memberNames = project.memberIds
         .map((id) => names[id] ?? id)
+        .toList(growable: false);
+    final memberAvatars = project.memberIds
+        .map((id) => avatars[id])
         .toList(growable: false);
     final subtitle = leadName != null
         ? '${project.key} · ${context.t('projects.lead')} ${leadName.split(' ').first}'
@@ -331,7 +348,13 @@ class _ProjectCard extends StatelessWidget {
           Row(
             children: [
               if (memberNames.isNotEmpty)
-                Expanded(child: HiveAvatarStack(names: memberNames, size: 26))
+                Expanded(
+                  child: HiveAvatarStack(
+                    names: memberNames,
+                    imageUrls: memberAvatars,
+                    size: 26,
+                  ),
+                )
               else
                 const Spacer(),
               if (project.labels.isNotEmpty) ...[

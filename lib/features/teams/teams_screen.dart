@@ -18,7 +18,11 @@ import '../../core/widgets/soft_card.dart';
 import 'team_modals.dart';
 import 'team_widgets.dart';
 
-typedef _TeamsData = ({List<Team> teams, Map<String, String> names});
+typedef _TeamsData = ({
+  List<Team> teams,
+  Map<String, String> names,
+  Map<String, String> avatars,
+});
 
 class TeamsScreen extends StatefulWidget {
   const TeamsScreen({super.key});
@@ -39,7 +43,11 @@ class _TeamsScreenState extends State<TeamsScreen> {
       final teams = results[0] as List<Team>;
       final users = results[1] as List<DirectoryUser>;
       final names = {for (final u in users) u.id: u.displayName};
-      return (teams: teams, names: names);
+      final avatars = {
+        for (final u in users)
+          if (u.avatarUrl != null && u.avatarUrl!.isNotEmpty) u.id: u.avatarUrl!,
+      };
+      return (teams: teams, names: names, avatars: avatars);
     })..load();
   }
 
@@ -65,6 +73,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
         builder: (context, state) {
           final teams = state.data?.teams ?? const <Team>[];
           final names = state.data?.names ?? const <String, String>{};
+          final avatars = state.data?.avatars ?? const <String, String>{};
           return RefreshIndicator(
             onRefresh: _cubit.load,
             color: AppColors.accent,
@@ -120,7 +129,11 @@ class _TeamsScreenState extends State<TeamsScreen> {
                         if (index == teams.length) {
                           return _NewTeamCard(onTap: _create);
                         }
-                        return _TeamCard(team: teams[index], names: names);
+                        return _TeamCard(
+                          team: teams[index],
+                          names: names,
+                          avatars: avatars,
+                        );
                       }, childCount: teams.length + 1),
                     ),
                   ),
@@ -134,10 +147,15 @@ class _TeamsScreenState extends State<TeamsScreen> {
 }
 
 class _TeamCard extends StatelessWidget {
-  const _TeamCard({required this.team, required this.names});
+  const _TeamCard({
+    required this.team,
+    required this.names,
+    required this.avatars,
+  });
 
   final Team team;
   final Map<String, String> names;
+  final Map<String, String> avatars;
 
   @override
   Widget build(BuildContext context) {
@@ -147,6 +165,7 @@ class _TeamCard extends StatelessWidget {
     final memberNames = team.members
         .map((m) => names[m.userId] ?? m.userId)
         .toList();
+    final memberAvatars = team.members.map((m) => avatars[m.userId]).toList();
 
     return SoftCard(
       onTap: () => context.go('/teams/${team.id}'),
@@ -209,7 +228,11 @@ class _TeamCard extends StatelessWidget {
           Row(
             children: [
               if (memberNames.isNotEmpty)
-                HiveAvatarStack(names: memberNames, size: 26),
+                HiveAvatarStack(
+                  names: memberNames,
+                  imageUrls: memberAvatars,
+                  size: 26,
+                ),
               const SizedBox(width: 14),
               Icon(LucideIcons.folder, size: 14, color: AppColors.inkFaint),
               const SizedBox(width: 5),

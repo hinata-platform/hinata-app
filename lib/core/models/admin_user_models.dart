@@ -67,6 +67,7 @@ class AdminUser {
     required this.name,
     required this.username,
     required this.email,
+    this.avatarUrl,
     required this.title,
     required this.role,
     required this.origin,
@@ -84,6 +85,7 @@ class AdminUser {
   final String name;
   final String username;
   final String email;
+  final String? avatarUrl;
   final String title;
   final AdminRole role;
   final UserOrigin origin;
@@ -110,6 +112,7 @@ class AdminUser {
     name: (json['name'] as String?) ?? '',
     username: (json['username'] as String?) ?? '',
     email: (json['email'] as String?) ?? '',
+    avatarUrl: json['avatarUrl'] as String?,
     title: (json['title'] as String?) ?? '',
     role: AdminRole.fromWire(json['role'] as String?),
     origin: UserOrigin.fromWire(json['origin'] as String?),

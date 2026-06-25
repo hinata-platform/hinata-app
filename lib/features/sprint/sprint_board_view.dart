@@ -36,12 +36,14 @@ class ScrumBoardView extends StatefulWidget {
     super.key,
     required this.view,
     required this.names,
+    this.avatars = const {},
     required this.projectNames,
     required this.onOpenIssue,
   });
 
   final BoardView view;
   final Map<String, String> names;
+  final Map<String, String> avatars;
   final Map<String, String> projectNames;
   final void Function(Issue) onOpenIssue;
 
@@ -159,6 +161,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
       epicIds: _epics.map((e) => e.id),
     ),
     names: widget.names,
+    avatars: widget.avatars,
     sprintNames: _sprintNames,
     epicNames: _epicNames,
     onChanged: (f) => setState(() => _filter = f),
@@ -600,6 +603,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
                             child: BoardPeopleStrip(
                               userIds: _peopleIds,
                               names: widget.names,
+                              avatars: widget.avatars,
                               selected: _filter.assignees,
                               onToggle: (id) => setState(
                                 () => _filter = _filter.toggle(
