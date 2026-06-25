@@ -17,6 +17,10 @@ class HinataRepository {
 
   final ApiClient _api;
 
+  /// The configured backend base URL (e.g. `https://api.track.asta.hn`). Used
+  /// to derive shareable web links to in-app resources.
+  String get apiBaseUrl => _api.baseUrl;
+
   // --- Meta & setup ---------------------------------------------------------
 
   Future<ServerMeta> meta() async => ServerMeta.fromJson(

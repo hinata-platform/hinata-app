@@ -56,6 +56,11 @@ Future<Issue?> showIssueForm(
     context: context,
     useRootNavigator: true,
     barrierDismissible: true,
+    // Let our own sticky save bar own the bottom safe-area inset. Wolt's
+    // default (useSafeArea: true) wraps the whole page in SafeArea, which on top
+    // of the save bar's own SafeArea double-counts the home indicator — that
+    // pushed the button up off the modal bottom and cut the last field off.
+    useSafeArea: false,
     pageContentDecorator: glassWoltSurface,
     modalTypeBuilder: (ctx) => MediaQuery.sizeOf(ctx).width >= 760
         ? const _CreateDialogType()

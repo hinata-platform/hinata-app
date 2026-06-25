@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/widgets/hex_mark.dart';
@@ -456,14 +457,32 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
   void copyIssueLink() {
     final issue = _issue;
     if (issue == null) return;
-    String link;
-    try {
-      link = '${Uri.base.origin}/#/issues/${issue.id}';
-    } catch (_) {
-      link = '/issues/${issue.id}';
-    }
-    Clipboard.setData(ClipboardData(text: link));
+    Clipboard.setData(ClipboardData(text: _issueWebLink(issue.id)));
     _toast(context.t('issues.linkCopied'));
+  }
+
+  /// A shareable, clean (non-`#`) URL that resolves to the issue — both as a
+  /// verified deep link into the app and as a normal web route. On web we use
+  /// the origin the app is served from; on native we derive the public web
+  /// origin from the configured API server (convention: API at `api.<domain>`,
+  /// web app + App Links at `<domain>`).
+  String _issueWebLink(String id) {
+    if (kIsWeb) {
+      try {
+        return '${Uri.base.origin}/issues/$id';
+      } catch (_) {
+        return '/issues/$id';
+      }
+    }
+    final api = Uri.tryParse(_repo.apiBaseUrl);
+    if (api == null || api.host.isEmpty) return '/issues/$id';
+    final host = api.host.startsWith('api.') ? api.host.substring(4) : api.host;
+    final origin = Uri(
+      scheme: api.scheme,
+      host: host,
+      port: api.hasPort ? api.port : null,
+    );
+    return '$origin/issues/$id';
   }
 
   Future<void> confirmDeleteIssue() async {
