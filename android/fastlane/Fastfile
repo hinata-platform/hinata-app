@@ -4,7 +4,8 @@ platform :android do
   desc "Build the app bundle and upload it to the Play Store internal track"
   lane :internal do
     Dir.chdir("../..") do
-      sh("flutter", "build", "appbundle", "--release")
+      sh("flutter", "build", "appbundle", "--release",
+         "--dart-define=HINATA_DEFAULT_SERVER=https://api.track.asta.hn")
     end
     upload_to_play_store(
       track: "internal",

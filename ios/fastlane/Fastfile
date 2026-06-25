@@ -102,6 +102,7 @@ platform :ios do
     # Bake the Dart/asset bundle + the resolved build number into the Xcode
     # config; gym then archives, signs and exports the IPA.
     flutter("build", "ios", "--release", "--no-codesign",
+            "--dart-define=HINATA_DEFAULT_SERVER=https://api.track.asta.hn",
             "--build-number=#{next_build_number}")
 
     build_app(

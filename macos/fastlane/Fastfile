@@ -86,7 +86,9 @@ platform :mac do
           platform: "macos", additional_cert_types: ["mac_installer_distribution"],
           readonly: ci?)
 
-    flutter("build", "macos", "--release", "--build-number=#{next_build_number}")
+    flutter("build", "macos", "--release",
+            "--dart-define=HINATA_DEFAULT_SERVER=https://api.track.asta.hn",
+            "--build-number=#{next_build_number}")
 
     build_app(
       workspace: WORKSPACE,
