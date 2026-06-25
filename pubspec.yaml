@@ -47,7 +47,10 @@ dependencies:
 
   # Reporting / export
   pdf: ^3.11.0
-  printing: ^5.13.0
+  # >=5.15.0 loads pdf.js as an ES module (dynamic import of pdf.min.mjs); the
+  # exact pdf.js version is pinned in web/index.html via dartPdfJsVersion so that
+  # JPEG2000 images decode without the OpenJPEG WASM that pdf.js 5+ requires.
+  printing: ^5.15.0
   flutter_svg: ^2.0.10
 
   # QR matrix generation for 2FA enrolment (pure-Dart; painted via CustomPainter)

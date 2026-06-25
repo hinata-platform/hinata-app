@@ -30,6 +30,16 @@
   <title>hinata</title>
   <link rel="manifest" href="manifest.json">
 
+  <!--
+    PDF rendering (printing package / pdf.js): pin pdf.js to the last 4.x release.
+    pdf.js 5+ decodes JPEG2000 (JPX) images via a separate OpenJPEG WASM that must
+    be located through a `wasmUrl` option which the `printing` package never passes
+    to getDocument(). That makes JPEG2000-containing PDFs fail on web with
+    "JpxError: OpenJPEG failed to initialize". pdf.js 4.x bundles the OpenJPEG
+    decoder as JS (no external wasm), so JPEG2000 images decode correctly.
+  -->
+  <script>globalThis.dartPdfJsVersion = "4.10.38";</script>
+
   <!-- ===== Hinata animierter Splash (nativ: SVG + CSS, kein Flutter nötig) ===== -->
   <style id="splash-screen-style">
     @font-face {
