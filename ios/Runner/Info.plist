@@ -99,5 +99,12 @@
 		<string>Hinata needs access to your camera so you can take a photo or record a video to attach to issues.</string>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>Hinata needs access to your microphone so videos you record for issue attachments include sound.</string>
+		<!-- Required by Apple (ITMS-90683): the media picker (file_picker →
+		     DKImagePickerController) references PHAsset.location, i.e. the GPS
+		     metadata stored inside photos/videos. Hinata never tracks your device
+		     location and never prompts for it; this string only covers location
+		     data already embedded in files you choose to attach. -->
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>Hinata does not track your location. This is only needed so photos or videos you choose to attach to issues keep the location information already saved inside them.</string>
 	</dict>
 </plist>
