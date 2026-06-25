@@ -68,7 +68,7 @@ GoRouter buildRouter({
   String? pendingDeepLink;
 
   return GoRouter(
-    initialLocation: '/dashboard',
+    initialLocation: storage.screenshotRoute ?? '/dashboard',
     refreshListenable: _MergedRefresh([appConfig.stream, auth.stream]),
     redirect: (context, routerState) {
       final config = appConfig.state.status;

@@ -43,6 +43,10 @@ class AppStorage {
   String? get locale => _prefs.getString(_kLocale);
   Future<void> setLocale(String code) => _prefs.setString(_kLocale, code);
 
+  /// Tooling-only: lets the screenshot harness force the boot route via a
+  /// pre-seeded pref (no effect in normal use, where the key is absent).
+  String? get screenshotRoute => _prefs.getString('screenshot_route');
+
   /// Recent global-search queries, most-recent first (max [recentSearchMax]).
   List<String> get recentSearches =>
       _prefs.getStringList(_kRecentSearch) ?? const [];
