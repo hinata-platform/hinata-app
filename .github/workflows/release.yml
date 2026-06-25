@@ -51,7 +51,7 @@ jobs:
 
   ios:
     name: iOS → TestFlight
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -78,7 +78,7 @@ jobs:
 
   macos:
     name: macOS → TestFlight (Mac App Store)
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
