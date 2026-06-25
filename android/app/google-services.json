@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "502636521814",
+    "project_id": "hinata-bb170",
+    "storage_bucket": "hinata-bb170.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:502636521814:android:a7fcfe462c769748bc4ef7",
+        "android_client_info": {
+          "package_name": "com.ahmadre.hinata"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCEdB21uNa9IY1iDp6WwLEg7t--WVAFI20"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

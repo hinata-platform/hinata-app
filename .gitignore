@@ -37,14 +37,12 @@ tool/.venv/
 tool/__pycache__/
 docs/screenshots/raw/
 
-# Firebase / Google credentials (client config + service accounts) — AStA-specific
-android/app/google-services.json
-ios/Runner/GoogleService-Info.plist
+# Firebase Admin / Google SERVICE-ACCOUNT keys (true secrets) — NEVER commit.
+# The client config (google-services.json / GoogleService-Info.plist /
+# firebase_options.dart) IS committed: it only holds client-side identifiers that
+# already ship inside every distributed app binary, and CI needs it to build.
 **/service-account*.json
-**/google-services.json
-**/GoogleService-Info.plist
-# firebase_options.dart carries the per-platform Firebase API keys → injected in CI, never committed
-lib/firebase_options.dart
+**/play-service-account*.json
 
 # Secret files
 *.p12

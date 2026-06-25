@@ -32,6 +32,7 @@
 		AB12CD34EF5600000000B002 /* HinataSplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB12CD34EF5600000000B001 /* HinataSplashView.swift */; };
 		AB12CD34EF5600000000B004 /* Sora-Variable.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AB12CD34EF5600000000B003 /* Sora-Variable.ttf */; };
 		DB3075A729FB81F02F668442 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00096205D18DC6F6031913D7 /* Pods_Runner.framework */; };
+		F200B7AA3BF9CD32593E3640 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 75FF1A32FCFEE6CD3C987BB0 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -85,6 +86,7 @@
 		33E51914231749380026EE4D /* Release.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = Release.entitlements; sourceTree = "<group>"; };
 		33E5194F232828860026EE4D /* AppInfo.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppInfo.xcconfig; sourceTree = "<group>"; };
 		3C02757C2DEDA8C1CBBD5D71 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
+		75FF1A32FCFEE6CD3C987BB0 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Runner/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		78E0A7A72DC9AD7400C4905E /* FlutterGeneratedPluginSwiftPackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FlutterGeneratedPluginSwiftPackage; path = ephemeral/Packages/FlutterGeneratedPluginSwiftPackage; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
@@ -145,6 +147,7 @@
 				33CC10EE2044A3C60003C045 /* Products */,
 				D73912EC22F37F3D000D13A0 /* Frameworks */,
 				FCB9F52FC07E7D7626B06E54 /* Pods */,
+				75FF1A32FCFEE6CD3C987BB0 /* GoogleService-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -334,6 +337,7 @@
 				33CC10F32044A3C60003C045 /* Assets.xcassets in Resources */,
 				AB12CD34EF5600000000B004 /* Sora-Variable.ttf in Resources */,
 				33CC10F62044A3C60003C045 /* MainMenu.xib in Resources */,
+				F200B7AA3BF9CD32593E3640 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

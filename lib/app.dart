@@ -13,6 +13,7 @@ import 'core/blocs/auth_bloc.dart';
 import 'core/blocs/locale_cubit.dart';
 import 'core/blocs/theme_cubit.dart';
 import 'core/i18n/i18n.dart';
+import 'core/notifications/fcm_service.dart';
 import 'core/router/app_router.dart';
 import 'core/storage/app_storage.dart';
 import 'core/theme/app_colors.dart';
@@ -40,6 +41,7 @@ class _HinataAppState extends State<HinataApp> {
   late final AuthBloc _auth;
   late final GoRouter _router;
   late final AccountEventStream _accountEvents;
+  late final FcmService _fcm;
   StreamSubscription<AuthState>? _authSub;
   // Shared backend-backed Knowledge Base store: the KB screen and the real
   // issue detail both resolve smart-links / "Documented in" against this single
@@ -74,6 +76,12 @@ class _HinataAppState extends State<HinataApp> {
       auth: _auth,
       storage: widget.storage,
     );
+    // Push: a tapped notification carries the in-app route in its data payload;
+    // forward it straight to the router (same routes as the web deep links).
+    _fcm = FcmService(
+      apiClient: widget.apiClient,
+      onDeepLink: (link) => _router.go(link),
+    );
     _listenForDeepLinks();
   }
 
@@ -82,8 +90,10 @@ class _HinataAppState extends State<HinataApp> {
   void _syncAccountStream(AuthState state) {
     if (state.status == AuthStatus.authenticated) {
       _accountEvents.start();
+      _fcm.start();
     } else {
       _accountEvents.stop();
+      _fcm.stop();
     }
   }
 
