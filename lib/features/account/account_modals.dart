@@ -390,7 +390,11 @@ Future<AvatarAction?> showAvatarActions(BuildContext context) {
   return showGlassModal<AvatarAction>(
     context,
     width: 380,
-    builder: (_) => Column(
+    // Use the modal's OWN context for pops: showGlassModal pushes on the root
+    // navigator, but the outer `context` resolves to GoRouter's shell navigator
+    // — popping that would tear down the whole page (white screen) instead of
+    // just closing this dialog.
+    builder: (modalContext) => Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         GlassModalHeader(
@@ -406,14 +410,16 @@ Future<AvatarAction?> showAvatarActions(BuildContext context) {
               _AvatarActionTile(
                 icon: LucideIcons.upload,
                 label: context.t('account.avatar.change'),
-                onTap: () => Navigator.of(context).pop(AvatarAction.change),
+                onTap: () =>
+                    Navigator.of(modalContext).pop(AvatarAction.change),
               ),
               const SizedBox(height: 8),
               _AvatarActionTile(
                 icon: LucideIcons.trash2,
                 label: context.t('account.avatar.remove'),
                 danger: true,
-                onTap: () => Navigator.of(context).pop(AvatarAction.remove),
+                onTap: () =>
+                    Navigator.of(modalContext).pop(AvatarAction.remove),
               ),
             ],
           ),
