@@ -24,6 +24,8 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/markdown_image_upload.dart';
 import '../../core/widgets/markdown_toolbar.dart';
 import '../../core/widgets/soft_card.dart';
+import '../git/widgets/deployment_panel.dart';
+import '../git/widgets/development_summary.dart';
 import '../knowledge/data/knowledge_models.dart' show KbArticle, lucideIcon;
 import '../knowledge/data/knowledge_repository.dart';
 import '../knowledge/knowledge_tokens.dart';
@@ -391,6 +393,68 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     }
   }
 
+  // ── git integration ───────────────────────────────────────────────────────
+  bool get _gitConnected => _project?.git != null;
+
+  /// Reflects a server-applied transition triggered by a PR/MR action (merge /
+  /// ready) in the Development summary.
+  void _applyGitIssue(Issue updated) {
+    if (!mounted) return;
+    setState(() => _issue = updated);
+    widget.header?.value = updated;
+    widget.onChanged?.call();
+    _refreshActivity();
+  }
+
+  /// Reflects a branch-template change made from the Deployment panel.
+  void _applyGitProject(Project updated) {
+    if (mounted) setState(() => _project = updated);
+  }
+
+  Future<void> _refreshActivity() async {
+    try {
+      final page = await _repo.issueActivity(widget.issueId);
+      if (mounted) {
+        setState(() {
+          _activity = page.items;
+          _activityTotal = page.total;
+          _activityPage = 0;
+        });
+      }
+    } catch (_) {
+      // Non-critical; the next full load reflects server truth.
+    }
+  }
+
+  void _openProjectSettings(String projectId) {
+    final router = GoRouter.of(context);
+    Navigator.of(context).maybePop();
+    router.push('/projects/$projectId/settings');
+  }
+
+  Widget _developmentBlock(Issue issue) {
+    final project = _project;
+    if (project == null || project.git == null) return const SizedBox.shrink();
+    return DevelopmentSummary(
+      issue: issue,
+      project: project,
+      names: _names,
+      avatars: _avatars,
+      onIssueChanged: _applyGitIssue,
+    );
+  }
+
+  Widget _deploymentPanel(Issue issue) {
+    final project = _project;
+    if (project == null) return const SizedBox.shrink();
+    return DeploymentPanel(
+      issue: issue,
+      project: project,
+      onConnectInSettings: () => _openProjectSettings(project.id),
+      onProjectChanged: _applyGitProject,
+    );
+  }
+
   Future<void> _submitComment() async {
     final text = _comment.text.trim();
     if (text.isEmpty) return;
@@ -644,6 +708,10 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
                     const SizedBox(height: 14),
                     hierarchy,
                   ],
+                  if (_gitConnected) ...[
+                    const SizedBox(height: 14),
+                    _developmentBlock(issue),
+                  ],
                   const SizedBox(height: 14),
                   _linksSection(issue),
                   const SizedBox(height: 14),
@@ -656,6 +724,10 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
                   _activityCard(),
                 ];
                 final right = <Widget>[
+                  if (_project != null) ...[
+                    _deploymentPanel(issue),
+                    const SizedBox(height: 14),
+                  ],
                   _detailsCard(issue),
                   const SizedBox(height: 14),
                   _timeCard(issue),
@@ -691,6 +763,10 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
                       const SizedBox(height: 14),
                       hierarchy,
                     ],
+                    if (_gitConnected) ...[
+                      const SizedBox(height: 14),
+                      _developmentBlock(issue),
+                    ],
                     const SizedBox(height: 14),
                     _linksSection(issue),
                     const SizedBox(height: 14),
@@ -698,6 +774,10 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
                     if (documented != null) ...[
                       const SizedBox(height: 14),
                       documented,
+                    ],
+                    if (_project != null) ...[
+                      const SizedBox(height: 14),
+                      _deploymentPanel(issue),
                     ],
                     const SizedBox(height: 14),
                     _detailsCard(issue),

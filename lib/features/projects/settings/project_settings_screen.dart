@@ -21,6 +21,7 @@ import '../../../core/widgets/glass_panel.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../search/search_tokens.dart';
 import '../../deletion/delete_flows.dart';
+import '../../git/settings/git_integration_section.dart';
 import '../../shell/page_chrome.dart';
 import 'archive_section.dart';
 import 'danger_section.dart';
@@ -409,6 +410,18 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
     }
   }
 
+  /// Merges a Git-connection change (connect / disconnect / automation / branch
+  /// template) into both the saved and draft copies. Git mutations persist
+  /// server-side immediately, so this only replaces the `git` field and leaves
+  /// any in-progress draft edits (and the dirty state) untouched.
+  void _onGitChanged(Project serverProject) {
+    if (!mounted) return;
+    setState(() {
+      _saved = _saved?.withGit(serverProject.git);
+      _draft = _draft?.withGit(serverProject.git);
+    });
+  }
+
   /// Opens the streamed delete flow; on success leaves settings so the projects
   /// list (which reloads when this route pops) no longer shows the project.
   Future<void> _deleteProject() async {
@@ -506,6 +519,12 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
                       onToggleResolved: _toggleResolved,
                       onDelete: _deleteState,
                       onAdd: _addState,
+                    ),
+                    const SizedBox(height: 16),
+                    GitIntegrationSection(
+                      project: _saved ?? draft,
+                      users: _users,
+                      onProjectChanged: _onGitChanged,
                     ),
                     const SizedBox(height: 16),
                     ArchiveSection(

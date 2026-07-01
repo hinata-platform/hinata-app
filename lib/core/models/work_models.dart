@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'git_connection.dart';
+
 /// A reusable, colored issue label ("Stichwort"). [name] is the canonical key
 /// issues reference via their `tags`; [id] is a stable handle used as a UI list
 /// key and to detect renames server-side. [hue] is an oklch hue (see
@@ -90,6 +92,7 @@ class Project extends Equatable {
     this.labels = const [],
     this.color = '#AEC6F4',
     this.archived = false,
+    this.git,
   });
 
   final String id;
@@ -109,6 +112,12 @@ class Project extends Equatable {
   final List<ProjectLabel> labels;
   final String color;
   final bool archived;
+
+  /// Per-project Git repository connection, or `null` when no repo is linked.
+  final GitConnection? git;
+
+  /// Whether this project has a repository connected.
+  bool get gitConnected => git != null;
 
   /// Primary lead (legacy single-lead accessor).
   String? get leadId => leadIds.isEmpty ? null : leadIds.first;
@@ -149,6 +158,7 @@ class Project extends Equatable {
     labels: _indexedList(json['labels'], ProjectLabel.fromAny),
     color: json['color'] as String? ?? '#AEC6F4',
     archived: json['archived'] as bool? ?? false,
+    git: GitConnection.fromJson(json['git'] as Map<String, dynamic>?),
   );
 
   Project copyWith({
@@ -162,6 +172,7 @@ class Project extends Equatable {
     List<ProjectLabel>? labels,
     String? color,
     bool? archived,
+    GitConnection? git,
   }) => Project(
     id: id,
     key: key ?? this.key,
@@ -174,6 +185,26 @@ class Project extends Equatable {
     labels: labels ?? this.labels,
     color: color ?? this.color,
     archived: archived ?? this.archived,
+    git: git ?? this.git,
+  );
+
+  /// Returns a copy with the Git connection replaced — including clearing it to
+  /// `null` on disconnect. Git mutations persist server-side immediately,
+  /// independently of the settings draft/save flow, so this merges just that
+  /// field without disturbing any in-progress draft edits.
+  Project withGit(GitConnection? git) => Project(
+    id: id,
+    key: key,
+    name: name,
+    description: description,
+    leadIds: leadIds,
+    memberIds: memberIds,
+    workflowStates: workflowStates,
+    resolvedStates: resolvedStates,
+    labels: labels,
+    color: color,
+    archived: archived,
+    git: git,
   );
 
   @override
@@ -189,6 +220,7 @@ class Project extends Equatable {
     labels,
     color,
     archived,
+    git,
   ];
 }
 
