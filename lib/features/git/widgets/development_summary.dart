@@ -67,19 +67,54 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
       setState(() {
         _info = info;
         _loading = false;
-        _openKey = _firstCategory(info);
+        _openKey = _firstOpenKey(info);
       });
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  static String? _firstCategory(DevInfo i) {
-    if (i.branches.isNotEmpty) return 'branches';
-    if (i.commits.isNotEmpty) return 'commits';
-    if (i.prs.isNotEmpty) return 'prs';
-    if (i.builds.isNotEmpty) return 'builds';
+  String? _firstOpenKey(DevInfo i) {
+    for (final g in _group(i)) {
+      if (g.branches.isNotEmpty) return '${g.key}/branches';
+      if (g.commits.isNotEmpty) return '${g.key}/commits';
+      if (g.prs.isNotEmpty) return '${g.key}/prs';
+      if (g.builds.isNotEmpty) return '${g.key}/builds';
+    }
     return null;
+  }
+
+  /// Splits the issue's dev info into one group per source repository, using the
+  /// per-item `provider`/`repo` attribution (multi-repo). Items without
+  /// attribution (legacy dev info) fall back to the project's primary repo.
+  List<_RepoGroup> _group(DevInfo info) {
+    final map = <String, _RepoGroup>{};
+    final order = <String>[];
+    final git = widget.project.git;
+    final fallbackRepo = git == null ? '' : '${git.owner}/${git.repo}';
+    _RepoGroup groupFor(String? provId, String? repo) {
+      final prov = gitProviderFrom(provId) ?? _prov;
+      final slug = (repo == null || repo.isEmpty) ? fallbackRepo : repo;
+      final key = '${prov.id}|$slug';
+      return map.putIfAbsent(key, () {
+        order.add(key);
+        return _RepoGroup(prov, slug);
+      });
+    }
+
+    for (final b in info.branches) {
+      groupFor(b.provider, b.repo).branches.add(b);
+    }
+    for (final c in info.commits) {
+      groupFor(c.provider, c.repo).commits.add(c);
+    }
+    for (final p in info.prs) {
+      groupFor(p.provider, p.repo).prs.add(p);
+    }
+    for (final b in info.builds) {
+      groupFor(b.provider, b.repo).builds.add(b);
+    }
+    return [for (final k in order) map[k]!];
   }
 
   void _toast(String message) {
@@ -158,7 +193,8 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
     // linked work (a branch, commit, PR/MR or build). No empty placeholder.
     if (!info.hasAny) return const SizedBox.shrink();
 
-    final git = widget.project.git!;
+    final groups = _group(info);
+    final single = groups.length == 1;
     // Owns its own leading gap so an empty (collapsed) section leaves no orphan
     // spacing in the sheet's main column.
     return Padding(
@@ -173,20 +209,33 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
                 style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
               ),
               const SizedBox(width: 10),
-              Expanded(child: _repoChip(git)),
+              // With one repo the chip rides in the header; with several, each
+              // group gets its own chip sub-header below.
+              if (single) Expanded(child: _repoChip(groups.first)),
             ],
           ),
           const SizedBox(height: 10),
-          ..._categories(info),
+          for (var i = 0; i < groups.length; i++) ...[
+            if (!single) ...[
+              if (i > 0) const SizedBox(height: 6),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _repoChip(groups[i]),
+                ),
+              ),
+            ],
+            ..._categories(groups[i]),
+          ],
         ],
       ),
     );
   }
 
-  Widget _repoChip(GitConnection git) {
+  Widget _repoChip(_RepoGroup g) {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.end,
       children: [
         Container(
           width: 6,
@@ -205,10 +254,9 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
         const SizedBox(width: 7),
         Flexible(
           child: Text(
-            '${_prov.label} · ${git.owner}/${git.repo}',
+            '${g.provider.label} · ${g.repo}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.right,
             style: TextStyle(
               fontFamily: AppTheme.fontMono,
               fontSize: 12,
@@ -220,7 +268,8 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
     );
   }
 
-  List<Widget> _categories(DevInfo info) {
+  List<Widget> _categories(_RepoGroup g) {
+    final prov = g.provider;
     final cats = <Widget>[];
     void add(
       String key,
@@ -231,6 +280,7 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
       List<Widget> body,
     ) {
       if (count == 0) return;
+      final fullKey = '${g.key}/$key';
       cats.add(
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -239,31 +289,32 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
             hue: hue,
             count: count,
             badge: badge,
-            open: _openKey == key,
-            onToggle: () => setState(() => _openKey = _openKey == key ? null : key),
+            open: _openKey == fullKey,
+            onToggle: () =>
+                setState(() => _openKey = _openKey == fullKey ? null : fullKey),
             body: body,
           ),
         ),
       );
     }
 
-    add('branches', 'Branches', kHueBranch, info.branches.length, null, [
-      for (final b in info.branches)
+    add('branches', 'Branches', kHueBranch, g.branches.length, null, [
+      for (final b in g.branches)
         BranchRow(
           branch: b,
           names: widget.names,
           avatars: widget.avatars,
-          onOpen: () => _toast('Opening branch on ${_prov.label}'),
+          onOpen: () => _toast('Opening branch on ${prov.label}'),
         ),
     ]);
     add(
       'commits',
       'Commits',
       kHueCommit,
-      info.commits.length,
-      info.commits.isNotEmpty && info.commits.first.at != null
+      g.commits.length,
+      g.commits.isNotEmpty && g.commits.first.at != null
           ? Text(
-              'latest ${agoSuffixed(info.commits.first.at)}',
+              'latest ${agoSuffixed(g.commits.first.at)}',
               style: TextStyle(
                 fontFamily: AppTheme.fontMono,
                 fontSize: 11.5,
@@ -272,40 +323,56 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
             )
           : null,
       [
-        for (final c in info.commits)
+        for (final c in g.commits)
           CommitRow(commit: c, names: widget.names, avatars: widget.avatars),
       ],
     );
-    add('prs', _prov.prTermPlural, kHuePullRequest, info.prs.length, _prBadge(info), [
-      for (final pr in info.prs)
+    add('prs', prov.prTermPlural, kHuePullRequest, g.prs.length, _prBadge(g.prs), [
+      for (final pr in g.prs)
         PrRow(
           pr: pr,
-          provider: _prov,
+          provider: prov,
           names: widget.names,
           avatars: widget.avatars,
           busy: _busy,
           onMerge: () => _merge(pr),
           onReady: () => _ready(pr),
-          onOpen: () => _toast('Opening ${_prov.prShort} #${pr.number} on ${_prov.label}'),
+          onOpen: () => _toast('Opening ${prov.prShort} #${pr.number} on ${prov.label}'),
         ),
     ]);
-    add('builds', 'Builds', kHueBuild, info.builds.length, _buildBadge(info), [
-      for (final b in info.builds) BuildRow(run: b),
+    add('builds', 'Builds', kHueBuild, g.builds.length, _buildBadge(g.builds), [
+      for (final b in g.builds) BuildRow(run: b),
     ]);
     return cats;
   }
 
-  Widget? _prBadge(DevInfo info) {
-    if (info.prs.isEmpty) return null;
-    final s = prStateStyle(info.prs.first.state);
+  Widget? _prBadge(List<GitPullRequest> prs) {
+    if (prs.isEmpty) return null;
+    final s = prStateStyle(prs.first.state);
     return StatePill(hue: s.hue, icon: s.icon, label: s.label);
   }
 
-  Widget? _buildBadge(DevInfo info) {
-    if (info.builds.isEmpty) return null;
-    final s = checkStyle(info.builds.first.status);
+  Widget? _buildBadge(List<GitBuild> builds) {
+    if (builds.isEmpty) return null;
+    final s = checkStyle(builds.first.status);
     return StatePill(hue: s.hue, icon: s.icon, label: s.label);
   }
+}
+
+/// One source repository's slice of an issue's development info.
+class _RepoGroup {
+  _RepoGroup(this.provider, this.repo);
+
+  final GitProvider provider;
+
+  /// `owner/repo` slug of the source repository.
+  final String repo;
+  final List<GitBranch> branches = [];
+  final List<GitCommit> commits = [];
+  final List<GitPullRequest> prs = [];
+  final List<GitBuild> builds = [];
+
+  String get key => '${provider.id}|$repo';
 }
 
 class _DevCat extends StatelessWidget {

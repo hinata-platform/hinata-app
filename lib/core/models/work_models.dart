@@ -93,6 +93,7 @@ class Project extends Equatable {
     this.color = '#AEC6F4',
     this.archived = false,
     this.git,
+    this.extraRepos = const [],
   });
 
   final String id;
@@ -113,10 +114,17 @@ class Project extends Equatable {
   final String color;
   final bool archived;
 
-  /// Per-project Git repository connection, or `null` when no repo is linked.
+  /// Per-project **primary** Git repository connection, or `null` when no repo
+  /// is linked. Holds the project-wide automation + branch template.
   final GitConnection? git;
 
-  /// Whether this project has a repository connected.
+  /// Additional connected repositories beyond [git] (multi-repo).
+  final List<GitConnection> extraRepos;
+
+  /// Every connected repository, primary first (empty when none linked).
+  List<GitConnection> get allRepos => [?git, ...extraRepos];
+
+  /// Whether this project has at least one repository connected.
   bool get gitConnected => git != null;
 
   /// Primary lead (legacy single-lead accessor).
@@ -159,7 +167,17 @@ class Project extends Equatable {
     color: json['color'] as String? ?? '#AEC6F4',
     archived: json['archived'] as bool? ?? false,
     git: GitConnection.fromJson(json['git'] as Map<String, dynamic>?),
+    extraRepos: _gitList(json['extraRepos']),
   );
+
+  static List<GitConnection> _gitList(Object? raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map<String, dynamic>>()
+        .map(GitConnection.fromJson)
+        .whereType<GitConnection>()
+        .toList(growable: false);
+  }
 
   Project copyWith({
     String? key,
@@ -173,6 +191,7 @@ class Project extends Equatable {
     String? color,
     bool? archived,
     GitConnection? git,
+    List<GitConnection>? extraRepos,
   }) => Project(
     id: id,
     key: key ?? this.key,
@@ -186,6 +205,7 @@ class Project extends Equatable {
     color: color ?? this.color,
     archived: archived ?? this.archived,
     git: git ?? this.git,
+    extraRepos: extraRepos ?? this.extraRepos,
   );
 
   /// Returns a copy with the Git connection replaced — including clearing it to
@@ -205,6 +225,7 @@ class Project extends Equatable {
     color: color,
     archived: archived,
     git: git,
+    extraRepos: extraRepos,
   );
 
   @override
@@ -221,6 +242,7 @@ class Project extends Equatable {
     color,
     archived,
     git,
+    extraRepos,
   ];
 }
 

@@ -1449,14 +1449,20 @@ class HinataRepository {
         as Map<String, dynamic>,
   );
 
-  Future<Project> gitDisconnect(String projectId) async => Project.fromJson(
-    await _api.delete('/api/v1/projects/$projectId/git') as Map<String, dynamic>,
-  );
+  Future<Project> gitDisconnect(String projectId, {String? repoId}) async {
+    final q = repoId == null ? '' : '?repoId=${Uri.encodeQueryComponent(repoId)}';
+    return Project.fromJson(
+      await _api.delete('/api/v1/projects/$projectId/git$q') as Map<String, dynamic>,
+    );
+  }
 
-  Future<Project> gitResync(String projectId) async => Project.fromJson(
-    await _api.post('/api/v1/projects/$projectId/git/resync')
-        as Map<String, dynamic>,
-  );
+  Future<Project> gitResync(String projectId, {String? repoId}) async {
+    final q = repoId == null ? '' : '?repoId=${Uri.encodeQueryComponent(repoId)}';
+    return Project.fromJson(
+      await _api.post('/api/v1/projects/$projectId/git/resync$q')
+          as Map<String, dynamic>,
+    );
+  }
 
   Future<Project> gitSetAutomation(
     String projectId,

@@ -74,17 +74,18 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
     );
     if (updated != null && mounted) {
       widget.onProjectChanged(updated);
-      _toast('Connected ${updated.git?.owner}/${updated.git?.repo}');
+      final added = updated.allRepos.isNotEmpty ? updated.allRepos.last : null;
+      _toast(added == null ? 'Repository connected' : 'Connected ${added.owner}/${added.repo}');
     }
   }
 
-  Future<void> _disconnect() async {
+  Future<void> _disconnect(GitConnection repo) async {
     final confirmed = await showGlassConfirm(
       context,
       icon: LucideIcons.unlink,
-      title: 'Disconnect repository?',
+      title: 'Disconnect ${repo.owner}/${repo.repo}?',
       message:
-          'Development information and automation for this project will stop '
+          'Development information and automation from this repository will stop '
           'updating. You can reconnect at any time.',
       confirmLabel: 'Disconnect',
       confirmIcon: LucideIcons.unlink,
@@ -93,10 +94,10 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
     if (confirmed != true) return;
     setState(() => _busy = true);
     try {
-      final updated = await _repo.gitDisconnect(widget.project.id);
+      final updated = await _repo.gitDisconnect(widget.project.id, repoId: repo.id);
       if (mounted) {
         widget.onProjectChanged(updated);
-        _toast('Repository disconnected');
+        _toast('Disconnected ${repo.owner}/${repo.repo}');
       }
     } catch (e) {
       _toast(_message(e));
@@ -105,10 +106,10 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
     }
   }
 
-  Future<void> _resync() async {
+  Future<void> _resync(GitConnection repo) async {
     setState(() => _busy = true);
     try {
-      final updated = await _repo.gitResync(widget.project.id);
+      final updated = await _repo.gitResync(widget.project.id, repoId: repo.id);
       if (mounted) {
         widget.onProjectChanged(updated);
         _toast('Development information synced');
@@ -246,10 +247,16 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
 
   // ── connected ────────────────────────────────────────────────────────────
   Widget _connected(GitConnection git, GitProvider prov) {
+    final repos = widget.project.allRepos;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _repoCard(git, prov),
+        for (var i = 0; i < repos.length; i++) ...[
+          if (i > 0) const SizedBox(height: 10),
+          _repoCard(repos[i], gitProviderFrom(repos[i].provider) ?? prov),
+        ],
+        const SizedBox(height: 12),
+        _addRepoButton(),
         const SizedBox(height: 20),
         _automation(git, prov),
         const SizedBox(height: 20),
@@ -257,6 +264,14 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
         const SizedBox(height: 16),
         _keyCallout(prov),
       ],
+    );
+  }
+
+  Widget _addRepoButton() {
+    return GhostButton(
+      label: 'Add repository',
+      icon: LucideIcons.plus,
+      onPressed: _busy ? null : () => _connect(),
     );
   }
 
@@ -319,13 +334,13 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
               GhostButton(
                 label: 'Re-sync',
                 icon: LucideIcons.refreshCw,
-                onPressed: _busy ? null : _resync,
+                onPressed: _busy ? null : () => _resync(git),
               ),
               const Spacer(),
               _iconAction(
                 icon: LucideIcons.unlink,
                 tooltip: 'Disconnect repository',
-                onTap: _busy ? null : _disconnect,
+                onTap: _busy ? null : () => _disconnect(git),
               ),
             ],
           ),

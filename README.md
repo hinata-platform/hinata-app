@@ -175,18 +175,20 @@ packages/
 
 ## 🔗 Git integration
 
-Connect each project to **its own** repository on **GitHub, GitLab or Bitbucket**
-to pull development info (branches, commits, pull/merge requests, CI status) onto
-issues, drive **smart commits** and **status automation**, and create branches
-straight from an issue.
+Connect each project to **one or more** repositories on **GitHub, GitLab or
+Bitbucket** to pull development info (branches, commits, pull/merge requests, CI
+status) onto issues, drive **smart commits** and **status automation**, and
+create branches straight from an issue. A project can track work across several
+repos (e.g. an app **and** a server) — its issues aggregate development info from
+all of them, grouped by repository.
 
-There are **two layers** — set the first up once as the operator, then every
-project connects its own repo:
+There are **two layers** — set the first up once as the operator, then each
+project connects its repositories:
 
 | Layer | Who | Where | How often |
 | --- | --- | --- | --- |
 | **1 · OAuth app identity** | Operator / admin | *Admin area → Git integration* (or `HINATA_GIT_*` env) | **Once** per provider |
-| **2 · Repository connection** | Project lead | *Project → Settings → Git integration → Connect a repository* | Per project |
+| **2 · Repository connection** | Project lead | *Project → Settings → Git integration → Add repository* | Per repo, per project |
 
 > 💡 Layer 2 (per-project) only works once layer 1 exists — the provider needs a
 > registered app to redirect users back to. This mirrors Atlassian's
