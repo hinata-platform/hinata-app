@@ -1360,8 +1360,9 @@ class HinataRepository {
   // Per-project repository connection + automation, and per-issue development
   // information. OAuth is brokered server-side; the client never sees a token.
 
-  /// Kicks off the OAuth app flow for [provider]; returns the URL to open (or an
-  /// `emulated` marker when no provider app credentials are configured yet).
+  /// Kicks off the real OAuth flow for [provider]; returns the consent URL to
+  /// open + the `state` to poll (or `available:false` when no provider app is
+  /// configured, in which case the client uses the URL + token method).
   Future<GitOAuthStart> gitOAuthStart(String projectId, String provider) async =>
       GitOAuthStart.fromJson(
         await _api.post(
@@ -1371,11 +1372,24 @@ class HinataRepository {
             as Map<String, dynamic>,
       );
 
-  /// Owners (org / group / workspace) the connected account exposes.
-  Future<List<GitOwner>> gitOwners(String projectId, String provider) async =>
+  /// Polls the server-side OAuth session (by [state]) for completion.
+  Future<GitOAuthSessionStatus> gitOAuthSession(String state) async =>
+      GitOAuthSessionStatus.fromJson(
+        await _api.get('/api/v1/git/oauth/session/$state') as Map<String, dynamic>,
+      );
+
+  /// Owners (org / group / workspace) the authorized account exposes.
+  Future<List<GitOwner>> gitOwners(
+    String projectId,
+    String provider, {
+    String? state,
+  }) async =>
       ((await _api.get(
                 '/api/v1/projects/$projectId/git/owners',
-                query: {'provider': provider},
+                query: {
+                  'provider': provider,
+                  'state': ?state,
+                },
               ))
               as List<dynamic>)
           .map((o) => GitOwner.fromJson(o as Map<String, dynamic>))
@@ -1387,6 +1401,7 @@ class HinataRepository {
     String provider,
     String owner, {
     String? query,
+    String? state,
   }) async =>
       ((await _api.get(
                 '/api/v1/projects/$projectId/git/repos',
@@ -1394,6 +1409,7 @@ class HinataRepository {
                   'provider': provider,
                   'owner': owner,
                   if (query != null && query.isNotEmpty) 'q': query,
+                  'state': ?state,
                 },
               ))
               as List<dynamic>)
@@ -1406,10 +1422,16 @@ class HinataRepository {
     required String provider,
     required String owner,
     required String repo,
+    String? state,
   }) async => Project.fromJson(
     await _api.post(
           '/api/v1/projects/$projectId/git/connect',
-          body: {'provider': provider, 'owner': owner, 'repo': repo},
+          body: {
+            'provider': provider,
+            'owner': owner,
+            'repo': repo,
+            'state': ?state,
+          },
         )
         as Map<String, dynamic>,
   );

@@ -154,47 +154,32 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
     // first fetch is in flight (or if it failed / is unconnected) render nothing.
     if (_loading && info == null) return const SizedBox.shrink();
     if (info == null || !info.connected) return const SizedBox.shrink();
+    // Jira-style: the whole Development section stays hidden until there is
+    // linked work (a branch, commit, PR/MR or build). No empty placeholder.
+    if (!info.hasAny) return const SizedBox.shrink();
 
     final git = widget.project.git!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text(
-              'Development',
-              style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(width: 10),
-            Expanded(child: _repoChip(git)),
-          ],
-        ),
-        const SizedBox(height: 10),
-        if (!info.hasAny)
-          GitEmptyBox(
-            icon: LucideIcons.gitBranch,
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  const TextSpan(text: 'No development work linked yet. Include '),
-                  TextSpan(
-                    text: widget.issue.readableId,
-                    style: const TextStyle(
-                      fontFamily: AppTheme.fontMono,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  TextSpan(
-                    text: ' in a branch name, commit or '
-                        '${_prov.prTerm.toLowerCase()} to see it here.',
-                  ),
-                ],
+    // Owns its own leading gap so an empty (collapsed) section leaves no orphan
+    // spacing in the sheet's main column.
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Development',
+                style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
               ),
-            ),
-          )
-        else
+              const SizedBox(width: 10),
+              Expanded(child: _repoChip(git)),
+            ],
+          ),
+          const SizedBox(height: 10),
           ..._categories(info),
-      ],
+        ],
+      ),
     );
   }
 

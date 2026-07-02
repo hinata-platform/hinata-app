@@ -45,7 +45,12 @@ class _CopyFieldState extends State<CopyField> {
 
   @override
   Widget build(BuildContext context) {
+    // A fixed height keeps the row's cross-axis bounded so the trailing button
+    // can stretch to a full-height divider. Without it, `stretch` inside the
+    // issue sheet's vertical scroll (unbounded height) forces an infinite height
+    // and crashes with "BoxConstraints forces an infinite height".
     return Container(
+      height: 38,
       decoration: BoxDecoration(
         color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(9),
@@ -58,7 +63,7 @@ class _CopyFieldState extends State<CopyField> {
           Expanded(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
@@ -68,7 +73,6 @@ class _CopyFieldState extends State<CopyField> {
                   style: TextStyle(
                     fontFamily: AppTheme.fontMono,
                     fontSize: 12,
-                    height: 1.5,
                     color: AppColors.ink,
                   ),
                 ),

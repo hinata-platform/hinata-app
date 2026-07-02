@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/hinata_repository.dart';
@@ -70,6 +71,17 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
   GitProvider? _provider;
   bool _busy = false;
 
+  // Real OAuth: the in-flight session state + the consent URL (for re-opening)
+  // while we wait for the browser round-trip to complete.
+  bool _awaiting = false;
+  String? _state;
+  String? _authUrl;
+
+  // Set when the backend reports no OAuth app is registered for the chosen
+  // provider yet — we surface a clear "an admin must set this up" panel instead
+  // of silently dropping to the manual URL + token method.
+  bool _unavailable = false;
+
   List<GitOwner> _owners = const [];
   GitOwner? _owner;
   List<GitRepo> _repos = const [];
@@ -109,6 +121,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
       _repo = null;
       _owners = const [];
       _repos = const [];
+      _unavailable = false;
       _step = _Step.authorize;
     });
   }
@@ -116,15 +129,46 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
   Future<void> _authorize() async {
     final provider = _provider;
     if (provider == null) return;
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _awaiting = false;
+      _unavailable = false;
+    });
     try {
-      // Kick off the (server-brokered) OAuth flow. When a real provider app is
-      // configured the returned URL would open in a web-auth session and the
-      // backend deep-links back; until then it is `emulated` and we proceed
-      // straight to owner/repo picking, which the server serves.
-      await _repoApi.gitOAuthStart(_pid, provider.id);
-      final owners = await _repoApi.gitOwners(_pid, provider.id);
+      // Real server-brokered OAuth: get the provider consent URL + session state,
+      // open it in the browser, then poll until the callback has exchanged the
+      // code for a token. Owners/repos are then fetched with the real token.
+      final start = await _repoApi.gitOAuthStart(_pid, provider.id);
       if (!mounted) return;
+      if (!start.available || start.authorizeUrl == null || start.state == null) {
+        // No OAuth app is registered for this provider yet. This is a
+        // platform-wide, admin-only setup — surface a clear explanation
+        // (works for non-admins too) instead of silently dropping to the
+        // manual URL + token method.
+        setState(() => _unavailable = true);
+        return;
+      }
+      _state = start.state;
+      _authUrl = start.authorizeUrl;
+      final launched = await launchUrl(
+        Uri.parse(start.authorizeUrl!),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        _toast('Could not open the browser to authorize on ${provider.label}.');
+        return;
+      }
+      if (mounted) setState(() => _awaiting = true);
+      final ok = await _pollAuthorization(start.state!);
+      if (!mounted) return;
+      if (!ok) {
+        _toast('Authorization wasn\'t completed. Please try again.');
+        setState(() => _awaiting = false);
+        return;
+      }
+      final owners = await _repoApi.gitOwners(_pid, provider.id, state: _state);
+      if (!mounted) return;
+      _awaiting = false;
       if (owners.length == 1) {
         _owner = owners.single;
         await _loadRepos();
@@ -139,8 +183,30 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
     } catch (e) {
       _toast(_message(e));
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _awaiting = false;
+        });
+      }
     }
+  }
+
+  /// Polls the OAuth session (~3 min) while the user completes consent in the
+  /// browser. Returns true once authorized, false on error/timeout.
+  Future<bool> _pollAuthorization(String state) async {
+    for (var i = 0; i < 120; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 1500));
+      if (!mounted) return false;
+      try {
+        final status = await _repoApi.gitOAuthSession(state);
+        if (status.authorized) return true;
+        if (status.failed) return false;
+      } catch (_) {
+        // Transient (e.g. session not yet visible) — keep polling.
+      }
+    }
+    return false;
   }
 
   Future<void> _pickOwner(GitOwner owner) async {
@@ -160,7 +226,12 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
 
   Future<void> _loadRepos() async {
     final provider = _provider!;
-    final repos = await _repoApi.gitRepos(_pid, provider.id, _owner!.id);
+    final repos = await _repoApi.gitRepos(
+      _pid,
+      provider.id,
+      _owner!.id,
+      state: _state,
+    );
     _repos = repos;
   }
 
@@ -176,6 +247,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
         provider: provider.id,
         owner: owner.id,
         repo: repo.name,
+        state: _state,
       );
       if (mounted) Navigator.of(context).pop(updated);
     } catch (e) {
@@ -483,9 +555,130 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
     );
   }
 
+  // ── awaiting browser consent ───────────────────────────────────────────
+  Widget _awaitingStep(GitProvider p) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _stepRail(),
+        const SizedBox(height: 6),
+        _hint(
+          icon: LucideIcons.externalLink,
+          child: Text(
+            'Approve access in the ${p.label} tab that just opened, then come '
+            'back here — this updates automatically.',
+            style: TextStyle(fontSize: 12, height: 1.5, color: AppColors.inkSoft),
+          ),
+        ),
+        const SizedBox(height: 22),
+        const Center(
+          child: SizedBox(
+            width: 26,
+            height: 26,
+            child: CircularProgressIndicator(strokeWidth: 2.4, color: AppColors.navy),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Center(
+          child: Text(
+            'Waiting for ${p.label} authorization…',
+            style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Center(
+          child: TextButton.icon(
+            onPressed: () {
+              final url = _authUrl;
+              if (url != null) {
+                launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+              }
+            },
+            icon: Icon(LucideIcons.refreshCw, size: 14, color: AppColors.inkSoft),
+            label: Text(
+              'Reopen the authorization page',
+              style: TextStyle(color: AppColors.inkSoft),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── OAuth app not registered yet ───────────────────────────────────────
+  Widget _unavailableStep(GitProvider p) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _stepRail(),
+        const SizedBox(height: 6),
+        Center(
+          child: Container(
+            width: 52,
+            height: 52,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.accentSoft,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(LucideIcons.lock, size: 24, color: AppColors.warning),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Center(
+          child: Text(
+            'One-click ${p.label} sign-in isn\'t available yet',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontFamily: AppTheme.fontBrand,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Center(
+          child: Text(
+            'An administrator still needs to register hinata as an OAuth app for '
+            '${p.label} before you can connect with one click. This is a one-time '
+            'platform setup done in Admin area → Git integration.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12.5, height: 1.55, color: AppColors.inkSoft),
+          ),
+        ),
+        const SizedBox(height: 16),
+        _hint(
+          icon: LucideIcons.keyRound,
+          child: Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(
+                  text: 'Have a personal access token? ',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const TextSpan(
+                  text:
+                      'You can connect this project right now with a repository '
+                      'URL and access token — no admin setup required. ',
+                ),
+                _linkSpan(
+                  'Connect with a URL & token',
+                  () => setState(() => _step = _Step.token),
+                ),
+              ],
+            ),
+            style: TextStyle(fontSize: 12, height: 1.5, color: AppColors.inkSoft),
+          ),
+        ),
+      ],
+    );
+  }
+
   // ── authorize step ─────────────────────────────────────────────────────
   Widget _authorizeStep() {
     final p = _provider!;
+    if (_awaiting) return _awaitingStep(p);
+    if (_unavailable) return _unavailableStep(p);
     final perms = _permsByProvider[p.id] ?? _permsByProvider['github']!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -749,12 +942,19 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
         !widget.startToken &&
         (_step == _Step.authorize || _step == _Step.owner || _step == _Step.repo);
     final primary = _step == _Step.authorize
-        ? _PrimaryAction(
-            label: 'Authorize & install',
-            icon: LucideIcons.shieldCheck,
-            busy: _busy,
-            onPressed: _busy ? null : _authorize,
-          )
+        ? (_unavailable
+              ? _PrimaryAction(
+                  label: 'Use URL & token',
+                  icon: LucideIcons.keyRound,
+                  busy: false,
+                  onPressed: () => setState(() => _step = _Step.token),
+                )
+              : _PrimaryAction(
+                  label: 'Authorize & install',
+                  icon: LucideIcons.shieldCheck,
+                  busy: _busy,
+                  onPressed: _busy ? null : _authorize,
+                ))
         : _PrimaryAction(
             label: _repo != null ? 'Connect ${_repo!.name}' : 'Connect',
             icon: LucideIcons.link,
