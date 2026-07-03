@@ -22,6 +22,7 @@
   <a href="#-how-it-works">How it works</a> ·
   <a href="#-features">Features</a> ·
   <a href="#-architecture">Architecture</a> ·
+  <a href="#-git-integration">Git integration</a> ·
   <a href="#-development">Development</a> ·
   <a href="#-releases">Releases</a> ·
   <a href="#-license">License</a>
@@ -172,6 +173,96 @@ packages/
 
 ---
 
+## 🔗 Git integration
+
+Connect each project to **one or more** repositories on **GitHub, GitLab or
+Bitbucket** to pull development info (branches, commits, pull/merge requests, CI
+status) onto issues, drive **smart commits** and **status automation**, and
+create branches straight from an issue. A project can track work across several
+repos (e.g. an app **and** a server) — its issues aggregate development info from
+all of them, grouped by repository.
+
+There are **two layers** — set the first up once as the operator, then each
+project connects its repositories:
+
+| Layer | Who | Where | How often |
+| --- | --- | --- | --- |
+| **1 · OAuth app identity** | Operator / admin | *Admin area → Git integration* (or `HINATA_GIT_*` env) | **Once** per provider |
+| **2 · Repository connection** | Project lead | *Project → Settings → Git integration → Add repository* | Per repo, per project |
+
+> 💡 Layer 2 (per-project) only works once layer 1 exists — the provider needs a
+> registered app to redirect users back to. This mirrors Atlassian's
+> *GitHub for Jira*: **one** app, **many** repository connections.
+
+### 1 · Register the OAuth app (operator, one-time)
+
+The callback and webhooks must be reachable from the provider, so you need a
+**public base URL** for the API. In production that's your API host; for local
+testing expose it with a tunnel (e.g. ngrok) — the **public API base** is then
+`https://<your-host>/api/v1`.
+
+Create **one OAuth app per provider** and register this callback URL:
+
+```text
+<public-api-base>/git/oauth/callback
+```
+
+| Provider | Register at | Callback / redirect URL | Scopes |
+| --- | --- | --- | --- |
+| **GitHub** | *Settings → Developer settings → OAuth Apps → New OAuth App* | `<public-api-base>/git/oauth/callback` | repo · read/write metadata, contents, pull requests, issues, webhooks |
+| **GitLab** | *User/Group → Settings → Applications* | `<public-api-base>/git/oauth/callback` | `api` · `read_repository` · `write_repository` |
+| **Bitbucket** | *Workspace settings → OAuth consumers* | `<public-api-base>/git/oauth/callback` | account · repository · pullrequest · webhook |
+
+Then enter the credentials in **Admin area → Git integration** (client id +
+secret per provider, the **public API base URL**, and an optional token-encryption
+secret) — **database values override the environment**. Alternatively configure
+them purely via environment on the server:
+
+<details>
+  <summary><b>🔧 Server environment variables</b></summary>
+
+<br>
+
+| Variable | Purpose |
+| --- | --- |
+| `HINATA_GIT_GITHUB_CLIENT_ID` / `…_SECRET` | GitHub OAuth app credentials |
+| `HINATA_GIT_GITLAB_CLIENT_ID` / `…_SECRET` | GitLab OAuth app credentials |
+| `HINATA_GIT_BITBUCKET_CLIENT_ID` / `…_SECRET` | Bitbucket OAuth consumer credentials |
+| `HINATA_GIT_WEBHOOK_BASE_URL` | Public API base (e.g. `https://<host>/api/v1`) used for the OAuth callback **and** webhook registration. Falls back to the server's own base URL when unset. |
+| `HINATA_GIT_TOKEN_SECRET` | Key that encrypts stored access tokens at rest (**change the default in production**). |
+
+</details>
+
+Until a provider is configured, its **Authorize & install** button explains that
+an admin must finish setup, and offers the URL + token fallback below.
+
+### 2 · Connect a project's repository (project lead)
+
+1. Open **Project → Settings → Git integration → Connect a repository**.
+2. Pick the provider and choose **Authorize & install** — you're sent to the
+   provider's consent screen and back; the app then lists your organisations and
+   repositories to pick from.
+3. Select the repository. A **webhook** is registered automatically at
+   `<public-api-base>/git/webhooks/<provider>` (signed with a per-project secret),
+   so pushes, pull/merge requests and CI results flow onto issues live.
+
+> 🏢 **Self-managed** GitHub Enterprise, self-hosted GitLab or Bitbucket Data
+> Center? Choose **Connect with a URL & access token** instead — paste the repo
+> URL and a personal access token (`api` / `repo` scope). No admin OAuth app is
+> required; the token is stored encrypted and used server-side only.
+
+### Using it on issues
+
+- **Smart commits** — reference an issue key in a branch name, commit message or
+  PR title (e.g. `HN-42`) to link the work. Commit trailers `#comment`, `#time`
+  and `#transition` add a comment, log time or move the issue.
+- **Automation** — configure per project (in the same settings section) to move an
+  issue when a branch is created or a pull/merge request is opened or merged.
+- **Development panel** — a connected issue shows its branches, commits, PRs and
+  deployment status, and lets you **create a branch** from the issue.
+
+---
+
 ## 🛠️ Development
 
 ```bash
@@ -230,3 +321,4 @@ Pushing a `v*` tag triggers [release.yml](.github/workflows/release.yml):
 **GPL-3.0** — see [LICENSE](LICENSE).
 
 <p align="center"><sub>Made with 🍯 by Rebar Ahmad</sub></p>
+

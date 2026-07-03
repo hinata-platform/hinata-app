@@ -172,6 +172,8 @@ class GitBranch {
     required this.behind,
     this.updatedAt,
     this.authorId,
+    this.provider,
+    this.repo,
   });
 
   final String name;
@@ -181,6 +183,10 @@ class GitBranch {
   final DateTime? updatedAt;
   final String? authorId;
 
+  /// Source repo attribution (multi-repo): provider id + `owner/repo`.
+  final String? provider;
+  final String? repo;
+
   factory GitBranch.fromJson(Map<String, dynamic> json) => GitBranch(
     name: json['name'] as String? ?? '',
     base: json['base'] as String? ?? 'main',
@@ -188,6 +194,8 @@ class GitBranch {
     behind: json['behind'] as int? ?? 0,
     updatedAt: _ts(json['updatedAt']),
     authorId: json['authorId'] as String?,
+    provider: json['provider'] as String?,
+    repo: json['repo'] as String?,
   );
 }
 
@@ -200,6 +208,8 @@ class GitCommit {
     this.additions = 0,
     this.deletions = 0,
     this.verified = false,
+    this.provider,
+    this.repo,
   });
 
   final String sha;
@@ -209,6 +219,8 @@ class GitCommit {
   final int additions;
   final int deletions;
   final bool verified;
+  final String? provider;
+  final String? repo;
 
   factory GitCommit.fromJson(Map<String, dynamic> json) => GitCommit(
     sha: json['sha'] as String? ?? '',
@@ -218,6 +230,8 @@ class GitCommit {
     additions: json['additions'] as int? ?? 0,
     deletions: json['deletions'] as int? ?? 0,
     verified: json['verified'] as bool? ?? false,
+    provider: json['provider'] as String?,
+    repo: json['repo'] as String?,
   );
 }
 
@@ -235,6 +249,8 @@ class GitPullRequest {
     this.targetBranch,
     this.at,
     this.checks = CheckState.passing,
+    this.provider,
+    this.repo,
   });
 
   final int number;
@@ -249,6 +265,8 @@ class GitPullRequest {
   final String? targetBranch;
   final DateTime? at;
   final CheckState checks;
+  final String? provider;
+  final String? repo;
 
   factory GitPullRequest.fromJson(Map<String, dynamic> json) => GitPullRequest(
     number: json['number'] as int? ?? 0,
@@ -263,6 +281,8 @@ class GitPullRequest {
     targetBranch: json['targetBranch'] as String?,
     at: _ts(json['at']),
     checks: CheckState.fromJson(json['checks'] as String?),
+    provider: json['provider'] as String?,
+    repo: json['repo'] as String?,
   );
 
   GitPullRequest copyWith({PrState? state}) => GitPullRequest(
@@ -278,6 +298,8 @@ class GitPullRequest {
     targetBranch: targetBranch,
     at: at,
     checks: checks,
+    provider: provider,
+    repo: repo,
   );
 }
 
@@ -289,6 +311,8 @@ class GitBuild {
     required this.status,
     this.duration,
     this.at,
+    this.provider,
+    this.repo,
   });
 
   final String name;
@@ -297,6 +321,8 @@ class GitBuild {
   final CheckState status;
   final String? duration;
   final DateTime? at;
+  final String? provider;
+  final String? repo;
 
   factory GitBuild.fromJson(Map<String, dynamic> json) => GitBuild(
     name: json['name'] as String? ?? '',
@@ -305,6 +331,8 @@ class GitBuild {
     status: CheckState.fromJson(json['status'] as String?),
     duration: json['duration'] as String?,
     at: _ts(json['at']),
+    provider: json['provider'] as String?,
+    repo: json['repo'] as String?,
   );
 }
 
@@ -350,20 +378,44 @@ class GitRepo {
   );
 }
 
-/// Result of kicking off the OAuth app flow.
+/// Result of kicking off the real OAuth flow.
 class GitOAuthStart {
-  const GitOAuthStart({required this.authorizeUrl, required this.emulated});
+  const GitOAuthStart({this.authorizeUrl, required this.available, this.state});
 
-  final String authorizeUrl;
+  /// Provider consent URL to open in the browser (null when unavailable).
+  final String? authorizeUrl;
 
-  /// When true, no real provider app is configured, so the client skips the
-  /// browser hand-off and proceeds straight to owner/repo picking.
-  final bool emulated;
+  /// Whether the admin has configured a provider app (real OAuth possible). When
+  /// false the client falls back to the URL + access-token method.
+  final bool available;
+
+  /// The OAuth `state` used to poll the server-side session for completion.
+  final String? state;
 
   factory GitOAuthStart.fromJson(Map<String, dynamic> json) => GitOAuthStart(
-    authorizeUrl: json['authorizeUrl'] as String? ?? '',
-    emulated: json['emulated'] as bool? ?? true,
+    authorizeUrl: json['authorizeUrl'] as String?,
+    available: json['available'] as bool? ?? false,
+    state: json['state'] as String?,
   );
+}
+
+/// Status of an in-flight OAuth session, polled after opening the consent page.
+class GitOAuthSessionStatus {
+  const GitOAuthSessionStatus({required this.status, this.provider, this.error});
+
+  final String status; // PENDING · AUTHORIZED · ERROR
+  final String? provider;
+  final String? error;
+
+  bool get authorized => status == 'AUTHORIZED';
+  bool get failed => status == 'ERROR';
+
+  factory GitOAuthSessionStatus.fromJson(Map<String, dynamic> json) =>
+      GitOAuthSessionStatus(
+        status: json['status'] as String? ?? 'PENDING',
+        provider: json['provider'] as String?,
+        error: json['error'] as String?,
+      );
 }
 
 /// Short relative label, e.g. `2h`, `3d`, `just now`.

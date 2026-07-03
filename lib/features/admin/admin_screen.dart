@@ -16,6 +16,7 @@ import 'sections/admin_app_section.dart';
 import 'sections/admin_audit_section.dart';
 import 'sections/admin_email_section.dart';
 import 'sections/admin_general_section.dart';
+import 'sections/admin_git_section.dart';
 import 'sections/admin_security_section.dart';
 
 // ─────────────────────────── Section enum ────────────────────────────────
@@ -25,6 +26,7 @@ enum _AdminSection {
   app,
   authentication,
   email,
+  git,
   security,
   auditLog,
   users,
@@ -44,6 +46,7 @@ const _navItems = <_SectionMeta>[
   (section: _AdminSection.security,       icon: LucideIcons.shield,         labelKey: 'admin.security',          group: 'navGeneral'),
   (section: _AdminSection.authentication, icon: LucideIcons.lock,           labelKey: 'admin.authentication',    group: 'navIntegrations'),
   (section: _AdminSection.email,          icon: LucideIcons.mail,           labelKey: 'admin.email',             group: 'navIntegrations'),
+  (section: _AdminSection.git,            icon: LucideIcons.gitBranch,      labelKey: 'admin.gitIntegration',    group: 'navIntegrations'),
   (section: _AdminSection.auditLog,       icon: LucideIcons.history,        labelKey: 'admin.auditLog',          group: 'navSystem'),
   (section: _AdminSection.users,          icon: LucideIcons.users,         labelKey: 'admin.users',             group: 'navSystem'),
 ];
@@ -200,6 +203,7 @@ String _sectionTitleKey(_AdminSection section) => switch (section) {
       _AdminSection.app => 'admin.app',
       _AdminSection.authentication => 'admin.authentication',
       _AdminSection.email => 'admin.email',
+      _AdminSection.git => 'admin.gitIntegration',
       _AdminSection.security => 'admin.security',
       _AdminSection.auditLog => 'admin.auditLog',
       _AdminSection.users => 'admin.users',
@@ -429,6 +433,8 @@ class _MobileDetailView extends StatelessWidget {
           AdminSsoSection(settings: settings),
         _AdminSection.email =>
           AdminEmailSection(settings: settings),
+        _AdminSection.git =>
+          AdminGitSection(settings: settings),
         _AdminSection.security =>
           AdminSecuritySection(settings: settings),
         // Rendered directly by the shell (self-scrolling); never reached here.
@@ -556,6 +562,7 @@ class _DesktopSectionContent extends StatelessWidget {
         _AdminSection.app => context.t('admin.app'),
         _AdminSection.authentication => context.t('admin.authentication'),
         _AdminSection.email => context.t('admin.email'),
+        _AdminSection.git => context.t('admin.gitIntegration'),
         _AdminSection.security => context.t('admin.security'),
         _AdminSection.auditLog => context.t('admin.auditLog'),
         _AdminSection.users => context.t('admin.users'),
@@ -635,6 +642,8 @@ class _DesktopSectionContent extends StatelessWidget {
           AdminSsoSection(settings: settings),
         _AdminSection.email =>
           AdminEmailSection(settings: settings),
+        _AdminSection.git =>
+          AdminGitSection(settings: settings),
         _AdminSection.security =>
           AdminSecuritySection(settings: settings),
         // Rendered directly by the shell (self-scrolling); never reached here.

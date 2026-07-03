@@ -14,7 +14,7 @@ import 'copy_field.dart';
 import 'dev_rows.dart';
 import 'provider_glyph.dart';
 
-/// Issue right-rail quick-actions (`DeploymentPanel`): Open in IDE · Create
+/// Issue right-rail quick-actions (`DeploymentPanel`): Create
 /// branch (with a copyable `git checkout -b …` + a branch-template gear) ·
 /// Create commit (copy key + example commit). Popovers reveal **inline** (no
 /// floating overlay) so nothing can overflow the narrow rail at any width; the
@@ -190,12 +190,6 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _actionRow(
-          icon: LucideIcons.squareTerminal,
-          label: 'Open in IDE',
-          trailing: Icon(LucideIcons.externalLink, size: 14, color: AppColors.inkFaint),
-          onTap: () => _toast('Opening $_key in your IDE…'),
-        ),
         _actionRow(
           icon: LucideIcons.gitBranch,
           label: 'Create branch',

@@ -10,6 +10,7 @@ import 'package:equatable/equatable.dart';
 /// server-side (encrypted) and never reaches the client, so it is absent here.
 class GitConnection extends Equatable {
   const GitConnection({
+    this.id,
     required this.provider,
     required this.owner,
     required this.repo,
@@ -22,6 +23,8 @@ class GitConnection extends Equatable {
     this.automation = const GitAutomation(),
   });
 
+  /// Stable per-connection id (multi-repo); null on legacy pre-id connections.
+  final String? id;
   final String provider;
   final String owner;
   final String repo;
@@ -46,6 +49,7 @@ class GitConnection extends Equatable {
     final provider = json['provider'] as String?;
     if (provider == null || provider.isEmpty) return null;
     return GitConnection(
+      id: json['id'] as String?,
       provider: provider,
       owner: json['owner'] as String? ?? '',
       repo: json['repo'] as String? ?? '',
@@ -64,6 +68,7 @@ class GitConnection extends Equatable {
     GitAutomation? automation,
     DateTime? lastSyncAt,
   }) => GitConnection(
+    id: id,
     provider: provider,
     owner: owner,
     repo: repo,
@@ -78,6 +83,7 @@ class GitConnection extends Equatable {
 
   @override
   List<Object?> get props => [
+    id,
     provider,
     owner,
     repo,

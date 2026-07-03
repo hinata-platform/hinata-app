@@ -708,10 +708,9 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
                     const SizedBox(height: 14),
                     hierarchy,
                   ],
-                  if (_gitConnected) ...[
-                    const SizedBox(height: 14),
-                    _developmentBlock(issue),
-                  ],
+                  // The Development block owns its own leading gap and hides
+                  // entirely when no work is linked (Jira-style).
+                  if (_gitConnected) _developmentBlock(issue),
                   const SizedBox(height: 14),
                   _linksSection(issue),
                   const SizedBox(height: 14),
@@ -724,11 +723,12 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
                   _activityCard(),
                 ];
                 final right = <Widget>[
-                  if (_project != null) ...[
-                    _deploymentPanel(issue),
-                    const SizedBox(height: 14),
-                  ],
                   _detailsCard(issue),
+                  // Deployment sits between Details and Timeline.
+                  if (_project != null) ...[
+                    const SizedBox(height: 14),
+                    _deploymentPanel(issue),
+                  ],
                   const SizedBox(height: 14),
                   _timeCard(issue),
                 ];
@@ -763,10 +763,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
                       const SizedBox(height: 14),
                       hierarchy,
                     ],
-                    if (_gitConnected) ...[
-                      const SizedBox(height: 14),
-                      _developmentBlock(issue),
-                    ],
+                    if (_gitConnected) _developmentBlock(issue),
                     const SizedBox(height: 14),
                     _linksSection(issue),
                     const SizedBox(height: 14),
@@ -775,12 +772,13 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
                       const SizedBox(height: 14),
                       documented,
                     ],
+                    const SizedBox(height: 14),
+                    _detailsCard(issue),
+                    // Deployment sits between Details and Timeline.
                     if (_project != null) ...[
                       const SizedBox(height: 14),
                       _deploymentPanel(issue),
                     ],
-                    const SizedBox(height: 14),
-                    _detailsCard(issue),
                     const SizedBox(height: 14),
                     _timeCard(issue),
                     const SizedBox(height: 14),
