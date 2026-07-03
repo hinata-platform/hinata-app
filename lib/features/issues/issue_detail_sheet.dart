@@ -43,6 +43,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassModal,
         showGlassOptions;
 import 'attachments/attachments_section.dart';
+import 'epic_search_popover.dart';
 import 'issue_form.dart' show showIssueForm;
 import 'issue_links_section.dart';
 import 'issue_description_editor.dart';
@@ -1773,8 +1774,6 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     if (chosen != null) await _patch({'type': chosen});
   }
 
-  static const _noParent = '__none__';
-
   /// The "Epic" (standard issues) / "Parent" (sub-tasks) detail row. Value is
   /// the immediate ancestor; tapping opens the parent picker.
   Widget _parentRow(Issue issue) {
@@ -1812,36 +1811,21 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
   );
 
   Future<void> _pickParent(Issue issue, Rect anchor) async {
-    // Sub-tasks attach to a standard issue; standard issues attach to an epic.
-    final candidates =
-        _projectIssues.values
-            .where(
-              (i) =>
-                  i.id != issue.id &&
-                  (issue.isSubtask ? i.isStandard : i.isEpic),
-            )
-            .toList()
-          ..sort((a, b) => a.readableId.compareTo(b.readableId));
-    final chosen = await _showOptions<String>(
-      title: issue.isSubtask
-          ? context.t('issues.parent')
-          : context.t('issues.epic'),
+    // On-the-fly parent assignment: an inline popover with a debounced, paginated
+    // server search (recent items first). Sub-tasks attach to a standard issue;
+    // standard issues attach to an epic.
+    final result = await showEpicSearchPopover(
+      context,
       anchorRect: anchor,
-      options: [
-        if (!issue.isSubtask)
-          (
-            value: _noParent,
-            child: Text(
-              context.t('issues.noEpic'),
-              style: TextStyle(color: AppColors.inkFaint),
-            ),
-          ),
-        for (final c in candidates) (value: c.id, child: _parentChip(c)),
-      ],
+      projectId: issue.projectId,
+      currentIssueId: issue.id,
+      forSubtask: issue.isSubtask,
+      hasCurrentParent: _hierarchy.ancestors.isNotEmpty,
     );
-    if (chosen != null) {
-      await _patch({'parentId': chosen == _noParent ? '' : chosen});
-    }
+    if (result == null || !mounted) return;
+    // `_patch` → PATCH /issues/{id} → `_reloadHierarchy`, so the breadcrumb and
+    // parent row refresh immediately after the write.
+    await _patch({'parentId': result.clear ? '' : result.issue!.id});
   }
 
   Future<void> _pickLabels(Rect anchor) async {

@@ -373,6 +373,16 @@
       "suggestionsTitle": "Current issues",
       "noMatches": "No matching issues"
     },
+    "epicPicker": {
+      "recent": "Recent epics",
+      "recentParents": "Recent issues",
+      "results": "Results",
+      "searchHint": "Search epics…",
+      "searchParentsHint": "Search issues…",
+      "noResults": "No matching epics",
+      "noParentResults": "No matching issues",
+      "clear": "No epic"
+    },
     "group": {
       "none": "None",
       "state": "Status",

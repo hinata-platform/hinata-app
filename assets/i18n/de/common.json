@@ -373,6 +373,16 @@
       "suggestionsTitle": "Aktuelle Vorgänge",
       "noMatches": "Keine passenden Vorgänge"
     },
+    "epicPicker": {
+      "recent": "Letzte Epics",
+      "recentParents": "Aktuelle Vorgänge",
+      "results": "Ergebnisse",
+      "searchHint": "Epics durchsuchen…",
+      "searchParentsHint": "Vorgänge durchsuchen…",
+      "noResults": "Keine passenden Epics",
+      "noParentResults": "Keine passenden Vorgänge",
+      "clear": "Kein Epic"
+    },
     "group": {
       "none": "Keine",
       "state": "Status",
