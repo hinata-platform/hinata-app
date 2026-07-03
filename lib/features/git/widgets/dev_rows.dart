@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../core/models/git_dev_info.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -199,11 +200,12 @@ class BranchRow extends StatelessWidget {
             color: AppColors.inkSoft,
           ),
         ),
-        _subText('from ${branch.base}'),
-        if (branch.updatedAt != null) _subText('· updated ${agoSuffixed(branch.updatedAt)}'),
+        _subText(context.t('git.branchFrom', variables: {'base': branch.base})),
+        if (branch.updatedAt != null)
+          _subText('· ${context.t('git.updated', variables: {'ago': agoSuffixed(branch.updatedAt)})}'),
         _avatar(branch.authorId, names, avatars),
       ],
-      actions: _OpenButton(tooltip: 'Open branch', onTap: onOpen),
+      actions: _OpenButton(tooltip: context.t('git.openBranch'), onTap: onOpen),
     );
   }
 }
@@ -214,16 +216,26 @@ class CommitRow extends StatelessWidget {
     required this.commit,
     required this.names,
     required this.avatars,
+    required this.onOpen,
   });
 
   final GitCommit commit;
   final Map<String, String> names;
   final Map<String, String> avatars;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onOpen,
+      child: _row(context),
+    );
+  }
+
+  Widget _row(BuildContext context) {
     return _DevRow(
       glyph: DevGlyph(hue: kHueCommit, icon: LucideIcons.gitCommitHorizontal),
+      actions: _OpenButton(tooltip: context.t('git.openCommit'), onTap: onOpen),
       top: Text(
         commit.message,
         maxLines: 1,
@@ -247,7 +259,7 @@ class CommitRow extends StatelessWidget {
               Icon(LucideIcons.badgeCheck, size: 12, color: AppColors.success),
               const SizedBox(width: 3),
               Text(
-                'verified',
+                context.t('git.verified'),
                 style: TextStyle(fontSize: 11, color: AppColors.success),
               ),
             ],
@@ -367,15 +379,18 @@ class PrRow extends StatelessWidget {
         // so it reflows below the pills on a narrow rail instead of squeezing
         // them into an overflow.
         if (pr.state == PrState.draft)
-          _GhostAction(label: 'Ready', onTap: busy ? null : onReady),
+          _GhostAction(label: context.t('git.ready'), onTap: busy ? null : onReady),
         if (pr.state == PrState.open)
           _GhostAction(
-            label: 'Merge',
+            label: context.t('git.merge'),
             icon: LucideIcons.gitMerge,
             onTap: busy ? null : onMerge,
           ),
       ],
-      actions: _OpenButton(tooltip: 'Open ${provider.prShort}', onTap: onOpen),
+      actions: _OpenButton(
+        tooltip: context.t('git.openPr', variables: {'pr': provider.prShort}),
+        onTap: onOpen,
+      ),
     );
   }
 }

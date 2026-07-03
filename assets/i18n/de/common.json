@@ -1614,6 +1614,18 @@
     "copied": "Kopiert",
     "reset": "Zurücksetzen",
     "calloutPrefix": "Füge ",
-    "calloutSuffix": " in Branch-Namen, Commit-Nachrichten und {{pr}}-Titel ein, um Arbeit automatisch mit den Issues dieses Projekts zu verknüpfen."
+    "calloutSuffix": " in Branch-Namen, Commit-Nachrichten und {{pr}}-Titel ein, um Arbeit automatisch mit den Issues dieses Projekts zu verknüpfen.",
+    "openBranch": "Branch öffnen",
+    "openCommit": "Commit öffnen",
+    "openPr": "{{pr}} öffnen",
+    "branchFrom": "von {{base}}",
+    "updated": "aktualisiert {{ago}}",
+    "verified": "verifiziert",
+    "ready": "Bereit",
+    "merge": "Mergen",
+    "couldNotOpen": "{{url}} konnte nicht geöffnet werden",
+    "development": "Entwicklung",
+    "prMergedToast": "{{pr}} gemerged · {{issue}}{{note}}",
+    "prReadyToast": "{{pr}} bereit zur Prüfung · {{issue}}{{note}}"
   }
 }

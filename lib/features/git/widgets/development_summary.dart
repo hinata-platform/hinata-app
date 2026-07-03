@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/hinata_repository.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../core/models/git_connection.dart';
 import '../../../core/models/git_dev_info.dart';
 import '../../../core/models/work_models.dart';
@@ -117,6 +119,15 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
     return [for (final k in order) map[k]!];
   }
 
+  /// Opens a provider web URL (branch / commit / PR) in the external browser.
+  Future<void> _open(String? url) async {
+    if (url == null) return;
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && mounted) _toast(context.t('git.couldNotOpen', variables: {'url': url}));
+  }
+
   void _toast(String message) {
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
@@ -131,7 +142,7 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
   }
 
   String _message(Object e) =>
-      e is ApiFailure ? e.message : 'Something went wrong. Please try again.';
+      e is ApiFailure ? e.message : context.t('git.genericError');
 
   String _transitionNote(GitRule rule) {
     if (!rule.on || rule.toStateId == null) return '';
@@ -143,18 +154,18 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
 
   Future<void> _merge(GitPullRequest pr) =>
       _prAction(pr, PrState.merged, () => _repo.gitMergePr(widget.issue.readableId, pr.number),
-          _transitionNote(widget.project.git!.automation.prMerged), 'merged');
+          _transitionNote(widget.project.git!.automation.prMerged), 'git.prMergedToast');
 
   Future<void> _ready(GitPullRequest pr) =>
       _prAction(pr, PrState.open, () => _repo.gitReadyPr(widget.issue.readableId, pr.number),
-          _transitionNote(widget.project.git!.automation.prOpened), 'ready for review');
+          _transitionNote(widget.project.git!.automation.prOpened), 'git.prReadyToast');
 
   Future<void> _prAction(
     GitPullRequest pr,
     PrState optimistic,
     Future<({DevInfo devInfo, Issue issue})> Function() call,
     String note,
-    String verb,
+    String toastKey,
   ) async {
     final before = _info;
     if (before == null) return;
@@ -170,7 +181,11 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
         _busy = false;
       });
       widget.onIssueChanged(result.issue);
-      _toast('${_prov.prShort} $verb · ${widget.issue.readableId}$note');
+      _toast(context.t(toastKey, variables: {
+        'pr': _prov.prShort,
+        'issue': widget.issue.readableId,
+        'note': note,
+      }));
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -204,9 +219,9 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
         children: [
           Row(
             children: [
-              const Text(
-                'Development',
-                style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+              Text(
+                context.t('git.development'),
+                style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
               ),
               const SizedBox(width: 10),
               // With one repo the chip rides in the header; with several, each
@@ -304,7 +319,7 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
           branch: b,
           names: widget.names,
           avatars: widget.avatars,
-          onOpen: () => _toast('Opening branch on ${prov.label}'),
+          onOpen: () => _open(gitBranchUrl(prov, g.repo, b.name)),
         ),
     ]);
     add(
@@ -324,7 +339,12 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
           : null,
       [
         for (final c in g.commits)
-          CommitRow(commit: c, names: widget.names, avatars: widget.avatars),
+          CommitRow(
+            commit: c,
+            names: widget.names,
+            avatars: widget.avatars,
+            onOpen: () => _open(gitCommitUrl(prov, g.repo, c.sha)),
+          ),
       ],
     );
     add('prs', prov.prTermPlural, kHuePullRequest, g.prs.length, _prBadge(g.prs), [
@@ -337,7 +357,7 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
           busy: _busy,
           onMerge: () => _merge(pr),
           onReady: () => _ready(pr),
-          onOpen: () => _toast('Opening ${prov.prShort} #${pr.number} on ${prov.label}'),
+          onOpen: () => _open(gitPrUrl(prov, g.repo, pr.number)),
         ),
     ]);
     add('builds', 'Builds', kHueBuild, g.builds.length, _buildBadge(g.builds), [

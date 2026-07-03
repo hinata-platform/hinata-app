@@ -1614,6 +1614,18 @@
     "copied": "Copied",
     "reset": "reset",
     "calloutPrefix": "Include ",
-    "calloutSuffix": " in branch names, commit messages and {{pr}} titles to link work to this project’s issues automatically."
+    "calloutSuffix": " in branch names, commit messages and {{pr}} titles to link work to this project’s issues automatically.",
+    "openBranch": "Open branch",
+    "openCommit": "Open commit",
+    "openPr": "Open {{pr}}",
+    "branchFrom": "from {{base}}",
+    "updated": "updated {{ago}}",
+    "verified": "verified",
+    "ready": "Ready",
+    "merge": "Merge",
+    "couldNotOpen": "Could not open {{url}}",
+    "development": "Development",
+    "prMergedToast": "{{pr}} merged · {{issue}}{{note}}",
+    "prReadyToast": "{{pr}} ready for review · {{issue}}{{note}}"
   }
 }

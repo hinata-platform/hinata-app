@@ -63,6 +63,41 @@ GitProvider? gitProviderFrom(String? id) => switch (id) {
   _ => null,
 };
 
+/// Browser URL for a branch on [provider], scoped to the `owner/repo` [slug].
+/// Returns null when the slug or branch is missing. Slashes in the branch name
+/// stay as path segments (providers resolve `feat/x` correctly).
+String? gitBranchUrl(GitProvider provider, String slug, String branch) {
+  if (slug.isEmpty || branch.isEmpty) return null;
+  final host = provider.host;
+  return switch (provider) {
+    GitProvider.gitlab => 'https://$host/$slug/-/tree/$branch',
+    GitProvider.bitbucket => 'https://$host/$slug/branch/$branch',
+    GitProvider.github => 'https://$host/$slug/tree/$branch',
+  };
+}
+
+/// Browser URL for a single commit by [sha] on [provider]/[slug].
+String? gitCommitUrl(GitProvider provider, String slug, String sha) {
+  if (slug.isEmpty || sha.isEmpty) return null;
+  final host = provider.host;
+  return switch (provider) {
+    GitProvider.gitlab => 'https://$host/$slug/-/commit/$sha',
+    GitProvider.bitbucket => 'https://$host/$slug/commits/$sha',
+    GitProvider.github => 'https://$host/$slug/commit/$sha',
+  };
+}
+
+/// Browser URL for a pull/merge request [number] on [provider]/[slug].
+String? gitPrUrl(GitProvider provider, String slug, int number) {
+  if (slug.isEmpty || number <= 0) return null;
+  final host = provider.host;
+  return switch (provider) {
+    GitProvider.gitlab => 'https://$host/$slug/-/merge_requests/$number',
+    GitProvider.bitbucket => 'https://$host/$slug/pull-requests/$number',
+    GitProvider.github => 'https://$host/$slug/pull/$number',
+  };
+}
+
 /// PR/MR lifecycle state.
 enum PrState {
   open,
