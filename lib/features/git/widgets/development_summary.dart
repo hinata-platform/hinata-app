@@ -300,6 +300,7 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: _DevCat(
+            iconKey: key,
             label: label,
             hue: hue,
             count: count,

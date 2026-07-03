@@ -1626,6 +1626,10 @@
     "couldNotOpen": "Could not open {{url}}",
     "development": "Development",
     "prMergedToast": "{{pr}} merged · {{issue}}{{note}}",
-    "prReadyToast": "{{pr}} ready for review · {{issue}}{{note}}"
+    "prReadyToast": "{{pr}} ready for review · {{issue}}{{note}}",
+    "branches": "Branches",
+    "commits": "Commits",
+    "builds": "Builds",
+    "latest": "latest {{ago}}"
   }
 }
