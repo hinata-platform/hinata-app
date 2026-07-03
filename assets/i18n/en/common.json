@@ -321,6 +321,7 @@
     "dueDate": "Due date",
     "noValue": "No value",
     "searchPeople": "Search people…",
+    "noPeopleFound": "No people found",
     "attachments": {
       "title": "Attachments",
       "add": "Add files",

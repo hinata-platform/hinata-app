@@ -4387,7 +4387,7 @@ class _PeoplePickerState extends State<_PeoplePicker> {
             padding: const EdgeInsets.all(24),
             child: Center(
               child: Text(
-                context.t('issues.empty'),
+                context.t('issues.noPeopleFound'),
                 style: TextStyle(color: AppColors.inkFaint),
               ),
             ),

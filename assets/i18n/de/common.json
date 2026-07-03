@@ -321,6 +321,7 @@
     "dueDate": "Fälligkeitsdatum",
     "noValue": "Kein Wert",
     "searchPeople": "Personen suchen…",
+    "noPeopleFound": "Keine Personen gefunden",
     "attachments": {
       "title": "Anhänge",
       "add": "Dateien hinzufügen",
