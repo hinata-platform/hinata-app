@@ -314,7 +314,7 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
       );
     }
 
-    add('branches', 'Branches', kHueBranch, g.branches.length, null, [
+    add('branches', context.t('git.branches'), kHueBranch, g.branches.length, null, [
       for (final b in g.branches)
         BranchRow(
           branch: b,
@@ -325,12 +325,12 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
     ]);
     add(
       'commits',
-      'Commits',
+      context.t('git.commits'),
       kHueCommit,
       g.commits.length,
       g.commits.isNotEmpty && g.commits.first.at != null
           ? Text(
-              'latest ${agoSuffixed(g.commits.first.at)}',
+              context.t('git.latest', variables: {'ago': agoSuffixed(g.commits.first.at)}),
               style: TextStyle(
                 fontFamily: AppTheme.fontMono,
                 fontSize: 11.5,
@@ -361,7 +361,7 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
           onOpen: () => _open(gitPrUrl(prov, g.repo, pr.number)),
         ),
     ]);
-    add('builds', 'Builds', kHueBuild, g.builds.length, _buildBadge(g.builds), [
+    add('builds', context.t('git.builds'), kHueBuild, g.builds.length, _buildBadge(g.builds), [
       for (final b in g.builds) BuildRow(run: b),
     ]);
     return cats;
@@ -398,6 +398,7 @@ class _RepoGroup {
 
 class _DevCat extends StatelessWidget {
   const _DevCat({
+    required this.iconKey,
     required this.label,
     required this.hue,
     required this.count,
@@ -407,6 +408,9 @@ class _DevCat extends StatelessWidget {
     required this.body,
   });
 
+  /// Stable category token ('branches'|'commits'|'prs'|'builds') driving the
+  /// glyph — decoupled from the (translated) [label].
+  final String iconKey;
   final String label;
   final int hue;
   final int count;
@@ -433,7 +437,7 @@ class _DevCat extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
               child: Row(
                 children: [
-                  DevGlyph(hue: hue, icon: categoryIcon(_keyForLabel(label)), size: 30),
+                  DevGlyph(hue: hue, icon: categoryIcon(iconKey), size: 30),
                   const SizedBox(width: 11),
                   Text(
                     label,
@@ -474,14 +478,5 @@ class _DevCat extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  // The category icon is driven by the label; map the visible label back to the
-  // token key (provider-adaptive PR/MR labels both map to 'prs').
-  String _keyForLabel(String label) {
-    if (label == 'Branches') return 'branches';
-    if (label == 'Commits') return 'commits';
-    if (label == 'Builds') return 'builds';
-    return 'prs';
   }
 }
