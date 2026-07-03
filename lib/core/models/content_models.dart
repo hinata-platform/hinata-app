@@ -234,18 +234,145 @@ class TrendPoint extends Equatable {
   List<Object?> get props => [date, created, resolved];
 }
 
+/// One ISO calendar week of tracked focus time (the "Month" tracker range).
+class TrackerWeek extends Equatable {
+  const TrackerWeek({required this.week, required this.focusMinutes});
+
+  final int week;
+  final int focusMinutes;
+
+  factory TrackerWeek.fromJson(Map<String, dynamic> json) => TrackerWeek(
+        week: (json['week'] as num?)?.toInt() ?? 0,
+        focusMinutes: (json['focusMinutes'] as num?)?.toInt() ?? 0,
+      );
+
+  @override
+  List<Object?> get props => [week, focusMinutes];
+}
+
+/// A member of the active sprint, resolved for avatar display.
+class SprintMember extends Equatable {
+  const SprintMember({required this.userId, required this.displayName, this.avatarUrl});
+
+  final String userId;
+  final String displayName;
+  final String? avatarUrl;
+
+  factory SprintMember.fromJson(Map<String, dynamic> json) => SprintMember(
+        userId: json['userId'] as String? ?? '',
+        displayName: json['displayName'] as String? ?? '',
+        avatarUrl: json['avatarUrl'] as String?,
+      );
+
+  @override
+  List<Object?> get props => [userId, displayName, avatarUrl];
+}
+
+/// Snapshot of the board's active sprint powering the dashboard hero.
+class DashboardSprint extends Equatable {
+  const DashboardSprint({
+    required this.boardId,
+    required this.sprintId,
+    required this.name,
+    required this.day,
+    required this.days,
+    required this.points,
+    required this.pointsTotal,
+    required this.issuesDone,
+    required this.issuesTotal,
+    required this.members,
+    this.goal,
+  });
+
+  final String boardId;
+  final String sprintId;
+  final String name;
+  final String? goal;
+  final int day;
+  final int days;
+  final int points;
+  final int pointsTotal;
+  final int issuesDone;
+  final int issuesTotal;
+  final List<SprintMember> members;
+
+  double get pointsPercent =>
+      pointsTotal == 0 ? 0 : (points / pointsTotal).clamp(0.0, 1.0);
+
+  factory DashboardSprint.fromJson(Map<String, dynamic> json) => DashboardSprint(
+        boardId: json['boardId'] as String? ?? '',
+        sprintId: json['sprintId'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        goal: json['goal'] as String?,
+        day: (json['day'] as num?)?.toInt() ?? 0,
+        days: (json['days'] as num?)?.toInt() ?? 0,
+        points: (json['points'] as num?)?.toInt() ?? 0,
+        pointsTotal: (json['pointsTotal'] as num?)?.toInt() ?? 0,
+        issuesDone: (json['issuesDone'] as num?)?.toInt() ?? 0,
+        issuesTotal: (json['issuesTotal'] as num?)?.toInt() ?? 0,
+        members: ((json['members'] as List<dynamic>?) ?? const [])
+            .map((m) => SprintMember.fromJson(m as Map<String, dynamic>))
+            .toList(),
+      );
+
+  @override
+  List<Object?> get props =>
+      [sprintId, day, points, pointsTotal, issuesDone, issuesTotal];
+}
+
+/// A recent development event (commit / PR / deploy / merge) for the git feed.
+class GitEvent extends Equatable {
+  const GitEvent({
+    required this.kind,
+    required this.ref,
+    required this.text,
+    this.repo,
+    this.authorName,
+    this.at,
+    this.issueKey,
+  });
+
+  /// One of: `commit`, `pr`, `deploy`, `merge`.
+  final String kind;
+  final String ref;
+  final String text;
+  final String? repo;
+  final String? authorName;
+  final DateTime? at;
+  final String? issueKey;
+
+  factory GitEvent.fromJson(Map<String, dynamic> json) => GitEvent(
+        kind: json['kind'] as String? ?? 'commit',
+        ref: json['ref'] as String? ?? '',
+        text: json['text'] as String? ?? '',
+        repo: json['repo'] as String?,
+        authorName: json['authorName'] as String?,
+        at: json['at'] is String ? DateTime.tryParse(json['at'] as String) : null,
+        issueKey: json['issueKey'] as String?,
+      );
+
+  @override
+  List<Object?> get props => [kind, ref, text, at, issueKey];
+}
+
 class DashboardData extends Equatable {
   const DashboardData({
     required this.todayTasks,
     required this.completion,
     required this.ranking,
     required this.tracker,
+    this.trackerMonth = const [],
+    this.activeSprint,
+    this.gitActivity = const [],
   });
 
   final List<Issue> todayTasks;
   final ProjectCompletion completion;
   final List<RankEntry> ranking;
   final List<TrackerDay> tracker;
+  final List<TrackerWeek> trackerMonth;
+  final DashboardSprint? activeSprint;
+  final List<GitEvent> gitActivity;
 
   factory DashboardData.fromJson(Map<String, dynamic> json) => DashboardData(
         todayTasks: ((json['todayTasks'] as List<dynamic>?) ?? [])
@@ -259,8 +386,18 @@ class DashboardData extends Equatable {
         tracker: ((json['tracker'] as List<dynamic>?) ?? [])
             .map((t) => TrackerDay.fromJson(t as Map<String, dynamic>))
             .toList(),
+        trackerMonth: ((json['trackerMonth'] as List<dynamic>?) ?? [])
+            .map((t) => TrackerWeek.fromJson(t as Map<String, dynamic>))
+            .toList(),
+        activeSprint: json['activeSprint'] is Map<String, dynamic>
+            ? DashboardSprint.fromJson(json['activeSprint'] as Map<String, dynamic>)
+            : null,
+        gitActivity: ((json['gitActivity'] as List<dynamic>?) ?? [])
+            .map((g) => GitEvent.fromJson(g as Map<String, dynamic>))
+            .toList(),
       );
 
   @override
-  List<Object?> get props => [todayTasks, completion, ranking, tracker];
+  List<Object?> get props =>
+      [todayTasks, completion, ranking, tracker, trackerMonth, activeSprint, gitActivity];
 }
