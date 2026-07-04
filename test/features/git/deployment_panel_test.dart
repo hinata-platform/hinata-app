@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/git/widgets/deployment_panel.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Reproduces the crash reported when expanding the "Create branch" dropdown in
 /// the issue deployment panel for a connected repository.
@@ -55,16 +56,19 @@ void main() {
         ),
       );
 
+  // The action rows label themselves via context.t (i18next); without a
+  // localization delegate wired in, context.t echoes the raw key, so we tap the
+  // rows by their (language-agnostic) leading icon instead of the visible text.
   testWidgets('expanding Create branch does not throw', (tester) async {
     await tester.pumpWidget(host(380));
-    await tester.tap(find.text('Create branch'));
+    await tester.tap(find.byIcon(LucideIcons.gitBranch));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('expanding Create commit does not throw', (tester) async {
     await tester.pumpWidget(host(380));
-    await tester.tap(find.text('Create commit'));
+    await tester.tap(find.byIcon(LucideIcons.gitCommitHorizontal));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
