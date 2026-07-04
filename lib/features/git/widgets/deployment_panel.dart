@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/hinata_repository.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../core/models/git_connection.dart';
 import '../../../core/models/git_dev_info.dart';
 import '../../../core/models/work_models.dart';
@@ -98,8 +99,9 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
       final updated = await _repo.gitSetBranchTemplate(widget.project.id, next);
       if (mounted) widget.onProjectChanged(updated);
     } catch (e) {
-      if (mounted) setState(() => _templateOverride = null);
-      _toast(e is ApiFailure ? e.message : 'Could not save the template');
+      if (!mounted) return;
+      setState(() => _templateOverride = null);
+      _toast(e is ApiFailure ? e.message : context.t('git.templateSaveError'));
     }
   }
 
@@ -148,7 +150,7 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
             ),
             const SizedBox(width: 8),
             Text(
-              'DEPLOYMENT',
+              context.t('git.deployment'),
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -192,7 +194,7 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
       children: [
         _actionRow(
           icon: LucideIcons.gitBranch,
-          label: 'Create branch',
+          label: context.t('git.createBranch'),
           open: _pop == 'branch',
           trailing: _chevron(_pop == 'branch'),
           onTap: () => _togglePop('branch'),
@@ -200,7 +202,7 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
         if (_pop == 'branch') _branchPop(auto),
         _actionRow(
           icon: LucideIcons.gitCommitHorizontal,
-          label: 'Create commit',
+          label: context.t('git.createCommit'),
           open: _pop == 'commit',
           trailing: _chevron(_pop == 'commit'),
           onTap: () => _togglePop('commit'),
@@ -222,8 +224,9 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
               Expanded(
                 child: Text(
                   _gear
-                      ? 'Branch name template · ${widget.project.name}'
-                      : 'APPLY “GIT BRANCH” & “GIT CHECKOUT” TO A NEW BRANCH',
+                      ? context.t('git.branchTemplateHeader',
+                          variables: {'project': widget.project.name})
+                      : context.t('git.branchApplyHeader'),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -239,7 +242,7 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
           ),
           const SizedBox(height: 9),
           if (_gear) ...[
-            CopyField(text: _template, onCopied: () => _toast('Copied')),
+            CopyField(text: _template, onCopied: () => _toast(context.t('git.copied'))),
             const SizedBox(height: 8),
             Wrap(
               spacing: 6,
@@ -247,20 +250,24 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
               children: [
                 _chip('+ {key}', () => _appendToken('{key}')),
                 _chip('+ {summary}', () => _appendToken('{summary}')),
-                _chip('reset', () => _setTemplate('{key}-{summary}')),
+                _chip(context.t('git.reset'), () => _setTemplate('{key}-{summary}')),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              'Tokens are filled in when the branch is created. Applies to every '
-              'issue in this project.',
+              context.t('git.tokensHint'),
               style: TextStyle(fontSize: 12, height: 1.5, color: AppColors.inkSoft),
             ),
           ] else ...[
-            CopyField(text: _checkout, onCopied: () => _toast('Copied to clipboard')),
+            CopyField(
+                text: _checkout,
+                onCopied: () => _toast(context.t('git.copiedToClipboard'))),
             if (auto.branchCreated.on && moveTo != null) ...[
               const SizedBox(height: 10),
-              _autoHint('Pushing this branch moves $_key to ', moveTo, '.'),
+              _autoHint(
+                  context.t('git.branchAutoPrefix', variables: {'key': _key}),
+                  moveTo,
+                  '.'),
             ],
           ],
         ],
@@ -273,22 +280,23 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Link commits to this issue',
-            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+          Text(
+            context.t('git.linkCommitsTitle'),
+            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           Text(
-            'Add the issue key to your commit messages to link them here '
-            'automatically.',
+            context.t('git.linkCommitsDesc'),
             style: TextStyle(fontSize: 12, height: 1.55, color: AppColors.inkSoft),
           ),
           const SizedBox(height: 10),
-          _fieldLabel('Copy key'),
-          CopyField(text: _key, onCopied: () => _toast('Copied')),
+          _fieldLabel(context.t('git.copyKey')),
+          CopyField(text: _key, onCopied: () => _toast(context.t('git.copied'))),
           const SizedBox(height: 10),
-          _fieldLabel('Copy example commit'),
-          CopyField(text: _commitExample, onCopied: () => _toast('Copied')),
+          _fieldLabel(context.t('git.copyExampleCommit')),
+          CopyField(
+              text: _commitExample,
+              onCopied: () => _toast(context.t('git.copied'))),
           if (auto.smartCommits) ...[
             const SizedBox(height: 10),
             _autoHintRich(),
@@ -315,19 +323,17 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
             ),
           ),
           icon: const Icon(LucideIcons.link, size: 14),
-          label: const Text('Connect in settings'),
+          label: Text(context.t('git.connectInSettings')),
         ),
         child: Text.rich(
           TextSpan(
             children: [
-              const TextSpan(text: 'No repository is connected to '),
+              TextSpan(text: context.t('git.emptyPrefix')),
               TextSpan(
                 text: widget.project.name,
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
-              const TextSpan(
-                text: ' yet. Connect one to create branches and link commits.',
-              ),
+              TextSpan(text: context.t('git.emptySuffix')),
             ],
           ),
         ),
@@ -437,13 +443,13 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
             child: Icon(LucideIcons.zap, size: 12, color: AppColors.accentStrong),
           ),
         ),
-        const TextSpan(text: 'Smart commits are on — add '),
+        TextSpan(text: context.t('git.smartCommitsHintPrefix')),
         _monoChip('#done'),
         const TextSpan(text: ', '),
         _monoChip('#comment'),
-        const TextSpan(text: ' or '),
+        TextSpan(text: context.t('git.smartCommitsHintOr')),
         _monoChip('#time 2h'),
-        const TextSpan(text: '.'),
+        TextSpan(text: context.t('git.smartCommitsHintSuffix')),
       ],
     ),
     style: TextStyle(fontSize: 12, height: 1.6, color: AppColors.inkSoft),
@@ -488,7 +494,7 @@ class _GearButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'Branch name template',
+      message: context.t('git.branchTemplateTooltip'),
       child: Material(
         color: active ? AppColors.accentSoft : AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(7),

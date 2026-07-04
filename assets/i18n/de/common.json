@@ -1670,6 +1670,26 @@
     "branches": "Branches",
     "commits": "Commits",
     "builds": "Builds",
-    "latest": "letzter {{ago}}"
+    "latest": "letzter {{ago}}",
+    "deployment": "DEPLOYMENT",
+    "createBranch": "Branch erstellen",
+    "createCommit": "Commit erstellen",
+    "templateSaveError": "Vorlage konnte nicht gespeichert werden",
+    "copiedToClipboard": "In die Zwischenablage kopiert",
+    "branchTemplateHeader": "Branch-Namensvorlage · {{project}}",
+    "branchApplyHeader": "„GIT BRANCH“ & „GIT CHECKOUT“ AUF EINEN NEUEN BRANCH ANWENDEN",
+    "branchTemplateTooltip": "Branch-Namensvorlage",
+    "tokensHint": "Tokens werden beim Erstellen des Branches eingesetzt. Gilt für jedes Issue in diesem Projekt.",
+    "branchAutoPrefix": "Das Pushen dieses Branches verschiebt {{key}} nach ",
+    "linkCommitsTitle": "Commits mit diesem Issue verknüpfen",
+    "linkCommitsDesc": "Füge den Issue-Key zu deinen Commit-Nachrichten hinzu, um sie hier automatisch zu verknüpfen.",
+    "copyKey": "Key kopieren",
+    "copyExampleCommit": "Beispiel-Commit kopieren",
+    "connectInSettings": "In Einstellungen verbinden",
+    "emptyPrefix": "Es ist noch kein Repository mit ",
+    "emptySuffix": " verbunden. Verbinde eines, um Branches zu erstellen und Commits zu verknüpfen.",
+    "smartCommitsHintPrefix": "Smart Commits sind aktiv — füge ",
+    "smartCommitsHintOr": " oder ",
+    "smartCommitsHintSuffix": " hinzu."
   }
 }

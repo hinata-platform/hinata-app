@@ -1670,6 +1670,26 @@
     "branches": "Branches",
     "commits": "Commits",
     "builds": "Builds",
-    "latest": "latest {{ago}}"
+    "latest": "latest {{ago}}",
+    "deployment": "DEPLOYMENT",
+    "createBranch": "Create branch",
+    "createCommit": "Create commit",
+    "templateSaveError": "Could not save the template",
+    "copiedToClipboard": "Copied to clipboard",
+    "branchTemplateHeader": "Branch name template · {{project}}",
+    "branchApplyHeader": "APPLY “GIT BRANCH” & “GIT CHECKOUT” TO A NEW BRANCH",
+    "branchTemplateTooltip": "Branch name template",
+    "tokensHint": "Tokens are filled in when the branch is created. Applies to every issue in this project.",
+    "branchAutoPrefix": "Pushing this branch moves {{key}} to ",
+    "linkCommitsTitle": "Link commits to this issue",
+    "linkCommitsDesc": "Add the issue key to your commit messages to link them here automatically.",
+    "copyKey": "Copy key",
+    "copyExampleCommit": "Copy example commit",
+    "connectInSettings": "Connect in settings",
+    "emptyPrefix": "No repository is connected to ",
+    "emptySuffix": " yet. Connect one to create branches and link commits.",
+    "smartCommitsHintPrefix": "Smart commits are on — add ",
+    "smartCommitsHintOr": " or ",
+    "smartCommitsHintSuffix": "."
   }
 }
