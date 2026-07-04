@@ -61,42 +61,65 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=raw,value=latest,enable={{is_default_branch}}
-      - uses: docker/build-push-action@v6
+      # asta web image — baked with api.track.asta.hn. Tags: semver (on v* tags)
+      # + :latest (on main). Runs on every push.
+      - name: Build & push asta web image
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          # Bake the production backend URL into the static web build.
           build-args: |
             HINATA_DEFAULT_SERVER=https://api.track.asta.hn
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      # bear web image — same source, baked with api.track.bear.ahmadre.com, fixed
+      # :bear tag. The web build bakes the backend URL at compile time, so bear
+      # needs its OWN image (it is NOT just a re-tag of :latest). Reuses the asta
+      # build cache: only the final `flutter build web` layer differs (build-arg).
+      # main only — the bear instance tracks main, not release tags.
+      - name: Build & push bear web image
+        if: github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            HINATA_DEFAULT_SERVER=https://api.track.bear.ahmadre.com
+          tags: ghcr.io/${{ github.repository }}:bear
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   deploy:
-    name: Redeploy asta (ASTASRV01)
+    name: Redeploy asta + bear (ASTASRV01)
     needs: docker
     # Only on a real push to main — never on tags or PRs (the self-hosted runner
     # has the host docker socket, so it must not run untrusted/fork code).
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: [self-hosted, astasrv01]
     steps:
-      - name: Surgical redeploy of hinata-app (web)
+      - name: Surgical redeploy of hinata-app (asta + bear)
         env:
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Pull the freshly-built web image and recreate ONLY the app container
-          # (--no-deps leaves the server + databases untouched). The asta stack
-          # lives at /opt/stacks/hinata on ASTASRV01 (all values inline, no .env).
-          # NB: this is the asta web image (baked api.track.asta.hn); the bear
-          # instance uses the :bear image and stays a manual deploy.
-          docker run --rm \
-            -e GHCR_USER -e GHCR_TOKEN \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v /opt/stacks/hinata:/work -w /work \
-            docker:cli sh -euc '
-              echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-              docker compose -p hinata pull hinata-app
-              docker compose -p hinata up -d --no-deps --force-recreate hinata-app
-              docker logout ghcr.io'
+          # Each stack pulls its OWN freshly-built web image and recreates ONLY the
+          # app container (--no-deps leaves server + databases untouched). Each
+          # compose pins its own image tag, so `pull hinata-app` fetches :latest for
+          # asta and :bear for bear. Stack dirs on ASTASRV01:
+          #   asta -> /opt/stacks/hinata       (project "hinata",      inline values)
+          #   bear -> /opt/stacks/hinata-bear  (project "hinata-bear", loads its .env)
+          for STACK in hinata hinata-bear; do
+            echo "::group::redeploy $STACK (app)"
+            docker run --rm \
+              -e GHCR_USER -e GHCR_TOKEN -e STACK="$STACK" \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -v "/opt/stacks/$STACK:/work" -w /work \
+              docker:cli sh -euc '
+                echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+                docker compose -p "$STACK" pull hinata-app
+                docker compose -p "$STACK" up -d --no-deps --force-recreate hinata-app
+                docker logout ghcr.io'
+            echo "::endgroup::"
+          done
