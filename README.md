@@ -15,9 +15,15 @@
   <img alt="Dart" src="https://img.shields.io/badge/Dart-3.11-0175C2?style=for-the-badge&logo=dart&logoColor=white">
   <img alt="Platforms" src="https://img.shields.io/badge/Android%20·%20iOS%20·%20Web%20·%20macOS-211F3D?style=for-the-badge&logo=apple&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/License-GPL%203.0-D9A032?style=for-the-badge&logo=gnu&logoColor=white">
+  <a href="https://hinata-platform.github.io"><img alt="Documentation" src="https://img.shields.io/badge/Documentation-hinata--platform.github.io-D9A032?style=for-the-badge&logo=readthedocs&logoColor=white"></a>
 </p>
 
 <p align="center">
+  <b>📖 Full documentation &amp; self-hosting guide: <a href="https://hinata-platform.github.io">hinata-platform.github.io</a></b> — bilingual (EN&nbsp;/&nbsp;DE)
+</p>
+
+<p align="center">
+  <a href="https://hinata-platform.github.io"><b>Docs</b></a> ·
   <a href="#-screenshots">Screenshots</a> ·
   <a href="#-how-it-works">How it works</a> ·
   <a href="#-features">Features</a> ·
