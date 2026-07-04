@@ -338,8 +338,8 @@ class _NavRail extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      AppColors.rail.withValues(alpha: 0.84),
-                      AppColors.rail2.withValues(alpha: 0.84),
+                      AppColors.rail,
+                      AppColors.rail2,
                     ],
                   ),
                 ),
