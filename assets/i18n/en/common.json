@@ -235,6 +235,7 @@
     "greetEvening": "Good evening, {{name}}",
     "sprintDay": "Sprint day {{day}} of {{days}}",
     "activeSprint": "ACTIVE SPRINT",
+    "kanbanBoard": "KANBAN BOARD",
     "toBoard": "To board",
     "sprintCompleted": "completed",
     "dayChip": "Day {{day}}/{{days}}",

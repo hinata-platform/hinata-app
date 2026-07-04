@@ -19,6 +19,7 @@ import '../../features/connect/update_required_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/gantt/gantt_screen.dart';
 import '../../features/issues/issue_detail_screen.dart';
+import '../../features/issues/issue_filter.dart' show IssuesInitialView;
 import '../../features/issues/issues_screen.dart';
 import '../../features/knowledge/knowledge_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
@@ -224,7 +225,10 @@ GoRouter buildRouter({
             path: '/issues',
             pageBuilder: (_, state) => _transition(
               state,
-              IssuesScreen(projectId: state.uri.queryParameters['projectId']),
+              IssuesScreen(
+                projectId: state.uri.queryParameters['projectId'],
+                initialView: _issuesView(state.uri.queryParameters['view']),
+              ),
             ),
           ),
           GoRoute(
@@ -316,6 +320,15 @@ GoRouter buildRouter({
 /// first, then the incoming page fades + rises in — they are never both visible
 /// at once. `fillColor` is transparent so the canvas (not an opaque box) shows
 /// through during the brief hand-off.
+/// Maps the `/issues?view=…` query value to a preset filter (dashboard KPIs).
+IssuesInitialView? _issuesView(String? value) => switch (value) {
+      'today' => IssuesInitialView.today,
+      'inprogress' => IssuesInitialView.inProgress,
+      'backlog' => IssuesInitialView.backlog,
+      'done' => IssuesInitialView.done,
+      _ => null,
+    };
+
 CustomTransitionPage<void> _transition(GoRouterState state, Widget child) =>
     CustomTransitionPage<void>(
       key: state.pageKey,

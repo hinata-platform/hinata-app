@@ -8,6 +8,12 @@ import '../../core/models/work_models.dart';
 /// cross-project facets that make sense on a global task list.
 enum IssueFilterFacet { state, priority, assignee, project, type }
 
+/// A preset the Issues overview can open pre-filtered on — used by dashboard
+/// KPI deep-links (`/issues?view=…`). Bucket presets ([inProgress], [backlog],
+/// [done]) resolve to concrete workflow-state names once projects are loaded;
+/// [today] applies the "due today" time range.
+enum IssuesInitialView { today, inProgress, backlog, done }
+
 /// Swimlane-style grouping for the Issues list. [none] renders one flat list;
 /// every other value buckets the (already filtered) issues under section
 /// headers.

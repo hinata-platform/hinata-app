@@ -40,9 +40,12 @@ typedef _RefData = ({
 });
 
 class IssuesScreen extends StatefulWidget {
-  const IssuesScreen({super.key, this.projectId});
+  const IssuesScreen({super.key, this.projectId, this.initialView});
 
   final String? projectId;
+
+  /// Optional preset the screen opens pre-filtered on (dashboard KPI deep-link).
+  final IssuesInitialView? initialView;
 
   @override
   State<IssuesScreen> createState() => _IssuesScreenState();
@@ -76,6 +79,11 @@ class _IssuesScreenState extends State<IssuesScreen> {
   IssueFilter _filter = IssueFilter.empty;
   IssueGrouping _grouping = IssueGrouping.none;
   IssueTimeRange _timeRange = IssueTimeRange.none;
+
+  /// The deep-link preset is applied once, after projects load (so bucket
+  /// presets can resolve to real state names); later refreshes keep the user's
+  /// own filter choices.
+  bool _initialViewApplied = false;
 
   /// Group keys currently collapsed in the grouped view (mirrors the board's
   /// swimlane collapse). Cleared whenever the grouping dimension changes.
@@ -147,6 +155,12 @@ class _IssuesScreenState extends State<IssuesScreen> {
           palette: ProjectPalette.fromProjects(projects),
         );
         _refLoading = false;
+        // Apply a dashboard deep-link preset once, now that we know the
+        // projects' workflow/resolved states.
+        if (!_initialViewApplied && widget.initialView != null) {
+          _applyInitialView(widget.initialView!, projects);
+          _initialViewApplied = true;
+        }
       });
     } catch (_) {
       if (!mounted) return;
@@ -155,6 +169,35 @@ class _IssuesScreenState extends State<IssuesScreen> {
         _refError = true;
       });
     }
+  }
+
+  /// Translates a dashboard KPI deep-link preset into the concrete filter/time
+  /// range. Bucket presets use the same rule as the dashboard's server-side
+  /// completion split: done = the projects' resolved states, backlog =
+  /// `Backlog`/`Open`, in-progress = everything else.
+  void _applyInitialView(IssuesInitialView view, List<Project> projects) {
+    if (view == IssuesInitialView.today) {
+      _timeRange = const IssueTimeRange(preset: IssueTimePreset.today);
+      return;
+    }
+    final done = <String>{};
+    final all = <String>{};
+    for (final p in projects) {
+      for (final name in p.resolvedStates) {
+        done.add(name.toUpperCase());
+      }
+      for (final name in p.stateNames) {
+        all.add(name.toUpperCase());
+      }
+    }
+    const backlog = {'BACKLOG', 'OPEN'};
+    final states = switch (view) {
+      IssuesInitialView.done => done,
+      IssuesInitialView.backlog => all.intersection(backlog),
+      IssuesInitialView.inProgress => all.difference(done).difference(backlog),
+      IssuesInitialView.today => const <String>{},
+    };
+    if (states.isNotEmpty) _filter = IssueFilter(states: states);
   }
 
   /// Pull-to-refresh / retry: reload the first page and the reference data.

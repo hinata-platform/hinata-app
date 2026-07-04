@@ -90,7 +90,7 @@ class _DashboardView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _Greeting(sprint: data.activeSprint),
+          _Greeting(sprint: data.activeBoard),
           const SizedBox(height: 22),
           if (wide)
             _wideGrid(context, data)
@@ -104,7 +104,7 @@ class _DashboardView extends StatelessWidget {
   // Desktop / tablet: golden-ratio two columns (1.618 : 1).
   Widget _wideGrid(BuildContext context, DashboardData data) {
     final left = <Widget>[
-      _sprintCard(data.activeSprint),
+      _sprintCard(data.activeBoard),
       const SizedBox(height: _gap),
       _FocusCard(issues: data.todayTasks),
       if (data.gitActivity.isNotEmpty) ...[
@@ -142,7 +142,7 @@ class _DashboardView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _sprintCard(data.activeSprint),
+        _sprintCard(data.activeBoard),
         const SizedBox(height: _gap),
         _Kpis(today: data.todayTasks.length, completion: data.completion),
         const SizedBox(height: _gap),
@@ -161,7 +161,7 @@ class _DashboardView extends StatelessWidget {
     );
   }
 
-  Widget _sprintCard(DashboardSprint? sprint) =>
+  Widget _sprintCard(DashboardBoard? sprint) =>
       sprint == null ? const _SprintEmpty() : _SprintHero(sprint: sprint);
 }
 
@@ -226,6 +226,7 @@ class _GlassCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(21),
     this.gradient,
     this.borderColor,
+    this.onTap,
   });
 
   static const double _radius = 26;
@@ -234,6 +235,7 @@ class _GlassCard extends StatelessWidget {
   final EdgeInsets padding;
   final Gradient? gradient;
   final Color? borderColor;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -245,6 +247,33 @@ class _GlassCard extends StatelessWidget {
         (dark
             ? Colors.white.withValues(alpha: .13)
             : Colors.white.withValues(alpha: .62));
+    Widget content = Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: gradient == null ? fill : null,
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(_radius),
+        border: Border.all(color: border),
+      ),
+      child: child,
+    );
+    if (onTap != null) {
+      content = Stack(
+        children: [
+          content,
+          Positioned.fill(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(_radius),
+                child: const SizedBox.expand(),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(_radius),
@@ -261,16 +290,7 @@ class _GlassCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(_radius),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            padding: padding,
-            decoration: BoxDecoration(
-              color: gradient == null ? fill : null,
-              gradient: gradient,
-              borderRadius: BorderRadius.circular(_radius),
-              border: Border.all(color: border),
-            ),
-            child: child,
-          ),
+          child: content,
         ),
       ),
     );
@@ -293,7 +313,7 @@ BoxDecoration _innerTile(bool dark) => BoxDecoration(
 
 class _Greeting extends StatelessWidget {
   const _Greeting({required this.sprint});
-  final DashboardSprint? sprint;
+  final DashboardBoard? sprint;
 
   @override
   Widget build(BuildContext context) {
@@ -327,9 +347,8 @@ class _Greeting extends StatelessWidget {
         const SizedBox(height: 6),
         DefaultTextStyle(
           style: TextStyle(fontSize: 13.5, color: AppColors.inkSoft),
-          child: sprint == null
-              ? Text(date)
-              : Wrap(
+          child: (sprint != null && sprint!.isSprint && sprint!.days > 0)
+              ? Wrap(
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text('$date · '),
@@ -344,7 +363,8 @@ class _Greeting extends StatelessWidget {
                       ),
                     ),
                   ],
-                ),
+                )
+              : Text(date),
         ),
       ],
     );
@@ -364,12 +384,12 @@ class _Greeting extends StatelessWidget {
 
 class _SprintHero extends StatelessWidget {
   const _SprintHero({required this.sprint});
-  final DashboardSprint sprint;
+  final DashboardBoard sprint;
 
   @override
   Widget build(BuildContext context) {
     final compact = context.isCompact;
-    final ring = _ProgressRing(pct: sprint.pointsPercent, size: compact ? 104 : 150);
+    final ring = _ProgressRing(pct: sprint.progressPercent, size: compact ? 104 : 150);
     return _GlassCard(
       padding: EdgeInsets.all(compact ? 20 : 26),
       gradient: const LinearGradient(
@@ -440,7 +460,7 @@ class _SprintHero extends StatelessWidget {
           ),
           const SizedBox(width: 7),
           Text(
-            context.t('dashboard.activeSprint'),
+            context.t(sprint.isSprint ? 'dashboard.activeSprint' : 'dashboard.kanbanBoard'),
             style: const TextStyle(
               fontFamily: AppTheme.fontMono,
               fontSize: 10.5,
@@ -489,10 +509,12 @@ class _SprintHero extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
-            _chip(LucideIcons.calendarDays,
-                context.t('dashboard.dayChip', variables: {'day': '${sprint.day}', 'days': '${sprint.days}'})),
-            _chip(LucideIcons.gauge,
-                context.t('dashboard.spChip', variables: {'done': '${sprint.points}', 'total': '${sprint.pointsTotal}'})),
+            if (sprint.isSprint) ...[
+              _chip(LucideIcons.calendarDays,
+                  context.t('dashboard.dayChip', variables: {'day': '${sprint.day}', 'days': '${sprint.days}'})),
+              _chip(LucideIcons.gauge,
+                  context.t('dashboard.spChip', variables: {'done': '${sprint.points}', 'total': '${sprint.pointsTotal}'})),
+            ],
             _chip(LucideIcons.circleCheck,
                 context.t('dashboard.issuesChip', variables: {'done': '${sprint.issuesDone}', 'total': '${sprint.issuesTotal}'})),
           ],
@@ -767,13 +789,15 @@ class _Kpis extends StatelessWidget {
   final int today;
   final ProjectCompletion completion;
 
+  void _open(BuildContext context, String view) => context.go('/issues?view=$view');
+
   @override
   Widget build(BuildContext context) {
     final items = [
-      _KpiCard(label: context.t('dashboard.kpiToday'), value: today, icon: LucideIcons.inbox, hue: _cToday),
-      _KpiCard(label: context.t('dashboard.inProgress'), value: completion.inProgress, icon: LucideIcons.loader, hue: AppColors.accentStrong),
-      _KpiCard(label: context.t('dashboard.backlog'), value: completion.backlog, icon: LucideIcons.layers, hue: _cBacklog),
-      _KpiCard(label: context.t('dashboard.done'), value: completion.done, icon: LucideIcons.circleCheckBig, hue: _cDone),
+      _KpiCard(label: context.t('dashboard.kpiToday'), value: today, icon: LucideIcons.inbox, hue: _cToday, onTap: () => _open(context, 'today')),
+      _KpiCard(label: context.t('dashboard.inProgress'), value: completion.inProgress, icon: LucideIcons.loader, hue: AppColors.accentStrong, onTap: () => _open(context, 'inprogress')),
+      _KpiCard(label: context.t('dashboard.backlog'), value: completion.backlog, icon: LucideIcons.layers, hue: _cBacklog, onTap: () => _open(context, 'backlog')),
+      _KpiCard(label: context.t('dashboard.done'), value: completion.done, icon: LucideIcons.circleCheckBig, hue: _cDone, onTap: () => _open(context, 'done')),
     ];
     if (context.isCompact) {
       return SizedBox(
@@ -807,16 +831,24 @@ class _Kpis extends StatelessWidget {
 }
 
 class _KpiCard extends StatelessWidget {
-  const _KpiCard({required this.label, required this.value, required this.icon, required this.hue});
+  const _KpiCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.hue,
+    this.onTap,
+  });
   final String label;
   final int value;
   final IconData icon;
   final Color hue;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return _GlassCard(
       padding: const EdgeInsets.fromLTRB(16, 15, 16, 15),
+      onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
