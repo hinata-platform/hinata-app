@@ -17,6 +17,7 @@ import '../../core/models/core_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/ambient_background.dart';
 import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/honeycomb_background.dart';
 import '../../core/widgets/app_avatar.dart';
@@ -226,33 +227,59 @@ class _WideShellState extends State<_WideShell> {
     final isMedium = context.layoutSize == LayoutSize.medium;
     final collapsed = isMedium || _collapsed;
     final railWidth = collapsed ? 76.0 : 244.0;
+    final subKey = _subPageTitleKey(widget.location);
+    final dark = Theme.of(context).brightness == Brightness.dark;
 
+    // The ambient backdrop is painted app-wide; the floating glass topbar and
+    // nav rail sit over it, with the content area between/below them. The outer
+    // SafeArea consumes the status-bar inset once (so context.topGutter stays 0
+    // for pages, as before).
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      body: Row(
+      body: Stack(
         children: [
-          _NavRail(
-            location: widget.location,
-            collapsed: collapsed,
-            width: railWidth,
-            canToggle: !isMedium,
-            onToggle: () => setState(() => _collapsed = !_collapsed),
-          ),
-          Expanded(
-            child: Column(
-              children: [
-                _HinataTopBar(location: widget.location, compact: false),
-                // The top bar already consumes the status-bar inset, so zero the
-                // top padding for the content — keeps context.topGutter at 0 on
-                // wide layouts (no overlay app bar there).
-                Expanded(
-                  child: MediaQuery.removePadding(
-                    context: context,
-                    removeTop: true,
-                    child: widget.child,
+          Positioned.fill(child: AmbientBackground(dark: dark)),
+          Positioned.fill(
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+                    child: _GlassFloatingTopBar(location: widget.location),
                   ),
-                ),
-              ],
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _NavRail(
+                          location: widget.location,
+                          collapsed: collapsed,
+                          width: railWidth,
+                          canToggle: !isMedium,
+                          onToggle: () =>
+                              setState(() => _collapsed = !_collapsed),
+                        ),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              // Sub-pages keep a slim back + title bar (the floating
+                              // topbar carries no breadcrumb); primary pages render
+                              // their own PageHead instead.
+                              if (subKey != null)
+                                _SubPageBar(
+                                  location: widget.location,
+                                  titleKey: subKey,
+                                ),
+                              Expanded(child: widget.child),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -280,21 +307,45 @@ class _NavRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.select((AuthBloc bloc) => bloc.state.user);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 260),
       curve: Curves.easeInOut,
       width: width,
-      clipBehavior: Clip.hardEdge,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [AppColors.rail, AppColors.rail2],
-        ),
+      margin: const EdgeInsets.fromLTRB(16, 0, 0, 16),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2D2B55).withValues(alpha: 0.34),
+            blurRadius: 30,
+            spreadRadius: -12,
+            offset: const Offset(0, 14),
+          ),
+        ],
       ),
       child: Stack(
         children: [
+          // Frosted navy liquid glass: blur the ambient behind the rail and lay
+          // a slightly-translucent navy gradient over it so it reads as glass.
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppColors.rail.withValues(alpha: 0.84),
+                      AppColors.rail2.withValues(alpha: 0.84),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
           // Faint honeycomb texture pooling at the base of the rail.
           const Positioned(
             left: 0,
@@ -303,204 +354,137 @@ class _NavRail extends StatelessWidget {
             height: 240,
             child: HoneycombBackground(),
           ),
-          SafeArea(
-            child: Column(
-              // Centre every item on the rail's vertical axis when collapsed;
-              // left-align them in the expanded view.
-              crossAxisAlignment: collapsed
-                  ? CrossAxisAlignment.center
-                  : CrossAxisAlignment.start,
-              children: [
-                // Scrollable nav section so short viewports never overflow the
-                // rail; the footer (toggle + account) below stays pinned.
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: collapsed
-                          ? CrossAxisAlignment.center
-                          : CrossAxisAlignment.start,
-                      children: [
-                        // Logo
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: collapsed ? 18 : 20,
-                            vertical: 20,
-                          ),
-                          child: collapsed
-                              ? HexMark(size: 32, color: AppColors.accent)
-                              : Row(
-                                  children: [
-                                    HexMark(size: 28, color: AppColors.accent),
-                                    const SizedBox(width: 10),
-                                    const Text(
-                                      'hinata',
-                                      style: TextStyle(
-                                        fontFamily: AppTheme.fontBrand,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
-                                        letterSpacing: -0.4,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
+          Positioned.fill(
+            child: SafeArea(
+              child: Column(
+                // Centre every item on the rail's vertical axis when collapsed;
+                // left-align them in the expanded view.
+                crossAxisAlignment: collapsed
+                    ? CrossAxisAlignment.center
+                    : CrossAxisAlignment.start,
+                children: [
+                  // Scrollable nav section so short viewports never overflow the
+                  // rail; the footer (toggle + account) below stays pinned.
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: collapsed
+                            ? CrossAxisAlignment.center
+                            : CrossAxisAlignment.start,
+                        children: [
+                          // Brand now lives in the floating topbar; the rail opens
+                          // straight into its actions.
+                          const SizedBox(height: 16),
 
-                        // New issue CTA
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: collapsed ? 12 : 16,
-                            vertical: 4,
-                          ),
-                          child: collapsed
-                              ? _RailIconButton(
-                                  icon: LucideIcons.plus,
-                                  active: false,
-                                  amber: true,
-                                  tooltip: context.t('issues.new'),
-                                  onTap: () => context.go('/issues'),
-                                )
-                              : DecoratedBox(
-                                  // Soft honey glow beneath the CTA (matches the web
-                                  // prototype's box-shadow: 0 6px 18px -8px amber/0.7).
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(
-                                      AppTheme.radiusControl,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.accent.withValues(
-                                          alpha: 0.45,
-                                        ),
-                                        blurRadius: 18,
-                                        spreadRadius: -6,
-                                        offset: const Offset(0, 6),
+                          // New issue CTA
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: collapsed ? 12 : 16,
+                              vertical: 4,
+                            ),
+                            child: collapsed
+                                ? _RailIconButton(
+                                    icon: LucideIcons.plus,
+                                    active: false,
+                                    amber: true,
+                                    tooltip: context.t('issues.new'),
+                                    onTap: () => context.go('/issues'),
+                                  )
+                                : DecoratedBox(
+                                    // Soft honey glow beneath the CTA (matches the web
+                                    // prototype's box-shadow: 0 6px 18px -8px amber/0.7).
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(
+                                        AppTheme.radiusControl,
                                       ),
-                                    ],
-                                  ),
-                                  child: SizedBox(
-                                    width: double.infinity,
-                                    child: FilledButton.icon(
-                                      onPressed: () => context.go('/issues'),
-                                      style: FilledButton.styleFrom(
-                                        backgroundColor: AppColors.accent,
-                                        foregroundColor: const Color(
-                                          0xFF2A2410,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.accent.withValues(
+                                            alpha: 0.45,
+                                          ),
+                                          blurRadius: 18,
+                                          spreadRadius: -6,
+                                          offset: const Offset(0, 6),
                                         ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            AppTheme.radiusControl,
+                                      ],
+                                    ),
+                                    child: SizedBox(
+                                      width: double.infinity,
+                                      child: FilledButton.icon(
+                                        onPressed: () => context.go('/issues'),
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: AppColors.accent,
+                                          foregroundColor: const Color(
+                                            0xFF2A2410,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              AppTheme.radiusControl,
+                                            ),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 12,
+                                          ),
+                                          textStyle: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13.5,
                                           ),
                                         ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 12,
+                                        icon: const Icon(
+                                          LucideIcons.plus,
+                                          size: 18,
                                         ),
-                                        textStyle: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 13.5,
-                                        ),
+                                        label: Text(context.t('issues.new')),
                                       ),
-                                      icon: const Icon(
-                                        LucideIcons.plus,
-                                        size: 18,
-                                      ),
-                                      label: Text(context.t('issues.new')),
                                     ),
                                   ),
-                                ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Primary group
-                        if (!collapsed) _RailGroupLabel('WORK'),
-                        for (final dest in _primary)
-                          _RailItem(
-                            destination: dest,
-                            selected: _isActive(location, dest.route),
-                            collapsed: collapsed,
                           ),
 
-                        const SizedBox(height: 8),
-                        if (!collapsed) _RailGroupLabel('PLAN'),
-                        for (final dest in _secondary)
-                          _RailItem(
-                            destination: dest,
-                            selected: _isActive(location, dest.route),
-                            collapsed: collapsed,
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
+                          const SizedBox(height: 16),
 
-                // Collapse / expand toggle — desktop only, sits above the user.
-                if (canToggle && onToggle != null)
-                  _CollapseToggle(collapsed: collapsed, onToggle: onToggle!),
-
-                if (!collapsed)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: InkWell(
-                      onTap: () => context.go('/settings'),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Row(
-                        children: [
-                          AppAvatar(
-                            name: user?.displayName ?? '?',
-                            imageUrl: user?.avatarUrl,
-                            radius: 16,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  user?.displayName ?? '',
-                                  style: const TextStyle(
-                                    color: AppColors.railInk,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  user?.email ?? '',
-                                  style: const TextStyle(
-                                    color: AppColors.railFaint,
-                                    fontSize: 11,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                          // Primary group
+                          if (!collapsed) _RailGroupLabel('WORK'),
+                          for (final dest in _primary)
+                            _RailItem(
+                              destination: dest,
+                              selected: _isActive(location, dest.route),
+                              collapsed: collapsed,
                             ),
-                          ),
+
+                          const SizedBox(height: 8),
+                          if (!collapsed) _RailGroupLabel('PLAN'),
+                          for (final dest in _secondary)
+                            _RailItem(
+                              destination: dest,
+                              selected: _isActive(location, dest.route),
+                              collapsed: collapsed,
+                            ),
                         ],
                       ),
                     ),
-                  )
-                else
+                  ),
+
+                  // Collapse / expand toggle — desktop only, sits above the user.
+                  if (canToggle && onToggle != null)
+                    _CollapseToggle(collapsed: collapsed, onToggle: onToggle!),
+
+                  // Settings entry — a standard rail item so it matches the nav
+                  // above (icon + label expanded, icon-only collapsed).
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Center(
-                      child: InkWell(
-                        onTap: () => context.go('/settings'),
-                        borderRadius: BorderRadius.circular(20),
-                        child: AppAvatar(
-                          name: user?.displayName ?? '?',
-                          imageUrl: user?.avatarUrl,
-                          radius: 16,
-                        ),
+                    padding: const EdgeInsets.only(top: 4, bottom: 8),
+                    child: _RailItem(
+                      destination: const _Destination(
+                        '/settings',
+                        'nav.settings',
+                        LucideIcons.settings,
                       ),
+                      selected: _isActive(location, '/settings'),
+                      collapsed: collapsed,
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -727,125 +711,123 @@ class _RailIconButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────── App top bar ───────────────────────────────────
-// Shared across every screen size. Left → right: brand mark (compact only),
-// breadcrumb, global search, notification bell (with unread dot + popover),
-// settings. The bell + settings live here so they never disappear on mobile.
+// ─────────────────────── Desktop / tablet floating topbar ──────────────────
+// A full-width floating glass bar: brand mark + wordmark (left), a centred ⌘K
+// search pill, and the notification bell + avatar (→ settings) on the right.
+// The compact shell keeps its own overlay glass app bar (_GlassTopBar).
 
-class _HinataTopBar extends StatelessWidget {
-  const _HinataTopBar({required this.location, required this.compact});
+class _GlassFloatingTopBar extends StatelessWidget {
+  const _GlassFloatingTopBar({required this.location});
 
   final String location;
-  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    // Sub-page → back button + the page's own title; primary nav page → the
-    // workspace breadcrumb.
-    final subKey = _subPageTitleKey(location);
-    final String titleText;
-    VoidCallback? onBack;
-    if (subKey != null) {
-      final chrome = PageChromeScope.of(context);
-      titleText = chrome.titleFor(location) ?? context.t(subKey);
-      final override = chrome.onBackFor(location);
-      onBack = () => _handleBack(context, location, override);
-    } else {
-      final all = [..._primary, ..._secondary];
-      final current = all.firstWhere(
-        (d) => _isActive(location, d.route),
-        orElse: () =>
-            const _Destination('/', 'nav.dashboard', LucideIcons.house),
-      );
-      titleText = context.t(current.labelKey);
-    }
-    final segStyle = TextStyle(fontSize: 13, color: AppColors.inkSoft);
-    final curStyle = TextStyle(
-      fontSize: 13,
-      fontWeight: FontWeight.w600,
-      color: AppColors.ink,
-    );
-
-    return DecoratedBox(
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final user = context.select((AuthBloc bloc) => bloc.state.user);
+    return Container(
+      height: 60,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
       decoration: BoxDecoration(
-        color: AppColors.canvas,
-        border: Border(bottom: BorderSide(color: AppColors.hairline)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.hairline),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2D2B55).withValues(alpha: dark ? .34 : .10),
+            blurRadius: 26,
+            spreadRadius: -10,
+            offset: const Offset(0, 12),
+          ),
+        ],
       ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 16 : 28,
-            vertical: 11,
+      child: Row(
+        children: [
+          HexMark(size: 26, color: dark ? AppColors.accent : AppColors.navy),
+          const SizedBox(width: 11),
+          Text(
+            'hinata',
+            style: TextStyle(
+              fontFamily: AppTheme.fontBrand,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.4,
+              color: AppColors.ink,
+            ),
           ),
-          child: Row(
-            children: [
-              if (compact) ...[
-                HexMark(size: 26, color: AppColors.accent),
-                const SizedBox(width: 12),
-              ],
-              // Breadcrumb zone. A single Expanded absorbs all free space (so the
-              // search + actions sit flush right) and shrinks/ellipsises under
-              // pressure (so nothing overflows on narrow widths). On a sub-page
-              // it becomes a back button + the page title.
-              if (onBack != null) ...[
-                IconButton(
-                  onPressed: onBack,
-                  visualDensity: VisualDensity.compact,
-                  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                  icon: Icon(
-                    LucideIcons.arrowLeft,
-                    size: 20,
-                    color: AppColors.inkSoft,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    titleText,
-                    style: curStyle,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ] else
-                Expanded(
-                  child: Row(
-                    children: [
-                      if (!compact) ...[
-                        Text(context.t('appbar.workspace'), style: segStyle),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: Icon(
-                            LucideIcons.chevronRight,
-                            size: 16,
-                            color: AppColors.inkFaint,
-                          ),
-                        ),
-                      ],
-                      Flexible(
-                        child: Text(
-                          titleText,
-                          style: curStyle,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              const SizedBox(width: 16),
-              _TopSearchField(compact: compact),
-              const SizedBox(width: 8),
-              _NotificationBell(active: location.startsWith('/notifications')),
-              const SizedBox(width: 4),
-              _TopIconButton(
-                icon: LucideIcons.settings,
-                tooltip: context.t('nav.settings'),
-                active: location.startsWith('/settings'),
+          const Expanded(
+            child: Center(
+              child: _TopSearchField(compact: false, maxWidth: 520),
+            ),
+          ),
+          const SizedBox(width: 6),
+          _NotificationBell(active: location.startsWith('/notifications')),
+          const SizedBox(width: 10),
+          Tooltip(
+            message: context.t('nav.settings'),
+            child: Material(
+              color: Colors.transparent,
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
                 onTap: () => context.go('/settings'),
+                child: Padding(
+                  padding: const EdgeInsets.all(1),
+                  child: AppAvatar(
+                    name: user?.displayName ?? '?',
+                    imageUrl: user?.avatarUrl,
+                    radius: 18,
+                  ),
+                ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Slim contextual bar shown on sub-pages under the floating topbar: a back
+/// button + the page's title (published via [PageChrome]).
+class _SubPageBar extends StatelessWidget {
+  const _SubPageBar({required this.location, required this.titleKey});
+
+  final String location;
+  final String titleKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final chrome = PageChromeScope.of(context);
+    final title = chrome.titleFor(location) ?? context.t(titleKey);
+    final override = chrome.onBackFor(location);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 24, 0),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => _handleBack(context, location, override),
+            visualDensity: VisualDensity.compact,
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            icon: Icon(
+              LucideIcons.arrowLeft,
+              size: 20,
+              color: AppColors.inkSoft,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -853,9 +835,10 @@ class _HinataTopBar extends StatelessWidget {
 
 /// Pill global-search field. Collapses to a single icon button on compact.
 class _TopSearchField extends StatelessWidget {
-  const _TopSearchField({required this.compact});
+  const _TopSearchField({required this.compact, this.maxWidth = 300});
 
   final bool compact;
+  final double maxWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -867,7 +850,7 @@ class _TopSearchField extends StatelessWidget {
       );
     }
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 300, maxHeight: 38),
+      constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: 38),
       child: Material(
         color: AppColors.surface,
         shape: RoundedRectangleBorder(
@@ -1513,6 +1496,9 @@ class _CompactShellState extends State<_CompactShell> {
       // context.topGutter / context.bottomGutter while still blurring through.
       body: Stack(
         children: [
+          // App-wide ambient backdrop (same as the wide shell) so every screen
+          // — including the mobile dashboard — sits on the v2 canvas.
+          Positioned.fill(child: AmbientBackground(dark: dark)),
           Positioned.fill(
             child: Builder(
               builder: (context) {

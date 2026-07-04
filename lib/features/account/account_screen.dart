@@ -152,6 +152,18 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
+  /// Applies a language choice instantly (local cubit) and persists it to the
+  /// account so the backend localizes emails to the same language. Best-effort:
+  /// a failed sync leaves the UI language applied and the `Accept-Language`
+  /// header still carries it on every request.
+  void _setLanguage(String code) {
+    context.read<LocaleCubit>().setLocale(code);
+    if (_me?.locale == code) return;
+    _repo.updateMyProfile(locale: code).then((saved) {
+      if (mounted) setState(() => _me = saved);
+    }).catchError((_) {});
+  }
+
   Future<void> _changeAvatar() async {
     // Capture context-derived values up front so nothing reads `context` across
     // the upload's async gap.
@@ -1425,9 +1437,7 @@ class _AccountScreenState extends State<AccountScreen> {
               for (final entry in I18n.localeNames.entries)
                 DropdownMenuItem(value: entry.key, child: Text(entry.value)),
             ],
-            onChanged: (code) => code == null
-                ? null
-                : context.read<LocaleCubit>().setLocale(code),
+            onChanged: (code) => code == null ? null : _setLanguage(code),
           ),
         ),
         Divider(height: 1, color: AppColors.hairline2),

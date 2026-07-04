@@ -401,12 +401,12 @@ class _WarningNote extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(LucideIcons.triangleAlert, size: 15, color: hueInk(45)),
+          Icon(LucideIcons.triangleAlert, size: 15, color: hueChipText(45)),
           const SizedBox(width: 9),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontSize: 12, height: 1.4, color: hueInk(45)),
+              style: TextStyle(fontSize: 12, height: 1.4, color: hueChipText(45)),
             ),
           ),
         ],

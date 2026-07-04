@@ -52,26 +52,22 @@ class _DashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
+    // The ambient backdrop is now painted app-wide by the shell; the dashboard
+    // just renders its (glass) content on top of it.
     return BlocBuilder<FetchCubit<DashboardData>, FetchState<DashboardData>>(
       builder: (context, state) {
-        return Stack(
-          children: [
-            Positioned.fill(child: _AmbientBackground(dark: dark)),
-            RefreshIndicator(
-              color: AppColors.accent,
-              backgroundColor: AppColors.surface,
-              edgeOffset: context.topGutter,
-              onRefresh: () => context.read<FetchCubit<DashboardData>>().load(),
-              child: AsyncView(
-                isLoading: state.isLoading,
-                hasData: state.hasData,
-                errorKey: state.errorKey,
-                onRetry: () => context.read<FetchCubit<DashboardData>>().load(),
-                builder: (context) => _content(context, state.data!),
-              ),
-            ),
-          ],
+        return RefreshIndicator(
+          color: AppColors.accent,
+          backgroundColor: AppColors.surface,
+          edgeOffset: context.topGutter,
+          onRefresh: () => context.read<FetchCubit<DashboardData>>().load(),
+          child: AsyncView(
+            isLoading: state.isLoading,
+            hasData: state.hasData,
+            errorKey: state.errorKey,
+            onRetry: () => context.read<FetchCubit<DashboardData>>().load(),
+            builder: (context) => _content(context, state.data!),
+          ),
         );
       },
     );
@@ -163,59 +159,6 @@ class _DashboardView extends StatelessWidget {
 
   Widget _sprintCard(DashboardBoard? sprint) =>
       sprint == null ? const _SprintEmpty() : _SprintHero(sprint: sprint);
-}
-
-// ══════════════════════════ Ambient background ═════════════════════════════
-
-class _AmbientBackground extends StatelessWidget {
-  const _AmbientBackground({required this.dark});
-  final bool dark;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: dark
-              ? const [Color(0xFF131226), Color(0xFF1B1936), Color(0xFF171531)]
-              : const [Color(0xFFF0EEE6), Color(0xFFF5F3EC), Color(0xFFEFEBE0)],
-        ),
-      ),
-      child: Stack(
-        children: [
-          _blob(left: -140, top: -180, size: 560,
-              color: const Color(0xFFD9A032), opacity: dark ? .20 : .34),
-          _blob(right: -200, top: 260, size: 640,
-              color: dark ? const Color(0xFF5E58BE) : const Color(0xFF2D2B55),
-              opacity: dark ? .26 : .20),
-        ],
-      ),
-    );
-  }
-
-  Widget _blob({double? left, double? right, double? top,
-      required double size, required Color color, required double opacity}) {
-    return Positioned(
-      left: left,
-      right: right,
-      top: top,
-      child: IgnorePointer(
-        child: ImageFiltered(
-          imageFilter: ImageFilter.blur(sigmaX: 90, sigmaY: 90),
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color.withValues(alpha: opacity),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 // ══════════════════════════ Glass card ═════════════════════════════════════
