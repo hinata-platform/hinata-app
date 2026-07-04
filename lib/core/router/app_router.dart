@@ -8,9 +8,12 @@ import '../../features/account/account_screen.dart';
 import '../../features/admin/admin_screen.dart';
 import '../../features/admin/users/user_management_screen.dart';
 import '../../features/auth/accept_invite_screen.dart';
+import '../../features/auth/forgot_password_screen.dart';
 import '../../features/auth/login_screen.dart';
+import '../../features/auth/register_screen.dart';
 import '../../features/auth/reset_password_screen.dart';
 import '../../features/auth/sso_callback_screen.dart';
+import '../../features/auth/verify_email_screen.dart';
 import '../../features/board/board_screen.dart';
 import '../../features/board/project_boards_screen.dart';
 import '../../features/connect/connect_screen.dart';
@@ -66,7 +69,7 @@ GoRouter buildRouter({
   // being lost to the default /dashboard.
   const gates = {
     '/connect', '/connecting', '/setup', '/onboarding', '/login', '/update',
-    '/auth-callback',
+    '/auth-callback', '/register', '/forgot-password', '/verify-email',
   };
   String? pendingDeepLink;
 
@@ -99,7 +102,11 @@ GoRouter buildRouter({
       // (validate token → set password → auto-sign-in). Let them render
       // regardless of config/auth state; they set the server URL from the link
       // and navigate on themselves.
-      if (location == '/invite' || location == '/reset-password') return null;
+      if (location == '/invite' ||
+          location == '/reset-password' ||
+          location == '/verify-email') {
+        return null;
+      }
 
       switch (config) {
         case AppConfigStatus.initial:
@@ -130,8 +137,11 @@ GoRouter buildRouter({
         return '/onboarding';
       }
       if (authStatus != AuthStatus.authenticated) {
-        // /auth-callback carries the SSO token pair and signs the user in.
-        const allowed = {'/login', '/auth-callback'};
+        // /auth-callback carries the SSO token pair and signs the user in;
+        // /register + /forgot-password are the public logged-out auth flows.
+        const allowed = {
+          '/login', '/auth-callback', '/register', '/forgot-password',
+        };
         if (allowed.contains(location)) return null;
         parkIfDeepLink();
         return '/login';
@@ -170,6 +180,18 @@ GoRouter buildRouter({
         ),
       ),
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+      GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (_, _) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/verify-email',
+        builder: (_, state) => VerifyEmailScreen(
+          token: state.uri.queryParameters['token'] ?? '',
+          server: state.uri.queryParameters['server'],
+        ),
+      ),
       GoRoute(
         path: '/invite',
         builder: (_, state) => AcceptInviteScreen(
@@ -297,8 +319,15 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/admin/users',
-            pageBuilder: (_, state) =>
-                _transition(state, const UserManagementScreen()),
+            pageBuilder: (_, state) => _transition(
+              state,
+              UserManagementScreen(
+                // In-app links carry the focus user as `user`; the Connect relay
+                // (native email deep-link) delivers it as the relay `token`.
+                focusUserId: state.uri.queryParameters['user'] ??
+                    state.uri.queryParameters['token'],
+              ),
+            ),
           ),
         ],
       ),

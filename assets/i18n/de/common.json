@@ -71,7 +71,8 @@
     "invalidNumber": "Bitte eine gültige Zahl eingeben",
     "invalidProjectKey": "2–10 Zeichen, beginnend mit einem Buchstaben",
     "connection": "Server nicht erreichbar. Bitte Verbindung prüfen.",
-    "unexpected": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
+    "unexpected": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+    "passwordsDoNotMatch": "Passwörter stimmen nicht überein"
   },
   "connect": {
     "title": "Mit deinem Server verbinden",
@@ -188,7 +189,15 @@
     "twoFactorTitle": "Zwei-Faktor-Authentifizierung",
     "twoFactorSubtitle": "Gib den 6-stelligen Code deiner Authenticator-App oder einen Wiederherstellungscode ein.",
     "verify": "Bestätigen",
-    "backToSignIn": "Zurück zur Anmeldung"
+    "backToSignIn": "Zurück zur Anmeldung",
+    "forgotPassword": "Passwort vergessen?",
+    "noAccount": "Noch kein Konto?",
+    "createAccount": "Konto erstellen",
+    "haveAccount": "Bereits ein Konto?",
+    "signUp": "Registrieren",
+    "ssoOnlyTitle": "Single Sign-On",
+    "ssoOnlyBody": "Die Anmeldung mit Passwort ist für diesen Server deaktiviert. Melde dich über einen Anbieter unten an.",
+    "ssoOnlyNoProviders": "Die Anmeldung mit Passwort ist deaktiviert und es ist noch kein Single-Sign-On-Anbieter konfiguriert. Bitte wende dich an deine Administratorin oder deinen Administrator."
   },
   "update": {
     "title": "Update erforderlich",
@@ -992,11 +1001,22 @@
       "toastResetSent": "Passwort-Reset-E-Mail gesendet",
       "toastSessionsRevoked": "Sitzungen beendet",
       "toastDeleted": "Benutzer gelöscht",
-      "toastProfileUpdated": "Profil aktualisiert"
+      "toastProfileUpdated": "Profil aktualisiert",
+      "statusPending": "Wartet auf Freigabe",
+      "approve": "Freigeben",
+      "approved": "Registrierung freigegeben."
     },
     "iosStoreUrl": "iOS App-Store-URL",
     "androidStoreUrl": "Android Play-Store-URL",
-    "macosStoreUrl": "macOS App-Store-URL"
+    "macosStoreUrl": "macOS App-Store-URL",
+    "authTitle": "Authentifizierung",
+    "authHint": "Steuere, wie sich Nutzer anmelden und registrieren.",
+    "localAuthTitle": "Lokale Authentifizierung",
+    "localAuthHint": "Anmeldung, Registrierung und Passwort-Zurücksetzen mit E-Mail und Passwort erlauben. Ausschalten, um SSO zu erzwingen.",
+    "registrationTitle": "Öffentliche Registrierung",
+    "registrationHint": "Neuen Nutzern erlauben, sich über die Anmeldeseite selbst ein Konto zu erstellen.",
+    "approvalTitle": "Freigabe durch Admin erforderlich",
+    "approvalHint": "Neue Registrierungen müssen nach der E-Mail-Bestätigung von einem Admin freigegeben werden."
   },
   "audit": {
     "title": "Audit-Protokoll",
@@ -1604,7 +1624,8 @@
     "updatePassword": "Passwort aktualisieren",
     "invalidTitle": "Reset-Link ungültig",
     "invalidBody": "Dieser Link zum Zurücksetzen des Passworts fehlt oder ist ungültig. Bitte fordere einen neuen an.",
-    "goToLogin": "Zur Anmeldung"
+    "goToLogin": "Zur Anmeldung",
+    "confirmLabel": "Neues Passwort bestätigen"
   },
   "git": {
     "title": "Git-Integration",
@@ -1691,5 +1712,45 @@
     "smartCommitsHintPrefix": "Smart Commits sind aktiv — füge ",
     "smartCommitsHintOr": " oder ",
     "smartCommitsHintSuffix": " hinzu."
+  },
+  "register": {
+    "title": "Konto erstellen",
+    "subtitle": "Registriere dich, um loszulegen.",
+    "displayName": "Vollständiger Name",
+    "displayNameHint": "Erika Mustermann",
+    "email": "E-Mail",
+    "username": "Benutzername",
+    "usernameHint": "3-40 Zeichen: Buchstaben, Ziffern, . _ -",
+    "password": "Passwort",
+    "passwordHint": "Mindestens 10 Zeichen",
+    "confirmPassword": "Passwort bestätigen",
+    "submit": "Konto erstellen",
+    "haveAccount": "Bereits ein Konto?",
+    "signIn": "Anmelden",
+    "approvalHint": "Nachdem du deine E-Mail bestätigt hast, prüft eine Administratorin oder ein Administrator dein Konto, bevor du dich anmelden kannst.",
+    "checkEmailTitle": "Bestätige deine E-Mail",
+    "checkEmailBody": "Wir haben einen Bestätigungslink an {{email}} gesendet. Öffne ihn, um dein Konto zu aktivieren.",
+    "resend": "E-Mail erneut senden",
+    "resent": "Bestätigungs-E-Mail gesendet.",
+    "backToSignIn": "Zurück zur Anmeldung"
+  },
+  "forgotPassword": {
+    "title": "Passwort zurücksetzen",
+    "subtitle": "Gib deine E-Mail-Adresse ein und wir senden dir einen Link, um ein neues Passwort zu wählen.",
+    "email": "E-Mail",
+    "submit": "Link zum Zurücksetzen senden",
+    "sentTitle": "Prüfe dein Postfach",
+    "sentBody": "Falls ein Konto für {{email}} existiert, ist ein Link zum Zurücksetzen des Passworts unterwegs.",
+    "backToSignIn": "Zurück zur Anmeldung"
+  },
+  "verifyEmail": {
+    "verifying": "E-Mail wird bestätigt…",
+    "successTitle": "E-Mail bestätigt",
+    "successBody": "Alles bereit — du wirst zu deinem Dashboard weitergeleitet…",
+    "pendingTitle": "Fast geschafft",
+    "pendingBody": "Deine E-Mail ist bestätigt. Eine Administratorin oder ein Administrator muss dein Konto noch freigeben, bevor du dich anmelden kannst. Wir benachrichtigen dich per E-Mail.",
+    "invalidTitle": "Link ungültig oder abgelaufen",
+    "invalidBody": "Dieser Bestätigungslink ist ungültig oder abgelaufen. Registriere dich erneut, um einen neuen zu erhalten.",
+    "goToLogin": "Zur Anmeldung"
   }
 }

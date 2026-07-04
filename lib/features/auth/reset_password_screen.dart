@@ -30,6 +30,7 @@ class ResetPasswordScreen extends StatefulWidget {
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _password = TextEditingController();
+  final _confirm = TextEditingController();
 
   bool _submitting = false;
   bool _obscure = true;
@@ -55,6 +56,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   void dispose() {
     _password.dispose();
+    _confirm.dispose();
     super.dispose();
   }
 
@@ -163,10 +165,22 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 onPressed: () => setState(() => _obscure = !_obscure),
               ),
             ),
-            onFieldSubmitted: (_) => _submit(),
             validator: (v) => (v ?? '').length >= 10
                 ? null
                 : context.t('errors.passwordTooShort'),
+          ),
+          const SizedBox(height: 14),
+          TextFormField(
+            controller: _confirm,
+            obscureText: _obscure,
+            decoration: InputDecoration(
+              labelText: context.t('reset.confirmLabel'),
+              prefixIcon: const Icon(LucideIcons.lock),
+            ),
+            onFieldSubmitted: (_) => _submit(),
+            validator: (v) => (v == _password.text)
+                ? null
+                : context.t('errors.passwordsDoNotMatch'),
           ),
           if (_error != null) ...[
             const SizedBox(height: 8),

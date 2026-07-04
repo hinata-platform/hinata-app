@@ -44,6 +44,7 @@ Color _hue(double h, {double s = 0.5, double l = 0.5}) =>
   UserStatus.active => (_hue(155, s: .4, l: .92), _hue(155, s: .45, l: .38)),
   UserStatus.disabled => (_hue(20, s: .5, l: .93), _hue(20, s: .5, l: .47)),
   UserStatus.invited => (_hue(45, s: .6, l: .92), _hue(45, s: .55, l: .42)),
+  UserStatus.pendingApproval => (_hue(265, s: .5, l: .93), _hue(265, s: .5, l: .5)),
 };
 
 Color originColor(UserOrigin origin) => switch (origin) {
@@ -60,6 +61,7 @@ IconData statusIcon(UserStatus status) => switch (status) {
   UserStatus.active => LucideIcons.circleCheck,
   UserStatus.disabled => LucideIcons.ban,
   UserStatus.invited => LucideIcons.mail,
+  UserStatus.pendingApproval => LucideIcons.clock,
 };
 
 String roleLabel(BuildContext c, AdminRole r) =>
@@ -69,6 +71,7 @@ String statusLabel(BuildContext c, UserStatus s) => c.t(switch (s) {
   UserStatus.active => 'admin.um.statusActive',
   UserStatus.disabled => 'admin.um.statusDisabled',
   UserStatus.invited => 'admin.um.statusInvited',
+  UserStatus.pendingApproval => 'admin.um.statusPending',
 });
 
 String originLabel(UserOrigin o) => switch (o) {
@@ -377,6 +380,7 @@ class UserActions {
     required this.openDrawer,
     required this.openEdit,
     required this.activate,
+    required this.approve,
     required this.openDeactivate,
     required this.setRole,
     required this.openDemote,
@@ -392,6 +396,7 @@ class UserActions {
   final void Function(AdminUser u) openDrawer;
   final void Function(AdminUser u) openEdit;
   final void Function(List<String> ids) activate;
+  final void Function(List<String> ids) approve;
   final void Function(List<String> ids) openDeactivate;
   final void Function(List<String> ids, AdminRole role) setRole;
   final void Function(List<String> ids) openDemote;
@@ -450,6 +455,18 @@ class UserRowMenu extends StatelessWidget {
           label: context.t('admin.um.deactivate'),
           dividerAbove: true,
           leading: const Icon(LucideIcons.ban, size: 16),
+        )
+      else if (u.status == UserStatus.pendingApproval)
+        GlassMenuItem(
+          value: 'approve',
+          label: context.t('admin.um.approve'),
+          color: AppColors.success,
+          dividerAbove: true,
+          leading: const Icon(
+            LucideIcons.userCheck,
+            size: 16,
+            color: AppColors.success,
+          ),
         )
       else
         GlassMenuItem(
@@ -535,6 +552,8 @@ class UserRowMenu extends StatelessWidget {
         actions.openDeactivate(ids);
       case 'activate':
         actions.activate(ids);
+      case 'approve':
+        actions.approve(ids);
       case 'promote':
         actions.setRole(ids, AdminRole.admin);
       case 'demote':
@@ -571,6 +590,7 @@ class BulkActionBar extends StatelessWidget {
     final invited = _ids((u) => u.status == UserStatus.invited);
     final disabled = _ids((u) => u.status == UserStatus.disabled);
     final active = _ids((u) => u.status == UserStatus.active);
+    final pending = _ids((u) => u.status == UserStatus.pendingApproval);
     final nonAdmin = _ids(
       (u) => u.role != AdminRole.admin && u.status != UserStatus.invited,
     );
@@ -617,6 +637,12 @@ class BulkActionBar extends StatelessWidget {
               icon: LucideIcons.send,
               label: context.t('admin.um.resend'),
               onTap: () => actions.openResend(invited),
+            ),
+          if (pending.isNotEmpty)
+            _BulkBtn(
+              icon: LucideIcons.userCheck,
+              label: context.t('admin.um.approve'),
+              onTap: () => actions.approve(pending),
             ),
           if (disabled.isNotEmpty)
             _BulkBtn(
@@ -1038,6 +1064,19 @@ class UserDrawerBody extends StatelessWidget {
           onTap: () {
             close();
             actions.openDeactivate([u.id]);
+          },
+        ),
+      );
+    } else if (u.status == UserStatus.pendingApproval) {
+      rows.add(
+        _ActRow(
+          icon: LucideIcons.userCheck,
+          success: true,
+          title: context.t('admin.um.approve'),
+          subtitle: context.t('admin.approvalHint'),
+          onTap: () {
+            close();
+            actions.approve([u.id]);
           },
         ),
       );

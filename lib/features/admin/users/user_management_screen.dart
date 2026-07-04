@@ -23,7 +23,11 @@ import 'user_management_widgets.dart';
 /// user with search, role/status/origin filters, sortable columns, a per-user
 /// detail drawer, bulk actions and the full account lifecycle. Admin-gated.
 class UserManagementScreen extends StatefulWidget {
-  const UserManagementScreen({super.key});
+  const UserManagementScreen({super.key, this.focusUserId});
+
+  /// When set (e.g. from an admin approval deep-link `?user=<id>`), the matching
+  /// user's detail drawer is opened automatically once the board has loaded.
+  final String? focusUserId;
 
   @override
   State<UserManagementScreen> createState() => _UserManagementScreenState();
@@ -46,6 +50,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   final Set<String> _sel = {};
 
+  /// Guards the one-shot deep-link drawer open so filter/page reloads don't
+  /// keep re-opening it.
+  bool _focusHandled = false;
+
   HinataRepository get _repo => context.read<HinataRepository>();
   String? get _currentUserId => context.read<AuthBloc>().state.user?.id;
 
@@ -53,6 +61,21 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  /// Opens the drawer for [UserManagementScreen.focusUserId] once, fetching the
+  /// user directly so it works regardless of the current filters or page.
+  Future<void> _openFocusedUser() async {
+    final id = widget.focusUserId;
+    if (id == null || id.isEmpty || _focusHandled) return;
+    _focusHandled = true;
+    try {
+      final user = await _repo.adminUser(id);
+      if (!mounted) return;
+      _actions.openDrawer(user);
+    } on ApiFailure {
+      // User was deleted/not found — silently stay on the board.
+    }
   }
 
   @override
@@ -83,6 +106,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         _pageNum = page.page;
         _loading = false;
       });
+      _openFocusedUser();
     } on ApiFailure catch (failure) {
       if (!mounted) return;
       setState(() {
@@ -162,6 +186,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         ids.length == 1
             ? 'admin.um.toastActivated'
             : 'admin.um.toastActivatedMany',
+        clearSel: true,
+      ),
+      approve: (ids) => _run(
+        () => _repo.adminApproveUsers(ids),
+        'admin.um.approved',
         clearSel: true,
       ),
       openDeactivate: (ids) async {
@@ -472,6 +501,21 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           _statusF == UserStatus.invited ? null : UserStatus.invited,
         ),
       ),
+      // Only surfaced when the admin-approval flag has produced pending sign-ups.
+      if (c.pendingApproval > 0)
+        UmKpiCard(
+          icon: LucideIcons.clock,
+          iconBg: const Color(0x14673AB7),
+          iconFg: const Color(0xFF673AB7),
+          value: '${c.pendingApproval}',
+          label: context.t('admin.um.statusPending'),
+          active: _statusF == UserStatus.pendingApproval,
+          onTap: () => _setStatusFilter(
+            _statusF == UserStatus.pendingApproval
+                ? null
+                : UserStatus.pendingApproval,
+          ),
+        ),
     ];
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -534,6 +578,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             (UserStatus.active, context.t('admin.um.statusActive')),
             (UserStatus.disabled, context.t('admin.um.statusDisabled')),
             (UserStatus.invited, context.t('admin.um.statusInvited')),
+            (UserStatus.pendingApproval, context.t('admin.um.statusPending')),
           ],
           onChanged: _setStatusFilter,
         ),

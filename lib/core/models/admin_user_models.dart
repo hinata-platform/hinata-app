@@ -36,13 +36,15 @@ enum UserOrigin {
 enum UserStatus {
   active,
   disabled,
-  invited;
+  invited,
+  pendingApproval;
 
-  String get wire => name.toUpperCase();
+  String get wire => this == UserStatus.pendingApproval ? 'PENDING' : name.toUpperCase();
 
   static UserStatus fromWire(String? value) => switch (value) {
     'DISABLED' => UserStatus.disabled,
     'INVITED' => UserStatus.invited,
+    'PENDING' => UserStatus.pendingApproval,
     _ => UserStatus.active,
   };
 }
@@ -138,6 +140,7 @@ class AdminUserCounts {
     required this.expiredInvites,
     required this.disabled,
     required this.activeAdmins,
+    this.pendingApproval = 0,
   });
 
   final int total;
@@ -147,6 +150,7 @@ class AdminUserCounts {
   final int expiredInvites;
   final int disabled;
   final int activeAdmins;
+  final int pendingApproval;
 
   static int _int(dynamic v) => (v as num?)?.toInt() ?? 0;
 
@@ -159,6 +163,7 @@ class AdminUserCounts {
         expiredInvites: _int(json['expiredInvites']),
         disabled: _int(json['disabled']),
         activeAdmins: _int(json['activeAdmins']),
+        pendingApproval: _int(json['pendingApproval']),
       );
 
   static const empty = AdminUserCounts(

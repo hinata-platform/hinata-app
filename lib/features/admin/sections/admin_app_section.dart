@@ -71,6 +71,35 @@ class _AdminAppSectionState extends State<AdminAppSection> {
         ),
         const SizedBox(height: 16),
         AdminSectionCard(
+          icon: LucideIcons.lockKeyhole,
+          title: context.t('admin.authTitle'),
+          subtitle: context.t('admin.authHint'),
+          children: [
+            _PlatformToggle(
+              title: context.t('admin.localAuthTitle'),
+              description: context.t('admin.localAuthHint'),
+              value: _app['localAuthEnabled'] != false,
+              onChanged: (v) => setState(() => _app['localAuthEnabled'] = v),
+            ),
+            const SizedBox(height: 14),
+            _PlatformToggle(
+              title: context.t('admin.registrationTitle'),
+              description: context.t('admin.registrationHint'),
+              value: _app['registrationEnabled'] != false,
+              onChanged: (v) => setState(() => _app['registrationEnabled'] = v),
+            ),
+            const SizedBox(height: 14),
+            _PlatformToggle(
+              title: context.t('admin.approvalTitle'),
+              description: context.t('admin.approvalHint'),
+              value: _app['requireAdminApproval'] == true,
+              onChanged: (v) =>
+                  setState(() => _app['requireAdminApproval'] = v),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        AdminSectionCard(
           icon: LucideIcons.slidersHorizontal,
           title: context.t('admin.platformTitle'),
           subtitle: context.t('admin.platformHint'),

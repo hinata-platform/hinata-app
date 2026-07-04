@@ -135,6 +135,47 @@ class HinataRepository {
     );
   }
 
+  /// Registers a new local account. The server always answers 202 (it never
+  /// reveals whether the email already exists) and emails a verification link.
+  Future<void> register({
+    required String email,
+    required String username,
+    required String displayName,
+    required String password,
+  }) => _api.post('/api/v1/auth/register', body: {
+        'email': email,
+        'username': username,
+        'displayName': displayName,
+        'password': password,
+      });
+
+  /// Resends the email-verification link. Always succeeds (anti-enumeration).
+  Future<void> resendVerification(String email) =>
+      _api.post('/api/v1/auth/resend-verification', body: {'email': email});
+
+  /// Confirms an email from the verification link. Returns either a token pair
+  /// (verified → signed in) or [pendingApproval] when an admin must approve.
+  Future<({bool pendingApproval, String? access, String? refresh})> verifyEmail(
+    String token,
+  ) async {
+    final data =
+        await _api.post(
+              '/api/v1/auth/verify-email',
+              body: {'token': token},
+            )
+            as Map<String, dynamic>;
+    return (
+      pendingApproval: data['pendingApproval'] as bool? ?? false,
+      access: data['accessToken'] as String?,
+      refresh: data['refreshToken'] as String?,
+    );
+  }
+
+  /// Requests a password-reset email (forgot-password). Always succeeds; the
+  /// server never reveals whether the address maps to an account.
+  Future<void> requestPasswordReset(String email) =>
+      _api.post('/api/v1/auth/reset/request', body: {'email': email});
+
   /// Completes a 2FA login challenge. [mfaToken] comes from the login response;
   /// [code] is a current TOTP or a recovery code. Returns a real token pair.
   Future<({String access, String refresh, AuthUser user})> verifyTwoFactor(
@@ -1083,6 +1124,16 @@ class HinataRepository {
   Future<void> adminSetStatus(List<String> ids, UserStatus status) => _api.post(
     '/api/v1/admin/users/status',
     body: {'ids': ids, 'status': status.wire},
+  );
+
+  /// Approves verified self-registrations awaiting admin sign-off.
+  Future<void> adminApproveUsers(List<String> ids) =>
+      _api.post('/api/v1/admin/users/approve', body: {'ids': ids});
+
+  /// Fetches a single user for the admin board (e.g. an approval deep-link that
+  /// opens straight to the user's detail drawer).
+  Future<AdminUser> adminUser(String id) async => AdminUser.fromJson(
+    await _api.get('/api/v1/admin/users/$id') as Map<String, dynamic>,
   );
 
   Future<void> adminSetRole(List<String> ids, AdminRole role) => _api.post(

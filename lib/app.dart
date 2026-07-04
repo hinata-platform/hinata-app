@@ -165,6 +165,8 @@ class _HinataAppState extends State<HinataApp> {
           await _openTokenFlow(uri, '/invite');
         case 'reset-password':
           await _openTokenFlow(uri, '/reset-password');
+        case 'verify-email':
+          await _openTokenFlow(uri, '/verify-email');
       }
       return;
     }
@@ -181,6 +183,8 @@ class _HinataAppState extends State<HinataApp> {
         await _openTokenFlow(uri, '/invite');
       } else if (uri.path.startsWith('/reset-password')) {
         await _openTokenFlow(uri, '/reset-password');
+      } else if (uri.path.startsWith('/verify-email')) {
+        await _openTokenFlow(uri, '/verify-email');
       } else if (uri.path.isNotEmpty && uri.path != '/') {
         _router.go(uri.hasQuery ? '${uri.path}?${uri.query}' : uri.path);
       }

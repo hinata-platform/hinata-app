@@ -78,6 +78,15 @@ class _LoginScreenState extends State<LoginScreen> {
     final organization = context.select(
       (AppConfigBloc bloc) => bloc.state.meta?.organizationName,
     );
+    // Local email/password auth can be disabled server-side (SSO-only mode);
+    // and self-registration can be closed independently. Default on for servers
+    // that predate the flags.
+    final localAuth = context.select(
+      (AppConfigBloc bloc) => bloc.state.meta?.localAuthEnabled ?? true,
+    );
+    final registrationEnabled = context.select(
+      (AppConfigBloc bloc) => bloc.state.meta?.registrationEnabled ?? true,
+    );
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -124,61 +133,76 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            context.t('auth.subtitle'),
+                            localAuth
+                                ? context.t('auth.subtitle')
+                                : context.t('auth.ssoOnlyBody'),
                             textAlign: TextAlign.center,
                             style: TextStyle(color: AppColors.textSecondary),
                           ),
-                          const SizedBox(height: 28),
-                          TextFormField(
-                            controller: _identifier,
-                            enabled: !busy,
-                            autofillHints: const [AutofillHints.username],
-                            decoration: InputDecoration(
-                              labelText: context.t('auth.identifier'),
-                              prefixIcon: const Icon(LucideIcons.user),
+                          if (localAuth) ...[
+                            const SizedBox(height: 28),
+                            TextFormField(
+                              controller: _identifier,
+                              enabled: !busy,
+                              autofillHints: const [AutofillHints.username],
+                              decoration: InputDecoration(
+                                labelText: context.t('auth.identifier'),
+                                prefixIcon: const Icon(LucideIcons.user),
+                              ),
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? context.t('errors.required')
+                                  : null,
                             ),
-                            validator: (v) => (v == null || v.trim().isEmpty)
-                                ? context.t('errors.required')
-                                : null,
-                          ),
-                          const SizedBox(height: 14),
-                          TextFormField(
-                            controller: _password,
-                            enabled: !busy,
-                            obscureText: true,
-                            autofillHints: const [AutofillHints.password],
-                            decoration: InputDecoration(
-                              labelText: context.t('auth.password'),
-                              prefixIcon: const Icon(LucideIcons.lock),
+                            const SizedBox(height: 14),
+                            TextFormField(
+                              controller: _password,
+                              enabled: !busy,
+                              obscureText: true,
+                              autofillHints: const [AutofillHints.password],
+                              decoration: InputDecoration(
+                                labelText: context.t('auth.password'),
+                                prefixIcon: const Icon(LucideIcons.lock),
+                              ),
+                              validator: (v) => (v == null || v.isEmpty)
+                                  ? context.t('errors.required')
+                                  : null,
+                              onFieldSubmitted: (_) => _submit(),
                             ),
-                            validator: (v) => (v == null || v.isEmpty)
-                                ? context.t('errors.required')
-                                : null,
-                            onFieldSubmitted: (_) => _submit(),
-                          ),
-                          const SizedBox(height: 24),
-                          FilledButton(
-                            onPressed: busy ? null : _submit,
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 200),
-                              child: passwordBusy
-                                  ? const SizedBox(
-                                      key: ValueKey('loader'),
-                                      width: 22,
-                                      height: 22,
-                                      child: HiveLoader(
-                                        size: 22,
-                                        strokeWidth: 2,
-                                        color: Colors.white,
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: busy
+                                    ? null
+                                    : () => context.go('/forgot-password'),
+                                child: Text(context.t('auth.forgotPassword')),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            FilledButton(
+                              onPressed: busy ? null : _submit,
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 200),
+                                child: passwordBusy
+                                    ? const SizedBox(
+                                        key: ValueKey('loader'),
+                                        width: 22,
+                                        height: 22,
+                                        child: HiveLoader(
+                                          size: 22,
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : Text(
+                                        context.t('auth.signIn'),
+                                        key: const ValueKey('label'),
                                       ),
-                                    )
-                                  : Text(
-                                      context.t('auth.signIn'),
-                                      key: const ValueKey('label'),
-                                    ),
+                              ),
                             ),
-                          ),
-                          if (_providers.isNotEmpty) ...[
+                          ],
+                          // The "or" divider only makes sense when both local
+                          // sign-in and SSO are offered.
+                          if (localAuth && _providers.isNotEmpty) ...[
                             const SizedBox(height: 24),
                             Row(
                               children: [
@@ -197,6 +221,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 const Expanded(child: Divider()),
                               ],
                             ),
+                          ],
+                          // SSO buttons are shown whenever a provider exists,
+                          // including SSO-only mode (localAuth == false).
+                          if (_providers.isNotEmpty) ...[
                             const SizedBox(height: 16),
                             for (final provider in _providers)
                               Padding(
@@ -243,6 +271,36 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                               ),
+                          ],
+                          // SSO-only, but no provider configured yet — the user
+                          // has no way to sign in; point them at their admin.
+                          if (!localAuth && _providers.isEmpty) ...[
+                            const SizedBox(height: 16),
+                            Text(
+                              context.t('auth.ssoOnlyNoProviders'),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: AppColors.textSecondary),
+                            ),
+                          ],
+                          if (localAuth && registrationEnabled) ...[
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  context.t('auth.noAccount'),
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: busy
+                                      ? null
+                                      : () => context.go('/register'),
+                                  child: Text(context.t('auth.createAccount')),
+                                ),
+                              ],
+                            ),
                           ],
                         ],
                       ),

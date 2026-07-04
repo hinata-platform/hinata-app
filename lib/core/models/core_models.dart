@@ -23,6 +23,9 @@ class ServerMeta extends Equatable {
     this.androidStoreUrl = '',
     this.macosStoreUrl = '',
     this.featureFlags = const {},
+    this.localAuthEnabled = true,
+    this.registrationEnabled = true,
+    this.adminApprovalRequired = false,
     this.uploadLimits = const UploadLimits(),
   });
 
@@ -39,6 +42,18 @@ class ServerMeta extends Equatable {
   final String androidStoreUrl;
   final String macosStoreUrl;
   final Map<String, bool> featureFlags;
+
+  /// Whether local email/password auth (sign-in, sign-up, forgot-password) is
+  /// enabled. Off → the login screen shows SSO only. Defaults true for
+  /// backward-compatibility with servers that predate the flag.
+  final bool localAuthEnabled;
+
+  /// Whether the public self-registration (sign-up) flow is open.
+  final bool registrationEnabled;
+
+  /// Whether a verified sign-up still needs admin approval (shown as a hint on
+  /// the sign-up screen).
+  final bool adminApprovalRequired;
   final UploadLimits uploadLimits;
 
   factory ServerMeta.fromJson(Map<String, dynamic> json) => ServerMeta(
@@ -56,6 +71,9 @@ class ServerMeta extends Equatable {
     featureFlags: (json['featureFlags'] as Map<String, dynamic>? ?? {}).map(
       (k, v) => MapEntry(k, v == true),
     ),
+    localAuthEnabled: json['localAuthEnabled'] as bool? ?? true,
+    registrationEnabled: json['registrationEnabled'] as bool? ?? true,
+    adminApprovalRequired: json['adminApprovalRequired'] as bool? ?? false,
     uploadLimits: json['uploadLimits'] is Map<String, dynamic>
         ? UploadLimits.fromJson(json['uploadLimits'] as Map<String, dynamic>)
         : const UploadLimits(),
@@ -77,6 +95,9 @@ class ServerMeta extends Equatable {
     iosStoreUrl,
     androidStoreUrl,
     macosStoreUrl,
+    localAuthEnabled,
+    registrationEnabled,
+    adminApprovalRequired,
   ];
 }
 

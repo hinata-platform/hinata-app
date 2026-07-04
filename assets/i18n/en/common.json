@@ -71,7 +71,8 @@
     "invalidNumber": "Please enter a valid number",
     "invalidProjectKey": "2-10 characters, starting with a letter",
     "connection": "Could not reach the server. Please check your connection.",
-    "unexpected": "Something went wrong. Please try again."
+    "unexpected": "Something went wrong. Please try again.",
+    "passwordsDoNotMatch": "Passwords do not match"
   },
   "connect": {
     "title": "Connect to your server",
@@ -188,7 +189,15 @@
     "twoFactorTitle": "Two-factor authentication",
     "twoFactorSubtitle": "Enter the 6-digit code from your authenticator app, or a recovery code.",
     "verify": "Verify",
-    "backToSignIn": "Back to sign in"
+    "backToSignIn": "Back to sign in",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "createAccount": "Create account",
+    "haveAccount": "Already have an account?",
+    "signUp": "Sign up",
+    "ssoOnlyTitle": "Single sign-on",
+    "ssoOnlyBody": "Password sign-in is disabled for this server. Continue with a provider below.",
+    "ssoOnlyNoProviders": "Password sign-in is disabled and no single sign-on provider is configured yet. Please contact your administrator."
   },
   "update": {
     "title": "Update required",
@@ -992,11 +1001,22 @@
       "toastResetSent": "Password reset email sent",
       "toastSessionsRevoked": "Sessions revoked",
       "toastDeleted": "User(s) deleted",
-      "toastProfileUpdated": "Profile updated"
+      "toastProfileUpdated": "Profile updated",
+      "statusPending": "Pending approval",
+      "approve": "Approve",
+      "approved": "Registration approved."
     },
     "iosStoreUrl": "iOS App Store URL",
     "androidStoreUrl": "Android Play Store URL",
-    "macosStoreUrl": "macOS App Store URL"
+    "macosStoreUrl": "macOS App Store URL",
+    "authTitle": "Authentication",
+    "authHint": "Control how users sign in and register.",
+    "localAuthTitle": "Local authentication",
+    "localAuthHint": "Allow sign-in, sign-up and password reset with email and password. Turn off to require SSO.",
+    "registrationTitle": "Public sign-up",
+    "registrationHint": "Let new users create their own account from the sign-in screen.",
+    "approvalTitle": "Require admin approval",
+    "approvalHint": "New sign-ups must be approved by an admin after confirming their email."
   },
   "audit": {
     "title": "Audit log",
@@ -1604,7 +1624,8 @@
     "updatePassword": "Update password",
     "invalidTitle": "Reset link invalid",
     "invalidBody": "This password-reset link is missing or invalid. Please request a new one.",
-    "goToLogin": "Go to sign in"
+    "goToLogin": "Go to sign in",
+    "confirmLabel": "Confirm new password"
   },
   "git": {
     "title": "Git integration",
@@ -1691,5 +1712,45 @@
     "smartCommitsHintPrefix": "Smart commits are on — add ",
     "smartCommitsHintOr": " or ",
     "smartCommitsHintSuffix": "."
+  },
+  "register": {
+    "title": "Create your account",
+    "subtitle": "Sign up to get started.",
+    "displayName": "Full name",
+    "displayNameHint": "Jane Doe",
+    "email": "E-mail",
+    "username": "Username",
+    "usernameHint": "3-40 chars: letters, digits, . _ -",
+    "password": "Password",
+    "passwordHint": "At least 10 characters",
+    "confirmPassword": "Confirm password",
+    "submit": "Create account",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "approvalHint": "After you confirm your email, an administrator will review your account before you can sign in.",
+    "checkEmailTitle": "Confirm your email",
+    "checkEmailBody": "We've sent a confirmation link to {{email}}. Open it to activate your account.",
+    "resend": "Resend email",
+    "resent": "Verification email sent.",
+    "backToSignIn": "Back to sign in"
+  },
+  "forgotPassword": {
+    "title": "Reset your password",
+    "subtitle": "Enter your email and we'll send you a link to choose a new password.",
+    "email": "E-mail",
+    "submit": "Send reset link",
+    "sentTitle": "Check your inbox",
+    "sentBody": "If an account exists for {{email}}, a password-reset link is on its way.",
+    "backToSignIn": "Back to sign in"
+  },
+  "verifyEmail": {
+    "verifying": "Confirming your email…",
+    "successTitle": "Email confirmed",
+    "successBody": "You're all set — taking you to your dashboard…",
+    "pendingTitle": "Almost there",
+    "pendingBody": "Your email is confirmed. An administrator needs to approve your account before you can sign in. We'll let you know by email.",
+    "invalidTitle": "Link invalid or expired",
+    "invalidBody": "This confirmation link is invalid or has expired. Sign up again to receive a new one.",
+    "goToLogin": "Go to sign in"
   }
 }
