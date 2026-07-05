@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api/hinata_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
+import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
@@ -181,7 +182,11 @@ class _IssuesScreenState extends State<IssuesScreen> {
     _filter = IssueFilter.empty;
     _timeRange = IssueTimeRange.none;
     if (view == IssuesInitialView.today) {
-      _timeRange = const IssueTimeRange(preset: IssueTimePreset.today);
+      // "Today's tasks" = my open issues due today or overdue — the exact set the
+      // dashboard KPI counts, so the filtered list length matches the card.
+      final me = context.read<AuthBloc>().state.user?.id;
+      _filter = me == null ? IssueFilter.empty : IssueFilter(assignees: {me});
+      _timeRange = const IssueTimeRange(preset: IssueTimePreset.dueByToday);
       return;
     }
     final done = <String>{};
@@ -1041,6 +1046,7 @@ String _timeLabel(BuildContext context, IssueTimeRange r) {
   return switch (r.preset) {
     IssueTimePreset.all => context.t('issues.timeRange'),
     IssueTimePreset.overdue => context.t('issues.time.overdue'),
+    IssueTimePreset.dueByToday => context.t('issues.time.dueByToday'),
     IssueTimePreset.today => context.t('issues.time.today'),
     IssueTimePreset.thisWeek => context.t('issues.time.thisWeek'),
     IssueTimePreset.thisMonth => context.t('issues.time.thisMonth'),

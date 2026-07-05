@@ -462,6 +462,7 @@
     "time": {
       "all": "All time",
       "overdue": "Overdue",
+      "dueByToday": "Due by today",
       "today": "Today",
       "thisWeek": "This week",
       "thisMonth": "This month",

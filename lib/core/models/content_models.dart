@@ -459,6 +459,7 @@ class DashboardData extends Equatable {
     required this.completion,
     required this.ranking,
     required this.tracker,
+    this.todayCount = 0,
     this.trackerMonth = const [],
     this.activeBoard,
     this.gitActivity = const [],
@@ -467,6 +468,10 @@ class DashboardData extends Equatable {
   });
 
   final List<Issue> todayTasks;
+
+  /// Exact count of "today's tasks" (my open issues due today or overdue) — may
+  /// exceed [todayTasks] since that list is capped for display.
+  final int todayCount;
   final ProjectCompletion completion;
   final List<RankEntry> ranking;
   final List<TrackerDay> tracker;
@@ -480,6 +485,8 @@ class DashboardData extends Equatable {
         todayTasks: ((json['todayTasks'] as List<dynamic>?) ?? [])
             .map((i) => Issue.fromJson(i as Map<String, dynamic>))
             .toList(),
+        todayCount: (json['todayCount'] as num?)?.toInt() ??
+            ((json['todayTasks'] as List<dynamic>?) ?? const []).length,
         completion: ProjectCompletion.fromJson(
             (json['completion'] as Map<String, dynamic>?) ?? const {}),
         ranking: ((json['ranking'] as List<dynamic>?) ?? [])
@@ -508,6 +515,7 @@ class DashboardData extends Equatable {
   @override
   List<Object?> get props => [
         todayTasks,
+        todayCount,
         completion,
         ranking,
         tracker,

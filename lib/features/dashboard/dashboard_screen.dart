@@ -22,7 +22,7 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../issues/issue_detail_sheet.dart';
 import '../sprint/modals/glass_modal.dart'
-    show showGlassModal, GlassModalHeader, GlassModalFooter;
+    show showGlassAnchoredPopover, GlassModalHeader, GlassModalFooter;
 
 /// Exact segment colours for the completion donut / KPIs (design "Liquid Glass").
 const _cDone = Color(0xFF2E8B62);
@@ -237,7 +237,7 @@ class _DashboardViewState extends State<_DashboardView> {
       if (data.gitActivity.isNotEmpty) (_Card.git, _GitCard(events: data.gitActivity)),
     ];
     final right = <(String, Widget)>[
-      (_Card.kpis, _Kpis(today: data.todayTasks.length, completion: data.completion)),
+      (_Card.kpis, _Kpis(today: data.todayCount, completion: data.completion)),
       (_Card.completion, _CompletionCard(completion: data.completion)),
       (_Card.tracker, _TrackerCard(week: data.tracker, month: data.trackerMonth)),
       (_Card.ranking, _LeaderboardCard(ranking: data.ranking)),
@@ -256,7 +256,7 @@ class _DashboardViewState extends State<_DashboardView> {
   Widget _stack(BuildContext context, DashboardData data, DashboardPrefs prefs) {
     final items = <(String, Widget)>[
       (_Card.hero, _sprintCard(data.activeBoard)),
-      (_Card.kpis, _Kpis(today: data.todayTasks.length, completion: data.completion)),
+      (_Card.kpis, _Kpis(today: data.todayCount, completion: data.completion)),
       (_Card.focus, _FocusCard(issues: data.todayTasks)),
       (_Card.completion, _CompletionCard(completion: data.completion)),
       (_Card.tracker, _TrackerCard(week: data.tracker, month: data.trackerMonth)),
@@ -1936,19 +1936,19 @@ class _EditToolbar extends StatelessWidget {
                   icon: LucideIcons.layoutDashboard,
                   label: context.t('dashboard.heroBoard'),
                   value: boardLabel,
-                  onTap: () => _pickBoard(context),
+                  onTap: (rect) => _pickBoard(context, rect),
                 ),
                 _PickerField(
                   icon: LucideIcons.folderKanban,
                   label: context.t('dashboard.dataScope'),
                   value: projectsLabel,
-                  onTap: () => _pickProjects(context),
+                  onTap: (rect) => _pickProjects(context, rect),
                 ),
                 _PickerField(
                   icon: LucideIcons.usersRound,
                   label: context.t('dashboard.teamScope'),
                   value: teamsLabel,
-                  onTap: () => _pickTeams(context),
+                  onTap: (rect) => _pickTeams(context, rect),
                 ),
               ];
               // Equal-width fields that fill the row so each chevron pins right.
@@ -1967,23 +1967,25 @@ class _EditToolbar extends StatelessWidget {
     );
   }
 
-  Future<void> _pickBoard(BuildContext context) async {
-    final result = await showGlassModal<String>(
+  Future<void> _pickBoard(BuildContext context, Rect anchor) async {
+    final result = await showGlassAnchoredPopover<String>(
       context,
-      width: 460,
+      anchorRect: anchor,
+      width: 320,
       builder: (_) => _BoardPickerSheet(boards: boards, selected: draft.boardId),
     );
-    if (result == null) return; // cancelled
+    if (result == null) return; // dismissed
     onChanged(draft.copyWith(
       boardId: result.isEmpty ? null : result,
       clearBoard: result.isEmpty,
     ));
   }
 
-  Future<void> _pickProjects(BuildContext context) async {
-    final result = await showGlassModal<List<String>>(
+  Future<void> _pickProjects(BuildContext context, Rect anchor) async {
+    final result = await showGlassAnchoredPopover<List<String>>(
       context,
-      width: 460,
+      anchorRect: anchor,
+      width: 320,
       builder: (_) => _ScopePickerSheet(
         title: context.t('dashboard.dataScope'),
         icon: LucideIcons.folderKanban,
@@ -1996,10 +1998,11 @@ class _EditToolbar extends StatelessWidget {
     onChanged(draft.copyWith(projectIds: result));
   }
 
-  Future<void> _pickTeams(BuildContext context) async {
-    final result = await showGlassModal<List<String>>(
+  Future<void> _pickTeams(BuildContext context, Rect anchor) async {
+    final result = await showGlassAnchoredPopover<List<String>>(
       context,
-      width: 460,
+      anchorRect: anchor,
+      width: 320,
       builder: (_) => _ScopePickerSheet(
         title: context.t('dashboard.teamScope'),
         icon: LucideIcons.usersRound,
@@ -2013,7 +2016,8 @@ class _EditToolbar extends StatelessWidget {
   }
 }
 
-/// A labelled, dropdown-like field that opens a picker on tap.
+/// A labelled, dropdown-like field that opens a picker anchored to itself on
+/// tap (reports its own global rect so the popover attaches to the field).
 class _PickerField extends StatelessWidget {
   const _PickerField({
     required this.icon,
@@ -2025,7 +2029,7 @@ class _PickerField extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  final VoidCallback onTap;
+  final ValueChanged<Rect> onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -2033,7 +2037,13 @@ class _PickerField extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          final box = context.findRenderObject() as RenderBox?;
+          final rect = box != null && box.hasSize
+              ? box.localToGlobal(Offset.zero) & box.size
+              : Rect.zero;
+          onTap(rect);
+        },
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),

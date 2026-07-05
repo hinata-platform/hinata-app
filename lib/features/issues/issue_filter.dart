@@ -75,10 +75,15 @@ class IssueFilter {
       return false;
     }
     if (assignees.isNotEmpty) {
-      final id = issue.assigneeId;
-      final hasId = id != null && id.isNotEmpty;
-      final matchesId = hasId && assignees.contains(id);
-      final matchesNone = !hasId && assignees.contains(noAssignee);
+      // Match any assignee (primary or secondary), mirroring the backend which
+      // checks both assigneeIds and the legacy assigneeId.
+      final ids = issue.assigneeIds.isNotEmpty
+          ? issue.assigneeIds
+          : (issue.assigneeId != null && issue.assigneeId!.isNotEmpty
+              ? [issue.assigneeId!]
+              : const <String>[]);
+      final matchesId = ids.any(assignees.contains);
+      final matchesNone = ids.isEmpty && assignees.contains(noAssignee);
       if (!matchesId && !matchesNone) return false;
     }
     if (projects.isNotEmpty && !projects.contains(issue.projectId)) {
@@ -203,6 +208,10 @@ class IssueFilterOptions {
 enum IssueTimePreset {
   all,
   overdue,
+
+  /// Due today or overdue (due date on/before today, still open). Powers the
+  /// dashboard "Today's tasks" deep-link so its count matches this list exactly.
+  dueByToday,
   today,
   thisWeek,
   thisMonth,
@@ -245,6 +254,7 @@ class IssueTimeRange {
     switch (preset) {
       case IssueTimePreset.all:
       case IssueTimePreset.overdue:
+      case IssueTimePreset.dueByToday:
         return null;
       case IssueTimePreset.today:
         return r(today, today);
@@ -276,6 +286,11 @@ class IssueTimeRange {
     if (preset == IssueTimePreset.overdue) {
       final due = issue.dueDate;
       return due != null && _dayOf(due).isBefore(_dayOf(now)) && !issue.resolved;
+    }
+    if (preset == IssueTimePreset.dueByToday) {
+      // Due today or overdue, still open — mirrors the backend "today's tasks".
+      final due = issue.dueDate;
+      return due != null && !_dayOf(due).isAfter(_dayOf(now)) && !issue.resolved;
     }
     final range = resolve(now);
     if (range == null) return true;

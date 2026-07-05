@@ -462,6 +462,7 @@
     "time": {
       "all": "Gesamter Zeitraum",
       "overdue": "Überfällig",
+      "dueByToday": "Bis heute fällig",
       "today": "Heute",
       "thisWeek": "Diese Woche",
       "thisMonth": "Dieser Monat",
