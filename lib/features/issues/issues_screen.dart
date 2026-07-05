@@ -176,6 +176,10 @@ class _IssuesScreenState extends State<IssuesScreen> {
   /// completion split: done = the projects' resolved states, backlog =
   /// `Backlog`/`Open`, in-progress = everything else.
   void _applyInitialView(IssuesInitialView view, List<Project> projects) {
+    // Each preset fully defines the view — start from a clean slate so nothing
+    // from a previous state (filter or time range) leaks in.
+    _filter = IssueFilter.empty;
+    _timeRange = IssueTimeRange.none;
     if (view == IssuesInitialView.today) {
       _timeRange = const IssueTimeRange(preset: IssueTimePreset.today);
       return;
@@ -197,7 +201,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
       IssuesInitialView.inProgress => all.difference(done).difference(backlog),
       IssuesInitialView.today => const <String>{},
     };
-    if (states.isNotEmpty) _filter = IssueFilter(states: states);
+    _filter = IssueFilter(states: states);
   }
 
   /// Pull-to-refresh / retry: reload the first page and the reference data.
