@@ -1054,7 +1054,20 @@
     "registrationTitle": "Öffentliche Registrierung",
     "registrationHint": "Neuen Nutzern erlauben, sich über die Anmeldeseite selbst ein Konto zu erstellen.",
     "approvalTitle": "Freigabe durch Admin erforderlich",
-    "approvalHint": "Neue Registrierungen müssen nach der E-Mail-Bestätigung von einem Admin freigegeben werden."
+    "approvalHint": "Neue Registrierungen müssen nach der E-Mail-Bestätigung von einem Admin freigegeben werden.",
+    "mcp": "MCP-Server",
+    "mcpHint": "Der eingebettete MCP-Server (Model Context Protocol) ermöglicht es KI-Assistenten, im Auftrag eines Nutzers in Hinata zu handeln – authentifiziert über dessen Personal Access Tokens. Lege hier die plattformweite Richtlinie fest.",
+    "mcpServerTitle": "Server",
+    "mcpServerHint": "Identität des eingebetteten MCP-Servers, die an Clients ausgegeben wird.",
+    "mcpServerName": "Servername",
+    "mcpServerNameFallback": "Hinata MCP",
+    "mcpAccessTitle": "Zugriff & Limits",
+    "mcpAccessHint": "Steuere, ob Nutzer Tokens erstellen dürfen und wie viele sie halten können.",
+    "mcpEnabledTitle": "MCP-Server aktivieren",
+    "mcpEnabledHint": "Wenn deaktiviert, ist der MCP-Endpunkt geschlossen und die Token-Einstellungen sind für Nutzer ausgeblendet. Unverändert lassen, um dem Server-Standard zu folgen.",
+    "mcpMaxPats": "Max. Tokens pro Nutzer",
+    "mcpMaxPatsHint": "Leer lassen, um den Server-Standard zu verwenden. 0 bedeutet unbegrenzt.",
+    "mcpMaxPatsSuffix": "Tokens"
   },
   "audit": {
     "title": "Audit-Protokoll",
@@ -1616,6 +1629,10 @@
       "subtitle": "Dies löscht dauerhaft dein Profil, deine Zugangsdaten und Sitzungen. Deine erstellten Vorgänge & Kommentare werden anonymisiert. Dies kann nicht rückgängig gemacht werden.",
       "confirmLabel": "Gib DELETE ein, um zu bestätigen",
       "button": "Konto löschen"
+    },
+    "tokens": {
+      "title": "Zugriffstokens",
+      "subtitle": "Personal Access Tokens für den MCP-Server und den API-Zugriff."
     }
   },
   "twofa": {
@@ -1869,5 +1886,55 @@
     "invalidTitle": "Link ungültig oder abgelaufen",
     "invalidBody": "Dieser Bestätigungslink ist ungültig oder abgelaufen. Registriere dich erneut, um einen neuen zu erhalten.",
     "goToLogin": "Zur Anmeldung"
+  },
+  "pat": {
+    "createButton": "Neues Token",
+    "createdOn": "Erstellt {{date}}",
+    "lastUsedOn": "Zuletzt genutzt {{date}}",
+    "expiresOn": "Läuft ab {{date}}",
+    "neverUsed": "Nie genutzt",
+    "noExpiry": "Kein Ablauf",
+    "copiedToast": "Token in die Zwischenablage kopiert",
+    "revokedToast": "Token widerrufen",
+    "statusRevoked": "Widerrufen",
+    "statusExpired": "Abgelaufen",
+    "empty": {
+      "title": "Noch keine Zugriffstokens",
+      "message": "Erstelle ein Token, um einen KI-Assistenten oder ein Skript mit dem MCP-Server zu verbinden."
+    },
+    "revoke": {
+      "title": "Token widerrufen",
+      "message": "„{{name}}“ widerrufen? Jeder Client, der es nutzt, verliert sofort den Zugriff. Dies kann nicht rückgängig gemacht werden.",
+      "confirm": "Token widerrufen"
+    },
+    "create": {
+      "title": "Zugriffstoken erstellen",
+      "subtitle": "Erstelle ein Token mit begrenztem Umfang für den MCP-Server. Das Geheimnis wird nur einmal angezeigt.",
+      "nameLabel": "Name",
+      "nameHint": "z. B. Claude Desktop, CI-Skript",
+      "scopesLabel": "Berechtigungen",
+      "expiryLabel": "Ablauf",
+      "submit": "Token erstellen"
+    },
+    "created": {
+      "title": "Token erstellt",
+      "subtitle": "Kopiere dein Token jetzt – du kannst es später nicht mehr sehen.",
+      "warning": "Dies ist die einzige Gelegenheit, das Token zu sehen. Bewahre es sicher auf; bei Verlust musst du ein neues erstellen.",
+      "tokenLabel": "Dein neues Token",
+      "done": "Fertig"
+    },
+    "expiry": {
+      "days": "{{count}} Tage",
+      "never": "Nie"
+    },
+    "scope": {
+      "issues_read": "Vorgänge lesen",
+      "issues_write": "Vorgänge schreiben",
+      "projects_read": "Projekte lesen",
+      "kb_read": "Wissensdatenbank lesen",
+      "kb_write": "Wissensdatenbank schreiben",
+      "worklog_write": "Arbeit erfassen",
+      "search_read": "Suchen"
+    }
   }
 }

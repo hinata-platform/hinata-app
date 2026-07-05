@@ -1054,7 +1054,20 @@
     "registrationTitle": "Public sign-up",
     "registrationHint": "Let new users create their own account from the sign-in screen.",
     "approvalTitle": "Require admin approval",
-    "approvalHint": "New sign-ups must be approved by an admin after confirming their email."
+    "approvalHint": "New sign-ups must be approved by an admin after confirming their email.",
+    "mcp": "MCP server",
+    "mcpHint": "The embedded MCP (Model Context Protocol) server lets AI assistants act on Hinata on a user's behalf, authenticated by their Personal Access Tokens. Configure the platform-wide policy here.",
+    "mcpServerTitle": "Server",
+    "mcpServerHint": "Identity of the embedded MCP server exposed to clients.",
+    "mcpServerName": "Server name",
+    "mcpServerNameFallback": "Hinata MCP",
+    "mcpAccessTitle": "Access & limits",
+    "mcpAccessHint": "Control whether users can mint tokens and how many they may hold.",
+    "mcpEnabledTitle": "Enable MCP server",
+    "mcpEnabledHint": "When off, the MCP endpoint is closed and the token settings are hidden from users. Leave untouched to follow the server default.",
+    "mcpMaxPats": "Max tokens per user",
+    "mcpMaxPatsHint": "Leave blank to use the server default. 0 means unlimited.",
+    "mcpMaxPatsSuffix": "tokens"
   },
   "audit": {
     "title": "Audit log",
@@ -1616,6 +1629,10 @@
       "subtitle": "This permanently erases your profile, credentials and sessions. Your authored issues & comments are anonymised. This cannot be undone.",
       "confirmLabel": "Type DELETE to confirm",
       "button": "Delete account"
+    },
+    "tokens": {
+      "title": "Access tokens",
+      "subtitle": "Personal Access Tokens for the MCP server and API access."
     }
   },
   "twofa": {
@@ -1869,5 +1886,55 @@
     "invalidTitle": "Link invalid or expired",
     "invalidBody": "This confirmation link is invalid or has expired. Sign up again to receive a new one.",
     "goToLogin": "Go to sign in"
+  },
+  "pat": {
+    "createButton": "New token",
+    "createdOn": "Created {{date}}",
+    "lastUsedOn": "Last used {{date}}",
+    "expiresOn": "Expires {{date}}",
+    "neverUsed": "Never used",
+    "noExpiry": "No expiry",
+    "copiedToast": "Token copied to clipboard",
+    "revokedToast": "Token revoked",
+    "statusRevoked": "Revoked",
+    "statusExpired": "Expired",
+    "empty": {
+      "title": "No access tokens yet",
+      "message": "Create a token to connect an AI assistant or script to the MCP server."
+    },
+    "revoke": {
+      "title": "Revoke token",
+      "message": "Revoke “{{name}}”? Any client using it will immediately lose access. This cannot be undone.",
+      "confirm": "Revoke token"
+    },
+    "create": {
+      "title": "Create access token",
+      "subtitle": "Grant a scoped token for the MCP server. The secret is shown only once.",
+      "nameLabel": "Name",
+      "nameHint": "e.g. Claude Desktop, CI script",
+      "scopesLabel": "Scopes",
+      "expiryLabel": "Expiry",
+      "submit": "Create token"
+    },
+    "created": {
+      "title": "Token created",
+      "subtitle": "Copy your token now — you won't be able to see it again.",
+      "warning": "This is the only time the token is shown. Store it somewhere safe; if you lose it you'll need to create a new one.",
+      "tokenLabel": "Your new token",
+      "done": "Done"
+    },
+    "expiry": {
+      "days": "{{count}} days",
+      "never": "Never"
+    },
+    "scope": {
+      "issues_read": "Read issues",
+      "issues_write": "Write issues",
+      "projects_read": "Read projects",
+      "kb_read": "Read knowledge base",
+      "kb_write": "Write knowledge base",
+      "worklog_write": "Log work",
+      "search_read": "Search"
+    }
   }
 }

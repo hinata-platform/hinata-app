@@ -16,6 +16,7 @@ import '../../core/blocs/locale_cubit.dart';
 import '../../core/blocs/theme_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/account_models.dart';
+import '../../core/models/core_models.dart' show PlatformFlags;
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -27,6 +28,7 @@ import '../connect/server_switcher.dart';
 import '../shell/page_chrome.dart';
 import 'account_modals.dart';
 import 'account_widgets.dart';
+import 'pat_section.dart';
 import 'twofa_modals.dart';
 
 /// The settings categories. On compact (phone) layouts each is its own
@@ -37,6 +39,7 @@ enum _SettingsSection {
   sessions,
   notifications,
   access,
+  tokens,
   appearance,
   data,
   danger,
@@ -50,6 +53,7 @@ const _settingsMenu = <({_SettingsSection section, IconData icon})>[
   (section: _SettingsSection.sessions, icon: LucideIcons.monitorSmartphone),
   (section: _SettingsSection.notifications, icon: LucideIcons.bell),
   (section: _SettingsSection.access, icon: LucideIcons.layers),
+  (section: _SettingsSection.tokens, icon: LucideIcons.keyRound),
   (section: _SettingsSection.appearance, icon: LucideIcons.sunMoon),
   (section: _SettingsSection.data, icon: LucideIcons.fileText),
   (section: _SettingsSection.danger, icon: LucideIcons.triangleAlert),
@@ -80,6 +84,14 @@ const _notifEvents = <({String id, IconData icon, bool locked})>[
 
 class _AccountScreenState extends State<AccountScreen> {
   HinataRepository get _repo => context.read<HinataRepository>();
+
+  /// Whether the embedded MCP server surface (Personal Access Tokens) is exposed
+  /// — driven by the server's `mcp` feature flag.
+  bool get _mcpEnabled =>
+      context.read<AppConfigBloc>().state.meta?.isFlagEnabled(
+        PlatformFlags.mcp,
+      ) ??
+      false;
 
   Me? _me;
   List<DeviceSession> _sessions = const [];
@@ -159,9 +171,12 @@ class _AccountScreenState extends State<AccountScreen> {
   void _setLanguage(String code) {
     context.read<LocaleCubit>().setLocale(code);
     if (_me?.locale == code) return;
-    _repo.updateMyProfile(locale: code).then((saved) {
-      if (mounted) setState(() => _me = saved);
-    }).catchError((_) {});
+    _repo
+        .updateMyProfile(locale: code)
+        .then((saved) {
+          if (mounted) setState(() => _me = saved);
+        })
+        .catchError((_) {});
   }
 
   Future<void> _changeAvatar() async {
@@ -398,6 +413,7 @@ class _AccountScreenState extends State<AccountScreen> {
     ];
     final right = <Widget>[
       _accessSection(),
+      if (_mcpEnabled) ...[const SizedBox(height: 16), const PatSection()],
       const SizedBox(height: 16),
       _appearanceSection(),
       // Admin area is its own top-level entry here, not buried in Appearance.
@@ -485,8 +501,10 @@ class _AccountScreenState extends State<AccountScreen> {
   /// navigates to `/admin` rather than opening an in-page section).
   Widget _sectionMenu() {
     final isAdmin = context.read<AuthBloc>().state.user?.isAdmin ?? false;
+    final mcpEnabled = _mcpEnabled;
     final tiles = <Widget>[];
     for (final item in _settingsMenu) {
+      if (item.section == _SettingsSection.tokens && !mcpEnabled) continue;
       tiles.add(
         _navTile(
           icon: item.icon,
@@ -603,6 +621,7 @@ class _AccountScreenState extends State<AccountScreen> {
     _SettingsSection.sessions => 'account.sessions.title',
     _SettingsSection.notifications => 'account.notifications.title',
     _SettingsSection.access => 'account.access.title',
+    _SettingsSection.tokens => 'account.tokens.title',
     _SettingsSection.appearance => 'account.appearance.title',
     _SettingsSection.data => 'account.data.title',
     _SettingsSection.danger => 'account.danger.title',
@@ -613,6 +632,7 @@ class _AccountScreenState extends State<AccountScreen> {
     _SettingsSection.sessions => 'account.sessions.subtitle',
     _SettingsSection.notifications => 'account.notifications.subtitle',
     _SettingsSection.access => 'account.access.subtitle',
+    _SettingsSection.tokens => 'account.tokens.subtitle',
     _SettingsSection.appearance => 'account.appearance.subtitle',
     _SettingsSection.data => 'account.data.subtitle',
     _SettingsSection.danger => 'account.danger.subtitle',
@@ -623,6 +643,7 @@ class _AccountScreenState extends State<AccountScreen> {
     _SettingsSection.sessions => _sessionsSection(),
     _SettingsSection.notifications => _notificationsSection(),
     _SettingsSection.access => _accessSection(),
+    _SettingsSection.tokens => const PatSection(),
     _SettingsSection.appearance => _appearanceSection(),
     _SettingsSection.data => _dataSection(),
     _SettingsSection.danger => _dangerSection(),

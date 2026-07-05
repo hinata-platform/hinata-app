@@ -8,6 +8,10 @@ class PlatformFlags {
 
   /// Allow assigning multiple people to an issue (off → single assignee).
   static const multiAssignee = 'multi_assignee';
+
+  /// Expose the embedded MCP server surface: Personal Access Token management in
+  /// account settings (and the admin MCP configuration section).
+  static const mcp = 'mcp';
 }
 
 /// Server metadata from GET /api/v1/meta (version gate, branding, flags).

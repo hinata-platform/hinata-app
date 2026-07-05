@@ -8,6 +8,7 @@ import '../models/core_models.dart';
 import '../models/deletion_models.dart';
 import '../models/git_connection.dart';
 import '../models/git_dev_info.dart';
+import '../models/personal_access_token.dart';
 import '../models/search_api.dart';
 import '../models/team_models.dart';
 import '../models/work_models.dart';
@@ -142,12 +143,15 @@ class HinataRepository {
     required String username,
     required String displayName,
     required String password,
-  }) => _api.post('/api/v1/auth/register', body: {
-        'email': email,
-        'username': username,
-        'displayName': displayName,
-        'password': password,
-      });
+  }) => _api.post(
+    '/api/v1/auth/register',
+    body: {
+      'email': email,
+      'username': username,
+      'displayName': displayName,
+      'password': password,
+    },
+  );
 
   /// Resends the email-verification link. Always succeeds (anti-enumeration).
   Future<void> resendVerification(String email) =>
@@ -159,10 +163,7 @@ class HinataRepository {
     String token,
   ) async {
     final data =
-        await _api.post(
-              '/api/v1/auth/verify-email',
-              body: {'token': token},
-            )
+        await _api.post('/api/v1/auth/verify-email', body: {'token': token})
             as Map<String, dynamic>;
     return (
       pendingApproval: data['pendingApproval'] as bool? ?? false,
@@ -312,6 +313,32 @@ class HinataRepository {
   /// Erases the account (Art. 17). The body must literally be `DELETE`.
   Future<void> deleteMyAccount() =>
       _api.delete('/api/v1/me', body: {'confirm': 'DELETE'});
+
+  // --- Personal access tokens (MCP) -----------------------------------------
+
+  /// The caller's Personal Access Tokens (metadata only; secrets never returned).
+  Future<List<PersonalAccessToken>> listPats() async =>
+      ((await _api.get('/api/v1/me/pats')) as List<dynamic>)
+          .map((p) => PersonalAccessToken.fromJson(p as Map<String, dynamic>))
+          .toList();
+
+  /// Mints a new PAT. [ttlDays] null → the server's default lifetime; a value
+  /// ≤ 0 → never expires. Returns the one-time plaintext token plus its metadata;
+  /// the plaintext is only ever available here.
+  Future<CreatedPat> createPat({
+    required String name,
+    required List<String> scopes,
+    int? ttlDays,
+  }) async => CreatedPat.fromJson(
+    await _api.post(
+          '/api/v1/me/pats',
+          body: {'name': name, 'scopes': scopes, 'ttlDays': ttlDays},
+        )
+        as Map<String, dynamic>,
+  );
+
+  /// Revokes (deletes) a PAT by id.
+  Future<void> revokePat(String id) => _api.delete('/api/v1/me/pats/$id');
 
   // --- Users ----------------------------------------------------------------
 
@@ -1437,19 +1464,22 @@ class HinataRepository {
   /// Kicks off the real OAuth flow for [provider]; returns the consent URL to
   /// open + the `state` to poll (or `available:false` when no provider app is
   /// configured, in which case the client uses the URL + token method).
-  Future<GitOAuthStart> gitOAuthStart(String projectId, String provider) async =>
-      GitOAuthStart.fromJson(
-        await _api.post(
-              '/api/v1/projects/$projectId/git/oauth/start',
-              body: {'provider': provider},
-            )
-            as Map<String, dynamic>,
-      );
+  Future<GitOAuthStart> gitOAuthStart(
+    String projectId,
+    String provider,
+  ) async => GitOAuthStart.fromJson(
+    await _api.post(
+          '/api/v1/projects/$projectId/git/oauth/start',
+          body: {'provider': provider},
+        )
+        as Map<String, dynamic>,
+  );
 
   /// Polls the server-side OAuth session (by [state]) for completion.
   Future<GitOAuthSessionStatus> gitOAuthSession(String state) async =>
       GitOAuthSessionStatus.fromJson(
-        await _api.get('/api/v1/git/oauth/session/$state') as Map<String, dynamic>,
+        await _api.get('/api/v1/git/oauth/session/$state')
+            as Map<String, dynamic>,
       );
 
   /// Owners (org / group / workspace) the authorized account exposes.
@@ -1460,10 +1490,7 @@ class HinataRepository {
   }) async =>
       ((await _api.get(
                 '/api/v1/projects/$projectId/git/owners',
-                query: {
-                  'provider': provider,
-                  'state': ?state,
-                },
+                query: {'provider': provider, 'state': ?state},
               ))
               as List<dynamic>)
           .map((o) => GitOwner.fromJson(o as Map<String, dynamic>))
@@ -1524,14 +1551,19 @@ class HinataRepository {
   );
 
   Future<Project> gitDisconnect(String projectId, {String? repoId}) async {
-    final q = repoId == null ? '' : '?repoId=${Uri.encodeQueryComponent(repoId)}';
+    final q = repoId == null
+        ? ''
+        : '?repoId=${Uri.encodeQueryComponent(repoId)}';
     return Project.fromJson(
-      await _api.delete('/api/v1/projects/$projectId/git$q') as Map<String, dynamic>,
+      await _api.delete('/api/v1/projects/$projectId/git$q')
+          as Map<String, dynamic>,
     );
   }
 
   Future<Project> gitResync(String projectId, {String? repoId}) async {
-    final q = repoId == null ? '' : '?repoId=${Uri.encodeQueryComponent(repoId)}';
+    final q = repoId == null
+        ? ''
+        : '?repoId=${Uri.encodeQueryComponent(repoId)}';
     return Project.fromJson(
       await _api.post('/api/v1/projects/$projectId/git/resync$q')
           as Map<String, dynamic>,
@@ -1549,14 +1581,16 @@ class HinataRepository {
         as Map<String, dynamic>,
   );
 
-  Future<Project> gitSetBranchTemplate(String projectId, String template) async =>
-      Project.fromJson(
-        await _api.patch(
-              '/api/v1/projects/$projectId/git/branch-template',
-              body: {'branchTemplate': template},
-            )
-            as Map<String, dynamic>,
-      );
+  Future<Project> gitSetBranchTemplate(
+    String projectId,
+    String template,
+  ) async => Project.fromJson(
+    await _api.patch(
+          '/api/v1/projects/$projectId/git/branch-template',
+          body: {'branchTemplate': template},
+        )
+        as Map<String, dynamic>,
+  );
 
   /// Development information (branches/commits/PRs/builds) for an issue key.
   Future<DevInfo> gitDevInfo(String issueKey) async => DevInfo.fromJson(

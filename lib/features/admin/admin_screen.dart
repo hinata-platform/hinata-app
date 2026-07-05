@@ -17,6 +17,7 @@ import 'sections/admin_audit_section.dart';
 import 'sections/admin_email_section.dart';
 import 'sections/admin_general_section.dart';
 import 'sections/admin_git_section.dart';
+import 'sections/admin_mcp_section.dart';
 import 'sections/admin_security_section.dart';
 
 // ─────────────────────────── Section enum ────────────────────────────────
@@ -27,6 +28,7 @@ enum _AdminSection {
   authentication,
   email,
   git,
+  mcp,
   security,
   auditLog,
   users,
@@ -41,14 +43,60 @@ typedef _SectionMeta = ({
 });
 
 const _navItems = <_SectionMeta>[
-  (section: _AdminSection.general,        icon: LucideIcons.building2,       labelKey: 'admin.general',           group: 'navGeneral'),
-  (section: _AdminSection.app,            icon: LucideIcons.smartphone,      labelKey: 'admin.app',               group: 'navGeneral'),
-  (section: _AdminSection.security,       icon: LucideIcons.shield,         labelKey: 'admin.security',          group: 'navGeneral'),
-  (section: _AdminSection.authentication, icon: LucideIcons.lock,           labelKey: 'admin.authentication',    group: 'navIntegrations'),
-  (section: _AdminSection.email,          icon: LucideIcons.mail,           labelKey: 'admin.email',             group: 'navIntegrations'),
-  (section: _AdminSection.git,            icon: LucideIcons.gitBranch,      labelKey: 'admin.gitIntegration',    group: 'navIntegrations'),
-  (section: _AdminSection.auditLog,       icon: LucideIcons.history,        labelKey: 'admin.auditLog',          group: 'navSystem'),
-  (section: _AdminSection.users,          icon: LucideIcons.users,         labelKey: 'admin.users',             group: 'navSystem'),
+  (
+    section: _AdminSection.general,
+    icon: LucideIcons.building2,
+    labelKey: 'admin.general',
+    group: 'navGeneral',
+  ),
+  (
+    section: _AdminSection.app,
+    icon: LucideIcons.smartphone,
+    labelKey: 'admin.app',
+    group: 'navGeneral',
+  ),
+  (
+    section: _AdminSection.security,
+    icon: LucideIcons.shield,
+    labelKey: 'admin.security',
+    group: 'navGeneral',
+  ),
+  (
+    section: _AdminSection.authentication,
+    icon: LucideIcons.lock,
+    labelKey: 'admin.authentication',
+    group: 'navIntegrations',
+  ),
+  (
+    section: _AdminSection.email,
+    icon: LucideIcons.mail,
+    labelKey: 'admin.email',
+    group: 'navIntegrations',
+  ),
+  (
+    section: _AdminSection.git,
+    icon: LucideIcons.gitBranch,
+    labelKey: 'admin.gitIntegration',
+    group: 'navIntegrations',
+  ),
+  (
+    section: _AdminSection.mcp,
+    icon: LucideIcons.plug,
+    labelKey: 'admin.mcp',
+    group: 'navIntegrations',
+  ),
+  (
+    section: _AdminSection.auditLog,
+    icon: LucideIcons.history,
+    labelKey: 'admin.auditLog',
+    group: 'navSystem',
+  ),
+  (
+    section: _AdminSection.users,
+    icon: LucideIcons.users,
+    labelKey: 'admin.users',
+    group: 'navSystem',
+  ),
 ];
 
 // ─────────────────────────── Root screen ─────────────────────────────────
@@ -98,16 +146,19 @@ class _AdminScreenState extends State<AdminScreen> {
     if (_settings == null) return;
     setState(() => _saving = true);
     try {
-      _settings =
-          await context.read<HinataRepository>().updateAdminSettings(_settings!);
+      _settings = await context.read<HinataRepository>().updateAdminSettings(
+        _settings!,
+      );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(context.t('admin.saved'))));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.t('admin.saved'))));
       }
     } on ApiFailure catch (failure) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(failure.message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(failure.message)));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -129,22 +180,24 @@ class _AdminScreenState extends State<AdminScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Center(
-          child: HiveLoader());
+      return const Center(child: HiveLoader());
     }
     if (_error != null) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(LucideIcons.cloudOff,
-                size: 48, color: AppColors.inkFaint),
+            Icon(LucideIcons.cloudOff, size: 48, color: AppColors.inkFaint),
             const SizedBox(height: 12),
-            Text(context.t(_error!),
-                style: TextStyle(color: AppColors.textSecondary)),
+            Text(
+              context.t(_error!),
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
             const SizedBox(height: 12),
             OutlinedButton(
-                onPressed: _load, child: Text(context.t('common.retry'))),
+              onPressed: _load,
+              child: Text(context.t('common.retry')),
+            ),
           ],
         ),
       );
@@ -199,15 +252,16 @@ class _AdminScreenState extends State<AdminScreen> {
 /// i18n key for an admin section's title (shared by the shell app bar and the
 /// in-pane section header).
 String _sectionTitleKey(_AdminSection section) => switch (section) {
-      _AdminSection.general => 'admin.general',
-      _AdminSection.app => 'admin.app',
-      _AdminSection.authentication => 'admin.authentication',
-      _AdminSection.email => 'admin.email',
-      _AdminSection.git => 'admin.gitIntegration',
-      _AdminSection.security => 'admin.security',
-      _AdminSection.auditLog => 'admin.auditLog',
-      _AdminSection.users => 'admin.users',
-    };
+  _AdminSection.general => 'admin.general',
+  _AdminSection.app => 'admin.app',
+  _AdminSection.authentication => 'admin.authentication',
+  _AdminSection.email => 'admin.email',
+  _AdminSection.git => 'admin.gitIntegration',
+  _AdminSection.mcp => 'admin.mcp',
+  _AdminSection.security => 'admin.security',
+  _AdminSection.auditLog => 'admin.auditLog',
+  _AdminSection.users => 'admin.users',
+};
 
 // ─────────────────────────── Mobile: list view ───────────────────────────
 
@@ -235,15 +289,15 @@ class _MobileListView extends StatelessWidget {
                 Text(
                   context.t('admin.title'),
                   style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 22,
-                      color: AppColors.ink),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 22,
+                    color: AppColors.ink,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   context.t('admin.subtitle'),
-                  style: TextStyle(
-                      fontSize: 13, color: AppColors.inkSoft),
+                  style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
                 ),
               ],
             ),
@@ -270,18 +324,14 @@ class _MobileListView extends StatelessWidget {
               margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius:
-                    BorderRadius.circular(AppTheme.radiusCard),
+                borderRadius: BorderRadius.circular(AppTheme.radiusCard),
                 border: Border.all(color: AppColors.hairline),
               ),
               child: Column(
                 children: [
                   for (int i = 0; i < entry.value.length; i++) ...[
                     if (i > 0)
-                      Divider(
-                          height: 1,
-                          indent: 56,
-                          color: AppColors.hairline),
+                      Divider(height: 1, indent: 56, color: AppColors.hairline),
                     _MobileNavTile(
                       meta: entry.value[i],
                       onTap: () => onSelect(entry.value[i].section),
@@ -292,8 +342,7 @@ class _MobileListView extends StatelessWidget {
             ),
           ),
         ],
-        SliverToBoxAdapter(
-            child: SizedBox(height: 32 + context.bottomGutter)),
+        SliverToBoxAdapter(child: SizedBox(height: 32 + context.bottomGutter)),
       ],
     );
   }
@@ -314,8 +363,7 @@ class _MobileNavTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-              horizontal: 16, vertical: 13),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
           child: Row(
             children: [
               Container(
@@ -325,23 +373,21 @@ class _MobileNavTile extends StatelessWidget {
                   color: AppColors.accentSoft,
                   borderRadius: BorderRadius.circular(9),
                 ),
-                child: Icon(meta.icon,
-                    size: 17, color: AppColors.accentStrong),
+                child: Icon(meta.icon, size: 17, color: AppColors.accentStrong),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
                   context.t(meta.labelKey),
                   style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.ink),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.ink,
+                  ),
                 ),
               ),
               Icon(
-                isUsers
-                    ? LucideIcons.externalLink
-                    : LucideIcons.chevronRight,
+                isUsers ? LucideIcons.externalLink : LucideIcons.chevronRight,
                 size: 18,
                 color: AppColors.inkFaint,
               ),
@@ -393,7 +439,9 @@ class _MobileDetailView extends StatelessWidget {
                       width: 20,
                       height: 20,
                       child: HiveLoader(
-                          strokeWidth: 2, color: AppColors.brandInk),
+                        strokeWidth: 2,
+                        color: AppColors.brandInk,
+                      ),
                     ),
                   )
                 : TextButton.icon(
@@ -403,7 +451,9 @@ class _MobileDetailView extends StatelessWidget {
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.brandInk,
                       textStyle: const TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 13),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
           ),
@@ -415,8 +465,11 @@ class _MobileDetailView extends StatelessWidget {
               ? const AdminAuditSection()
               : SingleChildScrollView(
                   padding: EdgeInsets.fromLTRB(
-                      16, _hasSave ? 16 : 16 + context.topGutter, 16,
-                      16 + context.bottomGutter),
+                    16,
+                    _hasSave ? 16 : 16 + context.topGutter,
+                    16,
+                    16 + context.bottomGutter,
+                  ),
                   child: _sectionBody(section),
                 ),
         ),
@@ -425,22 +478,17 @@ class _MobileDetailView extends StatelessWidget {
   }
 
   Widget _sectionBody(_AdminSection sec) => switch (sec) {
-        _AdminSection.general =>
-          AdminGeneralSection(settings: settings),
-        _AdminSection.app =>
-          AdminAppSection(settings: settings),
-        _AdminSection.authentication =>
-          AdminSsoSection(settings: settings),
-        _AdminSection.email =>
-          AdminEmailSection(settings: settings),
-        _AdminSection.git =>
-          AdminGitSection(settings: settings),
-        _AdminSection.security =>
-          AdminSecuritySection(settings: settings),
-        // Rendered directly by the shell (self-scrolling); never reached here.
-        _AdminSection.auditLog => const SizedBox.shrink(),
-        _AdminSection.users => const SizedBox.shrink(),
-      };
+    _AdminSection.general => AdminGeneralSection(settings: settings),
+    _AdminSection.app => AdminAppSection(settings: settings),
+    _AdminSection.authentication => AdminSsoSection(settings: settings),
+    _AdminSection.email => AdminEmailSection(settings: settings),
+    _AdminSection.git => AdminGitSection(settings: settings),
+    _AdminSection.mcp => AdminMcpSection(settings: settings),
+    _AdminSection.security => AdminSecuritySection(settings: settings),
+    // Rendered directly by the shell (self-scrolling); never reached here.
+    _AdminSection.auditLog => const SizedBox.shrink(),
+    _AdminSection.users => const SizedBox.shrink(),
+  };
 }
 
 // ─────────────────────────── Wide layout (≥ medium) ──────────────────────
@@ -470,8 +518,7 @@ class _WideAdminShell extends StatelessWidget {
           width: 220,
           decoration: BoxDecoration(
             color: AppColors.surface,
-            border:
-                Border(right: BorderSide(color: AppColors.hairline)),
+            border: Border(right: BorderSide(color: AppColors.hairline)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -484,24 +531,22 @@ class _WideAdminShell extends StatelessWidget {
                     Text(
                       context.t('admin.title'),
                       style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                          color: AppColors.ink),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        color: AppColors.ink,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       context.t('admin.subtitle'),
-                      style: TextStyle(
-                          fontSize: 11, color: AppColors.inkSoft),
+                      style: TextStyle(fontSize: 11, color: AppColors.inkSoft),
                     ),
                   ],
                 ),
               ),
               Divider(height: 1, color: AppColors.hairline),
               const SizedBox(height: 8),
-              Expanded(
-                child: _buildNavList(context),
-              ),
+              Expanded(child: _buildNavList(context)),
             ],
           ),
         ),
@@ -530,11 +575,7 @@ class _WideAdminShell extends StatelessWidget {
         for (final entry in groups.entries) ...[
           _NavGroup(label: context.t('admin.${entry.key}')),
           for (final meta in entry.value)
-            _NavItem(
-              meta: meta,
-              current: section,
-              onTap: onSectionChanged,
-            ),
+            _NavItem(meta: meta, current: section, onTap: onSectionChanged),
           const SizedBox(height: 4),
         ],
       ],
@@ -558,15 +599,16 @@ class _DesktopSectionContent extends StatelessWidget {
   final VoidCallback onSave;
 
   String _title(BuildContext context) => switch (section) {
-        _AdminSection.general => context.t('admin.general'),
-        _AdminSection.app => context.t('admin.app'),
-        _AdminSection.authentication => context.t('admin.authentication'),
-        _AdminSection.email => context.t('admin.email'),
-        _AdminSection.git => context.t('admin.gitIntegration'),
-        _AdminSection.security => context.t('admin.security'),
-        _AdminSection.auditLog => context.t('admin.auditLog'),
-        _AdminSection.users => context.t('admin.users'),
-      };
+    _AdminSection.general => context.t('admin.general'),
+    _AdminSection.app => context.t('admin.app'),
+    _AdminSection.authentication => context.t('admin.authentication'),
+    _AdminSection.email => context.t('admin.email'),
+    _AdminSection.git => context.t('admin.gitIntegration'),
+    _AdminSection.mcp => context.t('admin.mcp'),
+    _AdminSection.security => context.t('admin.security'),
+    _AdminSection.auditLog => context.t('admin.auditLog'),
+    _AdminSection.users => context.t('admin.users'),
+  };
 
   bool get _hasSave => section != _AdminSection.auditLog;
 
@@ -580,8 +622,7 @@ class _DesktopSectionContent extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           decoration: BoxDecoration(
             color: AppColors.canvas,
-            border:
-                Border(bottom: BorderSide(color: AppColors.hairline)),
+            border: Border(bottom: BorderSide(color: AppColors.hairline)),
           ),
           child: Row(
             children: [
@@ -589,9 +630,10 @@ class _DesktopSectionContent extends StatelessWidget {
                 child: Text(
                   _title(context),
                   style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                      color: AppColors.ink),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: AppColors.ink,
+                  ),
                 ),
               ),
               if (_hasSave)
@@ -600,7 +642,9 @@ class _DesktopSectionContent extends StatelessWidget {
                         width: 20,
                         height: 20,
                         child: HiveLoader(
-                            strokeWidth: 2, color: AppColors.brandInk),
+                          strokeWidth: 2,
+                          color: AppColors.brandInk,
+                        ),
                       )
                     : FilledButton.icon(
                         onPressed: onSave,
@@ -608,10 +652,13 @@ class _DesktopSectionContent extends StatelessWidget {
                           backgroundColor: AppColors.navy,
                           foregroundColor: Colors.white,
                           textStyle: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 10),
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
                         ),
                         icon: const Icon(LucideIcons.save, size: 16),
                         label: Text(context.t('common.save')),
@@ -634,22 +681,17 @@ class _DesktopSectionContent extends StatelessWidget {
   }
 
   Widget _body() => switch (section) {
-        _AdminSection.general =>
-          AdminGeneralSection(settings: settings),
-        _AdminSection.app =>
-          AdminAppSection(settings: settings),
-        _AdminSection.authentication =>
-          AdminSsoSection(settings: settings),
-        _AdminSection.email =>
-          AdminEmailSection(settings: settings),
-        _AdminSection.git =>
-          AdminGitSection(settings: settings),
-        _AdminSection.security =>
-          AdminSecuritySection(settings: settings),
-        // Rendered directly by the shell (self-scrolling); never reached here.
-        _AdminSection.auditLog => const SizedBox.shrink(),
-        _AdminSection.users => const SizedBox.shrink(),
-      };
+    _AdminSection.general => AdminGeneralSection(settings: settings),
+    _AdminSection.app => AdminAppSection(settings: settings),
+    _AdminSection.authentication => AdminSsoSection(settings: settings),
+    _AdminSection.email => AdminEmailSection(settings: settings),
+    _AdminSection.git => AdminGitSection(settings: settings),
+    _AdminSection.mcp => AdminMcpSection(settings: settings),
+    _AdminSection.security => AdminSecuritySection(settings: settings),
+    // Rendered directly by the shell (self-scrolling); never reached here.
+    _AdminSection.auditLog => const SizedBox.shrink(),
+    _AdminSection.users => const SizedBox.shrink(),
+  };
 }
 
 // ─────────────────────────── Nav widgets ─────────────────────────────────
@@ -700,8 +742,7 @@ class _NavItem extends StatelessWidget {
           onTap: () => onTap(meta.section),
           borderRadius: BorderRadius.circular(8),
           child: Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 12, vertical: 9),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
             decoration: active
                 ? BoxDecoration(
                     color: AppColors.accentSoft,
@@ -713,9 +754,7 @@ class _NavItem extends StatelessWidget {
                 Icon(
                   meta.icon,
                   size: 17,
-                  color: active
-                      ? AppColors.accentStrong
-                      : AppColors.inkSoft,
+                  color: active ? AppColors.accentStrong : AppColors.inkSoft,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -723,19 +762,18 @@ class _NavItem extends StatelessWidget {
                     context.t(meta.labelKey),
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight: active
-                          ? FontWeight.w600
-                          : FontWeight.w400,
-                      color: active
-                          ? AppColors.accentStrong
-                          : AppColors.ink,
+                      fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                      color: active ? AppColors.accentStrong : AppColors.ink,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (isUsers)
-                  Icon(LucideIcons.externalLink,
-                      size: 12, color: AppColors.inkFaint),
+                  Icon(
+                    LucideIcons.externalLink,
+                    size: 12,
+                    color: AppColors.inkFaint,
+                  ),
               ],
             ),
           ),
