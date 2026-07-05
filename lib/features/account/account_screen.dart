@@ -53,8 +53,8 @@ const _settingsMenu = <({_SettingsSection section, IconData icon})>[
   (section: _SettingsSection.sessions, icon: LucideIcons.monitorSmartphone),
   (section: _SettingsSection.notifications, icon: LucideIcons.bell),
   (section: _SettingsSection.access, icon: LucideIcons.layers),
-  (section: _SettingsSection.tokens, icon: LucideIcons.keyRound),
   (section: _SettingsSection.appearance, icon: LucideIcons.sunMoon),
+  (section: _SettingsSection.tokens, icon: LucideIcons.keyRound),
   (section: _SettingsSection.data, icon: LucideIcons.fileText),
   (section: _SettingsSection.danger, icon: LucideIcons.triangleAlert),
 ];
@@ -413,9 +413,9 @@ class _AccountScreenState extends State<AccountScreen> {
     ];
     final right = <Widget>[
       _accessSection(),
-      if (_mcpEnabled) ...[const SizedBox(height: 16), const PatSection()],
       const SizedBox(height: 16),
       _appearanceSection(),
+      if (_mcpEnabled) ...[const SizedBox(height: 16), const PatSection()],
       // Admin area is its own top-level entry here, not buried in Appearance.
       if (isAdmin) ...[const SizedBox(height: 16), _adminSection()],
       const SizedBox(height: 16),
