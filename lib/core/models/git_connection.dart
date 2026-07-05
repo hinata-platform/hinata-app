@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../util/dates.dart';
 
 /// Per-project Git repository connection, embedded on [Project.git].
 ///
@@ -181,10 +182,4 @@ class GitRule extends Equatable {
 
 const Object _noChange = Object();
 
-DateTime? _ts(dynamic value) {
-  if (value is String) return DateTime.tryParse(value);
-  if (value is num) {
-    return DateTime.fromMillisecondsSinceEpoch((value * 1000).round(), isUtc: true);
-  }
-  return null;
-}
+DateTime? _ts(dynamic value) => parseInstant(value);

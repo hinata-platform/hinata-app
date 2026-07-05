@@ -151,7 +151,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   String _buildJson() {
     final out = {
       'project': _projectName(),
-      'generatedAt': DateTime.now().toIso8601String(),
+      'generatedAt': DateTime.now().toUtc().toIso8601String(),
       'reports': {
         for (final name in _reportNames)
           name: {

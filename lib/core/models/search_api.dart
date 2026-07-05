@@ -1,6 +1,10 @@
 /// DTOs for the `/api/v1/search` response (mirrors the server's `SearchHit` /
 /// `SearchResponse`). Kept raw — the controller maps these onto [SearchEntry]
 /// and composes/localises the display strings client-side.
+library;
+
+import '../util/dates.dart';
+
 class SearchApiHit {
   SearchApiHit({
     required this.category,
@@ -61,9 +65,7 @@ class SearchApiHit {
         memberNames:
             ((json['memberNames'] as List<dynamic>?) ?? const []).cast<String>(),
         space: json['space'] as String?,
-        updatedAt: json['updatedAt'] is String
-            ? DateTime.tryParse(json['updatedAt'] as String)
-            : null,
+        updatedAt: parseInstant(json['updatedAt']),
       );
 }
 

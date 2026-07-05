@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../util/dates.dart';
 
 /// A member's role within a single team. `admin` == "Team-Admin": full control
 /// of that team (members, projects, settings) but never platform-wide.
@@ -187,13 +188,4 @@ class TeamActivity extends Equatable {
   List<Object?> get props => [id, verb, objectLabel, createdAt];
 }
 
-DateTime? _instant(dynamic value) {
-  if (value is String) return DateTime.tryParse(value);
-  if (value is num) {
-    return DateTime.fromMillisecondsSinceEpoch(
-      (value * 1000).round(),
-      isUtc: true,
-    );
-  }
-  return null;
-}
+DateTime? _instant(dynamic value) => parseInstant(value);

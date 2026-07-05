@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../util/dates.dart';
 
 /// How an account was provisioned. SSO origins make email + password
 /// read-only ("managed by your identity provider").
@@ -333,7 +334,4 @@ class AccessProject extends Equatable {
   List<Object?> get props => [id, role];
 }
 
-DateTime? _date(dynamic value) {
-  if (value is String && value.isNotEmpty) return DateTime.tryParse(value);
-  return null;
-}
+DateTime? _date(dynamic value) => parseInstant(value);

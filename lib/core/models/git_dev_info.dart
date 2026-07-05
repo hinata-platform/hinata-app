@@ -6,6 +6,8 @@
 /// (see `core/models/git_connection.dart`).
 library;
 
+import '../util/dates.dart';
+
 /// A supported Git provider. Terminology is **provider-adaptive**: GitHub &
 /// Bitbucket say "Pull request / PR"; GitLab says "Merge request / MR". Every
 /// label in the UI derives from the connected provider via these getters.
@@ -477,10 +479,4 @@ List<T> _list<T>(dynamic value, T Function(Map<String, dynamic>) build) =>
         .map((e) => build(e as Map<String, dynamic>))
         .toList();
 
-DateTime? _ts(dynamic value) {
-  if (value is String) return DateTime.tryParse(value);
-  if (value is num) {
-    return DateTime.fromMillisecondsSinceEpoch((value * 1000).round(), isUtc: true);
-  }
-  return null;
-}
+DateTime? _ts(dynamic value) => parseInstant(value);

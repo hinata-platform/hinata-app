@@ -118,7 +118,7 @@ String buildIssuesJson(IssueExportData data) {
 
   final out = {
     'scope': data.scopeLabel,
-    'generatedAt': data.generatedAt.toIso8601String(),
+    'generatedAt': data.generatedAt.toUtc().toIso8601String(),
     'total': data.totalIssues,
     if (data.grouped && data.groupByLabel != null)
       'groupedBy': data.groupByLabel,

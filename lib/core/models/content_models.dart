@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../util/dates.dart';
+
 import 'work_models.dart';
 
 class Article extends Equatable {
@@ -53,12 +55,8 @@ class Article extends Equatable {
         authorId: json['authorId'] as String?,
         tags: ((json['tags'] as List<dynamic>?) ?? const []).cast<String>(),
         sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
-        createdAt: json['createdAt'] is String
-            ? DateTime.tryParse(json['createdAt'] as String)
-            : null,
-        updatedAt: json['updatedAt'] is String
-            ? DateTime.tryParse(json['updatedAt'] as String)
-            : null,
+        createdAt: parseInstant(json['createdAt']),
+        updatedAt: parseInstant(json['updatedAt']),
       );
 
   @override
@@ -95,12 +93,8 @@ class Space extends Equatable {
         hue: (json['hue'] as num?)?.toInt() ?? 250,
         description: json['description'] as String? ?? '',
         sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
-        createdAt: json['createdAt'] is String
-            ? DateTime.tryParse(json['createdAt'] as String)
-            : null,
-        updatedAt: json['updatedAt'] is String
-            ? DateTime.tryParse(json['updatedAt'] as String)
-            : null,
+        createdAt: parseInstant(json['createdAt']),
+        updatedAt: parseInstant(json['updatedAt']),
       );
 
   @override
@@ -133,9 +127,7 @@ class AppNotification extends Equatable {
         read: json['read'] as bool? ?? false,
         body: json['body'] as String?,
         link: json['link'] as String?,
-        createdAt: json['createdAt'] is String
-            ? DateTime.tryParse(json['createdAt'] as String)
-            : null,
+        createdAt: parseInstant(json['createdAt']),
       );
 
   @override
@@ -204,7 +196,7 @@ class TrackerDay extends Equatable {
   final int focusMinutes;
 
   factory TrackerDay.fromJson(Map<String, dynamic> json) => TrackerDay(
-        date: DateTime.parse(json['date'] as String),
+        date: parseDate(json['date'])!,
         focusMinutes: json['focusMinutes'] as int? ?? 0,
       );
 
@@ -225,7 +217,7 @@ class TrendPoint extends Equatable {
   final int resolved;
 
   factory TrendPoint.fromJson(Map<String, dynamic> json) => TrendPoint(
-        date: DateTime.parse(json['date'] as String),
+        date: parseDate(json['date'])!,
         created: (json['created'] as num?)?.toInt() ?? 0,
         resolved: (json['resolved'] as num?)?.toInt() ?? 0,
       );
@@ -357,7 +349,7 @@ class GitEvent extends Equatable {
         text: json['text'] as String? ?? '',
         repo: json['repo'] as String?,
         authorName: json['authorName'] as String?,
-        at: json['at'] is String ? DateTime.tryParse(json['at'] as String) : null,
+        at: parseInstant(json['at']),
         issueKey: json['issueKey'] as String?,
       );
 

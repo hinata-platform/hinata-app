@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../util/dates.dart';
 import 'git_connection.dart';
 
 /// A reusable, colored issue label ("Stichwort"). [name] is the canonical key
@@ -842,7 +843,7 @@ class TimesheetRow extends Equatable {
     projectId: json['projectId'] as String? ?? '',
     totalMinutes: json['totalMinutes'] as int? ?? 0,
     minutesPerDay: ((json['minutesPerDay'] as Map<String, dynamic>?) ?? {}).map(
-      (k, v) => MapEntry(DateTime.parse(k), v as int),
+      (k, v) => MapEntry(parseDate(k)!, v as int),
     ),
   );
 
@@ -1036,16 +1037,8 @@ List<String> _assigneeIds(Map<String, dynamic> json) {
   return (single != null && single.isNotEmpty) ? [single] : const [];
 }
 
-DateTime? _date(dynamic value) =>
-    value is String && value.isNotEmpty ? DateTime.tryParse(value) : null;
+// Calendar dates (dueDate/startDate/…) stay date-only; instants localize.
+// See lib/core/util/dates.dart for the rationale.
+DateTime? _date(dynamic value) => parseDate(value);
 
-DateTime? _instant(dynamic value) {
-  if (value is String) return DateTime.tryParse(value);
-  if (value is num) {
-    return DateTime.fromMillisecondsSinceEpoch(
-      (value * 1000).round(),
-      isUtc: true,
-    );
-  }
-  return null;
-}
+DateTime? _instant(dynamic value) => parseInstant(value);
