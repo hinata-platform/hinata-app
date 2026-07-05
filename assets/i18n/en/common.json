@@ -1944,10 +1944,16 @@
       "issues_read": "Read issues",
       "issues_write": "Write issues",
       "projects_read": "Read projects",
+      "boards_read": "Read boards & sprints",
+      "sprints_write": "Manage sprints",
+      "teams_read": "Read teams",
+      "users_read": "Read people directory",
       "kb_read": "Read knowledge base",
       "kb_write": "Write knowledge base",
+      "worklog_read": "Read logged work",
       "worklog_write": "Log work",
-      "search_read": "Search"
+      "search_read": "Search",
+      "notifications_read": "Read own notifications"
     }
   }
 }

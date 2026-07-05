@@ -1944,10 +1944,16 @@
       "issues_read": "Vorgänge lesen",
       "issues_write": "Vorgänge schreiben",
       "projects_read": "Projekte lesen",
+      "boards_read": "Boards & Sprints lesen",
+      "sprints_write": "Sprints verwalten",
+      "teams_read": "Teams lesen",
+      "users_read": "Personenverzeichnis lesen",
       "kb_read": "Wissensdatenbank lesen",
       "kb_write": "Wissensdatenbank schreiben",
+      "worklog_read": "Erfasste Arbeit lesen",
       "worklog_write": "Arbeit erfassen",
-      "search_read": "Suchen"
+      "search_read": "Suchen",
+      "notifications_read": "Eigene Benachrichtigungen lesen"
     }
   }
 }

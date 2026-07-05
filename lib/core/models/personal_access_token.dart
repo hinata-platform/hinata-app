@@ -8,10 +8,16 @@ const List<String> kPatScopes = [
   'issues:read',
   'issues:write',
   'projects:read',
+  'boards:read',
+  'sprints:write',
+  'teams:read',
+  'users:read',
   'kb:read',
   'kb:write',
+  'worklog:read',
   'worklog:write',
   'search:read',
+  'notifications:read',
 ];
 
 /// i18n key segment for a scope id — i18next treats `:` as the namespace
