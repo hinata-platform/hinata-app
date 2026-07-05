@@ -1887,6 +1887,19 @@
     "invalidBody": "Dieser Bestätigungslink ist ungültig oder abgelaufen. Registriere dich erneut, um einen neuen zu erhalten.",
     "goToLogin": "Zur Anmeldung"
   },
+  "oauthConsent": {
+    "title": "{{client}} verbinden",
+    "subtitle": "{{client}} möchte in deinem Namen auf dein {{product}}-Konto zugreifen.",
+    "scopesHeader": "Damit wird Folgendes erlaubt",
+    "noScopes": "Es wurden keine bestimmten Berechtigungen angefordert.",
+    "redirectNote": "Nach deiner Entscheidung wirst du zu {{host}} zurückgeleitet.",
+    "allow": "Zugriff erlauben",
+    "deny": "Ablehnen",
+    "expired": {
+      "title": "Dieser Autorisierungslink ist abgelaufen",
+      "message": "Zu deiner Sicherheit ist dieser Link nur kurz gültig. Bitte starte die Verbindung erneut über deinen KI-Client."
+    }
+  },
   "pat": {
     "createButton": "Neues Token",
     "createdOn": "Erstellt {{date}}",

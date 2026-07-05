@@ -26,6 +26,7 @@ import '../../features/issues/issue_filter.dart' show IssuesInitialView;
 import '../../features/issues/issues_screen.dart';
 import '../../features/knowledge/knowledge_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
+import '../../features/oauth/oauth_consent_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/projects/projects_screen.dart';
 import '../../features/projects/settings/project_settings_screen.dart';
@@ -204,6 +205,12 @@ GoRouter buildRouter({
         builder: (_, state) => ResetPasswordScreen(
           token: state.uri.queryParameters['token'] ?? '',
           server: state.uri.queryParameters['server'],
+        ),
+      ),
+      GoRoute(
+        path: '/oauth-consent',
+        builder: (_, state) => OAuthConsentScreen(
+          requestId: state.uri.queryParameters['request_id'] ?? '',
         ),
       ),
       GoRoute(

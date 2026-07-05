@@ -8,6 +8,7 @@ import '../models/core_models.dart';
 import '../models/deletion_models.dart';
 import '../models/git_connection.dart';
 import '../models/git_dev_info.dart';
+import '../models/oauth_consent.dart';
 import '../models/personal_access_token.dart';
 import '../models/search_api.dart';
 import '../models/team_models.dart';
@@ -339,6 +340,37 @@ class HinataRepository {
 
   /// Revokes (deletes) a PAT by id.
   Future<void> revokePat(String id) => _api.delete('/api/v1/me/pats/$id');
+
+  // --- OAuth 2.1 consent (MCP authorization) --------------------------------
+
+  /// Details of a pending OAuth authorization request an AI client started —
+  /// looked up by the `request_id` the backend hands the web app when it
+  /// 302-redirects the browser to `/oauth-consent?request_id=<id>`. Throws an
+  /// [ApiFailure] with `statusCode == 404` when the request is unknown/expired.
+  Future<OAuthConsentInfo> oauthConsentInfo(String requestId) async =>
+      OAuthConsentInfo.fromJson(
+        await _api.get('/api/v1/oauth/consent/$requestId')
+            as Map<String, dynamic>,
+      );
+
+  /// Records the user's decision on a pending OAuth request and returns the
+  /// `redirectUri` the browser must be sent to next (the AI client's callback,
+  /// carrying `code`+`state` on approve, or `error=access_denied` on deny).
+  Future<String> oauthConsentDecision(
+    String requestId, {
+    required bool approved,
+    required List<String> grantedScopes,
+  }) async =>
+      ((await _api.post(
+                '/api/v1/oauth/consent',
+                body: {
+                  'requestId': requestId,
+                  'approved': approved,
+                  'grantedScopes': grantedScopes,
+                },
+              ))
+              as Map<String, dynamic>)['redirectUri']
+          as String;
 
   // --- Users ----------------------------------------------------------------
 

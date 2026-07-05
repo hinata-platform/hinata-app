@@ -1887,6 +1887,19 @@
     "invalidBody": "This confirmation link is invalid or has expired. Sign up again to receive a new one.",
     "goToLogin": "Go to sign in"
   },
+  "oauthConsent": {
+    "title": "Connect {{client}}",
+    "subtitle": "{{client}} wants to access your {{product}} account on your behalf.",
+    "scopesHeader": "This will allow it to",
+    "noScopes": "No specific permissions were requested.",
+    "redirectNote": "After you decide, you'll be returned to {{host}}.",
+    "allow": "Allow access",
+    "deny": "Deny",
+    "expired": {
+      "title": "This authorization link has expired",
+      "message": "For your security this link is only valid for a short time. Please start the connection again from your AI client."
+    }
+  },
   "pat": {
     "createButton": "New token",
     "createdOn": "Created {{date}}",
