@@ -120,7 +120,9 @@ GoRouter buildRouter({
             parkIfDeepLink();
             return '/connect';
           }
-          return location == '/connecting' ? null : '/connecting';
+          if (location == '/connecting') return null;
+          parkIfDeepLink();
+          return '/connecting';
         case AppConfigStatus.needsServerUrl:
           if (location == '/connect') return null;
           parkIfDeepLink();
