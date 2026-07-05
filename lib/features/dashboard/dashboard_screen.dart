@@ -36,6 +36,10 @@ const _heroInk = Color(0xF2FFFFFF); // ~95% white — hero text on navy glass
 /// Card-to-card gap on the dashboard grid.
 const double _gap = 18;
 
+/// Width of the edit-mode picker fields and their anchored popovers (kept equal
+/// so the dropdown lines up exactly under its field).
+const double _kPickerWidth = 300;
+
 /// Stable card keys for show/hide personalisation. `hero` is the anchor card
 /// (with the board picker) and is never hideable.
 abstract final class _Card {
@@ -1951,10 +1955,10 @@ class _EditToolbar extends StatelessWidget {
                   onTap: (rect) => _pickTeams(context, rect),
                 ),
               ];
-              // Equal-width fields that fill the row so each chevron pins right.
+              // Compact fixed-width fields (matching the popover width) that wrap
+              // instead of stretching across the whole toolbar.
               const gap = 12.0;
-              final cols = c.maxWidth >= 560 ? 3 : (c.maxWidth >= 360 ? 2 : 1);
-              final width = (c.maxWidth - gap * (cols - 1)) / cols;
+              final width = c.maxWidth < _kPickerWidth ? c.maxWidth : _kPickerWidth;
               return Wrap(
                 spacing: gap,
                 runSpacing: gap,
@@ -1971,7 +1975,7 @@ class _EditToolbar extends StatelessWidget {
     final result = await showGlassAnchoredPopover<String>(
       context,
       anchorRect: anchor,
-      width: 320,
+      width: _kPickerWidth,
       builder: (_) => _BoardPickerSheet(boards: boards, selected: draft.boardId),
     );
     if (result == null) return; // dismissed
@@ -1985,7 +1989,7 @@ class _EditToolbar extends StatelessWidget {
     final result = await showGlassAnchoredPopover<List<String>>(
       context,
       anchorRect: anchor,
-      width: 320,
+      width: _kPickerWidth,
       builder: (_) => _ScopePickerSheet(
         title: context.t('dashboard.dataScope'),
         icon: LucideIcons.folderKanban,
@@ -2002,7 +2006,7 @@ class _EditToolbar extends StatelessWidget {
     final result = await showGlassAnchoredPopover<List<String>>(
       context,
       anchorRect: anchor,
-      width: 320,
+      width: _kPickerWidth,
       builder: (_) => _ScopePickerSheet(
         title: context.t('dashboard.teamScope'),
         icon: LucideIcons.usersRound,
