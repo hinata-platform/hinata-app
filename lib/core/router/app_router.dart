@@ -248,15 +248,23 @@ GoRouter buildRouter({
             pageBuilder: (_, state) {
               final projectId = state.uri.queryParameters['projectId'];
               final view = _issuesView(state.uri.queryParameters['view']);
-              // Key by the preset so switching KPI deep-links always yields a
-              // fresh screen (clean filter) instead of reusing the prior state
-              // — go_router's pageKey ignores the ?view= query on its own.
+              // Dashboard KPI deep-links carry the active project scope so the
+              // Issues page shows exactly the set the card counted.
+              final projectsCsv = state.uri.queryParameters['projects'] ?? '';
+              final scope = projectsCsv.isEmpty
+                  ? const <String>[]
+                  : projectsCsv.split(',').where((s) => s.isNotEmpty).toList();
+              // Key by the preset + scope so switching KPI deep-links always
+              // yields a fresh screen (clean filter) instead of reusing the prior
+              // state — go_router's pageKey ignores the query on its own.
               return _transition(
                 state,
                 IssuesScreen(
-                  key: ValueKey('issues-${view?.name ?? 'all'}-${projectId ?? ''}'),
+                  key: ValueKey(
+                      'issues-${view?.name ?? 'all'}-${projectId ?? ''}-${scope.join(',')}'),
                   projectId: projectId,
                   initialView: view,
+                  scopeProjectIds: scope,
                 ),
               );
             },

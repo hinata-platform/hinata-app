@@ -41,12 +41,21 @@ typedef _RefData = ({
 });
 
 class IssuesScreen extends StatefulWidget {
-  const IssuesScreen({super.key, this.projectId, this.initialView});
+  const IssuesScreen({
+    super.key,
+    this.projectId,
+    this.initialView,
+    this.scopeProjectIds = const [],
+  });
 
   final String? projectId;
 
   /// Optional preset the screen opens pre-filtered on (dashboard KPI deep-link).
   final IssuesInitialView? initialView;
+
+  /// Project scope carried from the dashboard so a KPI deep-link reproduces the
+  /// same project selection the card was counted with. Empty ⇒ all projects.
+  final List<String> scopeProjectIds;
 
   @override
   State<IssuesScreen> createState() => _IssuesScreenState();
@@ -181,11 +190,17 @@ class _IssuesScreenState extends State<IssuesScreen> {
     // from a previous state (filter or time range) leaks in.
     _filter = IssueFilter.empty;
     _timeRange = IssueTimeRange.none;
+    // The dashboard's project scope (if any) applies to every preset so the
+    // filtered list reproduces exactly what the KPI card counted.
+    final scope = widget.scopeProjectIds.toSet();
     if (view == IssuesInitialView.today) {
       // "Today's tasks" = my open issues due today or overdue — the exact set the
       // dashboard KPI counts, so the filtered list length matches the card.
       final me = context.read<AuthBloc>().state.user?.id;
-      _filter = me == null ? IssueFilter.empty : IssueFilter(assignees: {me});
+      _filter = IssueFilter(
+        assignees: me == null ? const {} : {me},
+        projects: scope,
+      );
       _timeRange = const IssueTimeRange(preset: IssueTimePreset.dueByToday);
       return;
     }
@@ -206,7 +221,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
       IssuesInitialView.inProgress => all.difference(done).difference(backlog),
       IssuesInitialView.today => const <String>{},
     };
-    _filter = IssueFilter(states: states);
+    _filter = IssueFilter(states: states, projects: scope);
   }
 
   /// Pull-to-refresh / retry: reload the first page and the reference data.

@@ -241,7 +241,7 @@ class _DashboardViewState extends State<_DashboardView> {
       if (data.gitActivity.isNotEmpty) (_Card.git, _GitCard(events: data.gitActivity)),
     ];
     final right = <(String, Widget)>[
-      (_Card.kpis, _Kpis(today: data.todayCount, completion: data.completion)),
+      (_Card.kpis, _Kpis(today: data.todayCount, completion: data.completion, projectIds: prefs.projectIds)),
       (_Card.completion, _CompletionCard(completion: data.completion)),
       (_Card.tracker, _TrackerCard(week: data.tracker, month: data.trackerMonth)),
       (_Card.ranking, _LeaderboardCard(ranking: data.ranking)),
@@ -260,7 +260,7 @@ class _DashboardViewState extends State<_DashboardView> {
   Widget _stack(BuildContext context, DashboardData data, DashboardPrefs prefs) {
     final items = <(String, Widget)>[
       (_Card.hero, _sprintCard(data.activeBoard)),
-      (_Card.kpis, _Kpis(today: data.todayCount, completion: data.completion)),
+      (_Card.kpis, _Kpis(today: data.todayCount, completion: data.completion, projectIds: prefs.projectIds)),
       (_Card.focus, _FocusCard(issues: data.todayTasks)),
       (_Card.completion, _CompletionCard(completion: data.completion)),
       (_Card.tracker, _TrackerCard(week: data.tracker, month: data.trackerMonth)),
@@ -863,11 +863,22 @@ class _RingPainter extends CustomPainter {
 // ══════════════════════════ KPIs ═══════════════════════════════════════════
 
 class _Kpis extends StatelessWidget {
-  const _Kpis({required this.today, required this.completion});
+  const _Kpis({
+    required this.today,
+    required this.completion,
+    this.projectIds = const [],
+  });
   final int today;
   final ProjectCompletion completion;
 
-  void _open(BuildContext context, String view) => context.go('/issues?view=$view');
+  /// The dashboard's active project scope, forwarded so the Issues page shows
+  /// exactly the same set the counts were computed from.
+  final List<String> projectIds;
+
+  void _open(BuildContext context, String view) {
+    final scope = projectIds.isEmpty ? '' : '&projects=${projectIds.join(',')}';
+    context.go('/issues?view=$view$scope');
+  }
 
   @override
   Widget build(BuildContext context) {
