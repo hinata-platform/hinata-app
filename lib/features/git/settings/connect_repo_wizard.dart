@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/hinata_repository.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../core/models/git_dev_info.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
@@ -29,28 +30,31 @@ Future<Project?> showConnectRepoWizard(
   );
 }
 
-typedef _Scope = ({String title, String desc, String scope, bool required});
+// [titleKey] is either an i18n key (github rows: human labels) or a literal
+// OAuth scope name kept verbatim (gitlab/bitbucket rows like `api`, `account`).
+// [descKey]/[scopeKey] always resolve through i18n. See [_permTitle].
+typedef _Scope = ({String titleKey, String descKey, String scopeKey, bool required});
 
 const Map<String, List<_Scope>> _permsByProvider = {
   'github': [
-    (title: 'Repository metadata', desc: 'Names, branches, topics', scope: 'Read', required: true),
-    (title: 'Contents (code)', desc: 'Sync development info & create branches', scope: 'Read & write', required: false),
-    (title: 'Pull requests', desc: 'Link and update pull requests', scope: 'Read & write', required: false),
-    (title: 'Issues', desc: 'Smart-commit comments & transitions', scope: 'Read & write', required: false),
-    (title: 'Deployments & checks', desc: 'Show build & deployment status', scope: 'Read', required: false),
-    (title: 'Webhooks', desc: 'Receive push, branch & PR events', scope: 'Read & write', required: false),
+    (titleKey: 'git.connect.perms.ghMeta', descKey: 'git.connect.perms.ghMetaDesc', scopeKey: 'read', required: true),
+    (titleKey: 'git.connect.perms.ghContents', descKey: 'git.connect.perms.ghContentsDesc', scopeKey: 'readWrite', required: false),
+    (titleKey: 'git.connect.perms.ghPrs', descKey: 'git.connect.perms.ghPrsDesc', scopeKey: 'readWrite', required: false),
+    (titleKey: 'git.connect.perms.ghIssues', descKey: 'git.connect.perms.ghIssuesDesc', scopeKey: 'readWrite', required: false),
+    (titleKey: 'git.connect.perms.ghChecks', descKey: 'git.connect.perms.ghChecksDesc', scopeKey: 'read', required: false),
+    (titleKey: 'git.connect.perms.ghHooks', descKey: 'git.connect.perms.ghHooksDesc', scopeKey: 'readWrite', required: false),
   ],
   'gitlab': [
-    (title: 'api', desc: 'Read development info & transition issues', scope: 'Full', required: true),
-    (title: 'read_repository', desc: 'Branches, commits & merge requests', scope: 'Read', required: false),
-    (title: 'write_repository', desc: 'Create branches from issues', scope: 'Write', required: false),
-    (title: 'Webhooks', desc: 'Receive push & MR events', scope: 'Read & write', required: false),
+    (titleKey: 'api', descKey: 'git.connect.perms.glApiDesc', scopeKey: 'full', required: true),
+    (titleKey: 'read_repository', descKey: 'git.connect.perms.glReadDesc', scopeKey: 'read', required: false),
+    (titleKey: 'write_repository', descKey: 'git.connect.perms.glWriteDesc', scopeKey: 'write', required: false),
+    (titleKey: 'git.connect.perms.ghHooks', descKey: 'git.connect.perms.glHooksDesc', scopeKey: 'readWrite', required: false),
   ],
   'bitbucket': [
-    (title: 'account', desc: 'Identify your workspaces', scope: 'Read', required: true),
-    (title: 'repository', desc: 'Branches, commits & pull requests', scope: 'Read', required: false),
-    (title: 'pullrequest', desc: 'Link and update pull requests', scope: 'Read & write', required: false),
-    (title: 'webhook', desc: 'Receive repository events', scope: 'Read & write', required: false),
+    (titleKey: 'account', descKey: 'git.connect.perms.bbAccountDesc', scopeKey: 'read', required: true),
+    (titleKey: 'repository', descKey: 'git.connect.perms.bbRepoDesc', scopeKey: 'read', required: false),
+    (titleKey: 'pullrequest', descKey: 'git.connect.perms.bbPrDesc', scopeKey: 'readWrite', required: false),
+    (titleKey: 'webhook', descKey: 'git.connect.perms.bbHookDesc', scopeKey: 'readWrite', required: false),
   ],
 };
 
@@ -154,15 +158,17 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
         Uri.parse(start.authorizeUrl!),
         mode: LaunchMode.externalApplication,
       );
+      if (!mounted) return;
       if (!launched) {
-        _toast('Could not open the browser to authorize on ${provider.label}.');
+        _toast(context.t('git.connect.browserOpenError',
+            variables: {'provider': provider.label}));
         return;
       }
-      if (mounted) setState(() => _awaiting = true);
+      setState(() => _awaiting = true);
       final ok = await _pollAuthorization(start.state!);
       if (!mounted) return;
       if (!ok) {
-        _toast('Authorization wasn\'t completed. Please try again.');
+        _toast(context.t('git.connect.notCompleted'));
         setState(() => _awaiting = false);
         return;
       }
@@ -275,7 +281,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
   }
 
   String _message(Object e) =>
-      e is ApiFailure ? e.message : 'Something went wrong. Please try again.';
+      e is ApiFailure ? e.message : context.t('git.genericError');
 
   bool get _canFinish => switch (_step) {
     _Step.token => _urlCtrl.text.trim().isNotEmpty && _tokenCtrl.text.trim().isNotEmpty,
@@ -332,9 +338,9 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Connect a repository',
-                  style: TextStyle(
+                Text(
+                  context.t('git.connect.title'),
+                  style: const TextStyle(
                     fontFamily: AppTheme.fontBrand,
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -345,12 +351,12 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
                 Text.rich(
                   TextSpan(
                     children: [
-                      TextSpan(text: 'Link ${p.name} '),
+                      TextSpan(text: '${context.t('git.connect.linkPrefix')}${p.name} '),
                       TextSpan(
                         text: '(${p.key})',
                         style: const TextStyle(fontFamily: AppTheme.fontMono),
                       ),
-                      const TextSpan(text: ' to its own Git repository'),
+                      TextSpan(text: context.t('git.connect.linkSuffix')),
                     ],
                   ),
                   maxLines: 2,
@@ -362,7 +368,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
           ),
           const SizedBox(width: 8),
           IconButton(
-            tooltip: 'Close',
+            tooltip: context.t('git.connect.close'),
             icon: Icon(LucideIcons.x, size: 20, color: AppColors.inkSoft),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
@@ -385,10 +391,10 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
   Widget _stepRail() {
     final p = _provider;
     final steps = <(_Step, String)>[
-      (_Step.provider, 'Provider'),
-      (_Step.authorize, 'Authorize'),
-      (_Step.owner, p == null ? 'Owner' : _cap(p.ownerWord)),
-      (_Step.repo, p == null ? 'Repository' : _cap(p.unit)),
+      (_Step.provider, context.t('git.connect.stepProvider')),
+      (_Step.authorize, context.t('git.connect.stepAuthorize')),
+      (_Step.owner, p == null ? context.t('git.connect.stepOwner') : _cap(p.ownerWord)),
+      (_Step.repo, p == null ? context.t('git.connect.stepRepository') : _cap(p.unit)),
     ];
     final currentIdx = steps.indexWhere((s) => s.$1 == _step);
     return Padding(
@@ -492,12 +498,12 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
           child: Text.rich(
             TextSpan(
               children: [
-                const TextSpan(text: 'Self-managed GitLab or GitHub Enterprise? '),
+                TextSpan(text: context.t('git.connect.selfManagedPrefix')),
                 _linkSpan(
-                  'Connect with a URL & access token',
+                  context.t('git.connect.urlTokenLink'),
                   () => setState(() => _step = _Step.token),
                 ),
-                const TextSpan(text: ' instead.'),
+                TextSpan(text: context.t('git.connect.selfManagedSuffix')),
               ],
             ),
             style: TextStyle(fontSize: 12, height: 1.5, color: AppColors.inkSoft),
@@ -565,8 +571,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
         _hint(
           icon: LucideIcons.externalLink,
           child: Text(
-            'Approve access in the ${p.label} tab that just opened, then come '
-            'back here — this updates automatically.',
+            context.t('git.connect.awaitingHint', variables: {'provider': p.label}),
             style: TextStyle(fontSize: 12, height: 1.5, color: AppColors.inkSoft),
           ),
         ),
@@ -581,7 +586,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
         const SizedBox(height: 14),
         Center(
           child: Text(
-            'Waiting for ${p.label} authorization…',
+            context.t('git.connect.awaitingWaiting', variables: {'provider': p.label}),
             style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
           ),
         ),
@@ -596,7 +601,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
             },
             icon: Icon(LucideIcons.refreshCw, size: 14, color: AppColors.inkSoft),
             label: Text(
-              'Reopen the authorization page',
+              context.t('git.connect.reopenAuth'),
               style: TextStyle(color: AppColors.inkSoft),
             ),
           ),
@@ -627,7 +632,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
         const SizedBox(height: 14),
         Center(
           child: Text(
-            'One-click ${p.label} sign-in isn\'t available yet',
+            context.t('git.connect.unavailableTitle', variables: {'provider': p.label}),
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontFamily: AppTheme.fontBrand,
@@ -639,9 +644,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
         const SizedBox(height: 6),
         Center(
           child: Text(
-            'An administrator still needs to register hinata as an OAuth app for '
-            '${p.label} before you can connect with one click. This is a one-time '
-            'platform setup done in Admin area → Git integration.',
+            context.t('git.connect.unavailableBody', variables: {'provider': p.label}),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12.5, height: 1.55, color: AppColors.inkSoft),
           ),
@@ -652,17 +655,13 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
           child: Text.rich(
             TextSpan(
               children: [
-                const TextSpan(
-                  text: 'Have a personal access token? ',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                TextSpan(
+                  text: context.t('git.connect.tokenPromptPrefix'),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
-                const TextSpan(
-                  text:
-                      'You can connect this project right now with a repository '
-                      'URL and access token — no admin setup required. ',
-                ),
+                TextSpan(text: context.t('git.connect.tokenPromptBody')),
                 _linkSpan(
-                  'Connect with a URL & token',
+                  context.t('git.connect.tokenPromptLink'),
                   () => setState(() => _step = _Step.token),
                 ),
               ],
@@ -706,7 +705,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
         const SizedBox(height: 14),
         Center(
           child: Text(
-            'Authorize hinata on ${p.label}',
+            context.t('git.connect.authorizeTitle', variables: {'provider': p.label}),
             style: const TextStyle(
               fontFamily: AppTheme.fontBrand,
               fontSize: 17,
@@ -717,7 +716,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
         const SizedBox(height: 4),
         Center(
           child: Text(
-            'hinata for ${p.label} will be able to:',
+            context.t('git.connect.authorizeSubtitle', variables: {'provider': p.label}),
             style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
           ),
         ),
@@ -751,10 +750,10 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
                             Text.rich(
                               TextSpan(
                                 children: [
-                                  TextSpan(text: perms[i].title),
+                                  TextSpan(text: _permTitle(context, perms[i].titleKey)),
                                   if (perms[i].required)
                                     TextSpan(
-                                      text: ' · required',
+                                      text: ' · ${context.t('git.connect.required')}',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w500,
                                         color: AppColors.inkFaint,
@@ -768,7 +767,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
                               ),
                             ),
                             Text(
-                              perms[i].desc,
+                              context.t(perms[i].descKey),
                               style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
                             ),
                           ],
@@ -776,7 +775,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        perms[i].scope,
+                        context.t('git.connect.scope.${perms[i].scopeKey}'),
                         style: TextStyle(
                           fontFamily: AppTheme.fontMono,
                           fontSize: 10.5,
@@ -803,7 +802,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(
-            'Choose the ${p.ownerWord} hinata was installed on.',
+            context.t('git.connect.chooseOwner', variables: {'owner': p.ownerWord}),
             style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
           ),
         ),
@@ -849,7 +848,8 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
                   decoration: InputDecoration(
                     isDense: true,
                     border: InputBorder.none,
-                    hintText: 'Search ${p.unit}s…',
+                    hintText: context.t('git.connect.searchHint',
+                        variables: {'unit': '${p.unit}s'}),
                     hintStyle: TextStyle(color: AppColors.inkFaint),
                   ),
                 ),
@@ -863,7 +863,8 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: Center(
               child: Text(
-                'No ${p.unit}s match “$_query”.',
+                context.t('git.connect.noMatches',
+                    variables: {'unit': '${p.unit}s', 'query': _query}),
                 style: TextStyle(color: AppColors.inkFaint),
               ),
             ),
@@ -891,15 +892,13 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
         _hint(
           icon: LucideIcons.info,
           child: Text(
-            'For self-managed GitLab / GitHub Enterprise / Bitbucket Data Center. '
-            'Generate a personal access token with api / repo scope and paste it '
-            'below. The token is stored encrypted and used server-side only.',
+            context.t('git.connect.tokenIntro'),
             style: TextStyle(fontSize: 12, height: 1.5, color: AppColors.inkSoft),
           ),
         ),
         const SizedBox(height: 14),
         GlassField(
-          label: 'Repository URL',
+          label: context.t('git.connect.repoUrlLabel'),
           child: TextField(
             controller: _urlCtrl,
             autofocus: true,
@@ -911,7 +910,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
         ),
         const SizedBox(height: 14),
         GlassField(
-          label: 'Access token',
+          label: context.t('git.connect.accessTokenLabel'),
           child: TextField(
             controller: _tokenCtrl,
             obscureText: true,
@@ -927,7 +926,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
             onPressed: () => setState(() => _step = _Step.provider),
             icon: Icon(LucideIcons.arrowLeft, size: 14, color: AppColors.inkSoft),
             label: Text(
-              'Use OAuth instead',
+              context.t('git.connect.useOauthInstead'),
               style: TextStyle(color: AppColors.inkSoft),
             ),
           ),
@@ -944,19 +943,21 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
     final primary = _step == _Step.authorize
         ? (_unavailable
               ? _PrimaryAction(
-                  label: 'Use URL & token',
+                  label: context.t('git.connect.useUrlToken'),
                   icon: LucideIcons.keyRound,
                   busy: false,
                   onPressed: () => setState(() => _step = _Step.token),
                 )
               : _PrimaryAction(
-                  label: 'Authorize & install',
+                  label: context.t('git.connect.authorizeInstall'),
                   icon: LucideIcons.shieldCheck,
                   busy: _busy,
                   onPressed: _busy ? null : _authorize,
                 ))
         : _PrimaryAction(
-            label: _repo != null ? 'Connect ${_repo!.name}' : 'Connect',
+            label: _repo != null
+                ? context.t('git.connect.connectNamed', variables: {'name': _repo!.name})
+                : context.t('git.connect.connect'),
             icon: LucideIcons.link,
             busy: _busy,
             onPressed: (_canFinish && !_busy)
@@ -974,12 +975,13 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
             TextButton.icon(
               onPressed: _busy ? null : _back,
               icon: Icon(LucideIcons.arrowLeft, size: 14, color: AppColors.inkSoft),
-              label: Text('Back', style: TextStyle(color: AppColors.inkSoft)),
+              label: Text(context.t('common.back'),
+                  style: TextStyle(color: AppColors.inkSoft)),
             ),
           const Spacer(),
           TextButton(
             onPressed: _busy ? null : () => Navigator.of(context).maybePop(),
-            child: const Text('Cancel'),
+            child: Text(context.t('common.cancel')),
           ),
           const SizedBox(width: 8),
           primary,
@@ -1026,6 +1028,11 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
 
   static String _cap(String s) =>
       s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
+  // Permission-row titles are either an i18n key (github: human labels) or a
+  // literal OAuth scope name (gitlab/bitbucket) that stays verbatim.
+  String _permTitle(BuildContext context, String titleKey) =>
+      titleKey.startsWith('git.') ? context.t(titleKey) : titleKey;
 }
 
 class _CardButton extends StatelessWidget {
@@ -1107,7 +1114,11 @@ class _OwnerItem extends StatelessWidget {
                   style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
                 ),
                 Text(
-                  '${owner.kind} · ${owner.repos} ${provider.unit}s',
+                  context.t('git.connect.ownerMeta', variables: {
+                    'kind': owner.kind,
+                    'count': '${owner.repos}',
+                    'unit': '${provider.unit}s',
+                  }),
                   style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
                 ),
               ],
@@ -1184,7 +1195,9 @@ class _RepoItem extends StatelessWidget {
                       child: Text(
                         [
                           if (repo.lang != null) repo.lang!,
-                          if (repo.updated != null) 'updated ${repo.updated} ago',
+                          if (repo.updated != null)
+                            context.t('git.connect.updatedAgo',
+                                variables: {'ago': '${repo.updated}'}),
                         ].join(' · '),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1204,7 +1217,9 @@ class _RepoItem extends StatelessWidget {
               border: Border.all(color: AppColors.hairline),
             ),
             child: Text(
-              repo.isPrivate ? 'Private' : 'Public',
+              repo.isPrivate
+                  ? context.t('git.connect.private')
+                  : context.t('git.connect.public'),
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,

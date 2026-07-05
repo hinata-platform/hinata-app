@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/i18n/i18n.dart';
 import '../../core/models/git_dev_info.dart';
 
 /// Design tokens for the Git integration surfaces, mirrored 1:1 from
@@ -29,18 +30,20 @@ IconData categoryIcon(String key) => switch (key) {
   _ => LucideIcons.gitBranch,
 };
 
-/// Hue + icon + label for a PR/MR state pill.
-({int hue, IconData icon, String label}) prStateStyle(PrState state) => switch (state) {
-  PrState.open => (hue: 155, icon: LucideIcons.gitPullRequest, label: 'Open'),
-  PrState.draft => (hue: 250, icon: LucideIcons.gitPullRequestDraft, label: 'Draft'),
-  PrState.merged => (hue: 300, icon: LucideIcons.gitMerge, label: 'Merged'),
-  PrState.closed => (hue: 20, icon: LucideIcons.gitPullRequestClosed, label: 'Closed'),
+/// Hue + icon + label for a PR/MR state pill (label localized for [context]).
+({int hue, IconData icon, String label}) prStateStyle(BuildContext context, PrState state) =>
+    switch (state) {
+  PrState.open => (hue: 155, icon: LucideIcons.gitPullRequest, label: context.t('git.stateOpen')),
+  PrState.draft => (hue: 250, icon: LucideIcons.gitPullRequestDraft, label: context.t('git.stateDraft')),
+  PrState.merged => (hue: 300, icon: LucideIcons.gitMerge, label: context.t('git.stateMerged')),
+  PrState.closed => (hue: 20, icon: LucideIcons.gitPullRequestClosed, label: context.t('git.stateClosed')),
 };
 
-/// Hue + icon + label for a checks / build status pill.
-({int hue, IconData icon, String label}) checkStyle(CheckState state) => switch (state) {
-  CheckState.passing => (hue: 155, icon: LucideIcons.circleCheckBig, label: 'Passing'),
-  CheckState.failing => (hue: 20, icon: LucideIcons.circleX, label: 'Failing'),
-  CheckState.pending => (hue: 65, icon: LucideIcons.clock, label: 'Pending'),
-  CheckState.running => (hue: 200, icon: LucideIcons.loaderCircle, label: 'Running'),
+/// Hue + icon + label for a checks / build status pill (label localized).
+({int hue, IconData icon, String label}) checkStyle(BuildContext context, CheckState state) =>
+    switch (state) {
+  CheckState.passing => (hue: 155, icon: LucideIcons.circleCheckBig, label: context.t('git.statePassing')),
+  CheckState.failing => (hue: 20, icon: LucideIcons.circleX, label: context.t('git.stateFailing')),
+  CheckState.pending => (hue: 65, icon: LucideIcons.clock, label: context.t('git.statePending')),
+  CheckState.running => (hue: 200, icon: LucideIcons.loaderCircle, label: context.t('git.stateRunning')),
 };

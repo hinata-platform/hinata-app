@@ -4109,9 +4109,9 @@ class _DocumentedIn extends StatelessWidget {
             children: [
               Icon(lucideIcon('link-2'), size: 16, color: KbTokens.accent),
               const SizedBox(width: 8),
-              const Text(
-                'Documented in',
-                style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+              Text(
+                context.t('knowledge.documentedIn'),
+                style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
               ),
               const SizedBox(width: 8),
               Container(

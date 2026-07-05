@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -112,7 +113,7 @@ class CapacityBar extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Capacity',
+                context.t('sprint.capacity'),
                 style: TextStyle(fontSize: 10.5, color: AppColors.inkSoft),
               ),
               const Spacer(),

@@ -348,7 +348,7 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
           ),
       ],
     );
-    add('prs', prov.prTermPlural, kHuePullRequest, g.prs.length, _prBadge(g.prs), [
+    add('prs', prov.prTermPlural, kHuePullRequest, g.prs.length, _prBadge(context, g.prs), [
       for (final pr in g.prs)
         PrRow(
           pr: pr,
@@ -361,21 +361,21 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
           onOpen: () => _open(gitPrUrl(prov, g.repo, pr.number)),
         ),
     ]);
-    add('builds', context.t('git.builds'), kHueBuild, g.builds.length, _buildBadge(g.builds), [
+    add('builds', context.t('git.builds'), kHueBuild, g.builds.length, _buildBadge(context, g.builds), [
       for (final b in g.builds) BuildRow(run: b),
     ]);
     return cats;
   }
 
-  Widget? _prBadge(List<GitPullRequest> prs) {
+  Widget? _prBadge(BuildContext context, List<GitPullRequest> prs) {
     if (prs.isEmpty) return null;
-    final s = prStateStyle(prs.first.state);
+    final s = prStateStyle(context, prs.first.state);
     return StatePill(hue: s.hue, icon: s.icon, label: s.label);
   }
 
-  Widget? _buildBadge(List<GitBuild> builds) {
+  Widget? _buildBadge(BuildContext context, List<GitBuild> builds) {
     if (builds.isEmpty) return null;
-    final s = checkStyle(builds.first.status);
+    final s = checkStyle(context, builds.first.status);
     return StatePill(hue: s.hue, icon: s.icon, label: s.label);
   }
 }

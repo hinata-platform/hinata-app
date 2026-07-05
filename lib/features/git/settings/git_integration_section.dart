@@ -359,7 +359,7 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
             Icon(LucideIcons.refreshCw, size: 13, color: AppColors.success),
             const SizedBox(width: 5),
             Text(
-              context.t('git.syncedAgo', variables: {'ago': _syncedLabel(git.lastSyncAt)}),
+              context.t('git.syncedAgo', variables: {'ago': _syncedLabel(context, git.lastSyncAt)}),
               style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
@@ -383,9 +383,9 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
     );
   }
 
-  String _syncedLabel(DateTime? at) {
+  String _syncedLabel(BuildContext context, DateTime? at) {
     final s = agoSuffixed(at);
-    return s.isEmpty ? 'recently' : s;
+    return s.isEmpty ? context.t('git.recently') : s;
   }
 
   // ── automation ─────────────────────────────────────────────────────────

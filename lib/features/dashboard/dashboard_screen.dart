@@ -12,6 +12,7 @@ import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
+import '../../core/models/team_models.dart' show Team;
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
@@ -20,6 +21,8 @@ import '../../core/widgets/hex_mark.dart' show HexMark;
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../issues/issue_detail_sheet.dart';
+import '../sprint/modals/glass_modal.dart'
+    show showGlassModal, GlassModalHeader, GlassModalFooter;
 
 /// Exact segment colours for the completion donut / KPIs (design "Liquid Glass").
 const _cDone = Color(0xFF2E8B62);
@@ -33,48 +36,150 @@ const _heroInk = Color(0xF2FFFFFF); // ~95% white — hero text on navy glass
 /// Card-to-card gap on the dashboard grid.
 const double _gap = 18;
 
+/// Stable card keys for show/hide personalisation. `hero` is the anchor card
+/// (with the board picker) and is never hideable.
+abstract final class _Card {
+  static const hero = 'hero';
+  static const focus = 'focus';
+  static const git = 'git';
+  static const kpis = 'kpis';
+  static const completion = 'completion';
+  static const tracker = 'tracker';
+  static const ranking = 'ranking';
+}
+
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) =>
-          FetchCubit<DashboardData>(context.read<HinataRepository>().dashboard)
-            ..load(),
-      child: const _DashboardView(),
-    );
-  }
+  Widget build(BuildContext context) => const _DashboardView();
 }
 
-class _DashboardView extends StatelessWidget {
+class _DashboardView extends StatefulWidget {
   const _DashboardView();
 
   @override
+  State<_DashboardView> createState() => _DashboardViewState();
+}
+
+class _DashboardViewState extends State<_DashboardView> {
+  late final FetchCubit<DashboardData> _cubit;
+
+  bool _editing = false;
+  bool _saving = false;
+
+  /// The pending personalisation while [_editing]; seeded from the saved prefs
+  /// on entering edit mode. Scope/board changes re-fetch for a live preview;
+  /// card show/hide is applied purely client-side.
+  DashboardPrefs _draft = DashboardPrefs.empty;
+
+  // Loaded once for the scope pickers (never blocks the dashboard itself).
+  List<Project> _projects = const [];
+  List<Team> _teams = const [];
+
+  HinataRepository get _repo => context.read<HinataRepository>();
+
+  @override
+  void initState() {
+    super.initState();
+    _cubit = FetchCubit<DashboardData>(
+      () => _repo.dashboard(override: _editing ? _draft : null),
+    )..load();
+    _loadPickerData();
+  }
+
+  Future<void> _loadPickerData() async {
+    try {
+      final projects = await _repo.projects();
+      final teams = await _repo.teams();
+      if (!mounted) return;
+      setState(() {
+        _projects = projects;
+        _teams = teams;
+      });
+    } catch (_) {
+      // Pickers simply stay empty — the dashboard still works.
+    }
+  }
+
+  @override
+  void dispose() {
+    _cubit.close();
+    super.dispose();
+  }
+
+  void _enterEdit(DashboardData data) {
+    setState(() {
+      _draft = data.prefs;
+      _editing = true;
+    });
+  }
+
+  Future<void> _finishEdit() async {
+    setState(() => _saving = true);
+    try {
+      await _repo.saveDashboardPrefs(_draft);
+      if (!mounted) return;
+      setState(() {
+        _editing = false;
+        _saving = false;
+      });
+      _cubit.load(); // reload with the persisted prefs (no override)
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(context.t('dashboard.saved'))));
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(context.t('dashboard.saveError'))));
+    }
+  }
+
+  /// A scope/board change: update the draft and re-fetch for live preview.
+  void _applyScope(DashboardPrefs next) {
+    setState(() => _draft = next);
+    _cubit.load();
+  }
+
+  /// Card show/hide is client-side only — no server round trip.
+  void _toggleCard(String key) {
+    setState(() =>
+        _draft = _draft.toggleCard(key, hidden: !_draft.isHidden(key)));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // The ambient backdrop is now painted app-wide by the shell; the dashboard
-    // just renders its (glass) content on top of it.
-    return BlocBuilder<FetchCubit<DashboardData>, FetchState<DashboardData>>(
-      builder: (context, state) {
-        return RefreshIndicator(
-          color: AppColors.accent,
-          backgroundColor: AppColors.surface,
-          edgeOffset: context.topGutter,
-          onRefresh: () => context.read<FetchCubit<DashboardData>>().load(),
-          child: AsyncView(
-            isLoading: state.isLoading,
-            hasData: state.hasData,
-            errorKey: state.errorKey,
-            onRetry: () => context.read<FetchCubit<DashboardData>>().load(),
-            builder: (context) => _content(context, state.data!),
-          ),
-        );
-      },
+    // The ambient backdrop is painted app-wide by the shell; the dashboard just
+    // renders its (glass) content on top of it.
+    return BlocProvider.value(
+      value: _cubit,
+      child: BlocBuilder<FetchCubit<DashboardData>, FetchState<DashboardData>>(
+        builder: (context, state) {
+          return RefreshIndicator(
+            color: AppColors.accent,
+            backgroundColor: AppColors.surface,
+            edgeOffset: context.topGutter,
+            onRefresh: () => _cubit.load(),
+            child: AsyncView(
+              isLoading: state.isLoading,
+              hasData: state.hasData,
+              errorKey: state.errorKey,
+              onRetry: () => _cubit.load(),
+              builder: (context) => _content(context, state.data!),
+            ),
+          );
+        },
+      ),
     );
   }
 
   Widget _content(BuildContext context, DashboardData data) {
     final wide = !context.isCompact;
+    // Effective personalisation: the live draft while editing, else the saved
+    // snapshot from the server.
+    final prefs = _editing ? _draft : data.prefs;
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(
@@ -86,75 +191,99 @@ class _DashboardView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _Greeting(sprint: data.activeBoard),
+          _header(context, data),
+          if (_editing) ...[
+            const SizedBox(height: 16),
+            _EditToolbar(
+              boards: data.boards,
+              draft: _draft,
+              projects: _projects,
+              teams: _teams,
+              onChanged: _applyScope,
+            ),
+          ],
           const SizedBox(height: 22),
-          if (wide)
-            _wideGrid(context, data)
-          else
-            _stack(context, data),
+          if (wide) _wideGrid(context, data, prefs) else _stack(context, data, prefs),
         ],
       ),
     );
   }
 
-  // Desktop / tablet: golden-ratio two columns (1.618 : 1).
-  Widget _wideGrid(BuildContext context, DashboardData data) {
-    final left = <Widget>[
-      _sprintCard(data.activeBoard),
-      const SizedBox(height: _gap),
-      _FocusCard(issues: data.todayTasks),
-      if (data.gitActivity.isNotEmpty) ...[
-        const SizedBox(height: _gap),
-        _GitCard(events: data.gitActivity),
-      ],
-    ];
-    final right = <Widget>[
-      _Kpis(today: data.todayTasks.length, completion: data.completion),
-      const SizedBox(height: _gap),
-      _CompletionCard(completion: data.completion),
-      const SizedBox(height: _gap),
-      _TrackerCard(week: data.tracker, month: data.trackerMonth),
-      const SizedBox(height: _gap),
-      _LeaderboardCard(ranking: data.ranking),
-    ];
+  // Greeting + the responsive "Customize" toggle, aligned to the title's row.
+  Widget _header(BuildContext context, DashboardData data) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          flex: 1618,
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: left),
-        ),
-        const SizedBox(width: _gap + 3),
-        Expanded(
-          flex: 1000,
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: right),
+        Expanded(child: _Greeting(sprint: data.activeBoard)),
+        const SizedBox(width: 12),
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: _CustomizeButton(
+            editing: _editing,
+            saving: _saving,
+            compact: context.isCompact,
+            onPressed: () => _editing ? _finishEdit() : _enterEdit(data),
+          ),
         ),
       ],
     );
   }
 
-  // Phone: one column.
-  Widget _stack(BuildContext context, DashboardData data) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+  // Desktop / tablet: golden-ratio two columns (1.618 : 1).
+  Widget _wideGrid(BuildContext context, DashboardData data, DashboardPrefs prefs) {
+    final left = <(String, Widget)>[
+      (_Card.hero, _sprintCard(data.activeBoard)),
+      (_Card.focus, _FocusCard(issues: data.todayTasks)),
+      if (data.gitActivity.isNotEmpty) (_Card.git, _GitCard(events: data.gitActivity)),
+    ];
+    final right = <(String, Widget)>[
+      (_Card.kpis, _Kpis(today: data.todayTasks.length, completion: data.completion)),
+      (_Card.completion, _CompletionCard(completion: data.completion)),
+      (_Card.tracker, _TrackerCard(week: data.tracker, month: data.trackerMonth)),
+      (_Card.ranking, _LeaderboardCard(ranking: data.ranking)),
+    ];
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sprintCard(data.activeBoard),
-        const SizedBox(height: _gap),
-        _Kpis(today: data.todayTasks.length, completion: data.completion),
-        const SizedBox(height: _gap),
-        _FocusCard(issues: data.todayTasks),
-        const SizedBox(height: _gap),
-        _CompletionCard(completion: data.completion),
-        const SizedBox(height: _gap),
-        _TrackerCard(week: data.tracker, month: data.trackerMonth),
-        if (data.gitActivity.isNotEmpty) ...[
-          const SizedBox(height: _gap),
-          _GitCard(events: data.gitActivity),
-        ],
-        const SizedBox(height: _gap),
-        _LeaderboardCard(ranking: data.ranking),
+        Expanded(flex: 1618, child: _column(left, prefs)),
+        const SizedBox(width: _gap + 3),
+        Expanded(flex: 1000, child: _column(right, prefs)),
       ],
     );
+  }
+
+  // Phone: one column.
+  Widget _stack(BuildContext context, DashboardData data, DashboardPrefs prefs) {
+    final items = <(String, Widget)>[
+      (_Card.hero, _sprintCard(data.activeBoard)),
+      (_Card.kpis, _Kpis(today: data.todayTasks.length, completion: data.completion)),
+      (_Card.focus, _FocusCard(issues: data.todayTasks)),
+      (_Card.completion, _CompletionCard(completion: data.completion)),
+      (_Card.tracker, _TrackerCard(week: data.tracker, month: data.trackerMonth)),
+      if (data.gitActivity.isNotEmpty) (_Card.git, _GitCard(events: data.gitActivity)),
+      (_Card.ranking, _LeaderboardCard(ranking: data.ranking)),
+    ];
+    return _column(items, prefs);
+  }
+
+  /// Builds a column from `(cardKey, widget)` pairs: in view mode hidden cards
+  /// are dropped (and their gap with them); in edit mode every card renders,
+  /// wrapped with a show/hide toggle (hidden ones dimmed).
+  Widget _column(List<(String, Widget)> items, DashboardPrefs prefs) {
+    final children = <Widget>[];
+    for (final (key, widget) in items) {
+      final hidden = prefs.isHidden(key);
+      if (!_editing && hidden) continue;
+      if (children.isNotEmpty) children.add(const SizedBox(height: _gap));
+      children.add(_editableCard(key, widget, hidden));
+    }
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children);
+  }
+
+  Widget _editableCard(String key, Widget child, bool hidden) {
+    // The hero is the personalisation anchor (holds the board picker) — always on.
+    if (!_editing || key == _Card.hero) return child;
+    return _HideableCard(hidden: hidden, onToggle: () => _toggleCard(key), child: child);
   }
 
   Widget _sprintCard(DashboardBoard? sprint) =>
@@ -1589,3 +1718,553 @@ class _CardHead extends StatelessWidget {
     );
   }
 }
+
+// ══════════════════════ Customize (edit mode) ══════════════════════════════
+
+/// The header toggle. Desktop/tablet show icon + label; mobile shows the icon
+/// only. In edit mode it turns amber and becomes a "Done" (save) action.
+class _CustomizeButton extends StatelessWidget {
+  const _CustomizeButton({
+    required this.editing,
+    required this.saving,
+    required this.compact,
+    required this.onPressed,
+  });
+
+  final bool editing;
+  final bool saving;
+  final bool compact;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final label =
+        context.t(editing ? 'dashboard.done_editing' : 'dashboard.customize');
+    final icon = editing ? LucideIcons.check : LucideIcons.settings2;
+    final bg = editing
+        ? AppColors.accent
+        : (dark
+            ? Colors.white.withValues(alpha: .09)
+            : Colors.white.withValues(alpha: .6));
+    final fg = editing ? const Color(0xFF2A2410) : AppColors.ink;
+    final border = editing
+        ? Colors.transparent
+        : (dark
+            ? Colors.white.withValues(alpha: .14)
+            : Colors.white.withValues(alpha: .7));
+
+    final Widget content = saving
+        ? SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2, color: fg),
+          )
+        : (compact
+            ? Icon(icon, size: 18, color: fg)
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 16, color: fg),
+                  const SizedBox(width: 7),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: fg,
+                    ),
+                  ),
+                ],
+              ));
+
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: saving ? null : onPressed,
+          borderRadius: BorderRadius.circular(12),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            height: 40,
+            width: compact ? 40 : null,
+            alignment: Alignment.center,
+            padding: compact
+                ? EdgeInsets.zero
+                : const EdgeInsets.symmetric(horizontal: 15),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: border),
+            ),
+            child: content,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Wraps a card in edit mode: dims it when hidden, blocks its own interactions,
+/// and overlays a show/hide eye toggle.
+class _HideableCard extends StatelessWidget {
+  const _HideableCard({
+    required this.hidden,
+    required this.onToggle,
+    required this.child,
+  });
+
+  final bool hidden;
+  final VoidCallback onToggle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // The card is inert while editing — no accidental navigation.
+        IgnorePointer(
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 180),
+            opacity: hidden ? 0.4 : 1,
+            child: child,
+          ),
+        ),
+        Positioned(top: 12, right: 12, child: _EyeToggle(hidden: hidden, onTap: onToggle)),
+      ],
+    );
+  }
+}
+
+class _EyeToggle extends StatelessWidget {
+  const _EyeToggle({required this.hidden, required this.onTap});
+
+  final bool hidden;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Material(
+      color: dark
+          ? const Color(0xFF232140).withValues(alpha: .82)
+          : Colors.white.withValues(alpha: .9),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(7),
+          child: Icon(
+            hidden ? LucideIcons.eyeOff : LucideIcons.eye,
+            size: 16,
+            color: hidden ? AppColors.inkSoft : AppColors.accentStrong,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ══════════════════════ Edit toolbar + pickers ═════════════════════════════
+
+/// The inline edit controls: hero-board picker, data scope and team-ranking
+/// scope. Every change flows out through [onChanged] (which re-fetches).
+class _EditToolbar extends StatelessWidget {
+  const _EditToolbar({
+    required this.boards,
+    required this.draft,
+    required this.projects,
+    required this.teams,
+    required this.onChanged,
+  });
+
+  final List<DashboardBoardOption> boards;
+  final DashboardPrefs draft;
+  final List<Project> projects;
+  final List<Team> teams;
+  final ValueChanged<DashboardPrefs> onChanged;
+
+  DashboardBoardOption? get _selectedBoard {
+    for (final b in boards) {
+      if (b.id == draft.boardId) return b;
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final boardLabel =
+        _selectedBoard?.name ?? context.t('dashboard.heroBoardAuto');
+    final projectsLabel = draft.projectIds.isEmpty
+        ? context.t('dashboard.scopeAllProjects')
+        : context.t('dashboard.scopeProjectsCount',
+            variables: {'count': '${draft.projectIds.length}'});
+    final teamsLabel = draft.teamIds.isEmpty
+        ? context.t('dashboard.scopeAllTeams')
+        : context.t('dashboard.scopeTeamsCount',
+            variables: {'count': '${draft.teamIds.length}'});
+
+    return _GlassCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(LucideIcons.sparkles, size: 15, color: AppColors.accentStrong),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  context.t('dashboard.editHint'),
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.35,
+                    color: AppColors.inkSoft,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, c) {
+              final fields = <Widget>[
+                _PickerField(
+                  icon: LucideIcons.layoutDashboard,
+                  label: context.t('dashboard.heroBoard'),
+                  value: boardLabel,
+                  onTap: () => _pickBoard(context),
+                ),
+                _PickerField(
+                  icon: LucideIcons.folderKanban,
+                  label: context.t('dashboard.dataScope'),
+                  value: projectsLabel,
+                  onTap: () => _pickProjects(context),
+                ),
+                _PickerField(
+                  icon: LucideIcons.usersRound,
+                  label: context.t('dashboard.teamScope'),
+                  value: teamsLabel,
+                  onTap: () => _pickTeams(context),
+                ),
+              ];
+              // Equal-width fields that fill the row so each chevron pins right.
+              const gap = 12.0;
+              final cols = c.maxWidth >= 560 ? 3 : (c.maxWidth >= 360 ? 2 : 1);
+              final width = (c.maxWidth - gap * (cols - 1)) / cols;
+              return Wrap(
+                spacing: gap,
+                runSpacing: gap,
+                children: [for (final f in fields) SizedBox(width: width, child: f)],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickBoard(BuildContext context) async {
+    final result = await showGlassModal<String>(
+      context,
+      width: 460,
+      builder: (_) => _BoardPickerSheet(boards: boards, selected: draft.boardId),
+    );
+    if (result == null) return; // cancelled
+    onChanged(draft.copyWith(
+      boardId: result.isEmpty ? null : result,
+      clearBoard: result.isEmpty,
+    ));
+  }
+
+  Future<void> _pickProjects(BuildContext context) async {
+    final result = await showGlassModal<List<String>>(
+      context,
+      width: 460,
+      builder: (_) => _ScopePickerSheet(
+        title: context.t('dashboard.dataScope'),
+        icon: LucideIcons.folderKanban,
+        allLabel: context.t('dashboard.scopeAllProjects'),
+        items: [for (final p in projects) (id: p.id, name: p.name)],
+        selected: draft.projectIds.toSet(),
+      ),
+    );
+    if (result == null) return;
+    onChanged(draft.copyWith(projectIds: result));
+  }
+
+  Future<void> _pickTeams(BuildContext context) async {
+    final result = await showGlassModal<List<String>>(
+      context,
+      width: 460,
+      builder: (_) => _ScopePickerSheet(
+        title: context.t('dashboard.teamScope'),
+        icon: LucideIcons.usersRound,
+        allLabel: context.t('dashboard.scopeAllTeams'),
+        items: [for (final t in teams) (id: t.id, name: t.name)],
+        selected: draft.teamIds.toSet(),
+      ),
+    );
+    if (result == null) return;
+    onChanged(draft.copyWith(teamIds: result));
+  }
+}
+
+/// A labelled, dropdown-like field that opens a picker on tap.
+class _PickerField extends StatelessWidget {
+  const _PickerField({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            color: dark
+                ? Colors.white.withValues(alpha: .05)
+                : Colors.white.withValues(alpha: .55),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: dark
+                  ? Colors.white.withValues(alpha: .1)
+                  : Colors.white.withValues(alpha: .7),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: AppColors.accentStrong),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
+                        color: AppColors.inkSoft,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Icon(LucideIcons.chevronDown, size: 15, color: AppColors.inkSoft),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Single-select list of the caller's boards (plus "Automatic"). Pops the
+/// chosen board id, an empty string for automatic, or null on cancel.
+class _BoardPickerSheet extends StatelessWidget {
+  const _BoardPickerSheet({required this.boards, required this.selected});
+
+  final List<DashboardBoardOption> boards;
+  final String? selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GlassModalHeader(
+          icon: LucideIcons.layoutDashboard,
+          title: context.t('dashboard.heroBoard'),
+          subtitle: context.t('dashboard.editHint'),
+        ),
+        Flexible(
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            children: [
+              _ChoiceRow(
+                icon: LucideIcons.sparkles,
+                label: context.t('dashboard.heroBoardAuto'),
+                selected: selected == null,
+                onTap: () => Navigator.of(context).pop(''),
+              ),
+              for (final b in boards)
+                _ChoiceRow(
+                  icon: b.isScrum ? LucideIcons.zap : LucideIcons.columns3,
+                  label: b.name,
+                  selected: b.id == selected,
+                  onTap: () => Navigator.of(context).pop(b.id),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+}
+
+/// Multi-select scope list with an "All" reset row. Pops the selected ids
+/// (empty ⇒ all), or null on cancel.
+class _ScopePickerSheet extends StatefulWidget {
+  const _ScopePickerSheet({
+    required this.title,
+    required this.icon,
+    required this.allLabel,
+    required this.items,
+    required this.selected,
+  });
+
+  final String title;
+  final IconData icon;
+  final String allLabel;
+  final List<({String id, String name})> items;
+  final Set<String> selected;
+
+  @override
+  State<_ScopePickerSheet> createState() => _ScopePickerSheetState();
+}
+
+class _ScopePickerSheetState extends State<_ScopePickerSheet> {
+  late final Set<String> _sel = {...widget.selected};
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GlassModalHeader(
+          icon: widget.icon,
+          title: widget.title,
+          subtitle: context.t('dashboard.editHint'),
+        ),
+        Flexible(
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            children: [
+              _ChoiceRow(
+                icon: LucideIcons.layoutGrid,
+                label: widget.allLabel,
+                selected: _sel.isEmpty,
+                onTap: () => setState(_sel.clear),
+              ),
+              for (final it in widget.items)
+                _ChoiceRow(
+                  icon: LucideIcons.check,
+                  showIcon: false,
+                  label: it.name,
+                  selected: _sel.contains(it.id),
+                  onTap: () => setState(() =>
+                      _sel.contains(it.id) ? _sel.remove(it.id) : _sel.add(it.id)),
+                ),
+            ],
+          ),
+        ),
+        GlassModalFooter(
+          confirmLabel: context.t('common.apply'),
+          onConfirm: () => Navigator.of(context).pop(_sel.toList()),
+        ),
+      ],
+    );
+  }
+}
+
+/// A selectable row for the pickers: leading glyph, label, trailing check.
+class _ChoiceRow extends StatelessWidget {
+  const _ChoiceRow({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.icon,
+    this.showIcon = true,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final IconData? icon;
+  final bool showIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.accentSoft : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? AppColors.accent.withValues(alpha: .5) : AppColors.hairline,
+            ),
+          ),
+          child: Row(
+            children: [
+              if (showIcon && icon != null) ...[
+                Icon(
+                  icon,
+                  size: 16,
+                  color: selected ? AppColors.accentStrong : AppColors.inkSoft,
+                ),
+                const SizedBox(width: 10),
+              ],
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+              if (selected)
+                Icon(LucideIcons.check, size: 16, color: AppColors.accentStrong),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+

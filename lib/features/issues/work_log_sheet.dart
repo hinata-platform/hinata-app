@@ -117,7 +117,12 @@ class _WorkLogBodyState extends State<_WorkLogBody> {
               ),
               items: [
                 for (final activity in _activities)
-                  DropdownMenuItem(value: activity, child: Text(activity)),
+                  DropdownMenuItem(
+                    value: activity,
+                    // The value stays the canonical English key sent to the API;
+                    // only the visible label is localized.
+                    child: Text(context.t('time.activity.${activity.toLowerCase()}')),
+                  ),
               ],
               onChanged: (value) =>
                   setState(() => _activity = value ?? 'Development'),

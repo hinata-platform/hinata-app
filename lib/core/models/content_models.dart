@@ -365,6 +365,94 @@ class GitEvent extends Equatable {
   List<Object?> get props => [kind, ref, text, at, issueKey];
 }
 
+/// A board the user can pin to the dashboard hero (populates the picker).
+class DashboardBoardOption extends Equatable {
+  const DashboardBoardOption({
+    required this.id,
+    required this.name,
+    required this.type,
+  });
+
+  final String id;
+  final String name;
+
+  /// `KANBAN` or `SCRUM`.
+  final String type;
+
+  bool get isScrum => type == 'SCRUM';
+
+  factory DashboardBoardOption.fromJson(Map<String, dynamic> json) =>
+      DashboardBoardOption(
+        id: json['id'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        type: json['type'] as String? ?? 'KANBAN',
+      );
+
+  @override
+  List<Object?> get props => [id, name, type];
+}
+
+/// The user's saved dashboard personalisation (hero board, data scope, hidden
+/// cards). Empty [projectIds]/[teamIds] mean "all" (the default view).
+class DashboardPrefs extends Equatable {
+  const DashboardPrefs({
+    this.boardId,
+    this.projectIds = const [],
+    this.teamIds = const [],
+    this.hiddenCards = const [],
+  });
+
+  final String? boardId;
+  final List<String> projectIds;
+  final List<String> teamIds;
+  final List<String> hiddenCards;
+
+  static const empty = DashboardPrefs();
+
+  bool isHidden(String card) => hiddenCards.contains(card);
+
+  DashboardPrefs copyWith({
+    String? boardId,
+    bool clearBoard = false,
+    List<String>? projectIds,
+    List<String>? teamIds,
+    List<String>? hiddenCards,
+  }) =>
+      DashboardPrefs(
+        boardId: clearBoard ? null : (boardId ?? this.boardId),
+        projectIds: projectIds ?? this.projectIds,
+        teamIds: teamIds ?? this.teamIds,
+        hiddenCards: hiddenCards ?? this.hiddenCards,
+      );
+
+  DashboardPrefs toggleCard(String card, {required bool hidden}) {
+    final next = List<String>.from(hiddenCards)..remove(card);
+    if (hidden) next.add(card);
+    return copyWith(hiddenCards: next);
+  }
+
+  factory DashboardPrefs.fromJson(Map<String, dynamic> json) => DashboardPrefs(
+        boardId: (json['boardId'] as String?)?.isEmpty ?? true
+            ? null
+            : json['boardId'] as String?,
+        projectIds:
+            ((json['projectIds'] as List<dynamic>?) ?? const []).cast<String>(),
+        teamIds: ((json['teamIds'] as List<dynamic>?) ?? const []).cast<String>(),
+        hiddenCards:
+            ((json['hiddenCards'] as List<dynamic>?) ?? const []).cast<String>(),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'boardId': boardId,
+        'projectIds': projectIds,
+        'teamIds': teamIds,
+        'hiddenCards': hiddenCards,
+      };
+
+  @override
+  List<Object?> get props => [boardId, projectIds, teamIds, hiddenCards];
+}
+
 class DashboardData extends Equatable {
   const DashboardData({
     required this.todayTasks,
@@ -374,6 +462,8 @@ class DashboardData extends Equatable {
     this.trackerMonth = const [],
     this.activeBoard,
     this.gitActivity = const [],
+    this.boards = const [],
+    this.prefs = DashboardPrefs.empty,
   });
 
   final List<Issue> todayTasks;
@@ -383,6 +473,8 @@ class DashboardData extends Equatable {
   final List<TrackerWeek> trackerMonth;
   final DashboardBoard? activeBoard;
   final List<GitEvent> gitActivity;
+  final List<DashboardBoardOption> boards;
+  final DashboardPrefs prefs;
 
   factory DashboardData.fromJson(Map<String, dynamic> json) => DashboardData(
         todayTasks: ((json['todayTasks'] as List<dynamic>?) ?? [])
@@ -405,9 +497,24 @@ class DashboardData extends Equatable {
         gitActivity: ((json['gitActivity'] as List<dynamic>?) ?? [])
             .map((g) => GitEvent.fromJson(g as Map<String, dynamic>))
             .toList(),
+        boards: ((json['boards'] as List<dynamic>?) ?? [])
+            .map((b) => DashboardBoardOption.fromJson(b as Map<String, dynamic>))
+            .toList(),
+        prefs: json['prefs'] is Map<String, dynamic>
+            ? DashboardPrefs.fromJson(json['prefs'] as Map<String, dynamic>)
+            : DashboardPrefs.empty,
       );
 
   @override
-  List<Object?> get props =>
-      [todayTasks, completion, ranking, tracker, trackerMonth, activeBoard, gitActivity];
+  List<Object?> get props => [
+        todayTasks,
+        completion,
+        ranking,
+        tracker,
+        trackerMonth,
+        activeBoard,
+        gitActivity,
+        boards,
+        prefs,
+      ];
 }

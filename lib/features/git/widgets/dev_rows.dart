@@ -76,7 +76,7 @@ class _MiniChecks extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = checkStyle(status);
+    final s = checkStyle(context, status);
     final c = hueChipText(s.hue);
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -311,7 +311,7 @@ class PrRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = prStateStyle(pr.state);
+    final style = prStateStyle(context, pr.state);
     return _DevRow(
       glyph: DevGlyph(hue: style.hue, icon: style.icon),
       top: Row(
@@ -402,7 +402,7 @@ class BuildRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = checkStyle(run.status);
+    final s = checkStyle(context, run.status);
     return _DevRow(
       glyph: DevGlyph(hue: s.hue, icon: s.icon),
       top: Text(
