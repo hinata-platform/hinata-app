@@ -49,7 +49,7 @@ class ReportPdfData {
   final String projectName;
   final DateTime generatedAt;
 
-  /// Locale-formatted "Generated <date>" label for the header.
+  /// Locale-formatted `"Generated <date>"` label for the header.
   final String generatedAtLabel;
   final int totalIssues;
   final List<PdfSection> sections;
