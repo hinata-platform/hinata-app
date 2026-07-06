@@ -634,7 +634,14 @@
     "issues-by-state": "Aufgaben nach Status",
     "issues-by-priority": "Aufgaben nach Priorität",
     "issues-by-assignee": "Aufgaben nach Bearbeiter",
-    "time-per-activity": "Zeit pro Tätigkeit (30 Tage)"
+    "time-per-activity": "Zeit pro Tätigkeit (30 Tage)",
+    "pdf": {
+      "title": "Projektbericht",
+      "generated": "Erstellt am {{date}}",
+      "openLast30Days": "Offen (letzte 30 Tage)",
+      "breakdowns": "Auswertungen",
+      "pageFooter": "Hinata · Seite {page}/{pages}"
+    }
   },
   "knowledge": {
     "title": "Wissensdatenbank",
@@ -1131,6 +1138,7 @@
       "administration": "Administration",
       "configuration": "Konfiguration",
       "data": "Daten & Datenschutz",
+      "integration": "Integration",
       "unknown": "Sonstige"
     },
     "action": {
@@ -1140,6 +1148,8 @@
       "MFA_FAILURE": "Zwei-Faktor fehlgeschlagen",
       "SSO_LOGIN": "Über SSO angemeldet",
       "SESSION_REVOKED": "Sitzung widerrufen",
+      "USER_REGISTERED": "Benutzer registriert",
+      "EMAIL_VERIFIED": "E-Mail bestätigt",
       "PASSWORD_CHANGED": "Passwort geändert",
       "PASSWORD_RESET_REQUESTED": "Passwort-Zurücksetzung angefordert",
       "PASSWORD_RESET_COMPLETED": "Passwort zurückgesetzt",
@@ -1153,12 +1163,30 @@
       "USER_CREATED": "Benutzer erstellt",
       "USER_ROLE_CHANGED": "Rolle geändert",
       "USER_ACTIVATED": "Benutzer aktiviert",
+      "USER_APPROVED": "Benutzer genehmigt",
       "USER_DEACTIVATED": "Benutzer deaktiviert",
       "USER_DELETED": "Benutzer gelöscht",
       "USER_PASSWORD_RESET_SENT": "Passwort-Zurücksetzung gesendet",
       "USER_SESSIONS_REVOKED": "Sitzungen widerrufen",
       "SETTINGS_CHANGED": "Einstellungen geändert",
       "DATA_EXPORT_REQUESTED": "Datenexport angefordert",
+      "PAT_CREATED": "Zugriffstoken erstellt",
+      "PAT_REVOKED": "Zugriffstoken widerrufen",
+      "MCP_ISSUE_CREATED": "Vorgang per MCP erstellt",
+      "MCP_ISSUE_UPDATED": "Vorgang per MCP aktualisiert",
+      "MCP_COMMENT_ADDED": "Kommentar per MCP hinzugefügt",
+      "MCP_COMMENT_EDITED": "Kommentar per MCP bearbeitet",
+      "MCP_COMMENT_DELETED": "Kommentar per MCP gelöscht",
+      "MCP_KB_CREATED": "Wissensdatenbank-Artikel per MCP erstellt",
+      "MCP_KB_UPDATED": "Wissensdatenbank-Artikel per MCP aktualisiert",
+      "MCP_KB_DELETED": "Wissensdatenbank-Artikel per MCP gelöscht",
+      "MCP_WORK_LOGGED": "Arbeit per MCP erfasst",
+      "MCP_WORK_DELETED": "Erfasste Arbeit per MCP gelöscht",
+      "MCP_SPRINT_CREATED": "Sprint per MCP erstellt",
+      "MCP_SPRINT_UPDATED": "Sprint per MCP aktualisiert",
+      "MCP_SPRINT_STARTED": "Sprint per MCP gestartet",
+      "MCP_SPRINT_COMPLETED": "Sprint per MCP abgeschlossen",
+      "MCP_OAUTH_AUTHORIZED": "MCP-OAuth-Autorisierung erteilt",
       "UNKNOWN": "Unbekanntes Ereignis"
     },
     "meta": {

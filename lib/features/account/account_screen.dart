@@ -23,6 +23,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_avatar.dart';
 import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_loader.dart';
+import '../../core/widgets/hive_widgets.dart' show HiveSwitch;
 import '../../core/widgets/honeycomb_background.dart';
 import '../connect/server_switcher.dart';
 import '../shell/page_chrome.dart';
@@ -1210,7 +1211,6 @@ class _AccountScreenState extends State<AccountScreen> {
               )
             : HiveSwitch(
                 value: enabled && value,
-                enabled: enabled,
                 onChanged: enabled ? onChanged : null,
               ),
       ),
@@ -1241,7 +1241,6 @@ class _AccountScreenState extends State<AccountScreen> {
             else
               HiveSwitch(
                 value: enabled && value,
-                enabled: enabled,
                 onChanged: enabled ? onChanged : null,
               ),
           ],

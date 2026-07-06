@@ -258,7 +258,7 @@ class _StatusPill extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: hueInk(hue),
+                color: hueChipText(hue),
               ),
             ),
           ),

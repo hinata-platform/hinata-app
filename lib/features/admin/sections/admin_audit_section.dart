@@ -568,6 +568,7 @@ class _CategoryFilterChip extends StatelessWidget {
           AuditCategory.administration,
           AuditCategory.configuration,
           AuditCategory.data,
+          AuditCategory.integration,
         ])
           GlassMenuItem(
             value: c,
@@ -1407,6 +1408,7 @@ IconData _categoryIcon(AuditCategory c) => switch (c) {
       AuditCategory.administration => LucideIcons.shieldCheck,
       AuditCategory.configuration => LucideIcons.settings,
       AuditCategory.data => LucideIcons.database,
+      AuditCategory.integration => LucideIcons.plug,
       AuditCategory.unknown => LucideIcons.activity,
     };
 

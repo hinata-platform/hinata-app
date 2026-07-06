@@ -63,10 +63,8 @@ class _AdminEmailSectionState extends State<AdminEmailSection> {
                   const SizedBox(width: 12),
                   Expanded(
                     flex: 3,
-                    child: SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(context.t('admin.smtpStartTls'),
-                          style: const TextStyle(fontSize: 13)),
+                    child: AdminToggle(
+                      label: context.t('admin.smtpStartTls'),
                       value: (_smtp['starttls'] as bool?) ?? true,
                       onChanged: (v) =>
                           setState(() => _smtp['starttls'] = v),

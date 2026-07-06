@@ -12,15 +12,31 @@ typedef PdfDatum = ({String label, int value, String display, Color color});
 typedef PdfSection = ({String title, List<PdfDatum> rows});
 
 /// Everything needed to render the report document.
+///
+/// String fields here arrive pre-localized from the caller (a [BuildContext]
+/// isn't available inside this pure pdf-widgets module), except
+/// [pageFooterTemplate], which carries literal `{page}`/`{pages}` tokens
+/// substituted at render time since the page count isn't known until then.
 class ReportPdfData {
   ReportPdfData({
     required this.orgName,
     required this.projectName,
     required this.generatedAt,
+    required this.generatedAtLabel,
     required this.totalIssues,
     required this.sections,
     required this.burndown,
     required this.burndownRemaining,
+    required this.pdfTitleLabel,
+    required this.totalIssuesLabel,
+    required this.openLast30DaysLabel,
+    required this.breakdownsLabel,
+    required this.burndownTitleLabel,
+    required this.openRemainingLabel,
+    required this.noDataLabel,
+    required this.axis30dLabel,
+    required this.axisTodayLabel,
+    required this.pageFooterTemplate,
     this.logoBytes,
   });
 
@@ -32,11 +48,25 @@ class ReportPdfData {
   final Uint8List? logoBytes;
   final String projectName;
   final DateTime generatedAt;
+
+  /// Locale-formatted "Generated <date>" label for the header.
+  final String generatedAtLabel;
   final int totalIssues;
   final List<PdfSection> sections;
   // (dayIndex, remaining, ideal) — empty when no trend data is available.
   final List<({int day, double remaining, double ideal})> burndown;
   final int burndownRemaining;
+
+  final String pdfTitleLabel;
+  final String totalIssuesLabel;
+  final String openLast30DaysLabel;
+  final String breakdownsLabel;
+  final String burndownTitleLabel;
+  final String openRemainingLabel;
+  final String noDataLabel;
+  final String axis30dLabel;
+  final String axisTodayLabel;
+  final String pageFooterTemplate;
 }
 
 PdfColor _c(Color c) => PdfColor.fromInt(c.toARGB32());
@@ -79,7 +109,6 @@ Future<pw.Document> _buildDocument(ReportPdfData data) async {
     author: 'Hinata',
   );
 
-  final df = _fmtDate(data.generatedAt);
   final logo = data.logoBytes == null
       ? null
       : pw.Image(pw.MemoryImage(data.logoBytes!), fit: pw.BoxFit.contain);
@@ -89,7 +118,7 @@ Future<pw.Document> _buildDocument(ReportPdfData data) async {
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.fromLTRB(36, 36, 36, 40),
       build: (context) => [
-        _header(data, df, logo),
+        _header(data, logo),
         pw.SizedBox(height: 22),
         _summaryRow(data),
         pw.SizedBox(height: 22),
@@ -97,13 +126,16 @@ Future<pw.Document> _buildDocument(ReportPdfData data) async {
           _burndownSection(data),
           pw.SizedBox(height: 22),
         ],
-        ...data.sections.map(_distributionSection),
+        ...data.sections
+            .map((s) => _distributionSection(s, data.noDataLabel)),
       ],
       footer: (context) => pw.Container(
         alignment: pw.Alignment.centerRight,
         margin: const pw.EdgeInsets.only(top: 10),
         child: pw.Text(
-          'Hinata · page ${context.pageNumber}/${context.pagesCount}',
+          data.pageFooterTemplate
+              .replaceAll('{page}', '${context.pageNumber}')
+              .replaceAll('{pages}', '${context.pagesCount}'),
           style: const pw.TextStyle(fontSize: 9, color: _inkFaint),
         ),
       ),
@@ -112,7 +144,7 @@ Future<pw.Document> _buildDocument(ReportPdfData data) async {
   return doc;
 }
 
-pw.Widget _header(ReportPdfData data, String generated, pw.Widget? logo) {
+pw.Widget _header(ReportPdfData data, pw.Widget? logo) {
   // The org logo is rendered inside the navy band, in the same top-left slot
   // the Hinata wordmark fallback occupies.
   return pw.Container(
@@ -156,7 +188,7 @@ pw.Widget _header(ReportPdfData data, String generated, pw.Widget? logo) {
                   ],
                 ),
               pw.SizedBox(height: 10),
-              pw.Text('Project report',
+              pw.Text(data.pdfTitleLabel,
                   style: pw.TextStyle(
                       color: PdfColors.white,
                       fontSize: 22,
@@ -175,7 +207,7 @@ pw.Widget _header(ReportPdfData data, String generated, pw.Widget? logo) {
                 style: const pw.TextStyle(
                     color: PdfColors.white, fontSize: 11)),
             pw.SizedBox(height: 4),
-            pw.Text('Generated $generated',
+            pw.Text(data.generatedAtLabel,
                 style: const pw.TextStyle(
                     color: PdfColor.fromInt(0xFF807EA0), fontSize: 9)),
           ],
@@ -212,9 +244,9 @@ pw.Widget _summaryRow(ReportPdfData data) {
 
   return pw.Row(
     children: [
-      stat('${data.totalIssues}', 'Total issues'),
-      stat('${data.burndownRemaining}', 'Open (last 30 days)'),
-      stat('${data.sections.length}', 'Breakdowns'),
+      stat('${data.totalIssues}', data.totalIssuesLabel),
+      stat('${data.burndownRemaining}', data.openLast30DaysLabel),
+      stat('${data.sections.length}', data.breakdownsLabel),
     ],
   );
 }
@@ -244,10 +276,10 @@ pw.Widget _burndownSection(ReportPdfData data) {
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            pw.Text('Burndown · last 30 days',
+            pw.Text(data.burndownTitleLabel,
                 style: pw.TextStyle(
                     fontSize: 14, fontWeight: pw.FontWeight.bold, color: _ink)),
-            pw.Text('${data.burndownRemaining} open remaining',
+            pw.Text(data.openRemainingLabel,
                 style: const pw.TextStyle(fontSize: 10, color: _inkSoft)),
           ],
         ),
@@ -260,7 +292,7 @@ pw.Widget _burndownSection(ReportPdfData data) {
                 [0, lastDay],
                 divisions: false,
                 buildLabel: (v) => pw.Text(
-                  v == 0 ? '−30d' : 'today',
+                  v == 0 ? data.axis30dLabel : data.axisTodayLabel,
                   style: const pw.TextStyle(fontSize: 8, color: _inkFaint),
                 ),
               ),
@@ -306,7 +338,7 @@ pw.Widget _burndownSection(ReportPdfData data) {
   );
 }
 
-pw.Widget _distributionSection(PdfSection section) {
+pw.Widget _distributionSection(PdfSection section, String noDataLabel) {
   final max = section.rows.isEmpty
       ? 1
       : section.rows.map((r) => r.value).reduce((a, b) => a > b ? a : b);
@@ -322,7 +354,7 @@ pw.Widget _distributionSection(PdfSection section) {
       children: [
         _sectionTitle(section.title),
         if (section.rows.isEmpty)
-          pw.Text('No data',
+          pw.Text(noDataLabel,
               style: const pw.TextStyle(fontSize: 10, color: _inkFaint))
         else
           ...section.rows.map((r) => _barRow(r, max)),
@@ -385,14 +417,4 @@ pw.Widget _barRow(PdfDatum d, int max) {
       ],
     ),
   );
-}
-
-String _fmtDate(DateTime d) {
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
-  final hh = d.hour.toString().padLeft(2, '0');
-  final mm = d.minute.toString().padLeft(2, '0');
-  return '${months[d.month - 1]} ${d.day}, ${d.year} · $hh:$mm';
 }

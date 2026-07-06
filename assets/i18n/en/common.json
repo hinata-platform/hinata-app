@@ -634,7 +634,14 @@
     "issues-by-state": "Issues by state",
     "issues-by-priority": "Issues by priority",
     "issues-by-assignee": "Issues by assignee",
-    "time-per-activity": "Time per activity (30 days)"
+    "time-per-activity": "Time per activity (30 days)",
+    "pdf": {
+      "title": "Project report",
+      "generated": "Generated {{date}}",
+      "openLast30Days": "Open (last 30 days)",
+      "breakdowns": "Breakdowns",
+      "pageFooter": "Hinata · page {page}/{pages}"
+    }
   },
   "knowledge": {
     "title": "Knowledge base",
@@ -1131,6 +1138,7 @@
       "administration": "Administration",
       "configuration": "Configuration",
       "data": "Data & privacy",
+      "integration": "Integration",
       "unknown": "Other"
     },
     "action": {
@@ -1140,6 +1148,8 @@
       "MFA_FAILURE": "Two-factor failed",
       "SSO_LOGIN": "Signed in via SSO",
       "SESSION_REVOKED": "Session revoked",
+      "USER_REGISTERED": "User registered",
+      "EMAIL_VERIFIED": "Email verified",
       "PASSWORD_CHANGED": "Password changed",
       "PASSWORD_RESET_REQUESTED": "Password reset requested",
       "PASSWORD_RESET_COMPLETED": "Password reset completed",
@@ -1153,12 +1163,30 @@
       "USER_CREATED": "User created",
       "USER_ROLE_CHANGED": "Role changed",
       "USER_ACTIVATED": "User activated",
+      "USER_APPROVED": "User approved",
       "USER_DEACTIVATED": "User deactivated",
       "USER_DELETED": "User deleted",
       "USER_PASSWORD_RESET_SENT": "Password reset sent",
       "USER_SESSIONS_REVOKED": "Sessions revoked",
       "SETTINGS_CHANGED": "Settings changed",
       "DATA_EXPORT_REQUESTED": "Data export requested",
+      "PAT_CREATED": "Access token created",
+      "PAT_REVOKED": "Access token revoked",
+      "MCP_ISSUE_CREATED": "Issue created via MCP",
+      "MCP_ISSUE_UPDATED": "Issue updated via MCP",
+      "MCP_COMMENT_ADDED": "Comment added via MCP",
+      "MCP_COMMENT_EDITED": "Comment edited via MCP",
+      "MCP_COMMENT_DELETED": "Comment deleted via MCP",
+      "MCP_KB_CREATED": "Knowledge base article created via MCP",
+      "MCP_KB_UPDATED": "Knowledge base article updated via MCP",
+      "MCP_KB_DELETED": "Knowledge base article deleted via MCP",
+      "MCP_WORK_LOGGED": "Work logged via MCP",
+      "MCP_WORK_DELETED": "Logged work deleted via MCP",
+      "MCP_SPRINT_CREATED": "Sprint created via MCP",
+      "MCP_SPRINT_UPDATED": "Sprint updated via MCP",
+      "MCP_SPRINT_STARTED": "Sprint started via MCP",
+      "MCP_SPRINT_COMPLETED": "Sprint completed via MCP",
+      "MCP_OAUTH_AUTHORIZED": "MCP OAuth authorization granted",
       "UNKNOWN": "Unknown event"
     },
     "meta": {

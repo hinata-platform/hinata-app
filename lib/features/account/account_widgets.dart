@@ -4,64 +4,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 
-/// The account screen's signature toggle: a 40×23 track, 19 px knob, honey-amber
-/// when on, hairline ring; disabled at 0.45 opacity (mirrors the design spec).
-class HiveSwitch extends StatelessWidget {
-  const HiveSwitch({
-    super.key,
-    required this.value,
-    required this.onChanged,
-    this.enabled = true,
-  });
-
-  final bool value;
-  final ValueChanged<bool>? onChanged;
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    final on = value;
-    final active = enabled && onChanged != null;
-    return Opacity(
-      opacity: active ? 1 : 0.45,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: active ? () => onChanged!(!on) : null,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          curve: Curves.easeOut,
-          width: 40,
-          height: 23,
-          padding: const EdgeInsets.all(2),
-          alignment: on ? Alignment.centerRight : Alignment.centerLeft,
-          decoration: BoxDecoration(
-            color: on ? AppColors.accent : AppColors.surfaceMuted,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: on ? AppColors.accentStrong : AppColors.hairline,
-            ),
-          ),
-          child: Container(
-            width: 17,
-            height: 17,
-            decoration: BoxDecoration(
-              color: on ? const Color(0xFF2A2410) : AppColors.surface,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.18),
-                  blurRadius: 2,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// A titled card section used down the account screen. Header carries an amber
 /// icon tile + title/subtitle and an optional trailing widget.
 class AccountSection extends StatelessWidget {

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
@@ -215,6 +216,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final byState = _reports['issues-by-state'] ?? const {};
     final total = byState.values.fold<int>(0, (s, v) => s + v);
     final bd = _burndown();
+    final now = DateTime.now();
+    final locale = Localizations.localeOf(context).toString();
+    final generatedAtLabel = context.t('reports.pdf.generated', variables: {
+      'date': DateFormat('MMM d, y · HH:mm', locale).format(now),
+    });
 
     PdfSection section(String report, String titleKey,
         {bool duration = false}) {
@@ -236,7 +242,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
           : 'Hinata',
       logoBytes: logoPng,
       projectName: _projectName(),
-      generatedAt: DateTime.now(),
+      generatedAt: now,
+      generatedAtLabel: generatedAtLabel,
       totalIssues: total,
       sections: [
         section('issues-by-state', 'reports.issues-by-state'),
@@ -247,6 +254,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
       ],
       burndown: bd.points,
       burndownRemaining: bd.remaining,
+      pdfTitleLabel: context.t('reports.pdf.title'),
+      totalIssuesLabel: context.t('reports.totalIssues'),
+      openLast30DaysLabel: context.t('reports.pdf.openLast30Days'),
+      breakdownsLabel: context.t('reports.pdf.breakdowns'),
+      burndownTitleLabel: context.t('reports.burndown'),
+      openRemainingLabel:
+          context.t('reports.remaining', variables: {'count': '${bd.remaining}'}),
+      noDataLabel: context.t('reports.empty'),
+      axis30dLabel: context.t('reports.windowStart'),
+      axisTodayLabel: context.t('reports.windowEnd'),
+      pageFooterTemplate: context.t('reports.pdf.pageFooter'),
     );
   }
 
