@@ -51,16 +51,39 @@ class FcmService {
           defaultTargetPlatform == TargetPlatform.macOS) {
         await messaging.getAPNSToken();
       }
+      // Let a tapped notification show its banner/alert even while the app is
+      // already in the foreground on iOS/macOS (Android never surfaces FCM
+      // notification-type messages in the foreground regardless of this flag).
+      await messaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
       final token = await messaging.getToken();
       if (token != null) await _register(token);
       _tokenRefreshSub = messaging.onTokenRefresh.listen(_register);
-
-      // Notification tap while terminated (cold start) and while backgrounded.
-      final initial = await messaging.getInitialMessage();
-      if (initial != null) _route(initial);
-      _openedSub = FirebaseMessaging.onMessageOpenedApp.listen(_route);
     } catch (e) {
       debugPrint('FCM start failed: $e');
+    }
+
+    // Wire up tap routing independently of the block above: a failure fetching
+    // a token or registering a device must never skip these, and a failure
+    // routing the cold-start message must never skip subscribing to
+    // onMessageOpenedApp — otherwise every later background-tap for the rest
+    // of this app session would silently stop routing too.
+    try {
+      _openedSub = FirebaseMessaging.onMessageOpenedApp.listen(_route);
+    } catch (e) {
+      debugPrint('FCM onMessageOpenedApp subscription failed: $e');
+    }
+    try {
+      // Notification tap that launched the app from fully terminated (cold
+      // start); a warm background tap is delivered via onMessageOpenedApp
+      // above instead.
+      final initial = await messaging.getInitialMessage();
+      if (initial != null) _route(initial);
+    } catch (e) {
+      debugPrint('FCM getInitialMessage routing failed: $e');
     }
   }
 

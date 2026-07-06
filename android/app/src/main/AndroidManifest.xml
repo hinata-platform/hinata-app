@@ -1,6 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Hinata needs internet access to talk to the self-hosted server. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Android 13+ (API 33) requires this declared before the app can ask for
+         runtime permission to post notifications; without it,
+         FirebaseMessaging.requestPermission() has nothing to grant and push
+         notifications never display or become tappable. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="Hinata"
         android:name="${applicationName}"

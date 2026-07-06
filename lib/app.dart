@@ -193,9 +193,11 @@ class _HinataAppState extends State<HinataApp> {
 
   /// Hinata Connect relay links: `https://connect…/l/<base64url(payload)>.<sig>`.
   /// The payload carries the originating server's API URL (`a`), the in-app path
-  /// (`p`) and the token (`t`). We decode it locally (the gateway's signature is
-  /// only for its own web-fallback redirect; the token is validated server-side
-  /// anyway), point the app at that server, and open the flow.
+  /// (`p`) and, for invite/reset flows only, a one-time token (`t`) — plain
+  /// notification links (mentions, assignments, …) omit it. We decode it
+  /// locally (the gateway's signature is only for its own web-fallback
+  /// redirect; a token, when present, is validated server-side anyway), point
+  /// the app at that server, and open the flow.
   Future<void> _openRelayLink(Uri uri) async {
     final seg = uri.pathSegments.length > 1 ? uri.pathSegments[1] : '';
     final dot = seg.indexOf('.');
@@ -207,12 +209,23 @@ class _HinataAppState extends State<HinataApp> {
       final token = payload['t'] as String?;
       final route = payload['p'] as String?;
       final server = payload['a'] as String?;
-      if (token == null || token.isEmpty || route == null || route.isEmpty) return;
+      if (route == null || route.isEmpty) return;
       if (server != null && server.isNotEmpty) {
         await widget.storage.setServerUrl(server);
         _appConfig.add(ServerUrlSubmitted(server));
       }
-      _router.go('$route?token=${Uri.encodeQueryComponent(token)}');
+      // Invite/reset links carry a one-time token; plain notification links
+      // (mentions, assignments, team changes, …) route with just the path.
+      // `route` may already carry its own query string (e.g.
+      // "/admin/users?user=…"), so merge rather than appending a second "?".
+      final qIndex = route.indexOf('?');
+      final path = qIndex < 0 ? route : route.substring(0, qIndex);
+      final queryParts = <String>[
+        if (qIndex >= 0) route.substring(qIndex + 1),
+        if (token != null && token.isNotEmpty)
+          'token=${Uri.encodeQueryComponent(token)}',
+      ];
+      _router.go(queryParts.isEmpty ? path : '$path?${queryParts.join('&')}');
     } catch (_) {
       // Malformed/garbage relay link — ignore silently.
     }
