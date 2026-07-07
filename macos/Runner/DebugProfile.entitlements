@@ -10,6 +10,10 @@
 	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
+	<!-- Push notifications (FCM/APNs). "development" matches the local debug/dev
+	     signing profile (fastlane `mac signing`/`bootstrap`, type: development). -->
+	<key>aps-environment</key>
+	<string>development</string>
 	<!-- Hinata Connect relay: the ONE verified domain for the white-label app, so
 	     invite/reset links from ANY self-hosted server open the macOS app. Apple
 	     fetches https://connect.hinata.ahmadre.com/.well-known/apple-app-site-association
