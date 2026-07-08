@@ -70,6 +70,12 @@ class ApiClient {
   final AppStorage _storage;
   late final Dio _dio;
 
+  /// In-flight refresh, shared by every request that 401s at the same time so
+  /// they trigger ONE `/auth/refresh` instead of a thundering herd (which wastes
+  /// connections and — if the server rotates refresh tokens — makes all but the
+  /// first refresh fail and wipe the session). Cleared when the refresh settles.
+  Future<bool>? _refreshing;
+
   /// Invoked when the session can no longer be refreshed.
   void Function()? onSessionExpired;
 
@@ -127,11 +133,20 @@ class ApiClient {
     }
   }
 
-  Future<bool> _tryRefresh() async {
+  /// Single-flight refresh: concurrent 401s all await the same in-flight call.
+  Future<bool> _tryRefresh() =>
+      _refreshing ??= _doRefresh().whenComplete(() => _refreshing = null);
+
+  Future<bool> _doRefresh() async {
+    // Snapshot the refresh token now: a parallel request may have already
+    // rotated it by the time this runs, but the single-flight guard means only
+    // one _doRefresh is ever in flight, so this is the current one.
+    final refresh = _storage.refreshToken;
+    if (refresh == null) return false;
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '$baseUrl/api/v1/auth/refresh',
-        data: {'refreshToken': _storage.refreshToken},
+        data: {'refreshToken': refresh},
       );
       final data = response.data!;
       await _storage.setTokens(

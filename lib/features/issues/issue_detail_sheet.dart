@@ -645,7 +645,11 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
 
   /// Nudges the sticky action bar (a subtree outside this body) to rebuild its
   /// floating composer — call after any state change the composer reflects.
-  void _bumpComposer() => widget.composerRev?.value++;
+  /// Guarded: `composerRev` is owned by the host and disposed when the sheet/
+  /// route closes, so a late async caller must not touch it once unmounted.
+  void _bumpComposer() {
+    if (mounted) widget.composerRev?.value++;
+  }
 
   /// Animates the modal down to the just-posted comment. Scoped to the
   /// chat-ordered Comments tab (newest last → bottom); the "All" tab is
@@ -722,13 +726,17 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
       } catch (_) {
         _documentedIn = const [];
       }
+      // The sheet/route can close mid-load — the host then disposes `header` and
+      // `composerRev`. `?.` guards null, NOT disposal, so writing them after an
+      // await on a closed sheet throws "used after disposed" as an UNHANDLED
+      // async error that takes the whole app down. Bail if we were unmounted
+      // during any of the awaits above.
+      if (!mounted) return;
       widget.header?.value = issue;
-      if (mounted) {
-        setState(() => _loading = false);
-        // Reveal the host's floating composer now that the issue is loaded (the
-        // route overlay reads `hasIssue`, and its subtree is outside this body).
-        _bumpComposer();
-      }
+      setState(() => _loading = false);
+      // Reveal the host's floating composer now that the issue is loaded (the
+      // route overlay reads `hasIssue`, and its subtree is outside this body).
+      _bumpComposer();
     } on ApiFailure catch (failure) {
       if (mounted) {
         setState(() {
@@ -743,6 +751,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     setState(() => _busy = true);
     try {
       final updated = await _repo.updateIssue(widget.issueId, patch);
+      if (!mounted) return;
       _issue = updated;
       widget.header?.value = updated;
       widget.onChanged?.call();

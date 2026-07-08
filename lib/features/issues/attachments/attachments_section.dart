@@ -119,6 +119,15 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
         widget.issueId,
         cancelToken: _sseCancel,
       );
+      // Disposed WHILE the stream was opening → tear the just-opened connection
+      // down instead of subscribing to it. Otherwise this subscription is never
+      // cancelled and its HTTP connection leaks; enough of those and the server
+      // runs out of SSE slots and every request starts timing out ("connection
+      // gone" until an app restart drops the sockets).
+      if (_disposed) {
+        _sseCancel?.cancel();
+        return;
+      }
       _reconnectAttempts = 0; // connected — reset the backoff
       _sseSub = parseSse(bytes).listen(
         _onSseEvent,

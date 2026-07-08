@@ -114,6 +114,14 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
         widget.issueId,
         cancelToken: _sseCancel,
       );
+      // Disposed WHILE opening → tear down the just-opened connection instead of
+      // subscribing (else the subscription + its HTTP connection leak; enough
+      // leaked SSE connections exhaust the server's slots and every request
+      // starts timing out until an app restart drops the sockets).
+      if (_disposed) {
+        _sseCancel?.cancel();
+        return;
+      }
       _reconnectAttempts = 0;
       _sseSub = parseSse(bytes).listen(
         (_) => _load(),

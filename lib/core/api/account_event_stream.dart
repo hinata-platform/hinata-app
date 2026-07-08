@@ -55,6 +55,12 @@ class AccountEventStream {
     _cancel = CancelToken();
     try {
       final bytes = await _repo.meEventStream(cancelToken: _cancel);
+      // Stopped WHILE the stream was opening → tear the just-opened connection
+      // down instead of subscribing to it (else it leaks an open HTTP stream).
+      if (!_running) {
+        _cancel?.cancel();
+        return;
+      }
       _attempts = 0; // connected — reset the backoff
       _sub = parseSse(bytes).listen(
         _onEvent,
