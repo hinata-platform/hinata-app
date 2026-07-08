@@ -266,22 +266,28 @@ class CommitRow extends StatelessWidget {
           ),
         _avatar(commit.authorId, names, avatars),
         if (commit.at != null) _subText(agoSuffixed(commit.at)),
-        Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: '+${commit.additions}',
-                style: TextStyle(color: AppColors.success),
-              ),
-              const TextSpan(text: ' '),
-              TextSpan(
-                text: '−${commit.deletions}',
-                style: TextStyle(color: AppColors.danger),
-              ),
-            ],
+        // Only surface the counts that actually changed — a bare +0 or −0 is
+        // noise (matches how Git itself omits zero-line sides).
+        if (commit.additions > 0 || commit.deletions > 0)
+          Text.rich(
+            TextSpan(
+              children: [
+                if (commit.additions > 0)
+                  TextSpan(
+                    text: '+${commit.additions}',
+                    style: TextStyle(color: AppColors.success),
+                  ),
+                if (commit.additions > 0 && commit.deletions > 0)
+                  const TextSpan(text: ' '),
+                if (commit.deletions > 0)
+                  TextSpan(
+                    text: '−${commit.deletions}',
+                    style: TextStyle(color: AppColors.danger),
+                  ),
+              ],
+            ),
+            style: const TextStyle(fontFamily: AppTheme.fontMono, fontSize: 11),
           ),
-          style: const TextStyle(fontFamily: AppTheme.fontMono, fontSize: 11),
-        ),
       ],
     );
   }
