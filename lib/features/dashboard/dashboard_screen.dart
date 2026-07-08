@@ -1382,7 +1382,7 @@ class _Bars extends StatelessWidget {
                         width: 20,
                         height: h,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(999),
+                          borderRadius: BorderRadius.circular(6),
                           gradient: b.today
                               ? const LinearGradient(
                                   begin: Alignment.topCenter,
