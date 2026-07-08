@@ -207,16 +207,17 @@ class _GanttScreenState extends State<GanttScreen> {
 
     _maybeInitialScroll(todayX, timelineWidth);
 
-    // The shell's `bottomGutter` reserves the floating nav pill *plus* the
-    // device safe-area so scrolling lists clear both. This chart is a fixed
-    // card (not a scroll list) and the floating switcher is anchored to its
-    // bottom — so reserving the full gutter strands the card and switcher far
-    // above the nav. Clear only the pill's visible height (drop the safe-area
-    // the pill already overlaps) plus one page gutter, so the card and the
-    // switcher rest just above the nav on every screen size.
-    final navClearance = (context.bottomGutter -
-            MediaQuery.viewPaddingOf(context).bottom)
-        .clamp(0.0, double.infinity);
+    // Reserve just the floating nav *pill's* height so the card + switcher rest
+    // snug above the nav — NOT the full gutter (pill + home-indicator safe-area),
+    // which floats them too high, and NOT `bottomGutter - viewPaddingOf.bottom`
+    // (the compact shell injects the nav footprint into `viewPadding.bottom` too,
+    // so that collapses to 0 and hides the switcher behind the nav). Read the
+    // REAL device safe-area straight from the FlutterView, which the shell's
+    // MediaQuery override doesn't touch.
+    final view = View.of(context);
+    final safeArea = view.viewPadding.bottom / view.devicePixelRatio;
+    final navClearance =
+        (context.bottomGutter - safeArea).clamp(0.0, double.infinity);
     return Padding(
       padding: EdgeInsets.fromLTRB(context.pageGutter, 0, context.pageGutter,
           context.pageGutter + navClearance),
