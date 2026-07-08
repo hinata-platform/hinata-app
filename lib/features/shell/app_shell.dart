@@ -1,8 +1,10 @@
 import 'dart:math' show pow;
 import 'dart:ui';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -221,6 +223,7 @@ class _WideShellState extends State<_WideShell> {
   // Desktop-only manual collapse. Medium widths are always collapsed (no room
   // to expand), so the toggle is offered only on the full layout.
   bool _collapsed = false;
+  final double maxBodyWidth = 1618;
 
   @override
   Widget build(BuildContext context) {
@@ -261,18 +264,29 @@ class _WideShellState extends State<_WideShell> {
                               setState(() => _collapsed = !_collapsed),
                         ),
                         Expanded(
-                          child: Column(
-                            children: [
-                              // Sub-pages keep a slim back + title bar (the floating
-                              // topbar carries no breadcrumb); primary pages render
-                              // their own PageHead instead.
-                              if (subKey != null)
-                                _SubPageBar(
-                                  location: widget.location,
-                                  titleKey: subKey,
+                          child: _ScrollWheelPassthrough(
+                            maxContentWidth: maxBodyWidth,
+                            child: Column(
+                              children: [
+                                // Sub-pages keep a slim back + title bar (the floating
+                                // topbar carries no breadcrumb); primary pages render
+                                // their own PageHead instead.
+                                if (subKey != null)
+                                  ConstrainedBox(
+                                    constraints: BoxConstraints(maxWidth: maxBodyWidth),
+                                    child: _SubPageBar(
+                                      location: widget.location,
+                                      titleKey: subKey,
+                                    ),
+                                  ),
+                                Expanded(
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(maxWidth: maxBodyWidth),
+                                    child: widget.child,
+                                  ),
                                 ),
-                              Expanded(child: widget.child),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -284,6 +298,67 @@ class _WideShellState extends State<_WideShell> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The centered [maxContentWidth] body leaves empty margins on wide screens
+/// that no [Scrollable] covers, so a mouse wheel there does nothing. This
+/// wraps the full-width area and, when a scroll happens outside the centered
+/// content, re-dispatches it as if it occurred at the nearest point inside
+/// the content so the page underneath still scrolls.
+class _ScrollWheelPassthrough extends StatelessWidget {
+  const _ScrollWheelPassthrough({
+    required this.maxContentWidth,
+    required this.child,
+  });
+
+  final double maxContentWidth;
+  final Widget child;
+
+  void _onPointerSignal(BuildContext context, PointerSignalEvent event) {
+    if (event is! PointerScrollEvent) return;
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.attached) return;
+
+    final local = box.globalToLocal(event.position);
+    final centerX = box.size.width / 2;
+    final halfContent = maxContentWidth / 2;
+    final offsetFromCenter = local.dx - centerX;
+    if (offsetFromCenter.abs() <= halfContent) {
+      return; // Already inside the content column; let normal hit-testing handle it.
+    }
+
+    final clampedDx =
+        centerX + offsetFromCenter.clamp(-halfContent, halfContent);
+    final targetGlobal = box.localToGlobal(Offset(clampedDx, local.dy));
+    final viewId = View.of(context).viewId;
+    final result = HitTestResult();
+    RendererBinding.instance.hitTestInView(result, targetGlobal, viewId);
+    RendererBinding.instance.dispatchEvent(
+      PointerScrollEvent(
+        timeStamp: event.timeStamp,
+        kind: event.kind,
+        device: event.device,
+        position: targetGlobal,
+        scrollDelta: event.scrollDelta,
+        viewId: viewId,
+        embedderId: event.embedderId,
+      ),
+      result,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      // Listener defaults to HitTestBehavior.deferToChild, so in the empty
+      // margins beside the centered content (where no child claims the hit)
+      // it would never be hit-tested and onPointerSignal would never fire.
+      // opaque makes it always participate in hit-testing over its full area.
+      behavior: HitTestBehavior.opaque,
+      onPointerSignal: (event) => _onPointerSignal(context, event),
+      child: child,
     );
   }
 }
@@ -337,10 +412,7 @@ class _NavRail extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [
-                      AppColors.rail,
-                      AppColors.rail2,
-                    ],
+                    colors: [AppColors.rail, AppColors.rail2],
                   ),
                 ),
               ),
