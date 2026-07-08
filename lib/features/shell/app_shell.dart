@@ -15,6 +15,7 @@ import '../../core/api/hinata_repository.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/blocs/theme_cubit.dart';
+import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
 import '../../core/models/core_models.dart';
@@ -405,6 +406,16 @@ class _ScrollWheelPassthrough extends StatelessWidget {
   }
 }
 
+/// Opens the create-issue form from global chrome (the nav-rail CTA). On a
+/// successful create it broadcasts [IssueEvents.notifyChanged] so whatever
+/// issue-bearing screen is currently visible re-fetches — the rail itself has
+/// no handle to that page's cubit, so the change travels through the event bus.
+/// [showIssueForm] already opens the new issue's detail sheet on success.
+Future<void> _createIssue(BuildContext context) async {
+  final created = await showIssueForm(context);
+  if (created != null) IssueEvents.instance.notifyChanged();
+}
+
 class _NavRail extends StatelessWidget {
   const _NavRail({
     required this.location,
@@ -502,8 +513,7 @@ class _NavRail extends StatelessWidget {
                                     active: false,
                                     amber: true,
                                     tooltip: context.t('issues.new'),
-                                    onTap: () async =>
-                                        await showIssueForm(context),
+                                    onTap: () => _createIssue(context),
                                   )
                                 : DecoratedBox(
                                     // Soft honey glow beneath the CTA (matches the web
@@ -526,8 +536,7 @@ class _NavRail extends StatelessWidget {
                                     child: SizedBox(
                                       width: double.infinity,
                                       child: FilledButton.icon(
-                                        onPressed: () async =>
-                                            await showIssueForm(context),
+                                        onPressed: () => _createIssue(context),
                                         style: FilledButton.styleFrom(
                                           backgroundColor: AppColors.accent,
                                           foregroundColor: const Color(

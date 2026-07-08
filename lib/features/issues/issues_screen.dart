@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +16,7 @@ import '../../core/api/hinata_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/paged_cubit.dart';
+import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
 import '../../core/models/work_models.dart';
@@ -106,10 +109,15 @@ class _IssuesScreenState extends State<IssuesScreen> {
 
   final GlobalKey _filterKey = GlobalKey();
 
+  /// Re-fetch when an issue is created/changed elsewhere (e.g. the global
+  /// nav-rail "new issue" button, which can't reach this screen's cubit).
+  StreamSubscription<void>? _issueSub;
+
   @override
   void initState() {
     super.initState();
     _repo = context.read<HinataRepository>();
+    _issueSub = IssueEvents.instance.changes.listen((_) => _reload());
     _issues = PagedCubit<Issue>(
       (page, size) async {
         final result = await _repo.issues(
@@ -128,6 +136,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
 
   @override
   void dispose() {
+    _issueSub?.cancel();
     _scroll.dispose();
     _issues.close();
     super.dispose();

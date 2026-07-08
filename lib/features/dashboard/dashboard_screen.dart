@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
@@ -10,6 +11,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/api/hinata_repository.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
+import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
 import '../../core/models/team_models.dart' show Team;
@@ -83,12 +85,17 @@ class _DashboardViewState extends State<_DashboardView> {
 
   HinataRepository get _repo => context.read<HinataRepository>();
 
+  /// Re-fetch when an issue is created/changed elsewhere (e.g. the global
+  /// nav-rail "new issue" button, which can't reach this screen's cubit).
+  StreamSubscription<void>? _issueSub;
+
   @override
   void initState() {
     super.initState();
     _cubit = FetchCubit<DashboardData>(
       () => _repo.dashboard(override: _editing ? _draft : null),
     )..load();
+    _issueSub = IssueEvents.instance.changes.listen((_) => _cubit.load());
     _loadPickerData();
   }
 
@@ -108,6 +115,7 @@ class _DashboardViewState extends State<_DashboardView> {
 
   @override
   void dispose() {
+    _issueSub?.cancel();
     _cubit.close();
     super.dispose();
   }

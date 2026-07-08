@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/hinata_repository.dart';
 import '../../core/blocs/auth_bloc.dart';
+import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
 import '../../core/models/team_models.dart';
@@ -332,10 +334,21 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
 
   final GlobalKey _filterKey = GlobalKey();
 
+  /// Re-fetch when an issue is created/changed elsewhere (e.g. the global
+  /// nav-rail "new issue" button, which can't reach this screen's state).
+  StreamSubscription<void>? _issueSub;
+
   @override
   void initState() {
     super.initState();
+    _issueSub = IssueEvents.instance.changes.listen((_) => _load());
     _load();
+  }
+
+  @override
+  void dispose() {
+    _issueSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
