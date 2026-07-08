@@ -1,8 +1,10 @@
 import 'dart:math' show pow;
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:hinata/features/issues/issue_form.dart' show showIssueForm;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -74,7 +76,7 @@ const _bottomTabs = [
 // share one preset. Values mirror the package's kBottomBarGlassDefaults; the
 // glass is tinted translucent-black in dark mode (so it doesn't turn milky) and
 // translucent-white in light mode (clean frost).
-const _kNavGlassDark = LiquidGlassSettings(
+const kNavGlassDark = LiquidGlassSettings(
   thickness: 30,
   blur: 3,
   chromaticAberration: 0.3,
@@ -85,7 +87,7 @@ const _kNavGlassDark = LiquidGlassSettings(
   lightAngle: 2.356194490192345, // 0.75π — Apple key light
   glassColor: Color(0x4D0A0A0A),
 );
-const _kNavGlassLight = LiquidGlassSettings(
+const kNavGlassLight = LiquidGlassSettings(
   thickness: 30,
   blur: 3,
   chromaticAberration: 0.3,
@@ -96,6 +98,12 @@ const _kNavGlassLight = LiquidGlassSettings(
   lightAngle: 2.356194490192345, // 0.75π — Apple key light
   glassColor: Color(0x3DFFFFFF),
 );
+
+bool get isNativeApp =>
+    !kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.macOS);
 
 /// Responsive scaffold:
 /// • phone/compact (<987): Liquid-Glass floating bottom nav
@@ -303,7 +311,9 @@ class _WideShellState extends State<_WideShell> {
                                 // their own PageHead instead.
                                 if (subKey != null)
                                   ConstrainedBox(
-                                    constraints: BoxConstraints(maxWidth: maxBodyWidth),
+                                    constraints: BoxConstraints(
+                                      maxWidth: maxBodyWidth,
+                                    ),
                                     child: _SubPageBar(
                                       location: widget.location,
                                       titleKey: subKey,
@@ -311,7 +321,9 @@ class _WideShellState extends State<_WideShell> {
                                   ),
                                 Expanded(
                                   child: ConstrainedBox(
-                                    constraints: BoxConstraints(maxWidth: maxBodyWidth),
+                                    constraints: BoxConstraints(
+                                      maxWidth: maxBodyWidth,
+                                    ),
                                     child: widget.child,
                                   ),
                                 ),
@@ -490,7 +502,8 @@ class _NavRail extends StatelessWidget {
                                     active: false,
                                     amber: true,
                                     tooltip: context.t('issues.new'),
-                                    onTap: () => context.go('/issues'),
+                                    onTap: () async =>
+                                        await showIssueForm(context),
                                   )
                                 : DecoratedBox(
                                     // Soft honey glow beneath the CTA (matches the web
@@ -513,7 +526,8 @@ class _NavRail extends StatelessWidget {
                                     child: SizedBox(
                                       width: double.infinity,
                                       child: FilledButton.icon(
-                                        onPressed: () => context.go('/issues'),
+                                        onPressed: () async =>
+                                            await showIssueForm(context),
                                         style: FilledButton.styleFrom(
                                           backgroundColor: AppColors.accent,
                                           foregroundColor: const Color(
@@ -1063,13 +1077,18 @@ class _TopIconButton extends StatelessWidget {
 /// Bell action with an unread dot and an anchored popover listing the 10 most
 /// recent notifications. The popover footer links to the full list.
 class _NotificationBell extends StatefulWidget {
-  const _NotificationBell({required this.active, this.frosted = false});
+  const _NotificationBell({
+    required this.active,
+    this.dark = false,
+    this.frosted = false,
+  });
 
+  final bool frosted;
   final bool active;
 
   /// When true the trigger is a standalone iOS-26 [_FrostedCircleButton]
   /// (mobile top bar); otherwise the desktop ghost [_TopIconButton].
-  final bool frosted;
+  final bool dark;
 
   @override
   State<_NotificationBell> createState() => _NotificationBellState();
@@ -1176,10 +1195,37 @@ class _NotificationBellState extends State<_NotificationBell> {
                             )
                           : null,
                     );
+              final nativeButton = GlassButton(
+                icon: const Icon(LucideIcons.bell),
+                onTap: _toggle,
+                width: 42,
+                height: 42,
+                iconSize: 18,
+                useOwnLayer: true,
+                settings: widget.dark ? kNavGlassDark : kNavGlassLight,
+                iconColor: widget.dark ? AppColors.inkDark : AppColors.ink,
+                glowColor: AppColors.accent,
+
+                // Keep the tactile press-scale but damp the liquid drag-follow so the
+                // isolated button doesn't over-stretch on tap.
+                stretch: 0.15,
+              );
+              final mobileTrigger = Tooltip(
+                message: context.t('nav.notifications'),
+                child: Badge(
+                  backgroundColor: AppColors.accent,
+                  smallSize: 10.5,
+                  isLabelVisible: showDot,
+                  child: nativeButton,
+                ),
+              );
               return OverlayPortal(
                 controller: _portalController,
                 overlayChildBuilder: (_) => _buildOverlay(items),
-                child: CompositedTransformTarget(link: _link, child: trigger),
+                child: CompositedTransformTarget(
+                  link: _link,
+                  child: isNativeApp ? mobileTrigger : trigger,
+                ),
               );
             },
           ),
@@ -1687,7 +1733,7 @@ class _CompactShellState extends State<_CompactShell> {
                         onTabSelected: _onTap,
                         // Black-tinted glass in dark mode (so it doesn't turn
                         // milky), clean white frost in light — see _kNavGlass*.
-                        settings: dark ? _kNavGlassDark : _kNavGlassLight,
+                        settings: dark ? kNavGlassDark : kNavGlassLight,
                         // Honey-amber indicator (translucent so the glass shows
                         // through).
                         indicatorColor: AppColors.accent.withValues(
@@ -1720,7 +1766,7 @@ class _CompactShellState extends State<_CompactShell> {
             top: 0,
             left: 0,
             right: 0,
-            child: _GlassTopBar(location: widget.location),
+            child: _GlassTopBar(location: widget.location, dark: dark),
           ),
         ],
       ),
@@ -1734,14 +1780,14 @@ class _CompactShellState extends State<_CompactShell> {
 /// left, the always-visible action icons (search · notifications · settings)
 /// grouped in a glass capsule on the right.
 class _GlassTopBar extends StatelessWidget {
-  const _GlassTopBar({required this.location});
+  const _GlassTopBar({required this.location, required this.dark});
 
   final String location;
+  final bool dark;
 
   @override
   Widget build(BuildContext context) {
     final topInset = MediaQuery.viewPaddingOf(context).top;
-    final dark = Theme.of(context).brightness == Brightness.dark;
 
     // Sub-page → back button + the page's own title; primary nav page → brand
     // mark + the nav-derived title.
@@ -1816,10 +1862,26 @@ class _GlassTopBar extends StatelessWidget {
                     message: MaterialLocalizations.of(
                       context,
                     ).backButtonTooltip,
-                    child: _FrostedCircleButton(
-                      icon: LucideIcons.arrowLeft,
-                      onTap: onBack,
-                    ),
+                    child: !isNativeApp
+                        ? _FrostedCircleButton(
+                            icon: LucideIcons.arrowLeft,
+                            onTap: onBack,
+                          )
+                        : GlassButton(
+                            icon: const Icon(LucideIcons.arrowLeft),
+                            onTap: onBack,
+                            width: 42,
+                            height: 42,
+                            iconSize: 18,
+                            useOwnLayer: true,
+                            settings: dark ? kNavGlassDark : kNavGlassLight,
+                            iconColor: dark ? AppColors.inkDark : AppColors.ink,
+                            glowColor: AppColors.accent,
+
+                            // Keep the tactile press-scale but damp the liquid drag-follow so the
+                            // isolated button doesn't over-stretch on tap.
+                            stretch: 0.15,
+                          ),
                   )
                 : const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10),
@@ -1838,7 +1900,7 @@ class _GlassTopBar extends StatelessWidget {
                 color: AppColors.ink,
               ),
             ),
-            actions: [_GlassTopActions(location: location)],
+            actions: [_GlassTopActions(location: location, dark: dark)],
           ),
         ],
       ),
@@ -1853,9 +1915,10 @@ class _GlassTopBar extends StatelessWidget {
 /// translucent fill (no nested [BackdropFilter], which would re-sample the
 /// already-blurred backdrop and pixelate).
 class _GlassTopActions extends StatelessWidget {
-  const _GlassTopActions({required this.location});
+  const _GlassTopActions({required this.location, required this.dark});
 
   final String location;
+  final bool dark;
 
   @override
   Widget build(BuildContext context) {
@@ -1865,14 +1928,34 @@ class _GlassTopActions extends StatelessWidget {
         _NotificationBell(
           active: location.startsWith('/notifications'),
           frosted: true,
+          dark: dark,
         ),
         const SizedBox(width: 8),
-        _FrostedCircleButton(
-          icon: LucideIcons.settings,
-          tooltip: context.t('nav.settings'),
-          active: location.startsWith('/settings'),
-          onTap: () => context.go('/settings'),
-        ),
+        !isNativeApp
+            ? _FrostedCircleButton(
+                icon: LucideIcons.settings,
+                tooltip: context.t('nav.settings'),
+                active: location.startsWith('/settings'),
+                onTap: () => context.go('/settings'),
+              )
+            : Tooltip(
+                message: context.t('nav.settings'),
+                child: GlassButton(
+                  icon: const Icon(LucideIcons.settings2),
+                  onTap: () => context.go('/settings'),
+                  width: 42,
+                  height: 42,
+                  iconSize: 18,
+                  useOwnLayer: true,
+                  settings: dark ? kNavGlassDark : kNavGlassLight,
+                  iconColor: dark ? AppColors.inkDark : AppColors.ink,
+                  glowColor: AppColors.accent,
+
+                  // Keep the tactile press-scale but damp the liquid drag-follow so the
+                  // isolated button doesn't over-stretch on tap.
+                  stretch: 0.15,
+                ),
+              ),
       ],
     );
   }
@@ -2071,8 +2154,8 @@ class _BlurSlice extends StatelessWidget {
 /// Detached liquid-glass button carrying the global search, floating to the
 /// right of the tab pill (iOS-26 separated-controls layout). It is its own
 /// glass layer ([GlassButton.useOwnLayer]) so it refracts the content behind it
-/// independently of the tab pill, matched to the same [_kNavGlassDark] /
-/// [_kNavGlassLight] preset so the two elements read as one material. Sized to
+/// independently of the tab pill, matched to the same [kNavGlassDark] /
+/// [kNavGlassLight] preset so the two elements read as one material. Sized to
 /// the bar's 64px height so both align.
 class _GlassNavSearchButton extends StatelessWidget {
   const _GlassNavSearchButton({required this.dark});
@@ -2088,9 +2171,9 @@ class _GlassNavSearchButton extends StatelessWidget {
         onTap: () => openGlobalSearch(context),
         width: 64,
         height: 64,
-        iconSize: 22,
+        iconSize: 24,
         useOwnLayer: true,
-        settings: dark ? _kNavGlassDark : _kNavGlassLight,
+        settings: dark ? kNavGlassDark : kNavGlassLight,
         iconColor: dark ? AppColors.inkDark : AppColors.ink,
         // Keep the tactile press-scale but damp the liquid drag-follow so the
         // isolated button doesn't over-stretch on tap.

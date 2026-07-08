@@ -1,6 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hinata/features/shell/app_shell.dart'
+    show kNavGlassDark, kNavGlassLight, isNativeApp;
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
+    show LiquidRoundedSuperellipse, LiquidOval;
+import 'package:liquid_glass_widgets/widgets/interactive/glass_button.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -585,6 +590,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
     return BlocBuilder<PagedCubit<Issue>, PagedState<Issue>>(
       bloc: _issues,
       builder: (context, state) {
+        final dark = Theme.of(context).brightness == Brightness.dark;
         final ref = _ref ?? _emptyRef;
         final all = state.items;
         final list = _filtered(all);
@@ -632,17 +638,80 @@ class _IssuesScreenState extends State<IssuesScreen> {
                       title: context.t('nav.issues'),
                       subtitle: _subtitle(list.length, state.total),
                       actions: [
-                        PrimaryButton(
-                          label: context.t('issues.new'),
-                          collapseToIcon: true,
-                          onPressed: () async {
-                            final created = await showIssueForm(
-                              context,
-                              projectId: widget.projectId,
-                            );
-                            if (created != null) _reload();
-                          },
-                        ),
+                        !isNativeApp
+                            ? PrimaryButton(
+                                label: context.t('issues.new'),
+                                collapseToIcon: true,
+                                onPressed: () async {
+                                  final created = await showIssueForm(
+                                    context,
+                                    projectId: widget.projectId,
+                                  );
+                                  if (created != null) _reload();
+                                },
+                              )
+                            : Tooltip(
+                                message: context.t('issues.new'),
+                                child: GlassButton.custom(
+                                  onTap: () async {
+                                    final created = await showIssueForm(
+                                      context,
+                                      projectId: widget.projectId,
+                                    );
+                                    if (created != null) _reload();
+                                  },
+                                  width: context.isCompact ? 46 : null,
+                                  height: 46,
+                                  shape: !context.isCompact
+                                      ? LiquidRoundedSuperellipse(
+                                          borderRadius: 15,
+                                        )
+                                      : const LiquidOval(),
+                                  useOwnLayer: true,
+                                  settings: dark
+                                      ? kNavGlassDark
+                                      : kNavGlassLight,
+                                  glowColor: AppColors.accent,
+                                  stretch: 0.15,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 8,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          LucideIcons.plus,
+                                          size: 18,
+                                          color: dark
+                                              ? AppColors.inkDark
+                                              : AppColors.ink,
+                                        ),
+                                        if (!context.isCompact) ...[
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            context.t('issues.new'),
+                                            style: TextStyle(
+                                              fontFamily: AppTheme.fontBrand,
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: -0.3,
+                                              color: dark
+                                                  ? AppColors.inkDark
+                                                  : AppColors.ink,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
                       ],
                     ),
                   ),
