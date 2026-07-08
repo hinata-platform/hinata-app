@@ -146,7 +146,7 @@ Future<void> showIssueDetailSheet(
                   child: CopyLinkId(
                     type: issue.type,
                     readableId: issue.readableId,
-                    link: issueWebLink(apiBaseUrl, issue.id),
+                    link: issueWebLink(apiBaseUrl, issue.linkId),
                     glyphSize: 24,
                     fontSize: 16,
                   ),
@@ -947,7 +947,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
               issue: issue,
               busy: _busy,
               stateColor: _projStateColor(_project, issue.state),
-              link: issueWebLink(_repo.apiBaseUrl, issue.id),
+              link: issueWebLink(_repo.apiBaseUrl, issue.linkId),
               onMinimize: widget.canMinimize ? _minimizeToModal : null,
               onDelete: () => _confirmDelete(issue),
               onClose: () => Navigator.of(context).maybePop(),

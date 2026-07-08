@@ -279,6 +279,14 @@ GoRouter buildRouter({
               );
             },
           ),
+          // Jira-familiar alias: /browse/ASTA-42 → the canonical issue detail
+          // route. Everything (deep links, App Links / Universal Links) targets
+          // /issues/*, so we redirect here rather than duplicating the screen.
+          GoRoute(
+            path: '/browse/:key',
+            redirect: (_, state) =>
+                '/issues/${state.pathParameters['key']!}',
+          ),
           GoRoute(
             path: '/issues/:id',
             pageBuilder: (_, state) {

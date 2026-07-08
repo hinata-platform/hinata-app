@@ -325,6 +325,12 @@ class Issue extends Equatable {
 
   bool get resolved => resolvedAt != null;
 
+  /// The id to use when building a shareable URL / route for this issue. Prefers
+  /// the human-readable key (`ASTA-42`) so links read cleanly; falls back to the
+  /// Mongo id for any legacy issue that predates readable keys. The backend
+  /// resolves either form, so both always work.
+  String get linkId => readableId.isNotEmpty ? readableId : id;
+
   /// Top of the hierarchy — groups standard issues, never has a parent.
   bool get isEpic => type.toUpperCase() == 'EPIC';
 
