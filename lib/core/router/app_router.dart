@@ -22,6 +22,7 @@ import '../../features/connect/update_required_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/gantt/gantt_screen.dart';
 import '../../features/issues/issue_detail_screen.dart';
+import '../../features/issues/issue_detail_sheet.dart' show IssueRouteArgs;
 import '../../features/issues/issue_filter.dart' show IssuesInitialView;
 import '../../features/issues/issues_screen.dart';
 import '../../features/knowledge/knowledge_screen.dart';
@@ -280,10 +281,19 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/issues/:id',
-            pageBuilder: (_, state) => _transition(
-              state,
-              IssueDetailScreen(issueId: state.pathParameters['id']!),
-            ),
+            pageBuilder: (_, state) {
+              final args = state.extra is IssueRouteArgs
+                  ? state.extra as IssueRouteArgs
+                  : null;
+              return _transition(
+                state,
+                IssueDetailScreen(
+                  issueId: state.pathParameters['id']!,
+                  fromModal: args?.fromModal ?? false,
+                  onChanged: args?.onChanged,
+                ),
+              );
+            },
           ),
           GoRoute(
             path: '/board',

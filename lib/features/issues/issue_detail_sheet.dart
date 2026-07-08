@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -58,6 +59,30 @@ Color? _projStateColor(Project? project, String state) {
   return hue == null ? null : hueColor(hue);
 }
 
+/// A shareable, clean (non-`#`) URL that resolves to the issue — both as a
+/// verified deep link into the app and as a normal web route. On web we use the
+/// origin the app is served from; on native we derive the public web origin from
+/// the configured API server ([apiBaseUrl]) using the convention that the API
+/// lives at `api.<domain>` and the web app + App Links at `<domain>`.
+String issueWebLink(String apiBaseUrl, String id) {
+  if (kIsWeb) {
+    try {
+      return '${Uri.base.origin}/issues/$id';
+    } catch (_) {
+      return '/issues/$id';
+    }
+  }
+  final api = Uri.tryParse(apiBaseUrl);
+  if (api == null || api.host.isEmpty) return '/issues/$id';
+  final host = api.host.startsWith('api.') ? api.host.substring(4) : api.host;
+  final origin = Uri(
+    scheme: api.scheme,
+    host: host,
+    port: api.hasPort ? api.port : null,
+  );
+  return '$origin/issues/$id';
+}
+
 /// Centered dialog that can grow much wider than the wolt default so the
 /// two-column issue detail has room on desktop.
 class _WideDialogType extends WoltDialogType {
@@ -92,6 +117,7 @@ Future<void> showIssueDetailSheet(
   final auth = context.read<AuthBloc>();
   final header = ValueNotifier<Issue?>(null);
   final bodyKey = GlobalKey<IssueDetailBodyState>();
+  final apiBaseUrl = repository.apiBaseUrl;
 
   return WoltModalSheet.show<void>(
     context: context,
@@ -117,22 +143,24 @@ Future<void> showIssueDetailSheet(
               ? const SizedBox.shrink()
               : Padding(
                   padding: const EdgeInsets.only(left: 16.0),
-                  child: Row(
-                    spacing: 10,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TypeGlyph(type: issue.type, size: 24),
-                      IdMono(
-                        issue.readableId,
-                        color: AppColors.inkSoft,
-                        fontSize: 16,
-                      ),
-                    ],
+                  child: CopyLinkId(
+                    type: issue.type,
+                    readableId: issue.readableId,
+                    link: issueWebLink(apiBaseUrl, issue.id),
+                    glyphSize: 24,
+                    fontSize: 16,
                   ),
                 ),
         ),
         trailingNavBarWidget: _SheetActions(
-          onCopyLink: () => bodyKey.currentState?.copyIssueLink(),
+          onMaximize: () {
+            final router = GoRouter.of(modalContext);
+            Navigator.of(modalContext).maybePop();
+            router.push(
+              '/issues/$issueId',
+              extra: IssueRouteArgs(fromModal: true, onChanged: onChanged),
+            );
+          },
           onDelete: () => bodyKey.currentState?.confirmDeleteIssue(),
           onClose: () => Navigator.of(modalContext).maybePop(),
         ),
@@ -153,15 +181,28 @@ Future<void> showIssueDetailSheet(
   ).whenComplete(header.dispose);
 }
 
-/// Copy-link · delete · close — rendered in the wolt top bar.
+/// Arguments handed to the `/issues/:id` route via GoRouter `extra` when the
+/// user promotes the modal sheet to the full-page view ("full screen"). They
+/// let the page know it may shrink back to the modal ([fromModal]) and carry
+/// the caller's refresh callback so list views still update from full screen.
+class IssueRouteArgs {
+  const IssueRouteArgs({this.fromModal = false, this.onChanged});
+
+  final bool fromModal;
+  final VoidCallback? onChanged;
+}
+
+/// Full-screen · delete · close — rendered in the wolt top bar. The copy-link
+/// affordance now lives on the readable-id chip (see [CopyLinkId]); the leading
+/// action here promotes the sheet to the full-page `/issues/:id` view.
 class _SheetActions extends StatelessWidget {
   const _SheetActions({
-    required this.onCopyLink,
+    required this.onMaximize,
     required this.onDelete,
     required this.onClose,
   });
 
-  final VoidCallback onCopyLink;
+  final VoidCallback onMaximize;
   final VoidCallback onDelete;
   final VoidCallback onClose;
 
@@ -171,9 +212,9 @@ class _SheetActions extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          tooltip: context.t('issues.copyLink'),
-          onPressed: onCopyLink,
-          icon: Icon(LucideIcons.link, size: 20, color: AppColors.inkSoft),
+          tooltip: context.t('issues.maximize'),
+          onPressed: onMaximize,
+          icon: Icon(LucideIcons.maximize2, size: 19, color: AppColors.inkSoft),
         ),
         IconButton(
           tooltip: context.t('common.delete'),
@@ -195,6 +236,230 @@ class _SheetActions extends StatelessWidget {
   }
 }
 
+/// The readable-id chip with a Jira-style "copy link" affordance.
+///
+/// Desktop / mouse: hovering near the id fades a copy icon in from the left;
+/// clicking it (or the id) copies the shareable issue link and morphs the icon
+/// into a green check with a "Copied!" tooltip, reverting after a moment.
+///
+/// Touch: a single tap on the id copies the link and floats a small hint chip
+/// ("Link to HIN-39 copied") just below the id, since there is no hover state.
+class CopyLinkId extends StatefulWidget {
+  const CopyLinkId({
+    super.key,
+    required this.type,
+    required this.readableId,
+    required this.link,
+    this.glyphSize = 22,
+    this.fontSize = 13,
+    this.color,
+    this.showGlyph = true,
+  });
+
+  final String type;
+  final String readableId;
+  final String link;
+  final double glyphSize;
+  final double fontSize;
+  final Color? color;
+
+  /// Whether to render the leading type glyph before the id (the modal header
+  /// shows it; the route top bar already has a back button and omits it).
+  final bool showGlyph;
+
+  @override
+  State<CopyLinkId> createState() => _CopyLinkIdState();
+}
+
+class _CopyLinkIdState extends State<CopyLinkId> {
+  final LayerLink _layerLink = LayerLink();
+  bool _hovering = false;
+  bool _copied = false;
+  Timer? _revertTimer;
+  OverlayEntry? _hintEntry;
+  Timer? _hintTimer;
+
+  @override
+  void dispose() {
+    _revertTimer?.cancel();
+    _hintTimer?.cancel();
+    _removeHint();
+    super.dispose();
+  }
+
+  void _removeHint() {
+    _hintEntry?.remove();
+    _hintEntry = null;
+  }
+
+  void _copy() {
+    Clipboard.setData(ClipboardData(text: widget.link));
+    setState(() => _copied = true);
+    _revertTimer?.cancel();
+    _revertTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _copied = false);
+    });
+    // No hover state means a touch device — surface the inline confirmation
+    // chip below the id (desktop relies on the icon morph + tooltip instead).
+    if (!_hovering) _showHint();
+  }
+
+  void _showHint() {
+    _removeHint();
+    final overlay = Overlay.maybeOf(context);
+    if (overlay == null) return;
+    final id = widget.readableId;
+    _hintEntry = OverlayEntry(
+      builder: (_) => Positioned(
+        width: 300,
+        child: CompositedTransformFollower(
+          link: _layerLink,
+          showWhenUnlinked: false,
+          offset: const Offset(0, 30),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: _CopiedHintChip(id: id),
+          ),
+        ),
+      ),
+    );
+    overlay.insert(_hintEntry!);
+    _hintTimer?.cancel();
+    _hintTimer = Timer(const Duration(milliseconds: 2000), _removeHint);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final visible = _hovering || _copied;
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovering = true),
+        onExit: (_) => setState(() => _hovering = false),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _copy,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.showGlyph) ...[
+                TypeGlyph(type: widget.type, size: widget.glyphSize),
+                const SizedBox(width: 10),
+              ],
+              IdMono(
+                widget.readableId,
+                color: widget.color ?? AppColors.inkSoft,
+                fontSize: widget.fontSize,
+              ),
+              // Reserved slot: the icon fades + slides in from the left on hover
+              // (or once copied), so the row width never jumps.
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 160),
+                  opacity: visible ? 1 : 0,
+                  child: AnimatedSlide(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    offset: visible ? Offset.zero : const Offset(-0.45, 0),
+                    child: Tooltip(
+                      message: context.t(
+                        _copied ? 'issues.copied' : 'issues.copyLink',
+                      ),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: Center(
+                          child: _copied
+                              ? Container(
+                                  width: 18,
+                                  height: 18,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.success,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    LucideIcons.check,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Icon(
+                                  LucideIcons.link,
+                                  size: 16,
+                                  color: widget.color ?? AppColors.inkSoft,
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The floating "Link to HIN-39 copied" chip shown under the id on touch.
+class _CopiedHintChip extends StatelessWidget {
+  const _CopiedHintChip({required this.id});
+
+  final String id;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      tween: Tween(begin: 0, end: 1),
+      builder: (_, t, child) => Opacity(
+        opacity: t.clamp(0.0, 1.0),
+        child: Transform.translate(offset: Offset(0, (1 - t) * -6), child: child),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          decoration: BoxDecoration(
+            color: AppColors.navy,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.22),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.link, size: 16, color: Colors.white),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  context.t('issues.linkCopiedFor', variables: {'id': id}),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Shared editable issue detail — used both inside the sheet and by the
 /// `/issues/:id` route. When [header] is supplied (sheet mode) the readable id
 /// lives in the wolt top bar and the internal top bar is hidden.
@@ -204,11 +469,17 @@ class IssueDetailBody extends StatefulWidget {
     required this.issueId,
     this.onChanged,
     this.header,
+    this.canMinimize = false,
   });
 
   final String issueId;
   final VoidCallback? onChanged;
   final ValueNotifier<Issue?>? header;
+
+  /// Full-page (route) mode only: whether this view was promoted from the modal
+  /// sheet and can therefore shrink back to it. Direct deep-links open the page
+  /// with no modal underneath, so the "exit full screen" button is hidden.
+  final bool canMinimize;
 
   @override
   State<IssueDetailBody> createState() => IssueDetailBodyState();
@@ -613,35 +884,17 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     await _patch({'description': value});
   }
 
-  void copyIssueLink() {
-    final issue = _issue;
-    if (issue == null) return;
-    Clipboard.setData(ClipboardData(text: _issueWebLink(issue.id)));
-    _toast(context.t('issues.linkCopied'));
-  }
-
-  /// A shareable, clean (non-`#`) URL that resolves to the issue — both as a
-  /// verified deep link into the app and as a normal web route. On web we use
-  /// the origin the app is served from; on native we derive the public web
-  /// origin from the configured API server (convention: API at `api.<domain>`,
-  /// web app + App Links at `<domain>`).
-  String _issueWebLink(String id) {
-    if (kIsWeb) {
-      try {
-        return '${Uri.base.origin}/issues/$id';
-      } catch (_) {
-        return '/issues/$id';
-      }
-    }
-    final api = Uri.tryParse(_repo.apiBaseUrl);
-    if (api == null || api.host.isEmpty) return '/issues/$id';
-    final host = api.host.startsWith('api.') ? api.host.substring(4) : api.host;
-    final origin = Uri(
-      scheme: api.scheme,
-      host: host,
-      port: api.hasPort ? api.port : null,
+  /// Full-page → modal: re-open the issue as a modal sheet and drop the route
+  /// underneath it. The sheet is shown first (while this context is still
+  /// mounted) so its provider reads succeed, then the route is popped away.
+  void _minimizeToModal() {
+    final navigator = Navigator.of(context);
+    showIssueDetailSheet(
+      context,
+      issueId: widget.issueId,
+      onChanged: widget.onChanged,
     );
-    return '$origin/issues/$id';
+    navigator.maybePop();
   }
 
   Future<void> confirmDeleteIssue() async {
@@ -694,7 +947,8 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
               issue: issue,
               busy: _busy,
               stateColor: _projStateColor(_project, issue.state),
-              onCopyLink: copyIssueLink,
+              link: issueWebLink(_repo.apiBaseUrl, issue.id),
+              onMinimize: widget.canMinimize ? _minimizeToModal : null,
               onDelete: () => _confirmDelete(issue),
               onClose: () => Navigator.of(context).maybePop(),
             ),
@@ -3325,7 +3579,8 @@ class _RouteTopBar extends StatelessWidget {
     required this.issue,
     required this.busy,
     this.stateColor,
-    required this.onCopyLink,
+    required this.link,
+    this.onMinimize,
     required this.onDelete,
     required this.onClose,
   });
@@ -3333,7 +3588,11 @@ class _RouteTopBar extends StatelessWidget {
   final Issue issue;
   final bool busy;
   final Color? stateColor;
-  final VoidCallback onCopyLink;
+  final String link;
+
+  /// Shrink back to the modal sheet — only when this page was promoted from it
+  /// (null for direct deep-links, which have no modal to return to).
+  final VoidCallback? onMinimize;
   final VoidCallback onDelete;
   final VoidCallback onClose;
 
@@ -3351,23 +3610,43 @@ class _RouteTopBar extends StatelessWidget {
               color: AppColors.inkSoft,
             ),
           ),
-          IdMono(issue.readableId, color: AppColors.inkSoft),
-          const SizedBox(width: 10),
-          StateDotBadge(state: issue.state, color: stateColor),
-          if (busy) ...[
-            const SizedBox(width: 10),
-            const SizedBox(
-              width: 14,
-              height: 14,
-              child: HiveLoader(strokeWidth: 2, color: AppColors.accent),
+          // The leading cluster consumes the free space (so the action buttons
+          // stay hard-right); the state badge ellipsises inside it if tight.
+          Expanded(
+            child: Row(
+              children: [
+                CopyLinkId(
+                  type: issue.type,
+                  readableId: issue.readableId,
+                  link: link,
+                  showGlyph: false,
+                  color: AppColors.inkSoft,
+                ),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: StateDotBadge(state: issue.state, color: stateColor),
+                ),
+                if (busy) ...[
+                  const SizedBox(width: 10),
+                  const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: HiveLoader(strokeWidth: 2, color: AppColors.accent),
+                  ),
+                ],
+              ],
             ),
-          ],
-          const Spacer(),
-          IconButton(
-            tooltip: context.t('issues.copyLink'),
-            onPressed: onCopyLink,
-            icon: Icon(LucideIcons.link, size: 20, color: AppColors.inkSoft),
           ),
+          if (onMinimize != null)
+            IconButton(
+              tooltip: context.t('issues.minimize'),
+              onPressed: onMinimize,
+              icon: Icon(
+                LucideIcons.minimize2,
+                size: 19,
+                color: AppColors.inkSoft,
+              ),
+            ),
           IconButton(
             tooltip: context.t('common.delete'),
             onPressed: onDelete,

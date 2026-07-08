@@ -7,9 +7,19 @@ import 'issue_detail_sheet.dart';
 /// [IssueDetailBody]; the primary in-app entry point is the modal sheet
 /// (`showIssueDetailSheet`).
 class IssueDetailScreen extends StatelessWidget {
-  const IssueDetailScreen({super.key, required this.issueId});
+  const IssueDetailScreen({
+    super.key,
+    required this.issueId,
+    this.fromModal = false,
+    this.onChanged,
+  });
 
   final String issueId;
+
+  /// Set when the page was promoted from the modal sheet ("full screen"), so the
+  /// top bar offers an "exit full screen" button back to the modal.
+  final bool fromModal;
+  final VoidCallback? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +34,11 @@ class IssueDetailScreen extends StatelessWidget {
         top: context.topGutter,
         bottom: context.bottomGutter,
       ),
-      child: IssueDetailBody(issueId: issueId),
+      child: IssueDetailBody(
+        issueId: issueId,
+        canMinimize: fromModal,
+        onChanged: onChanged,
+      ),
     );
   }
 }
