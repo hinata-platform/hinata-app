@@ -28,6 +28,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
         GlassAppBar,
         GlassBottomBar,
         GlassBottomBarTab,
+        GlassButton,
         GlassContainer,
         GlassQuality,
         LiquidGlassSettings,
@@ -66,6 +67,35 @@ const _bottomTabs = [
   _Destination('/board', 'nav.board', LucideIcons.squareKanban),
   _Destination('/more', 'nav.more', LucideIcons.layoutGrid),
 ];
+
+// ── Floating bottom-nav glass presets ───────────────────────────────────────
+// The mobile nav is two *separate* floating glass elements (the tab pill and a
+// detached search button, iOS-26 style). Both must refract identically, so they
+// share one preset. Values mirror the package's kBottomBarGlassDefaults; the
+// glass is tinted translucent-black in dark mode (so it doesn't turn milky) and
+// translucent-white in light mode (clean frost).
+const _kNavGlassDark = LiquidGlassSettings(
+  thickness: 30,
+  blur: 3,
+  chromaticAberration: 0.3,
+  lightIntensity: 0.6,
+  refractiveIndex: 1.59,
+  saturation: 0.7,
+  ambientStrength: 1,
+  lightAngle: 2.356194490192345, // 0.75π — Apple key light
+  glassColor: Color(0x4D0A0A0A),
+);
+const _kNavGlassLight = LiquidGlassSettings(
+  thickness: 30,
+  blur: 3,
+  chromaticAberration: 0.3,
+  lightIntensity: 0.6,
+  refractiveIndex: 1.59,
+  saturation: 0.7,
+  ambientStrength: 1,
+  lightAngle: 2.356194490192345, // 0.75π — Apple key light
+  glassColor: Color(0x3DFFFFFF),
+);
 
 /// Responsive scaffold:
 /// • phone/compact (<987): Liquid-Glass floating bottom nav
@@ -1033,9 +1063,13 @@ class _TopIconButton extends StatelessWidget {
 /// Bell action with an unread dot and an anchored popover listing the 10 most
 /// recent notifications. The popover footer links to the full list.
 class _NotificationBell extends StatefulWidget {
-  const _NotificationBell({required this.active});
+  const _NotificationBell({required this.active, this.frosted = false});
 
   final bool active;
+
+  /// When true the trigger is a standalone iOS-26 [_FrostedCircleButton]
+  /// (mobile top bar); otherwise the desktop ghost [_TopIconButton].
+  final bool frosted;
 
   @override
   State<_NotificationBell> createState() => _NotificationBellState();
@@ -1114,25 +1148,38 @@ class _NotificationBellState extends State<_NotificationBell> {
             builder: (context, state) {
               final items = state.data ?? const <AppNotification>[];
               final hasUnread = items.any((n) => !n.read);
+              final showDot = hasUnread && !_open;
+              final trigger = widget.frosted
+                  ? _FrostedCircleButton(
+                      icon: LucideIcons.bell,
+                      tooltip: context.t('nav.notifications'),
+                      active: widget.active || _open,
+                      onTap: _toggle,
+                      overlay: showDot
+                          ? const Positioned(
+                              top: 8,
+                              right: 9,
+                              child: _UnreadDot(),
+                            )
+                          : null,
+                    )
+                  : _TopIconButton(
+                      icon: LucideIcons.bell,
+                      tooltip: context.t('nav.notifications'),
+                      active: widget.active || _open,
+                      onTap: _toggle,
+                      child: showDot
+                          ? const Positioned(
+                              top: 7,
+                              right: 8,
+                              child: _UnreadDot(),
+                            )
+                          : null,
+                    );
               return OverlayPortal(
                 controller: _portalController,
                 overlayChildBuilder: (_) => _buildOverlay(items),
-                child: CompositedTransformTarget(
-                  link: _link,
-                  child: _TopIconButton(
-                    icon: LucideIcons.bell,
-                    tooltip: context.t('nav.notifications'),
-                    active: widget.active || _open,
-                    onTap: _toggle,
-                    child: (hasUnread && !_open)
-                        ? const Positioned(
-                            top: 7,
-                            right: 8,
-                            child: _UnreadDot(),
-                          )
-                        : null,
-                  ),
-                ),
+                child: CompositedTransformTarget(link: _link, child: trigger),
               );
             },
           ),
@@ -1620,46 +1667,51 @@ class _CompactShellState extends State<_CompactShell> {
             child: SafeArea(
               top: false,
               bottom: false,
-              child: GlassBottomBar(
-                horizontalPadding: 24,
-                verticalPadding: 16,
-                selectedIndex: _selectedIndex,
-                onTabSelected: _onTap,
-                // The package default glassColor is a translucent WHITE
-                // (0x3DFFFFFF). In light mode that reads as clean frost, but in
-                // dark mode it turns the bar milky-white. Mirror the iOS-26 /
-                // GitHub aesthetic by tinting the glass black in dark mode while
-                // keeping the white frost in light mode. Other values match the
-                // package's kBottomBarGlassDefaults so the refraction is intact.
-                settings: dark
-                    ? const LiquidGlassSettings(
-                        thickness: 30,
-                        blur: 3,
-                        chromaticAberration: 0.3,
-                        lightIntensity: 0.6,
-                        refractiveIndex: 1.59,
-                        saturation: 0.7,
-                        ambientStrength: 1,
-                        lightAngle:
-                            2.356194490192345, // 0.75π — Apple key light
-                        glassColor: Color(0x4D0A0A0A),
-                      )
-                    : null,
-                // Honey-amber indicator (translucent so the glass shows through).
-                indicatorColor: AppColors.accent.withValues(
-                  alpha: dark ? 0.30 : 0.22,
+              // iOS-26 layout: the tab pill and a detached global-search button
+              // are two separate floating glass elements with a gap between
+              // them. The padding that used to live inside GlassBottomBar is
+              // hoisted to this Row so both elements share the same inset and
+              // the footprint injected above (navFootprint) stays unchanged.
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
                 ),
-                selectedIconColor: dark
-                    ? AppColors.accent
-                    : AppColors.accentStrong,
-                unselectedIconColor: dark ? AppColors.inkDark : AppColors.ink,
-                tabs: [
-                  for (final d in _bottomTabs)
-                    GlassBottomBarTab(
-                      icon: Icon(d.icon),
-                      label: context.t(d.labelKey),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GlassBottomBar(
+                        horizontalPadding: 0,
+                        verticalPadding: 0,
+                        selectedIndex: _selectedIndex,
+                        onTabSelected: _onTap,
+                        // Black-tinted glass in dark mode (so it doesn't turn
+                        // milky), clean white frost in light — see _kNavGlass*.
+                        settings: dark ? _kNavGlassDark : _kNavGlassLight,
+                        // Honey-amber indicator (translucent so the glass shows
+                        // through).
+                        indicatorColor: AppColors.accent.withValues(
+                          alpha: dark ? 0.30 : 0.22,
+                        ),
+                        selectedIconColor: dark
+                            ? AppColors.accent
+                            : AppColors.accentStrong,
+                        unselectedIconColor: dark
+                            ? AppColors.inkDark
+                            : AppColors.ink,
+                        tabs: [
+                          for (final d in _bottomTabs)
+                            GlassBottomBarTab(
+                              icon: Icon(d.icon),
+                              label: context.t(d.labelKey),
+                            ),
+                        ],
+                      ),
                     ),
-                ],
+                    const SizedBox(width: 12),
+                    _GlassNavSearchButton(dark: dark),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1786,7 +1838,7 @@ class _GlassTopBar extends StatelessWidget {
                 color: AppColors.ink,
               ),
             ),
-            actions: [_GlassActionCapsule(location: location)],
+            actions: [_GlassTopActions(location: location)],
           ),
         ],
       ),
@@ -1794,40 +1846,34 @@ class _GlassTopBar extends StatelessWidget {
   }
 }
 
-/// Rounded capsule grouping the persistent top-bar actions
-/// (search · notifications · settings) — the iOS-26 action pill.
-///
-/// Deliberately a *frosted* surface (translucent fill + hairline border +
-/// specular top highlight) with NO [BackdropFilter] of its own: the bar already
-/// runs one progressive blur ([_ProgressiveBlur]) behind it, which shows through
-/// the translucent fill. Stacking a second backdrop filter here would re-sample
-/// that already-blurred (downsampled) backdrop and produce the pixelated /
-/// "layered" blocks — exactly the artefact this avoids.
-class _GlassActionCapsule extends StatelessWidget {
-  const _GlassActionCapsule({required this.location});
+/// Persistent top-bar actions — notifications and settings, each its own
+/// separate round iOS-26 liquid-glass button (no more grouped capsule; global
+/// search moved to the floating bottom nav). Each button is a [_FrostedSurface]
+/// circle that relies on the bar's single [_ProgressiveBlur] showing through its
+/// translucent fill (no nested [BackdropFilter], which would re-sample the
+/// already-blurred backdrop and pixelate).
+class _GlassTopActions extends StatelessWidget {
+  const _GlassTopActions({required this.location});
 
   final String location;
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    return _FrostedSurface(
-      borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-      dark: dark,
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _TopSearchField(compact: true),
-          _NotificationBell(active: location.startsWith('/notifications')),
-          _TopIconButton(
-            icon: LucideIcons.settings,
-            tooltip: context.t('nav.settings'),
-            active: location.startsWith('/settings'),
-            onTap: () => context.go('/settings'),
-          ),
-        ],
-      ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _NotificationBell(
+          active: location.startsWith('/notifications'),
+          frosted: true,
+        ),
+        const SizedBox(width: 8),
+        _FrostedCircleButton(
+          icon: LucideIcons.settings,
+          tooltip: context.t('nav.settings'),
+          active: location.startsWith('/settings'),
+          onTap: () => context.go('/settings'),
+        ),
+      ],
     );
   }
 }
@@ -1843,13 +1889,11 @@ class _FrostedSurface extends StatelessWidget {
     required this.child,
     required this.borderRadius,
     required this.dark,
-    this.padding,
   });
 
   final Widget child;
   final BorderRadius borderRadius;
   final bool dark;
-  final EdgeInsetsGeometry? padding;
 
   @override
   Widget build(BuildContext context) {
@@ -1870,23 +1914,38 @@ class _FrostedSurface extends StatelessWidget {
           width: 0.6,
         ),
       ),
-      child: Padding(padding: padding ?? EdgeInsets.zero, child: child),
+      child: child,
     );
   }
 }
 
-/// 40×40 frosted circular button (used for the top-bar back affordance) — same
-/// no-own-blur frosted treatment as [_FrostedSurface].
+/// 40×40 frosted circular button — the iOS-26 standalone glass control used for
+/// the top-bar back affordance and each trailing action (notifications ·
+/// settings). Same no-own-blur frosted treatment as [_FrostedSurface]. When
+/// [active] it fills with a translucent honey-amber tint and the glyph adopts
+/// the accent colour; [overlay] paints an extra badge (e.g. the unread dot)
+/// above the icon.
 class _FrostedCircleButton extends StatelessWidget {
-  const _FrostedCircleButton({required this.icon, required this.onTap});
+  const _FrostedCircleButton({
+    required this.icon,
+    required this.onTap,
+    this.tooltip,
+    this.active = false,
+    this.overlay,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
+  final String? tooltip;
+  final bool active;
+
+  /// Optional badge (e.g. the unread dot) painted above the icon.
+  final Widget? overlay;
 
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return _FrostedSurface(
+    final button = _FrostedSurface(
       borderRadius: BorderRadius.circular(20),
       dark: dark,
       child: Material(
@@ -1898,11 +1957,36 @@ class _FrostedCircleButton extends StatelessWidget {
           child: SizedBox(
             width: 40,
             height: 40,
-            child: Icon(icon, size: 18, color: AppColors.ink),
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                if (active)
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.accent.withValues(
+                          alpha: dark ? 0.30 : 0.20,
+                        ),
+                      ),
+                    ),
+                  ),
+                Icon(
+                  icon,
+                  size: 18,
+                  color: active
+                      ? (dark ? AppColors.accent : AppColors.accentStrong)
+                      : AppColors.ink,
+                ),
+                ?overlay,
+              ],
+            ),
           ),
         ),
       ),
     );
+    return tooltip != null ? Tooltip(message: tooltip!, child: button) : button;
   }
 }
 
@@ -1979,6 +2063,38 @@ class _BlurSlice extends StatelessWidget {
       child: BackdropFilter.grouped(
         filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
         child: const SizedBox.expand(),
+      ),
+    );
+  }
+}
+
+/// Detached liquid-glass button carrying the global search, floating to the
+/// right of the tab pill (iOS-26 separated-controls layout). It is its own
+/// glass layer ([GlassButton.useOwnLayer]) so it refracts the content behind it
+/// independently of the tab pill, matched to the same [_kNavGlassDark] /
+/// [_kNavGlassLight] preset so the two elements read as one material. Sized to
+/// the bar's 64px height so both align.
+class _GlassNavSearchButton extends StatelessWidget {
+  const _GlassNavSearchButton({required this.dark});
+
+  final bool dark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: context.t('appbar.search'),
+      child: GlassButton(
+        icon: const Icon(LucideIcons.search),
+        onTap: () => openGlobalSearch(context),
+        width: 64,
+        height: 64,
+        iconSize: 22,
+        useOwnLayer: true,
+        settings: dark ? _kNavGlassDark : _kNavGlassLight,
+        iconColor: dark ? AppColors.inkDark : AppColors.ink,
+        // Keep the tactile press-scale but damp the liquid drag-follow so the
+        // isolated button doesn't over-stretch on tap.
+        stretch: 0.15,
       ),
     );
   }
