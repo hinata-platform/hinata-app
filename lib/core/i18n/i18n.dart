@@ -13,7 +13,14 @@ abstract final class I18n {
           locales: supportedLocales,
           dataSource:
               AssetBundleLocalizationDataSource(bundlePath: 'assets/i18n'),
-          options: I18NextOptions(fallbackNamespaces: const ['common']),
+          // escapeValue defaults to true, which HTML-escapes interpolated
+          // values (e.g. a repo slug's "/" becomes "&#x2F;"). That's meant for
+          // HTML output; Flutter Text widgets render plain text, so it only
+          // corrupts our strings. Disable it so interpolated values stay literal.
+          options: I18NextOptions(
+            fallbackNamespaces: const ['common'],
+            escapeValue: false,
+          ),
         ),
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
