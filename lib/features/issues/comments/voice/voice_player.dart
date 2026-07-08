@@ -1,0 +1,143 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:just_audio/just_audio.dart';
+
+import 'voice_platform.dart' as platform;
+
+/// Loads a voice comment's audio bytes on demand — the [contentType] the proxy
+/// reports is used to build the playable source.
+typedef VoiceAudioLoader =
+    Future<({List<int> bytes, String contentType})?> Function();
+
+/// Drives playback of one voice bubble: lazily downloads the audio on first
+/// play (through the authenticated API, never the object store), wraps it in a
+/// platform-appropriate source (temp file on native, blob URL on web) and
+/// exposes play/pause/scrub state to the widget.
+///
+/// [fallbackDuration] comes from the stored voice metadata so the bubble can
+/// show the total length before any audio is fetched.
+class VoicePlaybackController extends ChangeNotifier {
+  VoicePlaybackController({
+    required VoiceAudioLoader loader,
+    required Duration fallbackDuration,
+  }) : _loader = loader,
+       _duration = fallbackDuration;
+
+  final VoiceAudioLoader _loader;
+  final AudioPlayer _player = AudioPlayer();
+
+  Future<void> Function()? _disposeSource;
+  final List<StreamSubscription<dynamic>> _subs = [];
+
+  bool _loading = false;
+  bool _loaded = false;
+  bool _failed = false;
+  bool _playing = false;
+  bool _disposed = false;
+  Duration _position = Duration.zero;
+  Duration _duration;
+
+  bool get loading => _loading;
+  bool get failed => _failed;
+  bool get playing => _playing;
+  Duration get position => _position;
+  Duration get duration =>
+      _duration.inMilliseconds > 0 ? _duration : Duration.zero;
+
+  /// 0..1 playback progress, for the amber fill + scrub head.
+  double get progress {
+    final total = duration.inMilliseconds;
+    if (total <= 0) return 0;
+    return (_position.inMilliseconds / total).clamp(0.0, 1.0);
+  }
+
+  Future<void> toggle() async {
+    if (_playing) {
+      await _player.pause();
+      return;
+    }
+    if (!_loaded) {
+      await _load();
+      if (!_loaded) return;
+    }
+    // Restart from the top once a clip has finished.
+    if (_position >= duration && duration > Duration.zero) {
+      await _player.seek(Duration.zero);
+    }
+    await _player.play();
+  }
+
+  Future<void> _load() async {
+    if (_loading || _disposed) return;
+    _loading = true;
+    _failed = false;
+    notifyListeners();
+    try {
+      final audio = await _loader();
+      if (audio == null || audio.bytes.isEmpty) throw StateError('no audio');
+      if (_disposed) return;
+      final source = await platform.createPlayableSource(
+        Uint8List.fromList(audio.bytes),
+        audio.contentType,
+      );
+      _disposeSource = source.dispose;
+      final resolved = await _player.setAudioSource(
+        AudioSource.uri(Uri.parse(source.uri)),
+      );
+      if (resolved != null && resolved > Duration.zero) _duration = resolved;
+      _wireStreams();
+      _loaded = true;
+    } catch (_) {
+      _failed = true;
+    } finally {
+      _loading = false;
+      if (!_disposed) notifyListeners();
+    }
+  }
+
+  void _wireStreams() {
+    _subs.add(
+      _player.positionStream.listen((p) {
+        _position = p;
+        if (!_disposed) notifyListeners();
+      }),
+    );
+    _subs.add(
+      _player.playerStateStream.listen((state) {
+        _playing =
+            state.playing && state.processingState != ProcessingState.completed;
+        if (state.processingState == ProcessingState.completed) {
+          // Reset to the start, paused, so the bubble is replayable.
+          _position = Duration.zero;
+          _player.pause();
+          _player.seek(Duration.zero);
+        }
+        if (!_disposed) notifyListeners();
+      }),
+    );
+  }
+
+  /// Scrub to [fraction] (0..1) of the clip; loads the audio first if needed.
+  Future<void> seekFraction(double fraction) async {
+    if (!_loaded) {
+      await _load();
+      if (!_loaded) return;
+    }
+    final target = duration * fraction.clamp(0.0, 1.0);
+    _position = target;
+    notifyListeners();
+    await _player.seek(target);
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    for (final s in _subs) {
+      s.cancel();
+    }
+    _player.dispose();
+    _disposeSource?.call();
+    super.dispose();
+  }
+}

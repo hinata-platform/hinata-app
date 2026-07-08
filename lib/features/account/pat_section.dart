@@ -98,6 +98,23 @@ class _PatSectionState extends State<PatSection> {
     }
   }
 
+  Future<void> _delete(PersonalAccessToken token) async {
+    final toast = context.t('pat.deletedToast');
+    final ok = await showConfirm(
+      context,
+      icon: LucideIcons.trash2,
+      title: context.t('pat.delete.title'),
+      message: context.t('pat.delete.message', variables: {'name': token.name}),
+      confirmLabel: context.t('pat.delete.confirm'),
+      danger: true,
+      onConfirm: () => _repo.deletePat(token.id),
+    );
+    if (ok == true) {
+      _toast(toast);
+      _load();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = _tokens;
@@ -125,7 +142,11 @@ class _PatSectionState extends State<PatSection> {
         else
           for (var i = 0; i < tokens.length; i++) ...[
             if (i > 0) Divider(height: 1, color: AppColors.hairline2),
-            _PatRow(token: tokens[i], onRevoke: () => _revoke(tokens[i])),
+            _PatRow(
+              token: tokens[i],
+              onRevoke: () => _revoke(tokens[i]),
+              onDelete: () => _delete(tokens[i]),
+            ),
           ],
       ],
     );
@@ -135,10 +156,15 @@ class _PatSectionState extends State<PatSection> {
 /// One token row: name + status pill, mono prefix, scope chips and a meta line
 /// (created / last used / expiry), with a revoke action.
 class _PatRow extends StatelessWidget {
-  const _PatRow({required this.token, required this.onRevoke});
+  const _PatRow({
+    required this.token,
+    required this.onRevoke,
+    required this.onDelete,
+  });
 
   final PersonalAccessToken token;
   final VoidCallback onRevoke;
+  final VoidCallback onDelete;
 
   String _date(BuildContext context, DateTime date) =>
       MaterialLocalizations.of(context).formatShortDate(date);
@@ -233,8 +259,19 @@ class _PatRow extends StatelessWidget {
                 ],
               ),
             ),
-            if (!token.revoked) ...[
-              const SizedBox(width: 8),
+            const SizedBox(width: 8),
+            if (token.revoked)
+              IconButton(
+                tooltip: context.t('pat.delete.confirm'),
+                visualDensity: VisualDensity.compact,
+                icon: Icon(
+                  LucideIcons.trash2,
+                  size: 17,
+                  color: AppColors.danger,
+                ),
+                onPressed: onDelete,
+              )
+            else
               IconButton(
                 tooltip: context.t('pat.revoke.confirm'),
                 visualDensity: VisualDensity.compact,
@@ -245,7 +282,6 @@ class _PatRow extends StatelessWidget {
                 ),
                 onPressed: onRevoke,
               ),
-            ],
           ],
         ),
       ),

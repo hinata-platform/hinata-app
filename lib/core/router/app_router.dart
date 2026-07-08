@@ -224,8 +224,7 @@ GoRouter buildRouter({
         ),
       ),
       ShellRoute(
-        builder: (context, state, child) =>
-            AppShell(location: state.matchedLocation, child: child),
+        builder: (context, state, child) => AppShell(child: child),
         routes: [
           GoRoute(
             path: '/dashboard',

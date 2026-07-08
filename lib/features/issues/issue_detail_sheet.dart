@@ -22,9 +22,14 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/hue_colors.dart';
 import '../../core/widgets/hive_widgets.dart';
-import '../../core/widgets/markdown_image_upload.dart';
 import '../../core/widgets/markdown_toolbar.dart';
 import '../../core/widgets/soft_card.dart';
+import 'package:image_picker/image_picker.dart' show ImageSource;
+
+import 'comments/comment_attach.dart';
+import 'comments/comment_thread.dart';
+import 'comments/glass_comment_composer.dart';
+import 'comments/voice/voice_recorder.dart' show VoiceRecording;
 import '../git/widgets/deployment_panel.dart';
 import '../git/widgets/development_summary.dart';
 import '../knowledge/data/knowledge_models.dart' show KbArticle, lucideIcon;
@@ -118,6 +123,13 @@ Future<void> showIssueDetailSheet(
   final header = ValueNotifier<Issue?>(null);
   final bodyKey = GlobalKey<IssueDetailBodyState>();
   final apiBaseUrl = repository.apiBaseUrl;
+  // Own the sheet's scroll controller so the body can animate the feed to the
+  // newest comment after posting (phone: the whole sheet scrolls).
+  final sheetScroll = ScrollController();
+  // Bumped by the body whenever the sticky composer's appearance changes (e.g.
+  // entering/leaving inline comment editing) so the sticky bar — a separate
+  // subtree from the body — rebuilds to reflect it.
+  final composerRev = ValueNotifier<int>(0);
 
   return WoltModalSheet.show<void>(
     context: context,
@@ -135,6 +147,7 @@ Future<void> showIssueDetailSheet(
       WoltModalSheetPage(
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
+        scrollController: sheetScroll,
         hasTopBarLayer: true,
         isTopBarLayerAlwaysVisible: true,
         leadingNavBarWidget: ValueListenableBuilder<Issue?>(
@@ -164,6 +177,30 @@ Future<void> showIssueDetailSheet(
           onDelete: () => bodyKey.currentState?.confirmDeleteIssue(),
           onClose: () => Navigator.of(modalContext).maybePop(),
         ),
+        // On a phone bottom sheet the comment composer floats here, pinned above
+        // the scrolling feed; the wide dialog keeps it inline (returns nothing).
+        // Providers are re-supplied because the sticky bar sits outside the
+        // body's provider scope (the MentionField reads the repository).
+        stickyActionBar: MultiRepositoryProvider(
+          providers: [
+            RepositoryProvider.value(value: repository),
+            BlocProvider.value(value: auth),
+          ],
+          child: ValueListenableBuilder<Issue?>(
+            valueListenable: header,
+            builder: (ctx, issue, _) {
+              final state = bodyKey.currentState;
+              if (issue == null || state == null) {
+                return const SizedBox.shrink();
+              }
+              // Rebuild on composer-state changes (edit banner, mode) too.
+              return ValueListenableBuilder<int>(
+                valueListenable: composerRev,
+                builder: (ctx, _, _) => state.buildFloatingComposer(ctx),
+              );
+            },
+          ),
+        ),
         child: MultiRepositoryProvider(
           providers: [
             RepositoryProvider.value(value: repository),
@@ -174,11 +211,22 @@ Future<void> showIssueDetailSheet(
             issueId: issueId,
             onChanged: onChanged,
             header: header,
+            sheetScroll: sheetScroll,
+            composerRev: composerRev,
+            floatingComposer: true,
           ),
         ),
       ),
     ],
-  ).whenComplete(header.dispose);
+  ).whenComplete(() {
+    header.dispose();
+    // NOTE: do NOT dispose `sheetScroll` here — Wolt's animated switcher takes
+    // ownership of the page's `scrollController` and disposes it itself
+    // (WoltModalSheetAnimatedSwitcher.dispose). Disposing it again crashes with
+    // "A ScrollController was used after being disposed", which then cascades
+    // into a storm of null-check errors from the half-torn-down widget tree.
+    composerRev.dispose();
+  });
 }
 
 /// Arguments handed to the `/issues/:id` route via GoRouter `extra` when the
@@ -418,7 +466,10 @@ class _CopiedHintChip extends StatelessWidget {
       tween: Tween(begin: 0, end: 1),
       builder: (_, t, child) => Opacity(
         opacity: t.clamp(0.0, 1.0),
-        child: Transform.translate(offset: Offset(0, (1 - t) * -6), child: child),
+        child: Transform.translate(
+          offset: Offset(0, (1 - t) * -6),
+          child: child,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
@@ -469,12 +520,29 @@ class IssueDetailBody extends StatefulWidget {
     required this.issueId,
     this.onChanged,
     this.header,
+    this.sheetScroll,
+    this.composerRev,
+    this.floatingComposer = false,
     this.canMinimize = false,
   });
 
   final String issueId;
   final VoidCallback? onChanged;
   final ValueNotifier<Issue?>? header;
+
+  /// The host's scroll controller. Lets the body animate to the newest comment
+  /// after posting (sheet: the wolt page scroll; route: the page scroll view).
+  final ScrollController? sheetScroll;
+
+  /// Bumped to force the host's floating composer (a separate subtree — the
+  /// sheet's sticky bar or the route's Stack overlay) to rebuild when its
+  /// appearance depends on body state (inline edit).
+  final ValueNotifier<int>? composerRev;
+
+  /// Whether the host renders the composer as a floating bar (via
+  /// [buildFloatingComposer]) instead of inline in the activity card — true for
+  /// both the modal sheet and the full-page route.
+  final bool floatingComposer;
 
   /// Full-page (route) mode only: whether this view was promoted from the modal
   /// sheet and can therefore shrink back to it. Direct deep-links open the page
@@ -492,8 +560,16 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     _comment,
     _commentFocus,
   );
+
+  /// When non-null, the composer is editing this existing comment inline (its
+  /// text is loaded into [_comment]); submitting saves the edit instead of
+  /// posting a new comment.
+  IssueComment? _editingComment;
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
+  // Lets the composer's "+" → Anhang drive the attachments section's own
+  // (optimistic, live-updating) upload flow instead of a blind background POST.
+  final _attachmentsKey = GlobalKey<AttachmentsSectionState>();
 
   Issue? _issue;
   // Comments are paginated newest-first server-side but displayed oldest-first
@@ -560,6 +636,29 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     super.dispose();
   }
 
+  /// Nudges the sticky action bar (a subtree outside this body) to rebuild its
+  /// floating composer — call after any state change the composer reflects.
+  void _bumpComposer() => widget.composerRev?.value++;
+
+  /// Animates the modal down to the just-posted comment. Scoped to the
+  /// chat-ordered Comments tab (newest last → bottom); the "All" tab is
+  /// newest-first and mid-scroll, so a "scroll to bottom" wouldn't map there.
+  /// Runs after the next frame so the new row is laid out and the max extent is
+  /// current.
+  void _revealNewestComment() {
+    if (_activityFilter != _ActivityFilter.comments) return;
+    final controller = widget.sheetScroll;
+    if (controller == null || !controller.hasClients) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!controller.hasClients) return;
+      controller.animateTo(
+        controller.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
@@ -617,7 +716,12 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
         _documentedIn = const [];
       }
       widget.header?.value = issue;
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+        // Reveal the host's floating composer now that the issue is loaded (the
+        // route overlay reads `hasIssue`, and its subtree is outside this body).
+        _bumpComposer();
+      }
     } on ApiFailure catch (failure) {
       if (mounted) {
         setState(() {
@@ -730,6 +834,19 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
   Future<void> _submitComment() async {
     final text = _comment.text.trim();
     if (text.isEmpty) return;
+    // Editing an existing comment inline → save instead of posting a new one.
+    final editing = _editingComment;
+    if (editing != null) {
+      final ok = await _editComment(editing, text);
+      if (ok && mounted) {
+        setState(() {
+          _editingComment = null;
+          _comment.clear();
+        });
+        _bumpComposer();
+      }
+      return;
+    }
     try {
       await _repo.addComment(widget.issueId, text);
       _comment.clear();
@@ -738,10 +855,35 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
       _comments = p.items.reversed.toList();
       _commentsTotal = p.total;
       _commentsPage = 0;
-      if (mounted) setState(() {});
+      if (mounted) {
+        setState(() {});
+        _revealNewestComment();
+      }
     } on ApiFailure catch (failure) {
       _toast(failure.message);
     }
+  }
+
+  /// Loads [comment] into the composer for inline editing (no separate dialog).
+  void _promptEditComment(IssueComment comment) {
+    setState(() {
+      _editingComment = comment;
+      _comment.text = comment.text;
+      _comment.selection = TextSelection.collapsed(
+        offset: _comment.text.length,
+      );
+    });
+    _bumpComposer();
+    _commentFocus.requestFocus();
+  }
+
+  /// Abandons an in-progress inline edit and clears the composer.
+  void _cancelEditComment() {
+    setState(() {
+      _editingComment = null;
+      _comment.clear();
+    });
+    _bumpComposer();
   }
 
   /// Saves an inline edit of the user's own [comment]. Returns true on success
@@ -884,6 +1026,18 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     await _patch({'description': value});
   }
 
+  /// The route back button (compact full-screen has no shell nav to fall back
+  /// on): pop if there's a page underneath, otherwise — e.g. a cold-start deep
+  /// link straight into the issue — go home so the user is never stranded.
+  void _closeRoute() {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+    } else {
+      GoRouter.of(context).go('/dashboard');
+    }
+  }
+
   /// Full-page → modal: re-open the issue as a modal sheet and drop the route
   /// underneath it. The sheet is shown first (while this context is still
   /// mounted) so its provider reads succeed, then the route is popped away.
@@ -939,21 +1093,36 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     final documented = _documentedInSection();
     return SmartLinkScope(
       resolver: _buildResolver(issue),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (!inSheet)
-            _RouteTopBar(
+      // Tap anywhere on the body (feed bubbles, empty gaps between them and the
+      // docked composer) to drop focus and dismiss the keyboard — there's no
+      // other way out on a full-screen chat. The composer lives in a separate
+      // subtree (sticky action bar / route overlay) so tapping it keeps focus,
+      // and interactive children (buttons, links, menus) still win their taps.
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!inSheet)
+              _RouteTopBar(
               issue: issue,
               busy: _busy,
               stateColor: _projStateColor(_project, issue.state),
               link: issueWebLink(_repo.apiBaseUrl, issue.linkId),
               onMinimize: widget.canMinimize ? _minimizeToModal : null,
               onDelete: () => _confirmDelete(issue),
-              onClose: () => Navigator.of(context).maybePop(),
+              onClose: _closeRoute,
             ),
           Padding(
-            padding: EdgeInsets.fromLTRB(20, inSheet ? 16 : 16, 20, 24),
+            // Extra bottom room when the composer floats, so the last comment
+            // isn't hidden behind the docked input.
+            padding: EdgeInsets.fromLTRB(
+              20,
+              16,
+              20,
+              composerFloats(context) ? 128 : 24,
+            ),
             child: LayoutBuilder(
               builder: (context, c) {
                 final hierarchy = _hierarchyCard(issue);
@@ -1048,6 +1217,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -1225,6 +1395,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
   );
 
   Widget _attachmentsSection(Issue issue) => AttachmentsSection(
+    key: _attachmentsKey,
     issueId: widget.issueId,
     initial: issue.attachments,
     userNames: _names,
@@ -1885,9 +2056,136 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     );
   }
 
+  /// True when the host floats the composer (sheet sticky bar / route overlay)
+  /// rather than showing it inline in the activity card.
+  bool composerFloats(BuildContext context) => widget.floatingComposer;
+
+  /// Whether the issue has finished loading (so the host can defer the floating
+  /// composer until there is something to comment on).
+  bool get hasIssue => _issue != null;
+
+  /// The docked composer, pinned to the bottom by the host (sheet: sticky bar;
+  /// route: Stack overlay). Phone/narrow: spans the whole width. Tablet/desktop
+  /// (2-column): constrained to the comment column's width + left-aligned with
+  /// the body, so it floats only over the comment section, never the details
+  /// column. [deviceSafeArea] adds the home-indicator inset (sheet); the route
+  /// instead positions above the nav via `bottomGutter`, so it passes false.
+  Widget buildFloatingComposer(
+    BuildContext context, {
+    bool deviceSafeArea = true,
+  }) {
+    // The floating composer lives in a separate subtree (the sheet's sticky
+    // action bar / the route's Stack overlay) from the body, so it must re-supply
+    // the SmartLinkScope — otherwise the composer's MentionField can't resolve
+    // `@`-mentions/smart-links (it reads the resolver from context).
+    final issue = _issue;
+    if (issue == null) return const SizedBox.shrink();
+    return SmartLinkScope(
+      resolver: _buildResolver(issue),
+      child: LayoutBuilder(
+        builder: (context, c) {
+          // Content width mirrors the body's inner width (20px padding / side).
+          final contentW = c.maxWidth - 40;
+          if (contentW < 680) {
+            // Phone / narrow: full-width dock over the whole area.
+            return _composerDock(deviceSafeArea: deviceSafeArea, horizontal: 16);
+          }
+          // 2-column: match the left column (flex 3 of 3+2 with an 18px gutter),
+          // aligned with the body's left padding.
+          final leftW = (contentW - 18) * 3 / 5;
+          return Padding(
+            padding: const EdgeInsets.only(left: 20),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                width: leftW,
+                child: _composerDock(
+                  deviceSafeArea: deviceSafeArea,
+                  horizontal: 0,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// The docked composer chrome: a bottom-up fade into the translucent modal
+  /// surface (so the feed dissolves behind it) wrapping the glass composer.
+  /// Bottom-anchored at the modal edge, so the inline format editor grows
+  /// *upward* in place.
+  Widget _composerDock({required bool deviceSafeArea, double horizontal = 16}) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    // Fade INTO the *translucent* modal surface (glassWoltSurface floats content
+    // on `canvas @ 0.88/0.84`), not full-opacity canvas — else it reads as a
+    // lighter, hard-edged box instead of a seamless dissolve.
+    final wash = _panelWashAlpha(dark);
+    final padding = EdgeInsets.fromLTRB(
+      horizontal,
+      26,
+      horizontal,
+      deviceSafeArea
+          ? (MediaQuery.viewPaddingOf(context).bottom <= 0
+                ? 16
+                : MediaQuery.viewPaddingOf(context).bottom)
+          : 12,
+    );
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: ShaderMask(
+            blendMode: BlendMode.dstIn,
+            // Horizontal mask: taper the wash's alpha over the outer ~32px on
+            // each side, so the left/right edges dissolve too instead of
+            // showing a hard vertical seam against the feed.
+            shaderCallback: (rect) {
+              final f = (32 / rect.width).clamp(0.0, 0.5);
+              return LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: const [
+                  Color(0x00FFFFFF),
+                  Color(0xFFFFFFFF),
+                  Color(0xFFFFFFFF),
+                  Color(0x00FFFFFF),
+                ],
+                stops: [0, f, 1 - f, 1],
+              ).createShader(rect);
+            },
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.canvas.withValues(alpha: 0),
+                    AppColors.canvas.withValues(alpha: wash * 0.7),
+                    AppColors.canvas.withValues(alpha: wash),
+                    AppColors.canvas.withValues(alpha: wash),
+                  ],
+                  stops: const [0, 0.35, 0.6, 1],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Padding(padding: padding, child: _commentComposer()),
+      ],
+    );
+  }
+
+  /// The modal surface's canvas alpha (see `glassWoltSurface`), so the composer
+  /// dock's fade dissolves into the *actual* translucent surface instead of
+  /// painting an opaque, mismatched box over it.
+  double _panelWashAlpha(bool dark) => dark ? 0.84 : 0.88;
+
   Widget _activityCard() {
     final filter = _activityFilter;
-    final showComposer = filter != _ActivityFilter.history;
+    // Hide the inline composer when it floats (phone sheet) — it's rendered in
+    // the sticky action bar instead; otherwise keep it inline.
+    final showComposer =
+        filter != _ActivityFilter.history && !composerFloats(context);
     return SoftCard(
       color: Colors.transparent,
       borderRadius: BorderRadius.zero,
@@ -1914,62 +2212,74 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     );
   }
 
-  /// Comment composer with `@`-smart-link autocomplete (issues · articles ·
-  /// people). Mirrors the KB editor's box; `⌘↵` or the button submits.
+  /// Liquid-Glass comment composer (chat-style): `+` attachment menu, mic↔send
+  /// morph, live voice recording and a Markdown format toolbar. Wraps a
+  /// [MentionField] so `@`-smart-link autocomplete keeps working.
   Widget _commentComposer() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-        border: Border.all(color: AppColors.hairline),
-      ),
-      child: Column(
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 44, maxHeight: 160),
-            child: MentionField(
-              controller: _comment,
-              focusNode: _commentFocus,
-              commentMode: true,
-              minLines: 1,
-              maxLines: 6,
-              hintText: context.t('issues.addComment'),
-              onSubmit: _submitComment,
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: AppColors.hairline2)),
-            ),
-            padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
-            child: Row(
-              children: [
-                _CommentImageButton(
-                  onTap: () =>
-                      pickAndInsertMarkdownImage(context, _commentActions),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  context.t('issues.commentHint'),
-                  style: TextStyle(fontSize: 11, color: AppColors.inkFaint),
-                ),
-                const Spacer(),
-                FilledButton(
-                  onPressed: _submitComment,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.navy,
-                    visualDensity: VisualDensity.compact,
-                    minimumSize: const Size(0, 34),
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                  ),
-                  child: Text(context.t('issues.comment')),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return GlassCommentComposer(
+      controller: _comment,
+      focusNode: _commentFocus,
+      actions: _commentActions,
+      editing: _editingComment != null,
+      onCancelEdit: _cancelEditComment,
+      onSubmitText: _submitComment,
+      onSendVoice: _sendVoiceComment,
+      onAttach: _onComposerAttach,
     );
+  }
+
+  /// Handles the `+` menu picks. Camera/gallery insert an inline Markdown photo
+  /// into the comment (the body is Markdown, like the editor); "Anhang" uploads
+  /// any file — including video/PDF — as an issue attachment.
+  Future<void> _onComposerAttach(ComposerAttach kind) async {
+    switch (kind) {
+      case ComposerAttach.camera:
+        await insertCommentPhoto(context, _commentActions, ImageSource.camera);
+      case ComposerAttach.gallery:
+        await insertCommentPhoto(context, _commentActions, ImageSource.gallery);
+      case ComposerAttach.file:
+        // Drive the attachments section's own optimistic upload so the new tile
+        // appears live (no reload, no dependence on the SSE `added` event).
+        final section = _attachmentsKey.currentState;
+        if (section != null) {
+          await section.pickFiles();
+        } else {
+          // Fallback (section not mounted): blind upload + list refresh.
+          await attachFileToIssue(
+            context,
+            widget.issueId,
+            onChanged: widget.onChanged,
+          );
+        }
+    }
+  }
+
+  /// Uploads a recorded voice message as a comment, then refreshes to the newest
+  /// page so the playable bubble appears at the bottom of the thread.
+  Future<void> _sendVoiceComment(VoiceRecording recording) async {
+    try {
+      await _repo.addVoiceComment(
+        widget.issueId,
+        bytes: recording.bytes,
+        mime: recording.mime,
+        durationMs: recording.durationMs,
+        peaks: recording.peaks,
+      );
+      final p = await _repo.comments(widget.issueId);
+      if (!mounted) return;
+      setState(() {
+        _comments = p.items.reversed.toList();
+        _commentsTotal = p.total;
+        _commentsPage = 0;
+      });
+      _revealNewestComment();
+      widget.onChanged?.call();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text(context.t('comments.voiceFailed'))),
+      );
+    }
   }
 
   /// Builds the activity feed for [filter]:
@@ -1978,12 +2288,17 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
   ///  • all      → both, merged newest-first
   List<Widget> _activityItems(_ActivityFilter filter) {
     final me = context.read<AuthBloc>().state.user;
-    Widget commentTile(IssueComment c) => _CommentTile(
+    final chat = CommentThread.chatMode(context);
+    // Same bubble as the Comments tab, so comments look identical in every tab
+    // (voice comments stay playable in the merged "All" feed too).
+    Widget commentTile(IssueComment c) => CommentBubbleRow(
       comment: c,
-      authorName: _names[c.authorId] ?? c.authorId,
-      authorAvatarUrl: _avatars[c.authorId],
+      me: chat && me != null && c.authorId == me.id,
+      name: _names[c.authorId] ?? c.authorId,
+      avatarUrl: _avatars[c.authorId],
+      loadVoice: () => _repo.voiceCommentAudio(widget.issueId, c.id),
       canManage: me != null && c.authorId == me.id,
-      onEdit: (text) => _editComment(c, text),
+      onEdit: () => _promptEditComment(c),
       onDelete: () => _deleteComment(c),
     );
     final issueIds = {
@@ -2012,7 +2327,18 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
           // sits at the top of the thread.
           if (_hasMoreComments)
             loadMore(context.t('issues.loadEarlier'), _loadMoreComments),
-          for (final c in _comments) commentTile(c),
+          // Liquid-Glass chat thread (text + playable voice bubbles).
+          CommentThread(
+            comments: _comments,
+            meId: me?.id,
+            nameFor: (id) => _names[id] ?? id,
+            avatarFor: (id) => _avatars[id],
+            loadVoice: (c) =>
+                () => _repo.voiceCommentAudio(widget.issueId, c.id),
+            canManage: (c) => me != null && c.authorId == me.id,
+            onEdit: _promptEditComment,
+            onDelete: _deleteComment,
+          ),
         ];
       case _ActivityFilter.history:
         if (_activity.isEmpty) {
@@ -3936,317 +4262,6 @@ class _ActivityTabs extends StatelessWidget {
   }
 }
 
-/// Comment row: author avatar + name + relative date + body text.
-class _CommentTile extends StatefulWidget {
-  const _CommentTile({
-    required this.comment,
-    required this.authorName,
-    this.authorAvatarUrl,
-    this.canManage = false,
-    this.onEdit,
-    this.onDelete,
-  });
-
-  final IssueComment comment;
-  final String authorName;
-  final String? authorAvatarUrl;
-
-  /// Whether the current user owns this comment and may edit/delete it.
-  final bool canManage;
-
-  /// Saves an inline edit; returns true on success so the editor can close.
-  final Future<bool> Function(String text)? onEdit;
-  final VoidCallback? onDelete;
-
-  @override
-  State<_CommentTile> createState() => _CommentTileState();
-}
-
-class _CommentTileState extends State<_CommentTile> {
-  final _editController = TextEditingController();
-  final _editFocus = FocusNode();
-  late final MarkdownEditingActions _editActions = MarkdownEditingActions(
-    _editController,
-    _editFocus,
-  );
-  bool _editing = false;
-  bool _saving = false;
-
-  @override
-  void dispose() {
-    _editController.dispose();
-    _editFocus.dispose();
-    super.dispose();
-  }
-
-  void _startEdit() {
-    setState(() {
-      _editController.text = widget.comment.text;
-      _editing = true;
-    });
-    _editFocus.requestFocus();
-  }
-
-  void _cancelEdit() => setState(() => _editing = false);
-
-  Future<void> _save() async {
-    if (_saving) return;
-    setState(() => _saving = true);
-    final ok = await widget.onEdit?.call(_editController.text) ?? true;
-    if (!mounted) return;
-    setState(() {
-      _saving = false;
-      if (ok) _editing = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final comment = widget.comment;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          HiveAvatar(
-            name: widget.authorName,
-            imageUrl: widget.authorAvatarUrl,
-            size: 30,
-          ),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              widget.authorName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          if (comment.createdAt != null) ...[
-                            const SizedBox(width: 8),
-                            Text(
-                              MaterialLocalizations.of(
-                                context,
-                              ).formatShortDate(comment.createdAt!.toLocal()),
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                color: AppColors.inkFaint,
-                              ),
-                            ),
-                          ],
-                          if (comment.isEdited) ...[
-                            const SizedBox(width: 6),
-                            Text(
-                              context.t('issues.commentEdited'),
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                color: AppColors.inkFaint,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    if (widget.canManage && !_editing) ...[
-                      const SizedBox(width: 6),
-                      _CommentAction(
-                        icon: LucideIcons.pencil,
-                        tooltip: context.t('common.edit'),
-                        onTap: _startEdit,
-                      ),
-                      const SizedBox(width: 2),
-                      _CommentAction(
-                        icon: LucideIcons.trash2,
-                        tooltip: context.t('common.delete'),
-                        danger: true,
-                        onTap: widget.onDelete,
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 3),
-                if (_editing)
-                  _buildEditor(context)
-                else
-                  // Render smart-link tokens ({{issue}}/{{doc}}/{{user}}) as chips.
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: KbMarkdownParser(
-                      fontSize: 13,
-                    ).parse(comment.text).nodes,
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEditor(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-        border: Border.all(color: AppColors.hairline),
-      ),
-      child: Column(
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 44, maxHeight: 160),
-            child: MentionField(
-              controller: _editController,
-              focusNode: _editFocus,
-              commentMode: true,
-              minLines: 1,
-              maxLines: 6,
-              hintText: context.t('issues.addComment'),
-              onSubmit: _save,
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: AppColors.hairline2)),
-            ),
-            padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
-            child: Row(
-              children: [
-                _CommentImageButton(
-                  onTap: () =>
-                      pickAndInsertMarkdownImage(context, _editActions),
-                ),
-                const Spacer(),
-                TextButton(
-                  onPressed: _saving ? null : _cancelEdit,
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    minimumSize: const Size(0, 34),
-                  ),
-                  child: Text(
-                    context.t('common.cancel'),
-                    style: TextStyle(
-                      color: AppColors.inkSoft,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                FilledButton(
-                  onPressed: _saving ? null : _save,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.navy,
-                    visualDensity: VisualDensity.compact,
-                    minimumSize: const Size(0, 34),
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                  ),
-                  child: Text(context.t('common.save')),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// "Attach image" button for the comment composer / inline editor: runs the
-/// shared pick → upload → insert flow and shows a spinner while the upload is in
-/// flight (also blocks a second tap until it finishes).
-class _CommentImageButton extends StatefulWidget {
-  const _CommentImageButton({required this.onTap});
-
-  final Future<void> Function() onTap;
-
-  @override
-  State<_CommentImageButton> createState() => _CommentImageButtonState();
-}
-
-class _CommentImageButtonState extends State<_CommentImageButton> {
-  bool _busy = false;
-
-  Future<void> _run() async {
-    if (_busy) return;
-    setState(() => _busy = true);
-    try {
-      await widget.onTap();
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: context.t('md.image'),
-      child: InkWell(
-        onTap: _busy ? null : _run,
-        borderRadius: BorderRadius.circular(7),
-        child: SizedBox(
-          width: 30,
-          height: 30,
-          child: _busy
-              ? const Center(
-                  child: SizedBox(
-                    width: 15,
-                    height: 15,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              : Icon(LucideIcons.image, size: 17, color: AppColors.inkSoft),
-        ),
-      ),
-    );
-  }
-}
-
-/// Subtle icon button shown on the author's own comments to edit/delete.
-class _CommentAction extends StatelessWidget {
-  const _CommentAction({
-    required this.icon,
-    required this.tooltip,
-    this.onTap,
-    this.danger = false,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback? onTap;
-  final bool danger;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(5),
-          child: Icon(
-            icon,
-            size: 15,
-            color: danger ? AppColors.danger : AppColors.inkFaint,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// History row: actor avatar + "[name] changed [field]" + optional from→to.
 class _ActivityTile extends StatelessWidget {
   const _ActivityTile({
@@ -4289,10 +4304,69 @@ class _ActivityTile extends StatelessWidget {
           );
     final showChips = _chipFields.contains(activity.field);
 
+    final dark = AppColors.brightness == Brightness.dark;
+    // System-note bubble: same rounded hairline shell as the "other" comment
+    // bubble (so all three activity tabs read as one feed), just a flatter,
+    // more muted fill to distinguish change events from real messages.
+    final bubble = Container(
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.72,
+      ),
+      decoration: BoxDecoration(
+        color: dark ? const Color(0xFF1E1D29) : AppColors.surfaceMuted,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
+          bottomLeft: Radius.circular(5),
+          bottomRight: Radius.circular(16),
+        ),
+        border: Border.all(color: AppColors.hairline),
+      ),
+      padding: const EdgeInsets.fromLTRB(13, 9, 13, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: actorName,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                  ),
+                ),
+                TextSpan(text: ' $action'),
+              ],
+            ),
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.4,
+              color: AppColors.inkSoft,
+            ),
+          ),
+          if (showChips) ...[const SizedBox(height: 7), _changeRow(context)],
+          if (activity.createdAt != null) ...[
+            const SizedBox(height: 3),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                MaterialLocalizations.of(
+                  context,
+                ).formatShortDate(activity.createdAt!.toLocal()),
+                style: TextStyle(fontSize: 10.5, color: AppColors.inkFaint),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           HiveAvatar(
             name: actorName,
@@ -4300,46 +4374,8 @@ class _ActivityTile extends StatelessWidget {
             glyph: activity.actorId == null ? const HexMark(size: 18) : null,
             background: activity.actorId == null ? AppColors.accentSoft : null,
           ),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: actorName,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.ink,
-                        ),
-                      ),
-                      TextSpan(text: ' $action'),
-                    ],
-                  ),
-                  style: TextStyle(
-                    fontSize: 13,
-                    height: 1.4,
-                    color: AppColors.inkSoft,
-                  ),
-                ),
-                if (activity.createdAt != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    MaterialLocalizations.of(
-                      context,
-                    ).formatShortDate(activity.createdAt!.toLocal()),
-                    style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
-                  ),
-                ],
-                if (showChips) ...[
-                  const SizedBox(height: 7),
-                  _changeRow(context),
-                ],
-              ],
-            ),
-          ),
+          const SizedBox(width: 9),
+          Flexible(child: bubble),
         ],
       ),
     );
@@ -4464,7 +4500,10 @@ class _DocumentedIn extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 context.t('knowledge.documentedIn'),
-                style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(width: 8),
               Container(

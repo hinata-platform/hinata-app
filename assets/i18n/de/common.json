@@ -298,6 +298,19 @@
     "thisWeek": "diese Woche",
     "pointsShort": "{{count}} P"
   },
+  "comments": {
+    "actionCamera": "Foto/Video aufnehmen",
+    "actionGallery": "Foto- und Videogalerie",
+    "actionFile": "Anhang",
+    "actionFormat": "Textformatierung",
+    "micDenied": "Für eine Sprachnachricht wird Zugriff auf das Mikrofon benötigt.",
+    "voiceFailed": "Sprachnachricht konnte nicht gesendet werden — versuch es nochmal.",
+    "recording": "Aufnahme",
+    "attaching": "Anhang wird hochgeladen…",
+    "attached": "Anhang hinzugefügt",
+    "placeholder": "Kommentar…",
+    "editingComment": "Kommentar bearbeiten"
+  },
   "issues": {
     "new": "Neue Aufgabe",
     "edit": "Aufgabe bearbeiten",
@@ -412,6 +425,8 @@
     "attachments": {
       "title": "Anhänge",
       "add": "Dateien hinzufügen",
+      "uploaded": "Anhang hochgeladen",
+      "downloadStarted": "Download gestartet",
       "emptyTitle": "Dateien hier ablegen oder zum Hochladen klicken",
       "emptyHint": "Bilder, PDFs & Text werden direkt angezeigt · beliebiger Dateityp · bis zu {{size}} MB",
       "dropHere": "Zum Anhängen ablegen",
@@ -1192,6 +1207,7 @@
       "DATA_EXPORT_REQUESTED": "Datenexport angefordert",
       "PAT_CREATED": "Zugriffstoken erstellt",
       "PAT_REVOKED": "Zugriffstoken widerrufen",
+      "PAT_DELETED": "Zugriffstoken gelöscht",
       "MCP_ISSUE_CREATED": "Vorgang per MCP erstellt",
       "MCP_ISSUE_UPDATED": "Vorgang per MCP aktualisiert",
       "MCP_COMMENT_ADDED": "Kommentar per MCP hinzugefügt",
@@ -1957,6 +1973,7 @@
     "noExpiry": "Kein Ablauf",
     "copiedToast": "Token in die Zwischenablage kopiert",
     "revokedToast": "Token widerrufen",
+    "deletedToast": "Token gelöscht",
     "statusRevoked": "Widerrufen",
     "statusExpired": "Abgelaufen",
     "empty": {
@@ -1967,6 +1984,11 @@
       "title": "Token widerrufen",
       "message": "„{{name}}“ widerrufen? Jeder Client, der es nutzt, verliert sofort den Zugriff. Dies kann nicht rückgängig gemacht werden.",
       "confirm": "Token widerrufen"
+    },
+    "delete": {
+      "title": "Token löschen",
+      "message": "„{{name}}“ endgültig löschen? Es wird dauerhaft aus dieser Liste entfernt. Dies kann nicht rückgängig gemacht werden.",
+      "confirm": "Token löschen"
     },
     "create": {
       "title": "Zugriffstoken erstellen",

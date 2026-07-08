@@ -185,12 +185,22 @@ class ApiClient {
     MultipartFile file, {
     void Function(int sent, int total)? onSendProgress,
     CancelToken? cancelToken,
+    Map<String, dynamic>? fields,
   }) => _run(
     () => _dio.post<dynamic>(
       '$baseUrl$path',
-      data: FormData.fromMap({'file': file}),
+      data: FormData.fromMap({'file': file, ...?fields}),
       onSendProgress: onSendProgress,
       cancelToken: cancelToken,
+      // Uploads (attachments, voice) can take far longer than the default
+      // 20s receive timeout, especially on mobile. Native Dio enforces that
+      // timeout and would abort a slow upload *after* the server already
+      // stored the file (web/XHR ignores it, hence "only mobile"). Give upload
+      // requests a generous window matching the max upload size.
+      options: Options(
+        sendTimeout: const Duration(minutes: 5),
+        receiveTimeout: const Duration(minutes: 5),
+      ),
     ),
   );
 

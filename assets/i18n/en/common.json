@@ -298,6 +298,19 @@
     "thisWeek": "this week",
     "pointsShort": "{{count}} P"
   },
+  "comments": {
+    "actionCamera": "Take photo or video",
+    "actionGallery": "Photo & video library",
+    "actionFile": "Attachment",
+    "actionFormat": "Text formatting",
+    "micDenied": "Microphone access is needed to record a voice message.",
+    "voiceFailed": "Voice message couldn't be sent — please try again.",
+    "recording": "Recording",
+    "attaching": "Uploading attachment…",
+    "attached": "Attachment added",
+    "placeholder": "Comment…",
+    "editingComment": "Editing comment"
+  },
   "issues": {
     "new": "New issue",
     "edit": "Edit issue",
@@ -412,6 +425,8 @@
     "attachments": {
       "title": "Attachments",
       "add": "Add files",
+      "uploaded": "Attachment uploaded",
+      "downloadStarted": "Download started",
       "emptyTitle": "Drop files here, or click to upload",
       "emptyHint": "Images, PDFs & text preview inline · any file type · up to {{size}} MB",
       "dropHere": "Drop to attach",
@@ -1192,6 +1207,7 @@
       "DATA_EXPORT_REQUESTED": "Data export requested",
       "PAT_CREATED": "Access token created",
       "PAT_REVOKED": "Access token revoked",
+      "PAT_DELETED": "Access token deleted",
       "MCP_ISSUE_CREATED": "Issue created via MCP",
       "MCP_ISSUE_UPDATED": "Issue updated via MCP",
       "MCP_COMMENT_ADDED": "Comment added via MCP",
@@ -1957,6 +1973,7 @@
     "noExpiry": "No expiry",
     "copiedToast": "Token copied to clipboard",
     "revokedToast": "Token revoked",
+    "deletedToast": "Token deleted",
     "statusRevoked": "Revoked",
     "statusExpired": "Expired",
     "empty": {
@@ -1967,6 +1984,11 @@
       "title": "Revoke token",
       "message": "Revoke “{{name}}”? Any client using it will immediately lose access. This cannot be undone.",
       "confirm": "Revoke token"
+    },
+    "delete": {
+      "title": "Delete token",
+      "message": "Permanently delete “{{name}}”? It will be removed from this list for good. This cannot be undone.",
+      "confirm": "Delete token"
     },
     "create": {
       "title": "Create access token",

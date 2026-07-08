@@ -283,8 +283,11 @@ class MentionFieldState extends State<MentionField> {
 
   TextStyle _textStyle() => TextStyle(
     fontFamily: widget.monospace ? AppTheme.fontMono : AppTheme.fontUi,
-    fontSize: widget.monospace ? 13.5 : 14,
-    height: 1.7,
+    // Comment box: a touch larger and a tighter line so the single-line pill
+    // measures ~52 and lines up with the round +/mic/send buttons beside it.
+    // The editor source pane (commentMode=false) keeps its roomy 14/1.7.
+    fontSize: widget.monospace ? 13.5 : (widget.commentMode ? 15.5 : 14),
+    height: widget.commentMode ? 1.3 : 1.7,
     color: AppColors.ink,
   );
 
@@ -314,7 +317,7 @@ class MentionFieldState extends State<MentionField> {
           vertical: 10,
         ),
         hintText: widget.hintText,
-        hintStyle: TextStyle(color: AppColors.inkFaint),
+        hintStyle: _textStyle().copyWith(color: AppColors.inkFaint),
       ),
     );
   }

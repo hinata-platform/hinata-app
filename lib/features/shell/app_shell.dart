@@ -110,9 +110,8 @@ bool get isNativeApp =>
 /// • phone/compact (<987): Liquid-Glass floating bottom nav
 /// • desktop/wide (≥987): persistent dark Navy rail on the left
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.location, required this.child});
+  const AppShell({super.key, required this.child});
 
-  final String location;
   final Widget child;
 
   @override
@@ -168,16 +167,45 @@ class _AppShellState extends State<AppShell> {
     // brightness for ThemeMode.system.
     context.watch<ThemeCubit>();
     MediaQuery.platformBrightnessOf(context);
+    // `widget.location` (from the ShellRoute builder's state) goes STALE after
+    // an imperative `push` of a nested route — it keeps reporting the underlying
+    // page (e.g. `/board`) while a pushed `/issues/:id` is on screen, so the top
+    // bar shows the wrong title/brand mark and never treats it as a sub-page.
+    // Read the live location straight from the router instead, rebuilding when
+    // it changes.
+    final router = GoRouter.of(context);
     return PageChromeScope(
       controller: _chrome,
-      child: ResponsiveBuilder(
-        builder: (context, size) => size == LayoutSize.compact
-            ? _CompactShell(location: widget.location, child: widget.child)
-            : _WideShell(location: widget.location, child: widget.child),
+      child: ListenableBuilder(
+        listenable: router.routerDelegate,
+        builder: (context, _) {
+          final location = router.state.matchedLocation;
+          return ResponsiveBuilder(
+            builder: (context, size) {
+              // The full-screen single-issue view is immersive on compact: its
+              // own top bar (back/minimize/delete) + docked composer replace the
+              // shell's app bar and floating nav.
+              final immersive =
+                  size == LayoutSize.compact && _isImmersive(location);
+              return size == LayoutSize.compact
+                  ? _CompactShell(
+                      location: location,
+                      immersive: immersive,
+                      child: widget.child,
+                    )
+                  : _WideShell(location: location, child: widget.child);
+            },
+          );
+        },
       ),
     );
   }
 }
+
+/// Whether [location] is a route that takes over the whole compact screen — no
+/// shell app bar, no floating nav — because it renders its own full-screen
+/// chrome. The full-page issue view (`/issues/:id`) is the case today.
+bool _isImmersive(String location) => location.startsWith('/issues/');
 
 // ─────────────────────────── Sub-page chrome ──────────────────────────────
 // A "sub-page" is any route that isn't a primary nav destination — its top bar
@@ -1613,10 +1641,18 @@ class _PopInState extends State<_PopIn> with SingleTickerProviderStateMixin {
 const double _kCompactBarHeight = 52;
 
 class _CompactShell extends StatefulWidget {
-  const _CompactShell({required this.location, required this.child});
+  const _CompactShell({
+    required this.location,
+    required this.child,
+    this.immersive = false,
+  });
 
   final String location;
   final Widget child;
+
+  /// A full-screen route that supplies its own chrome: hide the shell's glass
+  /// app bar + floating nav and drop their footprints from the content gutters.
+  final bool immersive;
 
   @override
   State<_CompactShell> createState() => _CompactShellState();
@@ -1677,11 +1713,17 @@ class _CompactShellState extends State<_CompactShell> {
             child: Builder(
               builder: (context) {
                 final mq = MediaQuery.of(context);
-                // Glass app bar: status-bar inset + bar content height.
-                final topFootprint = _kCompactBarHeight + mq.viewPadding.top;
+                // Glass app bar: status-bar inset + bar content height. Immersive
+                // routes hide the bar, so only the status-bar inset remains.
+                final topFootprint = widget.immersive
+                    ? mq.viewPadding.top
+                    : _kCompactBarHeight + mq.viewPadding.top;
                 // Floating nav: GlassBottomBar barHeight(64) + verticalPadding
-                // (8 top + 8 bottom) + device safe-area.
-                final navFootprint = 80 + mq.viewPadding.bottom;
+                // (8 top + 8 bottom) + device safe-area. Immersive routes hide
+                // the nav, so only the device safe-area remains.
+                final navFootprint = widget.immersive
+                    ? mq.viewPadding.bottom
+                    : 80 + mq.viewPadding.bottom;
                 return MediaQuery(
                   data: mq.copyWith(
                     padding: mq.padding.copyWith(
@@ -1705,78 +1747,82 @@ class _CompactShellState extends State<_CompactShell> {
             ),
           ),
           // Black gradient scrim rising from the bottom up to the nav so content
-          // dissolves beneath the floating glass pill.
-          const Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: IgnorePointer(child: _BottomNavScrim()),
-          ),
+          // dissolves beneath the floating glass pill. (Hidden when immersive.)
+          if (!widget.immersive)
+            const Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: IgnorePointer(child: _BottomNavScrim()),
+            ),
           // Floating liquid-glass nav (package GlassBottomBar). Kept in the
           // Stack (not Scaffold.bottomNavigationBar) so it floats over the
           // content it refracts; SafeArea lifts it above the home indicator.
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: SafeArea(
-              top: false,
-              bottom: false,
-              // iOS-26 layout: the tab pill and a detached global-search button
-              // are two separate floating glass elements with a gap between
-              // them. The padding that used to live inside GlassBottomBar is
-              // hoisted to this Row so both elements share the same inset and
-              // the footprint injected above (navFootprint) stays unchanged.
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: GlassBottomBar(
-                        horizontalPadding: 0,
-                        verticalPadding: 0,
-                        selectedIndex: _selectedIndex,
-                        onTabSelected: _onTap,
-                        // Black-tinted glass in dark mode (so it doesn't turn
-                        // milky), clean white frost in light — see _kNavGlass*.
-                        settings: dark ? kNavGlassDark : kNavGlassLight,
-                        // Honey-amber indicator (translucent so the glass shows
-                        // through).
-                        indicatorColor: AppColors.accent.withValues(
-                          alpha: dark ? 0.30 : 0.22,
+          if (!widget.immersive)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SafeArea(
+                top: false,
+                bottom: false,
+                // iOS-26 layout: the tab pill and a detached global-search button
+                // are two separate floating glass elements with a gap between
+                // them. The padding that used to live inside GlassBottomBar is
+                // hoisted to this Row so both elements share the same inset and
+                // the footprint injected above (navFootprint) stays unchanged.
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: GlassBottomBar(
+                          horizontalPadding: 0,
+                          verticalPadding: 0,
+                          selectedIndex: _selectedIndex,
+                          onTabSelected: _onTap,
+                          // Black-tinted glass in dark mode (so it doesn't turn
+                          // milky), clean white frost in light — see _kNavGlass*.
+                          settings: dark ? kNavGlassDark : kNavGlassLight,
+                          // Honey-amber indicator (translucent so the glass shows
+                          // through).
+                          indicatorColor: AppColors.accent.withValues(
+                            alpha: dark ? 0.30 : 0.22,
+                          ),
+                          selectedIconColor: dark
+                              ? AppColors.accent
+                              : AppColors.accentStrong,
+                          unselectedIconColor: dark
+                              ? AppColors.inkDark
+                              : AppColors.ink,
+                          tabs: [
+                            for (final d in _bottomTabs)
+                              GlassBottomBarTab(
+                                icon: Icon(d.icon),
+                                label: context.t(d.labelKey),
+                              ),
+                          ],
                         ),
-                        selectedIconColor: dark
-                            ? AppColors.accent
-                            : AppColors.accentStrong,
-                        unselectedIconColor: dark
-                            ? AppColors.inkDark
-                            : AppColors.ink,
-                        tabs: [
-                          for (final d in _bottomTabs)
-                            GlassBottomBarTab(
-                              icon: Icon(d.icon),
-                              label: context.t(d.labelKey),
-                            ),
-                        ],
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    _GlassNavSearchButton(dark: dark),
-                  ],
+                      const SizedBox(width: 12),
+                      _GlassNavSearchButton(dark: dark),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
           // Transparent glass app bar with a top-down scrim — overlays content.
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: _GlassTopBar(location: widget.location, dark: dark),
-          ),
+          // (Hidden when immersive; the page draws its own top bar.)
+          if (!widget.immersive)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: _GlassTopBar(location: widget.location, dark: dark),
+            ),
         ],
       ),
     );

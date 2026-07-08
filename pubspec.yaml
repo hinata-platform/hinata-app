@@ -69,6 +69,15 @@ dependencies:
   image_picker: ^1.1.2
   desktop_drop: ^0.5.0
   cross_file: ^0.3.4+2
+  # Native download: present the OS share sheet on a downloaded attachment so the
+  # user can "Save to Files" (iOS) / save to Downloads (Android) or send it on,
+  # instead of dumping it in a hidden app directory.
+  share_plus: ^11.0.0
+
+  # Voice comments: mic capture + live amplitude (record) and playback (just_audio).
+  # Cross-platform (mobile/desktop/web); web plays the audio via a Blob URL.
+  record: ^6.1.2
+  just_audio: ^0.10.5
 
   cupertino_icons: ^1.0.8
 

@@ -66,10 +66,10 @@ class AttachmentsSection extends StatefulWidget {
   final VoidCallback? onChanged;
 
   @override
-  State<AttachmentsSection> createState() => _AttachmentsSectionState();
+  State<AttachmentsSection> createState() => AttachmentsSectionState();
 }
 
-class _AttachmentsSectionState extends State<AttachmentsSection> {
+class AttachmentsSectionState extends State<AttachmentsSection> {
   late List<IssueAttachment> _server = List.of(widget.initial);
   final List<_Upload> _uploads = [];
 
@@ -176,6 +176,13 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
       !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.iOS ||
           defaultTargetPlatform == TargetPlatform.android);
+
+  /// Public entry for external "add attachment" affordances (e.g. the comment
+  /// composer's "+" → Anhang). Opens the document picker and uploads through the
+  /// *same* optimistic flow as the section's own button — so the new tile shows
+  /// up live here without relying on the SSE `added` event (which may not stream
+  /// on web) or a full issue reload.
+  Future<void> pickFiles() => _pickFiles();
 
   /// Entry point for every "add" affordance (header button + empty dropzone).
   /// On mobile it asks the user where to source from; elsewhere it opens the
@@ -351,6 +358,9 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
         _uploads.remove(u);
       });
       widget.onChanged?.call();
+      // Confirm success — the new tile may be off-screen (e.g. when uploaded
+      // from the comment composer's "+"), so close the loop with a toast.
+      if (mounted) _toast(context.t('issues.attachments.uploaded'));
     } on ApiFailure catch (e) {
       if (_disposed) return;
       setState(() => u.failed = true);
@@ -393,9 +403,15 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
       '/api/v1/issues/${widget.issueId}/attachments/$id/download';
 
   Future<void> _download(IssueAttachment a) async {
+    // Capture the iPad share-popover anchor before any async gap (the render
+    // object is only valid on the current frame's context).
+    final box = context.findRenderObject() as RenderBox?;
+    final origin = (box != null && box.hasSize)
+        ? box.localToGlobal(Offset.zero) & box.size
+        : null;
     // Stream the bytes through the authenticated server endpoint (the object
     // store is internal-only; its presigned URLs aren't reachable from a
-    // client), then save them via the browser / file system.
+    // client), then save/share them via the browser / OS share sheet.
     try {
       final res = await context.read<ApiClient>().getBytes(
             '/api/v1/issues/${widget.issueId}/attachments/${a.id}/download',
@@ -404,12 +420,24 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
         if (mounted) _toast(context.t('errors.unexpected'));
         return;
       }
-      final saved = await downloadBytes(
+      final outcome = await downloadBytes(
         a.fileName,
         Uint8List.fromList(res.bytes),
         res.contentType,
+        sharePositionOrigin: origin,
       );
-      if (mounted && saved != null) _toast(saved);
+      if (!mounted) return;
+      switch (outcome) {
+        case DownloadOutcome.browser:
+          _toast(context.t('issues.attachments.downloadStarted'));
+        case DownloadOutcome.failed:
+          _toast(context.t('errors.unexpected'));
+        // Native: the OS share sheet is the feedback — no toast (and none on a
+        // deliberate dismiss).
+        case DownloadOutcome.shared:
+        case DownloadOutcome.dismissed:
+          break;
+      }
     } catch (_) {
       if (mounted) _toast(context.t('errors.unexpected'));
     }

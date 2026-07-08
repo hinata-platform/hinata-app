@@ -338,8 +338,12 @@ class HinataRepository {
         as Map<String, dynamic>,
   );
 
-  /// Revokes (deletes) a PAT by id.
+  /// Revokes a PAT by id (soft: the token is disabled but stays in the list).
   Future<void> revokePat(String id) => _api.delete('/api/v1/me/pats/$id');
+
+  /// Permanently deletes a PAT by id, removing it from the caller's list.
+  Future<void> deletePat(String id) =>
+      _api.delete('/api/v1/me/pats/$id/permanent');
 
   // --- OAuth 2.1 consent (MCP authorization) --------------------------------
 
@@ -676,6 +680,50 @@ class HinataRepository {
   /// Deletes one of the caller's own comments (admins may delete any).
   Future<void> deleteComment(String issueId, String commentId) =>
       _api.delete('/api/v1/issues/$issueId/comments/$commentId');
+
+  /// Posts a recorded voice message as a comment. [durationMs] and [peaks]
+  /// (normalised 0–100 waveform amplitudes) travel alongside the audio blob so
+  /// the feed renders the bubble without decoding the audio. Returns the created
+  /// [CommentType.voice] comment.
+  Future<IssueComment> addVoiceComment(
+    String issueId, {
+    required List<int> bytes,
+    required String mime,
+    required int durationMs,
+    required List<int> peaks,
+    CancelToken? cancelToken,
+  }) async {
+    final audio = MultipartFile.fromBytes(
+      bytes,
+      filename: 'voice${_voiceExt(mime)}',
+      contentType: DioMediaType.parse(mime),
+    );
+    return IssueComment.fromJson(
+      await _api.upload(
+            '/api/v1/issues/$issueId/comments/voice',
+            audio,
+            cancelToken: cancelToken,
+            fields: {'durationMs': durationMs, 'peaks': peaks.join(',')},
+          )
+          as Map<String, dynamic>,
+    );
+  }
+
+  static String _voiceExt(String mime) => switch (mime.toLowerCase()) {
+    'audio/mpeg' => '.mp3',
+    'audio/webm' => '.webm',
+    'audio/ogg' => '.ogg',
+    'audio/wav' || 'audio/x-wav' => '.wav',
+    _ => '.m4a',
+  };
+
+  /// Fetches a voice comment's audio bytes through the authenticated proxy, for
+  /// local playback (the object store isn't reachable directly). Returns the
+  /// bytes + content type, or null when unavailable.
+  Future<({List<int> bytes, String contentType})?> voiceCommentAudio(
+    String issueId,
+    String commentId,
+  ) => _api.getBytes('/api/v1/issues/$issueId/comments/$commentId/voice');
 
   /// Uploads one file to an issue, reporting fractional progress (0–1) as the
   /// bytes are sent so the tile's ring can fill. Returns the updated issue.

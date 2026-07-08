@@ -301,6 +301,7 @@ class Issue extends Equatable {
   final String? description;
   final String type;
   final String priority;
+
   /// Primary assignee (first of [assigneeIds]); the single-assignee read sites
   /// (board swimlanes, avatars, filters) keep using this.
   final String? assigneeId;
@@ -551,11 +552,48 @@ class IssueAttachment extends Equatable {
   List<Object?> get props => [id, fileName, size];
 }
 
+/// A comment is either plain Markdown ([text]) or a recorded [voice] message.
+enum CommentType { text, voice }
+
+/// Voice-message payload attached to a [CommentType.voice] comment. The audio
+/// bytes are streamed from the API (`.../comments/{id}/voice`); [peaks] and
+/// [durationMs] carry the pre-computed waveform so the bubble renders without
+/// decoding the audio.
+class CommentVoice extends Equatable {
+  const CommentVoice({
+    required this.durationMs,
+    required this.peaks,
+    this.size = 0,
+    this.contentType,
+  });
+
+  final int durationMs;
+  final List<int> peaks;
+  final int size;
+  final String? contentType;
+
+  Duration get duration => Duration(milliseconds: durationMs);
+
+  factory CommentVoice.fromJson(Map<String, dynamic> json) => CommentVoice(
+    durationMs: (json['durationMs'] as num?)?.toInt() ?? 0,
+    peaks: ((json['peaks'] as List?) ?? const [])
+        .map((e) => (e as num).toInt())
+        .toList(growable: false),
+    size: (json['size'] as num?)?.toInt() ?? 0,
+    contentType: json['contentType'] as String?,
+  );
+
+  @override
+  List<Object?> get props => [durationMs, peaks, size, contentType];
+}
+
 class IssueComment extends Equatable {
   const IssueComment({
     required this.id,
     required this.authorId,
     required this.text,
+    this.type = CommentType.text,
+    this.voice,
     this.createdAt,
     this.updatedAt,
   });
@@ -563,8 +601,12 @@ class IssueComment extends Equatable {
   final String id;
   final String authorId;
   final String text;
+  final CommentType type;
+  final CommentVoice? voice;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+
+  bool get isVoice => type == CommentType.voice && voice != null;
 
   /// True once the comment has been edited after creation (server stamps
   /// `updatedAt` via @LastModifiedDate on every save).
@@ -579,12 +621,19 @@ class IssueComment extends Equatable {
     id: json['id'] as String,
     authorId: json['authorId'] as String? ?? '',
     text: json['text'] as String? ?? '',
+    // Legacy documents predate `type`; a missing value is plain text.
+    type: (json['type'] as String?)?.toUpperCase() == 'VOICE'
+        ? CommentType.voice
+        : CommentType.text,
+    voice: json['voice'] is Map<String, dynamic>
+        ? CommentVoice.fromJson(json['voice'] as Map<String, dynamic>)
+        : null,
     createdAt: _instant(json['createdAt']),
     updatedAt: _instant(json['updatedAt']),
   );
 
   @override
-  List<Object?> get props => [id, authorId, text, updatedAt];
+  List<Object?> get props => [id, authorId, text, type, voice, updatedAt];
 }
 
 /// One entry in an issue's change history ("Verlauf").

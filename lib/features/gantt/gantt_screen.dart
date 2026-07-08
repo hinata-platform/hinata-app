@@ -207,9 +207,19 @@ class _GanttScreenState extends State<GanttScreen> {
 
     _maybeInitialScroll(todayX, timelineWidth);
 
+    // The shell's `bottomGutter` reserves the floating nav pill *plus* the
+    // device safe-area so scrolling lists clear both. This chart is a fixed
+    // card (not a scroll list) and the floating switcher is anchored to its
+    // bottom — so reserving the full gutter strands the card and switcher far
+    // above the nav. Clear only the pill's visible height (drop the safe-area
+    // the pill already overlaps) plus one page gutter, so the card and the
+    // switcher rest just above the nav on every screen size.
+    final navClearance = (context.bottomGutter -
+            MediaQuery.viewPaddingOf(context).bottom)
+        .clamp(0.0, double.infinity);
     return Padding(
       padding: EdgeInsets.fromLTRB(context.pageGutter, 0, context.pageGutter,
-          context.pageGutter + context.bottomGutter),
+          context.pageGutter + navClearance),
       child: LayoutBuilder(
         builder: (context, constraints) {
           // The card is only as tall as its rows, capped at the space we have.

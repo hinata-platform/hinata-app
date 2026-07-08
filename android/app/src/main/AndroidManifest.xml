@@ -6,6 +6,8 @@
          FirebaseMessaging.requestPermission() has nothing to grant and push
          notifications never display or become tappable. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Voice comments: capture audio from the microphone. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
         android:label="Hinata"
         android:name="${applicationName}"

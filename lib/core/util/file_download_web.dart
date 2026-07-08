@@ -1,12 +1,20 @@
 import 'dart:js_interop';
 import 'dart:typed_data';
+import 'dart:ui' show Rect;
 
 import 'package:web/web.dart' as web;
 
+import 'file_download_types.dart';
+
 /// Web: trigger a browser download via an in-memory Blob + a temporary
-/// download anchor. Returns null (the browser handles the save dialog).
-Future<String?> downloadBytes(
-    String filename, Uint8List bytes, String mimeType) async {
+/// download anchor. The browser owns the save dialog, so [sharePositionOrigin]
+/// is ignored here.
+Future<DownloadOutcome> downloadBytes(
+  String filename,
+  Uint8List bytes,
+  String mimeType, {
+  Rect? sharePositionOrigin,
+}) async {
   final type = mimeType.isEmpty ? 'application/octet-stream' : mimeType;
   final blob = web.Blob(
     [bytes.toJS].toJS,
@@ -21,5 +29,5 @@ Future<String?> downloadBytes(
   anchor.click();
   anchor.remove();
   web.URL.revokeObjectURL(url);
-  return null;
+  return DownloadOutcome.browser;
 }

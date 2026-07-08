@@ -6,6 +6,9 @@
 	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
+	<!-- Voice comments: record from the microphone. -->
+	<key>com.apple.security.device.audio-input</key>
+	<true/>
 	<!-- Push notifications (FCM/APNs). "production" matches the App Store
 	     distribution profile (fastlane `mac build`/`beta`/`release`, type: appstore). -->
 	<key>aps-environment</key>
