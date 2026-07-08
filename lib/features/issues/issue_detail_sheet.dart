@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_loader.dart';
+import '../../core/widgets/progressive_blur.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +18,7 @@ import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
+import '../../core/responsive/responsive.dart';
 import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -56,6 +58,11 @@ import 'issue_description_editor.dart';
 import 'issue_labels.dart';
 import 'issue_link_resolver.dart';
 import 'work_log_sheet.dart';
+
+/// Row height of the full-screen route's pinned top bar (below the status bar).
+/// Shared so [IssueDetailScreen] can offset its scroll content by exactly this
+/// much and the bar's blur region lines up with where the content begins.
+const double kRouteTopBarHeight = 52;
 
 /// The project's configured colour for a workflow-state name, or null to fall
 /// back to the global state palette (`AppColors.stateColor`).
@@ -1089,7 +1096,6 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     // The wolt sheet (header != null) owns the top bar; the route renders its
     // own. Both are intrinsically sized — the route wraps this in a scroll view,
     // the sheet scrolls its own content.
-    final inSheet = widget.header != null;
     final documented = _documentedInSection();
     return SmartLinkScope(
       resolver: _buildResolver(issue),
@@ -1104,17 +1110,22 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (!inSheet)
+            // On the COMPACT full-screen route the top bar is not inline — it's
+            // pinned as a scroll-reactive glass bar by IssueDetailScreen (see
+            // [buildRouteTopBar]) so back/minimize stay reachable when the thread
+            // gets long. The sheet uses Wolt's own nav bar. The WIDE route keeps
+            // an inline bar (no overlap with the desktop shell's own top bar).
+            if (widget.header == null && !context.isCompact)
               _RouteTopBar(
-              issue: issue,
-              busy: _busy,
-              stateColor: _projStateColor(_project, issue.state),
-              link: issueWebLink(_repo.apiBaseUrl, issue.linkId),
-              onMinimize: widget.canMinimize ? _minimizeToModal : null,
-              onDelete: () => _confirmDelete(issue),
-              onClose: _closeRoute,
-            ),
-          Padding(
+                issue: issue,
+                busy: _busy,
+                stateColor: _projStateColor(_project, issue.state),
+                link: issueWebLink(_repo.apiBaseUrl, issue.linkId),
+                onMinimize: widget.canMinimize ? _minimizeToModal : null,
+                onDelete: () => _confirmDelete(issue),
+                onClose: _closeRoute,
+              ),
+            Padding(
             // Extra bottom room when the composer floats, so the last comment
             // isn't hidden behind the docked input.
             padding: EdgeInsets.fromLTRB(
@@ -2063,6 +2074,71 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
   /// Whether the issue has finished loading (so the host can defer the floating
   /// composer until there is something to comment on).
   bool get hasIssue => _issue != null;
+
+  /// The full-screen route's pinned top bar (back · id/state · minimize · trash).
+  /// Rendered by [IssueDetailScreen] as a top overlay — NOT inline in the body —
+  /// so the actions stay reachable when the comment thread scrolls long. [glass]
+  /// (0→1, driven by scroll offset) fades the shell-style progressive blur +
+  /// scrim in as content scrolls up under it, so at the very top the bar is
+  /// invisible chrome and only frosts once you start scrolling.
+  Widget buildRouteTopBar(BuildContext context, {required double glass}) {
+    final issue = _issue;
+    if (issue == null) return const SizedBox.shrink();
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final topInset = MediaQuery.viewPaddingOf(context).top;
+    final g = glass.clamp(0.0, 1.0);
+    final scrimTop = (dark ? 0.5 : 0.16) * g;
+    return SizedBox(
+      height: topInset + kRouteTopBarHeight,
+      child: Stack(
+        children: [
+          // Progressive blur, faded in by scaling maxSigma with scroll (0 → no
+          // filter → perfectly sharp at the top of the page). Non-interactive.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ProgressiveBlur(maxSigma: (dark ? 30.0 : 26.0) * g),
+            ),
+          ),
+          // Darkening scrim (fades to transparent at the bottom edge so the bar
+          // dissolves into the content instead of a hard cut-off).
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: scrimTop),
+                      Colors.black.withValues(alpha: scrimTop * 0.4),
+                      Colors.black.withValues(alpha: 0),
+                    ],
+                    stops: const [0.0, 0.6, 1.0],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // The bar row itself, pinned just below the status bar — always visible
+          // and tappable regardless of [glass].
+          Positioned(
+            left: 0,
+            right: 0,
+            top: topInset,
+            child: _RouteTopBar(
+              issue: issue,
+              busy: _busy,
+              stateColor: _projStateColor(_project, issue.state),
+              link: issueWebLink(_repo.apiBaseUrl, issue.linkId),
+              onMinimize: widget.canMinimize ? _minimizeToModal : null,
+              onDelete: () => _confirmDelete(issue),
+              onClose: _closeRoute,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   /// The docked composer, pinned to the bottom by the host (sheet: sticky bar;
   /// route: Stack overlay). Phone/narrow: spans the whole width. Tablet/desktop
@@ -3998,8 +4074,10 @@ class _RouteTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 10, 12, 4),
+    return SizedBox(
+      height: kRouteTopBarHeight,
+      child: Padding(
+      padding: const EdgeInsets.fromLTRB(8, 0, 12, 0),
       child: Row(
         children: [
           IconButton(
@@ -4057,6 +4135,7 @@ class _RouteTopBar extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

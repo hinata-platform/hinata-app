@@ -2159,7 +2159,7 @@ class _ProgressiveBlur extends StatelessWidget {
 
   /// Slice count. High enough that the per-step sigma delta is sub-perceptual
   /// (~1px), so no visible bands. Cheap thanks to the shared [BackdropGroup].
-  static const int _slices = 28;
+  static const int _slices = 60;
 
   @override
   Widget build(BuildContext context) {

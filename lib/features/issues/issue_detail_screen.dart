@@ -34,11 +34,28 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   // Bumped by the body when the floating composer's appearance changes (load
   // complete, inline edit) so this overlay — a separate subtree — rebuilds.
   final _composerRev = ValueNotifier<int>(0);
+  // 0 → 1 as the content scrolls up under the pinned top bar; fades the bar's
+  // shell-style progressive blur + scrim in (sharp/invisible at the very top).
+  final _topGlass = ValueNotifier<double>(0);
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!_scroll.hasClients) return;
+    // Reach full frost over the first ~28px so it engages the moment you scroll.
+    _topGlass.value = (_scroll.offset / 28).clamp(0.0, 1.0);
+  }
 
   @override
   void dispose() {
+    _scroll.removeListener(_onScroll);
     _scroll.dispose();
     _composerRev.dispose();
+    _topGlass.dispose();
     super.dispose();
   }
 
@@ -48,6 +65,10 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     // device inset is hidden then), so the input never gets covered — the modal
     // sheet gets this free from Wolt's Scaffold; the raw route must do it itself.
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    // The pinned glass top bar is the COMPACT full-screen treatment only; the
+    // wide route keeps its inline bar (drawn by the body) to avoid overlapping
+    // the desktop shell's own top bar.
+    final pinnedBar = context.isCompact;
     // No SafeArea here: the compact shell injects the glass app-bar and floating
     // nav footprints into MediaQuery padding, so we add them as scroll padding
     // (topGutter / bottomGutter) and let content scroll *behind* the bars — the
@@ -59,7 +80,10 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         SingleChildScrollView(
           controller: _scroll,
           padding: EdgeInsets.only(
-            top: context.topGutter,
+            // Clear the pinned top bar (status-bar inset + the bar row) so the
+            // content starts right where the bar ends and scrolls up under it.
+            // Wide keeps its inline bar, so no extra offset there.
+            top: context.topGutter + (pinnedBar ? kRouteTopBarHeight : 0),
             bottom: context.bottomGutter,
           ),
           child: IssueDetailBody(
@@ -101,6 +125,30 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
             },
           ),
         ),
+        // Pinned, scroll-reactive glass top bar (back · id/state · minimize ·
+        // trash) so navigation stays reachable however long the thread gets.
+        // Compact full-screen only — the modal sheet uses Wolt's own nav bar and
+        // the wide route keeps an inline bar.
+        if (pinnedBar)
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            child: ValueListenableBuilder<int>(
+              valueListenable: _composerRev,
+              builder: (context, _, _) {
+                final state = _bodyKey.currentState;
+                if (state == null || !state.hasIssue) {
+                  return const SizedBox.shrink();
+                }
+                return ValueListenableBuilder<double>(
+                  valueListenable: _topGlass,
+                  builder: (context, glass, _) =>
+                      state.buildRouteTopBar(context, glass: glass),
+                );
+              },
+            ),
+          ),
       ],
     );
   }
