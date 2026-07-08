@@ -986,6 +986,8 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
                   ],
                   const SizedBox(height: 14),
                   _timeCard(issue),
+                  const SizedBox(height: 14),
+                  _issueMeta(issue),
                 ];
                 if (c.maxWidth >= 680) {
                   return Row(
@@ -1036,6 +1038,8 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
                     ],
                     const SizedBox(height: 14),
                     _timeCard(issue),
+                    const SizedBox(height: 14),
+                    _issueMeta(issue),
                     const SizedBox(height: 14),
                     _activityCard(),
                   ],
@@ -1808,6 +1812,76 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
             ),
         ],
       ),
+    );
+  }
+
+  /// Baseline issue provenance shown as a separate block directly beneath the
+  /// Timeline card: when it was created and last touched, as short relative
+  /// labels (e.g. "Created 2h ago" / "Updated 5m ago").
+  Widget _issueMeta(Issue issue) {
+    final created = issue.createdAt;
+    // A brand-new issue has createdAt == updatedAt; showing "updated" then adds
+    // no information, so only surface it once something was actually changed.
+    final updated =
+        (issue.updatedAt != null &&
+            (created == null || !issue.updatedAt!.isAtSameMomentAs(created)))
+        ? issue.updatedAt
+        : null;
+    if (created == null && updated == null) return const SizedBox.shrink();
+
+    Widget line(IconData icon, String text) => Row(
+      children: [
+        Icon(icon, size: 13, color: AppColors.inkFaint),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+          ),
+        ),
+      ],
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (created != null)
+            line(LucideIcons.clock, _relLabel(created, created: true)),
+          if (updated != null) ...[
+            if (created != null) const SizedBox(height: 6),
+            line(LucideIcons.history, _relLabel(updated, created: false)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// "Created/Updated N units ago", fully written out (Jira-style) and
+  /// localized with proper plurals; falls back to a "just …" phrasing under a
+  /// minute.
+  String _relLabel(DateTime at, {required bool created}) {
+    final d = DateTime.now().difference(at);
+    if (d.inSeconds < 60) {
+      return context.t(
+        created ? 'issues.createdJustNow' : 'issues.updatedJustNow',
+      );
+    }
+
+    final (String unitKey, int count) = switch (d) {
+      _ when d.inMinutes < 60 => ('issues.relMinutes', d.inMinutes),
+      _ when d.inHours < 24 => ('issues.relHours', d.inHours),
+      _ when d.inDays < 7 => ('issues.relDays', d.inDays),
+      _ when d.inDays < 30 => ('issues.relWeeks', d.inDays ~/ 7),
+      _ when d.inDays < 365 => ('issues.relMonths', d.inDays ~/ 30),
+      _ => ('issues.relYears', d.inDays ~/ 365),
+    };
+
+    final time = context.t(unitKey, count: count, variables: {'count': count});
+    return context.t(
+      created ? 'issues.createdAgo' : 'issues.updatedAgo',
+      variables: {'time': time},
     );
   }
 

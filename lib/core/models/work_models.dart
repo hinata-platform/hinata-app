@@ -289,6 +289,7 @@ class Issue extends Equatable {
     this.attachments = const [],
     this.rank = 0,
     this.resolvedAt,
+    this.createdAt,
     this.updatedAt,
   });
 
@@ -321,6 +322,7 @@ class Issue extends Equatable {
   final List<IssueAttachment> attachments;
   final double rank;
   final DateTime? resolvedAt;
+  final DateTime? createdAt;
   final DateTime? updatedAt;
 
   bool get resolved => resolvedAt != null;
@@ -366,6 +368,7 @@ class Issue extends Equatable {
         .toList(),
     rank: (json['rank'] as num?)?.toDouble() ?? 0,
     resolvedAt: _instant(json['resolvedAt']),
+    createdAt: _instant(json['createdAt']),
     updatedAt: _instant(json['updatedAt']),
   );
 
@@ -405,6 +408,7 @@ class Issue extends Equatable {
     attachments: attachments,
     rank: rank ?? this.rank,
     resolvedAt: resolvedAt,
+    createdAt: createdAt,
     updatedAt: updatedAt,
   );
 
