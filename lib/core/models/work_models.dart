@@ -209,25 +209,28 @@ class Project extends Equatable {
     extraRepos: extraRepos ?? this.extraRepos,
   );
 
-  /// Returns a copy with the Git connection replaced — including clearing it to
-  /// `null` on disconnect. Git mutations persist server-side immediately,
-  /// independently of the settings draft/save flow, so this merges just that
-  /// field without disturbing any in-progress draft edits.
-  Project withGit(GitConnection? git) => Project(
-    id: id,
-    key: key,
-    name: name,
-    description: description,
-    leadIds: leadIds,
-    memberIds: memberIds,
-    workflowStates: workflowStates,
-    resolvedStates: resolvedStates,
-    labels: labels,
-    color: color,
-    archived: archived,
-    git: git,
-    extraRepos: extraRepos,
-  );
+  /// Returns a copy with the Git repositories replaced — the primary [git]
+  /// (including clearing it to `null` on disconnect) plus the full
+  /// [extraRepos] list. Git mutations persist server-side immediately,
+  /// independently of the settings draft/save flow, so this merges just the
+  /// repo fields without disturbing any in-progress draft edits. When
+  /// [extraRepos] is omitted the current additional repos are kept.
+  Project withGit(GitConnection? git, {List<GitConnection>? extraRepos}) =>
+      Project(
+        id: id,
+        key: key,
+        name: name,
+        description: description,
+        leadIds: leadIds,
+        memberIds: memberIds,
+        workflowStates: workflowStates,
+        resolvedStates: resolvedStates,
+        labels: labels,
+        color: color,
+        archived: archived,
+        git: git,
+        extraRepos: extraRepos ?? this.extraRepos,
+      );
 
   @override
   List<Object?> get props => [

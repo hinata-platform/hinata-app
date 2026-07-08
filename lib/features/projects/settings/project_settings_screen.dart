@@ -412,13 +412,20 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
 
   /// Merges a Git-connection change (connect / disconnect / automation / branch
   /// template) into both the saved and draft copies. Git mutations persist
-  /// server-side immediately, so this only replaces the `git` field and leaves
-  /// any in-progress draft edits (and the dirty state) untouched.
+  /// server-side immediately, so this only replaces the repository fields — the
+  /// primary `git` plus the full `extraRepos` list — and leaves any in-progress
+  /// draft edits (and the dirty state) untouched.
   void _onGitChanged(Project serverProject) {
     if (!mounted) return;
     setState(() {
-      _saved = _saved?.withGit(serverProject.git);
-      _draft = _draft?.withGit(serverProject.git);
+      _saved = _saved?.withGit(
+        serverProject.git,
+        extraRepos: serverProject.extraRepos,
+      );
+      _draft = _draft?.withGit(
+        serverProject.git,
+        extraRepos: serverProject.extraRepos,
+      );
     });
   }
 
