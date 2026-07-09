@@ -144,9 +144,20 @@ class _GlassPopoverState extends State<GlassPopover>
               ),
             ),
 
-            // Overlay portal for morphing animation
+            // Overlay portal for morphing animation.
+            //
+            // Targets the ROOT overlay, not the nearest one. The morph is placed
+            // with absolute, root-relative coordinates (the trigger's
+            // `localToGlobal(Offset.zero)`), so it must render in the overlay
+            // that shares that coordinate space. Rendering into a *nested*
+            // overlay (e.g. a ShellRoute/nested-Navigator content area offset by
+            // a side rail) would shift the popover by that overlay's origin —
+            // the trigger's global position gets double-counted. The root
+            // overlay always coincides with the global coordinate space, so the
+            // popover lands exactly on its trigger in every embedding.
             OverlayPortal(
               controller: _overlayController,
+              overlayLocation: OverlayChildLocation.rootOverlay,
               overlayChildBuilder: _buildMorphingOverlay,
             ),
           ],
@@ -563,15 +574,22 @@ class _GlassPopoverState extends State<GlassPopover>
     // doesn't overflow inside the still-morphing container. The visual scale
     // transform handles the size illusion; the GlassContainer's Clip.antiAlias
     // clips anything outside the morph boundary.
-    final targetHeight =
-        widget.popoverHeight ?? _measuredContentHeight ?? 200.0;
+    //
+    // For intrinsic-height popovers ([popoverHeight] == null) the child must be
+    // laid out UNCAPPED (maxHeight: infinity): the measurement below reads the
+    // laid-out height of [_contentKey], so capping it at the current estimate
+    // would clamp the measurement to that estimate forever — the popover could
+    // never grow past ~200px and taller content would overflow permanently.
+    // Leaving it unbounded lets the content take its true intrinsic height,
+    // which then feeds back as the container's morph target next frame.
+    final maxContentHeight = widget.popoverHeight ?? double.infinity;
 
     return OverflowBox(
       alignment: Alignment.center,
       minWidth: widget.popoverWidth,
       maxWidth: widget.popoverWidth,
       minHeight: 0,
-      maxHeight: targetHeight,
+      maxHeight: maxContentHeight,
       child: Opacity(
         opacity: contentOpacity,
         child: Transform.scale(

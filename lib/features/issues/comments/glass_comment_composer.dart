@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show
         GlassButton,
         GlassContainer,
+        GlassMenuAlignment,
+        GlassPopover,
         GlassQuality,
-        GlassSpring,
         LiquidGlassSettings,
         LiquidRoundedSuperellipse;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -143,28 +143,10 @@ class GlassCommentComposer extends StatefulWidget {
   State<GlassCommentComposer> createState() => _GlassCommentComposerState();
 }
 
-enum _Mode { idle, popup, recording, format }
+enum _Mode { idle, recording, format }
 
-/// iOS-26 "liquid" underdamped spring driving the "+" attachment popup's
-/// grow-from-the-button open/close (same bounce ratio the package's popover
-/// morph uses). Underdamped, so the panel overshoots slightly past its target
-/// scale and rubber-bands back — the signature Apple liquid pop.
-final SpringDescription _kPopupSpring = GlassSpring.bouncy(
-  duration: const Duration(milliseconds: 430),
-);
-
-class _GlassCommentComposerState extends State<GlassCommentComposer>
-    with SingleTickerProviderStateMixin {
+class _GlassCommentComposerState extends State<GlassCommentComposer> {
   _Mode _mode = _Mode.idle;
-  final _plusPortal = OverlayPortalController();
-  final _plusLink = LayerLink();
-
-  // Drives the "+" popup's spring reveal. Unbounded so the underdamped spring
-  // can overshoot past 1.0 (the liquid bounce) before settling. [_popupClosing]
-  // defers hiding the overlay until the close spring has sprung back to 0.
-  late final AnimationController _popupAnim =
-      AnimationController.unbounded(vsync: this)..addListener(_onPopupTick);
-  bool _popupClosing = false;
 
   // Format mode: the drag-resizable field height + the Edit/Preview toggle.
   double _formatHeight = 200;
@@ -186,7 +168,6 @@ class _GlassCommentComposerState extends State<GlassCommentComposer>
   @override
   void dispose() {
     widget.controller.removeListener(_onTextChanged);
-    _popupAnim.dispose();
     _recTimer?.cancel();
     _recorder?.dispose();
     super.dispose();
@@ -195,50 +176,6 @@ class _GlassCommentComposerState extends State<GlassCommentComposer>
   void _onTextChanged() {
     // Rebuild so the mic↔send swap tracks the text.
     if (mounted) setState(() {});
-  }
-
-  void _togglePopup() {
-    if (_mode == _Mode.popup) {
-      _closePopup();
-    } else {
-      _popupClosing = false;
-      setState(() => _mode = _Mode.popup);
-      _plusPortal.show();
-      // Spring the panel out of the "+" button (from rest, no inherited
-      // velocity → a clean pop). Unbounded animateWith lets it overshoot.
-      _popupAnim.animateWith(
-        SpringSimulation(_kPopupSpring, _popupAnim.value, 1, 0),
-      );
-    }
-  }
-
-  void _closePopup() {
-    if (!_plusPortal.isShowing) {
-      if (_mode == _Mode.popup) setState(() => _mode = _Mode.idle);
-      return;
-    }
-    // Reverse the spring back into the button; [_onPopupTick] tears the overlay
-    // down once it settles at 0 (carry the current velocity for continuity).
-    _popupClosing = true;
-    _popupAnim.animateWith(
-      SpringSimulation(_kPopupSpring, _popupAnim.value, 0, _popupAnim.velocity),
-    );
-  }
-
-  // Called each spring frame. On close, hide the overlay + reset the mode the
-  // moment the panel has retracted into the button (first zero-crossing), so
-  // the closing animation is actually visible instead of snapping away.
-  void _onPopupTick() {
-    if (_popupClosing && _popupAnim.value <= 0.001) {
-      _popupClosing = false;
-      if (_plusPortal.isShowing) _plusPortal.hide();
-      if (_mode == _Mode.popup) setState(() => _mode = _Mode.idle);
-    }
-  }
-
-  void _pick(ComposerAttach kind) {
-    _closePopup();
-    widget.onAttach(kind);
   }
 
   // ── recording ──────────────────────────────────────────────────────────
@@ -337,6 +274,16 @@ class _GlassCommentComposerState extends State<GlassCommentComposer>
 
   /// Leading circle: an "×" cancel-edit button while editing, otherwise the "+"
   /// attachment menu trigger.
+  ///
+  /// The "+" is wrapped in a [GlassPopover] so the attachment menu opens with
+  /// the package's full iOS-26 dual-blob metaball morph — the glass literally
+  /// pulls a teardrop neck out of the button and rubber-bands into the panel
+  /// (and collapses back on close), instead of a plain scale/fade. The popover
+  /// owns its own overlay, spring physics, positioning and screen-edge
+  /// clamping; we only feed it the trigger, the content, and our dark composer
+  /// glass so it matches the rest of the chrome. Pinned to
+  /// [GlassMenuAlignment.bottomLeft] so it always grows upward-left out of the
+  /// button (the composer is bottom-anchored), never downward over the field.
   Widget _leadingButton() {
     final size = _composerButtonSize(context);
     if (widget.editing) {
@@ -346,18 +293,35 @@ class _GlassCommentComposerState extends State<GlassCommentComposer>
         onTap: widget.enabled ? widget.onCancelEdit : null,
       );
     }
-    return CompositedTransformTarget(
-      link: _plusLink,
-      child: OverlayPortal(
-        controller: _plusPortal,
-        overlayChildBuilder: _buildPopup,
-        child: _CircleButton(
-          icon: LucideIcons.plus,
-          size: size,
-          rotated: _mode == _Mode.popup,
-          amber: _mode == _Mode.popup,
-          onTap: widget.enabled ? _togglePopup : null,
-        ),
+    final dark = AppColors.brightness == Brightness.dark;
+    return GlassPopover(
+      alignment: GlassMenuAlignment.bottomLeft,
+      popoverWidth: 268,
+      popoverBorderRadius: 24,
+      // Same near-opaque dark-slate / frost tint as the rest of the composer so
+      // the morphing panel reads identically to the field pill and "+" menu of
+      // old — the metaball just adds the liquid growth on top.
+      settings: _composerGlass(dark),
+      // The metaball neck (SDF blend of the two blobs) only renders on the
+      // premium Impeller pipeline; standard silently drops the blend. This is a
+      // transient, heavily-tinted overlay (not a surface floating over the
+      // scrolling feed), so the usual reasons the composer avoids premium don't
+      // apply here — and it degrades gracefully to a plain morph on Skia/web.
+      quality: GlassQuality.premium,
+      triggerBuilder: (context, toggle) => _CircleButton(
+        icon: LucideIcons.plus,
+        size: size,
+        onTap: widget.enabled ? toggle : null,
+      ),
+      contentBuilder: (context, close) => _ActionPopup(
+        onPick: (kind) {
+          close();
+          widget.onAttach(kind);
+        },
+        onFormat: () {
+          close();
+          _openFormat();
+        },
       ),
     );
   }
@@ -519,73 +483,24 @@ class _GlassCommentComposerState extends State<GlassCommentComposer>
     );
   }
 
-  Widget _buildPopup(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _closePopup,
-          ),
-        ),
-        CompositedTransformFollower(
-          link: _plusLink,
-          targetAnchor: Alignment.topLeft,
-          followerAnchor: Alignment.bottomLeft,
-          offset: const Offset(0, -10),
-          child: Align(
-            alignment: Alignment.bottomLeft,
-            child: AnimatedBuilder(
-              animation: _popupAnim,
-              builder: (context, child) {
-                final t = _popupAnim.value;
-                // Grow out of the "+" button's top-left corner (the panel's
-                // bottom-left anchor) with the spring's slight overshoot; the
-                // content fades in fast so it's legible almost immediately.
-                return Opacity(
-                  opacity: (t * 1.8).clamp(0.0, 1.0),
-                  child: Transform.scale(
-                    scale: t.clamp(0.0, 1.2),
-                    alignment: Alignment.bottomLeft,
-                    child: child,
-                  ),
-                );
-              },
-              child: _ActionPopup(
-                onPick: _pick,
-                onFormat: () {
-                  _closePopup();
-                  _openFormat();
-                },
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 // ── circle buttons ─────────────────────────────────────────────────────────
-/// A round composer button. The honey-amber [send] / active [amber] states are
-/// intentionally solid accent; every other state is real Liquid Glass
-/// ([GlassButton]) so it refracts like the rest of the app's chrome.
+/// A round composer button. The honey-amber [send] state is intentionally solid
+/// accent; every other state is real Liquid Glass ([GlassButton]) so it refracts
+/// like the rest of the app's chrome.
 class _CircleButton extends StatelessWidget {
   const _CircleButton({
     required this.icon,
     this.onTap,
-    this.amber = false,
     this.send = false,
-    this.rotated = false,
     this.danger = false,
     this.size = 52,
   });
 
   final IconData icon;
   final VoidCallback? onTap;
-  final bool amber;
   final bool send;
-  final bool rotated;
   final bool danger;
   final double size;
 
@@ -593,33 +508,28 @@ class _CircleButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = AppColors.brightness == Brightness.dark;
 
-    // Solid accent buttons (send / active "+").
-    if (send || amber) {
-      final decoration = send
-          ? BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFFE7B24A),
-                  AppColors.accent,
-                  AppColors.accentStrong,
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.accent.withValues(alpha: 0.5),
-                  blurRadius: 16,
-                  spreadRadius: -5,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            )
-          : const BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.accent,
-            );
+    // Solid accent send button.
+    if (send) {
+      final decoration = BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFE7B24A),
+            AppColors.accent,
+            AppColors.accentStrong,
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accent.withValues(alpha: 0.5),
+            blurRadius: 16,
+            spreadRadius: -5,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      );
       return Semantics(
         button: true,
         child: GestureDetector(
@@ -630,11 +540,7 @@ class _CircleButton extends StatelessWidget {
             width: size,
             height: size,
             decoration: decoration,
-            child: AnimatedRotation(
-              turns: rotated ? 0.125 : 0,
-              duration: const Duration(milliseconds: 200),
-              child: Icon(icon, size: 22, color: _onAccent),
-            ),
+            child: Icon(icon, size: 22, color: _onAccent),
           ),
         ),
       );
@@ -757,11 +663,12 @@ class _ActionPopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = AppColors.brightness == Brightness.dark;
-    return _composerSurface(
-      dark: dark,
-      radius: 24,
-      width: 268,
+    // No glass here: this content is rendered directly inside the
+    // [GlassPopover]'s morphing glass container, which supplies the tint, blur
+    // and the metaball shape. Wrapping it in our own [_composerSurface] would
+    // double-stack the glass. mainAxisSize.min so the popover can measure the
+    // intrinsic height and morph to exactly the right size.
+    return Padding(
       padding: const EdgeInsets.all(8),
       child: Material(
         color: Colors.transparent,
