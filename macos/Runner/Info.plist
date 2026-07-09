@@ -46,6 +46,11 @@
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>$(PRODUCT_COPYRIGHT)</string>
+	<!-- Voice comments: recording an audio message needs microphone access.
+	     macOS TCC hard-crashes (SIGABRT, "Namespace TCC") the moment the mic is
+	     touched without this usage-description key present. -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Hinata needs microphone access so you can record voice messages on issue comments and activity.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
