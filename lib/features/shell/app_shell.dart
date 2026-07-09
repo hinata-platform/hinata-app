@@ -1882,7 +1882,12 @@ class _GlassTopBar extends StatelessWidget {
         children: [
           // Smooth progressive blur: strongest at the top, fading to sharp at the
           // bottom edge so the bar dissolves into the content beneath it.
-          Positioned.fill(child: ProgressiveBlur(maxSigma: dark ? 30 : 26)),
+          Positioned.fill(
+            child: ProgressiveBlur(
+              maxSigma: dark ? 14 : 12,
+              direction: ProgressiveBlurDirection.topToBottom,
+            ),
+          ),
           // Darkening scrim (fades to transparent at the bottom edge so the bar
           // dissolves into the content instead of ending on a hard cut-off).
           Positioned.fill(

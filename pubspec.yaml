@@ -101,6 +101,10 @@ flutter:
     - assets/i18n/en/
     - assets/i18n/de/
     - assets/branding/
+  shaders:
+    # Single-pass progressive (graduated) backdrop blur — the iOS-26 header
+    # dissolve, sampling the real backdrop via ImageFilter.shader (Impeller).
+    - shaders/progressive_blur.frag
   fonts:
     - family: Sora
       fonts:

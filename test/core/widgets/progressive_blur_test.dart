@@ -1,19 +1,21 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/widgets/progressive_blur.dart';
 
 /// Performance regression guard for [ProgressiveBlur].
 ///
-/// Each slice is a real GPU [BackdropFilter] blur pass, and this widget renders
-/// the app's always-on top bar over scrolling content — so every pass re-runs on
-/// each scroll/keystroke frame. A previous version used 50 slices (~48 live blur
-/// passes per frame) and was the app's dominant source of Android jank.
+/// The whole point of the current design is that the graduated ("Instagram
+/// header") blur is a SINGLE GPU pass — one [BackdropFilter] whose fragment
+/// shader varies the blur radius per-pixel — instead of the old stack of ~8-50
+/// separate [BackdropFilter] slices that made every scroll/keystroke frame
+/// re-run N blur passes and was the app's dominant Android jank source.
 ///
-/// These tests pin the pass count to a small ceiling. If someone raises the
-/// slice count again, the first test fails loudly instead of silently
-/// re-introducing the jank.
+/// These tests pin that invariant: at most ONE BackdropFilter is ever emitted.
+/// If someone reintroduces a slice stack, the first test fails loudly.
+///
+/// (In the test VM there is no Impeller, so [ProgressiveBlur] renders its uniform
+/// single-pass fallback — still exactly one BackdropFilter, which is what we
+/// assert. The Impeller path also emits exactly one, just with the shader.)
 void main() {
   Widget host(double maxSigma) => MaterialApp(
         home: Scaffold(
@@ -32,39 +34,49 @@ void main() {
         ),
       );
 
-  testWidgets('renders far fewer than the old 50 backdrop passes', (
-    tester,
-  ) async {
+  testWidgets('is a single backdrop pass — never a slice stack', (tester) async {
     await tester.pumpWidget(host(30));
+    await tester.pump();
 
-    final passes = tester.widgetList<BackdropFilter>(
-      find.byType(BackdropFilter),
-    );
-
-    // Hard ceiling: the current design uses 8 slices (bottom ones fall below the
-    // sub-perceptual sigma threshold and are skipped). 12 leaves headroom for a
-    // small tweak while still catching a regression to the old 50.
     expect(
-      passes.length,
-      lessThanOrEqualTo(12),
+      find.byType(BackdropFilter),
+      findsOneWidget,
       reason:
-          'ProgressiveBlur must stay cheap: each BackdropFilter is a live GPU '
-          'blur pass over scrolling content. A jump back toward 50 was the '
-          'original global jank bug.',
+          'ProgressiveBlur must stay a single-pass blur. More than one '
+          'BackdropFilter means the old per-slice stack (N blur passes per '
+          'frame) has crept back — the original global jank bug.',
     );
-    // Sanity: it still blurs (the effect is not accidentally disabled).
-    expect(passes.length, greaterThanOrEqualTo(1));
-
-    // Every emitted pass must carry a real blur filter.
-    for (final f in passes) {
-      expect(f.filter, isA<ImageFilter>());
-    }
   });
 
   testWidgets('emits no blur pass at all when maxSigma is 0', (tester) async {
     await tester.pumpWidget(host(0));
+    await tester.pump();
     // maxSigma <= 0 short-circuits to a plain box — zero backdrop cost when the
     // bar is scrolled to its sharp (top-of-page) state.
     expect(find.byType(BackdropFilter), findsNothing);
+  });
+
+  testWidgets('builds with the default (optional) maxSigma', (tester) async {
+    // maxSigma is optional now; the default must still render a blur pass.
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: SizedBox(height: 120, child: ProgressiveBlur())),
+    ));
+    await tester.pump();
+    expect(find.byType(BackdropFilter), findsOneWidget);
+  });
+
+  testWidgets('every direction builds as a single pass', (tester) async {
+    for (final dir in ProgressiveBlurDirection.values) {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            height: 120,
+            child: ProgressiveBlur(maxSigma: 24, direction: dir),
+          ),
+        ),
+      ));
+      await tester.pump();
+      expect(find.byType(BackdropFilter), findsOneWidget, reason: 'dir=$dir');
+    }
   });
 }

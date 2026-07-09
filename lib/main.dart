@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'app.dart';
 import 'core/api/api_client.dart';
 import 'core/api/hinata_repository.dart';
+import 'core/widgets/progressive_blur.dart';
 import 'core/notifications/fcm_service.dart';
 import 'core/storage/app_storage.dart';
 import 'firebase_options.dart';
@@ -59,6 +60,11 @@ Future<void> main() async {
   try {
     await LiquidGlassWidgets.initialize(enablePerformanceMonitor: false);
   } catch (_) {}
+
+  // Pre-compile the progressive-blur shader (the app bar's single-pass graduated
+  // backdrop blur) so the first bar paint uses it instead of the uniform-blur
+  // fallback. Guarded internally; never throws.
+  await ProgressiveBlur.preload();
 
   final storage = await AppStorage.create();
   final apiClient = ApiClient(storage);

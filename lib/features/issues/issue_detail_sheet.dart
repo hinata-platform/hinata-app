@@ -2128,7 +2128,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           // filter → perfectly sharp at the top of the page). Non-interactive.
           Positioned.fill(
             child: IgnorePointer(
-              child: ProgressiveBlur(maxSigma: (dark ? 30.0 : 26.0) * g),
+              child: ProgressiveBlur(
+                maxSigma: (dark ? 14.0 : 12.0) * g,
+                direction: ProgressiveBlurDirection.topToBottom,
+              ),
             ),
           ),
           // Darkening scrim (fades to transparent at the bottom edge so the bar

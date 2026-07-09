@@ -1,78 +1,188 @@
-import 'dart:math';
-import 'dart:ui';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-/// A vertical *progressive* backdrop blur: heavy at the top edge, easing to
-/// perfectly sharp at the bottom (the iOS-26 header look — cf. Instagram's
-/// profile header). Stack it behind a translucent app bar so content dissolves
-/// beneath it instead of ending on a hard cut-off.
-///
-/// It slices the area into many thin [BackdropFilter.grouped] bands sharing one
-/// [BackdropGroup] capture, so no band ever samples another (no compounded blur
-/// → no pixelation) and the whole thing costs a single backdrop capture.
-///
-/// Drive [maxSigma] from a scroll offset to fade the blur in/out (0 → sharp).
-class ProgressiveBlur extends StatelessWidget {
-  const ProgressiveBlur({super.key, required this.maxSigma});
+/// The edge a [ProgressiveBlur] is *strongest* at; it eases to perfectly sharp at
+/// the opposite edge. Named after the direction the blur travels — e.g.
+/// [topToBottom] is heavy at the top and dissolves downward (the classic app-bar
+/// / status-bar look), [bottomToTop] is heavy at the bottom (e.g. a bottom bar
+/// or a fade above a docked toolbar).
+enum ProgressiveBlurDirection {
+  /// Strong at the top edge, sharp at the bottom.
+  topToBottom,
 
-  final double maxSigma;
+  /// Strong at the bottom edge, sharp at the top.
+  bottomToTop,
 
-  /// Slice count — a hard performance ceiling.
-  ///
-  /// Each slice is a real [BackdropFilter] blur *pass* on the GPU. `BackdropGroup`
-  /// only shares the backdrop *capture*; it does NOT collapse the N blur passes
-  /// into one. This bar overlays scrolling content, so every pass re-runs on each
-  /// scroll/keystroke frame — the earlier value of 50 meant ~48 blur passes per
-  /// frame and was the app's dominant source of jank on Android.
-  ///
-  /// 8 slices keep the gradient dissolve visually smooth (the translucent scrim
-  /// on top masks any residual banding) at ~6x lower cost. Do NOT raise this
-  /// without profiling on a real mid-range Android device — [progressiveBlurTest]
-  /// guards the ceiling.
-  static const int _slices = 8;
+  /// Strong at the left edge, sharp at the right.
+  leftToRight,
 
-  @override
-  Widget build(BuildContext context) {
-    if (maxSigma <= 0) return const SizedBox.expand();
-    return ClipRect(
-      child: BackdropGroup(
-        child: Column(
-          children: [
-            for (var i = 0; i < _slices; i++)
-              Expanded(
-                child: _BlurSlice(
-                  // t: 0 at the top → 1 at the bottom. A gentle (^1.2) falloff
-                  // keeps the blur strong across the top rows, then eases to
-                  // sharp near the bottom edge.
-                  sigma:
-                      maxSigma * pow(1 - (i / (_slices - 1)), 1.2).toDouble(),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+  /// Strong at the right edge, sharp at the left.
+  rightToLeft;
+
+  /// The `uDirection` uniform value the shader expects (0 top, 1 bottom, 2 left,
+  /// 3 right = where the blur is strongest).
+  double get _uniform => index.toDouble();
 }
 
-class _BlurSlice extends StatelessWidget {
-  const _BlurSlice({required this.sigma});
+/// A *progressive* (graduated) backdrop blur — the Signal / iOS header look: a
+/// clean gaussian frost that is strongest at one edge and eases to perfectly
+/// sharp at the opposite edge. Stack it behind a translucent app bar so content
+/// dissolves beneath it instead of ending on a hard cut-off.
+///
+/// ## How it works — a single GPU pass that samples the backdrop
+///
+/// The naive "blur then fade with a ShaderMask" recipe does NOT work: a
+/// [BackdropFilter]'s captured backdrop is not included in an ancestor
+/// [ShaderMask]'s layer on Impeller, so the mask reveals nothing and iOS shows no
+/// blur at all. Instead this uses [ui.ImageFilter.shader]: a fragment shader runs
+/// as the [ImageFilter] of a [BackdropFilter], so the engine binds the captured
+/// backdrop to the shader's sampler — sampling it reliably on every backend.
+/// `shaders/progressive_blur.frag` reads that backdrop with an importance-sampled
+/// gaussian whose sigma follows the gradient (normalised over the widget's own
+/// device-pixel rectangle, since the bound texture is the whole screen), giving a
+/// smooth, band-free dissolve in one backdrop capture + one draw.
+///
+/// Drive [maxSigma] from a scroll offset to fade the blur in/out (0 → sharp).
+class ProgressiveBlur extends StatefulWidget {
+  const ProgressiveBlur({
+    super.key,
+    this.maxSigma = 18,
+    this.direction = ProgressiveBlurDirection.topToBottom,
+    this.falloff = 1.2,
+  });
 
-  final double sigma;
+  /// Blur sigma (logical px) at the strong edge. 0 ⇒ no blur (passthrough).
+  /// Optional — defaults to a moderate 18.
+  final double maxSigma;
+
+  /// Which edge the blur is strongest at (it eases to sharp at the opposite
+  /// edge). Defaults to [ProgressiveBlurDirection.topToBottom].
+  final ProgressiveBlurDirection direction;
+
+  /// Gradient gamma. >1 keeps the blur strong across the strong edge then eases
+  /// to sharp near the opposite edge.
+  final double falloff;
+
+  // ── Shader program: compiled once, process-wide ───────────────────────────
+  static ui.FragmentProgram? _program;
+  static Future<ui.FragmentProgram>? _loading;
+
+  /// Pre-compiles the blur shader so the first bar paint already has it. Safe to
+  /// call repeatedly (compiled once). Call from `main()` after the binding is
+  /// initialized. Never throws — on failure the widget falls back to a uniform
+  /// blur.
+  static Future<void> preload() async {
+    if (_program != null) return;
+    try {
+      _program = await (_loading ??= ui.FragmentProgram.fromAsset(
+        'shaders/progressive_blur.frag',
+      ));
+    } catch (e) {
+      // Graceful degradation: the widget falls back to a uniform blur. (Also the
+      // path taken in unit tests, where compiled shaders aren't bundled.)
+      _loading = null;
+      debugPrint('progressive_blur.frag load failed, using uniform-blur fallback: $e');
+    }
+  }
+
+  @override
+  State<ProgressiveBlur> createState() => _ProgressiveBlurState();
+}
+
+class _ProgressiveBlurState extends State<ProgressiveBlur> {
+  // Two instances of the same program: one blurs along X, the other along Y.
+  ui.FragmentShader? _hShader;
+  ui.FragmentShader? _vShader;
+
+  @override
+  void initState() {
+    super.initState();
+    _makeShaders();
+    if (_hShader == null) {
+      // Not pre-compiled yet — load, then rebuild with the shaders.
+      ProgressiveBlur.preload().then((_) {
+        if (mounted) setState(_makeShaders);
+      });
+    }
+  }
+
+  void _makeShaders() {
+    final p = ProgressiveBlur._program;
+    if (p != null && _hShader == null) {
+      _hShader = p.fragmentShader();
+      _vShader = p.fragmentShader();
+    }
+  }
+
+  @override
+  void dispose() {
+    _hShader?.dispose();
+    _vShader?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Below ~0.3 a blur is imperceptible; skip the filter so the bottom slices
-    // stay genuinely sharp and cheap.
-    if (sigma < 0.3) return const SizedBox.expand();
-    return ClipRect(
-      // .grouped → shares the BackdropGroup's single backdrop capture and never
-      // samples sibling slices (no compounded blur → no pixelation).
-      child: BackdropFilter.grouped(
-        filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-        child: const SizedBox.expand(),
-      ),
+    if (widget.maxSigma <= 0) return const SizedBox.expand();
+
+    final h = _hShader;
+    final v = _vShader;
+    // Fallback — the shaders aren't ready yet, or the backend can't run shader
+    // filters (Skia / web: isShaderFilterSupported == false). A single uniform
+    // backdrop blur is a cheap stand-in; the translucent scrim above the bar
+    // hides the harder bottom edge. Web/desktop have the headroom for it.
+    if (h == null || v == null || !ui.ImageFilter.isShaderFilterSupported) {
+      return ClipRect(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(
+            sigmaX: widget.maxSigma * 0.6,
+            sigmaY: widget.maxSigma * 0.6,
+          ),
+          child: const SizedBox.expand(),
+        ),
+      );
+    }
+
+    // The bound texture (and thus uSize, float indices 0,1) is the WHOLE backdrop,
+    // not this widget — so we pass the widget's own device-pixel rectangle to
+    // normalise the gradient over the bar (see the .frag header). The bar is
+    // anchored at the top-left of the backdrop layer (true for top app bars), so
+    // its origin is (0,0); LayoutBuilder gives its size.
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wPx = constraints.maxWidth * dpr;
+        final hPx = constraints.maxHeight * dpr;
+        void configure(ui.FragmentShader s, double axis) {
+          s
+            ..setFloat(2, widget.maxSigma * dpr)
+            ..setFloat(3, widget.falloff)
+            ..setFloat(4, widget.direction._uniform)
+            ..setFloat(5, axis) // 0 = horizontal, 1 = vertical
+            ..setFloat(6, 0) // region origin x (device px)
+            ..setFloat(7, 0) // region origin y (device px)
+            ..setFloat(8, wPx) // region width (device px)
+            ..setFloat(9, hPx); // region height (device px)
+        }
+
+        configure(h, 0);
+        configure(v, 1);
+
+        // Separable 2-pass: horizontal (inner) then vertical (outer) = a clean
+        // 2-D gaussian.
+        final filter = ui.ImageFilter.compose(
+          outer: ui.ImageFilter.shader(v),
+          inner: ui.ImageFilter.shader(h),
+        );
+
+        return ClipRect(
+          child: BackdropFilter(
+            filter: filter,
+            child: const SizedBox.expand(),
+          ),
+        );
+      },
     );
   }
 }
