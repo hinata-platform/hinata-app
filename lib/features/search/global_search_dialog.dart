@@ -404,7 +404,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
             ),
           ),
           const SizedBox(width: 8),
-          _EscPill(tokens: tokens, onTap: _close),
+          _EscPill(tokens: tokens, onTap: _close, mobile: mobile),
         ],
       ),
     );
@@ -1000,20 +1000,37 @@ class _ScopeChip extends StatelessWidget {
 }
 
 class _EscPill extends StatelessWidget {
-  const _EscPill({required this.tokens, required this.onTap});
+  const _EscPill({required this.tokens, required this.onTap, required this.mobile});
   final SearchTokens tokens;
   final VoidCallback onTap;
+  final bool mobile;
 
   @override
   Widget build(BuildContext context) {
+    // On phones there's no keyboard, so keep a tappable X. On the wide (web /
+    // desktop) layout show the boxed `esc` key hint instead — pressing Escape is
+    // how you dismiss it there — kept tappable for mouse users.
+    if (mobile) {
+      return Tooltip(
+        message: 'esc',
+        child: IconButton(
+          icon: Icon(LucideIcons.x),
+          color: tokens.inkSoft,
+          onPressed: onTap,
+          style: ButtonStyle(
+            padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 9, vertical: 4)),
+          ),
+        ),
+      );
+    }
     return Tooltip(
       message: 'esc',
-      child: IconButton(
-        icon: Icon(LucideIcons.x),
-        color: tokens.inkSoft,
-        onPressed: onTap,
-        style: ButtonStyle(
-          padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 9, vertical: 4)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: _KbdHint(tokens: tokens, text: 'esc'),
         ),
       ),
     );
