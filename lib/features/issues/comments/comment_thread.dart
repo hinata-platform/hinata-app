@@ -83,14 +83,33 @@ class CommentThread extends StatelessWidget {
   static bool chatMode(BuildContext context) =>
       context.layoutSize == LayoutSize.compact;
 
+  /// Consecutive comments from the same author within this window are treated as
+  /// one WhatsApp-style group: name shown once on top, avatar once at the bottom.
+  static const _groupWindow = Duration(minutes: 5);
+
+  static bool _grouped(IssueComment a, IssueComment b) {
+    if (a.authorId != b.authorId) return false;
+    final ta = a.createdAt, tb = b.createdAt;
+    if (ta == null || tb == null) return true;
+    return tb.difference(ta).abs() <= _groupWindow;
+  }
+
   @override
   Widget build(BuildContext context) {
     final chat = chatMode(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final c in comments)
-          CommentBubbleRow(
+    final rows = <Widget>[];
+    for (var idx = 0; idx < comments.length; idx++) {
+      final c = comments[idx];
+      final prev = idx > 0 ? comments[idx - 1] : null;
+      final next = idx < comments.length - 1 ? comments[idx + 1] : null;
+      final firstOfGroup = prev == null || !_grouped(prev, c);
+      final lastOfGroup = next == null || !_grouped(c, next);
+      rows.add(
+        Padding(
+          // Tight within a group, roomier between groups — the vertical rhythm
+          // that keeps the feed from feeling bulky.
+          padding: EdgeInsets.only(top: idx == 0 ? 0 : (firstOfGroup ? 14 : 3)),
+          child: CommentBubbleRow(
             comment: c,
             // Right-align only in chat mode, and only for the current user.
             me: chat && meId != null && c.authorId == meId,
@@ -98,10 +117,20 @@ class CommentThread extends StatelessWidget {
             avatarUrl: avatarFor(c.authorId),
             loadVoice: loadVoice(c),
             canManage: canManage(c),
+            // Author name only atop a group; avatar + tail only on its last
+            // bubble, so stacked messages read as one thread.
+            showName: firstOfGroup,
+            showAvatar: lastOfGroup,
+            tail: lastOfGroup,
             onEdit: () => onEdit(c),
             onDelete: () => onDelete(c),
           ),
-      ],
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
     );
   }
 }
@@ -119,6 +148,9 @@ class CommentBubbleRow extends StatelessWidget {
     required this.canManage,
     required this.onEdit,
     required this.onDelete,
+    this.showName = true,
+    this.showAvatar = true,
+    this.tail = true,
   });
 
   final IssueComment comment;
@@ -130,18 +162,31 @@ class CommentBubbleRow extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
+  /// Author name atop the bubble — only the first message of a group shows it.
+  final bool showName;
+
+  /// Avatar in the gutter — only the last message of a group shows it; earlier
+  /// ones reserve the gutter width so the column stays aligned.
+  final bool showAvatar;
+
+  /// Whether this bubble draws the small "tail" corner (last of a group).
+  final bool tail;
+
   @override
   Widget build(BuildContext context) {
     // Compact (phone) = chat layout + long-press moderation. On tablet/desktop
     // long-press is unintuitive, so own comments get explicit edit/delete
-    // buttons beside the bubble instead.
+    // buttons pinned to the row's trailing edge instead.
     final compact = CommentThread.chatMode(context);
     final inlineActions = !compact && canManage;
 
-    final avatar = HiveAvatar(name: name, imageUrl: avatarUrl, size: 30);
+    final avatar = showAvatar
+        ? HiveAvatar(name: name, imageUrl: avatarUrl, size: 30)
+        : const SizedBox(width: 30);
     Widget bubble = _Bubble(
       comment: comment,
       me: me,
+      tail: tail,
       loadVoice: loadVoice,
       canManage: canManage,
       // Long-press menu only in chat (compact) mode.
@@ -151,15 +196,23 @@ class CommentBubbleRow extends StatelessWidget {
     );
     if (inlineActions) {
       bubble = Row(
-        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Flexible(child: bubble),
-          const SizedBox(width: 4),
-          _RowActions(
-            canEdit: !comment.isVoice,
-            onEdit: onEdit,
-            onDelete: onDelete,
+          // Push the actions to the far (right) edge of the row rather than
+          // cramming them against the bubble.
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 10, right: 2),
+                child: _RowActions(
+                  canEdit: !comment.isVoice,
+                  onEdit: onEdit,
+                  onDelete: onDelete,
+                ),
+              ),
+            ),
           ),
         ],
       );
@@ -171,7 +224,7 @@ class CommentBubbleRow extends StatelessWidget {
             ? CrossAxisAlignment.end
             : CrossAxisAlignment.start,
         children: [
-          if (!me)
+          if (showName && !me)
             Padding(
               padding: const EdgeInsets.only(left: 4, bottom: 3),
               child: Text(
@@ -192,14 +245,10 @@ class CommentBubbleRow extends StatelessWidget {
         ? [column, const SizedBox(width: 9), avatar]
         : [avatar, const SizedBox(width: 9), column];
 
-    // Self-spacing so the row drops straight into any tab's feed list.
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Row(
-        mainAxisAlignment: me ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: children,
-      ),
+    return Row(
+      mainAxisAlignment: me ? MainAxisAlignment.end : MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: children,
     );
   }
 }
@@ -275,6 +324,7 @@ class _Bubble extends StatelessWidget {
   const _Bubble({
     required this.comment,
     required this.me,
+    required this.tail,
     required this.loadVoice,
     required this.canManage,
     required this.enableMenu,
@@ -284,6 +334,9 @@ class _Bubble extends StatelessWidget {
 
   final IssueComment comment;
   final bool me;
+
+  /// Draw the small "tail" corner on the sender's side (last of a group only).
+  final bool tail;
   final VoiceAudioLoader loadVoice;
   final bool canManage;
 
@@ -305,8 +358,8 @@ class _Bubble extends StatelessWidget {
     final radius = BorderRadius.only(
       topLeft: const Radius.circular(16),
       topRight: const Radius.circular(16),
-      bottomLeft: Radius.circular(me ? 16 : 5),
-      bottomRight: Radius.circular(me ? 5 : 16),
+      bottomLeft: Radius.circular(!me && tail ? 5 : 16),
+      bottomRight: Radius.circular(me && tail ? 5 : 16),
     );
 
     final bubble = ConstrainedBox(
@@ -488,16 +541,78 @@ class _GlassBubbleMenu extends StatelessWidget {
 }
 
 /// Text comment body — rendered through the shared Markdown parser so mentions,
-/// smart-links and inline images keep working inside the bubble — with the time
-/// (and a read-receipt tick on the user's own messages) tucked under it.
+/// smart-links and inline images keep working inside the bubble.
+///
+/// For the common case (a single plain paragraph) the time flows *inline* after
+/// the text — WhatsApp-style — so short messages stay one line tall instead of
+/// spending a whole extra row on the timestamp. Rich content (headings, lists,
+/// code, tables, images) falls back to block layout with the time tucked under.
 class _TextBody extends StatelessWidget {
   const _TextBody({required this.comment, required this.me});
 
   final IssueComment comment;
   final bool me;
 
+  /// Matches any line that opens a block-level markdown construct.
+  static final _blockLine = RegExp(
+    r'^(#{1,6}\s|```|>\s?|\s*\|.*\||:::|(-{3,}|\*{3,}|_{3,})\s*$|(\s*([-*+]|\d+\.)\s+))',
+  );
+  static final _image = RegExp(r'!\[[^\]]*\]\([^)]+\)');
+
+  /// True when the body is a single paragraph with no block-level markdown —
+  /// safe to render as one inline run with a trailing timestamp.
+  bool get _inlineOnly {
+    if (_image.hasMatch(comment.text)) return false;
+    final lines = comment.text.replaceAll('\r\n', '\n').split('\n');
+    var sawText = false;
+    var sawBlank = false;
+    for (final l in lines) {
+      if (l.trim().isEmpty) {
+        if (sawText) sawBlank = true;
+        continue;
+      }
+      if (sawBlank) return false; // a second paragraph → treat as block
+      if (_blockLine.hasMatch(l)) return false;
+      sawText = true;
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final meta = _MetaLine(
+      createdAt: comment.createdAt,
+      me: me,
+      edited: comment.isEdited,
+    );
+
+    if (_inlineOnly) {
+      final parser = KbMarkdownParser(fontSize: 14);
+      final base = parser.baseStyle.copyWith(height: 1.32);
+      // Collapse the soft-wrapped paragraph into one line-flow (same as the
+      // block parser) so the trailing time wraps naturally with the text.
+      final body = comment.text
+          .replaceAll('\r\n', '\n')
+          .split('\n')
+          .map((l) => l.trim())
+          .where((l) => l.isNotEmpty)
+          .join(' ');
+      return Text.rich(
+        TextSpan(
+          children: [
+            parser.inlineFor(body, base),
+            WidgetSpan(
+              alignment: PlaceholderAlignment.bottom,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: meta,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final nodes = KbMarkdownParser(fontSize: 14).parse(comment.text).nodes;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,11 +620,7 @@ class _TextBody extends StatelessWidget {
       children: [
         ...nodes,
         const SizedBox(height: 2),
-        _MetaLine(
-          createdAt: comment.createdAt,
-          me: me,
-          edited: comment.isEdited,
-        ),
+        meta,
       ],
     );
   }
