@@ -765,11 +765,22 @@ class TabIndicatorState extends State<TabIndicator>
             ),
 
             // 2. Icon Content Layer (Unselected + Selected combined for refraction)
+            //
+            // Clipped to the bar's rounded superellipse: this layer is a
+            // rectangular fill, so without the clip the unselected labels/icons
+            // in the leading/trailing tabs bleed past the pill's rounded corners
+            // as faint white slivers along the edges. The amber indicator is
+            // painted by the separate AnimatedGlassIndicator siblings (below and
+            // above this layer), so clipping the icons does NOT trim the yellow
+            // out of the corner radius — it stays exactly where it needs to be.
             Positioned.fill(
-              child: RepaintBoundary(
-                key: _iconLayerKey,
-                child: Stack(
-                  children: [
+              child: ClipPath(
+                clipper: ShapeBorderClipper(shape: _barShape),
+                clipBehavior: Clip.antiAlias,
+                child: RepaintBoundary(
+                  key: _iconLayerKey,
+                  child: Stack(
+                    children: [
                     // Unselected (inverse clipped — visible OUTSIDE pill)
                     ClipPath(
                       clipper: JellyClipper(
@@ -806,7 +817,8 @@ class TabIndicatorState extends State<TabIndicator>
                             context, thickness, alignment),
                       ),
                     ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

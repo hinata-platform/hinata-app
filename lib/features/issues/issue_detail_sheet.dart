@@ -560,7 +560,8 @@ class IssueDetailBody extends StatefulWidget {
   State<IssueDetailBody> createState() => IssueDetailBodyState();
 }
 
-class IssueDetailBodyState extends State<IssueDetailBody> {
+class IssueDetailBodyState extends State<IssueDetailBody>
+    with WidgetsBindingObserver {
   final _comment = TextEditingController();
   final _commentFocus = FocusNode();
   late final MarkdownEditingActions _commentActions = MarkdownEditingActions(
@@ -631,6 +632,7 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _commentFocus.addListener(_onCommentFocusChanged);
     _load();
   }
@@ -643,8 +645,19 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
   // wouldn't otherwise trigger a MediaQuery rebuild of the sticky bar.
   void _onCommentFocusChanged() => _bumpComposer();
 
+  // The keyboard opening/closing decides whether the floating composer is shown
+  // (it hides while another field's keyboard is up). Inside Wolt's Scaffold the
+  // sticky-bar subtree never sees the keyboard inset via MediaQuery
+  // (resizeToAvoidBottomInset strips it), so a MediaQuery dependency alone won't
+  // rebuild it on keyboard toggles — observe the raw window metrics and nudge
+  // the composer whenever they change (keyboard rising from a *different* field
+  // being focused, etc.). See [buildFloatingComposer].
+  @override
+  void didChangeMetrics() => _bumpComposer();
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _commentFocus.removeListener(_onCommentFocusChanged);
     _comment.dispose();
     _commentFocus.dispose();
@@ -2180,7 +2193,15 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     // up for another input (sub-task / linked-issue / inline title-edit), the
     // composer would still ride above it. Only keep it mounted when the keyboard
     // is down or the comment field itself is the reason it's up.
-    final keyboardUp = MediaQuery.viewInsetsOf(context).bottom > 0;
+    //
+    // Read the *raw* keyboard height off the FlutterView, NOT
+    // `MediaQuery.viewInsetsOf(context)`: Wolt hosts the sheet in a Scaffold with
+    // `resizeToAvoidBottomInset`, which strips the bottom view inset from the
+    // sticky-bar subtree's MediaQuery (`removeViewInsets(removeBottom: true)`),
+    // so MediaQuery would report 0 here even with the keyboard up — and the
+    // composer would never hide. The physical view inset is immune to that.
+    // [didChangeMetrics] nudges this subtree to re-evaluate as the keyboard moves.
+    final keyboardUp = View.of(context).viewInsets.bottom > 0;
     if (keyboardUp && !_commentFocus.hasFocus) return const SizedBox.shrink();
     return SmartLinkScope(
       resolver: _buildResolver(issue),
