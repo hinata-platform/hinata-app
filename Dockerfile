@@ -2,9 +2,11 @@
 FROM ghcr.io/cirruslabs/flutter:stable AS build
 WORKDIR /app
 
-# Backend the hosted web build talks to by default (so users skip the connect
-# screen). Override at build time: --build-arg HINATA_DEFAULT_SERVER=...
-ARG HINATA_DEFAULT_SERVER=https://api.track.asta.hn
+# White-label build: NO backend is baked in. The default server is resolved at
+# *runtime* from window.hinataDefaultServer (see web/config.js), which the
+# runtime entrypoint below regenerates from the HINATA_DEFAULT_SERVER env on
+# every container start. The image on ghcr is therefore server-agnostic — the
+# operator sets the backend purely at deployment.
 
 # Copy the full source first: the app has a path dependency
 # (packages/liquid_glass_widgets), so `pub get` needs the vendored package
@@ -13,8 +15,7 @@ COPY . .
 RUN flutter pub get
 # WasmGC build (ships a JS fallback bundle for browsers without WasmGC). Fixes a
 # class of canvas/UI rendering glitches vs. the CanvasKit JS build.
-RUN flutter build web --wasm --release \
-    --dart-define=HINATA_DEFAULT_SERVER=${HINATA_DEFAULT_SERVER}
+RUN flutter build web --wasm --release
 
 # ---- Runtime stage: serve the static build via nginx ----
 FROM nginx:1.27-alpine
@@ -24,6 +25,12 @@ COPY --from=build /app/build/web /usr/share/nginx/html
 # https://track.asta.hn/.well-known/* verifies Android App Links + iOS
 # Universal Links. assetlinks.json carries the release signing fingerprint.
 COPY deploy/well-known/ /usr/share/nginx/html/.well-known/
+# White-label runtime config: regenerate /config.js from $HINATA_DEFAULT_SERVER
+# on every container start. nginx:alpine runs every executable *.sh in this dir
+# before starting nginx, so no custom ENTRYPOINT is needed. Unset/empty env ⇒
+# the app shows the connect screen.
+COPY deploy/docker-entrypoint.d/40-hinata-config.sh /docker-entrypoint.d/40-hinata-config.sh
+RUN chmod +x /docker-entrypoint.d/40-hinata-config.sh
 EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
   CMD wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1

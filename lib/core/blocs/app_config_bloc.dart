@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../api/hinata_repository.dart';
+import '../config/runtime_config.dart';
 import '../models/core_models.dart';
 import '../models/server_profile.dart';
 import '../storage/app_storage.dart';
@@ -85,22 +86,20 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
   final HinataRepository repository;
   final AppStorage storage;
 
-  /// Compile-time default backend, only ever consulted for the hosted **web**
-  /// build (see [_effectiveDefaultServer]). Baked in via
-  /// `--build-arg HINATA_DEFAULT_SERVER=…` in the web Dockerfile, so users of a
-  /// specific hosted deployment land straight in the app. Empty ⇒ show /connect.
-  static const String _defaultServer =
-      String.fromEnvironment('HINATA_DEFAULT_SERVER');
-
   /// The default server URL that actually applies on this platform.
   ///
-  /// White-label rule: the native store apps (iOS/Android/macOS) must **never**
-  /// pin a backend — a fresh install always asks for the server URL on first
-  /// launch. We gate the compile-time default to the web build here as
-  /// defense-in-depth, so even a build that mistakenly passes
-  /// `--dart-define=HINATA_DEFAULT_SERVER=…` to a native target is ignored and
-  /// the connect screen still shows.
-  static String get _effectiveDefaultServer => kIsWeb ? _defaultServer : '';
+  /// White-label rule: the shipped image/app bakes **no** backend. The hosted
+  /// web build resolves its default at *runtime* from `window.hinataDefaultServer`
+  /// (injected by `config.js`, which the Docker entrypoint regenerates from the
+  /// `HINATA_DEFAULT_SERVER` container env) — so the operator sets the backend
+  /// purely at deployment, not at build time. Empty ⇒ show /connect.
+  ///
+  /// The native store apps (iOS/Android/macOS) must **never** pin a backend, so
+  /// we additionally gate to the web build here as defense-in-depth: even if a
+  /// native platform ever exposed a value, a fresh install still asks for the
+  /// server URL on first launch.
+  static String get _effectiveDefaultServer =>
+      kIsWeb ? runtimeDefaultServer : '';
 
   Future<void> _onStarted(AppConfigStarted event, Emitter<AppConfigState> emit) async {
     final info = await PackageInfo.fromPlatform();

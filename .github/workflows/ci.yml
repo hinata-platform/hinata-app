@@ -61,33 +61,20 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=raw,value=latest,enable={{is_default_branch}}
-      # asta web image — baked with api.track.asta.hn. Tags: semver (on v* tags)
-      # + :latest (on main). Runs on every push.
-      - name: Build & push asta web image
+            type=raw,value=bear,enable={{is_default_branch}}
+      # White-label web image — NO backend is baked in. The default server is set
+      # at deployment via the HINATA_DEFAULT_SERVER container env (see Dockerfile
+      # + deploy/docker-entrypoint.d). One image serves every deployment; the
+      # :bear tag is now just an alias of the same white-label build (asta + bear
+      # differ only by the env each stack's compose sets). Tags: semver (v* tags)
+      # + :latest and :bear (main).
+      - name: Build & push white-label web image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          build-args: |
-            HINATA_DEFAULT_SERVER=https://api.track.asta.hn
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      # bear web image — same source, baked with api.track.bear.ahmadre.com, fixed
-      # :bear tag. The web build bakes the backend URL at compile time, so bear
-      # needs its OWN image (it is NOT just a re-tag of :latest). Reuses the asta
-      # build cache: only the final `flutter build web` layer differs (build-arg).
-      # main only — the bear instance tracks main, not release tags.
-      - name: Build & push bear web image
-        if: github.ref == 'refs/heads/main'
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          build-args: |
-            HINATA_DEFAULT_SERVER=https://api.track.bear.ahmadre.com
-          tags: ghcr.io/${{ github.repository }}:bear
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -110,6 +97,11 @@ jobs:
           # asta and :bear for bear. Stack dirs on ASTASRV01:
           #   asta -> /opt/stacks/hinata       (project "hinata",      inline values)
           #   bear -> /opt/stacks/hinata-bear  (project "hinata-bear", loads its .env)
+          #
+          # WHITE-LABEL: the image bakes NO backend. Each stack's hinata-app service
+          # MUST set the server via env, else the app opens the connect screen:
+          #   asta compose:  environment: [ "HINATA_DEFAULT_SERVER=https://api.track.asta.hn" ]
+          #   bear compose:  environment: [ "HINATA_DEFAULT_SERVER=https://api.track.bear.ahmadre.com" ]
           for STACK in hinata hinata-bear; do
             echo "::group::redeploy $STACK (app)"
             docker run --rm \
