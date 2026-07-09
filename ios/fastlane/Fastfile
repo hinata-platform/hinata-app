@@ -11,6 +11,13 @@
 
 default_platform(:ios)
 
+# gym probes `xcodebuild -showBuildSettings` before archiving. On a cold CI
+# runner the very first xcodebuild invocation resolves the workspace/SPM state
+# and can take minutes; fastlane's 3s default timeout then fails the lane.
+# `||=` keeps an explicit override from the environment authoritative.
+ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] ||= "120"
+ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] ||= "6"
+
 APP_IDENTIFIER = "com.ahmadre.hinata".freeze
 WORKSPACE = "Runner.xcworkspace".freeze
 SCHEME = "Runner".freeze
