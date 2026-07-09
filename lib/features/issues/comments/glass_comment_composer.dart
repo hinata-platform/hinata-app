@@ -582,6 +582,14 @@ class _CircleButton extends StatelessWidget {
     // Real Liquid Glass for the idle "+", mic, trash and format-close buttons —
     // pinned to the standard (lightweight) shader so it renders correctly over
     // the scrolling feed and on rotation, unlike the default premium pipeline.
+    //
+    // Shape: a superellipse with radius = size/2 (a perfect circle), NOT the
+    // default LiquidOval. An oval glass surface is clipped with ClipPath, which
+    // the engine can't forward to the descendant BackdropFilter layer — so the
+    // backdrop blur stays a rectangle behind the circle and its vertical edges
+    // leak as faint seams beside the button (worst over the bright desktop/web
+    // footer). ClipRRect (used for the superellipse) forwards the clip, killing
+    // the halo. See lightweight_liquid_glass.dart's LiquidOval note.
     return GlassButton(
       icon: Icon(icon, size: 22),
       iconColor: danger ? AppColors.danger : AppColors.ink,
@@ -590,6 +598,7 @@ class _CircleButton extends StatelessWidget {
       width: size,
       height: size,
       iconSize: 22,
+      shape: LiquidRoundedSuperellipse(borderRadius: size / 2),
       useOwnLayer: true,
       quality: GlassQuality.standard,
       settings: _composerGlass(dark),
