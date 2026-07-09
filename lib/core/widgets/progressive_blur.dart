@@ -18,9 +18,19 @@ class ProgressiveBlur extends StatelessWidget {
 
   final double maxSigma;
 
-  /// Slice count. High enough that the per-step sigma delta is sub-perceptual
-  /// (~1px), so no visible bands.
-  static const int _slices = 50;
+  /// Slice count — a hard performance ceiling.
+  ///
+  /// Each slice is a real [BackdropFilter] blur *pass* on the GPU. `BackdropGroup`
+  /// only shares the backdrop *capture*; it does NOT collapse the N blur passes
+  /// into one. This bar overlays scrolling content, so every pass re-runs on each
+  /// scroll/keystroke frame — the earlier value of 50 meant ~48 blur passes per
+  /// frame and was the app's dominant source of jank on Android.
+  ///
+  /// 8 slices keep the gradient dissolve visually smooth (the translucent scrim
+  /// on top masks any residual banding) at ~6x lower cost. Do NOT raise this
+  /// without profiling on a real mid-range Android device — [progressiveBlurTest]
+  /// guards the ceiling.
+  static const int _slices = 8;
 
   @override
   Widget build(BuildContext context) {

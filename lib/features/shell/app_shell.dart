@@ -1,4 +1,3 @@
-import 'dart:math' show pow;
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
@@ -23,14 +22,15 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ambient_background.dart';
+import '../../core/widgets/progressive_blur.dart';
 import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/honeycomb_background.dart';
 import '../../core/widgets/app_avatar.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show
         GlassAppBar,
-        GlassBottomBar,
-        GlassBottomBarTab,
+        GlassTabBar,
+        GlassTab,
         GlassButton,
         GlassContainer,
         GlassQuality,
@@ -1779,7 +1779,7 @@ class _CompactShellState extends State<_CompactShell> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: GlassBottomBar(
+                        child: GlassTabBar.bottom(
                           horizontalPadding: 0,
                           verticalPadding: 0,
                           selectedIndex: _selectedIndex,
@@ -1800,7 +1800,7 @@ class _CompactShellState extends State<_CompactShell> {
                               : AppColors.ink,
                           tabs: [
                             for (final d in _bottomTabs)
-                              GlassBottomBarTab(
+                              GlassTab(
                                 icon: Icon(d.icon),
                                 label: context.t(d.labelKey),
                               ),
@@ -1882,7 +1882,7 @@ class _GlassTopBar extends StatelessWidget {
         children: [
           // Smooth progressive blur: strongest at the top, fading to sharp at the
           // bottom edge so the bar dissolves into the content beneath it.
-          Positioned.fill(child: _ProgressiveBlur(maxSigma: dark ? 30 : 26)),
+          Positioned.fill(child: ProgressiveBlur(maxSigma: dark ? 30 : 26)),
           // Darkening scrim (fades to transparent at the bottom edge so the bar
           // dissolves into the content instead of ending on a hard cut-off).
           Positioned.fill(
@@ -1966,7 +1966,7 @@ class _GlassTopBar extends StatelessWidget {
 /// Persistent top-bar actions — notifications and settings, each its own
 /// separate round iOS-26 liquid-glass button (no more grouped capsule; global
 /// search moved to the floating bottom nav). Each button is a [_FrostedSurface]
-/// circle that relies on the bar's single [_ProgressiveBlur] showing through its
+/// circle that relies on the bar's single [ProgressiveBlur] showing through its
 /// translucent fill (no nested [BackdropFilter], which would re-sample the
 /// already-blurred backdrop and pixelate).
 class _GlassTopActions extends StatelessWidget {
@@ -2125,84 +2125,6 @@ class _FrostedCircleButton extends StatelessWidget {
       ),
     );
     return tooltip != null ? Tooltip(message: tooltip!, child: button) : button;
-  }
-}
-
-/// Smooth vertical *gradient* backdrop blur: strongest at the top, easing to
-/// perfectly sharp at the bottom, so the frosted bar dissolves into the content
-/// beneath it (no hard cut-off edge) — the iOS-26 top-of-screen blur.
-///
-/// ## Why this is smooth AND cheap
-///
-/// A true gradient blur isn't expressible with a single primitive: a custom
-/// fragment shader can't sample the backdrop (no Flutter API), and wrapping a
-/// [BackdropFilter] in a [ShaderMask] breaks it (the filter samples an empty
-/// backdrop inside the mask's save-layer). So we approximate the gradient with
-/// many thin horizontal slices of increasing sigma.
-///
-/// The trick that makes it premium-quality:
-///
-/// 1. **No banding** — enough slices ([_slices]) that the sigma step between
-///    neighbours falls below the perceptible threshold, so the discrete strips
-///    read as one continuous gradient.
-/// 2. **No pixelation** — every slice is a [BackdropFilter.grouped] sharing one
-///    [BackdropGroup] key, so they all blur the *same original* backdrop
-///    snapshot. They never sample each other, so there's no compounded /
-///    down-sampled "blur of a blur" (which is what produced the earlier blocky
-///    artefacts).
-/// 3. **Performant** — the shared [BackdropGroup] lets the engine capture the
-///    backdrop a single time for the whole stack instead of once per slice.
-class _ProgressiveBlur extends StatelessWidget {
-  const _ProgressiveBlur({required this.maxSigma});
-
-  final double maxSigma;
-
-  /// Slice count. High enough that the per-step sigma delta is sub-perceptual
-  /// (~1px), so no visible bands. Cheap thanks to the shared [BackdropGroup].
-  static const int _slices = 50;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRect(
-      child: BackdropGroup(
-        child: Column(
-          children: [
-            for (var i = 0; i < _slices; i++)
-              Expanded(
-                child: _BlurSlice(
-                  // t: 0 at the top → 1 at the bottom. A gentle (^1.2) falloff
-                  // keeps the blur strong across the status bar AND the
-                  // title/pill row — like the reference — then eases to sharp
-                  // near the bottom edge, so the pill still reads as glass.
-                  sigma:
-                      maxSigma * pow(1 - (i / (_slices - 1)), 1.2).toDouble(),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BlurSlice extends StatelessWidget {
-  const _BlurSlice({required this.sigma});
-
-  final double sigma;
-
-  @override
-  Widget build(BuildContext context) {
-    // Below ~0.3 a blur is imperceptible; skip the filter so the bottom slices
-    // stay genuinely sharp and cheap.
-    if (sigma < 0.3) return const SizedBox.expand();
-    return ClipRect(
-      // .grouped → shares the BackdropGroup's single backdrop capture and never
-      // samples sibling slices (no compounded blur → no pixelation).
-      child: BackdropFilter.grouped(
-        filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-        child: const SizedBox.expand(),
-      ),
-    );
   }
 }
 

@@ -90,8 +90,7 @@ const Color _onAccent = Color(0xFF2A2410);
 /// pointer-driven, so we trim the [+]/mic/send circles a touch — at 52 they
 /// read too large next to the field pill. Keyed off the same compact-width
 /// signal the comment thread uses to split phone-chat from desktop layout.
-double _composerButtonSize(BuildContext context) =>
-    context.isCompact ? 52 : 46;
+double _composerButtonSize(BuildContext context) => context.isCompact ? 52 : 46;
 
 /// Attachment sources offered by the composer's "+" menu.
 enum ComposerAttach { camera, gallery, file }
@@ -159,9 +158,16 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
 
   bool get _canSend => widget.controller.text.trim().isNotEmpty;
 
+  // Last computed send-ability, so a keystroke only rebuilds this composer (which
+  // hosts liquid-glass buttons) when the mic↔send affordance actually flips —
+  // not on every character. Typing rebuilt the glass buttons per keystroke
+  // before, a measurable source of input lag in the comment field.
+  bool _sendable = false;
+
   @override
   void initState() {
     super.initState();
+    _sendable = _canSend;
     widget.controller.addListener(_onTextChanged);
   }
 
@@ -174,7 +180,11 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
   }
 
   void _onTextChanged() {
-    // Rebuild so the mic↔send swap tracks the text.
+    // Rebuild only when the mic↔send swap actually changes (empty ↔ non-empty),
+    // not on every keystroke.
+    final sendable = _canSend;
+    if (sendable == _sendable) return;
+    _sendable = sendable;
     if (mounted) setState(() {});
   }
 
@@ -259,16 +269,16 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
   /// existing comment, the leading "+" becomes an "×" that abandons the edit.
   Widget _idleRow() {
     return Row(
-          // Single-line field and the buttons share one baseline; when the
-          // field grows, buttons stay pinned to the bottom edge.
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            _leadingButton(),
-            const SizedBox(width: 10),
-            Expanded(child: _fieldPill()),
-            const SizedBox(width: 10),
-            _trailingButton(),
-          ],
+      // Single-line field and the buttons share one baseline; when the
+      // field grows, buttons stay pinned to the bottom edge.
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        _leadingButton(),
+        const SizedBox(width: 10),
+        Expanded(child: _fieldPill()),
+        const SizedBox(width: 10),
+        _trailingButton(),
+      ],
     );
   }
 
@@ -482,7 +492,6 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
       ),
     );
   }
-
 }
 
 // ── circle buttons ─────────────────────────────────────────────────────────
@@ -515,11 +524,7 @@ class _CircleButton extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFE7B24A),
-            AppColors.accent,
-            AppColors.accentStrong,
-          ],
+          colors: [Color(0xFFE7B24A), AppColors.accent, AppColors.accentStrong],
         ),
         boxShadow: [
           BoxShadow(

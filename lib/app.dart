@@ -5,6 +5,7 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import 'core/api/account_event_stream.dart';
 import 'core/api/api_client.dart';
@@ -206,7 +207,9 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     if (b64.isEmpty) return;
     try {
       final padded = b64.padRight((b64.length + 3) ~/ 4 * 4, '=');
-      final payload = jsonDecode(utf8.decode(base64Url.decode(padded))) as Map<String, dynamic>;
+      final payload =
+          jsonDecode(utf8.decode(base64Url.decode(padded)))
+              as Map<String, dynamic>;
       final token = payload['t'] as String?;
       final route = payload['p'] as String?;
       final server = payload['a'] as String?;
@@ -325,7 +328,33 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
                         context,
                       ),
                     };
-                    return child ?? const SizedBox.shrink();
+                    // Performance + stability: install the liquid-glass adaptive
+                    // quality scope at the app root. Without it, every explicit
+                    // `quality: GlassQuality.premium` in the app renders the full
+                    // (and crash-prone on some Mali GPUs) two-BackdropFilter +
+                    // fragment-shader pipeline *ungated* on every device. The
+                    // scope acts as a device-capability ceiling that caps those
+                    // surfaces. We cap at `standard` (the lightweight single-pass
+                    // shader — 5-10x cheaper, and the path that does NOT trigger
+                    // the shader-related production crashes) and let the runtime
+                    // monitor degrade to `minimal` (BackdropFilter-only) on weak
+                    // GPUs, stepping back up when headroom returns. Raise
+                    // maxQuality to premium only if flagship refraction is wanted.
+                    return LiquidGlassWidgets.wrap(
+                      adaptiveQuality: true,
+                      // Deliberately using the package's experimental adaptive
+                      // quality API — it is the intended, supported way to gate
+                      // glass cost per device.
+                      // ignore: experimental_member_use
+                      adaptiveConfig: const GlassAdaptiveScopeConfig(
+                        initialQuality: GlassQuality.standard,
+                        maxQuality: GlassQuality.premium,
+                        minQuality: GlassQuality.minimal,
+                        allowStepUp: true,
+                        targetFrameMs: 16,
+                      ),
+                      child: child ?? const SizedBox.shrink(),
+                    );
                   },
                 );
               },

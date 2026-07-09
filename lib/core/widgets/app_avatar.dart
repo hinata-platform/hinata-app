@@ -23,7 +23,12 @@ final Map<String, Future<void>> _avatarInFlight = {};
 /// everywhere. It also transparently carries the bearer token + the
 /// ngrok-skip header, so it works behind auth and tunnels too.
 class AppAvatar extends StatelessWidget {
-  const AppAvatar({super.key, required this.name, this.imageUrl, this.radius = 18});
+  const AppAvatar({
+    super.key,
+    required this.name,
+    this.imageUrl,
+    this.radius = 18,
+  });
 
   final String name;
   final String? imageUrl;
@@ -56,24 +61,40 @@ class AppAvatar extends StatelessWidget {
   }
 
   Widget _circle(ImageProvider? image) => CircleAvatar(
-        radius: radius,
-        backgroundColor: AppColors.pastelFor(name.hashCode.abs()),
-        foregroundImage: image,
-        child: Text(
-          _initials(name),
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
-            fontSize: radius * 0.8,
+    radius: radius,
+    backgroundColor: AppColors.pastelFor(name.hashCode.abs()),
+    // Decode at (roughly) the on-screen pixel size, not the source's full
+    // resolution: a 512px upload rendered in a 28-36px circle otherwise
+    // wastes decode time and GPU texture memory — costly in avatar-dense
+    // lists (member strips, notifications, boards). 3x covers the densest
+    // screens; ResizeImage is a no-op when the source is already smaller.
+    foregroundImage: image == null
+        ? null
+        : ResizeImage(
+            image,
+            width: (radius * 2 * 3).round(),
+            height: (radius * 2 * 3).round(),
           ),
-        ),
-      );
+    child: Text(
+      _initials(name),
+      style: TextStyle(
+        color: AppColors.textPrimary,
+        fontWeight: FontWeight.w700,
+        fontSize: radius * 0.8,
+      ),
+    ),
+  );
 
   String _initials(String value) {
-    final parts = value.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts = value
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '?';
     if (parts.length == 1) return parts.first.characters.first.toUpperCase();
-    return (parts.first.characters.first + parts.last.characters.first).toUpperCase();
+    return (parts.first.characters.first + parts.last.characters.first)
+        .toUpperCase();
   }
 }
 
@@ -122,8 +143,9 @@ class ApiImageAvatarState extends State<ApiImageAvatar> {
   Future<void> _fetch(String path) async {
     try {
       final result = await widget.api.getBytes(path);
-      _avatarBytesCache[path] =
-          result == null ? null : Uint8List.fromList(result.bytes);
+      _avatarBytesCache[path] = result == null
+          ? null
+          : Uint8List.fromList(result.bytes);
     } catch (_) {
       _avatarBytesCache[path] = null;
     } finally {
@@ -141,7 +163,12 @@ class ApiImageAvatarState extends State<ApiImageAvatar> {
 
 /// Overlapping avatar stack like the member group in the design header.
 class AvatarStack extends StatelessWidget {
-  const AvatarStack({super.key, required this.names, this.max = 3, this.radius = 14});
+  const AvatarStack({
+    super.key,
+    required this.names,
+    this.max = 3,
+    this.radius = 14,
+  });
 
   final List<String> names;
   final int max;
@@ -155,7 +182,8 @@ class AvatarStack extends StatelessWidget {
       height: radius * 2,
       width: visible.isEmpty
           ? 0
-          : radius * 2 + (visible.length - 1 + (overflow > 0 ? 1 : 0)) * radius * 1.2,
+          : radius * 2 +
+                (visible.length - 1 + (overflow > 0 ? 1 : 0)) * radius * 1.2,
       child: Stack(
         children: [
           for (var i = 0; i < visible.length; i++)
