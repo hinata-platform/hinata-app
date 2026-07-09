@@ -59,6 +59,12 @@ dependencies:
   # Platform integration
   url_launcher: ^6.3.0
   app_links: ^6.3.0
+  # High-refresh-rate (90/120 Hz) on Android. Android renders the Flutter surface
+  # at the panel's *default* mode (usually 60 Hz) unless the app explicitly opts
+  # into the highest supported mode, which is why static screens sit at 60 Hz
+  # while continuous animations opportunistically boost to 120. iOS/macOS are
+  # already covered by CADisableMinimumFrameDurationOnPhone in Info.plist.
+  flutter_displaymode: ^0.6.0
   package_info_plus: ^9.0.0
   # Browser download (Blob + anchor) for authenticated file downloads on web.
   web: ^1.1.0

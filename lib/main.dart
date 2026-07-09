@@ -1,7 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
@@ -18,6 +21,20 @@ import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // High refresh rate. Android renders the Flutter surface at the panel's
+  // *default* mode (usually 60 Hz) unless the app explicitly opts into the
+  // highest supported mode — which is why static screens (e.g. the dashboard)
+  // sit at 60 Hz while continuous glass animations opportunistically boost to
+  // 120. Requesting `setHighRefreshRate` pins the surface to the fastest mode
+  // at the current resolution so the whole app runs at 120 Hz uniformly. iOS/
+  // macOS are already covered by CADisableMinimumFrameDurationOnPhone in
+  // Info.plist. Guarded: never let this block startup on any device.
+  if (!kIsWeb && Platform.isAndroid) {
+    try {
+      await FlutterDisplayMode.setHighRefreshRate();
+    } catch (_) {}
+  }
 
   // Warm up the Lucide icon module on this shallow call stack. On Flutter web's
   // dev compiler (DDC) the first access to a symbol in this ~1600-icon library
