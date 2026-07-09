@@ -778,9 +778,14 @@ class _LinkEditorState extends State<_LinkEditor> {
                         issue: issue,
                         onRemove: () => _removeChip(issue),
                       ),
-                    // The text field shares the row, growing to fill the line.
+                    // The text field fills the full width of the run it lands on
+                    // (its own line beneath the chips, or the whole field when
+                    // empty) instead of a fixed 160px stub — otherwise the input
+                    // caret sat in a cramped half-width box. `_fieldWidth` is the
+                    // container's outer width; subtract its 10px horizontal
+                    // padding on each side to get the Wrap's content width.
                     SizedBox(
-                      width: 160,
+                      width: (_fieldWidth - 20).clamp(120.0, double.infinity),
                       child: TextField(
                         controller: _searchCtrl,
                         focusNode: _focus,

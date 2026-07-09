@@ -37,7 +37,7 @@ class HinataApp extends StatefulWidget {
   State<HinataApp> createState() => _HinataAppState();
 }
 
-class _HinataAppState extends State<HinataApp> {
+class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   late final AppConfigBloc _appConfig;
   late final AuthBloc _auth;
   late final GoRouter _router;
@@ -64,6 +64,7 @@ class _HinataAppState extends State<HinataApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _appConfig = AppConfigBloc(
       repository: widget.repository,
       storage: widget.storage,
@@ -245,8 +246,25 @@ class _HinataAppState extends State<HinataApp> {
     _router.go('$route?token=${Uri.encodeQueryComponent(token)}');
   }
 
+  /// Dismiss the keyboard whenever the app leaves the foreground. If a TextField
+  /// is still focused (keyboard up) when iOS snapshots the app for the background,
+  /// UIKit's own keyboard layout (TUIKeyboardContentView / UIKeyboardImpl) logs a
+  /// spurious "Unable to simultaneously satisfy constraints" warning — its
+  /// internal 250 vs. 216 height conflict, not ours. Unfocusing first removes the
+  /// trigger so the keyboard is already gone before the snapshot is taken.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      FocusManager.instance.primaryFocus?.unfocus();
+    }
+    super.didChangeAppLifecycleState(state);
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _linkSubscription?.cancel();
     _authSub?.cancel();
     _configSub?.cancel();

@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show
         GlassButton,
         GlassContainer,
         GlassQuality,
+        GlassSpring,
         LiquidGlassSettings,
         LiquidRoundedSuperellipse;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -143,10 +145,26 @@ class GlassCommentComposer extends StatefulWidget {
 
 enum _Mode { idle, popup, recording, format }
 
-class _GlassCommentComposerState extends State<GlassCommentComposer> {
+/// iOS-26 "liquid" underdamped spring driving the "+" attachment popup's
+/// grow-from-the-button open/close (same bounce ratio the package's popover
+/// morph uses). Underdamped, so the panel overshoots slightly past its target
+/// scale and rubber-bands back — the signature Apple liquid pop.
+final SpringDescription _kPopupSpring = GlassSpring.bouncy(
+  duration: const Duration(milliseconds: 430),
+);
+
+class _GlassCommentComposerState extends State<GlassCommentComposer>
+    with SingleTickerProviderStateMixin {
   _Mode _mode = _Mode.idle;
   final _plusPortal = OverlayPortalController();
   final _plusLink = LayerLink();
+
+  // Drives the "+" popup's spring reveal. Unbounded so the underdamped spring
+  // can overshoot past 1.0 (the liquid bounce) before settling. [_popupClosing]
+  // defers hiding the overlay until the close spring has sprung back to 0.
+  late final AnimationController _popupAnim =
+      AnimationController.unbounded(vsync: this)..addListener(_onPopupTick);
+  bool _popupClosing = false;
 
   // Format mode: the drag-resizable field height + the Edit/Preview toggle.
   double _formatHeight = 200;
@@ -168,6 +186,7 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
   @override
   void dispose() {
     widget.controller.removeListener(_onTextChanged);
+    _popupAnim.dispose();
     _recTimer?.cancel();
     _recorder?.dispose();
     super.dispose();
@@ -182,14 +201,39 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
     if (_mode == _Mode.popup) {
       _closePopup();
     } else {
+      _popupClosing = false;
       setState(() => _mode = _Mode.popup);
       _plusPortal.show();
+      // Spring the panel out of the "+" button (from rest, no inherited
+      // velocity → a clean pop). Unbounded animateWith lets it overshoot.
+      _popupAnim.animateWith(
+        SpringSimulation(_kPopupSpring, _popupAnim.value, 1, 0),
+      );
     }
   }
 
   void _closePopup() {
-    if (_plusPortal.isShowing) _plusPortal.hide();
-    if (_mode == _Mode.popup) setState(() => _mode = _Mode.idle);
+    if (!_plusPortal.isShowing) {
+      if (_mode == _Mode.popup) setState(() => _mode = _Mode.idle);
+      return;
+    }
+    // Reverse the spring back into the button; [_onPopupTick] tears the overlay
+    // down once it settles at 0 (carry the current velocity for continuity).
+    _popupClosing = true;
+    _popupAnim.animateWith(
+      SpringSimulation(_kPopupSpring, _popupAnim.value, 0, _popupAnim.velocity),
+    );
+  }
+
+  // Called each spring frame. On close, hide the overlay + reset the mode the
+  // moment the panel has retracted into the button (first zero-crossing), so
+  // the closing animation is actually visible instead of snapping away.
+  void _onPopupTick() {
+    if (_popupClosing && _popupAnim.value <= 0.001) {
+      _popupClosing = false;
+      if (_plusPortal.isShowing) _plusPortal.hide();
+      if (_mode == _Mode.popup) setState(() => _mode = _Mode.idle);
+    }
   }
 
   void _pick(ComposerAttach kind) {
@@ -491,12 +535,29 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
           offset: const Offset(0, -10),
           child: Align(
             alignment: Alignment.bottomLeft,
-            child: _ActionPopup(
-              onPick: _pick,
-              onFormat: () {
-                _closePopup();
-                _openFormat();
+            child: AnimatedBuilder(
+              animation: _popupAnim,
+              builder: (context, child) {
+                final t = _popupAnim.value;
+                // Grow out of the "+" button's top-left corner (the panel's
+                // bottom-left anchor) with the spring's slight overshoot; the
+                // content fades in fast so it's legible almost immediately.
+                return Opacity(
+                  opacity: (t * 1.8).clamp(0.0, 1.0),
+                  child: Transform.scale(
+                    scale: t.clamp(0.0, 1.2),
+                    alignment: Alignment.bottomLeft,
+                    child: child,
+                  ),
+                );
               },
+              child: _ActionPopup(
+                onPick: _pick,
+                onFormat: () {
+                  _closePopup();
+                  _openFormat();
+                },
+              ),
             ),
           ),
         ),
@@ -1022,7 +1083,11 @@ class _LiveWave extends StatefulWidget {
 class _LiveWaveState extends State<_LiveWave> {
   final List<double> _bars = [];
   StreamSubscription<double>? _sub;
-  static const int _maxBars = 34;
+
+  /// Each bar is 3px wide + 1px margin either side (see [_barSlot]). Capped so a
+  /// long recording doesn't grow an unbounded backing list.
+  static const double _barSlot = 5;
+  static const int _hardCap = 60;
 
   @override
   void initState() {
@@ -1031,7 +1096,7 @@ class _LiveWaveState extends State<_LiveWave> {
       if (!mounted) return;
       setState(() {
         _bars.add(v);
-        if (_bars.length > _maxBars) _bars.removeAt(0);
+        if (_bars.length > _hardCap) _bars.removeAt(0);
       });
     });
   }
@@ -1044,24 +1109,37 @@ class _LiveWaveState extends State<_LiveWave> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 30,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          for (final v in _bars)
-            Container(
-              width: 3,
-              margin: const EdgeInsets.symmetric(horizontal: 1),
-              height: (4 + v * 24).clamp(4, 28).toDouble(),
-              decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-        ],
-      ),
+    // Fit the bar count to the space the Expanded actually hands us, so the
+    // waveform never overruns the pill (the timer/dot leave little room on a
+    // narrow phone). Newest bars stay on the right; older ones scroll off.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final capacity = constraints.maxWidth.isFinite
+            ? (constraints.maxWidth ~/ _barSlot).clamp(0, _hardCap)
+            : _hardCap;
+        final visible = _bars.length > capacity
+            ? _bars.sublist(_bars.length - capacity)
+            : _bars;
+        return SizedBox(
+          height: 30,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              for (final v in visible)
+                Container(
+                  width: 3,
+                  margin: const EdgeInsets.symmetric(horizontal: 1),
+                  height: (4 + v * 24).clamp(4, 28).toDouble(),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
