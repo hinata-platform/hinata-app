@@ -313,14 +313,18 @@ class _BottomNav extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: i == index ? _amber : _white(0.22),
                     borderRadius: BorderRadius.circular(3),
-                    boxShadow: i == index
-                        ? [
-                            BoxShadow(
-                              color: _amber.withValues(alpha: 0.55),
-                              blurRadius: 10,
-                            ),
-                          ]
-                        : null,
+                    // Keep the shadow present with a constant (positive) blur and
+                    // only fade its alpha — the width uses Curves.easeOutBack,
+                    // which overshoots past its endpoints, and lerping a shadow
+                    // to/from null under that overshoot yields a negative blur
+                    // radius (assertion crash). A constant blurRadius stays
+                    // non-negative through the overshoot.
+                    boxShadow: [
+                      BoxShadow(
+                        color: _amber.withValues(alpha: i == index ? 0.55 : 0.0),
+                        blurRadius: 10,
+                      ),
+                    ],
                   ),
                 ),
             ],

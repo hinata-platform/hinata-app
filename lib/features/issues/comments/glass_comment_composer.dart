@@ -11,6 +11,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
+import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/markdown_toolbar.dart';
@@ -81,6 +82,14 @@ Widget _composerSurface({
 }
 
 const Color _onAccent = Color(0xFF2A2410);
+
+/// Round composer button size. On phones it's a fat 52 touch target; on the
+/// wider tablet/desktop/web layouts (macOS + Web included) the composer is
+/// pointer-driven, so we trim the [+]/mic/send circles a touch — at 52 they
+/// read too large next to the field pill. Keyed off the same compact-width
+/// signal the comment thread uses to split phone-chat from desktop layout.
+double _composerButtonSize(BuildContext context) =>
+    context.isCompact ? 52 : 46;
 
 /// Attachment sources offered by the composer's "+" menu.
 enum ComposerAttach { camera, gallery, file }
@@ -249,6 +258,7 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
       return _RecordingBar(
         elapsed: _recElapsed,
         amplitude: _recorder?.liveAmplitude ?? const Stream.empty(),
+        buttonSize: _composerButtonSize(context),
         onCancel: _cancelRecording,
         onSend: _sendRecording,
       );
@@ -284,9 +294,11 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
   /// Leading circle: an "×" cancel-edit button while editing, otherwise the "+"
   /// attachment menu trigger.
   Widget _leadingButton() {
+    final size = _composerButtonSize(context);
     if (widget.editing) {
       return _CircleButton(
         icon: LucideIcons.x,
+        size: size,
         onTap: widget.enabled ? widget.onCancelEdit : null,
       );
     }
@@ -297,6 +309,7 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
         overlayChildBuilder: _buildPopup,
         child: _CircleButton(
           icon: LucideIcons.plus,
+          size: size,
           rotated: _mode == _Mode.popup,
           amber: _mode == _Mode.popup,
           onTap: widget.enabled ? _togglePopup : null,
@@ -326,15 +339,18 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
   }
 
   Widget _trailingButton() {
+    final size = _composerButtonSize(context);
     if (_canSend) {
       return _CircleButton(
         icon: LucideIcons.send,
+        size: size,
         send: true,
         onTap: widget.enabled ? _submitText : null,
       );
     }
     return _CircleButton(
       icon: LucideIcons.mic,
+      size: size,
       onTap: widget.enabled ? _startRecording : null,
     );
   }
@@ -884,12 +900,14 @@ class _RecordingBar extends StatelessWidget {
   const _RecordingBar({
     required this.elapsed,
     required this.amplitude,
+    required this.buttonSize,
     required this.onCancel,
     required this.onSend,
   });
 
   final Duration elapsed;
   final Stream<double> amplitude;
+  final double buttonSize;
   final VoidCallback onCancel;
   final VoidCallback onSend;
 
@@ -902,7 +920,12 @@ class _RecordingBar extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        _CircleButton(icon: LucideIcons.trash2, danger: true, onTap: onCancel),
+        _CircleButton(
+          icon: LucideIcons.trash2,
+          size: buttonSize,
+          danger: true,
+          onTap: onCancel,
+        ),
         const SizedBox(width: 11),
         Expanded(
           child: _composerSurface(
@@ -929,7 +952,12 @@ class _RecordingBar extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 11),
-        _CircleButton(icon: LucideIcons.send, send: true, onTap: onSend),
+        _CircleButton(
+          icon: LucideIcons.send,
+          size: buttonSize,
+          send: true,
+          onTap: onSend,
+        ),
       ],
     );
   }

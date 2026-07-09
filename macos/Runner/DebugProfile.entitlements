@@ -13,18 +13,15 @@
 	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
-	<!-- Push notifications (FCM/APNs). "development" matches the local debug/dev
-	     signing profile (fastlane `mac signing`/`bootstrap`, type: development). -->
-	<key>aps-environment</key>
-	<string>development</string>
-	<!-- Hinata Connect relay: the ONE verified domain for the white-label app, so
-	     invite/reset links from ANY self-hosted server open the macOS app. Apple
-	     fetches https://connect.hinata.ahmadre.com/.well-known/apple-app-site-association
-	     and matches it against this app's appID. The matching provisioning profile
-	     must have the Associated Domains capability enabled (fastlane match). -->
-	<key>com.apple.developer.associated-domains</key>
-	<array>
-		<string>applinks:connect.hinata.ahmadre.com</string>
-	</array>
+	<!-- NOTE: `aps-environment` (push) and `com.apple.developer.associated-domains`
+	     are DELIBERATELY absent here. They require a provisioning profile from a
+	     real development team; the local `flutter run -d macos` config signs
+	     ad-hoc ("Sign to Run Locally": CODE_SIGN_IDENTITY = "-", no DEVELOPMENT_TEAM),
+	     which cannot satisfy them — Xcode then fails the build with "Runner has
+	     entitlements that require signing with a development certificate."
+	     They live only in Release.entitlements, which the fastlane distribution
+	     build signs manually with the matching profile. Consequence: FCM push and
+	     universal links don't work in a local macOS debug run (fine for dev);
+	     re-adding either here breaks `flutter run -d macos` again. -->
 </dict>
 </plist>
