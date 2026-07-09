@@ -631,11 +631,21 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
   @override
   void initState() {
     super.initState();
+    _commentFocus.addListener(_onCommentFocusChanged);
     _load();
   }
 
+  // Rebuild the floating composer (a separate subtree) when the comment field
+  // gains/loses focus, so it can hide itself while the keyboard is up for some
+  // *other* field (e.g. the sub-task or linked-issue inputs) — see
+  // [buildFloatingComposer]. Focus transitions that don't move the keyboard
+  // (tapping the comment field while another field's keyboard is already open)
+  // wouldn't otherwise trigger a MediaQuery rebuild of the sticky bar.
+  void _onCommentFocusChanged() => _bumpComposer();
+
   @override
   void dispose() {
+    _commentFocus.removeListener(_onCommentFocusChanged);
     _comment.dispose();
     _commentFocus.dispose();
     _titleCtrl.dispose();
@@ -2165,6 +2175,13 @@ class IssueDetailBodyState extends State<IssueDetailBody> {
     // `@`-mentions/smart-links (it reads the resolver from context).
     final issue = _issue;
     if (issue == null) return const SizedBox.shrink();
+    // Wolt lifts the sticky action bar above the keyboard whenever *any* field
+    // is focused. That's wrong for the comment composer: while the keyboard is
+    // up for another input (sub-task / linked-issue / inline title-edit), the
+    // composer would still ride above it. Only keep it mounted when the keyboard
+    // is down or the comment field itself is the reason it's up.
+    final keyboardUp = MediaQuery.viewInsetsOf(context).bottom > 0;
+    if (keyboardUp && !_commentFocus.hasFocus) return const SizedBox.shrink();
     return SmartLinkScope(
       resolver: _buildResolver(issue),
       child: LayoutBuilder(
