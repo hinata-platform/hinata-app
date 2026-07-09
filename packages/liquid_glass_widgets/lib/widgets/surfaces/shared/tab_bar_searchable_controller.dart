@@ -11,8 +11,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/physics.dart';
 
 import '../../surfaces/glass_bottom_bar.dart'
-    show ExtraButtonPosition, GlassTabPillAnchor;
-import 'bar_layout_utils.dart';
+    show GlassExtraButtonPosition, GlassTabPillAnchor;
+import 'tab_bar_layout_utils.dart';
 
 // =============================================================================
 // SearchablePillLayout — immutable layout result
@@ -320,7 +320,7 @@ class SearchableBottomBarController extends ChangeNotifier {
     required double? collapsedTabWidth,
     required GlassTabPillAnchor tabPillAnchor,
     required double extraFullW,
-    required ExtraButtonPosition extraPos,
+    required GlassExtraButtonPosition extraPos,
     required bool extraCollapsesOnSearch,
     required bool isKeyboardActive,
     required double keyboardH,
@@ -335,19 +335,19 @@ class SearchableBottomBarController extends ChangeNotifier {
         : 0.0;
 
     final extraWLeft =
-        (extraFullW > 0 && extraPos == ExtraButtonPosition.beforeSearch)
+        (extraFullW > 0 && extraPos == GlassExtraButtonPosition.beforeSearch)
             ? (extraTargetW + spacing)
             : 0.0;
     final extraWRight =
-        (extraFullW > 0 && extraPos == ExtraButtonPosition.afterSearch)
+        (extraFullW > 0 && extraPos == GlassExtraButtonPosition.afterSearch)
             ? (extraTargetW + spacing)
             : 0.0;
     final extraFullWLeft =
-        (extraFullW > 0 && extraPos == ExtraButtonPosition.beforeSearch)
+        (extraFullW > 0 && extraPos == GlassExtraButtonPosition.beforeSearch)
             ? (extraFullW + spacing)
             : 0.0;
     final extraFullWRight =
-        (extraFullW > 0 && extraPos == ExtraButtonPosition.afterSearch)
+        (extraFullW > 0 && extraPos == GlassExtraButtonPosition.afterSearch)
             ? (extraFullW + spacing)
             : 0.0;
 

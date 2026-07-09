@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:flutter/cupertino.dart' show CupertinoTheme;
 import 'package:flutter/material.dart';
 import '../../src/renderer/liquid_glass_renderer.dart';
+import '../../theme/glass_theme.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../../types/glass_quality.dart';
@@ -148,9 +148,18 @@ class AdaptiveGlass extends StatelessWidget {
     // _FrostedFallback: ClipPath(ShapeBorderClipper) + BackdropFilter + tint.
     // ClipPath correctly clips ALL shape types (oval, superellipse, rect).
     // Zero fragment shader cost on any device.
+    //
+    // platformViewBackdrop ALSO routes here: over a PlatformView only a live
+    // BackdropFilter samples the composited map. The premium/standard shaders
+    // read a captured backdrop that EXCLUDES the platform view (see
+    // canUsePremiumShader below), so they render inert there — the frost is the
+    // one tier that actually blurs over a PlatformView. This finally delivers
+    // the "live BackdropFilter path" the canUsePremiumShader comment promises.
     // --------------------------------------------------------------------------
-    if (quality == GlassQuality.minimal || baseSettings.effectiveBlur == 0) {
-      return _wrapWithLightModeShadow(
+    if (quality == GlassQuality.minimal ||
+        baseSettings.effectiveBlur == 0 ||
+        platformViewBackdrop) {
+      return _wrapWithDecorations(
         context,
         baseSettings,
         _FrostedFallback(
@@ -160,6 +169,7 @@ class AdaptiveGlass extends StatelessWidget {
           glowIntensity: glowIntensity,
           isAccessibilityFallback: false,
           isInteractive: isInteractive,
+          platformViewBackdrop: platformViewBackdrop,
           child: child,
         ),
       );
@@ -180,7 +190,7 @@ class AdaptiveGlass extends StatelessWidget {
     // --------------------------------------------------------------------------
     final accessibilityData = GlassAccessibilityData.of(context);
     if (accessibilityData.reduceTransparency) {
-      return _wrapWithLightModeShadow(
+      return _wrapWithDecorations(
         context,
         baseSettings,
         _FrostedFallback(
@@ -286,7 +296,7 @@ class AdaptiveGlass extends StatelessWidget {
       // If this is a container (allowElevation=false), we are providing a blur
       // for all our children to use. We update the InheritedLiquidGlass tree.
       if (!allowElevation) {
-        return _wrapWithLightModeShadow(
+        return _wrapWithDecorations(
           context,
           baseSettings,
           LightweightLiquidGlass(
@@ -315,7 +325,7 @@ class AdaptiveGlass extends StatelessWidget {
         child: child,
       );
 
-      return _wrapWithLightModeShadow(context, baseSettings, lightweightWidget);
+      return _wrapWithDecorations(context, baseSettings, lightweightWidget);
     }
 
     // Impeller + Premium Path: Use the renderer's native path.
@@ -341,7 +351,7 @@ class AdaptiveGlass extends StatelessWidget {
 
     if (effectiveUseOwnLayer) {
       // Resolve shadows for the GPU cutout method
-      final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+      final isDark = GlassTheme.brightnessOf(context) == Brightness.dark;
       final shadows = (isDark || _FrostedFallback._isFlatEdge(shape))
           ? const <BoxShadow>[]
           : baseSettings.effectiveShadow;
@@ -362,8 +372,11 @@ class AdaptiveGlass extends StatelessWidget {
         ),
       );
 
-      return PremiumGlassTracker(
-        child: premium,
+      return _wrapWithBacker(
+        baseSettings,
+        PremiumGlassTracker(
+          child: premium,
+        ),
       );
     } else {
       // Grouped elements (e.g. inside GlassBottomBar) rely on the ancestor's
@@ -395,7 +408,7 @@ class AdaptiveGlass extends StatelessWidget {
   // ---------------------------------------------------------------------------
   Widget _wrapWithLightModeShadow(
       BuildContext context, LiquidGlassSettings baseSettings, Widget glass) {
-    final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+    final isDark = GlassTheme.brightnessOf(context) == Brightness.dark;
 
     // Skip shadow in dark mode or for flat-edge shapes (bars, full-width surfaces).
     if (isDark || _FrostedFallback._isFlatEdge(shape)) {
@@ -433,6 +446,58 @@ class AdaptiveGlass extends StatelessWidget {
             ),
           ),
         ),
+      ],
+    );
+  }
+
+  /// Applies the backer (behind the glass) and the light-mode drop shadow
+  /// (outside the glass) to [glass]. Both are no-ops when their respective
+  /// settings are unset, so existing recipes are unaffected. Same signature as
+  /// [_wrapWithLightModeShadow] so the non-premium call sites just swap names.
+  Widget _wrapWithDecorations(
+      BuildContext context, LiquidGlassSettings baseSettings, Widget glass) {
+    return _wrapWithBacker(
+      baseSettings,
+      _wrapWithLightModeShadow(context, baseSettings, glass),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Backer — Apple "dimming layer" behind the glass
+  //
+  // A shape-matched color pad composited BEHIND the glass (the inverse of the
+  // drop shadow, which sits OUTSIDE the boundary). Gives a control's content
+  // contrast over rich/colorful backdrops — video, maps, photography — where
+  // the glass tint alone can't. Rendered at the widget level via [_ShapeClip]
+  // (ClipRRect for superellipses, so the clip forwards to the iOS PlatformView
+  // mutator stack), independent of the shader tier — so it works over a
+  // PlatformView, where a shader-side tint cannot reach.
+  //
+  // Unlike the shadow, it applies in BOTH brightnesses and for flat-edge shapes
+  // (a bar over a map is a primary use case). NOT applied on the grouped path:
+  // like the shadow, inserting a Stack between a grouped glass and its shared
+  // layer would break metaball morphing.
+  // ---------------------------------------------------------------------------
+  Widget _wrapWithBacker(LiquidGlassSettings baseSettings, Widget glass) {
+    final backerColor = baseSettings.backerColor;
+    if (backerColor == null || backerColor.a == 0) return glass;
+
+    return Stack(
+      fit: StackFit.passthrough,
+      clipBehavior: Clip.none,
+      children: [
+        // 1. The dimming pad — BEHIND the glass, clipped to the glass shape.
+        Positioned.fill(
+          child: IgnorePointer(
+            child: _ShapeClip(
+              shape: shape,
+              platformViewBackdrop: platformViewBackdrop,
+              child: ColoredBox(color: backerColor),
+            ),
+          ),
+        ),
+        // 2. The glass on top; its translucency lets the pad dim it through.
+        glass,
       ],
     );
   }
@@ -518,6 +583,7 @@ class _FrostedFallback extends StatelessWidget {
     this.glowIntensity = 0.0,
     this.isAccessibilityFallback = false,
     this.isInteractive = false,
+    this.platformViewBackdrop = false,
   });
 
   final LiquidShape shape;
@@ -540,6 +606,14 @@ class _FrostedFallback extends StatelessWidget {
   /// When true, during [GlassQuality.minimal] we omit the [BackdropFilter] to
   /// prevent compositor desync flicker caused by the bounds changing continuously.
   final bool isInteractive;
+
+  /// When true, this frost sits directly over a PlatformView (map/video) via the
+  /// `platformViewBackdrop` route. The live [BackdropFilter] is the ONLY path
+  /// that blurs a hybrid-composed PlatformView, so it must run even for
+  /// interactive surfaces — otherwise the [isInteractive] blur-omission below
+  /// leaves over-map buttons with no blur at all (the brief tap-scale flicker is
+  /// negligible next to having no blur).
+  final bool platformViewBackdrop;
 
   /// Rec. 709 saturation matrix — identical to upstream FakeGlass.
   ///
@@ -609,9 +683,14 @@ class _FrostedFallback extends StatelessWidget {
     //   mode because BackdropFilter re-samples the background every frame and
     //   desyncs with spring bounds changes, causing a "flashing" or flickering
     //   artifact beneath the element.
+    // - EXCEPT when platformViewBackdrop is set: over a PlatformView the live
+    //   BackdropFilter is the only path that blurs the (hybrid-composed) map, so
+    //   it must run even for interactive buttons. Without this, #128's frost
+    //   route delivers no blur for over-map controls (heading, 2D, ⋯ buttons).
     // ────────────────────────────────────────────────────────────────────────
     final bool useBlur =
-        (isAccessibilityFallback || !isInteractive) && blur > 0;
+        (isAccessibilityFallback || !isInteractive || platformViewBackdrop) &&
+            blur > 0;
 
     Widget body;
     if (useBlur) {
@@ -652,7 +731,11 @@ class _FrostedFallback extends StatelessWidget {
           // around rounded glass surfaces stacked over PlatformViews
           // (e.g. mapbox_maps_flutter, video_player on iOS).
           Positioned.fill(
-            child: _ShapeClip(shape: shape, child: body),
+            child: _ShapeClip(
+              shape: shape,
+              platformViewBackdrop: platformViewBackdrop,
+              child: body,
+            ),
           ),
 
         if (!useBlur)
@@ -671,7 +754,7 @@ class _FrostedFallback extends StatelessWidget {
             child: DecoratedBox(
               decoration: ShapeDecoration(
                 shape: shape,
-                color: (CupertinoTheme.brightnessOf(context) == Brightness.dark
+                color: (GlassTheme.brightnessOf(context) == Brightness.dark
                         ? Colors.white
                         : Colors.black)
                     .withValues(alpha: 0.15 * glowIntensity),
@@ -682,7 +765,11 @@ class _FrostedFallback extends StatelessWidget {
         // Text and contents MUST be strictly clipped to corner radii.
         // Same ClipRRect-over-ClipPath rationale as the blur body
         // above — see the [_ShapeClip] doc comment.
-        _ShapeClip(shape: shape, child: child),
+        _ShapeClip(
+          shape: shape,
+          platformViewBackdrop: platformViewBackdrop,
+          child: child,
+        ),
 
         // Specular Rim: drawn as a pure native overlay vector perfectly on top.
         // Wrapped in _ShapeClip because canvas.drawPath draws a center-aligned
@@ -696,6 +783,7 @@ class _FrostedFallback extends StatelessWidget {
             child: IgnorePointer(
               child: _ShapeClip(
                 shape: shape,
+                platformViewBackdrop: platformViewBackdrop,
                 child: CustomPaint(
                   painter: _SpecularRimPainter(
                     shape: shape,
@@ -846,19 +934,33 @@ class _SpecularRimPainter extends CustomPainter {
 /// `_FrostedFallback` surfaces when stacked over a PlatformView (e.g.
 /// `mapbox_maps_flutter`'s `MapWidget`, `video_player` on iOS).
 ///
-/// **Caveat — [LiquidOval] is not handled.** Empirically the engine fix
-/// does not forward `ClipRRect` with `circular(double.infinity)`, nor
-/// does it forward a `LayoutBuilder`-computed finite radius on a
-/// `LiquidOval` shape. Callers that need a halo-free circular surface
-/// over a PlatformView should pass
-/// `LiquidRoundedSuperellipse(borderRadius: size / 2)` instead, which
-/// renders identically to a circle on a square widget and triggers the
-/// engine fix.
+/// When [platformViewBackdrop] is true, any shape that can be expressed
+/// as a [BorderRadius] (including [LiquidOval] → `circular(9999)` and
+/// [LiquidRoundedRectangle]) is also routed through [ClipRRect] so the
+/// clip is forwarded and the frost is bounded to the shape on PlatformViews.
+/// Off a PlatformView, [LiquidOval] retains an exact [ClipPath] ellipse.
 class _ShapeClip extends StatelessWidget {
-  const _ShapeClip({required this.shape, required this.child});
+  const _ShapeClip({
+    required this.shape,
+    required this.child,
+    this.platformViewBackdrop = false,
+  });
 
   final LiquidShape shape;
   final Widget child;
+
+  /// When the clipped subtree sits over an iOS PlatformView, force a
+  /// [ClipRRect]-based clip even for shapes that would otherwise fall through to
+  /// a [ClipPath] (e.g. [LiquidOval], [LiquidRoundedRectangle]).
+  ///
+  /// Flutter's clip forwarding (#177551, 3.41+) only sends ClipRRect clip data
+  /// to the iOS PlatformView mutator stack — a ClipPath leaves a descendant
+  /// [BackdropFilter] unclipped, so the frost leaks a rectangular halo around
+  /// the (visually round) surface. A ClipRRect with a full radius renders the
+  /// same circle/stadium but IS forwarded, bounding the frost to the shape.
+  /// Off a PlatformView the ClipPath path is exact (a true ellipse), so the swap
+  /// is gated on this flag.
+  final bool platformViewBackdrop;
 
   @override
   Widget build(BuildContext context) {
@@ -877,6 +979,17 @@ class _ShapeClip extends StatelessWidget {
         ),
         child: child,
       );
+    }
+    // Over a PlatformView, route any radius-expressible shape (oval →
+    // circle/stadium, rounded rect, vertical variants) through ClipRRect so the
+    // clip is forwarded to the PlatformView mutator and a descendant
+    // BackdropFilter is bounded to the shape — eliminating the rectangular halo.
+    // #177551 only forwards ClipRRect, never ClipPath.
+    if (platformViewBackdrop) {
+      final borderRadius = AdaptiveGlass._borderRadiusFromShape(shape);
+      if (borderRadius != null) {
+        return ClipRRect(borderRadius: borderRadius, child: child);
+      }
     }
     return ClipPath(
       clipper: ShapeBorderClipper(shape: shape),

@@ -70,7 +70,7 @@ class _GlassBottomBarDemoPageState extends State<GlassBottomBarDemoPage> {
             ),
           ),
         ),
-        bottomNavigationBar: GlassBottomBar(
+        bottomNavigationBar: GlassTabBar.bottom(
           selectedIndex: _selectedIndex,
           onTabSelected: (index) => setState(() => _selectedIndex = index),
           // Use distinct colors to verify masking
@@ -78,24 +78,24 @@ class _GlassBottomBarDemoPageState extends State<GlassBottomBarDemoPage> {
           unselectedIconColor: Colors.white.withValues(alpha: 0.4),
           indicatorColor: Colors.blue.withValues(alpha: 0.2),
           maskingQuality: MaskingQuality.high,
-          extraButton: GlassBottomBarExtraButton(
+          extraButton: GlassTabBarExtraButton(
             icon: const Icon(CupertinoIcons.info),
             label: 'something',
             onTap: () {},
           ),
           tabs: [
-            GlassBottomBarTab(
+            GlassTab(
               label: 'Home',
               icon: const Icon(CupertinoIcons.home),
               activeIcon: const Icon(CupertinoIcons.home),
             ),
-            GlassBottomBarTab(
+            GlassTab(
               // Empty label - should center icon
               label: null,
               icon: const Icon(CupertinoIcons.add_circled),
               activeIcon: const Icon(CupertinoIcons.add_circled_solid),
             ),
-            GlassBottomBarTab(
+            GlassTab(
               label: 'Profile',
               icon: const Icon(CupertinoIcons.person),
               activeIcon: const Icon(CupertinoIcons.person_fill),

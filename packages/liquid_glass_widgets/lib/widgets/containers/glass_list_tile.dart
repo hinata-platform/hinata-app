@@ -2,43 +2,37 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../src/renderer/liquid_glass_renderer.dart';
+import '../../theme/glass_theme.dart';
 import '../../types/glass_quality.dart';
 import 'glass_container.dart';
-import 'glass_divider.dart';
 
 /// A glass-aesthetic list tile following iOS 26 grouped row design.
 ///
 /// [GlassListTile] is the glass design system's equivalent of Flutter's
-/// [ListTile], designed to sit inside a [GlassCard] or [GlassContainer].
+/// [ListTile] — a clean, stateless item with no knowledge of its position.
 ///
-/// When [grouped] is true (default), tiles share a glass layer and automatically
-/// draw separators between them. When standalone, each tile has its own layer.
+/// Divider rendering is the responsibility of the parent container:
+/// [GlassGroupedSection] automatically injects [GlassDivider]s between tiles.
+/// For standalone column layouts, compose [GlassDivider] explicitly, as you
+/// would with Flutter's built-in [ListTile] + [Divider] pattern.
 ///
-/// ## Usage inside a grouped card:
+/// ## Usage inside [GlassGroupedSection] (recommended):
 ///
 /// ```dart
-/// GlassCard(
-///   padding: EdgeInsets.zero,
-///   child: Column(
-///     children: [
-///       GlassListTile(
-///         leading: Icon(CupertinoIcons.person, color: CupertinoColors.white),
-///         title: Text('Account'),
-///       ),
-///       GlassListTile(
-///         leading: Icon(CupertinoIcons.bell, color: CupertinoColors.white),
-///         title: Text('Notifications'),
-///         trailing: GlassListTile.chevron,
-///       ),
-///       GlassListTile(
-///         leading: Icon(CupertinoIcons.lock, color: CupertinoColors.white),
-///         title: Text('Privacy'),
-///         subtitle: Text('Manage your data'),
-///         trailing: GlassListTile.chevron,
-///         isLast: true,
-///       ),
-///     ],
-///   ),
+/// GlassGroupedSection(
+///   header: const Text('NETWORK'),
+///   children: [
+///     GlassListTile(
+///       leading: Icon(CupertinoIcons.wifi, color: CupertinoColors.white),
+///       title: Text('Wi-Fi'),
+///       trailing: GlassListTile.chevron,
+///     ),
+///     GlassListTile(
+///       leading: Icon(CupertinoIcons.bluetooth, color: CupertinoColors.white),
+///       title: Text('Bluetooth'),
+///       trailing: GlassListTile.chevron,
+///     ),
+///   ],
 /// )
 /// ```
 ///
@@ -52,8 +46,9 @@ import 'glass_divider.dart';
 /// )
 /// ```
 class GlassListTile extends StatefulWidget {
-  /// Creates a glass list tile for use inside a [GlassCard] or other glass
-  /// container. Does not create its own glass layer.
+  /// Creates a glass list tile for use inside a [GlassCard],
+  /// [GlassGroupedSection], or other glass container.
+  /// Does not create its own glass layer.
   const GlassListTile({
     super.key,
     this.leading,
@@ -62,7 +57,6 @@ class GlassListTile extends StatefulWidget {
     this.trailing,
     this.onTap,
     this.onLongPress,
-    this.isLast = false,
     this.contentPadding = const EdgeInsets.symmetric(
       horizontal: 16,
       vertical: 12,
@@ -70,8 +64,6 @@ class GlassListTile extends StatefulWidget {
     this.leadingIconColor,
     this.titleStyle,
     this.subtitleStyle,
-    this.showDivider = true,
-    this.dividerIndent,
   })  : _useOwnLayer = false,
         _settings = null,
         _quality = null;
@@ -98,10 +90,7 @@ class GlassListTile extends StatefulWidget {
     GlassQuality? quality,
   })  : _useOwnLayer = true,
         _settings = settings,
-        _quality = quality,
-        isLast = true,
-        showDivider = false,
-        dividerIndent = null;
+        _quality = quality;
 
   // ===========================================================================
   // Content Properties
@@ -156,26 +145,6 @@ class GlassListTile extends StatefulWidget {
   ///
   /// Defaults to white with reduced opacity.
   final TextStyle? subtitleStyle;
-
-  /// Whether to draw a [GlassDivider] below this tile.
-  ///
-  /// Ignored when [isLast] is true.
-  final bool showDivider;
-
-  /// Leading indent for the bottom divider.
-  ///
-  /// Defaults to the width of the leading area (56px) when a [leading] widget
-  /// is provided, or 16px otherwise.
-  final double? dividerIndent;
-
-  // ===========================================================================
-  // Layout Properties
-  // ===========================================================================
-
-  /// Whether this is the last tile in a group.
-  ///
-  /// When true, the bottom divider is suppressed.
-  final bool isLast;
 
   // ===========================================================================
   // Glass Layer Properties (standalone only)
@@ -300,25 +269,13 @@ class _GlassListTileState extends State<GlassListTile> {
                 _isPressed ? Duration.zero : const Duration(milliseconds: 150),
             curve: Curves.easeOutCubic,
             color: _isPressed
-                ? (CupertinoTheme.brightnessOf(context) == Brightness.light
+                ? (GlassTheme.brightnessOf(context) == Brightness.light
                     ? CupertinoColors.black.withValues(alpha: 0.08)
                     : CupertinoColors.white.withValues(alpha: 0.08))
                 : Colors.transparent,
             child: tile,
           ),
         ),
-      );
-    }
-
-    if (widget.showDivider && !widget.isLast) {
-      final indent =
-          widget.dividerIndent ?? (widget.leading != null ? 56.0 : 16.0);
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          tile,
-          GlassDivider(indent: indent),
-        ],
       );
     }
 

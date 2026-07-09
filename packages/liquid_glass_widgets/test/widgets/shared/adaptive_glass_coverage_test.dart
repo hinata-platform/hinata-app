@@ -77,6 +77,98 @@ void main() {
     });
   });
 
+  group('AdaptiveGlass — backer (dimming layer)', () {
+    // A distinctive color nothing else in the glass stack uses, so the
+    // backer's ColoredBox is unambiguous to find.
+    const backer = Color(0x80FF00FF);
+    Finder backerFinder() =>
+        find.byWidgetPredicate((w) => w is ColoredBox && w.color == backer);
+
+    testWidgets('renders a clipped dimming pad behind the glass when set',
+        (tester) async {
+      await tester.pumpWidget(_wrap(const SizedBox(
+        width: 200,
+        height: 100,
+        child: AdaptiveGlass(
+          shape: _shape,
+          settings: LiquidGlassSettings(blur: 5, backerColor: backer),
+          quality: GlassQuality.standard,
+          child: SizedBox.expand(),
+        ),
+      )));
+      await tester.pump();
+      expect(backerFinder(), findsOneWidget);
+    });
+
+    testWidgets('no backer when backerColor is null', (tester) async {
+      await tester.pumpWidget(_wrap(const SizedBox(
+        width: 200,
+        height: 100,
+        child: AdaptiveGlass(
+          shape: _shape,
+          settings: _settings, // no backerColor
+          quality: GlassQuality.standard,
+          child: SizedBox.expand(),
+        ),
+      )));
+      await tester.pump();
+      expect(backerFinder(), findsNothing);
+    });
+
+    testWidgets('a fully-transparent backer is treated as no backer',
+        (tester) async {
+      await tester.pumpWidget(_wrap(const SizedBox(
+        width: 200,
+        height: 100,
+        child: AdaptiveGlass(
+          shape: _shape,
+          settings:
+              LiquidGlassSettings(blur: 5, backerColor: Color(0x00FF00FF)),
+          quality: GlassQuality.standard,
+          child: SizedBox.expand(),
+        ),
+      )));
+      await tester.pump();
+      expect(
+        find.byWidgetPredicate(
+            (w) => w is ColoredBox && w.color == const Color(0x00FF00FF)),
+        findsNothing,
+      );
+    });
+
+    testWidgets('backer also applies on the minimal/frosted path',
+        (tester) async {
+      await tester.pumpWidget(_wrap(const SizedBox(
+        width: 200,
+        height: 100,
+        child: AdaptiveGlass(
+          shape: _shape,
+          settings: LiquidGlassSettings(backerColor: backer),
+          quality: GlassQuality.minimal,
+          child: SizedBox.expand(),
+        ),
+      )));
+      await tester.pump();
+      expect(backerFinder(), findsOneWidget);
+    });
+
+    testWidgets('backer applies on the premium own-layer path', (tester) async {
+      await tester.pumpWidget(_wrap(const SizedBox(
+        width: 200,
+        height: 100,
+        child: AdaptiveGlass(
+          shape: _shape,
+          settings: LiquidGlassSettings(blur: 5, backerColor: backer),
+          quality: GlassQuality.premium,
+          useOwnLayer: true,
+          child: SizedBox.expand(),
+        ),
+      )));
+      await tester.pump();
+      expect(backerFinder(), findsOneWidget);
+    });
+  });
+
   group('AdaptiveGlass — accessibility path', () {
     testWidgets('reduce transparency triggers frosted fallback',
         (tester) async {
@@ -199,6 +291,27 @@ void main() {
       expect(find.byType(DecoratedBox), findsWidgets);
     });
 
+    testWidgets('isInteractive=true keeps BackdropFilter over a PlatformView',
+        (tester) async {
+      // platformViewBackdrop overrides the interactive blur-omission above: over
+      // a PlatformView the live BackdropFilter is the only path that blurs the
+      // (hybrid-composed) map, so it must run even for interactive surfaces.
+      await tester.pumpWidget(_wrap(const SizedBox(
+        width: 200,
+        height: 100,
+        child: AdaptiveGlass(
+          shape: _shape,
+          settings: _settings,
+          quality: GlassQuality.minimal,
+          isInteractive: true,
+          platformViewBackdrop: true,
+          child: SizedBox.expand(),
+        ),
+      )));
+      await tester.pump();
+      expect(find.byType(BackdropFilter), findsWidgets);
+    });
+
     testWidgets('glowIntensity > 0 adds glow overlay', (tester) async {
       await tester.pumpWidget(_wrap(const SizedBox(
         width: 200,
@@ -261,6 +374,48 @@ void main() {
       // _ShapeClip doc comment) — verify the ClipPath fallback path is
       // taken.
       expect(find.byType(ClipPath), findsWidgets);
+    });
+  });
+
+  group('AdaptiveGlass — platformViewBackdrop routes to the frost', () {
+    // Over a PlatformView the premium/standard shaders sample a captured
+    // backdrop that excludes the platform view (inert), so platformViewBackdrop
+    // must route to the frosted fallback (a live BackdropFilter) regardless of
+    // the requested quality. The frost path wraps in ClipRRect via _ShapeClip;
+    // the lightweight/shader paths do not. (settings has blur:5, so this is the
+    // platformViewBackdrop branch, not the blur==0 fast path.)
+    testWidgets('forces the frost at premium quality', (tester) async {
+      await tester.pumpWidget(_wrap(const SizedBox(
+        width: 200,
+        height: 100,
+        child: AdaptiveGlass(
+          shape: _shape,
+          settings: _settings,
+          quality: GlassQuality.premium,
+          platformViewBackdrop: true,
+          child: SizedBox.expand(),
+        ),
+      )));
+      await tester.pump();
+      expect(find.byType(ClipRRect), findsWidgets,
+          reason: 'platformViewBackdrop must take the frosted-fallback path at '
+              'premium, not the shader path that is inert over a PlatformView');
+    });
+
+    testWidgets('forces the frost at standard quality', (tester) async {
+      await tester.pumpWidget(_wrap(const SizedBox(
+        width: 200,
+        height: 100,
+        child: AdaptiveGlass(
+          shape: _shape,
+          settings: _settings,
+          quality: GlassQuality.standard,
+          platformViewBackdrop: true,
+          child: SizedBox.expand(),
+        ),
+      )));
+      await tester.pump();
+      expect(find.byType(ClipRRect), findsWidgets);
     });
   });
 }

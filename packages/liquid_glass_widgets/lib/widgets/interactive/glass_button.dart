@@ -155,6 +155,7 @@ class GlassButton extends StatefulWidget {
     this.anchorStretchSettings = const AnchorStretchSettings(),
     this.alignment = Alignment.center,
     this.ambientBaseLight = 0.08,
+    this.platformViewBackdrop = false,
   }) : child = null;
 
   /// Creates a glass button with custom content.
@@ -184,7 +185,7 @@ class GlassButton extends StatefulWidget {
     super.key,
     this.label = '',
     this.width,
-    this.height = 56,
+    this.height,
     this.shape = const LiquidOval(),
     this.settings,
     this.useOwnLayer = false,
@@ -208,6 +209,7 @@ class GlassButton extends StatefulWidget {
     this.anchorStretchSettings = const AnchorStretchSettings(),
     this.alignment = Alignment.center,
     this.ambientBaseLight = 0.08,
+    this.platformViewBackdrop = false,
   })  : icon = null,
         iconSize = 24.0,
         iconColor = null;
@@ -277,7 +279,7 @@ class GlassButton extends StatefulWidget {
   /// Height of the button in logical pixels.
   ///
   /// Defaults to 56.0.
-  final double height;
+  final double? height;
 
   // ===========================================================================
   // Glass Effect Properties
@@ -512,6 +514,11 @@ class GlassButton extends StatefulWidget {
   /// Set to 0.0 to disable.
   final double ambientBaseLight;
 
+  /// When true (typically for iOS PlatformViews), forces the BackdropFilter
+  /// fallback render path instead of the Impeller-native shader. Forwarded to
+  /// the underlying [AdaptiveGlass].
+  final bool platformViewBackdrop;
+
   @override
   State<GlassButton> createState() => _GlassButtonState();
 }
@@ -543,20 +550,27 @@ class _GlassButtonState extends State<GlassButton>
   // ---------------------------------------------------------------------------
   // Tap-based pressed state (persistPressOnDrag: false)
   // Used by lock screen camera/torch buttons — cancels on drag.
+  //
+  // All press handlers below guard on `mounted` before touching
+  // [_saturationController]: a button can be DISPOSED mid-press — e.g. a
+  // collapsing nav mini-bar removed by the very tap that expands it — after which
+  // a queued pointerUp / pointerCancel still dispatches here and would call
+  // `.reverse()` on the disposed controller, throwing
+  // `AnimationController.reverse() called after dispose()` (assert `_ticker != null`).
   // ---------------------------------------------------------------------------
 
   void _handleTapDown(TapDownDetails details) {
-    if (!widget.enabled) return;
+    if (!mounted || !widget.enabled) return;
     _saturationController.forward();
   }
 
   void _handleTapUp(TapUpDetails details) {
-    if (!widget.enabled) return;
+    if (!mounted || !widget.enabled) return;
     _saturationController.reverse();
   }
 
   void _handleTapCancel() {
-    if (!widget.enabled) return;
+    if (!mounted || !widget.enabled) return;
     _saturationController.reverse();
   }
 
@@ -568,17 +582,17 @@ class _GlassButtonState extends State<GlassButton>
   // ---------------------------------------------------------------------------
 
   void _handlePointerDown(PointerDownEvent event) {
-    if (!widget.enabled) return;
+    if (!mounted || !widget.enabled) return;
     _saturationController.forward();
   }
 
   void _handlePointerUp(PointerUpEvent event) {
-    if (!widget.enabled) return;
+    if (!mounted || !widget.enabled) return;
     _saturationController.reverse();
   }
 
   void _handlePointerCancel(PointerCancelEvent event) {
-    if (!widget.enabled) return;
+    if (!mounted || !widget.enabled) return;
     _saturationController.reverse();
   }
 
@@ -613,6 +627,8 @@ class _GlassButtonState extends State<GlassButton>
       width: widget.width,
       child: Align(
         alignment: widget.alignment,
+        widthFactor: widget.width == null ? 1.0 : null,
+        heightFactor: widget.height == null ? 1.0 : null,
         child: widget.child ??
             IconTheme(
               data: IconThemeData(
@@ -656,6 +672,7 @@ class _GlassButtonState extends State<GlassButton>
 
     final contentWithAmbient = ambientOverlay != null
         ? Stack(
+            alignment: widget.alignment,
             children: [
               contentWidget,
               ambientOverlay,
@@ -723,6 +740,7 @@ class _GlassButtonState extends State<GlassButton>
           useOwnLayer: widget.useOwnLayer,
           glowIntensity: _saturationAnimation.value, // 0.0-1.0 animation
           isInteractive: true, // Buttons manage their own RepaintBoundary
+          platformViewBackdrop: widget.platformViewBackdrop,
           child: child!,
         );
       },

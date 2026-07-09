@@ -38,6 +38,8 @@ export 'src/types/glass_interaction_behavior.dart'; // GlassInteractionBehavior 
 // Shared widgets
 export 'widgets/shared/adaptive_glass.dart';
 export 'widgets/shared/adaptive_liquid_glass_layer.dart';
+export 'widgets/shared/animated_glass_indicator.dart'
+    show AnimatedGlassIndicator; // baseIndicatorSettings for partial overrides
 export 'widgets/shared/glass_accessibility_scope.dart'; // GlassAccessibilityScope + GlassAccessibilityData
 export 'widgets/shared/glass_adaptive_scope.dart'; // GlassAdaptiveScope + GlassAdaptiveScopeData + GlassAdaptiveDiagnostic
 export 'widgets/shared/glass_backdrop_scope.dart'; // GlassBackdropScope — per-screen backdrop isolation
@@ -96,17 +98,28 @@ export 'widgets/overlays/glass_dialog.dart';
 export 'widgets/overlays/glass_menu.dart';
 export 'widgets/overlays/glass_menu_item.dart';
 export 'widgets/overlays/glass_sheet.dart';
-export 'widgets/overlays/glass_modal_sheet.dart';
+export 'widgets/overlays/glass_modal_sheet.dart'
+    show
+        GlassModalSheet,
+        GlassSheetState,
+        GlassSheetMode,
+        GlassFillTransition,
+        GlassModalSheetController,
+        GlassModalSheetScaffold, // used directly for maps-style hit-through layouts
+        GlassModalSheetStateProvider, // read sheet state from descendants
+        SheetStateInfo, // value type from GlassModalSheetStateProvider.of()
+        ScrollControllerProvider; // access scroll controller from sheet content
 export 'widgets/overlays/glass_toast.dart';
 export 'widgets/overlays/glass_popover.dart';
 // Widgets - Surfaces
 export 'widgets/surfaces/glass_app_bar.dart';
+export 'widgets/surfaces/glass_large_title.dart';
 export 'widgets/shared/glass_isolation_scope.dart';
 export 'widgets/surfaces/glass_scaffold.dart';
 export 'widgets/surfaces/glass_bottom_bar.dart';
 export 'widgets/surfaces/glass_searchable_bottom_bar.dart';
 export 'widgets/surfaces/shared/glass_search_bar_config.dart';
-export 'widgets/surfaces/shared/searchable_bottom_bar_controller.dart';
+export 'widgets/surfaces/shared/tab_bar_searchable_controller.dart';
 
 export 'widgets/surfaces/glass_tab_bar.dart';
 export 'widgets/surfaces/glass_toolbar.dart';

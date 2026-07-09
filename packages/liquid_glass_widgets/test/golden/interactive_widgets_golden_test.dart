@@ -3,6 +3,8 @@ import 'package:liquid_glass_widgets/widgets/interactive/glass_button.dart';
 import 'package:liquid_glass_widgets/widgets/interactive/glass_chip.dart';
 import 'package:liquid_glass_widgets/widgets/interactive/glass_icon_button.dart';
 import 'package:liquid_glass_widgets/widgets/interactive/glass_segmented_control.dart';
+import 'package:liquid_glass_widgets/widgets/surfaces/glass_tab_bar.dart'
+    show GlassSegment;
 import 'package:liquid_glass_widgets/widgets/interactive/glass_slider.dart';
 import 'package:liquid_glass_widgets/widgets/interactive/glass_switch.dart';
 import 'package:liquid_glass_widgets/widgets/input/glass_search_bar.dart';
@@ -266,7 +268,10 @@ void main() {
           name: 'two_segments',
           child: buildWithGradientBackground(
             GlassSegmentedControl(
-              segments: const ['Daily', 'Weekly'],
+              segments: [
+                GlassSegment(label: 'Daily'),
+                GlassSegment(label: 'Weekly')
+              ],
               selectedIndex: 0,
               onSegmentSelected: (_) {},
               useOwnLayer: true,
@@ -278,7 +283,11 @@ void main() {
           name: 'three_segments',
           child: buildWithGradientBackground(
             GlassSegmentedControl(
-              segments: const ['One', 'Two', 'Three'],
+              segments: [
+                GlassSegment(label: 'One'),
+                GlassSegment(label: 'Two'),
+                GlassSegment(label: 'Three')
+              ],
               selectedIndex: 1,
               onSegmentSelected: (_) {},
               useOwnLayer: true,

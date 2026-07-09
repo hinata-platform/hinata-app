@@ -15,6 +15,7 @@ import 'package:liquid_glass_widgets_example/demos/text_field_demo.dart';
 import 'package:liquid_glass_widgets_example/demos/bottom_bar_tab_width_demo.dart';
 import 'package:liquid_glass_widgets_example/demos/buttons_and_shadows_demo.dart';
 import 'package:liquid_glass_widgets_example/demos/content_aware_brightness_demo.dart';
+import 'package:liquid_glass_widgets_example/demos/indicator_parity_demo.dart';
 
 import 'package:liquid_glass_widgets_example/demos/google_maps_demo.dart'
     show PlatformViewDemo;
@@ -119,22 +120,22 @@ class _ShowcaseHomePageState extends State<ShowcaseHomePage> {
   int _selectedTab = 0;
 
   static const _tabs = [
-    GlassBottomBarTab(
+    GlassTab(
       label: 'Explore',
       icon: Icon(CupertinoIcons.compass),
       activeIcon: Icon(CupertinoIcons.compass_fill),
     ),
-    GlassBottomBarTab(
+    GlassTab(
       label: 'Widgets',
       icon: Icon(CupertinoIcons.square_grid_2x2),
       activeIcon: Icon(CupertinoIcons.square_grid_2x2_fill),
     ),
-    GlassBottomBarTab(
+    GlassTab(
       label: 'Demos',
       icon: Icon(Icons.apple, size: 30),
       activeIcon: Icon(Icons.apple, size: 30),
     ),
-    GlassBottomBarTab(
+    GlassTab(
       label: 'Examples',
       icon: Icon(CupertinoIcons.cube),
       activeIcon: Icon(CupertinoIcons.cube_fill),
@@ -152,7 +153,7 @@ class _ShowcaseHomePageState extends State<ShowcaseHomePage> {
           isDark ? GlassStatusBarStyle.light : GlassStatusBarStyle.dark,
       settings: RecommendedGlassSettings.standard,
       topEdgeFade: true,
-      bottomBar: GlassBottomBar(
+      bottomBar: GlassTabBar.bottom(
         selectedIndex: _selectedTab,
         onTabSelected: (i) => setState(() => _selectedTab = i),
         interactionBehavior: GlassInteractionBehavior.full,
@@ -172,7 +173,7 @@ class _ShowcaseHomePageState extends State<ShowcaseHomePage> {
           saturation: 1.2,
           specularSharpness: GlassSpecularSharpness.medium,
         ),
-        extraButton: GlassBottomBarExtraButton(
+        extraButton: GlassTabBarExtraButton(
           icon: Icon(isDark ? CupertinoIcons.sun_max : CupertinoIcons.moon),
           label: isDark ? 'Light mode' : 'Dark mode',
           onTap: scope.toggleBrightness,
@@ -805,6 +806,19 @@ class _ExamplesTab extends StatelessWidget {
                       Color(0xFF5AC8FA),
                     ],
                     destination: const ContentAwareBrightnessDemo(),
+                  ),
+                  const SizedBox(height: 14),
+
+                  _LargeDemoCard(
+                    title: 'Indicator Parity',
+                    subtitle:
+                        'All 5 pill widgets — live pinch / expansion / aberration tuner',
+                    icon: CupertinoIcons.dial_fill,
+                    gradient: const [
+                      Color(0xFF5E3AFF),
+                      Color(0xFF0A84FF),
+                    ],
+                    destination: const IndicatorParityDemoPage(),
                   ),
                   const SizedBox(height: 14),
 

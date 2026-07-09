@@ -447,6 +447,7 @@ class _GlassMenuState extends State<GlassMenu> with TickerProviderStateMixin {
               settings: effectiveSettings,
               quality: effectiveQuality,
               blendAmount: state.blend,
+              platformViewBackdrop: widget.platformViewBackdrop,
               child: LiquidGlassBlendGroup(
                 blend: state.blend,
                 child: Stack(
@@ -472,6 +473,7 @@ class _GlassMenuState extends State<GlassMenu> with TickerProviderStateMixin {
                             useOwnLayer: false,
                             settings: effectiveSettings,
                             quality: effectiveQuality,
+                            platformViewBackdrop: widget.platformViewBackdrop,
                             width: tw,
                             height: th,
                             shape: LiquidRoundedSuperellipse(
@@ -626,6 +628,7 @@ class _GlassMenuState extends State<GlassMenu> with TickerProviderStateMixin {
         useOwnLayer: false, // blends with the trigger ghost
         settings: effectiveSettings,
         quality: effectiveQuality,
+        platformViewBackdrop: widget.platformViewBackdrop,
         allowElevation:
             false, // Menu is overlay - don't darken when outside parent
         width: currentWidth,
@@ -635,8 +638,7 @@ class _GlassMenuState extends State<GlassMenu> with TickerProviderStateMixin {
             Clip.antiAlias, // Clip items at the edges for edge-to-edge feel
         glowIntensity: widget.glowIntensity,
         child: Builder(builder: (context) {
-          final isDark =
-              CupertinoTheme.brightnessOf(context) == Brightness.dark;
+          final isDark = GlassTheme.brightnessOf(context) == Brightness.dark;
           return GlassGlow(
             enabled: widget.enableInteractionGlow,
             glowOnTapOnly: widget.glowOnTapOnly,
@@ -687,11 +689,10 @@ class _GlassMenuState extends State<GlassMenu> with TickerProviderStateMixin {
                                   borderRadius: BorderRadius.circular(
                                       widget.itemBorderRadius),
                                   border: Border.all(
-                                    color:
-                                        CupertinoTheme.brightnessOf(context) ==
-                                                Brightness.dark
-                                            ? const Color(0x0DFFFFFF)
-                                            : const Color(0x0D000000),
+                                    color: GlassTheme.brightnessOf(context) ==
+                                            Brightness.dark
+                                        ? const Color(0x0DFFFFFF)
+                                        : const Color(0x0D000000),
                                     width: 0.5,
                                   ),
                                 ),
@@ -762,8 +763,9 @@ class _GlassMenuState extends State<GlassMenu> with TickerProviderStateMixin {
                                   const EdgeInsets.symmetric(horizontal: 12),
                               child: SingleChildScrollView(
                                 controller: _scrollController,
-                                physics:
-                                    const ClampingScrollPhysics(), // iOS-style
+                                physics: _isScrollable
+                                    ? const ClampingScrollPhysics() // iOS-style
+                                    : const NeverScrollableScrollPhysics(),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   crossAxisAlignment:

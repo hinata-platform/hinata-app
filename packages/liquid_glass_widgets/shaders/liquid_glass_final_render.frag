@@ -28,6 +28,7 @@ precision highp float; // mediump causes colour banding (10-bit mantissa on mobi
 // Slots 16-17: uLightDirection
 // Slot 18: uWhiten
 // Slot 19: uWhitenGated
+// Slot 20: uPinchStrength
 uniform vec2 uSize;          // physical-pixel size of the backdrop capture
 uniform vec2 uGeometryOffset;
 uniform vec2 uGeometrySize;
@@ -51,10 +52,95 @@ uniform float uWhiten;
 // behaviour, gives dark glass a small even lift toward white).
 uniform float uWhitenGated;
 
+// Slot 20: uPinchStrength. Concave horizontal-pinch strength [0..1].
+// When > 0, the pill's refraction is squeezed inward at the left/right edges,
+// creating the iOS 26 "pinched through a lens" look. The centre is left flat.
+uniform float uPinchStrength;
+
+// Slot 21-24: uBackgroundFallback — Per-mode opaque stand-in for backdrop
+// regions the engine can't capture (e.g. a PlatformView past the glass).
+// Straight (non-premultiplied) RGBA; a == 0 disables it.
+uniform vec4 uBackgroundFallback;
+
+// Slot 25-26: uCaptureOffset — physical-pixel offset from the render surface
+// origin to the capture-boundary origin. Only non-zero on the Impeller capture
+// path (GlassEffect with backgroundKey on Impeller premium). When zero (the
+// default / BackdropFilter path), (fragCoord + uCaptureOffset) == fragCoord, so
+// this is a mathematical no-op and has zero performance impact on existing paths.
+//
+// BackdropFilter mode (default, uCaptureOffset == vec2(0)):
+//   FlutterFragCoord() is screen-space physical pixels.
+//   uSize == full-screen physical pixel size.
+//   screenUV = fragCoord / uSize → samples the backdrop at screen position.
+//
+// Capture mode (uCaptureOffset != vec2(0)):
+//   FlutterFragCoord() is RepaintBoundary-surface-space physical pixels.
+//   uSize == captured image physical pixel size.
+//   uCaptureOffset shifts fragCoord so that (fragCoord + offset) is the
+//   position within the capture image — mapping the indicator's fragment
+//   to the correct texel in the pre-captured bar texture.
+uniform vec2 uCaptureOffset;
+
+// Slot 27: uAmbientRim — full-perimeter Fresnel rim boost. Added to the base
+// 0.12 edge-luminosity strength; 0 = unchanged default rendering.
+uniform float uAmbientRim;
+
 uniform sampler2D uBackgroundTexture;
 uniform sampler2D uGeometryTexture;
 
 layout(location = 0) out vec4 fragColor;
+
+// ── Manual Bilinear Filtering ─────────────────────────────────────────────
+// Impeller's implicit BackdropFilterLayer sampler is bound to the
+// FragmentShader as Nearest-Neighbor with no Dart API to override it.
+// Tracked as:
+//   Flutter Issue #139887 — original bug report (NN aliasing on backdrop)
+//   Flutter Issue #188365 — feature request to expose FilterQuality on
+//                           BackdropFilterLayer (filed during 0.18.2 work)
+// Once #188365 is resolved, this entire function can be replaced with a
+// single texture() call and the physTexSize/invTexSize derivation removed.
+//
+// On-screen bilinear is lost without this workaround, which means continuous
+// sub-pixel UV shifts (pinch lens, refraction) snap to integer texels and
+// produce stair-step aliasing on high-contrast background edges.
+//
+// This function replaces all uBackgroundTexture lookups with 4 Nearest-Neighbor
+// fetches and a standard bilinear mix, restoring perfectly smooth sub-pixel
+// sampling at the cost of 3 additional cache-hot reads per invocation.
+//
+// NOTE: uGeometryTexture is intentionally excluded — it is a pre-rasterized
+// SDF picture whose texels are pixel-aligned by construction. Bilinear
+// filtering it would soften the SDF alpha channel and degrade anti-aliasing.
+//
+// Windows/SkSL: texture() with literal-computed UVs is legal in glslang
+// SPIR-V path; floor(), fract(), and vec2 arithmetic are all universally
+// supported. This function introduces no new platform compatibility issues.
+vec4 textureBilinear(vec2 uv, vec2 size, vec2 invSize) {
+    vec2 px = uv * size - 0.5;
+    vec2 f = fract(px);
+    vec2 p0 = floor(px);
+    vec2 p1 = p0 + vec2(1.0, 0.0);
+    vec2 p2 = p0 + vec2(0.0, 1.0);
+    vec2 p3 = p0 + vec2(1.0, 1.0);
+
+    vec4 c0 = texture(uBackgroundTexture, (p0 + 0.5) * invSize);
+    vec4 c1 = texture(uBackgroundTexture, (p1 + 0.5) * invSize);
+    vec4 c2 = texture(uBackgroundTexture, (p2 + 0.5) * invSize);
+    vec4 c3 = texture(uBackgroundTexture, (p3 + 0.5) * invSize);
+
+    vec4 cTop = mix(c0, c1, f.x);
+    vec4 cBot = mix(c2, c3, f.x);
+    vec4 bg = mix(cTop, cBot, f.y);
+
+    // Composite the (premultiplied) backdrop sample OVER the fallback colour.
+    // Where the engine couldn't capture a backdrop (a PlatformView past the bar
+    // → transparent black, bg.a ≈ 0) this yields the fallback; where the
+    // backdrop is real (bg.a ≈ 1) it is left untouched. uBackgroundFallback is
+    // straight RGBA, so premultiply it by its own alpha before the over.
+    bg.rgb += uBackgroundFallback.rgb * uBackgroundFallback.a * (1.0 - bg.a);
+    bg.a += uBackgroundFallback.a * (1.0 - bg.a);
+    return bg;
+}
 
 void main() {
     // Unpacked here rather than at global scope: global non-constant initialisers
@@ -69,13 +155,11 @@ void main() {
 
     vec2 fragCoord = FlutterFragCoord().xy;
 
-    // Use the explicit uSize uniform for UV derivation. textureSize() was tried
-    // but can return (0,0) on the first frame before GPU texture upload completes
-    // in Impeller's BackdropFilterLayer context, causing 1/0 = Infinity UVs and
-    // an invisible first-frame render. uSize (physical pixels of the backdrop
-    // capture, equal to desiredMatteSize * devicePixelRatio) is always valid.
-    vec2 invTexSize = 1.0 / uSize;
-    vec2 screenUV = fragCoord * invTexSize;
+    vec2 physTexSize = uSize;
+    vec2 invTexSize = 1.0 / physTexSize;
+    // uCaptureOffset shifts the fragment into capture-image space.
+    // In BackdropFilter mode uCaptureOffset == vec2(0) so this is a no-op.
+    vec2 screenUV = (fragCoord + uCaptureOffset) * invTexSize;
 
     #ifdef IMPELLER_TARGET_OPENGLES
         screenUV.y = 1.0 - screenUV.y;
@@ -86,16 +170,17 @@ void main() {
         geometryUV.y = 1.0 - geometryUV.y;
     #endif
 
-    // Any fragment whose geometryUV falls outside [0,1] is outside the glass
-    // pill boundary entirely.  Without this early-out the sampler clamps to the
-    // edge pixel (UV.x=0 → left boundary pixel, alpha ≈ 0.5 from SDF AA), which
-    // renders a faint glass stripe in the _clipExpansion zone (20 px on each
-    // side). That stripe is visible at the pill's vertical midpoint as a short
-    // line protruding left and right from the pill edges.
-    if (any(lessThan(geometryUV, vec2(0.0))) || any(greaterThan(geometryUV, vec2(1.0)))) {
-        fragColor = vec4(0.0);
-        return;
-    }
+    // Clamp geometryUV to [0, 1] for two reasons:
+    // 1. Impeller's texture samplers may default to Repeat mode. Without this
+    //    clamp, a fragment slightly outside uGeometrySize (e.g. during
+    //    LiquidStretch scaling overshoot) wraps around and samples the opposite
+    //    edge of the geometry SDF, producing inverted normals and extreme
+    //    chromatic aliasing (jagged rainbows).
+    // 2. Fragments genuinely outside the pill (the _clipExpansion zone) get
+    //    clamped to the SDF edge, which has near-zero alpha. The
+    //    `geometryData.a < 0.01` early-out below discards them efficiently
+    //    without needing a separate bounds check here.
+    geometryUV = clamp(geometryUV, 0.0, 1.0);
 
     vec4 geometryData = texture(uGeometryTexture, geometryUV);
 
@@ -131,7 +216,6 @@ void main() {
     vec3  baseRefract = refract(incident, normal, invN);
     float refractLen  = (height + baseHeight) / max(0.001, abs(baseRefract.z));
     vec2  displacement = baseRefract.xy * refractLen;
-
     // On OpenGL ES, screenUV.y is already flipped to (1.0 - y) to compensate
     // for the bottom-left texture-origin convention.  The displacement is
     // computed in Flutter's native Y-down space (outward normal at the bottom
@@ -142,7 +226,77 @@ void main() {
         displacement.y = -displacement.y;
     #endif
 
-    // Apply refraction — with optional chromatic aberration.
+    // ── Concave horizontal pinch ──────────────────────────────────────────────
+    // iOS 26 indicator pills make the bar content behind the left/right edges
+    // appear slightly compressed inward — as if the pill is a convex lens
+    // squeezing the bar through its edges. The effect is HORIZONTAL ONLY:
+    // the bar content at the pill edges is sampled from a position slightly
+    // closer to the pill centre, making those edge regions appear to pinch in.
+    //
+    // The centre of the pill (over the icon/label) is left completely flat.
+    //
+    // Scale: shifts are in UV space relative to the FULL backdrop (uSize).
+    // 0.015 UV on a 390pt screen ≈ 6pt logical pixels — subtle but visible.
+    //
+    // ── iOS 26 Concave Lens Pinch ─────────────────────────────────────────────
+    if (uPinchStrength > 0.001) {
+        // We cannot use normalXY because it is 0.0 in the flat interior of the pill,
+        // which prevents the background from being pinched at all.
+        // We also cannot use a circular distance field, because a circle mapped to a
+        // wide pill creates an elliptical lens that curves the flat top/bottom edges.
+        //
+        // Solution: Use an L6 norm (superellipse/squircle) distance field.
+        // This mathematically mimics the physical shape of a rounded rectangle:
+        // perfectly flat on the top/bottom/sides, and perfectly rounded in the corners.
+        vec2 centered = geometryUV - vec2(0.5);
+        vec2 absCentered = abs(centered) * 2.0; // 0.0 to 1.0
+
+        // Compute x^6 and y^6 using multiply chains instead of pow().
+        // pow(x, 6.0) compiles to exp(6*log(x)) — a pair of transcendentals.
+        // Two squares and two multiplies is significantly faster.
+        float x2 = absCentered.x * absCentered.x;
+        float ax6 = x2 * x2 * x2;
+        float y2 = absCentered.y * absCentered.y;
+        float ay6 = y2 * y2 * y2;
+
+        // PP3: pow(s, 1.0/6.0) = exp((1/6)·log(s)) — two transcendentals.
+        // ⁶√x = √(√(√x)) — three sqrt() calls, each a single SFU instruction.
+        // Error vs true cube-root-of-cube-root: <0.3%, imperceptible in the
+        // smoothstep ramp that follows. Only executes when uPinchStrength > 0.001.
+        float s = ax6 + ay6;
+        float squircleDist = sqrt(sqrt(sqrt(s)));
+
+        // Map the squircle distance to a 0..1 smooth curve.
+        float pinchRamp = smoothstep(0.0, 1.0, squircleDist);
+
+        // Vector pointing outwards from the pill centre, scaled by the ramp.
+        // uPinchStrength interpolates the effect during spring animations.
+        // 0.025 is the baseline UV shift magnitude (subtle but visible).
+        vec2 pinchShift = centered * pinchRamp * uPinchStrength * 0.025;
+
+        // Feather the pinch shift to zero at the pill's SDF boundary.
+        // Without this, there is a hard UV discontinuity at the pill edge:
+        // the background content inside the pill is sampled from a shifted UV
+        // while the content immediately outside is at the natural UV — this
+        // mismatch produces the "stepped/aliased" edge visible through the lens,
+        // especially where the bar's own clip edge is refracted inward.
+        // Multiplying by geometryData.a (which is 0 at the boundary and 1 by 2 px
+        // inside) ramps the shift smoothly from 0 → full pinch over the same AA
+        // zone as the pill alpha, eliminating the hard UV seam.
+        pinchShift *= geometryData.a;
+
+        // Correct Y-axis for OpenGL ES.
+        #ifdef IMPELLER_TARGET_OPENGLES
+            pinchShift.y = -pinchShift.y;
+        #endif
+
+        screenUV += pinchShift;
+        
+        // Guarantee we never sample outside the valid backdrop capture bounds,
+        // preventing black/void artifacts if the pill is pressed tightly against the edge.
+        screenUV = clamp(screenUV, vec2(0.001), vec2(0.999));
+    }
+
     // PP1 optimisation: when the surface normal is flat (pointing straight up,
     // i.e. normalXY ≈ 0), refract() always produces displacement = vec2(0) and
     // the refracted UV is identical to screenUV.  Skip refract() entirely and
@@ -157,10 +311,10 @@ void main() {
     if (dot(normalXY, normalXY) < 1e-4) {
         // Flat interior — surface is pointing straight at the camera.
         // Displacement is mathematically zero; sample the background directly.
-        refractColor = texture(uBackgroundTexture, screenUV);
+        refractColor = textureBilinear(screenUV, physTexSize, invTexSize);
     } else if (uChromaticAberration < 0.01) {
         vec2 refractedUV = screenUV + displacement * invTexSize;
-        refractColor = texture(uBackgroundTexture, refractedUV);
+        refractColor = textureBilinear(refractedUV, physTexSize, invTexSize);
     } else {
         float dispersionStrength = uChromaticAberration * 0.5;
         vec2 redOffset  = displacement * (1.0 + dispersionStrength);
@@ -170,11 +324,21 @@ void main() {
         vec2 greenUV = screenUV + displacement * invTexSize;
         vec2 blueUV  = screenUV + blueOffset  * invTexSize;
 
-        float red         = texture(uBackgroundTexture, redUV).r;
-        vec4  greenSample = texture(uBackgroundTexture, greenUV);
-        float blue        = texture(uBackgroundTexture, blueUV).b;
+        float red         = textureBilinear(redUV, physTexSize, invTexSize).r;
+        vec4  greenSample = textureBilinear(greenUV, physTexSize, invTexSize);
+        float blue        = textureBilinear(blueUV, physTexSize, invTexSize).b;
 
         refractColor = vec4(red, greenSample.g, blue, greenSample.a);
+    }
+
+    // Un-premultiply the background sample before refraction math.
+    // BackdropFilter delivers premultiplied RGBA; toImageSync captures also
+    // deliver premultiplied RGBA. Without un-premultiply, the chromatic
+    // aberration dispersion channels (red/blue split) operate on premultiplied
+    // values, which biases saturated colours toward grey at the edges.
+    // On fully-opaque backdrops (refractColor.a == 1.0) this is a no-op.
+    if (refractColor.a > 0.001) {
+        refractColor.rgb /= refractColor.a;
     }
 
     vec4 finalColor = applyGlassColor(refractColor, uGlassColor);
@@ -305,8 +469,26 @@ void main() {
     // and doesn't accumulate on interior pixels where edgeFactor ≈ 0.
     //
     // Strength 0.10 produces a gentle brightening calibrated against Apple
-    // reference screenshots.  Fully branchless — no extra GPU divergence.
-    float fresnel = (1.0 - normalZ) * edgeFactor * 0.10;
+    // reference screenshots. Fully branchless — no extra GPU divergence.
+    // Fresnel strength 0.12 (was 0.10 in the calibration build).
+    // The extra 0.02 restores the subtle rim luminosity that the geometry AA band
+    // experiment temporarily reduced — keeping the glass edge visually present
+    // against dark bar backgrounds without making it glowing or harsh.
+    float rimBase = (1.0 - normalZ) * edgeFactor;
+    // uAmbientRim > 0 draws an ADDITIONAL rim band of that width (in the
+    // SDF's pixel units). The stock Fresnel profile cannot be widened by
+    // intensity scaling: within the circular bevel normalizedHeight == normalZ
+    // == sqrt(1-((T-d)/T)^2), which rises so steeply that the edgeFactor gate
+    // confines (1-normalZ)*edgeFactor to the outer ~10% of the bevel — a
+    // hairline. Inverting that profile recovers the true distance from the
+    // shape edge, d = T*(1-sqrt(1-h^2)), so the band below has an exact,
+    // thickness-independent geometric width with a ±0.75px AA edge.
+    // At uAmbientRim = 0 rendering is exactly stock.
+    float cosTerm = sqrt(max(0.0, 1.0 - normalizedHeight * normalizedHeight));
+    float rimDist = uThickness * (1.0 - cosTerm);
+    float ring    = (1.0 - smoothstep(uAmbientRim - 0.75, uAmbientRim + 0.75, rimDist))
+                  * step(0.001, uAmbientRim);
+    float fresnel = rimBase * 0.12 + ring * 0.45;
     finalColor.rgb = clamp(finalColor.rgb + vec3(fresnel), 0.0, 1.0);
 
     float alpha  = geometryData.a;

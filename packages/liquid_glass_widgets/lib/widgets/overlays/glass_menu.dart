@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'dart:ui';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../utils/glass_morph_controller.dart';
 import '../../src/renderer/liquid_glass_renderer.dart';
@@ -12,6 +11,7 @@ import '../shared/adaptive_liquid_glass_layer.dart';
 import '../shared/inherited_liquid_glass.dart';
 import 'glass_menu_item.dart';
 import '../../theme/glass_theme_helpers.dart';
+import '../../theme/glass_theme.dart';
 
 part 'shared/glass_menu_internal.dart';
 
@@ -224,6 +224,11 @@ class GlassMenu extends StatefulWidget {
   /// zero-sized trigger reads as a point bloom rather than an 8px glass dot.
   final bool morphFromZero;
 
+  /// When true (typically for iOS PlatformViews), forces the BackdropFilter
+  /// fallback render path instead of the Impeller-native shader. Forwarded to
+  /// the underlying [AdaptiveLiquidGlassLayer].
+  final bool platformViewBackdrop;
+
   /// Creates a liquid glass menu.
   const GlassMenu({
     super.key,
@@ -257,6 +262,7 @@ class GlassMenu extends StatefulWidget {
     this.controller,
     this.showDismissBarrier = true,
     this.morphFromZero = false,
+    this.platformViewBackdrop = false,
   }) : assert(trigger != null || triggerBuilder != null,
             'Either trigger or triggerBuilder must be provided');
 

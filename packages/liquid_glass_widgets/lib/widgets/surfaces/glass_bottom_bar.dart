@@ -1,32 +1,12 @@
-// Using deprecated Colors.withOpacity for backwards compatibility with
-// existing code patterns in the codebase.
 // ignore_for_file: deprecated_member_use
-
-// Implementation inspired by example code in the liquid_glass_renderer package
-// by whynotmake-it team (https://github.com/whynotmake-it/flutter_liquid_glass).
-// Used under MIT License.
-
-import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import '../../src/renderer/liquid_glass_renderer.dart';
-
+import '../../src/types/glass_interaction_behavior.dart';
 import '../../types/glass_quality.dart';
 import '../interactive/glass_button.dart';
 import '../shared/adaptive_liquid_glass_layer.dart';
-import '../shared/glass_content_aware_scope.dart';
-import '../shared/inherited_liquid_glass.dart';
-import '../../theme/glass_theme_data.dart';
-import '../../theme/glass_theme_helpers.dart';
-import '../../src/types/glass_interaction_behavior.dart';
-import 'shared/bottom_bar_internal.dart'
-    show
-        BottomBarExtraBtn,
-        BottomBarTabItem,
-        TabIndicator,
-        kBottomBarGlassDefaults,
-        resolveBarLabelColor;
-import 'shared/bar_layout_utils.dart';
+import 'shared/tab_bar_bottom_layout.dart';
 
 /// A glass morphism bottom navigation bar following Apple's design patterns.
 ///
@@ -112,7 +92,7 @@ import 'shared/bar_layout_utils.dart';
 ///   tabs: [...],
 ///   selectedIndex: _selectedIndex,
 ///   onTabSelected: (index) => setState(() => _selectedIndex = index),
-///   extraButton: GlassBottomBarExtraButton(
+///   extraButton: GlassTabBarExtraButton(
 ///     icon: CupertinoIcons.add,
 ///     label: 'Create',
 ///     onTap: () => _showCreateDialog(),
@@ -185,7 +165,23 @@ enum MaskingQuality {
   high,
 }
 
-class GlassBottomBar extends StatefulWidget {
+/// **Deprecated:** Use [GlassTabBar.bottom] instead.
+///
+/// [GlassBottomBar] is a zero-logic shim that will be removed in v1.0.
+/// Migrate by replacing `GlassBottomBar(` with `GlassTabBar.bottom(` and
+/// `GlassBottomBarTab(` with `GlassSegment(`. All parameters are identical.
+///
+/// ```dart
+/// // BEFORE
+/// GlassBottomBar(tabs: [GlassBottomBarTab(icon: Icon(Icons.home), label: 'Home')], ...)
+/// // AFTER
+/// GlassTabBar.bottom(tabs: [GlassSegment(icon: Icon(Icons.home), label: 'Home')], ...)
+/// ```
+@Deprecated('Use GlassTabBar.bottom() instead. '
+    'GlassBottomBar will be removed in v1.0. '
+    'Migration: replace GlassBottomBar( with GlassTabBar.bottom( '
+    'and GlassBottomBarTab( with GlassSegment(.')
+class GlassBottomBar extends StatelessWidget {
   /// Creates a glass bottom navigation bar.
   const GlassBottomBar({
     required this.tabs,
@@ -206,8 +202,13 @@ class GlassBottomBar extends StatefulWidget {
     this.showIndicator = true,
     this.indicatorColor,
     this.indicatorSettings,
+    this.indicatorPinchStrength = 0.4,
     this.selectedIconColor,
     this.unselectedIconColor,
+    this.selectedLabelColor,
+    this.unselectedLabelColor,
+    this.selectedLabelStyle,
+    this.unselectedLabelStyle,
     this.iconSize = 24,
     this.labelFontSize = 11,
     this.textStyle,
@@ -216,12 +217,14 @@ class GlassBottomBar extends StatefulWidget {
     this.glowSpreadRadius = 8,
     this.glowOpacity = 0.6,
     this.quality,
-    this.magnification = 1.0,
+    this.magnification = 1.15,
     this.innerBlur = 0.0,
     this.maskingQuality = MaskingQuality.high,
     this.backgroundKey,
     this.tabWidth,
-    this.indicatorExpansion = 14,
+    this.indicatorBorderRadius,
+    this.indicatorExpansion =
+        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     this.interactionGlowColor,
     this.interactionGlowRadius = 1.5,
     this.interactionBehavior = GlassInteractionBehavior.full,
@@ -242,12 +245,14 @@ class GlassBottomBar extends StatefulWidget {
 
   /// Magnification factor for the content inside the selected indicator.
   ///
-  /// Values > 1.0 will zoom in the content, creating a lens effect.
+  /// Values > 1.0 zoom in the selected tab's icon and label, creating the
+  /// iOS 26 "lens" effect where the active tab appears slightly larger than
+  /// its neighbours.
   ///
-  /// **Recommended range:** 1.0-1.3
-  /// - 1.0: No magnification (default)
-  /// - 1.1-1.2: Subtle emphasis
-  /// - 1.3+: Dramatic effect (may look aggressive)
+  /// **Recommended range:** 1.0–1.3
+  /// - `1.15` (default) — matches Apple News / Safari selected-tab scale.
+  /// - `1.0` — no magnification; all tabs render at the same size.
+  /// - `1.2–1.3` — more dramatic; may feel large with dense labels.
   ///
   /// Only applies when [maskingQuality] is [MaskingQuality.high].
   final double magnification;
@@ -372,12 +377,19 @@ class GlassBottomBar extends StatefulWidget {
   ///     searchable variant which uses the same default and clamping logic.
   final double? tabWidth;
 
+  /// Override border radius for the indicator. Null = inherits from barBorderRadius.
+  final double? indicatorBorderRadius;
+
   /// How far the jelly indicator's leading and trailing edges expand
   /// past the tab boundary as the indicator translates between tabs.
   /// Higher values give a more dramatic "puff" stretch; lower values
-  /// produce a tighter, more iOS-native feel. Defaults to `14` —
-  /// matches the pre-existing visual.
-  final double indicatorExpansion;
+  /// a tighter, more iOS-native feel.
+  ///
+  /// Defaults to `EdgeInsets.symmetric(horizontal: 12, vertical: 8)` which
+  /// matches the iOS 26 bottom-bar pill proportions (slightly wider than tall).
+  /// To restore the previous symmetric behaviour pass
+  /// `indicatorExpansion: const EdgeInsets.all(8.0)`.
+  final EdgeInsetsGeometry indicatorExpansion;
 
   /// List of tabs to display in the bottom bar.
   ///
@@ -401,7 +413,7 @@ class GlassBottomBar extends StatefulWidget {
   ///
   /// Typically used for a primary action like "Create", "Add", or "Compose".
   /// The button is rendered as a [GlassButton] and inherits the glass settings.
-  final GlassBottomBarExtraButton? extraButton;
+  final GlassTabBarExtraButton? extraButton;
 
   // ===========================================================================
   // Layout Properties
@@ -521,6 +533,16 @@ class GlassBottomBar extends StatefulWidget {
   /// - blur: 0
   final LiquidGlassSettings? indicatorSettings;
 
+  /// Maximum concave lens pinch strength for the draggable indicator pill.
+  ///
+  /// Controls how strongly the bar content appears to pinch inward through
+  /// the pill's left and right edges during a drag (iOS 26 lens effect).
+  ///
+  /// - `1.0` (default) — full Apple-calibrated effect
+  /// - `0.5` — half the pinch depth
+  /// - `0.0` — pinch fully disabled
+  final double indicatorPinchStrength;
+
   // ===========================================================================
   // Tab Style Properties
   // ===========================================================================
@@ -532,6 +554,19 @@ class GlassBottomBar extends StatefulWidget {
   ///
   /// Defaults to [Colors.white].
   final Color? unselectedIconColor;
+
+  /// Label color for selected tab.
+  final Color? selectedLabelColor;
+
+  /// Label color for unselected tabs.
+  final Color? unselectedLabelColor;
+
+  /// Per-state label text style, merged over the base label style — overrides
+  /// font / weight / letter-spacing while keeping the resolved label color.
+  final TextStyle? selectedLabelStyle;
+
+  /// See [selectedLabelStyle].
+  final TextStyle? unselectedLabelStyle;
 
   /// Size of the tab icons.
   ///
@@ -581,246 +616,55 @@ class GlassBottomBar extends StatefulWidget {
   final double glowOpacity;
 
   @override
-  State<GlassBottomBar> createState() => _GlassBottomBarState();
-}
-
-class _GlassBottomBarState extends State<GlassBottomBar> {
-  // Delegate to the shared const — single source of truth in bottom_bar_internal.dart.
-  // Both bars reference kBottomBarGlassDefaults so their glass is guaranteed identical.
-  static const _defaultGlassSettings = kBottomBarGlassDefaults;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!widget.adaptiveBrightness && widget.brightnessOverride == null) {
-      return _buildBar(context, null);
-    }
-    return GlassContentAwareBrightness(
-      brightnessOverride: widget.brightnessOverride,
-      onBrightnessChanged: widget.onBrightnessChanged,
-      builder: (context, brightness, darkAmount) =>
-          _buildBar(context, darkAmount),
-    );
-  }
-
-  /// Builds the bar. [darkAmount] is the animated light→dark cross-fade
-  /// position when the adaptive brightness machinery is active, or null in
-  /// the classic (ambient-brightness) path.
-  Widget _buildBar(BuildContext context, double? darkAmount) {
-    final effectiveQuality = GlassThemeHelpers.resolveQuality(
-      context,
-      widgetQuality: widget.quality,
-      fallback: GlassQuality.premium,
-    );
-
-    // Resolve interaction glow color: explicit param → GlassThemeData.primary → null
-    // (null lets the internal widget use its own hardcoded fallback).
-    final resolvedGlowColors =
-        GlassThemeData.of(context).glowColorsFor(context);
-    final effectiveInteractionGlowColor =
-        widget.interactionGlowColor ?? resolvedGlowColors.primary;
-
-    final dynamicLabelColor = resolveBarLabelColor(context, darkAmount);
-    final resolvedSelectedIconColor =
-        widget.selectedIconColor ?? dynamicLabelColor;
-    final resolvedUnselectedIconColor =
-        widget.unselectedIconColor ?? dynamicLabelColor;
-
-    // Glow appearance fields come from the theme; they cannot be set per-widget
-    // because they are part of the theme palette. Widgets that need custom
-    // values should supply a custom GlassGlowColors via GlassTheme.
-    final effectiveGlowBlurRadius = resolvedGlowColors.glowBlurRadius;
-    final effectiveGlowSpreadRadius = resolvedGlowColors.glowSpreadRadius;
-    final effectiveGlowOpacity = resolvedGlowColors.glowOpacity;
-
-    // Use custom glass settings or cached defaults for bottom bars
-    final effectiveSettings = widget.settings ?? _defaultGlassSettings;
-
-    return AdaptiveLiquidGlassLayer(
-      settings: effectiveSettings,
-      quality: effectiveQuality,
-      platformViewBackdrop: widget.platformViewBackdrop,
-      blendAmount: widget.enableBlend
-          ? widget.blendAmount
-          : 0, // Impeller-only (gracefully ignored on Skia)
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: widget.horizontalPadding,
-          vertical: widget.verticalPadding,
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            // Compute how much width the extra button consumes, if present.
-            final extraBtnW = widget.extraButton != null
-                ? widget.extraButton!.size + widget.spacing
-                : 0.0;
-            // Available width for the tab pill inside the padded row.
-            final maxTabW = constraints.maxWidth - extraBtnW;
-            // Resolve the pill width: compact (tabWidth × count) or fill (null).
-            final tabPillW = resolveTabPillWidth(
-              tabWidth: widget.tabWidth,
-              tabCount: widget.tabs.length,
-              maxAvailable: maxTabW,
-            );
-
-            return SizedBox(
-              height: widget.barHeight,
-              child: Builder(
-                builder: (context) {
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      // 1. Optional extra button — painted first (bottom of z-order).
-                      // Pinned to the trailing edge. Painted before the tab pill
-                      // so the jelly indicator's glass effect correctly overlaps and
-                      // refracts the extra button during horizontal stretch physics.
-                      // This matches the z-order pattern in GlassSearchableBottomBar.
-                      if (widget.extraButton != null)
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          bottom: 0,
-                          child: SizedBox(
-                            width: widget.extraButton!.size,
-                            height: widget.barHeight,
-                            child: BottomBarExtraBtn(
-                              config: widget.extraButton!,
-                              quality: effectiveQuality,
-                              iconColor: widget.extraButton!.iconColor ??
-                                  resolvedUnselectedIconColor,
-                              enableBlend: widget.enableBlend,
-                              borderRadius: widget.barBorderRadius ==
-                                      GlassBottomBar._defaultBarBorderRadius
-                                  ? null
-                                  : widget.barBorderRadius,
-                            ),
-                          ),
-                        ),
-
-                      // 2. Tab pill — painted last (top of z-order).
-                      // The jelly indicator uses Stack(clipBehavior: Clip.none)
-                      // internally, so it can overflow past the pill bounds.
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        width: tabPillW,
-                        height: widget.barHeight,
-                        child: TabIndicator(
-                          quality: effectiveQuality,
-                          visible: widget.showIndicator,
-                          tabIndex: widget.selectedIndex,
-                          tabCount: widget.tabs.length,
-                          indicatorColor: widget.indicatorColor,
-                          indicatorSettings: widget.indicatorSettings,
-                          onTabChanged: widget.onTabSelected,
-                          barHeight: widget.barHeight,
-                          barBorderRadius: widget.barBorderRadius,
-                          tabPadding: widget.tabPadding,
-                          backgroundKey: widget.backgroundKey,
-                          maskingQuality: widget.maskingQuality,
-                          indicatorExpansion: widget.indicatorExpansion,
-                          platformViewBackdrop: widget.platformViewBackdrop,
-                          interactionGlowColor:
-                              widget.interactionBehavior.hasGlow
-                                  ? effectiveInteractionGlowColor
-                                  : const Color(0x00000000),
-                          interactionGlowRadius: widget.interactionGlowRadius,
-                          interactionGlowBlurRadius: effectiveGlowBlurRadius,
-                          interactionGlowSpreadRadius:
-                              effectiveGlowSpreadRadius,
-                          interactionGlowOpacity: effectiveGlowOpacity,
-                          interactionScale: widget.interactionBehavior.hasScale
-                              ? widget.pressScale
-                              : 1.0,
-                          childUnselected: Row(
-                            children: [
-                              for (var i = 0; i < widget.tabs.length; i++)
-                                Expanded(
-                                  child: BottomBarTabItem(
-                                    tab: widget.tabs[i],
-                                    selected: false,
-                                    selectedIconColor:
-                                        resolvedSelectedIconColor,
-                                    unselectedIconColor:
-                                        resolvedUnselectedIconColor,
-                                    iconSize: widget.iconSize,
-                                    labelFontSize: widget.labelFontSize,
-                                    textStyle: widget.textStyle,
-                                    iconLabelSpacing: widget.iconLabelSpacing,
-                                    glowDuration: widget.glowDuration,
-                                    glowBlurRadius: widget.glowBlurRadius,
-                                    glowSpreadRadius: widget.glowSpreadRadius,
-                                    glowOpacity: widget.glowOpacity,
-                                    // onTap is null: all tap selection goes through
-                                    // TabIndicator.onBarTapDown (prevents double-fire).
-                                    onTap: null,
-                                  ),
-                                ),
-                            ],
-                          ),
-                          // Pass selected tabs (foreground/masked layer)
-                          selectedTabBuilder: (context, intensity, alignment) =>
-                              _buildSelectedTabs(
-                                  intensity,
-                                  alignment,
-                                  resolvedSelectedIconColor,
-                                  resolvedUnselectedIconColor),
-                          magnification: widget.magnification,
-                          innerBlur: widget.innerBlur,
-                        ),
-                      ),
-                    ],
-                  ); // Stack
-                }, // Builder.builder
-              ), // Builder
-            ); // SizedBox
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSelectedTabs(double intensity, Alignment alignment,
-      Color resolvedSelectedIconColor, Color resolvedUnselectedIconColor) {
-    // Lerp magnification: 1.0 -> widget.magnification
-    final scale = ui.lerpDouble(1.0, widget.magnification, intensity) ?? 1.0;
-
-    // Selective rendering: only render tabs near the indicator (within +/- 1 tab).
-    final currentTabFloat = ((alignment.x + 1) / 2) * widget.tabs.length;
-    final affectedStart =
-        (currentTabFloat - 1).floor().clamp(0, widget.tabs.length - 1);
-    final affectedEnd =
-        (currentTabFloat + 1).ceil().clamp(0, widget.tabs.length - 1);
-
-    return Row(
-      children: [
-        for (var i = 0; i < widget.tabs.length; i++)
-          Expanded(
-            child: (i >= affectedStart && i <= affectedEnd)
-                ? Transform.scale(
-                    scale: scale,
-                    child: BottomBarTabItem(
-                      tab: widget.tabs[i],
-                      selected: true,
-                      selectedIconColor: resolvedSelectedIconColor,
-                      unselectedIconColor: resolvedUnselectedIconColor,
-                      iconSize: widget.iconSize,
-                      labelFontSize: widget.labelFontSize,
-                      textStyle: widget.textStyle,
-                      iconLabelSpacing: widget.iconLabelSpacing,
-                      glowDuration: widget.glowDuration,
-                      glowBlurRadius: widget.glowBlurRadius,
-                      glowSpreadRadius: widget.glowSpreadRadius,
-                      glowOpacity: widget.glowOpacity,
-                      // onTap is null: all tap selection goes through
-                      // TabIndicator.onBarTapDown (prevents double-fire).
-                      onTap: null,
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => TabBarBottomLayout(
+        tabs: tabs,
+        selectedIndex: selectedIndex,
+        onTabSelected: onTabSelected,
+        extraButton: extraButton,
+        spacing: spacing,
+        horizontalPadding: horizontalPadding,
+        verticalPadding: verticalPadding,
+        barHeight: barHeight,
+        barBorderRadius: barBorderRadius,
+        tabPadding: tabPadding,
+        iconLabelSpacing: iconLabelSpacing,
+        enableBlend: enableBlend,
+        blendAmount: blendAmount,
+        settings: settings,
+        showIndicator: showIndicator,
+        indicatorColor: indicatorColor,
+        indicatorSettings: indicatorSettings,
+        indicatorPinchStrength: indicatorPinchStrength,
+        selectedIconColor: selectedIconColor,
+        unselectedIconColor: unselectedIconColor,
+        selectedLabelColor: selectedLabelColor,
+        unselectedLabelColor: unselectedLabelColor,
+        selectedLabelStyle: selectedLabelStyle,
+        unselectedLabelStyle: unselectedLabelStyle,
+        iconSize: iconSize,
+        labelFontSize: labelFontSize,
+        textStyle: textStyle,
+        glowDuration: glowDuration,
+        glowBlurRadius: glowBlurRadius,
+        glowSpreadRadius: glowSpreadRadius,
+        glowOpacity: glowOpacity,
+        quality: quality,
+        magnification: magnification,
+        innerBlur: innerBlur,
+        maskingQuality: maskingQuality,
+        backgroundKey: backgroundKey,
+        tabWidth: tabWidth,
+        indicatorBorderRadius: indicatorBorderRadius,
+        indicatorExpansion: indicatorExpansion,
+        interactionGlowColor: interactionGlowColor,
+        interactionGlowRadius: interactionGlowRadius,
+        interactionBehavior: interactionBehavior,
+        pressScale: pressScale,
+        platformViewBackdrop: platformViewBackdrop,
+        adaptiveBrightness: adaptiveBrightness,
+        onBrightnessChanged: onBrightnessChanged,
+        brightnessOverride: brightnessOverride,
+      );
 }
 
 /// Configuration for a tab in [GlassBottomBar].
@@ -849,6 +693,14 @@ class _GlassBottomBarState extends State<GlassBottomBar> {
 ///   icon: SvgPicture.asset('assets/settings.svg', colorFilter: ...),
 /// )
 /// ```
+/// **Deprecated:** Use [GlassSegment] instead.
+///
+/// [GlassBottomBarTab] is a zero-logic typedef shim.
+/// Replace `GlassBottomBarTab(icon: ..., label: ..., glowColor: ...)` with
+/// `GlassSegment(icon: ..., label: ..., glowColor: ...)`.
+@Deprecated('Use GlassSegment instead. '
+    'GlassBottomBarTab will be removed in v1.0. '
+    'Migration: replace GlassBottomBarTab( with GlassSegment(.')
 class GlassBottomBarTab {
   /// Creates a bottom bar tab configuration.
   const GlassBottomBarTab({
@@ -893,12 +745,12 @@ class GlassBottomBarTab {
   final double? thickness;
 }
 
-/// Where a [GlassBottomBarExtraButton] appears relative to the search pill
+/// Where a [GlassTabBarExtraButton] appears relative to the search pill
 /// in a [GlassSearchableBottomBar].
 ///
 /// Has no effect in [GlassBottomBar], where the extra button always sits
 /// between the tab content and the right edge.
-enum ExtraButtonPosition {
+enum GlassExtraButtonPosition {
   /// Place the button **before** the search pill — between the tab pill and
   /// the search pill. This is the default and matches the classic iOS
   /// "compose" button position seen in Mail and Messages.
@@ -938,15 +790,15 @@ enum GlassTabPillAnchor {
 ///
 /// The extra button is rendered as a [GlassButton] and typically used for
 /// primary actions like creating new content.
-class GlassBottomBarExtraButton {
+class GlassTabBarExtraButton {
   /// Creates an extra button configuration.
-  const GlassBottomBarExtraButton({
+  const GlassTabBarExtraButton({
     required this.icon,
     required this.onTap,
     required this.label,
     this.iconColor,
     this.size = 64,
-    this.position = ExtraButtonPosition.beforeSearch,
+    this.position = GlassExtraButtonPosition.beforeSearch,
     this.collapseOnSearchFocus = true,
   });
 
@@ -972,14 +824,14 @@ class GlassBottomBarExtraButton {
   /// Where this button is placed relative to the search pill in a
   /// [GlassSearchableBottomBar].
   ///
-  /// - [ExtraButtonPosition.beforeSearch] (default) — between the tab pill
+  /// - [GlassExtraButtonPosition.beforeSearch] (default) — between the tab pill
   ///   and the search pill. Classic iOS pattern (Mail compose button).
-  /// - [ExtraButtonPosition.afterSearch] — pinned to the right edge, after
+  /// - [GlassExtraButtonPosition.afterSearch] — pinned to the right edge, after
   ///   the search pill. The search pill's spring calculations automatically
   ///   reserve space so no RenderFlex overflow occurs during transitions.
   ///
   /// Has no effect in [GlassBottomBar].
-  final ExtraButtonPosition position;
+  final GlassExtraButtonPosition position;
 
   /// Whether this button collapses (hides + frees layout space) when the
   /// search field is focused (i.e. the keyboard is visible).
@@ -997,7 +849,21 @@ class GlassBottomBarExtraButton {
   final bool collapseOnSearchFocus;
 }
 
-// TabIndicator and TabIndicatorState live in shared/bottom_bar_internal.dart.
+/// Deprecated alias for [GlassTabBarExtraButton].
+///
+/// **Deprecated:** Use [GlassTabBarExtraButton] instead.
+///
+/// This typedef will be removed in v1.0 alongside [GlassBottomBar] and
+/// [GlassSearchableBottomBar]. Migrate by replacing
+/// `GlassBottomBarExtraButton(` with `GlassTabBarExtraButton(`.
+@Deprecated(
+  'Use GlassTabBarExtraButton instead. '
+  'GlassBottomBarExtraButton will be removed in v1.0. '
+  'Migrate: replace GlassBottomBarExtraButton( with GlassTabBarExtraButton(.',
+)
+typedef GlassBottomBarExtraButton = GlassTabBarExtraButton;
+
+// TabIndicator and TabIndicatorState live in shared/tab_bar_bottom_internal.dart.
 // JellyClipper is defined below — kept here because bottom_bar_internal.dart
 // and searchable_bottom_bar_internal.dart import it via `show JellyClipper`.
 
@@ -1016,7 +882,7 @@ class JellyClipper extends CustomClipper<Path> {
   final int itemCount;
   final Alignment alignment;
   final double thickness;
-  final double expansion;
+  final EdgeInsets expansion;
   final Matrix4 transform;
   final double borderRadius;
   final bool inverse;
@@ -1051,13 +917,24 @@ class JellyClipper extends CustomClipper<Path> {
     );
 
     // Apply expansion based on thickness (drag state)
-    final inflatedRect = paddedRect.inflate(expansion * thickness);
+    final inflatedRect = Rect.fromLTRB(
+      paddedRect.left - (expansion.left * thickness),
+      paddedRect.top - (expansion.top * thickness),
+      paddedRect.right + (expansion.right * thickness),
+      paddedRect.bottom + (expansion.bottom * thickness),
+    );
+
+    // Clamp radius to avoid invalid RRect paths on Impeller.
+    // We subtract 0.1 to prevent the radius from being EXACTLY half the shortest side,
+    // which triggers an empty path bug in some Impeller versions during animation.
+    final maxRadius = (inflatedRect.shortestSide / 2) - 0.1;
+    final safeRadius = borderRadius > maxRadius ? maxRadius : borderRadius;
 
     // Create rounded rect path
     final path = Path()
       ..addRRect(RRect.fromRectAndRadius(
         inflatedRect,
-        Radius.circular(borderRadius),
+        Radius.circular(safeRadius > 0 ? safeRadius : 0),
       ));
 
     // Apply jelly physics transform around the center

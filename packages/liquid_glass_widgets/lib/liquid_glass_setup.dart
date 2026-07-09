@@ -8,6 +8,8 @@ import 'types/glass_quality.dart';
 import 'utils/accessibility_config.dart' as glass_config;
 import 'utils/glass_performance_monitor.dart';
 import 'src/renderer/liquid_glass_renderer.dart';
+import 'src/renderer/shaders.dart';
+import 'src/renderer/internal/multi_shader_builder.dart';
 import 'widgets/shared/glass_adaptive_scope.dart';
 import 'widgets/shared/glass_effect.dart';
 import 'widgets/shared/glass_accessibility_scope.dart';
@@ -98,19 +100,45 @@ class LiquidGlassWidgets {
   /// 2. Pre-warms the interactive indicator shader (custom refraction).
   /// 3. Pre-warms the Impeller rendering pipeline (iOS / Android / macOS).
   /// 4. Optionally registers the debug performance monitor.
+  ///
+  /// ### Shaders pre-warmed
+  ///
+  /// | Shader | Role |
+  /// |---|---|
+  /// | `lightweight_glass.frag` | Minimal glass layer |
+  /// | `interactive_indicator.frag` | Custom refraction effect |
+  /// | `liquid_glass_geometry_blended.frag` | Geometry / SDF pass |
+  /// | `liquid_glass_final_render.frag` | Final composite pass |
   static Future<void> initialize({
     bool enablePerformanceMonitor = true,
   }) async {
     debugPrint('[LiquidGlass] Initializing library...');
 
-    // 1. Pre-warm shaders — prevents the "white flash" on first render.
+    // 1. Pre-warm shader programs in parallel — prevents first-frame jank /
+    //    "white flash" when glass widgets first appear.
+    //
+    //    Only shader disk-loads are awaited here (the only work that MUST
+    //    complete before runApp, since a missing program causes a white flash).
+    //
+    //    The Impeller pipeline warm-up is scheduled post-first-frame instead —
+    //    the splash screen or first non-glass frame provides enough GPU idle
+    //    time for pipeline compilation without blocking runApp.
     await Future.wait([
       LightweightLiquidGlass.preWarm(),
       GlassEffect.preWarm(),
-      _warmUpImpellerPipeline(),
+      MultiShaderBuilder.precacheShaders([
+        ShaderKeys.blendedGeometry,
+        ShaderKeys.liquidGlassRender,
+      ]),
     ]);
 
-    // 2. Register the debug performance monitor (no-op in release builds).
+    // 2. Schedule Impeller pipeline warm-up after the first frame — zero
+    //    startup cost. The first non-glass frame (e.g. splash screen) provides
+    //    ample idle GPU time for the driver to compile the Vulkan pipeline.
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _warmUpImpellerPipeline());
+
+    // 3. Register the debug performance monitor (no-op in release builds).
     if (enablePerformanceMonitor && !kReleaseMode) {
       GlassPerformanceMonitor.start();
     }
@@ -250,7 +278,12 @@ class LiquidGlassWidgets {
   /// Instantiates a minimal [LiquidGlassLayer] to trigger Impeller pipeline
   /// compilation — eliminating first-frame jank when glass effects appear.
   /// Skipped on Skia / Web where Impeller is not active.
-  static Future<void> _warmUpImpellerPipeline() async {
+  ///
+  /// Called via [addPostFrameCallback] from [initialize], so it runs after
+  /// the first frame rather than blocking [runApp]. The first non-glass frame
+  /// (splash screen, loading state) provides natural GPU idle time for driver
+  /// pipeline compilation without any artificial delay.
+  static void _warmUpImpellerPipeline() {
     if (!ui.ImageFilter.isShaderFilterSupported) {
       debugPrint('[LiquidGlass] Skipping Impeller warm-up (Skia/Web detected)');
       return;
@@ -263,17 +296,16 @@ class LiquidGlassWidgets {
         refractiveIndex: 1.5,
       );
 
-      // Instantiating the layer triggers Impeller pipeline compilation.
-      // We don't need to render it.
+      // Instantiating the layer registers the shader programs with the
+      // Impeller engine and kicks off async driver pipeline compilation.
+      // No artificial delay needed — the post-frame scheduling ensures the
+      // engine is in a stable state to accept the compilation work.
       final _ = LiquidGlassLayer(
         settings: warmUpSettings,
         child: const SizedBox.shrink(),
       );
 
-      // Brief delay to allow pipeline compilation to complete.
-      await Future.delayed(const Duration(milliseconds: 16));
-
-      debugPrint('[LiquidGlass] ✓ Impeller pipeline warmed up');
+      debugPrint('[LiquidGlass] ✓ Impeller pipeline warm-up scheduled');
     } catch (e) {
       debugPrint('[LiquidGlass] Impeller warm-up failed (non-critical): $e');
     }

@@ -1,7 +1,6 @@
 import 'dart:collection';
 import 'dart:math';
 import 'dart:ui' as ui;
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -23,24 +22,25 @@ abstract class LiquidGlassRenderObject extends RenderProxyBox {
     required LiquidGlassSettings settings,
     required double devicePixelRatio,
     BackdropKey? backdropKey,
+    ui.Image? captureImage,
+    Offset captureOriginInScreenSpace = Offset.zero,
   })  : _settings = settings,
         _devicePixelRatio = devicePixelRatio,
         _backdropKey = backdropKey,
+        _captureImage = captureImage,
+        _captureOriginInScreenSpace = captureOriginInScreenSpace,
         _link = link,
         _cachedLightDir = Offset(
           cos(settings.lightAngle),
           -sin(settings.lightAngle),
-        ) {
-    _updateShaderSettings();
-  }
+        );
 
   static final logger = Logger(LgrLogNames.render);
 
   final FragmentShader renderShader;
 
   /// Cached light direction vector — updated only when [settings.lightAngle]
-  /// changes. Avoids recomputing cos/sin on every _updateShaderSettings() call
-  /// (which fires for any property change: visibility, blur, color, etc.).
+  /// changes. Avoids recomputing cos/sin on every setting change.
   Offset _cachedLightDir;
 
   /// The size that the geometry texture should have.
@@ -68,7 +68,6 @@ abstract class LiquidGlassRenderObject extends RenderProxyBox {
       );
     }
     _settings = value;
-    _updateShaderSettings();
     markNeedsPaint();
   }
 
@@ -77,7 +76,6 @@ abstract class LiquidGlassRenderObject extends RenderProxyBox {
   set devicePixelRatio(double value) {
     if (_devicePixelRatio == value) return;
     _devicePixelRatio = value;
-    _updateShaderSettings();
     markNeedsPaint();
   }
 
@@ -89,6 +87,35 @@ abstract class LiquidGlassRenderObject extends RenderProxyBox {
   set backdropKey(BackdropKey? value) {
     if (_backdropKey == value) return;
     _backdropKey = value;
+    markNeedsPaint();
+  }
+
+  // ── Capture-path fields ───────────────────────────────────────────────────
+  //
+  // When [captureImage] is non-null, [paintLiquidGlass] implementations MUST
+  // use [paintLiquidGlassWithCapture] instead of the BackdropFilterLayer path.
+  // The captured image is the background texture fed directly to the shader,
+  // bypassing the live compositor read entirely.
+  //
+  // [captureOriginInScreenSpace] is the global (screen-space) logical-pixel
+  // position of the RepaintBoundary that produced [captureImage]. It is used
+  // to derive [uCaptureOffset]: the physical-pixel shift from the render
+  // surface's canvas origin to the capture boundary's origin, which corrects
+  // [FlutterFragCoord()] (canvas-local) into capture-image space.
+
+  ui.Image? _captureImage;
+  ui.Image? get captureImage => _captureImage;
+  set captureImage(ui.Image? value) {
+    if (identical(_captureImage, value)) return;
+    _captureImage = value;
+    markNeedsPaint();
+  }
+
+  Offset _captureOriginInScreenSpace = Offset.zero;
+  Offset get captureOriginInScreenSpace => _captureOriginInScreenSpace;
+  set captureOriginInScreenSpace(Offset value) {
+    if (_captureOriginInScreenSpace == value) return;
+    _captureOriginInScreenSpace = value;
     markNeedsPaint();
   }
 
@@ -125,31 +152,6 @@ abstract class LiquidGlassRenderObject extends RenderProxyBox {
   void layout(Constraints constraints, {bool parentUsesSize = false}) {
     needsGeometryUpdate = true;
     super.layout(constraints, parentUsesSize: parentUsesSize);
-  }
-
-  void _updateShaderSettings() {
-    renderShader.setFloatUniforms(initialIndex: 6, (value) {
-      value
-        ..setColor(settings.effectiveGlassColor)
-        ..setFloats([
-          settings.effectiveRefractiveIndex,
-          settings.effectiveChromaticAberration,
-          settings.effectiveThickness,
-          settings.effectiveLightIntensity,
-          settings.effectiveAmbientStrength,
-          settings.effectiveSaturation,
-        ])
-        // Use pre-cached direction — cos/sin only recomputed when lightAngle changes,
-        // not on every visibility, blur, or color animation frame.
-        ..setOffset(_cachedLightDir);
-    });
-    // Slot 18: uWhiten (whitening amount); slot 19: uWhitenGated
-    // (1 = luminance-gated, the light-mode behaviour; 0 = uniform lift).
-    renderShader.setFloatUniforms(initialIndex: 18, (value) {
-      value
-        ..setFloat(settings.whitenStrength)
-        ..setFloat(settings.whitenGated ? 1.0 : 0.0);
-    });
   }
 
   ui.Rect _paintBounds = ui.Rect.zero;
@@ -264,10 +266,6 @@ abstract class LiquidGlassRenderObject extends RenderProxyBox {
         // (_geometryLocalBounds) rather than the newly expanding current frame
         // bounds (_paintBounds).
         //
-        // Map the texture to exactly the bounds it was originally built for
-        // (_geometryLocalBounds) rather than the newly expanding current frame
-        // bounds (_paintBounds).
-        //
         // Using _paintBounds causes severe multi-button jitter during animations:
         // as one button scales, _paintBounds expands/shifts to contain it. Since
         // the asynchronous texture lags 1 frame behind, rendering the old texture
@@ -293,7 +291,58 @@ abstract class LiquidGlassRenderObject extends RenderProxyBox {
               ..setOffset(activeBounds.topLeft * devicePixelRatio)
               ..setSize(activeBounds.size * devicePixelRatio);
           })
-          ..setImageSampler(1, geometryImage);
+          ..setFloatUniforms(initialIndex: 6, (value) {
+            value
+              ..setColor(settings.effectiveGlassColor)
+              ..setFloats([
+                settings.effectiveRefractiveIndex,
+                settings.effectiveChromaticAberration,
+                settings.effectiveThickness,
+                settings.effectiveLightIntensity,
+                settings.effectiveAmbientStrength,
+                settings.effectiveSaturation,
+              ])
+              ..setOffset(_cachedLightDir);
+          })
+          // Slot 18: uWhiten (whitening amount); slot 19: uWhitenGated
+          // (1 = luminance-gated, the light-mode behaviour; 0 = uniform lift).
+          // Slot 20: uPinchStrength (concave horizontal-pinch for indicator pills).
+          ..setFloatUniforms(initialIndex: 18, (value) {
+            value
+              ..setFloat(settings.whitenStrength)
+              ..setFloat(settings.whitenGated ? 1.0 : 0.0)
+              ..setFloat(settings.pinchStrength);
+          })
+          // Slots 21-24: uBackgroundFallback (straight RGBA). An opaque stand-in
+          // for backdrop regions the engine can't capture (e.g. a PlatformView
+          // past the glass, which the lens would otherwise render black); a == 0
+          // (the default) disables it. See the over-composite in textureBilinear
+          // (liquid_glass_final_render.frag).
+          //
+          // Sourced from platformViewFallbackColor, falling back to backerColor
+          // when unset — so backerColor keeps doubling as the fill for existing
+          // recipes, while platformViewFallbackColor lets callers decouple the
+          // PlatformView fill from the aesthetic backer.
+          ..setFloatUniforms(initialIndex: 21, (value) {
+            final b = settings.platformViewFallbackColor ??
+                settings.backerColor ??
+                const Color(0x00000000);
+            value.setFloats(<double>[b.r, b.g, b.b, b.a]);
+          })
+          // Slots 25-26: uCaptureOffset — zero in BackdropFilter mode (no-op).
+          // The capture path sets this non-zero via paintLiquidGlassWithCapture.
+          ..setFloatUniforms(initialIndex: 25, (value) {
+            value.setOffset(Offset.zero);
+          })
+          // Slot 27: uAmbientRim — full-perimeter Fresnel rim boost.
+          ..setFloatUniforms(initialIndex: 27, (value) {
+            value.setFloat(settings.ambientRim);
+          })
+          ..setImageSampler(
+            1,
+            geometryImage,
+            filterQuality: FilterQuality.medium,
+          );
         paintLiquidGlass(
           context,
           offset,
@@ -319,6 +368,143 @@ abstract class LiquidGlassRenderObject extends RenderProxyBox {
     List<(RenderLiquidGlassGeometry, GeometryCache, Matrix4)> shapes,
     Rect boundingBox,
   );
+
+  /// Direct-draw paint path used when [captureImage] is non-null.
+  ///
+  /// Instead of emitting a [BackdropFilterLayer] (which reads from the live
+  /// compositor), this draws the shader as a plain rect onto the current canvas,
+  /// binding the pre-captured background image to sampler slot 0.
+  ///
+  /// Coordinate math:
+  ///   [FlutterFragCoord()] in a plain canvas.drawRect gives the fragment
+  ///   position within the current compositing layer (the RepaintBoundary that
+  ///   [LiquidGlassLayer] creates). [captureOriginInScreenSpace] is the global
+  ///   logical-pixel origin of the capture boundary (from localToGlobal).
+  ///   The physical-pixel offset between the two coordinate origins is:
+  ///
+  ///     uCaptureOffset = (captureOriginGlobal - thisRenderOriginGlobal) * dpr
+  ///
+  ///   Adding this to [FlutterFragCoord()] maps each fragment into capture-image
+  ///   space, so [screenUV] correctly addresses the pre-captured bar texture.
+  @protected
+  void paintLiquidGlassWithCapture(
+    PaintingContext context,
+    Offset offset,
+    List<(RenderLiquidGlassGeometry, GeometryCache, Matrix4)> shapes,
+    Rect boundingBox,
+    ui.Image capture,
+  ) {
+    if (!attached) return;
+
+    final dpr = devicePixelRatio;
+
+    // Our render object's global logical-pixel origin.
+    final thisOriginGlobal = getTransformTo(null).getTranslation();
+    final thisOriginLogical = Offset(thisOriginGlobal.x, thisOriginGlobal.y);
+
+    // Physical-pixel offset from our canvas origin → capture-boundary origin.
+    // This is the uCaptureOffset uniform: it shifts FlutterFragCoord() (which
+    // is relative to the compositing layer, i.e. our RepaintBoundary surface)
+    // into the capture image's coordinate space.
+    final captureOffset =
+        (_captureOriginInScreenSpace - thisOriginLogical) * dpr;
+
+    // uSize: physical pixel dimensions of the captured image.
+    final captureSize =
+        ui.Size(capture.width.toDouble(), capture.height.toDouble());
+
+    // Geometry bounds in screen space, snapped to pixels.
+    final activeBounds = MatrixUtils.transformRect(
+      matteTransform,
+      _geometryLocalBounds,
+    ).snapToPixels(dpr);
+
+    // uGeometryOffset/uGeometrySize are relative to the capture image origin
+    // (not screen origin) so that geometryUV = (fragCoord + uCaptureOffset -
+    // uGeometryOffset) / uGeometrySize resolves correctly.
+    final geometryOffsetInCapture =
+        (activeBounds.topLeft - _captureOriginInScreenSpace) * dpr;
+    final geometrySizePhysical = activeBounds.size * dpr;
+
+    renderShader
+      // Slot 0-1: uSize — physical size of the capture image.
+      ..setFloatUniforms(initialIndex: 0, (value) {
+        value.setSize(captureSize);
+      })
+      // Slots 2-5: uGeometryOffset + uGeometrySize, relative to capture origin.
+      ..setFloatUniforms(initialIndex: 2, (value) {
+        value
+          ..setOffset(geometryOffsetInCapture)
+          ..setSize(geometrySizePhysical);
+      })
+      ..setFloatUniforms(initialIndex: 6, (value) {
+        value
+          ..setColor(settings.effectiveGlassColor)
+          ..setFloats([
+            settings.effectiveRefractiveIndex,
+            settings.effectiveChromaticAberration,
+            settings.effectiveThickness,
+            settings.effectiveLightIntensity,
+            settings.effectiveAmbientStrength,
+            settings.effectiveSaturation,
+          ])
+          ..setOffset(_cachedLightDir);
+      })
+      ..setFloatUniforms(initialIndex: 18, (value) {
+        value
+          ..setFloat(settings.whitenStrength)
+          ..setFloat(settings.whitenGated ? 1.0 : 0.0)
+          ..setFloat(settings.pinchStrength);
+      })
+      ..setFloatUniforms(initialIndex: 21, (value) {
+        final b = settings.platformViewFallbackColor ??
+            settings.backerColor ??
+            const Color(0x00000000);
+        value.setFloats(<double>[b.r, b.g, b.b, b.a]);
+      })
+      // Slot 25-26: uCaptureOffset — shift fragCoord into capture-image space.
+      ..setFloatUniforms(initialIndex: 25, (value) {
+        value.setOffset(captureOffset);
+      })
+      // Slot 27: uAmbientRim — full-perimeter Fresnel rim boost.
+      ..setFloatUniforms(initialIndex: 27, (value) {
+        value.setFloat(settings.ambientRim);
+      })
+      // Slot 0: captured background image (replaces the BackdropFilter read).
+      ..setImageSampler(0, capture)
+      ..setImageSampler(1, geometryImage!, filterQuality: FilterQuality.medium);
+
+    // Draw the capture path: no BackdropFilterLayer needed — draw directly
+    // onto the canvas over the expanded clip rect.
+    final clipRect = boundingBox.expandToInclude(
+      Rect.fromLTRB(
+        boundingBox.left - 20,
+        boundingBox.top - 15,
+        boundingBox.right + 20,
+        boundingBox.bottom + 15,
+      ),
+    );
+
+    // Pass 1 (blur): retained even in capture mode — the blur layer reads from
+    // the BackdropGroup which is the internal bar blur, not the external capture.
+    // This is correct: the inner blur pass blurs icon content inside the glass,
+    // the capture provides the bar background behind the glass.
+    paintShapeContents(context, offset, shapes, insideGlass: true);
+
+    // Pass 2: glass refraction shader as a plain canvas.drawRect.
+    // No BackdropFilter wrapper; the captured image is already bound to slot 0.
+    context.canvas
+      ..save()
+      ..clipRect(clipRect.shift(offset))
+      ..drawRect(
+        clipRect.shift(offset),
+        Paint()..shader = renderShader,
+      )
+      ..restore();
+
+    // Pass 3: shape contents painted on top (non-glass child layer).
+    paintShapeContents(context, offset, shapes, insideGlass: false);
+  }
 
   @protected
   void paintShapeContents(
@@ -425,7 +611,11 @@ abstract class LiquidGlassRenderObject extends RenderProxyBox {
     Rect bounds,
   ) {
     // Work in local coordinate space — no matteTransform applied.
-    final localBounds = bounds.snapToPixels(devicePixelRatio);
+    // Inflate by 2 logical pixels (= 2×DPR physical pixels after snapToPixels
+    // aligns to the pixel grid) to ensure the anti-aliased SDF edge is fully
+    // captured. Without this, the picture boundaries tightly crop the fractional
+    // edge pixels, abruptly cutting off the rim lighting at the pill boundary.
+    final localBounds = bounds.snapToPixels(devicePixelRatio).inflate(2.0);
     final size = localBounds.size * devicePixelRatio;
 
     final logging = LgrLogs.isLogActive(logger);

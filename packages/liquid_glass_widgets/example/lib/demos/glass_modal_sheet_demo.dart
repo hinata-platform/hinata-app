@@ -112,7 +112,7 @@ class _ShowcaseHomeScreenState extends State<ShowcaseHomeScreen> {
       ),
       bottomNavigationBar: Padding(
         padding: EdgeInsets.only(bottom: sysBottom > 25 ? sysBottom - 25 : 0),
-        child: GlassSearchableBottomBar(
+        child: GlassTabBar.searchable(
           selectedIndex: _selectedTab,
           interactionBehavior: GlassInteractionBehavior.scaleOnly,
           isSearchActive: _isSearching,
@@ -137,16 +137,16 @@ class _ShowcaseHomeScreenState extends State<ShowcaseHomeScreen> {
                 setState(() => _searchFieldFocused = focused),
           ),
           tabs: [
-            GlassBottomBarTab(
+            GlassTab(
               label: 'Standard',
               icon: const Icon(CupertinoIcons.layers_alt),
               activeIcon: const Icon(CupertinoIcons.layers_alt_fill),
             ),
-            GlassBottomBarTab(
+            GlassTab(
               label: 'Peek',
               icon: const Icon(Icons.unfold_more_rounded),
             ),
-            GlassBottomBarTab(
+            GlassTab(
               label: 'Apple Maps',
               icon: const Icon(CupertinoIcons.map),
               activeIcon: const Icon(CupertinoIcons.map_fill),
@@ -225,7 +225,11 @@ class _ShowcaseHomeScreenState extends State<ShowcaseHomeScreen> {
     return SizedBox(
       width: 160,
       child: GlassSegmentedControl(
-        segments: const ['Standard', 'Premium', 'Minimal'],
+        segments: [
+          GlassSegment(label: 'Standard'),
+          GlassSegment(label: 'Premium'),
+          GlassSegment(label: 'Minimal')
+        ],
         selectedIndex: currentIndex >= 0 ? currentIndex : 1,
         onSegmentSelected: (index) {
           widget.onQualityChanged(qualities[index]);
@@ -647,7 +651,7 @@ class _ShowcaseHomeScreenState extends State<ShowcaseHomeScreen> {
     GlassModalSheet.show(
       context: context,
       quality: widget.currentQuality,
-      initialState: SheetState.peek,
+      initialState: GlassSheetState.peek,
       enablePeek: true,
       peekTopBorderRadius: 46,
       builder: (context) => const BaseScenario(
@@ -727,7 +731,7 @@ class _ShowcaseHomeScreenState extends State<ShowcaseHomeScreen> {
     GlassModalSheet.show(
       context: context,
       quality: widget.currentQuality,
-      fillTransition: FillTransition.gradual,
+      fillTransition: GlassFillTransition.gradual,
       fillThreshold: 0.8,
       builder: (context) => const BaseScenario(
         title: 'Gradual Experience',
@@ -854,9 +858,9 @@ class MapsExperienceScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: GlassModalSheetScaffold(
-        mode: SheetMode.persistent,
+        mode: GlassSheetMode.persistent,
         enablePeek: true,
-        initialState: SheetState.peek,
+        initialState: GlassSheetState.peek,
         peekSize: 90,
         halfSize: 0.445,
         horizontalMargin: 5,
@@ -869,7 +873,7 @@ class MapsExperienceScreen extends StatelessWidget {
         topBorderRadius: 40,
         bottomBorderRadius: 54,
         fullTopBorderRadius: 36,
-        fillTransition: FillTransition.instant,
+        fillTransition: GlassFillTransition.instant,
         halfSettings: LiquidGlassSettings(
           blur: 5,
           glassColor: Colors.blueGrey.withValues(alpha: 0.8),

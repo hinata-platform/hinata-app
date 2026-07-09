@@ -1,14 +1,15 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../src/renderer/liquid_glass_renderer.dart';
 import '../../types/glass_quality.dart';
 import 'glass_card.dart';
+import 'glass_divider.dart';
 import 'glass_list_tile.dart';
 
 /// A convenience wrapper that groups [GlassListTile]s inside a [GlassCard].
 ///
-/// [GlassGroupedSection] automatically applies `isLast: true` to the final
-/// tile, suppressing its bottom divider — the most common source of bugs when
-/// building grouped list sections manually.
+/// [GlassGroupedSection] automatically injects [GlassDivider]s between tiles,
+/// with smart leading-indent detection — 56px when the preceding tile has a
+/// [GlassListTile.leading] widget, 16px otherwise.
 ///
 /// ## iOS 26 pattern
 ///
@@ -20,7 +21,7 @@ import 'glass_list_tile.dart';
 ///
 /// ```dart
 /// GlassGroupedSection(
-///   header: Text('Network', style: TextStyle(color: CupertinoColors.white.withOpacity(0.7))),
+///   header: const Text('NETWORK'),
 ///   children: [
 ///     GlassListTile(
 ///       leading: Icon(CupertinoIcons.wifi, color: CupertinoColors.white),
@@ -37,31 +38,20 @@ import 'glass_list_tile.dart';
 ///           color: CupertinoColors.white),
 ///       title: Text('VPN'),
 ///       trailing: GlassListTile.chevron,
-///       // No need to set isLast — GlassGroupedSection handles it.
 ///     ),
 ///   ],
 /// )
 /// ```
 ///
-/// ## With a section header
+/// ## Children
 ///
-/// ```dart
-/// GlassGroupedSection(
-///   header: Padding(
-///     padding: EdgeInsets.only(left: 16, bottom: 8),
-///     child: Text(
-///       'GENERAL',
-///       style: TextStyle(
-///         color: CupertinoColors.white.withOpacity(0.54),
-///         fontSize: 13,
-///         fontWeight: FontWeight.w600,
-///         letterSpacing: 0.5,
-///       ),
-///     ),
-///   ),
-///   children: [ ... ],
-/// )
-/// ```
+/// [GlassGroupedSection] is designed to contain [GlassListTile] rows and
+/// standard Flutter content. Do not place interactive glass controls
+/// (`GlassSegmentedControl`, `GlassSlider`, `GlassSwitch`, `GlassButton`)
+/// as direct children — this is a glass-in-glass anti-pattern that degrades
+/// refraction and can clip indicator animations. See [GlassContainer] for
+/// the full explanation.
+
 class GlassGroupedSection extends StatelessWidget {
   /// Creates a grouped section of glass list tiles.
   const GlassGroupedSection({
@@ -78,8 +68,9 @@ class GlassGroupedSection extends StatelessWidget {
 
   /// The list tiles to display inside the section.
   ///
-  /// Typically [GlassListTile] widgets. The last child automatically gets
-  /// `isLast: true` applied to suppress its bottom divider.
+  /// Typically [GlassListTile] widgets. [GlassGroupedSection] automatically
+  /// injects [GlassDivider]s between adjacent tiles — no manual divider or
+  /// position tracking needed.
   final List<Widget> children;
 
   /// Optional header displayed above the glass card.
@@ -118,31 +109,72 @@ class GlassGroupedSection extends StatelessWidget {
   /// Rendering quality.
   final GlassQuality? quality;
 
+  Widget _buildHeader(BuildContext context) {
+    if (header == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 6.0),
+      child: DefaultTextStyle(
+        style: TextStyle(
+          color: CupertinoColors.secondaryLabel.resolveFrom(context),
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0.2,
+        ),
+        child: header!,
+      ),
+    );
+  }
+
+  Widget _buildFooter(BuildContext context) {
+    if (footer == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 6.0),
+      child: DefaultTextStyle(
+        style: TextStyle(
+          color: CupertinoColors.secondaryLabel.resolveFrom(context),
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+        ),
+        child: footer!,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final effectiveMargin =
         margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 6);
 
-    // Clone the children list, applying isLast to the final GlassListTile.
+    // Interleave GlassDividers between adjacent children. The divider indent
+    // is derived from the preceding tile's leading widget — 56px with a leading
+    // icon (32px icon + 12px gap + 12px content start inset) or 16px otherwise.
+    // If the user manually placed a GlassDivider in children, we don't insert
+    // automatic dividers around it to prevent double-dividers.
     final processedChildren = <Widget>[];
     for (var i = 0; i < children.length; i++) {
-      final child = children[i];
-      final isLast = i == children.length - 1;
+      processedChildren.add(children[i]);
 
-      if (isLast && child is GlassListTile) {
-        // Rebuild the tile with isLast: true by wrapping in a builder that
-        // creates a new GlassListTile with the same properties + isLast.
-        processedChildren.add(
-          _LastTileWrapper(key: child.key, child: child),
-        );
-      } else {
-        processedChildren.add(child);
+      final isLastChild = i == children.length - 1;
+      if (!isLastChild) {
+        final currentChild = children[i];
+        final nextChild = children[i + 1];
+
+        // Skip auto-divider if the current child is a divider, or if the next
+        // child is a divider. This prevents doubling them up.
+        if (currentChild is GlassDivider || nextChild is GlassDivider) continue;
+
+        // Compute indent based on whether the current tile has a leading widget.
+        final double indent =
+            (currentChild is GlassListTile && currentChild.leading != null)
+                ? 56.0
+                : 16.0;
+        processedChildren.add(GlassDivider(indent: indent));
       }
     }
 
     final card = GlassCard(
       padding: EdgeInsets.zero,
-      margin: effectiveMargin,
+      margin: EdgeInsets.zero,
       shape: shape ?? const LiquidRoundedSuperellipse(borderRadius: 12),
       settings: settings,
       useOwnLayer: useOwnLayer,
@@ -153,47 +185,23 @@ class GlassGroupedSection extends StatelessWidget {
       ),
     );
 
-    if (header == null && footer == null) return card;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    Widget section = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (header != null) header!,
+        _buildHeader(context),
         card,
-        if (footer != null) footer!,
+        _buildFooter(context),
       ],
     );
-  }
-}
 
-/// Internal widget that wraps the last [GlassListTile] to force `isLast: true`
-/// and `showDivider: false` without requiring the user to specify it.
-class _LastTileWrapper extends StatelessWidget {
-  const _LastTileWrapper({super.key, required this.child});
+    if (effectiveMargin != EdgeInsets.zero) {
+      section = Padding(
+        padding: effectiveMargin,
+        child: section,
+      );
+    }
 
-  final GlassListTile child;
-
-  @override
-  Widget build(BuildContext context) {
-    // Re-create the tile with isLast semantics applied.
-    // This preserves all user-provided properties while ensuring the last
-    // tile in a section never renders a bottom divider.
-    return GlassListTile(
-      key: child.key,
-      leading: child.leading,
-      title: child.title,
-      subtitle: child.subtitle,
-      trailing: child.trailing,
-      onTap: child.onTap,
-      onLongPress: child.onLongPress,
-      isLast: true,
-      contentPadding: child.contentPadding,
-      leadingIconColor: child.leadingIconColor,
-      titleStyle: child.titleStyle,
-      subtitleStyle: child.subtitleStyle,
-      showDivider: false,
-      dividerIndent: child.dividerIndent,
-    );
+    return section;
   }
 }

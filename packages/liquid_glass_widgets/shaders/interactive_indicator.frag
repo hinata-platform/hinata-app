@@ -40,7 +40,58 @@ uniform vec4 uData7; // 28..31 (baseAlphaMultiplier, edgeAlphaMultiplier, rimThi
 
 uniform sampler2D uTexture;         // Captured background image
 
+// 32: Device pixel ratio — passed from Dart _RenderInteractiveIndicator.
+// The background texture is now captured at full DPR resolution, so the
+// physical texel size = logical uBackgroundSize * uDpr.
+uniform float uDpr;
+
 out vec4 fragColor;
+
+// ── Manual Bilinear Filtering ─────────────────────────────────────────────
+// Impeller's explicit setImageSampler() binding may also default to
+// Nearest-Neighbor. Even when it does not, the background texture was
+// previously captured at pixelRatio: 1.0, meaning each "texel" covered
+// a 3×3 block of physical pixels on a 3× Retina screen. Both issues
+// produced blocky staircase aliasing on edge refraction and chromatic
+// aberration.
+//
+// This function replaces all uTexture lookups with a 4-texel bilinear
+// interpolation in GLSL, guaranteeing smooth sub-pixel sampling regardless
+// of Impeller's sampler default.
+//
+// uv       — UV coordinate in [0,1] (relative to logical uBackgroundSize)
+// logSize  — uBackgroundSize in logical pixels
+// physSize — uBackgroundSize * uDpr = actual pixel dimensions of the texture
+// invPhys  — 1.0 / physSize (precomputed for efficiency)
+vec4 textureBilinear(vec2 uv, vec2 physSize, vec2 invPhys) {
+    // Convert UV to physical texel coordinate, centre on the texel grid.
+    vec2 px = uv * physSize - 0.5;
+    vec2 f  = fract(px);
+    vec2 p0 = floor(px);
+    vec2 p1 = p0 + vec2(1.0, 0.0);
+    vec2 p2 = p0 + vec2(0.0, 1.0);
+    vec2 p3 = p0 + vec2(1.0, 1.0);
+
+    // Explicitly clamp to texture bounds. In Impeller, custom FragmentShader 
+    // samplers may not use ClampToEdge by default. When the indicator pill 
+    // expands outside the RepaintBoundary bounds (e.g. via jelly overshoot 
+    // or LiquidStretch scaling), out-of-bounds UVs cause extreme wrap-around 
+    // chromatic aliasing (jagged rainbows) on the pill's top/left edges.
+    vec2 maxPx = max(vec2(0.0), physSize - 1.0);
+    p0 = clamp(p0, vec2(0.0), maxPx);
+    p1 = clamp(p1, vec2(0.0), maxPx);
+    p2 = clamp(p2, vec2(0.0), maxPx);
+    p3 = clamp(p3, vec2(0.0), maxPx);
+
+    vec4 c0 = texture(uTexture, (p0 + 0.5) * invPhys);
+    vec4 c1 = texture(uTexture, (p1 + 0.5) * invPhys);
+    vec4 c2 = texture(uTexture, (p2 + 0.5) * invPhys);
+    vec4 c3 = texture(uTexture, (p3 + 0.5) * invPhys);
+
+    vec4 cTop = mix(c0, c1, f.x);
+    vec4 cBot = mix(c2, c3, f.x);
+    return mix(cTop, cBot, f.y);
+}
 
 void main() {
   vec2 uSize = uData0.xy;
@@ -178,35 +229,46 @@ void main() {
   
   vec3 bg;
   if (uHasBackground > 0.5) {
+    // Physical texture size (actual pixel dimensions after DPR capture).
+    // uBackgroundSize is in LOGICAL pixels; the texture has uDpr× more texels.
+    vec2 physBgSize = uBackgroundSize * uDpr;
+    vec2 invPhysBgSize = 1.0 / physBgSize;
+
     if (uChromaticAberration < 0.001) {
-      // No chromatic aberration — single texture fetch (2/3 fewer samples vs
-      // the 3-channel path). This is the common default configuration.
-      bg = texture(uTexture, localRefracted / uBackgroundSize).rgb;
+      // No chromatic aberration — single bilinear fetch.
+      bg = textureBilinear(localRefracted / uBackgroundSize, physBgSize, invPhysBgSize).rgb;
     } else {
-      // REAL REFRACTION with chromatic aberration: separate RGB channels
-      vec3 colR = texture(uTexture, (localRefracted + chromaticShift) / uBackgroundSize).rgb;
-      vec3 colG = texture(uTexture, localRefracted / uBackgroundSize).rgb;
-      vec3 colB = texture(uTexture, (localRefracted - chromaticShift) / uBackgroundSize).rgb;
+      // Chromatic aberration: separate RGB channels with bilinear filtering.
+      vec3 colR = textureBilinear((localRefracted + chromaticShift) / uBackgroundSize, physBgSize, invPhysBgSize).rgb;
+      vec3 colG = textureBilinear(localRefracted / uBackgroundSize, physBgSize, invPhysBgSize).rgb;
+      vec3 colB = textureBilinear((localRefracted - chromaticShift) / uBackgroundSize, physBgSize, invPhysBgSize).rgb;
       bg = vec3(colR.r, colG.g, colB.b);
     }
   } else {
-    // SYNTHETIC LIQUID: Bright clear base with subtle tint
-    // We use a high base color (0.9) to ensure it looks like pure glass
-    bg = vec3(0.9);
+    // SYNTHETIC LIQUID: Use the passed indicator color
+    // This allows the standard mode to respect the color passed to the widget
+    bg = uGlassColor.rgb;
   }
   
   // uLightDirection is passed from Dart as [cos(angle), -sin(angle)]
   float edgeLightCatch = dot(surfaceNormal, uLightDirection);
   
   // Key light: bright highlight on edges facing the light
-  // TWEAK: pow exponent (8.0) controls sharpness - higher = tighter highlight
-  // NOTE: Using * 0.5 (same scale as kickHighlight) to avoid an over-bright "dot"
-  // at the pill corner where the light direction perfectly aligns with the corner normal.
-  float keyHighlight = pow(max(edgeLightCatch, 0.0), 8.0) * uLightIntensity * 0.5;
+  // PP2: pow(x, 8.0) replaced with multiply chain — zero transcendentals.
+  // x^8 = ((x^2)^2)^2 — 3 multiplies vs exp(8·log(x)).
+  // Same optimisation already applied in lightweight_glass.frag.
+  float lc  = max(edgeLightCatch,  0.0);
+  float lc2 = lc  * lc;
+  float lc4 = lc2 * lc2;
+  float keyHighlight = lc4 * lc4 * uLightIntensity * 0.5;  // lc^8
   
   // Kick light: subtle highlight on opposite edge (back-reflection)
-  // TWEAK: pow exponent (12.0) is higher for tighter back-reflection
-  float kickHighlight = pow(max(-edgeLightCatch, 0.0), 12.0) * uLightIntensity * 0.5;
+  // PP2: pow(x, 12.0) = x^8 * x^4 — 4 multiplies vs transcendental.
+  float kc  = max(-edgeLightCatch, 0.0);
+  float kc2 = kc  * kc;
+  float kc4 = kc2 * kc2;
+  float kc8 = kc4 * kc4;
+  float kickHighlight = kc8 * kc4 * uLightIntensity * 0.5; // kc^12
   
   // TWEAK: ambientRim - minimum rim brightness regardless of light direction
   float rimBrightness = uAmbientRim + keyHighlight + kickHighlight;
@@ -216,8 +278,8 @@ void main() {
   // ==========================================================================
   // Subtle glow at grazing angles (edges appear slightly brighter)
   
-  // TWEAK: multiplier (0.25) controls fresnel intensity
-  float fresnel = pow(radialDist, 2.0) * 0.25;
+  // PP2: pow(radialDist, 2.0) → radialDist * radialDist (1 multiply, no transcendental).
+  float fresnel = (radialDist * radialDist) * 0.25;
   
   // ==========================================================================
   // HAIRLINE RIM
@@ -259,18 +321,16 @@ void main() {
   // ==========================================================================
   
   // Start with background — glass transmits and adds luminosity, not darkness.
-  // uSaturation doubles as bgBoost for Standard (how much the captured bg is brightened).
-  // uSaturation also sets the synthetic bright base when no background is captured.
-  // Default: saturation=1.08 → bgBoost=1.08 (compensates for backdrop being slightly darker).
-  // Synthetic base = uSaturation * 1.11 → 1.08 * 1.11 ≈ 1.2 (same as before).
-  float bgBoost = uSaturation;         // TUNE via LiquidGlassSettings.saturation
-  float synthBase = uSaturation * 1.11; // TUNE: synthetic bright base (no-bg path)
-  vec3 finalColor = (uHasBackground > 0.5) ? (bg * bgBoost) : vec3(synthBase);
+  // bgBoost boosts the background texture (if present) based on saturation.
+  // In synthetic mode, we just use the un-boosted bg color so it matches exactly
+  // what the user passed as the indicatorColor, preserving its brightness.
+  float bgBoost = uSaturation;
+  vec3 finalColor = (uHasBackground > 0.5) ? (bg * bgBoost) : bg;
   
-  // Add rim highlight (only if rimColor is non-zero)
-  finalColor += rimColor * borderMask;
-  // Secondary rim pass: extra bevel definition at the edge
-  finalColor += rimColor * borderMask * 0.5;
+  // Rim highlight: primary + secondary bevel definition collapsed to one operation.
+  // Was: finalColor += rimColor * borderMask; finalColor += rimColor * borderMask * 0.5;
+  // 1.5× is mathematically identical with one fewer MAD per border fragment.
+  finalColor += rimColor * borderMask * 1.5;
 
   // Add fresnel glow — uGlowIntensity controls how visible the glass-edge luminosity is.
   // Default: glowIntensity=0.75 matches previous hardcoded value.

@@ -74,7 +74,7 @@ void main() {
             tabs: [_tab('Home'), _tab('Profile')],
             selectedIndex: 0,
             onTabSelected: (_) {},
-            extraButton: GlassBottomBarExtraButton(
+            extraButton: GlassTabBarExtraButton(
               icon: const Icon(Icons.add),
               onTap: () {},
               label: 'Add',
@@ -96,7 +96,7 @@ void main() {
             selectedIndex: 0,
             onTabSelected: (_) {},
             barBorderRadius: 10, // not the default 32
-            extraButton: GlassBottomBarExtraButton(
+            extraButton: GlassTabBarExtraButton(
               icon: const Icon(Icons.add),
               onTap: () {},
               label: 'Add',
@@ -142,7 +142,7 @@ void main() {
             selectedIndex: 0,
             onTabSelected: (_) {},
             enableBlend: false,
-            extraButton: GlassBottomBarExtraButton(
+            extraButton: GlassTabBarExtraButton(
               icon: const Icon(Icons.add),
               onTap: () {},
               label: 'Add',
@@ -230,7 +230,7 @@ void main() {
         itemCount: 3,
         alignment: const Alignment(0.1, 0),
         thickness: 1.0,
-        expansion: 14.0,
+        expansion: const EdgeInsets.all(14.0),
         transform: Matrix4.identity(),
         borderRadius: 32.0,
       );
@@ -238,7 +238,7 @@ void main() {
         itemCount: 3,
         alignment: const Alignment(0.1 + 0.0001, 0), // sub-pixel
         thickness: 1.0,
-        expansion: 14.0,
+        expansion: const EdgeInsets.all(14.0),
         transform: Matrix4.identity(),
         borderRadius: 32.0,
       );
@@ -250,7 +250,7 @@ void main() {
         itemCount: 3,
         alignment: const Alignment(0.0, 0),
         thickness: 1.0,
-        expansion: 14.0,
+        expansion: const EdgeInsets.all(14.0),
         transform: Matrix4.identity(),
         borderRadius: 32.0,
       );
@@ -258,7 +258,7 @@ void main() {
         itemCount: 3,
         alignment: const Alignment(0.5, 0),
         thickness: 1.0,
-        expansion: 14.0,
+        expansion: const EdgeInsets.all(14.0),
         transform: Matrix4.identity(),
         borderRadius: 32.0,
       );
@@ -270,7 +270,7 @@ void main() {
         itemCount: 2,
         alignment: Alignment.center,
         thickness: 0.5,
-        expansion: 10.0,
+        expansion: const EdgeInsets.all(10.0),
         transform: Matrix4.identity(),
         borderRadius: 20.0,
         inverse: true,

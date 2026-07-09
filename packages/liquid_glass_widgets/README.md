@@ -42,7 +42,7 @@ cd example/showcase && flutter pub get && flutter run
 
 ### [Apple Music Demo](example/lib/apple_music/) — iOS 26 Replica
 
-A recreation of the Apple Music app demonstrating `GlassSearchableBottomBar`, a floating playback pill, and the full iOS 26 navigation model with smooth morphing transitions.
+A recreation of the Apple Music app demonstrating `GlassTabBar.searchable()`, a floating playback pill, and the full iOS 26 navigation model with smooth morphing transitions.
 
 ```bash
 cd example && flutter pub get && flutter run -t lib/apple_music/apple_music_demo.dart
@@ -60,7 +60,7 @@ cd example && flutter pub get && flutter run -t lib/apple_messages/apple_message
 
 ### [Apple News Demo](example/lib/apple_news/) — iOS 26 Replica
 
-A recreation of the Apple News app demonstrating `GlassSearchableBottomBar` with its morphing search pill, category chips, hero cards, and rounded article tiles.
+A recreation of the Apple News app demonstrating `GlassTabBar.searchable()` with its morphing search pill, category chips, hero cards, and rounded article tiles.
 
 ```bash
 cd example && flutter pub get && flutter run -t lib/apple_news/apple_news_demo.dart
@@ -95,6 +95,7 @@ Eight focused, self-contained demos — one widget, one file, runnable standalon
 | `quality_comparison_demo.dart` — premium & standard quality comparison playground | `cd example && flutter run -t lib/demos/quality_comparison_demo.dart` |
 | `nav_bar_patterns_demo.dart` — GlassScaffold layout patterns | `cd example && flutter run -t lib/demos/nav_bar_patterns_demo.dart` |
 | `content_aware_brightness_demo.dart` — light/dark bar adaptation on scroll | `cd example && flutter run -t lib/demos/content_aware_brightness_demo.dart` |
+| `indicator_parity_demo.dart` — all four pill widgets side-by-side with live pinch/expansion/tint sliders | `cd example && flutter run -t lib/demos/indicator_parity_demo.dart` |
 
 
 ## Glass vs Content — Design Philosophy
@@ -129,6 +130,25 @@ Building a Settings screen? Use `GlassScaffold` + `GlassAppBar` for navigation
 chrome, and `CupertinoListTile` or standard Flutter containers for the rows.
 Use `GlassGroupedSection` when you want glass-styled grouped rows.
 
+### Glass Composition Rule: Glass is a Platter, Not a Wrapper
+
+`GlassCard`, `GlassContainer`, and `GlassGroupedSection` are **base surfaces** — they sit
+beneath your content. They are not generic styling wrappers for other glass controls.
+
+| ✅ Place inside GlassCard / GlassContainer | ❌ Do not place inside GlassCard / GlassContainer |
+|---|---|
+| `Text`, `Icon`, `ListTile`, `CupertinoListTile` | `GlassSegmentedControl`, `GlassSlider`, `GlassSwitch` |
+| `GlassListTile`, `GlassDivider` | `GlassButton`, `GlassChip`, `GlassIconButton` |
+| Standard Flutter form widgets | Any other refractive glass widget |
+
+**Why?** `GlassContainer` sets `avoidsRefraction: true` on its children so nested glass
+cannot refract through the outer layer — the inner effect degrades by design. On Impeller
+with `useOwnLayer: true`, the container's own-layer clip also cuts jelly-physics overshots
+from interactive indicators (segmented control pill, slider thumb) during animations.
+
+Interactive glass controls already provide their own surface appearance via `backgroundColor`
+and `indicatorColor` — no outer container is needed for the track or background.
+
 
 ## Widget Categories
 
@@ -151,19 +171,23 @@ Most apps should use `GlassCard` or `GlassGroupedSection` instead.
 `GlassDialog` · `GlassSheet` · `GlassModalSheet` · `showGlassActionSheet` · `GlassMenu` · `GlassMenuItem` · `GlassMenuDivider` · `GlassMenuLabel` · `GlassPopover`
 
 ### Surfaces
-`GlassScaffold` · `GlassAppBar` · `GlassBottomBar` · `GlassSearchableBottomBar` · `GlassTabBar` · `GlassToolbar` · `GlassContentAwareScope` · `GlassContentAwareContent` · `GlassContentAwareBrightness`
+`GlassScaffold` · `GlassAppBar` · `GlassTabBar` (`.bottom` / `.inline` / `.searchable`) · `GlassToolbar` · `GlassContentAwareScope` · `GlassContentAwareContent` · `GlassContentAwareBrightness`
 
 
 ## Installation
 
 ```yaml
 dependencies:
-  liquid_glass_widgets: ^0.16.0
+  liquid_glass_widgets: ^0.21.3
 ```
 
 ```bash
 flutter pub get
 ```
+
+> **Flutter version requirement:** Requires Flutter ≥ 3.41.0 (Dart ≥ 3.5.0).
+> **Recommended: Flutter 3.41+** for the best Impeller rendering quality.
+> This package uses cutting-edge shader APIs that improve significantly with each Flutter release.
 
 
 ## Quick Start
@@ -203,6 +227,19 @@ GlassScaffold(
 > device's Reduce Motion and Reduce Transparency settings — no extra setup
 > required. See [Accessibility](#accessibility) for details.
 
+### Choose the right widget
+
+The package is centred around **navigation chrome** — `GlassScaffold` with `GlassAppBar` and `GlassTabBar` is the primary pattern and where the iOS 26 liquid glass effect is most impactful.
+
+| Scenario | Widget to use |
+|---|---|
+| Screen with app bar and/or tab bar | **`GlassScaffold`** — the primary pattern |
+| Custom layout without standard scaffold structure | **`GlassPage`** — lower-level building block |
+| Standalone glass card or panel in an existing layout | **`GlassCard` / `GlassContainer`** — opt-in, not the core pattern |
+| Localised group of glass elements in an existing layout | **`AdaptiveLiquidGlassLayer`** — scope a layer to a region; grouped cards share its settings |
+
+> `GlassContainer` / `GlassCard` are fully supported for localised glass UI (floating panels, settings cards, etc.) but most screens should start with `GlassScaffold`.
+
 ### Optional: quality & theming
 
 For production apps, pass `adaptiveQuality` and/or `theme` to `wrap()` at the same call site:
@@ -220,7 +257,6 @@ runApp(LiquidGlassWidgets.wrap(
 ```
 
 Both parameters are optional — omit them and the library uses sensible defaults.
-
 
 
 ## Theming
@@ -370,12 +406,12 @@ GlassScaffold(
       onTap: () {},
     ),
   ),
-  bottomBar: GlassBottomBar(
+  bottomBar: GlassTabBar.bottom(
     selectedIndex: 0,
     onTabSelected: (_) {},
     tabs: const [
-      GlassBottomBarTab(icon: Icon(Icons.home), label: 'Home'),
-      GlassBottomBarTab(icon: Icon(Icons.search), label: 'Search'),
+      GlassTab(icon: Icon(Icons.home), label: 'Home'),
+      GlassTab(icon: Icon(Icons.search), label: 'Search'),
     ],
   ),
   body: CustomScrollView(
@@ -405,7 +441,7 @@ one on the bar:
 ```dart
 GlassScaffold(
   contentAwareBrightness: true,
-  bottomBar: GlassBottomBar(
+  bottomBar: GlassTabBar.bottom(
     adaptiveBrightness: true,
     onBrightnessChanged: (b) => debugPrint('Bar is now: $b'),
     tabs: [...],
@@ -432,7 +468,7 @@ GlassContentAwareScope(
     body: GlassContentAwareContent(
       child: ListView(...),
     ),
-    bottomNavigationBar: GlassBottomBar(
+    bottomNavigationBar: GlassTabBar.bottom(
       adaptiveBrightness: true,
       ...
     ),
@@ -528,38 +564,7 @@ Each value maps to a fixed power-of-2 exponent. The GPU uses a zero-transcendent
 
 ### Automatic Quality Adaptation *(experimental)*
 
-> ### 📊 Help us tune the thresholds — takes 2 minutes
->
-> `GlassAdaptiveScope` is `@experimental` because its Phase 2 timing thresholds
-> are based on limited community data, not yet validated across the full Android
-> device landscape. Current defaults (v0.12.0):
->
-> | P75 warmup | Quality assigned |
-> |---|---|
-> | < 20 ms | `premium` *(based on 1 report — please share yours)* |
-> | 20–28 ms | `standard` *(provisional — no real-device data yet)* |
-> | > 28 ms | `minimal` |
->
-> **If you use `adaptiveQuality: true`, please post your results to our
-> [Threshold Calibration Discussion](https://github.com/sdegenaar/liquid_glass_widgets/discussions)
-> with the snippet below.** Every report directly informs the threshold calibration
-> and gets us closer to removing `@experimental`. Thank you 🙏
->
-> ```dart
-> // Add to your GlassAdaptiveScopeConfig while testing — remove before shipping:
-> // Option A: zero-wiring (recommended for quick reports)
-> GlassAdaptiveScopeConfig(
->   debugLogDiagnostics: true, // prints to console in debug builds only
-> )
->
-> // Option B: custom handler for analytics
-> GlassAdaptiveScopeConfig(
->   onDiagnostic: (d) {
->     // d.reason, d.p75Ms, d.p95Ms, d.framesMeasured, d.phase are all set
->     debugPrint('📊 ${d.from.name} → ${d.to.name} | reason: ${d.reason.name} | P75: ${d.p75Ms?.toStringAsFixed(1)}ms');
->   },
-> )
-> ```
+> 📊 **`GlassAdaptiveScope` is `@experimental`** — its timing thresholds need more real-device data to be finalised. If you use `adaptiveQuality: true`, please share your device model, Flutter version, and observed P75 ms in our [Threshold Calibration Discussion](https://github.com/sdegenaar/liquid_glass_widgets/discussions). See [`docs/ADAPTIVE_QUALITY.md`](docs/ADAPTIVE_QUALITY.md) for current threshold values and the reporting snippet.
 
 `GlassAdaptiveScope` (enabled via `wrap(adaptiveQuality: true)`) automatically
 benchmarks the device at startup and adjusts quality in real time:
@@ -699,9 +704,6 @@ LiquidGlassScope(
 On Impeller, `GlassQuality.premium` uses the native scene graph — no
 `LiquidGlassScope` needed.
 
-> **Migration note (0.7.0):** `LiquidGlassBackground` was renamed to
-> `GlassRefractionSource`. The old name still compiles (deprecated typedef)
-> and will be removed in 1.0.0.
 
 | When | Recommendation |
 |---|---|

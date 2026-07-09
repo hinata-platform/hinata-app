@@ -73,7 +73,7 @@ class _ShadowClippingDemoPageState extends State<ShadowClippingDemoPage> {
         appBar: const GlassAppBar(
           title: Text('Buttons & Shadows Demo'),
         ),
-        bottomBar: GlassSearchableBottomBar(
+        bottomBar: GlassTabBar.searchable(
           selectedIndex: _tabIndex,
           onTabSelected: (idx) => setState(() {
             _tabIndex = idx;
@@ -94,11 +94,11 @@ class _ShadowClippingDemoPageState extends State<ShadowClippingDemoPage> {
           scrollController: _scrollController,
           whitenAtBottom: true,
           tabs: [
-            GlassBottomBarTab(
+            GlassTab(
               icon: const Icon(CupertinoIcons.house),
               label: 'Home',
             ),
-            GlassBottomBarTab(
+            GlassTab(
               icon: const Icon(CupertinoIcons.compass),
               label: 'Discover',
             ),
@@ -215,15 +215,15 @@ class _ShadowClippingDemoPageState extends State<ShadowClippingDemoPage> {
                       shadowElevation: 2.0,
                     ),
                     items: [
-                      GlassGroupItem(
+                      GlassButtonGroupItem(
                         icon: const Icon(CupertinoIcons.reply),
                         onTap: () {},
                       ),
-                      GlassGroupItem(
+                      GlassButtonGroupItem(
                         icon: const Icon(CupertinoIcons.heart),
                         onTap: () {},
                       ),
-                      GlassGroupItem(
+                      GlassButtonGroupItem(
                         icon: const Icon(CupertinoIcons.share),
                         onTap: () {},
                       ),

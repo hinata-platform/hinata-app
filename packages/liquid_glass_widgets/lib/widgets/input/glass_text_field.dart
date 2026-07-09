@@ -6,6 +6,7 @@ import '../../src/types/glass_interaction_behavior.dart';
 import '../../types/glass_quality.dart';
 import '../shared/adaptive_glass.dart';
 import '../../theme/glass_theme_helpers.dart';
+import '../../theme/glass_theme.dart';
 
 /// A glass text field widget following Apple's input field design.
 ///
@@ -577,7 +578,7 @@ class _GlassTextFieldState extends State<GlassTextField> {
 
     // Use MediaQuery textScaler for accurate line height calculation.
     final textScaler = MediaQuery.textScalerOf(context);
-    final isDark = CupertinoTheme.brightnessOf(context) == Brightness.dark;
+    final isDark = GlassTheme.brightnessOf(context) == Brightness.dark;
 
     final defaultTextStyle = TextStyle(
       color: isDark
@@ -586,7 +587,7 @@ class _GlassTextFieldState extends State<GlassTextField> {
       fontSize: 16,
       height: 1.2,
     );
-    final effectiveStyle = widget.textStyle ?? defaultTextStyle;
+    final effectiveStyle = defaultTextStyle.merge(widget.textStyle);
     final fontSize = effectiveStyle.fontSize ?? 16.0;
     final effectiveLineHeight =
         textScaler.scale(fontSize) * (effectiveStyle.height ?? 1.2);
@@ -602,7 +603,7 @@ class _GlassTextFieldState extends State<GlassTextField> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = CupertinoTheme.brightnessOf(context) == Brightness.dark;
+    final isDark = GlassTheme.brightnessOf(context) == Brightness.dark;
 
     final defaultTextStyle = TextStyle(
       color: isDark
@@ -662,10 +663,10 @@ class _GlassTextFieldState extends State<GlassTextField> {
             onTapOutside: widget.onTapOutside ??
                 (event) => FocusManager.instance.primaryFocus?.unfocus(),
             inputFormatters: widget.inputFormatters,
-            style: widget.textStyle ?? defaultTextStyle,
+            style: defaultTextStyle.merge(widget.textStyle),
             placeholder: widget.placeholder,
             placeholderStyle:
-                widget.placeholderStyle ?? defaultPlaceholderStyle,
+                defaultPlaceholderStyle.merge(widget.placeholderStyle),
             padding: EdgeInsets.zero,
             decoration: null,
           ),
