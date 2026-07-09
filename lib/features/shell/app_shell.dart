@@ -1663,9 +1663,13 @@ class _CompactShellState extends State<_CompactShell> {
     for (var i = 0; i < _bottomTabs.length - 1; i++) {
       if (_isActive(widget.location, _bottomTabs[i].route)) return i;
     }
-    // Everything not in first 3 tabs → "More" tab (index 3)
-    final inPrimary = _primary.any((d) => _isActive(widget.location, d.route));
-    return inPrimary ? 0 : 3;
+    // Anything that isn't one of the first three tabs (dashboard · issues ·
+    // board) lives behind the "More" sheet — teams, projects, gantt, timesheet,
+    // reports, knowledge — so "More" (index 3) is the active tab for all of
+    // them. (Earlier this returned Dashboard for primary routes like
+    // /projects & /teams, wrongly lighting up Dashboard while their page was
+    // open via the More sheet.)
+    return 3;
   }
 
   void _onTap(int index) {
