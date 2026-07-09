@@ -337,7 +337,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
                     // surfaces. We cap at `standard` (the lightweight single-pass
                     // shader — 5-10x cheaper, and the path that does NOT trigger
                     // the shader-related production crashes) and let the runtime
-                    // monitor degrade to `minimal` (BackdropFilter-only) on weak
+                    // monitor degrade to `standard` (BackdropFilter-only) on weak
                     // GPUs, stepping back up when headroom returns. Raise
                     // maxQuality to premium only if flagship refraction is wanted.
                     return LiquidGlassWidgets.wrap(
@@ -349,7 +349,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
                       adaptiveConfig: const GlassAdaptiveScopeConfig(
                         initialQuality: GlassQuality.standard,
                         maxQuality: GlassQuality.premium,
-                        minQuality: GlassQuality.minimal,
+                        minQuality: GlassQuality.standard,
                         allowStepUp: true,
                         targetFrameMs: 16,
                       ),
