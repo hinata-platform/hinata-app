@@ -195,23 +195,25 @@ class CommentBubbleRow extends StatelessWidget {
       onDelete: onDelete,
     );
     if (inlineActions) {
+      // Bubble hugs its content on the left; the actions sit at a *fixed* right
+      // edge so every row's buttons line up in one column — putting the empty
+      // space between them (via Expanded on the bubble) instead of after them.
       bubble = Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Flexible(child: bubble),
-          // Push the actions to the far (right) edge of the row rather than
-          // cramming them against the bubble.
           Expanded(
             child: Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 10, right: 2),
-                child: _RowActions(
-                  canEdit: !comment.isVoice,
-                  onEdit: onEdit,
-                  onDelete: onDelete,
-                ),
-              ),
+              alignment: Alignment.centerLeft,
+              child: bubble,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Padding(
+            padding: const EdgeInsets.only(right: 2),
+            child: _RowActions(
+              canEdit: !comment.isVoice,
+              onEdit: onEdit,
+              onDelete: onDelete,
             ),
           ),
         ],
