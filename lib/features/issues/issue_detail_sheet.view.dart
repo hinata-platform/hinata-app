@@ -2537,16 +2537,24 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           // Filter tabs (All · Comments · History) + comment sort selector.
           // The tab bar hugs its content on the left (no Expanded — that
           // stretched its background); a Spacer pushes the sort selector right.
-          Row(
-            children: [
-              _ActivityTabs(
-                value: filter,
-                onChanged: (f) => setState(() => _activityFilter = f),
-              ),
-              const Spacer(),
-              if (filter != _ActivityFilter.history)
-                CommentSortButton(sort: _commentSort, onChanged: _setCommentSort),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) => Row(
+              children: [
+                _ActivityTabs(
+                  value: filter,
+                  onChanged: (f) => setState(() => _activityFilter = f),
+                ),
+                const Spacer(),
+                if (filter != _ActivityFilter.history)
+                  CommentSortButton(
+                    sort: _commentSort,
+                    onChanged: _setCommentSort,
+                    // Long localized labels ("Neueste zuerst") don't fit next
+                    // to the tab bar on phones — fall back to icon-only.
+                    compact: constraints.maxWidth < 480,
+                  ),
+              ],
+            ),
           ),
           const SizedBox(height: 14),
           ..._activityItems(filter),
