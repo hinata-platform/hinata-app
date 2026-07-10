@@ -261,14 +261,20 @@ class _CommentBubbleRowState extends State<CommentBubbleRow> {
       ),
     );
 
-    // Gestures: long-press (mobile) or right-click opens the focused menu; a tap
-    // in selection mode toggles the checkbox. Disabled while selecting.
+    // Gestures: the focused (lifted-bubble) menu is a MOBILE affordance — only a
+    // long-press on compact layouts opens it. On wide layouts the hover action
+    // buttons (chevron menu + quick-react) replace it, so long-press is off there.
+    // Right-click still opens it everywhere (a deliberate desktop context-menu
+    // gesture, and the only menu path for pinned rows, which have no hover
+    // buttons). A tap in selection mode toggles the checkbox.
     bubble = GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: widget.selectionMode && _canManage
           ? () => widget.onToggleSelected?.call(_c)
           : null,
-      onLongPress: widget.selectionMode ? null : () => _openFocusedMenu(context),
+      onLongPress: (compact && !widget.selectionMode)
+          ? () => _openFocusedMenu(context)
+          : null,
       onSecondaryTapDown: widget.selectionMode
           ? null
           : (_) => _openFocusedMenu(context),
