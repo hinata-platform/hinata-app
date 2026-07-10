@@ -77,6 +77,7 @@ const _notifEvents = <({String id, IconData icon, bool locked})>[
   (id: 'assigned', icon: LucideIcons.userCheck, locked: false),
   (id: 'comments', icon: LucideIcons.messageSquare, locked: false),
   (id: 'status', icon: LucideIcons.refreshCw, locked: false),
+  (id: 'ingest', icon: LucideIcons.inbox, locked: false),
   (id: 'sprint', icon: LucideIcons.goal, locked: false),
   (id: 'invites', icon: LucideIcons.usersRound, locked: false),
   (id: 'digest', icon: LucideIcons.newspaper, locked: false),
