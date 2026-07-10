@@ -355,7 +355,10 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/settings',
-            pageBuilder: (_, state) => _transition(state, const AccountScreen()),
+            pageBuilder: (_, state) => _transition(
+              state,
+              AccountScreen(section: state.uri.queryParameters['section']),
+            ),
           ),
           GoRoute(
             path: '/admin',

@@ -66,7 +66,11 @@ const _settingsMenu = <({_SettingsSection section, IconData icon})>[
 /// device sessions, notification preferences, access overview, appearance and
 /// the GDPR data/danger zone. Replaces the former lightweight settings screen.
 class AccountScreen extends StatefulWidget {
-  const AccountScreen({super.key});
+  const AccountScreen({super.key, this.section});
+
+  /// The open compact sub-page, carried in the URL (`/settings?section=…`) so
+  /// the shell's settings button (`go('/settings')`) returns to the index.
+  final String? section;
 
   @override
   State<AccountScreen> createState() => _AccountScreenState();
@@ -110,7 +114,10 @@ class _AccountScreenState extends State<AccountScreen> {
 
   /// The open sub-page on compact layouts; `null` shows the index list. Always
   /// `null` on medium/expanded, where every section renders on one scroll.
-  _SettingsSection? _section;
+  /// Derived from the route's `section` query parameter so the shell's
+  /// settings button (`go('/settings')`) always returns to the index.
+  _SettingsSection? get _section =>
+      _SettingsSection.values.asNameMap()[widget.section];
 
   @override
   void initState() {
@@ -471,7 +478,7 @@ class _AccountScreenState extends State<AccountScreen> {
     if (section != null) {
       return PageChrome(
         title: _sectionTitle(section),
-        onBack: () => setState(() => _section = null),
+        onBack: () => context.go('/settings'),
         child: RefreshIndicator(
           onRefresh: _load,
           child: ListView(
@@ -515,7 +522,8 @@ class _AccountScreenState extends State<AccountScreen> {
           title: _sectionTitle(item.section),
           subtitle: _sectionSubtitle(item.section),
           danger: item.section == _SettingsSection.danger,
-          onTap: () => setState(() => _section = item.section),
+          onTap: () =>
+              context.go('/settings?section=${item.section.name}'),
         ),
       );
       if (item.section == _SettingsSection.appearance && isAdmin) {

@@ -369,7 +369,7 @@ class _GlassTopActions extends StatelessWidget {
         const SizedBox(width: 8),
         !isNativeApp
             ? _FrostedCircleButton(
-                icon: LucideIcons.settings,
+                icon: LucideIcons.settings2,
                 tooltip: context.t('nav.settings'),
                 active: location.startsWith('/settings'),
                 onTap: () => context.go('/settings'),
