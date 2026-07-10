@@ -465,6 +465,99 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
   Widget _buildBody(BuildContext context, Project draft) {
     final nameErr = draft.name.trim().isEmpty;
     final keyErr = draft.key.trim().isEmpty;
+
+    final general = GeneralSection(
+      nameController: _nameCtrl,
+      keyController: _keyCtrl,
+      descController: _descCtrl,
+      nameError: nameErr,
+      keyError: keyErr,
+      selectedHue: hueForHex(draft.color),
+      onHue: _onHue,
+    );
+    final members = MembersSection(
+      memberIds: draft.memberIds,
+      leadIds: draft.leadIds,
+      users: _users,
+      onToggleLead: _toggleLead,
+      onRemove: _removeMember,
+      onAdd: _addMembers,
+    );
+    final labels = LabelsSection(
+      key: ValueKey('labels_$_rev'),
+      labels: draft.labels,
+      onRename: _renameLabel,
+      onRecolor: _recolorLabel,
+      onRemove: _removeLabel,
+      onAdd: _addLabel,
+    );
+    final workflow = WorkflowSection(
+      key: ValueKey('workflow_$_rev'),
+      states: draft.workflowStates,
+      resolved: draft.resolvedStates,
+      onRename: _renameState,
+      onRecolor: _recolorState,
+      onReorder: _reorderState,
+      onToggleResolved: _toggleResolved,
+      onDelete: _deleteState,
+      onAdd: _addState,
+    );
+    final git = GitIntegrationSection(
+      project: _saved ?? draft,
+      users: _users,
+      onProjectChanged: _onGitChanged,
+    );
+    final archive = ArchiveSection(
+      archived: draft.archived,
+      onChanged: (v) => _mutate((d) => d.copyWith(archived: v)),
+    );
+    final danger = DangerSection(onDelete: _deleteProject);
+
+    return LayoutBuilder(
+      builder: (context, box) {
+        // Golden-ratio layout: once the body is wider than a φ² column, split
+        // into a φ:1 two-column grid; below that, stack a single φ² column.
+        final twoColumn = box.maxWidth >= Breakpoints.mediumMax;
+        final contentMax = twoColumn
+            ? Breakpoints.baseColumnWidth *
+                  Breakpoints.phi *
+                  Breakpoints.phi *
+                  Breakpoints
+                      .phi // ≈ 1597
+            : Breakpoints.baseColumnWidth *
+                  Breakpoints.phi *
+                  Breakpoints.phi; // ≈ 987
+        return _buildScaffold(
+          context,
+          draft: draft,
+          contentMax: contentMax,
+          twoColumn: twoColumn,
+          general: general,
+          members: members,
+          labels: labels,
+          workflow: workflow,
+          git: git,
+          archive: archive,
+          danger: danger,
+        );
+      },
+    );
+  }
+
+  Widget _buildScaffold(
+    BuildContext context, {
+    required Project draft,
+    required double contentMax,
+    required bool twoColumn,
+    required Widget general,
+    required Widget members,
+    required Widget labels,
+    required Widget workflow,
+    required Widget git,
+    required Widget archive,
+    required Widget danger,
+  }) {
+    const gap = SizedBox(height: 16);
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -479,64 +572,61 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
           ),
           children: [
             Center(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _Header(draft: draft),
-                  const SizedBox(height: 20),
-                  GeneralSection(
-                    nameController: _nameCtrl,
-                    keyController: _keyCtrl,
-                    descController: _descCtrl,
-                    nameError: nameErr,
-                    keyError: keyErr,
-                    selectedHue: hueForHex(draft.color),
-                    onHue: _onHue,
-                  ),
-                  const SizedBox(height: 16),
-                  MembersSection(
-                    memberIds: draft.memberIds,
-                    leadIds: draft.leadIds,
-                    users: _users,
-                    onToggleLead: _toggleLead,
-                    onRemove: _removeMember,
-                    onAdd: _addMembers,
-                  ),
-                  const SizedBox(height: 16),
-                  LabelsSection(
-                    key: ValueKey('labels_$_rev'),
-                    labels: draft.labels,
-                    onRename: _renameLabel,
-                    onRecolor: _recolorLabel,
-                    onRemove: _removeLabel,
-                    onAdd: _addLabel,
-                  ),
-                  const SizedBox(height: 16),
-                  WorkflowSection(
-                    key: ValueKey('workflow_$_rev'),
-                    states: draft.workflowStates,
-                    resolved: draft.resolvedStates,
-                    onRename: _renameState,
-                    onRecolor: _recolorState,
-                    onReorder: _reorderState,
-                    onToggleResolved: _toggleResolved,
-                    onDelete: _deleteState,
-                    onAdd: _addState,
-                  ),
-                  const SizedBox(height: 16),
-                  GitIntegrationSection(
-                    project: _saved ?? draft,
-                    users: _users,
-                    onProjectChanged: _onGitChanged,
-                  ),
-                  const SizedBox(height: 16),
-                  ArchiveSection(
-                    archived: draft.archived,
-                    onChanged: (v) => _mutate((d) => d.copyWith(archived: v)),
-                  ),
-                  const SizedBox(height: 16),
-                  DangerSection(onDelete: _deleteProject),
-                ],
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: contentMax),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _Header(draft: draft),
+                    const SizedBox(height: 20),
+                    if (twoColumn)
+                      // φ:1 golden split — heavy editing surfaces live in the
+                      // wide column, light toggles/meta in the narrow one.
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 1618,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                general,
+                                gap,
+                                members,
+                                gap,
+                                workflow,
+                                gap,
+                                git,
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            flex: 1000,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [labels, gap, archive, gap, danger],
+                            ),
+                          ),
+                        ],
+                      )
+                    else ...[
+                      general,
+                      gap,
+                      members,
+                      gap,
+                      labels,
+                      gap,
+                      workflow,
+                      gap,
+                      git,
+                      gap,
+                      archive,
+                      gap,
+                      danger,
+                    ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -561,14 +651,18 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
                           MediaQuery.viewInsetsOf(context).bottom,
                         ) -
                         20
-                  : 12 + math.max(
-                      context.bottomGutter,
-                      MediaQuery.viewInsetsOf(context).bottom,
-                    ),
+                  : 12 +
+                        math.max(
+                          context.bottomGutter,
+                          MediaQuery.viewInsetsOf(context).bottom,
+                        ),
             ),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 880),
+                // Match the content column so the bar visually docks to it.
+                constraints: BoxConstraints(
+                  maxWidth: math.min(contentMax, 880),
+                ),
                 child: _SaveBar(
                   visible: _dirty,
                   valid: _valid,
