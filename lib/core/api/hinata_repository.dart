@@ -633,16 +633,40 @@ class HinataRepository {
     );
   }
 
-  /// One newest-first page of an issue's comment thread, plus the backend total.
-  /// Callers that show comments chat-style (oldest-first) reverse each page.
+  /// One page of an issue's TOP-LEVEL comments (replies excluded; each carries a
+  /// `replyCount`), plus the backend total. [sort] is `'newest'` (default) or
+  /// `'oldest'` — the server orders accordingly.
   Future<({List<IssueComment> items, int total})> comments(
     String issueId, {
     int page = 0,
     int size = 30,
+    String sort = 'newest',
   }) async {
     final data =
         await _api.get(
               '/api/v1/issues/$issueId/comments',
+              query: {'page': page, 'size': size, 'sort': sort},
+            )
+            as Map<String, dynamic>;
+    return (
+      items: ((data['content'] as List<dynamic>?) ?? [])
+          .map((c) => IssueComment.fromJson(c as Map<String, dynamic>))
+          .toList(),
+      total: data['totalElements'] as int? ?? 0,
+    );
+  }
+
+  /// One page of a root comment's replies, oldest-first, plus the backend total.
+  /// Replies are lazily loaded — only fetched when a thread is expanded.
+  Future<({List<IssueComment> items, int total})> commentReplies(
+    String issueId,
+    String rootId, {
+    int page = 0,
+    int size = 10,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/issues/$issueId/comments/$rootId/replies',
               query: {'page': page, 'size': size},
             )
             as Map<String, dynamic>;

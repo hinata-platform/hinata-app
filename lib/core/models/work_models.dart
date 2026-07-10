@@ -617,6 +617,7 @@ class IssueComment extends Equatable {
     this.replyToId,
     this.replyToAuthorId,
     this.replyToPreview,
+    this.replyCount = 0,
     this.editedAt,
     this.createdAt,
     this.updatedAt,
@@ -641,6 +642,10 @@ class IssueComment extends Equatable {
   final String? replyToAuthorId;
   final String? replyToPreview;
 
+  /// Number of replies to this (top-level) comment, from the backend — lets the
+  /// UI show "N replies" before the reply thread is loaded. 0 on replies.
+  final int replyCount;
+
   /// When the text was last edited (null = never); drives the "edited" marker.
   final DateTime? editedAt;
 
@@ -650,6 +655,12 @@ class IssueComment extends Equatable {
   bool get isVoice => type == CommentType.voice && voice != null;
 
   bool get isReply => replyToId != null && replyToId!.isNotEmpty;
+
+  /// A top-level comment (owns a flat reply thread); the inverse of [isReply].
+  bool get isRoot => !isReply;
+
+  /// Whether this top-level comment has replies to lazily load.
+  bool get hasReplies => replyCount > 0;
 
   /// True once the comment's text has been edited after creation. Based on the
   /// explicit [editedAt] stamp (not [updatedAt], which also bumps on reactions/pins).
@@ -680,6 +691,7 @@ class IssueComment extends Equatable {
     bool clearPinnedAt = false,
     String? text,
     DateTime? editedAt,
+    int? replyCount,
   }) => IssueComment(
     id: id,
     authorId: authorId,
@@ -692,6 +704,7 @@ class IssueComment extends Equatable {
     replyToId: replyToId,
     replyToAuthorId: replyToAuthorId,
     replyToPreview: replyToPreview,
+    replyCount: replyCount ?? this.replyCount,
     editedAt: editedAt ?? this.editedAt,
     createdAt: createdAt,
     updatedAt: updatedAt,
@@ -717,6 +730,7 @@ class IssueComment extends Equatable {
     replyToId: json['replyToId'] as String?,
     replyToAuthorId: json['replyToAuthorId'] as String?,
     replyToPreview: json['replyToPreview'] as String?,
+    replyCount: (json['replyCount'] as num?)?.toInt() ?? 0,
     editedAt: _instant(json['editedAt']),
     createdAt: _instant(json['createdAt']),
     updatedAt: _instant(json['updatedAt']),
@@ -733,6 +747,7 @@ class IssueComment extends Equatable {
     pinned,
     pinnedAt,
     replyToId,
+    replyCount,
     editedAt,
     updatedAt,
   ];

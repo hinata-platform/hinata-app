@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/blocs/auth_bloc.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -118,14 +120,25 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
       case 'user':
         final u = _resolver.person(widget.id);
         if (u == null) return _broken('@unknown');
+        // A mention of the signed-in user is emphasised in strong amber so "you
+        // were tagged" reads at a glance; other mentions keep the soft accent.
+        final meId = context.read<AuthBloc>().state.user?.id;
+        final isMe = meId != null && meId == widget.id;
         return _chipShell(
-          background: AppColors.accentSoft,
-          border: AppColors.accentLine,
+          background: isMe
+              ? AppColors.accent.withValues(alpha: 0.20)
+              : AppColors.accentSoft,
+          border: isMe ? AppColors.accent : AppColors.accentLine,
+          borderWidth: isMe ? 1.4 : 1,
           padStart: 3,
           children: [
             AppAvatar(name: u.name, radius: 8),
             const SizedBox(width: 5),
-            _label(u.firstName, AppColors.ink),
+            _label(
+              u.firstName,
+              isMe ? AppColors.accentStrong : AppColors.ink,
+              bold: isMe,
+            ),
           ],
         );
       case 'issue':
@@ -164,13 +177,17 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
     }
   }
 
-  Widget _label(String text, Color color) => ConstrainedBox(
+  Widget _label(String text, Color color, {bool bold = false}) => ConstrainedBox(
     constraints: const BoxConstraints(maxWidth: 240),
     child: Text(
       text,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color),
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: bold ? FontWeight.w700 : FontWeight.w600,
+        color: color,
+      ),
     ),
   );
 
@@ -179,24 +196,26 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
     required Color border,
     required List<Widget> children,
     double padStart = 5,
+    double borderWidth = 1,
   }) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 130),
       padding: EdgeInsets.fromLTRB(padStart, 1, 6, 1),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(KbTokens.radiusChip),
-        border: Border.all(color: border),
+        // Pill/stadium corners — smart-links read as rounded chips app-wide.
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: border, width: borderWidth),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: children),
     );
   }
 
   Widget _broken(String label) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
     decoration: BoxDecoration(
       color: AppColors.dangerSoft,
-      borderRadius: BorderRadius.circular(KbTokens.radiusChip),
+      borderRadius: BorderRadius.circular(100),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,

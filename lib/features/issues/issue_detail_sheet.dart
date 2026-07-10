@@ -624,6 +624,14 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// view).
   final GlobalKey _commentsLoaderKey = GlobalKey();
 
+  /// How top-level comments are ordered (newest-first by default). Reply threads
+  /// are always oldest-first, independent of this.
+  CommentSort _commentSort = CommentSort.newest;
+
+  /// Lazily-loaded reply threads, keyed by root comment id.
+  final Map<String, ReplyThread> _replyThreads = {};
+  static const int _replyPageSize = 10;
+
   // Live comment sync (SSE): reactions/pins/edits/new comments from anyone in the
   // issue arrive as a payload-free `changed` ping → re-sync the loaded window.
   CancelToken? _commentSseCancel;
@@ -815,7 +823,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     try {
       final want = math.max(_comments.length, _commentPageSize);
       final results = await Future.wait([
-        _repo.comments(widget.issueId, size: want),
+        _repo.comments(widget.issueId, size: want, sort: _commentSort.api),
         _repo.pinnedComments(widget.issueId),
       ]);
       if (!mounted) return;
@@ -825,8 +833,131 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         _commentsTotal = page.total;
         _pinned = results[1] as List<IssueComment>;
       });
+      await _resyncExpandedThreads();
     } catch (_) {
       // Keep the current view; the next event or manual reload reconciles.
+    }
+  }
+
+  /// Re-fetches the loaded window of every currently-expanded reply thread after
+  /// a live change, so new replies / reacts reconcile without collapsing it.
+  Future<void> _resyncExpandedThreads() async {
+    final rootIds = [
+      for (final e in _replyThreads.entries)
+        if (e.value.expanded) e.key,
+    ];
+    for (final rootId in rootIds) {
+      final t = _replyThreads[rootId];
+      if (t == null || !mounted) continue;
+      final want = math.max(t.replies.length, _replyPageSize);
+      try {
+        final p = await _repo.commentReplies(widget.issueId, rootId, size: want);
+        if (!mounted) return;
+        setState(() {
+          _replyThreads[rootId] = t.copyWith(
+            replies: p.items.toList(),
+            total: p.total,
+          );
+        });
+      } catch (_) {
+        // Keep the current view; the next event reconciles.
+      }
+    }
+  }
+
+  ReplyThread _threadOf(String rootId) =>
+      _replyThreads[rootId] ?? const ReplyThread();
+
+  /// Expands (loading the first page) or collapses a root's reply thread.
+  Future<void> _toggleReplies(IssueComment root) async {
+    final t = _threadOf(root.id);
+    if (t.expanded) {
+      setState(() => _replyThreads[root.id] = t.copyWith(expanded: false));
+      return;
+    }
+    if (t.replies.isNotEmpty) {
+      setState(() => _replyThreads[root.id] = t.copyWith(expanded: true));
+      return;
+    }
+    setState(
+      () => _replyThreads[root.id] = t.copyWith(expanded: true, loading: true),
+    );
+    await _fetchReplies(root.id, page: 0, replace: true);
+  }
+
+  /// Loads the next page of a root's replies (oldest→newest).
+  Future<void> _loadMoreReplies(IssueComment root) async {
+    final t = _threadOf(root.id);
+    if (t.loading || !t.hasMore) return;
+    setState(() => _replyThreads[root.id] = t.copyWith(loading: true));
+    await _fetchReplies(
+      root.id,
+      page: t.replies.length ~/ _replyPageSize,
+      replace: false,
+    );
+  }
+
+  Future<void> _fetchReplies(
+    String rootId, {
+    required int page,
+    required bool replace,
+  }) async {
+    try {
+      final p = await _repo.commentReplies(
+        widget.issueId,
+        rootId,
+        page: page,
+        size: _replyPageSize,
+      );
+      if (!mounted) return;
+      final base = replace ? const <IssueComment>[] : _threadOf(rootId).replies;
+      final existing = {for (final c in base) c.id};
+      final merged = [
+        ...base,
+        for (final c in p.items)
+          if (!existing.contains(c.id)) c,
+      ];
+      setState(() {
+        _replyThreads[rootId] = _threadOf(rootId).copyWith(
+          expanded: true,
+          loading: false,
+          replies: merged,
+          total: p.total,
+        );
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _replyThreads[rootId] = _threadOf(
+            rootId,
+          ).copyWith(loading: false),
+        );
+      }
+    }
+  }
+
+  /// Switches the top-level sort and reloads from the first page.
+  void _setCommentSort(CommentSort sort) {
+    if (sort == _commentSort) return;
+    setState(() => _commentSort = sort);
+    _reloadTopLevelComments();
+  }
+
+  Future<void> _reloadTopLevelComments() async {
+    try {
+      final p = await _repo.comments(
+        widget.issueId,
+        size: _commentPageSize,
+        sort: _commentSort.api,
+      );
+      if (!mounted) return;
+      setState(() {
+        _comments = p.items.toList();
+        _commentsTotal = p.total;
+        _loadArmed = true;
+      });
+    } catch (_) {
+      // Keep the current view.
     }
   }
 
@@ -880,17 +1011,26 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   void _revealNewestComment() {
     if (_activityFilter != _ActivityFilter.comments) return;
     if (_comments.isEmpty) return;
+    // Newest-first → the new comment is at the top; oldest-first → at the bottom.
+    final newest =
+        _commentSort == CommentSort.newest ? _comments.first : _comments.last;
+    _revealComment(newest.id, alignment: 0.15);
+  }
+
+  /// Animated scroll bringing [id]'s row into view. Animated (drives over later
+  /// frames) so it never mutates layout inside the post-frame callback — a
+  /// synchronous jump there trips the sheet's SlideTransition on web.
+  void _revealComment(String id, {double alignment = 0.3}) {
     final controller = widget.sheetScroll;
     if (controller == null || !controller.hasClients) return;
-    final id = _comments.first.id;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final ctx = _commentKeys[id]?.currentContext;
       if (ctx == null || !controller.hasClients) return;
       Scrollable.ensureVisible(
         ctx,
-        duration: const Duration(milliseconds: 380),
+        duration: const Duration(milliseconds: 360),
         curve: Curves.easeOutCubic,
-        alignment: 0.15,
+        alignment: alignment,
       );
     });
   }
@@ -903,7 +1043,11 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     try {
       final issue = await _repo.issue(widget.issueId);
       final results = await Future.wait([
-        _repo.comments(widget.issueId, size: _commentPageSize),
+        _repo.comments(
+          widget.issueId,
+          size: _commentPageSize,
+          sort: _commentSort.api,
+        ),
         _repo.workItems(widget.issueId),
         _repo.projects(),
         _repo.users(),
@@ -1095,25 +1239,80 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       return;
     }
     try {
-      // Attach the reply target (WhatsApp quote), then clear reply mode.
-      final replyToId = _replyingTo?.id;
-      await _repo.addComment(widget.issueId, text, replyToId: replyToId);
-      _comment.clear();
-      if (_replyingTo != null) _replyingTo = null;
-      // Reset to the newest window so the just-posted comment shows at the
-      // bottom, keeping however many pages were already loaded.
-      final p = await _repo.comments(
+      final replyTarget = _replyingTo;
+      final created = await _repo.addComment(
         widget.issueId,
-        size: math.max(_comments.length + 1, _commentPageSize),
+        text,
+        replyToId: replyTarget?.id,
       );
-      _comments = p.items.toList();
-      _commentsTotal = p.total;
-      if (mounted) {
-        setState(() {});
-        _revealNewestComment();
+      _comment.clear();
+      if (!mounted) return;
+      setState(() => _replyingTo = null);
+      _bumpComposer();
+      if (created.isReply) {
+        _onReplyPosted(created);
+      } else {
+        await _refreshTopLevelAfterPost();
       }
     } on ApiFailure catch (failure) {
       _toast(failure.message);
+    }
+  }
+
+  /// After a top-level comment: reload the newest window so it appears (top for
+  /// newest-first, bottom for oldest-first) and reveal it.
+  Future<void> _refreshTopLevelAfterPost() async {
+    final p = await _repo.comments(
+      widget.issueId,
+      size: math.max(_comments.length + 1, _commentPageSize),
+      sort: _commentSort.api,
+    );
+    if (!mounted) return;
+    setState(() {
+      _comments = p.items.toList();
+      _commentsTotal = p.total;
+    });
+    _revealNewestComment();
+  }
+
+  /// After a reply: bump the root's reply count and splice the reply into its
+  /// (now expanded) thread. A fully-loaded thread appends at the bottom (newest
+  /// last); otherwise the thread is fetched fresh.
+  void _onReplyPosted(IssueComment reply) {
+    final rootId = reply.replyToId;
+    if (rootId == null) return;
+    setState(() {
+      _comments = [
+        for (final c in _comments)
+          c.id == rootId ? c.copyWith(replyCount: c.replyCount + 1) : c,
+      ];
+      _pinned = [
+        for (final c in _pinned)
+          c.id == rootId ? c.copyWith(replyCount: c.replyCount + 1) : c,
+      ];
+    });
+    final t = _threadOf(rootId);
+    if (t.expanded && !t.hasMore) {
+      final replies = [
+        for (final r in t.replies)
+          if (r.id != reply.id) r,
+        reply,
+      ];
+      setState(() {
+        _replyThreads[rootId] = t.copyWith(
+          replies: replies,
+          total: replies.length,
+          loading: false,
+        );
+      });
+      _revealComment(reply.id);
+    } else {
+      setState(
+        () => _replyThreads[rootId] = t.copyWith(expanded: true, loading: true),
+      );
+      _fetchReplies(rootId, page: 0, replace: true).then((_) {
+        if (mounted) _revealComment(reply.id);
+      });
     }
   }
 
@@ -1152,11 +1351,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         trimmed,
       );
       if (mounted) {
-        setState(() {
-          _comments = [
-            for (final c in _comments) c.id == updated.id ? updated : c,
-          ];
-        });
+        setState(() => _replaceComment(updated));
       }
       return true;
     } on ApiFailure catch (failure) {
@@ -1175,17 +1370,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     try {
       await _repo.deleteComment(widget.issueId, comment.id);
       if (mounted) {
-        setState(() {
-          _comments = [
-            for (final c in _comments)
-              if (c.id != comment.id) c,
-          ];
-          _pinned = [
-            for (final c in _pinned)
-              if (c.id != comment.id) c,
-          ];
-          if (_commentsTotal > 0) _commentsTotal--;
-        });
+        setState(() => _removeComment(comment));
       }
     } on ApiFailure catch (failure) {
       _toast(failure.message);
@@ -1194,10 +1379,63 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   // ── comment reactions / pin / reply / copy / select (focused menu) ──────────
 
-  /// Splices [updated] into the loaded window + pinned set by id.
-  void _replaceComment(IssueComment updated) {
-    _comments = [for (final c in _comments) c.id == updated.id ? updated : c];
-    _pinned = [for (final c in _pinned) c.id == updated.id ? updated : c];
+  /// Splices [updated] in wherever it lives (feed, pinned, or a reply thread).
+  void _replaceComment(IssueComment updated) =>
+      _mutateAll(updated.id, (_) => updated);
+
+  /// Applies [fn] to the comment with [id] wherever it lives — the top-level
+  /// feed, the pinned set, or any loaded reply thread.
+  void _mutateAll(String id, IssueComment Function(IssueComment) fn) {
+    _comments = [for (final c in _comments) c.id == id ? fn(c) : c];
+    _pinned = [for (final c in _pinned) c.id == id ? fn(c) : c];
+    for (final key in _replyThreads.keys.toList()) {
+      final t = _replyThreads[key]!;
+      if (t.replies.any((r) => r.id == id)) {
+        _replyThreads[key] = t.copyWith(
+          replies: [for (final r in t.replies) r.id == id ? fn(r) : r],
+        );
+      }
+    }
+  }
+
+  /// Removes [comment] wherever it lives, keeping counts consistent: a reply is
+  /// pulled from its root's thread (decrementing that root's replyCount); a root
+  /// drops from the feed together with its whole thread.
+  void _removeComment(IssueComment comment) {
+    final id = comment.id;
+    if (comment.isReply) {
+      final rootId = comment.replyToId!;
+      final t = _threadOf(rootId);
+      _replyThreads[rootId] = t.copyWith(
+        replies: [for (final r in t.replies) if (r.id != id) r],
+        total: t.total > 0 ? t.total - 1 : 0,
+      );
+      IssueComment dec(IssueComment c) =>
+          c.copyWith(replyCount: (c.replyCount - 1).clamp(0, 1 << 30));
+      _comments = [for (final c in _comments) c.id == rootId ? dec(c) : c];
+      _pinned = [for (final c in _pinned) c.id == rootId ? dec(c) : c];
+      return;
+    }
+    _comments = [for (final c in _comments) if (c.id != id) c];
+    _pinned = [for (final c in _pinned) if (c.id != id) c];
+    _replyThreads.remove(id);
+    if (_commentsTotal > 0) _commentsTotal--;
+  }
+
+  /// Finds a comment by id across the feed, pinned set and loaded reply threads.
+  IssueComment? _findComment(String id) {
+    for (final c in _comments) {
+      if (c.id == id) return c;
+    }
+    for (final c in _pinned) {
+      if (c.id == id) return c;
+    }
+    for (final t in _replyThreads.values) {
+      for (final r in t.replies) {
+        if (r.id == id) return r;
+      }
+    }
+    return null;
   }
 
   /// Toggles the caller's emoji reaction (optimistic, WhatsApp one-per-user).
@@ -1215,10 +1453,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       return c.copyWith(reactions: list);
     }
 
-    setState(() {
-      _comments = [for (final c in _comments) toggle(c)];
-      _pinned = [for (final c in _pinned) toggle(c)];
-    });
+    setState(() => _mutateAll(comment.id, toggle));
     try {
       final updated = await _repo.reactToComment(
         widget.issueId,
@@ -1251,12 +1486,22 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     }
   }
 
-  /// Enters reply mode: the composer floats a quote of [comment] above its field.
+  /// Enters reply mode: the composer shows who you're replying to. Replying to a
+  /// reply (Instagram-style) pre-fills an @mention of its author, then the user
+  /// types; a reply to a root starts empty. The backend normalises every reply
+  /// to the thread root, so the thread stays flat.
   void _startReply(IssueComment comment) {
     setState(() {
       _replyingTo = comment;
       _editingComment = null;
-      _comment.clear();
+      if (comment.isReply) {
+        _comment.text = '{{user:${comment.authorId}}} ';
+        _comment.selection = TextSelection.collapsed(
+          offset: _comment.text.length,
+        );
+      } else {
+        _comment.clear();
+      }
     });
     _bumpComposer();
     _commentFocus.requestFocus();
@@ -1334,15 +1579,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     }
     if (!mounted) return;
     setState(() {
-      _comments = [
-        for (final c in _comments)
-          if (!ids.contains(c.id)) c,
-      ];
-      _pinned = [
-        for (final c in _pinned)
-          if (!ids.contains(c.id)) c,
-      ];
-      _commentsTotal = (_commentsTotal - ids.length).clamp(0, 1 << 31);
+      for (final id in ids) {
+        final c = _findComment(id);
+        if (c != null) _removeComment(c);
+      }
       _selectionMode = false;
       _selectedIds.clear();
     });
@@ -1352,11 +1592,14 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// Scrolls to [commentId] (loading older pages until found) and flashes it —
   /// used by a reply-quote tap and by a deep link into a specific comment.
   Future<void> _jumpToComment(String commentId) async {
+    bool found() =>
+        _comments.any((c) => c.id == commentId) ||
+        _pinned.any((c) => c.id == commentId) ||
+        _replyThreads.values.any(
+          (t) => t.replies.any((r) => r.id == commentId),
+        );
     var guard = 0;
-    while (!_comments.any((c) => c.id == commentId) &&
-        !_pinned.any((c) => c.id == commentId) &&
-        _hasMoreComments &&
-        guard++ < 20) {
+    while (!found() && _hasMoreComments && guard++ < 20) {
       await _loadMoreComments();
     }
     if (!mounted) return;
@@ -1399,6 +1642,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         widget.issueId,
         page: next,
         size: _commentPageSize,
+        sort: _commentSort.api,
       );
       if (!mounted) return;
       final existing = {for (final c in _comments) c.id};
@@ -2757,10 +3001,20 @@ class IssueDetailBodyState extends State<IssueDetailBody>
             style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
-          // Filter tabs: All · Comments · History
-          _ActivityTabs(
-            value: filter,
-            onChanged: (f) => setState(() => _activityFilter = f),
+          // Filter tabs (All · Comments · History) + comment sort selector.
+          Row(
+            children: [
+              Expanded(
+                child: _ActivityTabs(
+                  value: filter,
+                  onChanged: (f) => setState(() => _activityFilter = f),
+                ),
+              ),
+              if (filter != _ActivityFilter.history) ...[
+                const SizedBox(width: 8),
+                CommentSortButton(sort: _commentSort, onChanged: _setCommentSort),
+              ],
+            ],
           ),
           const SizedBox(height: 14),
           ..._activityItems(filter),
@@ -2831,23 +3085,23 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// page so the playable bubble appears at the bottom of the thread.
   Future<void> _sendVoiceComment(VoiceRecording recording) async {
     try {
-      await _repo.addVoiceComment(
+      final replyTarget = _replyingTo;
+      final created = await _repo.addVoiceComment(
         widget.issueId,
         bytes: recording.bytes,
         mime: recording.mime,
         durationMs: recording.durationMs,
         peaks: recording.peaks,
-      );
-      final p = await _repo.comments(
-        widget.issueId,
-        size: math.max(_comments.length + 1, _commentPageSize),
+        replyToId: replyTarget?.id,
       );
       if (!mounted) return;
-      setState(() {
-        _comments = p.items.toList();
-        _commentsTotal = p.total;
-      });
-      _revealNewestComment();
+      setState(() => _replyingTo = null);
+      _bumpComposer();
+      if (created.isReply) {
+        _onReplyPosted(created);
+      } else {
+        await _refreshTopLevelAfterPost();
+      }
       widget.onChanged?.call();
     } catch (_) {
       if (!mounted) return;
@@ -2863,9 +3117,13 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   ///  • all      → both, merged newest-first
   List<Widget> _activityItems(_ActivityFilter filter) {
     final me = context.read<AuthBloc>().state.user;
-    final chat = CommentThread.chatMode(context);
-    // Every loaded comment gets a stable key so a deep-link jump can scroll to it.
-    for (final c in [..._comments, ..._pinned]) {
+    // Every loaded comment (incl. loaded replies) gets a stable key so a
+    // deep-link jump / reveal can scroll to it.
+    for (final c in [
+      ..._comments,
+      ..._pinned,
+      for (final t in _replyThreads.values) ...t.replies,
+    ]) {
       _commentKeys.putIfAbsent(c.id, () => GlobalKey());
     }
     final interactions = CommentInteractions(
@@ -2884,13 +3142,15 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       onTogglePin: _togglePin,
       onEnterSelection: _enterSelection,
       onJumpToComment: _jumpToComment,
+      threadOf: _threadOf,
+      onToggleReplies: _toggleReplies,
+      onLoadMoreReplies: _loadMoreReplies,
     );
-    // Same bubble as the Comments tab, so comments look identical in every tab
-    // (voice comments stay playable in the merged "All" feed too).
+    // Same flat tile as the Comments tab, so comments look identical in every
+    // tab (voice comments stay playable in the merged "All" feed too).
     Widget commentTile(IssueComment c) => CommentBubbleRow(
       comment: c,
       interactions: interactions,
-      me: chat && me != null && c.authorId == me.id,
       selectionMode: _selectionMode,
       selected: _selectedIds.contains(c.id),
       onToggleSelected: _toggleSelected,
