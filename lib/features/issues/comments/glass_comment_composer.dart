@@ -123,6 +123,9 @@ class GlassCommentComposer extends StatefulWidget {
     required this.onAttach,
     this.editing = false,
     this.onCancelEdit,
+    this.replyingToName,
+    this.replyingToPreview,
+    this.onCancelReply,
     this.enabled = true,
   });
 
@@ -136,6 +139,13 @@ class GlassCommentComposer extends StatefulWidget {
   /// True while editing an existing comment inline (shows the edit banner).
   final bool editing;
   final VoidCallback? onCancelEdit;
+
+  /// When set, a WhatsApp-style "replying to …" quote bar floats above the
+  /// field; the parent's submit attaches the reply.
+  final String? replyingToName;
+  final String? replyingToPreview;
+  final VoidCallback? onCancelReply;
+
   final bool enabled;
 
   @override
@@ -260,6 +270,12 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
       children: [
         if (widget.editing)
           _EditingBanner(onCancel: widget.onCancelEdit ?? () {}),
+        if (!widget.editing && widget.replyingToName != null)
+          _ReplyBanner(
+            name: widget.replyingToName!,
+            preview: widget.replyingToPreview ?? '',
+            onCancel: widget.onCancelReply ?? () {},
+          ),
         if (_mode == _Mode.format) _formatEditor(context) else _idleRow(),
       ],
     );
@@ -621,6 +637,72 @@ class _EditingBanner extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// WhatsApp-style "replying to …" quote bar shown above the composer field: an
+/// accent rule, the replied-to author and a one-line preview, plus a dismiss.
+class _ReplyBanner extends StatelessWidget {
+  const _ReplyBanner({
+    required this.name,
+    required this.preview,
+    required this.onCancel,
+  });
+
+  final String name;
+  final String preview;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = AppColors.brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, left: 4, right: 4),
+      child: Container(
+        decoration: BoxDecoration(
+          color: dark ? Colors.white10 : Colors.black.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(9),
+          border: Border(left: BorderSide(color: AppColors.accent, width: 3)),
+        ),
+        padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
+        child: Row(
+          children: [
+            Icon(LucideIcons.reply, size: 14, color: AppColors.accentStrong),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    context.t('comments.replyingTo', variables: {'name': name}),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.accentStrong,
+                    ),
+                  ),
+                  if (preview.isNotEmpty) ...[
+                    const SizedBox(height: 1),
+                    Text(
+                      preview,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            IconButton(
+              onPressed: onCancel,
+              visualDensity: VisualDensity.compact,
+              icon: Icon(LucideIcons.x, size: 16, color: AppColors.inkSoft),
+            ),
+          ],
+        ),
       ),
     );
   }

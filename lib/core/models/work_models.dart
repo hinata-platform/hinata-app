@@ -587,6 +587,23 @@ class CommentVoice extends Equatable {
   List<Object?> get props => [durationMs, peaks, size, contentType];
 }
 
+/// A single emoji reaction on a comment. WhatsApp semantics: a user holds at
+/// most one reaction per comment, so [userId] is unique within a comment's list.
+class CommentReaction extends Equatable {
+  const CommentReaction({required this.emoji, required this.userId});
+
+  final String emoji;
+  final String userId;
+
+  factory CommentReaction.fromJson(Map<String, dynamic> json) => CommentReaction(
+    emoji: json['emoji'] as String? ?? '',
+    userId: json['userId'] as String? ?? '',
+  );
+
+  @override
+  List<Object?> get props => [emoji, userId];
+}
+
 class IssueComment extends Equatable {
   const IssueComment({
     required this.id,
@@ -594,6 +611,13 @@ class IssueComment extends Equatable {
     required this.text,
     this.type = CommentType.text,
     this.voice,
+    this.reactions = const [],
+    this.pinned = false,
+    this.pinnedAt,
+    this.replyToId,
+    this.replyToAuthorId,
+    this.replyToPreview,
+    this.editedAt,
     this.createdAt,
     this.updatedAt,
   });
@@ -603,19 +627,75 @@ class IssueComment extends Equatable {
   final String text;
   final CommentType type;
   final CommentVoice? voice;
+
+  /// Emoji reactions; at most one per user (WhatsApp-style).
+  final List<CommentReaction> reactions;
+
+  /// Whether the comment is pinned to the top of the thread.
+  final bool pinned;
+  final DateTime? pinnedAt;
+
+  /// Reply quote (WhatsApp): the comment this replies to + a denormalised
+  /// snapshot so the quote renders without resolving the parent.
+  final String? replyToId;
+  final String? replyToAuthorId;
+  final String? replyToPreview;
+
+  /// When the text was last edited (null = never); drives the "edited" marker.
+  final DateTime? editedAt;
+
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
   bool get isVoice => type == CommentType.voice && voice != null;
 
-  /// True once the comment has been edited after creation (server stamps
-  /// `updatedAt` via @LastModifiedDate on every save).
-  bool get isEdited {
-    final c = createdAt, u = updatedAt;
-    if (c == null || u == null) return false;
-    // Allow a second of slack so the initial create isn't flagged as edited.
-    return u.difference(c).inSeconds > 1;
+  bool get isReply => replyToId != null && replyToId!.isNotEmpty;
+
+  /// True once the comment's text has been edited after creation. Based on the
+  /// explicit [editedAt] stamp (not [updatedAt], which also bumps on reactions/pins).
+  bool get isEdited => editedAt != null;
+
+  /// Reaction counts grouped by emoji, in first-seen order (for stable chips).
+  Map<String, int> get reactionCounts {
+    final counts = <String, int>{};
+    for (final r in reactions) {
+      counts[r.emoji] = (counts[r.emoji] ?? 0) + 1;
+    }
+    return counts;
   }
+
+  /// The emoji the given user reacted with, or null.
+  String? myReaction(String? meId) {
+    if (meId == null) return null;
+    for (final r in reactions) {
+      if (r.userId == meId) return r.emoji;
+    }
+    return null;
+  }
+
+  IssueComment copyWith({
+    List<CommentReaction>? reactions,
+    bool? pinned,
+    DateTime? pinnedAt,
+    bool clearPinnedAt = false,
+    String? text,
+    DateTime? editedAt,
+  }) => IssueComment(
+    id: id,
+    authorId: authorId,
+    text: text ?? this.text,
+    type: type,
+    voice: voice,
+    reactions: reactions ?? this.reactions,
+    pinned: pinned ?? this.pinned,
+    pinnedAt: clearPinnedAt ? null : (pinnedAt ?? this.pinnedAt),
+    replyToId: replyToId,
+    replyToAuthorId: replyToAuthorId,
+    replyToPreview: replyToPreview,
+    editedAt: editedAt ?? this.editedAt,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+  );
 
   factory IssueComment.fromJson(Map<String, dynamic> json) => IssueComment(
     id: json['id'] as String,
@@ -628,12 +708,34 @@ class IssueComment extends Equatable {
     voice: json['voice'] is Map<String, dynamic>
         ? CommentVoice.fromJson(json['voice'] as Map<String, dynamic>)
         : null,
+    reactions: ((json['reactions'] as List?) ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(CommentReaction.fromJson)
+        .toList(growable: false),
+    pinned: json['pinned'] as bool? ?? false,
+    pinnedAt: _instant(json['pinnedAt']),
+    replyToId: json['replyToId'] as String?,
+    replyToAuthorId: json['replyToAuthorId'] as String?,
+    replyToPreview: json['replyToPreview'] as String?,
+    editedAt: _instant(json['editedAt']),
     createdAt: _instant(json['createdAt']),
     updatedAt: _instant(json['updatedAt']),
   );
 
   @override
-  List<Object?> get props => [id, authorId, text, type, voice, updatedAt];
+  List<Object?> get props => [
+    id,
+    authorId,
+    text,
+    type,
+    voice,
+    reactions,
+    pinned,
+    pinnedAt,
+    replyToId,
+    editedAt,
+    updatedAt,
+  ];
 }
 
 /// One entry in an issue's change history ("Verlauf").

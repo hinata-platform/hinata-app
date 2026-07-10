@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:dio/dio.dart' show CancelToken;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -14,6 +15,7 @@ import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/api/hinata_repository.dart';
+import '../../core/api/sse.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
@@ -29,6 +31,7 @@ import '../../core/widgets/soft_card.dart';
 import 'package:image_picker/image_picker.dart' show ImageSource;
 
 import 'comments/comment_attach.dart';
+import 'comments/comment_copy.dart';
 import 'comments/comment_thread.dart';
 import 'comments/glass_comment_composer.dart';
 import 'comments/voice/voice_recorder.dart' show VoiceRecording;
@@ -124,6 +127,7 @@ Future<void> showIssueDetailSheet(
   BuildContext context, {
   required String issueId,
   VoidCallback? onChanged,
+  String? targetCommentId,
 }) {
   final repository = context.read<HinataRepository>();
   final auth = context.read<AuthBloc>();
@@ -221,6 +225,7 @@ Future<void> showIssueDetailSheet(
             sheetScroll: sheetScroll,
             composerRev: composerRev,
             floatingComposer: true,
+            targetCommentId: targetCommentId,
           ),
         ),
       ),
@@ -531,11 +536,15 @@ class IssueDetailBody extends StatefulWidget {
     this.composerRev,
     this.floatingComposer = false,
     this.canMinimize = false,
+    this.targetCommentId,
   });
 
   final String issueId;
   final VoidCallback? onChanged;
   final ValueNotifier<Issue?>? header;
+
+  /// Deep-link target: scroll to + flash this comment once the thread loads.
+  final String? targetCommentId;
 
   /// The host's scroll controller. Lets the body animate to the newest comment
   /// after posting (sheet: the wolt page scroll; route: the page scroll view).
@@ -584,12 +593,43 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   // (chat style): each loaded page is reversed and older pages prepend above.
   // Activity stays newest-first; older pages append below.
   List<IssueComment> _comments = const [];
+  // Pinned comments (any project member can pin) float above the chat feed in
+  // pin order — fetched separately so a pinned comment on an unloaded page still
+  // shows. They're de-duplicated out of the chronological list below.
+  List<IssueComment> _pinned = const [];
   List<IssueActivity> _activity = const [];
   int _commentsTotal = 0;
-  int _commentsPage = 0;
   int _activityTotal = 0;
   int _activityPage = 0;
   bool _loadingMore = false;
+
+  /// Comments are paged in small batches — only the first [_commentPageSize] load
+  /// with the issue, and each scroll to the top of the thread pulls another page.
+  static const int _commentPageSize = 10;
+
+  /// Anchors the top-of-thread load sentinel so [_onCommentScroll] can tell when
+  /// it scrolls into view (the thread lives mid-page in the shared scroll view).
+  final GlobalKey _commentsLoaderKey = GlobalKey();
+
+  // Live comment sync (SSE): reactions/pins/edits/new comments from anyone in the
+  // issue arrive as a payload-free `changed` ping → re-sync the loaded window.
+  CancelToken? _commentSseCancel;
+  StreamSubscription<SseEvent>? _commentSseSub;
+  Timer? _commentSseReconnect;
+  int _commentSseAttempts = 0;
+  bool _disposed = false;
+
+  // Multi-select of own comments (batch delete).
+  bool _selectionMode = false;
+  final Set<String> _selectedIds = {};
+
+  // Reply-to (WhatsApp quoted composer bar); mutually exclusive with editing.
+  IssueComment? _replyingTo;
+
+  // Deep-link jump: the comment briefly flashing + per-comment scroll keys.
+  String? _highlightedCommentId;
+  Timer? _highlightTimer;
+  final Map<String, GlobalKey> _commentKeys = {};
   List<WorkItem> _workItems = const [];
   Project? _project;
   // Cross-feature smart-links: project issues (keyed by readable id) feed the
@@ -634,7 +674,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _commentFocus.addListener(_onCommentFocusChanged);
+    // Auto-load older comments as the user scrolls toward the top of the thread.
+    widget.sheetScroll?.addListener(_onCommentScroll);
     _load();
+    _connectCommentSse();
   }
 
   // Rebuild the floating composer (a separate subtree) when the comment field
@@ -657,6 +700,12 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   @override
   void dispose() {
+    _disposed = true;
+    _commentSseReconnect?.cancel();
+    _commentSseSub?.cancel();
+    _commentSseCancel?.cancel();
+    _highlightTimer?.cancel();
+    widget.sheetScroll?.removeListener(_onCommentScroll);
     WidgetsBinding.instance.removeObserver(this);
     _commentFocus.removeListener(_onCommentFocusChanged);
     _comment.dispose();
@@ -664,6 +713,83 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     _titleCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
+  }
+
+  // ── live comment sync (SSE) ────────────────────────────────────────────────
+  Future<void> _connectCommentSse() async {
+    if (_disposed) return;
+    _commentSseCancel = CancelToken();
+    try {
+      final bytes = await _repo.commentEventStream(
+        widget.issueId,
+        cancelToken: _commentSseCancel,
+      );
+      // Disposed WHILE opening → tear down the just-opened connection instead of
+      // subscribing (a leaked SSE connection holds a server slot open).
+      if (_disposed) {
+        _commentSseCancel?.cancel();
+        return;
+      }
+      _commentSseAttempts = 0;
+      _commentSseSub = parseSse(bytes).listen(
+        (_) => _resyncComments(),
+        onDone: _scheduleCommentSseReconnect,
+        onError: (_) => _scheduleCommentSseReconnect(),
+        cancelOnError: true,
+      );
+    } catch (_) {
+      _scheduleCommentSseReconnect();
+    }
+  }
+
+  void _scheduleCommentSseReconnect() {
+    _commentSseSub?.cancel();
+    _commentSseSub = null;
+    if (_disposed) return;
+    _commentSseReconnect?.cancel();
+    final secs = (3 * (1 << _commentSseAttempts)).clamp(3, 30);
+    _commentSseAttempts = (_commentSseAttempts + 1).clamp(0, 4);
+    _commentSseReconnect = Timer(Duration(seconds: secs), _connectCommentSse);
+  }
+
+  /// Re-fetches the currently-loaded comment window + pinned set after a live
+  /// change, preserving how many pages the user has scrolled through.
+  Future<void> _resyncComments() async {
+    if (_disposed) return;
+    try {
+      final want = math.max(_comments.length, _commentPageSize);
+      final results = await Future.wait([
+        _repo.comments(widget.issueId, size: want),
+        _repo.pinnedComments(widget.issueId),
+      ]);
+      if (!mounted) return;
+      final page = results[0] as ({List<IssueComment> items, int total});
+      setState(() {
+        _comments = page.items.reversed.toList();
+        _commentsTotal = page.total;
+        _pinned = results[1] as List<IssueComment>;
+      });
+    } catch (_) {
+      // Keep the current view; the next event or manual reload reconciles.
+    }
+  }
+
+  /// Auto-loads the next older page when the load sentinel (at the top of the
+  /// thread, which sits mid-page inside the shared scroll view) scrolls into
+  /// view. Geometry-based, since all children are built eagerly here so "built"
+  /// wouldn't mean "visible".
+  void _onCommentScroll() {
+    if (_activityFilter == _ActivityFilter.history) return;
+    if (!_hasMoreComments || _loadingMore) return;
+    final ctx = _commentsLoaderKey.currentContext;
+    if (ctx == null) return;
+    final box = ctx.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return;
+    final top = box.localToGlobal(Offset.zero).dy;
+    final viewportBottom = MediaQuery.of(context).size.height + 240;
+    if (top <= viewportBottom) {
+      _loadMoreComments();
+    }
   }
 
   /// Nudges the sticky action bar (a subtree outside this body) to rebuild its
@@ -701,18 +827,19 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     try {
       final issue = await _repo.issue(widget.issueId);
       final results = await Future.wait([
-        _repo.comments(widget.issueId),
+        _repo.comments(widget.issueId, size: _commentPageSize),
         _repo.workItems(widget.issueId),
         _repo.projects(),
         _repo.users(),
         _repo.issueActivity(widget.issueId),
+        _repo.pinnedComments(widget.issueId),
       ]);
       _issue = issue;
       final commentsPage =
           results[0] as ({List<IssueComment> items, int total});
       _comments = commentsPage.items.reversed.toList();
       _commentsTotal = commentsPage.total;
-      _commentsPage = 0;
+      _pinned = results[5] as List<IssueComment>;
       _workItems = results[1] as List<WorkItem>;
       _project = (results[2] as List<Project>)
           .where((p) => p.id == issue.projectId)
@@ -760,6 +887,11 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       // Reveal the host's floating composer now that the issue is loaded (the
       // route overlay reads `hasIssue`, and its subtree is outside this body).
       _bumpComposer();
+      // Deep link into a specific comment → scroll to it and flash it.
+      final target = widget.targetCommentId;
+      if (target != null && target.isNotEmpty) {
+        _jumpToComment(target);
+      }
     } on ApiFailure catch (failure) {
       if (mounted) {
         setState(() {
@@ -887,13 +1019,19 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       return;
     }
     try {
-      await _repo.addComment(widget.issueId, text);
+      // Attach the reply target (WhatsApp quote), then clear reply mode.
+      final replyToId = _replyingTo?.id;
+      await _repo.addComment(widget.issueId, text, replyToId: replyToId);
       _comment.clear();
-      // Reset to the newest page so the just-posted comment shows at the bottom.
-      final p = await _repo.comments(widget.issueId);
+      if (_replyingTo != null) _replyingTo = null;
+      // Reset to the newest window so the just-posted comment shows at the
+      // bottom, keeping however many pages were already loaded.
+      final p = await _repo.comments(
+        widget.issueId,
+        size: math.max(_comments.length + 1, _commentPageSize),
+      );
       _comments = p.items.reversed.toList();
       _commentsTotal = p.total;
-      _commentsPage = 0;
       if (mounted) {
         setState(() {});
         _revealNewestComment();
@@ -907,6 +1045,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   void _promptEditComment(IssueComment comment) {
     setState(() {
       _editingComment = comment;
+      _replyingTo = null; // edit and reply are mutually exclusive
       _comment.text = comment.text;
       _comment.selection = TextSelection.collapsed(
         offset: _comment.text.length,
@@ -965,12 +1104,211 @@ class IssueDetailBodyState extends State<IssueDetailBody>
             for (final c in _comments)
               if (c.id != comment.id) c,
           ];
+          _pinned = [
+            for (final c in _pinned)
+              if (c.id != comment.id) c,
+          ];
           if (_commentsTotal > 0) _commentsTotal--;
         });
       }
     } on ApiFailure catch (failure) {
       _toast(failure.message);
     }
+  }
+
+  // ── comment reactions / pin / reply / copy / select (focused menu) ──────────
+
+  /// Splices [updated] into the loaded window + pinned set by id.
+  void _replaceComment(IssueComment updated) {
+    _comments = [
+      for (final c in _comments) c.id == updated.id ? updated : c,
+    ];
+    _pinned = [
+      for (final c in _pinned) c.id == updated.id ? updated : c,
+    ];
+  }
+
+  /// Toggles the caller's emoji reaction (optimistic, WhatsApp one-per-user).
+  Future<void> _reactToComment(IssueComment comment, String emoji) async {
+    final meId = context.read<AuthBloc>().state.user?.id;
+    if (meId == null) return;
+    IssueComment toggle(IssueComment c) {
+      if (c.id != comment.id) return c;
+      final mine = c.myReaction(meId);
+      final list = [
+        for (final r in c.reactions)
+          if (r.userId != meId) r,
+      ];
+      if (mine != emoji) list.add(CommentReaction(emoji: emoji, userId: meId));
+      return c.copyWith(reactions: list);
+    }
+
+    setState(() {
+      _comments = [for (final c in _comments) toggle(c)];
+      _pinned = [for (final c in _pinned) toggle(c)];
+    });
+    try {
+      final updated = await _repo.reactToComment(
+        widget.issueId,
+        comment.id,
+        emoji,
+      );
+      if (mounted) setState(() => _replaceComment(updated));
+    } on ApiFailure catch (failure) {
+      _toast(failure.message);
+      _resyncComments();
+    }
+  }
+
+  /// Pins/unpins a comment (any project member); refreshes pin ordering.
+  Future<void> _togglePin(IssueComment comment) async {
+    try {
+      final updated = await _repo.pinComment(
+        widget.issueId,
+        comment.id,
+        !comment.pinned,
+      );
+      final pinned = await _repo.pinnedComments(widget.issueId);
+      if (!mounted) return;
+      setState(() {
+        _pinned = pinned;
+        _replaceComment(updated);
+      });
+    } on ApiFailure catch (failure) {
+      _toast(failure.message);
+    }
+  }
+
+  /// Enters reply mode: the composer floats a quote of [comment] above its field.
+  void _startReply(IssueComment comment) {
+    setState(() {
+      _replyingTo = comment;
+      _editingComment = null;
+      _comment.clear();
+    });
+    _bumpComposer();
+    _commentFocus.requestFocus();
+  }
+
+  void _cancelReply() {
+    setState(() => _replyingTo = null);
+    _bumpComposer();
+  }
+
+  /// Copies a comment's text (or its inline image as real image data).
+  Future<void> _copyComment(IssueComment comment) async {
+    final kind = await copyComment(_repo, comment);
+    if (!mounted) return;
+    _toast(
+      kind == CommentCopyKind.image
+          ? context.t('comments.imageCopied')
+          : context.t('comments.copied'),
+    );
+  }
+
+  /// Copies a deep link straight to this comment (opens the issue + scrolls).
+  Future<void> _copyCommentLink(IssueComment comment) async {
+    final issue = _issue;
+    if (issue == null) return;
+    final link =
+        '${issueWebLink(_repo.apiBaseUrl, issue.linkId)}?comment=${comment.id}';
+    await Clipboard.setData(ClipboardData(text: link));
+    if (!mounted) return;
+    _toast(context.t('comments.linkCopied'));
+  }
+
+  void _enterSelection(IssueComment comment) {
+    setState(() {
+      _selectionMode = true;
+      _selectedIds
+        ..clear()
+        ..add(comment.id);
+    });
+    _bumpComposer();
+  }
+
+  void _toggleSelected(IssueComment comment) {
+    setState(() {
+      if (!_selectedIds.remove(comment.id)) _selectedIds.add(comment.id);
+      if (_selectedIds.isEmpty) _selectionMode = false;
+    });
+    _bumpComposer();
+  }
+
+  void _exitSelection() {
+    setState(() {
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
+    _bumpComposer();
+  }
+
+  /// Batch-deletes the selected own comments after a single confirmation.
+  Future<void> _deleteSelected() async {
+    final ids = _selectedIds.toList();
+    if (ids.isEmpty) return;
+    final confirmed = await showGlassModal<bool>(
+      context,
+      width: 420,
+      builder: (_) => _DeleteCommentConfirm(count: ids.length),
+    );
+    if (confirmed != true) return;
+    for (final id in ids) {
+      try {
+        await _repo.deleteComment(widget.issueId, id);
+      } catch (_) {
+        // Skip failures; the rest still delete and a resync reconciles.
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _comments = [
+        for (final c in _comments)
+          if (!ids.contains(c.id)) c,
+      ];
+      _pinned = [
+        for (final c in _pinned)
+          if (!ids.contains(c.id)) c,
+      ];
+      _commentsTotal = (_commentsTotal - ids.length).clamp(0, 1 << 31);
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
+    _bumpComposer();
+  }
+
+  /// Scrolls to [commentId] (loading older pages until found) and flashes it —
+  /// used by a reply-quote tap and by a deep link into a specific comment.
+  Future<void> _jumpToComment(String commentId) async {
+    var guard = 0;
+    while (!_comments.any((c) => c.id == commentId) &&
+        !_pinned.any((c) => c.id == commentId) &&
+        _hasMoreComments &&
+        guard++ < 20) {
+      await _loadMoreComments();
+    }
+    if (!mounted) return;
+    if (_activityFilter == _ActivityFilter.history) {
+      setState(() => _activityFilter = _ActivityFilter.comments);
+    }
+    _commentKeys.putIfAbsent(commentId, () => GlobalKey());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final ctx = _commentKeys[commentId]?.currentContext;
+      if (ctx != null) {
+        await Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 420),
+          curve: Curves.easeOutCubic,
+          alignment: 0.3,
+        );
+      }
+      if (!mounted) return;
+      setState(() => _highlightedCommentId = commentId);
+      _highlightTimer?.cancel();
+      _highlightTimer = Timer(const Duration(milliseconds: 1600), () {
+        if (mounted) setState(() => _highlightedCommentId = null);
+      });
+    });
   }
 
   bool get _hasMoreComments => _comments.length < _commentsTotal;
@@ -981,9 +1319,21 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   Future<void> _loadMoreComments() async {
     if (_loadingMore || !_hasMoreComments) return;
     setState(() => _loadingMore = true);
+    final controller = widget.sheetScroll;
+    // Anchor to the distance-from-bottom so prepending older comments above the
+    // viewport doesn't yank the content the user is currently reading.
+    final anchorFromBottom = controller != null && controller.hasClients
+        ? controller.position.maxScrollExtent - controller.offset
+        : null;
     try {
-      final next = _commentsPage + 1;
-      final p = await _repo.comments(widget.issueId, page: next);
+      // Derive the page from how many are loaded (survives an SSE resync that
+      // reset the window), so each pull fetches the next older batch.
+      final next = _comments.length ~/ _commentPageSize;
+      final p = await _repo.comments(
+        widget.issueId,
+        page: next,
+        size: _commentPageSize,
+      );
       if (!mounted) return;
       final existing = {for (final c in _comments) c.id};
       final older = [
@@ -993,8 +1343,20 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       setState(() {
         _comments = [...older, ..._comments];
         _commentsTotal = p.total;
-        _commentsPage = next;
       });
+      if (anchorFromBottom != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (controller != null && controller.hasClients) {
+            final pos = controller.position;
+            controller.jumpTo(
+              (pos.maxScrollExtent - anchorFromBottom).clamp(
+                pos.minScrollExtent,
+                pos.maxScrollExtent,
+              ),
+            );
+          }
+        });
+      }
     } catch (_) {
       // Keep what we have; the user can retry.
     } finally {
@@ -2342,16 +2704,31 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// morph, live voice recording and a Markdown format toolbar. Wraps a
   /// [MentionField] so `@`-smart-link autocomplete keeps working.
   Widget _commentComposer() {
+    final replying = _replyingTo;
     return GlassCommentComposer(
       controller: _comment,
       focusNode: _commentFocus,
       actions: _commentActions,
       editing: _editingComment != null,
       onCancelEdit: _cancelEditComment,
+      replyingToName: replying == null
+          ? null
+          : (_names[replying.authorId] ?? replying.authorId),
+      replyingToPreview: replying == null ? null : _replyPreview(replying),
+      onCancelReply: _cancelReply,
       onSubmitText: _submitComment,
       onSendVoice: _sendVoiceComment,
       onAttach: _onComposerAttach,
     );
+  }
+
+  /// One-line preview of a comment for the reply bar ("🎤"/"📷" for media).
+  String _replyPreview(IssueComment c) {
+    if (c.isVoice) return '🎤';
+    final text = c.text.trim();
+    if (RegExp(r'^\s*!\[[^\]]*\]\([^)]+\)\s*$').hasMatch(text)) return '📷';
+    final oneLine = text.replaceAll(RegExp(r'\s+'), ' ');
+    return oneLine.length > 80 ? '${oneLine.substring(0, 80)}…' : oneLine;
   }
 
   /// Handles the `+` menu picks. Camera/gallery insert an inline Markdown photo
@@ -2391,12 +2768,14 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         durationMs: recording.durationMs,
         peaks: recording.peaks,
       );
-      final p = await _repo.comments(widget.issueId);
+      final p = await _repo.comments(
+        widget.issueId,
+        size: math.max(_comments.length + 1, _commentPageSize),
+      );
       if (!mounted) return;
       setState(() {
         _comments = p.items.reversed.toList();
         _commentsTotal = p.total;
-        _commentsPage = 0;
       });
       _revealNewestComment();
       widget.onChanged?.call();
@@ -2415,17 +2794,35 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   List<Widget> _activityItems(_ActivityFilter filter) {
     final me = context.read<AuthBloc>().state.user;
     final chat = CommentThread.chatMode(context);
+    // Every loaded comment gets a stable key so a deep-link jump can scroll to it.
+    for (final c in [..._comments, ..._pinned]) {
+      _commentKeys.putIfAbsent(c.id, () => GlobalKey());
+    }
+    final interactions = CommentInteractions(
+      meId: me?.id,
+      nameFor: (id) => _names[id] ?? id,
+      avatarFor: (id) => _avatars[id],
+      loadVoice: (c) => () => _repo.voiceCommentAudio(widget.issueId, c.id),
+      canManage: (c) => me != null && c.authorId == me.id,
+      onEdit: _promptEditComment,
+      onDelete: _deleteComment,
+      onReply: _startReply,
+      onReact: _reactToComment,
+      onCopy: _copyComment,
+      onCopyLink: _copyCommentLink,
+      onTogglePin: _togglePin,
+      onEnterSelection: _enterSelection,
+      onJumpToComment: _jumpToComment,
+    );
     // Same bubble as the Comments tab, so comments look identical in every tab
     // (voice comments stay playable in the merged "All" feed too).
     Widget commentTile(IssueComment c) => CommentBubbleRow(
       comment: c,
+      interactions: interactions,
       me: chat && me != null && c.authorId == me.id,
-      name: _names[c.authorId] ?? c.authorId,
-      avatarUrl: _avatars[c.authorId],
-      loadVoice: () => _repo.voiceCommentAudio(widget.issueId, c.id),
-      canManage: me != null && c.authorId == me.id,
-      onEdit: () => _promptEditComment(c),
-      onDelete: () => _deleteComment(c),
+      selectionMode: _selectionMode,
+      selected: _selectedIds.contains(c.id),
+      onToggleSelected: _toggleSelected,
     );
     final issueIds = {
       for (final i in _projectIssues.values) i.id: i.readableId,
@@ -2443,28 +2840,50 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     Widget loadMore(String label, VoidCallback onTap) =>
         _LoadMoreTile(label: label, loading: _loadingMore, onTap: onTap);
 
+    CommentThread thread(List<IssueComment> items, {bool pinned = false}) =>
+        CommentThread(
+          comments: items,
+          interactions: interactions,
+          pinnedSection: pinned,
+          selectionMode: _selectionMode,
+          selectedIds: _selectedIds,
+          onToggleSelected: _toggleSelected,
+          highlightedId: _highlightedCommentId,
+          commentKeys: _commentKeys,
+        );
+
     switch (filter) {
       case _ActivityFilter.comments:
-        if (_comments.isEmpty) {
+        // Pinned comments float above the feed (any member can pin); de-dupe them
+        // out of the chronological list so a pinned comment shows only once.
+        final pinnedIds = {for (final c in _pinned) c.id};
+        final feed = [
+          for (final c in _comments)
+            if (!pinnedIds.contains(c.id)) c,
+        ];
+        if (_pinned.isEmpty && feed.isEmpty) {
           return [_emptyActivity(context.t('issues.activityEmpty'))];
         }
         return [
-          // Older comments live above (chat is oldest→newest), so the control
-          // sits at the top of the thread.
+          if (_selectionMode) _selectionBar(),
+          if (_pinned.isNotEmpty) ...[
+            _pinnedHeader(),
+            thread(_pinned, pinned: true),
+            const SizedBox(height: 8),
+            Divider(height: 1, color: AppColors.hairline),
+            const SizedBox(height: 12),
+          ],
+          // Auto-loading sentinel at the top of the chronological thread (older
+          // comments live above); [_onCommentScroll] pulls the next page as it
+          // nears the viewport — no manual "load earlier" button.
           if (_hasMoreComments)
-            loadMore(context.t('issues.loadEarlier'), _loadMoreComments),
+            Padding(
+              key: _commentsLoaderKey,
+              padding: const EdgeInsets.only(bottom: 12),
+              child: const Center(child: HiveLoader(size: 26)),
+            ),
           // Liquid-Glass chat thread (text + playable voice bubbles).
-          CommentThread(
-            comments: _comments,
-            meId: me?.id,
-            nameFor: (id) => _names[id] ?? id,
-            avatarFor: (id) => _avatars[id],
-            loadVoice: (c) =>
-                () => _repo.voiceCommentAudio(widget.issueId, c.id),
-            canManage: (c) => me != null && c.authorId == me.id,
-            onEdit: _promptEditComment,
-            onDelete: _deleteComment,
-          ),
+          thread(feed),
         ];
       case _ActivityFilter.history:
         if (_activity.isEmpty) {
@@ -2488,6 +2907,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           return [_emptyActivity(context.t('issues.activityEmpty'))];
         }
         return [
+          if (_selectionMode) _selectionBar(),
           for (final m in merged) m.tile,
           if (_hasMoreComments || _hasMoreActivity)
             loadMore(context.t('issues.loadMore'), _loadMoreAll),
@@ -2501,6 +2921,62 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     if (_hasMoreComments) await _loadMoreComments();
     if (_hasMoreActivity) await _loadMoreActivity();
   }
+
+  /// Batch-selection toolbar shown atop the feed while selecting own comments.
+  Widget _selectionBar() => Container(
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.hairline),
+    ),
+    child: Row(
+      children: [
+        IconButton(
+          onPressed: _exitSelection,
+          visualDensity: VisualDensity.compact,
+          icon: Icon(LucideIcons.x, size: 18, color: AppColors.inkSoft),
+        ),
+        Text(
+          context.t('comments.selectedCount', count: _selectedIds.length),
+          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+        ),
+        const Spacer(),
+        TextButton.icon(
+          onPressed: _selectedIds.isEmpty ? null : _deleteSelected,
+          icon: Icon(LucideIcons.trash2, size: 16, color: AppColors.danger),
+          label: Text(
+            context.t('common.delete'),
+            style: TextStyle(
+              color: AppColors.danger,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  /// Small "📌 Pinned" section header shown above pinned comments.
+  Widget _pinnedHeader() => Padding(
+    padding: const EdgeInsets.only(left: 4, bottom: 8),
+    child: Row(
+      children: [
+        Icon(LucideIcons.pin, size: 13, color: AppColors.inkFaint),
+        const SizedBox(width: 6),
+        Text(
+          context.t('comments.pinnedSection'),
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.2,
+            color: AppColors.inkFaint,
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _emptyActivity(String message) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 22),
@@ -2905,7 +3381,10 @@ class _DeleteIssueConfirm extends StatelessWidget {
 /// Destructive confirm for deleting one's own comment. Mirrors the issue
 /// delete confirm's Liquid-Glass language (danger chip, hairline footer).
 class _DeleteCommentConfirm extends StatelessWidget {
-  const _DeleteCommentConfirm();
+  const _DeleteCommentConfirm({this.count = 1});
+
+  /// How many comments will be deleted (batch selection shows a plural body).
+  final int count;
 
   @override
   Widget build(BuildContext context) {
@@ -2939,7 +3418,12 @@ class _DeleteCommentConfirm extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      context.t('issues.deleteCommentTitle'),
+                      count > 1
+                          ? context.t(
+                              'comments.deleteSelectedTitle',
+                              count: count,
+                            )
+                          : context.t('issues.deleteCommentTitle'),
                       style: TextStyle(
                         fontFamily: AppTheme.fontBrand,
                         fontSize: 17,
@@ -2949,7 +3433,12 @@ class _DeleteCommentConfirm extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      context.t('issues.deleteCommentBody'),
+                      count > 1
+                          ? context.t(
+                              'comments.deleteSelectedBody',
+                              count: count,
+                            )
+                          : context.t('issues.deleteCommentBody'),
                       style: TextStyle(
                         fontSize: 12.5,
                         height: 1.4,
