@@ -2,7 +2,7 @@ name: hinata
 description: "Hinata - open source, self-hosted project management."
 publish_to: 'none'
 
-version: 4.0.2+39
+version: 4.1.0+40
 
 environment:
   sdk: ^3.11.3
