@@ -622,16 +622,34 @@ class _GlassFloatingTopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          HexMark(size: 26, color: dark ? AppColors.accent : AppColors.navy),
-          const SizedBox(width: 11),
-          Text(
-            'hinata',
-            style: TextStyle(
-              fontFamily: AppTheme.fontBrand,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.4,
-              color: AppColors.ink,
+          Tooltip(
+            message: context.t('nav.dashboard'),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => context.go('/dashboard'),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    HexMark(
+                      size: 26,
+                      color: dark ? AppColors.accent : AppColors.navy,
+                    ),
+                    const SizedBox(width: 11),
+                    Text(
+                      'hinata',
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontBrand,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.4,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
           const Expanded(

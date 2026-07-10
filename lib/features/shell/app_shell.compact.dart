@@ -312,9 +312,16 @@ class _GlassTopBar extends StatelessWidget {
                             stretch: 0.15,
                           ),
                   )
-                : const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: HexMark(size: 24, color: AppColors.accent),
+                : Tooltip(
+                    message: context.t('nav.dashboard'),
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => context.go('/dashboard'),
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: HexMark(size: 24, color: AppColors.accent),
+                      ),
+                    ),
                   ),
             title: Text(
               titleText,
