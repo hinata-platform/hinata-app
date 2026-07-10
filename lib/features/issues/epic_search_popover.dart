@@ -11,7 +11,11 @@ import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_widgets.dart';
-import '../sprint/modals/glass_modal.dart' show showGlassAnchoredPopover;
+import '../sprint/modals/glass_modal.dart'
+    show
+        kGlassPopoverBreakpoint,
+        showGlassAnchoredPopover,
+        showGlassBottomSheet;
 
 /// Result of the on-the-fly epic/parent picker.
 ///
@@ -37,6 +41,10 @@ class EpicPickResult {
 /// [forSubtask] switches the target set: sub-tasks attach to a standard issue,
 /// standard issues attach to an epic. [hasCurrentParent] toggles the leading
 /// "no epic" (detach) row.
+///
+/// Responsive like [showGlassOptions]: an anchored dropdown on wide screens, a
+/// glass bottom sheet on phones — the sheet rides above the keyboard, whereas
+/// the anchored panel would be buried under it on a low anchor row.
 Future<EpicPickResult?> showEpicSearchPopover(
   BuildContext context, {
   required Rect anchorRect,
@@ -45,18 +53,29 @@ Future<EpicPickResult?> showEpicSearchPopover(
   required bool forSubtask,
   required bool hasCurrentParent,
 }) {
-  return showGlassAnchoredPopover<EpicPickResult>(
+  final panel = _EpicSearchPanel(
+    projectId: projectId,
+    currentIssueId: currentIssueId,
+    forSubtask: forSubtask,
+    hasCurrentParent: hasCurrentParent,
+  );
+  final wide = MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint;
+  if (wide) {
+    return showGlassAnchoredPopover<EpicPickResult>(
+      context,
+      anchorRect: anchorRect,
+      width: 360,
+      minHeight: 180,
+      maxHeight: 420,
+      builder: (_) => panel,
+    );
+  }
+  // Fixed sheet height: results change per keystroke, and a shrink-to-content
+  // sheet would bounce with every debounced page. The glass sheet clamps this
+  // below the keyboard when space is tight.
+  return showGlassBottomSheet<EpicPickResult>(
     context,
-    anchorRect: anchorRect,
-    width: 360,
-    minHeight: 180,
-    maxHeight: 420,
-    builder: (_) => _EpicSearchPanel(
-      projectId: projectId,
-      currentIssueId: currentIssueId,
-      forSubtask: forSubtask,
-      hasCurrentParent: hasCurrentParent,
-    ),
+    builder: (_) => SizedBox(height: 420, child: panel),
   );
 }
 
