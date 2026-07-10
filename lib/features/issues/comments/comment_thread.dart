@@ -72,10 +72,14 @@ class CommentSortButton extends StatelessWidget {
     super.key,
     required this.sort,
     required this.onChanged,
+    this.compact = false,
   });
 
   final CommentSort sort;
   final ValueChanged<CommentSort> onChanged;
+
+  /// Icon-only trigger for narrow layouts where the text label wouldn't fit.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -95,32 +99,37 @@ class CommentSortButton extends StatelessWidget {
         child: InkWell(
           onTap: toggle,
           borderRadius: BorderRadius.circular(9),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  LucideIcons.arrowUpDown,
-                  size: 14,
-                  color: AppColors.inkSoft,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
+          child: Tooltip(
+            message: compact ? label : '',
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    LucideIcons.arrowUpDown,
+                    size: compact ? 16 : 14,
                     color: AppColors.inkSoft,
                   ),
-                ),
-                const SizedBox(width: 3),
-                Icon(
-                  LucideIcons.chevronDown,
-                  size: 14,
-                  color: AppColors.inkSoft,
-                ),
-              ],
+                  if (!compact) ...[
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.inkSoft,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Icon(
+                      LucideIcons.chevronDown,
+                      size: 14,
+                      color: AppColors.inkSoft,
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ),
