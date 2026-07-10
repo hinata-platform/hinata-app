@@ -2864,6 +2864,17 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     // `@`-mentions/smart-links (it reads the resolver from context).
     final issue = _issue;
     if (issue == null) return const SizedBox.shrink();
+    // Batch-selection mode takes over the bottom dock: the selection toolbar
+    // (cancel · N selected · delete) floats here in place of the composer, so it
+    // stays reachable however far the feed is scrolled — the actions are useless
+    // if they scroll off-screen. It rides above the keyboard-guard below since
+    // the keyboard is down while selecting.
+    if (_selectionMode && _activityFilter != _ActivityFilter.history) {
+      return _dockAligned(
+        deviceSafeArea: deviceSafeArea,
+        child: _selectionBar(floating: true),
+      );
+    }
     // Wolt lifts the sticky action bar above the keyboard whenever *any* field
     // is focused. That's wrong for the comment composer: while the keyboard is
     // up for another input (sub-task / linked-issue / inline title-edit), the
@@ -2881,35 +2892,46 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     if (keyboardUp && !_commentFocus.hasFocus) return const SizedBox.shrink();
     return SmartLinkScope(
       resolver: _buildResolver(issue),
-      child: LayoutBuilder(
-        builder: (context, c) {
-          // Content width mirrors the body's inner width (20px padding / side).
-          final contentW = c.maxWidth - 40;
-          if (contentW < 680) {
-            // Phone / narrow: full-width dock over the whole area.
-            return _composerDock(
-              deviceSafeArea: deviceSafeArea,
-              horizontal: 16,
-            );
-          }
-          // 2-column: match the left column (flex 3 of 3+2 with an 18px gutter),
-          // aligned with the body's left padding.
-          final leftW = (contentW - 18) * 3 / 5;
-          return Padding(
-            padding: const EdgeInsets.only(left: 20),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: SizedBox(
-                width: leftW,
-                child: _composerDock(
-                  deviceSafeArea: deviceSafeArea,
-                  horizontal: 0,
-                ),
+      child: _dockAligned(
+        deviceSafeArea: deviceSafeArea,
+        child: _commentComposer(),
+      ),
+    );
+  }
+
+  /// Anchors a bottom-dock [child] (composer or selection toolbar) with the same
+  /// width treatment: full-width on phone/narrow, constrained + left-aligned to
+  /// the comment column (flex 3 of 3+2 with an 18px gutter) on the 2-column view.
+  Widget _dockAligned({required Widget child, required bool deviceSafeArea}) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        // Content width mirrors the body's inner width (20px padding / side).
+        final contentW = c.maxWidth - 40;
+        if (contentW < 680) {
+          // Phone / narrow: full-width dock over the whole area.
+          return _composerDock(
+            deviceSafeArea: deviceSafeArea,
+            horizontal: 16,
+            child: child,
+          );
+        }
+        // 2-column: match the left column, aligned with the body's left padding.
+        final leftW = (contentW - 18) * 3 / 5;
+        return Padding(
+          padding: const EdgeInsets.only(left: 20),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: SizedBox(
+              width: leftW,
+              child: _composerDock(
+                deviceSafeArea: deviceSafeArea,
+                horizontal: 0,
+                child: child,
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -2917,7 +2939,11 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// surface (so the feed dissolves behind it) wrapping the glass composer.
   /// Bottom-anchored at the modal edge, so the inline format editor grows
   /// *upward* in place.
-  Widget _composerDock({required bool deviceSafeArea, double horizontal = 16}) {
+  Widget _composerDock({
+    required bool deviceSafeArea,
+    required Widget child,
+    double horizontal = 16,
+  }) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     // Fade INTO the *translucent* modal surface (glassWoltSurface floats content
     // on `canvas @ 0.88/0.84`), not full-opacity canvas — else it reads as a
@@ -2972,7 +2998,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
             ),
           ),
         ),
-        Padding(padding: padding, child: _commentComposer()),
+        Padding(padding: padding, child: child),
       ],
     );
   }
@@ -3195,7 +3221,6 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           return [_emptyActivity(context.t('issues.activityEmpty'))];
         }
         return [
-          if (_selectionMode) _selectionBar(),
           if (_pinned.isNotEmpty) ...[
             _pinnedHeader(),
             thread(_pinned, pinned: true),
@@ -3248,7 +3273,6 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           return [_emptyActivity(context.t('issues.activityEmpty'))];
         }
         return [
-          if (_selectionMode) _selectionBar(),
           for (final m in merged) m.tile,
           if (_hasMoreComments || _hasMoreActivity)
             loadMore(context.t('issues.loadMore'), _loadMoreAll),
@@ -3263,14 +3287,25 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     if (_hasMoreActivity) await _loadMoreActivity();
   }
 
-  /// Batch-selection toolbar shown atop the feed while selecting own comments.
-  Widget _selectionBar() => Container(
-    margin: const EdgeInsets.only(bottom: 12),
+  /// Batch-selection toolbar (cancel · N selected · delete) shown while
+  /// selecting own comments. It floats in the bottom dock ([floating]) so the
+  /// actions stay reachable no matter where the feed is scrolled.
+  Widget _selectionBar({bool floating = false}) => Container(
+    margin: floating ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
     padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
     decoration: BoxDecoration(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(14),
       border: Border.all(color: AppColors.hairline),
+      boxShadow: floating
+          ? [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.14),
+                blurRadius: 20,
+                offset: const Offset(0, 6),
+              ),
+            ]
+          : null,
     ),
     child: Row(
       children: [

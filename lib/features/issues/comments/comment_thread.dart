@@ -1,7 +1,13 @@
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show GlassMenuAlignment, GlassPopover, GlassQuality, LiquidGlassSettings;
+    show
+        GlassContainer,
+        GlassMenuAlignment,
+        GlassPopover,
+        GlassQuality,
+        LiquidGlassSettings,
+        LiquidRoundedSuperellipse;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
@@ -308,7 +314,10 @@ class CommentThread extends StatelessWidget {
         );
       }
     }
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: rows);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
+    );
   }
 }
 
@@ -513,16 +522,20 @@ class _CommentActions extends StatelessWidget {
             tooltip: context.t('comments.react'),
             onTap: toggle,
           ),
-          contentBuilder: (context, close) => _QuickReactionsBar(
+          contentBuilder: (_, close) => _QuickReactionsBar(
             selected: comment.myReaction(interactions.meId),
             onPick: (emoji) {
               close();
               interactions.onReact(comment, emoji);
             },
-            onMore: () async {
-              final picked = await _pickEmoji(context);
+            // "…" → the full glass emoji picker, anchored to the button on wide
+            // screens and docked as a glass sheet on phones. Close the quick pill
+            // first, then present (using the stable actions context, not the
+            // popover's, which is being torn down).
+            onMore: (anchor) async {
+              close();
+              final picked = await _pickEmojiGlass(context, anchor: anchor);
               if (picked != null && context.mounted) {
-                close();
                 interactions.onReact(comment, picked);
               }
             },
@@ -586,7 +599,9 @@ class _CommentActions extends StatelessWidget {
       ),
       _MenuRowData(
         comment.pinned ? LucideIcons.pinOff : LucideIcons.pin,
-        comment.pinned ? context.t('comments.unpin') : context.t('comments.pin'),
+        comment.pinned
+            ? context.t('comments.unpin')
+            : context.t('comments.pin'),
         () => run(() => interactions.onTogglePin(comment)),
       ),
       if (canManage)
@@ -710,7 +725,10 @@ class _ReplyThreadView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (var i = 0; i < replies.length; i++)
-            _replyRow(replies[i], last: i == replies.length - 1 && !thread.hasMore),
+            _replyRow(
+              replies[i],
+              last: i == replies.length - 1 && !thread.hasMore,
+            ),
           Padding(
             padding: const EdgeInsets.only(left: _indent, top: 6),
             child: Row(
@@ -764,9 +782,7 @@ class _ReplyThreadView extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: keyed == null
-                  ? row
-                  : KeyedSubtree(key: keyed, child: row),
+              child: keyed == null ? row : KeyedSubtree(key: keyed, child: row),
             ),
           ),
         ],
@@ -979,7 +995,9 @@ class _ReactionChips extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w600,
-                    color: selected ? AppColors.accentStrong : AppColors.inkSoft,
+                    color: selected
+                        ? AppColors.accentStrong
+                        : AppColors.inkSoft,
                   ),
                 ),
               ],
@@ -1002,9 +1020,7 @@ class _ContextMenuCard extends StatelessWidget {
       color: Colors.transparent,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final r in rows) _row(context, r),
-        ],
+        children: [for (final r in rows) _row(context, r)],
       ),
     );
   }
@@ -1050,7 +1066,9 @@ class _QuickReactionsBar extends StatelessWidget {
 
   final String? selected;
   final void Function(String emoji) onPick;
-  final VoidCallback onMore;
+
+  /// Opens the full picker; receives the "…" button's screen rect for anchoring.
+  final void Function(Rect? anchor) onMore;
 
   @override
   Widget build(BuildContext context) {
@@ -1076,7 +1094,9 @@ class _QuickReactionsBar extends StatelessWidget {
         child: SizedBox(
           width: 40,
           height: 40,
-          child: Center(child: Text(emoji, style: const TextStyle(fontSize: 22))),
+          child: Center(
+            child: Text(emoji, style: const TextStyle(fontSize: 22)),
+          ),
         ),
       ),
     );
@@ -1084,16 +1104,31 @@ class _QuickReactionsBar extends StatelessWidget {
 
   Widget _moreButton(BuildContext context) {
     final dark = AppColors.brightness == Brightness.dark;
-    return Material(
-      color: dark ? Colors.white10 : Colors.black12,
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onMore,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(LucideIcons.ellipsis, size: 18, color: AppColors.inkSoft),
+    // Wrapped in a Builder so onTap can read this button's own render box and
+    // hand its screen rect to [onMore] for anchoring the emoji picker.
+    return Builder(
+      builder: (context) => Material(
+        color: dark ? Colors.white10 : Colors.black12,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            final box = context.findRenderObject() as RenderBox?;
+            onMore(
+              box != null && box.hasSize
+                  ? box.localToGlobal(Offset.zero) & box.size
+                  : null,
+            );
+          },
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Icon(
+              LucideIcons.ellipsis,
+              size: 18,
+              color: AppColors.inkSoft,
+            ),
+          ),
         ),
       ),
     );
@@ -1108,41 +1143,138 @@ class _MenuRowData {
   final bool danger;
 }
 
-/// Opens the device emoji picker (system emoji font) and returns the chosen
-/// emoji, or null if dismissed.
-Future<String?> _pickEmoji(BuildContext context) {
-  final dark = AppColors.brightness == Brightness.dark;
-  return showModalBottomSheet<String>(
+/// Opens the full glass emoji picker and returns the chosen emoji (or null).
+/// Responsive: anchored beside the "…" button on wide layouts, docked as a glass
+/// sheet on phones. The system emoji grid renders on transparent glass.
+Future<String?> _pickEmojiGlass(BuildContext context, {Rect? anchor}) {
+  return showGeneralDialog<String>(
     context: context,
-    backgroundColor: dark ? const Color(0xFF1A1A22) : Colors.white,
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    barrierDismissible: true,
+    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    barrierColor: Colors.black.withValues(alpha: 0.14),
+    transitionDuration: const Duration(milliseconds: 180),
+    pageBuilder: (ctx, _, _) => _GlassEmojiOverlay(anchor: anchor),
+    transitionBuilder: (ctx, anim, _, child) => FadeTransition(
+      opacity: CurvedAnimation(parent: anim, curve: Curves.easeOutCubic),
+      child: child,
     ),
-    builder: (ctx) => SizedBox(
-      height: MediaQuery.of(ctx).size.height * 0.42,
-      child: EmojiPicker(
-        onEmojiSelected: (category, emoji) =>
-            Navigator.of(ctx).pop(emoji.emoji),
-        config: Config(
-          height: MediaQuery.of(ctx).size.height * 0.42,
-          emojiViewConfig: EmojiViewConfig(
-            backgroundColor: dark ? const Color(0xFF1A1A22) : Colors.white,
-            columns: 8,
+  );
+}
+
+/// Positions the glass emoji panel: anchored to [anchor] on wide screens (it
+/// flips above the trigger if it would overflow below), otherwise docked to the
+/// bottom of the screen as a glass sheet. A full-screen barrier dismisses it.
+class _GlassEmojiOverlay extends StatelessWidget {
+  const _GlassEmojiOverlay({this.anchor});
+  final Rect? anchor;
+
+  static const double _panelH = 396;
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final size = media.size;
+    final wide = anchor != null && size.width >= 600;
+
+    final Widget positioned;
+    if (wide) {
+      const w = 340.0;
+      const h = _panelH;
+      final a = anchor!;
+      const gap = 8.0;
+      final left = a.left.clamp(12.0, size.width - w - 12);
+      var top = a.bottom + gap;
+      if (top + h > size.height - 12) top = a.top - gap - h; // flip above
+      top = top.clamp(media.padding.top + 12, size.height - h - 12);
+      positioned = Positioned(
+        left: left,
+        top: top,
+        child: _GlassEmojiPanel(
+          width: w,
+          height: h,
+          onPick: (e) => Navigator.of(context).pop(e),
+        ),
+      );
+    } else {
+      final h = (size.height * 0.55).clamp(300.0, _panelH);
+      positioned = Positioned(
+        left: 10,
+        bottom: media.padding.bottom + 12,
+        child: _GlassEmojiPanel(
+          width: size.width - 20,
+          height: h,
+          onPick: (e) => Navigator.of(context).pop(e),
+        ),
+      );
+    }
+
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.of(context).pop(),
           ),
-          categoryViewConfig: CategoryViewConfig(
-            backgroundColor: dark ? const Color(0xFF1A1A22) : Colors.white,
-            indicatorColor: AppColors.accent,
-            iconColorSelected: AppColors.accent,
-          ),
-          bottomActionBarConfig: const BottomActionBarConfig(enabled: false),
-          searchViewConfig: SearchViewConfig(
-            backgroundColor: dark ? const Color(0xFF23222F) : Colors.white,
+        ),
+        positioned,
+      ],
+    );
+  }
+}
+
+/// The Liquid-Glass emoji panel: the system emoji grid on a transparent
+/// background so the glass shows through.
+class _GlassEmojiPanel extends StatelessWidget {
+  const _GlassEmojiPanel({
+    required this.width,
+    required this.height,
+    required this.onPick,
+  });
+
+  final double width;
+  final double height;
+  final void Function(String emoji) onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = AppColors.brightness == Brightness.dark;
+    return GlassContainer(
+      width: width,
+      height: height,
+      useOwnLayer: true,
+      quality: GlassQuality.standard,
+      settings: _navGlass(dark),
+      clipBehavior: Clip.antiAlias,
+      shape: const LiquidRoundedSuperellipse(borderRadius: 24),
+      padding: const EdgeInsets.all(6),
+      // EmojiPicker's search field + ink need a Material ancestor;
+      // showGeneralDialog (unlike a bottom sheet) doesn't provide one.
+      child: Material(
+        type: MaterialType.transparency,
+        child: EmojiPicker(
+          onEmojiSelected: (category, emoji) => onPick(emoji.emoji),
+          config: Config(
+            height: height - 12,
+            emojiViewConfig: const EmojiViewConfig(
+              backgroundColor: Colors.transparent,
+              columns: 8,
+            ),
+            categoryViewConfig: CategoryViewConfig(
+              backgroundColor: Colors.transparent,
+              indicatorColor: AppColors.accent,
+              iconColorSelected: AppColors.accent,
+            ),
+            bottomActionBarConfig: const BottomActionBarConfig(enabled: false),
+            searchViewConfig: SearchViewConfig(
+              backgroundColor: dark
+                  ? const Color(0x33121218)
+                  : const Color(0x14000000),
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 /// Text comment body — rendered through the shared Markdown parser so mentions,
