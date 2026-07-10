@@ -1583,7 +1583,13 @@ class _NotifRow extends StatelessWidget {
   'COMMENT' => (LucideIcons.messageSquare, AppColors.stProgress),
   'ISSUE_UPDATED' => (LucideIcons.refreshCw, AppColors.accentBlue),
   'ISSUE_INGESTED' => (LucideIcons.inbox, AppColors.accentTeal),
-  'SPRINT_STARTED' => (LucideIcons.goal, AppColors.accentPurple),
+  'SPRINT_STARTED' ||
+  'SPRINT_COMPLETED' => (LucideIcons.goal, AppColors.accentPurple),
+  'ISSUE_DUE_SOON' ||
+  'DUE' ||
+  'DEADLINE' => (LucideIcons.calendarDays, AppColors.priHigh),
+  'DIGEST' => (LucideIcons.newspaper, AppColors.accentBlue),
+  'SECURITY_ALERT' => (LucideIcons.shieldAlert, AppColors.priHigh),
   'TEAM_ADDED' ||
   'TEAM_ROLE_CHANGED' ||
   'TEAM_REMOVED' => (LucideIcons.usersRound, AppColors.accentBlue),
@@ -1594,7 +1600,6 @@ class _NotifRow extends StatelessWidget {
   'ACCOUNT_DELETED' => (LucideIcons.shieldCheck, AppColors.inkSoft),
   'REVIEW' ||
   'REVIEW_REQUEST' => (LucideIcons.messageSquareText, AppColors.stReview),
-  'DUE' || 'DEADLINE' => (LucideIcons.calendarDays, AppColors.priHigh),
   _ => (LucideIcons.bell, AppColors.inkSoft),
 };
 
