@@ -40,6 +40,7 @@ import '../../core/widgets/glass_panel.dart';
 import '../search/global_search_dialog.dart';
 import '../search/search_tokens.dart';
 import 'page_chrome.dart';
+import 'swipe_back.dart';
 
 part 'app_shell.wide.dart';
 part 'app_shell.notifications.dart';
@@ -180,29 +181,81 @@ class _AppShellState extends State<AppShell> {
     final router = GoRouter.of(context);
     return PageChromeScope(
       controller: _chrome,
-      child: ListenableBuilder(
-        listenable: router.routerDelegate,
-        builder: (context, _) {
-          final location = router.state.matchedLocation;
-          return ResponsiveBuilder(
-            builder: (context, size) {
-              // The full-screen single-issue view is immersive on compact: its
-              // own top bar (back/minimize/delete) + docked composer replace the
-              // shell's app bar and floating nav.
-              final immersive =
-                  size == LayoutSize.compact && _isImmersive(location);
-              return size == LayoutSize.compact
-                  ? _CompactShell(
-                      location: location,
-                      immersive: immersive,
-                      child: widget.child,
-                    )
-                  : _WideShell(location: location, child: widget.child);
-            },
-          );
-        },
+      child: BackButtonListener(
+        onBackButtonPressed: _onSystemBack,
+        child: ListenableBuilder(
+          listenable: router.routerDelegate,
+          builder: (context, _) {
+            final location = router.state.matchedLocation;
+            // In-app swipe-back: an edge drag on the content area unwinds
+            // navigation through the same chain as the system back gesture.
+            final content = SwipeBackGesture(
+              enabled: _canSwipeBack,
+              onBack: () => _onSystemBack(),
+              child: widget.child,
+            );
+            return ResponsiveBuilder(
+              builder: (context, size) {
+                // The full-screen single-issue view is immersive on compact: its
+                // own top bar (back/minimize/delete) + docked composer replace the
+                // shell's app bar and floating nav.
+                final immersive =
+                    size == LayoutSize.compact && _isImmersive(location);
+                return size == LayoutSize.compact
+                    ? _CompactShell(
+                        location: location,
+                        immersive: immersive,
+                        child: content,
+                      )
+                    : _WideShell(location: location, child: content);
+              },
+            );
+          },
+        ),
       ),
     );
+  }
+
+  /// Routes the system back (Android back button / edge-swipe gesture) through
+  /// the same fallback chain as the shell's on-screen back button instead of
+  /// letting it close the app: pop whatever sits on a navigator stack (pushed
+  /// pages, dialogs), then a page-published in-page back override (e.g. the
+  /// settings/admin section → index step), then the sub-page's parent route,
+  /// then home. Only on /dashboard with nothing left to unwind does the system
+  /// take over and background the app.
+  /// Whether the swipe-back gesture has anywhere to go right now: something
+  /// on a navigator stack, an in-page back override, or a sub-page's parent
+  /// route. Primary tabs (dashboard, issues, board, …) don't swipe — the
+  /// gesture is for unwinding, not for jumping between tabs.
+  bool _canSwipeBack() {
+    final router = GoRouter.of(context);
+    if (router.canPop()) return true;
+    final location = router.state.matchedLocation;
+    return _chrome.onBackFor(location) != null ||
+        _subPageTitleKey(location) != null;
+  }
+
+  Future<bool> _onSystemBack() async {
+    final router = GoRouter.of(context);
+    if (router.canPop()) {
+      router.pop();
+      return true;
+    }
+    final location = router.state.matchedLocation;
+    final override = _chrome.onBackFor(location);
+    if (override != null) {
+      override();
+      return true;
+    }
+    if (_subPageTitleKey(location) != null) {
+      router.go(_subPageBackRoute(location));
+      return true;
+    }
+    if (location != '/dashboard') {
+      router.go('/dashboard');
+      return true;
+    }
+    return false;
   }
 }
 
