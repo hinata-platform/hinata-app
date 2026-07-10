@@ -1640,6 +1640,10 @@
           "label": "Statusänderungen",
           "desc": "Beobachtete Vorgänge wandern über das Board"
         },
+        "ingest": {
+          "label": "Neue Vorgänge aus E-Mails",
+          "desc": "Eine E-Mail wird zu einem neuen Vorgang in einem deiner Projekte"
+        },
         "sprint": {
           "label": "Sprints & Fristen",
           "desc": "Sprint-Start/-Ende und nahende Fälligkeiten"

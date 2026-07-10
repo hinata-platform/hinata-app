@@ -13,13 +13,26 @@ import '../models/personal_access_token.dart';
 import '../models/search_api.dart';
 import '../models/team_models.dart';
 import '../models/work_models.dart';
+import '../repositories/repositories.dart';
 import 'api_client.dart';
 
-/// Single REST gateway for the Hinata server API (v1).
+/// LEGACY facade over the domain repositories in `core/repositories/`.
+///
+/// The REST surface used to live here as one god class; it is now split into
+/// per-domain repositories ([HinataRepositories]) that are provided app-wide
+/// via `MultiRepositoryProvider`. This shim keeps the old call sites compiling
+/// while they migrate — new code must inject the specific domain repository
+/// (e.g. `context.read<IssueRepository>()`) instead of this class. Delete this
+/// file once the last call site is migrated.
 class HinataRepository {
-  HinataRepository(this._api);
+  HinataRepository(ApiClient api)
+    : _api = api,
+      domains = HinataRepositories(api);
 
   final ApiClient _api;
+
+  /// The split domain repositories this facade delegates to.
+  final HinataRepositories domains;
 
   /// The configured backend base URL (e.g. `https://api.track.asta.hn`). Used
   /// to derive shareable web links to in-app resources.
@@ -27,14 +40,10 @@ class HinataRepository {
 
   // --- Meta & setup ---------------------------------------------------------
 
-  Future<ServerMeta> meta() async => ServerMeta.fromJson(
-    await _api.get('/api/v1/meta') as Map<String, dynamic>,
-  );
+  Future<ServerMeta> meta() => domains.meta.meta();
 
-  /// Reachability test for a *candidate* server [url] the app is not yet bound
-  /// to — powers the "add server" connection test and the live status dots in
-  /// the server manager. Returns null when the server is unreachable.
-  Future<ServerProbe?> probeServer(String url) => _api.probe(url);
+  Future<ServerProbe?> probeServer(String url) =>
+      domains.meta.probeServer(url);
 
   Future<void> completeSetup({
     required String organizationName,
@@ -42,392 +51,173 @@ class HinataRepository {
     required String adminUsername,
     required String adminDisplayName,
     required String adminPassword,
-  }) => _api.post(
-    '/api/v1/setup',
-    body: {
-      'organizationName': organizationName,
-      'adminEmail': adminEmail,
-      'adminUsername': adminUsername,
-      'adminDisplayName': adminDisplayName,
-      'adminPassword': adminPassword,
-    },
+  }) => domains.meta.completeSetup(
+    organizationName: organizationName,
+    adminEmail: adminEmail,
+    adminUsername: adminUsername,
+    adminDisplayName: adminDisplayName,
+    adminPassword: adminPassword,
   );
+
+  Future<({List<int> bytes, bool isSvg})?> organizationLogo() =>
+      domains.meta.organizationLogo();
 
   // --- Auth -----------------------------------------------------------------
 
-  /// Authenticates with a password. When the account has 2FA enabled the server
-  /// returns [LoginResult.mfaRequired] with an [LoginResult.mfaToken] the caller
-  /// must complete via [verifyTwoFactor]; otherwise a token pair + user.
-  Future<LoginResult> login(String identifier, String password) async {
-    final data =
-        await _api.post(
-              '/api/v1/auth/login',
-              body: {'identifier': identifier, 'password': password},
-            )
-            as Map<String, dynamic>;
-    if (data['mfaRequired'] == true) {
-      return LoginResult.twoFactor(data['mfaToken'] as String);
-    }
-    return LoginResult.tokens(
-      access: data['accessToken'] as String,
-      refresh: data['refreshToken'] as String,
-      user: AuthUser.fromJson(data['user'] as Map<String, dynamic>),
-    );
-  }
+  Future<LoginResult> login(String identifier, String password) =>
+      domains.auth.login(identifier, password);
 
-  Future<AuthUser> me() async => AuthUser.fromJson(
-    await _api.get('/api/v1/auth/me') as Map<String, dynamic>,
-  );
+  Future<AuthUser> me() => domains.auth.me();
 
-  Future<List<SsoProvider>> ssoProviders() async =>
-      ((await _api.get('/api/v1/auth/sso/providers')) as List<dynamic>)
-          .map((p) => SsoProvider.fromJson(p as Map<String, dynamic>))
-          .toList();
+  Future<List<SsoProvider>> ssoProviders() => domains.auth.ssoProviders();
 
-  Future<void> changePassword(String current, String next) => _api.post(
-    '/api/v1/auth/password',
-    body: {'currentPassword': current, 'newPassword': next},
-  );
+  Future<void> changePassword(String current, String next) =>
+      domains.auth.changePassword(current, next);
 
-  /// Validates an invitation token, returning the invitee's email + name to show
-  /// on the accept screen.
-  Future<({String email, String displayName})> inviteInfo(String token) async {
-    final data =
-        await _api.get('/api/v1/auth/invite/info', query: {'token': token})
-            as Map<String, dynamic>;
-    return (
-      email: data['email'] as String? ?? '',
-      displayName: data['displayName'] as String? ?? '',
-    );
-  }
+  Future<({String email, String displayName})> inviteInfo(String token) =>
+      domains.auth.inviteInfo(token);
 
-  /// Accepts an invitation by setting the account password; the server signs the
-  /// user in and returns a token pair.
   Future<({String access, String refresh})> acceptInvite(
     String token,
     String password,
-  ) async {
-    final data =
-        await _api.post(
-              '/api/v1/auth/invite/accept',
-              body: {'token': token, 'password': password},
-            )
-            as Map<String, dynamic>;
-    return (
-      access: data['accessToken'] as String,
-      refresh: data['refreshToken'] as String,
-    );
-  }
+  ) => domains.auth.acceptInvite(token, password);
 
-  /// Sets a new password from a reset link; the server signs the user in and
-  /// returns a token pair.
   Future<({String access, String refresh})> acceptPasswordReset(
     String token,
     String password,
-  ) async {
-    final data =
-        await _api.post(
-              '/api/v1/auth/reset/accept',
-              body: {'token': token, 'password': password},
-            )
-            as Map<String, dynamic>;
-    return (
-      access: data['accessToken'] as String,
-      refresh: data['refreshToken'] as String,
-    );
-  }
+  ) => domains.auth.acceptPasswordReset(token, password);
 
-  /// Registers a new local account. The server always answers 202 (it never
-  /// reveals whether the email already exists) and emails a verification link.
   Future<void> register({
     required String email,
     required String username,
     required String displayName,
     required String password,
-  }) => _api.post(
-    '/api/v1/auth/register',
-    body: {
-      'email': email,
-      'username': username,
-      'displayName': displayName,
-      'password': password,
-    },
+  }) => domains.auth.register(
+    email: email,
+    username: username,
+    displayName: displayName,
+    password: password,
   );
 
-  /// Resends the email-verification link. Always succeeds (anti-enumeration).
   Future<void> resendVerification(String email) =>
-      _api.post('/api/v1/auth/resend-verification', body: {'email': email});
+      domains.auth.resendVerification(email);
 
-  /// Confirms an email from the verification link. Returns either a token pair
-  /// (verified → signed in) or [pendingApproval] when an admin must approve.
   Future<({bool pendingApproval, String? access, String? refresh})> verifyEmail(
     String token,
-  ) async {
-    final data =
-        await _api.post('/api/v1/auth/verify-email', body: {'token': token})
-            as Map<String, dynamic>;
-    return (
-      pendingApproval: data['pendingApproval'] as bool? ?? false,
-      access: data['accessToken'] as String?,
-      refresh: data['refreshToken'] as String?,
-    );
-  }
+  ) => domains.auth.verifyEmail(token);
 
-  /// Requests a password-reset email (forgot-password). Always succeeds; the
-  /// server never reveals whether the address maps to an account.
   Future<void> requestPasswordReset(String email) =>
-      _api.post('/api/v1/auth/reset/request', body: {'email': email});
+      domains.auth.requestPasswordReset(email);
 
-  /// Completes a 2FA login challenge. [mfaToken] comes from the login response;
-  /// [code] is a current TOTP or a recovery code. Returns a real token pair.
   Future<({String access, String refresh, AuthUser user})> verifyTwoFactor(
     String mfaToken,
     String code,
-  ) async {
-    final data =
-        await _api.post(
-              '/api/v1/auth/2fa',
-              body: {'mfaToken': mfaToken, 'code': code},
-            )
-            as Map<String, dynamic>;
-    return (
-      access: data['accessToken'] as String,
-      refresh: data['refreshToken'] as String,
-      user: AuthUser.fromJson(data['user'] as Map<String, dynamic>),
-    );
-  }
+  ) => domains.auth.verifyTwoFactor(mfaToken, code);
 
   // --- Account (/me self-service) -------------------------------------------
 
-  Future<Me> meAccount() async =>
-      Me.fromJson(await _api.get('/api/v1/me') as Map<String, dynamic>);
+  Future<Me> meAccount() => domains.account.meAccount();
 
   Future<Me> updateMyProfile({
     String? displayName,
     String? title,
     String? locale,
-  }) async => Me.fromJson(
-    await _api.patch(
-          '/api/v1/me',
-          body: {
-            'displayName': ?displayName,
-            'title': ?title,
-            'locale': ?locale,
-          },
-        )
-        as Map<String, dynamic>,
+  }) => domains.account.updateMyProfile(
+    displayName: displayName,
+    title: title,
+    locale: locale,
   );
 
-  /// Uploads a new profile picture; the server compresses + stores it and
-  /// returns the (relative) avatar URL. [onProgress] reports 0–1 upload progress.
   Future<String> uploadAvatar(
     MultipartFile file, {
     void Function(double pct)? onProgress,
-  }) async =>
-      ((await _api.upload(
-                '/api/v1/me/avatar',
-                file,
-                onSendProgress: onProgress == null
-                    ? null
-                    : (sent, total) => onProgress(total > 0 ? sent / total : 0),
-              ))
-              as Map<String, dynamic>)['avatarUrl']
-          as String;
+  }) => domains.account.uploadAvatar(file, onProgress: onProgress);
 
-  /// Removes the current profile picture.
-  Future<void> deleteAvatar() => _api.delete('/api/v1/me/avatar');
+  Future<void> deleteAvatar() => domains.account.deleteAvatar();
 
-  /// Starts a double-opt-in change of the sign-in email (mails the new address).
   Future<void> requestEmailChange(String newEmail) =>
-      _api.post('/api/v1/me/email-change', body: {'newEmail': newEmail});
+      domains.account.requestEmailChange(newEmail);
 
-  /// Emails a one-time password-reset link (LOCAL accounts only).
-  Future<void> sendPasswordReset() => _api.post('/api/v1/me/password-reset');
+  Future<void> sendPasswordReset() => domains.account.sendPasswordReset();
 
-  Future<List<DeviceSession>> sessions() async =>
-      ((await _api.get('/api/v1/me/sessions')) as List<dynamic>)
-          .map((s) => DeviceSession.fromJson(s as Map<String, dynamic>))
-          .toList();
+  Future<List<DeviceSession>> sessions() => domains.account.sessions();
 
-  Future<void> revokeSession(String id) =>
-      _api.delete('/api/v1/me/sessions/$id');
+  Future<void> revokeSession(String id) => domains.account.revokeSession(id);
 
-  Future<void> revokeOtherSessions() =>
-      _api.post('/api/v1/me/sessions/revoke-others');
+  Future<void> revokeOtherSessions() => domains.account.revokeOtherSessions();
 
-  Future<NotifPrefs> notificationPrefs() async => NotifPrefs.fromJson(
-    await _api.get('/api/v1/me/notification-preferences')
-        as Map<String, dynamic>,
-  );
+  Future<NotifPrefs> notificationPrefs() => domains.account.notificationPrefs();
 
-  Future<NotifPrefs> saveNotificationPrefs(NotifPrefs prefs) async =>
-      NotifPrefs.fromJson(
-        await _api.put(
-              '/api/v1/me/notification-preferences',
-              body: prefs.toJson(),
-            )
-            as Map<String, dynamic>,
-      );
+  Future<NotifPrefs> saveNotificationPrefs(NotifPrefs prefs) =>
+      domains.account.saveNotificationPrefs(prefs);
 
-  // 2FA (TOTP) ----------------------------------------------------------------
+  Future<TotpSetup> beginTotpSetup() => domains.account.beginTotpSetup();
 
-  Future<TotpSetup> beginTotpSetup() async => TotpSetup.fromJson(
-    await _api.post('/api/v1/me/2fa/totp/setup') as Map<String, dynamic>,
-  );
+  Future<List<String>> verifyTotpSetup(String code) =>
+      domains.account.verifyTotpSetup(code);
 
-  /// Verifies the first code, enabling 2FA. Returns the one-time recovery codes.
-  Future<List<String>> verifyTotpSetup(String code) async =>
-      (((await _api.post('/api/v1/me/2fa/totp/verify', body: {'code': code}))
-                  as Map<String, dynamic>)['recoveryCodes']
-              as List<dynamic>)
-          .cast<String>();
+  Future<List<String>> regenerateRecoveryCodes(String code) =>
+      domains.account.regenerateRecoveryCodes(code);
 
-  Future<List<String>> regenerateRecoveryCodes(String code) async =>
-      (((await _api.post(
-                    '/api/v1/me/2fa/recovery-codes/regenerate',
-                    body: {'code': code},
-                  ))
-                  as Map<String, dynamic>)['recoveryCodes']
-              as List<dynamic>)
-          .cast<String>();
+  Future<void> disableTotp(String code) => domains.account.disableTotp(code);
 
-  Future<void> disableTotp(String code) =>
-      _api.post('/api/v1/me/2fa/disable', body: {'code': code});
+  Future<List<AccessTeam>> myTeams() => domains.account.myTeams();
 
-  // Access overview -----------------------------------------------------------
+  Future<List<AccessProject>> myProjects() => domains.account.myProjects();
 
-  Future<List<AccessTeam>> myTeams() async =>
-      ((await _api.get('/api/v1/me/teams')) as List<dynamic>)
-          .map((t) => AccessTeam.fromJson(t as Map<String, dynamic>))
-          .toList();
+  Future<void> requestDataReport() => domains.account.requestDataReport();
 
-  Future<List<AccessProject>> myProjects() async =>
-      ((await _api.get('/api/v1/me/projects')) as List<dynamic>)
-          .map((p) => AccessProject.fromJson(p as Map<String, dynamic>))
-          .toList();
+  Future<void> deleteMyAccount() => domains.account.deleteMyAccount();
 
-  // GDPR ----------------------------------------------------------------------
+  Future<List<PersonalAccessToken>> listPats() => domains.account.listPats();
 
-  /// Requests an async data report (Art. 15); the user is emailed when ready.
-  Future<void> requestDataReport() => _api.post('/api/v1/me/data-report');
-
-  /// Erases the account (Art. 17). The body must literally be `DELETE`.
-  Future<void> deleteMyAccount() =>
-      _api.delete('/api/v1/me', body: {'confirm': 'DELETE'});
-
-  // --- Personal access tokens (MCP) -----------------------------------------
-
-  /// The caller's Personal Access Tokens (metadata only; secrets never returned).
-  Future<List<PersonalAccessToken>> listPats() async =>
-      ((await _api.get('/api/v1/me/pats')) as List<dynamic>)
-          .map((p) => PersonalAccessToken.fromJson(p as Map<String, dynamic>))
-          .toList();
-
-  /// Mints a new PAT. [ttlDays] null → the server's default lifetime; a value
-  /// ≤ 0 → never expires. Returns the one-time plaintext token plus its metadata;
-  /// the plaintext is only ever available here.
   Future<CreatedPat> createPat({
     required String name,
     required List<String> scopes,
     int? ttlDays,
-  }) async => CreatedPat.fromJson(
-    await _api.post(
-          '/api/v1/me/pats',
-          body: {'name': name, 'scopes': scopes, 'ttlDays': ttlDays},
-        )
-        as Map<String, dynamic>,
-  );
+  }) => domains.account.createPat(name: name, scopes: scopes, ttlDays: ttlDays);
 
-  /// Revokes a PAT by id (soft: the token is disabled but stays in the list).
-  Future<void> revokePat(String id) => _api.delete('/api/v1/me/pats/$id');
+  Future<void> revokePat(String id) => domains.account.revokePat(id);
 
-  /// Permanently deletes a PAT by id, removing it from the caller's list.
-  Future<void> deletePat(String id) =>
-      _api.delete('/api/v1/me/pats/$id/permanent');
+  Future<void> deletePat(String id) => domains.account.deletePat(id);
+
+  Future<Stream<List<int>>> meEventStream({CancelToken? cancelToken}) =>
+      domains.account.meEventStream(cancelToken: cancelToken);
 
   // --- OAuth 2.1 consent (MCP authorization) --------------------------------
 
-  /// Details of a pending OAuth authorization request an AI client started —
-  /// looked up by the `request_id` the backend hands the web app when it
-  /// 302-redirects the browser to `/oauth-consent?request_id=<id>`. Throws an
-  /// [ApiFailure] with `statusCode == 404` when the request is unknown/expired.
-  Future<OAuthConsentInfo> oauthConsentInfo(String requestId) async =>
-      OAuthConsentInfo.fromJson(
-        await _api.get('/api/v1/oauth/consent/$requestId')
-            as Map<String, dynamic>,
-      );
+  Future<OAuthConsentInfo> oauthConsentInfo(String requestId) =>
+      domains.auth.oauthConsentInfo(requestId);
 
-  /// Records the user's decision on a pending OAuth request and returns the
-  /// `redirectUri` the browser must be sent to next (the AI client's callback,
-  /// carrying `code`+`state` on approve, or `error=access_denied` on deny).
   Future<String> oauthConsentDecision(
     String requestId, {
     required bool approved,
     required List<String> grantedScopes,
-  }) async =>
-      ((await _api.post(
-                '/api/v1/oauth/consent',
-                body: {
-                  'requestId': requestId,
-                  'approved': approved,
-                  'grantedScopes': grantedScopes,
-                },
-              ))
-              as Map<String, dynamic>)['redirectUri']
-          as String;
+  }) => domains.auth.oauthConsentDecision(
+    requestId,
+    approved: approved,
+    grantedScopes: grantedScopes,
+  );
 
   // --- Users ----------------------------------------------------------------
 
-  Future<List<DirectoryUser>> users() async =>
-      ((await _api.get('/api/v1/users')) as List<dynamic>)
-          .map((u) => DirectoryUser.fromJson(u as Map<String, dynamic>))
-          .toList();
+  Future<List<DirectoryUser>> users() => domains.users.users();
 
-  /// Server-side type-ahead over the directory, for assignee/member pickers in
-  /// large orgs where loading every user is wasteful. Returns one page plus the
-  /// backend total. An empty [query] returns the first page of all active users.
   Future<({List<DirectoryUser> items, int total})> searchUsers(
     String query, {
     int page = 0,
     int size = 25,
-  }) async {
-    final data =
-        await _api.get(
-              '/api/v1/users/search',
-              query: {'q': query, 'page': page, 'size': size},
-            )
-            as Map<String, dynamic>;
-    return (
-      items: ((data['content'] as List<dynamic>?) ?? [])
-          .map((u) => DirectoryUser.fromJson(u as Map<String, dynamic>))
-          .toList(),
-      total: data['totalElements'] as int? ?? 0,
-    );
-  }
+  }) => domains.users.searchUsers(query, page: page, size: size);
 
   // --- Projects -------------------------------------------------------------
 
-  Future<List<Project>> projects({bool archived = false}) async =>
-      ((await _api.get(
-                '/api/v1/projects',
-                query: archived ? {'archived': 'true'} : null,
-              ))
-              as List<dynamic>)
-          .map((p) => Project.fromJson(p as Map<String, dynamic>))
-          .toList();
+  Future<List<Project>> projects({bool archived = false}) =>
+      domains.projects.projects(archived: archived);
 
-  Future<Project> project(String id) async => Project.fromJson(
-    await _api.get('/api/v1/projects/$id') as Map<String, dynamic>,
-  );
+  Future<Project> project(String id) => domains.projects.project(id);
 
-  /// Issue count per workflow-state name — used by the settings UI to warn
-  /// before deleting a state that still has issues assigned.
-  Future<Map<String, int>> projectStateUsage(String id) async {
-    final json =
-        await _api.get('/api/v1/projects/$id/state-usage')
-            as Map<String, dynamic>;
-    return json.map((k, v) => MapEntry(k, (v as num).toInt()));
-  }
+  Future<Map<String, int>> projectStateUsage(String id) =>
+      domains.projects.projectStateUsage(id);
 
   Future<Project> createProject({
     required String key,
@@ -435,36 +225,19 @@ class HinataRepository {
     String? description,
     String? color,
     String? leadId,
-  }) async => Project.fromJson(
-    await _api.post(
-          '/api/v1/projects',
-          body: {
-            'key': key,
-            'name': name,
-            'description': ?description,
-            'color': ?color,
-            'leadId': ?leadId,
-          },
-        )
-        as Map<String, dynamic>,
+  }) => domains.projects.createProject(
+    key: key,
+    name: name,
+    description: description,
+    color: color,
+    leadId: leadId,
   );
 
-  /// Atomically commits the full edited project from the settings surface. Pass
-  /// only the fields that changed; the server re-validates every invariant
-  /// (>=1 lead, >=2 states, >=1 resolved) and cascades workflow/label renames.
-  Future<Project> updateProject(String id, Map<String, dynamic> patch) async =>
-      Project.fromJson(
-        await _api.patch('/api/v1/projects/$id', body: patch)
-            as Map<String, dynamic>,
-      );
+  Future<Project> updateProject(String id, Map<String, dynamic> patch) =>
+      domains.projects.updateProject(id, patch);
 
-  /// Permanently removes a label from the project and every issue using it.
-  Future<void> deleteProjectLabel(
-    String projectId,
-    String label,
-  ) => _api.delete(
-    '/api/v1/projects/$projectId/labels?label=${Uri.encodeQueryComponent(label)}',
-  );
+  Future<void> deleteProjectLabel(String projectId, String label) =>
+      domains.projects.deleteProjectLabel(projectId, label);
 
   // --- Issues ---------------------------------------------------------------
 
@@ -478,39 +251,18 @@ class HinataRepository {
     bool noSprint = false,
     int page = 0,
     int size = 50,
-  }) async {
-    final data =
-        await _api.get(
-              '/api/v1/issues',
-              query: {
-                'projectId': ?projectId,
-                'state': ?state,
-                'assigneeId': ?assigneeId,
-                'sprintId': ?sprintId,
-                'type': ?type,
-                if (noSprint) 'noSprint': true,
-                if (query != null && query.isNotEmpty) 'query': query,
-                'page': page,
-                'size': size,
-              },
-            )
-            as Map<String, dynamic>;
-    return (
-      issues: ((data['content'] as List<dynamic>?) ?? [])
-          .map((i) => Issue.fromJson(i as Map<String, dynamic>))
-          .toList(),
-      total: data['totalElements'] as int? ?? 0,
-    );
-  }
+  }) => domains.issues.issues(
+    projectId: projectId,
+    state: state,
+    assigneeId: assigneeId,
+    sprintId: sprintId,
+    type: type,
+    query: query,
+    noSprint: noSprint,
+    page: page,
+    size: size,
+  );
 
-  /// Fetches **every** matching issue by paging through the server-clamped
-  /// result set (the search endpoint caps `size` at 100), so callers that need
-  /// the complete collection — exports, board swimlane indexes, smart-link
-  /// `@`-menus — never silently miss issues beyond the first page.
-  ///
-  /// Pages are de-duplicated by id: the backend orders by `updatedAt`, so a row
-  /// can shift across a page boundary while we page. Stops at the last partial
-  /// page or once the accumulated count reaches the backend total.
   Future<List<Issue>> allIssues({
     String? projectId,
     String? state,
@@ -518,237 +270,103 @@ class HinataRepository {
     String? sprintId,
     String? query,
     bool noSprint = false,
-  }) async {
-    const size = 100;
-    final out = <Issue>[];
-    final seen = <String>{};
-    var page = 0;
-    while (true) {
-      final result = await issues(
-        projectId: projectId,
-        state: state,
-        assigneeId: assigneeId,
-        sprintId: sprintId,
-        query: query,
-        noSprint: noSprint,
-        page: page,
-        size: size,
-      );
-      for (final issue in result.issues) {
-        if (seen.add(issue.id)) out.add(issue);
-      }
-      if (result.issues.length < size || out.length >= result.total) break;
-      page++;
-    }
-    return out;
-  }
-
-  Future<Issue> issue(String id) async => Issue.fromJson(
-    await _api.get('/api/v1/issues/$id') as Map<String, dynamic>,
+  }) => domains.issues.allIssues(
+    projectId: projectId,
+    state: state,
+    assigneeId: assigneeId,
+    sprintId: sprintId,
+    query: query,
+    noSprint: noSprint,
   );
 
-  /// Breadcrumb ancestors + direct children for the issue hierarchy view.
-  Future<IssueHierarchy> issueHierarchy(String id) async =>
-      IssueHierarchy.fromJson(
-        await _api.get('/api/v1/issues/$id/hierarchy') as Map<String, dynamic>,
-      );
+  Future<Issue> issue(String id) => domains.issues.issue(id);
 
-  Future<Issue> createIssue(Map<String, dynamic> body) async => Issue.fromJson(
-    await _api.post('/api/v1/issues', body: body) as Map<String, dynamic>,
-  );
+  Future<IssueHierarchy> issueHierarchy(String id) =>
+      domains.issues.issueHierarchy(id);
 
-  Future<Issue> updateIssue(String id, Map<String, dynamic> patch) async =>
-      Issue.fromJson(
-        await _api.patch('/api/v1/issues/$id', body: patch)
-            as Map<String, dynamic>,
-      );
+  Future<Issue> createIssue(Map<String, dynamic> body) =>
+      domains.issues.createIssue(body);
 
-  Future<void> deleteIssue(String id) => _api.delete('/api/v1/issues/$id');
+  Future<Issue> updateIssue(String id, Map<String, dynamic> patch) =>
+      domains.issues.updateIssue(id, patch);
 
-  // --- Issue links (Jira-style relationships) -------------------------------
+  Future<void> deleteIssue(String id) => domains.issues.deleteIssue(id);
 
-  /// All links touching the issue, oriented for it (perspective-correct verbs).
-  Future<List<IssueLink>> issueLinks(String issueId) async =>
-      ((await _api.get('/api/v1/issues/$issueId/links')) as List<dynamic>)
-          .map((l) => IssueLink.fromJson(l as Map<String, dynamic>))
-          .toList();
+  Future<List<IssueLink>> issueLinks(String issueId) =>
+      domains.issues.issueLinks(issueId);
 
-  /// Links [issueId] to each of [targetIds] with the given [type]/direction;
-  /// returns the refreshed, oriented link list.
   Future<List<IssueLink>> addIssueLinks(
     String issueId, {
     required String type,
     required bool outward,
     required List<String> targetIds,
-  }) async =>
-      ((await _api.post(
-                '/api/v1/issues/$issueId/links',
-                body: {
-                  'type': type,
-                  'outward': outward,
-                  'targetIds': targetIds,
-                },
-              ))
-              as List<dynamic>)
-          .map((l) => IssueLink.fromJson(l as Map<String, dynamic>))
-          .toList();
+  }) => domains.issues.addIssueLinks(
+    issueId,
+    type: type,
+    outward: outward,
+    targetIds: targetIds,
+  );
 
-  /// Removes one link; returns the refreshed, oriented link list.
-  Future<List<IssueLink>> deleteIssueLink(
-    String issueId,
-    String linkId,
-  ) async =>
-      ((await _api.delete('/api/v1/issues/$issueId/links/$linkId'))
-              as List<dynamic>)
-          .map((l) => IssueLink.fromJson(l as Map<String, dynamic>))
-          .toList();
+  Future<List<IssueLink>> deleteIssueLink(String issueId, String linkId) =>
+      domains.issues.deleteIssueLink(issueId, linkId);
 
-  /// Raw SSE byte stream of link changes for an issue (parse with [parseSse]).
-  /// Carries a payload-free `changed` ping; the client re-fetches its links.
   Future<Stream<List<int>>> issueLinkEventStream(
     String issueId, {
     CancelToken? cancelToken,
-  }) => _api.openEventStream(
-    '/api/v1/issues/$issueId/links/stream',
-    cancelToken: cancelToken,
-  );
+  }) => domains.issues.issueLinkEventStream(issueId, cancelToken: cancelToken);
 
-  /// One newest-first page of an issue's change history, plus the backend total.
   Future<({List<IssueActivity> items, int total})> issueActivity(
     String issueId, {
     int page = 0,
     int size = 30,
-  }) async {
-    final data =
-        await _api.get(
-              '/api/v1/issues/$issueId/activity',
-              query: {'page': page, 'size': size},
-            )
-            as Map<String, dynamic>;
-    return (
-      items: ((data['content'] as List<dynamic>?) ?? [])
-          .map((a) => IssueActivity.fromJson(a as Map<String, dynamic>))
-          .toList(),
-      total: data['totalElements'] as int? ?? 0,
-    );
-  }
+  }) => domains.issues.issueActivity(issueId, page: page, size: size);
 
-  /// One page of an issue's TOP-LEVEL comments (replies excluded; each carries a
-  /// `replyCount`), plus the backend total. [sort] is `'newest'` (default) or
-  /// `'oldest'` — the server orders accordingly.
+  // --- Comments ---------------------------------------------------------------
+
   Future<({List<IssueComment> items, int total})> comments(
     String issueId, {
     int page = 0,
     int size = 30,
     String sort = 'newest',
-  }) async {
-    final data =
-        await _api.get(
-              '/api/v1/issues/$issueId/comments',
-              query: {'page': page, 'size': size, 'sort': sort},
-            )
-            as Map<String, dynamic>;
-    return (
-      items: ((data['content'] as List<dynamic>?) ?? [])
-          .map((c) => IssueComment.fromJson(c as Map<String, dynamic>))
-          .toList(),
-      total: data['totalElements'] as int? ?? 0,
-    );
-  }
+  }) => domains.comments.comments(issueId, page: page, size: size, sort: sort);
 
-  /// One page of a root comment's replies, oldest-first, plus the backend total.
-  /// Replies are lazily loaded — only fetched when a thread is expanded.
   Future<({List<IssueComment> items, int total})> commentReplies(
     String issueId,
     String rootId, {
     int page = 0,
     int size = 10,
-  }) async {
-    final data =
-        await _api.get(
-              '/api/v1/issues/$issueId/comments/$rootId/replies',
-              query: {'page': page, 'size': size},
-            )
-            as Map<String, dynamic>;
-    return (
-      items: ((data['content'] as List<dynamic>?) ?? [])
-          .map((c) => IssueComment.fromJson(c as Map<String, dynamic>))
-          .toList(),
-      total: data['totalElements'] as int? ?? 0,
-    );
-  }
+  }) => domains.comments.commentReplies(issueId, rootId, page: page, size: size);
 
-  /// Posts a text comment, optionally as a reply quoting [replyToId] (WhatsApp).
   Future<IssueComment> addComment(
     String issueId,
     String text, {
     String? replyToId,
-  }) async => IssueComment.fromJson(
-    await _api.post(
-          '/api/v1/issues/$issueId/comments',
-          body: {'text': text, 'replyToId': ?replyToId},
-        )
-        as Map<String, dynamic>,
-  );
+  }) => domains.comments.addComment(issueId, text, replyToId: replyToId);
 
-  /// Toggles the caller's emoji reaction on a comment (WhatsApp-style: one per
-  /// user — a new emoji replaces theirs, the same emoji removes it). Returns the
-  /// updated comment.
   Future<IssueComment> reactToComment(
     String issueId,
     String commentId,
     String emoji,
-  ) async => IssueComment.fromJson(
-    await _api.put(
-          '/api/v1/issues/$issueId/comments/$commentId/reactions',
-          body: {'emoji': emoji},
-        )
-        as Map<String, dynamic>,
-  );
+  ) => domains.comments.reactToComment(issueId, commentId, emoji);
 
-  /// Pins/unpins a comment. Any project member may pin and unpin.
   Future<IssueComment> pinComment(
     String issueId,
     String commentId,
     bool pinned,
-  ) async => IssueComment.fromJson(
-    await _api.put(
-          '/api/v1/issues/$issueId/comments/$commentId/pin',
-          body: {'pinned': pinned},
-        )
-        as Map<String, dynamic>,
-  );
+  ) => domains.comments.pinComment(issueId, commentId, pinned);
 
-  /// Pinned comments of a thread, in pin order (surfaced above the feed).
-  Future<List<IssueComment>> pinnedComments(String issueId) async =>
-      ((await _api.get('/api/v1/issues/$issueId/comments/pinned')
-                  as List<dynamic>?) ??
-              const [])
-          .map((c) => IssueComment.fromJson(c as Map<String, dynamic>))
-          .toList();
+  Future<List<IssueComment>> pinnedComments(String issueId) =>
+      domains.comments.pinnedComments(issueId);
 
-  /// Edits the text of one of the caller's own comments. Server returns the
-  /// updated comment (with a fresh `updatedAt`).
   Future<IssueComment> editComment(
     String issueId,
     String commentId,
     String text,
-  ) async => IssueComment.fromJson(
-    await _api.patch(
-          '/api/v1/issues/$issueId/comments/$commentId',
-          body: {'text': text},
-        )
-        as Map<String, dynamic>,
-  );
+  ) => domains.comments.editComment(issueId, commentId, text);
 
-  /// Deletes one of the caller's own comments (admins may delete any).
   Future<void> deleteComment(String issueId, String commentId) =>
-      _api.delete('/api/v1/issues/$issueId/comments/$commentId');
+      domains.comments.deleteComment(issueId, commentId);
 
-  /// Posts a recorded voice message as a comment. [durationMs] and [peaks]
-  /// (normalised 0–100 waveform amplitudes) travel alongside the audio blob so
-  /// the feed renders the bubble without decoding the audio. Returns the created
-  /// [CommentType.voice] comment.
   Future<IssueComment> addVoiceComment(
     String issueId, {
     required List<int> bytes,
@@ -757,177 +375,78 @@ class HinataRepository {
     required List<int> peaks,
     String? replyToId,
     CancelToken? cancelToken,
-  }) async {
-    final audio = MultipartFile.fromBytes(
-      bytes,
-      filename: 'voice${_voiceExt(mime)}',
-      contentType: DioMediaType.parse(mime),
-    );
-    return IssueComment.fromJson(
-      await _api.upload(
-            '/api/v1/issues/$issueId/comments/voice',
-            audio,
-            cancelToken: cancelToken,
-            fields: {
-              'durationMs': durationMs,
-              'peaks': peaks.join(','),
-              'replyToId': ?replyToId,
-            },
-          )
-          as Map<String, dynamic>,
-    );
-  }
-
-  /// Raw SSE byte stream of comment-thread changes for an issue (parse with
-  /// [parseSse]). Carries a payload-free `changed` ping; the client re-syncs the
-  /// thread. Cancel via [cancelToken] when the view is disposed.
-  Future<Stream<List<int>>> commentEventStream(
-    String issueId, {
-    CancelToken? cancelToken,
-  }) => _api.openEventStream(
-    '/api/v1/issues/$issueId/comments/stream',
+  }) => domains.comments.addVoiceComment(
+    issueId,
+    bytes: bytes,
+    mime: mime,
+    durationMs: durationMs,
+    peaks: peaks,
+    replyToId: replyToId,
     cancelToken: cancelToken,
   );
 
-  static String _voiceExt(String mime) => switch (mime.toLowerCase()) {
-    'audio/mpeg' => '.mp3',
-    'audio/webm' => '.webm',
-    'audio/ogg' => '.ogg',
-    'audio/wav' || 'audio/x-wav' => '.wav',
-    _ => '.m4a',
-  };
+  Future<Stream<List<int>>> commentEventStream(
+    String issueId, {
+    CancelToken? cancelToken,
+  }) => domains.comments.commentEventStream(issueId, cancelToken: cancelToken);
 
-  /// Fetches a voice comment's audio bytes through the authenticated proxy, for
-  /// local playback (the object store isn't reachable directly). Returns the
-  /// bytes + content type, or null when unavailable.
   Future<({List<int> bytes, String contentType})?> voiceCommentAudio(
     String issueId,
     String commentId,
-  ) => _api.getBytes('/api/v1/issues/$issueId/comments/$commentId/voice');
+  ) => domains.comments.voiceCommentAudio(issueId, commentId);
 
-  /// Fetches an app-relative media object's bytes (e.g. an inline comment image
-  /// at `/api/v1/media/<uuid>`) through the authenticated proxy — used to copy a
-  /// comment's image to the clipboard. Returns null for external/absolute URLs.
-  Future<({List<int> bytes, String contentType})?> mediaBytes(String url) {
-    if (!url.startsWith('/')) return Future.value(null);
-    return _api.getBytes(url);
-  }
+  // --- Media & attachments -----------------------------------------------------
 
-  /// Uploads one file to an issue, reporting fractional progress (0–1) as the
-  /// bytes are sent so the tile's ring can fill. Returns the updated issue.
+  Future<({List<int> bytes, String contentType})?> mediaBytes(String url) =>
+      domains.media.mediaBytes(url);
+
   Future<Issue> uploadAttachment(
     String issueId,
     MultipartFile file, {
     void Function(double pct)? onProgress,
     CancelToken? cancelToken,
-  }) async => Issue.fromJson(
-    await _api.upload(
-          '/api/v1/issues/$issueId/attachments',
-          file,
-          cancelToken: cancelToken,
-          onSendProgress: onProgress == null
-              ? null
-              : (sent, total) => onProgress(total > 0 ? sent / total : 0),
-        )
-        as Map<String, dynamic>,
-  );
-
-  /// Uploads an inline Markdown image (issue description/comment or KB article)
-  /// and returns its app-relative URL — e.g. `/api/v1/media/<uuid>` — ready to
-  /// embed as `![alt](url)`. Not bound to any entity; readable by any signed-in
-  /// user, served back through the authenticated media proxy.
-  Future<String> uploadMedia(
-    MultipartFile file, {
-    CancelToken? cancelToken,
-  }) async =>
-      ((await _api.upload('/api/v1/media', file, cancelToken: cancelToken))
-              as Map<String, dynamic>)['url']
-          as String;
-
-  /// Short-lived presigned download URL for an attachment.
-  Future<String> attachmentDownloadUrl(
-    String issueId,
-    String attachmentId,
-  ) async =>
-      ((await _api.get(
-                '/api/v1/issues/$issueId/attachments/$attachmentId/download-url',
-              ))
-              as Map<String, dynamic>)['url']
-          as String;
-
-  Future<void> deleteAttachment(String issueId, String attachmentId) =>
-      _api.delete('/api/v1/issues/$issueId/attachments/$attachmentId');
-
-  /// Raw SSE byte stream of account-level events for the signed-in user (parse
-  /// with [parseSse]). Currently carries the `logout` frame the server pushes
-  /// when this device's session is revoked, for real-time sign-out. Cancel via
-  /// [cancelToken] on logout / app teardown.
-  Future<Stream<List<int>>> meEventStream({CancelToken? cancelToken}) =>
-      _api.openEventStream('/api/v1/me/stream', cancelToken: cancelToken);
-
-  /// Raw SSE byte stream of attachment changes for an issue (parse with
-  /// [parseSse]). Cancel via [cancelToken] when the view is disposed.
-  Future<Stream<List<int>>> attachmentEventStream(
-    String issueId, {
-    CancelToken? cancelToken,
-  }) => _api.openEventStream(
-    '/api/v1/issues/$issueId/attachments/stream',
+  }) => domains.issues.uploadAttachment(
+    issueId,
+    file,
+    onProgress: onProgress,
     cancelToken: cancelToken,
   );
 
+  Future<String> uploadMedia(MultipartFile file, {CancelToken? cancelToken}) =>
+      domains.media.uploadMedia(file, cancelToken: cancelToken);
+
+  Future<String> attachmentDownloadUrl(String issueId, String attachmentId) =>
+      domains.issues.attachmentDownloadUrl(issueId, attachmentId);
+
+  Future<void> deleteAttachment(String issueId, String attachmentId) =>
+      domains.issues.deleteAttachment(issueId, attachmentId);
+
+  Future<Stream<List<int>>> attachmentEventStream(
+    String issueId, {
+    CancelToken? cancelToken,
+  }) => domains.issues.attachmentEventStream(issueId, cancelToken: cancelToken);
+
   // --- Boards ---------------------------------------------------------------
 
-  Future<List<AgileBoard>> boards({String? projectId}) async =>
-      ((await _api.get('/api/v1/boards', query: {'projectId': ?projectId}))
-              as List<dynamic>)
-          .map((b) => AgileBoard.fromJson(b as Map<String, dynamic>))
-          .toList();
+  Future<List<AgileBoard>> boards({String? projectId}) =>
+      domains.boards.boards(projectId: projectId);
 
   Future<AgileBoard> createBoard(
     String name,
     List<String> projectIds, {
     BoardType type = BoardType.kanban,
-  }) async => AgileBoard.fromJson(
-    await _api.post(
-          '/api/v1/boards',
-          body: {
-            'name': name,
-            'projectIds': projectIds,
-            'type': type == BoardType.scrum ? 'SCRUM' : 'KANBAN',
-          },
-        )
-        as Map<String, dynamic>,
-  );
+  }) => domains.boards.createBoard(name, projectIds, type: type);
 
-  /// Renames a board (management action — server enforces owner/lead/admin).
-  Future<AgileBoard> renameBoard(String boardId, String name) async =>
-      AgileBoard.fromJson(
-        await _api.patch('/api/v1/boards/$boardId', body: {'name': name})
-            as Map<String, dynamic>,
-      );
+  Future<AgileBoard> renameBoard(String boardId, String name) =>
+      domains.boards.renameBoard(boardId, name);
 
-  Future<BoardView> boardView(String boardId, {String? sprintId}) async =>
-      BoardView.fromJson(
-        await _api.get(
-              '/api/v1/boards/$boardId',
-              query: {'sprintId': ?sprintId},
-            )
-            as Map<String, dynamic>,
-      );
+  Future<BoardView> boardView(String boardId, {String? sprintId}) =>
+      domains.boards.boardView(boardId, sprintId: sprintId);
 
   // --- Sprints --------------------------------------------------------------
 
-  Future<List<Sprint>> sprints(
-    String boardId, {
-    bool includeArchived = false,
-  }) async =>
-      ((await _api.get(
-                '/api/v1/sprints',
-                query: {'boardId': boardId, 'archived': includeArchived},
-              ))
-              as List<dynamic>)
-          .map((s) => Sprint.fromJson(s as Map<String, dynamic>))
-          .toList();
+  Future<List<Sprint>> sprints(String boardId, {bool includeArchived = false}) =>
+      domains.sprints.sprints(boardId, includeArchived: includeArchived);
 
   Future<Sprint> createSprint({
     required String boardId,
@@ -936,79 +455,34 @@ class HinataRepository {
     DateTime? startDate,
     DateTime? endDate,
     int? capacityPoints,
-  }) async => Sprint.fromJson(
-    await _api.post(
-          '/api/v1/sprints',
-          body: {
-            'boardId': boardId,
-            'name': name,
-            'goal': ?goal,
-            if (startDate != null)
-              'startDate': startDate.toIso8601String().substring(0, 10),
-            if (endDate != null)
-              'endDate': endDate.toIso8601String().substring(0, 10),
-            'capacityPoints': ?capacityPoints,
-          },
-        )
-        as Map<String, dynamic>,
+  }) => domains.sprints.createSprint(
+    boardId: boardId,
+    name: name,
+    goal: goal,
+    startDate: startDate,
+    endDate: endDate,
+    capacityPoints: capacityPoints,
   );
 
-  /// All assignable (non-archived) sprints across every board of [projectId].
-  /// A project can have several boards (e.g. a Kanban and a Scrum board); only
-  /// the Scrum boards contribute sprints. Used by the issue form/detail pickers.
-  Future<List<Sprint>> sprintsForProject(String projectId) async {
-    final boardList = await boards(projectId: projectId);
-    if (boardList.isEmpty) return const [];
-    final lists = await Future.wait(boardList.map((b) => sprints(b.id)));
-    final seen = <String>{};
-    final out = <Sprint>[];
-    for (final list in lists) {
-      for (final s in list) {
-        if (seen.add(s.id)) out.add(s);
-      }
-    }
-    return out;
-  }
+  Future<List<Sprint>> sprintsForProject(String projectId) =>
+      domains.sprints.sprintsForProject(projectId);
 
-  Future<Sprint> updateSprint(String id, Map<String, dynamic> patch) async =>
-      Sprint.fromJson(
-        await _api.patch('/api/v1/sprints/$id', body: patch)
-            as Map<String, dynamic>,
-      );
+  Future<Sprint> updateSprint(String id, Map<String, dynamic> patch) =>
+      domains.sprints.updateSprint(id, patch);
 
-  /// Locks scope and sets the board's activeSprintId server-side.
-  Future<Sprint> startSprint(
-    String id, {
-    String? goal,
-    DateTime? endDate,
-  }) async => Sprint.fromJson(
-    await _api.post(
-          '/api/v1/sprints/$id/start',
-          body: {
-            'goal': ?goal,
-            if (endDate != null)
-              'endDate': endDate.toIso8601String().substring(0, 10),
-          },
-        )
-        as Map<String, dynamic>,
-  );
+  Future<Sprint> startSprint(String id, {String? goal, DateTime? endDate}) =>
+      domains.sprints.startSprint(id, goal: goal, endDate: endDate);
 
-  /// Archives the sprint; re-homes every unfinished issue to [moveOpenTo]
-  /// (`backlog` → no sprint, or a sibling sprint id).
-  Future<void> completeSprint(String id, {required String moveOpenTo}) => _api
-      .post('/api/v1/sprints/$id/complete', body: {'moveOpenTo': moveOpenTo});
+  Future<void> completeSprint(String id, {required String moveOpenTo}) =>
+      domains.sprints.completeSprint(id, moveOpenTo: moveOpenTo);
 
-  /// Server-computed insights (summary, burndown, velocity, scope, breakdown).
-  Future<SprintReport> sprintReport(String id) async => SprintReport.fromJson(
-    await _api.get('/api/v1/sprints/$id/report') as Map<String, dynamic>,
-  );
+  Future<SprintReport> sprintReport(String id) =>
+      domains.sprints.sprintReport(id);
 
   // --- Time tracking --------------------------------------------------------
 
-  Future<List<WorkItem>> workItems(String issueId) async =>
-      ((await _api.get('/api/v1/issues/$issueId/work-items')) as List<dynamic>)
-          .map((w) => WorkItem.fromJson(w as Map<String, dynamic>))
-          .toList();
+  Future<List<WorkItem>> workItems(String issueId) =>
+      domains.issues.workItems(issueId);
 
   Future<WorkItem> addWorkItem(
     String issueId, {
@@ -1016,84 +490,42 @@ class HinataRepository {
     String? activityType,
     String? description,
     DateTime? date,
-  }) async {
-    return WorkItem.fromJson(
-      await _api.post(
-            '/api/v1/issues/$issueId/work-items',
-            body: {
-              'durationMinutes': minutes,
-              'activityType': ?activityType,
-              'description': ?description,
-              if (date != null) 'date': date.toIso8601String().substring(0, 10),
-            },
-          )
-          as Map<String, dynamic>,
-    );
-  }
+  }) => domains.issues.addWorkItem(
+    issueId,
+    minutes: minutes,
+    activityType: activityType,
+    description: description,
+    date: date,
+  );
 
   Future<List<TimesheetRow>> timesheet(
     DateTime from,
     DateTime to, {
     String? userId,
     String? projectId,
-  }) async {
-    final data =
-        await _api.get(
-              '/api/v1/timesheet',
-              query: {
-                'from': from.toIso8601String().substring(0, 10),
-                'to': to.toIso8601String().substring(0, 10),
-                'userId': ?userId,
-                'projectId': ?projectId,
-              },
-            )
-            as List<dynamic>;
-    return data
-        .map((r) => TimesheetRow.fromJson(r as Map<String, dynamic>))
-        .toList();
-  }
+  }) => domains.timesheet.timesheet(
+    from,
+    to,
+    userId: userId,
+    projectId: projectId,
+  );
 
   // --- Gantt ----------------------------------------------------------------
 
-  Future<List<GanttTask>> gantt(String projectId) async =>
-      ((await _api.get('/api/v1/projects/$projectId/gantt')) as List<dynamic>)
-          .map((t) => GanttTask.fromJson(t as Map<String, dynamic>))
-          .toList();
+  Future<List<GanttTask>> gantt(String projectId) =>
+      domains.projects.gantt(projectId);
 
   // --- Global search --------------------------------------------------------
 
-  /// Unified search across issues, projects, people, boards and knowledge.
-  /// [scope] is `all` (default) or a single category (`issues`, `projects`,
-  /// `people`, `boards`, `docs`). A blank [query] returns just category counts.
-  Future<SearchApiResponse> search({String query = '', String? scope}) async =>
-      SearchApiResponse.fromJson(
-        await _api.get(
-              '/api/v1/search',
-              query: {
-                'q': ?(query.trim().isEmpty ? null : query.trim()),
-                'scope': ?scope,
-              },
-            )
-            as Map<String, dynamic>,
-      );
+  Future<SearchApiResponse> search({String query = '', String? scope}) =>
+      domains.search.search(query: query, scope: scope);
 
   // --- Knowledge base -------------------------------------------------------
 
-  /// Lists articles. [all] fetches every article (the whole knowledge base
-  /// across projects + org-wide); otherwise scoped by [projectId] (or org-wide
-  /// when null).
-  Future<List<Article>> articles({String? projectId, bool all = false}) async =>
-      ((await _api.get(
-                '/api/v1/articles',
-                query: {'projectId': ?projectId, if (all) 'all': true},
-              ))
-              as List<dynamic>)
-          .map((a) => Article.fromJson(a as Map<String, dynamic>))
-          .toList();
+  Future<List<Article>> articles({String? projectId, bool all = false}) =>
+      domains.articles.articles(projectId: projectId, all: all);
 
-  Future<Article> article(String id) async => Article.fromJson(
-    await _api.get('/api/v1/articles/$id') as Map<String, dynamic>,
-  );
+  Future<Article> article(String id) => domains.articles.article(id);
 
   Future<Article> saveArticle({
     String? id,
@@ -1105,190 +537,89 @@ class HinataRepository {
     String? space,
     String? icon,
     List<String>? tags,
-  }) async {
-    final body = {
-      'title': title,
-      'content': ?content,
-      'projectId': ?projectId,
-      'teamId': ?teamId,
-      'parentId': ?parentId,
-      'space': ?space,
-      'icon': ?icon,
-      'tags': ?tags,
-    };
-    final data = id == null
-        ? await _api.post('/api/v1/articles', body: body)
-        : await _api.patch('/api/v1/articles/$id', body: body);
-    return Article.fromJson(data as Map<String, dynamic>);
-  }
+  }) => domains.articles.saveArticle(
+    id: id,
+    title: title,
+    content: content,
+    projectId: projectId,
+    teamId: teamId,
+    parentId: parentId,
+    space: space,
+    icon: icon,
+    tags: tags,
+  );
 
-  /// Moves an article under a new parent (or to the space root when [parentId]
-  /// is null — sent explicitly, unlike [saveArticle] which omits nulls) and/or
-  /// into a different [space]. Content/tags/icon are left untouched.
   Future<Article> moveArticle(
     String id, {
     required String title,
     String? parentId,
     String? space,
-  }) async {
-    final data = await _api.patch(
-      '/api/v1/articles/$id',
-      body: {'title': title, 'parentId': parentId, 'space': ?space},
-    );
-    return Article.fromJson(data as Map<String, dynamic>);
-  }
+  }) => domains.articles.moveArticle(
+    id,
+    title: title,
+    parentId: parentId,
+    space: space,
+  );
 
-  Future<void> deleteArticle(String id) async =>
-      _api.delete('/api/v1/articles/$id');
+  Future<void> deleteArticle(String id) => domains.articles.deleteArticle(id);
 
-  /// Lists every knowledge-base space (organisation-wide, sorted).
-  Future<List<Space>> spaces() async =>
-      ((await _api.get('/api/v1/spaces')) as List<dynamic>)
-          .map((s) => Space.fromJson(s as Map<String, dynamic>))
-          .toList();
+  Future<List<Space>> spaces() => domains.articles.spaces();
 
   Future<Space> createSpace({
     required String name,
     String? icon,
     int? hue,
     String? description,
-  }) async {
-    final data = await _api.post(
-      '/api/v1/spaces',
-      body: {
-        'name': name,
-        'icon': ?icon,
-        'hue': ?hue,
-        'description': ?description,
-      },
-    );
-    return Space.fromJson(data as Map<String, dynamic>);
-  }
+  }) => domains.articles.createSpace(
+    name: name,
+    icon: icon,
+    hue: hue,
+    description: description,
+  );
 
-  Future<void> deleteSpace(String id) async =>
-      _api.delete('/api/v1/spaces/$id');
+  Future<void> deleteSpace(String id) => domains.articles.deleteSpace(id);
 
   // --- Dashboard, reports, notifications ------------------------------------
 
-  /// The dashboard aggregate. Pass [override] to preview a scope/board that
-  /// hasn't been saved yet (edit mode); with no override the caller's saved
-  /// [DashboardPrefs] drive the view server-side.
-  Future<DashboardData> dashboard({DashboardPrefs? override}) async {
-    final query = <String, dynamic>{};
-    if (override != null) {
-      // Always send the keys (even when empty) so the server treats this as a
-      // preview and applies exactly this scope instead of the saved prefs.
-      query['boardId'] = override.boardId ?? '';
-      query['projectIds'] = override.projectIds;
-      query['teamIds'] = override.teamIds;
-    }
-    return DashboardData.fromJson(
-      await _api.get('/api/v1/dashboard', query: query.isEmpty ? null : query)
-          as Map<String, dynamic>,
-    );
-  }
+  Future<DashboardData> dashboard({DashboardPrefs? override}) =>
+      domains.dashboard.dashboard(override: override);
 
-  /// Persist the caller's dashboard personalisation; returns the stored value.
-  Future<DashboardPrefs> saveDashboardPrefs(DashboardPrefs prefs) async =>
-      DashboardPrefs.fromJson(
-        await _api.put('/api/v1/dashboard/prefs', body: prefs.toJson())
-            as Map<String, dynamic>,
-      );
+  Future<DashboardPrefs> saveDashboardPrefs(DashboardPrefs prefs) =>
+      domains.dashboard.saveDashboardPrefs(prefs);
 
-  Future<Map<String, int>> report(
-    String name,
-    Map<String, dynamic> query,
-  ) async =>
-      ((await _api.get('/api/v1/reports/$name', query: query))
-              as Map<String, dynamic>)
-          .map((k, v) => MapEntry(k, (v as num).toInt()));
+  Future<Map<String, int>> report(String name, Map<String, dynamic> query) =>
+      domains.dashboard.report(name, query);
 
-  /// Fetches the configured organization logo through the server-side proxy
-  /// (`/api/v1/meta/logo`) so it is delivered same-origin (no browser CORS).
-  /// Returns the raw bytes plus whether the payload is SVG, or null when no
-  /// logo is configured / reachable.
-  Future<({List<int> bytes, bool isSvg})?> organizationLogo() async {
-    final result = await _api.getBytes('/api/v1/meta/logo');
-    if (result == null) return null;
-    final head = String.fromCharCodes(result.bytes.take(256)).toLowerCase();
-    final isSvg =
-        result.contentType.contains('svg') ||
-        head.contains('<svg') ||
-        head.contains('<?xml');
-    return (bytes: result.bytes, isSvg: isSvg);
-  }
-
-  /// Daily created/resolved counts for a project over the last [days] —
-  /// the basis for the burndown (cumulative remaining) trend.
   Future<List<TrendPoint>> createdVsResolved(
     String projectId, {
     int days = 30,
-  }) async =>
-      ((await _api.get(
-                '/api/v1/reports/created-vs-resolved',
-                query: {'projectId': projectId, 'days': '$days'},
-              ))
-              as List<dynamic>)
-          .map((e) => TrendPoint.fromJson(e as Map<String, dynamic>))
-          .toList();
+  }) => domains.dashboard.createdVsResolved(projectId, days: days);
 
-  Future<List<AppNotification>> notifications({int page = 0}) async {
-    final data =
-        await _api.get('/api/v1/notifications', query: {'page': page})
-            as Map<String, dynamic>;
-    return ((data['content'] as List<dynamic>?) ?? [])
-        .map((n) => AppNotification.fromJson(n as Map<String, dynamic>))
-        .toList();
-  }
+  Future<List<AppNotification>> notifications({int page = 0}) =>
+      domains.notifications.notifications(page: page);
 
-  /// One page of notifications plus the backend total, for infinite scroll.
   Future<({List<AppNotification> items, int total})> notificationsPage({
     int page = 0,
     int size = 25,
-  }) async {
-    final data =
-        await _api.get(
-              '/api/v1/notifications',
-              query: {'page': page, 'size': size},
-            )
-            as Map<String, dynamic>;
-    return (
-      items: ((data['content'] as List<dynamic>?) ?? [])
-          .map((n) => AppNotification.fromJson(n as Map<String, dynamic>))
-          .toList(),
-      total: data['totalElements'] as int? ?? 0,
-    );
-  }
+  }) => domains.notifications.notificationsPage(page: page, size: size);
 
-  Future<int> unreadNotifications() async =>
-      ((await _api.get('/api/v1/notifications/unread-count'))
-              as Map<String, dynamic>)['count']
-          as int? ??
-      0;
+  Future<int> unreadNotifications() =>
+      domains.notifications.unreadNotifications();
 
   Future<void> markNotificationRead(String id) =>
-      _api.post('/api/v1/notifications/$id/read');
+      domains.notifications.markNotificationRead(id);
 
-  /// Marks every supplied notification id as read. The backend exposes no bulk
-  /// endpoint, so we fan the per-id calls out concurrently.
   Future<void> markNotificationsRead(Iterable<String> ids) =>
-      Future.wait(ids.map(markNotificationRead));
+      domains.notifications.markNotificationsRead(ids);
 
   // --- Admin ----------------------------------------------------------------
 
-  Future<Map<String, dynamic>> adminSettings() async =>
-      await _api.get('/api/v1/admin/settings') as Map<String, dynamic>;
+  Future<Map<String, dynamic>> adminSettings() => domains.admin.adminSettings();
 
   Future<Map<String, dynamic>> updateAdminSettings(
     Map<String, dynamic> settings,
-  ) async =>
-      await _api.put('/api/v1/admin/settings', body: settings)
-          as Map<String, dynamic>;
+  ) => domains.admin.updateAdminSettings(settings);
 
-  // --- Admin · User management ----------------------------------------------
-
-  /// One page of the platform user directory + global KPI counts. Filter/sort/
-  /// paginate server-side; a blank [query] / null filters return everything.
   Future<AdminUserPage> adminUsersPage({
     String query = '',
     AdminRole? role,
@@ -1298,88 +629,58 @@ class HinataRepository {
     bool desc = true,
     int page = 1,
     int perPage = 25,
-  }) async => AdminUserPage.fromJson(
-    await _api.get(
-          '/api/v1/admin/users',
-          query: {
-            'q': ?(query.trim().isEmpty ? null : query.trim()),
-            'role': ?role?.wire,
-            'status': ?status?.wire,
-            'origin': ?origin?.wire,
-            'sort': sort.wire,
-            'dir': desc ? 'desc' : 'asc',
-            'page': '$page',
-            'perPage': '$perPage',
-          },
-        )
-        as Map<String, dynamic>,
+  }) => domains.admin.adminUsersPage(
+    query: query,
+    role: role,
+    status: status,
+    origin: origin,
+    sort: sort,
+    desc: desc,
+    page: page,
+    perPage: perPage,
   );
 
   Future<int> adminInvite({
     required List<String> emails,
     required AdminRole role,
     String? message,
-  }) async {
-    final result = await _api.post(
-      '/api/v1/admin/users/invite',
-      body: {
-        'emails': emails,
-        'admin': role == AdminRole.admin,
-        if (message != null && message.trim().isNotEmpty)
-          'message': message.trim(),
-      },
-    );
-    return (result is Map && result['sent'] is num)
-        ? (result['sent'] as num).toInt()
-        : emails.length;
-  }
+  }) => domains.admin.adminInvite(emails: emails, role: role, message: message);
 
   Future<void> adminResendInvites(List<String> ids) =>
-      _api.post('/api/v1/admin/users/resend', body: {'ids': ids});
+      domains.admin.adminResendInvites(ids);
 
-  Future<void> adminSetStatus(List<String> ids, UserStatus status) => _api.post(
-    '/api/v1/admin/users/status',
-    body: {'ids': ids, 'status': status.wire},
-  );
+  Future<void> adminSetStatus(List<String> ids, UserStatus status) =>
+      domains.admin.adminSetStatus(ids, status);
 
-  /// Approves verified self-registrations awaiting admin sign-off.
   Future<void> adminApproveUsers(List<String> ids) =>
-      _api.post('/api/v1/admin/users/approve', body: {'ids': ids});
+      domains.admin.adminApproveUsers(ids);
 
-  /// Fetches a single user for the admin board (e.g. an approval deep-link that
-  /// opens straight to the user's detail drawer).
-  Future<AdminUser> adminUser(String id) async => AdminUser.fromJson(
-    await _api.get('/api/v1/admin/users/$id') as Map<String, dynamic>,
-  );
+  Future<AdminUser> adminUser(String id) => domains.admin.adminUser(id);
 
-  Future<void> adminSetRole(List<String> ids, AdminRole role) => _api.post(
-    '/api/v1/admin/users/role',
-    body: {'ids': ids, 'role': role.wire},
-  );
+  Future<void> adminSetRole(List<String> ids, AdminRole role) =>
+      domains.admin.adminSetRole(ids, role);
 
   Future<void> adminSendPasswordReset(List<String> ids) =>
-      _api.post('/api/v1/admin/users/password-reset', body: {'ids': ids});
+      domains.admin.adminSendPasswordReset(ids);
 
   Future<void> adminRevokeSessions(List<String> ids) =>
-      _api.post('/api/v1/admin/users/revoke-sessions', body: {'ids': ids});
+      domains.admin.adminRevokeSessions(ids);
 
   Future<void> adminUpdateUserDetails(
     String id, {
     String? displayName,
     String? title,
     String? email,
-  }) => _api.patch(
-    '/api/v1/admin/users/$id',
-    body: {'displayName': ?displayName, 'title': ?title, 'email': ?email},
+  }) => domains.admin.adminUpdateUserDetails(
+    id,
+    displayName: displayName,
+    title: title,
+    email: email,
   );
 
   Future<void> adminDeleteUsers(List<String> ids) =>
-      _api.post('/api/v1/admin/users/delete', body: {'ids': ids});
+      domains.admin.adminDeleteUsers(ids);
 
-  // --- Admin · Audit log ----------------------------------------------------
-
-  /// One filtered, paginated page of the security audit log. Blank/null filters
-  /// widen the query; results are newest-first.
   Future<AuditPage> auditLog({
     String query = '',
     AuditCategory? category,
@@ -1389,43 +690,25 @@ class HinataRepository {
     String? actorId,
     int page = 1,
     int perPage = 30,
-  }) async => AuditPage.fromJson(
-    await _api.get(
-          '/api/v1/admin/audit',
-          query: {
-            'query': ?(query.trim().isEmpty ? null : query.trim()),
-            'category': ?(category == null || category == AuditCategory.unknown
-                ? null
-                : category.wire),
-            'severity': ?(severity == null || severity == AuditSeverity.unknown
-                ? null
-                : severity.wire),
-            'action': ?action,
-            'outcome': ?outcome,
-            'actorId': ?actorId,
-            'page': '$page',
-            'perPage': '$perPage',
-          },
-        )
-        as Map<String, dynamic>,
+  }) => domains.admin.auditLog(
+    query: query,
+    category: category,
+    severity: severity,
+    action: action,
+    outcome: outcome,
+    actorId: actorId,
+    page: page,
+    perPage: perPage,
   );
 
-  /// The catalogue of audit event types — used to render the per-event toggles.
-  Future<List<AuditEventType>> auditEventTypes() async =>
-      ((await _api.get('/api/v1/admin/audit/event-types')) as List<dynamic>)
-          .map((e) => AuditEventType.fromJson(e as Map<String, dynamic>))
-          .toList();
+  Future<List<AuditEventType>> auditEventTypes() =>
+      domains.admin.auditEventTypes();
 
   // --- Teams ----------------------------------------------------------------
 
-  Future<List<Team>> teams() async =>
-      ((await _api.get('/api/v1/teams')) as List<dynamic>)
-          .map((t) => Team.fromJson(t as Map<String, dynamic>))
-          .toList();
+  Future<List<Team>> teams() => domains.teams.teams();
 
-  Future<Team> team(String id) async => Team.fromJson(
-    await _api.get('/api/v1/teams/$id') as Map<String, dynamic>,
-  );
+  Future<Team> team(String id) => domains.teams.team(id);
 
   Future<Team> createTeam({
     required String name,
@@ -1433,78 +716,43 @@ class HinataRepository {
     String? description,
     required int colorHue,
     required String icon,
-  }) async => Team.fromJson(
-    await _api.post(
-          '/api/v1/teams',
-          body: {
-            'name': name,
-            'key': key,
-            'description': ?description,
-            'colorHue': colorHue,
-            'icon': icon,
-          },
-        )
-        as Map<String, dynamic>,
+  }) => domains.teams.createTeam(
+    name: name,
+    key: key,
+    description: description,
+    colorHue: colorHue,
+    icon: icon,
   );
 
-  Future<Team> updateTeam(String id, Map<String, dynamic> patch) async =>
-      Team.fromJson(
-        await _api.patch('/api/v1/teams/$id', body: patch)
-            as Map<String, dynamic>,
-      );
+  Future<Team> updateTeam(String id, Map<String, dynamic> patch) =>
+      domains.teams.updateTeam(id, patch);
 
-  Future<void> deleteTeam(String id) => _api.delete('/api/v1/teams/$id');
+  Future<void> deleteTeam(String id) => domains.teams.deleteTeam(id);
 
-  /// Adds [userIds] to the team with a single [role] + [access] for the batch.
   Future<Team> addTeamMembers(
     String teamId,
     List<String> userIds, {
     required TeamRole role,
     required ProjectAccess access,
-  }) async => Team.fromJson(
-    await _api.post(
-          '/api/v1/teams/$teamId/members',
-          body: {
-            'userIds': userIds,
-            'role': role.wire,
-            'access': access.toJson(),
-          },
-        )
-        as Map<String, dynamic>,
-  );
+  }) => domains.teams.addTeamMembers(teamId, userIds, role: role, access: access);
 
   Future<Team> updateTeamMembership(
     String teamId,
     String userId, {
     TeamRole? role,
     ProjectAccess? access,
-  }) async => Team.fromJson(
-    await _api.patch(
-          '/api/v1/teams/$teamId/members/$userId',
-          body: {
-            if (role != null) 'role': role.wire,
-            if (access != null) 'access': access.toJson(),
-          },
-        )
-        as Map<String, dynamic>,
+  }) => domains.teams.updateTeamMembership(
+    teamId,
+    userId,
+    role: role,
+    access: access,
   );
 
-  Future<Team> removeTeamMember(String teamId, String userId) async =>
-      Team.fromJson(
-        await _api.delete('/api/v1/teams/$teamId/members/$userId')
-            as Map<String, dynamic>,
-      );
+  Future<Team> removeTeamMember(String teamId, String userId) =>
+      domains.teams.removeTeamMember(teamId, userId);
 
-  Future<Team> attachTeamProjects(
-    String teamId,
-    List<String> projectIds,
-  ) async => Team.fromJson(
-    await _api.post(
-          '/api/v1/teams/$teamId/projects',
-          body: {'projectIds': projectIds},
-        )
-        as Map<String, dynamic>,
-  );
+  Future<Team> attachTeamProjects(String teamId, List<String> projectIds) =>
+      domains.teams.attachTeamProjects(teamId, projectIds);
 
   Future<Project> createTeamProject(
     String teamId, {
@@ -1513,284 +761,130 @@ class HinataRepository {
     String? description,
     String? color,
     String? leadId,
-  }) async => Project.fromJson(
-    await _api.post(
-          '/api/v1/teams/$teamId/projects/new',
-          body: {
-            'key': key,
-            'name': name,
-            'description': ?description,
-            'color': ?color,
-            'leadId': ?leadId,
-          },
-        )
-        as Map<String, dynamic>,
+  }) => domains.teams.createTeamProject(
+    teamId,
+    key: key,
+    name: name,
+    description: description,
+    color: color,
+    leadId: leadId,
   );
 
-  Future<Team> detachTeamProject(String teamId, String projectId) async =>
-      Team.fromJson(
-        await _api.delete('/api/v1/teams/$teamId/projects/$projectId')
-            as Map<String, dynamic>,
-      );
+  Future<Team> detachTeamProject(String teamId, String projectId) =>
+      domains.teams.detachTeamProject(teamId, projectId);
 
-  Future<List<TeamActivity>> teamActivity(String teamId, {int page = 0}) async {
-    final data =
-        await _api.get('/api/v1/teams/$teamId/activity', query: {'page': page})
-            as Map<String, dynamic>;
-    return ((data['content'] as List<dynamic>?) ?? const [])
-        .map((a) => TeamActivity.fromJson(a as Map<String, dynamic>))
-        .toList();
-  }
+  Future<List<TeamActivity>> teamActivity(String teamId, {int page = 0}) =>
+      domains.teams.teamActivity(teamId, page: page);
 
-  /// One newest-first page of a team's activity feed, plus the backend total.
   Future<({List<TeamActivity> items, int total})> teamActivityPage(
     String teamId, {
     int page = 0,
     int size = 20,
-  }) async {
-    final data =
-        await _api.get(
-              '/api/v1/teams/$teamId/activity',
-              query: {'page': page, 'size': size},
-            )
-            as Map<String, dynamic>;
-    return (
-      items: ((data['content'] as List<dynamic>?) ?? const [])
-          .map((a) => TeamActivity.fromJson(a as Map<String, dynamic>))
-          .toList(),
-      total: data['totalElements'] as int? ?? 0,
-    );
-  }
+  }) => domains.teams.teamActivityPage(teamId, page: page, size: size);
 
   // --- Cascading deletion ---------------------------------------------------
 
-  /// Counts driving the board delete confirmation (sprints, issues to detach).
-  Future<BoardDeletionImpact> boardDeletionImpact(String boardId) async =>
-      BoardDeletionImpact.fromJson(
-        await _api.get('/api/v1/boards/$boardId/deletion-impact')
-            as Map<String, dynamic>,
-      );
+  Future<BoardDeletionImpact> boardDeletionImpact(String boardId) =>
+      domains.boards.boardDeletionImpact(boardId);
 
-  /// Affected boards/issues/etc. + the projects issues could migrate into.
-  Future<ProjectDeletionImpact> projectDeletionImpact(String projectId) async =>
-      ProjectDeletionImpact.fromJson(
-        await _api.get('/api/v1/projects/$projectId/deletion-impact')
-            as Map<String, dynamic>,
-      );
+  Future<ProjectDeletionImpact> projectDeletionImpact(String projectId) =>
+      domains.projects.projectDeletionImpact(projectId);
 
-  /// The access (members/projects/boards/issues) members lose with the team.
-  Future<TeamDeletionImpact> teamDeletionImpact(String teamId) async =>
-      TeamDeletionImpact.fromJson(
-        await _api.get('/api/v1/teams/$teamId/deletion-impact')
-            as Map<String, dynamic>,
-      );
+  Future<TeamDeletionImpact> teamDeletionImpact(String teamId) =>
+      domains.teams.teamDeletionImpact(teamId);
 
-  /// Raw SSE byte stream of a board deletion (parse with [parseSse] →
-  /// [DeleteEvent.tryParse]). Cancel via [cancelToken] to abort listening.
   Future<Stream<List<int>>> boardDeleteStream(
     String boardId, {
     CancelToken? cancelToken,
-  }) => _api.openEventStream(
-    '/api/v1/boards/$boardId/delete-stream',
-    cancelToken: cancelToken,
-  );
+  }) => domains.boards.boardDeleteStream(boardId, cancelToken: cancelToken);
 
-  /// Raw SSE byte stream of a project deletion. [strategy]/[migrateToProjectId]
-  /// are required only when the project still has issues.
   Future<Stream<List<int>>> projectDeleteStream(
     String projectId, {
     IssueStrategy? strategy,
     String? migrateToProjectId,
     CancelToken? cancelToken,
-  }) {
-    final query = <String, String>{
-      'issueStrategy': ?strategy?.wire,
-      'migrateToProjectId': ?migrateToProjectId,
-    };
-    final suffix = query.isEmpty
-        ? ''
-        : '?${query.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&')}';
-    return _api.openEventStream(
-      '/api/v1/projects/$projectId/delete-stream$suffix',
-      cancelToken: cancelToken,
-    );
-  }
-
-  /// Raw SSE byte stream of a team deletion.
-  Future<Stream<List<int>>> teamDeleteStream(
-    String teamId, {
-    CancelToken? cancelToken,
-  }) => _api.openEventStream(
-    '/api/v1/teams/$teamId/delete-stream',
+  }) => domains.projects.projectDeleteStream(
+    projectId,
+    strategy: strategy,
+    migrateToProjectId: migrateToProjectId,
     cancelToken: cancelToken,
   );
 
+  Future<Stream<List<int>>> teamDeleteStream(
+    String teamId, {
+    CancelToken? cancelToken,
+  }) => domains.teams.teamDeleteStream(teamId, cancelToken: cancelToken);
+
   // --- Git integration ------------------------------------------------------
-  // Per-project repository connection + automation, and per-issue development
-  // information. OAuth is brokered server-side; the client never sees a token.
 
-  /// Kicks off the real OAuth flow for [provider]; returns the consent URL to
-  /// open + the `state` to poll (or `available:false` when no provider app is
-  /// configured, in which case the client uses the URL + token method).
-  Future<GitOAuthStart> gitOAuthStart(
-    String projectId,
-    String provider,
-  ) async => GitOAuthStart.fromJson(
-    await _api.post(
-          '/api/v1/projects/$projectId/git/oauth/start',
-          body: {'provider': provider},
-        )
-        as Map<String, dynamic>,
-  );
+  Future<GitOAuthStart> gitOAuthStart(String projectId, String provider) =>
+      domains.git.gitOAuthStart(projectId, provider);
 
-  /// Polls the server-side OAuth session (by [state]) for completion.
-  Future<GitOAuthSessionStatus> gitOAuthSession(String state) async =>
-      GitOAuthSessionStatus.fromJson(
-        await _api.get('/api/v1/git/oauth/session/$state')
-            as Map<String, dynamic>,
-      );
+  Future<GitOAuthSessionStatus> gitOAuthSession(String state) =>
+      domains.git.gitOAuthSession(state);
 
-  /// Owners (org / group / workspace) the authorized account exposes.
   Future<List<GitOwner>> gitOwners(
     String projectId,
     String provider, {
     String? state,
-  }) async =>
-      ((await _api.get(
-                '/api/v1/projects/$projectId/git/owners',
-                query: {'provider': provider, 'state': ?state},
-              ))
-              as List<dynamic>)
-          .map((o) => GitOwner.fromJson(o as Map<String, dynamic>))
-          .toList();
+  }) => domains.git.gitOwners(projectId, provider, state: state);
 
-  /// Repositories under [owner], optionally filtered by [query].
   Future<List<GitRepo>> gitRepos(
     String projectId,
     String provider,
     String owner, {
     String? query,
     String? state,
-  }) async =>
-      ((await _api.get(
-                '/api/v1/projects/$projectId/git/repos',
-                query: {
-                  'provider': provider,
-                  'owner': owner,
-                  if (query != null && query.isNotEmpty) 'q': query,
-                  'state': ?state,
-                },
-              ))
-              as List<dynamic>)
-          .map((r) => GitRepo.fromJson(r as Map<String, dynamic>))
-          .toList();
+  }) => domains.git.gitRepos(
+    projectId,
+    provider,
+    owner,
+    query: query,
+    state: state,
+  );
 
-  /// Binds the chosen repo to the project; returns the updated project.
   Future<Project> gitConnect(
     String projectId, {
     required String provider,
     required String owner,
     required String repo,
     String? state,
-  }) async => Project.fromJson(
-    await _api.post(
-          '/api/v1/projects/$projectId/git/connect',
-          body: {
-            'provider': provider,
-            'owner': owner,
-            'repo': repo,
-            'state': ?state,
-          },
-        )
-        as Map<String, dynamic>,
+  }) => domains.git.gitConnect(
+    projectId,
+    provider: provider,
+    owner: owner,
+    repo: repo,
+    state: state,
   );
 
-  /// Self-managed fallback — connect with a repo URL + access token.
   Future<Project> gitConnectToken(
     String projectId, {
     required String repoUrl,
     required String token,
-  }) async => Project.fromJson(
-    await _api.post(
-          '/api/v1/projects/$projectId/git/connect-token',
-          body: {'repoUrl': repoUrl, 'token': token},
-        )
-        as Map<String, dynamic>,
-  );
+  }) => domains.git.gitConnectToken(projectId, repoUrl: repoUrl, token: token);
 
-  Future<Project> gitDisconnect(String projectId, {String? repoId}) async {
-    final q = repoId == null
-        ? ''
-        : '?repoId=${Uri.encodeQueryComponent(repoId)}';
-    return Project.fromJson(
-      await _api.delete('/api/v1/projects/$projectId/git$q')
-          as Map<String, dynamic>,
-    );
-  }
+  Future<Project> gitDisconnect(String projectId, {String? repoId}) =>
+      domains.git.gitDisconnect(projectId, repoId: repoId);
 
-  Future<Project> gitResync(String projectId, {String? repoId}) async {
-    final q = repoId == null
-        ? ''
-        : '?repoId=${Uri.encodeQueryComponent(repoId)}';
-    return Project.fromJson(
-      await _api.post('/api/v1/projects/$projectId/git/resync$q')
-          as Map<String, dynamic>,
-    );
-  }
+  Future<Project> gitResync(String projectId, {String? repoId}) =>
+      domains.git.gitResync(projectId, repoId: repoId);
 
-  Future<Project> gitSetAutomation(
-    String projectId,
-    GitAutomation automation,
-  ) async => Project.fromJson(
-    await _api.patch(
-          '/api/v1/projects/$projectId/git/automation',
-          body: automation.toJson(),
-        )
-        as Map<String, dynamic>,
-  );
+  Future<Project> gitSetAutomation(String projectId, GitAutomation automation) =>
+      domains.git.gitSetAutomation(projectId, automation);
 
-  Future<Project> gitSetBranchTemplate(
-    String projectId,
-    String template,
-  ) async => Project.fromJson(
-    await _api.patch(
-          '/api/v1/projects/$projectId/git/branch-template',
-          body: {'branchTemplate': template},
-        )
-        as Map<String, dynamic>,
-  );
+  Future<Project> gitSetBranchTemplate(String projectId, String template) =>
+      domains.git.gitSetBranchTemplate(projectId, template);
 
-  /// Development information (branches/commits/PRs/builds) for an issue key.
-  Future<DevInfo> gitDevInfo(String issueKey) async => DevInfo.fromJson(
-    await _api.get('/api/v1/issues/$issueKey/dev-info') as Map<String, dynamic>,
-  );
+  Future<DevInfo> gitDevInfo(String issueKey) =>
+      domains.git.gitDevInfo(issueKey);
 
-  /// Merges a PR/MR from the Development panel; the server applies the project's
-  /// `prMerged` automation and returns the updated dev-info + issue.
   Future<({DevInfo devInfo, Issue issue})> gitMergePr(
     String issueKey,
     int number,
-  ) async {
-    final json =
-        await _api.post('/api/v1/issues/$issueKey/dev-info/prs/$number/merge')
-            as Map<String, dynamic>;
-    return (
-      devInfo: DevInfo.fromJson(json['devInfo'] as Map<String, dynamic>),
-      issue: Issue.fromJson(json['issue'] as Map<String, dynamic>),
-    );
-  }
+  ) => domains.git.gitMergePr(issueKey, number);
 
-  /// Marks a draft PR/MR ready for review; applies the `prOpened` automation.
   Future<({DevInfo devInfo, Issue issue})> gitReadyPr(
     String issueKey,
     int number,
-  ) async {
-    final json =
-        await _api.post('/api/v1/issues/$issueKey/dev-info/prs/$number/ready')
-            as Map<String, dynamic>;
-    return (
-      devInfo: DevInfo.fromJson(json['devInfo'] as Map<String, dynamic>),
-      issue: Issue.fromJson(json['issue'] as Map<String, dynamic>),
-    );
-  }
+  ) => domains.git.gitReadyPr(issueKey, number);
 }
