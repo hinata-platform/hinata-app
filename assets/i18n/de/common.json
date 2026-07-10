@@ -332,6 +332,7 @@
     "loadMoreReplies": "Weitere Antworten laden",
     "sortNewest": "Neueste zuerst",
     "sortOldest": "Älteste zuerst",
+    "searchEmoji": "Emoji suchen…",
     "deleteSelectedTitle": "Kommentar löschen?",
     "deleteSelectedTitle_plural": "{{count}} Kommentare löschen?",
     "deleteSelectedBody": "Er wird dauerhaft für alle entfernt.",

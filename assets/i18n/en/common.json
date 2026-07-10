@@ -332,6 +332,7 @@
     "loadMoreReplies": "Load more replies",
     "sortNewest": "Newest first",
     "sortOldest": "Oldest first",
+    "searchEmoji": "Search emoji…",
     "deleteSelectedTitle": "Delete comment?",
     "deleteSelectedTitle_plural": "Delete {{count}} comments?",
     "deleteSelectedBody": "This permanently removes it for everyone.",

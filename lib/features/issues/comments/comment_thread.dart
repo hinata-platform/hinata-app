@@ -1271,12 +1271,21 @@ class _GlassEmojiPanel extends StatelessWidget {
               backgroundColor: Colors.transparent,
               indicatorColor: AppColors.accent,
               iconColorSelected: AppColors.accent,
+              // Unselected category tabs — the package default (Colors.grey)
+              // washes out to invisible on the light glass panel. Theme-aware
+              // ink keeps them legible in both light and dark.
+              iconColor: AppColors.inkSoft,
+              backspaceColor: AppColors.inkSoft,
             ),
             bottomActionBarConfig: const BottomActionBarConfig(enabled: false),
             searchViewConfig: SearchViewConfig(
               backgroundColor: dark
                   ? const Color(0x33121218)
                   : const Color(0x14000000),
+              // Default buttonIconColor (Colors.black26) vanishes on dark glass —
+              // theme-aware ink keeps the back/clear button visible either way.
+              buttonIconColor: AppColors.inkSoft,
+              hintText: context.t('comments.searchEmoji'),
             ),
           ),
         ),
