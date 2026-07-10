@@ -1,0 +1,81 @@
+#!/bin/sh
+# commit-msg hook: auto-prepends [TICKET-NNN]: to commit messages on feature branches.
+#
+# The ticket number is extracted from the branch name.
+# Examples:
+#   Branch: feature/MUEP-403-add-payment   →  [MUEP-403]: <message>
+#   Branch: MUEP-117-fix-login             →  [MUEP-117]: <message>
+#
+# Skips silently when:
+#   - HEAD is detached (e.g., during a rebase)
+#   - Branch is a protected integration branch (main, master, develop, staging,
+#     release/*, hotfix/*)
+#   - Branch name contains no recognisable ticket number pattern ([A-Z]+-[0-9]+)
+#   - Commit message already starts with a [TICKET]: prefix (handles --amend)
+#
+# Emergency bypass: git commit --no-verify
+
+COMMIT_MSG_FILE="$1"
+
+# ── Guard: ensure the hook received a valid file argument ─────────────────────
+if [ -z "$COMMIT_MSG_FILE" ] || [ ! -f "$COMMIT_MSG_FILE" ]; then
+    echo "[commit-msg] Error: commit message file not found: '${COMMIT_MSG_FILE}'" >&2
+    exit 1
+fi
+
+# ── 1. Resolve current branch name ───────────────────────────────────────────
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+GIT_RC=$?
+
+# Skip on git errors or detached HEAD (rebase, cherry-pick, bisect, etc.)
+if [ "$GIT_RC" -ne 0 ] || [ -z "$BRANCH" ] || [ "$BRANCH" = "HEAD" ]; then
+    exit 0
+fi
+
+# ── 2. Skip protected / integration branches ──────────────────────────────────
+# These branches either have no associated ticket or collect work from many tickets.
+case "$BRANCH" in
+    main|master|develop|staging|release/*|hotfix/*)
+        exit 0 ;;
+esac
+
+# ── 3. Extract ticket number from branch name ─────────────────────────────────
+# Matches e.g. MUEP-403, ABC-1, PROJ-12345 — takes the first match.
+TICKET=$(printf '%s' "$BRANCH" | grep -oE '[A-Z]+-[0-9]+' | head -1)
+
+if [ -z "$TICKET" ]; then
+    exit 0  # branch exists but carries no ticket number — skip silently
+fi
+
+# ── 4. Skip if a ticket prefix is already present ─────────────────────────────
+# Handles: git commit --amend, re-runs after a failed push, etc.
+FIRST_LINE=$(head -1 "$COMMIT_MSG_FILE")
+
+if printf '%s' "$FIRST_LINE" | grep -qE '^\[[A-Z]+-[0-9]+\]:'; then
+    exit 0  # already prefixed — do not double-prepend
+fi
+
+# ── 5. Prepend [TICKET]: to the commit message ────────────────────────────────
+# Write to a sibling temp file then rename atomically to avoid partial writes.
+TMP_FILE="${COMMIT_MSG_FILE}.hook_tmp"
+
+{
+    printf '[%s]: ' "$TICKET"
+    cat "$COMMIT_MSG_FILE"
+} > "$TMP_FILE"
+
+if [ $? -ne 0 ]; then
+    echo "[commit-msg] Error: could not write temporary file '${TMP_FILE}'" >&2
+    rm -f "$TMP_FILE"
+    exit 1
+fi
+
+mv "$TMP_FILE" "$COMMIT_MSG_FILE"
+
+if [ $? -ne 0 ]; then
+    echo "[commit-msg] Error: could not update commit message file" >&2
+    exit 1
+fi
+
+printf '[commit-msg] Prefix added: [%s]\n' "$TICKET"
+exit 0
