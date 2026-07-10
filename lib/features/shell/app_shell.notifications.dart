@@ -31,8 +31,9 @@ class _NotificationBellState extends State<_NotificationBell> {
   @override
   void initState() {
     super.initState();
-    _cubit = FetchCubit(() => context.read<NotificationRepository>().notifications())
-      ..load();
+    _cubit = FetchCubit(
+      () => context.read<NotificationRepository>().notifications(),
+    )..load();
   }
 
   @override
@@ -61,7 +62,9 @@ class _NotificationBellState extends State<_NotificationBell> {
     final unread = items.where((n) => !n.read).map((n) => n.id).toList();
     if (unread.isEmpty) return;
     try {
-      await context.read<NotificationRepository>().markNotificationsRead(unread);
+      await context.read<NotificationRepository>().markNotificationsRead(
+        unread,
+      );
     } catch (_) {
       // Non-critical; the reload below reflects server truth.
     }
@@ -379,8 +382,8 @@ class _NotifRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final unread = !notification.read;
-    final (icon, tint) = _notifVisual(notification.type);
-    final ago = _timeAgo(notification.createdAt);
+    final (icon, tint) = notificationVisual(notification.type);
+    final ago = notificationTimeAgo(notification.createdAt);
     return Material(
       // Transparent read rows let the glass panel show through; unread keep a
       // soft accent wash.
@@ -462,48 +465,9 @@ class _NotifRow extends StatelessWidget {
   }
 }
 
-/// Leading icon + tint for a notification type. Cases match the server's
-/// `Notification.Type` enum; the loose legacy tokens are kept as fallbacks.
-(IconData, Color) _notifVisual(String type) => switch (type.toUpperCase()) {
-  'MENTION' => (LucideIcons.atSign, AppColors.stReview),
-  'ISSUE_ASSIGNED' ||
-  'ASSIGN' ||
-  'ASSIGNED' ||
-  'ASSIGNMENT' => (LucideIcons.userCheck, AppColors.stTodo),
-  'ISSUE_COMMENTED' ||
-  'COMMENT' => (LucideIcons.messageSquare, AppColors.stProgress),
-  'ISSUE_UPDATED' => (LucideIcons.refreshCw, AppColors.accentBlue),
-  'ISSUE_INGESTED' => (LucideIcons.inbox, AppColors.accentTeal),
-  'SPRINT_STARTED' ||
-  'SPRINT_COMPLETED' => (LucideIcons.goal, AppColors.accentPurple),
-  'ISSUE_DUE_SOON' ||
-  'DUE' ||
-  'DEADLINE' => (LucideIcons.calendarDays, AppColors.priHigh),
-  'DIGEST' => (LucideIcons.newspaper, AppColors.accentBlue),
-  'SECURITY_ALERT' => (LucideIcons.shieldAlert, AppColors.priHigh),
-  'TEAM_ADDED' ||
-  'TEAM_ROLE_CHANGED' ||
-  'TEAM_REMOVED' => (LucideIcons.usersRound, AppColors.accentBlue),
-  'PROJECT_ADDED' => (LucideIcons.folderPlus, AppColors.accentPurple),
-  'ACCOUNT_ACTIVATED' ||
-  'ACCOUNT_DEACTIVATED' ||
-  'ACCOUNT_ROLE_CHANGED' ||
-  'ACCOUNT_DELETED' => (LucideIcons.shieldCheck, AppColors.inkSoft),
-  'REVIEW' ||
-  'REVIEW_REQUEST' => (LucideIcons.messageSquareText, AppColors.stReview),
-  _ => (LucideIcons.bell, AppColors.inkSoft),
-};
-
-/// Compact relative time ("now", "8m", "2h", "3d", "5w").
-String? _timeAgo(DateTime? time) {
-  if (time == null) return null;
-  final diff = DateTime.now().difference(time);
-  if (diff.isNegative || diff.inSeconds < 60) return 'now';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-  if (diff.inHours < 24) return '${diff.inHours}h';
-  if (diff.inDays < 7) return '${diff.inDays}d';
-  return '${(diff.inDays / 7).floor()}w';
-}
+// Icon/tint mapping and relative time live in
+// core/notifications/notification_visuals.dart, shared with the full
+// notifications page.
 
 /// Subtle scale + fade entrance for the popover (anchored top-right).
 class _PopIn extends StatefulWidget {

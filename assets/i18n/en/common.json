@@ -793,7 +793,15 @@
     "title": "Notifications",
     "empty": "You're all caught up!",
     "markAllRead": "Mark all read",
-    "viewAll": "View all notifications"
+    "viewAll": "View all notifications",
+    "unreadCount": "{{count}} unread",
+    "group": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "thisWeek": "This week",
+      "thisMonth": "This month",
+      "earlier": "Earlier"
+    }
   },
   "appbar": {
     "search": "Search or jump to…",

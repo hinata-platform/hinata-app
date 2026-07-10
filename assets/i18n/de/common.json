@@ -793,7 +793,15 @@
     "title": "Mitteilungen",
     "empty": "Du bist auf dem neuesten Stand!",
     "markAllRead": "Alle als gelesen markieren",
-    "viewAll": "Alle Mitteilungen anzeigen"
+    "viewAll": "Alle Mitteilungen anzeigen",
+    "unreadCount": "{{count}} ungelesen",
+    "group": {
+      "today": "Heute",
+      "yesterday": "Gestern",
+      "thisWeek": "Diese Woche",
+      "thisMonth": "Dieser Monat",
+      "earlier": "Früher"
+    }
   },
   "appbar": {
     "search": "Suchen oder springen zu…",

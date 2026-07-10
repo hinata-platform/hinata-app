@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/repositories/notification_repository.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
+import '../../core/notifications/notification_visuals.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_empty_state.dart';
@@ -13,6 +15,9 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/status_widgets.dart';
 
+/// Full notification centre: the paged feed grouped into time buckets
+/// (today / yesterday / this week / …), rendered as iOS-style inset grouped
+/// cards with per-type icon chips and unread accents.
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
@@ -24,6 +29,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   late final NotificationRepository _repo;
   late final PagedCubit<AppNotification> _cubit;
   final ScrollController _scroll = ScrollController();
+  bool _markingAll = false;
 
   @override
   void initState() {
@@ -53,98 +59,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<
-      PagedCubit<AppNotification>,
-      PagedState<AppNotification>
-    >(
-      bloc: _cubit,
-      builder: (context, state) {
-        return RefreshIndicator(
-          onRefresh: _cubit.load,
-          child: AsyncView(
-            isLoading: state.isLoading,
-            hasData: state.hasData,
-            errorKey: state.errorKey,
-            onRetry: _cubit.load,
-            builder: (context) {
-              final notifications = state.items;
-              return ListView(
-                controller: _scroll,
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: context.pagePadding,
-                children: [
-                  SectionHeader(title: context.t('notifications.title')),
-                  const SizedBox(height: 12),
-                  if (notifications.isEmpty)
-                    HiveEmptyState(
-                      title: context.t('notifications.title'),
-                      message: context.t('notifications.empty'),
-                    ),
-                  for (final notification in notifications)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: SoftCard(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 14,
-                        ),
-                        onTap: () => _open(notification),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                color: notification.read
-                                    ? Colors.transparent
-                                    : AppColors.accentOrange,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    notification.title,
-                                    style: TextStyle(
-                                      fontWeight: notification.read
-                                          ? FontWeight.w500
-                                          : FontWeight.w800,
-                                    ),
-                                  ),
-                                  if ((notification.body ?? '').isNotEmpty)
-                                    Text(
-                                      notification.body!,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  if (state.isLoadingMore)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
-                      child: Center(child: HiveLoader(size: 30)),
-                    ),
-                ],
-              );
-            },
-          ),
-        );
-      },
-    );
+  Future<void> _markAllRead(List<AppNotification> items) async {
+    final unread = items.where((n) => !n.read).map((n) => n.id).toList();
+    if (unread.isEmpty || _markingAll) return;
+    setState(() => _markingAll = true);
+    try {
+      await _repo.markNotificationsRead(unread);
+    } catch (_) {
+      // Non-critical; the reload below reflects server truth.
+    }
+    await _cubit.load();
+    if (mounted) setState(() => _markingAll = false);
   }
 
   Future<void> _open(AppNotification notification) async {
@@ -163,5 +88,288 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (link != null && link.isNotEmpty && link.startsWith('/') && mounted) {
       context.go(link);
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<
+      PagedCubit<AppNotification>,
+      PagedState<AppNotification>
+    >(
+      bloc: _cubit,
+      builder: (context, state) {
+        return RefreshIndicator(
+          onRefresh: _cubit.load,
+          child: AsyncView(
+            isLoading: state.isLoading,
+            hasData: state.hasData,
+            errorKey: state.errorKey,
+            onRetry: _cubit.load,
+            builder: (context) {
+              final notifications = state.items;
+              final unreadCount = notifications.where((n) => !n.read).length;
+              final groups = _groupByBucket(notifications);
+              return ListView(
+                controller: _scroll,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: context.pagePadding,
+                children: [
+                  SectionHeader(
+                    title: context.t('notifications.title'),
+                    actionLabel: unreadCount > 0 && !_markingAll
+                        ? context.t('notifications.markAllRead')
+                        : null,
+                    onAction: () => _markAllRead(notifications),
+                  ),
+                  if (unreadCount > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        context.t(
+                          'notifications.unreadCount',
+                          variables: {'count': '$unreadCount'},
+                        ),
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.accentStrong,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+                  if (notifications.isEmpty)
+                    HiveEmptyState(
+                      title: context.t('notifications.title'),
+                      message: context.t('notifications.empty'),
+                    ),
+                  for (final group in groups) ...[
+                    _GroupLabel(
+                      label: context.t(
+                        'notifications.group.${group.bucket.key}',
+                      ),
+                    ),
+                    SoftCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        children: [
+                          for (var i = 0; i < group.items.length; i++) ...[
+                            if (i > 0)
+                              Divider(
+                                height: 1,
+                                indent: 62,
+                                color: AppColors.hairline2,
+                              ),
+                            _NotificationTile(
+                              notification: group.items[i],
+                              onTap: () => _open(group.items[i]),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                  ],
+                  if (state.isLoadingMore)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Center(child: HiveLoader(size: 30)),
+                    ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ───────────────────────────── time bucketing ─────────────────────────────
+
+enum _Bucket {
+  today('today'),
+  yesterday('yesterday'),
+  thisWeek('thisWeek'),
+  thisMonth('thisMonth'),
+  earlier('earlier');
+
+  const _Bucket(this.key);
+  final String key;
+}
+
+_Bucket _bucketOf(DateTime? createdAt, DateTime now) {
+  if (createdAt == null) return _Bucket.earlier;
+  final local = createdAt.toLocal();
+  final today = DateTime(now.year, now.month, now.day);
+  final day = DateTime(local.year, local.month, local.day);
+  if (!day.isBefore(today)) return _Bucket.today;
+  if (!day.isBefore(today.subtract(const Duration(days: 1)))) {
+    return _Bucket.yesterday;
+  }
+  // Calendar week starting Monday, matching the local convention.
+  final weekStart = today.subtract(Duration(days: today.weekday - 1));
+  if (!day.isBefore(weekStart)) return _Bucket.thisWeek;
+  if (day.year == today.year && day.month == today.month) {
+    return _Bucket.thisMonth;
+  }
+  return _Bucket.earlier;
+}
+
+class _NotificationGroup {
+  const _NotificationGroup(this.bucket, this.items);
+  final _Bucket bucket;
+  final List<AppNotification> items;
+}
+
+/// Splits the (already newest-first) feed into contiguous time buckets,
+/// preserving order inside each group.
+List<_NotificationGroup> _groupByBucket(List<AppNotification> items) {
+  final now = DateTime.now();
+  final groups = <_NotificationGroup>[];
+  for (final n in items) {
+    final bucket = _bucketOf(n.createdAt, now);
+    if (groups.isNotEmpty && groups.last.bucket == bucket) {
+      groups.last.items.add(n);
+    } else {
+      groups.add(_NotificationGroup(bucket, [n]));
+    }
+  }
+  return groups;
+}
+
+// ─────────────────────────────── widgets ──────────────────────────────────
+
+class _GroupLabel extends StatelessWidget {
+  const _GroupLabel({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+          color: AppColors.inkSoft,
+        ),
+      ),
+    );
+  }
+}
+
+class _NotificationTile extends StatelessWidget {
+  const _NotificationTile({required this.notification, required this.onTap});
+
+  final AppNotification notification;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final unread = !notification.read;
+    final (icon, tint) = notificationVisual(notification.type);
+    final ago = notificationTimeAgo(notification.createdAt);
+    return Material(
+      color: unread ? AppColors.accentSoft : Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        hoverColor: AppColors.surfaceMuted,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: AppColors.soft(tint),
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Icon(icon, size: 17, color: tint),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            notification.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              height: 1.35,
+                              color: AppColors.ink,
+                              fontWeight: unread
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        if (ago != null) ...[
+                          const SizedBox(width: 10),
+                          Text(
+                            ago,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: AppColors.inkFaint,
+                            ),
+                          ),
+                        ],
+                        if (unread) ...[
+                          const SizedBox(width: 8),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 5),
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: AppColors.accentStrong,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    if ((notification.body ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        notification.body!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          height: 1.4,
+                          color: AppColors.inkSoft,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Icon(
+                  LucideIcons.chevronRight,
+                  size: 15,
+                  color: AppColors.inkFaint,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
