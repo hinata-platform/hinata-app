@@ -1,6 +1,8 @@
-import '../../../core/api/hinata_repository.dart';
 import '../../../core/models/content_models.dart';
 import '../../../core/models/core_models.dart';
+import '../../../core/repositories/article_repository.dart';
+import '../../../core/repositories/auth_repository.dart';
+import '../../../core/repositories/user_repository.dart';
 import 'knowledge_models.dart';
 
 /// Backend-backed Knowledge Base store. Articles, spaces and people all come
@@ -13,9 +15,17 @@ import 'knowledge_models.dart';
 /// "Spaces" are not a backend entity: they are the distinct `space` values on
 /// articles, dressed with presentational metadata from [_spaceCatalog].
 class KnowledgeRepository {
-  KnowledgeRepository(this._backend);
+  KnowledgeRepository({
+    required ArticleRepository articles,
+    required UserRepository users,
+    required AuthRepository auth,
+  }) : _articleApi = articles,
+       _userApi = users,
+       _authApi = auth;
 
-  final HinataRepository _backend;
+  final ArticleRepository _articleApi;
+  final UserRepository _userApi;
+  final AuthRepository _authApi;
 
   final Map<String, KbArticle> _articles = {};
   final Map<String, KbUser> _users = {};
@@ -46,8 +56,8 @@ class KnowledgeRepository {
 
   Future<void> reload() async {
     final results = await Future.wait([
-      _backend.articles(all: true),
-      _backend.users(),
+      _articleApi.articles(all: true),
+      _userApi.users(),
     ]);
     final articles = results[0] as List<Article>;
     final dirUsers = results[1] as List<DirectoryUser>;
@@ -56,7 +66,7 @@ class KnowledgeRepository {
       ..clear()
       ..addEntries(dirUsers.map((u) => MapEntry(u.id, _toKbUser(u))));
     try {
-      final me = await _backend.me();
+      final me = await _authApi.me();
       _me = KbUser(
         id: me.id,
         name: me.displayName,
@@ -69,7 +79,7 @@ class KnowledgeRepository {
 
     _backendSpaces.clear();
     try {
-      for (final s in await _backend.spaces()) {
+      for (final s in await _articleApi.spaces()) {
         _backendSpaces[s.name] = s;
       }
     } catch (_) {
@@ -240,7 +250,7 @@ class KnowledgeRepository {
     required String spaceId,
   }) async {
     final existing = _articles[id];
-    final saved = await _backend.saveArticle(
+    final saved = await _articleApi.saveArticle(
       id: id,
       title: title,
       content: body,
@@ -260,7 +270,7 @@ class KnowledgeRepository {
     required String spaceId,
     String? parentId,
   }) async {
-    final saved = await _backend.saveArticle(
+    final saved = await _articleApi.saveArticle(
       title: title,
       content: body,
       space: spaceId,
@@ -283,7 +293,7 @@ class KnowledgeRepository {
   }) async {
     final existing = _articles[id];
     if (existing == null) return Future.error('unknown article');
-    final saved = await _backend.moveArticle(
+    final saved = await _articleApi.moveArticle(
       id,
       title: existing.title,
       parentId: parentId,
@@ -296,7 +306,7 @@ class KnowledgeRepository {
   }
 
   Future<void> deleteArticle(String id) async {
-    await _backend.deleteArticle(id);
+    await _articleApi.deleteArticle(id);
     _articles.remove(id);
     _rebuildSpaces();
   }
@@ -309,7 +319,7 @@ class KnowledgeRepository {
     required int hue,
     String? description,
   }) async {
-    final s = await _backend.createSpace(
+    final s = await _articleApi.createSpace(
       name: name,
       icon: icon,
       hue: hue,
@@ -325,7 +335,7 @@ class KnowledgeRepository {
   Future<void> deleteSpace(String spaceId) async {
     final backend = _backendSpaces[spaceId];
     if (backend == null) return Future.error('unknown space');
-    await _backend.deleteSpace(backend.id);
+    await _articleApi.deleteSpace(backend.id);
     _backendSpaces.remove(spaceId);
     _rebuildSpaces();
   }

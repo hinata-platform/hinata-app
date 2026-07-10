@@ -104,7 +104,7 @@ class FieldLabel extends StatelessWidget {
               ),
               child: Text(
                 context.t('projectSettings.required'),
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.4,

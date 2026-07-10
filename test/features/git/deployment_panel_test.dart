@@ -7,7 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// Reproduces the crash reported when expanding the "Create branch" dropdown in
 /// the issue deployment panel for a connected repository.
 void main() {
-  final project = Project.fromJson({
+  final project = Project.fromJson(const {
     'id': 'p1',
     'key': 'HIN',
     'name': 'hinata-app',

@@ -54,7 +54,7 @@ class VoiceRecorder {
     _samples.clear();
     // Native: AAC/m4a — small, universally playable. Web: Opus (the recorder
     // picks the container; MIME is detected on read).
-    final config = RecordConfig(
+    const config = RecordConfig(
       encoder: kIsWeb ? AudioEncoder.opus : AudioEncoder.aacLc,
       bitRate: 96000,
       sampleRate: 44100,
@@ -83,7 +83,7 @@ class VoiceRecorder {
     await _teardown();
     final path = await _recorder.stop();
     if (path == null || path.isEmpty) return null;
-    final fallbackMime = kIsWeb ? 'audio/webm' : 'audio/mp4';
+    const fallbackMime = kIsWeb ? 'audio/webm' : 'audio/mp4';
     final audio = await platform.readRecordedAudio(path, fallbackMime);
     if (audio.bytes.isEmpty) return null;
     return VoiceRecording(

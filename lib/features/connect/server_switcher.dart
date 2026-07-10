@@ -54,7 +54,7 @@ class ServerSelectorButton extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(LucideIcons.server, size: 20, color: AppColors.accentStrong),
+              const Icon(LucideIcons.server, size: 20, color: AppColors.accentStrong),
               const SizedBox(width: 11),
               Expanded(
                 child: Column(
@@ -92,7 +92,7 @@ class ServerSelectorButton extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(
+              const Icon(
                 LucideIcons.chevronDown,
                 size: 19,
                 color: AppColors.accentStrong,
@@ -145,7 +145,7 @@ class ServerCard extends StatelessWidget {
                     color: AppColors.accent.withValues(alpha: 0.32),
                   ),
                 ),
-                child: Icon(
+                child: const Icon(
                   LucideIcons.server,
                   size: 22,
                   color: AppColors.accentStrong,

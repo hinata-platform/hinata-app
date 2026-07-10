@@ -67,7 +67,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        _host(width: 240, child: CopyField(text: 'git checkout -b $longBranch')),
+        _host(width: 240, child: const CopyField(text: 'git checkout -b $longBranch')),
       );
       expect(tester.takeException(), isNull);
     });

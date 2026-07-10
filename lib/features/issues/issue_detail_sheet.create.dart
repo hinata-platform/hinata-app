@@ -60,7 +60,6 @@ class IssueCreateBody extends StatefulWidget {
 }
 
 class IssueCreateBodyState extends State<IssueCreateBody> {
-  HinataRepository get _repo => context.read<HinataRepository>();
 
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
@@ -73,6 +72,10 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
   // from the shared seed. Reloaded whenever the selected project changes.
   Map<String, Issue> _projectIssues = const {};
   KnowledgeRepository get _knowledge => context.read<KnowledgeRepository>();
+  IssueRepository get _issueApi => context.read<IssueRepository>();
+  ProjectRepository get _projectApi => context.read<ProjectRepository>();
+  SprintRepository get _sprintApi => context.read<SprintRepository>();
+  UserRepository get _userApi => context.read<UserRepository>();
 
   String? _projectId;
   String? _state;
@@ -128,7 +131,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
       _error = null;
     });
     try {
-      final results = await Future.wait([_repo.projects(), _repo.users()]);
+      final results = await Future.wait([_projectApi.projects(), _userApi.users()]);
       _projects = results[0] as List<Project>;
       _users = results[1] as List<DirectoryUser>;
       _projectId ??= _projects.firstOrNull?.id;
@@ -153,14 +156,14 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     final pid = _projectId;
     if (pid == null) return;
     try {
-      _sprints = await _repo.sprintsForProject(pid);
+      _sprints = await _sprintApi.sprintsForProject(pid);
     } catch (_) {
       _sprints = const [];
     }
     // Project issues power the description `@`-menu + `{{issue:…}}` chips; the
     // shared KB seed backs `{{doc:…}}`. Both best-effort.
     try {
-      final all = await _repo.allIssues(projectId: pid);
+      final all = await _issueApi.allIssues(projectId: pid);
       _projectIssues = {for (final i in all) i.readableId: i};
     } catch (_) {
       _projectIssues = const {};
@@ -196,7 +199,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     widget.controller.phase = IssueCreatePhase.saving;
     setState(() => _error = null);
     try {
-      final created = await _repo.createIssue({
+      final created = await _issueApi.createIssue({
         'projectId': _projectId,
         'title': title,
         'description': _descCtrl.text,
@@ -317,7 +320,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     var match = _projectIssues[readableId];
     if (match == null) {
       try {
-        final res = await _repo.issues(query: readableId, size: 20);
+        final res = await _issueApi.issues(query: readableId, size: 20);
         match = res.issues.where((i) => i.readableId == readableId).firstOrNull;
       } on ApiFailure {
         return;
@@ -361,7 +364,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
           decoration: InputDecoration(
             hintText: context.t('issues.title'),
             errorStyle: const TextStyle(color: AppColors.danger, fontSize: 12),
-            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           ),
           validator: (value) => (value == null || value.trim().isEmpty)
               ? context.t('errors.required')
@@ -736,7 +739,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
       onDelete: pid == null
           ? null
           : (l) async {
-              await _repo.deleteProjectLabel(pid, l);
+              await _projectApi.deleteProjectLabel(pid, l);
               _deletedLabels.add(l);
               if (mounted) {
                 setState(() => _labels = _labels.where((x) => x != l).toList());

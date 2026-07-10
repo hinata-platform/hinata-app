@@ -214,7 +214,7 @@ class _NavRail extends StatelessWidget {
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-              child: DecoratedBox(
+              child: const DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
@@ -323,7 +323,7 @@ class _NavRail extends StatelessWidget {
                           const SizedBox(height: 16),
 
                           // Primary group
-                          if (!collapsed) _RailGroupLabel('WORK'),
+                          if (!collapsed) const _RailGroupLabel('WORK'),
                           for (final dest in _primary)
                             _RailItem(
                               destination: dest,
@@ -332,7 +332,7 @@ class _NavRail extends StatelessWidget {
                             ),
 
                           const SizedBox(height: 8),
-                          if (!collapsed) _RailGroupLabel('PLAN'),
+                          if (!collapsed) const _RailGroupLabel('PLAN'),
                           for (final dest in _secondary)
                             _RailItem(
                               destination: dest,

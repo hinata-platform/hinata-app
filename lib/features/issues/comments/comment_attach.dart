@@ -6,9 +6,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_client.dart' show ApiFailure;
-import '../../../core/api/hinata_repository.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/widgets/markdown_toolbar.dart';
+import '../../../core/repositories/issue_repository.dart';
+import '../../../core/repositories/media_repository.dart';
 
 /// Composer "+" actions. Camera & gallery insert an inline Markdown image into
 /// the comment (the comment body is Markdown, exactly like the issue/KB
@@ -24,7 +25,7 @@ Future<void> insertCommentPhoto(
   ImageSource source,
 ) async {
   final messenger = ScaffoldMessenger.of(context);
-  final repo = context.read<HinataRepository>();
+  final mediaApi = context.read<MediaRepository>();
 
   XFile? shot;
   try {
@@ -45,7 +46,7 @@ Future<void> insertCommentPhoto(
 
   final token = actions.beginImageUpload(name);
   try {
-    final url = await repo.uploadMedia(multipart);
+    final url = await mediaApi.uploadMedia(multipart);
     actions.completeImageUpload(token, url, name);
   } on ApiFailure catch (e) {
     actions.failImageUpload(token);
@@ -64,7 +65,7 @@ Future<void> attachFileToIssue(
   VoidCallback? onChanged,
 }) async {
   final messenger = ScaffoldMessenger.of(context);
-  final repo = context.read<HinataRepository>();
+  final issueApi = context.read<IssueRepository>();
 
   FilePickerResult? picked;
   try {
@@ -87,7 +88,7 @@ Future<void> attachFileToIssue(
 
   _toast(messenger, context.mounted ? context.t('comments.attaching') : '…');
   try {
-    await repo.uploadAttachment(issueId, multipart);
+    await issueApi.uploadAttachment(issueId, multipart);
     onChanged?.call();
     if (context.mounted) _toast(messenger, context.t('comments.attached'));
   } on ApiFailure catch (e) {

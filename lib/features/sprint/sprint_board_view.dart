@@ -3,7 +3,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
@@ -23,6 +22,8 @@ import 'sprint_active_surface.dart';
 import 'sprint_insights_surface.dart';
 import 'sprint_planning_surface.dart';
 import 'widgets/sprint_widgets.dart';
+import '../../core/repositories/issue_repository.dart';
+import '../../core/repositories/sprint_repository.dart';
 
 /// Number of backlog issues per page in the planning surface.
 const int kBacklogPageSize = 12;
@@ -55,7 +56,9 @@ enum _Tab { planning, active, insights }
 
 class _ScrumBoardViewState extends State<ScrumBoardView> {
   AgileBoard get _board => widget.view.board;
-  HinataRepository get _repo => context.read<HinataRepository>();
+
+  IssueRepository get _issueApi => context.read<IssueRepository>();
+  SprintRepository get _sprintApi => context.read<SprintRepository>();
 
   _Tab _tab = _Tab.planning;
 
@@ -175,7 +178,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
       _error = null;
     });
     try {
-      final sprints = await _repo.sprints(_board.id);
+      final sprints = await _sprintApi.sprints(_board.id);
       // The active id is tracked locally across start/complete; drop it if the
       // referenced sprint is gone or archived (the stale board view can't be
       // trusted after a completion).
@@ -185,7 +188,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
       }
       _bySprint.clear();
       final issueLists = await Future.wait(
-        sprints.map((s) => _repo.allIssues(sprintId: s.id)),
+        sprints.map((s) => _issueApi.allIssues(sprintId: s.id)),
       );
       for (var i = 0; i < sprints.length; i++) {
         _bySprint[sprints[i].id] = issueLists[i];
@@ -221,7 +224,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
     // allIssues pages through the whole backend result set (search clamps size
     // to 100), so swimlane epic resolution sees every issue, not just page one.
     final pages = await Future.wait(
-      projectIds.map((p) => _repo.allIssues(projectId: p)),
+      projectIds.map((p) => _issueApi.allIssues(projectId: p)),
     );
     _issuesById = {
       for (final page in pages)
@@ -233,7 +236,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
     final projectIds = _board.projectIds;
     final query = _query.trim().isEmpty ? null : _query.trim();
     if (projectIds.length <= 1) {
-      final res = await _repo.issues(
+      final res = await _issueApi.issues(
         projectId: projectIds.isEmpty ? null : projectIds.first,
         noSprint: true,
         query: query,
@@ -246,7 +249,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
       // Multiple projects: the search endpoint is single-project, so merge a
       // bounded page per project and paginate client-side.
       final pages = await Future.wait(
-        projectIds.map((p) => _repo.allIssues(projectId: p, noSprint: true)),
+        projectIds.map((p) => _issueApi.allIssues(projectId: p, noSprint: true)),
       );
       var merged = [for (final pg in pages) ...pg];
       if (query != null) {
@@ -286,7 +289,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
       _reportError = null;
     });
     try {
-      final report = await _repo.sprintReport(id);
+      final report = await _sprintApi.sprintReport(id);
       if (!mounted) return;
       setState(() {
         _report = report;
@@ -330,7 +333,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
     final moved = issue.copyWith(sprintId: sprintId);
     setState(() => _applyLocalMove(issue, moved));
     try {
-      await _repo.updateIssue(issue.id, {'sprintId': sprintId ?? ''});
+      await _issueApi.updateIssue(issue.id, {'sprintId': sprintId ?? ''});
       // A full (non-flashing) reload reconciles the server's truth — including
       // the backlog→working-state promotion when an issue enters a sprint.
       await _loadAll();
@@ -369,7 +372,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
     });
     try {
       await Future.wait(
-        ids.map((id) => _repo.updateIssue(id, {'sprintId': sprintId ?? ''})),
+        ids.map((id) => _issueApi.updateIssue(id, {'sprintId': sprintId ?? ''})),
       );
       await _loadAll();
     } on ApiFailure catch (failure) {
@@ -389,7 +392,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
       _replaceIssue(updated);
     });
     try {
-      await _repo.updateIssue(issue.id, patch);
+      await _issueApi.updateIssue(issue.id, patch);
       // Story points feed committed/velocity/burndown — refresh insights.
       _invalidateReport();
     } on ApiFailure catch (failure) {
@@ -423,7 +426,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
     if (issue.state == newState) return;
     setState(() => _replaceIssue(issue.copyWith(state: newState)));
     try {
-      await _repo.updateIssue(issue.id, {'state': newState});
+      await _issueApi.updateIssue(issue.id, {'state': newState});
       await _loadAll();
     } on ApiFailure catch (failure) {
       _toastKey(failure.message);
@@ -469,7 +472,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
     );
     if (data == null) return;
     try {
-      await _repo.createSprint(
+      await _sprintApi.createSprint(
         boardId: _board.id,
         name: data.name,
         goal: data.goal,
@@ -496,7 +499,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
     );
     if (data == null) return;
     try {
-      await _repo.startSprint(
+      await _sprintApi.startSprint(
         sprint.id,
         goal: data.goal,
         endDate: data.endDate,
@@ -526,7 +529,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
     );
     if (dest == null) return;
     try {
-      await _repo.completeSprint(sprint.id, moveOpenTo: dest);
+      await _sprintApi.completeSprint(sprint.id, moveOpenTo: dest);
       if (_activeSprintId == sprint.id) _activeSprintId = null;
       _report = null;
       _toastKey('sprint.toast.completed', vars: {'name': sprint.name});

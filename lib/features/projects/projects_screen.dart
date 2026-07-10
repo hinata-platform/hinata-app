@@ -7,7 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/i18n/i18n.dart';
@@ -20,6 +19,8 @@ import '../../core/theme/hue_colors.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../sprint/modals/glass_modal.dart';
+import '../../core/repositories/project_repository.dart';
+import '../../core/repositories/user_repository.dart';
 
 typedef _ProjectsData = ({
   List<Project> active,
@@ -43,11 +44,10 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   void initState() {
     super.initState();
     _cubit = FetchCubit<_ProjectsData>(() async {
-      final repo = context.read<HinataRepository>();
       final results = await Future.wait([
-        repo.projects(),
-        repo.projects(archived: true),
-        repo.users(),
+        context.read<ProjectRepository>().projects(),
+        context.read<ProjectRepository>().projects(archived: true),
+        context.read<UserRepository>().users(),
       ]);
       final active = results[0] as List<Project>;
       final archived = results[1] as List<Project>;
@@ -199,13 +199,17 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   }
 
   Future<void> _showCreate() async {
-    final repository = context.read<HinataRepository>();
+    final projects = context.read<ProjectRepository>();
+    final users = context.read<UserRepository>();
     final meId = context.read<AuthBloc>().state.user?.id;
     final created = await showGlassModal<Project>(
       context,
       width: 580,
-      builder: (modalContext) => RepositoryProvider.value(
-        value: repository,
+      builder: (modalContext) => MultiRepositoryProvider(
+        providers: [
+          RepositoryProvider.value(value: projects),
+          RepositoryProvider.value(value: users),
+        ],
         child: _CreateProjectBody(meId: meId),
       ),
     );
@@ -527,7 +531,7 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
 
   Future<void> _loadUsers() async {
     try {
-      final users = await context.read<HinataRepository>().users();
+      final users = await context.read<UserRepository>().users();
       if (mounted) setState(() => _users = users);
     } on ApiFailure {
       // Lead picker simply stays limited to the current user.
@@ -708,7 +712,7 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
       _error = null;
     });
     try {
-      final project = await context.read<HinataRepository>().createProject(
+      final project = await context.read<ProjectRepository>().createProject(
         key: _key.text.trim().toUpperCase(),
         name: _name.text.trim(),
         description: _description.text.trim().isEmpty

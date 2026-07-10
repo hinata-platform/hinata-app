@@ -10,7 +10,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/api/hinata_repository.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/blocs/theme_cubit.dart';
@@ -18,6 +17,7 @@ import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
 import '../../core/models/core_models.dart';
+import '../../core/repositories/notification_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';

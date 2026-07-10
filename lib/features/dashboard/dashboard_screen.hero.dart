@@ -185,7 +185,7 @@ class _SprintHero extends StatelessWidget {
         children: [
           // Honeycomb watermark: large + pushed far off the bottom-right corner
           // so only a soft curve shows — reads as texture, never a cut-off logo.
-          Positioned(
+          const Positioned(
             right: -220,
             bottom: -240,
             child: IgnorePointer(

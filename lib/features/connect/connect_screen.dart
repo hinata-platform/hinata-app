@@ -156,7 +156,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
           dense: true,
           enabled: !connecting,
           contentPadding: EdgeInsets.zero,
-          leading: Icon(LucideIcons.server,
+          leading: const Icon(LucideIcons.server,
               size: 18, color: AppColors.accentStrong),
           title: Text(server.displayName,
               style: const TextStyle(fontWeight: FontWeight.w600)),

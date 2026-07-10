@@ -70,7 +70,7 @@ class _AdminSsoSectionState extends State<AdminSsoSection> {
               title: 'LDAP / Active Directory',
               subtitle: context.t('admin.ldapSubtitle'),
               section: _section('ldap'),
-              fields: [
+              fields: const [
                 ('url', 'URL (ldaps://…)', false),
                 ('baseDn', 'Base DN', false),
                 ('managerDn', 'Manager DN', false),
@@ -84,7 +84,7 @@ class _AdminSsoSectionState extends State<AdminSsoSection> {
               title: 'Kerberos / SPNEGO',
               subtitle: context.t('admin.kerberosSubtitle'),
               section: _section('kerberos'),
-              fields: [
+              fields: const [
                 ('servicePrincipal', 'Service Principal', false),
                 ('keytabLocation', 'Keytab Location', false),
               ],
@@ -94,7 +94,7 @@ class _AdminSsoSectionState extends State<AdminSsoSection> {
               title: 'CAS',
               subtitle: context.t('admin.casSubtitle'),
               section: _section('cas'),
-              fields: [
+              fields: const [
                 ('serverUrlPrefix', 'CAS Server URL', false),
                 ('serviceUrl', 'Service URL', false),
               ],

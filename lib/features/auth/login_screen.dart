@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/auth_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
@@ -59,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _loadProviders() async {
     try {
-      final providers = await context.read<HinataRepository>().ssoProviders();
+      final providers = await context.read<AuthRepository>().ssoProviders();
       if (mounted) setState(() => _providers = providers);
     } catch (_) {
       // SSO buttons are optional; password login stays available.

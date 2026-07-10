@@ -6,9 +6,9 @@ import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
-import '../../core/api/hinata_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
+import '../../core/repositories/domain_providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../sprint/modals/glass_modal.dart' show glassWoltSurface;
@@ -49,7 +49,6 @@ Future<Issue?> showIssueForm(
   String? parentId,
   String? forcedType,
 }) async {
-  final repository = context.read<HinataRepository>();
   final controller = IssueCreateController();
 
   final created = await WoltModalSheet.show<Issue?>(
@@ -87,8 +86,8 @@ Future<Issue?> showIssueForm(
           ),
         ),
         stickyActionBar: _CreateSaveBar(controller: controller),
-        child: RepositoryProvider.value(
-          value: repository,
+        child: MultiRepositoryProvider(
+          providers: domainRepositoryProviders(context),
           child: IssueCreateBody(
             controller: controller,
             projectId: projectId,

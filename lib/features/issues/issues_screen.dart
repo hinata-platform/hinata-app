@@ -12,7 +12,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/api/hinata_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/paged_cubit.dart';
@@ -36,6 +35,10 @@ import 'issue_export.dart';
 import 'issue_filter.dart';
 import 'issue_filter_popup.dart';
 import 'issue_form.dart';
+import '../../core/repositories/issue_repository.dart';
+import '../../core/repositories/meta_repository.dart';
+import '../../core/repositories/project_repository.dart';
+import '../../core/repositories/user_repository.dart';
 
 part 'issues_screen.toolbar.dart';
 part 'issues_screen.rows.dart';
@@ -85,7 +88,6 @@ class _IssuesScreenState extends State<IssuesScreen> {
 
   static const int _pageSize = 100;
 
-  late final HinataRepository _repo;
   late final PagedCubit<Issue> _issues;
   final ScrollController _scroll = ScrollController();
 
@@ -119,11 +121,10 @@ class _IssuesScreenState extends State<IssuesScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = context.read<HinataRepository>();
     _issueSub = IssueEvents.instance.changes.listen((_) => _reload());
     _issues = PagedCubit<Issue>(
       (page, size) async {
-        final result = await _repo.issues(
+        final result = await context.read<IssueRepository>().issues(
           projectId: widget.projectId,
           page: page,
           size: size,
@@ -155,7 +156,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
       });
     }
     try {
-      final results = await Future.wait([_repo.users(), _repo.projects()]);
+      final results = await Future.wait([context.read<UserRepository>().users(), context.read<ProjectRepository>().projects()]);
       final users = results[0] as List<DirectoryUser>;
       final projects = results[1] as List<Project>;
       // Workflow-state order (UPPER-CASE), unioned across projects in first-seen
@@ -387,9 +388,11 @@ class _IssuesScreenState extends State<IssuesScreen> {
 
   Future<void> _export(String format) async {
     if (_exporting) return;
-    // Read inherited blocs before the first await to avoid using context across
-    // async gaps.
+    // Read inherited blocs / repositories before the first await to avoid using
+    // context across async gaps.
     final cachedMeta = context.read<AppConfigBloc>().state.meta;
+    final issueApi = context.read<IssueRepository>();
+    final metaApi = context.read<MetaRepository>();
     setState(() => _exporting = true);
     try {
       // Export EVERY matching issue, not just the pages scrolled into view:
@@ -397,7 +400,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
       // regardless of how far the user has scrolled.
       final List<Issue> all;
       try {
-        all = await _repo.allIssues(projectId: widget.projectId);
+        all = await issueApi.allIssues(projectId: widget.projectId);
       } catch (_) {
         if (mounted) _toast(context.t('reports.exportFailed'));
         return;
@@ -408,13 +411,13 @@ class _IssuesScreenState extends State<IssuesScreen> {
       if (format == 'pdf') {
         ServerMeta? meta = cachedMeta;
         try {
-          meta = await _repo.meta();
+          meta = await metaApi.meta();
         } catch (_) {
           meta = cachedMeta;
         }
         Uint8List? logoPng;
         try {
-          final logoAsset = await _repo.organizationLogo();
+          final logoAsset = await metaApi.organizationLogo();
           if (logoAsset != null) {
             logoPng = await logoToPng(
               bytes: logoAsset.bytes,
@@ -675,7 +678,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
                                   width: context.isCompact ? 46 : null,
                                   height: 46,
                                   shape: !context.isCompact
-                                      ? LiquidRoundedSuperellipse(
+                                      ? const LiquidRoundedSuperellipse(
                                           borderRadius: 15,
                                         )
                                       : const LiquidOval(),

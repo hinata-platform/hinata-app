@@ -4,7 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:qr/qr.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/account_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/account_models.dart';
 import '../../core/theme/app_colors.dart';
@@ -159,7 +159,7 @@ class _OtpInputState extends State<OtpInput> {
 
 /// The 3-step enrolment wizard (Scan → Verify → Recovery). Returns true when
 /// 2FA was enabled.
-Future<bool?> show2faWizard(BuildContext context, HinataRepository repo) {
+Future<bool?> show2faWizard(BuildContext context, AccountRepository repo) {
   return showGlassModal<bool>(
     context,
     width: 460,
@@ -169,7 +169,7 @@ Future<bool?> show2faWizard(BuildContext context, HinataRepository repo) {
 
 class _TwoFactorWizard extends StatefulWidget {
   const _TwoFactorWizard({required this.repo});
-  final HinataRepository repo;
+  final AccountRepository repo;
 
   @override
   State<_TwoFactorWizard> createState() => _TwoFactorWizardState();
@@ -490,7 +490,7 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
 
 /// Manage modal: shows remaining recovery codes count + regenerate (requires a
 /// current code). Returns the new remaining count if regenerated.
-Future<void> show2faManage(BuildContext context, HinataRepository repo) {
+Future<void> show2faManage(BuildContext context, AccountRepository repo) {
   return showGlassModal<void>(
     context,
     width: 440,
@@ -507,7 +507,7 @@ Future<void> show2faManage(BuildContext context, HinataRepository repo) {
 }
 
 /// Disable modal: requires a current TOTP/recovery code. Returns true when off.
-Future<bool?> show2faDisable(BuildContext context, HinataRepository repo) {
+Future<bool?> show2faDisable(BuildContext context, AccountRepository repo) {
   return showGlassModal<bool>(
     context,
     width: 440,
@@ -539,7 +539,7 @@ class _CodeGatedAction extends StatefulWidget {
     this.showCodes = false,
   });
 
-  final HinataRepository repo;
+  final AccountRepository repo;
   final IconData icon;
   final String title;
   final String subtitle;

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/api/api_client.dart';
-import '../../../core/api/hinata_repository.dart';
+import '../../../core/repositories/git_repository.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/core_models.dart';
 import '../../../core/models/git_connection.dart';
@@ -45,7 +45,7 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
   String? _templateOverride;
   bool _busy = false;
 
-  HinataRepository get _repo => context.read<HinataRepository>();
+  GitRepository get _repo => context.read<GitRepository>();
   GitConnection? get _git => widget.project.git;
   GitProvider? get _provider =>
       _git == null ? null : gitProviderFrom(_git!.provider);
@@ -224,7 +224,7 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
                   onTap: () => _connect(token: true),
                   child: Text(
                     context.t('git.ctaTokenLink'),
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppColors.accentStrong,
@@ -356,11 +356,11 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(LucideIcons.refreshCw, size: 13, color: AppColors.success),
+            const Icon(LucideIcons.refreshCw, size: 13, color: AppColors.success),
             const SizedBox(width: 5),
             Text(
               context.t('git.syncedAgo', variables: {'ago': _syncedLabel(context, git.lastSyncAt)}),
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
                 color: AppColors.success,
@@ -670,7 +670,7 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
                 const TextSpan(text: ' '),
                 TextSpan(
                   text: cmd,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.accentStrong,
                     fontWeight: FontWeight.w700,
                   ),
@@ -755,8 +755,8 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 1),
+          const Padding(
+            padding: EdgeInsets.only(top: 1),
             child: Icon(LucideIcons.info, size: 16, color: AppColors.accentStrong),
           ),
           const SizedBox(width: 10),
@@ -772,7 +772,7 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
                   ),
                 ],
               ),
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12.5,
                 height: 1.55,
                 color: AppColors.accentStrong,
@@ -817,11 +817,11 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(LucideIcons.gitBranch, size: 12, color: AppColors.accentStrong),
+        const Icon(LucideIcons.gitBranch, size: 12, color: AppColors.accentStrong),
         const SizedBox(width: 5),
         Text(
           branch,
-          style: TextStyle(
+          style: const TextStyle(
             fontFamily: AppTheme.fontMono,
             fontSize: 11,
             fontWeight: FontWeight.w600,
@@ -860,7 +860,7 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
       ),
       child: Text(
         label,
-        style: TextStyle(
+        style: const TextStyle(
           fontFamily: AppTheme.fontMono,
           fontSize: 11,
           color: AppColors.accentStrong,

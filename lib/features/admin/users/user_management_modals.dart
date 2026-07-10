@@ -268,7 +268,7 @@ Future<bool> showResendModal(BuildContext context, List<AdminUser> users) {
                 'admin.um.resendExpiredNote',
                 variables: {'n': '$expired'},
               ),
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12.5,
                 color: AppColors.danger,
                 height: 1.4,
@@ -629,7 +629,7 @@ class _InviteModalState extends State<_InviteModal> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (invalid) ...[
-            Icon(LucideIcons.mailWarning, size: 13, color: AppColors.danger),
+            const Icon(LucideIcons.mailWarning, size: 13, color: AppColors.danger),
             const SizedBox(width: 4),
           ],
           Text(

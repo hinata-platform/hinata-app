@@ -9,7 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/account_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/locale_cubit.dart';
@@ -87,7 +87,7 @@ const _notifEvents = <({String id, IconData icon, bool locked})>[
 ];
 
 class _AccountScreenState extends State<AccountScreen> {
-  HinataRepository get _repo => context.read<HinataRepository>();
+  AccountRepository get _repo => context.read<AccountRepository>();
 
   /// Whether the embedded MCP server surface (Personal Access Tokens) is exposed
   /// — driven by the server's `mcp` feature flag.
@@ -661,9 +661,9 @@ class _AccountScreenState extends State<AccountScreen> {
       borderRadius: BorderRadius.circular(AppTheme.radiusCard),
       child: Stack(
         children: [
-          Positioned.fill(
+          const Positioned.fill(
             child: DecoratedBox(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -680,7 +680,7 @@ class _AccountScreenState extends State<AccountScreen> {
           const Positioned.fill(
             child: HoneycombBackground(opacity: 0.06, color: Colors.white),
           ),
-          Positioned(
+          const Positioned(
             right: -10,
             top: -10,
             child: Opacity(
@@ -1047,7 +1047,7 @@ class _AccountScreenState extends State<AccountScreen> {
             IconButton(
               tooltip: context.t('account.sessions.signOut'),
               visualDensity: VisualDensity.compact,
-              icon: Icon(LucideIcons.logOut, size: 17, color: AppColors.danger),
+              icon: const Icon(LucideIcons.logOut, size: 17, color: AppColors.danger),
               onPressed: () => _revokeSession(s),
             ),
           ],

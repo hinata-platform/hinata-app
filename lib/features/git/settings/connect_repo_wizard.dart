@@ -4,7 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_client.dart';
-import '../../../core/api/hinata_repository.dart';
+import '../../../core/repositories/git_repository.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/git_dev_info.dart';
 import '../../../core/models/work_models.dart';
@@ -14,6 +14,9 @@ import '../../../core/widgets/hex_mark.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../git_tokens.dart';
 import '../widgets/provider_glyph.dart';
+
+part 'connect_repo_wizard.data.dart';
+part 'connect_repo_wizard.widgets.dart';
 
 /// Opens the Liquid-Glass connect wizard. Resolves to the updated [Project]
 /// (with `git` set) once a repository is linked, or `null` if cancelled.
@@ -29,36 +32,6 @@ Future<Project?> showConnectRepoWizard(
         _ConnectRepoWizard(project: project, startToken: startToken),
   );
 }
-
-// [titleKey] is either an i18n key (github rows: human labels) or a literal
-// OAuth scope name kept verbatim (gitlab/bitbucket rows like `api`, `account`).
-// [descKey]/[scopeKey] always resolve through i18n. See [_permTitle].
-typedef _Scope = ({String titleKey, String descKey, String scopeKey, bool required});
-
-const Map<String, List<_Scope>> _permsByProvider = {
-  'github': [
-    (titleKey: 'git.connect.perms.ghMeta', descKey: 'git.connect.perms.ghMetaDesc', scopeKey: 'read', required: true),
-    (titleKey: 'git.connect.perms.ghContents', descKey: 'git.connect.perms.ghContentsDesc', scopeKey: 'readWrite', required: false),
-    (titleKey: 'git.connect.perms.ghPrs', descKey: 'git.connect.perms.ghPrsDesc', scopeKey: 'readWrite', required: false),
-    (titleKey: 'git.connect.perms.ghIssues', descKey: 'git.connect.perms.ghIssuesDesc', scopeKey: 'readWrite', required: false),
-    (titleKey: 'git.connect.perms.ghChecks', descKey: 'git.connect.perms.ghChecksDesc', scopeKey: 'read', required: false),
-    (titleKey: 'git.connect.perms.ghHooks', descKey: 'git.connect.perms.ghHooksDesc', scopeKey: 'readWrite', required: false),
-  ],
-  'gitlab': [
-    (titleKey: 'api', descKey: 'git.connect.perms.glApiDesc', scopeKey: 'full', required: true),
-    (titleKey: 'read_repository', descKey: 'git.connect.perms.glReadDesc', scopeKey: 'read', required: false),
-    (titleKey: 'write_repository', descKey: 'git.connect.perms.glWriteDesc', scopeKey: 'write', required: false),
-    (titleKey: 'git.connect.perms.ghHooks', descKey: 'git.connect.perms.glHooksDesc', scopeKey: 'readWrite', required: false),
-  ],
-  'bitbucket': [
-    (titleKey: 'account', descKey: 'git.connect.perms.bbAccountDesc', scopeKey: 'read', required: true),
-    (titleKey: 'repository', descKey: 'git.connect.perms.bbRepoDesc', scopeKey: 'read', required: false),
-    (titleKey: 'pullrequest', descKey: 'git.connect.perms.bbPrDesc', scopeKey: 'readWrite', required: false),
-    (titleKey: 'webhook', descKey: 'git.connect.perms.bbHookDesc', scopeKey: 'readWrite', required: false),
-  ],
-};
-
-enum _Step { provider, authorize, owner, repo, token }
 
 class _ConnectRepoWizard extends StatefulWidget {
   const _ConnectRepoWizard({required this.project, required this.startToken});
@@ -95,7 +68,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
   final _urlCtrl = TextEditingController();
   final _tokenCtrl = TextEditingController();
 
-  HinataRepository get _repoApi => context.read<HinataRepository>();
+  GitRepository get _repoApi => context.read<GitRepository>();
   String get _pid => widget.project.id;
 
   @override
@@ -331,7 +304,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               color: AppColors.accentSoft,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(LucideIcons.gitBranch, size: 20, color: AppColors.accentStrong),
+            child: const Icon(LucideIcons.gitBranch, size: 20, color: AppColors.accentStrong),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -546,7 +519,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               color: AppColors.accentSoft,
               borderRadius: BorderRadius.circular(AppTheme.radiusPill),
             ),
-            child: Text(
+            child: const Text(
               'OAuth',
               style: TextStyle(
                 fontSize: 10,
@@ -626,7 +599,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               color: AppColors.accentSoft,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(LucideIcons.lock, size: 24, color: AppColors.warning),
+            child: const Icon(LucideIcons.lock, size: 24, color: AppColors.warning),
           ),
         ),
         const SizedBox(height: 14),
@@ -741,7 +714,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(LucideIcons.circleCheckBig, size: 16, color: AppColors.success),
+                      const Icon(LucideIcons.circleCheckBig, size: 16, color: AppColors.success),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -1016,7 +989,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
         onTap: onTap,
         child: Text(
           text,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: AppColors.accentStrong,
@@ -1033,280 +1006,4 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
   // literal OAuth scope name (gitlab/bitbucket) that stays verbatim.
   String _permTitle(BuildContext context, String titleKey) =>
       titleKey.startsWith('git.') ? context.t(titleKey) : titleKey;
-}
-
-class _CardButton extends StatelessWidget {
-  const _CardButton({required this.child, required this.onTap});
-
-  final Widget child;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: Container(
-          padding: const EdgeInsets.all(15),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(color: AppColors.hairline),
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class _OwnerItem extends StatelessWidget {
-  const _OwnerItem({
-    required this.owner,
-    required this.provider,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final GitOwner owner;
-  final GitProvider provider;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return _ListItem(
-      selected: selected,
-      onTap: onTap,
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: providerBrand(provider),
-              borderRadius: BorderRadius.circular(7),
-            ),
-            child: Text(
-              owner.name.length >= 2
-                  ? owner.name.substring(0, 2).toUpperCase()
-                  : owner.name.toUpperCase(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  owner.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
-                ),
-                Text(
-                  context.t('git.connect.ownerMeta', variables: {
-                    'kind': owner.kind,
-                    'count': '${owner.repos}',
-                    'unit': '${provider.unit}s',
-                  }),
-                  style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
-                ),
-              ],
-            ),
-          ),
-          Icon(LucideIcons.chevronRight, size: 18, color: AppColors.accentStrong),
-        ],
-      ),
-    );
-  }
-}
-
-class _RepoItem extends StatelessWidget {
-  const _RepoItem({
-    required this.repo,
-    required this.provider,
-    required this.owner,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final GitRepo repo;
-  final GitProvider provider;
-  final GitOwner owner;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return _ListItem(
-      selected: selected,
-      onTap: onTap,
-      child: Row(
-        children: [
-          ProviderGlyph(provider: provider, size: 30),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '${owner.name}/',
-                        style: TextStyle(
-                          color: AppColors.inkFaint,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      TextSpan(text: repo.name),
-                    ],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    if (repo.langColor != null) ...[
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _hexColor(repo.langColor!),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                    ],
-                    Flexible(
-                      child: Text(
-                        [
-                          if (repo.lang != null) repo.lang!,
-                          if (repo.updated != null)
-                            context.t('git.connect.updatedAgo',
-                                variables: {'ago': '${repo.updated}'}),
-                        ].join(' · '),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-              border: Border.all(color: AppColors.hairline),
-            ),
-            child: Text(
-              repo.isPrivate
-                  ? context.t('git.connect.private')
-                  : context.t('git.connect.public'),
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.4,
-                color: AppColors.inkFaint,
-              ),
-            ),
-          ),
-          if (selected) ...[
-            const SizedBox(width: 8),
-            Icon(LucideIcons.circleCheckBig, size: 18, color: AppColors.accentStrong),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _ListItem extends StatelessWidget {
-  const _ListItem({required this.child, required this.selected, required this.onTap});
-
-  final Widget child;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected ? AppColors.accentSoft : AppColors.surface,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(
-              color: selected ? AppColors.accent : AppColors.hairline,
-            ),
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class _PrimaryAction extends StatelessWidget {
-  const _PrimaryAction({
-    required this.label,
-    required this.icon,
-    required this.busy,
-    required this.onPressed,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool busy;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return FilledButton.icon(
-      onPressed: onPressed,
-      style: FilledButton.styleFrom(
-        backgroundColor: AppColors.navy,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        ),
-      ),
-      icon: busy
-          ? const SizedBox(
-              width: 15,
-              height: 15,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-            )
-          : Icon(icon, size: 15),
-      label: Text(label),
-    );
-  }
-}
-
-Color _hexColor(String hex) {
-  final cleaned = hex.replaceAll('#', '');
-  final value = int.tryParse(cleaned, radix: 16) ?? 0x999999;
-  return Color(0xFF000000 | value);
 }

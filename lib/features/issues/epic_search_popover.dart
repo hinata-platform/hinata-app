@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/issue_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
@@ -81,7 +81,7 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
   static const _debounceDelay = Duration(milliseconds: 180);
   static const _pageSize = 25;
 
-  HinataRepository get _repo => context.read<HinataRepository>();
+  IssueRepository get _repo => context.read<IssueRepository>();
 
   final _searchCtrl = TextEditingController();
   final _focus = FocusNode();
@@ -277,7 +277,7 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            borderSide: BorderSide(color: AppColors.accent, width: 1.4),
+            borderSide: const BorderSide(color: AppColors.accent, width: 1.4),
           ),
         ),
       ),

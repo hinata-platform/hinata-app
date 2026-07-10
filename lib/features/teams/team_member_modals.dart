@@ -3,7 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/team_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
 import '../../core/models/team_models.dart';
@@ -21,7 +21,7 @@ Future<bool?> showAddMembersModal(
   required List<DirectoryUser> candidates,
   required Map<String, Project> projectsById,
 }) {
-  final repo = context.read<HinataRepository>();
+  final repo = context.read<TeamRepository>();
   return showTeamModal<bool>(
     context,
     _AddMembersBody(
@@ -42,7 +42,7 @@ Future<bool?> showManageMemberModal(
   required Map<String, Project> projectsById,
   required bool isSelf,
 }) {
-  final repo = context.read<HinataRepository>();
+  final repo = context.read<TeamRepository>();
   return showTeamModal<bool>(
     context,
     _ManageMemberBody(
@@ -73,7 +73,7 @@ class _AddMembersBody extends StatefulWidget {
     required this.projectsById,
   });
 
-  final HinataRepository repo;
+  final TeamRepository repo;
   final Team team;
   final List<DirectoryUser> candidates;
   final Map<String, Project> projectsById;
@@ -287,7 +287,7 @@ class _ManageMemberBody extends StatefulWidget {
     required this.isSelf,
   });
 
-  final HinataRepository repo;
+  final TeamRepository repo;
   final Team team;
   final TeamMembership membership;
   final DirectoryUser user;

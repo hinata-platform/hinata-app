@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/notification_repository.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
@@ -21,14 +21,14 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  late final HinataRepository _repo;
+  late final NotificationRepository _repo;
   late final PagedCubit<AppNotification> _cubit;
   final ScrollController _scroll = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _repo = context.read<HinataRepository>();
+    _repo = context.read<NotificationRepository>();
     _cubit = PagedCubit<AppNotification>(
       (page, size) => _repo.notificationsPage(page: page, size: size),
       pageSize: 25,

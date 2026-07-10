@@ -108,7 +108,7 @@ class ServerMeta extends Equatable {
 /// Outcome of a one-off reachability probe of a *candidate* server — a timed
 /// `GET /api/v1/meta` against a URL the app is not yet connected to. Powers the
 /// "add server" connection test (latency, TLS, version) before committing to a
-/// switch. See [HinataRepository.probeServer].
+/// switch. See [MetaRepository.probeServer].
 class ServerProbe {
   const ServerProbe({
     required this.ms,

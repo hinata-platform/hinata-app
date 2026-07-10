@@ -5,7 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/auth_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/oauth_consent.dart';
@@ -37,7 +37,7 @@ class OAuthConsentScreen extends StatefulWidget {
 }
 
 class _OAuthConsentScreenState extends State<OAuthConsentScreen> {
-  HinataRepository get _repo => context.read<HinataRepository>();
+  AuthRepository get _repo => context.read<AuthRepository>();
 
   OAuthConsentInfo? _info;
   bool _loading = true;
@@ -318,7 +318,7 @@ class _ScopeRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       child: Row(
         children: [
-          Icon(LucideIcons.check, size: 16, color: AppColors.success),
+          const Icon(LucideIcons.check, size: 16, color: AppColors.success),
           const SizedBox(width: 11),
           Expanded(
             child: Column(

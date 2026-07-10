@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/auth_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
@@ -73,7 +73,7 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
       _loadError = null;
     });
     try {
-      final info = await context.read<HinataRepository>().inviteInfo(widget.token);
+      final info = await context.read<AuthRepository>().inviteInfo(widget.token);
       if (!mounted) return;
       setState(() {
         _email = info.email;
@@ -96,7 +96,7 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
     });
     try {
       final tokens = await context
-          .read<HinataRepository>()
+          .read<AuthRepository>()
           .acceptInvite(widget.token, _password.text);
       if (!mounted) return;
       context.read<AuthBloc>().add(SsoTokensReceived(tokens.access, tokens.refresh));
@@ -141,7 +141,7 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(LucideIcons.mailWarning, size: 40, color: AppColors.danger),
+        const Icon(LucideIcons.mailWarning, size: 40, color: AppColors.danger),
         const SizedBox(height: 16),
         Text(
           context.t('invite.invalidTitle'),

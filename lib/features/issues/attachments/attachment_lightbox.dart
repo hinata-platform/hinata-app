@@ -171,7 +171,7 @@ class _LightboxScaffoldState extends State<_LightboxScaffold> {
           useOwnLayer: true,
           quality: GlassQuality.premium,
           clipBehavior: Clip.antiAlias,
-          shape: LiquidRoundedSuperellipse(borderRadius: 22),
+          shape: const LiquidRoundedSuperellipse(borderRadius: 22),
           // A touch more frost than the standard panel — this chrome sits
           // over full-bleed photos.
           settings: liquidGlassPanelSettings(

@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/i18n/i18n.dart';
@@ -20,6 +19,9 @@ import '../../core/widgets/status_widgets.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart' show glassWoltSurface;
 import 'board_manage_menu.dart';
+import '../../core/repositories/board_repository.dart';
+import '../../core/repositories/project_repository.dart';
+import '../../core/repositories/team_repository.dart';
 
 /// Lists all boards for a single project and allows creating new ones.
 class ProjectBoardsScreen extends StatefulWidget {
@@ -45,12 +47,11 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
   void initState() {
     super.initState();
     _cubit = FetchCubit<_BoardsData>(() async {
-      final repo = context.read<HinataRepository>();
       final me = context.read<AuthBloc>().state.user;
       final results = await Future.wait([
-        repo.boards(projectId: widget.projectId),
-        repo.project(widget.projectId),
-        repo.teams(),
+        context.read<BoardRepository>().boards(projectId: widget.projectId),
+        context.read<ProjectRepository>().project(widget.projectId),
+        context.read<TeamRepository>().teams(),
       ]);
       final boards = results[0] as List<AgileBoard>;
       final project = results[1] as Project;
@@ -77,7 +78,7 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
   }
 
   Future<void> _showCreate() async {
-    final repository = context.read<HinataRepository>();
+    final boards = context.read<BoardRepository>();
     final created = await WoltModalSheet.show<AgileBoard?>(
       context: context,
       pageContentDecorator: glassWoltSurface,
@@ -87,7 +88,7 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
           surfaceTintColor: Colors.transparent,
           hasTopBarLayer: false,
           child: RepositoryProvider.value(
-            value: repository,
+            value: boards,
             child: _CreateBoardBody(
               projectId: widget.projectId,
               projectName: widget.projectName,
@@ -462,7 +463,7 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
       _error = null;
     });
     try {
-      final board = await context.read<HinataRepository>().createBoard(
+      final board = await context.read<BoardRepository>().createBoard(
         _name.text.trim(),
         [widget.projectId],
       );

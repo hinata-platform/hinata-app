@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/api/api_client.dart';
-import '../../../core/api/hinata_repository.dart';
+import '../../../core/repositories/git_repository.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/git_connection.dart';
 import '../../../core/models/git_dev_info.dart';
@@ -44,7 +44,7 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
   bool _gear = false;
   String? _templateOverride;
 
-  HinataRepository get _repo => context.read<HinataRepository>();
+  GitRepository get _repo => context.read<GitRepository>();
   GitConnection? get _git => widget.project.git;
   GitProvider? get _provider => gitProviderFrom(_git?.provider);
 
@@ -406,7 +406,7 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
       ),
       child: Text(
         label,
-        style: TextStyle(
+        style: const TextStyle(
           fontFamily: AppTheme.fontMono,
           fontSize: 11,
           color: AppColors.accentStrong,
@@ -418,10 +418,10 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
   Widget _autoHint(String pre, String bold, String post) => Text.rich(
     TextSpan(
       children: [
-        WidgetSpan(
+        const WidgetSpan(
           alignment: PlaceholderAlignment.middle,
           child: Padding(
-            padding: const EdgeInsets.only(right: 5),
+            padding: EdgeInsets.only(right: 5),
             child: Icon(LucideIcons.zap, size: 12, color: AppColors.accentStrong),
           ),
         ),
@@ -436,10 +436,10 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
   Widget _autoHintRich() => Text.rich(
     TextSpan(
       children: [
-        WidgetSpan(
+        const WidgetSpan(
           alignment: PlaceholderAlignment.middle,
           child: Padding(
-            padding: const EdgeInsets.only(right: 5),
+            padding: EdgeInsets.only(right: 5),
             child: Icon(LucideIcons.zap, size: 12, color: AppColors.accentStrong),
           ),
         ),
@@ -457,7 +457,7 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
 
   InlineSpan _monoChip(String text) => TextSpan(
     text: text,
-    style: TextStyle(
+    style: const TextStyle(
       fontFamily: AppTheme.fontMono,
       fontSize: 11.5,
       color: AppColors.accentStrong,

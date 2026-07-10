@@ -10,7 +10,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
@@ -35,6 +34,11 @@ import 'create_board_dialog.dart';
 import 'board_filter_popup.dart';
 import 'board_people_strip.dart';
 import 'board_timeline.dart';
+import '../../core/repositories/board_repository.dart';
+import '../../core/repositories/issue_repository.dart';
+import '../../core/repositories/project_repository.dart';
+import '../../core/repositories/team_repository.dart';
+import '../../core/repositories/user_repository.dart';
 
 part 'board_screen.header.dart';
 part 'board_screen.cards.dart';
@@ -87,12 +91,11 @@ class _BoardScreenState extends State<BoardScreen> {
       _loading = true;
       _error = null;
     });
-    final repo = context.read<HinataRepository>();
     try {
       final results = await Future.wait([
-        repo.projects(),
-        repo.boards(projectId: _projectFilter),
-        repo.teams(),
+        context.read<ProjectRepository>().projects(),
+        context.read<BoardRepository>().boards(projectId: _projectFilter),
+        context.read<TeamRepository>().teams(),
       ]);
       _projects = results[0] as List<Project>;
       _boards = results[1] as List<AgileBoard>;
@@ -359,18 +362,17 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       _loading = true;
       _error = null;
     });
-    final repo = context.read<HinataRepository>();
     try {
       final results = await Future.wait([
-        repo.boardView(widget.boardId, sprintId: _sprintId),
-        repo.users(),
-        repo.projects(),
-        repo.teams(),
+        context.read<BoardRepository>().boardView(widget.boardId, sprintId: _sprintId),
+        context.read<UserRepository>().users(),
+        context.read<ProjectRepository>().projects(),
+        context.read<TeamRepository>().teams(),
       ]);
       final view = results[0] as BoardView;
       final users = results[1] as List<DirectoryUser>;
       final projects = results[2] as List<Project>;
-      final loaded = await _loadBacklog(repo, view.board.projectIds);
+      final loaded = await _loadBacklog(view.board.projectIds);
       final backlog = loaded.backlog;
       if (!mounted) return;
       final boardProjectIds = view.board.projectIds.toSet();
@@ -406,7 +408,6 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   /// Loads every project issue once: the backlog (no-sprint issues) plus a
   /// by-id index used to resolve an issue's epic for grouping / filtering.
   Future<({List<Issue> backlog, Map<String, Issue> byId})> _loadBacklog(
-    HinataRepository repo,
     List<String> projectIds,
   ) async {
     if (projectIds.isEmpty) {
@@ -416,7 +417,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     // clamps size to 100), so the by-id index and backlog never silently miss
     // issues beyond the first page.
     final pages = await Future.wait(
-      projectIds.map((p) => repo.allIssues(projectId: p)),
+      projectIds.map((p) => context.read<IssueRepository>().allIssues(projectId: p)),
     );
     final seen = <String>{};
     final out = <Issue>[];
@@ -492,7 +493,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   Future<void> _moveIssue(Issue issue, BoardColumnView column) async {
     if (column.states.contains(issue.state) || column.states.isEmpty) return;
     try {
-      await context.read<HinataRepository>().updateIssue(issue.id, {
+      await context.read<IssueRepository>().updateIssue(issue.id, {
         'state': column.states.first,
       });
       await _load();

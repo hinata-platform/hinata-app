@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/auth_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
@@ -68,7 +68,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     });
     try {
       final tokens = await context
-          .read<HinataRepository>()
+          .read<AuthRepository>()
           .acceptPasswordReset(widget.token, _password.text);
       if (!mounted) return;
       context.read<AuthBloc>().add(SsoTokensReceived(tokens.access, tokens.refresh));
@@ -107,7 +107,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(LucideIcons.triangleAlert, size: 40, color: AppColors.danger),
+        const Icon(LucideIcons.triangleAlert, size: 40, color: AppColors.danger),
         const SizedBox(height: 16),
         Text(
           context.t('reset.invalidTitle'),

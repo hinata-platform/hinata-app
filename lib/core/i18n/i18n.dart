@@ -17,8 +17,8 @@ abstract final class I18n {
           // values (e.g. a repo slug's "/" becomes "&#x2F;"). That's meant for
           // HTML output; Flutter Text widgets render plain text, so it only
           // corrupts our strings. Disable it so interpolated values stay literal.
-          options: I18NextOptions(
-            fallbackNamespaces: const ['common'],
+          options: const I18NextOptions(
+            fallbackNamespaces: ['common'],
             escapeValue: false,
           ),
         ),

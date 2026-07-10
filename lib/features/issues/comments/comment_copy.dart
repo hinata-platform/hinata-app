@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
-import '../../../core/api/hinata_repository.dart';
+import '../../../core/repositories/media_repository.dart';
 import '../../../core/models/work_models.dart';
 
 /// What a comment copy actually put on the clipboard.
@@ -16,7 +16,7 @@ final _singleImage = RegExp(r'^\s*!\[[^\]]*\]\(([^)]+)\)\s*$');
 /// action). Falls back to text if the image can't be fetched or the platform
 /// lacks a rich clipboard.
 Future<CommentCopyKind> copyComment(
-  HinataRepository repo,
+  MediaRepository repo,
   IssueComment comment,
 ) async {
   final url = _singleImage.firstMatch(comment.text)?.group(1);
@@ -28,7 +28,7 @@ Future<CommentCopyKind> copyComment(
   return CommentCopyKind.text;
 }
 
-Future<bool> _copyImage(HinataRepository repo, String url) async {
+Future<bool> _copyImage(MediaRepository repo, String url) async {
   final clipboard = SystemClipboard.instance;
   if (clipboard == null) return false; // platform without a rich clipboard
   try {

@@ -158,12 +158,12 @@ class CapacityBar extends StatelessWidget {
                 if (b.done > 0)
                   Expanded(
                     flex: flex(b.done),
-                    child: ColoredBox(color: SprintTokens.done),
+                    child: const ColoredBox(color: SprintTokens.done),
                   ),
                 if (b.progress > 0)
                   Expanded(
                     flex: flex(b.progress),
-                    child: ColoredBox(color: SprintTokens.progress),
+                    child: const ColoredBox(color: SprintTokens.progress),
                   ),
                 if (b.todo > 0)
                   Expanded(

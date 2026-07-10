@@ -8,7 +8,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../core/api/hinata_repository.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/events/issue_events.dart';
@@ -25,6 +24,9 @@ import '../../core/widgets/status_widgets.dart';
 import '../issues/issue_detail_sheet.dart';
 import '../sprint/modals/glass_modal.dart'
     show showGlassAnchoredPopover, GlassModalHeader, GlassModalFooter;
+import '../../core/repositories/dashboard_repository.dart';
+import '../../core/repositories/project_repository.dart';
+import '../../core/repositories/team_repository.dart';
 
 part 'dashboard_screen.hero.dart';
 part 'dashboard_screen.panels.dart';
@@ -75,6 +77,10 @@ class _DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<_DashboardView> {
   late final FetchCubit<DashboardData> _cubit;
 
+  DashboardRepository get _dashboardApi => context.read<DashboardRepository>();
+  ProjectRepository get _projectApi => context.read<ProjectRepository>();
+  TeamRepository get _teamApi => context.read<TeamRepository>();
+
   bool _editing = false;
   bool _saving = false;
 
@@ -87,7 +93,6 @@ class _DashboardViewState extends State<_DashboardView> {
   List<Project> _projects = const [];
   List<Team> _teams = const [];
 
-  HinataRepository get _repo => context.read<HinataRepository>();
 
   /// Re-fetch when an issue is created/changed elsewhere (e.g. the global
   /// nav-rail "new issue" button, which can't reach this screen's cubit).
@@ -97,7 +102,7 @@ class _DashboardViewState extends State<_DashboardView> {
   void initState() {
     super.initState();
     _cubit = FetchCubit<DashboardData>(
-      () => _repo.dashboard(override: _editing ? _draft : null),
+      () => _dashboardApi.dashboard(override: _editing ? _draft : null),
     )..load();
     _issueSub = IssueEvents.instance.changes.listen((_) => _cubit.load());
     _loadPickerData();
@@ -105,8 +110,8 @@ class _DashboardViewState extends State<_DashboardView> {
 
   Future<void> _loadPickerData() async {
     try {
-      final projects = await _repo.projects();
-      final teams = await _repo.teams();
+      final projects = await _projectApi.projects();
+      final teams = await _teamApi.teams();
       if (!mounted) return;
       setState(() {
         _projects = projects;
@@ -134,7 +139,7 @@ class _DashboardViewState extends State<_DashboardView> {
   Future<void> _finishEdit() async {
     setState(() => _saving = true);
     try {
-      await _repo.saveDashboardPrefs(_draft);
+      await _dashboardApi.saveDashboardPrefs(_draft);
       if (!mounted) return;
       setState(() {
         _editing = false;

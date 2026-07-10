@@ -633,7 +633,7 @@ class _DashedBorderPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
 
-    final inset = strokeWidth / 2;
+    const inset = strokeWidth / 2;
     final rrect = RRect.fromRectAndRadius(
       Rect.fromLTWH(
         inset,

@@ -14,8 +14,14 @@ import 'package:go_router/go_router.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
 import '../../core/api/sse.dart';
+import '../../core/repositories/comment_repository.dart';
+import '../../core/repositories/domain_providers.dart';
+import '../../core/repositories/issue_repository.dart';
+import '../../core/repositories/media_repository.dart';
+import '../../core/repositories/project_repository.dart';
+import '../../core/repositories/sprint_repository.dart';
+import '../../core/repositories/user_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
@@ -134,11 +140,10 @@ Future<void> showIssueDetailSheet(
   VoidCallback? onChanged,
   String? targetCommentId,
 }) {
-  final repository = context.read<HinataRepository>();
   final auth = context.read<AuthBloc>();
   final header = ValueNotifier<Issue?>(null);
   final bodyKey = GlobalKey<IssueDetailBodyState>();
-  final apiBaseUrl = repository.apiBaseUrl;
+  final apiBaseUrl = context.read<IssueRepository>().apiBaseUrl;
   // Own the sheet's scroll controller so the body can animate the feed to the
   // newest comment after posting (phone: the whole sheet scrolls).
   final sheetScroll = ScrollController();
@@ -199,7 +204,7 @@ Future<void> showIssueDetailSheet(
         // body's provider scope (the MentionField reads the repository).
         stickyActionBar: MultiRepositoryProvider(
           providers: [
-            RepositoryProvider.value(value: repository),
+            ...domainRepositoryProviders(context),
             BlocProvider.value(value: auth),
           ],
           child: ValueListenableBuilder<Issue?>(
@@ -219,7 +224,7 @@ Future<void> showIssueDetailSheet(
         ),
         child: MultiRepositoryProvider(
           providers: [
-            RepositoryProvider.value(value: repository),
+            ...domainRepositoryProviders(context),
             BlocProvider.value(value: auth),
           ],
           child: IssueDetailBody(

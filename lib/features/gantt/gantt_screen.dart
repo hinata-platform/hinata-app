@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/project_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
@@ -96,7 +96,7 @@ class _GanttScreenState extends State<GanttScreen> {
       _loading = true;
       _error = null;
     });
-    final repository = context.read<HinataRepository>();
+    final repository = context.read<ProjectRepository>();
     try {
       _projects = await repository.projects();
       if (_projects.isEmpty) {
@@ -697,7 +697,7 @@ class _DayTick extends StatelessWidget {
                 width: 18,
                 height: 18,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppColors.stTodo,
                   shape: BoxShape.circle,
                 ),

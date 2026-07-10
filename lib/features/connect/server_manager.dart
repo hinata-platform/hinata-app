@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/meta_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
@@ -38,7 +38,7 @@ Future<void> showServerManager(
   Rect? anchor,
 }) {
   Widget builder(BuildContext _) => _ServerManagerSheet(
-    repo: context.read<HinataRepository>(),
+    repo: context.read<MetaRepository>(),
     storage: context.read<AppStorage>(),
     appConfig: context.read<AppConfigBloc>(),
     startOnAdd: startOnAdd,
@@ -89,7 +89,7 @@ class _ServerManagerSheet extends StatefulWidget {
     required this.startOnAdd,
   });
 
-  final HinataRepository repo;
+  final MetaRepository repo;
   final AppStorage storage;
   final AppConfigBloc appConfig;
   final bool startOnAdd;
@@ -561,7 +561,7 @@ class _AddServerButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(LucideIcons.plus, size: 19, color: AppColors.accentStrong),
+              const Icon(LucideIcons.plus, size: 19, color: AppColors.accentStrong),
               const SizedBox(width: 9),
               Text(
                 context.t('server.addServer'),
@@ -590,7 +590,7 @@ class _AddServerPage extends StatefulWidget {
     required this.onSave,
   });
 
-  final HinataRepository repo;
+  final MetaRepository repo;
   final VoidCallback onBack;
   final Future<void> Function(String url, String name) onSave;
 
@@ -725,7 +725,7 @@ class _AddServerPageState extends State<_AddServerPage> {
                 enabled: _phase != _Phase.testing,
                 keyboardType: TextInputType.url,
                 autofillHints: const [AutofillHints.url],
-                style: TextStyle(fontFamily: AppTheme.fontMono, fontSize: 14),
+                style: const TextStyle(fontFamily: AppTheme.fontMono, fontSize: 14),
                 decoration: glassInputDecoration(hint: 'server.hinata.com')
                     .copyWith(
                       prefixIcon: const Icon(LucideIcons.server, size: 18),
@@ -811,7 +811,7 @@ class _AddServerPageState extends State<_AddServerPage> {
                     ),
                   ),
                   const Spacer(),
-                  Icon(
+                  const Icon(
                     LucideIcons.zap,
                     size: 13,
                     color: AppColors.accentStrong,

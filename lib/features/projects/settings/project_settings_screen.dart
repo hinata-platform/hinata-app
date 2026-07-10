@@ -8,7 +8,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_client.dart';
-import '../../../core/api/hinata_repository.dart';
 import '../../../core/blocs/auth_bloc.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/core_models.dart';
@@ -30,6 +29,8 @@ import 'labels_section.dart';
 import 'members_section.dart';
 import 'settings_common.dart';
 import 'workflow_section.dart';
+import '../../../core/repositories/project_repository.dart';
+import '../../../core/repositories/user_repository.dart';
 
 /// Full project-settings surface: identity, accent, leads & members, colored
 /// labels, colored workflow states, and archive — edited as a draft behind a
@@ -104,11 +105,10 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
       _loadError = null;
     });
     try {
-      final repo = context.read<HinataRepository>();
       final results = await Future.wait([
-        repo.project(widget.projectId),
-        repo.users(),
-        repo.projectStateUsage(widget.projectId),
+        context.read<ProjectRepository>().project(widget.projectId),
+        context.read<UserRepository>().users(),
+        context.read<ProjectRepository>().projectStateUsage(widget.projectId),
       ]);
       final project = results[0] as Project;
       final users = results[1] as List<DirectoryUser>;
@@ -374,6 +374,7 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
     final d = _draft;
     if (d == null || !_valid || _saving) return;
     setState(() => _saving = true);
+    final projectApi = context.read<ProjectRepository>();
     try {
       final patch = <String, dynamic>{
         'name': d.name.trim(),
@@ -388,10 +389,9 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
         'archived': d.archived,
         if (_stateMigrations.isNotEmpty) 'stateMigrations': _stateMigrations,
       };
-      final repo = context.read<HinataRepository>();
-      final updated = await repo.updateProject(d.id, patch);
+      final updated = await projectApi.updateProject(d.id, patch);
       // Counts changed once issues were reassigned/deleted.
-      final usage = await repo.projectStateUsage(d.id);
+      final usage = await projectApi.projectStateUsage(d.id);
       if (!mounted) return;
       setState(() {
         _saved = updated;

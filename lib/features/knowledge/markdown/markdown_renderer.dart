@@ -297,7 +297,7 @@ class KbMarkdownParser {
     padding: const EdgeInsets.symmetric(vertical: 13),
     child: Container(
       padding: const EdgeInsets.fromLTRB(18, 4, 8, 4),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         border: Border(left: BorderSide(color: AppColors.accent, width: 3)),
       ),
       child: DefaultTextStyle.merge(
