@@ -174,7 +174,15 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   // up front when an issue is opened.
   _ActivityFilter _activityFilter = _ActivityFilter.comments;
 
-  HinataRepository get _repo => context.read<HinataRepository>();
+  // Domain repositories, read from the (re-provided) modal scope on each access
+  // — kept as getters so a `context.read` never crosses an async gap in the
+  // load/mutation flows below.
+  IssueRepository get _issueApi => context.read<IssueRepository>();
+  CommentRepository get _commentApi => context.read<CommentRepository>();
+  ProjectRepository get _projectApi => context.read<ProjectRepository>();
+  UserRepository get _userApi => context.read<UserRepository>();
+  SprintRepository get _sprintApi => context.read<SprintRepository>();
+  MediaRepository get _mediaApi => context.read<MediaRepository>();
 
   @override
   void initState() {
@@ -231,7 +239,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     _commentSseCancel?.cancel();
     _commentSseCancel = CancelToken();
     try {
-      final bytes = await _repo.commentEventStream(
+      final bytes = await _commentApi.commentEventStream(
         widget.issueId,
         cancelToken: _commentSseCancel,
       );
@@ -302,8 +310,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     try {
       final want = math.max(_comments.length, _commentPageSize);
       final results = await Future.wait([
-        _repo.comments(widget.issueId, size: want, sort: _commentSort.api),
-        _repo.pinnedComments(widget.issueId),
+        _commentApi.comments(widget.issueId, size: want, sort: _commentSort.api),
+        _commentApi.pinnedComments(widget.issueId),
       ]);
       if (!mounted) return;
       final page = results[0] as ({List<IssueComment> items, int total});
@@ -330,7 +338,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       if (t == null || !mounted) continue;
       final want = math.max(t.replies.length, _replyPageSize);
       try {
-        final p = await _repo.commentReplies(widget.issueId, rootId, size: want);
+        final p = await _commentApi.commentReplies(widget.issueId, rootId, size: want);
         if (!mounted) return;
         setState(() {
           _replyThreads[rootId] = t.copyWith(
@@ -382,7 +390,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     required bool replace,
   }) async {
     try {
-      final p = await _repo.commentReplies(
+      final p = await _commentApi.commentReplies(
         widget.issueId,
         rootId,
         page: page,
@@ -424,7 +432,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   Future<void> _reloadTopLevelComments() async {
     try {
-      final p = await _repo.comments(
+      final p = await _commentApi.comments(
         widget.issueId,
         size: _commentPageSize,
         sort: _commentSort.api,
@@ -535,18 +543,18 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       _error = null;
     });
     try {
-      final issue = await _repo.issue(widget.issueId);
+      final issue = await _issueApi.issue(widget.issueId);
       final results = await Future.wait([
-        _repo.comments(
+        _commentApi.comments(
           widget.issueId,
           size: _commentPageSize,
           sort: _commentSort.api,
         ),
-        _repo.workItems(widget.issueId),
-        _repo.projects(),
-        _repo.users(),
-        _repo.issueActivity(widget.issueId),
-        _repo.pinnedComments(widget.issueId),
+        _issueApi.workItems(widget.issueId),
+        _projectApi.projects(),
+        _userApi.users(),
+        _issueApi.issueActivity(widget.issueId),
+        _commentApi.pinnedComments(widget.issueId),
       ]);
       _issue = issue;
       final commentsPage =
@@ -567,20 +575,20 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       // Sprints come from the project's board(s); aggregate across every board
       // (a project may have both a Kanban and a Scrum board). Best-effort.
       try {
-        _sprints = await _repo.sprintsForProject(issue.projectId);
+        _sprints = await _sprintApi.sprintsForProject(issue.projectId);
       } catch (_) {
         _sprints = const [];
       }
       // Project issues power the comment `@`-menu + `{{issue:…}}` chip previews;
       // KB backlinks come from the shared seed. Both best-effort.
       try {
-        final all = await _repo.allIssues(projectId: issue.projectId);
+        final all = await _issueApi.allIssues(projectId: issue.projectId);
         _projectIssues = {for (final i in all) i.readableId: i};
       } catch (_) {
         _projectIssues = const {};
       }
       try {
-        _hierarchy = await _repo.issueHierarchy(widget.issueId);
+        _hierarchy = await _issueApi.issueHierarchy(widget.issueId);
       } catch (_) {
         _hierarchy = IssueHierarchy.empty;
       }
@@ -619,7 +627,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   Future<void> _patch(Map<String, dynamic> patch) async {
     setState(() => _busy = true);
     try {
-      final updated = await _repo.updateIssue(widget.issueId, patch);
+      final updated = await _issueApi.updateIssue(widget.issueId, patch);
       if (!mounted) return;
       _issue = updated;
       _publishHeader(updated);
@@ -627,7 +635,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       // Refresh the change history so the new entry shows immediately (reset to
       // the newest page).
       try {
-        final p = await _repo.issueActivity(widget.issueId);
+        final p = await _issueApi.issueActivity(widget.issueId);
         _activity = p.items;
         _activityTotal = p.total;
         _activityPage = 0;
@@ -647,7 +655,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// sub-task panels reflect a re-parent, an inline add, or a state toggle.
   Future<void> _reloadHierarchy() async {
     try {
-      final h = await _repo.issueHierarchy(widget.issueId);
+      final h = await _issueApi.issueHierarchy(widget.issueId);
       if (mounted) setState(() => _hierarchy = h);
     } catch (_) {
       // Non-critical; the next full load reflects server truth.
@@ -674,7 +682,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   Future<void> _refreshActivity() async {
     try {
-      final page = await _repo.issueActivity(widget.issueId);
+      final page = await _issueApi.issueActivity(widget.issueId);
       if (mounted) {
         setState(() {
           _activity = page.items;
@@ -734,7 +742,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     }
     try {
       final replyTarget = _replyingTo;
-      final created = await _repo.addComment(
+      final created = await _commentApi.addComment(
         widget.issueId,
         text,
         replyToId: replyTarget?.id,
@@ -756,7 +764,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// After a top-level comment: reload the newest window so it appears (top for
   /// newest-first, bottom for oldest-first) and reveal it.
   Future<void> _refreshTopLevelAfterPost() async {
-    final p = await _repo.comments(
+    final p = await _commentApi.comments(
       widget.issueId,
       size: math.max(_comments.length + 1, _commentPageSize),
       sort: _commentSort.api,
@@ -839,7 +847,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     final trimmed = text.trim();
     if (trimmed.isEmpty || trimmed == comment.text) return true;
     try {
-      final updated = await _repo.editComment(
+      final updated = await _commentApi.editComment(
         widget.issueId,
         comment.id,
         trimmed,
@@ -862,7 +870,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     );
     if (confirmed != true) return;
     try {
-      await _repo.deleteComment(widget.issueId, comment.id);
+      await _commentApi.deleteComment(widget.issueId, comment.id);
       if (mounted) {
         setState(() => _removeComment(comment));
       }
@@ -954,7 +962,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
     setState(() => _mutateAll(comment.id, toggle));
     try {
-      final updated = await _repo.reactToComment(
+      final updated = await _commentApi.reactToComment(
         widget.issueId,
         comment.id,
         emoji,
@@ -969,12 +977,12 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// Pins/unpins a comment (any project member); refreshes pin ordering.
   Future<void> _togglePin(IssueComment comment) async {
     try {
-      final updated = await _repo.pinComment(
+      final updated = await _commentApi.pinComment(
         widget.issueId,
         comment.id,
         !comment.pinned,
       );
-      final pinned = await _repo.pinnedComments(widget.issueId);
+      final pinned = await _commentApi.pinnedComments(widget.issueId);
       if (!mounted) return;
       setState(() {
         _pinned = pinned;
@@ -1013,7 +1021,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   /// Copies a comment's text (or its inline image as real image data).
   Future<void> _copyComment(IssueComment comment) async {
-    final kind = await copyComment(context.read<MediaRepository>(), comment);
+    final kind = await copyComment(_mediaApi, comment);
     if (!mounted) return;
     _toast(
       kind == CommentCopyKind.image
@@ -1027,7 +1035,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     final issue = _issue;
     if (issue == null) return;
     final link =
-        '${issueWebLink(_repo.apiBaseUrl, issue.linkId)}?comment=${comment.id}';
+        '${issueWebLink(_issueApi.apiBaseUrl, issue.linkId)}?comment=${comment.id}';
     await Clipboard.setData(ClipboardData(text: link));
     if (!mounted) return;
     _toast(context.t('comments.linkCopied'));
@@ -1071,7 +1079,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     if (confirmed != true) return;
     for (final id in ids) {
       try {
-        await _repo.deleteComment(widget.issueId, id);
+        await _commentApi.deleteComment(widget.issueId, id);
       } catch (_) {
         // Skip failures; the rest still delete and a resync reconciles.
       }
@@ -1137,7 +1145,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       // Derive the page from how many are loaded (survives an SSE resync that
       // reset the window), so each pull fetches the next older batch.
       final next = _comments.length ~/ _commentPageSize;
-      final p = await _repo.comments(
+      final p = await _commentApi.comments(
         widget.issueId,
         page: next,
         size: _commentPageSize,
@@ -1176,7 +1184,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     setState(() => _loadingMore = true);
     try {
       final next = _activityPage + 1;
-      final p = await _repo.issueActivity(widget.issueId, page: next);
+      final p = await _issueApi.issueActivity(widget.issueId, page: next);
       if (!mounted) return;
       final existing = {for (final a in _activity) a.id};
       final older = [
@@ -1324,7 +1332,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 issue: issue,
                 busy: _busy,
                 stateColor: _projStateColor(_project, issue.state),
-                link: issueWebLink(_repo.apiBaseUrl, issue.linkId),
+                link: issueWebLink(_issueApi.apiBaseUrl, issue.linkId),
                 onMinimize: widget.canMinimize ? _minimizeToModal : null,
                 onDelete: () => _confirmDelete(issue),
                 onClose: _closeRoute,
@@ -1459,7 +1467,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     var match = _projectIssues[readableId];
     if (match == null) {
       try {
-        final res = await _repo.issues(query: readableId, size: 20);
+        final res = await _issueApi.issues(query: readableId, size: 20);
         match = res.issues.where((i) => i.readableId == readableId).firstOrNull;
       } on ApiFailure catch (failure) {
         _toast(failure.message);
@@ -1846,7 +1854,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   Future<void> _addSubtask(Issue parent, String title) async {
     if (title.trim().isEmpty) return;
     try {
-      await _repo.createIssue({
+      await _issueApi.createIssue({
         'projectId': parent.projectId,
         'title': title.trim(),
         'type': 'SUBTASK',
@@ -1873,7 +1881,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     }
     if (target == child.state) return;
     try {
-      await _repo.updateIssue(child.id, {'state': target});
+      await _issueApi.updateIssue(child.id, {'state': target});
       await _reloadHierarchy();
     } on ApiFailure catch (failure) {
       _toast(failure.message);
@@ -2336,7 +2344,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
               issue: issue,
               busy: _busy,
               stateColor: _projStateColor(_project, issue.state),
-              link: issueWebLink(_repo.apiBaseUrl, issue.linkId),
+              link: issueWebLink(_issueApi.apiBaseUrl, issue.linkId),
               onMinimize: widget.canMinimize ? _minimizeToModal : null,
               onDelete: () => _confirmDelete(issue),
               onClose: _closeRoute,
@@ -2610,7 +2618,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   Future<void> _sendVoiceComment(VoiceRecording recording) async {
     try {
       final replyTarget = _replyingTo;
-      final created = await _repo.addVoiceComment(
+      final created = await _commentApi.addVoiceComment(
         widget.issueId,
         bytes: recording.bytes,
         mime: recording.mime,
@@ -2655,7 +2663,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       nameFor: (id) => _names[id] ?? id,
       avatarFor: (id) => _avatars[id],
       loadVoice: (c) =>
-          () => _repo.voiceCommentAudio(widget.issueId, c.id),
+          () => _commentApi.voiceCommentAudio(widget.issueId, c.id),
       canManage: (c) => me != null && c.authorId == me.id,
       onEdit: _promptEditComment,
       onDelete: _deleteComment,
@@ -2973,7 +2981,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       available: available,
       selected: issue.tags.where((l) => !_deletedLabels.contains(l)).toList(),
       onDelete: (l) async {
-        await _repo.deleteProjectLabel(issue.projectId, l);
+        await _projectApi.deleteProjectLabel(issue.projectId, l);
         _deletedLabels.add(l);
         didDelete = true;
       },
@@ -2984,7 +2992,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       // Dismissed without saving, but a label was deleted server-side — pull
       // the fresh issue so its tag chips reflect the removal.
       try {
-        final fresh = await _repo.issue(widget.issueId);
+        final fresh = await _issueApi.issue(widget.issueId);
         if (mounted) setState(() => _issue = fresh);
       } catch (_) {
         /* next full load reflects server truth */
@@ -3120,7 +3128,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     );
     if (confirmed == true) {
       try {
-        await _repo.deleteIssue(issue.id);
+        await _issueApi.deleteIssue(issue.id);
         widget.onChanged?.call();
         if (mounted) Navigator.of(context).maybePop();
       } on ApiFailure catch (failure) {

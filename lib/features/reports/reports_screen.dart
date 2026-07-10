@@ -13,7 +13,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
@@ -26,6 +25,10 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import 'logo_raster.dart';
 import 'report_pdf.dart';
+import '../../core/repositories/dashboard_repository.dart';
+import '../../core/repositories/meta_repository.dart';
+import '../../core/repositories/project_repository.dart';
+import '../../core/repositories/user_repository.dart';
 
 /// Project insight dashboard: distribution reports (state / priority /
 /// assignee / time-per-activity) rendered as v2 bar cards, with CSV/JSON export.
@@ -65,9 +68,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
       _loading = true;
       _error = null;
     });
-    final repo = context.read<HinataRepository>();
     try {
-      final results = await Future.wait([repo.projects(), repo.users()]);
+      final results = await Future.wait([context.read<ProjectRepository>().projects(), context.read<UserRepository>().users()]);
       _projects = results[0] as List<Project>;
       final users = results[1] as List<DirectoryUser>;
       _userNames = {for (final u in users) u.id: u.displayName};
@@ -90,7 +92,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
       _loading = true;
       _error = null;
     });
-    final repo = context.read<HinataRepository>();
     final now = DateTime.now();
     final from =
         now.subtract(const Duration(days: 30)).toIso8601String().substring(0, 10);
@@ -102,11 +103,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
           query['from'] = from;
           query['to'] = to;
         }
-        return repo.report(name, query);
+        return context.read<DashboardRepository>().report(name, query);
       }).toList();
       final results = await Future.wait([
         Future.wait(futures),
-        repo.createdVsResolved(_projectId!, days: 30),
+        context.read<DashboardRepository>().createdVsResolved(_projectId!, days: 30),
       ]);
       final maps = results[0] as List<Map<String, int>>;
       _trend = results[1] as List<TrendPoint>;
@@ -168,18 +169,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
     if (format == 'pdf') {
       // Pull the freshest branding so a logo configured after app start is
       // picked up; fall back to whatever was cached at launch.
-      final repo = context.read<HinataRepository>();
+      final metaApi = context.read<MetaRepository>();
       final cached = context.read<AppConfigBloc>().state.meta;
       ServerMeta? meta = cached;
       try {
-        meta = await repo.meta();
+        meta = await metaApi.meta();
       } catch (_) {
         meta = cached;
       }
       // Fetch the org logo through the server-side proxy (same-origin → no web
       // CORS) and rasterize SVGs to PNG before embedding.
       Uint8List? logoPng;
-      final logoAsset = await repo.organizationLogo();
+      final logoAsset = await metaApi.organizationLogo();
       if (logoAsset != null) {
         logoPng = await logoToPng(
             bytes: logoAsset.bytes, isSvg: logoAsset.isSvg);

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../core/api/hinata_repository.dart';
 import '../../core/api/sse.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/deletion_models.dart';
@@ -13,6 +12,9 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../sprint/modals/glass_modal.dart' show showGlassModal;
 import '../teams/team_modal_kit.dart' show ModalShell, ModalFooter, FieldLabel;
+import '../../core/repositories/board_repository.dart';
+import '../../core/repositories/project_repository.dart';
+import '../../core/repositories/team_repository.dart';
 
 // ════════════════════════════════════════════════════════════════════════
 //  Cascading-delete flow for boards, projects and teams. A single Liquid-Glass
@@ -29,7 +31,6 @@ Future<bool?> showDeleteBoardFlow(
   required String boardId,
   required String boardName,
 }) {
-  final repo = context.read<HinataRepository>();
   return _show(
     context,
     _DeleteFlow(
@@ -37,9 +38,9 @@ Future<bool?> showDeleteBoardFlow(
       titleKey: 'delete.board.title',
       subtitleKey: 'delete.board.subtitle',
       confirmName: boardName,
-      loadImpact: () => repo.boardDeletionImpact(boardId).then(_boardImpact),
+      loadImpact: () => context.read<BoardRepository>().boardDeletionImpact(boardId).then(_boardImpact),
       openStream: (_, cancel) =>
-          repo.boardDeleteStream(boardId, cancelToken: cancel),
+          context.read<BoardRepository>().boardDeleteStream(boardId, cancelToken: cancel),
     ),
   );
 }
@@ -51,7 +52,6 @@ Future<bool?> showDeleteProjectFlow(
   required String projectId,
   required String projectName,
 }) {
-  final repo = context.read<HinataRepository>();
   return _show(
     context,
     _DeleteFlow(
@@ -59,8 +59,8 @@ Future<bool?> showDeleteProjectFlow(
       titleKey: 'delete.project.title',
       subtitleKey: 'delete.project.subtitle',
       confirmName: projectName,
-      loadImpact: () => repo.projectDeletionImpact(projectId).then(_projectImpact),
-      openStream: (choice, cancel) => repo.projectDeleteStream(
+      loadImpact: () => context.read<ProjectRepository>().projectDeletionImpact(projectId).then(_projectImpact),
+      openStream: (choice, cancel) => context.read<ProjectRepository>().projectDeleteStream(
         projectId,
         strategy: choice.strategy,
         migrateToProjectId: choice.targetId,
@@ -77,7 +77,6 @@ Future<bool?> showDeleteTeamFlow(
   required String teamId,
   required String teamName,
 }) {
-  final repo = context.read<HinataRepository>();
   return _show(
     context,
     _DeleteFlow(
@@ -85,8 +84,8 @@ Future<bool?> showDeleteTeamFlow(
       titleKey: 'delete.team.title',
       subtitleKey: 'delete.team.subtitle',
       confirmName: teamName,
-      loadImpact: () => repo.teamDeletionImpact(teamId).then(_teamImpact),
-      openStream: (_, cancel) => repo.teamDeleteStream(teamId, cancelToken: cancel),
+      loadImpact: () => context.read<TeamRepository>().teamDeletionImpact(teamId).then(_teamImpact),
+      openStream: (_, cancel) => context.read<TeamRepository>().teamDeleteStream(teamId, cancelToken: cancel),
     ),
   );
 }

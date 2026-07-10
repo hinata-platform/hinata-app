@@ -5,7 +5,6 @@ import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
 import '../../core/models/work_models.dart';
@@ -14,6 +13,9 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_avatar.dart';
 import '../../core/widgets/soft_card.dart';
+import '../../core/repositories/project_repository.dart';
+import '../../core/repositories/timesheet_repository.dart';
+import '../../core/repositories/user_repository.dart';
 
 /// Weekly timesheet matrix (user x day), YouTrack-style.
 class TimesheetScreen extends StatefulWidget {
@@ -46,12 +48,11 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
       _loading = true;
       _error = null;
     });
-    final repository = context.read<HinataRepository>();
     try {
       final results = await Future.wait([
-        repository.timesheet(_from, _to),
-        repository.users(),
-        repository.projects(),
+        context.read<TimesheetRepository>().timesheet(_from, _to),
+        context.read<UserRepository>().users(),
+        context.read<ProjectRepository>().projects(),
       ]);
       _rows = results[0] as List<TimesheetRow>;
       _users = {

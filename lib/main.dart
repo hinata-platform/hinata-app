@@ -13,7 +13,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'app.dart';
 import 'core/api/api_client.dart';
-import 'core/api/hinata_repository.dart';
+import 'core/repositories/repositories.dart';
 import 'core/widgets/progressive_blur.dart';
 import 'core/notifications/fcm_service.dart';
 import 'core/storage/app_storage.dart';
@@ -85,11 +85,11 @@ Future<void> main() async {
 
   final storage = await AppStorage.create();
   final apiClient = ApiClient(storage);
-  final repository = HinataRepository(apiClient);
+  final repositories = HinataRepositories(apiClient);
 
   runApp(HinataApp(
     storage: storage,
     apiClient: apiClient,
-    repository: repository,
+    repositories: repositories,
   ));
 }

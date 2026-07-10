@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
@@ -25,6 +24,8 @@ import 'knowledge_scope.dart';
 import 'knowledge_tokens.dart';
 import 'knowledge_tree.dart';
 import 'markdown/smart_link_resolver.dart';
+import '../../core/repositories/issue_repository.dart';
+import '../../core/repositories/user_repository.dart';
 
 /// Confluence-style Knowledge Base shell: spaces home, nested article tree,
 /// reader with TOC/aside/linked-issues, and a full markdown editor with
@@ -88,12 +89,13 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
   /// Pulls real issues (across all visible projects) and member names so smart
   /// links and the `@`-mention menu resolve to genuine backend issues.
   Future<void> _loadBackendIssues() async {
-    final repository = context.read<HinataRepository>();
+    final issueApi = context.read<IssueRepository>();
+    final userApi = context.read<UserRepository>();
     try {
       // allIssues pages through the whole backend result set so smart links and
       // the `@`-mention menu resolve against every issue, not just the first 100.
-      final issues = await repository.allIssues();
-      final users = await repository.users();
+      final issues = await issueApi.allIssues();
+      final users = await userApi.users();
       if (!mounted) return;
       setState(() {
         _issuesByReadable = {for (final i in issues) i.readableId: i};
@@ -141,9 +143,8 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
   /// Resolves a readable id (e.g. `HIV-208`) to the backend issue and opens the
   /// real issue sheet; toasts if there is no matching issue.
   Future<void> _openRealIssue(String readableId) async {
-    final repository = context.read<HinataRepository>();
     try {
-      final res = await repository.issues(query: readableId, size: 20);
+      final res = await context.read<IssueRepository>().issues(query: readableId, size: 20);
       final match = res.issues
           .where((i) => i.readableId == readableId)
           .firstOrNull;

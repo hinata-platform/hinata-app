@@ -9,7 +9,6 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import 'core/api/account_event_stream.dart';
 import 'core/api/api_client.dart';
-import 'core/api/hinata_repository.dart';
 import 'core/blocs/app_config_bloc.dart';
 import 'core/blocs/auth_bloc.dart';
 import 'core/blocs/locale_cubit.dart';
@@ -28,12 +27,12 @@ class HinataApp extends StatefulWidget {
     super.key,
     required this.storage,
     required this.apiClient,
-    required this.repository,
+    required this.repositories,
   });
 
   final AppStorage storage;
   final ApiClient apiClient;
-  final HinataRepository repository;
+  final HinataRepositories repositories;
 
   @override
   State<HinataApp> createState() => _HinataAppState();
@@ -59,7 +58,9 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   // issue detail both resolve smart-links / "Documented in" against this single
   // instance. Loaded lazily on first use (post-auth), not at startup.
   late final KnowledgeRepository _knowledge = KnowledgeRepository(
-    widget.repository,
+    articles: widget.repositories.articles,
+    users: widget.repositories.users,
+    auth: widget.repositories.auth,
   );
   StreamSubscription<Uri>? _linkSubscription;
 
@@ -67,7 +68,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    final domains = widget.repository.domains;
+    final domains = widget.repositories;
     _appConfig = AppConfigBloc(
       repository: domains.meta,
       storage: widget.storage,
@@ -282,16 +283,14 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final domains = widget.repository.domains;
+    final domains = widget.repositories;
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider.value(value: widget.storage),
         RepositoryProvider.value(value: widget.apiClient),
-        RepositoryProvider.value(value: widget.repository),
         RepositoryProvider.value(value: _knowledge),
         // Domain layer: one repository per domain (see core/repositories/).
-        // Feature code injects exactly the repository it needs instead of the
-        // legacy HinataRepository facade above.
+        // Feature code injects exactly the repository it needs.
         RepositoryProvider<MetaRepository>.value(value: domains.meta),
         RepositoryProvider<AuthRepository>.value(value: domains.auth),
         RepositoryProvider<AccountRepository>.value(value: domains.account),

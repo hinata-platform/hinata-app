@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../core/api/hinata_repository.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/i18n/i18n.dart';
@@ -17,6 +16,9 @@ import '../../core/widgets/hive_widgets.dart';
 import '../shell/page_chrome.dart';
 import 'team_tabs.dart';
 import 'team_widgets.dart';
+import '../../core/repositories/project_repository.dart';
+import '../../core/repositories/team_repository.dart';
+import '../../core/repositories/user_repository.dart';
 
 /// Bundles everything the detail tabs need in one fetch (team + directory +
 /// projects + activity), so the panels render without further round-trips.
@@ -44,12 +46,11 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
   void initState() {
     super.initState();
     _cubit = FetchCubit<TeamDetailData>(() async {
-      final repo = context.read<HinataRepository>();
       final results = await Future.wait([
-        repo.team(widget.teamId),
-        repo.users(),
-        repo.projects(),
-        repo.teamActivityPage(widget.teamId),
+        context.read<TeamRepository>().team(widget.teamId),
+        context.read<UserRepository>().users(),
+        context.read<ProjectRepository>().projects(),
+        context.read<TeamRepository>().teamActivityPage(widget.teamId),
       ]);
       final team = results[0] as Team;
       final users = results[1] as List<DirectoryUser>;
@@ -156,7 +157,7 @@ class _TeamDetailContentState extends State<_TeamDetailContent> {
     setState(() => _loadingMoreActivity = true);
     try {
       final next = _activityPage + 1;
-      final p = await context.read<HinataRepository>().teamActivityPage(
+      final p = await context.read<TeamRepository>().teamActivityPage(
         widget.data.team.id,
         page: next,
       );

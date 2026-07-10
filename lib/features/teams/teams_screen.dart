@@ -3,7 +3,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/api/hinata_repository.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/i18n/i18n.dart';
@@ -17,6 +16,8 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import 'team_modals.dart';
 import 'team_widgets.dart';
+import '../../core/repositories/team_repository.dart';
+import '../../core/repositories/user_repository.dart';
 
 typedef _TeamsData = ({
   List<Team> teams,
@@ -38,8 +39,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
   void initState() {
     super.initState();
     _cubit = FetchCubit<_TeamsData>(() async {
-      final repo = context.read<HinataRepository>();
-      final results = await Future.wait([repo.teams(), repo.users()]);
+      final results = await Future.wait([context.read<TeamRepository>().teams(), context.read<UserRepository>().users()]);
       final teams = results[0] as List<Team>;
       final users = results[1] as List<DirectoryUser>;
       final names = {for (final u in users) u.id: u.displayName};
