@@ -231,6 +231,12 @@ Future<void> showIssueDetailSheet(
       ),
     ],
   ).whenComplete(() {
+    // Wolt can complete this future (sheet "closed") a beat before the page's
+    // element subtree actually unmounts, leaving the body briefly mounted and
+    // still registered as a WidgetsBindingObserver. Tell it to stop writing to
+    // `header`/`composerRev` BEFORE we dispose them, else a `didChangeMetrics`
+    // landing in that window throws "ValueNotifier used after disposed".
+    bodyKey.currentState?.detachHostChannels();
     header.dispose();
     // NOTE: do NOT dispose `sheetScroll` here — Wolt's animated switcher takes
     // ownership of the page's `scrollController` and disposes it itself
@@ -639,6 +645,14 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   Timer? _commentSseReconnect;
   int _commentSseAttempts = 0;
   bool _disposed = false;
+  // The host (`header`/`composerRev`) can be disposed while this body is briefly
+  // still mounted + registered as a WidgetsBindingObserver during a modal→route
+  // transition (Wolt's page can outlive the sheet's `whenComplete`). The host
+  // flips this via [detachHostChannels] right before disposing those notifiers,
+  // so a late `didChangeMetrics`/focus/data callback stops writing to them (a
+  // write would throw "ValueNotifier used after disposed"). `mounted` alone
+  // can't catch it — the notifiers' lifetime is the host's, not this body's.
+  bool _hostDetached = false;
   // Coalesce bursts of `changed` pings (rapid pinning, a batch delete, or the
   // actor's own broadcast echo) into at most one in-flight re-sync plus one
   // trailing one, instead of firing 2 GETs per ping. Without this a batch
@@ -992,12 +1006,27 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     }
   }
 
+  /// Called by the host immediately before it disposes the shared `header` /
+  /// `composerRev` notifiers, so any late window-metric / focus / data callback
+  /// arriving while this observer is briefly still registered stops writing to
+  /// them. See [_hostDetached].
+  void detachHostChannels() => _hostDetached = true;
+
+  /// Whether it's safe to write to the host-owned `header` / `composerRev`.
+  bool get _hostAlive => mounted && !_hostDetached;
+
   /// Nudges the sticky action bar (a subtree outside this body) to rebuild its
   /// floating composer — call after any state change the composer reflects.
   /// Guarded: `composerRev` is owned by the host and disposed when the sheet/
-  /// route closes, so a late async caller must not touch it once unmounted.
+  /// route closes, so a late async caller must not touch it once detached.
   void _bumpComposer() {
-    if (mounted) widget.composerRev?.value++;
+    if (_hostAlive) widget.composerRev?.value++;
+  }
+
+  /// Publishes the latest issue to the host's top-bar `header` notifier, guarded
+  /// against the host having disposed it (same lifetime caveat as [_bumpComposer]).
+  void _publishHeader(Issue issue) {
+    if (_hostAlive) widget.header?.value = issue;
   }
 
   /// Reveals the just-posted comment. In the newest-first feed it lands at the
@@ -1102,7 +1131,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       // async error that takes the whole app down. Bail if we were unmounted
       // during any of the awaits above.
       if (!mounted) return;
-      widget.header?.value = issue;
+      _publishHeader(issue);
       setState(() => _loading = false);
       // Reveal the host's floating composer now that the issue is loaded (the
       // route overlay reads `hasIssue`, and its subtree is outside this body).
@@ -1128,7 +1157,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       final updated = await _repo.updateIssue(widget.issueId, patch);
       if (!mounted) return;
       _issue = updated;
-      widget.header?.value = updated;
+      _publishHeader(updated);
       widget.onChanged?.call();
       // Refresh the change history so the new entry shows immediately (reset to
       // the newest page).
@@ -1168,7 +1197,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   void _applyGitIssue(Issue updated) {
     if (!mounted) return;
     setState(() => _issue = updated);
-    widget.header?.value = updated;
+    _publishHeader(updated);
     widget.onChanged?.call();
     _refreshActivity();
   }
