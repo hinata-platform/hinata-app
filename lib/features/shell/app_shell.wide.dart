@@ -1,0 +1,836 @@
+part of 'app_shell.dart';
+
+// ─────────────────────────── Wide Shell (Navy Rail) ───────────────────────
+
+class _WideShell extends StatefulWidget {
+  const _WideShell({required this.location, required this.child});
+
+  final String location;
+  final Widget child;
+
+  @override
+  State<_WideShell> createState() => _WideShellState();
+}
+
+class _WideShellState extends State<_WideShell> {
+  // Desktop-only manual collapse. Medium widths are always collapsed (no room
+  // to expand), so the toggle is offered only on the full layout.
+  bool _collapsed = false;
+  final double maxBodyWidth = 1618;
+
+  @override
+  Widget build(BuildContext context) {
+    final isMedium = context.layoutSize == LayoutSize.medium;
+    final collapsed = isMedium || _collapsed;
+    final railWidth = collapsed ? 76.0 : 244.0;
+    final subKey = _subPageTitleKey(widget.location);
+    final dark = Theme.of(context).brightness == Brightness.dark;
+
+    // The ambient backdrop is painted app-wide; the floating glass topbar and
+    // nav rail sit over it, with the content area between/below them. The outer
+    // SafeArea consumes the status-bar inset once (so context.topGutter stays 0
+    // for pages, as before).
+    return Scaffold(
+      backgroundColor: AppColors.canvas,
+      body: Stack(
+        children: [
+          Positioned.fill(child: AmbientBackground(dark: dark)),
+          Positioned.fill(
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+                    child: _GlassFloatingTopBar(location: widget.location),
+                  ),
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _NavRail(
+                          location: widget.location,
+                          collapsed: collapsed,
+                          width: railWidth,
+                          canToggle: !isMedium,
+                          onToggle: () =>
+                              setState(() => _collapsed = !_collapsed),
+                        ),
+                        Expanded(
+                          child: _ScrollWheelPassthrough(
+                            maxContentWidth: maxBodyWidth,
+                            child: Column(
+                              children: [
+                                // Sub-pages keep a slim back + title bar (the floating
+                                // topbar carries no breadcrumb); primary pages render
+                                // their own PageHead instead.
+                                if (subKey != null)
+                                  ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      maxWidth: maxBodyWidth,
+                                    ),
+                                    child: _SubPageBar(
+                                      location: widget.location,
+                                      titleKey: subKey,
+                                    ),
+                                  ),
+                                Expanded(
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      maxWidth: maxBodyWidth,
+                                    ),
+                                    child: widget.child,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The centered [maxContentWidth] body leaves empty margins on wide screens
+/// that no [Scrollable] covers, so a mouse wheel there does nothing. This
+/// wraps the full-width area and, when a scroll happens outside the centered
+/// content, re-dispatches it as if it occurred at the nearest point inside
+/// the content so the page underneath still scrolls.
+class _ScrollWheelPassthrough extends StatelessWidget {
+  const _ScrollWheelPassthrough({
+    required this.maxContentWidth,
+    required this.child,
+  });
+
+  final double maxContentWidth;
+  final Widget child;
+
+  void _onPointerSignal(BuildContext context, PointerSignalEvent event) {
+    if (event is! PointerScrollEvent) return;
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.attached) return;
+
+    final local = box.globalToLocal(event.position);
+    final centerX = box.size.width / 2;
+    final halfContent = maxContentWidth / 2;
+    final offsetFromCenter = local.dx - centerX;
+    if (offsetFromCenter.abs() <= halfContent) {
+      return; // Already inside the content column; let normal hit-testing handle it.
+    }
+
+    final clampedDx =
+        centerX + offsetFromCenter.clamp(-halfContent, halfContent);
+    final targetGlobal = box.localToGlobal(Offset(clampedDx, local.dy));
+    final viewId = View.of(context).viewId;
+    final result = HitTestResult();
+    RendererBinding.instance.hitTestInView(result, targetGlobal, viewId);
+    RendererBinding.instance.dispatchEvent(
+      PointerScrollEvent(
+        timeStamp: event.timeStamp,
+        kind: event.kind,
+        device: event.device,
+        position: targetGlobal,
+        scrollDelta: event.scrollDelta,
+        viewId: viewId,
+        embedderId: event.embedderId,
+      ),
+      result,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      // Listener defaults to HitTestBehavior.deferToChild, so in the empty
+      // margins beside the centered content (where no child claims the hit)
+      // it would never be hit-tested and onPointerSignal would never fire.
+      // opaque makes it always participate in hit-testing over its full area.
+      behavior: HitTestBehavior.opaque,
+      onPointerSignal: (event) => _onPointerSignal(context, event),
+      child: child,
+    );
+  }
+}
+
+/// Opens the create-issue form from global chrome (the nav-rail CTA). On a
+/// successful create it broadcasts [IssueEvents.notifyChanged] so whatever
+/// issue-bearing screen is currently visible re-fetches — the rail itself has
+/// no handle to that page's cubit, so the change travels through the event bus.
+/// [showIssueForm] already opens the new issue's detail sheet on success.
+Future<void> _createIssue(BuildContext context) async {
+  final created = await showIssueForm(context);
+  if (created != null) IssueEvents.instance.notifyChanged();
+}
+
+class _NavRail extends StatelessWidget {
+  const _NavRail({
+    required this.location,
+    required this.collapsed,
+    required this.width,
+    this.canToggle = false,
+    this.onToggle,
+  });
+
+  final String location;
+  final bool collapsed;
+  final double width;
+
+  /// Whether to show the manual collapse/expand control (desktop only).
+  final bool canToggle;
+  final VoidCallback? onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeInOut,
+      width: width,
+      margin: const EdgeInsets.fromLTRB(16, 0, 0, 16),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2D2B55).withValues(alpha: 0.34),
+            blurRadius: 30,
+            spreadRadius: -12,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Frosted navy liquid glass: blur the ambient behind the rail and lay
+          // a slightly-translucent navy gradient over it so it reads as glass.
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [AppColors.rail, AppColors.rail2],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Faint honeycomb texture pooling at the base of the rail.
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 240,
+            child: HoneycombBackground(),
+          ),
+          Positioned.fill(
+            child: SafeArea(
+              child: Column(
+                // Centre every item on the rail's vertical axis when collapsed;
+                // left-align them in the expanded view.
+                crossAxisAlignment: collapsed
+                    ? CrossAxisAlignment.center
+                    : CrossAxisAlignment.start,
+                children: [
+                  // Scrollable nav section so short viewports never overflow the
+                  // rail; the footer (toggle + account) below stays pinned.
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: collapsed
+                            ? CrossAxisAlignment.center
+                            : CrossAxisAlignment.start,
+                        children: [
+                          // Brand now lives in the floating topbar; the rail opens
+                          // straight into its actions.
+                          const SizedBox(height: 16),
+
+                          // New issue CTA
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: collapsed ? 12 : 16,
+                              vertical: 4,
+                            ),
+                            child: collapsed
+                                ? _RailIconButton(
+                                    icon: LucideIcons.plus,
+                                    active: false,
+                                    amber: true,
+                                    tooltip: context.t('issues.new'),
+                                    onTap: () => _createIssue(context),
+                                  )
+                                : DecoratedBox(
+                                    // Soft honey glow beneath the CTA (matches the web
+                                    // prototype's box-shadow: 0 6px 18px -8px amber/0.7).
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(
+                                        AppTheme.radiusControl,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.accent.withValues(
+                                            alpha: 0.45,
+                                          ),
+                                          blurRadius: 18,
+                                          spreadRadius: -6,
+                                          offset: const Offset(0, 6),
+                                        ),
+                                      ],
+                                    ),
+                                    child: SizedBox(
+                                      width: double.infinity,
+                                      child: FilledButton.icon(
+                                        onPressed: () => _createIssue(context),
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: AppColors.accent,
+                                          foregroundColor: const Color(
+                                            0xFF2A2410,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              AppTheme.radiusControl,
+                                            ),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 12,
+                                          ),
+                                          textStyle: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13.5,
+                                          ),
+                                        ),
+                                        icon: const Icon(
+                                          LucideIcons.plus,
+                                          size: 18,
+                                        ),
+                                        label: Text(context.t('issues.new')),
+                                      ),
+                                    ),
+                                  ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Primary group
+                          if (!collapsed) _RailGroupLabel('WORK'),
+                          for (final dest in _primary)
+                            _RailItem(
+                              destination: dest,
+                              selected: _isActive(location, dest.route),
+                              collapsed: collapsed,
+                            ),
+
+                          const SizedBox(height: 8),
+                          if (!collapsed) _RailGroupLabel('PLAN'),
+                          for (final dest in _secondary)
+                            _RailItem(
+                              destination: dest,
+                              selected: _isActive(location, dest.route),
+                              collapsed: collapsed,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Collapse / expand toggle — desktop only, sits above the user.
+                  if (canToggle && onToggle != null)
+                    _CollapseToggle(collapsed: collapsed, onToggle: onToggle!),
+
+                  // Settings entry — a standard rail item so it matches the nav
+                  // above (icon + label expanded, icon-only collapsed).
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 8),
+                    child: _RailItem(
+                      destination: const _Destination(
+                        '/settings',
+                        'nav.settings',
+                        LucideIcons.settings,
+                      ),
+                      selected: _isActive(location, '/settings'),
+                      collapsed: collapsed,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Desktop rail collapse/expand control. Full-width labelled row when expanded,
+/// a centered icon button when collapsed. Sits just above the user button.
+class _CollapseToggle extends StatelessWidget {
+  const _CollapseToggle({required this.collapsed, required this.onToggle});
+
+  final bool collapsed;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = collapsed
+        ? LucideIcons.panelLeftOpen
+        : LucideIcons.panelLeftClose;
+    if (collapsed) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: _RailIconButton(
+          icon: icon,
+          active: false,
+          tooltip: context.t('nav.expandSidebar'),
+          onTap: onToggle,
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: onToggle,
+          borderRadius: BorderRadius.circular(8),
+          hoverColor: Colors.white.withValues(alpha: 0.06),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            child: Row(
+              children: [
+                Icon(icon, size: 18, color: AppColors.railFaint),
+                const SizedBox(width: 10),
+                Text(
+                  context.t('nav.collapse'),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.railFaint,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RailGroupLabel extends StatelessWidget {
+  const _RailGroupLabel(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontFamily: AppTheme.fontMono,
+          fontSize: 10,
+          fontWeight: FontWeight.w500,
+          color: AppColors.railFaint,
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+}
+
+class _RailItem extends StatelessWidget {
+  const _RailItem({
+    required this.destination,
+    required this.selected,
+    required this.collapsed,
+  });
+
+  final _Destination destination;
+  final bool selected;
+  final bool collapsed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: collapsed ? 8 : 10,
+        vertical: 2,
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Clean amber edge indicator (3×18, rounded) — sits just outside
+          // the tile's left edge like the prototype's `::before` bar.
+          if (selected && !collapsed)
+            Positioned(
+              left: -10,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: Container(
+                  width: 3,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+            ),
+          Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            child: InkWell(
+              onTap: () => context.go(destination.route),
+              borderRadius: BorderRadius.circular(8),
+              hoverColor: Colors.white.withValues(alpha: 0.06),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                width: collapsed ? null : double.infinity,
+                padding: EdgeInsets.symmetric(
+                  horizontal: collapsed ? 10 : 12,
+                  vertical: 9,
+                ),
+                decoration: selected
+                    ? BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      )
+                    : null,
+                child: collapsed
+                    ? Tooltip(
+                        message: context.t(destination.labelKey),
+                        preferBelow: false,
+                        child: Icon(
+                          destination.icon,
+                          size: 20,
+                          color: selected
+                              ? AppColors.accent
+                              : AppColors.railFaint,
+                        ),
+                      )
+                    : Row(
+                        children: [
+                          Icon(
+                            destination.icon,
+                            size: 18,
+                            color: selected
+                                ? AppColors.accent
+                                : AppColors.railFaint,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            context.t(destination.labelKey),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: selected
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
+                              color: selected
+                                  ? AppColors.railInk
+                                  : AppColors.railFaint,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RailIconButton extends StatelessWidget {
+  const _RailIconButton({
+    required this.icon,
+    required this.active,
+    required this.onTap,
+    this.amber = false,
+    this.tooltip,
+  });
+
+  final IconData icon;
+  final bool active;
+  final bool amber;
+  final String? tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final child = Material(
+      color: amber ? AppColors.accent : Colors.transparent,
+      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Icon(
+            icon,
+            size: 20,
+            color: amber ? const Color(0xFF2A2410) : AppColors.railFaint,
+          ),
+        ),
+      ),
+    );
+    return tooltip != null ? Tooltip(message: tooltip!, child: child) : child;
+  }
+}
+
+// ─────────────────────── Desktop / tablet floating topbar ──────────────────
+// A full-width floating glass bar: brand mark + wordmark (left), a centred ⌘K
+// search pill, and the notification bell + avatar (→ settings) on the right.
+// The compact shell keeps its own overlay glass app bar (_GlassTopBar).
+
+class _GlassFloatingTopBar extends StatelessWidget {
+  const _GlassFloatingTopBar({required this.location});
+
+  final String location;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final user = context.select((AuthBloc bloc) => bloc.state.user);
+    return Container(
+      height: 60,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.hairline),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2D2B55).withValues(alpha: dark ? .34 : .10),
+            blurRadius: 26,
+            spreadRadius: -10,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          HexMark(size: 26, color: dark ? AppColors.accent : AppColors.navy),
+          const SizedBox(width: 11),
+          Text(
+            'hinata',
+            style: TextStyle(
+              fontFamily: AppTheme.fontBrand,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.4,
+              color: AppColors.ink,
+            ),
+          ),
+          const Expanded(
+            child: Center(
+              child: _TopSearchField(compact: false, maxWidth: 520),
+            ),
+          ),
+          const SizedBox(width: 6),
+          _NotificationBell(active: location.startsWith('/notifications')),
+          const SizedBox(width: 10),
+          Tooltip(
+            message: context.t('nav.settings'),
+            child: Material(
+              color: Colors.transparent,
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () => context.go('/settings'),
+                child: Padding(
+                  padding: const EdgeInsets.all(1),
+                  child: AppAvatar(
+                    name: user?.displayName ?? '?',
+                    imageUrl: user?.avatarUrl,
+                    radius: 18,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Slim contextual bar shown on sub-pages under the floating topbar: a back
+/// button + the page's title (published via [PageChrome]).
+class _SubPageBar extends StatelessWidget {
+  const _SubPageBar({required this.location, required this.titleKey});
+
+  final String location;
+  final String titleKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final chrome = PageChromeScope.of(context);
+    final title = chrome.titleFor(location) ?? context.t(titleKey);
+    final override = chrome.onBackFor(location);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 24, 0),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => _handleBack(context, location, override),
+            visualDensity: VisualDensity.compact,
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            icon: Icon(
+              LucideIcons.arrowLeft,
+              size: 20,
+              color: AppColors.inkSoft,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Pill global-search field. Collapses to a single icon button on compact.
+class _TopSearchField extends StatelessWidget {
+  const _TopSearchField({required this.compact, this.maxWidth = 300});
+
+  final bool compact;
+  final double maxWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    if (compact) {
+      return _TopIconButton(
+        icon: LucideIcons.search,
+        tooltip: context.t('appbar.search'),
+        onTap: () => openGlobalSearch(context),
+      );
+    }
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: 38),
+      child: Material(
+        color: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+          side: BorderSide(color: AppColors.hairline),
+        ),
+        child: InkWell(
+          onTap: () => openGlobalSearch(context),
+          borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+            child: Row(
+              children: [
+                Icon(LucideIcons.search, size: 16, color: AppColors.inkFaint),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    context.t('appbar.search'),
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
+                  ),
+                ),
+                const SizedBox(width: 9),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceMuted,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: AppColors.hairline),
+                  ),
+                  child: Text(
+                    '⌘K',
+                    style: TextStyle(
+                      fontFamily: AppTheme.fontMono,
+                      fontSize: 11,
+                      color: AppColors.inkFaint,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 38×38 ghost icon button matching the prototype's `.icon-btn`.
+class _TopIconButton extends StatelessWidget {
+  const _TopIconButton({
+    required this.icon,
+    required this.onTap,
+    this.tooltip,
+    this.active = false,
+    this.child,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final String? tooltip;
+  final bool active;
+
+  /// Optional overlay (e.g. the unread dot) painted above the icon.
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = Material(
+      color: active ? AppColors.surface : Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        side: BorderSide(
+          color: active ? AppColors.hairline : Colors.transparent,
+        ),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        hoverColor: AppColors.surface,
+        child: SizedBox(
+          width: 38,
+          height: 38,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: active ? AppColors.ink : AppColors.inkSoft,
+              ),
+              ?child,
+            ],
+          ),
+        ),
+      ),
+    );
+    return tooltip != null ? Tooltip(message: tooltip!, child: button) : button;
+  }
+}
