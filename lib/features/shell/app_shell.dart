@@ -1569,13 +1569,26 @@ class _NotifRow extends StatelessWidget {
   }
 }
 
-/// Leading icon + tint for a notification type.
+/// Leading icon + tint for a notification type. Cases match the server's
+/// `Notification.Type` enum; the loose legacy tokens are kept as fallbacks.
 (IconData, Color) _notifVisual(String type) => switch (type.toUpperCase()) {
   'MENTION' => (LucideIcons.atSign, AppColors.stReview),
+  'ISSUE_ASSIGNED' ||
   'ASSIGN' ||
   'ASSIGNED' ||
   'ASSIGNMENT' => (LucideIcons.userCheck, AppColors.stTodo),
+  'ISSUE_COMMENTED' ||
   'COMMENT' => (LucideIcons.messageSquare, AppColors.stProgress),
+  'ISSUE_UPDATED' => (LucideIcons.refreshCw, AppColors.accentBlue),
+  'ISSUE_INGESTED' => (LucideIcons.inbox, AppColors.accentTeal),
+  'SPRINT_STARTED' => (LucideIcons.goal, AppColors.accentPurple),
+  'TEAM_ADDED' ||
+  'TEAM_ROLE_CHANGED' ||
+  'TEAM_REMOVED' => (LucideIcons.usersRound, AppColors.accentBlue),
+  'ACCOUNT_ACTIVATED' ||
+  'ACCOUNT_DEACTIVATED' ||
+  'ACCOUNT_ROLE_CHANGED' ||
+  'ACCOUNT_DELETED' => (LucideIcons.shieldCheck, AppColors.inkSoft),
   'REVIEW' ||
   'REVIEW_REQUEST' => (LucideIcons.messageSquareText, AppColors.stReview),
   'DUE' || 'DEADLINE' => (LucideIcons.calendarDays, AppColors.priHigh),
