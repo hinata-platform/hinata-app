@@ -1187,7 +1187,9 @@ class _NotificationBellState extends State<_NotificationBell> {
       _cubit.load();
     }
     final link = notification.link;
-    if (link != null && link.startsWith('/issues/') && mounted) {
+    // Any in-app route (issues, projects, teams, admin …), not just issues, so
+    // every notification type is tappable from the bell like it is in the feed.
+    if (link != null && link.startsWith('/') && mounted) {
       context.go(link);
     }
   }
@@ -1585,6 +1587,7 @@ class _NotifRow extends StatelessWidget {
   'TEAM_ADDED' ||
   'TEAM_ROLE_CHANGED' ||
   'TEAM_REMOVED' => (LucideIcons.usersRound, AppColors.accentBlue),
+  'PROJECT_ADDED' => (LucideIcons.folderPlus, AppColors.accentPurple),
   'ACCOUNT_ACTIVATED' ||
   'ACCOUNT_DEACTIVATED' ||
   'ACCOUNT_ROLE_CHANGED' ||
