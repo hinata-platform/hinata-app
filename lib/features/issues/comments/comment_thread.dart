@@ -503,9 +503,13 @@ class _CommentActions extends StatefulWidget {
 }
 
 class _CommentActionsState extends State<_CommentActions> {
-  // Anchors the emoji picker to the react button (its ORIGINAL trigger), not the
-  // "…" button inside the quick-reactions pill.
-  final GlobalKey _reactKey = GlobalKey();
+  // Screen rect of the react button, captured when the quick-reactions pill
+  // opens. The full emoji picker anchors here (its ORIGINAL trigger), not the
+  // "…" button inside the pill. Captured from the trigger's own render box —
+  // NOT a GlobalKey: a GlobalKey wrapping the Tooltip (an OverlayPortal) inside
+  // GlassPopover's animated triggerBuilder crashed on hover with a re-entrant
+  // overlay layout (`!_skipMarkNeedsLayout`). See [[reference_web_hover_transform_assert]].
+  Rect? _reactAnchor;
 
   IssueComment get _c => widget.comment;
   CommentInteractions get _x => widget.interactions;
@@ -529,13 +533,19 @@ class _CommentActionsState extends State<_CommentActions> {
           popoverBorderRadius: 27,
           settings: _navGlass(dark),
           quality: GlassQuality.standard,
-          triggerBuilder: (context, toggle) => KeyedSubtree(
-            key: _reactKey,
-            child: _ActionButton(
-              icon: LucideIcons.smilePlus,
-              tooltip: context.t('comments.react'),
-              onTap: toggle,
-            ),
+          triggerBuilder: (context, toggle) => _ActionButton(
+            icon: LucideIcons.smilePlus,
+            tooltip: context.t('comments.react'),
+            // Capture the react button's own render box (GlassPopover builds the
+            // trigger as its topmost render object, so this context IS the button)
+            // the moment the pill opens, then hand it to the emoji picker.
+            onTap: () {
+              final box = context.findRenderObject() as RenderBox?;
+              if (box != null && box.hasSize) {
+                _reactAnchor = box.localToGlobal(Offset.zero) & box.size;
+              }
+              toggle();
+            },
           ),
           contentBuilder: (_, close) => _QuickReactionsBar(
             selected: _c.myReaction(_x.meId),
@@ -547,7 +557,7 @@ class _CommentActionsState extends State<_CommentActions> {
             // (its original trigger), not the "…" button, so it opens where the
             // user first tapped. Capture the rect before closing the quick pill.
             onMore: () async {
-              final anchor = _reactRect();
+              final anchor = _reactAnchor;
               close();
               final picked = await _pickEmojiGlass(context, anchor: anchor);
               if (picked != null && context.mounted) {
@@ -574,13 +584,6 @@ class _CommentActionsState extends State<_CommentActions> {
         ),
       ],
     );
-  }
-
-  /// Global screen rect of the react button (the emoji picker's anchor).
-  Rect? _reactRect() {
-    final box = _reactKey.currentContext?.findRenderObject() as RenderBox?;
-    if (box == null || !box.hasSize) return null;
-    return box.localToGlobal(Offset.zero) & box.size;
   }
 
   List<_MenuRowData> _menuRows(BuildContext context, VoidCallback close) {
