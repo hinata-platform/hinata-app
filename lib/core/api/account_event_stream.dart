@@ -52,6 +52,9 @@ class AccountEventStream {
 
   Future<void> _connect() async {
     if (!_running) return;
+    // Cancel any prior token before overwriting it so a reconnect can never
+    // orphan a half-opened streamed GET that still holds a pool slot.
+    _cancel?.cancel();
     _cancel = CancelToken();
     try {
       final bytes = await _repo.meEventStream(cancelToken: _cancel);

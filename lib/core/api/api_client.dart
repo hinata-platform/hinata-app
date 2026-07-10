@@ -2,6 +2,11 @@ import 'package:dio/dio.dart';
 
 import '../models/core_models.dart';
 import '../storage/app_storage.dart';
+// Native-only HTTP connection tuning (idle keep-alive socket handling); a no-op
+// on the web, selected by conditional import so `dart:io` never reaches the web
+// build.
+import 'http_client_config.dart'
+    if (dart.library.io) 'http_client_config_io.dart';
 
 /// Exception with a user-presentable message key.
 class ApiFailure implements Exception {
@@ -31,6 +36,9 @@ class ApiClient {
         },
       ),
     );
+    // Native only: drop idle keep-alive sockets before the server closes them,
+    // so a reused-but-dead socket can't throw a spurious app-wide error.
+    configureNativeHttpClient(_dio);
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
@@ -161,26 +169,34 @@ class ApiClient {
   }
 
   Future<dynamic> get(String path, {Map<String, dynamic>? query}) =>
-      _run(() => _dio.get<dynamic>('$baseUrl$path', queryParameters: query));
+      _run(() => _dio.get<dynamic>('$baseUrl$path', queryParameters: query),
+          idempotent: true);
 
   /// Raw binary GET (e.g. the logo proxy). Returns the bytes and the response
-  /// content-type, or null on any non-2xx / transport error.
+  /// content-type, or null on any non-2xx / transport error. Retried once on a
+  /// transient connection loss (a reused-but-dead keep-alive socket).
   Future<({List<int> bytes, String contentType})?> getBytes(String path) async {
-    try {
-      final response = await _dio.get<List<int>>(
-        '$baseUrl$path',
-        options: Options(responseType: ResponseType.bytes),
-      );
-      final bytes = response.data;
-      if (bytes == null || bytes.isEmpty) return null;
-      return (
-        bytes: bytes,
-        contentType: (response.headers.value('content-type') ?? '')
-            .toLowerCase(),
-      );
-    } catch (_) {
-      return null;
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        final response = await _dio.get<List<int>>(
+          '$baseUrl$path',
+          options: Options(responseType: ResponseType.bytes),
+        );
+        final bytes = response.data;
+        if (bytes == null || bytes.isEmpty) return null;
+        return (
+          bytes: bytes,
+          contentType: (response.headers.value('content-type') ?? '')
+              .toLowerCase(),
+        );
+      } on DioException catch (error) {
+        if (attempt == 0 && _isTransientConnectionLoss(error)) continue;
+        return null;
+      } catch (_) {
+        return null;
+      }
     }
+    return null;
   }
 
   Future<dynamic> post(String path, {Object? body}) =>
@@ -244,12 +260,39 @@ class ApiClient {
     return response.data!.stream;
   }
 
-  Future<dynamic> _run(Future<Response<dynamic>> Function() request) async {
+  Future<dynamic> _run(
+    Future<Response<dynamic>> Function() request, {
+    bool idempotent = false,
+  }) async {
     try {
       return (await request()).data;
     } on DioException catch (error) {
+      // A transient connection loss (a keep-alive socket the pool handed us was
+      // already closed by the server) is exactly the failure a manual retry
+      // recovers from. Do it once, transparently, for idempotent (GET) requests
+      // on a fresh socket — so a single stale connection never paints a whole
+      // screen with `errors.unexpected`. Never retry a mutation (could double it)
+      // and never retry a real HTTP error (it carries a response we must surface).
+      if (idempotent && _isTransientConnectionLoss(error)) {
+        try {
+          return (await request()).data;
+        } on DioException catch (retryError) {
+          throw _toFailure(retryError);
+        }
+      }
       throw _toFailure(error);
     }
+  }
+
+  /// A transport-level failure with no HTTP response — a reused-but-dead
+  /// keep-alive socket, a connection reset, or a drop mid-flight. Safe to retry
+  /// for idempotent requests; deliberately excludes any 4xx/5xx (those carry a
+  /// response) and read/connect timeouts (already waited the full window — a
+  /// retry would just double the wait).
+  static bool _isTransientConnectionLoss(DioException error) {
+    if (error.response != null) return false;
+    return error.type == DioExceptionType.unknown ||
+        error.type == DioExceptionType.connectionError;
   }
 
   ApiFailure _toFailure(DioException error) {

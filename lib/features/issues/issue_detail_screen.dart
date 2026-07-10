@@ -12,6 +12,7 @@ class IssueDetailScreen extends StatefulWidget {
     required this.issueId,
     this.fromModal = false,
     this.onChanged,
+    this.targetCommentId,
   });
 
   final String issueId;
@@ -20,6 +21,9 @@ class IssueDetailScreen extends StatefulWidget {
   /// top bar offers an "exit full screen" button back to the modal.
   final bool fromModal;
   final VoidCallback? onChanged;
+
+  /// Deep-link target: scroll to + flash this comment once the thread loads.
+  final String? targetCommentId;
 
   @override
   State<IssueDetailScreen> createState() => _IssueDetailScreenState();
@@ -94,6 +98,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
             sheetScroll: _scroll,
             composerRev: _composerRev,
             floatingComposer: true,
+            targetCommentId: widget.targetCommentId,
           ),
         ),
         // Floating composer pinned to the PHYSICAL bottom of the screen — the

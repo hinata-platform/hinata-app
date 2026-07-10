@@ -298,6 +298,8 @@ GoRouter buildRouter({
                   issueId: state.pathParameters['id']!,
                   fromModal: args?.fromModal ?? false,
                   onChanged: args?.onChanged,
+                  // Deep link `…/issues/ID?comment=<id>` scrolls to that comment.
+                  targetCommentId: state.uri.queryParameters['comment'],
                 ),
               );
             },

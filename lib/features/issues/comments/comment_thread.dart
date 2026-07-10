@@ -1,7 +1,10 @@
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show
         GlassContainer,
+        GlassMenuAlignment,
+        GlassPopover,
         GlassQuality,
         LiquidGlassSettings,
         LiquidRoundedSuperellipse;
@@ -9,15 +12,18 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/work_models.dart';
-import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/hive_widgets.dart';
 import '../../knowledge/markdown/markdown_renderer.dart';
 import 'voice/voice_player.dart';
 
-/// Opaque glass for the long-press bubble menu: it floats over the feed, so —
-/// like the composer — it needs a strong tint (transparent nav glass would be
+/// The quick-reaction emojis offered by the reaction popover (before the "…"
+/// opens the full device picker). Mirrors WhatsApp/iMessage.
+const List<String> kQuickReactions = ['❤️', '👍', '😂', '😮', '😢', '🙏'];
+
+/// Opaque glass for the reaction/menu popovers: they float over the feed, so —
+/// like the composer — they need a strong tint (transparent nav glass would be
 /// unreadable) and, on native, the standard lightweight shader (the default
 /// premium pipeline corrupts on rotation). Same lighting as [kNavGlassDark].
 const _menuGlassDark = LiquidGlassSettings(
@@ -46,17 +52,146 @@ const _menuGlassLight = LiquidGlassSettings(
 LiquidGlassSettings _navGlass(bool dark) =>
     dark ? _menuGlassDark : _menuGlassLight;
 
-/// Chat-style activity feed (Liquid-Glass comment section). Text comments render
-/// as bubbles; voice comments as playable waveform bubbles.
-///
-/// Alignment is responsive per the design: on **compact** (phone) the signed-in
-/// user's own comments sit on the right (classic chat), everyone else on the
-/// left. On **medium/expanded** (tablet + desktop) *every* bubble — including the
-/// user's own — aligns left, which reads more naturally in a wide column.
-class CommentThread extends StatelessWidget {
-  const CommentThread({
+/// How top-level comments are ordered. Reply threads are *always* oldest-first,
+/// independent of this.
+enum CommentSort {
+  newest,
+  oldest;
+
+  /// The `sort` query value the backend expects.
+  String get api => this == CommentSort.oldest ? 'oldest' : 'newest';
+}
+
+/// Compact "Newest first ▾" selector that opens a two-option glass popover.
+class CommentSortButton extends StatelessWidget {
+  const CommentSortButton({
     super.key,
-    required this.comments,
+    required this.sort,
+    required this.onChanged,
+  });
+
+  final CommentSort sort;
+  final ValueChanged<CommentSort> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = AppColors.brightness == Brightness.dark;
+    final label = sort == CommentSort.newest
+        ? context.t('comments.sortNewest')
+        : context.t('comments.sortOldest');
+    return GlassPopover(
+      alignment: GlassMenuAlignment.bottomRight,
+      popoverWidth: 200,
+      popoverBorderRadius: 18,
+      settings: _navGlass(dark),
+      quality: GlassQuality.standard,
+      triggerBuilder: (context, toggle) => Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(9),
+        child: InkWell(
+          onTap: toggle,
+          borderRadius: BorderRadius.circular(9),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  LucideIcons.arrowUpDown,
+                  size: 14,
+                  color: AppColors.inkSoft,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.inkSoft,
+                  ),
+                ),
+                const SizedBox(width: 3),
+                Icon(
+                  LucideIcons.chevronDown,
+                  size: 14,
+                  color: AppColors.inkSoft,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      contentBuilder: (context, close) => _ContextMenuCard(
+        rows: [
+          _MenuRowData(
+            sort == CommentSort.newest
+                ? LucideIcons.check
+                : LucideIcons.arrowDown,
+            context.t('comments.sortNewest'),
+            () {
+              close();
+              onChanged(CommentSort.newest);
+            },
+          ),
+          _MenuRowData(
+            sort == CommentSort.oldest
+                ? LucideIcons.check
+                : LucideIcons.arrowUp,
+            context.t('comments.sortOldest'),
+            () {
+              close();
+              onChanged(CommentSort.oldest);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// View-state of one root comment's (lazily loaded) reply thread. Owned by the
+/// issue sheet and handed to the thread via [CommentInteractions.threadOf].
+class ReplyThread {
+  const ReplyThread({
+    this.expanded = false,
+    this.loading = false,
+    this.replies = const [],
+    this.total = 0,
+  });
+
+  /// Whether the thread is currently unfolded.
+  final bool expanded;
+
+  /// Whether a page of replies is in flight.
+  final bool loading;
+
+  /// Loaded replies, oldest-first (newest at the bottom).
+  final List<IssueComment> replies;
+
+  /// Total replies on the backend (known once a page has loaded).
+  final int total;
+
+  /// More older-than-loaded… no — more *newer* replies remain to page in.
+  bool get hasMore => replies.length < total;
+
+  ReplyThread copyWith({
+    bool? expanded,
+    bool? loading,
+    List<IssueComment>? replies,
+    int? total,
+  }) => ReplyThread(
+    expanded: expanded ?? this.expanded,
+    loading: loading ?? this.loading,
+    replies: replies ?? this.replies,
+    total: total ?? this.total,
+  );
+}
+
+/// The per-comment actions + directory lookups the thread needs, bundled so both
+/// [CommentThread] and a single [CommentBubbleRow] (the "All" tab) share one
+/// wiring. Callbacks are dispatched by the persistent action row + popovers.
+class CommentInteractions {
+  const CommentInteractions({
     required this.meId,
     required this.nameFor,
     required this.avatarFor,
@@ -64,69 +199,120 @@ class CommentThread extends StatelessWidget {
     required this.canManage,
     required this.onEdit,
     required this.onDelete,
+    required this.onReply,
+    required this.onReact,
+    required this.onCopy,
+    required this.onCopyLink,
+    required this.onTogglePin,
+    required this.onEnterSelection,
+    required this.onJumpToComment,
+    required this.threadOf,
+    required this.onToggleReplies,
+    required this.onLoadMoreReplies,
   });
 
-  final List<IssueComment> comments;
   final String? meId;
   final String Function(String authorId) nameFor;
   final String? Function(String authorId) avatarFor;
-
-  /// Fetches a voice comment's audio bytes through the authenticated proxy.
   final VoiceAudioLoader Function(IssueComment comment) loadVoice;
 
+  /// Whether the signed-in user owns [comment] (edit/delete/select gate).
   final bool Function(IssueComment comment) canManage;
+
   final void Function(IssueComment comment) onEdit;
   final void Function(IssueComment comment) onDelete;
+  final void Function(IssueComment comment) onReply;
+  final void Function(IssueComment comment, String emoji) onReact;
+  final void Function(IssueComment comment) onCopy;
+  final void Function(IssueComment comment) onCopyLink;
+  final void Function(IssueComment comment) onTogglePin;
+  final void Function(IssueComment comment) onEnterSelection;
+  final void Function(String commentId) onJumpToComment;
 
-  /// Whether the signed-in user's own comments sit on the right (chat style).
-  /// Only on compact (phone); wide layouts left-align everything.
-  static bool chatMode(BuildContext context) =>
-      context.layoutSize == LayoutSize.compact;
+  /// The reply-thread view-state for a root comment (empty if never expanded).
+  final ReplyThread Function(String rootId) threadOf;
 
-  /// Consecutive comments from the same author within this window are treated as
-  /// one WhatsApp-style group: name shown once on top, avatar once at the bottom.
-  static const _groupWindow = Duration(minutes: 5);
+  /// Expand (loading the first page) / collapse a root's reply thread.
+  final void Function(IssueComment root) onToggleReplies;
 
-  static bool _grouped(IssueComment a, IssueComment b) {
-    if (a.authorId != b.authorId) return false;
-    final ta = a.createdAt, tb = b.createdAt;
-    if (ta == null || tb == null) return true;
-    return tb.difference(ta).abs() <= _groupWindow;
-  }
+  /// Load the next page of a root's replies.
+  final void Function(IssueComment root) onLoadMoreReplies;
+}
+
+/// Jira-style comment feed (flat text, always left-aligned). Each top-level
+/// comment renders a header (author · date), its body, reactions and a
+/// persistent action row, followed by its own collapsible reply thread.
+class CommentThread extends StatelessWidget {
+  const CommentThread({
+    super.key,
+    required this.comments,
+    required this.interactions,
+    this.selectionMode = false,
+    this.selectedIds = const {},
+    this.onToggleSelected,
+    this.highlightedId,
+    this.commentKeys,
+    this.pinnedSection = false,
+  });
+
+  final List<IssueComment> comments;
+  final CommentInteractions interactions;
+
+  /// Multi-select (batch delete of own comments) state.
+  final bool selectionMode;
+  final Set<String> selectedIds;
+  final void Function(IssueComment comment)? onToggleSelected;
+
+  /// Comment to flash (deep-link / reply-jump highlight).
+  final String? highlightedId;
+
+  /// Stable keys per comment id so a jump can scroll to a specific row.
+  final Map<String, GlobalKey>? commentKeys;
+
+  /// The pinned section renders each comment standalone (no reply threads).
+  final bool pinnedSection;
 
   @override
   Widget build(BuildContext context) {
-    final chat = chatMode(context);
     final rows = <Widget>[];
     for (var idx = 0; idx < comments.length; idx++) {
       final c = comments[idx];
-      final prev = idx > 0 ? comments[idx - 1] : null;
-      final next = idx < comments.length - 1 ? comments[idx + 1] : null;
-      final firstOfGroup = prev == null || !_grouped(prev, c);
-      final lastOfGroup = next == null || !_grouped(c, next);
+      final hasThread = !pinnedSection && c.isRoot;
+      final thread = hasThread
+          ? interactions.threadOf(c.id)
+          : const ReplyThread();
+      final row = CommentBubbleRow(
+        comment: c,
+        interactions: interactions,
+        pinned: pinnedSection,
+        selectionMode: selectionMode,
+        selected: selectedIds.contains(c.id),
+        onToggleSelected: onToggleSelected,
+        highlight: highlightedId == c.id,
+        trunkBelow: thread.expanded && thread.replies.isNotEmpty,
+      );
+      final key = commentKeys?[c.id];
       rows.add(
         Padding(
-          // Tight within a group, roomier between groups — the vertical rhythm
-          // that keeps the feed from feeling bulky.
-          padding: EdgeInsets.only(top: idx == 0 ? 0 : (firstOfGroup ? 14 : 3)),
-          child: CommentBubbleRow(
-            comment: c,
-            // Right-align only in chat mode, and only for the current user.
-            me: chat && meId != null && c.authorId == meId,
-            name: nameFor(c.authorId),
-            avatarUrl: avatarFor(c.authorId),
-            loadVoice: loadVoice(c),
-            canManage: canManage(c),
-            // Author name only atop a group; avatar + tail only on its last
-            // bubble, so stacked messages read as one thread.
-            showName: firstOfGroup,
-            showAvatar: lastOfGroup,
-            tail: lastOfGroup,
-            onEdit: () => onEdit(c),
-            onDelete: () => onDelete(c),
-          ),
+          padding: EdgeInsets.only(top: idx == 0 ? 0 : 18),
+          child: key == null ? row : KeyedSubtree(key: key, child: row),
         ),
       );
+      // A root comment carries its own flat reply thread (never in the pinned
+      // section, and never for a reply row).
+      if (hasThread) {
+        rows.add(
+          _ReplyThreadView(
+            root: c,
+            interactions: interactions,
+            selectionMode: selectionMode,
+            selectedIds: selectedIds,
+            onToggleSelected: onToggleSelected,
+            highlightedId: highlightedId,
+            commentKeys: commentKeys,
+          ),
+        );
+      }
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -135,184 +321,603 @@ class CommentThread extends StatelessWidget {
   }
 }
 
-/// One comment in the feed (text bubble or playable voice bubble). Reused by
-/// every activity tab so comments look identical in Comments, All and History.
+/// One comment in the feed — flat text (or a playable voice bubble) on a
+/// transparent background, always left-aligned: avatar, an author · date header,
+/// the body, reaction chips and a persistent action row (Reply · react · more).
 class CommentBubbleRow extends StatelessWidget {
   const CommentBubbleRow({
     super.key,
     required this.comment,
-    required this.me,
-    required this.name,
-    required this.avatarUrl,
-    required this.loadVoice,
-    required this.canManage,
-    required this.onEdit,
-    required this.onDelete,
-    this.showName = true,
-    this.showAvatar = true,
-    this.tail = true,
+    required this.interactions,
+    this.isReply = false,
+    this.pinned = false,
+    this.selectionMode = false,
+    this.selected = false,
+    this.onToggleSelected,
+    this.highlight = false,
+    this.trunkBelow = false,
   });
 
   final IssueComment comment;
-  final bool me;
-  final String name;
-  final String? avatarUrl;
-  final VoiceAudioLoader loadVoice;
-  final bool canManage;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final CommentInteractions interactions;
 
-  /// Author name atop the bubble — only the first message of a group shows it.
-  final bool showName;
+  /// A reply row: a smaller avatar and no reply-thread of its own.
+  final bool isReply;
+  final bool pinned;
+  final bool selectionMode;
+  final bool selected;
+  final void Function(IssueComment comment)? onToggleSelected;
+  final bool highlight;
 
-  /// Avatar in the gutter — only the last message of a group shows it; earlier
-  /// ones reserve the gutter width so the column stays aligned.
-  final bool showAvatar;
+  /// Draw a "main branch" line down from this (root) comment's avatar to its
+  /// reply thread below — set when the thread is expanded with replies.
+  final bool trunkBelow;
 
-  /// Whether this bubble draws the small "tail" corner (last of a group).
-  final bool tail;
+  IssueComment get _c => comment;
+  CommentInteractions get _x => interactions;
+  bool get _canManage => _x.canManage(_c);
 
   @override
   Widget build(BuildContext context) {
-    // Compact (phone) = chat layout + long-press moderation. On tablet/desktop
-    // long-press is unintuitive, so own comments get explicit edit/delete
-    // buttons pinned to the row's trailing edge instead.
-    final compact = CommentThread.chatMode(context);
-    final inlineActions = !compact && canManage;
+    final avatarSize = isReply ? 26.0 : 32.0;
+    final name = _x.nameFor(_c.authorId);
 
-    final avatar = showAvatar
-        ? HiveAvatar(name: name, imageUrl: avatarUrl, size: 30)
-        : const SizedBox(width: 30);
-    Widget bubble = _Bubble(
-      comment: comment,
-      me: me,
-      tail: tail,
-      loadVoice: loadVoice,
-      canManage: canManage,
-      // Long-press menu only in chat (compact) mode.
-      enableMenu: compact && canManage,
-      onEdit: onEdit,
-      onDelete: onDelete,
-    );
-    if (inlineActions) {
-      // Bubble hugs its content on the left; the actions sit at a *fixed* right
-      // edge so every row's buttons line up in one column — putting the empty
-      // space between them (via Expanded on the bubble) instead of after them.
-      bubble = Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: bubble,
+    final leading = selectionMode
+        ? (_canManage
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 1),
+                  child: _SelectDot(selected: selected),
+                )
+              : SizedBox(width: avatarSize))
+        : HiveAvatar(
+            name: name,
+            imageUrl: _x.avatarFor(_c.authorId),
+            size: avatarSize,
+          );
+
+    final body = _c.isVoice
+        ? VoiceBubble(voice: _c.voice!, loader: _x.loadVoice(_c))
+        : _TextBody(comment: _c);
+
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _header(context, name),
+        const SizedBox(height: 5),
+        // A subtle wash flashes the row on a deep-link / reply jump.
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 320),
+          decoration: BoxDecoration(
+            color: highlight
+                ? AppColors.accent.withValues(alpha: 0.16)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: body,
+        ),
+        if (_c.reactions.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 7),
+            child: _ReactionChips(
+              comment: _c,
+              meId: _x.meId,
+              onTap: (emoji) => _x.onReact(_c, emoji),
             ),
           ),
-          const SizedBox(width: 12),
-          Padding(
-            padding: const EdgeInsets.only(right: 2),
-            child: _RowActions(
-              canEdit: !comment.isVoice,
-              onEdit: onEdit,
-              onDelete: onDelete,
-            ),
+        if (!selectionMode) ...[
+          const SizedBox(height: 3),
+          _CommentActions(comment: _c, interactions: _x, canManage: _canManage),
+        ],
+      ],
+    );
+
+    Widget row = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        leading,
+        const SizedBox(width: 10),
+        Expanded(child: content),
+      ],
+    );
+
+    // A root with visible replies grows a vertical "main branch" line from just
+    // below its 32px avatar (centre x = 16) down to the reply thread; the reply
+    // rows continue it at the same x. Painted in a Stack so no IntrinsicHeight
+    // is needed — the Positioned line stretches to the row's height.
+    if (trunkBelow) {
+      row = Stack(
+        children: [
+          row,
+          Positioned(
+            left: 15.25, // 32/2 − half of the 1.5px stroke
+            top: 35, // just below the 32px avatar
+            bottom: 0,
+            child: Container(width: 1.5, color: _branchLineColor()),
           ),
         ],
       );
     }
 
-    final column = Flexible(
-      child: Column(
-        crossAxisAlignment: me
-            ? CrossAxisAlignment.end
-            : CrossAxisAlignment.start,
-        children: [
-          if (showName && !me)
-            Padding(
-              padding: const EdgeInsets.only(left: 4, bottom: 3),
-              child: Text(
-                name,
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.inkSoft,
-                ),
-              ),
-            ),
-          bubble,
-        ],
-      ),
-    );
+    // In selection mode the whole row toggles the checkbox for own comments.
+    if (selectionMode && _canManage) {
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => onToggleSelected?.call(_c),
+        child: row,
+      );
+    }
+    return row;
+  }
 
-    final children = me
-        ? [column, const SizedBox(width: 9), avatar]
-        : [avatar, const SizedBox(width: 9), column];
-
-    return Row(
-      mainAxisAlignment: me ? MainAxisAlignment.end : MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: children,
+  Widget _header(BuildContext context, String name) {
+    final dt = _c.createdAt?.toLocal();
+    final when = dt == null
+        ? ''
+        : '${MaterialLocalizations.of(context).formatMediumDate(dt)} '
+              '${context.t('comments.at')} ${hhmm(dt)}';
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 7,
+      children: [
+        if (pinned)
+          Icon(LucideIcons.pin, size: 12, color: AppColors.accentStrong),
+        Text(
+          name,
+          style: TextStyle(
+            fontSize: isReply ? 12.5 : 13.5,
+            fontWeight: FontWeight.w700,
+            color: AppColors.ink,
+          ),
+        ),
+        if (when.isNotEmpty)
+          Text(
+            when,
+            style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+          ),
+        if (_c.isEdited)
+          Text(
+            '· ${context.t('issues.commentEdited')}',
+            style: TextStyle(fontSize: 11, color: AppColors.inkFaint),
+          ),
+      ],
     );
   }
 }
 
-/// Explicit edit/delete controls shown beside a user's own comment on
-/// tablet/desktop (where long-press moderation would be unintuitive).
-class _RowActions extends StatelessWidget {
-  const _RowActions({
-    required this.canEdit,
-    required this.onEdit,
-    required this.onDelete,
+/// The persistent action row under a comment: Reply, a reaction popover and a
+/// "more" popover (edit/copy/pin/…). Left-aligned to the body on every platform.
+class _CommentActions extends StatefulWidget {
+  const _CommentActions({
+    required this.comment,
+    required this.interactions,
+    required this.canManage,
   });
 
-  final bool canEdit;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final IssueComment comment;
+  final CommentInteractions interactions;
+  final bool canManage;
+
+  @override
+  State<_CommentActions> createState() => _CommentActionsState();
+}
+
+class _CommentActionsState extends State<_CommentActions> {
+  // Screen rect of the react button, captured when the quick-reactions pill
+  // opens. The full emoji picker anchors here (its ORIGINAL trigger), not the
+  // "…" button inside the pill. Captured from the trigger's own render box —
+  // NOT a GlobalKey: a GlobalKey wrapping the Tooltip (an OverlayPortal) inside
+  // GlassPopover's animated triggerBuilder crashed on hover with a re-entrant
+  // overlay layout (`!_skipMarkNeedsLayout`). See [[reference_web_hover_transform_assert]].
+  Rect? _reactAnchor;
+
+  IssueComment get _c => widget.comment;
+  CommentInteractions get _x => widget.interactions;
 
   @override
   Widget build(BuildContext context) {
+    final dark = AppColors.brightness == Brightness.dark;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (canEdit)
-          _iconButton(
-            context,
-            icon: LucideIcons.pencil,
-            tooltip: context.t('common.edit'),
-            color: AppColors.inkFaint,
-            onTap: onEdit,
+        _ActionButton(
+          icon: LucideIcons.reply,
+          label: context.t('comments.reply'),
+          onTap: () => _x.onReply(_c),
+        ),
+        const SizedBox(width: 2),
+        // Quick reactions (emoji row + "…" for the full picker).
+        GlassPopover(
+          alignment: GlassMenuAlignment.topLeft,
+          popoverWidth: (kQuickReactions.length + 1) * 40 + 12,
+          popoverBorderRadius: 27,
+          settings: _navGlass(dark),
+          quality: GlassQuality.standard,
+          triggerBuilder: (context, toggle) => _ActionButton(
+            icon: LucideIcons.smilePlus,
+            tooltip: context.t('comments.react'),
+            // Capture the react button's own render box (GlassPopover builds the
+            // trigger as its topmost render object, so this context IS the button)
+            // the moment the pill opens, then hand it to the emoji picker.
+            onTap: () {
+              final box = context.findRenderObject() as RenderBox?;
+              if (box != null && box.hasSize) {
+                _reactAnchor = box.localToGlobal(Offset.zero) & box.size;
+              }
+              toggle();
+            },
           ),
-        _iconButton(
-          context,
-          icon: LucideIcons.trash2,
-          tooltip: context.t('common.delete'),
-          color: AppColors.inkFaint,
-          hoverColor: AppColors.danger,
-          onTap: onDelete,
+          contentBuilder: (_, close) => _QuickReactionsBar(
+            selected: _c.myReaction(_x.meId),
+            onPick: (emoji) {
+              close();
+              _x.onReact(_c, emoji);
+            },
+            // "…" → the full glass emoji picker. Anchor it to the REACT button
+            // (its original trigger), not the "…" button, so it opens where the
+            // user first tapped. Capture the rect before closing the quick pill.
+            onMore: () async {
+              final anchor = _reactAnchor;
+              close();
+              final picked = await _pickEmojiGlass(context, anchor: anchor);
+              if (picked != null && context.mounted) {
+                _x.onReact(_c, picked);
+              }
+            },
+          ),
+        ),
+        const SizedBox(width: 2),
+        // Overflow menu.
+        GlassPopover(
+          alignment: GlassMenuAlignment.topLeft,
+          popoverWidth: 236,
+          popoverBorderRadius: 22,
+          settings: _navGlass(dark),
+          quality: GlassQuality.standard,
+          triggerBuilder: (context, toggle) => _ActionButton(
+            icon: LucideIcons.chevronDown,
+            tooltip: context.t('comments.more'),
+            onTap: toggle,
+          ),
+          contentBuilder: (context, close) =>
+              _ContextMenuCard(rows: _menuRows(context, close)),
         ),
       ],
     );
   }
 
-  Widget _iconButton(
-    BuildContext context, {
-    required IconData icon,
-    required String tooltip,
-    required Color color,
-    Color? hoverColor,
-    required VoidCallback onTap,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.transparent,
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          hoverColor: (hoverColor ?? AppColors.accent).withValues(alpha: 0.12),
-          child: Padding(
-            padding: const EdgeInsets.all(7),
-            child: Icon(icon, size: 15, color: color),
+  List<_MenuRowData> _menuRows(BuildContext context, VoidCallback close) {
+    final isVoice = _c.isVoice;
+    void run(void Function() action) {
+      close();
+      action();
+    }
+
+    return [
+      _MenuRowData(
+        LucideIcons.reply,
+        context.t('comments.reply'),
+        () => run(() => _x.onReply(_c)),
+      ),
+      if (!isVoice)
+        _MenuRowData(
+          LucideIcons.copy,
+          context.t('comments.copy'),
+          () => run(() => _x.onCopy(_c)),
+        ),
+      if (widget.canManage)
+        _MenuRowData(
+          LucideIcons.circleCheck,
+          context.t('comments.select'),
+          () => run(() => _x.onEnterSelection(_c)),
+        ),
+      if (widget.canManage && !isVoice)
+        _MenuRowData(
+          LucideIcons.pencil,
+          context.t('common.edit'),
+          () => run(() => _x.onEdit(_c)),
+        ),
+      _MenuRowData(
+        LucideIcons.link,
+        context.t('comments.copyLink'),
+        () => run(() => _x.onCopyLink(_c)),
+      ),
+      _MenuRowData(
+        _c.pinned ? LucideIcons.pinOff : LucideIcons.pin,
+        _c.pinned ? context.t('comments.unpin') : context.t('comments.pin'),
+        () => run(() => _x.onTogglePin(_c)),
+      ),
+      if (widget.canManage)
+        _MenuRowData(
+          LucideIcons.trash2,
+          context.t('common.delete'),
+          () => run(() => _x.onDelete(_c)),
+          danger: true,
+        ),
+    ];
+  }
+}
+
+/// A compact text/icon action button (Reply) or icon-only button (react/more).
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.icon,
+    required this.onTap,
+    this.label,
+    this.tooltip,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final String? label;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final child = Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        hoverColor: AppColors.accent.withValues(alpha: 0.10),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: label != null ? 8 : 6,
+            vertical: 5,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 15, color: AppColors.inkSoft),
+              if (label != null) ...[
+                const SizedBox(width: 5),
+                Text(
+                  label!,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.inkSoft,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+    return tooltip == null ? child : Tooltip(message: tooltip!, child: child);
+  }
+}
+
+/// The collapsible reply thread under a root comment: a "show replies (N)"
+/// affordance, then the flat replies (oldest-first) with connector lines, a
+/// "load more" control and a "hide replies" control.
+class _ReplyThreadView extends StatelessWidget {
+  const _ReplyThreadView({
+    required this.root,
+    required this.interactions,
+    required this.selectionMode,
+    required this.selectedIds,
+    required this.onToggleSelected,
+    required this.highlightedId,
+    required this.commentKeys,
+  });
+
+  final IssueComment root;
+  final CommentInteractions interactions;
+  final bool selectionMode;
+  final Set<String> selectedIds;
+  final void Function(IssueComment comment)? onToggleSelected;
+  final String? highlightedId;
+  final Map<String, GlobalKey>? commentKeys;
+
+  /// Indent of the reply block; the connector line lives in this gutter.
+  static const double _indent = 40;
+
+  @override
+  Widget build(BuildContext context) {
+    final thread = interactions.threadOf(root.id);
+    // Nothing to show: no known replies and never expanded.
+    if (root.replyCount == 0 && thread.replies.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    if (!thread.expanded) {
+      final count = root.replyCount;
+      return Padding(
+        padding: const EdgeInsets.only(left: _indent, top: 8),
+        child: _ThreadControl(
+          icon: LucideIcons.messageCircle,
+          loading: thread.loading,
+          label: context.t(
+            'comments.showReplies',
+            count: count,
+            variables: {'count': '$count'},
+          ),
+          onTap: () => interactions.onToggleReplies(root),
+        ),
+      );
+    }
+
+    final replies = thread.replies;
+    // No top gap: the first reply's rail must continue the root's branch stem.
+    return Padding(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < replies.length; i++)
+            _replyRow(
+              replies[i],
+              last: i == replies.length - 1 && !thread.hasMore,
+            ),
+          Padding(
+            padding: const EdgeInsets.only(left: _indent, top: 6),
+            child: Row(
+              children: [
+                if (thread.hasMore)
+                  _ThreadControl(
+                    icon: LucideIcons.chevronDown,
+                    loading: thread.loading,
+                    label: context.t('comments.loadMoreReplies'),
+                    onTap: () => interactions.onLoadMoreReplies(root),
+                  ),
+                if (thread.hasMore) const SizedBox(width: 8),
+                _ThreadControl(
+                  icon: LucideIcons.chevronUp,
+                  loading: false,
+                  label: context.t('comments.hideReplies'),
+                  onTap: () => interactions.onToggleReplies(root),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _replyRow(IssueComment reply, {required bool last}) {
+    final row = CommentBubbleRow(
+      comment: reply,
+      interactions: interactions,
+      isReply: true,
+      selectionMode: selectionMode,
+      selected: selectedIds.contains(reply.id),
+      onToggleSelected: onToggleSelected,
+      highlight: highlightedId == reply.id,
+    );
+    final keyed = commentKeys?[reply.id];
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: _indent,
+            child: CustomPaint(
+              painter: _ReplyConnectorPainter(
+                last: last,
+                color: _branchLineColor(),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: keyed == null ? row : KeyedSubtree(key: keyed, child: row),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The reply connector / branch-line colour — subtle but legible in BOTH
+/// themes. The default [AppColors.hairline] reads in dark mode but is nearly
+/// invisible on the light warm-paper canvas, so light mode uses a faded ink tone.
+Color _branchLineColor() {
+  final dark = AppColors.brightness == Brightness.dark;
+  return dark ? AppColors.hairline : AppColors.inkFaint.withValues(alpha: 0.5);
+}
+
+/// Draws the reply connector: a vertical rail down the gutter with a curved
+/// elbow into each reply's avatar. The rail stops at the elbow on the last row.
+class _ReplyConnectorPainter extends CustomPainter {
+  _ReplyConnectorPainter({required this.last, required this.color});
+
+  final bool last;
+  final Color color;
+
+  // Where the elbow meets the avatar row (aligns with the reply avatar centre:
+  // 8px top padding + ~13 to the avatar's vertical middle).
+  static const double _elbowY = 21;
+  // Rail x = the ROOT avatar's centre (32/2), so the branch continues the root's
+  // main-branch stem in a straight, unbroken line.
+  static const double _railX = 16;
+  // The elbow reaches across the gutter to the reply avatar's left edge.
+  static const double _avatarEdgeX = 36;
+  // Radius of the rounded corner where the rail turns into the elbow.
+  static const double _corner = 10;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    // Vertical rail (continues the root's main branch). For the LAST reply it
+    // stops exactly where the rounded corner begins — no straight overshoot — so
+    // the branch closes with a clean quarter-round; otherwise it runs full
+    // height down to the next reply.
+    canvas.drawLine(
+      const Offset(_railX, 0),
+      Offset(_railX, last ? _elbowY - _corner : size.height),
+      paint,
+    );
+    // Rounded corner from the rail across to the reply avatar.
+    final elbow = Path()
+      ..moveTo(_railX, _elbowY - _corner)
+      ..quadraticBezierTo(_railX, _elbowY, _avatarEdgeX, _elbowY);
+    canvas.drawPath(elbow, paint);
+  }
+
+  @override
+  bool shouldRepaint(_ReplyConnectorPainter old) =>
+      old.last != last || old.color != color;
+}
+
+/// A subtle text-button used by the reply thread ("show replies", "load more",
+/// "hide replies"), with an optional inline spinner.
+class _ThreadControl extends StatelessWidget {
+  const _ThreadControl({
+    required this.icon,
+    required this.label,
+    required this.loading,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool loading;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: loading ? null : onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 14,
+                height: 14,
+                child: loading
+                    ? const Padding(
+                        padding: EdgeInsets.all(1),
+                        child: CircularProgressIndicator(strokeWidth: 1.6),
+                      )
+                    : Icon(icon, size: 14, color: AppColors.accentStrong),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.accentStrong,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -320,214 +925,145 @@ class _RowActions extends StatelessWidget {
   }
 }
 
-/// A single comment bubble (text or voice). Long-press on a bubble the user owns
-/// opens an edit/delete menu, so moderation survives the chat-style redesign.
-class _Bubble extends StatelessWidget {
-  const _Bubble({
+/// The circular selection indicator shown on own comments in selection mode.
+class _SelectDot extends StatelessWidget {
+  const _SelectDot({required this.selected});
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 140),
+      width: 22,
+      height: 22,
+      decoration: BoxDecoration(
+        color: selected ? AppColors.accent : Colors.transparent,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: selected ? AppColors.accent : AppColors.hairline,
+          width: 1.6,
+        ),
+      ),
+      child: selected
+          ? const Icon(LucideIcons.check, size: 13, color: Color(0xFF2A2410))
+          : null,
+    );
+  }
+}
+
+/// Reaction chips (emoji + count) shown under a comment. The user's own reaction
+/// is tinted; tapping a chip toggles it.
+class _ReactionChips extends StatelessWidget {
+  const _ReactionChips({
     required this.comment,
-    required this.me,
-    required this.tail,
-    required this.loadVoice,
-    required this.canManage,
-    required this.enableMenu,
-    required this.onEdit,
-    required this.onDelete,
+    required this.meId,
+    required this.onTap,
   });
 
   final IssueComment comment;
-  final bool me;
-
-  /// Draw the small "tail" corner on the sender's side (last of a group only).
-  final bool tail;
-  final VoiceAudioLoader loadVoice;
-  final bool canManage;
-
-  /// Whether long-press opens the edit/delete menu (compact/chat mode only).
-  final bool enableMenu;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final String? meId;
+  final void Function(String emoji) onTap;
 
   @override
   Widget build(BuildContext context) {
     final dark = AppColors.brightness == Brightness.dark;
-    final bg = me
-        ? (dark ? const Color(0xFF322C46) : const Color(0xFFEFEBF8))
-        : (dark ? const Color(0xFF23222F) : AppColors.surface);
-    final borderColor = me
-        ? (dark ? const Color(0x40A98BFF) : const Color(0xFFDED6F2))
-        : AppColors.hairline;
-
-    final radius = BorderRadius.only(
-      topLeft: const Radius.circular(16),
-      topRight: const Radius.circular(16),
-      bottomLeft: Radius.circular(!me && tail ? 5 : 16),
-      bottomRight: Radius.circular(me && tail ? 5 : 16),
-    );
-
-    final bubble = ConstrainedBox(
-      constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width * 0.72,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: radius,
-          border: Border.all(color: borderColor),
-        ),
-        padding: comment.isVoice
-            ? const EdgeInsets.fromLTRB(8, 8, 12, 8)
-            : const EdgeInsets.fromLTRB(13, 9, 13, 8),
-        child: comment.isVoice
-            ? VoiceBubble(
-                voice: comment.voice!,
-                me: me,
-                loader: loadVoice,
-                createdAt: comment.createdAt,
-              )
-            : _TextBody(comment: comment, me: me),
-      ),
-    );
-
-    if (!enableMenu) return bubble;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onLongPress: () => _openMenu(context),
-      onSecondaryTapDown: (d) => _openMenu(context, d.globalPosition),
-      child: bubble,
-    );
-  }
-
-  Future<void> _openMenu(BuildContext context, [Offset? at]) async {
-    final box = context.findRenderObject() as RenderBox?;
-    if (box == null) return;
-    final origin = at ?? box.localToGlobal(box.size.center(Offset.zero));
-    final selected = await _showGlassBubbleMenu(
-      context,
-      origin,
-      canEdit: !comment.isVoice,
-    );
-    if (selected == 'edit') {
-      onEdit();
-    } else if (selected == 'delete') {
-      onDelete();
-    }
-  }
-}
-
-/// Liquid-Glass long-press menu for a comment bubble (compact mode). Shown as a
-/// positioned glass card at the press point, matching the composer's "+" popup.
-Future<String?> _showGlassBubbleMenu(
-  BuildContext context,
-  Offset globalPos, {
-  required bool canEdit,
-}) {
-  return showGeneralDialog<String>(
-    context: context,
-    barrierDismissible: true,
-    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-    barrierColor: Colors.black.withValues(alpha: 0.14),
-    transitionDuration: const Duration(milliseconds: 150),
-    pageBuilder: (ctx, _, _) {
-      final media = MediaQuery.of(ctx);
-      const menuW = 224.0;
-      final menuH = 12.0 + (canEdit ? 2 : 1) * 48.0;
-      var left = globalPos.dx;
-      var top = globalPos.dy;
-      if (left + menuW > media.size.width - 12) {
-        left = media.size.width - 12 - menuW;
-      }
-      if (left < 12) left = 12;
-      // Open below the press; flip above if it would overflow the bottom.
-      if (top + menuH > media.size.height - 12) {
-        top = (top - menuH).clamp(12.0, media.size.height - 12 - menuH);
-      }
-      return Stack(
-        children: [
-          Positioned(
-            left: left,
-            top: top,
-            child: _GlassBubbleMenu(canEdit: canEdit),
+    final mine = comment.myReaction(meId);
+    final counts = comment.reactionCounts;
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      children: [
+        for (final entry in counts.entries)
+          _chip(
+            emoji: entry.key,
+            count: entry.value,
+            selected: entry.key == mine,
+            dark: dark,
           ),
-        ],
-      );
-    },
-    transitionBuilder: (ctx, anim, _, child) {
-      final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
-      return FadeTransition(
-        opacity: curved,
-        child: ScaleTransition(
-          scale: Tween(begin: 0.96, end: 1.0).animate(curved),
-          alignment: Alignment.topLeft,
-          child: child,
-        ),
-      );
-    },
-  );
-}
+      ],
+    );
+  }
 
-class _GlassBubbleMenu extends StatelessWidget {
-  const _GlassBubbleMenu({required this.canEdit});
-
-  final bool canEdit;
-
-  @override
-  Widget build(BuildContext context) {
-    final dark = AppColors.brightness == Brightness.dark;
-    return GlassContainer(
-      width: 224,
-      useOwnLayer: true,
-      quality: GlassQuality.standard,
-      settings: _navGlass(dark),
-      clipBehavior: Clip.antiAlias,
-      shape: const LiquidRoundedSuperellipse(borderRadius: 22),
-      padding: const EdgeInsets.all(6),
-      child: Material(
-        color: Colors.transparent,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (canEdit)
-              _menuRow(
-                context,
-                LucideIcons.pencil,
-                context.t('common.edit'),
-                () => Navigator.of(context).pop('edit'),
-              ),
-            _menuRow(
-              context,
-              LucideIcons.trash2,
-              context.t('common.delete'),
-              () => Navigator.of(context).pop('delete'),
-              danger: true,
+  Widget _chip({
+    required String emoji,
+    required int count,
+    required bool selected,
+    required bool dark,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      shape: const StadiumBorder(),
+      child: InkWell(
+        onTap: () => onTap(emoji),
+        customBorder: const StadiumBorder(),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: selected
+                ? AppColors.accent.withValues(alpha: dark ? 0.26 : 0.18)
+                : (dark ? const Color(0xFF23222F) : AppColors.surface),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: selected ? AppColors.accentLine : AppColors.hairline,
             ),
-          ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 13)),
+              if (count > 1) ...[
+                const SizedBox(width: 4),
+                Text(
+                  '$count',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: selected
+                        ? AppColors.accentStrong
+                        : AppColors.inkSoft,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
   }
+}
 
-  Widget _menuRow(
-    BuildContext context,
-    IconData icon,
-    String label,
-    VoidCallback onTap, {
-    bool danger = false,
-  }) {
-    final color = danger ? AppColors.danger : AppColors.ink;
+/// The overflow menu content (inside a [GlassPopover] glass panel).
+class _ContextMenuCard extends StatelessWidget {
+  const _ContextMenuCard({required this.rows});
+  final List<_MenuRowData> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [for (final r in rows) _row(context, r)],
+      ),
+    );
+  }
+
+  Widget _row(BuildContext context, _MenuRowData r) {
+    final color = r.danger ? AppColors.danger : AppColors.ink;
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(15),
       child: InkWell(
-        onTap: onTap,
+        onTap: r.onTap,
         borderRadius: BorderRadius.circular(15),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
           child: Row(
             children: [
-              Icon(icon, size: 18, color: color),
+              Icon(r.icon, size: 18, color: color),
               const SizedBox(width: 12),
               Text(
-                label,
+                r.label,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
@@ -542,18 +1078,220 @@ class _GlassBubbleMenu extends StatelessWidget {
   }
 }
 
+/// The quick-reactions pill content (emoji row + "…" full picker), placed inside
+/// a [GlassPopover] glass panel.
+class _QuickReactionsBar extends StatelessWidget {
+  const _QuickReactionsBar({
+    required this.selected,
+    required this.onPick,
+    required this.onMore,
+  });
+
+  final String? selected;
+  final void Function(String emoji) onPick;
+
+  /// Opens the full emoji picker (anchored by the caller to the react button).
+  final VoidCallback onMore;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final e in kQuickReactions)
+          _emojiButton(e, e == selected, () => onPick(e)),
+        _moreButton(context),
+      ],
+    );
+  }
+
+  Widget _emojiButton(String emoji, bool active, VoidCallback onTap) {
+    return Material(
+      color: active
+          ? AppColors.accent.withValues(alpha: 0.22)
+          : Colors.transparent,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Center(
+            child: Text(emoji, style: const TextStyle(fontSize: 22)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _moreButton(BuildContext context) {
+    final dark = AppColors.brightness == Brightness.dark;
+    return Material(
+      color: dark ? Colors.white10 : Colors.black12,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onMore,
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(LucideIcons.ellipsis, size: 18, color: AppColors.inkSoft),
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuRowData {
+  _MenuRowData(this.icon, this.label, this.onTap, {this.danger = false});
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool danger;
+}
+
+/// Opens the full glass emoji picker and returns the chosen emoji (or null).
+/// Responsive: anchored beside the "…" button on wide layouts, docked as a glass
+/// sheet on phones. The system emoji grid renders on transparent glass.
+Future<String?> _pickEmojiGlass(BuildContext context, {Rect? anchor}) {
+  return showGeneralDialog<String>(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    barrierColor: Colors.black.withValues(alpha: 0.14),
+    transitionDuration: const Duration(milliseconds: 180),
+    pageBuilder: (ctx, _, _) => _GlassEmojiOverlay(anchor: anchor),
+    transitionBuilder: (ctx, anim, _, child) => FadeTransition(
+      opacity: CurvedAnimation(parent: anim, curve: Curves.easeOutCubic),
+      child: child,
+    ),
+  );
+}
+
+/// Positions the glass emoji panel: anchored to [anchor] on wide screens (it
+/// flips above the trigger if it would overflow below), otherwise docked to the
+/// bottom of the screen as a glass sheet. A full-screen barrier dismisses it.
+class _GlassEmojiOverlay extends StatelessWidget {
+  const _GlassEmojiOverlay({this.anchor});
+  final Rect? anchor;
+
+  static const double _panelH = 396;
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final size = media.size;
+    final wide = anchor != null && size.width >= 600;
+
+    final Widget positioned;
+    if (wide) {
+      const w = 340.0;
+      const h = _panelH;
+      final a = anchor!;
+      const gap = 8.0;
+      final left = a.left.clamp(12.0, size.width - w - 12);
+      var top = a.bottom + gap;
+      if (top + h > size.height - 12) top = a.top - gap - h; // flip above
+      top = top.clamp(media.padding.top + 12, size.height - h - 12);
+      positioned = Positioned(
+        left: left,
+        top: top,
+        child: _GlassEmojiPanel(
+          width: w,
+          height: h,
+          onPick: (e) => Navigator.of(context).pop(e),
+        ),
+      );
+    } else {
+      final h = (size.height * 0.55).clamp(300.0, _panelH);
+      positioned = Positioned(
+        left: 10,
+        bottom: media.padding.bottom + 12,
+        child: _GlassEmojiPanel(
+          width: size.width - 20,
+          height: h,
+          onPick: (e) => Navigator.of(context).pop(e),
+        ),
+      );
+    }
+
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.of(context).pop(),
+          ),
+        ),
+        positioned,
+      ],
+    );
+  }
+}
+
+/// The Liquid-Glass emoji panel: the system emoji grid on a transparent
+/// background so the glass shows through.
+class _GlassEmojiPanel extends StatelessWidget {
+  const _GlassEmojiPanel({
+    required this.width,
+    required this.height,
+    required this.onPick,
+  });
+
+  final double width;
+  final double height;
+  final void Function(String emoji) onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = AppColors.brightness == Brightness.dark;
+    return GlassContainer(
+      width: width,
+      height: height,
+      useOwnLayer: true,
+      quality: GlassQuality.standard,
+      settings: _navGlass(dark),
+      clipBehavior: Clip.antiAlias,
+      shape: const LiquidRoundedSuperellipse(borderRadius: 24),
+      padding: const EdgeInsets.all(6),
+      // EmojiPicker's search field + ink need a Material ancestor;
+      // showGeneralDialog (unlike a bottom sheet) doesn't provide one.
+      child: Material(
+        type: MaterialType.transparency,
+        child: EmojiPicker(
+          onEmojiSelected: (category, emoji) => onPick(emoji.emoji),
+          config: Config(
+            height: height - 12,
+            emojiViewConfig: const EmojiViewConfig(
+              backgroundColor: Colors.transparent,
+              columns: 8,
+            ),
+            categoryViewConfig: CategoryViewConfig(
+              backgroundColor: Colors.transparent,
+              indicatorColor: AppColors.accent,
+              iconColorSelected: AppColors.accent,
+            ),
+            bottomActionBarConfig: const BottomActionBarConfig(enabled: false),
+            searchViewConfig: SearchViewConfig(
+              backgroundColor: dark
+                  ? const Color(0x33121218)
+                  : const Color(0x14000000),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Text comment body — rendered through the shared Markdown parser so mentions,
-/// smart-links and inline images keep working inside the bubble.
-///
-/// For the common case (a single plain paragraph) the time flows *inline* after
-/// the text — WhatsApp-style — so short messages stay one line tall instead of
-/// spending a whole extra row on the timestamp. Rich content (headings, lists,
-/// code, tables, images) falls back to block layout with the time tucked under.
+/// smart-links and inline images keep working. Flat, on a transparent
+/// background (no bubble); the timestamp lives in the row header.
 class _TextBody extends StatelessWidget {
-  const _TextBody({required this.comment, required this.me});
+  const _TextBody({required this.comment});
 
   final IssueComment comment;
-  final bool me;
 
   /// Matches any line that opens a block-level markdown construct.
   static final _blockLine = RegExp(
@@ -562,7 +1300,7 @@ class _TextBody extends StatelessWidget {
   static final _image = RegExp(r'!\[[^\]]*\]\([^)]+\)');
 
   /// True when the body is a single paragraph with no block-level markdown —
-  /// safe to render as one inline run with a trailing timestamp.
+  /// rendered as one inline run instead of the heavier block layout.
   bool get _inlineOnly {
     if (_image.hasMatch(comment.text)) return false;
     final lines = comment.text.replaceAll('\r\n', '\n').split('\n');
@@ -582,80 +1320,23 @@ class _TextBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final meta = _MetaLine(
-      createdAt: comment.createdAt,
-      me: me,
-      edited: comment.isEdited,
-    );
-
     if (_inlineOnly) {
       final parser = KbMarkdownParser(fontSize: 14);
-      final base = parser.baseStyle.copyWith(height: 1.32);
-      // Collapse the soft-wrapped paragraph into one line-flow (same as the
-      // block parser) so the trailing time wraps naturally with the text.
+      final base = parser.baseStyle.copyWith(height: 1.35);
       final body = comment.text
           .replaceAll('\r\n', '\n')
           .split('\n')
           .map((l) => l.trim())
           .where((l) => l.isNotEmpty)
           .join(' ');
-      return Text.rich(
-        TextSpan(
-          children: [
-            parser.inlineFor(body, base),
-            WidgetSpan(
-              alignment: PlaceholderAlignment.bottom,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: meta,
-              ),
-            ),
-          ],
-        ),
-      );
+      return Text.rich(TextSpan(children: [parser.inlineFor(body, base)]));
     }
 
     final nodes = KbMarkdownParser(fontSize: 14).parse(comment.text).nodes;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
-      children: [
-        ...nodes,
-        const SizedBox(height: 2),
-        meta,
-      ],
-    );
-  }
-}
-
-/// Time + optional "edited" marker + read tick, right-aligned under a bubble.
-class _MetaLine extends StatelessWidget {
-  const _MetaLine({
-    required this.createdAt,
-    required this.me,
-    this.edited = false,
-  });
-
-  final DateTime? createdAt;
-  final bool me;
-  final bool edited;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = me ? AppColors.accentStrong : AppColors.inkFaint;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (edited) ...[
-          Text(
-            context.t('issues.commentEdited'),
-            style: TextStyle(fontSize: 10.5, color: AppColors.inkFaint),
-          ),
-          const SizedBox(width: 5),
-        ],
-        Text(hhmm(createdAt), style: TextStyle(fontSize: 10.5, color: color)),
-      ],
+      children: nodes,
     );
   }
 }
@@ -663,18 +1344,10 @@ class _MetaLine extends StatelessWidget {
 /// A playable voice message: amber play/pause, tappable/scrubbable waveform and
 /// a live-updating timecode. Audio is fetched lazily on first play.
 class VoiceBubble extends StatefulWidget {
-  const VoiceBubble({
-    super.key,
-    required this.voice,
-    required this.me,
-    required this.loader,
-    required this.createdAt,
-  });
+  const VoiceBubble({super.key, required this.voice, required this.loader});
 
   final CommentVoice voice;
-  final bool me;
   final VoiceAudioLoader loader;
-  final DateTime? createdAt;
 
   @override
   State<VoiceBubble> createState() => _VoiceBubbleState();
@@ -708,12 +1381,20 @@ class _VoiceBubbleState extends State<VoiceBubble> {
             ? _controller.position
             : Duration.zero;
         final total = _controller.duration;
+        final timeStyle = TextStyle(
+          fontFamily: AppTheme.fontMono,
+          fontSize: 10.5,
+          color: AppColors.inkFaint,
+        );
         return SizedBox(
-          width: 210,
+          width: 230,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Play button and waveform share one centred row, so the play
+              // glyph sits exactly on the waveform's centre line (WhatsApp-style
+              // — the 40px button and 30px waveform both centre to the row).
               Row(
                 children: [
                   _PlayButton(
@@ -724,50 +1405,35 @@ class _VoiceBubbleState extends State<VoiceBubble> {
                   ),
                   const SizedBox(width: 11),
                   Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          height: 30,
-                          child: _Waveform(
-                            peaks: widget.voice.peaks,
-                            progress: _controller.progress,
-                            onSeek: _controller.seekFraction,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              _mmss(
-                                playing || elapsed > Duration.zero
-                                    ? elapsed
-                                    : total,
-                              ),
-                              style: TextStyle(
-                                fontFamily: AppTheme.fontMono,
-                                fontSize: 10.5,
-                                color: AppColors.inkFaint,
-                              ),
-                            ),
-                            Text(
-                              _mmss(total),
-                              style: TextStyle(
-                                fontFamily: AppTheme.fontMono,
-                                fontSize: 10.5,
-                                color: AppColors.inkFaint,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                    child: SizedBox(
+                      height: 30,
+                      child: _Waveform(
+                        peaks: widget.voice.peaks,
+                        progress: _controller.progress,
+                        onSeek: _controller.seekFraction,
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 3),
-              _MetaLine(createdAt: widget.createdAt, me: widget.me),
+              const SizedBox(height: 4),
+              // Timecodes below the waveform, indented past the play button
+              // (40px button + 11px gap) so they align under the peaks.
+              Padding(
+                padding: const EdgeInsets.only(left: 51),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _mmss(
+                        playing || elapsed > Duration.zero ? elapsed : total,
+                      ),
+                      style: timeStyle,
+                    ),
+                    Text(_mmss(total), style: timeStyle),
+                  ],
+                ),
+              ),
             ],
           ),
         );

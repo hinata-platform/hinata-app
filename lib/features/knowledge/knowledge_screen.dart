@@ -315,8 +315,9 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
     }
   }
 
-  void _toast(String msg) =>
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  void _toast(String msg) => ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(context.t(msg))));
 
   void _openTreeDrawer() {
     showGlassBottomSheet<void>(

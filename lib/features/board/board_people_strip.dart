@@ -115,6 +115,9 @@ class _PersonAvatar extends StatelessWidget {
       onEnter: (_) => onEnter(),
       onExit: (_) => onExit(),
       child: GestureDetector(
+        // opaque so a tap still registers even though the animated avatar below
+        // is wrapped in IgnorePointer (see below).
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: Tooltip(
           message: name,
@@ -122,25 +125,33 @@ class _PersonAvatar extends StatelessWidget {
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 150),
             opacity: dimmed ? 0.45 : 1,
-            child: AnimatedSlide(
-              duration: const Duration(milliseconds: 150),
-              curve: hiveEase,
-              offset: Offset(0, lift / size),
-              child: Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    if (selected)
-                      BoxShadow(
-                        color: AppColors.accentStrong,
-                        spreadRadius: 3.2,
-                      ),
-                    BoxShadow(color: AppColors.surface, spreadRadius: 1.6),
-                  ],
+            child: IgnorePointer(
+              // Keep the hover-lift as a paint-only effect: don't let the web
+              // mouse-tracker hit-test down into the translating render object.
+              // RenderFractionalTranslation asserts `!debugNeedsLayout` when
+              // hit-tested mid-relayout — the same assert-flood that hung the
+              // issue sheet on web. Hover/tap are handled by the MouseRegion +
+              // opaque GestureDetector above, so nothing is lost.
+              child: AnimatedSlide(
+                duration: const Duration(milliseconds: 150),
+                curve: hiveEase,
+                offset: Offset(0, lift / size),
+                child: Container(
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      if (selected)
+                        BoxShadow(
+                          color: AppColors.accentStrong,
+                          spreadRadius: 3.2,
+                        ),
+                      BoxShadow(color: AppColors.surface, spreadRadius: 1.6),
+                    ],
+                  ),
+                  child: HiveAvatar(name: name, imageUrl: imageUrl, size: size),
                 ),
-                child: HiveAvatar(name: name, imageUrl: imageUrl, size: size),
               ),
             ),
           ),

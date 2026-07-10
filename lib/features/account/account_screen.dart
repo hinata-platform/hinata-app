@@ -148,7 +148,7 @@ class _AccountScreenState extends State<AccountScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(SnackBar(content: Text(context.t(message))));
   }
 
   // --- mutations ------------------------------------------------------------

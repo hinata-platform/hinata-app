@@ -589,7 +589,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ).showSnackBar(SnackBar(content: Text(context.t(message))));
   }
 
   // ── build ─────────────────────────────────────────────────────────────
