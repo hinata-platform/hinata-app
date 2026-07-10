@@ -487,7 +487,7 @@ class CommentBubbleRow extends StatelessWidget {
 
 /// The persistent action row under a comment: Reply, a reaction popover and a
 /// "more" popover (edit/copy/pin/…). Left-aligned to the body on every platform.
-class _CommentActions extends StatelessWidget {
+class _CommentActions extends StatefulWidget {
   const _CommentActions({
     required this.comment,
     required this.interactions,
@@ -499,6 +499,18 @@ class _CommentActions extends StatelessWidget {
   final bool canManage;
 
   @override
+  State<_CommentActions> createState() => _CommentActionsState();
+}
+
+class _CommentActionsState extends State<_CommentActions> {
+  // Anchors the emoji picker to the react button (its ORIGINAL trigger), not the
+  // "…" button inside the quick-reactions pill.
+  final GlobalKey _reactKey = GlobalKey();
+
+  IssueComment get _c => widget.comment;
+  CommentInteractions get _x => widget.interactions;
+
+  @override
   Widget build(BuildContext context) {
     final dark = AppColors.brightness == Brightness.dark;
     return Row(
@@ -507,7 +519,7 @@ class _CommentActions extends StatelessWidget {
         _ActionButton(
           icon: LucideIcons.reply,
           label: context.t('comments.reply'),
-          onTap: () => interactions.onReply(comment),
+          onTap: () => _x.onReply(_c),
         ),
         const SizedBox(width: 2),
         // Quick reactions (emoji row + "…" for the full picker).
@@ -517,26 +529,29 @@ class _CommentActions extends StatelessWidget {
           popoverBorderRadius: 27,
           settings: _navGlass(dark),
           quality: GlassQuality.standard,
-          triggerBuilder: (context, toggle) => _ActionButton(
-            icon: LucideIcons.smilePlus,
-            tooltip: context.t('comments.react'),
-            onTap: toggle,
+          triggerBuilder: (context, toggle) => KeyedSubtree(
+            key: _reactKey,
+            child: _ActionButton(
+              icon: LucideIcons.smilePlus,
+              tooltip: context.t('comments.react'),
+              onTap: toggle,
+            ),
           ),
           contentBuilder: (_, close) => _QuickReactionsBar(
-            selected: comment.myReaction(interactions.meId),
+            selected: _c.myReaction(_x.meId),
             onPick: (emoji) {
               close();
-              interactions.onReact(comment, emoji);
+              _x.onReact(_c, emoji);
             },
-            // "…" → the full glass emoji picker, anchored to the button on wide
-            // screens and docked as a glass sheet on phones. Close the quick pill
-            // first, then present (using the stable actions context, not the
-            // popover's, which is being torn down).
-            onMore: (anchor) async {
+            // "…" → the full glass emoji picker. Anchor it to the REACT button
+            // (its original trigger), not the "…" button, so it opens where the
+            // user first tapped. Capture the rect before closing the quick pill.
+            onMore: () async {
+              final anchor = _reactRect();
               close();
               final picked = await _pickEmojiGlass(context, anchor: anchor);
               if (picked != null && context.mounted) {
-                interactions.onReact(comment, picked);
+                _x.onReact(_c, picked);
               }
             },
           ),
@@ -561,8 +576,15 @@ class _CommentActions extends StatelessWidget {
     );
   }
 
+  /// Global screen rect of the react button (the emoji picker's anchor).
+  Rect? _reactRect() {
+    final box = _reactKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return null;
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
+
   List<_MenuRowData> _menuRows(BuildContext context, VoidCallback close) {
-    final isVoice = comment.isVoice;
+    final isVoice = _c.isVoice;
     void run(void Function() action) {
       close();
       action();
@@ -572,43 +594,41 @@ class _CommentActions extends StatelessWidget {
       _MenuRowData(
         LucideIcons.reply,
         context.t('comments.reply'),
-        () => run(() => interactions.onReply(comment)),
+        () => run(() => _x.onReply(_c)),
       ),
       if (!isVoice)
         _MenuRowData(
           LucideIcons.copy,
           context.t('comments.copy'),
-          () => run(() => interactions.onCopy(comment)),
+          () => run(() => _x.onCopy(_c)),
         ),
-      if (canManage)
+      if (widget.canManage)
         _MenuRowData(
           LucideIcons.circleCheck,
           context.t('comments.select'),
-          () => run(() => interactions.onEnterSelection(comment)),
+          () => run(() => _x.onEnterSelection(_c)),
         ),
-      if (canManage && !isVoice)
+      if (widget.canManage && !isVoice)
         _MenuRowData(
           LucideIcons.pencil,
           context.t('common.edit'),
-          () => run(() => interactions.onEdit(comment)),
+          () => run(() => _x.onEdit(_c)),
         ),
       _MenuRowData(
         LucideIcons.link,
         context.t('comments.copyLink'),
-        () => run(() => interactions.onCopyLink(comment)),
+        () => run(() => _x.onCopyLink(_c)),
       ),
       _MenuRowData(
-        comment.pinned ? LucideIcons.pinOff : LucideIcons.pin,
-        comment.pinned
-            ? context.t('comments.unpin')
-            : context.t('comments.pin'),
-        () => run(() => interactions.onTogglePin(comment)),
+        _c.pinned ? LucideIcons.pinOff : LucideIcons.pin,
+        _c.pinned ? context.t('comments.unpin') : context.t('comments.pin'),
+        () => run(() => _x.onTogglePin(_c)),
       ),
-      if (canManage)
+      if (widget.canManage)
         _MenuRowData(
           LucideIcons.trash2,
           context.t('common.delete'),
-          () => run(() => interactions.onDelete(comment)),
+          () => run(() => _x.onDelete(_c)),
           danger: true,
         ),
     ];
@@ -1067,8 +1087,8 @@ class _QuickReactionsBar extends StatelessWidget {
   final String? selected;
   final void Function(String emoji) onPick;
 
-  /// Opens the full picker; receives the "…" button's screen rect for anchoring.
-  final void Function(Rect? anchor) onMore;
+  /// Opens the full emoji picker (anchored by the caller to the react button).
+  final VoidCallback onMore;
 
   @override
   Widget build(BuildContext context) {
@@ -1104,31 +1124,16 @@ class _QuickReactionsBar extends StatelessWidget {
 
   Widget _moreButton(BuildContext context) {
     final dark = AppColors.brightness == Brightness.dark;
-    // Wrapped in a Builder so onTap can read this button's own render box and
-    // hand its screen rect to [onMore] for anchoring the emoji picker.
-    return Builder(
-      builder: (context) => Material(
-        color: dark ? Colors.white10 : Colors.black12,
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () {
-            final box = context.findRenderObject() as RenderBox?;
-            onMore(
-              box != null && box.hasSize
-                  ? box.localToGlobal(Offset.zero) & box.size
-                  : null,
-            );
-          },
-          child: SizedBox(
-            width: 40,
-            height: 40,
-            child: Icon(
-              LucideIcons.ellipsis,
-              size: 18,
-              color: AppColors.inkSoft,
-            ),
-          ),
+    return Material(
+      color: dark ? Colors.white10 : Colors.black12,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onMore,
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(LucideIcons.ellipsis, size: 18, color: AppColors.inkSoft),
         ),
       ),
     );
