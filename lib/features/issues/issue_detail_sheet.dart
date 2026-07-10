@@ -1199,7 +1199,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       if (mounted) setState(() => _replaceComment(updated));
     } on ApiFailure catch (failure) {
       _toast(failure.message);
-      _resyncComments();
+      _scheduleCommentResync();
     }
   }
 
