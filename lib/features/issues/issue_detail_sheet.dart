@@ -370,15 +370,21 @@ class _CopyLinkIdState extends State<CopyLinkId> {
     if (overlay == null) return;
     final id = widget.readableId;
     _hintEntry = OverlayEntry(
+      // A transient confirmation toast — it must never intercept pointers, and
+      // IgnorePointer also stops the mouse-tracker from hit-testing down into its
+      // animated (Transform) subtree mid-relayout (the `!debugNeedsLayout`
+      // assert-flood class of bug — see the id-icon note above).
       builder: (_) => Positioned(
         width: 300,
-        child: CompositedTransformFollower(
-          link: _layerLink,
-          showWhenUnlinked: false,
-          offset: const Offset(0, 30),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: _CopiedHintChip(id: id),
+        child: IgnorePointer(
+          child: CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            offset: const Offset(0, 30),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: _CopiedHintChip(id: id),
+            ),
           ),
         ),
       ),
@@ -412,45 +418,45 @@ class _CopyLinkIdState extends State<CopyLinkId> {
                 color: widget.color ?? AppColors.inkSoft,
                 fontSize: widget.fontSize,
               ),
-              // Reserved slot: the icon fades + slides in from the left on hover
-              // (or once copied), so the row width never jumps.
+              // Reserved fixed-size slot: the icon fades in on hover (or once
+              // copied), so the row width never jumps. Deliberately a plain
+              // fade, NOT an AnimatedSlide/Transform: a translating render object
+              // (RenderFractionalTranslation) asserts `!debugNeedsLayout` when
+              // the web mouse-tracker hit-tests it mid-relayout — while the sheet
+              // is loading comments its layout churns every frame, which turned
+              // that into an assert flood that hung the app on web/desktop.
               Padding(
                 padding: const EdgeInsets.only(left: 4),
                 child: AnimatedOpacity(
                   duration: const Duration(milliseconds: 160),
                   opacity: visible ? 1 : 0,
-                  child: AnimatedSlide(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOutCubic,
-                    offset: visible ? Offset.zero : const Offset(-0.45, 0),
-                    child: Tooltip(
-                      message: context.t(
-                        _copied ? 'issues.copied' : 'issues.copyLink',
-                      ),
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: Center(
-                          child: _copied
-                              ? Container(
-                                  width: 18,
-                                  height: 18,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.success,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    LucideIcons.check,
-                                    size: 12,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Icon(
-                                  LucideIcons.link,
-                                  size: 16,
-                                  color: widget.color ?? AppColors.inkSoft,
+                  child: Tooltip(
+                    message: context.t(
+                      _copied ? 'issues.copied' : 'issues.copyLink',
+                    ),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: Center(
+                        child: _copied
+                            ? Container(
+                                width: 18,
+                                height: 18,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.success,
+                                  shape: BoxShape.circle,
                                 ),
-                        ),
+                                child: const Icon(
+                                  LucideIcons.check,
+                                  size: 12,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Icon(
+                                LucideIcons.link,
+                                size: 16,
+                                color: widget.color ?? AppColors.inkSoft,
+                              ),
                       ),
                     ),
                   ),
@@ -589,9 +595,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   final _attachmentsKey = GlobalKey<AttachmentsSectionState>();
 
   Issue? _issue;
-  // Comments are paginated newest-first server-side but displayed oldest-first
-  // (chat style): each loaded page is reversed and older pages prepend above.
-  // Activity stays newest-first; older pages append below.
+  // Comments are paginated newest-first server-side and displayed newest-first
+  // (feed style): the newest page shows at the top and older pages append below.
+  // Activity is likewise newest-first; older pages append below.
   List<IssueComment> _comments = const [];
   // Pinned comments (any project member can pin) float above the chat feed in
   // pin order — fetched separately so a pinned comment on an unloaded page still
@@ -602,13 +608,20 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   int _activityTotal = 0;
   int _activityPage = 0;
   bool _loadingMore = false;
+  // Latch for comment auto-pagination: load exactly ONE page each time the load
+  // sentinel (at the BOTTOM of the thread) becomes visible, and re-arm only once
+  // it has scrolled off-screen again. Without the latch a level-trigger would
+  // reload every frame the sentinel stayed visible → a burst of page loads.
+  bool _loadArmed = true;
 
   /// Comments are paged in small batches — only the first [_commentPageSize] load
-  /// with the issue, and each scroll to the top of the thread pulls another page.
+  /// with the issue, and each scroll to the BOTTOM of the thread pulls another
+  /// (older) page.
   static const int _commentPageSize = 10;
 
-  /// Anchors the top-of-thread load sentinel so [_onCommentScroll] can tell when
-  /// it scrolls into view (the thread lives mid-page in the shared scroll view).
+  /// Anchors the bottom-of-thread load sentinel so [_onCommentScroll] can tell
+  /// when it scrolls into view (the thread lives mid-page in the shared scroll
+  /// view).
   final GlobalKey _commentsLoaderKey = GlobalKey();
 
   // Live comment sync (SSE): reactions/pins/edits/new comments from anyone in the
@@ -808,7 +821,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       if (!mounted) return;
       final page = results[0] as ({List<IssueComment> items, int total});
       setState(() {
-        _comments = page.items.reversed.toList();
+        _comments = page.items.toList();
         _commentsTotal = page.total;
         _pinned = results[1] as List<IssueComment>;
       });
@@ -817,7 +830,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     }
   }
 
-  /// Auto-loads the next older page when the load sentinel (at the top of the
+  /// Auto-loads the next older page when the load sentinel (at the bottom of the
   /// thread, which sits mid-page inside the shared scroll view) scrolls into
   /// view. Geometry-based, since all children are built eagerly here so "built"
   /// wouldn't mean "visible".
@@ -829,8 +842,21 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     final box = ctx.findRenderObject() as RenderBox?;
     if (box == null || !box.hasSize) return;
     final top = box.localToGlobal(Offset.zero).dy;
-    final viewportBottom = MediaQuery.of(context).size.height + 240;
-    if (top <= viewportBottom) {
+    final screenH = MediaQuery.of(context).size.height;
+    const prefetch = 200.0;
+    // The sentinel is (nearly) on-screen when its span overlaps the viewport,
+    // grown by a prefetch margin so a page loads just before it is reached.
+    final onScreen =
+        top < screenH + prefetch && (top + box.size.height) > -prefetch;
+    if (!onScreen) {
+      // Scrolled away → re-arm so the NEXT time it appears exactly ONE page
+      // loads. A plain level-trigger here would reload every frame it stays
+      // visible → a burst of page loads.
+      _loadArmed = true;
+      return;
+    }
+    if (_loadArmed) {
+      _loadArmed = false;
       _loadMoreComments();
     }
   }
@@ -843,21 +869,28 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     if (mounted) widget.composerRev?.value++;
   }
 
-  /// Animates the modal down to the just-posted comment. Scoped to the
-  /// chat-ordered Comments tab (newest last → bottom); the "All" tab is
-  /// newest-first and mid-scroll, so a "scroll to bottom" wouldn't map there.
-  /// Runs after the next frame so the new row is laid out and the max extent is
-  /// current.
+  /// Reveals the just-posted comment. In the newest-first feed it lands at the
+  /// TOP of the thread, so scroll it into view. Scoped to the Comments tab (the
+  /// "All" tab is a merged, mid-scroll feed where this wouldn't map). Uses an
+  /// *animated* `ensureVisible` — it drives the scroll over later frames; a
+  /// synchronous jump inside a post-frame callback would leave the sheet's
+  /// SlideTransition wrapper `debugNeedsLayout` when the web mouse-tracker runs
+  /// its post-frame hit-test, which asserts `!debugNeedsLayout` and froze the
+  /// app. Runs after the next frame so the new row is laid out and keyed.
   void _revealNewestComment() {
     if (_activityFilter != _ActivityFilter.comments) return;
+    if (_comments.isEmpty) return;
     final controller = widget.sheetScroll;
     if (controller == null || !controller.hasClients) return;
+    final id = _comments.first.id;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!controller.hasClients) return;
-      controller.animateTo(
-        controller.position.maxScrollExtent,
+      final ctx = _commentKeys[id]?.currentContext;
+      if (ctx == null || !controller.hasClients) return;
+      Scrollable.ensureVisible(
+        ctx,
         duration: const Duration(milliseconds: 380),
         curve: Curves.easeOutCubic,
+        alignment: 0.15,
       );
     });
   }
@@ -880,7 +913,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       _issue = issue;
       final commentsPage =
           results[0] as ({List<IssueComment> items, int total});
-      _comments = commentsPage.items.reversed.toList();
+      _comments = commentsPage.items.toList();
       _commentsTotal = commentsPage.total;
       _pinned = results[5] as List<IssueComment>;
       _workItems = results[1] as List<WorkItem>;
@@ -1073,7 +1106,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         widget.issueId,
         size: math.max(_comments.length + 1, _commentPageSize),
       );
-      _comments = p.items.reversed.toList();
+      _comments = p.items.toList();
       _commentsTotal = p.total;
       if (mounted) {
         setState(() {});
@@ -1163,12 +1196,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   /// Splices [updated] into the loaded window + pinned set by id.
   void _replaceComment(IssueComment updated) {
-    _comments = [
-      for (final c in _comments) c.id == updated.id ? updated : c,
-    ];
-    _pinned = [
-      for (final c in _pinned) c.id == updated.id ? updated : c,
-    ];
+    _comments = [for (final c in _comments) c.id == updated.id ? updated : c];
+    _pinned = [for (final c in _pinned) c.id == updated.id ? updated : c];
   }
 
   /// Toggles the caller's emoji reaction (optimistic, WhatsApp one-per-user).
@@ -1357,17 +1386,11 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   bool get _hasMoreComments => _comments.length < _commentsTotal;
   bool get _hasMoreActivity => _activity.length < _activityTotal;
 
-  /// Loads the previous (older) page of comments and prepends it above the
-  /// thread, de-duplicating in case a row shifted across the page boundary.
+  /// Loads the next (older) page of comments and appends it BELOW the thread,
+  /// de-duplicating in case a row shifted across the page boundary.
   Future<void> _loadMoreComments() async {
     if (_loadingMore || !_hasMoreComments) return;
     setState(() => _loadingMore = true);
-    final controller = widget.sheetScroll;
-    // Anchor to the distance-from-bottom so prepending older comments above the
-    // viewport doesn't yank the content the user is currently reading.
-    final anchorFromBottom = controller != null && controller.hasClients
-        ? controller.position.maxScrollExtent - controller.offset
-        : null;
     try {
       // Derive the page from how many are loaded (survives an SSE resync that
       // reset the window), so each pull fetches the next older batch.
@@ -1379,30 +1402,27 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       );
       if (!mounted) return;
       final existing = {for (final c in _comments) c.id};
+      // Backend pages are newest-first; keep that order and append so the feed
+      // stays a continuous newest→oldest list.
       final older = [
-        for (final c in p.items.reversed)
+        for (final c in p.items)
           if (!existing.contains(c.id)) c,
       ];
+      // Append the older page at the BOTTOM (the sentinel sits below the feed,
+      // so the user scrolls DOWN toward it) and leave the scroll offset
+      // UNTOUCHED. New rows land below the current viewport, so nothing above it
+      // moves — no scroll anchoring is needed. This deliberately avoids any
+      // post-frame `jumpTo`: mutating layout in a post-frame callback left the
+      // sheet's translation wrapper (Wolt's SlideTransition) `debugNeedsLayout`
+      // when Flutter's mouse-tracker ran its own post-frame hit-test, which
+      // asserts `!debugNeedsLayout` on web → froze the app.
       setState(() {
-        _comments = [...older, ..._comments];
+        _comments = [..._comments, ...older];
         _commentsTotal = p.total;
+        _loadingMore = false;
       });
-      if (anchorFromBottom != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (controller != null && controller.hasClients) {
-            final pos = controller.position;
-            controller.jumpTo(
-              (pos.maxScrollExtent - anchorFromBottom).clamp(
-                pos.minScrollExtent,
-                pos.maxScrollExtent,
-              ),
-            );
-          }
-        });
-      }
     } catch (_) {
       // Keep what we have; the user can retry.
-    } finally {
       if (mounted) setState(() => _loadingMore = false);
     }
   }
@@ -1567,80 +1587,25 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 onClose: _closeRoute,
               ),
             Padding(
-            // Extra bottom room when the composer floats, so the last comment
-            // isn't hidden behind the docked input.
-            padding: EdgeInsets.fromLTRB(
-              20,
-              16,
-              20,
-              composerFloats(context) ? 128 : 24,
-            ),
-            child: LayoutBuilder(
-              builder: (context, c) {
-                final hierarchy = _hierarchyCard(issue);
-                final left = <Widget>[
-                  _contentCard(issue),
-                  if (hierarchy != null) ...[
-                    const SizedBox(height: 14),
-                    hierarchy,
-                  ],
-                  // The Development block owns its own leading gap and hides
-                  // entirely when no work is linked (Jira-style).
-                  if (_gitConnected) _developmentBlock(issue),
-                  const SizedBox(height: 14),
-                  _linksSection(issue),
-                  const SizedBox(height: 14),
-                  _attachmentsSection(issue),
-                  if (documented != null) ...[
-                    const SizedBox(height: 14),
-                    documented,
-                  ],
-                  const SizedBox(height: 14),
-                  _activityCard(),
-                ];
-                final right = <Widget>[
-                  _detailsCard(issue),
-                  // Deployment sits between Details and Timeline.
-                  if (_project != null) ...[
-                    const SizedBox(height: 14),
-                    _deploymentPanel(issue),
-                  ],
-                  const SizedBox(height: 14),
-                  _timeCard(issue),
-                  const SizedBox(height: 14),
-                  _issueMeta(issue),
-                ];
-                if (c.maxWidth >= 680) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: left,
-                        ),
-                      ),
-                      const SizedBox(width: 18),
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: right,
-                        ),
-                      ),
-                    ],
-                  );
-                }
-                // Stacked (phone): content, details, time, activity.
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
+              // Extra bottom room when the composer floats, so the last comment
+              // isn't hidden behind the docked input.
+              padding: EdgeInsets.fromLTRB(
+                20,
+                16,
+                20,
+                composerFloats(context) ? 128 : 24,
+              ),
+              child: LayoutBuilder(
+                builder: (context, c) {
+                  final hierarchy = _hierarchyCard(issue);
+                  final left = <Widget>[
                     _contentCard(issue),
                     if (hierarchy != null) ...[
                       const SizedBox(height: 14),
                       hierarchy,
                     ],
+                    // The Development block owns its own leading gap and hides
+                    // entirely when no work is linked (Jira-style).
                     if (_gitConnected) _developmentBlock(issue),
                     const SizedBox(height: 14),
                     _linksSection(issue),
@@ -1651,6 +1616,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                       documented,
                     ],
                     const SizedBox(height: 14),
+                    _activityCard(),
+                  ];
+                  final right = <Widget>[
                     _detailsCard(issue),
                     // Deployment sits between Details and Timeline.
                     if (_project != null) ...[
@@ -1661,14 +1629,66 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                     _timeCard(issue),
                     const SizedBox(height: 14),
                     _issueMeta(issue),
-                    const SizedBox(height: 14),
-                    _activityCard(),
-                  ],
-                );
-              },
+                  ];
+                  if (c.maxWidth >= 680) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: left,
+                          ),
+                        ),
+                        const SizedBox(width: 18),
+                        Expanded(
+                          flex: 2,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: right,
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                  // Stacked (phone): content, details, time, activity.
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _contentCard(issue),
+                      if (hierarchy != null) ...[
+                        const SizedBox(height: 14),
+                        hierarchy,
+                      ],
+                      if (_gitConnected) _developmentBlock(issue),
+                      const SizedBox(height: 14),
+                      _linksSection(issue),
+                      const SizedBox(height: 14),
+                      _attachmentsSection(issue),
+                      if (documented != null) ...[
+                        const SizedBox(height: 14),
+                        documented,
+                      ],
+                      const SizedBox(height: 14),
+                      _detailsCard(issue),
+                      // Deployment sits between Details and Timeline.
+                      if (_project != null) ...[
+                        const SizedBox(height: 14),
+                        _deploymentPanel(issue),
+                      ],
+                      const SizedBox(height: 14),
+                      _timeCard(issue),
+                      const SizedBox(height: 14),
+                      _issueMeta(issue),
+                      const SizedBox(height: 14),
+                      _activityCard(),
+                    ],
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
         ),
       ),
     );
@@ -2623,7 +2643,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           final contentW = c.maxWidth - 40;
           if (contentW < 680) {
             // Phone / narrow: full-width dock over the whole area.
-            return _composerDock(deviceSafeArea: deviceSafeArea, horizontal: 16);
+            return _composerDock(
+              deviceSafeArea: deviceSafeArea,
+              horizontal: 16,
+            );
           }
           // 2-column: match the left column (flex 3 of 3+2 with an 18px gutter),
           // aligned with the body's left padding.
@@ -2821,7 +2844,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       );
       if (!mounted) return;
       setState(() {
-        _comments = p.items.reversed.toList();
+        _comments = p.items.toList();
         _commentsTotal = p.total;
       });
       _revealNewestComment();
@@ -2835,7 +2858,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   }
 
   /// Builds the activity feed for [filter]:
-  ///  • comments → comments oldest-first (chat style)
+  ///  • comments → comments newest-first (feed style)
   ///  • history  → change events newest-first
   ///  • all      → both, merged newest-first
   List<Widget> _activityItems(_ActivityFilter filter) {
@@ -2849,7 +2872,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       meId: me?.id,
       nameFor: (id) => _names[id] ?? id,
       avatarFor: (id) => _avatars[id],
-      loadVoice: (c) => () => _repo.voiceCommentAudio(widget.issueId, c.id),
+      loadVoice: (c) =>
+          () => _repo.voiceCommentAudio(widget.issueId, c.id),
       canManage: (c) => me != null && c.authorId == me.id,
       onEdit: _promptEditComment,
       onDelete: _deleteComment,
@@ -2920,17 +2944,28 @@ class IssueDetailBodyState extends State<IssueDetailBody>
             Divider(height: 1, color: AppColors.hairline),
             const SizedBox(height: 12),
           ],
-          // Auto-loading sentinel at the top of the chronological thread (older
-          // comments live above); [_onCommentScroll] pulls the next page as it
-          // nears the viewport — no manual "load earlier" button.
+          // Liquid-Glass feed thread, newest-first (text + playable voice
+          // bubbles): the newest comment sits at the TOP; older pages append
+          // below as the user scrolls DOWN toward the sentinel.
+          thread(feed),
+          // Auto-loading sentinel at the BOTTOM of the thread (older comments
+          // load below it); [_onCommentScroll] pulls the next older page as it
+          // nears the viewport — no manual "load older" button. The keyed box
+          // holds a stable position so [_onCommentScroll] can tell when it nears
+          // the viewport; the spinner shows ONLY while a page is actually
+          // loading (not as a permanent "there's more" marker, which read as
+          // "stuck").
           if (_hasMoreComments)
             Padding(
               key: _commentsLoaderKey,
-              padding: const EdgeInsets.only(bottom: 12),
-              child: const Center(child: HiveLoader(size: 26)),
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: SizedBox(
+                height: 26,
+                child: Center(
+                  child: _loadingMore ? const HiveLoader(size: 26) : null,
+                ),
+              ),
             ),
-          // Liquid-Glass chat thread (text + playable voice bubbles).
-          thread(feed),
         ];
       case _ActivityFilter.history:
         if (_activity.isEmpty) {
@@ -4663,65 +4698,68 @@ class _RouteTopBar extends StatelessWidget {
     return SizedBox(
       height: kRouteTopBarHeight,
       child: Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 12, 0),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: onClose,
-            icon: Icon(
-              LucideIcons.arrowLeft,
-              size: 20,
-              color: AppColors.inkSoft,
-            ),
-          ),
-          // The leading cluster consumes the free space (so the action buttons
-          // stay hard-right); the state badge ellipsises inside it if tight.
-          Expanded(
-            child: Row(
-              children: [
-                CopyLinkId(
-                  type: issue.type,
-                  readableId: issue.readableId,
-                  link: link,
-                  showGlyph: false,
-                  color: AppColors.inkSoft,
-                ),
-                const SizedBox(width: 10),
-                Flexible(
-                  child: StateDotBadge(state: issue.state, color: stateColor),
-                ),
-                if (busy) ...[
-                  const SizedBox(width: 10),
-                  const SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: HiveLoader(strokeWidth: 2, color: AppColors.accent),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          if (onMinimize != null)
+        padding: const EdgeInsets.fromLTRB(8, 0, 12, 0),
+        child: Row(
+          children: [
             IconButton(
-              tooltip: context.t('issues.minimize'),
-              onPressed: onMinimize,
+              onPressed: onClose,
               icon: Icon(
-                LucideIcons.minimize2,
-                size: 19,
+                LucideIcons.arrowLeft,
+                size: 20,
                 color: AppColors.inkSoft,
               ),
             ),
-          IconButton(
-            tooltip: context.t('common.delete'),
-            onPressed: onDelete,
-            icon: const Icon(
-              LucideIcons.trash2,
-              size: 20,
-              color: AppColors.danger,
+            // The leading cluster consumes the free space (so the action buttons
+            // stay hard-right); the state badge ellipsises inside it if tight.
+            Expanded(
+              child: Row(
+                children: [
+                  CopyLinkId(
+                    type: issue.type,
+                    readableId: issue.readableId,
+                    link: link,
+                    showGlyph: false,
+                    color: AppColors.inkSoft,
+                  ),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: StateDotBadge(state: issue.state, color: stateColor),
+                  ),
+                  if (busy) ...[
+                    const SizedBox(width: 10),
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: HiveLoader(
+                        strokeWidth: 2,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+            if (onMinimize != null)
+              IconButton(
+                tooltip: context.t('issues.minimize'),
+                onPressed: onMinimize,
+                icon: Icon(
+                  LucideIcons.minimize2,
+                  size: 19,
+                  color: AppColors.inkSoft,
+                ),
+              ),
+            IconButton(
+              tooltip: context.t('common.delete'),
+              onPressed: onDelete,
+              icon: const Icon(
+                LucideIcons.trash2,
+                size: 20,
+                color: AppColors.danger,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
