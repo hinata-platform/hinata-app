@@ -108,6 +108,9 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
   // ── SSE live sync ──────────────────────────────────────────────────────────
   Future<void> _connectSse() async {
     if (_disposed) return;
+    // Cancel any prior token before overwriting it so a reconnect can never
+    // orphan a half-opened streamed GET that still holds a pool slot.
+    _sseCancel?.cancel();
     _sseCancel = CancelToken();
     try {
       final bytes = await _repo.issueLinkEventStream(

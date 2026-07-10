@@ -618,6 +618,13 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   Timer? _commentSseReconnect;
   int _commentSseAttempts = 0;
   bool _disposed = false;
+  // Coalesce bursts of `changed` pings (rapid pinning, a batch delete, or the
+  // actor's own broadcast echo) into at most one in-flight re-sync plus one
+  // trailing one, instead of firing 2 GETs per ping. Without this a batch
+  // delete of K comments would fan out into ~2K near-simultaneous GETs.
+  Timer? _commentResyncDebounce;
+  bool _commentResyncing = false;
+  bool _commentResyncQueued = false;
 
   // Multi-select of own comments (batch delete).
   bool _selectionMode = false;
@@ -702,6 +709,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   void dispose() {
     _disposed = true;
     _commentSseReconnect?.cancel();
+    _commentResyncDebounce?.cancel();
     _commentSseSub?.cancel();
     _commentSseCancel?.cancel();
     _highlightTimer?.cancel();
@@ -718,6 +726,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   // ── live comment sync (SSE) ────────────────────────────────────────────────
   Future<void> _connectCommentSse() async {
     if (_disposed) return;
+    // Cancel any prior token before overwriting it, so a reconnect can never
+    // orphan a half-opened streamed GET that still holds a pool slot.
+    _commentSseCancel?.cancel();
     _commentSseCancel = CancelToken();
     try {
       final bytes = await _repo.commentEventStream(
@@ -732,7 +743,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       }
       _commentSseAttempts = 0;
       _commentSseSub = parseSse(bytes).listen(
-        (_) => _resyncComments(),
+        (_) => _scheduleCommentResync(),
         onDone: _scheduleCommentSseReconnect,
         onError: (_) => _scheduleCommentSseReconnect(),
         cancelOnError: true,
@@ -750,6 +761,38 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     final secs = (3 * (1 << _commentSseAttempts)).clamp(3, 30);
     _commentSseAttempts = (_commentSseAttempts + 1).clamp(0, 4);
     _commentSseReconnect = Timer(Duration(seconds: secs), _connectCommentSse);
+  }
+
+  /// Debounces + single-flights live re-syncs: a burst of `changed` pings
+  /// collapses into one in-flight re-sync (plus one trailing one for anything
+  /// that landed while it was running), instead of 2 GETs per ping.
+  void _scheduleCommentResync() {
+    if (_disposed) return;
+    _commentResyncDebounce?.cancel();
+    _commentResyncDebounce = Timer(
+      const Duration(milliseconds: 350),
+      _runCommentResync,
+    );
+  }
+
+  Future<void> _runCommentResync() async {
+    if (_disposed) return;
+    if (_commentResyncing) {
+      // One is already running — remember to run exactly one more afterwards so
+      // changes that arrived mid-flight aren't missed, without stacking requests.
+      _commentResyncQueued = true;
+      return;
+    }
+    _commentResyncing = true;
+    try {
+      await _resyncComments();
+    } finally {
+      _commentResyncing = false;
+      if (_commentResyncQueued && !_disposed) {
+        _commentResyncQueued = false;
+        _scheduleCommentResync();
+      }
+    }
   }
 
   /// Re-fetches the currently-loaded comment window + pinned set after a live
