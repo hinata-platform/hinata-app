@@ -42,11 +42,13 @@ class GlobalSearchController extends ChangeNotifier {
   // ---- client-side commands ----
   List<SearchEntry> _commands = const [];
 
-  /// Locale-aware archive trigger word (e.g. "archiviert" / "archived"),
-  /// resolved from i18n in [load]. Typing it (alone or as a prefix) switches
-  /// the server search to archived issues + projects; the rest of the query
-  /// keeps filtering within the archive.
-  String _archivedKeyword = 'archived';
+  /// Archive trigger words. Typing one (alone or as a prefix) switches the
+  /// server search to archived issues + projects; the rest of the query keeps
+  /// filtering within the archive. Every supported app language is always
+  /// accepted (a German user may think in either word, and the set must not
+  /// depend on i18n assets being loaded); [load] adds the locale's own word
+  /// from i18n on top for future languages.
+  final Set<String> _archivedKeywords = {'archived', 'archiviert'};
 
   // ---- server results (already mapped to SearchEntry) ----
   List<SearchGroup> _serverGroups = const [];
@@ -88,7 +90,12 @@ class GlobalSearchController extends ChangeNotifier {
 
   /// Builds the client commands (localised via [t]) and fetches initial counts.
   Future<void> load({required String Function(String) t}) async {
-    _archivedKeyword = t('search.archivedKeyword').trim().toLowerCase();
+    // i18next echoes the raw key when it can't resolve (e.g. assets not yet
+    // reloaded) — a dot marks that case, so never treat it as a keyword.
+    final localized = t('search.archivedKeyword').trim().toLowerCase();
+    if (localized.isNotEmpty && !localized.contains('.')) {
+      _archivedKeywords.add(localized);
+    }
     _commands = _buildCommands(t);
     _recount();
     _recompose();
@@ -223,14 +230,13 @@ class GlobalSearchController extends ChangeNotifier {
     }
   }
 
-  /// Detects the archive keyword ("archiviert" / "archived", per locale, plus
-  /// the English word as a universal fallback) at the start of the query and
-  /// strips it: `archiviert login bug` → archived search for `login bug`.
+  /// Detects an archive keyword ("archiviert" / "archived", any supported
+  /// language) at the start of the query and strips it:
+  /// `archiviert login bug` → archived search for `login bug`.
   ({String query, bool archived}) _parseArchiveKeyword(String raw) {
     final trimmed = raw.trim();
     final lower = trimmed.toLowerCase();
-    for (final keyword in {_archivedKeyword, 'archived'}) {
-      if (keyword.isEmpty) continue;
+    for (final keyword in _archivedKeywords) {
       if (lower == keyword) return (query: '', archived: true);
       if (lower.startsWith('$keyword ')) {
         return (query: trimmed.substring(keyword.length).trim(), archived: true);
