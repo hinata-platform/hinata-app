@@ -271,6 +271,10 @@ class CommentThread extends StatelessWidget {
     final rows = <Widget>[];
     for (var idx = 0; idx < comments.length; idx++) {
       final c = comments[idx];
+      final hasThread = !pinnedSection && c.isRoot;
+      final thread = hasThread
+          ? interactions.threadOf(c.id)
+          : const ReplyThread();
       final row = CommentBubbleRow(
         comment: c,
         interactions: interactions,
@@ -279,6 +283,7 @@ class CommentThread extends StatelessWidget {
         selected: selectedIds.contains(c.id),
         onToggleSelected: onToggleSelected,
         highlight: highlightedId == c.id,
+        trunkBelow: thread.expanded && thread.replies.isNotEmpty,
       );
       final key = commentKeys?[c.id];
       rows.add(
@@ -289,7 +294,7 @@ class CommentThread extends StatelessWidget {
       );
       // A root comment carries its own flat reply thread (never in the pinned
       // section, and never for a reply row).
-      if (!pinnedSection && c.isRoot) {
+      if (hasThread) {
         rows.add(
           _ReplyThreadView(
             root: c,
@@ -321,6 +326,7 @@ class CommentBubbleRow extends StatelessWidget {
     this.selected = false,
     this.onToggleSelected,
     this.highlight = false,
+    this.trunkBelow = false,
   });
 
   final IssueComment comment;
@@ -333,6 +339,10 @@ class CommentBubbleRow extends StatelessWidget {
   final bool selected;
   final void Function(IssueComment comment)? onToggleSelected;
   final bool highlight;
+
+  /// Draw a "main branch" line down from this (root) comment's avatar to its
+  /// reply thread below — set when the thread is expanded with replies.
+  final bool trunkBelow;
 
   IssueComment get _c => comment;
   CommentInteractions get _x => interactions;
@@ -393,7 +403,7 @@ class CommentBubbleRow extends StatelessWidget {
       ],
     );
 
-    final row = Row(
+    Widget row = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         leading,
@@ -401,6 +411,24 @@ class CommentBubbleRow extends StatelessWidget {
         Expanded(child: content),
       ],
     );
+
+    // A root with visible replies grows a vertical "main branch" line from just
+    // below its 32px avatar (centre x = 16) down to the reply thread; the reply
+    // rows continue it at the same x. Painted in a Stack so no IntrinsicHeight
+    // is needed — the Positioned line stretches to the row's height.
+    if (trunkBelow) {
+      row = Stack(
+        children: [
+          row,
+          Positioned(
+            left: 15.25, // 32/2 − half of the 1.5px stroke
+            top: 35, // just below the 32px avatar
+            bottom: 0,
+            child: Container(width: 1.5, color: AppColors.hairline),
+          ),
+        ],
+      );
+    }
 
     // In selection mode the whole row toggles the checkbox for own comments.
     if (selectionMode && _canManage) {
@@ -675,8 +703,9 @@ class _ReplyThreadView extends StatelessWidget {
     }
 
     final replies = thread.replies;
+    // No top gap: the first reply's rail must continue the root's branch stem.
     return Padding(
-      padding: const EdgeInsets.only(top: 10),
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -757,7 +786,11 @@ class _ReplyConnectorPainter extends CustomPainter {
   // Where the elbow meets the avatar row (aligns with the reply avatar centre:
   // 8px top padding + ~13 to the avatar's vertical middle).
   static const double _elbowY = 21;
-  static const double _railX = 19;
+  // Rail x = the ROOT avatar's centre (32/2), so the branch continues the root's
+  // main-branch stem in a straight, unbroken line.
+  static const double _railX = 16;
+  // The elbow reaches across the gutter to the reply avatar's left edge.
+  static const double _avatarEdgeX = 36;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -767,16 +800,17 @@ class _ReplyConnectorPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    // Vertical rail from the top; full height unless this is the last reply.
+    // Vertical rail (continues the root's main branch) from the top; full height
+    // unless this is the last reply, where it stops at the elbow.
     canvas.drawLine(
       const Offset(_railX, 0),
       Offset(_railX, last ? _elbowY : size.height),
       paint,
     );
-    // Curved elbow from the rail into the avatar.
+    // Curved elbow from the rail across to the reply avatar.
     final elbow = Path()
-      ..moveTo(_railX, _elbowY - 9)
-      ..quadraticBezierTo(_railX, _elbowY, _railX + 11, _elbowY);
+      ..moveTo(_railX, _elbowY - 10)
+      ..quadraticBezierTo(_railX, _elbowY, _avatarEdgeX, _elbowY);
     canvas.drawPath(elbow, paint);
   }
 
