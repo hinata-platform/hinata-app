@@ -3002,18 +3002,17 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           ),
           const SizedBox(height: 12),
           // Filter tabs (All · Comments · History) + comment sort selector.
+          // The tab bar hugs its content on the left (no Expanded — that
+          // stretched its background); a Spacer pushes the sort selector right.
           Row(
             children: [
-              Expanded(
-                child: _ActivityTabs(
-                  value: filter,
-                  onChanged: (f) => setState(() => _activityFilter = f),
-                ),
+              _ActivityTabs(
+                value: filter,
+                onChanged: (f) => setState(() => _activityFilter = f),
               ),
-              if (filter != _ActivityFilter.history) ...[
-                const SizedBox(width: 8),
+              const Spacer(),
+              if (filter != _ActivityFilter.history)
                 CommentSortButton(sort: _commentSort, onChanged: _setCommentSort),
-              ],
             ],
           ),
           const SizedBox(height: 14),
