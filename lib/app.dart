@@ -67,11 +67,12 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    final domains = widget.repository.domains;
     _appConfig = AppConfigBloc(
-      repository: widget.repository,
+      repository: domains.meta,
       storage: widget.storage,
     )..add(const AppConfigStarted());
-    _auth = AuthBloc(repository: widget.repository, storage: widget.storage)
+    _auth = AuthBloc(repository: domains.auth, storage: widget.storage)
       ..add(const AuthChecked());
     widget.apiClient.onSessionExpired = () =>
         _auth.add(const LogoutRequested());
@@ -79,7 +80,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     // the server can push a `logout` (revoked session) and end this device's
     // session at once, rather than waiting for the next request to 401.
     _accountEvents = AccountEventStream(
-      repository: widget.repository,
+      repository: domains.account,
       onLogout: () => _auth.add(const LogoutRequested()),
     );
     _router = buildRouter(

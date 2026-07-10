@@ -4,8 +4,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import '../api/hinata_repository.dart';
 import '../config/runtime_config.dart';
+import '../repositories/meta_repository.dart';
 import '../models/core_models.dart';
 import '../models/server_profile.dart';
 import '../storage/app_storage.dart';
@@ -83,7 +83,7 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
     on<SetupFinished>(_onSetupFinished);
   }
 
-  final HinataRepository repository;
+  final MetaRepository repository;
   final AppStorage storage;
 
   /// The default server URL that actually applies on this platform.
