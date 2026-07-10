@@ -791,6 +791,8 @@ class _ReplyConnectorPainter extends CustomPainter {
   static const double _railX = 16;
   // The elbow reaches across the gutter to the reply avatar's left edge.
   static const double _avatarEdgeX = 36;
+  // Radius of the rounded corner where the rail turns into the elbow.
+  static const double _corner = 10;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -800,16 +802,18 @@ class _ReplyConnectorPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    // Vertical rail (continues the root's main branch) from the top; full height
-    // unless this is the last reply, where it stops at the elbow.
+    // Vertical rail (continues the root's main branch). For the LAST reply it
+    // stops exactly where the rounded corner begins — no straight overshoot — so
+    // the branch closes with a clean quarter-round; otherwise it runs full
+    // height down to the next reply.
     canvas.drawLine(
       const Offset(_railX, 0),
-      Offset(_railX, last ? _elbowY : size.height),
+      Offset(_railX, last ? _elbowY - _corner : size.height),
       paint,
     );
-    // Curved elbow from the rail across to the reply avatar.
+    // Rounded corner from the rail across to the reply avatar.
     final elbow = Path()
-      ..moveTo(_railX, _elbowY - 10)
+      ..moveTo(_railX, _elbowY - _corner)
       ..quadraticBezierTo(_railX, _elbowY, _avatarEdgeX, _elbowY);
     canvas.drawPath(elbow, paint);
   }
