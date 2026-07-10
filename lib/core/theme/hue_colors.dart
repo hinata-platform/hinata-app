@@ -31,11 +31,13 @@ const List<({int hue, String name})> kProjectHues = [
 /// Distinct, evenly-spread label hues (cycled when adding labels).
 const List<int> kLabelHues = [70, 250, 300, 200, 155, 20, 330, 45];
 
-/// Default workflow-state hues by canonical name (Backlog…Done).
+/// Default workflow-state hues by canonical name (Open…Done).
+/// 'Backlog' is kept for projects created with the legacy default workflow.
 const Map<String, int> kDefaultStateHues = {
   'Backlog': 255,
   'Open': 250,
   'In Progress': 70,
+  'In Parking': 255,
   'In Review': 300,
   'Done': 155,
 };
