@@ -132,26 +132,13 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
                       child: Row(
                         children: [
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  widget.projectName,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.inkSoft,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  context.t('board.boards'),
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.w700),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                            // The project name already heads the shell bar via
+                            // PageChrome — only the section title lives here.
+                            child: Text(
+                              context.t('board.boards'),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           FilledButton.icon(

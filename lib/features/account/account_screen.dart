@@ -440,15 +440,8 @@ class _AccountScreenState extends State<AccountScreen> {
       child: ListView(
         padding: context.pagePadding,
         children: [
-          Text(
-            context.t('account.title'),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontFamily: AppTheme.fontBrand,
-              fontWeight: FontWeight.w800,
-              color: AppColors.ink,
-            ),
-          ),
-          const SizedBox(height: 14),
+          // No in-page title: the shell's sub-page bar already shows back +
+          // "settings" for this route.
           _profileHero(),
           const SizedBox(height: 16),
           if (expanded)

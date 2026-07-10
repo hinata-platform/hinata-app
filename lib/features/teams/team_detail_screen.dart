@@ -87,8 +87,10 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
           BlocBuilder<FetchCubit<TeamDetailData>, FetchState<TeamDetailData>>(
             builder: (context, state) {
               final data = state.data;
+              // The shell bar shows back + the generic section title; the team
+              // name lives only in the in-page _Header (avoids a doubled header).
               return PageChrome(
-                title: data?.team.name ?? context.t('teams.title'),
+                title: context.t('teams.title'),
                 child: () {
                   if (data == null) {
                     if (state.errorKey != null) {

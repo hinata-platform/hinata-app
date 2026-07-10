@@ -571,10 +571,11 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
         ),
       );
     }
-    // Back navigation is handled by the shell app bar (via PageChrome), which
-    // also shows the board name as the title.
+    // Back navigation is handled by the shell app bar (via PageChrome). The
+    // in-page PageHead already carries the board name, so the shell shows the
+    // generic section title instead of repeating it.
     return PageChrome(
-      title: view.board.name,
+      title: context.t('nav.board'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

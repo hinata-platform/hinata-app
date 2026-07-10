@@ -445,10 +445,10 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final draft = _draft;
+    // The shell bar shows back + the generic section title; the project's name
+    // lives only in the in-page _Header (avoids a doubled header).
     return PageChrome(
-      title: draft?.name.isNotEmpty == true
-          ? draft!.name
-          : context.t('projectSettings.title'),
+      title: context.t('projectSettings.title'),
       child: _loading
           ? const Center(child: HiveLoader())
           : _loadError != null
@@ -479,69 +479,64 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
           ),
           children: [
             Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 880),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _BackLink(onTap: () => Navigator.of(context).maybePop()),
-                    const SizedBox(height: 14),
-                    _Header(draft: draft),
-                    const SizedBox(height: 20),
-                    GeneralSection(
-                      nameController: _nameCtrl,
-                      keyController: _keyCtrl,
-                      descController: _descCtrl,
-                      nameError: nameErr,
-                      keyError: keyErr,
-                      selectedHue: hueForHex(draft.color),
-                      onHue: _onHue,
-                    ),
-                    const SizedBox(height: 16),
-                    MembersSection(
-                      memberIds: draft.memberIds,
-                      leadIds: draft.leadIds,
-                      users: _users,
-                      onToggleLead: _toggleLead,
-                      onRemove: _removeMember,
-                      onAdd: _addMembers,
-                    ),
-                    const SizedBox(height: 16),
-                    LabelsSection(
-                      key: ValueKey('labels_$_rev'),
-                      labels: draft.labels,
-                      onRename: _renameLabel,
-                      onRecolor: _recolorLabel,
-                      onRemove: _removeLabel,
-                      onAdd: _addLabel,
-                    ),
-                    const SizedBox(height: 16),
-                    WorkflowSection(
-                      key: ValueKey('workflow_$_rev'),
-                      states: draft.workflowStates,
-                      resolved: draft.resolvedStates,
-                      onRename: _renameState,
-                      onRecolor: _recolorState,
-                      onReorder: _reorderState,
-                      onToggleResolved: _toggleResolved,
-                      onDelete: _deleteState,
-                      onAdd: _addState,
-                    ),
-                    const SizedBox(height: 16),
-                    GitIntegrationSection(
-                      project: _saved ?? draft,
-                      users: _users,
-                      onProjectChanged: _onGitChanged,
-                    ),
-                    const SizedBox(height: 16),
-                    ArchiveSection(
-                      archived: draft.archived,
-                      onChanged: (v) => _mutate((d) => d.copyWith(archived: v)),
-                    ),
-                    const SizedBox(height: 16),
-                    DangerSection(onDelete: _deleteProject),
-                  ],
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _Header(draft: draft),
+                  const SizedBox(height: 20),
+                  GeneralSection(
+                    nameController: _nameCtrl,
+                    keyController: _keyCtrl,
+                    descController: _descCtrl,
+                    nameError: nameErr,
+                    keyError: keyErr,
+                    selectedHue: hueForHex(draft.color),
+                    onHue: _onHue,
+                  ),
+                  const SizedBox(height: 16),
+                  MembersSection(
+                    memberIds: draft.memberIds,
+                    leadIds: draft.leadIds,
+                    users: _users,
+                    onToggleLead: _toggleLead,
+                    onRemove: _removeMember,
+                    onAdd: _addMembers,
+                  ),
+                  const SizedBox(height: 16),
+                  LabelsSection(
+                    key: ValueKey('labels_$_rev'),
+                    labels: draft.labels,
+                    onRename: _renameLabel,
+                    onRecolor: _recolorLabel,
+                    onRemove: _removeLabel,
+                    onAdd: _addLabel,
+                  ),
+                  const SizedBox(height: 16),
+                  WorkflowSection(
+                    key: ValueKey('workflow_$_rev'),
+                    states: draft.workflowStates,
+                    resolved: draft.resolvedStates,
+                    onRename: _renameState,
+                    onRecolor: _recolorState,
+                    onReorder: _reorderState,
+                    onToggleResolved: _toggleResolved,
+                    onDelete: _deleteState,
+                    onAdd: _addState,
+                  ),
+                  const SizedBox(height: 16),
+                  GitIntegrationSection(
+                    project: _saved ?? draft,
+                    users: _users,
+                    onProjectChanged: _onGitChanged,
+                  ),
+                  const SizedBox(height: 16),
+                  ArchiveSection(
+                    archived: draft.archived,
+                    onChanged: (v) => _mutate((d) => d.copyWith(archived: v)),
+                  ),
+                  const SizedBox(height: 16),
+                  DangerSection(onDelete: _deleteProject),
+                ],
               ),
             ),
           ],
@@ -586,41 +581,6 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// "← All projects" back link above the project header.
-class _BackLink extends StatelessWidget {
-  const _BackLink({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(LucideIcons.arrowLeft, size: 16, color: AppColors.inkSoft),
-              const SizedBox(width: 7),
-              Text(
-                context.t('projectSettings.allProjects'),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.inkSoft,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

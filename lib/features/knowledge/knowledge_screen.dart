@@ -11,6 +11,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../issues/issue_detail_sheet.dart';
+import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart'
     show showGlassBottomSheet, showGlassConfirm;
 import 'data/knowledge_models.dart';
@@ -358,25 +359,34 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
         child: Padding(padding: EdgeInsets.all(40), child: HiveLoader()),
       );
     }
-    return KnowledgeScope(
-      repo: _repo,
-      openArticle: _openArticle,
-      openUser: (_) {},
-      child: SmartLinkScope(
-        resolver: _buildResolver(),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final w = constraints.maxWidth;
-            final bp = w < KbTokens.bpMid
-                ? _Bp.narrow
-                : w < KbTokens.bpWide
-                ? _Bp.mid
-                : _Bp.wide;
-            if (_mode == _Mode.edit || _mode == _Mode.newDoc) {
-              return _editorView(constraints.maxHeight);
-            }
-            return _mainView(bp);
-          },
+    // On the deep-link sub-route (/knowledge/:id) the shell paints a back +
+    // title bar; publish the open article's title so it doesn't just repeat
+    // the in-page "knowledge.title" head.
+    final chromeTitle = _mode == _Mode.article
+        ? (_current?.title ?? context.t('knowledge.title'))
+        : context.t('knowledge.title');
+    return PageChrome(
+      title: chromeTitle,
+      child: KnowledgeScope(
+        repo: _repo,
+        openArticle: _openArticle,
+        openUser: (_) {},
+        child: SmartLinkScope(
+          resolver: _buildResolver(),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final w = constraints.maxWidth;
+              final bp = w < KbTokens.bpMid
+                  ? _Bp.narrow
+                  : w < KbTokens.bpWide
+                  ? _Bp.mid
+                  : _Bp.wide;
+              if (_mode == _Mode.edit || _mode == _Mode.newDoc) {
+                return _editorView(constraints.maxHeight);
+              }
+              return _mainView(bp);
+            },
+          ),
         ),
       ),
     );

@@ -63,8 +63,11 @@ class _WideShellState extends State<_WideShell> {
                               children: [
                                 // Sub-pages keep a slim back + title bar (the floating
                                 // topbar carries no breadcrumb); primary pages render
-                                // their own PageHead instead.
-                                if (subKey != null)
+                                // their own PageHead instead. Immersive routes (the
+                                // full-page issue view) draw their own top bar, so the
+                                // shell must not stack a second back+title row above it.
+                                if (subKey != null &&
+                                    !_isImmersive(widget.location))
                                   ConstrainedBox(
                                     constraints: BoxConstraints(
                                       maxWidth: maxBodyWidth,
