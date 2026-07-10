@@ -1,14 +1,22 @@
 part of 'issue_detail_sheet.dart';
 
-// ─────────────────────── Delete confirmation ───────────────────────────────
+// ─────────────────────── Remove (archive/delete) confirmation ──────────────
 
-/// Destructive confirm presented on the app's Liquid-Glass modal material
-/// (matches the Teams `ModalShell`/`ModalFooter` language: danger icon chip,
-/// brand-font title, hairline-divided footer with a red primary action).
-class _DeleteIssueConfirm extends StatelessWidget {
-  const _DeleteIssueConfirm({required this.issue});
+/// What the user chose in the [_RemoveIssueConfirm] dialog.
+enum _IssueRemovalAction { archive, delete }
+
+/// Confirm presented on the app's Liquid-Glass modal material (matches the
+/// Teams `ModalShell`/`ModalFooter` language: icon chip, brand-font title,
+/// hairline-divided footer). Role-aware: users allowed to hard-delete
+/// (platform admin / project lead / team admin) get both an "Archive" and a
+/// red "Delete" action; everyone else only gets "Archive".
+class _RemoveIssueConfirm extends StatelessWidget {
+  const _RemoveIssueConfirm({required this.issue, required this.canDelete});
 
   final Issue issue;
+
+  /// Whether the current user may permanently delete this issue.
+  final bool canDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -26,13 +34,15 @@ class _DeleteIssueConfirm extends StatelessWidget {
                 height: 40,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: AppColors.dangerSoft,
+                  color: canDelete
+                      ? AppColors.dangerSoft
+                      : AppColors.accentSoft,
                   borderRadius: BorderRadius.circular(11),
                 ),
-                child: const Icon(
-                  LucideIcons.trash2,
+                child: Icon(
+                  canDelete ? LucideIcons.trash2 : LucideIcons.archive,
                   size: 20,
-                  color: AppColors.danger,
+                  color: canDelete ? AppColors.danger : AppColors.accentStrong,
                 ),
               ),
               const SizedBox(width: 13),
@@ -42,7 +52,11 @@ class _DeleteIssueConfirm extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      context.t('issues.deleteTitle'),
+                      context.t(
+                        canDelete
+                            ? 'issues.deleteTitle'
+                            : 'issues.archiveTitle',
+                      ),
                       style: TextStyle(
                         fontFamily: AppTheme.fontBrand,
                         fontSize: 17,
@@ -53,7 +67,7 @@ class _DeleteIssueConfirm extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       context.t(
-                        'issues.deleteBody',
+                        canDelete ? 'issues.deleteBody' : 'issues.archiveBody',
                         variables: {'id': issue.readableId},
                       ),
                       style: TextStyle(
@@ -82,7 +96,7 @@ class _DeleteIssueConfirm extends StatelessWidget {
               children: [
                 const Spacer(),
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
+                  onPressed: () => Navigator.of(context).pop(),
                   child: Text(
                     context.t('common.cancel'),
                     style: TextStyle(
@@ -93,10 +107,17 @@ class _DeleteIssueConfirm extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 FilledButton.icon(
-                  onPressed: () => Navigator.of(context).pop(true),
+                  onPressed: () =>
+                      Navigator.of(context).pop(_IssueRemovalAction.archive),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.danger,
-                    foregroundColor: Colors.white,
+                    // Archiving is the primary (only) action for regular
+                    // members; next to a red delete it steps back to tonal.
+                    backgroundColor: canDelete
+                        ? AppColors.accentSoft
+                        : AppColors.accentStrong,
+                    foregroundColor: canDelete
+                        ? AppColors.accentStrong
+                        : Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 13,
@@ -111,9 +132,35 @@ class _DeleteIssueConfirm extends StatelessWidget {
                       ),
                     ),
                   ),
-                  icon: const Icon(LucideIcons.trash2, size: 16),
-                  label: Text(context.t('common.delete')),
+                  icon: const Icon(LucideIcons.archive, size: 16),
+                  label: Text(context.t('issues.archive')),
                 ),
+                if (canDelete) ...[
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: () =>
+                        Navigator.of(context).pop(_IssueRemovalAction.delete),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.danger,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 13,
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusControl,
+                        ),
+                      ),
+                    ),
+                    icon: const Icon(LucideIcons.trash2, size: 16),
+                    label: Text(context.t('common.delete')),
+                  ),
+                ],
               ],
             ),
           ),

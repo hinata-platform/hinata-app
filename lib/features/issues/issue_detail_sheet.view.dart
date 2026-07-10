@@ -167,6 +167,16 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   String? _error;
   bool _busy = false;
 
+  // Whether the current user may hard-delete this issue (platform admin,
+  // project lead, or team admin of a team owning the project). Regular
+  // members only get the archive action. Defaults to false until the
+  // permission probe returns, so the UI can never over-promise a delete.
+  bool _canDelete = false;
+
+  /// Read by the wolt sheet's top bar (via `bodyKey.currentState`) to pick the
+  /// trash vs. archive affordance.
+  bool get canDelete => _canDelete;
+
   // Inline editing + activity filter state.
   bool _editingTitle = false;
   bool _editingDesc = false;
@@ -591,6 +601,13 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         _hierarchy = await _issueApi.issueHierarchy(widget.issueId);
       } catch (_) {
         _hierarchy = IssueHierarchy.empty;
+      }
+      // Archive-vs-delete capability for the top-bar action + confirm dialog.
+      // Best-effort: on failure the user simply keeps the safe archive path.
+      try {
+        _canDelete = await _issueApi.canDeleteIssue(widget.issueId);
+      } catch (_) {
+        _canDelete = false;
       }
       try {
         await _knowledge.init();
@@ -1336,6 +1353,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 onMinimize: widget.canMinimize ? _minimizeToModal : null,
                 onDelete: () => _confirmDelete(issue),
                 onClose: _closeRoute,
+                canDelete: _canDelete,
               ),
             Padding(
               // Extra bottom room when the composer floats, so the last comment
@@ -2348,6 +2366,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
               onMinimize: widget.canMinimize ? _minimizeToModal : null,
               onDelete: () => _confirmDelete(issue),
               onClose: _closeRoute,
+              canDelete: _canDelete,
             ),
           ),
         ],
@@ -3128,20 +3147,41 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     );
   }
 
+  /// Archive / delete / restore entry point behind the top-bar action.
+  /// An archived issue restores directly (non-destructive); otherwise the
+  /// role-aware confirm offers archive to everyone and delete only to
+  /// platform admins, project leads and team admins.
   Future<void> _confirmDelete(Issue issue) async {
-    final confirmed = await showGlassModal<bool>(
-      context,
-      width: 420,
-      builder: (_) => _DeleteIssueConfirm(issue: issue),
-    );
-    if (confirmed == true) {
+    if (issue.archived) {
       try {
-        await _issueApi.deleteIssue(issue.id);
+        final restored = await _issueApi.unarchiveIssue(issue.id);
+        if (!mounted) return;
+        setState(() => _issue = restored);
+        _publishHeader(restored);
         widget.onChanged?.call();
-        if (mounted) Navigator.of(context).maybePop();
       } on ApiFailure catch (failure) {
         _toast(failure.message);
       }
+      return;
+    }
+    final action = await showGlassModal<_IssueRemovalAction>(
+      context,
+      width: 420,
+      builder: (_) =>
+          _RemoveIssueConfirm(issue: issue, canDelete: _canDelete),
+    );
+    if (action == null) return;
+    try {
+      switch (action) {
+        case _IssueRemovalAction.delete:
+          await _issueApi.deleteIssue(issue.id);
+        case _IssueRemovalAction.archive:
+          await _issueApi.archiveIssue(issue.id);
+      }
+      widget.onChanged?.call();
+      if (mounted) Navigator.of(context).maybePop();
+    } on ApiFailure catch (failure) {
+      _toast(failure.message);
     }
   }
 }

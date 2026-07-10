@@ -32,6 +32,7 @@ class IssueFilter {
     this.assignees = const {},
     this.projects = const {},
     this.types = const {},
+    this.archivedOnly = false,
   });
 
   final Set<String> states;
@@ -39,6 +40,10 @@ class IssueFilter {
   final Set<String> assignees;
   final Set<String> projects;
   final Set<String> types;
+
+  /// Server-side facet: show archived (soft-deleted) issues instead of the
+  /// active ones. Toggling it triggers a refetch, not a client-side filter.
+  final bool archivedOnly;
 
   /// Sentinel used in [assignees] to match issues with no assignee.
   static const noAssignee = '__none__';
@@ -48,14 +53,16 @@ class IssueFilter {
       priorities.isEmpty &&
       assignees.isEmpty &&
       projects.isEmpty &&
-      types.isEmpty;
+      types.isEmpty &&
+      !archivedOnly;
 
   int get activeCount =>
       states.length +
       priorities.length +
       assignees.length +
       projects.length +
-      types.length;
+      types.length +
+      (archivedOnly ? 1 : 0);
 
   Set<String> facet(IssueFilterFacet f) => switch (f) {
     IssueFilterFacet.state => states,
@@ -101,12 +108,14 @@ class IssueFilter {
     Set<String>? assignees,
     Set<String>? projects,
     Set<String>? types,
+    bool? archivedOnly,
   }) => IssueFilter(
     states: states ?? this.states,
     priorities: priorities ?? this.priorities,
     assignees: assignees ?? this.assignees,
     projects: projects ?? this.projects,
     types: types ?? this.types,
+    archivedOnly: archivedOnly ?? this.archivedOnly,
   );
 
   /// Returns a copy with [value] toggled in [facet].

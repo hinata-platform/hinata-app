@@ -11,6 +11,7 @@ class _RouteTopBar extends StatelessWidget {
     this.onMinimize,
     required this.onDelete,
     required this.onClose,
+    this.canDelete = false,
   });
 
   final Issue issue;
@@ -23,6 +24,10 @@ class _RouteTopBar extends StatelessWidget {
   final VoidCallback? onMinimize;
   final VoidCallback onDelete;
   final VoidCallback onClose;
+
+  /// Whether the current user may hard-delete: picks the trash icon over the
+  /// archive icon (regular members only archive; archived issues restore).
+  final bool canDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -81,12 +86,20 @@ class _RouteTopBar extends StatelessWidget {
                 ),
               ),
             IconButton(
-              tooltip: context.t('common.delete'),
+              tooltip: context.t(
+                issue.archived
+                    ? 'issues.unarchive'
+                    : (canDelete ? 'common.delete' : 'issues.archive'),
+              ),
               onPressed: onDelete,
-              icon: const Icon(
-                LucideIcons.trash2,
+              icon: Icon(
+                issue.archived
+                    ? LucideIcons.archiveRestore
+                    : (canDelete ? LucideIcons.trash2 : LucideIcons.archive),
                 size: 20,
-                color: AppColors.danger,
+                color: canDelete && !issue.archived
+                    ? AppColors.danger
+                    : AppColors.accentStrong,
               ),
             ),
           ],

@@ -195,7 +195,7 @@ class _ResultRow extends StatelessWidget {
       children: [
         _leading(),
         const SizedBox(width: 13),
-        Expanded(child: _body()),
+        Expanded(child: _body(context)),
         const SizedBox(width: 8),
         _trailing(),
       ],
@@ -223,8 +223,8 @@ class _ResultRow extends StatelessWidget {
     }
   }
 
-  Widget _body() {
-    final title = Text.rich(
+  Widget _body(BuildContext context) {
+    Widget title = Text.rich(
       TextSpan(
         children: _highlightSpans(
           entry.title,
@@ -241,6 +241,43 @@ class _ResultRow extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
     );
+    if (entry.archived) {
+      // Archive-keyword hits: badge the row so a soft-deleted issue/project is
+      // never mistaken for an active one.
+      title = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(child: title),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.accentSoft,
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  LucideIcons.archive,
+                  size: 10,
+                  color: AppColors.accentStrong,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  context.t('issues.filterArchived'),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.accentStrong,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
 
     if (entry.cat == SearchCat.issues) {
       return Column(

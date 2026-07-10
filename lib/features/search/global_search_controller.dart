@@ -42,6 +42,12 @@ class GlobalSearchController extends ChangeNotifier {
   // ---- client-side commands ----
   List<SearchEntry> _commands = const [];
 
+  /// Locale-aware archive trigger word (e.g. "archiviert" / "archived"),
+  /// resolved from i18n in [load]. Typing it (alone or as a prefix) switches
+  /// the server search to archived issues + projects; the rest of the query
+  /// keeps filtering within the archive.
+  String _archivedKeyword = 'archived';
+
   // ---- server results (already mapped to SearchEntry) ----
   List<SearchGroup> _serverGroups = const [];
   final Map<SearchCat, int> _counts = {};
@@ -82,6 +88,7 @@ class GlobalSearchController extends ChangeNotifier {
 
   /// Builds the client commands (localised via [t]) and fetches initial counts.
   Future<void> load({required String Function(String) t}) async {
+    _archivedKeyword = t('search.archivedKeyword').trim().toLowerCase();
     _commands = _buildCommands(t);
     _recount();
     _recompose();
@@ -104,9 +111,11 @@ class GlobalSearchController extends ChangeNotifier {
     final seq = ++_reqSeq;
     _loading = true;
     try {
+      final parsed = _parseArchiveKeyword(_query);
       final response = await repository.search(
-        query: _query,
+        query: parsed.query,
         scope: _scope?.name,
+        archived: parsed.archived,
       );
       if (_disposed || seq != _reqSeq) return; // stale
       _applyResponse(response);
@@ -153,6 +162,7 @@ class GlobalSearchController extends ChangeNotifier {
           statusName: hit.state != null ? stateLabel(hit.state!) : null,
           avatarName: hit.assigneeName,
           avatarUrl: hit.assigneeAvatarUrl,
+          archived: hit.archived,
           onSelect: open,
         );
       case SearchCat.projects:
@@ -168,6 +178,7 @@ class GlobalSearchController extends ChangeNotifier {
           keyChipColor:
               hit.projectColor != null ? _parseHex(hit.projectColor!) : null,
           memberNames: hit.memberNames,
+          archived: hit.archived,
           onSelect: open,
         );
       case SearchCat.people:
@@ -210,6 +221,22 @@ class GlobalSearchController extends ChangeNotifier {
           onSelect: open,
         );
     }
+  }
+
+  /// Detects the archive keyword ("archiviert" / "archived", per locale, plus
+  /// the English word as a universal fallback) at the start of the query and
+  /// strips it: `archiviert login bug` → archived search for `login bug`.
+  ({String query, bool archived}) _parseArchiveKeyword(String raw) {
+    final trimmed = raw.trim();
+    final lower = trimmed.toLowerCase();
+    for (final keyword in {_archivedKeyword, 'archived'}) {
+      if (keyword.isEmpty) continue;
+      if (lower == keyword) return (query: '', archived: true);
+      if (lower.startsWith('$keyword ')) {
+        return (query: trimmed.substring(keyword.length).trim(), archived: true);
+      }
+    }
+    return (query: trimmed, archived: false);
   }
 
   // ─────────────────────────── composition ──────────────────────────────

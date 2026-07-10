@@ -126,6 +126,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
       (page, size) async {
         final result = await context.read<IssueRepository>().issues(
           projectId: widget.projectId,
+          archived: _filter.archivedOnly,
           page: page,
           size: size,
         );
@@ -383,7 +384,13 @@ class _IssuesScreenState extends State<IssuesScreen> {
     names: data.names,
     avatars: data.avatars,
     projectNames: data.projectNames,
-    onChanged: (f) => setState(() => _filter = f),
+    onChanged: (f) {
+      // The archived facet is server-side — flipping it swaps the whole
+      // backend result set, so the page cache must be refetched.
+      final refetch = f.archivedOnly != _filter.archivedOnly;
+      setState(() => _filter = f);
+      if (refetch) _issues.load();
+    },
   );
 
   Future<void> _export(String format) async {
@@ -400,7 +407,10 @@ class _IssuesScreenState extends State<IssuesScreen> {
       // regardless of how far the user has scrolled.
       final List<Issue> all;
       try {
-        all = await issueApi.allIssues(projectId: widget.projectId);
+        all = await issueApi.allIssues(
+          projectId: widget.projectId,
+          archived: _filter.archivedOnly,
+        );
       } catch (_) {
         if (mounted) _toast(context.t('reports.exportFailed'));
         return;
@@ -582,6 +592,9 @@ class _IssuesScreenState extends State<IssuesScreen> {
           _filter.projects.map((p) => projectNames[p] ?? p),
         ),
       );
+    }
+    if (_filter.archivedOnly) {
+      out.add(context.t('issues.filterArchived'));
     }
     if (_timeRange.isActive) {
       out.add(
@@ -770,10 +783,14 @@ class _IssuesScreenState extends State<IssuesScreen> {
                             : context.t('issues.empty'),
                         action: _hasActiveView
                             ? OutlinedButton(
-                                onPressed: () => setState(() {
-                                  _filter = IssueFilter.empty;
-                                  _timeRange = IssueTimeRange.none;
-                                }),
+                                onPressed: () {
+                                  final refetch = _filter.archivedOnly;
+                                  setState(() {
+                                    _filter = IssueFilter.empty;
+                                    _timeRange = IssueTimeRange.none;
+                                  });
+                                  if (refetch) _issues.load();
+                                },
                                 child: Text(context.t('board.clearFilters')),
                               )
                             : null,

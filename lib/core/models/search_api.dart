@@ -25,6 +25,7 @@ class SearchApiHit {
     this.memberNames = const [],
     this.space,
     this.updatedAt,
+    this.archived = false,
   });
 
   final String category;
@@ -46,6 +47,9 @@ class SearchApiHit {
   final String? space;
   final DateTime? updatedAt;
 
+  /// Archived (soft-deleted) issue or archived project — badged in the UI.
+  final bool archived;
+
   factory SearchApiHit.fromJson(Map<String, dynamic> json) => SearchApiHit(
         category: json['category'] as String? ?? '',
         id: json['id'] as String? ?? '',
@@ -66,6 +70,7 @@ class SearchApiHit {
             ((json['memberNames'] as List<dynamic>?) ?? const []).cast<String>(),
         space: json['space'] as String?,
         updatedAt: parseInstant(json['updatedAt']),
+        archived: json['archived'] as bool? ?? false,
       );
 }
 

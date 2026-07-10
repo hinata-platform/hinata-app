@@ -405,6 +405,11 @@
     "previewEmpty": "Noch nichts zum Anzeigen.",
     "deleteTitle": "Aufgabe löschen?",
     "deleteBody": "{{id}} wird dauerhaft gelöscht, inklusive Kommentaren und Arbeitseinträgen.",
+    "archiveTitle": "Aufgabe archivieren?",
+    "archiveBody": "{{id}} wird archiviert und aus Boards und Listen ausgeblendet. Der Vorgang kann jederzeit wiederhergestellt werden.",
+    "archive": "Archivieren",
+    "unarchive": "Wiederherstellen",
+    "filterArchived": "Archiviert",
     "commentEdited": "bearbeitet",
     "deleteCommentTitle": "Kommentar löschen?",
     "deleteCommentBody": "Dieser Kommentar wird dauerhaft entfernt. Das kann nicht rückgängig gemacht werden.",
@@ -809,6 +814,7 @@
   },
   "search": {
     "placeholder": "Vorgänge, Projekte, Personen suchen…  oder Befehl eingeben",
+    "archivedKeyword": "archiviert",
     "scope": {
       "all": "Alle"
     },
@@ -1240,6 +1246,9 @@
       "USER_SESSIONS_REVOKED": "Sitzungen widerrufen",
       "SETTINGS_CHANGED": "Einstellungen geändert",
       "DATA_EXPORT_REQUESTED": "Datenexport angefordert",
+      "ISSUE_DELETED": "Vorgang gelöscht",
+      "ISSUE_ARCHIVED": "Vorgang archiviert",
+      "ISSUE_UNARCHIVED": "Vorgang wiederhergestellt",
       "PAT_CREATED": "Zugriffstoken erstellt",
       "PAT_REVOKED": "Zugriffstoken widerrufen",
       "PAT_DELETED": "Zugriffstoken gelöscht",

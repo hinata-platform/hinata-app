@@ -22,6 +22,7 @@ class IssueRepository {
     String? type,
     String? query,
     bool noSprint = false,
+    bool archived = false,
     int page = 0,
     int size = 50,
   }) async {
@@ -35,6 +36,7 @@ class IssueRepository {
                 'sprintId': ?sprintId,
                 'type': ?type,
                 if (noSprint) 'noSprint': true,
+                if (archived) 'archived': true,
                 if (query != null && query.isNotEmpty) 'query': query,
                 'page': page,
                 'size': size,
@@ -64,6 +66,7 @@ class IssueRepository {
     String? sprintId,
     String? query,
     bool noSprint = false,
+    bool archived = false,
   }) async {
     const size = 100;
     final out = <Issue>[];
@@ -77,6 +80,7 @@ class IssueRepository {
         sprintId: sprintId,
         query: query,
         noSprint: noSprint,
+        archived: archived,
         page: page,
         size: size,
       );
@@ -110,6 +114,26 @@ class IssueRepository {
       );
 
   Future<void> deleteIssue(String id) => _api.delete('/api/v1/issues/$id');
+
+  /// Soft delete — any project member may archive; the issue disappears from
+  /// all default listings but stays restorable.
+  Future<Issue> archiveIssue(String id) async => Issue.fromJson(
+    await _api.post('/api/v1/issues/$id/archive') as Map<String, dynamic>,
+  );
+
+  /// Restores an archived issue (and its archived sub-tasks).
+  Future<Issue> unarchiveIssue(String id) async => Issue.fromJson(
+    await _api.post('/api/v1/issues/$id/unarchive') as Map<String, dynamic>,
+  );
+
+  /// Whether the current user may hard-delete the issue (platform admin,
+  /// project lead, or Team-Admin of a team owning the project).
+  Future<bool> canDeleteIssue(String id) async {
+    final data =
+        await _api.get('/api/v1/issues/$id/permissions')
+            as Map<String, dynamic>;
+    return data['canDelete'] as bool? ?? false;
+  }
 
   // --- Issue links (typed relationships) -------------------------------------
 

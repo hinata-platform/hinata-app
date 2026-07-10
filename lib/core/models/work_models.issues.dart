@@ -25,6 +25,7 @@ class Issue extends Equatable {
     this.attachments = const [],
     this.rank = 0,
     this.resolvedAt,
+    this.archived = false,
     this.createdAt,
     this.updatedAt,
   });
@@ -59,6 +60,9 @@ class Issue extends Equatable {
   final List<IssueAttachment> attachments;
   final double rank;
   final DateTime? resolvedAt;
+
+  /// Soft-deleted: hidden from all default listings, restorable by any member.
+  final bool archived;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -105,6 +109,7 @@ class Issue extends Equatable {
         .toList(),
     rank: (json['rank'] as num?)?.toDouble() ?? 0,
     resolvedAt: _instant(json['resolvedAt']),
+    archived: json['archived'] as bool? ?? false,
     createdAt: _instant(json['createdAt']),
     updatedAt: _instant(json['updatedAt']),
   );
@@ -145,6 +150,7 @@ class Issue extends Equatable {
     attachments: attachments,
     rank: rank ?? this.rank,
     resolvedAt: resolvedAt,
+    archived: archived,
     createdAt: createdAt,
     updatedAt: updatedAt,
   );
@@ -161,6 +167,7 @@ class Issue extends Equatable {
     sprintId,
     storyPoints,
     rank,
+    archived,
     updatedAt,
   ];
 }

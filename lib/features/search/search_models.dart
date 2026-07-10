@@ -45,6 +45,7 @@ class SearchEntry {
     this.keyChipText,
     this.keyChipColor,
     this.hint,
+    this.archived = false,
   });
 
   final SearchCat cat;
@@ -94,4 +95,8 @@ class SearchEntry {
 
   /// Command keyboard hint (e.g. `C`).
   final String? hint;
+
+  /// Archived (soft-deleted) issue / archived project — rendered with an
+  /// "Archived" badge.
+  final bool archived;
 }

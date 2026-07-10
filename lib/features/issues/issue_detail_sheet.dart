@@ -186,17 +186,26 @@ Future<void> showIssueDetailSheet(
                   ),
                 ),
         ),
-        trailingNavBarWidget: _SheetActions(
-          onMaximize: () {
-            final router = GoRouter.of(modalContext);
-            Navigator.of(modalContext).maybePop();
-            router.push(
-              '/issues/$issueId',
-              extra: IssueRouteArgs(fromModal: true, onChanged: onChanged),
-            );
-          },
-          onDelete: () => bodyKey.currentState?.confirmDeleteIssue(),
-          onClose: () => Navigator.of(modalContext).maybePop(),
+        // Rebuilt via the header notifier once the body has loaded the issue
+        // and its delete permission, so the action shows the right affordance
+        // (trash for admins/leads/team admins, archive for everyone else,
+        // restore for archived issues).
+        trailingNavBarWidget: ValueListenableBuilder<Issue?>(
+          valueListenable: header,
+          builder: (_, issue, _) => _SheetActions(
+            onMaximize: () {
+              final router = GoRouter.of(modalContext);
+              Navigator.of(modalContext).maybePop();
+              router.push(
+                '/issues/$issueId',
+                extra: IssueRouteArgs(fromModal: true, onChanged: onChanged),
+              );
+            },
+            onDelete: () => bodyKey.currentState?.confirmDeleteIssue(),
+            onClose: () => Navigator.of(modalContext).maybePop(),
+            canDelete: bodyKey.currentState?.canDelete ?? false,
+            archived: issue?.archived ?? false,
+          ),
         ),
         // On a phone bottom sheet the comment composer floats here, pinned above
         // the scrolling feed; the wide dialog keeps it inline (returns nothing).
@@ -276,11 +285,18 @@ class _SheetActions extends StatelessWidget {
     required this.onMaximize,
     required this.onDelete,
     required this.onClose,
+    this.canDelete = false,
+    this.archived = false,
   });
 
   final VoidCallback onMaximize;
   final VoidCallback onDelete;
   final VoidCallback onClose;
+
+  /// Whether the current user may hard-delete (trash icon); regular members
+  /// only see the archive affordance, archived issues a restore one.
+  final bool canDelete;
+  final bool archived;
 
   @override
   Widget build(BuildContext context) {
@@ -293,12 +309,20 @@ class _SheetActions extends StatelessWidget {
           icon: Icon(LucideIcons.maximize2, size: 19, color: AppColors.inkSoft),
         ),
         IconButton(
-          tooltip: context.t('common.delete'),
+          tooltip: context.t(
+            archived
+                ? 'issues.unarchive'
+                : (canDelete ? 'common.delete' : 'issues.archive'),
+          ),
           onPressed: onDelete,
-          icon: const Icon(
-            LucideIcons.trash2,
+          icon: Icon(
+            archived
+                ? LucideIcons.archiveRestore
+                : (canDelete ? LucideIcons.trash2 : LucideIcons.archive),
             size: 20,
-            color: AppColors.danger,
+            color: canDelete && !archived
+                ? AppColors.danger
+                : AppColors.accentStrong,
           ),
         ),
         IconButton(

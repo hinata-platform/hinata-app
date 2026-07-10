@@ -105,6 +105,13 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
     widget.onChanged(_filter);
   }
 
+  void _toggleArchived() {
+    setState(
+      () => _filter = _filter.copyWith(archivedOnly: !_filter.archivedOnly),
+    );
+    widget.onChanged(_filter);
+  }
+
   void _clear() {
     if (_filter.isEmpty) return;
     setState(() => _filter = IssueFilter.empty);
@@ -475,6 +482,32 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
             ),
           ),
           const Spacer(),
+          // Server-side "archived" facet: swaps the list to soft-deleted
+          // issues (they are excluded from every default listing).
+          TextButton.icon(
+            onPressed: _toggleArchived,
+            style: TextButton.styleFrom(
+              foregroundColor: _filter.archivedOnly
+                  ? AppColors.accentStrong
+                  : tokens.inkSoft,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: const Size(0, 30),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              textStyle: TextStyle(
+                fontSize: 12,
+                fontWeight: _filter.archivedOnly
+                    ? FontWeight.w700
+                    : FontWeight.w600,
+              ),
+            ),
+            icon: Icon(
+              _filter.archivedOnly
+                  ? LucideIcons.archiveRestore
+                  : LucideIcons.archive,
+              size: 14,
+            ),
+            label: Text(context.t('issues.filterArchived')),
+          ),
           if (count > 0)
             TextButton(
               onPressed: _clear,

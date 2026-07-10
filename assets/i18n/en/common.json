@@ -405,6 +405,11 @@
     "previewEmpty": "Nothing to preview yet.",
     "deleteTitle": "Delete issue?",
     "deleteBody": "{{id}} will be permanently deleted, including comments and work items.",
+    "archiveTitle": "Archive issue?",
+    "archiveBody": "{{id}} will be archived and hidden from boards and lists. It can be restored at any time.",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "filterArchived": "Archived",
     "commentEdited": "edited",
     "deleteCommentTitle": "Delete comment?",
     "deleteCommentBody": "This comment will be permanently removed. This cannot be undone.",
@@ -809,6 +814,7 @@
   },
   "search": {
     "placeholder": "Search issues, projects, people…  or type a command",
+    "archivedKeyword": "archived",
     "scope": {
       "all": "All"
     },
@@ -1240,6 +1246,9 @@
       "USER_SESSIONS_REVOKED": "Sessions revoked",
       "SETTINGS_CHANGED": "Settings changed",
       "DATA_EXPORT_REQUESTED": "Data export requested",
+      "ISSUE_DELETED": "Issue deleted",
+      "ISSUE_ARCHIVED": "Issue archived",
+      "ISSUE_UNARCHIVED": "Issue restored",
       "PAT_CREATED": "Access token created",
       "PAT_REVOKED": "Access token revoked",
       "PAT_DELETED": "Access token deleted",
