@@ -1195,22 +1195,31 @@ class _VoiceBubbleState extends State<VoiceBubble> {
             ? _controller.position
             : Duration.zero;
         final total = _controller.duration;
+        final timeStyle = TextStyle(
+          fontFamily: AppTheme.fontMono,
+          fontSize: 10.5,
+          color: AppColors.inkFaint,
+        );
         return SizedBox(
           width: 230,
-          child: Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _PlayButton(
-                playing: playing,
-                loading: loading,
-                failed: _controller.failed,
-                onTap: _controller.toggle,
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
+              // Play button and waveform share one centred row, so the play
+              // glyph sits exactly on the waveform's centre line (WhatsApp-style
+              // — the 40px button and 30px waveform both centre to the row).
+              Row(
+                children: [
+                  _PlayButton(
+                    playing: playing,
+                    loading: loading,
+                    failed: _controller.failed,
+                    onTap: _controller.toggle,
+                  ),
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: SizedBox(
                       height: 30,
                       child: _Waveform(
                         peaks: widget.voice.peaks,
@@ -1218,30 +1227,24 @@ class _VoiceBubbleState extends State<VoiceBubble> {
                         onSeek: _controller.seekFraction,
                       ),
                     ),
-                    const SizedBox(height: 3),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _mmss(
-                            playing || elapsed > Duration.zero ? elapsed : total,
-                          ),
-                          style: TextStyle(
-                            fontFamily: AppTheme.fontMono,
-                            fontSize: 10.5,
-                            color: AppColors.inkFaint,
-                          ),
-                        ),
-                        Text(
-                          _mmss(total),
-                          style: TextStyle(
-                            fontFamily: AppTheme.fontMono,
-                            fontSize: 10.5,
-                            color: AppColors.inkFaint,
-                          ),
-                        ),
-                      ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              // Timecodes below the waveform, indented past the play button
+              // (40px button + 11px gap) so they align under the peaks.
+              Padding(
+                padding: const EdgeInsets.only(left: 51),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _mmss(
+                        playing || elapsed > Duration.zero ? elapsed : total,
+                      ),
+                      style: timeStyle,
                     ),
+                    Text(_mmss(total), style: timeStyle),
                   ],
                 ),
               ),
