@@ -424,7 +424,7 @@ class CommentBubbleRow extends StatelessWidget {
             left: 15.25, // 32/2 − half of the 1.5px stroke
             top: 35, // just below the 32px avatar
             bottom: 0,
-            child: Container(width: 1.5, color: AppColors.hairline),
+            child: Container(width: 1.5, color: _branchLineColor()),
           ),
         ],
       );
@@ -757,7 +757,7 @@ class _ReplyThreadView extends StatelessWidget {
             child: CustomPaint(
               painter: _ReplyConnectorPainter(
                 last: last,
-                color: AppColors.hairline,
+                color: _branchLineColor(),
               ),
             ),
           ),
@@ -773,6 +773,14 @@ class _ReplyThreadView extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The reply connector / branch-line colour — subtle but legible in BOTH
+/// themes. The default [AppColors.hairline] reads in dark mode but is nearly
+/// invisible on the light warm-paper canvas, so light mode uses a faded ink tone.
+Color _branchLineColor() {
+  final dark = AppColors.brightness == Brightness.dark;
+  return dark ? AppColors.hairline : AppColors.inkFaint.withValues(alpha: 0.5);
 }
 
 /// Draws the reply connector: a vertical rail down the gutter with a curved
