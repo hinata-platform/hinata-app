@@ -95,17 +95,21 @@ class _RemoveIssueConfirm extends StatelessWidget {
             child: Row(
               children: [
                 const Spacer(),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(
-                    context.t('common.cancel'),
-                    style: TextStyle(
-                      color: AppColors.inkSoft,
-                      fontWeight: FontWeight.w600,
+                // With both archive + delete present the X button covers
+                // dismissal; a third neutral button would overflow the row.
+                if (!canDelete) ...[
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      context.t('common.cancel'),
+                      style: TextStyle(
+                        color: AppColors.inkSoft,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
+                  const SizedBox(width: 8),
+                ],
                 FilledButton.icon(
                   onPressed: () =>
                       Navigator.of(context).pop(_IssueRemovalAction.archive),
