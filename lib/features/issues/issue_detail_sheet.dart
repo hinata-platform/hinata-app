@@ -1379,9 +1379,14 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   // ── comment reactions / pin / reply / copy / select (focused menu) ──────────
 
-  /// Splices [updated] in wherever it lives (feed, pinned, or a reply thread).
-  void _replaceComment(IssueComment updated) =>
-      _mutateAll(updated.id, (_) => updated);
+  /// Splices [updated] in wherever it lives (feed, pinned, or a reply thread),
+  /// keeping the existing `replyCount`. React/edit/pin responses don't carry it
+  /// (it's a read-time transient → would deserialize as 0 and wipe the "N
+  /// replies" count); those mutations never change the reply count anyway.
+  void _replaceComment(IssueComment updated) => _mutateAll(
+    updated.id,
+    (old) => updated.copyWith(replyCount: old.replyCount),
+  );
 
   /// Applies [fn] to the comment with [id] wherever it lives — the top-level
   /// feed, the pinned set, or any loaded reply thread.
