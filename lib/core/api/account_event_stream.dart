@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 
-import 'hinata_repository.dart';
+import '../repositories/account_repository.dart';
 import 'sse.dart';
 
 /// Holds the app-wide `/api/v1/me/stream` SSE connection open while the user is
@@ -17,10 +17,12 @@ import 'sse.dart';
 /// [start] is idempotent and reconnects with capped backoff if the stream
 /// drops; [stop] tears it down. Drive both from the auth lifecycle.
 class AccountEventStream {
-  AccountEventStream({required HinataRepository repository, required this.onLogout})
-      : _repo = repository;
+  AccountEventStream({
+    required AccountRepository repository,
+    required this.onLogout,
+  }) : _repo = repository;
 
-  final HinataRepository _repo;
+  final AccountRepository _repo;
 
   /// Invoked when the server signals this device should sign out.
   final void Function() onLogout;

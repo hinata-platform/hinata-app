@@ -3,8 +3,8 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../api/api_client.dart';
-import '../api/hinata_repository.dart';
 import '../models/core_models.dart';
+import '../repositories/auth_repository.dart';
 import '../storage/app_storage.dart';
 
 sealed class AuthEvent extends Equatable {
@@ -99,7 +99,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LogoutRequested>(_onLogout);
   }
 
-  final HinataRepository repository;
+  final AuthRepository repository;
   final AppStorage storage;
 
   Future<void> _onChecked(AuthChecked event, Emitter<AuthState> emit) async {

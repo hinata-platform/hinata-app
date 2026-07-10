@@ -1640,6 +1640,10 @@
           "label": "Status changes",
           "desc": "Watched issues move across the board"
         },
+        "ingest": {
+          "label": "New issues from e-mail",
+          "desc": "An e-mail becomes a new issue in a project you're part of"
+        },
         "sprint": {
           "label": "Sprints & deadlines",
           "desc": "Sprint start / end and approaching due dates"

@@ -16,6 +16,7 @@ import 'core/blocs/locale_cubit.dart';
 import 'core/blocs/theme_cubit.dart';
 import 'core/i18n/i18n.dart';
 import 'core/notifications/fcm_service.dart';
+import 'core/repositories/repositories.dart';
 import 'core/router/app_router.dart';
 import 'core/storage/app_storage.dart';
 import 'core/theme/app_colors.dart';
@@ -66,11 +67,12 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    final domains = widget.repository.domains;
     _appConfig = AppConfigBloc(
-      repository: widget.repository,
+      repository: domains.meta,
       storage: widget.storage,
     )..add(const AppConfigStarted());
-    _auth = AuthBloc(repository: widget.repository, storage: widget.storage)
+    _auth = AuthBloc(repository: domains.auth, storage: widget.storage)
       ..add(const AuthChecked());
     widget.apiClient.onSessionExpired = () =>
         _auth.add(const LogoutRequested());
@@ -78,7 +80,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     // the server can push a `logout` (revoked session) and end this device's
     // session at once, rather than waiting for the next request to 401.
     _accountEvents = AccountEventStream(
-      repository: widget.repository,
+      repository: domains.account,
       onLogout: () => _auth.add(const LogoutRequested()),
     );
     _router = buildRouter(
@@ -280,12 +282,36 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final domains = widget.repository.domains;
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider.value(value: widget.storage),
         RepositoryProvider.value(value: widget.apiClient),
         RepositoryProvider.value(value: widget.repository),
         RepositoryProvider.value(value: _knowledge),
+        // Domain layer: one repository per domain (see core/repositories/).
+        // Feature code injects exactly the repository it needs instead of the
+        // legacy HinataRepository facade above.
+        RepositoryProvider<MetaRepository>.value(value: domains.meta),
+        RepositoryProvider<AuthRepository>.value(value: domains.auth),
+        RepositoryProvider<AccountRepository>.value(value: domains.account),
+        RepositoryProvider<UserRepository>.value(value: domains.users),
+        RepositoryProvider<ProjectRepository>.value(value: domains.projects),
+        RepositoryProvider<IssueRepository>.value(value: domains.issues),
+        RepositoryProvider<CommentRepository>.value(value: domains.comments),
+        RepositoryProvider<MediaRepository>.value(value: domains.media),
+        RepositoryProvider<BoardRepository>.value(value: domains.boards),
+        RepositoryProvider<SprintRepository>.value(value: domains.sprints),
+        RepositoryProvider<TimesheetRepository>.value(value: domains.timesheet),
+        RepositoryProvider<SearchRepository>.value(value: domains.search),
+        RepositoryProvider<ArticleRepository>.value(value: domains.articles),
+        RepositoryProvider<DashboardRepository>.value(value: domains.dashboard),
+        RepositoryProvider<NotificationRepository>.value(
+          value: domains.notifications,
+        ),
+        RepositoryProvider<AdminRepository>.value(value: domains.admin),
+        RepositoryProvider<TeamRepository>.value(value: domains.teams),
+        RepositoryProvider<GitRepository>.value(value: domains.git),
       ],
       child: MultiBlocProvider(
         providers: [
