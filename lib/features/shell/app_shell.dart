@@ -40,6 +40,7 @@ import '../../core/widgets/glass_panel.dart';
 import '../search/global_search_dialog.dart';
 import '../search/search_tokens.dart';
 import 'page_chrome.dart';
+import 'swipe_back.dart';
 
 part 'app_shell.wide.dart';
 part 'app_shell.notifications.dart';
@@ -186,6 +187,13 @@ class _AppShellState extends State<AppShell> {
           listenable: router.routerDelegate,
           builder: (context, _) {
             final location = router.state.matchedLocation;
+            // In-app swipe-back: an edge drag on the content area unwinds
+            // navigation through the same chain as the system back gesture.
+            final content = SwipeBackGesture(
+              enabled: _canSwipeBack,
+              onBack: () => _onSystemBack(),
+              child: widget.child,
+            );
             return ResponsiveBuilder(
               builder: (context, size) {
                 // The full-screen single-issue view is immersive on compact: its
@@ -197,9 +205,9 @@ class _AppShellState extends State<AppShell> {
                     ? _CompactShell(
                         location: location,
                         immersive: immersive,
-                        child: widget.child,
+                        child: content,
                       )
-                    : _WideShell(location: location, child: widget.child);
+                    : _WideShell(location: location, child: content);
               },
             );
           },
@@ -215,6 +223,18 @@ class _AppShellState extends State<AppShell> {
   /// settings/admin section → index step), then the sub-page's parent route,
   /// then home. Only on /dashboard with nothing left to unwind does the system
   /// take over and background the app.
+  /// Whether the swipe-back gesture has anywhere to go right now: something
+  /// on a navigator stack, an in-page back override, or a sub-page's parent
+  /// route. Primary tabs (dashboard, issues, board, …) don't swipe — the
+  /// gesture is for unwinding, not for jumping between tabs.
+  bool _canSwipeBack() {
+    final router = GoRouter.of(context);
+    if (router.canPop()) return true;
+    final location = router.state.matchedLocation;
+    return _chrome.onBackFor(location) != null ||
+        _subPageTitleKey(location) != null;
+  }
+
   Future<bool> _onSystemBack() async {
     final router = GoRouter.of(context);
     if (router.canPop()) {
