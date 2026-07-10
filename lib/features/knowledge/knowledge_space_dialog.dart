@@ -162,7 +162,7 @@ class _CreateSpaceFormState extends State<_CreateSpaceForm> {
                     Expanded(
                       child: Text(
                         _error!,
-                        style: TextStyle(fontSize: 12.5, color: AppColors.danger),
+                        style: const TextStyle(fontSize: 12.5, color: AppColors.danger),
                       ),
                     ),
                   ],

@@ -103,7 +103,7 @@ class _UserTableRow extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             LucideIcons.send,
                             size: 11,
                             color: AppColors.accentStrong,
@@ -111,7 +111,7 @@ class _UserTableRow extends StatelessWidget {
                           const SizedBox(width: 3),
                           Text(
                             context.t('admin.um.resendInvite'),
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: AppColors.accentStrong,
@@ -269,7 +269,7 @@ class _UserCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                      const Icon(
                         LucideIcons.send,
                         size: 12,
                         color: AppColors.accentStrong,
@@ -277,7 +277,7 @@ class _UserCard extends StatelessWidget {
                       const SizedBox(width: 3),
                       Text(
                         context.t('admin.um.resendInvite'),
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
                           color: AppColors.accentStrong,
@@ -307,7 +307,7 @@ class _YouChip extends StatelessWidget {
       ),
       child: Text(
         context.t('admin.um.you'),
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: AppColors.accentStrong,

@@ -264,7 +264,7 @@ class _PatRow extends StatelessWidget {
               IconButton(
                 tooltip: context.t('pat.delete.confirm'),
                 visualDensity: VisualDensity.compact,
-                icon: Icon(
+                icon: const Icon(
                   LucideIcons.trash2,
                   size: 17,
                   color: AppColors.danger,
@@ -275,7 +275,7 @@ class _PatRow extends StatelessWidget {
               IconButton(
                 tooltip: context.t('pat.revoke.confirm'),
                 visualDensity: VisualDensity.compact,
-                icon: Icon(
+                icon: const Icon(
                   LucideIcons.trash2,
                   size: 17,
                   color: AppColors.danger,

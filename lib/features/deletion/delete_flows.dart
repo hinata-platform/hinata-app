@@ -164,7 +164,7 @@ _Impact _teamImpact(TeamDeletionImpact i) => _Impact(
       'boards': i.boards,
       'issues': i.issues,
     }),
-    _Warn(LucideIcons.shieldCheck, 'delete.team.warnKept'),
+    const _Warn(LucideIcons.shieldCheck, 'delete.team.warnKept'),
   ],
 );
 

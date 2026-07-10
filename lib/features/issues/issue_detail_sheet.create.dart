@@ -364,7 +364,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
           decoration: InputDecoration(
             hintText: context.t('issues.title'),
             errorStyle: const TextStyle(color: AppColors.danger, fontSize: 12),
-            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           ),
           validator: (value) => (value == null || value.trim().isEmpty)
               ? context.t('errors.required')

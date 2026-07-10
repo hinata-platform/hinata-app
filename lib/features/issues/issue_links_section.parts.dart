@@ -670,19 +670,19 @@ class _LinkChip extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             issue.readableId,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: AppColors.accentStrong,
-              fontFeatures: const [FontFeature.tabularFigures()],
+              fontFeatures: [FontFeature.tabularFigures()],
             ),
           ),
           const SizedBox(width: 2),
           InkWell(
             onTap: onRemove,
             borderRadius: BorderRadius.circular(99),
-            child: Padding(
-              padding: const EdgeInsets.all(2),
+            child: const Padding(
+              padding: EdgeInsets.all(2),
               child: Icon(
                 LucideIcons.x,
                 size: 13,

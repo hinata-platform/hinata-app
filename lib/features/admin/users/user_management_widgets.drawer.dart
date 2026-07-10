@@ -301,7 +301,7 @@ class UserDrawerBody extends StatelessWidget {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(LucideIcons.mailWarning, size: 16, color: AppColors.danger),
+        const Icon(LucideIcons.mailWarning, size: 16, color: AppColors.danger),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
@@ -491,7 +491,7 @@ class UserDrawerBody extends StatelessWidget {
                     width: 9,
                     height: 9,
                     margin: const EdgeInsets.only(top: 3),
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppColors.accent,
                       shape: BoxShape.circle,
                     ),

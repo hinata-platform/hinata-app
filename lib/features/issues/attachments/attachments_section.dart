@@ -571,7 +571,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
           child: Stack(
             children: [
               if (count == 0) _empty() else _grid(phone),
-              if (_dragging) Positioned.fill(child: const _DropOverlay()),
+              if (_dragging) const Positioned.fill(child: _DropOverlay()),
             ],
           ),
         ),

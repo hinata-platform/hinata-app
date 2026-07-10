@@ -144,7 +144,7 @@ class SprintInsightsSurface extends StatelessWidget {
     final perRow = context.isExpanded ? 4 : 2;
     return LayoutBuilder(
       builder: (context, c) {
-        final spacing = 14.0;
+        const spacing = 14.0;
         final width = (c.maxWidth - spacing * (perRow - 1)) / perRow;
         return Wrap(
           spacing: spacing,

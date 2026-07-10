@@ -113,23 +113,23 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     onPageChanged: (i) => setState(() => _index = i),
                     children: [
                       _WelcomeSlide(glow: _ambient),
-                      _FeatureSlide(
+                      const _FeatureSlide(
                         labelKey: 'onboarding.label',
                         titleKey: 'onboarding.projects.title',
                         bodyKey: 'onboarding.projects.body',
-                        card: const _ProjectsCard(),
+                        card: _ProjectsCard(),
                       ),
-                      _FeatureSlide(
+                      const _FeatureSlide(
                         labelKey: 'onboarding.label',
                         titleKey: 'onboarding.sprints.title',
                         bodyKey: 'onboarding.sprints.body',
-                        card: const _SprintCard(),
+                        card: _SprintCard(),
                       ),
-                      _FeatureSlide(
+                      const _FeatureSlide(
                         labelKey: 'onboarding.label',
                         titleKey: 'onboarding.teams.title',
                         bodyKey: 'onboarding.teams.body',
-                        card: const _TeamsCard(),
+                        card: _TeamsCard(),
                       ),
                     ],
                   ),

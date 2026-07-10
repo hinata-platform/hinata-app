@@ -575,7 +575,7 @@ class _GitRow extends StatelessWidget {
   (IconData, Color) _kindStyle(String kind) => switch (kind) {
         'pr' => (LucideIcons.eye, _cToday),
         'deploy' => (LucideIcons.rocket, _cDone),
-        'merge' => (LucideIcons.circleCheckBig, Color(0xFFA45CC7)),
+        'merge' => (LucideIcons.circleCheckBig, const Color(0xFFA45CC7)),
         _ => (LucideIcons.circleDot, AppColors.accentStrong),
       };
 

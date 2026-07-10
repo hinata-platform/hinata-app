@@ -251,7 +251,7 @@ class _EditToolbar extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(LucideIcons.sparkles, size: 15, color: AppColors.accentStrong),
+              const Icon(LucideIcons.sparkles, size: 15, color: AppColors.accentStrong),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -606,7 +606,7 @@ class _ChoiceRow extends StatelessWidget {
                 ),
               ),
               if (selected)
-                Icon(LucideIcons.check, size: 16, color: AppColors.accentStrong),
+                const Icon(LucideIcons.check, size: 16, color: AppColors.accentStrong),
             ],
           ),
         ),

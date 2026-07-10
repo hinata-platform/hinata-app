@@ -259,7 +259,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Icon(LucideIcons.mailCheck, size: 40, color: AppColors.accentStrong),
+        const Icon(LucideIcons.mailCheck, size: 40, color: AppColors.accentStrong),
         const SizedBox(height: 16),
         Text(
           context.t('register.checkEmailTitle'),
@@ -315,7 +315,7 @@ class _InfoNote extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(LucideIcons.info, size: 18, color: AppColors.accentStrong),
+          const Icon(LucideIcons.info, size: 18, color: AppColors.accentStrong),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

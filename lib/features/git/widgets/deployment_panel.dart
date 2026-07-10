@@ -406,7 +406,7 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
       ),
       child: Text(
         label,
-        style: TextStyle(
+        style: const TextStyle(
           fontFamily: AppTheme.fontMono,
           fontSize: 11,
           color: AppColors.accentStrong,
@@ -418,10 +418,10 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
   Widget _autoHint(String pre, String bold, String post) => Text.rich(
     TextSpan(
       children: [
-        WidgetSpan(
+        const WidgetSpan(
           alignment: PlaceholderAlignment.middle,
           child: Padding(
-            padding: const EdgeInsets.only(right: 5),
+            padding: EdgeInsets.only(right: 5),
             child: Icon(LucideIcons.zap, size: 12, color: AppColors.accentStrong),
           ),
         ),
@@ -436,10 +436,10 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
   Widget _autoHintRich() => Text.rich(
     TextSpan(
       children: [
-        WidgetSpan(
+        const WidgetSpan(
           alignment: PlaceholderAlignment.middle,
           child: Padding(
-            padding: const EdgeInsets.only(right: 5),
+            padding: EdgeInsets.only(right: 5),
             child: Icon(LucideIcons.zap, size: 12, color: AppColors.accentStrong),
           ),
         ),
@@ -457,7 +457,7 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
 
   InlineSpan _monoChip(String text) => TextSpan(
     text: text,
-    style: TextStyle(
+    style: const TextStyle(
       fontFamily: AppTheme.fontMono,
       fontSize: 11.5,
       color: AppColors.accentStrong,

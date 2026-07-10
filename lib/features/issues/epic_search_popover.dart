@@ -277,7 +277,7 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            borderSide: BorderSide(color: AppColors.accent, width: 1.4),
+            borderSide: const BorderSide(color: AppColors.accent, width: 1.4),
           ),
         ),
       ),

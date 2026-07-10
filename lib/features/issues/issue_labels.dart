@@ -209,7 +209,7 @@ class _LabelPickerSheetState extends State<_LabelPickerSheet> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                borderSide: BorderSide(color: AppColors.accentLine),
+                borderSide: const BorderSide(color: AppColors.accentLine),
               ),
             ),
           ),
@@ -277,7 +277,7 @@ class _CreateRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
             children: [
-              Icon(LucideIcons.plus, size: 18, color: AppColors.accentStrong),
+              const Icon(LucideIcons.plus, size: 18, color: AppColors.accentStrong),
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
@@ -339,7 +339,7 @@ class _LabelChip extends StatelessWidget {
                           ? AppColors.accentStrong
                           : AppColors.inkFaint,
                     )
-                  : SizedBox.shrink(),
+                  : const SizedBox.shrink(),
             ),
             const SizedBox(width: 6),
             Text(
@@ -359,8 +359,8 @@ class _LabelChip extends StatelessWidget {
                   message: context.t('issues.deleteLabel'),
                   child: Container(
                     padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(shape: BoxShape.circle),
-                    child: Icon(
+                    decoration: const BoxDecoration(shape: BoxShape.circle),
+                    child: const Icon(
                       LucideIcons.x,
                       size: 13,
                       color: AppColors.danger,

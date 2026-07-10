@@ -304,7 +304,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               color: AppColors.accentSoft,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(LucideIcons.gitBranch, size: 20, color: AppColors.accentStrong),
+            child: const Icon(LucideIcons.gitBranch, size: 20, color: AppColors.accentStrong),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -519,7 +519,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               color: AppColors.accentSoft,
               borderRadius: BorderRadius.circular(AppTheme.radiusPill),
             ),
-            child: Text(
+            child: const Text(
               'OAuth',
               style: TextStyle(
                 fontSize: 10,
@@ -599,7 +599,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               color: AppColors.accentSoft,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(LucideIcons.lock, size: 24, color: AppColors.warning),
+            child: const Icon(LucideIcons.lock, size: 24, color: AppColors.warning),
           ),
         ),
         const SizedBox(height: 14),
@@ -714,7 +714,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(LucideIcons.circleCheckBig, size: 16, color: AppColors.success),
+                      const Icon(LucideIcons.circleCheckBig, size: 16, color: AppColors.success),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -989,7 +989,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
         onTap: onTap,
         child: Text(
           text,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: AppColors.accentStrong,

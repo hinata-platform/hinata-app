@@ -99,7 +99,7 @@ class _EditingBanner extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8, left: 4, right: 4),
       child: Row(
         children: [
-          Icon(LucideIcons.pencil, size: 14, color: AppColors.accentStrong),
+          const Icon(LucideIcons.pencil, size: 14, color: AppColors.accentStrong),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -118,7 +118,7 @@ class _EditingBanner extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               child: Text(
                 context.t('common.cancel'),
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                   color: AppColors.accentStrong,
@@ -154,12 +154,12 @@ class _ReplyBanner extends StatelessWidget {
         decoration: BoxDecoration(
           color: dark ? Colors.white10 : Colors.black.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(9),
-          border: Border(left: BorderSide(color: AppColors.accent, width: 3)),
+          border: const Border(left: BorderSide(color: AppColors.accent, width: 3)),
         ),
         padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
         child: Row(
           children: [
-            Icon(LucideIcons.reply, size: 14, color: AppColors.accentStrong),
+            const Icon(LucideIcons.reply, size: 14, color: AppColors.accentStrong),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -168,7 +168,7 @@ class _ReplyBanner extends StatelessWidget {
                 children: [
                   Text(
                     context.t('comments.replyingTo', variables: {'name': name}),
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: AppColors.accentStrong,

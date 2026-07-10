@@ -278,7 +278,7 @@ class _NewTeamCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 alignment: Alignment.center,
-                child: Icon(
+                child: const Icon(
                   LucideIcons.plus,
                   size: 22,
                   color: AppColors.accentStrong,

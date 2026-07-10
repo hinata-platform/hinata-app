@@ -181,7 +181,7 @@ pw.Widget _header(ReportPdfData data, pw.Widget? logo) {
                     ),
                     pw.SizedBox(width: 9),
                     pw.Text('hinata',
-                        style: pw.TextStyle(
+                        style: const pw.TextStyle(
                             color: PdfColors.white,
                             fontSize: 19,
                             fontWeight: pw.FontWeight.bold)),
@@ -189,7 +189,7 @@ pw.Widget _header(ReportPdfData data, pw.Widget? logo) {
                 ),
               pw.SizedBox(height: 10),
               pw.Text(data.pdfTitleLabel,
-                  style: pw.TextStyle(
+                  style: const pw.TextStyle(
                       color: PdfColors.white,
                       fontSize: 22,
                       fontWeight: pw.FontWeight.bold)),
@@ -230,7 +230,7 @@ pw.Widget _summaryRow(ReportPdfData data) {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(value,
-                  style: pw.TextStyle(
+                  style: const pw.TextStyle(
                       fontSize: 26,
                       fontWeight: pw.FontWeight.bold,
                       color: _ink)),
@@ -254,7 +254,7 @@ pw.Widget _summaryRow(ReportPdfData data) {
 pw.Widget _sectionTitle(String title) => pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 10),
       child: pw.Text(title,
-          style: pw.TextStyle(
+          style: const pw.TextStyle(
               fontSize: 14, fontWeight: pw.FontWeight.bold, color: _ink)),
     );
 
@@ -277,7 +277,7 @@ pw.Widget _burndownSection(ReportPdfData data) {
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
             pw.Text(data.burndownTitleLabel,
-                style: pw.TextStyle(
+                style: const pw.TextStyle(
                     fontSize: 14, fontWeight: pw.FontWeight.bold, color: _ink)),
             pw.Text(data.openRemainingLabel,
                 style: const pw.TextStyle(fontSize: 10, color: _inkSoft)),
@@ -377,7 +377,7 @@ pw.Widget _barRow(PdfDatum d, int max) {
           child: pw.Text(d.label,
               maxLines: 1,
               overflow: pw.TextOverflow.clip,
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                   fontSize: 10, fontWeight: pw.FontWeight.bold, color: _ink)),
         ),
         pw.SizedBox(width: 8),
@@ -411,7 +411,7 @@ pw.Widget _barRow(PdfDatum d, int max) {
           width: 60,
           child: pw.Text(d.display,
               textAlign: pw.TextAlign.right,
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                   fontSize: 10, fontWeight: pw.FontWeight.bold, color: _ink)),
         ),
       ],

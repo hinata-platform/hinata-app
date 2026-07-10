@@ -89,7 +89,7 @@ class _OwnerItem extends StatelessWidget {
               ],
             ),
           ),
-          Icon(LucideIcons.chevronRight, size: 18, color: AppColors.accentStrong),
+          const Icon(LucideIcons.chevronRight, size: 18, color: AppColors.accentStrong),
         ],
       ),
     );
@@ -195,7 +195,7 @@ class _RepoItem extends StatelessWidget {
           ),
           if (selected) ...[
             const SizedBox(width: 8),
-            Icon(LucideIcons.circleCheckBig, size: 18, color: AppColors.accentStrong),
+            const Icon(LucideIcons.circleCheckBig, size: 18, color: AppColors.accentStrong),
           ],
         ],
       ),

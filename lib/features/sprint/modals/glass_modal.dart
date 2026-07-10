@@ -660,7 +660,7 @@ class _GlassModalScaffold extends StatelessWidget {
           useOwnLayer: true,
           quality: GlassQuality.premium,
           clipBehavior: Clip.antiAlias,
-          shape: LiquidRoundedSuperellipse(borderRadius: 26),
+          shape: const LiquidRoundedSuperellipse(borderRadius: 26),
           settings: liquidGlassPanelSettings(
             glassFill: tokens.glassFill,
             dark: Theme.of(context).brightness == Brightness.dark,

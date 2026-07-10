@@ -145,7 +145,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Icon(LucideIcons.mailCheck, size: 40, color: AppColors.accentStrong),
+        const Icon(LucideIcons.mailCheck, size: 40, color: AppColors.accentStrong),
         const SizedBox(height: 16),
         Text(
           context.t('forgotPassword.sentTitle'),

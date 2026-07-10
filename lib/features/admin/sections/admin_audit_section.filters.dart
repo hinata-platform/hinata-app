@@ -101,7 +101,7 @@ class _FilterBar extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            borderSide: BorderSide(color: AppColors.accent, width: 1.5),
+            borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
           ),
         ),
       ),
@@ -152,13 +152,13 @@ class _CountPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(LucideIcons.history, size: 13, color: AppColors.accentStrong),
+          const Icon(LucideIcons.history, size: 13, color: AppColors.accentStrong),
           const SizedBox(width: 6),
           Text(
             loading
                 ? '…'
                 : context.t('audit.count', variables: {'count': total}),
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: AppColors.accentStrong,
@@ -317,12 +317,12 @@ class _OutcomeFilterChip extends StatelessWidget {
         GlassMenuItem(
           value: AuditOutcome.success,
           label: context.t('audit.outcome.success'),
-          leading: Icon(LucideIcons.circleCheck, size: 16, color: AppColors.success),
+          leading: const Icon(LucideIcons.circleCheck, size: 16, color: AppColors.success),
         ),
         GlassMenuItem(
           value: AuditOutcome.failure,
           label: context.t('audit.outcome.failure'),
-          leading: Icon(LucideIcons.circleX, size: 16, color: AppColors.danger),
+          leading: const Icon(LucideIcons.circleX, size: 16, color: AppColors.danger),
         ),
       ],
       child: _FilterChip(

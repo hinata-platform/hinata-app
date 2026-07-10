@@ -678,7 +678,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
                                   width: context.isCompact ? 46 : null,
                                   height: 46,
                                   shape: !context.isCompact
-                                      ? LiquidRoundedSuperellipse(
+                                      ? const LiquidRoundedSuperellipse(
                                           borderRadius: 15,
                                         )
                                       : const LiquidOval(),

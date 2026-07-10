@@ -159,7 +159,7 @@ class _LeadStar extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   context.t('projectSettings.lead'),
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppColors.accentStrong,

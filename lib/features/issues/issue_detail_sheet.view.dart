@@ -2828,10 +2828,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         const Spacer(),
         TextButton.icon(
           onPressed: _selectedIds.isEmpty ? null : _deleteSelected,
-          icon: Icon(LucideIcons.trash2, size: 16, color: AppColors.danger),
+          icon: const Icon(LucideIcons.trash2, size: 16, color: AppColors.danger),
           label: Text(
             context.t('common.delete'),
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.danger,
               fontWeight: FontWeight.w600,
             ),

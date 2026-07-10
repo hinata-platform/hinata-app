@@ -29,7 +29,7 @@ class _DeleteIssueConfirm extends StatelessWidget {
                   color: AppColors.dangerSoft,
                   borderRadius: BorderRadius.circular(11),
                 ),
-                child: Icon(
+                child: const Icon(
                   LucideIcons.trash2,
                   size: 20,
                   color: AppColors.danger,
@@ -150,7 +150,7 @@ class _DeleteCommentConfirm extends StatelessWidget {
                   color: AppColors.dangerSoft,
                   borderRadius: BorderRadius.circular(11),
                 ),
-                child: Icon(
+                child: const Icon(
                   LucideIcons.trash2,
                   size: 20,
                   color: AppColors.danger,
@@ -376,7 +376,7 @@ class _SubtaskQuickAddState extends State<_SubtaskQuickAdd> {
           padding: const EdgeInsets.symmetric(vertical: 7),
           child: Row(
             children: [
-              Icon(LucideIcons.plus, size: 16, color: AppColors.stTodo),
+              const Icon(LucideIcons.plus, size: 16, color: AppColors.stTodo),
               const SizedBox(width: 8),
               Text(
                 context.t('issues.addSubtask'),
@@ -409,7 +409,7 @@ class _SubtaskQuickAddState extends State<_SubtaskQuickAdd> {
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            icon: Icon(LucideIcons.plus, size: 18, color: AppColors.stTodo),
+            icon: const Icon(LucideIcons.plus, size: 18, color: AppColors.stTodo),
           ),
         const SizedBox(width: 4),
         Expanded(

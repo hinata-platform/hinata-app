@@ -141,7 +141,7 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(LucideIcons.mailWarning, size: 40, color: AppColors.danger),
+        const Icon(LucideIcons.mailWarning, size: 40, color: AppColors.danger),
         const SizedBox(height: 16),
         Text(
           context.t('invite.invalidTitle'),

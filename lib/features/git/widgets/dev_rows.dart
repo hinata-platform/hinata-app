@@ -166,7 +166,7 @@ class BranchRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _DevRow(
-      glyph: DevGlyph(hue: kHueBranch, icon: LucideIcons.gitBranch),
+      glyph: const DevGlyph(hue: kHueBranch, icon: LucideIcons.gitBranch),
       top: Text(
         branch.name,
         maxLines: 1,
@@ -234,7 +234,7 @@ class CommitRow extends StatelessWidget {
 
   Widget _row(BuildContext context) {
     return _DevRow(
-      glyph: DevGlyph(hue: kHueCommit, icon: LucideIcons.gitCommitHorizontal),
+      glyph: const DevGlyph(hue: kHueCommit, icon: LucideIcons.gitCommitHorizontal),
       actions: _OpenButton(tooltip: context.t('git.openCommit'), onTap: onOpen),
       top: Text(
         commit.message,
@@ -245,7 +245,7 @@ class CommitRow extends StatelessWidget {
       sub: [
         Text(
           commit.sha,
-          style: TextStyle(
+          style: const TextStyle(
             fontFamily: AppTheme.fontMono,
             fontSize: 11,
             fontWeight: FontWeight.w600,
@@ -256,11 +256,11 @@ class CommitRow extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(LucideIcons.badgeCheck, size: 12, color: AppColors.success),
+              const Icon(LucideIcons.badgeCheck, size: 12, color: AppColors.success),
               const SizedBox(width: 3),
               Text(
                 context.t('git.verified'),
-                style: TextStyle(fontSize: 11, color: AppColors.success),
+                style: const TextStyle(fontSize: 11, color: AppColors.success),
               ),
             ],
           ),
@@ -275,14 +275,14 @@ class CommitRow extends StatelessWidget {
                 if (commit.additions > 0)
                   TextSpan(
                     text: '+${commit.additions}',
-                    style: TextStyle(color: AppColors.success),
+                    style: const TextStyle(color: AppColors.success),
                   ),
                 if (commit.additions > 0 && commit.deletions > 0)
                   const TextSpan(text: ' '),
                 if (commit.deletions > 0)
                   TextSpan(
                     text: '−${commit.deletions}',
-                    style: TextStyle(color: AppColors.danger),
+                    style: const TextStyle(color: AppColors.danger),
                   ),
               ],
             ),
@@ -359,7 +359,7 @@ class PrRow extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   '✓${pr.approvals}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.success,
@@ -370,7 +370,7 @@ class PrRow extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   '±${pr.changesRequested}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.danger,

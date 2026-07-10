@@ -390,7 +390,7 @@ class _MenuRowState<T> extends State<_MenuRow<T>> {
             ),
             if (widget.selected) ...[
               const SizedBox(width: 8),
-              Icon(LucideIcons.check, size: 17, color: AppColors.accentStrong),
+              const Icon(LucideIcons.check, size: 17, color: AppColors.accentStrong),
             ],
           ],
         ),

@@ -717,7 +717,7 @@ class _PeoplePickerState extends State<_PeoplePicker> {
           ListTile(
             leading: CircleAvatar(
               backgroundColor: AppColors.accentSoft,
-              child: Icon(
+              child: const Icon(
                 LucideIcons.user,
                 color: AppColors.accentStrong,
                 size: 18,

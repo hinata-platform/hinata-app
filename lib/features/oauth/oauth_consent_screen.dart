@@ -318,7 +318,7 @@ class _ScopeRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       child: Row(
         children: [
-          Icon(LucideIcons.check, size: 16, color: AppColors.success),
+          const Icon(LucideIcons.check, size: 16, color: AppColors.success),
           const SizedBox(width: 11),
           Expanded(
             child: Column(

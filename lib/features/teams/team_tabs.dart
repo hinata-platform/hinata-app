@@ -435,7 +435,7 @@ class _ActivityRow extends StatelessWidget {
                 TextSpan(text: ' $verbText '),
                 TextSpan(
                   text: object,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     color: AppColors.accentStrong,
                   ),

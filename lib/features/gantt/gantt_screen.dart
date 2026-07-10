@@ -697,7 +697,7 @@ class _DayTick extends StatelessWidget {
                 width: 18,
                 height: 18,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppColors.stTodo,
                   shape: BoxShape.circle,
                 ),

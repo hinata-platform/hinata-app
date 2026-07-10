@@ -222,7 +222,7 @@ class _AttachmentTileState extends State<_AttachmentTile> {
                     const SizedBox(height: 8),
                     Text(
                       context.t('issues.attachments.uploadFailed'),
-                      style: TextStyle(fontSize: 11, color: AppColors.danger),
+                      style: const TextStyle(fontSize: 11, color: AppColors.danger),
                     ),
                   ],
                 )
@@ -236,7 +236,7 @@ class _AttachmentTileState extends State<_AttachmentTile> {
                         value: up.progress <= 0 ? null : up.progress,
                         strokeWidth: 4,
                         backgroundColor: AppColors.hairline,
-                        valueColor: AlwaysStoppedAnimation(
+                        valueColor: const AlwaysStoppedAnimation(
                           AppColors.accentStrong,
                         ),
                       ),
@@ -411,7 +411,7 @@ class _DropOverlay extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Icon(
+                  child: const Icon(
                     LucideIcons.cloudUpload,
                     size: 22,
                     color: AppColors.accentStrong,

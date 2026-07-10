@@ -208,7 +208,7 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
             _Opt(
               value: id,
               label: widget.sprintNames[id] ?? id,
-              leading: Icon(
+              leading: const Icon(
                 LucideIcons.zap,
                 size: 18,
                 color: AppColors.accentStrong,

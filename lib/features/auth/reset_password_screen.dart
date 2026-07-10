@@ -107,7 +107,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(LucideIcons.triangleAlert, size: 40, color: AppColors.danger),
+        const Icon(LucideIcons.triangleAlert, size: 40, color: AppColors.danger),
         const SizedBox(height: 16),
         Text(
           context.t('reset.invalidTitle'),

@@ -140,7 +140,7 @@ class CommentBubbleRow extends StatelessWidget {
       spacing: 7,
       children: [
         if (pinned)
-          Icon(LucideIcons.pin, size: 12, color: AppColors.accentStrong),
+          const Icon(LucideIcons.pin, size: 12, color: AppColors.accentStrong),
         Text(
           name,
           style: TextStyle(
@@ -590,7 +590,7 @@ class _ThreadControl extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 label,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                   color: AppColors.accentStrong,

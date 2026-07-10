@@ -661,9 +661,9 @@ class _AccountScreenState extends State<AccountScreen> {
       borderRadius: BorderRadius.circular(AppTheme.radiusCard),
       child: Stack(
         children: [
-          Positioned.fill(
+          const Positioned.fill(
             child: DecoratedBox(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -680,7 +680,7 @@ class _AccountScreenState extends State<AccountScreen> {
           const Positioned.fill(
             child: HoneycombBackground(opacity: 0.06, color: Colors.white),
           ),
-          Positioned(
+          const Positioned(
             right: -10,
             top: -10,
             child: Opacity(
@@ -1047,7 +1047,7 @@ class _AccountScreenState extends State<AccountScreen> {
             IconButton(
               tooltip: context.t('account.sessions.signOut'),
               visualDensity: VisualDensity.compact,
-              icon: Icon(LucideIcons.logOut, size: 17, color: AppColors.danger),
+              icon: const Icon(LucideIcons.logOut, size: 17, color: AppColors.danger),
               onPressed: () => _revokeSession(s),
             ),
           ],

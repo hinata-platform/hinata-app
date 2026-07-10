@@ -109,11 +109,11 @@ class _ProjectsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(14, 16, 14, 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           Expanded(
             child: _KanbanColumn(
               head: 'Backlog',
@@ -336,8 +336,8 @@ class _SprintCard extends StatelessWidget {
           const SizedBox(height: 10),
           Container(height: 1, color: _white(0.06)),
           const SizedBox(height: 10),
-          Row(
-            children: const [
+          const Row(
+            children: [
               _SprintStat(value: '13', label: 'Completed'),
               SizedBox(width: 14),
               _SprintStat(value: '7', label: 'Open'),

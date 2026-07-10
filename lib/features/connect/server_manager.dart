@@ -561,7 +561,7 @@ class _AddServerButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(LucideIcons.plus, size: 19, color: AppColors.accentStrong),
+              const Icon(LucideIcons.plus, size: 19, color: AppColors.accentStrong),
               const SizedBox(width: 9),
               Text(
                 context.t('server.addServer'),
@@ -725,7 +725,7 @@ class _AddServerPageState extends State<_AddServerPage> {
                 enabled: _phase != _Phase.testing,
                 keyboardType: TextInputType.url,
                 autofillHints: const [AutofillHints.url],
-                style: TextStyle(fontFamily: AppTheme.fontMono, fontSize: 14),
+                style: const TextStyle(fontFamily: AppTheme.fontMono, fontSize: 14),
                 decoration: glassInputDecoration(hint: 'server.hinata.com')
                     .copyWith(
                       prefixIcon: const Icon(LucideIcons.server, size: 18),
@@ -811,7 +811,7 @@ class _AddServerPageState extends State<_AddServerPage> {
                     ),
                   ),
                   const Spacer(),
-                  Icon(
+                  const Icon(
                     LucideIcons.zap,
                     size: 13,
                     color: AppColors.accentStrong,

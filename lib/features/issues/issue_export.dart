@@ -232,7 +232,7 @@ pw.Widget _header(IssueExportData data, String generated, pw.Widget? logo) {
                     pw.SizedBox(width: 9),
                     pw.Text(
                       'hinata',
-                      style: pw.TextStyle(
+                      style: const pw.TextStyle(
                         color: PdfColors.white,
                         fontSize: 19,
                         fontWeight: pw.FontWeight.bold,
@@ -243,7 +243,7 @@ pw.Widget _header(IssueExportData data, String generated, pw.Widget? logo) {
               pw.SizedBox(height: 10),
               pw.Text(
                 'Issues report',
-                style: pw.TextStyle(
+                style: const pw.TextStyle(
                   color: PdfColors.white,
                   fontSize: 22,
                   fontWeight: pw.FontWeight.bold,
@@ -290,9 +290,9 @@ pw.Widget _filterChips(IssueExportData data) {
       for (final f in data.filterSummary)
         pw.Container(
           padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: pw.BoxDecoration(
+          decoration: const pw.BoxDecoration(
             color: _canvas2,
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(20)),
+            borderRadius: pw.BorderRadius.all(pw.Radius.circular(20)),
           ),
           child: pw.Text(
             f,
@@ -312,7 +312,7 @@ List<pw.Widget> _groupBlock(IssueExportData data, IssueExportGroup group) {
           children: [
             pw.Text(
               group.title,
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                 fontSize: 13,
                 fontWeight: pw.FontWeight.bold,
                 color: _ink,
@@ -363,9 +363,9 @@ pw.Widget _table(List<IssueExportRow> rows) {
 
   return pw.Table(
     columnWidths: widths,
-    border: pw.TableBorder(
-      bottom: const pw.BorderSide(color: _hairline, width: 0.6),
-      horizontalInside: const pw.BorderSide(color: _hairline, width: 0.6),
+    border: const pw.TableBorder(
+      bottom: pw.BorderSide(color: _hairline, width: 0.6),
+      horizontalInside: pw.BorderSide(color: _hairline, width: 0.6),
     ),
     children: [
       pw.TableRow(

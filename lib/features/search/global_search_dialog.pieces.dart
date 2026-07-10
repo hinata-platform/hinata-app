@@ -146,7 +146,7 @@ class _EscPill extends StatelessWidget {
       return Tooltip(
         message: 'esc',
         child: IconButton(
-          icon: Icon(LucideIcons.x),
+          icon: const Icon(LucideIcons.x),
           color: tokens.inkSoft,
           onPressed: onTap,
           style: ButtonStyle(
@@ -285,7 +285,7 @@ class _EmptyDeep extends StatelessWidget {
           Opacity(
             opacity: 0.5,
             child: icon == null
-                ? HexMark(size: 40, color: AppColors.accent)
+                ? const HexMark(size: 40, color: AppColors.accent)
                 : Icon(icon, size: 30, color: tokens.inkFaint),
           ),
           const SizedBox(height: 12),
