@@ -158,7 +158,7 @@ class _AdminScreenState extends State<AdminScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(failure.message)));
+        ).showSnackBar(SnackBar(content: Text(context.t(failure.message))));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

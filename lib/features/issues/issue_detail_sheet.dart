@@ -1391,9 +1391,13 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   void _toast(String message) {
     if (!mounted) return;
+    // Resolve through i18n: a backend `ApiFailure.message` is already-localized
+    // text (returned unchanged by `t`), while a frontend fallback key like
+    // `errors.unexpected`/`errors.connection` gets localized here instead of
+    // leaking the raw key into the snackbar.
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ).showSnackBar(SnackBar(content: Text(context.t(message))));
   }
 
   // ── inline editing + actions (driven by the top-bar / double-tap) ─────────

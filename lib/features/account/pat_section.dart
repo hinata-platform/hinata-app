@@ -71,7 +71,7 @@ class _PatSectionState extends State<PatSection> {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(SnackBar(content: Text(context.t(message))));
   }
 
   Future<void> _create() async {

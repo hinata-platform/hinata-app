@@ -497,7 +497,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(failure.message)));
+        ).showSnackBar(SnackBar(content: Text(context.t(failure.message))));
       }
     }
   }

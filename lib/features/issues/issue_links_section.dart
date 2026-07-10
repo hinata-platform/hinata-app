@@ -181,7 +181,9 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
 
   void _toast(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.t(message))));
   }
 
   /// Links already present, so the picker can hint they're connected and the
