@@ -8,7 +8,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/issue_repository.dart';
 import '../../core/api/sse.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
@@ -61,7 +61,7 @@ class IssueLinksSection extends StatefulWidget {
 }
 
 class _IssueLinksSectionState extends State<IssueLinksSection> {
-  HinataRepository get _repo => context.read<HinataRepository>();
+  IssueRepository get _repo => context.read<IssueRepository>();
 
   List<IssueLink> _links = const [];
   bool _loading = true;
@@ -495,7 +495,7 @@ class _LinkEditor extends StatefulWidget {
 }
 
 class _LinkEditorState extends State<_LinkEditor> {
-  HinataRepository get _repo => context.read<HinataRepository>();
+  IssueRepository get _repo => context.read<IssueRepository>();
 
   IssueLinkOption _option = kIssueLinkOptions.first;
   final List<Issue> _selected = [];

@@ -16,6 +16,7 @@ import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/hinata_repository.dart';
 import '../../core/api/sse.dart';
+import '../../core/repositories/media_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';

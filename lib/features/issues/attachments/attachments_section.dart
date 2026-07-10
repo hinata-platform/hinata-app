@@ -13,7 +13,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/util/file_download.dart';
 import '../../../core/widgets/app_avatar.dart';
-import '../../../core/api/hinata_repository.dart';
+import '../../../core/repositories/issue_repository.dart';
 import '../../../core/api/sse.dart';
 import '../../../core/blocs/app_config_bloc.dart';
 import '../../../core/i18n/i18n.dart';
@@ -81,7 +81,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
   Timer? _reconnect;
   int _reconnectAttempts = 0;
 
-  HinataRepository get _repo => context.read<HinataRepository>();
+  IssueRepository get _repo => context.read<IssueRepository>();
 
   UploadLimits get _limits {
     try {

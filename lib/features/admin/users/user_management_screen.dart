@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/api/api_client.dart';
-import '../../../core/api/hinata_repository.dart';
+import '../../../core/repositories/admin_repository.dart';
 import '../../../core/blocs/auth_bloc.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/admin_user_models.dart';
@@ -54,7 +54,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   /// keep re-opening it.
   bool _focusHandled = false;
 
-  HinataRepository get _repo => context.read<HinataRepository>();
+  AdminRepository get _repo => context.read<AdminRepository>();
   String? get _currentUserId => context.read<AuthBloc>().state.user?.id;
 
   @override

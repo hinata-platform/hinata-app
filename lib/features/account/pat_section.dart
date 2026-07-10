@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/account_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/personal_access_token.dart';
 import '../../core/theme/app_colors.dart';
@@ -36,7 +36,7 @@ class PatSection extends StatefulWidget {
 }
 
 class _PatSectionState extends State<PatSection> {
-  HinataRepository get _repo => context.read<HinataRepository>();
+  AccountRepository get _repo => context.read<AccountRepository>();
 
   List<PersonalAccessToken>? _tokens;
   bool _loading = true;
@@ -319,7 +319,7 @@ class _ScopeChip extends StatelessWidget {
 
 /// Opens the "Create token" glass sheet. Resolves to the freshly-minted
 /// [CreatedPat] (with its one-time plaintext) or null if dismissed.
-Future<CreatedPat?> showCreatePat(BuildContext context, HinataRepository repo) {
+Future<CreatedPat?> showCreatePat(BuildContext context, AccountRepository repo) {
   return showGlassModal<CreatedPat>(
     context,
     width: 480,
@@ -334,7 +334,7 @@ const List<int> _kExpiryDays = [30, 90, 365, 0];
 class _CreatePatModal extends StatefulWidget {
   const _CreatePatModal({required this.repo});
 
-  final HinataRepository repo;
+  final AccountRepository repo;
 
   @override
   State<_CreatePatModal> createState() => _CreatePatModalState();

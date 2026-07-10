@@ -4,7 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_client.dart';
-import '../../../core/api/hinata_repository.dart';
+import '../../../core/repositories/git_repository.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/git_dev_info.dart';
 import '../../../core/models/work_models.dart';
@@ -95,7 +95,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
   final _urlCtrl = TextEditingController();
   final _tokenCtrl = TextEditingController();
 
-  HinataRepository get _repoApi => context.read<HinataRepository>();
+  GitRepository get _repoApi => context.read<GitRepository>();
   String get _pid => widget.project.id;
 
   @override

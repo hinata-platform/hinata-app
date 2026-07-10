@@ -31,7 +31,7 @@ class _NotificationBellState extends State<_NotificationBell> {
   @override
   void initState() {
     super.initState();
-    _cubit = FetchCubit(() => context.read<HinataRepository>().notifications())
+    _cubit = FetchCubit(() => context.read<NotificationRepository>().notifications())
       ..load();
   }
 
@@ -61,7 +61,7 @@ class _NotificationBellState extends State<_NotificationBell> {
     final unread = items.where((n) => !n.read).map((n) => n.id).toList();
     if (unread.isEmpty) return;
     try {
-      await context.read<HinataRepository>().markNotificationsRead(unread);
+      await context.read<NotificationRepository>().markNotificationsRead(unread);
     } catch (_) {
       // Non-critical; the reload below reflects server truth.
     }
@@ -70,7 +70,7 @@ class _NotificationBellState extends State<_NotificationBell> {
 
   Future<void> _openNotification(AppNotification notification) async {
     _close();
-    final repository = context.read<HinataRepository>();
+    final repository = context.read<NotificationRepository>();
     if (!notification.read) {
       try {
         await repository.markNotificationRead(notification.id);

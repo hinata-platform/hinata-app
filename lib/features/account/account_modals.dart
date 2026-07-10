@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/account_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/account_models.dart';
 import '../../core/theme/app_colors.dart';
@@ -13,7 +13,7 @@ import '../sprint/modals/glass_modal.dart'
 import 'account_widgets.dart';
 
 /// Edit display name / job title / locale → PATCH /me. Returns the saved [Me].
-Future<Me?> showEditProfile(BuildContext context, HinataRepository repo, Me me) {
+Future<Me?> showEditProfile(BuildContext context, AccountRepository repo, Me me) {
   return showGlassModal<Me>(
     context,
     width: 480,
@@ -23,7 +23,7 @@ Future<Me?> showEditProfile(BuildContext context, HinataRepository repo, Me me) 
 
 class _EditProfileModal extends StatefulWidget {
   const _EditProfileModal({required this.repo, required this.me});
-  final HinataRepository repo;
+  final AccountRepository repo;
   final Me me;
 
   @override
@@ -179,7 +179,7 @@ class _LocaleDropdown extends StatelessWidget {
 
 /// Change email → POST /me/email-change (double opt-in). Returns true if sent.
 Future<bool?> showChangeEmail(
-    BuildContext context, HinataRepository repo, Me me) {
+    BuildContext context, AccountRepository repo, Me me) {
   return showGlassModal<bool>(
     context,
     width: 460,
@@ -189,7 +189,7 @@ Future<bool?> showChangeEmail(
 
 class _ChangeEmailModal extends StatefulWidget {
   const _ChangeEmailModal({required this.repo, required this.me});
-  final HinataRepository repo;
+  final AccountRepository repo;
   final Me me;
 
   @override
@@ -482,7 +482,7 @@ class _AvatarActionTile extends StatelessWidget {
 }
 
 /// Type-DELETE-to-confirm account erasure (Art. 17). Returns true on success.
-Future<bool?> showDeleteAccount(BuildContext context, HinataRepository repo) {
+Future<bool?> showDeleteAccount(BuildContext context, AccountRepository repo) {
   return showGlassModal<bool>(
     context,
     width: 460,
@@ -492,7 +492,7 @@ Future<bool?> showDeleteAccount(BuildContext context, HinataRepository repo) {
 
 class _DeleteAccountModal extends StatefulWidget {
   const _DeleteAccountModal({required this.repo});
-  final HinataRepository repo;
+  final AccountRepository repo;
 
   @override
   State<_DeleteAccountModal> createState() => _DeleteAccountModalState();

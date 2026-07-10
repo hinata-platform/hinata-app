@@ -3,7 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/team_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
 import '../../core/models/team_models.dart';
@@ -21,7 +21,7 @@ Future<bool?> showAddProjectModal(
   required List<DirectoryUser> leadCandidates,
   required String currentUserId,
 }) {
-  final repo = context.read<HinataRepository>();
+  final repo = context.read<TeamRepository>();
   return showTeamModal<bool>(
     context,
     _AddProjectBody(
@@ -43,7 +43,7 @@ class _AddProjectBody extends StatefulWidget {
     required this.currentUserId,
   });
 
-  final HinataRepository repo;
+  final TeamRepository repo;
   final Team team;
   final List<Project> available;
   final List<DirectoryUser> leadCandidates;

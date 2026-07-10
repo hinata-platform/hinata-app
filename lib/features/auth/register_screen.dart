@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/auth_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
@@ -53,7 +53,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _error = null;
     });
     try {
-      await context.read<HinataRepository>().register(
+      await context.read<AuthRepository>().register(
             email: _email.text.trim(),
             username: _username.text.trim(),
             displayName: _displayName.text.trim(),
@@ -76,7 +76,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _resend() async {
     setState(() => _resending = true);
     try {
-      await context.read<HinataRepository>().resendVerification(_email.text.trim());
+      await context.read<AuthRepository>().resendVerification(_email.text.trim());
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.t('register.resent'))),

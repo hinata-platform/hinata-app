@@ -3,7 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/board_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
@@ -64,7 +64,7 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
       _error = null;
     });
     try {
-      final board = await context.read<HinataRepository>().createBoard(
+      final board = await context.read<BoardRepository>().createBoard(
         _name.text.trim(),
         [_projectId],
         type: _type,

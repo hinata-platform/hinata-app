@@ -4,7 +4,7 @@ import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/meta_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
@@ -141,7 +141,7 @@ class _SetupScreenState extends State<SetupScreen> {
       _error = null;
     });
     try {
-      await context.read<HinataRepository>().completeSetup(
+      await context.read<MetaRepository>().completeSetup(
             organizationName: _organization.text.trim(),
             adminEmail: _email.text.trim(),
             adminUsername: _username.text.trim(),

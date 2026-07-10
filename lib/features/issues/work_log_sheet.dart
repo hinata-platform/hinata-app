@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/issue_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../sprint/modals/glass_modal.dart'
@@ -13,7 +13,7 @@ import '../sprint/modals/glass_modal.dart'
 
 /// Log work on an issue (YouTrack work item): duration, activity, note.
 Future<bool?> showWorkLogSheet(BuildContext context, String issueId) {
-  final repository = context.read<HinataRepository>();
+  final repository = context.read<IssueRepository>();
   return WoltModalSheet.show<bool?>(
     context: context,
     pageContentDecorator: glassWoltSurface,
@@ -194,7 +194,7 @@ class _WorkLogBodyState extends State<_WorkLogBody> {
       _error = null;
     });
     try {
-      await context.read<HinataRepository>().addWorkItem(
+      await context.read<IssueRepository>().addWorkItem(
         widget.issueId,
         minutes: total,
         activityType: _activity,

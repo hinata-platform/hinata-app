@@ -9,7 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/account_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/locale_cubit.dart';
@@ -87,7 +87,7 @@ const _notifEvents = <({String id, IconData icon, bool locked})>[
 ];
 
 class _AccountScreenState extends State<AccountScreen> {
-  HinataRepository get _repo => context.read<HinataRepository>();
+  AccountRepository get _repo => context.read<AccountRepository>();
 
   /// Whether the embedded MCP server surface (Personal Access Tokens) is exposed
   /// — driven by the server's `mcp` feature flag.

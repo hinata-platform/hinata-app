@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/admin_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
@@ -132,7 +132,7 @@ class _AdminScreenState extends State<AdminScreen> {
       _error = null;
     });
     try {
-      _settings = await context.read<HinataRepository>().adminSettings();
+      _settings = await context.read<AdminRepository>().adminSettings();
       setState(() => _loading = false);
     } on ApiFailure catch (failure) {
       setState(() {
@@ -146,7 +146,7 @@ class _AdminScreenState extends State<AdminScreen> {
     if (_settings == null) return;
     setState(() => _saving = true);
     try {
-      _settings = await context.read<HinataRepository>().updateAdminSettings(
+      _settings = await context.read<AdminRepository>().updateAdminSettings(
         _settings!,
       );
       if (mounted) {

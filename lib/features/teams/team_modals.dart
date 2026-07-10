@@ -3,7 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/team_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/team_models.dart';
 import '../../core/theme/app_colors.dart';
@@ -17,13 +17,13 @@ export 'team_project_modal.dart';
 
 /// Create-team modal. Returns the created [Team] (so the caller can open it).
 Future<Team?> showCreateTeamModal(BuildContext context) {
-  final repo = context.read<HinataRepository>();
+  final repo = context.read<TeamRepository>();
   return showTeamModal<Team>(context, _TeamFormBody(repo: repo), width: 580);
 }
 
 /// Edit-team modal. Returns true if the team was saved.
 Future<bool?> showEditTeamModal(BuildContext context, Team team) {
-  final repo = context.read<HinataRepository>();
+  final repo = context.read<TeamRepository>();
   return showTeamModal<bool>(
     context,
     _TeamFormBody(repo: repo, existing: team),
@@ -40,7 +40,7 @@ Future<bool?> showDeleteTeamModal(BuildContext context, Team team) {
 class _TeamFormBody extends StatefulWidget {
   const _TeamFormBody({required this.repo, this.existing});
 
-  final HinataRepository repo;
+  final TeamRepository repo;
   final Team? existing;
 
   @override

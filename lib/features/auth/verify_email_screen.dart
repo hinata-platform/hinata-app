@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/auth_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
@@ -55,7 +55,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     }
     try {
       final result =
-          await context.read<HinataRepository>().verifyEmail(widget.token);
+          await context.read<AuthRepository>().verifyEmail(widget.token);
       if (!mounted) return;
       if (result.pendingApproval || result.access == null || result.refresh == null) {
         setState(() => _phase = _Phase.pending);

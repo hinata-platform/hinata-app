@@ -4,7 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_client.dart';
-import '../../../core/api/hinata_repository.dart';
+import '../../../core/repositories/git_repository.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/git_connection.dart';
 import '../../../core/models/git_dev_info.dart';
@@ -45,7 +45,7 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
   bool _busy = false;
   String? _openKey;
 
-  HinataRepository get _repo => context.read<HinataRepository>();
+  GitRepository get _repo => context.read<GitRepository>();
   GitProvider get _prov =>
       gitProviderFrom(widget.project.git?.provider) ?? GitProvider.github;
 

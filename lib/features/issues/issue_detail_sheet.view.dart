@@ -1013,7 +1013,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   /// Copies a comment's text (or its inline image as real image data).
   Future<void> _copyComment(IssueComment comment) async {
-    final kind = await copyComment(_repo, comment);
+    final kind = await copyComment(context.read<MediaRepository>(), comment);
     if (!mounted) return;
     _toast(
       kind == CommentCopyKind.image

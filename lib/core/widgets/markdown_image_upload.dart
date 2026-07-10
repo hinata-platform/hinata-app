@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../api/api_client.dart';
-import '../api/hinata_repository.dart';
+import '../repositories/media_repository.dart';
 import '../i18n/i18n.dart';
 import 'markdown_toolbar.dart';
 
@@ -21,7 +21,7 @@ Future<void> pickAndInsertMarkdownImage(
   MarkdownEditingActions actions,
 ) async {
   final messenger = ScaffoldMessenger.of(context);
-  final repo = context.read<HinataRepository>();
+  final repo = context.read<MediaRepository>();
 
   FilePickerResult? picked;
   try {

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/api/api_client.dart';
-import '../../../core/api/hinata_repository.dart';
+import '../../../core/repositories/git_repository.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/git_connection.dart';
 import '../../../core/models/git_dev_info.dart';
@@ -44,7 +44,7 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
   bool _gear = false;
   String? _templateOverride;
 
-  HinataRepository get _repo => context.read<HinataRepository>();
+  GitRepository get _repo => context.read<GitRepository>();
   GitConnection? get _git => widget.project.git;
   GitProvider? get _provider => gitProviderFrom(_git?.provider);
 

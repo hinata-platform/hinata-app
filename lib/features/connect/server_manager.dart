@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../core/api/hinata_repository.dart';
+import '../../core/repositories/meta_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
@@ -38,7 +38,7 @@ Future<void> showServerManager(
   Rect? anchor,
 }) {
   Widget builder(BuildContext _) => _ServerManagerSheet(
-    repo: context.read<HinataRepository>(),
+    repo: context.read<MetaRepository>(),
     storage: context.read<AppStorage>(),
     appConfig: context.read<AppConfigBloc>(),
     startOnAdd: startOnAdd,
@@ -89,7 +89,7 @@ class _ServerManagerSheet extends StatefulWidget {
     required this.startOnAdd,
   });
 
-  final HinataRepository repo;
+  final MetaRepository repo;
   final AppStorage storage;
   final AppConfigBloc appConfig;
   final bool startOnAdd;
@@ -590,7 +590,7 @@ class _AddServerPage extends StatefulWidget {
     required this.onSave,
   });
 
-  final HinataRepository repo;
+  final MetaRepository repo;
   final VoidCallback onBack;
   final Future<void> Function(String url, String name) onSave;
 
