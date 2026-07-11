@@ -10,6 +10,8 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/widgets/markdown_toolbar.dart';
 import '../../../core/repositories/issue_repository.dart';
 import '../../../core/repositories/media_repository.dart';
+import '../../sprint/modals/glass_modal.dart'
+    show GlassToastKind, showGlassErrorToast, showGlassToast;
 
 /// Composer "+" actions. Camera & gallery insert an inline Markdown image into
 /// the comment (the comment body is Markdown, exactly like the issue/KB
@@ -24,7 +26,6 @@ Future<void> insertCommentPhoto(
   MarkdownEditingActions actions,
   ImageSource source,
 ) async {
-  final messenger = ScaffoldMessenger.of(context);
   final mediaApi = context.read<MediaRepository>();
 
   XFile? shot;
@@ -50,10 +51,12 @@ Future<void> insertCommentPhoto(
     actions.completeImageUpload(token, url, name);
   } on ApiFailure catch (e) {
     actions.failImageUpload(token);
-    if (context.mounted) _toast(messenger, context.t(e.message));
+    if (context.mounted) showGlassErrorToast(context, context.t(e.message));
   } catch (_) {
     actions.failImageUpload(token);
-    if (context.mounted) _toast(messenger, context.t('errors.unexpected'));
+    if (context.mounted) {
+      showGlassErrorToast(context, context.t('errors.unexpected'));
+    }
   }
 }
 
@@ -64,7 +67,6 @@ Future<void> attachFileToIssue(
   String issueId, {
   VoidCallback? onChanged,
 }) async {
-  final messenger = ScaffoldMessenger.of(context);
   final issueApi = context.read<IssueRepository>();
 
   FilePickerResult? picked;
@@ -86,20 +88,24 @@ Future<void> attachFileToIssue(
     return;
   }
 
-  _toast(messenger, context.mounted ? context.t('comments.attaching') : '…');
+  if (context.mounted) {
+    showGlassToast(context, context.t('comments.attaching'));
+  }
   try {
     await issueApi.uploadAttachment(issueId, multipart);
     onChanged?.call();
-    if (context.mounted) _toast(messenger, context.t('comments.attached'));
+    if (context.mounted) {
+      showGlassToast(
+        context,
+        context.t('comments.attached'),
+        kind: GlassToastKind.success,
+      );
+    }
   } on ApiFailure catch (e) {
-    if (context.mounted) _toast(messenger, context.t(e.message));
+    if (context.mounted) showGlassErrorToast(context, context.t(e.message));
   } catch (_) {
-    if (context.mounted) _toast(messenger, context.t('errors.unexpected'));
+    if (context.mounted) {
+      showGlassErrorToast(context, context.t('errors.unexpected'));
+    }
   }
-}
-
-void _toast(ScaffoldMessengerState messenger, String message) {
-  messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(message)));
 }

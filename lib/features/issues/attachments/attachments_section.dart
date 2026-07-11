@@ -21,7 +21,8 @@ import '../../../core/models/core_models.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../sprint/modals/glass_modal.dart' show showGlassConfirm;
+import '../../sprint/modals/glass_modal.dart'
+    show GlassToastKind, showGlassConfirm, showGlassToast;
 import 'attachment_kind.dart';
 import 'attachment_lightbox.dart';
 import 'upload_source_sheet.dart';
@@ -314,6 +315,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
       if (isBlockedFileName(f.name)) {
         _toast(
           context.t('issues.attachments.blocked', variables: {'name': f.name}),
+          kind: GlassToastKind.warning,
         );
         continue;
       }
@@ -323,6 +325,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
             'issues.attachments.tooLarge',
             variables: {'name': f.name, 'size': limits.maxFileMb},
           ),
+          kind: GlassToastKind.warning,
         );
         continue;
       }
@@ -335,6 +338,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
           'issues.attachments.tooManyFiles',
           variables: {'count': limits.maxFiles},
         ),
+        kind: GlassToastKind.warning,
       );
       accepted.removeRange(limits.maxFiles, accepted.length);
     }
@@ -345,6 +349,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
           'issues.attachments.batchTooLarge',
           variables: {'size': limits.maxRequestMb},
         ),
+        kind: GlassToastKind.warning,
       );
       return;
     }
@@ -374,7 +379,12 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
       widget.onChanged?.call();
       // Confirm success — the new tile may be off-screen (e.g. when uploaded
       // from the comment composer's "+"), so close the loop with a toast.
-      if (mounted) _toast(context.t('issues.attachments.uploaded'));
+      if (mounted) {
+        _toast(
+          context.t('issues.attachments.uploaded'),
+          kind: GlassToastKind.success,
+        );
+      }
     } on ApiFailure catch (e) {
       if (_disposed) return;
       setState(() => u.failed = true);
@@ -443,7 +453,10 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
       if (!mounted) return;
       switch (outcome) {
         case DownloadOutcome.browser:
-          _toast(context.t('issues.attachments.downloadStarted'));
+          _toast(
+            context.t('issues.attachments.downloadStarted'),
+            kind: GlassToastKind.info,
+          );
         case DownloadOutcome.failed:
           _toast(context.t('errors.unexpected'));
         // Native: the OS share sheet is the feedback — no toast (and none on a
@@ -543,11 +556,9 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
     return parts.join(' · ');
   }
 
-  void _toast(String message) {
+  void _toast(String message, {GlassToastKind kind = GlassToastKind.error}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    showGlassToast(context, message, kind: kind);
   }
 
   // ── Build ───────────────────────────────────────────────────────────────

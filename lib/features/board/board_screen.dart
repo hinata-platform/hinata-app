@@ -26,6 +26,8 @@ import '../issues/issue_detail_sheet.dart';
 import '../issues/issue_form.dart';
 import '../issues/issues_screen.dart' show IssueRow;
 import '../shell/page_chrome.dart';
+import '../sprint/modals/glass_modal.dart'
+    show GlassToastKind, showGlassErrorToast, showGlassToast;
 import '../sprint/sprint_board_view.dart';
 import 'board_filter.dart';
 import 'board_manage_menu.dart';
@@ -111,9 +113,11 @@ class _BoardScreenState extends State<BoardScreen> {
 
   Future<void> _showCreate() async {
     if (_projects.isEmpty) {
-      ScaffoldMessenger.of(
+      showGlassToast(
         context,
-      ).showSnackBar(SnackBar(content: Text(context.t('board.needsProject'))));
+        context.t('board.needsProject'),
+        kind: GlassToastKind.warning,
+      );
       return;
     }
     final created = await showCreateBoardDialog(
@@ -499,9 +503,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       await _load();
     } on ApiFailure catch (failure) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(context.t(failure.message))));
+        showGlassErrorToast(context, context.t(failure.message));
       }
     }
   }

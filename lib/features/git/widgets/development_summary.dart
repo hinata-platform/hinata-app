@@ -11,6 +11,8 @@ import '../../../core/models/git_dev_info.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../sprint/modals/glass_modal.dart'
+    show GlassToastKind, showGlassToast;
 import '../git_tokens.dart';
 import 'dev_rows.dart';
 
@@ -128,17 +130,8 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
     if (!ok && mounted) _toast(context.t('git.couldNotOpen', variables: {'url': url}));
   }
 
-  void _toast(String message) {
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.navy,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+  void _toast(String message, {GlassToastKind kind = GlassToastKind.error}) {
+    showGlassToast(context, message, kind: kind);
   }
 
   String _message(Object e) =>
@@ -181,11 +174,14 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
         _busy = false;
       });
       widget.onIssueChanged(result.issue);
-      _toast(context.t(toastKey, variables: {
-        'pr': _prov.prShort,
-        'issue': widget.issue.readableId,
-        'note': note,
-      }));
+      _toast(
+        context.t(toastKey, variables: {
+          'pr': _prov.prShort,
+          'issue': widget.issue.readableId,
+          'note': note,
+        }),
+        kind: GlassToastKind.success,
+      );
     } catch (e) {
       if (mounted) {
         setState(() {

@@ -52,8 +52,11 @@ import '../knowledge/markdown/smart_link_resolver.dart';
 import '../sprint/modals/estimate_dialog.dart' show showStoryPointsDialog;
 import '../sprint/modals/glass_modal.dart'
     show
+        GlassToastKind,
         glassWoltSurface,
         kGlassPopoverBreakpoint,
+        showGlassErrorToast,
+        showGlassToast,
         showGlassAnchoredPopover,
         showGlassBottomSheet,
         showGlassDatePicker,

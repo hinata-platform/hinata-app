@@ -13,7 +13,7 @@ import '../../core/widgets/hive_widgets.dart';
 import '../issues/issue_detail_sheet.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart'
-    show showGlassBottomSheet, showGlassConfirm;
+    show GlassToastKind, showGlassBottomSheet, showGlassConfirm, showGlassToast;
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
 import 'knowledge_editor.dart';
@@ -151,12 +151,12 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
           .firstOrNull;
       if (!mounted) return;
       if (match == null) {
-        _toast('Issue $readableId not found');
+        _toast('Issue $readableId not found', kind: GlassToastKind.error);
         return;
       }
       await showIssueDetailSheet(context, issueId: match.id);
     } on ApiFailure catch (failure) {
-      if (mounted) _toast(failure.message);
+      if (mounted) _toast(failure.message, kind: GlassToastKind.error);
     }
   }
 
@@ -185,7 +185,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
       await _repo.moveArticle(id, parentId: parentId, spaceId: spaceId);
       if (mounted) setState(() => _spaceId = spaceId);
     } on ApiFailure catch (failure) {
-      if (mounted) _toast(failure.message);
+      if (mounted) _toast(failure.message, kind: GlassToastKind.error);
     }
   }
 
@@ -218,9 +218,9 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
           _mode = _Mode.home;
         }
       });
-      _toast(context.t('knowledge.deleted'));
+      _toast(context.t('knowledge.deleted'), kind: GlassToastKind.success);
     } on ApiFailure catch (failure) {
-      if (mounted) _toast(failure.message);
+      if (mounted) _toast(failure.message, kind: GlassToastKind.error);
     }
   }
 
@@ -252,7 +252,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
     );
     if (created != null && mounted) {
       setState(() {});
-      _toast(context.t('knowledge.spaceCreated'));
+      _toast(context.t('knowledge.spaceCreated'), kind: GlassToastKind.success);
     }
   }
 
@@ -274,9 +274,9 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
       await _repo.deleteSpace(id);
       if (!mounted) return;
       setState(() {});
-      _toast(context.t('knowledge.spaceDeleted'));
+      _toast(context.t('knowledge.spaceDeleted'), kind: GlassToastKind.success);
     } on ApiFailure catch (failure) {
-      if (mounted) _toast(failure.message);
+      if (mounted) _toast(failure.message, kind: GlassToastKind.error);
     }
   }
 
@@ -300,7 +300,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
           _spaceId = a.spaceId;
           _mode = _Mode.article;
         });
-        _toast(context.t('knowledge.published'));
+        _toast(context.t('knowledge.published'), kind: GlassToastKind.success);
       } else if (_current != null) {
         await _repo.saveEdit(
           _current!.id,
@@ -310,16 +310,15 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
         );
         if (!mounted) return;
         setState(() => _mode = _Mode.article);
-        _toast(context.t('knowledge.saved'));
+        _toast(context.t('knowledge.saved'), kind: GlassToastKind.success);
       }
     } on ApiFailure catch (failure) {
-      if (mounted) _toast(failure.message);
+      if (mounted) _toast(failure.message, kind: GlassToastKind.error);
     }
   }
 
-  void _toast(String msg) => ScaffoldMessenger.of(
-    context,
-  ).showSnackBar(SnackBar(content: Text(context.t(msg))));
+  void _toast(String msg, {GlassToastKind kind = GlassToastKind.info}) =>
+      showGlassToast(context, context.t(msg), kind: kind);
 
   void _openTreeDrawer() {
     showGlassBottomSheet<void>(

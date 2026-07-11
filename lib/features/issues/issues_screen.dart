@@ -29,6 +29,8 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/status_widgets.dart';
+import '../sprint/modals/glass_modal.dart'
+    show GlassToastKind, showGlassToast;
 import '../reports/logo_raster.dart';
 import '../shell/page_chrome.dart';
 import 'issue_detail_sheet.dart';
@@ -416,7 +418,12 @@ class _IssuesScreenState extends State<IssuesScreen> {
           archived: _filter.archivedOnly,
         );
       } catch (_) {
-        if (mounted) _toast(context.t('reports.exportFailed'));
+        if (mounted) {
+          _toast(
+            context.t('reports.exportFailed'),
+            kind: GlassToastKind.error,
+          );
+        }
         return;
       }
       if (!mounted) return;
@@ -446,7 +453,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
         try {
           await shareIssuesPdf(_buildExportData(ref, all, meta, logoPng));
         } catch (_) {
-          _toast(failMsg);
+          _toast(failMsg, kind: GlassToastKind.error);
         }
         return;
       }
@@ -468,10 +475,10 @@ class _IssuesScreenState extends State<IssuesScreen> {
           'data:$mime;charset=utf-8,${Uri.encodeComponent(content)}',
         );
         await launchUrl(uri, webOnlyWindowName: '_blank');
-        _toast(exportedMsg);
+        _toast(exportedMsg, kind: GlassToastKind.success);
       } else {
         await Clipboard.setData(ClipboardData(text: content));
-        _toast(copiedMsg);
+        _toast(copiedMsg, kind: GlassToastKind.success);
       }
     } finally {
       if (mounted) setState(() => _exporting = false);
@@ -608,11 +615,9 @@ class _IssuesScreenState extends State<IssuesScreen> {
     return out;
   }
 
-  void _toast(String message) {
+  void _toast(String message, {GlassToastKind kind = GlassToastKind.info}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.t(message))));
+    showGlassToast(context, context.t(message), kind: kind);
   }
 
   // ── build ─────────────────────────────────────────────────────────────

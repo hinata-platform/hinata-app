@@ -11,6 +11,8 @@ import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/soft_card.dart';
+import '../../sprint/modals/glass_modal.dart'
+    show GlassToastKind, showGlassToast;
 import 'copy_field.dart';
 import 'dev_rows.dart';
 import 'provider_glyph.dart';
@@ -77,17 +79,8 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
     return cleaned.split('-').where((w) => w.isNotEmpty).take(5).join('-');
   }
 
-  void _toast(String message) {
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.navy,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+  void _toast(String message, {GlassToastKind kind = GlassToastKind.success}) {
+    showGlassToast(context, message, kind: kind);
   }
 
   void _togglePop(String which) =>
@@ -101,7 +94,10 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _templateOverride = null);
-      _toast(e is ApiFailure ? e.message : context.t('git.templateSaveError'));
+      _toast(
+        e is ApiFailure ? e.message : context.t('git.templateSaveError'),
+        kind: GlassToastKind.error,
+      );
     }
   }
 

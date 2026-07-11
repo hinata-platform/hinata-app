@@ -152,8 +152,7 @@ class _IngestConnectionsCardState extends State<IngestConnectionsCard> {
   }
 
   void _showError(ApiFailure failure) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(context.t(failure.message))));
+    showGlassErrorToast(context, context.t(failure.message));
   }
 
   @override

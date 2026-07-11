@@ -9,7 +9,8 @@ import '../sprint/modals/glass_modal.dart'
         kGlassPopoverBreakpoint,
         showGlassAnchoredPopover,
         showGlassBottomSheet,
-        showGlassConfirm;
+        showGlassConfirm,
+        showGlassErrorToast;
 
 /// Multi-select label ("Stichwort") picker. On tablet/desktop it opens as an
 /// anchored popover beside the field (like the other detail pickers); on phone
@@ -135,9 +136,7 @@ class _LabelPickerSheetState extends State<_LabelPickerSheet> {
       });
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.t('errors.unexpected'))));
+      showGlassErrorToast(context, context.t('errors.unexpected'));
     }
   }
 

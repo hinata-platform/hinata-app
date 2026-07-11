@@ -19,6 +19,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/markdown_toolbar.dart';
 import '../../knowledge/markdown/markdown_renderer.dart';
 import '../../knowledge/markdown/mention_field.dart';
+import '../../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import 'voice/voice_recorder.dart';
 
 part 'glass_comment_composer.widgets.dart';
@@ -217,9 +218,7 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
     if (!ok) {
       await recorder.dispose();
       if (mounted) {
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(content: Text(context.t('comments.micDenied'))),
-        );
+        showGlassErrorToast(context, context.t('comments.micDenied'));
       }
       return;
     }

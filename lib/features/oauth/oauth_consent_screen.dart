@@ -16,6 +16,7 @@ import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/soft_card.dart';
+import '../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 
 /// The OAuth 2.1 consent screen an AI client (e.g. Claude) lands the user on
 /// when it starts an authorization flow against their Hinata instance.
@@ -113,18 +114,12 @@ class _OAuthConsentScreenState extends State<OAuthConsentScreen> {
     } on ApiFailure catch (f) {
       if (mounted) {
         setState(() => _deciding = false);
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(context.t(f.message))));
+        showGlassErrorToast(context, context.t(f.message));
       }
     } catch (_) {
       if (mounted) {
         setState(() => _deciding = false);
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(content: Text(context.t('errors.unexpected'))),
-          );
+        showGlassErrorToast(context, context.t('errors.unexpected'));
       }
     }
   }

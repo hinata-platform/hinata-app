@@ -26,6 +26,8 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveSwitch;
 import '../../core/widgets/honeycomb_background.dart';
 import '../connect/server_switcher.dart';
+import '../sprint/modals/glass_modal.dart'
+    show showGlassToast, GlassToastKind;
 import '../shell/page_chrome.dart';
 import 'account_modals.dart';
 import 'account_widgets.dart';
@@ -154,11 +156,10 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
-  void _toast(String message) {
+  void _toast(String message,
+      {GlassToastKind kind = GlassToastKind.success}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(context.t(message))));
+    showGlassToast(context, context.t(message), kind: kind);
   }
 
   // --- mutations ------------------------------------------------------------
@@ -223,7 +224,7 @@ class _AccountScreenState extends State<AccountScreen> {
       authBloc.add(const AuthChecked());
       _toast(updated);
     } catch (_) {
-      if (mounted) _toast(failed);
+      if (mounted) _toast(failed, kind: GlassToastKind.error);
     } finally {
       if (mounted) setState(() => _avatarBusy = false);
     }
@@ -241,7 +242,7 @@ class _AccountScreenState extends State<AccountScreen> {
       authBloc.add(const AuthChecked());
       _toast(removed);
     } catch (_) {
-      if (mounted) _toast(failed);
+      if (mounted) _toast(failed, kind: GlassToastKind.error);
     } finally {
       if (mounted) setState(() => _avatarBusy = false);
     }
@@ -371,7 +372,7 @@ class _AccountScreenState extends State<AccountScreen> {
         final saved = await _repo.saveNotificationPrefs(next);
         if (mounted) setState(() => _prefs = saved);
       } catch (_) {
-        if (mounted) _toast(failed);
+        if (mounted) _toast(failed, kind: GlassToastKind.error);
       }
     });
   }

@@ -15,6 +15,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/soft_card.dart';
 import '../account/twofa_modals.dart' show OtpInput;
 import '../connect/server_switcher.dart';
+import '../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -50,8 +51,9 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       final error = GoRouterState.of(context).uri.queryParameters['ssoError'];
       if (error != null && error.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${context.t('auth.ssoFailed')}: $error')),
+        showGlassErrorToast(
+          context,
+          '${context.t('auth.ssoFailed')}: $error',
         );
       }
     });
@@ -97,9 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: BlocConsumer<AuthBloc, AuthState>(
                 listener: (context, state) {
                   if (state.errorKey != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(context.t(state.errorKey!))),
-                    );
+                    showGlassErrorToast(context, context.t(state.errorKey!));
                   }
                 },
                 builder: (context, state) {

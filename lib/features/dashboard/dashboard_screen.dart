@@ -23,7 +23,13 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../issues/issue_detail_sheet.dart';
 import '../sprint/modals/glass_modal.dart'
-    show showGlassAnchoredPopover, GlassModalHeader, GlassModalFooter;
+    show
+        showGlassAnchoredPopover,
+        GlassModalHeader,
+        GlassModalFooter,
+        GlassToastKind,
+        showGlassErrorToast,
+        showGlassToast;
 import '../../core/repositories/dashboard_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
@@ -146,15 +152,15 @@ class _DashboardViewState extends State<_DashboardView> {
         _saving = false;
       });
       _cubit.load(); // reload with the persisted prefs (no override)
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(context.t('dashboard.saved'))));
+      showGlassToast(
+        context,
+        context.t('dashboard.saved'),
+        kind: GlassToastKind.success,
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(context.t('dashboard.saveError'))));
+      showGlassErrorToast(context, context.t('dashboard.saveError'));
     }
   }
 

@@ -7,6 +7,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../api/api_client.dart';
 import '../repositories/media_repository.dart';
 import '../i18n/i18n.dart';
+import '../../features/sprint/modals/glass_modal.dart'
+    show showGlassErrorToast;
 import 'markdown_toolbar.dart';
 
 /// Picks an image, uploads it as inline Markdown media and swaps the caret
@@ -20,7 +22,6 @@ Future<void> pickAndInsertMarkdownImage(
   BuildContext context,
   MarkdownEditingActions actions,
 ) async {
-  final messenger = ScaffoldMessenger.of(context);
   final repo = context.read<MediaRepository>();
 
   FilePickerResult? picked;
@@ -54,15 +55,11 @@ Future<void> pickAndInsertMarkdownImage(
     actions.completeImageUpload(token, url, name);
   } on ApiFailure catch (e) {
     actions.failImageUpload(token);
-    if (context.mounted) _toast(messenger, context.t(e.message));
+    if (context.mounted) showGlassErrorToast(context, context.t(e.message));
   } catch (_) {
     actions.failImageUpload(token);
-    if (context.mounted) _toast(messenger, context.t('errors.unexpected'));
+    if (context.mounted) {
+      showGlassErrorToast(context, context.t('errors.unexpected'));
+    }
   }
-}
-
-void _toast(ScaffoldMessengerState messenger, String message) {
-  messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(message)));
 }

@@ -8,6 +8,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
+import '../sprint/modals/glass_modal.dart'
+    show GlassToastKind, showGlassToast;
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -190,7 +192,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       try {
         await shareReportPdf(_buildPdfData(meta, logoPng));
       } catch (_) {
-        _toast(failMsg);
+        _toast(failMsg, kind: GlassToastKind.error);
       }
       return;
     }
@@ -206,10 +208,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
       final uri = Uri.parse(
           'data:$mime;charset=utf-8,${Uri.encodeComponent(content)}');
       await launchUrl(uri, webOnlyWindowName: '_blank');
-      _toast(exportedMsg);
+      _toast(exportedMsg, kind: GlassToastKind.success);
     } else {
       await Clipboard.setData(ClipboardData(text: content));
-      _toast(copiedMsg);
+      _toast(copiedMsg, kind: GlassToastKind.success);
     }
   }
 
@@ -269,10 +271,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  void _toast(String message) {
+  void _toast(String message, {GlassToastKind kind = GlassToastKind.info}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    showGlassToast(context, message, kind: kind);
   }
 
   // ── build ─────────────────────────────────────────────────────────────────

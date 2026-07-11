@@ -16,6 +16,8 @@ import '../../../core/widgets/glass_popup_menu.dart';
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../shell/page_chrome.dart';
+import '../../sprint/modals/glass_modal.dart'
+    show showGlassToast, GlassToastKind;
 import 'user_management_modals.dart';
 import 'user_management_widgets.dart';
 
@@ -131,14 +133,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   void _toast(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.t(msg))));
+    showGlassToast(context, context.t(msg), kind: GlassToastKind.success);
   }
 
-  void _toastRaw(String msg) {
+  void _toastRaw(String msg,
+      {GlassToastKind kind = GlassToastKind.error}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    showGlassToast(context, msg, kind: kind);
   }
 
   Future<void> _run(
@@ -268,7 +269,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         message: result.message,
       );
       if (!mounted) return;
-      _toastRaw(context.t('admin.um.toastInvited', variables: {'n': '$sent'}));
+      _toastRaw(
+        context.t('admin.um.toastInvited', variables: {'n': '$sent'}),
+        kind: GlassToastKind.success,
+      );
       setState(() {
         _statusF = UserStatus.invited;
         _roleF = null;

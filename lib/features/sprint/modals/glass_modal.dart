@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -749,42 +750,101 @@ class _GlassModalScaffold extends StatelessWidget {
   }
 }
 
-/// Shows a transient Liquid-Glass toast pill bottom-centre — inserted into the
-/// ROOT overlay, so it renders above every open glass modal/sheet and its
-/// blurred scrim (a Scaffold [SnackBar] would be buried underneath). Use this
-/// for notices raised from inside [showGlassModal]/[showGlassBottomSheet]
-/// content; auto-dismisses after [duration] and never intercepts taps.
+/// Semantic flavours for [showGlassToast]. Each kind carries its default
+/// Lucide glyph and tint; pass a custom [showGlassToast.icon] to override the
+/// glyph while keeping the kind's tint.
+enum GlassToastKind {
+  /// Neutral notice (default) — amber accent, info glyph.
+  info(LucideIcons.info, AppColors.accentStrong),
+
+  /// Positive confirmation ("saved", "copied", "sent").
+  success(LucideIcons.circleCheck, AppColors.success),
+
+  /// Recoverable problem or missing input the user should act on.
+  warning(LucideIcons.triangleAlert, AppColors.warning),
+
+  /// Failed operation (API errors, rejected uploads).
+  error(LucideIcons.circleAlert, AppColors.danger);
+
+  const GlassToastKind(this.icon, this.tint);
+
+  final IconData icon;
+  final Color tint;
+}
+
+/// The single live toast — showing a new one replaces it instead of stacking.
+OverlayEntry? _activeGlassToast;
+
+/// Shows a transient Liquid-Glass toast pill bottom-centre — the app-wide
+/// replacement for Material's [SnackBar]. Inserted into the ROOT overlay, so
+/// it renders above every open glass modal/sheet and its blurred scrim (a
+/// Scaffold [SnackBar] would be buried underneath) and rides above the
+/// on-screen keyboard.
+///
+/// [kind] picks the semantic glyph + tint ([GlassToastKind.info] by default);
+/// [icon] overrides the glyph only. [actionLabel]/[onAction] add a tappable
+/// action chip (e.g. "Undo", "Retry") — the toast then stays longer and
+/// accepts taps; without an action it never intercepts input. Errors and
+/// actionable toasts default to 5 s, everything else to 3.2 s; only one toast
+/// is visible at a time (a new one replaces the current).
 void showGlassToast(
   BuildContext context,
   String message, {
-  IconData icon = LucideIcons.info,
-  Duration duration = const Duration(milliseconds: 3200),
+  GlassToastKind kind = GlassToastKind.info,
+  IconData? icon,
+  Duration? duration,
+  String? actionLabel,
+  VoidCallback? onAction,
 }) {
   final overlay = Overlay.of(context, rootOverlay: true);
+  _activeGlassToast?.remove();
+  _activeGlassToast = null;
+  final hasAction = actionLabel != null && onAction != null;
+  final effectiveDuration = duration ??
+      (hasAction || kind == GlassToastKind.error
+          ? const Duration(milliseconds: 5000)
+          : const Duration(milliseconds: 3200));
   late final OverlayEntry entry;
   entry = OverlayEntry(
     builder: (_) => _GlassToast(
       message: message,
-      icon: icon,
-      duration: duration,
-      onDone: () => entry.remove(),
+      icon: icon ?? kind.icon,
+      tint: kind.tint,
+      duration: effectiveDuration,
+      actionLabel: hasAction ? actionLabel : null,
+      onAction: hasAction ? onAction : null,
+      onDone: () {
+        entry.remove();
+        if (identical(_activeGlassToast, entry)) _activeGlassToast = null;
+      },
     ),
   );
+  _activeGlassToast = entry;
   overlay.insert(entry);
 }
+
+/// Error-kind shorthand for the ubiquitous `context.t(failure.message)` case.
+void showGlassErrorToast(BuildContext context, String message) =>
+    showGlassToast(context, message, kind: GlassToastKind.error);
 
 class _GlassToast extends StatefulWidget {
   const _GlassToast({
     required this.message,
     required this.icon,
+    required this.tint,
     required this.duration,
     required this.onDone,
+    this.actionLabel,
+    this.onAction,
   });
 
   final String message;
   final IconData icon;
+  final Color tint;
   final Duration duration;
   final VoidCallback onDone;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   State<_GlassToast> createState() => _GlassToastState();
@@ -796,20 +856,32 @@ class _GlassToastState extends State<_GlassToast>
     vsync: this,
     duration: const Duration(milliseconds: 220),
   );
+  Timer? _dismissTimer;
+  bool _closing = false;
 
   @override
   void initState() {
     super.initState();
     _controller.forward();
-    Future.delayed(widget.duration, () async {
-      if (!mounted) return;
-      await _controller.reverse();
-      widget.onDone();
-    });
+    _dismissTimer = Timer(widget.duration, _close);
+  }
+
+  Future<void> _close() async {
+    if (_closing || !mounted) return;
+    _closing = true;
+    _dismissTimer?.cancel();
+    await _controller.reverse();
+    widget.onDone();
+  }
+
+  void _handleAction() {
+    widget.onAction?.call();
+    _close();
   }
 
   @override
   void dispose() {
+    _dismissTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -825,6 +897,9 @@ class _GlassToastState extends State<_GlassToast>
       right: 16,
       bottom: bottom,
       child: IgnorePointer(
+        // Without an action the toast is purely informational and must never
+        // swallow taps meant for the UI underneath it.
+        ignoring: widget.actionLabel == null,
         child: FadeTransition(
           opacity: CurvedAnimation(
             parent: _controller,
@@ -864,8 +939,7 @@ class _GlassToastState extends State<_GlassToast>
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(widget.icon,
-                                size: 16, color: AppColors.accentStrong),
+                            Icon(widget.icon, size: 16, color: widget.tint),
                             const SizedBox(width: 10),
                             Flexible(
                               child: Text(
@@ -877,6 +951,27 @@ class _GlassToastState extends State<_GlassToast>
                                 ),
                               ),
                             ),
+                            if (widget.actionLabel != null) ...[
+                              const SizedBox(width: 12),
+                              InkWell(
+                                borderRadius: BorderRadius.circular(8),
+                                onTap: _handleAction,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  child: Text(
+                                    widget.actionLabel!,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.accentStrong,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),

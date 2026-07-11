@@ -524,18 +524,13 @@ class _CheckBox extends StatelessWidget {
   }
 }
 
-/// Brief snackbar feedback (mirrors the reference's `H.toast`).
-void settingsToast(BuildContext context, String message) {
-  ScaffoldMessenger.of(context)
-    ..clearSnackBars()
-    ..showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.navy,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+/// Brief toast feedback (mirrors the reference's `H.toast`).
+void settingsToast(
+  BuildContext context,
+  String message, {
+  GlassToastKind kind = GlassToastKind.info,
+}) {
+  showGlassToast(context, message, kind: kind);
 }
 
 /// Shared input decoration matching `.ps-input`.

@@ -19,7 +19,8 @@ import '../../core/widgets/glass_panel.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../search/search_tokens.dart';
-import '../sprint/modals/glass_modal.dart' show showGlassOptions;
+import '../sprint/modals/glass_modal.dart'
+    show showGlassErrorToast, showGlassOptions;
 import 'issue_form.dart' show showIssueForm;
 
 part 'issue_links_section.parts.dart';
@@ -186,9 +187,7 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
 
   void _toast(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.t(message))));
+    showGlassErrorToast(context, context.t(message));
   }
 
   /// Links already present, so the picker can hint they're connected and the

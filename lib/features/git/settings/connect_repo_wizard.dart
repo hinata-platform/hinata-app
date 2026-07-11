@@ -78,17 +78,8 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
     super.dispose();
   }
 
-  void _toast(String message) {
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.navy,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+  void _toast(String message, {GlassToastKind kind = GlassToastKind.error}) {
+    showGlassToast(context, message, kind: kind);
   }
 
   void _pickProvider(GitProvider p) {
@@ -141,7 +132,10 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
       final ok = await _pollAuthorization(start.state!);
       if (!mounted) return;
       if (!ok) {
-        _toast(context.t('git.connect.notCompleted'));
+        _toast(
+          context.t('git.connect.notCompleted'),
+          kind: GlassToastKind.warning,
+        );
         setState(() => _awaiting = false);
         return;
       }

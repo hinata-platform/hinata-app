@@ -15,6 +15,7 @@ import '../board/board_people_strip.dart';
 import '../board/board_swimlanes.dart';
 import '../issues/issue_form.dart';
 import 'modals/complete_sprint_dialog.dart';
+import 'modals/glass_modal.dart' show GlassToastKind, showGlassToast;
 import 'modals/create_sprint_dialog.dart';
 import 'modals/estimate_dialog.dart';
 import 'modals/start_sprint_dialog.dart';
@@ -277,7 +278,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
       await _loadBacklog();
       if (mounted) setState(() {});
     } on ApiFailure catch (failure) {
-      _toastKey(failure.message);
+      _toastKey(failure.message, kind: GlassToastKind.error);
     }
   }
 
@@ -308,11 +309,13 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
 
   /// Resolves [key] against i18n only after confirming the widget is still
   /// mounted, so [context] is never read across an async gap.
-  void _toastKey(String key, {Map<String, dynamic>? vars}) {
+  void _toastKey(
+    String key, {
+    Map<String, dynamic>? vars,
+    GlassToastKind kind = GlassToastKind.info,
+  }) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.t(key, variables: vars))));
+    showGlassToast(context, context.t(key, variables: vars), kind: kind);
   }
 
   /// Locates an issue across the sprint containers and the backlog.
@@ -338,7 +341,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
       // the backlog→working-state promotion when an issue enters a sprint.
       await _loadAll();
     } on ApiFailure catch (failure) {
-      _toastKey(failure.message);
+      _toastKey(failure.message, kind: GlassToastKind.error);
       await _loadAll();
     }
   }
@@ -376,7 +379,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
       );
       await _loadAll();
     } on ApiFailure catch (failure) {
-      _toastKey(failure.message);
+      _toastKey(failure.message, kind: GlassToastKind.error);
       await _loadAll();
     }
   }
@@ -396,7 +399,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
       // Story points feed committed/velocity/burndown — refresh insights.
       _invalidateReport();
     } on ApiFailure catch (failure) {
-      _toastKey(failure.message);
+      _toastKey(failure.message, kind: GlassToastKind.error);
       await _loadAll();
     }
   }
@@ -429,7 +432,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
       await _issueApi.updateIssue(issue.id, {'state': newState});
       await _loadAll();
     } on ApiFailure catch (failure) {
-      _toastKey(failure.message);
+      _toastKey(failure.message, kind: GlassToastKind.error);
       await _loadAll();
     }
   }
@@ -479,10 +482,14 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
         startDate: data.start,
         endDate: data.end,
       );
-      _toastKey('sprint.toast.created', vars: {'name': data.name});
+      _toastKey(
+        'sprint.toast.created',
+        vars: {'name': data.name},
+        kind: GlassToastKind.success,
+      );
       await _loadAll();
     } on ApiFailure catch (failure) {
-      _toastKey(failure.message);
+      _toastKey(failure.message, kind: GlassToastKind.error);
     }
   }
 
@@ -506,11 +513,15 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
       );
       _activeSprintId = sprint.id;
       _report = null;
-      _toastKey('sprint.toast.started', vars: {'name': sprint.name});
+      _toastKey(
+        'sprint.toast.started',
+        vars: {'name': sprint.name},
+        kind: GlassToastKind.success,
+      );
       if (mounted) setState(() => _tab = _Tab.active);
       await _loadAll();
     } on ApiFailure catch (failure) {
-      _toastKey(failure.message);
+      _toastKey(failure.message, kind: GlassToastKind.error);
     }
   }
 
@@ -532,11 +543,15 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
       await _sprintApi.completeSprint(sprint.id, moveOpenTo: dest);
       if (_activeSprintId == sprint.id) _activeSprintId = null;
       _report = null;
-      _toastKey('sprint.toast.completed', vars: {'name': sprint.name});
+      _toastKey(
+        'sprint.toast.completed',
+        vars: {'name': sprint.name},
+        kind: GlassToastKind.success,
+      );
       if (mounted) setState(() => _tab = _Tab.planning);
       await _loadAll();
     } on ApiFailure catch (failure) {
-      _toastKey(failure.message);
+      _toastKey(failure.message, kind: GlassToastKind.error);
     }
   }
 

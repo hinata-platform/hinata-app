@@ -374,12 +374,11 @@ class _EventIdFooter extends StatelessWidget {
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: id));
               if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(context.t('audit.detail.copied')),
-                  behavior: SnackBarBehavior.floating,
-                  duration: const Duration(seconds: 2),
-                ),
+              showGlassToast(
+                context,
+                context.t('audit.detail.copied'),
+                kind: GlassToastKind.success,
+                duration: const Duration(seconds: 2),
               );
             },
             icon: Icon(LucideIcons.copy, size: 14, color: tokens.inkSoft),

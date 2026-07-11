@@ -11,6 +11,8 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/soft_card.dart';
 import '../connect/server_switcher.dart';
+import '../sprint/modals/glass_modal.dart'
+    show showGlassToast, showGlassErrorToast, GlassToastKind;
 
 /// Public self-registration. Collects the new account's details, then shows a
 /// "confirm your email" state — the account is only usable once the emailed
@@ -78,13 +80,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       await context.read<AuthRepository>().resendVerification(_email.text.trim());
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.t('register.resent'))),
+      showGlassToast(
+        context,
+        context.t('register.resent'),
+        kind: GlassToastKind.success,
       );
     } on ApiFailure catch (failure) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(context.t(failure.message))));
+      showGlassErrorToast(context, context.t(failure.message));
     } finally {
       if (mounted) setState(() => _resending = false);
     }

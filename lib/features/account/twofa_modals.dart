@@ -9,7 +9,8 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/account_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../sprint/modals/glass_modal.dart' show showGlassModal, GlassModalHeader;
+import '../sprint/modals/glass_modal.dart'
+    show showGlassModal, GlassModalHeader, showGlassToast, GlassToastKind;
 import 'account_widgets.dart';
 
 /// Renders a QR matrix for an `otpauth://` URI using the pure-Dart [qr]
@@ -394,8 +395,10 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
               onPressed: () {
                 Clipboard.setData(
                     ClipboardData(text: _recoveryCodes.join('\n')));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(context.t('twofa.codesCopied'))),
+                showGlassToast(
+                  context,
+                  context.t('twofa.codesCopied'),
+                  kind: GlassToastKind.success,
                 );
               },
             ),
@@ -688,8 +691,10 @@ class _CodeGatedActionState extends State<_CodeGatedAction> {
           icon: LucideIcons.copy,
           onPressed: () {
             Clipboard.setData(ClipboardData(text: codes.join('\n')));
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(context.t('twofa.codesCopied'))),
+            showGlassToast(
+              context,
+              context.t('twofa.codesCopied'),
+              kind: GlassToastKind.success,
             );
           },
         ),
@@ -730,8 +735,10 @@ class _CopyField extends StatelessWidget {
             icon: Icon(LucideIcons.copy, size: 16, color: AppColors.inkSoft),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: copyValue));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(context.t('twofa.keyCopied'))),
+              showGlassToast(
+                context,
+                context.t('twofa.keyCopied'),
+                kind: GlassToastKind.success,
               );
             },
           ),

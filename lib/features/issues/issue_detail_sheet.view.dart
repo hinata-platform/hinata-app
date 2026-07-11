@@ -1044,6 +1044,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       kind == CommentCopyKind.image
           ? context.t('comments.imageCopied')
           : context.t('comments.copied'),
+      kind: GlassToastKind.success,
     );
   }
 
@@ -1055,7 +1056,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         '${issueWebLink(_issueApi.apiBaseUrl, issue.linkId)}?comment=${comment.id}';
     await Clipboard.setData(ClipboardData(text: link));
     if (!mounted) return;
-    _toast(context.t('comments.linkCopied'));
+    _toast(context.t('comments.linkCopied'), kind: GlassToastKind.success);
   }
 
   void _enterSelection(IssueComment comment) {
@@ -1220,15 +1221,13 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     }
   }
 
-  void _toast(String message) {
+  void _toast(String message, {GlassToastKind kind = GlassToastKind.error}) {
     if (!mounted) return;
     // Resolve through i18n: a backend `ApiFailure.message` is already-localized
     // text (returned unchanged by `t`), while a frontend fallback key like
     // `errors.unexpected`/`errors.connection` gets localized here instead of
-    // leaking the raw key into the snackbar.
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.t(message))));
+    // leaking the raw key into the toast.
+    showGlassToast(context, context.t(message), kind: kind);
   }
 
   // ── inline editing + actions (driven by the top-bar / double-tap) ─────────
@@ -2664,9 +2663,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       widget.onChanged?.call();
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text(context.t('comments.voiceFailed'))),
-      );
+      showGlassErrorToast(context, context.t('comments.voiceFailed'));
     }
   }
 

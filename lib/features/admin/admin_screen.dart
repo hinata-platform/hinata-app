@@ -11,6 +11,8 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../shell/page_chrome.dart';
+import '../sprint/modals/glass_modal.dart'
+    show showGlassToast, showGlassErrorToast, GlassToastKind;
 import 'admin_sso_section.dart';
 import 'sections/admin_app_section.dart';
 import 'sections/admin_audit_section.dart';
@@ -150,15 +152,15 @@ class _AdminScreenState extends State<AdminScreen> {
         _settings!,
       );
       if (mounted) {
-        ScaffoldMessenger.of(
+        showGlassToast(
           context,
-        ).showSnackBar(SnackBar(content: Text(context.t('admin.saved'))));
+          context.t('admin.saved'),
+          kind: GlassToastKind.success,
+        );
       }
     } on ApiFailure catch (failure) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(context.t(failure.message))));
+        showGlassErrorToast(context, context.t(failure.message));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

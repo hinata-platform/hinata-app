@@ -104,8 +104,9 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
 
   // Rendered in the ROOT overlay so it stays visible above the glass modal's
   // blurred scrim (a Scaffold SnackBar would be buried underneath it).
-  void _toast(String message, {IconData icon = LucideIcons.info}) {
-    showGlassToast(context, message, icon: icon);
+  void _toast(String message,
+      {GlassToastKind kind = GlassToastKind.warning}) {
+    showGlassToast(context, message, kind: kind);
   }
 
   // ─── Folder scan (explicit consent, live IMAP folder listing) ────────
@@ -170,7 +171,7 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
     } on ApiFailure catch (failure) {
       if (!mounted) return;
       setState(() => _scanning = false);
-      _toast(context.t(failure.message));
+      _toast(context.t(failure.message), kind: GlassToastKind.error);
     }
   }
 
@@ -237,7 +238,7 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
     } on ApiFailure catch (failure) {
       if (!mounted) return;
       setState(() => _saving = false);
-      _toast(context.t(failure.message));
+      _toast(context.t(failure.message), kind: GlassToastKind.error);
     }
   }
 

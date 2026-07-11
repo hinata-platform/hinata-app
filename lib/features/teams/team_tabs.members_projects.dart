@@ -238,13 +238,13 @@ class TeamProjectsTab extends StatelessWidget {
     );
     if (confirmed != true || !context.mounted) return;
     final repo = context.read<TeamRepository>();
-    final messenger = ScaffoldMessenger.of(context);
     final errText = context.t('errors.unexpected');
     try {
       await repo.detachTeamProject(data.team.id, project.id);
       await onReload();
     } catch (_) {
-      messenger.showSnackBar(SnackBar(content: Text(errText)));
+      if (!context.mounted) return;
+      showGlassErrorToast(context, errText);
     }
   }
 

@@ -18,7 +18,9 @@ import '../sprint/modals/glass_modal.dart'
         GlassModalHeader,
         GlassModalFooter,
         GlassSegmented,
-        glassInputDecoration;
+        glassInputDecoration,
+        showGlassToast,
+        GlassToastKind;
 import 'account_modals.dart' show showConfirm;
 import 'account_widgets.dart';
 
@@ -69,9 +71,7 @@ class _PatSectionState extends State<PatSection> {
 
   void _toast(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(context.t(message))));
+    showGlassToast(context, context.t(message), kind: GlassToastKind.success);
   }
 
   Future<void> _create() async {
@@ -563,11 +563,11 @@ Future<void> showPatReveal(BuildContext context, CreatedPat created) {
                 CopyField(
                   text: created.token,
                   onCopied: () {
-                    ScaffoldMessenger.of(context)
-                      ..hideCurrentSnackBar()
-                      ..showSnackBar(
-                        SnackBar(content: Text(context.t('pat.copiedToast'))),
-                      );
+                    showGlassToast(
+                      context,
+                      context.t('pat.copiedToast'),
+                      kind: GlassToastKind.success,
+                    );
                   },
                 ),
               ],
