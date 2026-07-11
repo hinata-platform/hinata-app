@@ -775,6 +775,20 @@ enum GlassToastKind {
 /// The single live toast — showing a new one replaces it instead of stacking.
 OverlayEntry? _activeGlassToast;
 
+/// Handle returned by [showGlassToast] to programmatically dismiss the toast
+/// (e.g. from a custom [showGlassToast.trailing] widget or once a background
+/// operation finishes). Safe to call at any time — closing an already
+/// dismissed/replaced toast is a no-op.
+class GlassToastController {
+  _GlassToastState? _state;
+
+  /// Whether this toast is still on screen (and not already animating out).
+  bool get isShowing => _state != null && !_state!._closing;
+
+  /// Dismisses the toast with its exit animation. No-op if already gone.
+  void close() => _state?._close();
+}
+
 /// Shows a transient Liquid-Glass toast pill bottom-centre — the app-wide
 /// replacement for Material's [SnackBar]. Inserted into the ROOT overlay, so
 /// it renders above every open glass modal/sheet and its blurred scrim (a
@@ -783,11 +797,14 @@ OverlayEntry? _activeGlassToast;
 ///
 /// [kind] picks the semantic glyph + tint ([GlassToastKind.info] by default);
 /// [icon] overrides the glyph only. [actionLabel]/[onAction] add a tappable
-/// action chip (e.g. "Undo", "Retry") — the toast then stays longer and
-/// accepts taps; without an action it never intercepts input. Errors and
-/// actionable toasts default to 5 s, everything else to 3.2 s; only one toast
-/// is visible at a time (a new one replaces the current).
-void showGlassToast(
+/// action chip (e.g. "Undo", "Retry"); [trailing] instead mounts an arbitrary
+/// widget (e.g. an [IconButton]) in the action slot — its handlers may freely
+/// call [showGlassToast] again or [GlassToastController.close]. With either
+/// the toast stays longer and accepts taps; without it never intercepts
+/// input. Errors and actionable toasts default to 5 s, everything else to
+/// 3.2 s; only one toast is visible at a time (a new one replaces the
+/// current). The returned [GlassToastController] dismisses it early.
+GlassToastController showGlassToast(
   BuildContext context,
   String message, {
   GlassToastKind kind = GlassToastKind.info,
@@ -795,32 +812,45 @@ void showGlassToast(
   Duration? duration,
   String? actionLabel,
   VoidCallback? onAction,
+  Widget? trailing,
 }) {
+  assert(
+    trailing == null || actionLabel == null,
+    'Pass either actionLabel/onAction or a custom trailing widget, not both.',
+  );
   final overlay = Overlay.of(context, rootOverlay: true);
-  _activeGlassToast?.remove();
+  if (_activeGlassToast?.mounted ?? false) _activeGlassToast!.remove();
   _activeGlassToast = null;
   final hasAction = actionLabel != null && onAction != null;
-  final effectiveDuration = duration ??
-      (hasAction || kind == GlassToastKind.error
+  final interactive = hasAction || trailing != null;
+  final effectiveDuration =
+      duration ??
+      (interactive || kind == GlassToastKind.error
           ? const Duration(milliseconds: 5000)
           : const Duration(milliseconds: 3200));
+  final controller = GlassToastController();
   late final OverlayEntry entry;
   entry = OverlayEntry(
     builder: (_) => _GlassToast(
+      controller: controller,
       message: message,
       icon: icon ?? kind.icon,
       tint: kind.tint,
       duration: effectiveDuration,
       actionLabel: hasAction ? actionLabel : null,
       onAction: hasAction ? onAction : null,
+      trailing: trailing,
       onDone: () {
-        entry.remove();
+        // A replacement toast (possibly shown from within our own action
+        // handler) may already have removed this entry — never remove twice.
+        if (entry.mounted) entry.remove();
         if (identical(_activeGlassToast, entry)) _activeGlassToast = null;
       },
     ),
   );
   _activeGlassToast = entry;
   overlay.insert(entry);
+  return controller;
 }
 
 /// Error-kind shorthand for the ubiquitous `context.t(failure.message)` case.
@@ -829,6 +859,7 @@ void showGlassErrorToast(BuildContext context, String message) =>
 
 class _GlassToast extends StatefulWidget {
   const _GlassToast({
+    required this.controller,
     required this.message,
     required this.icon,
     required this.tint,
@@ -836,8 +867,10 @@ class _GlassToast extends StatefulWidget {
     required this.onDone,
     this.actionLabel,
     this.onAction,
+    this.trailing,
   });
 
+  final GlassToastController controller;
   final String message;
   final IconData icon;
   final Color tint;
@@ -845,6 +878,7 @@ class _GlassToast extends StatefulWidget {
   final VoidCallback onDone;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final Widget? trailing;
 
   @override
   State<_GlassToast> createState() => _GlassToastState();
@@ -862,6 +896,7 @@ class _GlassToastState extends State<_GlassToast>
   @override
   void initState() {
     super.initState();
+    widget.controller._state = this;
     _controller.forward();
     _dismissTimer = Timer(widget.duration, _close);
   }
@@ -871,7 +906,7 @@ class _GlassToastState extends State<_GlassToast>
     _closing = true;
     _dismissTimer?.cancel();
     await _controller.reverse();
-    widget.onDone();
+    if (mounted) widget.onDone();
   }
 
   void _handleAction() {
@@ -881,6 +916,9 @@ class _GlassToastState extends State<_GlassToast>
 
   @override
   void dispose() {
+    if (identical(widget.controller._state, this)) {
+      widget.controller._state = null;
+    }
     _dismissTimer?.cancel();
     _controller.dispose();
     super.dispose();
@@ -899,43 +937,47 @@ class _GlassToastState extends State<_GlassToast>
       child: IgnorePointer(
         // Without an action the toast is purely informational and must never
         // swallow taps meant for the UI underneath it.
-        ignoring: widget.actionLabel == null,
+        ignoring: widget.actionLabel == null && widget.trailing == null,
         child: FadeTransition(
           opacity: CurvedAnimation(
             parent: _controller,
             curve: Curves.easeOutCubic,
           ),
           child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.25),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-            ),
+            position:
+                Tween<Offset>(
+                  begin: const Offset(0, 0.25),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: _controller,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
             child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 440),
-                child: GlassPanelShadow(
-                  radius: BorderRadius.circular(16),
-                  shadows: tokens.panelShadow,
-                  child: GlassContainer(
-                    useOwnLayer: true,
-                    quality: GlassQuality.premium,
-                    clipBehavior: Clip.antiAlias,
-                    shape: const LiquidRoundedSuperellipse(borderRadius: 16),
-                    settings: liquidGlassPanelSettings(
-                      glassFill: tokens.glassFill,
-                      dark: dark,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+              child: Material(
+                color: Colors.transparent,
+                shadowColor: Colors.transparent,
+                surfaceTintColor: Colors.transparent,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 440),
+                  child: GlassPanelShadow(
+                    radius: BorderRadius.circular(16),
+                    shadows: tokens.panelShadow,
+                    child: GlassContainer(
+                      useOwnLayer: true,
+                      quality: GlassQuality.premium,
+                      clipBehavior: Clip.antiAlias,
+                      shape: const LiquidRoundedSuperellipse(borderRadius: 16),
+                      settings: liquidGlassPanelSettings(
+                        glassFill: tokens.glassFill,
+                        dark: dark,
                       ),
-                      child: Material(
-                        color: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        surfaceTintColor: Colors.transparent,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -951,6 +993,10 @@ class _GlassToastState extends State<_GlassToast>
                                 ),
                               ),
                             ),
+                            if (widget.trailing != null) ...[
+                              const SizedBox(width: 12),
+                              widget.trailing!,
+                            ],
                             if (widget.actionLabel != null) ...[
                               const SizedBox(width: 12),
                               InkWell(

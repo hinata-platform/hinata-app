@@ -67,14 +67,15 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
 
   late final _name = TextEditingController(text: widget.connection.name ?? '');
   late final _host = TextEditingController(text: widget.connection.host);
-  late final _port =
-      TextEditingController(text: '${widget.connection.port}');
-  late final _username =
-      TextEditingController(text: widget.connection.username);
+  late final _port = TextEditingController(text: '${widget.connection.port}');
+  late final _username = TextEditingController(
+    text: widget.connection.username,
+  );
   late final _password = TextEditingController();
   late final _folder = TextEditingController(text: widget.connection.folder);
-  late final _poll =
-      TextEditingController(text: '${widget.connection.pollSeconds}');
+  late final _poll = TextEditingController(
+    text: '${widget.connection.pollSeconds}',
+  );
 
   late bool _ssl = widget.connection.ssl;
   late IngestProjectOption? _project = widget.initialProject;
@@ -96,7 +97,15 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
 
   @override
   void dispose() {
-    for (final c in [_name, _host, _port, _username, _password, _folder, _poll]) {
+    for (final c in [
+      _name,
+      _host,
+      _port,
+      _username,
+      _password,
+      _folder,
+      _poll,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -104,9 +113,16 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
 
   // Rendered in the ROOT overlay so it stays visible above the glass modal's
   // blurred scrim (a Scaffold SnackBar would be buried underneath it).
-  void _toast(String message,
-      {GlassToastKind kind = GlassToastKind.warning}) {
-    showGlassToast(context, message, kind: kind);
+  void _toast(String message, {GlassToastKind kind = GlassToastKind.warning}) {
+    late GlassToastController toast;
+    toast = showGlassToast(
+      context,
+      message,
+      kind: kind,
+      actionLabel: context.t('common.ok'),
+      onAction:
+          () => toast.close(),
+    );
   }
 
   // ─── Folder scan (explicit consent, live IMAP folder listing) ────────
@@ -122,8 +138,10 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
       context,
       icon: LucideIcons.scanSearch,
       title: context.t('admin.ingest.scanConsentTitle'),
-      message: context.t('admin.ingest.scanConsentBody',
-          variables: {'host': _host.text.trim()}),
+      message: context.t(
+        'admin.ingest.scanConsentBody',
+        variables: {'host': _host.text.trim()},
+      ),
       confirmLabel: context.t('admin.ingest.scanConsentConfirm'),
       confirmIcon: LucideIcons.scanSearch,
     );
@@ -155,11 +173,12 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(LucideIcons.folder,
-                      size: 14, color: AppColors.inkSoft),
+                  Icon(LucideIcons.folder, size: 14, color: AppColors.inkSoft),
                   const SizedBox(width: 8),
-                  Text(folder,
-                      style: TextStyle(fontSize: 13, color: AppColors.ink)),
+                  Text(
+                    folder,
+                    style: TextStyle(fontSize: 13, color: AppColors.ink),
+                  ),
                 ],
               ),
             ),
@@ -254,14 +273,19 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
         children: [
           Row(
             children: [
-              const Icon(LucideIcons.inbox,
-                  size: 18, color: AppColors.accentStrong),
+              const Icon(
+                LucideIcons.inbox,
+                size: 18,
+                color: AppColors.accentStrong,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  context.t(_isNew
-                      ? 'admin.ingest.addConnection'
-                      : 'admin.ingest.editConnection'),
+                  context.t(
+                    _isNew
+                        ? 'admin.ingest.addConnection'
+                        : 'admin.ingest.editConnection',
+                  ),
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
@@ -272,16 +296,22 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
             ],
           ),
           const SizedBox(height: 16),
-          _field(_name, context.t('admin.ingest.name'),
-              hint: context.t('admin.ingest.nameHint')),
+          _field(
+            _name,
+            context.t('admin.ingest.name'),
+            hint: context.t('admin.ingest.nameHint'),
+          ),
           _field(_host, context.t('admin.smtpHost'), hint: 'imap.example.com'),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 flex: 2,
-                child: _field(_port, context.t('admin.smtpPort'),
-                    keyboardType: TextInputType.number),
+                child: _field(
+                  _port,
+                  context.t('admin.smtpPort'),
+                  keyboardType: TextInputType.number,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -291,11 +321,14 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: Text('SSL/TLS',
-                            style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.ink)),
+                        child: Text(
+                          'SSL/TLS',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.ink,
+                          ),
+                        ),
                       ),
                       HiveSwitch(
                         value: _ssl,
@@ -313,9 +346,12 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
               ),
             ],
           ),
-          _field(_username, context.t('auth.identifier'),
-              hint: 'support@example.com',
-              keyboardType: TextInputType.emailAddress),
+          _field(
+            _username,
+            context.t('auth.identifier'),
+            hint: 'support@example.com',
+            keyboardType: TextInputType.emailAddress,
+          ),
           _field(
             _password,
             context.t('setup.password'),
@@ -343,11 +379,13 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
                     )
                   : IconButton(
                       tooltip: context.t('admin.ingest.scanFolders'),
-                      icon: Icon(LucideIcons.scanSearch,
-                          size: 18,
-                          color: _canScan
-                              ? AppColors.accentStrong
-                              : AppColors.inkFaint),
+                      icon: Icon(
+                        LucideIcons.scanSearch,
+                        size: 18,
+                        color: _canScan
+                            ? AppColors.accentStrong
+                            : AppColors.inkFaint,
+                      ),
                       onPressed: _scanFolders,
                     ),
             ),
@@ -365,9 +403,10 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
                 suffixIcon: const Icon(LucideIcons.chevronsUpDown, size: 16),
               ),
               child: _project == null
-                  ? Text(context.t('admin.ingest.pickProject'),
-                      style:
-                          TextStyle(fontSize: 14, color: AppColors.inkFaint))
+                  ? Text(
+                      context.t('admin.ingest.pickProject'),
+                      style: TextStyle(fontSize: 14, color: AppColors.inkFaint),
+                    )
                   : Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -384,7 +423,9 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
                           child: Text(
                             '${_project!.key} · ${_project!.name}',
                             style: TextStyle(
-                                fontSize: 14, color: AppColors.ink),
+                              fontSize: 14,
+                              color: AppColors.ink,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -393,15 +434,17 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
             ),
           ),
           const SizedBox(height: 12),
-          _field(_poll, context.t('admin.ingest.pollSeconds'),
-              keyboardType: TextInputType.number),
+          _field(
+            _poll,
+            context.t('admin.ingest.pollSeconds'),
+            keyboardType: TextInputType.number,
+          ),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed:
-                    _saving ? null : () => Navigator.of(context).pop(),
+                onPressed: _saving ? null : () => Navigator.of(context).pop(),
                 child: Text(context.t('common.cancel')),
               ),
               const SizedBox(width: 8),
@@ -409,7 +452,10 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
                 onPressed: _saving ? null : _save,
                 icon: _saving
                     ? const HiveLoader(
-                        size: 16, strokeWidth: 2, color: Colors.white)
+                        size: 16,
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      )
                     : const Icon(LucideIcons.check, size: 16),
                 label: Text(context.t('common.save')),
               ),
@@ -565,60 +611,69 @@ class _ProjectSearchPanelState extends State<_ProjectSearchPanel> {
           child: _loading
               ? const Center(child: HiveLoader(size: 24))
               : _results.isEmpty
-                  ? Center(
-                      child: Text(context.t('common.noMatches'),
-                          style: TextStyle(
-                              fontSize: 13, color: AppColors.inkFaint)),
-                    )
-                  : ListView.builder(
-                      controller: _scroll,
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      itemCount: _results.length + (_hasMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index >= _results.length) {
-                          return const Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Center(
-                                child: HiveLoader(size: 18, strokeWidth: 2)),
-                          );
-                        }
-                        final option = _results[index];
-                        return InkWell(
-                          onTap: () => Navigator.of(context).pop(option),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    color: colorFromHex(option.color),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Text(option.key,
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.inkSoft)),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    option.name,
-                                    style: TextStyle(
-                                        fontSize: 13, color: AppColors.ink),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
+              ? Center(
+                  child: Text(
+                    context.t('common.noMatches'),
+                    style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
+                  ),
+                )
+              : ListView.builder(
+                  controller: _scroll,
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  itemCount: _results.length + (_hasMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index >= _results.length) {
+                      return const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Center(
+                          child: HiveLoader(size: 18, strokeWidth: 2),
+                        ),
+                      );
+                    }
+                    final option = _results[index];
+                    return InkWell(
+                      onTap: () => Navigator.of(context).pop(option),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: colorFromHex(option.color),
+                                shape: BoxShape.circle,
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                            const SizedBox(width: 10),
+                            Text(
+                              option.key,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.inkSoft,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                option.name,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.ink,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
         ),
       ],
     );

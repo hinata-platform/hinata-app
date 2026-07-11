@@ -15,7 +15,8 @@
     "empty": "Nothing here yet",
     "continueAction": "Continue",
     "of": "of",
-    "add": "Add"
+    "add": "Add",
+    "ok": "OK"
   },
   "delete": {
     "cta": "Delete",
