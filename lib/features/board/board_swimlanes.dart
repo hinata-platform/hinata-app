@@ -85,6 +85,10 @@ class BoardGroupByButton extends StatelessWidget {
   }
 }
 
+/// Lane key of the catch-all "no epic / no assignee / stand-alone" lane —
+/// lanes with this key carry no group issue to pre-fill on create.
+const String kBoardLaneNoneKey = '__none__';
+
 /// One swimlane: a stable [key], a rendered [header] and the issues that belong
 /// to the group (already passed through the board's filter).
 class BoardLane {
@@ -262,7 +266,7 @@ void _appendNone(
   if (group == null || group.isEmpty) return;
   lanes.add(
     BoardLane(
-      key: '__none__',
+      key: kBoardLaneNoneKey,
       header: _plainLaneHeader(label, group.length, icon),
       issues: group,
     ),
@@ -409,8 +413,14 @@ class BoardSwimlanes extends StatefulWidget {
   final List<BoardColumnView> columns;
   final List<BoardLane> lanes;
 
-  /// Renders one column of a lane from the issues that fall in it.
-  final Widget Function(BoardColumnView column, List<Issue> laneColumnIssues)
+  /// Renders one column of a lane from the issues that fall in it. The [lane]
+  /// carries the group context (e.g. the epic id as its key) so builders can
+  /// pre-fill it when creating an issue from within the lane.
+  final Widget Function(
+    BoardColumnView column,
+    List<Issue> laneColumnIssues,
+    BoardLane lane,
+  )
   columnBuilder;
 
   final double columnWidth;
@@ -465,6 +475,7 @@ class _BoardSwimlanesState extends State<BoardSwimlanes> {
                                   (x) => columns[i].states.contains(x.state),
                                 )
                                 .toList(),
+                            lane,
                           ),
                         ),
                       ],

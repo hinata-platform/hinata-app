@@ -506,7 +506,11 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     }
   }
 
-  Future<void> _addIssue(BoardColumnView column) async {
+  Future<void> _addIssue(
+    BoardColumnView column, {
+    String? parentId,
+    String? forcedType,
+  }) async {
     final view = _view;
     if (view == null) return;
     final projectId = view.board.projectIds.isNotEmpty
@@ -516,8 +520,21 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       context,
       projectId: projectId,
       initialState: column.states.isNotEmpty ? column.states.first : null,
+      parentId: parentId,
+      forcedType: forcedType,
     );
     if (created != null) await _load();
+  }
+
+  /// The parent to pre-fill when creating an issue inside a swimlane: the
+  /// lane's epic under the epic grouping, the lane's parent issue under the
+  /// sub-task grouping — never the catch-all "none" lane.
+  String? _laneParentId(BoardLane lane) {
+    if (lane.key == kBoardLaneNoneKey) return null;
+    return switch (_grouping) {
+      BoardGrouping.epic || BoardGrouping.subtask => lane.key,
+      _ => null,
+    };
   }
 
   void _openFilter() => openBoardFilter(
@@ -838,7 +855,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
         context.pageGutter,
         context.pageGutter + context.bottomGutter,
       ),
-      columnBuilder: (column, issues) => _BoardColumn(
+      columnBuilder: (column, issues, lane) => _BoardColumn(
         column: column,
         laneMode: true,
         issues: issues,
@@ -846,7 +863,17 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
         names: _names,
         avatars: _avatars,
         onAccept: (issue) => _moveIssue(issue, column),
-        onAddIssue: () => _addIssue(column),
+        onAddIssue: () => _addIssue(
+          column,
+          parentId: _laneParentId(lane),
+          // A sub-task lane's parent is a standard issue, so the only valid
+          // child there is a sub-task.
+          forcedType:
+              _grouping == BoardGrouping.subtask &&
+                  lane.key != kBoardLaneNoneKey
+              ? 'SUBTASK'
+              : null,
+        ),
         onOpenIssue: _openIssue,
       ),
     );

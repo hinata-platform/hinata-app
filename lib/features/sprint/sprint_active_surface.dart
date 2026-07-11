@@ -88,7 +88,7 @@ class SprintActiveSurface extends StatelessWidget {
         gutter,
         gutter + context.bottomGutter,
       ),
-      columnBuilder: (column, colIssues) => _SprintColumn(
+      columnBuilder: (column, colIssues, lane) => _SprintColumn(
         column: column,
         issues: colIssues,
         laneMode: true,
