@@ -436,7 +436,7 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
-              autofocus: true,
+              autofocus: false,
               cursorColor: tokens.ink,
               onChanged: (v) => setState(() => _query = v),
               style: TextStyle(
