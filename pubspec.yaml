@@ -90,7 +90,7 @@ dependencies:
   emoji_picker_flutter: ^4.3.0
   # Rich clipboard: copy a comment's inline image as real image data (Flutter's
   # built-in Clipboard is text-only). Text comments still copy as text.
-  super_clipboard: ^0.8.24
+  super_clipboard: ^0.9.1
 
   cupertino_icons: ^1.0.8
 
@@ -102,6 +102,10 @@ dependencies:
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_driver:
     sdk: flutter
   flutter_lints: ^6.0.0
   bloc_test: ^10.0.0

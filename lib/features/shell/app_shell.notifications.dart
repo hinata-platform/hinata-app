@@ -23,39 +23,35 @@ class _NotificationBell extends StatefulWidget {
 }
 
 class _NotificationBellState extends State<_NotificationBell> {
-  final _portalController = OverlayPortalController();
-  final _link = LayerLink();
+  /// The bell preview is capped at 5 entries — full history lives on the
+  /// notifications page, and a smaller page keeps the popover build cheap.
+  static const _previewCount = 5;
+
   late final FetchCubit<List<AppNotification>> _cubit;
   bool _open = false;
+
+  /// False while the liquid morph is still animating. During that window the
+  /// panel renders blur-free and with placeholder content — the per-frame
+  /// backdrop blur is the dominant raster cost of the morph.
+  bool _settled = false;
+  Timer? _settleTimer;
 
   @override
   void initState() {
     super.initState();
     _cubit = FetchCubit(
-      () => context.read<NotificationRepository>().notifications(),
+      () async =>
+          (await context.read<NotificationRepository>().notificationsPage(
+            size: _previewCount,
+          )).items,
     )..load();
   }
 
   @override
   void dispose() {
+    _settleTimer?.cancel();
     _cubit.close();
     super.dispose();
-  }
-
-  void _toggle() {
-    if (_open) {
-      _close();
-    } else {
-      _cubit.load(); // refresh contents whenever the popover opens
-      setState(() => _open = true);
-      _portalController.show();
-    }
-  }
-
-  void _close() {
-    if (!_open) return;
-    setState(() => _open = false);
-    _portalController.hide();
   }
 
   Future<void> _markAllRead(List<AppNotification> items) async {
@@ -72,7 +68,6 @@ class _NotificationBellState extends State<_NotificationBell> {
   }
 
   Future<void> _openNotification(AppNotification notification) async {
-    _close();
     final repository = context.read<NotificationRepository>();
     if (!notification.read) {
       try {
@@ -101,12 +96,20 @@ class _NotificationBellState extends State<_NotificationBell> {
               final items = state.data ?? const <AppNotification>[];
               final hasUnread = items.any((n) => !n.read);
               final showDot = hasUnread && !_open;
-              final trigger = widget.frosted
+              final media = MediaQuery.of(context);
+              final tokens = SearchTokens.of(Theme.of(context).brightness);
+              final dark = Theme.of(context).brightness == Brightness.dark;
+              // A touch more opaque than the shared search glass so
+              // notification text reads clearly over busy backgrounds.
+              final glassFill = tokens.glassFill.withValues(
+                alpha: (tokens.glassFill.a + 0.22).clamp(0.0, 0.92),
+              );
+              Widget buildTrigger(VoidCallback toggle) => widget.frosted
                   ? _FrostedCircleButton(
                       icon: LucideIcons.bell,
                       tooltip: context.t('nav.notifications'),
                       active: widget.active || _open,
-                      onTap: _toggle,
+                      onTap: toggle,
                       overlay: showDot
                           ? const Positioned(
                               top: 8,
@@ -119,7 +122,7 @@ class _NotificationBellState extends State<_NotificationBell> {
                       icon: LucideIcons.bell,
                       tooltip: context.t('nav.notifications'),
                       active: widget.active || _open,
-                      onTap: _toggle,
+                      onTap: toggle,
                       child: showDot
                           ? const Positioned(
                               top: 7,
@@ -128,9 +131,9 @@ class _NotificationBellState extends State<_NotificationBell> {
                             )
                           : null,
                     );
-              final nativeButton = GlassButton(
+              Widget buildNativeButton(VoidCallback toggle) => GlassButton(
                 icon: const Icon(LucideIcons.bell),
-                onTap: _toggle,
+                onTap: toggle,
                 width: 42,
                 height: 42,
                 iconSize: 18,
@@ -143,57 +146,66 @@ class _NotificationBellState extends State<_NotificationBell> {
                 // isolated button doesn't over-stretch on tap.
                 stretch: 0.15,
               );
-              final mobileTrigger = Tooltip(
+              Widget buildMobileTrigger(VoidCallback toggle) => Tooltip(
                 message: context.t('nav.notifications'),
                 child: Badge(
                   backgroundColor: AppColors.accent,
                   smallSize: 10.5,
                   isLabelVisible: showDot,
-                  child: nativeButton,
+                  child: buildNativeButton(toggle),
                 ),
               );
-              return OverlayPortal(
-                controller: _portalController,
-                overlayChildBuilder: (_) => _buildOverlay(items),
-                child: CompositedTransformTarget(
-                  link: _link,
-                  child: isNativeApp ? mobileTrigger : trigger,
+              // iOS-26 liquid morph: the popover grows out of the bell trigger
+              // (same dual-blob metaball pattern as the comment sort button)
+              // instead of fading in via an overlay portal.
+              return GlassPopover(
+                popoverWidth: (media.size.width - 24).clamp(0.0, 340.0),
+                popoverBorderRadius: AppTheme.radiusCard,
+                // Blur-free while the morph animates: the per-frame backdrop
+                // blur is the dominant raster cost of the animation. The full
+                // blur fades in via the settings change once settled.
+                settings: liquidGlassPanelSettings(
+                  glassFill: glassFill,
+                  dark: dark,
+                  blur: _settled ? 6 : 0,
+                ),
+                quality: GlassQuality.standard,
+                onOpen: () {
+                  _cubit.load(); // refresh contents whenever it opens
+                  _settleTimer?.cancel();
+                  _settleTimer = Timer(const Duration(milliseconds: 450), () {
+                    if (mounted && _open) setState(() => _settled = true);
+                  });
+                  setState(() {
+                    _open = true;
+                    _settled = false;
+                  });
+                },
+                onClose: () {
+                  _settleTimer?.cancel();
+                  setState(() {
+                    _open = false;
+                    _settled = false;
+                  });
+                },
+                triggerBuilder: (context, toggle) => isNativeApp
+                    ? buildMobileTrigger(toggle)
+                    : buildTrigger(toggle),
+                contentBuilder: (context, close) => _NotifPopoverCard(
+                  items: items,
+                  onMarkAllRead: () => _markAllRead(items),
+                  onTapNotification: (n) {
+                    close();
+                    _openNotification(n);
+                  },
+                  onViewAll: () {
+                    close();
+                    context.go('/notifications');
+                  },
                 ),
               );
             },
           ),
-    );
-  }
-
-  Widget _buildOverlay(List<AppNotification> items) {
-    return Stack(
-      children: [
-        // Transparent click-catcher (mirrors the prototype's z-29 backdrop).
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _close,
-          ),
-        ),
-        CompositedTransformFollower(
-          link: _link,
-          targetAnchor: Alignment.bottomRight,
-          followerAnchor: Alignment.topRight,
-          offset: const Offset(0, 8),
-          child: Align(
-            alignment: Alignment.topRight,
-            child: _NotifPopoverCard(
-              items: items,
-              onMarkAllRead: () => _markAllRead(items),
-              onTapNotification: _openNotification,
-              onViewAll: () {
-                _close();
-                context.go('/notifications');
-              },
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -231,143 +243,111 @@ class _NotifPopoverCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
-    final width = (media.size.width - 24).clamp(0.0, 340.0);
     final maxListHeight = media.size.height * 0.5;
-    final latest = items.take(10).toList();
+    final latest = items;
     final hasUnread = items.any((n) => !n.read);
-    final tokens = SearchTokens.of(Theme.of(context).brightness);
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    // A touch more opaque than the shared search glass so notification text
-    // reads clearly over busy backgrounds (still glassy, just a tick denser).
-    final glassFill = tokens.glassFill.withValues(
-      alpha: (tokens.glassFill.a + 0.22).clamp(0.0, 0.92),
-    );
 
-    return _PopIn(
-      child: SizedBox(
-        width: width,
-        child: GlassPanelShadow(
-          radius: BorderRadius.circular(AppTheme.radiusCard),
-          shadows: tokens.panelShadow,
-          child: GlassContainer(
-            useOwnLayer: true,
-            quality: GlassQuality.premium,
-            clipBehavior: Clip.antiAlias,
-            shape: const LiquidRoundedSuperellipse(
-              borderRadius: AppTheme.radiusCard,
-            ),
-            settings: liquidGlassPanelSettings(
-              glassFill: glassFill,
-              dark: dark,
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Header
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
-                    child: Row(
-                      children: [
-                        Text(
-                          context.t('notifications.title'),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13.5,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                        const Spacer(),
-                        if (hasUnread)
-                          InkWell(
-                            onTap: onMarkAllRead,
-                            borderRadius: BorderRadius.circular(6),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              child: Text(
-                                context.t('notifications.markAllRead'),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.accentStrong,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
+    // The surrounding GlassPopover provides the glass panel (shape, fill,
+    // shadow) and the liquid morph from the bell — this is content only.
+    return Material(
+      color: Colors.transparent,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
+            child: Row(
+              children: [
+                Text(
+                  context.t('notifications.title'),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5,
+                    color: AppColors.ink,
                   ),
-                  Divider(height: 1, color: AppColors.hairline2),
-                  // List (max 10 latest)
-                  if (latest.isEmpty)
-                    Padding(
+                ),
+                const Spacer(),
+                if (hasUnread)
+                  InkWell(
+                    onTap: onMarkAllRead,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
                       padding: const EdgeInsets.symmetric(
-                        vertical: 30,
-                        horizontal: 16,
+                        horizontal: 6,
+                        vertical: 2,
                       ),
                       child: Text(
-                        context.t('notifications.empty'),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppColors.inkSoft,
-                          fontSize: 13,
-                        ),
-                      ),
-                    )
-                  else
-                    Flexible(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxHeight: maxListHeight),
-                        child: ListView.separated(
-                          shrinkWrap: true,
-                          padding: EdgeInsets.zero,
-                          itemCount: latest.length,
-                          separatorBuilder: (_, _) =>
-                              Divider(height: 1, color: AppColors.hairline2),
-                          itemBuilder: (_, i) => _NotifRow(
-                            notification: latest[i],
-                            onTap: () => onTapNotification(latest[i]),
-                          ),
+                        context.t('notifications.markAllRead'),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.accentStrong,
                         ),
                       ),
                     ),
-                  Divider(height: 1, color: AppColors.hairline2),
-                  // Fixed footer → full notifications page
-                  InkWell(
-                    onTap: onViewAll,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            context.t('notifications.viewAll'),
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.inkSoft,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Icon(
-                            LucideIcons.arrowRight,
-                            size: 15,
-                            color: AppColors.inkSoft,
-                          ),
-                        ],
-                      ),
+                  ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: AppColors.hairline2),
+          // List (max 10 latest)
+          if (latest.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 16),
+              child: Text(
+                context.t('notifications.empty'),
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.inkSoft, fontSize: 13),
+              ),
+            )
+          else
+            // Plain ConstrainedBox (no Flexible): the popover measures
+            // its content with unbounded height during the morph, and
+            // flex children are illegal in an unbounded column.
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxListHeight),
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                itemCount: latest.length,
+                separatorBuilder: (_, _) =>
+                    Divider(height: 1, color: AppColors.hairline2),
+                itemBuilder: (_, i) => _NotifRow(
+                  notification: latest[i],
+                  onTap: () => onTapNotification(latest[i]),
+                ),
+              ),
+            ),
+          Divider(height: 1, color: AppColors.hairline2),
+          // Fixed footer → full notifications page
+          InkWell(
+            onTap: onViewAll,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    context.t('notifications.viewAll'),
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.inkSoft,
                     ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(
+                    LucideIcons.arrowRight,
+                    size: 15,
+                    color: AppColors.inkSoft,
                   ),
                 ],
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -468,46 +448,3 @@ class _NotifRow extends StatelessWidget {
 // Icon/tint mapping and relative time live in
 // core/notifications/notification_visuals.dart, shared with the full
 // notifications page.
-
-/// Subtle scale + fade entrance for the popover (anchored top-right).
-class _PopIn extends StatefulWidget {
-  const _PopIn({required this.child});
-  final Widget child;
-
-  @override
-  State<_PopIn> createState() => _PopInState();
-}
-
-class _PopInState extends State<_PopIn> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 180),
-  )..forward();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final curve = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    );
-    // No FadeTransition here: a fractional Opacity layer over the glass panel
-    // prevents its backdrop shader from sampling the screen behind it, so the
-    // popover renders its fill over black until the fade completes. Scale-only
-    // keeps the pop-in feel while the glass stays live from the first frame.
-    return AnimatedBuilder(
-      animation: curve,
-      child: widget.child,
-      builder: (context, child) => Transform.scale(
-        alignment: Alignment.topRight,
-        scale: 0.92 + 0.08 * curve.value,
-        child: child,
-      ),
-    );
-  }
-}

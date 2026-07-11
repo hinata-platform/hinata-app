@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
@@ -34,6 +35,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
         GlassTab,
         GlassButton,
         GlassContainer,
+        GlassPopover,
         GlassQuality,
         LiquidGlassSettings,
         LiquidRoundedSuperellipse;
