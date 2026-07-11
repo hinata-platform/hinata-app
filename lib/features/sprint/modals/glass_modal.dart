@@ -748,3 +748,146 @@ class _GlassModalScaffold extends StatelessWidget {
     );
   }
 }
+
+/// Shows a transient Liquid-Glass toast pill bottom-centre — inserted into the
+/// ROOT overlay, so it renders above every open glass modal/sheet and its
+/// blurred scrim (a Scaffold [SnackBar] would be buried underneath). Use this
+/// for notices raised from inside [showGlassModal]/[showGlassBottomSheet]
+/// content; auto-dismisses after [duration] and never intercepts taps.
+void showGlassToast(
+  BuildContext context,
+  String message, {
+  IconData icon = LucideIcons.info,
+  Duration duration = const Duration(milliseconds: 3200),
+}) {
+  final overlay = Overlay.of(context, rootOverlay: true);
+  late final OverlayEntry entry;
+  entry = OverlayEntry(
+    builder: (_) => _GlassToast(
+      message: message,
+      icon: icon,
+      duration: duration,
+      onDone: () => entry.remove(),
+    ),
+  );
+  overlay.insert(entry);
+}
+
+class _GlassToast extends StatefulWidget {
+  const _GlassToast({
+    required this.message,
+    required this.icon,
+    required this.duration,
+    required this.onDone,
+  });
+
+  final String message;
+  final IconData icon;
+  final Duration duration;
+  final VoidCallback onDone;
+
+  @override
+  State<_GlassToast> createState() => _GlassToastState();
+}
+
+class _GlassToastState extends State<_GlassToast>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 220),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.forward();
+    Future.delayed(widget.duration, () async {
+      if (!mounted) return;
+      await _controller.reverse();
+      widget.onDone();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = SearchTokens.of(Theme.of(context).brightness);
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    // Ride above the keyboard so field-validation notices stay visible.
+    final bottom = 32.0 + MediaQuery.viewInsetsOf(context).bottom;
+    return Positioned(
+      left: 16,
+      right: 16,
+      bottom: bottom,
+      child: IgnorePointer(
+        child: FadeTransition(
+          opacity: CurvedAnimation(
+            parent: _controller,
+            curve: Curves.easeOutCubic,
+          ),
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.25),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: GlassPanelShadow(
+                  radius: BorderRadius.circular(16),
+                  shadows: tokens.panelShadow,
+                  child: GlassContainer(
+                    useOwnLayer: true,
+                    quality: GlassQuality.premium,
+                    clipBehavior: Clip.antiAlias,
+                    shape: const LiquidRoundedSuperellipse(borderRadius: 16),
+                    settings: liquidGlassPanelSettings(
+                      glassFill: tokens.glassFill,
+                      dark: dark,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        surfaceTintColor: Colors.transparent,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(widget.icon,
+                                size: 16, color: AppColors.accentStrong),
+                            const SizedBox(width: 10),
+                            Flexible(
+                              child: Text(
+                                widget.message,
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  height: 1.35,
+                                  color: AppColors.ink,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

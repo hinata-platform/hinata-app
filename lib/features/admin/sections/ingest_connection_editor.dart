@@ -102,9 +102,10 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
     super.dispose();
   }
 
-  void _toast(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+  // Rendered in the ROOT overlay so it stays visible above the glass modal's
+  // blurred scrim (a Scaffold SnackBar would be buried underneath it).
+  void _toast(String message, {IconData icon = LucideIcons.info}) {
+    showGlassToast(context, message, icon: icon);
   }
 
   // ─── Folder scan (explicit consent, live IMAP folder listing) ────────
