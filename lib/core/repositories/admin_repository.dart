@@ -1,6 +1,7 @@
 import '../api/api_client.dart';
 import '../models/admin_user_models.dart';
 import '../models/audit_models.dart';
+import '../models/ingest_models.dart';
 
 /// Administration: platform settings, user management, and the security audit
 /// log.
@@ -17,6 +18,85 @@ class AdminRepository {
   ) async =>
       await _api.put('/api/v1/admin/settings', body: settings)
           as Map<String, dynamic>;
+
+  // --- E-mail-to-ticket connections ---------------------------------------------
+
+  Future<List<IngestConnection>> ingestConnections() async =>
+      ((await _api.get('/api/v1/admin/ingest-connections')) as List<dynamic>)
+          .map((e) => IngestConnection.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+  Future<IngestConnection> createIngestConnection(
+    IngestConnection connection,
+  ) async => IngestConnection.fromJson(
+    await _api.post(
+          '/api/v1/admin/ingest-connections',
+          body: connection.toJson(),
+        )
+        as Map<String, dynamic>,
+  );
+
+  Future<IngestConnection> updateIngestConnection(
+    IngestConnection connection,
+  ) async => IngestConnection.fromJson(
+    await _api.put(
+          '/api/v1/admin/ingest-connections/${connection.id}',
+          body: connection.toJson(),
+        )
+        as Map<String, dynamic>,
+  );
+
+  Future<void> deleteIngestConnection(String id) =>
+      _api.delete('/api/v1/admin/ingest-connections/$id');
+
+  /// Lists the mailbox's folders. Live-connects to the mail server, so only
+  /// called after the admin explicitly consented to a scan. A blank password
+  /// with a known [connectionId] reuses the stored one.
+  Future<List<String>> probeIngestFolders({
+    String? connectionId,
+    required String host,
+    required int port,
+    required bool ssl,
+    required String username,
+    String? password,
+  }) async {
+    final result = await _api.post(
+      '/api/v1/admin/ingest-connections/probe-folders',
+      body: {
+        'connectionId': ?connectionId,
+        'host': host,
+        'port': port,
+        'ssl': ssl,
+        'username': username,
+        'password': ?(password == null || password.isEmpty ? null : password),
+      },
+    ) as Map<String, dynamic>;
+    return ((result['folders'] as List<dynamic>?) ?? const [])
+        .map((e) => e.toString())
+        .toList();
+  }
+
+  /// One page of project options for the connection editor's picker.
+  Future<({List<IngestProjectOption> items, int total})> ingestProjectOptions({
+    String query = '',
+    int page = 0,
+    int size = 25,
+  }) async {
+    final result = await _api.get(
+      '/api/v1/admin/ingest-connections/projects',
+      query: {
+        'q': ?(query.trim().isEmpty ? null : query.trim()),
+        'page': '$page',
+        'size': '$size',
+      },
+    ) as Map<String, dynamic>;
+    return (
+      items: ((result['items'] as List<dynamic>?) ?? const [])
+          .map((e) => IngestProjectOption.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      total: (result['total'] as num?)?.toInt() ?? 0,
+    );
+  }
 
   // --- User management --------------------------------------------------------
 

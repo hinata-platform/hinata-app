@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
 import '../admin_form_helpers.dart';
+import 'ingest_connections_card.dart';
 
 /// Email settings: outbound SMTP + inbound email-to-ticket (IMAP).
 class AdminEmailSection extends StatefulWidget {
@@ -17,10 +18,6 @@ class AdminEmailSection extends StatefulWidget {
 class _AdminEmailSectionState extends State<AdminEmailSection> {
   Map<String, dynamic> get _smtp =>
       (widget.settings['smtp'] ??= <String, dynamic>{})
-          as Map<String, dynamic>;
-
-  Map<String, dynamic> get _ingest =>
-      (widget.settings['emailIngest'] ??= <String, dynamic>{})
           as Map<String, dynamic>;
 
   @override
@@ -103,26 +100,9 @@ class _AdminEmailSectionState extends State<AdminEmailSection> {
         const SizedBox(height: 16),
 
         // ─── Email-to-Ticket (IMAP ingest) ───────────────────────
-        AdminSectionCard(
-          icon: LucideIcons.inbox,
-          title: context.t('admin.emailIngest'),
-          subtitle: context.t('admin.emailIngestHint'),
-          children: [
-            ProviderTile(
-              title: 'IMAP',
-              subtitle: context.t('admin.imapSubtitle'),
-              section: _ingest,
-              fields: [
-                ('host', context.t('admin.smtpHost'), false),
-                ('username', context.t('auth.identifier'), false),
-                ('password', context.t('setup.password'), true),
-                ('folder', 'Folder', false),
-                ('defaultProjectId', context.t('admin.defaultProject'), false),
-              ],
-              onChanged: () => setState(() {}),
-            ),
-          ],
-        ),
+        // Self-contained connection management: own endpoints, saves
+        // immediately — independent of the section-level settings save.
+        const IngestConnectionsCard(),
       ],
     );
   }
