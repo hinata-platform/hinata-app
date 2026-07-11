@@ -496,16 +496,17 @@ class _PopInState extends State<_PopIn> with SingleTickerProviderStateMixin {
       parent: _controller,
       curve: Curves.easeOutCubic,
     );
-    return FadeTransition(
-      opacity: curve,
-      child: AnimatedBuilder(
-        animation: curve,
-        child: widget.child,
-        builder: (context, child) => Transform.scale(
-          alignment: Alignment.topRight,
-          scale: 0.96 + 0.04 * curve.value,
-          child: child,
-        ),
+    // No FadeTransition here: a fractional Opacity layer over the glass panel
+    // prevents its backdrop shader from sampling the screen behind it, so the
+    // popover renders its fill over black until the fade completes. Scale-only
+    // keeps the pop-in feel while the glass stays live from the first frame.
+    return AnimatedBuilder(
+      animation: curve,
+      child: widget.child,
+      builder: (context, child) => Transform.scale(
+        alignment: Alignment.topRight,
+        scale: 0.92 + 0.08 * curve.value,
+        child: child,
       ),
     );
   }
