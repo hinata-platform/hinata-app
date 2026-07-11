@@ -37,6 +37,7 @@ class IssueCreateBody extends StatefulWidget {
     this.initialSprintId,
     this.parentId,
     this.forcedType,
+    this.initialAssigneeId,
     required this.onCreated,
   });
 
@@ -52,6 +53,10 @@ class IssueCreateBody extends StatefulWidget {
   /// Forces and locks the issue type (e.g. `STORY` for an epic's child,
   /// `SUBTASK` for a sub-task). When set, the Type row is locked.
   final String? forcedType;
+
+  /// Pre-selected assignee (e.g. the lane's user under the assignee board
+  /// grouping). Only seeds the field — it stays editable.
+  final String? initialAssigneeId;
 
   final ValueChanged<Issue> onCreated;
 
@@ -113,6 +118,9 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     _state = widget.initialState;
     _sprintId = widget.initialSprintId;
     _parentId = widget.parentId;
+    if (widget.initialAssigneeId != null) {
+      _assigneeIds.add(widget.initialAssigneeId!);
+    }
     if (widget.forcedType != null) _type = widget.forcedType!;
     widget.controller.submit = _save;
     _load();

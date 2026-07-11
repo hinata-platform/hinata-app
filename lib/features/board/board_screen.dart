@@ -510,6 +510,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     BoardColumnView column, {
     String? parentId,
     String? forcedType,
+    String? assigneeId,
   }) async {
     final view = _view;
     if (view == null) return;
@@ -522,6 +523,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       initialState: column.states.isNotEmpty ? column.states.first : null,
       parentId: parentId,
       forcedType: forcedType,
+      initialAssigneeId: assigneeId,
     );
     if (created != null) await _load();
   }
@@ -872,6 +874,12 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
               _grouping == BoardGrouping.subtask &&
                   lane.key != kBoardLaneNoneKey
               ? 'SUBTASK'
+              : null,
+          // The assignee lane's user pre-fills the assignee (still editable).
+          assigneeId:
+              _grouping == BoardGrouping.assignee &&
+                  lane.key != kBoardLaneNoneKey
+              ? lane.key
               : null,
         ),
         onOpenIssue: _openIssue,

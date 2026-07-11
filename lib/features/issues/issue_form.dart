@@ -48,6 +48,7 @@ Future<Issue?> showIssueForm(
   String? initialSprintId,
   String? parentId,
   String? forcedType,
+  String? initialAssigneeId,
 }) async {
   final controller = IssueCreateController();
 
@@ -95,6 +96,7 @@ Future<Issue?> showIssueForm(
             initialSprintId: initialSprintId,
             parentId: parentId,
             forcedType: forcedType,
+            initialAssigneeId: initialAssigneeId,
             onCreated: (issue) => Navigator.of(modalContext).pop(issue),
           ),
         ),
