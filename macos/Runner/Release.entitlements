@@ -9,6 +9,11 @@
 	<!-- Voice comments: record from the microphone. -->
 	<key>com.apple.security.device.audio-input</key>
 	<true/>
+	<!-- Attachments & inline photos: file_picker/image_picker open an
+	     NSOpenPanel; without this the sandboxed panel returns nothing and the
+	     composer's upload buttons silently do nothing. -->
+	<key>com.apple.security.files.user-selected.read-only</key>
+	<true/>
 	<!-- Push notifications (FCM/APNs). "production" matches the App Store
 	     distribution profile (fastlane `mac build`/`beta`/`release`, type: appstore). -->
 	<key>aps-environment</key>

@@ -51,6 +51,13 @@
 	     touched without this usage-description key present. -->
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Hinata needs microphone access so you can record voice messages on issue comments and activity.</string>
+	<!-- Composer "+" menu: photo/camera pickers. App Store review rejects a
+	     build whose binary links these APIs without the matching usage
+	     descriptions, even if the sandboxed picker only opens a file dialog. -->
+	<key>NSCameraUsageDescription</key>
+	<string>Hinata needs camera access so you can capture photos and videos for issue comments and attachments.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Hinata needs photo library access so you can attach photos and videos to issue comments and attachments.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>

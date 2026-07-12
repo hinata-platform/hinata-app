@@ -13,6 +13,11 @@
 	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
+	<!-- Attachments & inline photos: file_picker/image_picker open an
+	     NSOpenPanel; without this the sandboxed panel returns nothing and the
+	     composer's upload buttons silently do nothing. -->
+	<key>com.apple.security.files.user-selected.read-only</key>
+	<true/>
 	<!-- NOTE: `aps-environment` (push) and `com.apple.developer.associated-domains`
 	     are DELIBERATELY absent here. They require a provisioning profile from a
 	     real development team; the local `flutter run -d macos` config signs
