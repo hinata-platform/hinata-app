@@ -13,6 +13,8 @@ class Issue extends Equatable {
     this.assigneeId,
     this.assigneeIds = const [],
     this.reporterId,
+    this.reporterEmail,
+    this.inboundSubject,
     this.tags = const [],
     this.parentId,
     this.dependsOnIds = const [],
@@ -46,7 +48,18 @@ class Issue extends Equatable {
   /// All assignees. In single-assignee mode this holds 0 or 1 entries.
   final List<String> assigneeIds;
   final String? reporterId;
+
+  /// Set when the issue was created from an inbound e-mail; also marks the issue
+  /// as email-sourced (drives the "Reply by email" action).
+  final String? reporterEmail;
+
+  /// Original subject line of the inbound e-mail; used to prefill "Re: …".
+  final String? inboundSubject;
   final List<String> tags;
+
+  /// Whether this issue was created via email-to-ticket (has a sender to reply to).
+  bool get isEmailSourced =>
+      reporterEmail != null && reporterEmail!.isNotEmpty;
   final String? parentId;
   final List<String> dependsOnIds;
   final String? sprintId;
@@ -95,6 +108,8 @@ class Issue extends Equatable {
     assigneeId: json['assigneeId'] as String?,
     assigneeIds: _assigneeIds(json),
     reporterId: json['reporterId'] as String?,
+    reporterEmail: json['reporterEmail'] as String?,
+    inboundSubject: json['inboundSubject'] as String?,
     tags: _stringList(json['tags']),
     parentId: json['parentId'] as String?,
     dependsOnIds: _stringList(json['dependsOnIds']),
@@ -136,6 +151,8 @@ class Issue extends Equatable {
     assigneeId: assigneeId ?? this.assigneeId,
     assigneeIds: assigneeIds ?? this.assigneeIds,
     reporterId: reporterId,
+    reporterEmail: reporterEmail,
+    inboundSubject: inboundSubject,
     tags: tags,
     parentId: parentId == _noChange ? this.parentId : parentId as String?,
     dependsOnIds: dependsOnIds,

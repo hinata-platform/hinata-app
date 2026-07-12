@@ -76,7 +76,15 @@
     "invalidProjectKey": "2–10 Zeichen, beginnend mit einem Buchstaben",
     "connection": "Server nicht erreichbar. Bitte Verbindung prüfen.",
     "unexpected": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
-    "passwordsDoNotMatch": "Passwörter stimmen nicht überein"
+    "passwordsDoNotMatch": "Passwörter stimmen nicht überein",
+    "emailReply": {
+      "disabled": "E-Mail-Antworten sind deaktiviert. Bitte einen Plattform-Admin, sie zu aktivieren.",
+      "subjectRequired": "Bitte gib einen Betreff ein.",
+      "bodyRequired": "Bitte gib eine Nachricht ein.",
+      "notEmailSourced": "Dieses Ticket wurde nicht aus einer E-Mail erstellt – es gibt keinen Empfänger für eine Antwort.",
+      "noSmtp": "Es ist noch kein Mailserver konfiguriert. Bitte wende dich an die Plattform-Admins, um E-Mails senden zu können.",
+      "sendFailed": "Die Antwort konnte nicht gesendet werden. Bitte versuche es erneut."
+    }
   },
   "connect": {
     "title": "Mit deinem Server verbinden",
@@ -541,7 +549,21 @@
       "custom": "Eigener Zeitraum…"
     },
     "countFiltered": "{{count}} von {{total}} Aufgaben",
-    "emptyFiltered": "Keine Aufgaben passen zu deinen Filtern"
+    "emptyFiltered": "Keine Aufgaben passen zu deinen Filtern",
+    "replyEmail": {
+      "action": "Per E-Mail antworten",
+      "title": "Per E-Mail antworten",
+      "subtitle": "Sende eine E-Mail-Antwort an den ursprünglichen Absender dieses Tickets.",
+      "to": "An",
+      "subject": "Betreff",
+      "subjectHint": "Betreff eingeben",
+      "body": "Nachricht",
+      "bodyHint": "Antwort schreiben…",
+      "attach": "Dateien anhängen",
+      "send": "Antwort senden",
+      "sent": "Antwort gesendet"
+    },
+    "moreActions": "Weitere Aktionen"
   },
   "type": {
     "task": "Aufgabe",
@@ -996,6 +1018,8 @@
     "platformHint": "Plattform-konforme Voreinstellungen. Aktiviere diese, um die flexiblen Modi freizuschalten.",
     "multiAssigneeTitle": "Mehrere zugewiesene Personen pro Vorgang",
     "multiAssigneeHint": "Aus: eine Person pro Vorgang. An: mehrere Personen zuweisbar.",
+    "emailReplyTitle": "Per E-Mail antworten",
+    "emailReplyHint": "Aus: keine E-Mail-Antworten. An: dem Absender von per E-Mail erstellten Tickets direkt aus dem Vorgang antworten.",
     "featureFlags": "Feature-Flags",
     "featureFlagsHint": "Optionale Client-Funktionen per Name schalten. Wird der App bei jedem Start übermittelt.",
     "featureFlagsEmpty": "Noch keine Feature-Flags definiert.",

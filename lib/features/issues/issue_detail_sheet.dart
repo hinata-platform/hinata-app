@@ -31,6 +31,7 @@ import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/hue_colors.dart';
+import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/markdown_toolbar.dart';
 import '../../core/widgets/soft_card.dart';
@@ -63,6 +64,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassModal,
         showGlassOptions;
 import 'attachments/attachments_section.dart';
+import 'email_reply/email_reply_sheet.dart';
 import 'epic_search_popover.dart';
 import 'issue_form.dart' show showIssueForm;
 import 'issue_links_section.dart';
@@ -147,6 +149,16 @@ Future<void> showIssueDetailSheet(
   final header = ValueNotifier<Issue?>(null);
   final bodyKey = GlobalKey<IssueDetailBodyState>();
   final apiBaseUrl = context.read<IssueRepository>().apiBaseUrl;
+  final issueRepo = context.read<IssueRepository>();
+  // Captured once here (not inside the rebuilding trailingNavBarWidget
+  // builder below) — that builder's closure otherwise re-reads the outer
+  // `context` on every `header` update, which can be deactivated by the time
+  // a later rebuild fires (e.g. after maximize navigates away and the sheet
+  // is minimized again), throwing "Looking up a deactivated widget's
+  // ancestor is unsafe".
+  final emailReplyEnabled =
+      context.read<AppConfigBloc>().state.meta?.isFlagEnabled('emailReply') ??
+      false;
   // Own the sheet's scroll controller so the body can animate the feed to the
   // newest comment after posting (phone: the whole sheet scrolls).
   final sheetScroll = ScrollController();
@@ -208,6 +220,14 @@ Future<void> showIssueDetailSheet(
             onClose: () => Navigator.of(modalContext).maybePop(),
             canDelete: bodyKey.currentState?.canDelete ?? false,
             archived: issue?.archived ?? false,
+            // Reply-by-email: only for email-sourced issues, gated on the flag.
+            onReply: issue != null && issue.isEmailSourced && emailReplyEnabled
+                ? () => showEmailReplySheet(
+                    modalContext,
+                    issue: issue,
+                    repo: issueRepo,
+                  )
+                : null,
           ),
         ),
         // On a phone bottom sheet the comment composer floats here, pinned above
@@ -288,6 +308,7 @@ class _SheetActions extends StatelessWidget {
     required this.onMaximize,
     required this.onDelete,
     required this.onClose,
+    this.onReply,
     this.canDelete = false,
     this.archived = false,
   });
@@ -296,6 +317,10 @@ class _SheetActions extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback onClose;
 
+  /// Non-null only for email-sourced issues with the `emailReply` flag enabled;
+  /// opens the reply-by-email composer.
+  final VoidCallback? onReply;
+
   /// Whether the current user may hard-delete (trash icon); regular members
   /// only see the archive affordance, archived issues a restore one.
   final bool canDelete;
@@ -303,6 +328,7 @@ class _SheetActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final removal = _removalLook(archived: archived, canDelete: canDelete);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -311,23 +337,21 @@ class _SheetActions extends StatelessWidget {
           onPressed: onMaximize,
           icon: Icon(LucideIcons.maximize2, size: 19, color: AppColors.inkSoft),
         ),
-        IconButton(
-          tooltip: context.t(
-            archived
-                ? 'issues.unarchive'
-                : (canDelete ? 'common.delete' : 'issues.archive'),
+        // With reply-by-email available the secondary actions collapse into a
+        // "…" popover; without it the removal action stays a plain button.
+        if (onReply != null)
+          _IssueActionsMenu(
+            onReply: onReply!,
+            onDelete: onDelete,
+            canDelete: canDelete,
+            archived: archived,
+          )
+        else
+          IconButton(
+            tooltip: context.t(removal.labelKey),
+            onPressed: onDelete,
+            icon: Icon(removal.icon, size: 20, color: removal.color),
           ),
-          onPressed: onDelete,
-          icon: Icon(
-            archived
-                ? LucideIcons.archiveRestore
-                : (canDelete ? LucideIcons.trash2 : LucideIcons.archive),
-            size: 20,
-            color: canDelete && !archived
-                ? AppColors.danger
-                : AppColors.accentStrong,
-          ),
-        ),
         IconButton(
           tooltip: context.t('common.cancel'),
           onPressed: onClose,

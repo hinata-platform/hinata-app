@@ -2,6 +2,96 @@ part of 'issue_detail_sheet.dart';
 
 // ─────────────────────────── Top bar ───────────────────────────────────────
 
+/// Actions collapsed into the "…" overflow menu of the issue top bars.
+enum _IssueMenuAction { reply, delete }
+
+/// The delete/archive/restore affordance shared by both top bars: label,
+/// icon and tint depend on the archived state and the delete permission.
+({String labelKey, IconData icon, Color color}) _removalLook({
+  required bool archived,
+  required bool canDelete,
+}) => (
+  labelKey: archived
+      ? 'issues.unarchive'
+      : (canDelete ? 'common.delete' : 'issues.archive'),
+  icon: archived
+      ? LucideIcons.archiveRestore
+      : (canDelete ? LucideIcons.trash2 : LucideIcons.archive),
+  color: canDelete && !archived ? AppColors.danger : AppColors.accentStrong,
+);
+
+/// "…" overflow button for the issue top bars. Shown only when the issue has
+/// more than the removal action (i.e. reply-by-email is available), bundling
+/// reply + delete/archive into one liquid-glass popover so the bar stays tidy.
+class _IssueActionsMenu extends StatelessWidget {
+  const _IssueActionsMenu({
+    required this.onReply,
+    required this.onDelete,
+    required this.canDelete,
+    required this.archived,
+  });
+
+  final VoidCallback onReply;
+  final VoidCallback onDelete;
+  final bool canDelete;
+  final bool archived;
+
+  @override
+  Widget build(BuildContext context) {
+    final removal = _removalLook(archived: archived, canDelete: canDelete);
+    return GlassPopupMenu<_IssueMenuAction?>(
+      value: null,
+      width: 250,
+      items: [
+        GlassMenuItem(
+          value: _IssueMenuAction.reply,
+          label: context.t('issues.replyEmail.action'),
+          leading: const Icon(
+            LucideIcons.mail,
+            size: 16,
+            color: AppColors.accentStrong,
+          ),
+        ),
+        GlassMenuItem(
+          value: _IssueMenuAction.delete,
+          label: context.t(removal.labelKey),
+          leading: Icon(removal.icon, size: 16, color: removal.color),
+          color: canDelete && !archived ? AppColors.danger : null,
+          dividerAbove: true,
+        ),
+      ],
+      onSelected: (action) {
+        switch (action) {
+          case _IssueMenuAction.reply:
+            onReply();
+          case _IssueMenuAction.delete:
+            onDelete();
+          case null:
+            break;
+        }
+      },
+      child: Tooltip(
+        message: context.t('issues.moreActions'),
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          // Sized to sit flush with the sibling IconButtons (48dp tap target).
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Center(
+              child: Icon(
+                LucideIcons.ellipsis,
+                size: 20,
+                color: AppColors.inkSoft,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _RouteTopBar extends StatelessWidget {
   const _RouteTopBar({
     required this.issue,
@@ -11,6 +101,7 @@ class _RouteTopBar extends StatelessWidget {
     this.onMinimize,
     required this.onDelete,
     required this.onClose,
+    this.onReply,
     this.canDelete = false,
   });
 
@@ -24,6 +115,10 @@ class _RouteTopBar extends StatelessWidget {
   final VoidCallback? onMinimize;
   final VoidCallback onDelete;
   final VoidCallback onClose;
+
+  /// Non-null only for email-sourced issues with the `emailReply` flag enabled;
+  /// opens the reply-by-email composer.
+  final VoidCallback? onReply;
 
   /// Whether the current user may hard-delete: picks the trash icon over the
   /// archive icon (regular members only archive; archived issues restore).
@@ -85,23 +180,29 @@ class _RouteTopBar extends StatelessWidget {
                   color: AppColors.inkSoft,
                 ),
               ),
-            IconButton(
-              tooltip: context.t(
-                issue.archived
-                    ? 'issues.unarchive'
-                    : (canDelete ? 'common.delete' : 'issues.archive'),
+            // With reply-by-email available the secondary actions collapse into
+            // a "…" popover; without it the removal action stays a plain button.
+            if (onReply != null)
+              _IssueActionsMenu(
+                onReply: onReply!,
+                onDelete: onDelete,
+                canDelete: canDelete,
+                archived: issue.archived,
+              )
+            else
+              Builder(
+                builder: (context) {
+                  final removal = _removalLook(
+                    archived: issue.archived,
+                    canDelete: canDelete,
+                  );
+                  return IconButton(
+                    tooltip: context.t(removal.labelKey),
+                    onPressed: onDelete,
+                    icon: Icon(removal.icon, size: 20, color: removal.color),
+                  );
+                },
               ),
-              onPressed: onDelete,
-              icon: Icon(
-                issue.archived
-                    ? LucideIcons.archiveRestore
-                    : (canDelete ? LucideIcons.trash2 : LucideIcons.archive),
-                size: 20,
-                color: canDelete && !issue.archived
-                    ? AppColors.danger
-                    : AppColors.accentStrong,
-              ),
-            ),
           ],
         ),
       ),

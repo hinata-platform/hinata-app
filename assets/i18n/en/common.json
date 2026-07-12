@@ -76,7 +76,15 @@
     "invalidProjectKey": "2-10 characters, starting with a letter",
     "connection": "Could not reach the server. Please check your connection.",
     "unexpected": "Something went wrong. Please try again.",
-    "passwordsDoNotMatch": "Passwords do not match"
+    "passwordsDoNotMatch": "Passwords do not match",
+    "emailReply": {
+      "disabled": "Email replies are turned off. Ask a platform admin to enable them.",
+      "subjectRequired": "Please enter a subject.",
+      "bodyRequired": "Please enter a message.",
+      "notEmailSourced": "This ticket wasn't created from an email, so there's no one to reply to.",
+      "noSmtp": "No mail server is configured yet. Please contact your platform admins to enable sending emails.",
+      "sendFailed": "The reply couldn't be sent. Please try again."
+    }
   },
   "connect": {
     "title": "Connect to your server",
@@ -541,7 +549,21 @@
       "custom": "Custom range…"
     },
     "countFiltered": "{{count}} of {{total}} issues",
-    "emptyFiltered": "No issues match your filters"
+    "emptyFiltered": "No issues match your filters",
+    "replyEmail": {
+      "action": "Reply by email",
+      "title": "Reply by email",
+      "subtitle": "Send an email reply to the original sender of this ticket.",
+      "to": "To",
+      "subject": "Subject",
+      "subjectHint": "Enter a subject",
+      "body": "Message",
+      "bodyHint": "Write your reply…",
+      "attach": "Attach files",
+      "send": "Send reply",
+      "sent": "Reply sent"
+    },
+    "moreActions": "More actions"
   },
   "type": {
     "task": "Task",
@@ -996,6 +1018,8 @@
     "platformHint": "Platform-conform defaults. Switch these on to unlock the flexible modes.",
     "multiAssigneeTitle": "Multiple assignees per issue",
     "multiAssigneeHint": "Off: one person per issue. On: assign several people.",
+    "emailReplyTitle": "Reply by email",
+    "emailReplyHint": "Off: no email replies. On: reply to the sender of email-to-ticket issues directly from the issue.",
     "featureFlags": "Feature flags",
     "featureFlagsHint": "Toggle optional client features by name. Served to apps on every start.",
     "featureFlagsEmpty": "No feature flags defined yet.",

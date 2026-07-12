@@ -27,6 +27,13 @@ class _AdminAppSectionState extends State<AdminAppSection> {
       (_app['featureFlags'] ??= <String, dynamic>{})
           as Map<String, dynamic>;
 
+  /// Flags that have a dedicated, described toggle above — hidden from the raw
+  /// name→enabled editor so they aren't shown twice.
+  static const _dedicatedFlags = {
+    PlatformFlags.multiAssignee,
+    PlatformFlags.emailReply,
+  };
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -111,6 +118,14 @@ class _AdminAppSectionState extends State<AdminAppSection> {
               onChanged: (v) => setState(
                   () => _flags[PlatformFlags.multiAssignee] = v),
             ),
+            const SizedBox(height: 14),
+            _PlatformToggle(
+              title: context.t('admin.emailReplyTitle'),
+              description: context.t('admin.emailReplyHint'),
+              value: _flags[PlatformFlags.emailReply] == true,
+              onChanged: (v) =>
+                  setState(() => _flags[PlatformFlags.emailReply] = v),
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -121,6 +136,10 @@ class _AdminAppSectionState extends State<AdminAppSection> {
           children: [
             _FeatureFlagEditor(
               flags: _flags,
+              // The well-known flags have dedicated toggles above (with proper
+              // titles + descriptions), so keep them out of the raw editor to
+              // avoid showing the same switch twice.
+              hidden: _dedicatedFlags,
               onChanged: () => setState(() {}),
             ),
           ],
@@ -173,10 +192,18 @@ class _PlatformToggle extends StatelessWidget {
 
 /// Add / toggle / remove arbitrary `name → enabled` feature flags.
 class _FeatureFlagEditor extends StatefulWidget {
-  const _FeatureFlagEditor({required this.flags, required this.onChanged});
+  const _FeatureFlagEditor({
+    required this.flags,
+    required this.onChanged,
+    this.hidden = const {},
+  });
 
   final Map<String, dynamic> flags;
   final VoidCallback onChanged;
+
+  /// Flag keys surfaced by a dedicated toggle elsewhere — excluded from the list
+  /// (and blocked from being re-added by name) so they never appear twice.
+  final Set<String> hidden;
 
   @override
   State<_FeatureFlagEditor> createState() => _FeatureFlagEditorState();
@@ -193,7 +220,11 @@ class _FeatureFlagEditorState extends State<_FeatureFlagEditor> {
 
   void _add() {
     final name = _newFlag.text.trim();
-    if (name.isEmpty || widget.flags.containsKey(name)) return;
+    if (name.isEmpty ||
+        widget.flags.containsKey(name) ||
+        widget.hidden.contains(name)) {
+      return;
+    }
     setState(() {
       widget.flags[name] = true;
       _newFlag.clear();
@@ -203,7 +234,9 @@ class _FeatureFlagEditorState extends State<_FeatureFlagEditor> {
 
   @override
   Widget build(BuildContext context) {
-    final entries = widget.flags.entries.toList();
+    final entries = widget.flags.entries
+        .where((e) => !widget.hidden.contains(e.key))
+        .toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
