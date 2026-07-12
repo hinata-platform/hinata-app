@@ -43,7 +43,15 @@ class ApiClient {
       InterceptorsWrapper(
         onRequest: (options, handler) {
           final token = _storage.accessToken;
-          if (token != null && !options.path.contains('/auth/refresh')) {
+          // Server metadata is deliberately public and drives boot routing. Do
+          // not attach a stale bearer token here: some servers reject an
+          // invalid token before reaching a public endpoint, which would make
+          // a revoked session look like a failed server connection.
+          final isAnonymousBootRequest =
+              options.path.contains('/api/v1/meta');
+          if (token != null &&
+              !isAnonymousBootRequest &&
+              !options.path.contains('/auth/refresh')) {
             options.headers['Authorization'] = 'Bearer $token';
           }
           // Tell the server which language to localize error messages in.
@@ -51,7 +59,14 @@ class ApiClient {
           handler.next(options);
         },
         onError: (error, handler) async {
+          // A rejected refresh token must end the refresh attempt. Retrying the
+          // refresh request through this interceptor would await the in-flight
+          // `_refreshing` future from inside itself, leaving startup stuck on
+          // the connecting screen after sessions are revoked server-side.
+          final isRefreshRequest =
+              error.requestOptions.path.contains('/auth/refresh');
           if (error.response?.statusCode == 401 &&
+              !isRefreshRequest &&
               _storage.refreshToken != null &&
               error.requestOptions.extra['retried'] != true) {
             final refreshed = await _tryRefresh();
