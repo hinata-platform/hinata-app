@@ -55,11 +55,11 @@ messages localized **by the server** through the `Accept-Language` header.
 
 | | Step | What happens |
 |:-:|---|---|
-| 🔌 | **Connect** | On first start the app asks for your server URL and only continues once the server answers. |
+| 🔌 | **Connect** | On first start the app asks for your server URL and only continues once the server answers. Native builds never bake in a URL — you can **save several servers and switch** between them, each with its own scoped tokens, from a liquid-glass server manager with live probe/ping. |
 | 🛡️ | **Version gate** | The app compares its version with the server's `minAppVersion` on every start and forces an update when required. |
 | 🧙 | **Setup wizard** | A fresh server is configured directly in the app (organization + first admin) — unless bootstrapped via `HINATA_SETUP_*`. |
 | 🧭 | **Onboarding** | A one-time illustrated tour of the key features. |
-| 🔑 | **Sign in** | Local credentials, or SSO (OpenID Connect, OAuth 2.0, SAML, LDAP — e.g. Synology SSO). SSO returns via the `hinata://auth-callback` deep link. |
+| 🔑 | **Sign in** | Local credentials with optional **2FA (TOTP)**, **self-registration + e-mail verification** and forgot-password — or SSO (OpenID Connect, OAuth 2.0, SAML, LDAP — e.g. Synology SSO). SSO returns via the `hinata://auth-callback` deep link. |
 
 ---
 
@@ -69,27 +69,32 @@ messages localized **by the server** through the `Accept-Language` header.
   <tr>
     <td>📊 <b>Dashboard</b><br><sub>today's focus, completion, ranking, weekly tracker</sub></td>
     <td>📁 <b>Projects &amp; teams</b><br><sub>per-project workflows, keys &amp; members</sub></td>
-    <td>🐛 <b>Issues</b><br><sub>comments, attachments, subtasks, time logging</sub></td>
+    <td>🐛 <b>Issues</b><br><sub>epic → story → subtask hierarchy, dependencies, archiving</sub></td>
   </tr>
   <tr>
+    <td>💬 <b>Comments</b><br><sub>threaded replies, reactions, voice notes, live (SSE)</sub></td>
     <td>📋 <b>Agile board</b><br><sub>drag &amp; drop, WIP limits, Board / Backlog / Timeline views</sub></td>
     <td>🏃 <b>Sprints</b><br><sub>plan, run &amp; review · capacity, points, burndown</sub></td>
-    <td>📈 <b>Gantt / Timeline</b><br><sub>dependencies, start/due dates, progress</sub></td>
   </tr>
   <tr>
+    <td>📈 <b>Gantt / Timeline</b><br><sub>dependencies, start/due dates, progress</sub></td>
     <td>⏱️ <b>Timesheets</b><br><sub>weekly time tracking by activity</sub></td>
     <td>📑 <b>Reports</b><br><sub>burndown, velocity, cycle time, distributions</sub></td>
-    <td>🏷️ <b>Reusable labels</b><br><sub>multi-select picker, project-wide tags</sub></td>
   </tr>
   <tr>
     <td>📎 <b>Attachments</b><br><sub>drag-drop grid, glass lightbox, live (SSE) sync</sub></td>
-    <td>📚 <b>Knowledge base</b><br><sub>hierarchical Markdown</sub></td>
-    <td>🔔 <b>Notifications</b><br><sub>in-app &amp; e-mail</sub></td>
+    <td>📚 <b>Knowledge base</b><br><sub>hierarchical Markdown, smart links</sub></td>
+    <td>🔔 <b>Notifications</b><br><sub>in-app, e-mail &amp; push</sub></td>
   </tr>
   <tr>
     <td>🔍 <b>Command palette</b><br><sub>⌘K global search · recents &amp; triggers</sub></td>
+    <td>👤 <b>Account</b><br><sub>2FA (TOTP), sessions, avatar, GDPR export/delete</sub></td>
+    <td>🖥️ <b>Multi-server</b><br><sub>save &amp; switch servers · per-server tokens</sub></td>
+  </tr>
+  <tr>
     <td>⚙️ <b>Settings</b><br><sub>language, theme &amp; dark mode, privacy, versions</sub></td>
-    <td>🛠️ <b>Admin</b><br><sub>SSO, mail-to-ticket, users</sub></td>
+    <td>🛠️ <b>Admin</b><br><sub>SSO, mail-to-ticket, git apps, users, app settings</sub></td>
+    <td>🏷️ <b>Reusable labels</b><br><sub>multi-select picker, project-wide tags</sub></td>
   </tr>
 </table>
 
