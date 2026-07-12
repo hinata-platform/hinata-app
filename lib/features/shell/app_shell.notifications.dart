@@ -22,7 +22,8 @@ class _NotificationBell extends StatefulWidget {
   State<_NotificationBell> createState() => _NotificationBellState();
 }
 
-class _NotificationBellState extends State<_NotificationBell> {
+class _NotificationBellState extends State<_NotificationBell>
+    with SingleTickerProviderStateMixin {
   /// The bell preview is capped at 5 entries — full history lives on the
   /// notifications page, and a smaller page keeps the popover build cheap.
   static const _previewCount = 5;
@@ -30,11 +31,16 @@ class _NotificationBellState extends State<_NotificationBell> {
   late final FetchCubit<List<AppNotification>> _cubit;
   bool _open = false;
 
-  /// False while the liquid morph is still animating. During that window the
-  /// panel renders blur-free and with placeholder content — the per-frame
-  /// backdrop blur is the dominant raster cost of the morph.
-  bool _settled = false;
-  Timer? _settleTimer;
+  /// Ramps the panel's blur from 0 → full over the same window as the liquid
+  /// morph, instead of snapping it on after a fixed delay. A snap left the
+  /// backdrop visibly un-blurred for a beat after the panel had already
+  /// settled into place; animating it in keeps the per-frame blur cost low
+  /// during the cheapest (still-growing) part of the morph while never
+  /// exposing a visible on/off switch.
+  late final AnimationController _blurController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 260),
+  );
 
   @override
   void initState() {
@@ -49,7 +55,7 @@ class _NotificationBellState extends State<_NotificationBell> {
 
   @override
   void dispose() {
-    _settleTimer?.cancel();
+    _blurController.dispose();
     _cubit.close();
     super.dispose();
   }
@@ -158,51 +164,51 @@ class _NotificationBellState extends State<_NotificationBell> {
               // iOS-26 liquid morph: the popover grows out of the bell trigger
               // (same dual-blob metaball pattern as the comment sort button)
               // instead of fading in via an overlay portal.
-              return GlassPopover(
-                popoverWidth: (media.size.width - 24).clamp(0.0, 340.0),
-                popoverBorderRadius: AppTheme.radiusCard,
-                // Blur-free while the morph animates: the per-frame backdrop
-                // blur is the dominant raster cost of the animation. The full
-                // blur fades in via the settings change once settled.
-                settings: liquidGlassPanelSettings(
-                  glassFill: glassFill,
-                  dark: dark,
-                  blur: _settled ? 6 : 0,
-                ),
-                quality: GlassQuality.standard,
-                onOpen: () {
-                  _cubit.load(); // refresh contents whenever it opens
-                  _settleTimer?.cancel();
-                  _settleTimer = Timer(const Duration(milliseconds: 450), () {
-                    if (mounted && _open) setState(() => _settled = true);
-                  });
-                  setState(() {
-                    _open = true;
-                    _settled = false;
-                  });
+              return AnimatedBuilder(
+                animation: _blurController,
+                builder: (context, _) {
+                  // Ramp blur 0 → 6 over the morph window (eased so it reads
+                  // as one continuous glass-forming motion, never a visible
+                  // switch) instead of gating it behind a fixed delay.
+                  final blur =
+                      6 * Curves.easeOut.transform(_blurController.value);
+                  return GlassPopover(
+                    popoverWidth: (media.size.width - 24).clamp(0.0, 340.0),
+                    popoverBorderRadius: AppTheme.radiusCard,
+                    settings: liquidGlassPanelSettings(
+                      glassFill: glassFill,
+                      dark: dark,
+                      blur: blur,
+                    ),
+                    quality: GlassQuality.standard,
+                    onOpen: () {
+                      _cubit.load(); // refresh contents whenever it opens
+                      _blurController
+                        ..value = 0
+                        ..forward();
+                      setState(() => _open = true);
+                    },
+                    onClose: () {
+                      _blurController.stop();
+                      setState(() => _open = false);
+                    },
+                    triggerBuilder: (context, toggle) => isNativeApp
+                        ? buildMobileTrigger(toggle)
+                        : buildTrigger(toggle),
+                    contentBuilder: (context, close) => _NotifPopoverCard(
+                      items: items,
+                      onMarkAllRead: () => _markAllRead(items),
+                      onTapNotification: (n) {
+                        close();
+                        _openNotification(n);
+                      },
+                      onViewAll: () {
+                        close();
+                        context.go('/notifications');
+                      },
+                    ),
+                  );
                 },
-                onClose: () {
-                  _settleTimer?.cancel();
-                  setState(() {
-                    _open = false;
-                    _settled = false;
-                  });
-                },
-                triggerBuilder: (context, toggle) => isNativeApp
-                    ? buildMobileTrigger(toggle)
-                    : buildTrigger(toggle),
-                contentBuilder: (context, close) => _NotifPopoverCard(
-                  items: items,
-                  onMarkAllRead: () => _markAllRead(items),
-                  onTapNotification: (n) {
-                    close();
-                    _openNotification(n);
-                  },
-                  onViewAll: () {
-                    close();
-                    context.go('/notifications');
-                  },
-                ),
               );
             },
           ),
