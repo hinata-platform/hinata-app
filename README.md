@@ -51,46 +51,6 @@ messages localized **by the server** through the `Accept-Language` header.
 
 ---
 
-## 📸 Screenshots
-
-### Desktop
-
-<table>
-  <tr>
-    <td width="50%"><img src="docs/screenshots/desktop-dashboard.png" alt="Dashboard — today's focus, completion, weekly tracking and team performance"></td>
-    <td width="50%"><img src="docs/screenshots/desktop-board.png" alt="Agile board — sprint planning with capacity, story points and live sprint header"></td>
-  </tr>
-  <tr>
-    <td align="center"><sub><b>Dashboard</b> — today's focus, completion, weekly tracker, team ranking</sub></td>
-    <td align="center"><sub><b>Agile board</b> — sprint planning, capacity, story points, drag &amp; drop</sub></td>
-  </tr>
-  <tr>
-    <td width="50%"><img src="docs/screenshots/desktop-gantt.png" alt="Gantt timeline — start/due dates, dependencies and progress"></td>
-    <td width="50%"><img src="docs/screenshots/desktop-reports.png" alt="Reports — burndown, velocity, cycle time and distributions"></td>
-  </tr>
-  <tr>
-    <td align="center"><sub><b>Gantt / Timeline</b> — start/due dates, dependencies, progress</sub></td>
-    <td align="center"><sub><b>Reports</b> — burndown, issues by state, priority &amp; assignee</sub></td>
-  </tr>
-</table>
-
-### Mobile
-
-<table>
-  <tr>
-    <td width="33%"><img src="docs/screenshots/mobile-dashboard.png" alt="Mobile dashboard — stats, today's focus, completion and tracker"></td>
-    <td width="33%"><img src="docs/screenshots/mobile-board.png" alt="Mobile agile board — sprint planning with capacity and story points"></td>
-    <td width="33%"><img src="docs/screenshots/mobile-issues.png" alt="Mobile issues — filterable, searchable issue list"></td>
-  </tr>
-  <tr>
-    <td align="center"><sub><b>Dashboard</b></sub></td>
-    <td align="center"><sub><b>Agile board</b></sub></td>
-    <td align="center"><sub><b>Issues</b></sub></td>
-  </tr>
-</table>
-
----
-
 ## 🚀 How it works
 
 | | Step | What happens |
