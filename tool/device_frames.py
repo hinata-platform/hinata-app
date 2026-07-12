@@ -109,30 +109,20 @@ def _dark_or_light(bg):
     return (24, 22, 30, 255) if lum > 140 else INK
 
 
-# The iOS status-bar / safe-area top as a fraction of the screen cut-out. Matches
-# the ~168 px status bar of a 2868 px-tall Pro Max screen, so app content is
-# always pushed clear of the Dynamic Island instead of rendering behind it. Web
-# captures have no safe-area inset, so we reserve this band ourselves rather than
-# relying on leftover aspect room (which collapses to ~0 when the capture already
-# fills the screen aspect — the "no status bar / cut-off top" bug).
-IOS_STATUS_FRAC = 0.0586
-
-
 # ---- public framing ---------------------------------------------------------
 def frame_device(device, shot, status_bar=False):
     shot = shot.convert("RGBA")
     frame, screen, bbox = _frame_and_screen(device)
     bw, bh = bbox[2] - bbox[0], bbox[3] - bbox[1]
 
-    layer = Image.new("RGBA", frame.size, (0, 0, 0, 0))
     if status_bar:
-        # Reserve a real status bar at the top, fit the app into the region
-        # BELOW it, then synthesize the clock/signal/battery over the band.
-        band = round(bh * IOS_STATUS_FRAC)
-        app = _fit_cover(shot, (bw, bh - band))
-        fitted = _status_bar(app, band)   # bw × bh, status bar on top of the app
-    else:
-        fitted = _fit_cover(shot, (bw, bh))
+        # Grow a status bar so (shot + band) matches the screen aspect exactly,
+        # leaving the body of the capture un-cropped.
+        band = max(0, round(shot.width * bh / bw) - shot.height)
+        shot = _status_bar(shot, band)
+
+    fitted = _fit_cover(shot, (bw, bh))
+    layer = Image.new("RGBA", frame.size, (0, 0, 0, 0))
     layer.paste(fitted, (bbox[0], bbox[1]))
     layer.putalpha(screen)          # clip to the exact screen shape
     layer.alpha_composite(frame)    # device chrome (bezel · notch · island) on top
