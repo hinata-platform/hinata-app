@@ -1,0 +1,13 @@
+# cargokit (Rust build) options for native plugins built from source, e.g.
+# irondash_engine_context (transitive via super_clipboard/super_native_extensions).
+#
+# Force building the Rust native libraries LOCALLY instead of downloading the
+# maintainer's precompiled binaries. The precompiled irondash 0.5.5 binary is
+# only 4 KB page-aligned, which fails Google Play's 16 KB requirement for
+# Android 15+. A local build with Rust >= 1.86 links aarch64-linux-android with
+# a 16 KB max-page-size by default, producing a compliant .so.
+#
+# REQUIRES a Rust toolchain (rustup) + the android targets to be installed in
+# every build environment (local AND CI/release):
+#   rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+use_precompiled_binaries: false

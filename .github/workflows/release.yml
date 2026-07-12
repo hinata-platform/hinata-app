@@ -53,6 +53,23 @@ jobs:
           keyAlias=$ANDROID_KEY_ALIAS
           storeFile=../upload-keystore.jks
           EOF
+      - name: Set up Rust for native plugins (16 KB page alignment)
+        # cargokit_options.yaml forces the Rust native libs (irondash_engine_context,
+        # super_native_extensions) to build from source instead of downloading the
+        # maintainer's precompiled binaries, which are only 4 KB-aligned and fail
+        # Google Play's 16 KB requirement for Android 15+. Rust >= 1.86 aligns the
+        # 64-bit aarch64 target to 16 KB by default; the CARGO_ENCODED_RUSTFLAGS
+        # (0x1F-separated) additionally aligns the 32-bit armv7 build.
+        run: |
+          # ubuntu-latest ships rustup; install it as a fallback if a future
+          # runner image drops it (cargokit REQUIRES it — precompiled is disabled).
+          if ! command -v rustup >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+            source "$HOME/.cargo/env"
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
+          rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+          printf 'CARGO_ENCODED_RUSTFLAGS=-C\x1flink-arg=-Wl,-z,max-page-size=16384\x1f-C\x1flink-arg=-Wl,-z,common-page-size=16384\n' >> "$GITHUB_ENV"
       - run: flutter pub get
       - name: Build & upload via Fastlane
         env:

@@ -22,6 +22,9 @@ val keystoreProperties = Properties().apply {
 android {
     namespace = "com.ahmadre.hinata"
     compileSdk = flutter.compileSdkVersion
+    // Pin NDK r28+: it links native libraries with a 16 KB max-page-size by
+    // default, which Google Play requires for apps targeting Android 15+.
+    // Falls back to Flutter's bundled NDK (also r28 on Flutter 3.44) if newer.
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -59,6 +62,15 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
+        }
+    }
+
+    // 16 KB page-size support (required by Google Play for Android 15+):
+    // ship native libraries uncompressed so the packager zip-aligns them to
+    // 16 KB. AGP 8.5.1+ then aligns to the 16 KB boundary automatically.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
         }
     }
 }
