@@ -206,11 +206,11 @@ class _CommentActionsState extends State<_CommentActions> {
         ),
         const SizedBox(width: 2),
         // Quick reactions (emoji row + "…" for the full picker).
-        GlassPopover(
+        MorphBlurPopover(
           alignment: GlassMenuAlignment.topLeft,
           popoverWidth: (kQuickReactions.length + 1) * 40 + 12,
           popoverBorderRadius: 27,
-          settings: _navGlass(dark),
+          baseSettings: _navGlass(dark),
           quality: GlassQuality.standard,
           triggerBuilder: (context, toggle) => _ActionButton(
             icon: LucideIcons.smilePlus,
@@ -247,11 +247,11 @@ class _CommentActionsState extends State<_CommentActions> {
         ),
         const SizedBox(width: 2),
         // Overflow menu.
-        GlassPopover(
+        MorphBlurPopover(
           alignment: GlassMenuAlignment.topLeft,
           popoverWidth: 236,
           popoverBorderRadius: 22,
-          settings: _navGlass(dark),
+          baseSettings: _navGlass(dark),
           quality: GlassQuality.standard,
           triggerBuilder: (context, toggle) => _ActionButton(
             icon: LucideIcons.chevronDown,

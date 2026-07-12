@@ -22,25 +22,13 @@ class _NotificationBell extends StatefulWidget {
   State<_NotificationBell> createState() => _NotificationBellState();
 }
 
-class _NotificationBellState extends State<_NotificationBell>
-    with SingleTickerProviderStateMixin {
+class _NotificationBellState extends State<_NotificationBell> {
   /// The bell preview is capped at 5 entries — full history lives on the
   /// notifications page, and a smaller page keeps the popover build cheap.
   static const _previewCount = 5;
 
   late final FetchCubit<List<AppNotification>> _cubit;
   bool _open = false;
-
-  /// Ramps the panel's blur from 0 → full over the same window as the liquid
-  /// morph, instead of snapping it on after a fixed delay. A snap left the
-  /// backdrop visibly un-blurred for a beat after the panel had already
-  /// settled into place; animating it in keeps the per-frame blur cost low
-  /// during the cheapest (still-growing) part of the morph while never
-  /// exposing a visible on/off switch.
-  late final AnimationController _blurController = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 260),
-  );
 
   @override
   void initState() {
@@ -55,7 +43,6 @@ class _NotificationBellState extends State<_NotificationBell>
 
   @override
   void dispose() {
-    _blurController.dispose();
     _cubit.close();
     super.dispose();
   }
@@ -162,53 +149,37 @@ class _NotificationBellState extends State<_NotificationBell>
                 ),
               );
               // iOS-26 liquid morph: the popover grows out of the bell trigger
-              // (same dual-blob metaball pattern as the comment sort button)
-              // instead of fading in via an overlay portal.
-              return AnimatedBuilder(
-                animation: _blurController,
-                builder: (context, _) {
-                  // Ramp blur 0 → 6 over the morph window (eased so it reads
-                  // as one continuous glass-forming motion, never a visible
-                  // switch) instead of gating it behind a fixed delay.
-                  final blur =
-                      6 * Curves.easeOut.transform(_blurController.value);
-                  return GlassPopover(
-                    popoverWidth: (media.size.width - 24).clamp(0.0, 340.0),
-                    popoverBorderRadius: AppTheme.radiusCard,
-                    settings: liquidGlassPanelSettings(
-                      glassFill: glassFill,
-                      dark: dark,
-                      blur: blur,
-                    ),
-                    quality: GlassQuality.standard,
-                    onOpen: () {
-                      _cubit.load(); // refresh contents whenever it opens
-                      _blurController
-                        ..value = 0
-                        ..forward();
-                      setState(() => _open = true);
-                    },
-                    onClose: () {
-                      _blurController.stop();
-                      setState(() => _open = false);
-                    },
-                    triggerBuilder: (context, toggle) => isNativeApp
-                        ? buildMobileTrigger(toggle)
-                        : buildTrigger(toggle),
-                    contentBuilder: (context, close) => _NotifPopoverCard(
-                      items: items,
-                      onMarkAllRead: () => _markAllRead(items),
-                      onTapNotification: (n) {
-                        close();
-                        _openNotification(n);
-                      },
-                      onViewAll: () {
-                        close();
-                        context.go('/notifications');
-                      },
-                    ),
-                  );
+              // (same dual-blob metaball pattern as the comment sort button).
+              // MorphBlurPopover ramps the backdrop blur in over the morph
+              // instead of paying its full raster cost from frame one.
+              return MorphBlurPopover(
+                popoverWidth: (media.size.width - 24).clamp(0.0, 340.0),
+                popoverBorderRadius: AppTheme.radiusCard,
+                baseSettings: liquidGlassPanelSettings(
+                  glassFill: glassFill,
+                  dark: dark,
+                ),
+                quality: GlassQuality.standard,
+                onOpen: () {
+                  _cubit.load(); // refresh contents whenever it opens
+                  setState(() => _open = true);
                 },
+                onClose: () => setState(() => _open = false),
+                triggerBuilder: (context, toggle) => isNativeApp
+                    ? buildMobileTrigger(toggle)
+                    : buildTrigger(toggle),
+                contentBuilder: (context, close) => _NotifPopoverCard(
+                  items: items,
+                  onMarkAllRead: () => _markAllRead(items),
+                  onTapNotification: (n) {
+                    close();
+                    _openNotification(n);
+                  },
+                  onViewAll: () {
+                    close();
+                    context.go('/notifications');
+                  },
+                ),
               );
             },
           ),
