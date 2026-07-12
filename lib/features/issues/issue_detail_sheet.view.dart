@@ -188,6 +188,20 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   // — kept as getters so a `context.read` never crosses an async gap in the
   // load/mutation flows below.
   IssueRepository get _issueApi => context.read<IssueRepository>();
+
+  /// Opens the reply-by-email composer for the current issue, or null when the
+  /// action isn't available (not email-sourced, or the admin flag is off).
+  VoidCallback? _replyEmailAction(Issue issue) {
+    final enabled =
+        context.read<AppConfigBloc>().state.meta?.isFlagEnabled(
+          'emailReply',
+        ) ??
+        false;
+    if (!issue.isEmailSourced || !enabled) return null;
+    return () =>
+        showEmailReplySheet(context, issue: issue, repo: _issueApi);
+  }
+
   CommentRepository get _commentApi => context.read<CommentRepository>();
   ProjectRepository get _projectApi => context.read<ProjectRepository>();
   UserRepository get _userApi => context.read<UserRepository>();
@@ -1352,6 +1366,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 onMinimize: widget.canMinimize ? _minimizeToModal : null,
                 onDelete: () => _confirmDelete(issue),
                 onClose: _closeRoute,
+                onReply: _replyEmailAction(issue),
                 canDelete: _canDelete,
               ),
             Padding(
@@ -2365,6 +2380,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
               onMinimize: widget.canMinimize ? _minimizeToModal : null,
               onDelete: () => _confirmDelete(issue),
               onClose: _closeRoute,
+              onReply: _replyEmailAction(issue),
               canDelete: _canDelete,
             ),
           ),

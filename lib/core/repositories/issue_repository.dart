@@ -126,6 +126,22 @@ class IssueRepository {
     await _api.post('/api/v1/issues/$id/unarchive') as Map<String, dynamic>,
   );
 
+  /// Sends a reply by e-mail to the original sender of an email-to-ticket issue.
+  /// [attachmentIds] reference attachments already uploaded onto the issue.
+  Future<void> replyEmail(
+    String issueId, {
+    required String subject,
+    required String body,
+    List<String> attachmentIds = const [],
+  }) => _api.post(
+    '/api/v1/issues/$issueId/reply-email',
+    body: {
+      'subject': subject,
+      'body': body,
+      'attachmentIds': attachmentIds,
+    },
+  );
+
   /// Whether the current user may hard-delete the issue (platform admin,
   /// project lead, or Team-Admin of a team owning the project).
   Future<bool> canDeleteIssue(String id) async {

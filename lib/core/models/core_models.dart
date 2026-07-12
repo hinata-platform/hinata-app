@@ -9,6 +9,10 @@ class PlatformFlags {
   /// Allow assigning multiple people to an issue (off → single assignee).
   static const multiAssignee = 'multi_assignee';
 
+  /// Allow replying by e-mail to the original sender of an email-to-ticket
+  /// issue (surfaces the "Reply by email" action on such issues).
+  static const emailReply = 'emailReply';
+
   /// Expose the embedded MCP server surface: Personal Access Token management in
   /// account settings (and the admin MCP configuration section).
   static const mcp = 'mcp';
@@ -87,6 +91,9 @@ class ServerMeta extends Equatable {
 
   /// Multiple assignees per issue (default off → single-assignee, Jira-style).
   bool get multiAssignee => isFlagEnabled(PlatformFlags.multiAssignee);
+
+  /// Reply-by-email to the sender of email-to-ticket issues (default off).
+  bool get emailReply => isFlagEnabled(PlatformFlags.emailReply);
 
   @override
   List<Object?> get props => [
