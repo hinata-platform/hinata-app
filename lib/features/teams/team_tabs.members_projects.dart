@@ -309,6 +309,9 @@ class TeamProjectsTab extends StatelessWidget {
   }
 }
 
+void _openProjectSettings(BuildContext context, String projectId) =>
+    GoRouter.of(context).push('/projects/$projectId/settings');
+
 class _ProjectRow extends StatelessWidget {
   const _ProjectRow({
     required this.data,
@@ -345,6 +348,7 @@ class _ProjectRow extends StatelessWidget {
         .toList();
 
     return SoftCard(
+      onTap: () => _openProjectSettings(context, project.id),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: LayoutBuilder(
         builder: (context, c) {
