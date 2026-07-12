@@ -449,10 +449,20 @@ class _BoardSwimlanesState extends State<BoardSwimlanes> {
     final boardWidth =
         columns.length * widget.columnWidth +
         (columns.length - 1) * widget.columnGap;
+    // Vertical padding lives on the outer scroll view, but the horizontal
+    // gutters must live INSIDE the horizontal scroll view — otherwise the
+    // lanes are clipped at the gutter edge instead of scrolling under it.
     return SingleChildScrollView(
-      padding: widget.padding,
+      padding: EdgeInsets.only(
+        top: widget.padding.top,
+        bottom: widget.padding.bottom,
+      ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.only(
+          left: widget.padding.left,
+          right: widget.padding.right,
+        ),
         child: SizedBox(
           width: boardWidth,
           child: Column(
