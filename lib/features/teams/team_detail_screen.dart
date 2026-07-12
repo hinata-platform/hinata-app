@@ -83,35 +83,34 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _cubit,
-      child:
-          BlocBuilder<FetchCubit<TeamDetailData>, FetchState<TeamDetailData>>(
-            builder: (context, state) {
-              final data = state.data;
-              // The shell bar shows back + the generic section title; the team
-              // name lives only in the in-page _Header (avoids a doubled header).
-              return PageChrome(
-                title: context.t('teams.title'),
-                child: () {
-                  if (data == null) {
-                    if (state.errorKey != null) {
-                      return Center(
-                        child: Text(
-                          context.t(state.errorKey!),
-                          style: TextStyle(color: AppColors.textSecondary),
-                        ),
-                      );
-                    }
-                    return const Center(child: HiveLoader());
-                  }
-                  return _TeamDetailContent(
-                    data: data,
-                    manage: _canManage(data.team),
-                    onReload: _cubit.load,
+      child: BlocBuilder<FetchCubit<TeamDetailData>, FetchState<TeamDetailData>>(
+        builder: (context, state) {
+          final data = state.data;
+          // The shell bar shows back + the generic section title; the team
+          // name lives only in the in-page _Header (avoids a doubled header).
+          return PageChrome(
+            title: context.t('teams.title'),
+            child: () {
+              if (data == null) {
+                if (state.errorKey != null) {
+                  return Center(
+                    child: Text(
+                      context.t(state.errorKey!),
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
                   );
-                }(),
+                }
+                return const Center(child: HiveLoader());
+              }
+              return _TeamDetailContent(
+                data: data,
+                manage: _canManage(data.team),
+                onReload: _cubit.load,
               );
-            },
-          ),
+            }(),
+          );
+        },
+      ),
     );
   }
 }
@@ -238,6 +237,7 @@ class _TeamDetailContentState extends State<_TeamDetailContent> {
               manage: widget.manage,
               onReload: widget.onReload,
               onGotoProjects: () => setState(() => _tab = 2),
+              onGotoMembers: () => setState(() => _tab = 1),
               activity: _activity,
               activityHasMore: _hasMoreActivity,
               activityLoadingMore: _loadingMoreActivity,

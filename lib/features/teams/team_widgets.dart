@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
@@ -257,6 +258,9 @@ class AccessChip extends StatelessWidget {
 }
 
 /// Overview KPI tile (icon badge · big number · label).
+///
+/// Tappable when [onTap] is provided — jumps to the related detail tab
+/// (projects, members, …). Purely decorative when omitted.
 class TeamKpi extends StatelessWidget {
   const TeamKpi({
     super.key,
@@ -264,12 +268,14 @@ class TeamKpi extends StatelessWidget {
     required this.value,
     required this.label,
     required this.hue,
+    this.onTap,
   });
 
   final IconData icon;
   final String value;
   final String label;
   final int hue;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -281,47 +287,51 @@ class TeamKpi extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
         border: Border.all(color: AppColors.hairline),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.soft(color),
-              borderRadius: BorderRadius.circular(11),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.soft(color),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, size: 18, color: color),
             ),
-            alignment: Alignment.center,
-            child: Icon(icon, size: 18, color: color),
-          ),
-          const SizedBox(width: 13),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: AppTheme.fontBrand,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    height: 1,
-                    color: AppColors.ink,
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppTheme.fontBrand,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      height: 1,
+                      color: AppColors.ink,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

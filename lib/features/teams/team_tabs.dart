@@ -113,6 +113,7 @@ class TeamOverviewTab extends StatelessWidget {
     required this.manage,
     required this.onReload,
     required this.onGotoProjects,
+    required this.onGotoMembers,
     required this.activity,
     required this.activityHasMore,
     required this.activityLoadingMore,
@@ -123,6 +124,10 @@ class TeamOverviewTab extends StatelessWidget {
   final bool manage;
   final Future<void> Function() onReload;
   final VoidCallback onGotoProjects;
+
+  /// Jumps to the Members tab — also used by the Admins KPI (admins are
+  /// shown within the Members tab, there's no dedicated Admins tab).
+  final VoidCallback onGotoMembers;
 
   /// Paginated activity (page 0 from the bundle + any loaded older pages).
   final List<TeamActivity> activity;
@@ -143,18 +148,21 @@ class TeamOverviewTab extends StatelessWidget {
         value: '${team.members.length}',
         label: context.t('teams.kpiMembers'),
         hue: 250,
+        onTap: onGotoMembers,
       ),
       TeamKpi(
         icon: LucideIcons.shieldCheck,
         value: '${team.adminCount}',
         label: context.t('teams.kpiAdmins'),
         hue: 70,
+        onTap: onGotoMembers,
       ),
       TeamKpi(
         icon: LucideIcons.folder,
         value: '${team.projectIds.length}',
         label: context.t('teams.kpiProjects'),
         hue: 200,
+        onTap: onGotoProjects,
       ),
     ];
 
