@@ -108,6 +108,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   CancelToken? _commentSseCancel;
   StreamSubscription<SseEvent>? _commentSseSub;
   Timer? _commentSseReconnect;
+  // Liveness watchdog: reset on every byte received; if it ever fires, the
+  // stream has gone silent (dead/half-open) and we cycle the connection.
+  Timer? _commentSseWatchdog;
   int _commentSseAttempts = 0;
   bool _disposed = false;
   // The host (`header`/`composerRev`) can be disposed while this body is briefly
@@ -241,6 +244,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   void dispose() {
     _disposed = true;
     _commentSseReconnect?.cancel();
+    _commentSseWatchdog?.cancel();
     _commentResyncDebounce?.cancel();
     _commentSseSub?.cancel();
     _commentSseCancel?.cancel();
@@ -274,18 +278,47 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         return;
       }
       _commentSseAttempts = 0;
-      _commentSseSub = parseSse(bytes).listen(
+      // Tap the RAW byte stream so every chunk — including the server's
+      // heartbeat comments, which `parseSse` filters out — feeds the liveness
+      // watchdog. A quiet-but-alive stream must not look dead.
+      final live = bytes.map((chunk) {
+        _resetCommentSseWatchdog();
+        return chunk;
+      });
+      _commentSseSub = parseSse(live).listen(
         (_) => _scheduleCommentResync(),
         onDone: _scheduleCommentSseReconnect,
         onError: (_) => _scheduleCommentSseReconnect(),
         cancelOnError: true,
       );
+      _resetCommentSseWatchdog();
+      // Reconcile immediately on every (re)connect: catch up anything that
+      // changed while the stream was down or was never delivered (a half-open
+      // socket / buffering proxy), instead of waiting for the next live event.
+      _scheduleCommentResync();
     } catch (_) {
       _scheduleCommentSseReconnect();
     }
   }
 
+  /// Treats the SSE stream as dead when no bytes — not even the server's ~15s
+  /// heartbeat — arrive within this window, then forces a reconnect (which also
+  /// resyncs). Guards against half-open sockets (common on mobile) and
+  /// buffering proxies that the socket layer never reports as closed, which
+  /// would otherwise leave the thread stale for minutes until a manual reload.
+  static const Duration _commentSseIdleLimit = Duration(seconds: 45);
+
+  void _resetCommentSseWatchdog() {
+    _commentSseWatchdog?.cancel();
+    if (_disposed) return;
+    _commentSseWatchdog = Timer(
+      _commentSseIdleLimit,
+      _scheduleCommentSseReconnect,
+    );
+  }
+
   void _scheduleCommentSseReconnect() {
+    _commentSseWatchdog?.cancel();
     _commentSseSub?.cancel();
     _commentSseSub = null;
     if (_disposed) return;
