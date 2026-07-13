@@ -148,11 +148,16 @@ class GlassModalHeader extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.actions = const [],
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+
+  /// Extra trailing action buttons rendered to the left of the close (X)
+  /// button — e.g. a maximize/minimize toggle on the email composer.
+  final List<Widget> actions;
 
   @override
   Widget build(BuildContext context) {
@@ -197,6 +202,7 @@ class GlassModalHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
+          ...actions,
           IconButton(
             tooltip: context.t('common.cancel'),
             icon: Icon(LucideIcons.x, size: 20, color: AppColors.inkSoft),

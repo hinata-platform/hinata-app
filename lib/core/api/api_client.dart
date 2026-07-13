@@ -7,6 +7,11 @@ import '../storage/app_storage.dart';
 // build.
 import 'http_client_config.dart'
     if (dart.library.io) 'http_client_config_io.dart';
+// SSE transport: dio streams fine over dart:io, but its XHR web adapter can't
+// stream an open response, so the web build opens the stream over the Fetch
+// API instead. Same signature on both, selected by the conditional import.
+import 'sse_transport_web.dart'
+    if (dart.library.io) 'sse_transport_io.dart' as sse_transport;
 
 /// Exception with a user-presentable message key.
 class ApiFailure implements Exception {
@@ -256,23 +261,23 @@ class ApiClient {
   Future<Stream<List<int>>> openEventStream(
     String path, {
     CancelToken? cancelToken,
-  }) async {
+  }) {
     final token = _storage.accessToken;
-    final response = await _dio.get<ResponseBody>(
-      '$baseUrl$path',
-      options: Options(
-        responseType: ResponseType.stream,
-        receiveTimeout: Duration.zero,
-        headers: {
-          'Accept': 'text/event-stream',
-          // Attach the bearer explicitly: the streamed request must carry auth
-          // even on the web adapter, which handles stream responses specially.
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-      ),
+    return sse_transport.openEventStream(
+      dio: _dio,
+      url: '$baseUrl$path',
+      headers: {
+        'Accept': 'text/event-stream',
+        // Attach the bearer explicitly: the streamed request must carry auth on
+        // both transports (dio on native, Fetch on web).
+        if (token != null) 'Authorization': 'Bearer $token',
+        // Mirror the base client so the streamed request isn't intercepted by
+        // ngrok's browser warning and is localized like every other call.
+        'ngrok-skip-browser-warning': 'true',
+        'Accept-Language': localeCode,
+      },
       cancelToken: cancelToken,
     );
-    return response.data!.stream;
   }
 
   Future<dynamic> _run(

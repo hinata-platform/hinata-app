@@ -29,6 +29,12 @@ dependencies:
 
   # Networking & storage
   dio: ^5.7.0
+  # Web-only: a Fetch API HTTP client so Server-Sent Events (live comments,
+  # reactions, attachments…) actually stream on the web build — dio's XHR web
+  # adapter buffers the whole response and never yields an open SSE stream.
+  # Consumed solely by sse_transport_web.dart; native uses dio.
+  fetch_client: ^1.1.2
+  http: ^1.2.0
   shared_preferences: ^2.3.0
   path_provider: ^2.1.0
 

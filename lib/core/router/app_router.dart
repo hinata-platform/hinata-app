@@ -293,10 +293,16 @@ GoRouter buildRouter({
               final args = state.extra is IssueRouteArgs
                   ? state.extra as IssueRouteArgs
                   : null;
+              final id = state.pathParameters['id']!;
               return _transition(
                 state,
                 IssueDetailScreen(
-                  issueId: state.pathParameters['id']!,
+                  // Key by the issue id so navigating issue→issue (e.g. global
+                  // search while a fullscreen issue is open) always yields a
+                  // fresh screen instead of reusing the prior State —
+                  // go_router's pageKey is per-pattern and ignores :id.
+                  key: ValueKey('issue-$id'),
+                  issueId: id,
                   fromModal: args?.fromModal ?? false,
                   onChanged: args?.onChanged,
                   // Deep link `…/issues/ID?comment=<id>` scrolls to that comment.

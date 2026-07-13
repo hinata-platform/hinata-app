@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
@@ -28,6 +29,7 @@ Future<T?> showGlassModal<T>(
   BuildContext context, {
   required WidgetBuilder builder,
   double width = 540,
+  ValueListenable<bool>? fullscreen,
 }) {
   return showGeneralDialog<T>(
     context: context,
@@ -37,7 +39,7 @@ Future<T?> showGlassModal<T>(
     useRootNavigator: true,
     transitionDuration: const Duration(milliseconds: 380),
     pageBuilder: (_, _, _) =>
-        _GlassModalScaffold(width: width, builder: builder),
+        _GlassModalScaffold(width: width, builder: builder, fullscreen: fullscreen),
     transitionBuilder: (_, _, _, child) => child,
   );
 }
@@ -628,13 +630,31 @@ Widget glassWoltSurface(Widget pageContent) {
 }
 
 class _GlassModalScaffold extends StatelessWidget {
-  const _GlassModalScaffold({required this.width, required this.builder});
+  const _GlassModalScaffold({
+    required this.width,
+    required this.builder,
+    this.fullscreen,
+  });
 
   final double width;
   final WidgetBuilder builder;
 
+  /// When provided and `true`, the panel expands to (near) fill the screen —
+  /// used by the email composer's maximize toggle. Rebuilds in place so no
+  /// route change is involved and the modal keeps its state.
+  final ValueListenable<bool>? fullscreen;
+
   @override
   Widget build(BuildContext context) {
+    final listenable = fullscreen;
+    if (listenable == null) return _build(context, false);
+    return ValueListenableBuilder<bool>(
+      valueListenable: listenable,
+      builder: (context, value, _) => _build(context, value),
+    );
+  }
+
+  Widget _build(BuildContext context, bool isFullscreen) {
     final size = MediaQuery.sizeOf(context);
     // The on-screen keyboard's height. Subscribing rebuilds the modal as the
     // keyboard animates in/out so the panel rides above it and its scrollable
@@ -644,13 +664,17 @@ class _GlassModalScaffold extends StatelessWidget {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final tokens = SearchTokens.of(Theme.of(context).brightness);
     final anim = ModalRoute.of(context)!.animation!;
-    final maxW = mobile ? size.width - 32 : width;
+    final margin = isFullscreen ? 6.0 : 16.0;
+    final maxW = isFullscreen
+        ? size.width
+        : (mobile ? size.width - 32 : width);
     // Cap the panel to the space left above the keyboard so it never hides
-    // behind it; the body scrolls within whatever height remains.
-    final maxH = (size.height - (mobile ? 120 : 96) - keyboard).clamp(
-      160.0,
-      size.height,
-    );
+    // behind it; the body scrolls within whatever height remains. Fullscreen
+    // reclaims the vertical breathing room so the composer fills the screen.
+    final maxH = (size.height -
+            (isFullscreen ? 0 : (mobile ? 120 : 96)) -
+            keyboard)
+        .clamp(160.0, size.height);
 
     final panel = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxW, maxHeight: maxH),
@@ -708,7 +732,7 @@ class _GlassModalScaffold extends StatelessWidget {
               padding: EdgeInsets.only(bottom: keyboard),
               child: Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(margin),
                   child: AnimatedBuilder(
                     animation: anim,
                     builder: (_, child) {

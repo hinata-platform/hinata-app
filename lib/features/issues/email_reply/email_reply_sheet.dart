@@ -20,18 +20,30 @@ Future<void> showEmailReplySheet(
   required Issue issue,
   required IssueRepository repo,
 }) {
+  // Drives the in-place maximize/minimize toggle. Owned here (not by the form)
+  // so the glass scaffold and the form share one source of truth; the toggle
+  // never touches routing, so the composer stays on the root navigator above
+  // the issue and keeps all its state through a maximize/minimize.
+  final fullscreen = ValueNotifier<bool>(false);
   return showGlassModal<void>(
     context,
     width: 560,
-    builder: (_) => _EmailReplyForm(issue: issue, repo: repo),
-  );
+    fullscreen: fullscreen,
+    builder: (_) =>
+        _EmailReplyForm(issue: issue, repo: repo, fullscreen: fullscreen),
+  ).whenComplete(fullscreen.dispose);
 }
 
 class _EmailReplyForm extends StatefulWidget {
-  const _EmailReplyForm({required this.issue, required this.repo});
+  const _EmailReplyForm({
+    required this.issue,
+    required this.repo,
+    required this.fullscreen,
+  });
 
   final Issue issue;
   final IssueRepository repo;
+  final ValueNotifier<bool> fullscreen;
 
   @override
   State<_EmailReplyForm> createState() => _EmailReplyFormState();
@@ -168,80 +180,160 @@ class _EmailReplyFormState extends State<_EmailReplyForm> {
 
   @override
   Widget build(BuildContext context) {
-    final recipient = widget.issue.reporterEmail ?? '';
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GlassModalHeader(
-          icon: LucideIcons.mail,
-          title: context.t('issues.replyEmail.title'),
-          subtitle: context.t('issues.replyEmail.subtitle'),
+    return ValueListenableBuilder<bool>(
+      valueListenable: widget.fullscreen,
+      builder: (context, fullscreen, _) => Column(
+        mainAxisSize: fullscreen ? MainAxisSize.max : MainAxisSize.min,
+        children: [
+          GlassModalHeader(
+            icon: LucideIcons.mail,
+            title: context.t('issues.replyEmail.title'),
+            subtitle: context.t('issues.replyEmail.subtitle'),
+            actions: [
+              IconButton(
+                tooltip: context.t(
+                  fullscreen ? 'issues.minimize' : 'issues.maximize',
+                ),
+                icon: Icon(
+                  fullscreen ? LucideIcons.minimize2 : LucideIcons.maximize2,
+                  size: 19,
+                  color: AppColors.inkSoft,
+                ),
+                onPressed: () => widget.fullscreen.value = !fullscreen,
+              ),
+            ],
+          ),
+          if (fullscreen) ..._fullscreenBody() else _compactBody(),
+          GlassModalFooter(
+            confirmLabel: context.t('issues.replyEmail.send'),
+            confirmIcon: LucideIcons.send,
+            busy: _sending,
+            onConfirm: _canSend ? _send : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Compact (default) layout: everything scrolls in one column, the body
+  /// field capped to a handful of lines. Best for the wide desktop dialog.
+  Widget _compactBody() {
+    return Flexible(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(22, 4, 22, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _recipientLine(),
+            const SizedBox(height: 16),
+            _subjectField(),
+            const SizedBox(height: 16),
+            GlassField(
+              label: context.t('issues.replyEmail.body'),
+              child: TextField(
+                controller: _body,
+                onChanged: (_) => setState(() {}),
+                minLines: 6,
+                maxLines: 12,
+                keyboardType: TextInputType.multiline,
+                decoration: glassInputDecoration(
+                  hint: context.t('issues.replyEmail.bodyHint'),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _attachmentsRow(),
+          ],
         ),
-        Flexible(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(22, 4, 22, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GlassInfoLine(
-                  icon: LucideIcons.atSign,
-                  child: RichText(
-                    text: TextSpan(
-                      style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
-                      children: [
-                        TextSpan(text: '${context.t('issues.replyEmail.to')} '),
-                        TextSpan(
-                          text: recipient,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ).copyWith(color: AppColors.ink),
-                        ),
-                      ],
-                    ),
-                  ),
+      ),
+    );
+  }
+
+  /// Full-screen layout: recipient + subject pinned at the top, the body field
+  /// expands to fill all remaining height so long replies are comfortable to
+  /// write on mobile. Attachments sit just above the footer.
+  List<Widget> _fullscreenBody() {
+    return [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(22, 4, 22, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _recipientLine(),
+            const SizedBox(height: 16),
+            _subjectField(),
+          ],
+        ),
+      ),
+      const SizedBox(height: 16),
+      Expanded(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 0, 22, 0),
+          child: GlassField(
+            label: context.t('issues.replyEmail.body'),
+            child: Expanded(
+              child: TextField(
+                controller: _body,
+                onChanged: (_) => setState(() {}),
+                expands: true,
+                maxLines: null,
+                minLines: null,
+                textAlignVertical: TextAlignVertical.top,
+                keyboardType: TextInputType.multiline,
+                decoration: glassInputDecoration(
+                  hint: context.t('issues.replyEmail.bodyHint'),
                 ),
-                const SizedBox(height: 16),
-                GlassField(
-                  label: context.t('issues.replyEmail.subject'),
-                  child: TextField(
-                    controller: _subject,
-                    onChanged: (_) => setState(() {}),
-                    decoration: glassInputDecoration(
-                      hint: context.t('issues.replyEmail.subjectHint'),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                GlassField(
-                  label: context.t('issues.replyEmail.body'),
-                  child: TextField(
-                    controller: _body,
-                    onChanged: (_) => setState(() {}),
-                    minLines: 6,
-                    maxLines: 12,
-                    keyboardType: TextInputType.multiline,
-                    decoration: glassInputDecoration(
-                      hint: context.t('issues.replyEmail.bodyHint'),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _AttachmentsRow(
-                  drafts: _drafts,
-                  onAdd: _sending ? null : _pick,
-                  onRemove: _sending ? null : _removeDraft,
-                ),
-              ],
+              ),
             ),
           ),
         ),
-        GlassModalFooter(
-          confirmLabel: context.t('issues.replyEmail.send'),
-          confirmIcon: LucideIcons.send,
-          busy: _sending,
-          onConfirm: _canSend ? _send : null,
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(22, 16, 22, 8),
+        child: _attachmentsRow(),
+      ),
+    ];
+  }
+
+  Widget _recipientLine() {
+    final recipient = widget.issue.reporterEmail ?? '';
+    return GlassInfoLine(
+      icon: LucideIcons.atSign,
+      child: RichText(
+        text: TextSpan(
+          style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+          children: [
+            TextSpan(text: '${context.t('issues.replyEmail.to')} '),
+            TextSpan(
+              text: recipient,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+              ).copyWith(color: AppColors.ink),
+            ),
+          ],
         ),
-      ],
+      ),
+    );
+  }
+
+  Widget _subjectField() {
+    return GlassField(
+      label: context.t('issues.replyEmail.subject'),
+      child: TextField(
+        controller: _subject,
+        onChanged: (_) => setState(() {}),
+        decoration: glassInputDecoration(
+          hint: context.t('issues.replyEmail.subjectHint'),
+        ),
+      ),
+    );
+  }
+
+  Widget _attachmentsRow() {
+    return _AttachmentsRow(
+      drafts: _drafts,
+      onAdd: _sending ? null : _pick,
+      onRemove: _sending ? null : _removeDraft,
     );
   }
 }
