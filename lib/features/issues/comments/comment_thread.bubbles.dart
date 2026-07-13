@@ -494,11 +494,13 @@ class _ReplyThreadView extends StatelessWidget {
 }
 
 /// The reply connector / branch-line colour — subtle but legible in BOTH
-/// themes. The default [AppColors.hairline] reads in dark mode but is nearly
-/// invisible on the light warm-paper canvas, so light mode uses a faded ink tone.
+/// themes. [AppColors.hairline] is too close to the dark canvas to read, and
+/// nearly invisible on the light warm-paper canvas, so both use faded ink.
 Color _branchLineColor() {
   final dark = AppColors.brightness == Brightness.dark;
-  return dark ? AppColors.hairline : AppColors.inkFaint.withValues(alpha: 0.5);
+  return dark
+      ? AppColors.inkFaint.withValues(alpha: 0.7)
+      : AppColors.inkFaint.withValues(alpha: 0.5);
 }
 
 /// Draws the reply connector: a vertical rail down the gutter with a curved
