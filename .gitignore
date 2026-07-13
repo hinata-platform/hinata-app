@@ -4,8 +4,9 @@
 .dart_tool/
 .packages
 build/
-# If you're building an application, you may want to check-in your pubspec.lock
-pubspec.lock
+# pubspec.lock IS checked in: this is an application, so CI must build the exact
+# resolved dependency set (a floating resolve once pulled the broken
+# firebase_messaging 16.4.2 and broke the web pipeline). Do not re-ignore it.
 
 # Directory created by dartdoc
 # If you don't generate documentation locally you can remove this line.
