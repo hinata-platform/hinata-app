@@ -136,6 +136,7 @@ class _EmailReplyFormState extends State<_EmailReplyForm> {
 
   Future<void> _send() async {
     if (!_canSend) return;
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _sending = true);
     try {
       await widget.repo.replyEmail(
