@@ -41,6 +41,7 @@ class HinataApp extends StatefulWidget {
 class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   late final AppConfigBloc _appConfig;
   late final AuthBloc _auth;
+  late final LocaleCubit _locale;
   late final GoRouter _router;
   late final AccountEventStream _accountEvents;
   late final FcmService _fcm;
@@ -68,6 +69,14 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Effective UI language (hydrated across restarts). Prime the API client's
+    // Accept-Language from it *before* the AuthChecked /me request below, so the
+    // very first request already carries the user's real language rather than
+    // racing the first build() and going out as the default 'en'. The server
+    // syncs the stored User.locale from this header, and async e-mails/push
+    // (which have no request context) localize off that stored value.
+    _locale = LocaleCubit();
+    widget.apiClient.localeCode = _locale.state.languageCode;
     final domains = widget.repositories;
     _appConfig = AppConfigBloc(
       repository: domains.meta,
@@ -285,6 +294,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     _router.dispose();
     _appConfig.close();
     _auth.close();
+    _locale.close();
     super.dispose();
   }
 
@@ -326,7 +336,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         providers: [
           BlocProvider.value(value: _appConfig),
           BlocProvider.value(value: _auth),
-          BlocProvider(create: (_) => LocaleCubit()),
+          BlocProvider.value(value: _locale),
           BlocProvider(create: (_) => ThemeCubit()),
         ],
         child: BlocBuilder<ThemeCubit, ThemeMode>(
