@@ -37,6 +37,7 @@ import '../../features/shell/app_shell.dart';
 import '../../features/teams/team_detail_screen.dart';
 import '../../features/teams/teams_screen.dart';
 import '../../features/timesheet/timesheet_screen.dart';
+import '../../features/weekly_summary/weekly_summary_screen.dart';
 import '../blocs/app_config_bloc.dart';
 import '../blocs/auth_bloc.dart';
 import '../storage/app_storage.dart';
@@ -352,6 +353,11 @@ GoRouter buildRouter({
             path: '/notifications',
             pageBuilder: (_, state) =>
                 _transition(state, const NotificationsScreen()),
+          ),
+          GoRoute(
+            path: '/weekly-summary',
+            pageBuilder: (_, state) =>
+                _transition(state, const WeeklySummaryScreen()),
           ),
           GoRoute(
             path: '/settings',

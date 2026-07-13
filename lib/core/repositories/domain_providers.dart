@@ -50,6 +50,9 @@ List<RepositoryProvider> domainRepositoryProviders(BuildContext source) => [
   RepositoryProvider<DashboardRepository>.value(
     value: source.read<DashboardRepository>(),
   ),
+  RepositoryProvider<WeeklySummaryRepository>.value(
+    value: source.read<WeeklySummaryRepository>(),
+  ),
   RepositoryProvider<NotificationRepository>.value(
     value: source.read<NotificationRepository>(),
   ),

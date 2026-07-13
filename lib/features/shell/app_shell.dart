@@ -279,6 +279,7 @@ String? _subPageTitleKey(String location) {
   if (location == '/admin') return 'admin.title';
   if (location.startsWith('/admin/users')) return 'admin.users';
   if (location == '/notifications') return 'nav.notifications';
+  if (location == '/weekly-summary') return 'weeklySummary.title';
   if (location == '/settings') return 'nav.settings';
   if (location.startsWith('/issues/')) return 'nav.issues';
   if (location.startsWith('/knowledge/')) return 'nav.knowledge';

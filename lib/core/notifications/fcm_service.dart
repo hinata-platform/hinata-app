@@ -66,21 +66,34 @@ class FcmService {
       debugPrint('FCM start failed: $e');
     }
 
-    // Wire up tap routing independently of the block above: a failure fetching
-    // a token or registering a device must never skip these, and a failure
-    // routing the cold-start message must never skip subscribing to
-    // onMessageOpenedApp — otherwise every later background-tap for the rest
-    // of this app session would silently stop routing too.
+    // Wire up background-tap routing independently of the block above: a failure
+    // fetching a token or registering a device must never skip this — otherwise
+    // every later background-tap for the rest of this app session would silently
+    // stop routing too.
+    //
+    // The cold-start tap (getInitialMessage) is deliberately NOT handled here.
+    // It is consumed once, early, via handleInitialMessage() from app start —
+    // independent of sign-in and of the slow token handshake above — so a
+    // slow/hanging APNs+token resolution can't defer (or drop) the launch deep
+    // link, which used to land the user on /dashboard instead of the target.
     try {
       _openedSub = FirebaseMessaging.onMessageOpenedApp.listen(_route);
     } catch (e) {
       debugPrint('FCM onMessageOpenedApp subscription failed: $e');
     }
+  }
+
+  /// Routes a notification tap that launched the app from a fully terminated
+  /// state (cold start). Call this once, as early as possible at app start —
+  /// NOT gated behind sign-in or the token registration in [start] — so the
+  /// launch deep link is read the instant Firebase is ready, before the slow
+  /// APNs + token handshake. The router's gate-parking then holds the link and
+  /// restores it once the app finishes connecting/authenticating; a warm
+  /// background tap is delivered via onMessageOpenedApp in [start] instead.
+  Future<void> handleInitialMessage() async {
+    if (!_supported) return;
     try {
-      // Notification tap that launched the app from fully terminated (cold
-      // start); a warm background tap is delivered via onMessageOpenedApp
-      // above instead.
-      final initial = await messaging.getInitialMessage();
+      final initial = await FirebaseMessaging.instance.getInitialMessage();
       if (initial != null) _route(initial);
     } catch (e) {
       debugPrint('FCM getInitialMessage routing failed: $e');
@@ -118,7 +131,12 @@ class FcmService {
 
   void _route(RemoteMessage message) {
     final link = message.data['link'];
-    if (link is String && link.isNotEmpty) _onDeepLink(link);
+    // Only in-app routes (relative paths) are navigable; guard like the other
+    // deep-link call sites so a stray/legacy payload (e.g. a bare "/") can't
+    // throw `no routes for location` instead of resolving to a real screen.
+    if (link is String && link.startsWith('/') && link.length > 1) {
+      _onDeepLink(link);
+    }
   }
 
   String _platform() {

@@ -22,6 +22,7 @@ import 'sprint_repository.dart';
 import 'team_repository.dart';
 import 'timesheet_repository.dart';
 import 'user_repository.dart';
+import 'weekly_summary_repository.dart';
 
 export 'account_repository.dart';
 export 'admin_repository.dart';
@@ -41,6 +42,7 @@ export 'sprint_repository.dart';
 export 'team_repository.dart';
 export 'timesheet_repository.dart';
 export 'user_repository.dart';
+export 'weekly_summary_repository.dart';
 
 /// Composition root for the domain layer: builds every repository exactly once
 /// over the shared [ApiClient].
@@ -62,6 +64,7 @@ class HinataRepositories {
       search: SearchRepository(api),
       articles: ArticleRepository(api),
       dashboard: DashboardRepository(api),
+      weeklySummary: WeeklySummaryRepository(api),
       notifications: NotificationRepository(api),
       admin: AdminRepository(api),
       teams: TeamRepository(api),
@@ -84,6 +87,7 @@ class HinataRepositories {
     required this.search,
     required this.articles,
     required this.dashboard,
+    required this.weeklySummary,
     required this.notifications,
     required this.admin,
     required this.teams,
@@ -104,6 +108,7 @@ class HinataRepositories {
   final SearchRepository search;
   final ArticleRepository articles;
   final DashboardRepository dashboard;
+  final WeeklySummaryRepository weeklySummary;
   final NotificationRepository notifications;
   final AdminRepository admin;
   final TeamRepository teams;

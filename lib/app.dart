@@ -97,6 +97,13 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       apiClient: widget.apiClient,
       onDeepLink: (link) => _router.go(link),
     );
+    // Cold start: a notification tap that launched the fully-terminated app
+    // carries its route in the initial message. Consume it now — before FCM's
+    // sign-in-gated, token-handshake-gated start() below — so the slow APNs +
+    // token resolution can't defer or drop it. Routed through _router.go, the
+    // gate-parking preserves the link until the app is ready + authenticated
+    // (mirrors the App Links getInitialLink() cold-start handling below).
+    unawaited(_fcm.handleInitialMessage());
     // Record the server the boot-time AuthChecked above runs against, so the
     // listener below doesn't redundantly re-check it on the first `ready`.
     _authServer = widget.storage.serverUrl;
@@ -305,6 +312,9 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         RepositoryProvider<SearchRepository>.value(value: domains.search),
         RepositoryProvider<ArticleRepository>.value(value: domains.articles),
         RepositoryProvider<DashboardRepository>.value(value: domains.dashboard),
+        RepositoryProvider<WeeklySummaryRepository>.value(
+          value: domains.weeklySummary,
+        ),
         RepositoryProvider<NotificationRepository>.value(
           value: domains.notifications,
         ),
