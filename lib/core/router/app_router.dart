@@ -21,6 +21,8 @@ import '../../features/connect/connecting_screen.dart';
 import '../../features/connect/update_required_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/gantt/gantt_screen.dart';
+import '../../features/issues/email_reply/email_reply_sheet.dart'
+    show EmailReplyRouteArgs, EmailReplyScreen;
 import '../../features/issues/issue_detail_screen.dart';
 import '../../features/issues/issue_detail_sheet.dart' show IssueRouteArgs;
 import '../../features/issues/issue_filter.dart' show IssuesInitialView;
@@ -307,6 +309,30 @@ GoRouter buildRouter({
                   onChanged: args?.onChanged,
                   // Deep link `…/issues/ID?comment=<id>` scrolls to that comment.
                   targetCommentId: state.uri.queryParameters['comment'],
+                ),
+              );
+            },
+          ),
+          // Maximized "Reply by email" composer — rendered inside the shell like
+          // a maximized issue. Only reachable by promoting the reply sheet
+          // (which carries the issue + draft via `extra`); a cold navigation
+          // with no `extra` (e.g. a browser refresh) can't compose, so it
+          // redirects to the issue itself.
+          GoRoute(
+            path: '/issues/:id/reply-email',
+            redirect: (_, state) =>
+                state.extra is EmailReplyRouteArgs
+                ? null
+                : '/issues/${state.pathParameters['id']!}',
+            pageBuilder: (_, state) {
+              final args = state.extra as EmailReplyRouteArgs;
+              return _transition(
+                state,
+                EmailReplyScreen(
+                  key: ValueKey('reply-email-${state.pathParameters['id']}'),
+                  issue: args.issue,
+                  initialDraft: args.draft,
+                  canMinimize: args.fromModal,
                 ),
               );
             },

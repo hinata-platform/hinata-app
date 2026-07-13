@@ -182,6 +182,8 @@ Future<void> showIssueDetailSheet(
       WoltModalSheetPage(
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
+        // Keyboard must not shrink/resize the sheet content.
+        resizeToAvoidBottomInset: false,
         scrollController: sheetScroll,
         hasTopBarLayer: true,
         isTopBarLayerAlwaysVisible: true,
