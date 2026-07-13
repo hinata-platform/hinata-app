@@ -3192,7 +3192,17 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           await _issueApi.archiveIssue(issue.id);
       }
       widget.onChanged?.call();
-      if (mounted) Navigator.of(context).maybePop();
+      if (!mounted) return;
+      // Sheet mode: pop the modal (Wolt owns the root-navigator route). Route
+      // mode: reuse the same back-or-home fallback as the top bar's close
+      // button, otherwise a directly deep-linked issue page — with no page
+      // underneath to pop back to — leaves the user stranded on the now
+      // deleted/archived issue after a plain `maybePop()` no-ops.
+      if (widget.header != null) {
+        Navigator.of(context).maybePop();
+      } else {
+        _closeRoute();
+      }
     } on ApiFailure catch (failure) {
       _toast(failure.message);
     }
