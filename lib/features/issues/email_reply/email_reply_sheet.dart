@@ -234,19 +234,28 @@ class EmailReplyScreen extends StatelessWidget {
             onBack: () => Navigator.of(context).maybePop(),
             onMinimize: canMinimize
                 ? () {
-                    final navigator = Navigator.of(context);
-                    final self = ModalRoute.of(context);
-                    showEmailReplySheet(
+                    // Leave this route THROUGH GoRouter (pop), never via
+                    // Navigator.removeRoute: removing a page-based route behind
+                    // the router's back leaves its location stuck on
+                    // `/reply-email`, and a later back-navigation re-syncs the
+                    // stack and resurrects this screen out of nowhere.
+                    final draft = composerKey.currentState?.currentDraft;
+                    // The sheet must be shown from a context that survives this
+                    // route's disposal — the root navigator's, not ours.
+                    final rootCtx = Navigator.of(
                       context,
-                      issue: issue,
-                      repo: repo,
-                      initialDraft: composerKey.currentState?.currentDraft,
-                    );
-                    if (self != null) {
-                      navigator.removeRoute(self);
-                    } else {
-                      navigator.maybePop();
-                    }
+                      rootNavigator: true,
+                    ).context;
+                    context.pop();
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!rootCtx.mounted) return;
+                      showEmailReplySheet(
+                        rootCtx,
+                        issue: issue,
+                        repo: repo,
+                        initialDraft: draft,
+                      );
+                    });
                   }
                 : null,
           ),
