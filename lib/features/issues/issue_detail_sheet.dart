@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:dio/dio.dart' show CancelToken;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -14,7 +13,7 @@ import 'package:go_router/go_router.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/sse.dart';
+import '../../core/api/sse_connection.dart';
 import '../../core/repositories/comment_repository.dart';
 import '../../core/repositories/domain_providers.dart';
 import '../../core/repositories/issue_repository.dart';

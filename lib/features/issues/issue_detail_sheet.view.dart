@@ -105,13 +105,15 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   // Live comment sync (SSE): reactions/pins/edits/new comments from anyone in the
   // issue arrive as a payload-free `changed` ping → re-sync the loaded window.
-  CancelToken? _commentSseCancel;
-  StreamSubscription<SseEvent>? _commentSseSub;
-  Timer? _commentSseReconnect;
-  // Liveness watchdog: reset on every byte received; if it ever fires, the
-  // stream has gone silent (dead/half-open) and we cycle the connection.
-  Timer? _commentSseWatchdog;
-  int _commentSseAttempts = 0;
+  // The shared [SseConnection] adds heartbeat-driven liveness detection (a
+  // half-open stream is cycled instead of silently going stale) and a resync on
+  // every reconnect to catch up anything missed while it was down.
+  late final SseConnection _commentSse = SseConnection(
+    open: (cancelToken) =>
+        _commentApi.commentEventStream(widget.issueId, cancelToken: cancelToken),
+    onEvent: (_) => _scheduleCommentResync(),
+    onReconnect: _scheduleCommentResync,
+  );
   bool _disposed = false;
   // The host (`header`/`composerRev`) can be disposed while this body is briefly
   // still mounted + registered as a WidgetsBindingObserver during a modal→route
@@ -219,7 +221,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     // Auto-load older comments as the user scrolls toward the top of the thread.
     widget.sheetScroll?.addListener(_onCommentScroll);
     _load();
-    _connectCommentSse();
+    _commentSse.start();
   }
 
   // Rebuild the floating composer (a separate subtree) when the comment field
@@ -243,11 +245,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   @override
   void dispose() {
     _disposed = true;
-    _commentSseReconnect?.cancel();
-    _commentSseWatchdog?.cancel();
+    _commentSse.stop();
     _commentResyncDebounce?.cancel();
-    _commentSseSub?.cancel();
-    _commentSseCancel?.cancel();
     _highlightTimer?.cancel();
     widget.sheetScroll?.removeListener(_onCommentScroll);
     WidgetsBinding.instance.removeObserver(this);
@@ -260,74 +259,6 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   }
 
   // ── live comment sync (SSE) ────────────────────────────────────────────────
-  Future<void> _connectCommentSse() async {
-    if (_disposed) return;
-    // Cancel any prior token before overwriting it, so a reconnect can never
-    // orphan a half-opened streamed GET that still holds a pool slot.
-    _commentSseCancel?.cancel();
-    _commentSseCancel = CancelToken();
-    try {
-      final bytes = await _commentApi.commentEventStream(
-        widget.issueId,
-        cancelToken: _commentSseCancel,
-      );
-      // Disposed WHILE opening → tear down the just-opened connection instead of
-      // subscribing (a leaked SSE connection holds a server slot open).
-      if (_disposed) {
-        _commentSseCancel?.cancel();
-        return;
-      }
-      _commentSseAttempts = 0;
-      // Tap the RAW byte stream so every chunk — including the server's
-      // heartbeat comments, which `parseSse` filters out — feeds the liveness
-      // watchdog. A quiet-but-alive stream must not look dead.
-      final live = bytes.map((chunk) {
-        _resetCommentSseWatchdog();
-        return chunk;
-      });
-      _commentSseSub = parseSse(live).listen(
-        (_) => _scheduleCommentResync(),
-        onDone: _scheduleCommentSseReconnect,
-        onError: (_) => _scheduleCommentSseReconnect(),
-        cancelOnError: true,
-      );
-      _resetCommentSseWatchdog();
-      // Reconcile immediately on every (re)connect: catch up anything that
-      // changed while the stream was down or was never delivered (a half-open
-      // socket / buffering proxy), instead of waiting for the next live event.
-      _scheduleCommentResync();
-    } catch (_) {
-      _scheduleCommentSseReconnect();
-    }
-  }
-
-  /// Treats the SSE stream as dead when no bytes — not even the server's ~15s
-  /// heartbeat — arrive within this window, then forces a reconnect (which also
-  /// resyncs). Guards against half-open sockets (common on mobile) and
-  /// buffering proxies that the socket layer never reports as closed, which
-  /// would otherwise leave the thread stale for minutes until a manual reload.
-  static const Duration _commentSseIdleLimit = Duration(seconds: 45);
-
-  void _resetCommentSseWatchdog() {
-    _commentSseWatchdog?.cancel();
-    if (_disposed) return;
-    _commentSseWatchdog = Timer(
-      _commentSseIdleLimit,
-      _scheduleCommentSseReconnect,
-    );
-  }
-
-  void _scheduleCommentSseReconnect() {
-    _commentSseWatchdog?.cancel();
-    _commentSseSub?.cancel();
-    _commentSseSub = null;
-    if (_disposed) return;
-    _commentSseReconnect?.cancel();
-    final secs = (3 * (1 << _commentSseAttempts)).clamp(3, 30);
-    _commentSseAttempts = (_commentSseAttempts + 1).clamp(0, 4);
-    _commentSseReconnect = Timer(Duration(seconds: secs), _connectCommentSse);
-  }
-
   /// Debounces + single-flights live re-syncs: a burst of `changed` pings
   /// collapses into one in-flight re-sync (plus one trailing one for anything
   /// that landed while it was running), instead of 2 GETs per ping.

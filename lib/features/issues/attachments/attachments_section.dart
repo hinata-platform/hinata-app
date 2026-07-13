@@ -15,6 +15,7 @@ import '../../../core/util/file_download.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../../../core/repositories/issue_repository.dart';
 import '../../../core/api/sse.dart';
+import '../../../core/api/sse_connection.dart';
 import '../../../core/blocs/app_config_bloc.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/core_models.dart';
@@ -79,10 +80,14 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
   bool _dragging = false;
   bool _disposed = false;
 
-  CancelToken? _sseCancel;
-  StreamSubscription<SseEvent>? _sseSub;
-  Timer? _reconnect;
-  int _reconnectAttempts = 0;
+  // Live sync over the shared resilient SSE connection: heartbeat-driven
+  // liveness detection + reconnect-with-catch-up (see [_reconcile]).
+  late final SseConnection _sse = SseConnection(
+    open: (cancelToken) =>
+        _repo.attachmentEventStream(widget.issueId, cancelToken: cancelToken),
+    onEvent: _onSseEvent,
+    onReconnect: _reconcile,
+  );
 
   IssueRepository get _repo => context.read<IssueRepository>();
 
@@ -98,15 +103,13 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
   @override
   void initState() {
     super.initState();
-    _connectSse();
+    _sse.start();
   }
 
   @override
   void dispose() {
     _disposed = true;
-    _reconnect?.cancel();
-    _sseSub?.cancel();
-    _sseCancel?.cancel();
+    _sse.stop();
     for (final u in _uploads) {
       if (!u.cancel.isCancelled) u.cancel.cancel();
     }
@@ -114,48 +117,17 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
   }
 
   // ── SSE live sync ─────────────────────────────────────────────────────────
-  Future<void> _connectSse() async {
-    if (_disposed) return;
-    // Cancel any prior token before overwriting it so a reconnect can never
-    // orphan a half-opened streamed GET that still holds a pool slot.
-    _sseCancel?.cancel();
-    _sseCancel = CancelToken();
+  /// Re-fetches the authoritative attachment list after a reconnect so anything
+  /// added/removed while the stream was down is reconciled — live frames carry
+  /// only deltas (`added`/`removed`), which a dropped connection would miss.
+  Future<void> _reconcile() async {
     try {
-      final bytes = await _repo.attachmentEventStream(
-        widget.issueId,
-        cancelToken: _sseCancel,
-      );
-      // Disposed WHILE the stream was opening → tear the just-opened connection
-      // down instead of subscribing to it. Otherwise this subscription is never
-      // cancelled and its HTTP connection leaks; enough of those and the server
-      // runs out of SSE slots and every request starts timing out ("connection
-      // gone" until an app restart drops the sockets).
-      if (_disposed) {
-        _sseCancel?.cancel();
-        return;
-      }
-      _reconnectAttempts = 0; // connected — reset the backoff
-      _sseSub = parseSse(bytes).listen(
-        _onSseEvent,
-        onDone: _scheduleReconnect,
-        onError: (_) => _scheduleReconnect(),
-        cancelOnError: true,
-      );
+      final issue = await _repo.issue(widget.issueId);
+      if (_disposed || !mounted) return;
+      setState(() => _server = List.of(issue.attachments));
     } catch (_) {
-      _scheduleReconnect();
+      // Keep the current view; the next event or reconnect reconciles.
     }
-  }
-
-  void _scheduleReconnect() {
-    _sseSub?.cancel();
-    _sseSub = null;
-    if (_disposed) return;
-    _reconnect?.cancel();
-    // Exponential backoff (3s → 30s cap) so a persistently failing stream
-    // (e.g. SSE not streamable on the web platform) doesn't hammer the server.
-    final secs = (3 * (1 << _reconnectAttempts)).clamp(3, 30);
-    _reconnectAttempts = (_reconnectAttempts + 1).clamp(0, 4);
-    _reconnect = Timer(Duration(seconds: secs), _connectSse);
   }
 
   void _onSseEvent(SseEvent ev) {

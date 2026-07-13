@@ -1,6 +1,3 @@
-import 'dart:async';
-
-import 'package:dio/dio.dart' show CancelToken;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -9,7 +6,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
 
 import '../../core/api/api_client.dart';
 import '../../core/repositories/issue_repository.dart';
-import '../../core/api/sse.dart';
+import '../../core/api/sse_connection.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
@@ -71,26 +68,25 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
   bool _adding = false;
 
   // SSE live sync (mirrors AttachmentsSection): a payload-free `changed` ping
-  // triggers a re-fetch, with exponential-backoff reconnect.
-  StreamSubscription<SseEvent>? _sseSub;
-  CancelToken? _sseCancel;
-  Timer? _reconnect;
-  int _reconnectAttempts = 0;
-  bool _disposed = false;
+  // triggers a re-fetch; the shared [SseConnection] adds heartbeat-driven
+  // liveness detection and reconnect-with-catch-up.
+  late final SseConnection _sse = SseConnection(
+    open: (cancelToken) =>
+        _repo.issueLinkEventStream(widget.issueId, cancelToken: cancelToken),
+    onEvent: (_) => _load(),
+    onReconnect: _load,
+  );
 
   @override
   void initState() {
     super.initState();
     _load();
-    _connectSse();
+    _sse.start();
   }
 
   @override
   void dispose() {
-    _disposed = true;
-    _reconnect?.cancel();
-    _sseSub?.cancel();
-    _sseCancel?.cancel();
+    _sse.stop();
     super.dispose();
   }
 
@@ -106,48 +102,6 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
     } on ApiFailure {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  // ── SSE live sync ──────────────────────────────────────────────────────────
-  Future<void> _connectSse() async {
-    if (_disposed) return;
-    // Cancel any prior token before overwriting it so a reconnect can never
-    // orphan a half-opened streamed GET that still holds a pool slot.
-    _sseCancel?.cancel();
-    _sseCancel = CancelToken();
-    try {
-      final bytes = await _repo.issueLinkEventStream(
-        widget.issueId,
-        cancelToken: _sseCancel,
-      );
-      // Disposed WHILE opening → tear down the just-opened connection instead of
-      // subscribing (else the subscription + its HTTP connection leak; enough
-      // leaked SSE connections exhaust the server's slots and every request
-      // starts timing out until an app restart drops the sockets).
-      if (_disposed) {
-        _sseCancel?.cancel();
-        return;
-      }
-      _reconnectAttempts = 0;
-      _sseSub = parseSse(bytes).listen(
-        (_) => _load(),
-        onDone: _scheduleReconnect,
-        onError: (_) => _scheduleReconnect(),
-        cancelOnError: true,
-      );
-    } catch (_) {
-      _scheduleReconnect();
-    }
-  }
-
-  void _scheduleReconnect() {
-    _sseSub?.cancel();
-    _sseSub = null;
-    if (_disposed) return;
-    _reconnect?.cancel();
-    final secs = (3 * (1 << _reconnectAttempts)).clamp(3, 30);
-    _reconnectAttempts = (_reconnectAttempts + 1).clamp(0, 4);
-    _reconnect = Timer(Duration(seconds: secs), _connectSse);
   }
 
   // ── mutations ──────────────────────────────────────────────────────────────
