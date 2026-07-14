@@ -547,19 +547,24 @@ class EmailReplyComposerState extends State<EmailReplyComposer> {
 
     if (widget.expandBody) {
       // Full-page: recipient/subject pinned, body grows, attachments below it.
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _recipientLine(),
-            const SizedBox(height: 16),
-            _subjectField(),
-            const SizedBox(height: 16),
-            Expanded(child: _bodyField(expand: true)),
-            const SizedBox(height: 16),
-            attachments,
-          ],
+      return GestureDetector(
+        // Tap anywhere outside a field → collapse the keyboard.
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _recipientLine(),
+              const SizedBox(height: 16),
+              _subjectField(),
+              const SizedBox(height: 16),
+              Expanded(child: _bodyField(expand: true)),
+              const SizedBox(height: 16),
+              attachments,
+            ],
+          ),
         ),
       );
     }
@@ -569,24 +574,29 @@ class EmailReplyComposerState extends State<EmailReplyComposer> {
     // shrink the sheet (resizeToAvoidBottomInset: false), so instead the form
     // grows by the keyboard inset and the focused field scrolls above it
     // (see the TextFields' scrollPadding).
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        22,
-        8,
-        22,
-        96 + MediaQuery.viewInsetsOf(context).bottom,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _recipientLine(),
-          const SizedBox(height: 16),
-          _subjectField(),
-          const SizedBox(height: 16),
-          _bodyField(expand: false),
-          const SizedBox(height: 16),
-          attachments,
-        ],
+    return GestureDetector(
+      // Tap anywhere outside a field → collapse the keyboard.
+      behavior: HitTestBehavior.translucent,
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          22,
+          8,
+          22,
+          96 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _recipientLine(),
+            const SizedBox(height: 16),
+            _subjectField(),
+            const SizedBox(height: 16),
+            _bodyField(expand: false),
+            const SizedBox(height: 16),
+            attachments,
+          ],
+        ),
       ),
     );
   }
