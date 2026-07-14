@@ -19,6 +19,30 @@ enum IssuesInitialView { today, inProgress, backlog, done }
 /// headers.
 enum IssueGrouping { none, state, priority, assignee, project, type }
 
+/// Server-side ordering for the Issues list. Sorting runs on the backend so it
+/// is correct across the *whole* paginated result set (not just the pages
+/// currently scrolled into view); changing it refetches from page 0. Each value
+/// carries the [wire] token the backend `?sort=` param understands.
+///
+/// [updatedDesc] is the default — it preserves the historical "most recently
+/// touched first" ordering, so existing behaviour is unchanged until the user
+/// picks something else.
+enum IssueSort {
+  createdDesc('created'),
+  createdAsc('created_asc'),
+  updatedDesc('updated'),
+  updatedAsc('updated_asc');
+
+  const IssueSort(this.wire);
+
+  /// The backend `?sort=` token.
+  final String wire;
+
+  static const defaultSort = IssueSort.updatedDesc;
+
+  bool get isDefault => this == defaultSort;
+}
+
 /// Multi-criteria filter for the Issues overview. Empty sets mean "no
 /// restriction" for that facet. State / priority / type are stored as
 /// UPPER-CASE backend codes; [assignees] hold user ids and [projects] hold

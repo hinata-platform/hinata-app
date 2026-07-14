@@ -23,6 +23,7 @@ class IssueRepository {
     String? query,
     bool noSprint = false,
     bool archived = false,
+    String? sort,
     int page = 0,
     int size = 50,
   }) async {
@@ -37,6 +38,7 @@ class IssueRepository {
                 'type': ?type,
                 if (noSprint) 'noSprint': true,
                 if (archived) 'archived': true,
+                'sort': ?sort,
                 if (query != null && query.isNotEmpty) 'query': query,
                 'page': page,
                 'size': size,
@@ -56,9 +58,10 @@ class IssueRepository {
   /// the complete collection — exports, board swimlane indexes, smart-link
   /// `@`-menus — never silently miss issues beyond the first page.
   ///
-  /// Pages are de-duplicated by id: the backend orders by `updatedAt`, so a row
-  /// can shift across a page boundary while we page. Stops at the last partial
-  /// page or once the accumulated count reaches the backend total.
+  /// Pages are de-duplicated by id: a row can shift across a page boundary
+  /// while we page (the backend sort is time-based), so dedup keeps the result
+  /// clean regardless of [sort]. Stops at the last partial page or once the
+  /// accumulated count reaches the backend total.
   Future<List<Issue>> allIssues({
     String? projectId,
     String? state,
@@ -67,6 +70,7 @@ class IssueRepository {
     String? query,
     bool noSprint = false,
     bool archived = false,
+    String? sort,
   }) async {
     const size = 100;
     final out = <Issue>[];
@@ -81,6 +85,7 @@ class IssueRepository {
         query: query,
         noSprint: noSprint,
         archived: archived,
+        sort: sort,
         page: page,
         size: size,
       );

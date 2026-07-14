@@ -106,6 +106,10 @@ class _IssuesScreenState extends State<IssuesScreen> {
   IssueGrouping _grouping = IssueGrouping.none;
   IssueTimeRange _timeRange = IssueTimeRange.none;
 
+  /// Server-side ordering. Changing it refetches from page 0 so the order is
+  /// correct across the whole result set, not just the loaded pages.
+  IssueSort _sort = IssueSort.defaultSort;
+
   /// The deep-link preset is applied once, after projects load (so bucket
   /// presets can resolve to real state names); later refreshes keep the user's
   /// own filter choices.
@@ -130,6 +134,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
         final result = await context.read<IssueRepository>().issues(
           projectId: widget.projectId,
           archived: _filter.archivedOnly,
+          sort: _sort.wire,
           page: page,
           size: size,
         );
@@ -264,18 +269,13 @@ class _IssuesScreenState extends State<IssuesScreen> {
 
   // ── filtering / sorting ────────────────────────────────────────────────
 
-  List<Issue> _filtered(List<Issue> issues) {
-    final list = issues
-        .where((i) => _filter.matches(i) && _timeRange.matches(i))
-        .toList();
-    const rank = {'URGENT': 4, 'HIGH': 3, 'NORMAL': 2, 'LOW': 1};
-    list.sort(
-      (a, b) => (rank[b.priority.toUpperCase()] ?? 2).compareTo(
-        rank[a.priority.toUpperCase()] ?? 2,
-      ),
-    );
-    return list;
-  }
+  /// Applies the active filter + time-range to the loaded pages. Ordering is
+  /// intentionally left to the backend (the `?sort=` param, see [_sort]) so it
+  /// holds across the whole paginated result set — re-sorting here would only
+  /// reorder the pages currently in memory and fight the server order.
+  List<Issue> _filtered(List<Issue> issues) => issues
+      .where((i) => _filter.matches(i) && _timeRange.matches(i))
+      .toList();
 
   // ── grouping ──────────────────────────────────────────────────────────
 
@@ -416,6 +416,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
         all = await issueApi.allIssues(
           projectId: widget.projectId,
           archived: _filter.archivedOnly,
+          sort: _sort.wire,
         );
       } catch (_) {
         if (mounted) {
@@ -781,6 +782,14 @@ class _IssuesScreenState extends State<IssuesScreen> {
                           _grouping = g;
                           _collapsed.clear();
                         }),
+                        sort: _sort,
+                        onSort: (s) {
+                          if (s == _sort) return;
+                          // Sort is server-side: change the order and refetch
+                          // from page 0 so it applies to the whole result set.
+                          setState(() => _sort = s);
+                          _issues.load();
+                        },
                         filterCount: _filter.activeCount,
                         filterKey: _filterKey,
                         onFilter: () => _openFilter(ref, all),

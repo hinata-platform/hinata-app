@@ -548,6 +548,13 @@
       "next30": "Next 30 days",
       "custom": "Custom range…"
     },
+    "sort": {
+      "label": "Sort",
+      "createdDesc": "Newest first",
+      "createdAsc": "Oldest first",
+      "updatedDesc": "Last modified (newest)",
+      "updatedAsc": "Last modified (oldest)"
+    },
     "countFiltered": "{{count}} of {{total}} issues",
     "emptyFiltered": "No issues match your filters",
     "replyEmail": {

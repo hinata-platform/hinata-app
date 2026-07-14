@@ -20,6 +20,8 @@ class _Toolbar extends StatelessWidget {
   const _Toolbar({
     required this.grouping,
     required this.onGrouping,
+    required this.sort,
+    required this.onSort,
     required this.filterCount,
     required this.filterKey,
     required this.onFilter,
@@ -31,6 +33,8 @@ class _Toolbar extends StatelessWidget {
 
   final IssueGrouping grouping;
   final ValueChanged<IssueGrouping> onGrouping;
+  final IssueSort sort;
+  final ValueChanged<IssueSort> onSort;
   final int filterCount;
   final GlobalKey filterKey;
   final VoidCallback? onFilter;
@@ -52,6 +56,8 @@ class _Toolbar extends StatelessWidget {
             child: Row(
               children: [
                 _GroupByButton(value: grouping, onChanged: onGrouping),
+                const SizedBox(width: 10),
+                _SortButton(value: sort, onChanged: onSort),
                 const SizedBox(width: 10),
                 _FilterButton(
                   key: filterKey,
@@ -149,6 +155,87 @@ class _GroupByButton extends StatelessWidget {
                 size: 15,
                 color: AppColors.inkFaint,
               ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────── sort ───────────────────────────────────────
+
+String _sortLabel(BuildContext context, IssueSort s) => switch (s) {
+  IssueSort.createdDesc => context.t('issues.sort.createdDesc'),
+  IssueSort.createdAsc => context.t('issues.sort.createdAsc'),
+  IssueSort.updatedDesc => context.t('issues.sort.updatedDesc'),
+  IssueSort.updatedAsc => context.t('issues.sort.updatedAsc'),
+};
+
+/// A directional glyph for each sort option — descending (newest/most-recent
+/// first) points down, ascending points up — so the menu reads at a glance.
+IconData _sortIcon(IssueSort s) => switch (s) {
+  IssueSort.createdDesc || IssueSort.updatedDesc =>
+    LucideIcons.arrowDownWideNarrow,
+  IssueSort.createdAsc || IssueSort.updatedAsc => LucideIcons.arrowUpNarrowWide,
+};
+
+/// Sort selector — mirrors [_GroupByButton]: an always-visible sort glyph, with
+/// the label + chevron hidden on compact (icon-only) layouts. Tints amber when
+/// a non-default order is active. The two created/updated pairs are separated by
+/// a divider so the "by creation" vs "by last change" grouping reads clearly.
+class _SortButton extends StatelessWidget {
+  const _SortButton({required this.value, required this.onChanged});
+
+  final IssueSort value;
+  final ValueChanged<IssueSort> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final compact = context.isCompact;
+    final active = !value.isDefault;
+    return GlassPopupMenu<IssueSort>(
+      value: value,
+      width: 250,
+      onSelected: onChanged,
+      items: [
+        for (final s in IssueSort.values)
+          GlassMenuItem(
+            value: s,
+            label: _sortLabel(context, s),
+            leading: Icon(_sortIcon(s), size: 18),
+            dividerAbove: s == IssueSort.updatedDesc,
+          ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          border: Border.all(
+            color: active ? AppColors.accentLine : AppColors.hairline,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              LucideIcons.arrowUpDown,
+              size: 16,
+              color: active ? AppColors.accentStrong : AppColors.inkSoft,
+            ),
+            if (!compact) ...[
+              const SizedBox(width: 7),
+              Text(
+                context.t('issues.sort.label'),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: active ? AppColors.accentStrong : AppColors.ink,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(LucideIcons.chevronDown, size: 15, color: AppColors.inkFaint),
             ],
           ],
         ),
