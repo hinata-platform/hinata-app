@@ -48,32 +48,164 @@ class _Toolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Compact (mobile): the four view controls collapse into a single
+    // connected glass housing (iOS-style segmented bar) so they read as one
+    // cluster instead of four detached boxes. Wide: separate labelled pills.
+    final Widget controls = context.isCompact
+        ? _SegmentedControls(
+            grouping: grouping,
+            onGrouping: onGrouping,
+            sort: sort,
+            onSort: onSort,
+            filterCount: filterCount,
+            filterKey: filterKey,
+            onFilter: onFilter,
+            timeRange: timeRange,
+            onTimeRange: onTimeRange,
+          )
+        : Row(
+            children: [
+              _GroupByButton(value: grouping, onChanged: onGrouping),
+              const SizedBox(width: 10),
+              _SortButton(value: sort, onChanged: onSort),
+              const SizedBox(width: 10),
+              _FilterButton(
+                key: filterKey,
+                count: filterCount,
+                onTap: onFilter,
+              ),
+              const SizedBox(width: 10),
+              _TimeRangeButton(value: timeRange, onChanged: onTimeRange),
+            ],
+          );
     return Row(
       children: [
         Expanded(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _GroupByButton(value: grouping, onChanged: onGrouping),
-                const SizedBox(width: 10),
-                _SortButton(value: sort, onChanged: onSort),
-                const SizedBox(width: 10),
-                _FilterButton(
-                  key: filterKey,
-                  count: filterCount,
-                  onTap: onFilter,
-                ),
-                const SizedBox(width: 10),
-                _TimeRangeButton(value: timeRange, onChanged: onTimeRange),
-              ],
-            ),
+            child: controls,
           ),
         ),
         const SizedBox(width: 10),
         if (onExport != null)
           _ExportButton(onSelected: onExport!, exporting: exporting),
       ],
+    );
+  }
+}
+
+/// The compact (mobile) view-controls cluster: one glass housing holding the
+/// Group-by / Sort / Filter / Time segments, separated by hairline dividers.
+/// Each segment opens its own popover and tints its cell amber when active, so
+/// multiple segments can read as "on" simultaneously (unlike a single-selection
+/// segmented control). Export stays a separate button outside this housing.
+class _SegmentedControls extends StatelessWidget {
+  const _SegmentedControls({
+    required this.grouping,
+    required this.onGrouping,
+    required this.sort,
+    required this.onSort,
+    required this.filterCount,
+    required this.filterKey,
+    required this.onFilter,
+    required this.timeRange,
+    required this.onTimeRange,
+  });
+
+  final IssueGrouping grouping;
+  final ValueChanged<IssueGrouping> onGrouping;
+  final IssueSort sort;
+  final ValueChanged<IssueSort> onSort;
+  final int filterCount;
+  final GlobalKey filterKey;
+  final VoidCallback? onFilter;
+  final IssueTimeRange timeRange;
+  final ValueChanged<IssueTimeRange> onTimeRange;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget divider() => Container(
+      width: 1,
+      height: 22,
+      color: AppColors.hairline,
+    );
+    final anyActive =
+        grouping != IssueGrouping.none ||
+        !sort.isDefault ||
+        filterCount > 0 ||
+        timeRange.isActive;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        border: Border.all(
+          color: anyActive ? AppColors.accentLine : AppColors.hairline,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _GroupByButton(value: grouping, onChanged: onGrouping, segmented: true),
+          divider(),
+          _SortButton(value: sort, onChanged: onSort, segmented: true),
+          divider(),
+          _FilterButton(
+            key: filterKey,
+            count: filterCount,
+            onTap: onFilter,
+            segmented: true,
+          ),
+          divider(),
+          _TimeRangeButton(
+            value: timeRange,
+            onChanged: onTimeRange,
+            segmented: true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One cell inside the compact [_SegmentedControls] housing: just the [icon]
+/// (the housing draws the shared border), with an inset amber fill when
+/// [active]. [badge] optionally trails the icon (the filter count).
+class _SegmentCell extends StatelessWidget {
+  const _SegmentCell({required this.icon, required this.active, this.badge});
+
+  final IconData icon;
+  final bool active;
+  final Widget? badge;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      // Inset so the active fill floats inside the housing, clear of the
+      // border and the neighbouring dividers.
+      padding: const EdgeInsets.all(5),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: badge == null ? 13 : 11,
+          vertical: 7,
+        ),
+        decoration: active
+            ? BoxDecoration(
+                color: AppColors.accentSoft,
+                borderRadius: BorderRadius.circular(8),
+              )
+            : null,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: active ? AppColors.accentStrong : AppColors.inkSoft,
+            ),
+            if (badge != null) ...[const SizedBox(width: 6), badge!],
+          ],
+        ),
+      ),
     );
   }
 }
@@ -100,10 +232,18 @@ IconData _groupingIcon(IssueGrouping g) => switch (g) {
 };
 
 class _GroupByButton extends StatelessWidget {
-  const _GroupByButton({required this.value, required this.onChanged});
+  const _GroupByButton({
+    required this.value,
+    required this.onChanged,
+    this.segmented = false,
+  });
 
   final IssueGrouping value;
   final ValueChanged<IssueGrouping> onChanged;
+
+  /// When true the button renders as a bare cell for the compact segmented
+  /// housing (no individual border); otherwise as a standalone labelled pill.
+  final bool segmented;
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +261,9 @@ class _GroupByButton extends StatelessWidget {
             leading: Icon(_groupingIcon(g), size: 18),
           ),
       ],
-      child: Container(
+      child: segmented
+          ? _SegmentCell(icon: _groupingIcon(value), active: active)
+          : Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -185,10 +327,17 @@ IconData _sortIcon(IssueSort s) => switch (s) {
 /// a non-default order is active. The two created/updated pairs are separated by
 /// a divider so the "by creation" vs "by last change" grouping reads clearly.
 class _SortButton extends StatelessWidget {
-  const _SortButton({required this.value, required this.onChanged});
+  const _SortButton({
+    required this.value,
+    required this.onChanged,
+    this.segmented = false,
+  });
 
   final IssueSort value;
   final ValueChanged<IssueSort> onChanged;
+
+  /// Renders as a bare cell for the compact segmented housing when true.
+  final bool segmented;
 
   @override
   Widget build(BuildContext context) {
@@ -207,7 +356,9 @@ class _SortButton extends StatelessWidget {
             dividerAbove: s == IssueSort.updatedDesc,
           ),
       ],
-      child: Container(
+      child: segmented
+          ? _SegmentCell(icon: LucideIcons.arrowUpDown, active: active)
+          : Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -247,13 +398,35 @@ class _SortButton extends StatelessWidget {
 /// White pill that opens the glass filter popup; shows an amber badge with the
 /// active-criteria count. Its [key] anchors the popup's position.
 class _FilterButton extends StatelessWidget {
-  const _FilterButton({super.key, required this.count, required this.onTap});
+  const _FilterButton({
+    super.key,
+    required this.count,
+    required this.onTap,
+    this.segmented = false,
+  });
 
   final int count;
   final VoidCallback? onTap;
 
+  /// Renders as a bare cell for the compact segmented housing when true. Unlike
+  /// the popup-menu segments this control just fires [onTap]; the [key] on the
+  /// widget still anchors the filter popover in either mode.
+  final bool segmented;
+
   @override
   Widget build(BuildContext context) {
+    final active = count > 0;
+    if (segmented) {
+      return GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: _SegmentCell(
+          icon: LucideIcons.slidersHorizontal,
+          active: active,
+          badge: active ? _CountBadge(count: count) : null,
+        ),
+      );
+    }
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(AppTheme.radiusControl),
@@ -265,7 +438,7 @@ class _FilterButton extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppTheme.radiusControl),
             border: Border.all(
-              color: count > 0 ? AppColors.accentLine : AppColors.hairline,
+              color: active ? AppColors.accentLine : AppColors.hairline,
             ),
           ),
           child: Row(
@@ -274,7 +447,7 @@ class _FilterButton extends StatelessWidget {
               Icon(
                 LucideIcons.slidersHorizontal,
                 size: 16,
-                color: count > 0 ? AppColors.accentStrong : AppColors.inkSoft,
+                color: active ? AppColors.accentStrong : AppColors.inkSoft,
               ),
               if (!context.isCompact) ...[
                 const SizedBox(width: 7),
@@ -286,30 +459,43 @@ class _FilterButton extends StatelessWidget {
                   ),
                 ),
               ],
-              if (count > 0) ...[
+              if (active) ...[
                 const SizedBox(width: 7),
-                Container(
-                  constraints: const BoxConstraints(minWidth: 18),
-                  height: 18,
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  decoration: const BoxDecoration(
-                    color: AppColors.accent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    '$count',
-                    style: const TextStyle(
-                      fontFamily: AppTheme.fontMono,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF2A2410),
-                    ),
-                  ),
-                ),
+                _CountBadge(count: count),
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The amber circular count badge shared by the filter pill and its compact
+/// segment.
+class _CountBadge extends StatelessWidget {
+  const _CountBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 18),
+      height: 18,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      decoration: const BoxDecoration(
+        color: AppColors.accent,
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        '$count',
+        style: const TextStyle(
+          fontFamily: AppTheme.fontMono,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF2A2410),
         ),
       ),
     );
@@ -340,10 +526,17 @@ String _timeLabel(BuildContext context, IssueTimeRange r) {
 }
 
 class _TimeRangeButton extends StatelessWidget {
-  const _TimeRangeButton({required this.value, required this.onChanged});
+  const _TimeRangeButton({
+    required this.value,
+    required this.onChanged,
+    this.segmented = false,
+  });
 
   final IssueTimeRange value;
   final ValueChanged<IssueTimeRange> onChanged;
+
+  /// Renders as a bare cell for the compact segmented housing when true.
+  final bool segmented;
 
   Future<void> _onSelected(BuildContext context, IssueTimePreset preset) async {
     if (preset == IssueTimePreset.custom) {
@@ -434,7 +627,9 @@ class _TimeRangeButton extends StatelessWidget {
           dividerAbove: true,
         ),
       ],
-      child: Container(
+      child: segmented
+          ? _SegmentCell(icon: LucideIcons.calendar, active: active)
+          : Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.surface,
