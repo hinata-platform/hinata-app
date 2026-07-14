@@ -42,8 +42,7 @@ class AdminSectionCard extends StatelessWidget {
                     color: AppColors.accentSoft,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child:
-                      Icon(icon, size: 18, color: AppColors.accentStrong),
+                  child: Icon(icon, size: 18, color: AppColors.accentStrong),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -54,15 +53,18 @@ class AdminSectionCard extends StatelessWidget {
                       Text(
                         title,
                         style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            color: AppColors.ink),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: AppColors.ink,
+                        ),
                       ),
                       if (subtitle != null)
                         Text(
                           subtitle!,
                           style: TextStyle(
-                              fontSize: 12, color: AppColors.inkSoft),
+                            fontSize: 12,
+                            color: AppColors.inkSoft,
+                          ),
                         ),
                     ],
                   ),
@@ -154,18 +156,15 @@ class AdminNumberField extends StatelessWidget {
       child: TextFormField(
         initialValue: '$value',
         keyboardType: TextInputType.number,
-        decoration: InputDecoration(
-          labelText: label,
-          suffixText: suffix,
-        ),
+        decoration: InputDecoration(labelText: label, suffixText: suffix),
         onChanged: (v) {
           final parsed = int.tryParse(v);
           if (parsed == null) return;
           final clamped = min != null && parsed < min!
               ? min!
               : max != null && parsed > max!
-                  ? max!
-                  : parsed;
+              ? max!
+              : parsed;
           onChanged(clamped);
         },
       ),
@@ -204,17 +203,24 @@ class AdminToggle extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(label,
-                        style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                            color: AppColors.ink)),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: AppColors.ink,
+                      ),
+                    ),
                     if (subtitle != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 2),
-                        child: Text(subtitle!,
-                            style: TextStyle(
-                                fontSize: 12, color: AppColors.inkSoft)),
+                        child: Text(
+                          subtitle!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.inkSoft,
+                          ),
+                        ),
                       ),
                   ],
                 ),
@@ -265,67 +271,78 @@ class _ProviderTileState extends State<ProviderTile> {
           color: AppColors.surfaceMuted,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color:
-                enabled ? AppColors.accentLine : AppColors.hairline2),
+            color: enabled ? AppColors.accentLine : AppColors.hairline2,
+          ),
         ),
         margin: const EdgeInsets.only(bottom: 10),
-        child: ExpansionTile(
-          initiallyExpanded:
-              widget.initiallyExpanded || enabled,
-          tilePadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-          childrenPadding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
-          title: Row(
-            children: [
-              HiveSwitch(
-                value: enabled,
-                onChanged: (value) {
-                  setState(() => widget.section['enabled'] = value);
-                  widget.onChanged();
-                },
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(widget.title,
+        // Transparent Material so the ExpansionTile's inner ListTile paints its
+        // ink/background on a Material in front of this coloured Container,
+        // instead of a hidden one behind it (Flutter asserts otherwise).
+        child: Material(
+          type: MaterialType.transparency,
+          borderRadius: BorderRadius.circular(10),
+          clipBehavior: Clip.antiAlias,
+          child: ExpansionTile(
+            initiallyExpanded: widget.initiallyExpanded || enabled,
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 2,
+            ),
+            childrenPadding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
+            title: Row(
+              children: [
+                HiveSwitch(
+                  value: enabled,
+                  onChanged: (value) {
+                    setState(() => widget.section['enabled'] = value);
+                    widget.onChanged();
+                  },
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.title,
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
-                          color: enabled
-                              ? AppColors.ink
-                              : AppColors.inkSoft,
-                        )),
-                    if (widget.subtitle != null)
-                      Text(widget.subtitle!,
+                          color: enabled ? AppColors.ink : AppColors.inkSoft,
+                        ),
+                      ),
+                      if (widget.subtitle != null)
+                        Text(
+                          widget.subtitle!,
                           style: TextStyle(
-                              fontSize: 11,
-                              color: AppColors.inkFaint)),
-                  ],
+                            fontSize: 11,
+                            color: AppColors.inkFaint,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
+            ),
+            children: [
+              for (final (key, label, secret) in widget.fields)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: TextFormField(
+                    initialValue: (widget.section[key] as String?) ?? '',
+                    obscureText: secret,
+                    decoration: InputDecoration(
+                      labelText: label,
+                      helperText: secret
+                          ? 'Leave blank to keep the stored value'
+                          : null,
+                    ),
+                    onChanged: (value) => widget.section[key] = value,
+                  ),
+                ),
             ],
           ),
-          children: [
-            for (final (key, label, secret) in widget.fields)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: TextFormField(
-                  initialValue:
-                      (widget.section[key] as String?) ?? '',
-                  obscureText: secret,
-                  decoration: InputDecoration(
-                    labelText: label,
-                    helperText: secret
-                        ? 'Leave blank to keep the stored value'
-                        : null,
-                  ),
-                  onChanged: (value) => widget.section[key] = value,
-                ),
-              ),
-          ],
         ),
       ),
     );
