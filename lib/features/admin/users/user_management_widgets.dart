@@ -8,6 +8,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/models/admin_user_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/glass_bulk_bar.dart';
 import '../../../core/widgets/glass_panel.dart';
 import '../../../core/widgets/glass_popup_menu.dart';
 import '../../../core/widgets/hive_widgets.dart';
@@ -598,121 +599,57 @@ class BulkActionBar extends StatelessWidget {
     );
     final admins = _ids((u) => u.role == AdminRole.admin);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.ink,
-        borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 22,
-            offset: const Offset(0, 8),
-          ),
-        ],
+    return GlassBulkBar(
+      countLabel: context.t(
+        'admin.um.selectedCount',
+        variables: {'n': '${selected.length}'},
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              context.t(
-                'admin.um.selectedCount',
-                variables: {'n': '${selected.length}'},
-              ),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-            ),
+      onClear: onClear,
+      clearTooltip: context.t('admin.um.clearSelection'),
+      actions: [
+        if (invited.isNotEmpty)
+          GlassBulkAction(
+            icon: LucideIcons.send,
+            label: context.t('admin.um.resend'),
+            onTap: () => actions.openResend(invited),
           ),
-          Container(
-            width: 1,
-            height: 22,
-            color: Colors.white.withValues(alpha: 0.18),
-            margin: const EdgeInsets.symmetric(horizontal: 6),
+        if (pending.isNotEmpty)
+          GlassBulkAction(
+            icon: LucideIcons.userCheck,
+            label: context.t('admin.um.approve'),
+            onTap: () => actions.approve(pending),
           ),
-          if (invited.isNotEmpty)
-            _BulkBtn(
-              icon: LucideIcons.send,
-              label: context.t('admin.um.resend'),
-              onTap: () => actions.openResend(invited),
-            ),
-          if (pending.isNotEmpty)
-            _BulkBtn(
-              icon: LucideIcons.userCheck,
-              label: context.t('admin.um.approve'),
-              onTap: () => actions.approve(pending),
-            ),
-          if (disabled.isNotEmpty)
-            _BulkBtn(
-              icon: LucideIcons.circleCheck,
-              label: context.t('admin.um.activate'),
-              onTap: () => actions.activate(disabled),
-            ),
-          if (active.isNotEmpty)
-            _BulkBtn(
-              icon: LucideIcons.ban,
-              label: context.t('admin.um.deactivate'),
-              onTap: () => actions.openDeactivate(active),
-            ),
-          if (nonAdmin.isNotEmpty)
-            _BulkBtn(
-              icon: LucideIcons.shieldCheck,
-              label: context.t('admin.um.makeAdmin'),
-              onTap: () => actions.setRole(nonAdmin, AdminRole.admin),
-            ),
-          if (admins.isNotEmpty)
-            _BulkBtn(
-              icon: LucideIcons.shieldMinus,
-              label: context.t('admin.um.revokeAdmin'),
-              onTap: () => actions.openDemote(admins),
-            ),
-          _BulkBtn(
-            icon: LucideIcons.trash2,
-            label: context.t('admin.um.delete'),
-            danger: true,
-            onTap: () => actions.openDelete(selected.map((u) => u.id).toList()),
+        if (disabled.isNotEmpty)
+          GlassBulkAction(
+            icon: LucideIcons.circleCheck,
+            label: context.t('admin.um.activate'),
+            onTap: () => actions.activate(disabled),
           ),
-          IconButton(
-            tooltip: context.t('admin.um.clearSelection'),
-            onPressed: onClear,
-            icon: const Icon(LucideIcons.x, size: 18, color: Colors.white),
-            visualDensity: VisualDensity.compact,
+        if (active.isNotEmpty)
+          GlassBulkAction(
+            icon: LucideIcons.ban,
+            label: context.t('admin.um.deactivate'),
+            onTap: () => actions.openDeactivate(active),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BulkBtn extends StatelessWidget {
-  const _BulkBtn({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.danger = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool danger;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = danger ? const Color(0xFFFF8A80) : Colors.white;
-    return TextButton.icon(
-      onPressed: onTap,
-      style: TextButton.styleFrom(
-        foregroundColor: color,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5),
-      ),
-      icon: Icon(icon, size: 15, color: color),
-      label: Text(label),
+        if (nonAdmin.isNotEmpty)
+          GlassBulkAction(
+            icon: LucideIcons.shieldCheck,
+            label: context.t('admin.um.makeAdmin'),
+            onTap: () => actions.setRole(nonAdmin, AdminRole.admin),
+          ),
+        if (admins.isNotEmpty)
+          GlassBulkAction(
+            icon: LucideIcons.shieldMinus,
+            label: context.t('admin.um.revokeAdmin'),
+            onTap: () => actions.openDemote(admins),
+          ),
+        GlassBulkAction(
+          icon: LucideIcons.trash2,
+          label: context.t('admin.um.delete'),
+          danger: true,
+          onTap: () => actions.openDelete(selected.map((u) => u.id).toList()),
+        ),
+      ],
     );
   }
 }

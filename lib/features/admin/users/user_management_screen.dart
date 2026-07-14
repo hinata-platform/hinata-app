@@ -838,8 +838,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       right: 0,
       bottom: 16 + context.bottomGutter,
       child: Center(
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
+        child: Padding(
+          // The glass bar scrolls its action strip internally, so it only
+          // ever needs the page gutters — never the screen edge.
           padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
           child: BulkActionBar(
             selected: selected,

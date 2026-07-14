@@ -6,7 +6,9 @@ import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/glass_bulk_bar.dart';
 import '../../core/widgets/hive_widgets.dart';
+import '../search/search_tokens.dart';
 import '../board/board_filter.dart';
 import '../board/board_screen.dart' show DottedAddButton;
 import 'sprint_format.dart';
@@ -135,11 +137,13 @@ class SprintPlanningSurface extends StatelessWidget {
             left: gutter,
             right: gutter,
             bottom: context.bottomGutter + 12,
-            child: _BulkBar(
-              count: selected.length,
-              sprints: sprints,
-              onMove: onBulkMove,
-              onClose: onClearSelection,
+            child: Center(
+              child: _BulkBar(
+                count: selected.length,
+                sprints: sprints,
+                onMove: onBulkMove,
+                onClose: onClearSelection,
+              ),
             ),
           ),
       ],
@@ -901,70 +905,48 @@ class _BulkBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.navy,
-      borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-      elevation: 8,
-      shadowColor: Colors.black26,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-        child: Row(
-          children: [
-            Text(
-              context.t('sprint.selectedCount', variables: {'count': '$count'}),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 13.5,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Flexible(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.18),
-                  ),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    hint: Text(
-                      context.t('sprint.moveTo'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12.5,
-                      ),
-                    ),
-                    dropdownColor: AppColors.navy,
-                    isDense: true,
-                    iconEnabledColor: Colors.white70,
-                    style: const TextStyle(color: Colors.white, fontSize: 12.5),
-                    items: [
-                      for (final s in sprints)
-                        DropdownMenuItem(value: s.id, child: Text(s.name)),
-                      DropdownMenuItem(
-                        value: '__backlog',
-                        child: Text(context.t('sprint.backlog')),
-                      ),
-                    ],
-                    onChanged: (v) {
-                      if (v != null) onMove(v == '__backlog' ? null : v);
-                    },
-                  ),
-                ),
-              ),
-            ),
-            const Spacer(),
-            IconButton(
-              onPressed: onClose,
-              icon: const Icon(LucideIcons.x, size: 18, color: Colors.white70),
-            ),
-          ],
-        ),
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final tokens = SearchTokens.of(dark ? Brightness.dark : Brightness.light);
+    return GlassBulkBar(
+      countLabel: context.t(
+        'sprint.selectedCount',
+        variables: {'count': '$count'},
       ),
+      onClear: onClose,
+      actions: [
+        Container(
+          decoration: BoxDecoration(
+            color: tokens.field,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: tokens.hairline),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              hint: Text(
+                context.t('sprint.moveTo'),
+                style: TextStyle(color: tokens.inkSoft, fontSize: 12.5),
+              ),
+              dropdownColor: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              isDense: true,
+              iconEnabledColor: tokens.inkSoft,
+              style: TextStyle(color: tokens.ink, fontSize: 12.5),
+              items: [
+                for (final s in sprints)
+                  DropdownMenuItem(value: s.id, child: Text(s.name)),
+                DropdownMenuItem(
+                  value: '__backlog',
+                  child: Text(context.t('sprint.backlog')),
+                ),
+              ],
+              onChanged: (v) {
+                if (v != null) onMove(v == '__backlog' ? null : v);
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
