@@ -17,6 +17,7 @@ import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
 import '../../core/models/core_models.dart';
+import '../../core/notifications/notification_swipe.dart';
 import '../../core/notifications/notification_visuals.dart';
 import '../../core/repositories/notification_repository.dart';
 import '../../core/responsive/responsive.dart';

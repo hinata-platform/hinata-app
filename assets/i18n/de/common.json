@@ -845,6 +845,9 @@
     "title": "Mitteilungen",
     "empty": "Du bist auf dem neuesten Stand!",
     "markAllRead": "Alle als gelesen markieren",
+    "markRead": "Als gelesen markieren",
+    "markUnread": "Als ungelesen markieren",
+    "delete": "Löschen",
     "viewAll": "Alle Mitteilungen anzeigen",
     "unreadCount": "{{count}} ungelesen",
     "group": {

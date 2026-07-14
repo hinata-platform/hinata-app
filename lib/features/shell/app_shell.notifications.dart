@@ -60,6 +60,31 @@ class _NotificationBellState extends State<_NotificationBell> {
     await _cubit.load();
   }
 
+  Future<void> _deleteNotification(AppNotification notification) async {
+    try {
+      await context.read<NotificationRepository>().deleteNotification(
+        notification.id,
+      );
+    } catch (_) {
+      // Non-critical; the reload below reflects server truth.
+    }
+    await _cubit.load();
+  }
+
+  Future<void> _toggleNotificationRead(AppNotification notification) async {
+    final repository = context.read<NotificationRepository>();
+    try {
+      if (notification.read) {
+        await repository.markNotificationUnread(notification.id);
+      } else {
+        await repository.markNotificationRead(notification.id);
+      }
+    } catch (_) {
+      // Non-critical; the reload below reflects server truth.
+    }
+    await _cubit.load();
+  }
+
   Future<void> _openNotification(AppNotification notification) async {
     final repository = context.read<NotificationRepository>();
     if (!notification.read) {
@@ -171,6 +196,8 @@ class _NotificationBellState extends State<_NotificationBell> {
                 contentBuilder: (context, close) => _NotifPopoverCard(
                   items: items,
                   onMarkAllRead: () => _markAllRead(items),
+                  onDelete: _deleteNotification,
+                  onToggleRead: _toggleNotificationRead,
                   onTapNotification: (n) {
                     close();
                     _openNotification(n);
@@ -208,12 +235,16 @@ class _NotifPopoverCard extends StatelessWidget {
   const _NotifPopoverCard({
     required this.items,
     required this.onMarkAllRead,
+    required this.onDelete,
+    required this.onToggleRead,
     required this.onTapNotification,
     required this.onViewAll,
   });
 
   final List<AppNotification> items;
   final VoidCallback onMarkAllRead;
+  final Future<void> Function(AppNotification) onDelete;
+  final Future<void> Function(AppNotification) onToggleRead;
   final void Function(AppNotification) onTapNotification;
   final VoidCallback onViewAll;
 
@@ -291,9 +322,14 @@ class _NotifPopoverCard extends StatelessWidget {
                 itemCount: latest.length,
                 separatorBuilder: (_, _) =>
                     Divider(height: 1, color: AppColors.hairline2),
-                itemBuilder: (_, i) => _NotifRow(
+                itemBuilder: (_, i) => NotificationSwipe(
                   notification: latest[i],
-                  onTap: () => onTapNotification(latest[i]),
+                  onDelete: onDelete,
+                  onToggleRead: onToggleRead,
+                  child: _NotifRow(
+                    notification: latest[i],
+                    onTap: () => onTapNotification(latest[i]),
+                  ),
                 ),
               ),
             ),

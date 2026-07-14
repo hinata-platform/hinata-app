@@ -845,6 +845,9 @@
     "title": "Notifications",
     "empty": "You're all caught up!",
     "markAllRead": "Mark all read",
+    "markRead": "Mark read",
+    "markUnread": "Mark unread",
+    "delete": "Delete",
     "viewAll": "View all notifications",
     "unreadCount": "{{count}} unread",
     "group": {

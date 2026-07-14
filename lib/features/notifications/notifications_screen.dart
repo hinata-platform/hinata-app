@@ -7,6 +7,7 @@ import '../../core/repositories/notification_repository.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
+import '../../core/notifications/notification_swipe.dart';
 import '../../core/notifications/notification_visuals.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
@@ -70,6 +71,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
     await _cubit.load();
     if (mounted) setState(() => _markingAll = false);
+  }
+
+  Future<void> _delete(AppNotification notification) async {
+    try {
+      await _repo.deleteNotification(notification.id);
+    } catch (_) {
+      // Non-critical; the reload below reflects server truth.
+    }
+    await _cubit.load();
+  }
+
+  Future<void> _toggleRead(AppNotification notification) async {
+    try {
+      if (notification.read) {
+        await _repo.markNotificationUnread(notification.id);
+      } else {
+        await _repo.markNotificationRead(notification.id);
+      }
+    } catch (_) {
+      // Non-critical; the reload below reflects server truth.
+    }
+    await _cubit.load();
   }
 
   Future<void> _open(AppNotification notification) async {
@@ -159,9 +182,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                 indent: 62,
                                 color: AppColors.hairline2,
                               ),
-                            _NotificationTile(
+                            NotificationSwipe(
                               notification: group.items[i],
-                              onTap: () => _open(group.items[i]),
+                              onDelete: _delete,
+                              onToggleRead: _toggleRead,
+                              child: _NotificationTile(
+                                notification: group.items[i],
+                                onTap: () => _open(group.items[i]),
+                              ),
                             ),
                           ],
                         ],
