@@ -1239,7 +1239,13 @@
       "pollSeconds": "Abrufintervall (Sekunden)",
       "noProject": "Kein Projekt",
       "deleteTitle": "Verbindung löschen?",
-      "deleteBody": "„{{name}}“ wird nicht mehr abgefragt. Bestehende Tickets bleiben erhalten."
+      "deleteBody": "„{{name}}“ wird nicht mehr abgefragt. Bestehende Tickets bleiben erhalten.",
+      "reprocess": "Postfach neu verarbeiten",
+      "reprocessTitle": "Postfach neu verarbeiten?",
+      "reprocessBody": "Liest alle Nachrichten in „{{name}}“ erneut und baut die Beschreibung ihrer Tickets mit dem aktuellen Parser neu auf. Manuell bearbeitete Beschreibungen bleiben unangetastet, und es werden keine neuen Tickets erstellt.",
+      "reprocessConfirm": "Neu verarbeiten",
+      "reprocessDone": "{{count}} Ticket neu aufgebaut · {{scanned}} geprüft",
+      "reprocessDone_plural": "{{count}} Tickets neu aufgebaut · {{scanned}} geprüft"
     }
   },
   "audit": {

@@ -49,6 +49,23 @@ class AdminRepository {
   Future<void> deleteIngestConnection(String id) =>
       _api.delete('/api/v1/admin/ingest-connections/$id');
 
+  /// Re-reads an existing connection's mailbox now and rebuilds the description
+  /// of every ticket whose source e-mail is still present, using the current
+  /// parser. Repairs tickets ingested while HTML handling was broken. Seen flags
+  /// are untouched, manual edits are preserved, no new tickets are created.
+  /// Returns how many messages were scanned and how many descriptions changed.
+  Future<({int scanned, int updated})> reprocessIngestConnection(
+    String id,
+  ) async {
+    final result = await _api.post(
+      '/api/v1/admin/ingest-connections/$id/reprocess',
+    ) as Map<String, dynamic>;
+    return (
+      scanned: (result['scanned'] as num?)?.toInt() ?? 0,
+      updated: (result['updated'] as num?)?.toInt() ?? 0,
+    );
+  }
+
   /// Lists the mailbox's folders. Live-connects to the mail server, so only
   /// called after the admin explicitly consented to a scan. A blank password
   /// with a known [connectionId] reuses the stored one.

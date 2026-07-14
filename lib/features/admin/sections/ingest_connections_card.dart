@@ -37,6 +37,10 @@ class _IngestConnectionsCardState extends State<IngestConnectionsCard> {
   bool _loading = true;
   String? _errorKey;
 
+  /// The connection whose mailbox is being reprocessed right now (drives the
+  /// per-row spinner); null when idle.
+  String? _reprocessingId;
+
   @override
   void initState() {
     super.initState();
@@ -151,6 +155,36 @@ class _IngestConnectionsCardState extends State<IngestConnectionsCard> {
     }
   }
 
+  Future<void> _reprocess(IngestConnection connection) async {
+    if (_reprocessingId != null) return;
+    final confirmed = await showGlassConfirm(
+      context,
+      icon: LucideIcons.refreshCw,
+      title: context.t('admin.ingest.reprocessTitle'),
+      message: context.t('admin.ingest.reprocessBody',
+          variables: {'name': connection.label}),
+      confirmLabel: context.t('admin.ingest.reprocessConfirm'),
+      confirmIcon: LucideIcons.refreshCw,
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _reprocessingId = connection.id);
+    try {
+      final result = await _repo.reprocessIngestConnection(connection.id!);
+      if (!mounted) return;
+      showGlassToast(
+        context,
+        context.t('admin.ingest.reprocessDone',
+            count: result.updated, variables: {'scanned': result.scanned}),
+        kind: GlassToastKind.success,
+      );
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      _showError(failure);
+    } finally {
+      if (mounted) setState(() => _reprocessingId = null);
+    }
+  }
+
   void _showError(ApiFailure failure) {
     showGlassErrorToast(context, context.t(failure.message));
   }
@@ -194,8 +228,10 @@ class _IngestConnectionsCardState extends State<IngestConnectionsCard> {
               project: connection.projectId != null
                   ? _projects[connection.projectId]
                   : null,
+              busy: _reprocessingId == connection.id,
               onToggle: (v) => _toggle(connection, v),
               onEdit: () => _edit(connection),
+              onReprocess: () => _reprocess(connection),
               onDelete: () => _delete(connection),
             ),
           const SizedBox(height: 4),
@@ -217,15 +253,19 @@ class _ConnectionTile extends StatelessWidget {
   const _ConnectionTile({
     required this.connection,
     required this.project,
+    required this.busy,
     required this.onToggle,
     required this.onEdit,
+    required this.onReprocess,
     required this.onDelete,
   });
 
   final IngestConnection connection;
   final IngestProjectOption? project;
+  final bool busy;
   final ValueChanged<bool> onToggle;
   final VoidCallback onEdit;
+  final VoidCallback onReprocess;
   final VoidCallback onDelete;
 
   @override
@@ -287,12 +327,24 @@ class _ConnectionTile extends StatelessWidget {
           IconButton(
             tooltip: context.t('common.edit'),
             icon: Icon(LucideIcons.pencil, size: 16, color: AppColors.inkSoft),
-            onPressed: onEdit,
+            onPressed: busy ? null : onEdit,
           ),
+          if (busy)
+            const Padding(
+              padding: EdgeInsets.all(10),
+              child: HiveLoader(size: 16, strokeWidth: 2),
+            )
+          else
+            IconButton(
+              tooltip: context.t('admin.ingest.reprocess'),
+              icon: Icon(LucideIcons.refreshCw, size: 16,
+                  color: AppColors.inkSoft),
+              onPressed: onReprocess,
+            ),
           IconButton(
             tooltip: context.t('common.delete'),
             icon: Icon(LucideIcons.trash2, size: 16, color: AppColors.inkSoft),
-            onPressed: onDelete,
+            onPressed: busy ? null : onDelete,
           ),
         ],
       ),

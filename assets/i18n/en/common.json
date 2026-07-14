@@ -1239,7 +1239,13 @@
       "pollSeconds": "Poll interval (seconds)",
       "noProject": "No project",
       "deleteTitle": "Delete connection?",
-      "deleteBody": "\"{{name}}\" will no longer be polled. Existing tickets are kept."
+      "deleteBody": "\"{{name}}\" will no longer be polled. Existing tickets are kept.",
+      "reprocess": "Reprocess mailbox",
+      "reprocessTitle": "Reprocess mailbox?",
+      "reprocessBody": "Re-reads every message in \"{{name}}\" and rebuilds its ticket's description with the current parser. Manually edited descriptions are left untouched, and no new tickets are created.",
+      "reprocessConfirm": "Reprocess",
+      "reprocessDone": "{{count}} ticket rebuilt · {{scanned}} scanned",
+      "reprocessDone_plural": "{{count}} tickets rebuilt · {{scanned}} scanned"
     }
   },
   "audit": {
