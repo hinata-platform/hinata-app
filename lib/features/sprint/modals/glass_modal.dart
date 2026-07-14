@@ -36,7 +36,8 @@ Future<T?> showGlassModal<T>(
     barrierColor: Colors.transparent,
     useRootNavigator: true,
     transitionDuration: const Duration(milliseconds: 380),
-    pageBuilder: (_, _, _) => _GlassModalScaffold(width: width, builder: builder),
+    pageBuilder: (_, _, _) =>
+        _GlassModalScaffold(width: width, builder: builder),
     transitionBuilder: (_, _, _, child) => child,
   );
 }
@@ -585,6 +586,419 @@ class _GlassDatePickerState extends State<_GlassDatePicker> {
           onConfirm: () => Navigator.of(context).pop(_selected),
         ),
       ],
+    );
+  }
+}
+
+/// A Liquid-Glass **date-range** picker — the shared replacement for Material's
+/// fullscreen [showDateRangePicker], which looks out of place on desktop/tablet.
+/// Renders a custom vertically-scrolling month calendar (the layout kept from the
+/// phone experience) on the app's compact glass modal, so it reads as a small
+/// floating panel on wide screens and a near-full-width sheet on phones.
+///
+/// [initialRange] pre-selects a range and scrolls it into view; otherwise the
+/// today's month is anchored. Resolves to the picked [DateTimeRange], or `null`
+/// if dismissed. Selection is inclusive of both endpoints.
+Future<DateTimeRange?> showGlassDateRangePicker(
+  BuildContext context, {
+  required DateTime firstDate,
+  required DateTime lastDate,
+  DateTimeRange? initialRange,
+  required String title,
+}) {
+  return showGlassModal<DateTimeRange>(
+    context,
+    width: 400,
+    builder: (modalContext) => _GlassDateRangePicker(
+      firstDate: DateUtils.dateOnly(firstDate),
+      lastDate: DateUtils.dateOnly(lastDate),
+      initialRange: initialRange,
+      title: title,
+    ),
+  );
+}
+
+class _GlassDateRangePicker extends StatefulWidget {
+  const _GlassDateRangePicker({
+    required this.firstDate,
+    required this.lastDate,
+    required this.initialRange,
+    required this.title,
+  });
+
+  final DateTime firstDate;
+  final DateTime lastDate;
+  final DateTimeRange? initialRange;
+  final String title;
+
+  @override
+  State<_GlassDateRangePicker> createState() => _GlassDateRangePickerState();
+}
+
+class _GlassDateRangePickerState extends State<_GlassDateRangePicker> {
+  DateTime? _start;
+  DateTime? _end;
+  final _scroll = ScrollController();
+  bool _jumped = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialRange != null) {
+      _start = DateUtils.dateOnly(widget.initialRange!.start);
+      _end = DateUtils.dateOnly(widget.initialRange!.end);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  /// Number of months rendered, from [widget.firstDate]'s month through
+  /// [widget.lastDate]'s month (inclusive).
+  int get _monthCount =>
+      DateUtils.monthDelta(widget.firstDate, widget.lastDate) + 1;
+
+  DateTime _monthAt(int index) =>
+      DateUtils.addMonthsToMonthDate(widget.firstDate, index);
+
+  /// Height of month [index] for a given day-[cell] size — a fixed label band
+  /// plus one row per week. Summed to compute the initial scroll offset so the
+  /// active range (or today) lands in view.
+  double _monthHeight(int index, double cell) {
+    final m = _monthAt(index);
+    final days = DateUtils.getDaysInMonth(m.year, m.month);
+    final offset = DateUtils.firstDayOffset(
+      m.year,
+      m.month,
+      MaterialLocalizations.of(context),
+    );
+    final weeks = ((offset + days) / 7).ceil();
+    return _kMonthLabelHeight + weeks * cell;
+  }
+
+  void _onTapDay(DateTime day) {
+    setState(() {
+      // First tap, or a fresh start after a complete range — begin anew.
+      if (_start == null || _end != null) {
+        _start = day;
+        _end = null;
+      } else if (day.isBefore(_start!)) {
+        // Second tap before the start flips the anchor so start ≤ end.
+        _end = _start;
+        _start = day;
+      } else {
+        _end = day;
+      }
+    });
+  }
+
+  String _subtitle(BuildContext context) {
+    final l = MaterialLocalizations.of(context);
+    if (_start == null) return context.t('issues.time.rangePrompt');
+    if (_end == null) {
+      return '${l.formatShortDate(_start!)}  ·  ${context.t('issues.time.pickEnd')}';
+    }
+    return '${l.formatShortDate(_start!)} – ${l.formatShortDate(_end!)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = MaterialLocalizations.of(context);
+    // Weekday header labels, ordered from the locale's first weekday.
+    final first = l.firstDayOfWeekIndex;
+    final weekdayLabels = [
+      for (var i = 0; i < 7; i++) l.narrowWeekdays[(first + i) % 7],
+    ];
+    // Keep the scrolling calendar to a compact band inside the modal; the modal
+    // scaffold itself caps overall height, so this only bounds the day grid.
+    final gridHeight = math.min(
+      MediaQuery.sizeOf(context).height * 0.52,
+      408.0,
+    );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GlassModalHeader(
+          icon: LucideIcons.calendarRange,
+          title: widget.title,
+          subtitle: _subtitle(context),
+        ),
+        // Weekday header row, aligned to the day grid below.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+          child: Row(
+            children: [
+              for (final label in weekdayLabels)
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.inkFaint,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        Container(height: 1, color: AppColors.hairline.withValues(alpha: 0.6)),
+        // Flexible + a max-height cap: prefers [gridHeight] but shrinks so the
+        // header/footer chrome always fits inside short (small-window) modals.
+        Flexible(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: gridHeight),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final cell = constraints.maxWidth / 7;
+                  // One-shot jump so the active range (or today) is on screen.
+                  if (!_jumped) {
+                    _jumped = true;
+                    final anchor = _start ?? DateUtils.dateOnly(DateTime.now());
+                    final clamped = anchor.isBefore(widget.firstDate)
+                        ? widget.firstDate
+                        : (anchor.isAfter(widget.lastDate)
+                              ? widget.lastDate
+                              : anchor);
+                    final anchorIndex = DateUtils.monthDelta(
+                      widget.firstDate,
+                      clamped,
+                    );
+                    var offset = 0.0;
+                    for (var i = 0; i < anchorIndex; i++) {
+                      offset += _monthHeight(i, cell);
+                    }
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (_scroll.hasClients) {
+                        _scroll.jumpTo(
+                          offset.clamp(0.0, _scroll.position.maxScrollExtent),
+                        );
+                      }
+                    });
+                  }
+                  return ListView.builder(
+                    controller: _scroll,
+                    padding: const EdgeInsets.only(bottom: 8),
+                    itemCount: _monthCount,
+                    itemBuilder: (context, index) => _MonthGrid(
+                      month: _monthAt(index),
+                      cell: cell,
+                      firstDate: widget.firstDate,
+                      lastDate: widget.lastDate,
+                      start: _start,
+                      end: _end,
+                      onTap: _onTapDay,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+        GlassModalFooter(
+          confirmLabel: l.okButtonLabel,
+          onConfirm: _start == null
+              ? null
+              : () => Navigator.of(
+                  context,
+                ).pop(DateTimeRange(start: _start!, end: _end ?? _start!)),
+        ),
+      ],
+    );
+  }
+}
+
+/// Fixed vertical space each month reserves for its "July 2026" label (label +
+/// surrounding padding), used both for layout and for the scroll-offset maths.
+const double _kMonthLabelHeight = 44;
+
+/// A single month's day grid inside [_GlassDateRangePicker]. Draws the month
+/// label, then a 7-column grid of day cells with the selected range painted as a
+/// continuous amber band and navy endpoint discs.
+class _MonthGrid extends StatelessWidget {
+  const _MonthGrid({
+    required this.month,
+    required this.cell,
+    required this.firstDate,
+    required this.lastDate,
+    required this.start,
+    required this.end,
+    required this.onTap,
+  });
+
+  final DateTime month;
+  final double cell;
+  final DateTime firstDate;
+  final DateTime lastDate;
+  final DateTime? start;
+  final DateTime? end;
+  final ValueChanged<DateTime> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = MaterialLocalizations.of(context);
+    final days = DateUtils.getDaysInMonth(month.year, month.month);
+    final offset = DateUtils.firstDayOffset(month.year, month.month, l);
+    final today = DateUtils.dateOnly(DateTime.now());
+
+    // Total cells rounded up to whole weeks, so the grid stays rectangular.
+    final cellCount = ((offset + days) / 7).ceil() * 7;
+    final cells = <Widget>[];
+    for (var i = 0; i < cellCount; i++) {
+      final dayNum = i - offset + 1;
+      if (dayNum < 1 || dayNum > days) {
+        cells.add(SizedBox(width: cell, height: cell));
+        continue;
+      }
+      final date = DateTime(month.year, month.month, dayNum);
+      final disabled = date.isBefore(firstDate) || date.isAfter(lastDate);
+      // A "real" (multi-day) range is needed before any connecting band shows;
+      // a single-day selection just draws its endpoint disc.
+      final hasRange = start != null && end != null && start != end;
+      final isStart = start != null && date == start;
+      final isEnd = end != null && date == end;
+      final inRange = hasRange && date.isAfter(start!) && date.isBefore(end!);
+      cells.add(
+        _DayCell(
+          size: cell,
+          label: '$dayNum',
+          disabled: disabled,
+          isToday: date == today,
+          isStart: isStart,
+          isEnd: isEnd,
+          // The band reaches only toward the other endpoint: the start caps its
+          // right half, the end its left half, interior days fill fully.
+          bandLeft: inRange || (hasRange && isEnd),
+          bandRight: inRange || (hasRange && isStart),
+          onTap: disabled ? null : () => onTap(date),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: _kMonthLabelHeight,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 2, top: 16, bottom: 8),
+            child: Text(
+              l.formatMonthYear(month),
+              style: const TextStyle(
+                fontFamily: AppTheme.fontBrand,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.2,
+              ),
+            ),
+          ),
+        ),
+        for (var row = 0; row < cellCount ~/ 7; row++)
+          Row(children: cells.sublist(row * 7, row * 7 + 7)),
+      ],
+    );
+  }
+}
+
+/// One day cell: an optional range band (right/left/full depending on where the
+/// day sits in the selection) with an optional navy endpoint disc and today ring.
+class _DayCell extends StatelessWidget {
+  const _DayCell({
+    required this.size,
+    required this.label,
+    required this.disabled,
+    required this.isToday,
+    required this.isStart,
+    required this.isEnd,
+    required this.bandLeft,
+    required this.bandRight,
+    required this.onTap,
+  });
+
+  final double size;
+  final String label;
+  final bool disabled;
+  final bool isToday;
+  final bool isStart;
+  final bool isEnd;
+  final bool bandLeft;
+  final bool bandRight;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isEndpoint = isStart || isEnd;
+
+    Widget? band;
+    if (bandLeft || bandRight) {
+      band = Row(
+        children: [
+          Expanded(
+            child: ColoredBox(
+              color: bandLeft ? AppColors.accentSoft : Colors.transparent,
+            ),
+          ),
+          Expanded(
+            child: ColoredBox(
+              color: bandRight ? AppColors.accentSoft : Colors.transparent,
+            ),
+          ),
+        ],
+      );
+    }
+
+    final Color textColor;
+    if (disabled) {
+      textColor = AppColors.inkFaint.withValues(alpha: 0.5);
+    } else if (isEndpoint) {
+      textColor = Colors.white;
+    } else if (isToday) {
+      textColor = AppColors.accentStrong;
+    } else {
+      textColor = AppColors.ink;
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (band != null) Positioned.fill(child: band),
+            Container(
+              width: size - 8,
+              height: size - 8,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isEndpoint ? AppColors.navy : null,
+                border: isToday && !isEndpoint
+                    ? Border.all(color: AppColors.accent, width: 1.5)
+                    : null,
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isEndpoint ? FontWeight.w700 : FontWeight.w500,
+                  color: textColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

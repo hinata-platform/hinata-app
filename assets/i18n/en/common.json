@@ -217,7 +217,7 @@
     "openStore": "Update now"
   },
   "nav": {
-    "dashboard": "Dashboard",
+    "dashboard": "Home",
     "projects": "Projects",
     "teams": "Teams",
     "issues": "Issues",
@@ -546,7 +546,11 @@
       "last30": "Last 30 days",
       "next7": "Next 7 days",
       "next30": "Next 30 days",
-      "custom": "Custom range…"
+      "custom": "Custom range…",
+      "selectRange": "Select time range",
+      "rangePrompt": "Start date – End date",
+      "pickStart": "Select start date",
+      "pickEnd": "Select end date"
     },
     "sort": {
       "label": "Sort",

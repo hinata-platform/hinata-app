@@ -88,11 +88,25 @@ class _Toolbar extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         if (onExport != null)
-          _ExportButton(onSelected: onExport!, exporting: exporting),
+          _ExportButton(
+            onSelected: onExport!,
+            exporting: exporting,
+            glass: context.isCompact,
+          ),
       ],
     );
   }
 }
+
+/// Corner radius of the segmented glass housing (and the export button, so both
+/// docked glass controls share one roundness). The active-segment indicator is
+/// rounded *concentrically* — [_kSegmentedRadius] minus the [_kSegmentInset] —
+/// so it echoes this shape: a pill housing yields pill indicators, a gentler
+/// radius yields gentler indicators. Change this one value and all three follow.
+const double _kSegmentedRadius = 30;
+
+/// Inset of each segment's active indicator inside the glass housing.
+const double _kSegmentInset = 5;
 
 /// The compact (mobile) view-controls cluster: one glass housing holding the
 /// Group-by / Sort / Filter / Time segments, separated by hairline dividers.
@@ -124,28 +138,24 @@ class _SegmentedControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    // Hairline-thin translucent divider that reads on the glass rather than an
+    // opaque line (which would look painted-on over the refraction).
     Widget divider() => Container(
       width: 1,
       height: 22,
-      color: AppColors.hairline,
+      color: (dark ? Colors.white : Colors.black).withValues(alpha: 0.10),
     );
-    final anyActive =
-        grouping != IssueGrouping.none ||
-        !sort.isDefault ||
-        filterCount > 0 ||
-        timeRange.isActive;
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        border: Border.all(
-          color: anyActive ? AppColors.accentLine : AppColors.hairline,
-        ),
-      ),
+    return _GlassControlSurface(
+      radius: _kSegmentedRadius,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _GroupByButton(value: grouping, onChanged: onGrouping, segmented: true),
+          _GroupByButton(
+            value: grouping,
+            onChanged: onGrouping,
+            segmented: true,
+          ),
           divider(),
           _SortButton(value: sort, onChanged: onSort, segmented: true),
           divider(),
@@ -167,9 +177,41 @@ class _SegmentedControls extends StatelessWidget {
   }
 }
 
-/// One cell inside the compact [_SegmentedControls] housing: just the [icon]
-/// (the housing draws the shared border), with an inset amber fill when
-/// [active]. [badge] optionally trails the icon (the filter count).
+/// A control surface for the docked toolbar: real refractive liquid glass on
+/// native (own-layer [GlassContainer], matching the app-bar bell), a
+/// [FrostedSurface] on web. The distinction matters because the toolbar sits on
+/// the app bar's single blur — a second own-layer backdrop is fine on native
+/// (Impeller), but on web/Skia it would nest [BackdropFilter]s and pixelate.
+class _GlassControlSurface extends StatelessWidget {
+  const _GlassControlSurface({required this.radius, required this.child});
+
+  final double radius;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    if (isNativeApp) {
+      return GlassContainer(
+        useOwnLayer: true,
+        settings: dark ? kNavGlassDark : kNavGlassLight,
+        shape: LiquidRoundedSuperellipse(borderRadius: radius),
+        clipBehavior: Clip.antiAlias,
+        child: child,
+      );
+    }
+    return FrostedSurface(
+      borderRadius: BorderRadius.circular(radius),
+      dark: dark,
+      child: child,
+    );
+  }
+}
+
+/// One cell inside the compact [_SegmentedControls] glass housing: just the
+/// [icon], with a translucent honey-amber fill when [active] (matching the
+/// app-bar bell's active tint so it reads as glass, not a painted chip).
+/// [badge] optionally trails the icon (the filter count).
 class _SegmentCell extends StatelessWidget {
   const _SegmentCell({required this.icon, required this.active, this.badge});
 
@@ -179,10 +221,11 @@ class _SegmentCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      // Inset so the active fill floats inside the housing, clear of the
-      // border and the neighbouring dividers.
-      padding: const EdgeInsets.all(5),
+      // Inset so the active fill floats inside the housing, clear of the glass
+      // rim and the neighbouring dividers.
+      padding: const EdgeInsets.all(_kSegmentInset),
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: badge == null ? 13 : 11,
@@ -190,8 +233,13 @@ class _SegmentCell extends StatelessWidget {
         ),
         decoration: active
             ? BoxDecoration(
-                color: AppColors.accentSoft,
-                borderRadius: BorderRadius.circular(8),
+                color: AppColors.accent.withValues(alpha: dark ? 0.30 : 0.20),
+                // Concentric with the housing (radius − inset), so a pill
+                // housing gives a pill indicator; clamps to a stadium when the
+                // fill is shorter than twice the radius.
+                borderRadius: BorderRadius.circular(
+                  _kSegmentedRadius - _kSegmentInset,
+                ),
               )
             : null,
         child: Row(
@@ -200,7 +248,9 @@ class _SegmentCell extends StatelessWidget {
             Icon(
               icon,
               size: 18,
-              color: active ? AppColors.accentStrong : AppColors.inkSoft,
+              color: active
+                  ? (dark ? AppColors.accent : AppColors.accentStrong)
+                  : AppColors.inkSoft,
             ),
             if (badge != null) ...[const SizedBox(width: 6), badge!],
           ],
@@ -264,43 +314,43 @@ class _GroupByButton extends StatelessWidget {
       child: segmented
           ? _SegmentCell(icon: _groupingIcon(value), active: active)
           : Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(
-            color: active ? AppColors.accentLine : AppColors.hairline,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              _groupingIcon(value),
-              size: 16,
-              color: active ? AppColors.accentStrong : AppColors.inkSoft,
-            ),
-            if (!compact) ...[
-              const SizedBox(width: 7),
-              Text(
-                active
-                    ? _groupingLabel(context, value)
-                    : context.t('board.groupBy'),
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                border: Border.all(
+                  color: active ? AppColors.accentLine : AppColors.hairline,
                 ),
               ),
-              const SizedBox(width: 4),
-              Icon(
-                LucideIcons.chevronDown,
-                size: 15,
-                color: AppColors.inkFaint,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _groupingIcon(value),
+                    size: 16,
+                    color: active ? AppColors.accentStrong : AppColors.inkSoft,
+                  ),
+                  if (!compact) ...[
+                    const SizedBox(width: 7),
+                    Text(
+                      active
+                          ? _groupingLabel(context, value)
+                          : context.t('board.groupBy'),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      LucideIcons.chevronDown,
+                      size: 15,
+                      color: AppColors.inkFaint,
+                    ),
+                  ],
+                ],
               ),
-            ],
-          ],
-        ),
-      ),
+            ),
     );
   }
 }
@@ -317,8 +367,8 @@ String _sortLabel(BuildContext context, IssueSort s) => switch (s) {
 /// A directional glyph for each sort option — descending (newest/most-recent
 /// first) points down, ascending points up — so the menu reads at a glance.
 IconData _sortIcon(IssueSort s) => switch (s) {
-  IssueSort.createdDesc || IssueSort.updatedDesc =>
-    LucideIcons.arrowDownWideNarrow,
+  IssueSort.createdDesc ||
+  IssueSort.updatedDesc => LucideIcons.arrowDownWideNarrow,
   IssueSort.createdAsc || IssueSort.updatedAsc => LucideIcons.arrowUpNarrowWide,
 };
 
@@ -359,38 +409,42 @@ class _SortButton extends StatelessWidget {
       child: segmented
           ? _SegmentCell(icon: LucideIcons.arrowUpDown, active: active)
           : Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(
-            color: active ? AppColors.accentLine : AppColors.hairline,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              LucideIcons.arrowUpDown,
-              size: 16,
-              color: active ? AppColors.accentStrong : AppColors.inkSoft,
-            ),
-            if (!compact) ...[
-              const SizedBox(width: 7),
-              Text(
-                context.t('issues.sort.label'),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: active ? AppColors.accentStrong : AppColors.ink,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                border: Border.all(
+                  color: active ? AppColors.accentLine : AppColors.hairline,
                 ),
               ),
-              const SizedBox(width: 4),
-              Icon(LucideIcons.chevronDown, size: 15, color: AppColors.inkFaint),
-            ],
-          ],
-        ),
-      ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    LucideIcons.arrowUpDown,
+                    size: 16,
+                    color: active ? AppColors.accentStrong : AppColors.inkSoft,
+                  ),
+                  if (!compact) ...[
+                    const SizedBox(width: 7),
+                    Text(
+                      context.t('issues.sort.label'),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: active ? AppColors.accentStrong : AppColors.ink,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      LucideIcons.chevronDown,
+                      size: 15,
+                      color: AppColors.inkFaint,
+                    ),
+                  ],
+                ],
+              ),
+            ),
     );
   }
 }
@@ -541,19 +595,12 @@ class _TimeRangeButton extends StatelessWidget {
   Future<void> _onSelected(BuildContext context, IssueTimePreset preset) async {
     if (preset == IssueTimePreset.custom) {
       final now = DateTime.now();
-      final picked = await showDateRangePicker(
-        context: context,
+      final picked = await showGlassDateRangePicker(
+        context,
         firstDate: DateTime(now.year - 5),
         lastDate: DateTime(now.year + 5),
-        initialDateRange: value.custom,
-        builder: (context, child) => Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(
-              context,
-            ).colorScheme.copyWith(primary: AppColors.accentStrong),
-          ),
-          child: child!,
-        ),
+        initialRange: value.custom,
+        title: context.t('issues.time.selectRange'),
       );
       if (picked != null) {
         onChanged(
@@ -630,53 +677,80 @@ class _TimeRangeButton extends StatelessWidget {
       child: segmented
           ? _SegmentCell(icon: LucideIcons.calendar, active: active)
           : Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(
-            color: active ? AppColors.accentLine : AppColors.hairline,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              LucideIcons.calendar,
-              size: 16,
-              color: active ? AppColors.accentStrong : AppColors.inkSoft,
-            ),
-            if (!context.isCompact) ...[
-              const SizedBox(width: 7),
-              Text(
-                _timeLabel(context, value),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: active ? AppColors.accentStrong : AppColors.ink,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                border: Border.all(
+                  color: active ? AppColors.accentLine : AppColors.hairline,
                 ),
               ),
-              const SizedBox(width: 4),
-              Icon(
-                LucideIcons.chevronDown,
-                size: 15,
-                color: AppColors.inkFaint,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    LucideIcons.calendar,
+                    size: 16,
+                    color: active ? AppColors.accentStrong : AppColors.inkSoft,
+                  ),
+                  if (!context.isCompact) ...[
+                    const SizedBox(width: 7),
+                    Text(
+                      _timeLabel(context, value),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: active ? AppColors.accentStrong : AppColors.ink,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      LucideIcons.chevronDown,
+                      size: 15,
+                      color: AppColors.inkFaint,
+                    ),
+                  ],
+                ],
               ),
-            ],
-          ],
-        ),
-      ),
+            ),
     );
   }
 }
 
 class _ExportButton extends StatelessWidget {
-  const _ExportButton({required this.onSelected, this.exporting = false});
+  const _ExportButton({
+    required this.onSelected,
+    this.exporting = false,
+    this.glass = false,
+  });
   final ValueChanged<String> onSelected;
   final bool exporting;
 
+  /// When true the button renders on the same liquid glass as the docked
+  /// toolbar (compact app bar); otherwise the plain in-scroll pill (wide).
+  final bool glass;
+
   @override
   Widget build(BuildContext context) {
+    final content = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        exporting
+            ? const HiveLoader(size: 16)
+            : Icon(LucideIcons.download, size: 16, color: AppColors.ink),
+        if (!context.isCompact) ...[
+          const SizedBox(width: 8),
+          Text(
+            context.t('reports.export'),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.ink,
+            ),
+          ),
+        ],
+      ],
+    );
     return GlassPopupMenu<String>(
       value: '',
       // The handler self-guards re-entry while a previous export is paging, so
@@ -699,36 +773,28 @@ class _ExportButton extends StatelessWidget {
           leading: const Icon(LucideIcons.braces, size: 18),
         ),
       ],
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(color: AppColors.hairline),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            exporting
-                ? const HiveLoader(size: 16)
-                : Icon(LucideIcons.download, size: 16, color: AppColors.ink),
-            if (!context.isCompact) ...[
-              const SizedBox(width: 8),
-              Text(
-                context.t('reports.export'),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.ink,
+      child: glass
+          ? _GlassControlSurface(
+              radius: _kSegmentedRadius,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
                 ),
+                child: content,
               ),
-            ],
-          ],
-        ),
-      ),
+            )
+          : Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                border: Border.all(color: AppColors.hairline),
+              ),
+              child: content,
+            ),
     );
   }
 }
 
 // ─────────────────────────── group header / dot ─────────────────────────
-

@@ -82,11 +82,20 @@ class _CompactShellState extends State<_CompactShell> {
             child: Builder(
               builder: (context) {
                 final mq = MediaQuery.of(context);
-                // Glass app bar: status-bar inset + bar content height. Immersive
-                // routes hide the bar, so only the status-bar inset remains.
+                // A page may dock a toolbar into the app bar (below the title);
+                // its height extends the bar and this gutter so content still
+                // clears the whole bar. Listening here re-runs the footprint
+                // when the page publishes/updates its docked toolbar.
+                final bottomH = widget.immersive
+                    ? 0.0
+                    : PageChromeScope.of(context)
+                        .bottomHeightFor(widget.location);
+                // Glass app bar: status-bar inset + bar content height (+ any
+                // docked toolbar). Immersive routes hide the bar, so only the
+                // status-bar inset remains.
                 final topFootprint = widget.immersive
                     ? mq.viewPadding.top
-                    : _kCompactBarHeight + mq.viewPadding.top;
+                    : _kCompactBarHeight + bottomH + mq.viewPadding.top;
                 // Floating nav: GlassBottomBar barHeight(64) + verticalPadding
                 // (8 top + 8 bottom) + device safe-area. Immersive routes hide
                 // the nav, so only the device safe-area remains.
@@ -212,6 +221,12 @@ class _GlassTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final topInset = MediaQuery.viewPaddingOf(context).top;
+    final chrome = PageChromeScope.of(context);
+
+    // Optional toolbar the page docks below the title row (shares this bar's
+    // single blur, so there is no separate blurred band beneath it).
+    final bottom = chrome.bottomFor(location);
+    final bottomHeight = chrome.bottomHeightFor(location);
 
     // Sub-page → back button + the page's own title; primary nav page → brand
     // mark + the nav-derived title.
@@ -219,7 +234,6 @@ class _GlassTopBar extends StatelessWidget {
     final String titleText;
     VoidCallback? onBack;
     if (subKey != null) {
-      final chrome = PageChromeScope.of(context);
       titleText = chrome.titleFor(location) ?? context.t(subKey);
       final override = chrome.onBackFor(location);
       onBack = () => _handleBack(context, location, override);
@@ -243,7 +257,11 @@ class _GlassTopBar extends StatelessWidget {
     // what produced the pixelated / "layered" blocks. Instead they are
     // translucent frosted surfaces that simply let this one blur show through.
     final scrimTop = dark ? 0.5 : 0.16;
-    final height = topInset + _kCompactBarHeight;
+    // The docked toolbar (if any) extends the bar below the title row; the
+    // single progressive blur and this whole height cover both, so the toolbar
+    // reads as part of the same glass — no separate band.
+    final chromeZone = topInset + _kCompactBarHeight;
+    final height = chromeZone + bottomHeight;
 
     return SizedBox(
       height: height,
@@ -257,9 +275,13 @@ class _GlassTopBar extends StatelessWidget {
               direction: ProgressiveBlurDirection.topToBottom,
             ),
           ),
-          // Darkening scrim (fades to transparent at the bottom edge so the bar
-          // dissolves into the content instead of ending on a hard cut-off).
-          Positioned.fill(
+          // Darkening scrim over the title zone only (fades out before the
+          // toolbar so the docked controls sit on clean glass, not a dark tint).
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: chromeZone,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -275,13 +297,16 @@ class _GlassTopBar extends StatelessWidget {
               ),
             ),
           ),
-          // The bar itself is the package's GlassAppBar — a transparent layout
-          // container (leading · centered title · actions) that handles its own
-          // status-bar SafeArea. Its children are translucent frosted surfaces
-          // that let the progressive blur above show through (no nested
-          // BackdropFilter): a back affordance and the action capsule (which
-          // carries the notification-bell popover).
-          GlassAppBar(
+          // Title row + optional docked toolbar, stacked. The GlassAppBar is a
+          // transparent layout container (leading · centered title · actions)
+          // that handles its own status-bar SafeArea; its children are
+          // translucent frosted surfaces that let the one progressive blur show
+          // through (no nested BackdropFilter). The docked toolbar sits directly
+          // below it, sharing the same blur.
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GlassAppBar(
             backgroundColor: Colors.transparent,
             centerTitle: true,
             preferredSize: const Size.fromHeight(_kCompactBarHeight),
@@ -336,7 +361,15 @@ class _GlassTopBar extends StatelessWidget {
                 color: AppColors.ink,
               ),
             ),
-            actions: [_GlassTopActions(location: location, dark: dark)],
+                actions: [_GlassTopActions(location: location, dark: dark)],
+              ),
+              if (bottom != null)
+                SizedBox(
+                  height: bottomHeight,
+                  width: double.infinity,
+                  child: bottom,
+                ),
+            ],
           ),
         ],
       ),

@@ -217,10 +217,10 @@
     "openStore": "Jetzt aktualisieren"
   },
   "nav": {
-    "dashboard": "Dashboard",
+    "dashboard": "Home",
     "projects": "Projekte",
     "teams": "Teams",
-    "issues": "Aufgaben",
+    "issues": "Issues",
     "board": "Board",
     "gantt": "Gantt",
     "timesheet": "Stundenzettel",
@@ -546,7 +546,11 @@
       "last30": "Letzte 30 Tage",
       "next7": "Nächste 7 Tage",
       "next30": "Nächste 30 Tage",
-      "custom": "Eigener Zeitraum…"
+      "custom": "Eigener Zeitraum…",
+      "selectRange": "Zeitraum auswählen",
+      "rangePrompt": "Startdatum – Enddatum",
+      "pickStart": "Startdatum wählen",
+      "pickEnd": "Enddatum wählen"
     },
     "sort": {
       "label": "Sortieren",

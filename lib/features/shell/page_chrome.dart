@@ -8,7 +8,13 @@ import 'package:go_router/go_router.dart';
 /// title and a pop/parent-route back.
 @immutable
 class PageChromeData {
-  const PageChromeData({this.location, this.title, this.onBack});
+  const PageChromeData({
+    this.location,
+    this.title,
+    this.onBack,
+    this.bottom,
+    this.bottomHeight = 0,
+  });
 
   /// The route this chrome belongs to. The shell only honours an override whose
   /// [location] matches the route currently on screen, so stale chrome from a
@@ -16,6 +22,14 @@ class PageChromeData {
   final String? location;
   final String? title;
   final VoidCallback? onBack;
+
+  /// An optional widget the page docks into the app bar *below* the title row —
+  /// e.g. a filter/sort toolbar that stays pinned and shares the bar's single
+  /// glass blur (no separate blurred band). [bottomHeight] is its fixed height,
+  /// added to the bar and to the injected top gutter so page content still
+  /// clears the whole bar. Compact shell only; the wide shell ignores it.
+  final Widget? bottom;
+  final double bottomHeight;
 }
 
 /// Carries the chrome published by the visible sub-page to the shell's top bar.
@@ -28,10 +42,18 @@ class PageChromeController extends ChangeNotifier {
   VoidCallback? onBackFor(String location) =>
       _data.location == location ? _data.onBack : null;
 
+  Widget? bottomFor(String location) =>
+      _data.location == location ? _data.bottom : null;
+
+  double bottomHeightFor(String location) =>
+      _data.location == location ? _data.bottomHeight : 0;
+
   void publish(PageChromeData data) {
     if (_data.location == data.location &&
         _data.title == data.title &&
-        identical(_data.onBack, data.onBack)) {
+        identical(_data.onBack, data.onBack) &&
+        identical(_data.bottom, data.bottom) &&
+        _data.bottomHeight == data.bottomHeight) {
       return;
     }
     _data = data;
@@ -68,11 +90,18 @@ class PageChrome extends StatefulWidget {
     super.key,
     this.title,
     this.onBack,
+    this.bottom,
+    this.bottomHeight = 0,
     required this.child,
   });
 
   final String? title;
   final VoidCallback? onBack;
+
+  /// Optional toolbar docked into the app bar below the title (compact only).
+  /// See [PageChromeData.bottom].
+  final Widget? bottom;
+  final double bottomHeight;
   final Widget child;
 
   @override
@@ -89,8 +118,13 @@ class _PageChromeState extends State<PageChrome> {
   @override
   void didUpdateWidget(PageChrome oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // [bottom] is rebuilt with fresh state on every page build, so compare by
+    // identity — a new instance re-publishes so the docked toolbar reflects the
+    // latest grouping/sort/filter selection.
     if (oldWidget.title != widget.title ||
-        !identical(oldWidget.onBack, widget.onBack)) {
+        !identical(oldWidget.onBack, widget.onBack) ||
+        !identical(oldWidget.bottom, widget.bottom) ||
+        oldWidget.bottomHeight != widget.bottomHeight) {
       _schedulePublish();
     }
   }
@@ -106,6 +140,8 @@ class _PageChromeState extends State<PageChrome> {
         location: GoRouterState.of(context).matchedLocation,
         title: widget.title,
         onBack: widget.onBack,
+        bottom: widget.bottom,
+        bottomHeight: widget.bottomHeight,
       ));
     });
   }

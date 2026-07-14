@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:hinata/features/shell/app_shell.dart'
     show kNavGlassDark, kNavGlassLight, isNativeApp;
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show LiquidRoundedSuperellipse, LiquidOval;
+    show GlassContainer, LiquidRoundedSuperellipse, LiquidOval;
 import 'package:liquid_glass_widgets/widgets/interactive/glass_button.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -23,6 +23,7 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/project_palette.dart';
+import '../../core/widgets/frosted_surface.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
@@ -30,7 +31,7 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../sprint/modals/glass_modal.dart'
-    show GlassToastKind, showGlassToast;
+    show GlassToastKind, showGlassToast, showGlassDateRangePicker;
 import '../reports/logo_raster.dart';
 import '../shell/page_chrome.dart';
 import 'issue_detail_sheet.dart';
@@ -273,9 +274,8 @@ class _IssuesScreenState extends State<IssuesScreen> {
   /// intentionally left to the backend (the `?sort=` param, see [_sort]) so it
   /// holds across the whole paginated result set — re-sorting here would only
   /// reorder the pages currently in memory and fight the server order.
-  List<Issue> _filtered(List<Issue> issues) => issues
-      .where((i) => _filter.matches(i) && _timeRange.matches(i))
-      .toList();
+  List<Issue> _filtered(List<Issue> issues) =>
+      issues.where((i) => _filter.matches(i) && _timeRange.matches(i)).toList();
 
   // ── grouping ──────────────────────────────────────────────────────────
 
@@ -399,6 +399,50 @@ class _IssuesScreenState extends State<IssuesScreen> {
     },
   );
 
+  /// Opens the filter popup against the *current* loaded issues + reference
+  /// data. Used as a stable callback for the pinned toolbar so its header
+  /// delegate need not rebuild every time a new page loads (it reads the fresh
+  /// data at tap time instead of closing over a build snapshot).
+  void _openFilterCurrent() =>
+      _openFilter(_ref ?? _emptyRef, _issues.state.items);
+
+  void _onGroupingChanged(IssueGrouping g) => setState(() {
+    _grouping = g;
+    _collapsed.clear();
+  });
+
+  /// Sort is server-side: change the order and refetch from page 0 so it
+  /// applies to the whole result set, not just the loaded pages.
+  void _onSortChanged(IssueSort s) {
+    if (s == _sort) return;
+    setState(() => _sort = s);
+    _issues.load();
+  }
+
+  void _onTimeRangeChanged(IssueTimeRange r) =>
+      setState(() => _timeRange = r);
+
+  /// Fixed height of the toolbar when docked into the app bar (compact).
+  static const double _kDockedToolbarHeight = 56;
+
+  /// The view-controls toolbar (group · sort · filter · time · export), built
+  /// with the live state + stable callbacks. Docked into the app bar on compact
+  /// (so it shares the bar's single glass blur — no separate band); rendered as
+  /// a normal in-scroll row on wide.
+  Widget _toolbar() => _Toolbar(
+    grouping: _grouping,
+    onGrouping: _onGroupingChanged,
+    sort: _sort,
+    onSort: _onSortChanged,
+    filterCount: _filter.activeCount,
+    filterKey: _filterKey,
+    onFilter: _openFilterCurrent,
+    timeRange: _timeRange,
+    onTimeRange: _onTimeRangeChanged,
+    onExport: _export,
+    exporting: _exporting,
+  );
+
   Future<void> _export(String format) async {
     if (_exporting) return;
     // Read inherited blocs / repositories before the first await to avoid using
@@ -420,10 +464,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
         );
       } catch (_) {
         if (mounted) {
-          _toast(
-            context.t('reports.exportFailed'),
-            kind: GlassToastKind.error,
-          );
+          _toast(context.t('reports.exportFailed'), kind: GlassToastKind.error);
         }
         return;
       }
@@ -658,8 +699,18 @@ class _IssuesScreenState extends State<IssuesScreen> {
             list.isEmpty &&
             (state.isLoadingMore || (_hasActiveView && state.hasMore));
 
+        final compact = context.isCompact;
         return PageChrome(
           title: projectName ?? context.t('nav.issues'),
+          // On compact the toolbar docks into the app bar (shared blur, no
+          // separate band); on wide it stays an in-scroll row below the title.
+          bottom: compact
+              ? Padding(
+                  padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
+                  child: Center(child: _toolbar()),
+                )
+              : null,
+          bottomHeight: compact ? _kDockedToolbarHeight : 0,
           child: RefreshIndicator(
             onRefresh: _reload,
             color: AppColors.accent,
@@ -678,6 +729,8 @@ class _IssuesScreenState extends State<IssuesScreen> {
                   SliverPadding(
                     padding: EdgeInsets.fromLTRB(
                       context.pageGutter,
+                      // topGutter now includes the docked toolbar height on
+                      // compact, so content clears the whole (taller) app bar.
                       24 + context.topGutter,
                       context.pageGutter,
                       14,
@@ -767,39 +820,19 @@ class _IssuesScreenState extends State<IssuesScreen> {
                       ),
                     ),
                   ),
-                  // toolbar: group by · filter · time range · export
-                  SliverPadding(
-                    padding: EdgeInsets.fromLTRB(
-                      context.pageGutter,
-                      0,
-                      context.pageGutter,
-                      14,
-                    ),
-                    sliver: SliverToBoxAdapter(
-                      child: _Toolbar(
-                        grouping: _grouping,
-                        onGrouping: (g) => setState(() {
-                          _grouping = g;
-                          _collapsed.clear();
-                        }),
-                        sort: _sort,
-                        onSort: (s) {
-                          if (s == _sort) return;
-                          // Sort is server-side: change the order and refetch
-                          // from page 0 so it applies to the whole result set.
-                          setState(() => _sort = s);
-                          _issues.load();
-                        },
-                        filterCount: _filter.activeCount,
-                        filterKey: _filterKey,
-                        onFilter: () => _openFilter(ref, all),
-                        timeRange: _timeRange,
-                        onTimeRange: (r) => setState(() => _timeRange = r),
-                        onExport: _export,
-                        exporting: _exporting,
+                  // Toolbar (group · sort · filter · time · export). On compact
+                  // it lives in the app bar (see PageChrome.bottom above); on
+                  // wide it's an in-scroll row below the title.
+                  if (!compact)
+                    SliverPadding(
+                      padding: EdgeInsets.fromLTRB(
+                        context.pageGutter,
+                        0,
+                        context.pageGutter,
+                        14,
                       ),
+                      sliver: SliverToBoxAdapter(child: _toolbar()),
                     ),
-                  ),
                   if (list.isEmpty && !searchingMore)
                     SliverToBoxAdapter(
                       child: Padding(
@@ -832,7 +865,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
                     SliverPadding(
                       padding: EdgeInsets.fromLTRB(
                         context.pageGutter,
-                        0,
+                        12,
                         context.pageGutter,
                         14,
                       ),
