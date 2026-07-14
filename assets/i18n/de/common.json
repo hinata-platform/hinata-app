@@ -1241,11 +1241,15 @@
       "deleteTitle": "Verbindung löschen?",
       "deleteBody": "„{{name}}“ wird nicht mehr abgefragt. Bestehende Tickets bleiben erhalten.",
       "reprocess": "Postfach neu verarbeiten",
-      "reprocessTitle": "Postfach neu verarbeiten?",
-      "reprocessBody": "Liest alle Nachrichten in „{{name}}“ erneut und baut die Beschreibung ihrer Tickets mit dem aktuellen Parser neu auf. Manuell bearbeitete Beschreibungen bleiben unangetastet, und es werden keine neuen Tickets erstellt.",
-      "reprocessConfirm": "Neu verarbeiten",
-      "reprocessDone": "{{count}} Ticket neu aufgebaut · {{scanned}} geprüft",
-      "reprocessDone_plural": "{{count}} Tickets neu aufgebaut · {{scanned}} geprüft"
+      "reprocessTitle": "Postfach neu verarbeiten",
+      "reprocessExisting": "Nur bestehende Tickets aktualisieren",
+      "reprocessExistingHint": "Baut die Beschreibungen bereits vorhandener Tickets neu auf. Es werden keine neuen Tickets erstellt.",
+      "reprocessFull": "Auch fehlende neu erstellen",
+      "reprocessFullHint": "Erstellt Tickets für E-Mails ohne Ticket – auch für solche, die du eventuell absichtlich gelöscht hast.",
+      "reprocessFullTitle": "Fehlende Tickets neu erstellen?",
+      "reprocessFullBody": "Für jede E-Mail in „{{name}}“ ohne Ticket wird ein neues erstellt – auch für absichtlich gelöschte. Das lässt sich nicht in einem Schritt rückgängig machen.",
+      "reprocessFullConfirm": "Neu erstellen",
+      "reprocessDone": "{{scanned}} geprüft · {{updated}} neu aufgebaut · {{created}} erstellt"
     }
   },
   "audit": {

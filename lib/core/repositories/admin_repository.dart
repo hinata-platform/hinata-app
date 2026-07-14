@@ -52,17 +52,21 @@ class AdminRepository {
   /// Re-reads an existing connection's mailbox now and rebuilds the description
   /// of every ticket whose source e-mail is still present, using the current
   /// parser. Repairs tickets ingested while HTML handling was broken. Seen flags
-  /// are untouched, manual edits are preserved, no new tickets are created.
-  /// Returns how many messages were scanned and how many descriptions changed.
-  Future<({int scanned, int updated})> reprocessIngestConnection(
-    String id,
-  ) async {
+  /// are untouched and manual edits are preserved. When [createMissing] is true
+  /// the caller also opts into (re-)creating tickets for e-mails that currently
+  /// have none — otherwise no new tickets are created. Returns how many messages
+  /// were scanned, how many descriptions changed, and how many tickets were made.
+  Future<({int scanned, int updated, int created})> reprocessIngestConnection(
+    String id, {
+    bool createMissing = false,
+  }) async {
     final result = await _api.post(
-      '/api/v1/admin/ingest-connections/$id/reprocess',
+      '/api/v1/admin/ingest-connections/$id/reprocess?createMissing=$createMissing',
     ) as Map<String, dynamic>;
     return (
       scanned: (result['scanned'] as num?)?.toInt() ?? 0,
       updated: (result['updated'] as num?)?.toInt() ?? 0,
+      created: (result['created'] as num?)?.toInt() ?? 0,
     );
   }
 

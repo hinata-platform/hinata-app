@@ -155,26 +155,67 @@ class _IngestConnectionsCardState extends State<IngestConnectionsCard> {
     }
   }
 
-  Future<void> _reprocess(IngestConnection connection) async {
+  Future<void> _reprocess(IngestConnection connection, Rect? anchorRect) async {
     if (_reprocessingId != null) return;
-    final confirmed = await showGlassConfirm(
+    // Let the admin choose the scope: repair existing tickets only (safe default),
+    // or also (re-)create tickets for e-mails that no longer have one. On wide
+    // screens this anchors as a popover under the button; on mobile it falls back
+    // to a bottom sheet (handled by showGlassOptions).
+    final mode = await showGlassOptions<String>(
       context,
-      icon: LucideIcons.refreshCw,
       title: context.t('admin.ingest.reprocessTitle'),
-      message: context.t('admin.ingest.reprocessBody',
-          variables: {'name': connection.label}),
-      confirmLabel: context.t('admin.ingest.reprocessConfirm'),
-      confirmIcon: LucideIcons.refreshCw,
+      anchorRect: anchorRect,
+      options: [
+        (
+          value: 'existing',
+          child: _reprocessModeOption(
+            icon: LucideIcons.refreshCw,
+            title: context.t('admin.ingest.reprocessExisting'),
+            subtitle: context.t('admin.ingest.reprocessExistingHint'),
+          ),
+        ),
+        (
+          value: 'full',
+          child: _reprocessModeOption(
+            icon: LucideIcons.mailPlus,
+            title: context.t('admin.ingest.reprocessFull'),
+            subtitle: context.t('admin.ingest.reprocessFullHint'),
+            emphasis: true,
+          ),
+        ),
+      ],
     );
-    if (confirmed != true || !mounted) return;
+    if (mode == null || !mounted) return;
+
+    // The create path can resurrect deliberately deleted tickets — confirm it.
+    if (mode == 'full') {
+      final confirmed = await showGlassConfirm(
+        context,
+        icon: LucideIcons.triangleAlert,
+        title: context.t('admin.ingest.reprocessFullTitle'),
+        message: context.t('admin.ingest.reprocessFullBody',
+            variables: {'name': connection.label}),
+        confirmLabel: context.t('admin.ingest.reprocessFullConfirm'),
+        destructive: true,
+        confirmIcon: LucideIcons.mailPlus,
+      );
+      if (confirmed != true || !mounted) return;
+    }
+
     setState(() => _reprocessingId = connection.id);
     try {
-      final result = await _repo.reprocessIngestConnection(connection.id!);
+      final result = await _repo.reprocessIngestConnection(
+        connection.id!,
+        createMissing: mode == 'full',
+      );
       if (!mounted) return;
       showGlassToast(
         context,
-        context.t('admin.ingest.reprocessDone',
-            count: result.updated, variables: {'scanned': result.scanned}),
+        context.t('admin.ingest.reprocessDone', variables: {
+          'scanned': result.scanned,
+          'updated': result.updated,
+          'created': result.created,
+        }),
         kind: GlassToastKind.success,
       );
     } on ApiFailure catch (failure) {
@@ -183,6 +224,46 @@ class _IngestConnectionsCardState extends State<IngestConnectionsCard> {
     } finally {
       if (mounted) setState(() => _reprocessingId = null);
     }
+  }
+
+  Widget _reprocessModeOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    bool emphasis = false,
+  }) {
+    final tint = emphasis ? AppColors.accentStrong : AppColors.inkSoft;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Icon(icon, size: 18, color: tint),
+        ),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: AppColors.ink,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   void _showError(ApiFailure failure) {
@@ -231,7 +312,7 @@ class _IngestConnectionsCardState extends State<IngestConnectionsCard> {
               busy: _reprocessingId == connection.id,
               onToggle: (v) => _toggle(connection, v),
               onEdit: () => _edit(connection),
-              onReprocess: () => _reprocess(connection),
+              onReprocess: (rect) => _reprocess(connection, rect),
               onDelete: () => _delete(connection),
             ),
           const SizedBox(height: 4),
@@ -265,11 +346,15 @@ class _ConnectionTile extends StatelessWidget {
   final bool busy;
   final ValueChanged<bool> onToggle;
   final VoidCallback onEdit;
-  final VoidCallback onReprocess;
+
+  /// Receives the reprocess button's global rect so the mode chooser can anchor
+  /// as a popover beneath it on wide screens (null → bottom sheet fallback).
+  final ValueChanged<Rect?> onReprocess;
   final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
+    final reprocessKey = GlobalKey();
     final enabled = connection.enabled;
     final projectLabel = project != null
         ? '${project!.key} · ${project!.name}'
@@ -324,30 +409,65 @@ class _ConnectionTile extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(
+          _CompactIconButton(
             tooltip: context.t('common.edit'),
-            icon: Icon(LucideIcons.pencil, size: 16, color: AppColors.inkSoft),
+            icon: LucideIcons.pencil,
             onPressed: busy ? null : onEdit,
           ),
           if (busy)
-            const Padding(
-              padding: EdgeInsets.all(10),
-              child: HiveLoader(size: 16, strokeWidth: 2),
+            const SizedBox(
+              width: 34,
+              height: 34,
+              child: Center(child: HiveLoader(size: 16, strokeWidth: 2)),
             )
           else
-            IconButton(
+            _CompactIconButton(
+              key: reprocessKey,
               tooltip: context.t('admin.ingest.reprocess'),
-              icon: Icon(LucideIcons.refreshCw, size: 16,
-                  color: AppColors.inkSoft),
-              onPressed: onReprocess,
+              icon: LucideIcons.refreshCw,
+              onPressed: () {
+                final box =
+                    reprocessKey.currentContext?.findRenderObject() as RenderBox?;
+                final rect = box != null && box.attached
+                    ? box.localToGlobal(Offset.zero) & box.size
+                    : null;
+                onReprocess(rect);
+              },
             ),
-          IconButton(
+          _CompactIconButton(
             tooltip: context.t('common.delete'),
-            icon: Icon(LucideIcons.trash2, size: 16, color: AppColors.inkSoft),
+            icon: LucideIcons.trash2,
             onPressed: busy ? null : onDelete,
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Tight icon button so the switch plus edit/reprocess/delete actions fit one
+/// row without overflowing on narrow (mobile) screens.
+class _CompactIconButton extends StatelessWidget {
+  const _CompactIconButton({
+    super.key,
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      icon: Icon(icon, size: 16, color: AppColors.inkSoft),
+      onPressed: onPressed,
+      visualDensity: VisualDensity.compact,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints.tightFor(width: 34, height: 34),
     );
   }
 }
@@ -366,9 +486,14 @@ class _MetaChip extends StatelessWidget {
       children: [
         Icon(icon, size: 12, color: color ?? AppColors.inkFaint),
         const SizedBox(width: 4),
-        Text(text,
-            style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
-            overflow: TextOverflow.ellipsis),
+        // Flexible so a long value ellipsizes within the row instead of
+        // overflowing the wrap line on narrow screens.
+        Flexible(
+          child: Text(text,
+              style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis),
+        ),
       ],
     );
   }

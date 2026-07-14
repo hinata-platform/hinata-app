@@ -1241,11 +1241,15 @@
       "deleteTitle": "Delete connection?",
       "deleteBody": "\"{{name}}\" will no longer be polled. Existing tickets are kept.",
       "reprocess": "Reprocess mailbox",
-      "reprocessTitle": "Reprocess mailbox?",
-      "reprocessBody": "Re-reads every message in \"{{name}}\" and rebuilds its ticket's description with the current parser. Manually edited descriptions are left untouched, and no new tickets are created.",
-      "reprocessConfirm": "Reprocess",
-      "reprocessDone": "{{count}} ticket rebuilt · {{scanned}} scanned",
-      "reprocessDone_plural": "{{count}} tickets rebuilt · {{scanned}} scanned"
+      "reprocessTitle": "Reprocess mailbox",
+      "reprocessExisting": "Update existing tickets only",
+      "reprocessExistingHint": "Rebuilds the descriptions of tickets that already exist. No new tickets are created.",
+      "reprocessFull": "Also re-create missing ones",
+      "reprocessFullHint": "Creates tickets for e-mails that have none — including ones you may have deleted on purpose.",
+      "reprocessFullTitle": "Re-create missing tickets?",
+      "reprocessFullBody": "Every e-mail in \"{{name}}\" without a ticket gets a new one — including any you deleted intentionally. This cannot be undone in bulk.",
+      "reprocessFullConfirm": "Re-create",
+      "reprocessDone": "{{scanned}} scanned · {{updated}} rebuilt · {{created}} created"
     }
   },
   "audit": {
