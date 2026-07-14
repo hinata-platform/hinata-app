@@ -519,8 +519,10 @@ class _ReplyConnectorPainter extends CustomPainter {
   static const double _railX = 16;
   // The elbow reaches across the gutter to the reply avatar's left edge.
   static const double _avatarEdgeX = 36;
-  // Radius of the rounded corner where the rail turns into the elbow.
-  static const double _corner = 10;
+  // Radius of the rounded corner where the rail turns into the elbow. A TRUE
+  // quarter-circle (see arcToPoint below) — a bezier squeezed over unequal
+  // spans reads flat/squashed, YouTube-style threads use a perfect round.
+  static const double _corner = 20;
 
   @override
   void paint(Canvas canvas, Size size) {
