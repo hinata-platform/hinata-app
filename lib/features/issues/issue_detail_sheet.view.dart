@@ -1335,12 +1335,15 @@ class IssueDetailBodyState extends State<IssueDetailBody>
               ),
             Padding(
               // Extra bottom room when the composer floats, so the last comment
-              // isn't hidden behind the docked input.
+              // isn't hidden behind the docked input. The sheet no longer
+              // resizes for the keyboard, so its height is added here too —
+              // otherwise the newest comments can't be scrolled above it.
               padding: EdgeInsets.fromLTRB(
                 20,
                 16,
                 20,
-                composerFloats(context) ? 128 : 24,
+                (composerFloats(context) ? 128 : 24) +
+                    MediaQuery.viewInsetsOf(context).bottom,
               ),
               child: LayoutBuilder(
                 builder: (context, c) {

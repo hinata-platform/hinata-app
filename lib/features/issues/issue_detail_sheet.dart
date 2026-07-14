@@ -250,7 +250,24 @@ Future<void> showIssueDetailSheet(
               // Rebuild on composer-state changes (edit banner, mode) too.
               return ValueListenableBuilder<int>(
                 valueListenable: composerRev,
-                builder: (ctx, _, _) => state.buildFloatingComposer(ctx),
+                builder: (ctx, _, _) {
+                  // The sheet doesn't resize for the keyboard — instead lift
+                  // the composer so it sits directly above it, like the
+                  // full-screen route. Read the RAW view inset (MediaQuery is
+                  // unreliable inside Wolt's Scaffold); didChangeMetrics bumps
+                  // composerRev as the keyboard moves, so this re-evaluates.
+                  final view = View.of(ctx);
+                  final keyboard =
+                      view.viewInsets.bottom / view.devicePixelRatio;
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: keyboard),
+                    child: state.buildFloatingComposer(
+                      ctx,
+                      // Keyboard up → flush above it (home indicator hidden).
+                      deviceSafeArea: keyboard <= 0,
+                    ),
+                  );
+                },
               );
             },
           ),
