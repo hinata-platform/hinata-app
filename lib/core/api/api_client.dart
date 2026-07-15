@@ -48,14 +48,12 @@ class ApiClient {
       InterceptorsWrapper(
         onRequest: (options, handler) {
           final token = _storage.accessToken;
-          // Server metadata and the legal documents are deliberately public
-          // (they drive boot routing / render on the logged-out login screen).
+          // Server metadata is deliberately public (it drives boot routing).
           // Do not attach a stale bearer token here: some servers reject an
           // invalid token before reaching a public endpoint, which would make
           // a revoked session look like a failed server connection.
           final isAnonymousBootRequest =
-              options.path.contains('/api/v1/meta') ||
-              options.path.contains('/api/v1/legal/');
+              options.path.contains('/api/v1/meta');
           if (token != null &&
               !isAnonymousBootRequest &&
               !options.path.contains('/auth/refresh')) {
