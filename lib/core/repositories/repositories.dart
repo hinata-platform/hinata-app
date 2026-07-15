@@ -13,6 +13,7 @@ import 'comment_repository.dart';
 import 'dashboard_repository.dart';
 import 'git_repository.dart';
 import 'issue_repository.dart';
+import 'legal_repository.dart';
 import 'media_repository.dart';
 import 'meta_repository.dart';
 import 'notification_repository.dart';
@@ -33,6 +34,7 @@ export 'comment_repository.dart';
 export 'dashboard_repository.dart';
 export 'git_repository.dart';
 export 'issue_repository.dart';
+export 'legal_repository.dart';
 export 'media_repository.dart';
 export 'meta_repository.dart';
 export 'notification_repository.dart';
@@ -51,6 +53,7 @@ class HinataRepositories {
     final boards = BoardRepository(api);
     return HinataRepositories._(
       meta: MetaRepository(api),
+      legal: LegalRepository(api),
       auth: AuthRepository(api),
       account: AccountRepository(api),
       users: UserRepository(api),
@@ -74,6 +77,7 @@ class HinataRepositories {
 
   const HinataRepositories._({
     required this.meta,
+    required this.legal,
     required this.auth,
     required this.account,
     required this.users,
@@ -95,6 +99,7 @@ class HinataRepositories {
   });
 
   final MetaRepository meta;
+  final LegalRepository legal;
   final AuthRepository auth;
   final AccountRepository account;
   final UserRepository users;

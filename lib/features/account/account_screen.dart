@@ -1475,11 +1475,31 @@ class _AccountScreenState extends State<AccountScreen> {
             onChanged: (m) => context.read<ThemeCubit>().setMode(m),
           ),
         ),
+        Divider(height: 1, color: AppColors.hairline2),
+        SettingRow(
+          label: context.t('legal.privacyPolicy'),
+          icon: LucideIcons.shieldAlert,
+          trailing: IconButton(
+            icon: const Icon(LucideIcons.chevronRight, size: 18),
+            onPressed: () => context.go('/privacy-policy'),
+          ),
+        ),
+        Divider(height: 1, color: AppColors.hairline2),
+        SettingRow(
+          label: context.t('legal.termsOfService'),
+          icon: LucideIcons.scrollText,
+          trailing: IconButton(
+            icon: const Icon(LucideIcons.chevronRight, size: 18),
+            onPressed: () => context.go('/terms-of-service'),
+          ),
+        ),
+        // Operator-configured external privacy notice (optional supplement to
+        // the app's own policy above).
         if ((config.meta?.privacyPolicyUrl ?? '').isNotEmpty) ...[
           Divider(height: 1, color: AppColors.hairline2),
           SettingRow(
-            label: context.t('settings.privacyPolicy'),
-            icon: LucideIcons.shieldAlert,
+            label: context.t('settings.privacyPolicyExternal'),
+            icon: LucideIcons.externalLink,
             trailing: IconButton(
               icon: const Icon(LucideIcons.externalLink, size: 17),
               onPressed: () => launchUrl(

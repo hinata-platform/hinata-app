@@ -209,7 +209,15 @@
     "signUp": "Registrieren",
     "ssoOnlyTitle": "Single Sign-On",
     "ssoOnlyBody": "Die Anmeldung mit Passwort ist für diesen Server deaktiviert. Melde dich über einen Anbieter unten an.",
-    "ssoOnlyNoProviders": "Die Anmeldung mit Passwort ist deaktiviert und es ist noch kein Single-Sign-On-Anbieter konfiguriert. Bitte wende dich an deine Administratorin oder deinen Administrator."
+    "ssoOnlyNoProviders": "Die Anmeldung mit Passwort ist deaktiviert und es ist noch kein Single-Sign-On-Anbieter konfiguriert. Bitte wende dich an deine Administratorin oder deinen Administrator.",
+    "privacyPolicy": "Datenschutzerklärung",
+    "termsOfService": "Nutzungsbedingungen",
+    "legalNotice": "Mit der Nutzung stimmst du unseren Nutzungsbedingungen und der Datenschutzerklärung zu."
+  },
+  "legal": {
+    "lastUpdated": "Stand",
+    "privacyPolicy": "Datenschutzerklärung",
+    "termsOfService": "Nutzungsbedingungen"
   },
   "update": {
     "title": "Update erforderlich",
@@ -924,6 +932,7 @@
     "themeLight": "Hell",
     "themeDark": "Dunkel",
     "privacyPolicy": "Datenschutzerklärung",
+    "privacyPolicyExternal": "Datenschutzhinweis des Betreibers",
     "adminArea": "Adminbereich",
     "adminAreaDesc": "Verwalte Workspace, Nutzer, SSO und mehr.",
     "about": "Über",
@@ -1345,6 +1354,7 @@
       "USER_PASSWORD_RESET_SENT": "Passwort-Zurücksetzung gesendet",
       "USER_SESSIONS_REVOKED": "Sitzungen widerrufen",
       "SETTINGS_CHANGED": "Einstellungen geändert",
+      "LEGAL_DOCUMENT_UPDATED": "Rechtsdokument aktualisiert",
       "DATA_EXPORT_REQUESTED": "Datenexport angefordert",
       "ISSUE_DELETED": "Vorgang gelöscht",
       "ISSUE_ARCHIVED": "Vorgang archiviert",

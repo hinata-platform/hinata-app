@@ -15,6 +15,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/soft_card.dart';
 import '../account/twofa_modals.dart' show OtpInput;
 import '../connect/server_switcher.dart';
+import '../legal/legal_links.dart';
 import '../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 
 class LoginScreen extends StatefulWidget {
@@ -302,6 +303,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
                             ),
                           ],
+                          const SizedBox(height: 8),
+                          const LegalLinks(),
                         ],
                       ),
                     ),

@@ -309,6 +309,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         // Domain layer: one repository per domain (see core/repositories/).
         // Feature code injects exactly the repository it needs.
         RepositoryProvider<MetaRepository>.value(value: domains.meta),
+        RepositoryProvider<LegalRepository>.value(value: domains.legal),
         RepositoryProvider<AuthRepository>.value(value: domains.auth),
         RepositoryProvider<AccountRepository>.value(value: domains.account),
         RepositoryProvider<UserRepository>.value(value: domains.users),
