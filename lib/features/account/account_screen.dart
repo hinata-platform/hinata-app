@@ -26,6 +26,7 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveSwitch;
 import '../../core/widgets/honeycomb_background.dart';
 import '../connect/server_switcher.dart';
+import '../legal/legal_links.dart';
 import '../sprint/modals/glass_modal.dart'
     show showGlassToast, GlassToastKind;
 import '../shell/page_chrome.dart';
@@ -1475,11 +1476,31 @@ class _AccountScreenState extends State<AccountScreen> {
             onChanged: (m) => context.read<ThemeCubit>().setMode(m),
           ),
         ),
+        Divider(height: 1, color: AppColors.hairline2),
+        SettingRow(
+          label: context.t('legal.privacyPolicy'),
+          icon: LucideIcons.shieldAlert,
+          trailing: IconButton(
+            icon: const Icon(LucideIcons.externalLink, size: 18),
+            onPressed: () => openPrivacyPolicy(context),
+          ),
+        ),
+        Divider(height: 1, color: AppColors.hairline2),
+        SettingRow(
+          label: context.t('legal.termsOfService'),
+          icon: LucideIcons.scrollText,
+          trailing: IconButton(
+            icon: const Icon(LucideIcons.externalLink, size: 18),
+            onPressed: () => openTermsOfService(context),
+          ),
+        ),
+        // Operator-configured external privacy notice (optional supplement to
+        // the app's own policy above).
         if ((config.meta?.privacyPolicyUrl ?? '').isNotEmpty) ...[
           Divider(height: 1, color: AppColors.hairline2),
           SettingRow(
-            label: context.t('settings.privacyPolicy'),
-            icon: LucideIcons.shieldAlert,
+            label: context.t('settings.privacyPolicyExternal'),
+            icon: LucideIcons.externalLink,
             trailing: IconButton(
               icon: const Icon(LucideIcons.externalLink, size: 17),
               onPressed: () => launchUrl(

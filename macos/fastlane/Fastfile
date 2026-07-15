@@ -97,7 +97,7 @@ platform :mac do
           platform: "macos", additional_cert_types: ["mac_installer_distribution"],
           readonly: ci?)
 
-    # White-label: the store app must NOT pin a backend. A fresh install asks
+    # No baked-in backend: the store app must NOT pin a backend. A fresh install asks
     # for the server URL on first launch, so no HINATA_DEFAULT_SERVER define.
     flutter("build", "macos", "--release",
             "--build-number=#{next_build_number}")

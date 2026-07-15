@@ -48,8 +48,8 @@ class ApiClient {
       InterceptorsWrapper(
         onRequest: (options, handler) {
           final token = _storage.accessToken;
-          // Server metadata is deliberately public and drives boot routing. Do
-          // not attach a stale bearer token here: some servers reject an
+          // Server metadata is deliberately public (it drives boot routing).
+          // Do not attach a stale bearer token here: some servers reject an
           // invalid token before reaching a public endpoint, which would make
           // a revoked session look like a failed server connection.
           final isAnonymousBootRequest =

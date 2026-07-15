@@ -18,7 +18,7 @@
 	     distribution profile (fastlane `mac build`/`beta`/`release`, type: appstore). -->
 	<key>aps-environment</key>
 	<string>production</string>
-	<!-- Hinata Connect relay: the ONE verified domain for the white-label app, so
+	<!-- Hinata Connect relay: the ONE verified domain for the published client app, so
 	     invite/reset links from ANY self-hosted server open the macOS app. Apple
 	     fetches https://connect.hinata.ahmadre.com/.well-known/apple-app-site-association
 	     and matches it against this app's appID. The matching provisioning profile

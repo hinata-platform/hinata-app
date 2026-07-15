@@ -52,7 +52,7 @@
                 <data android:scheme="hinata" android:host="reset-password"/>
             </intent-filter>
             <!-- Android App Links (Option B): Hinata Connect is the ONE verified
-                 domain for the white-label app, so invite/reset links from ANY
+                 domain for the published client app, so invite/reset links from ANY
                  self-hosted server open the app directly. autoVerify checks
                  https://connect.hinata.ahmadre.com/.well-known/assetlinks.json against
                  this app's signing certificate. -->

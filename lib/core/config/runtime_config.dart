@@ -1,4 +1,4 @@
-/// White-label runtime server resolution.
+/// Runtime server resolution (no baked-in backend).
 ///
 /// The shipped image/app bakes **no** backend. The hosted **web** build resolves
 /// its default backend at *runtime* from a `window.hinataDefaultServer` global —

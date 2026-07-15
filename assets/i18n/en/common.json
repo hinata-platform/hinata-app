@@ -209,7 +209,15 @@
     "signUp": "Sign up",
     "ssoOnlyTitle": "Single sign-on",
     "ssoOnlyBody": "Password sign-in is disabled for this server. Continue with a provider below.",
-    "ssoOnlyNoProviders": "Password sign-in is disabled and no single sign-on provider is configured yet. Please contact your administrator."
+    "ssoOnlyNoProviders": "Password sign-in is disabled and no single sign-on provider is configured yet. Please contact your administrator.",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "legalNotice": "By continuing you agree to our Terms of Service and Privacy Policy."
+  },
+  "legal": {
+    "lastUpdated": "Last updated",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service"
   },
   "update": {
     "title": "Update required",
@@ -924,6 +932,7 @@
     "themeLight": "Light",
     "themeDark": "Dark",
     "privacyPolicy": "Privacy policy",
+    "privacyPolicyExternal": "Operator privacy notice",
     "adminArea": "Admin area",
     "adminAreaDesc": "Manage the workspace, users, SSO and more.",
     "about": "About",

@@ -11,6 +11,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/soft_card.dart';
 import '../connect/server_switcher.dart';
+import '../legal/legal_links.dart';
 import '../sprint/modals/glass_modal.dart'
     show showGlassToast, showGlassErrorToast, GlassToastKind;
 
@@ -252,6 +253,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 4),
+          Text(
+            context.t('auth.legalNotice'),
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          ),
+          const SizedBox(height: 8),
+          const LegalLinks(),
         ],
       ),
     );
