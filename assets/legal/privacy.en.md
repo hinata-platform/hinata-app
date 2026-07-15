@@ -2,148 +2,87 @@
 
 *Last updated: 15 July 2026*
 
-Protecting your personal data matters to us. In accordance with Art. 13 and 14 of the General Data Protection Regulation (GDPR), we inform you below about which personal data we process in connection with the use of the Hinata application ("App", "Service"), for what purposes and on what legal basis, and which rights you have. The German version of this policy is authoritative.
+Protecting your personal data matters to us. In accordance with Art. 13 and 14 of the General Data Protection Regulation (GDPR), we inform you below about the data processing connected with the use of the Hinata application ("App"). The German version of this policy is authoritative.
 
-## 1. Controller
+**Important — scope:** This Privacy Policy applies solely to the App itself and to the way the App communicates with a server you choose. Hinata is a client application for self-hosted server instances: the publisher of the App does **not** operate any server instance and has **no access** to the servers you connect the App to. The respective operator of each server instance is solely responsible for all server-side data processing (see Section 2).
 
-The controller within the meaning of Art. 4(7) GDPR for the provision of the App is:
+## 1. Controller for the App
+
+The controller within the meaning of Art. 4(7) GDPR for the provision of the App (distribution via the app stores or as a web application) and for the processing described in this policy is:
 
 Rebar Ahmad
-[ADDRESS — street, number, postal code, city]
-E-mail: rebar.ahmad@gmail.com
+Weberstr. 58
+47798 Krefeld
+Germany
+E-mail: mail@ahmadre.com
 
-No data protection officer is legally required or appointed. For any data protection matters and to exercise your rights, please contact us at the address above.
+No data protection officer is legally required or appointed.
 
-## 2. Scope and self-hosted operation
+## 2. Roles: App publisher and instance operators
 
-Hinata is a project and issue management application provided as a web application and as an app for mobile and desktop operating systems. The App connects to a server ("instance") whose address you or your organization select.
+Hinata is a project and issue management application that organizations **self-host on their own infrastructure**. The App connects exclusively to the server instance whose address you or your organization enter.
 
-**Operation by third parties (instance operators)**
+- The **App publisher** (Section 1) merely provides the application software. He does not operate any server instance, does not store any account or content data, and has no access to the data you transmit to a server instance through the App.
+- The **operator of the respective server instance** (e.g. your organization) is the sole controller within the meaning of the GDPR for all server-side data processing — in particular for accounts, content (projects, issues, comments, attachments, time tracking, knowledge base), server logs, e-mail delivery (the operator configures its own e-mail/SMTP provider) and the storage and hosting infrastructure used.
 
-Hinata can be self-hosted by organizations on their own infrastructure. If you use an instance operated by your organization or another third party, that operator is a separate controller with respect to the content and account data stored on its instance. In that case, the operator's own privacy notice applies in addition; please contact the operator of your instance for information about that data. This policy describes the data processing inherent to the App itself.
+For access, erasure and all other data subject rights concerning data stored on an instance, please contact the operator of your instance; its privacy notice applies.
 
-## 3. Categories of data processed
+## 3. Processing by the App on your device
 
-When you use the Service we process, in particular:
+The App itself processes data exclusively locally on your device, to the extent technically necessary for its operation:
 
-**a) Account data**
+- the server address(es) you enter,
+- sign-in tokens (access/refresh tokens) for the selected instance(s),
+- application settings (e.g. language, theme, notification preferences).
 
-- name or display name and username
-- e-mail address
-- password (stored solely as a cryptographic hash, never in plain text)
-- optional profile picture (avatar) and profile details
-- language and application settings
+This data remains on your device and is not transmitted to the App publisher. The App uses **no** cookies or comparable technologies for analytics or advertising, embeds **no** tracking services and sends **no** telemetry to the App publisher. The legal basis for this local storage is Art. 6(1)(b) GDPR and, where applicable, Section 25(2) of the German TDDDG (technical necessity).
 
-**b) Authentication and security data**
+## 4. Communication with the server instance you choose
 
-- sign-in sessions including session identifier, timestamps and device information
-- access and refresh tokens
-- where two-factor authentication is enabled: the TOTP secret and recovery codes
-- where you sign in via an external identity provider (single sign-on): the user identifier it provides
-- where applicable, personal access tokens for interfaces (e.g. the MCP server)
+All data you enter in the App (e.g. credentials, content, comments, files, voice messages) is transmitted by the App directly and transport-encrypted (TLS/HTTPS) to the server instance you selected. The App publisher is not involved in this transmission and cannot access it. The controller for the processing of this data is exclusively the operator of the instance (Section 2).
 
-**c) Content data**
+## 5. Push notifications (Hinata Connect and Firebase Cloud Messaging)
 
-- projects, issues, tasks, epics and sub-tasks
-- comments including voice messages (audio recordings) and reactions
-- file attachments and images
-- time tracking (worklogs) and reports
-- knowledge base articles, teams and their assignments
+If you enable push notifications, they are delivered technically via a central relay component ("Hinata Connect") operated by the App publisher, and via Firebase Cloud Messaging (FCM), a service of Google Ireland Limited / Google LLC. In doing so, the App publisher processes:
 
-**d) Communication data**
+- a device- or installation-specific push identifier (FCM token),
+- the content of the respective notification — exclusively transiently for the purpose of delivery; the App publisher does not permanently store notification content.
 
-- incoming and outgoing e-mails as part of the "email to issue" feature
-- in-app and push notifications and their settings
+The legal basis is Art. 6(1)(a) GDPR (your consent, given by enabling push notifications). Push notifications are optional; you can disable them at any time in your device system settings or in the App's notification settings. Without push notifications, no data processing by the App publisher takes place at all.
 
-**e) Usage and log data**
+## 6. International data transfers
 
-- server and security logs including IP address, date and time of access
-- audit logs of security-relevant actions on your account
-- technical details about device, operating system and browser/app version
+When Firebase Cloud Messaging is used (Section 5), data may be processed by Google LLC in the USA. Google LLC is certified under the EU-U.S. Data Privacy Framework; in addition, the European Commission's standard contractual clauses (Art. 46(2)(c) GDPR) are relied upon as appropriate safeguards. Beyond this, the App publisher performs no third-country transfers. Whether and where the operator of your server instance transfers data can be found in its privacy notice.
 
-**f) Push tokens**
+## 7. Retention
 
-If you enable push notifications, we process a device-specific push identifier (FCM token) in order to deliver notifications to you (see Section 6).
+The App publisher stores personal data only to the extent and for as long as required for push delivery (Section 5); push identifiers are deleted when they become invalid or when you disable push notifications. You can delete the local data on your device (Section 3) yourself at any time by clearing the App's data or uninstalling the App. The respective instance operator is responsible for the retention of server-side data.
 
-## 4. Purposes and legal bases
+## 8. Your rights as a data subject
 
-We process your data for the following purposes and on the following legal bases:
+Under the GDPR you have, in particular, the rights to access (Art. 15), rectification (Art. 16), erasure (Art. 17), restriction of processing (Art. 18), data portability (Art. 20), objection to processing based on Art. 6(1)(f) GDPR (Art. 21), and withdrawal of consent with effect for the future (Art. 7(3)).
 
-- Providing, operating and delivering the features of the Service, managing your account and content — Art. 6(1)(b) GDPR (contract or pre-contractual measures).
-- Ensuring security, stability and abuse prevention (e.g. logs, audit log, session management) — Art. 6(1)(f) GDPR (legitimate interest in secure operation).
-- Sending push and e-mail notifications and using optional integrations — Art. 6(1)(a) GDPR (consent) where separately enabled; otherwise Art. 6(1)(b) GDPR.
-- Complying with legal obligations (e.g. handling data subject requests) — Art. 6(1)(c) GDPR.
-
-## 5. Recipients and processors
-
-Your data is generally processed only to provide the Service. It is shared only where necessary for that purpose. We use carefully selected service providers with whom — where required — data processing agreements pursuant to Art. 28 GDPR are in place:
-
-- Hosting/infrastructure: server and storage services (including the database and object storage for attachments) are operated on the infrastructure of the respective instance operator or a hosting provider engaged by it.
-- Push notifications: Google (Firebase Cloud Messaging), see Sections 6 and 7.
-- E-mail delivery: the e-mail/SMTP provider used to deliver system and notification e-mails.
-- Single sign-on: the external identity provider chosen by you or your organization (only when SSO is used).
-- Optional integrations: external providers connected to the Service (e.g. Git services such as GitHub, GitLab or Bitbucket) if you set up such an integration.
-
-Data is disclosed to authorities only within the scope of mandatory legal provisions.
-
-## 6. Push notifications (Firebase Cloud Messaging)
-
-To deliver push notifications to mobile devices we use Firebase Cloud Messaging (FCM), a service of Google Ireland Limited / Google LLC. A device- or installation-specific push identifier is processed and the message content is handed to the push service for delivery. Delivery is technically routed through a central relay component ("Hinata Connect").
-
-Push notifications are optional. You can disable them at any time in your device system settings and in the notification settings of the App.
-
-## 7. International data transfers
-
-Where we use Firebase Cloud Messaging, data may be processed by Google LLC in the USA. Google LLC is certified under the EU-U.S. Data Privacy Framework; in addition, the European Commission's standard contractual clauses (Art. 46(2)(c) GDPR) are relied upon as appropriate safeguards. Otherwise, your data is generally processed within the European Union or the European Economic Area, unless the respective instance operator provides otherwise.
-
-## 8. Cookies and local storage
-
-The App does not use cookies or comparable technologies for analytics or advertising purposes and does not embed third-party tracking services. To provide its features, technically necessary information is stored locally on your device (including sign-in tokens, the selected server address and your application settings). This local storage is required to operate the Service; the legal basis is Art. 6(1)(b) GDPR and, where applicable, Section 25(2) TDDDG.
-
-## 9. Retention and deletion
-
-We store personal data only for as long as necessary for the stated purposes or as required by statutory retention obligations. Account and content data is essentially stored for the duration of your account.
-
-You can delete your account at any time. Upon deletion, your account and associated data are removed or anonymized, unless statutory retention obligations or overriding legitimate interests (e.g. security logs kept for a limited period) apply. Log data is deleted or shortened after a short period.
-
-## 10. Your rights as a data subject
-
-Under the GDPR you have, in particular, the following rights:
-
-- Access to the data stored about you (Art. 15 GDPR). You can start a data export/report directly in the App.
-- Rectification of inaccurate data (Art. 16 GDPR).
-- Erasure of your data (Art. 17 GDPR). You can delete your account directly in the App.
-- Restriction of processing (Art. 18 GDPR).
-- Data portability (Art. 20 GDPR).
-- Objection to processing based on Art. 6(1)(f) GDPR (Art. 21 GDPR).
-- Withdrawal of consent with effect for the future (Art. 7(3) GDPR).
-
-To exercise your rights, an informal message to the contact address in Section 1 suffices.
-
-**Right to lodge a complaint**
+- For the processing described in this policy (App, push delivery), please direct your requests to the contact address in Section 1.
+- For account and content data on a server instance, the respective operator is the correct addressee. Depending on the instance, the App provides self-service features for this (e.g. data access/export under Art. 15 GDPR and account deletion under Art. 17 GDPR directly in the App); these requests are processed by the respective instance.
 
 Without prejudice to any other remedy, you have the right under Art. 77 GDPR to lodge a complaint with a supervisory authority, in particular in the Member State of your residence, place of work or the place of the alleged infringement.
 
-## 11. Necessity of providing data
+## 9. No automated decision-making
 
-Providing certain data (in particular an e-mail address and password, or an SSO sign-in) is required to create and use an account. Without this data we cannot provide the Service. Further details (e.g. a profile picture) are voluntary.
+There is no solely automated decision-making, including profiling, within the meaning of Art. 22 GDPR by the App publisher.
 
-## 12. No automated decision-making
+## 10. Minors
 
-There is no solely automated decision-making, including profiling, within the meaning of Art. 22 GDPR.
+The App is not directed at children under the age of 16. Persons under 16 should only use the App with the consent of their legal guardians.
 
-## 13. Minors
+## 11. Data security
 
-The Service is not directed at children under the age of 16. Persons under 16 should only use the Service with the consent of their legal guardians.
+The App transmits data exclusively transport-encrypted (TLS/HTTPS) and stores sign-in tokens in the protected storage areas of the respective operating system. The respective instance operator is responsible for the security of server-side processing.
 
-## 14. Data security
+## 12. Changes to this Privacy Policy
 
-We take technical and organizational measures to protect your data against unauthorized access, loss or manipulation. These include, among others, encrypted transmission (TLS/HTTPS), storing passwords only as hashes, and optional two-factor authentication.
+We update this Privacy Policy where changes to the App or the legal framework require it. The version available at the time of your use applies. The date at the top of this policy indicates the current version. Note: the operator of your server instance may supplement or replace this policy with its own instance-specific privacy notice; for server-side processing, the operator's notice always prevails.
 
-## 15. Changes to this Privacy Policy
+## 13. Contact
 
-We update this Privacy Policy where changes to our data processing or the legal framework require it. The version available at the time of your use applies. The date at the top of this policy indicates the current version.
-
-## 16. Contact
-
-For questions about data protection or to exercise your rights, contact us at: rebar.ahmad@gmail.com
+For questions about data protection relating to the App, contact us at: mail@ahmadre.com

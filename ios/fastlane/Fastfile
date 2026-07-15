@@ -121,7 +121,7 @@ platform :ios do
 
     # Bake the Dart/asset bundle + the resolved build number into the Xcode
     # config; gym then archives, signs and exports the IPA.
-    # White-label: the store app must NOT pin a backend. A fresh install asks
+    # No baked-in backend: the store app must NOT pin a backend. A fresh install asks
     # for the server URL on first launch, so no HINATA_DEFAULT_SERVER define.
     flutter("build", "ios", "--release", "--no-codesign",
             "--build-number=#{next_build_number}")

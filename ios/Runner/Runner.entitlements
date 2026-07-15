@@ -8,7 +8,7 @@
 	     on-device debug push you'd temporarily switch this to "development". -->
 	<key>aps-environment</key>
 	<string>production</string>
-	<!-- Hinata Connect relay: the ONE verified domain for the white-label app, so
+	<!-- Hinata Connect relay: the ONE verified domain for the published client app, so
 	     invite/reset links from ANY self-hosted server open this app. Apple fetches
 	     https://connect.hinata.ahmadre.com/.well-known/apple-app-site-association and
 	     matches it against this app's appID. The matching provisioning profile must

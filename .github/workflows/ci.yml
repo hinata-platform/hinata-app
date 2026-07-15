@@ -62,13 +62,13 @@ jobs:
             type=semver,pattern={{version}}
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=bear,enable={{is_default_branch}}
-      # White-label web image — NO backend is baked in. The default server is set
+      # Generic web image — NO backend is baked in. The default server is set
       # at deployment via the HINATA_DEFAULT_SERVER container env (see Dockerfile
       # + deploy/docker-entrypoint.d). One image serves every deployment; the
-      # :bear tag is now just an alias of the same white-label build (asta + bear
+      # :bear tag is now just an alias of the same generic build (asta + bear
       # differ only by the env each stack's compose sets). Tags: semver (v* tags)
       # + :latest and :bear (main).
-      - name: Build & push white-label web image
+      - name: Build & push generic web image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -98,7 +98,7 @@ jobs:
           #   asta -> /opt/stacks/hinata       (project "hinata",      inline values)
           #   bear -> /opt/stacks/hinata-bear  (project "hinata-bear", loads its .env)
           #
-          # WHITE-LABEL: the image bakes NO backend. Each stack's hinata-app service
+          # GENERIC IMAGE: it bakes NO backend. Each stack's hinata-app service
           # MUST set the server via env, else the app opens the connect screen:
           #   asta compose:  environment: [ "HINATA_DEFAULT_SERVER=https://api.track.asta.hn" ]
           #   bear compose:  environment: [ "HINATA_DEFAULT_SERVER=https://api.track.bear.ahmadre.com" ]

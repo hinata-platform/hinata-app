@@ -88,7 +88,7 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
 
   /// The default server URL that actually applies on this platform.
   ///
-  /// White-label rule: the shipped image/app bakes **no** backend. The hosted
+  /// No-baked-backend rule: the shipped image/app bakes **no** backend. The hosted
   /// web build resolves its default at *runtime* from `window.hinataDefaultServer`
   /// (injected by `config.js`, which the Docker entrypoint regenerates from the
   /// `HINATA_DEFAULT_SERVER` container env) — so the operator sets the backend

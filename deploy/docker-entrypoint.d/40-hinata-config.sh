@@ -1,5 +1,5 @@
 #!/bin/sh
-# Regenerate the white-label runtime config from the container environment.
+# Regenerate the runtime config from the container environment.
 # The shipped image bakes NO backend; the operator sets HINATA_DEFAULT_SERVER in
 # the deployment (compose/stack env). Unset/empty ⇒ the app shows /connect.
 #

@@ -2,7 +2,7 @@
 FROM ghcr.io/cirruslabs/flutter:stable AS build
 WORKDIR /app
 
-# White-label build: NO backend is baked in. The default server is resolved at
+# Generic build: NO backend is baked in. The default server is resolved at
 # *runtime* from window.hinataDefaultServer (see web/config.js), which the
 # runtime entrypoint below regenerates from the HINATA_DEFAULT_SERVER env on
 # every container start. The image on ghcr is therefore server-agnostic — the
@@ -25,7 +25,7 @@ COPY --from=build /app/build/web /usr/share/nginx/html
 # https://track.asta.hn/.well-known/* verifies Android App Links + iOS
 # Universal Links. assetlinks.json carries the release signing fingerprint.
 COPY deploy/well-known/ /usr/share/nginx/html/.well-known/
-# White-label runtime config: regenerate /config.js from $HINATA_DEFAULT_SERVER
+# Runtime config: regenerate /config.js from $HINATA_DEFAULT_SERVER
 # on every container start. nginx:alpine runs every executable *.sh in this dir
 # before starting nginx, so no custom ENTRYPOINT is needed. Unset/empty env ⇒
 # the app shows the connect screen.

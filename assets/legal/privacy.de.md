@@ -2,148 +2,87 @@
 
 *Stand: 15. Juli 2026*
 
-Der Schutz Ihrer personenbezogenen Daten ist uns wichtig. Nachfolgend informieren wir Sie gemäß Art. 13 und 14 der Datenschutz-Grundverordnung (DSGVO) darüber, welche personenbezogenen Daten wir im Zusammenhang mit der Nutzung der Anwendung Hinata („App", „Dienst") verarbeiten, zu welchen Zwecken und auf welcher Rechtsgrundlage dies geschieht sowie welche Rechte Ihnen zustehen.
+Der Schutz Ihrer personenbezogenen Daten ist uns wichtig. Nachfolgend informieren wir Sie gemäß Art. 13 und 14 der Datenschutz-Grundverordnung (DSGVO) über die Datenverarbeitung im Zusammenhang mit der Nutzung der Anwendung Hinata („App").
 
-## § 1 Verantwortlicher
+**Wichtig — Geltungsbereich:** Diese Datenschutzerklärung gilt ausschließlich für die App selbst und die Art und Weise, wie die App mit einem von Ihnen gewählten Server kommuniziert. Hinata ist eine Client-Anwendung für selbst gehostete Server-Instanzen: Der Herausgeber der App betreibt **keine** eigene Server-Instanz und hat **keinen Zugriff** auf die Server, mit denen Sie die App verbinden. Für sämtliche serverseitige Datenverarbeitung ist allein der jeweilige Betreiber der Server-Instanz verantwortlich (siehe § 2).
 
-Verantwortlicher im Sinne des Art. 4 Nr. 7 DSGVO für die Bereitstellung der App ist:
+## § 1 Verantwortlicher für die App
+
+Verantwortlicher im Sinne des Art. 4 Nr. 7 DSGVO für die Bereitstellung der App (Vertrieb über die App-Stores bzw. als Web-Anwendung) und die in dieser Erklärung beschriebene Verarbeitung ist:
 
 Rebar Ahmad
-[ANSCHRIFT EINTRAGEN — Straße, Hausnummer, PLZ, Ort]
-E-Mail: rebar.ahmad@gmail.com
+Weberstr. 58
+47798 Krefeld
+Deutschland
+E-Mail: mail@ahmadre.com
 
-Ein Datenschutzbeauftragter ist gesetzlich nicht bestellt. Für alle Anliegen rund um den Datenschutz und zur Ausübung Ihrer Rechte erreichen Sie uns unter der vorstehenden Kontaktadresse.
+Ein Datenschutzbeauftragter ist gesetzlich nicht bestellt.
 
-## § 2 Geltungsbereich und Betrieb auf eigenen Servern
+## § 2 Rollenverteilung: App-Herausgeber und Instanzbetreiber
 
-Hinata ist eine Anwendung zur Projekt- und Vorgangsverwaltung, die als Web-Anwendung sowie als App für mobile und Desktop-Betriebssysteme bereitgestellt wird. Die App verbindet sich mit einem Server („Instanz"), dessen Adresse Sie oder Ihre Organisation auswählen.
+Hinata ist eine Anwendung zur Projekt- und Vorgangsverwaltung, die von Organisationen auf **eigener Infrastruktur selbst gehostet** wird (Self-Hosting). Die App verbindet sich ausschließlich mit der Server-Instanz, deren Adresse Sie oder Ihre Organisation eingeben.
 
-**Betrieb durch Dritte (Instanzbetreiber)**
+- Der **App-Herausgeber** (§ 1) stellt lediglich die Anwendungssoftware bereit. Er betreibt keine Server-Instanz, speichert keine Konto- oder Inhaltsdaten und hat keinen Zugriff auf die Daten, die Sie über die App an eine Server-Instanz übermitteln.
+- Der **Betreiber der jeweiligen Server-Instanz** (z. B. Ihre Organisation) ist alleiniger Verantwortlicher im Sinne der DSGVO für die gesamte serverseitige Datenverarbeitung — insbesondere für Konten, Inhalte (Projekte, Vorgänge, Kommentare, Anhänge, Zeiterfassung, Wissensdatenbank), Server-Protokolle, den E-Mail-Versand (der Betreiber konfiguriert seinen eigenen E-Mail-/SMTP-Anbieter) sowie die eingesetzte Speicher- und Hosting-Infrastruktur.
 
-Hinata kann von Organisationen auf eigener Infrastruktur selbst betrieben werden. Nutzen Sie eine Instanz, die von Ihrer Organisation oder einem sonstigen Dritten betrieben wird, so ist dieser Betreiber hinsichtlich der auf seiner Instanz gespeicherten Inhalts- und Kontodaten ein eigener Verantwortlicher. In diesem Fall gelten ergänzend die Datenschutzhinweise des jeweiligen Betreibers; bitte wenden Sie sich für Auskünfte zu diesen Daten an den Betreiber Ihrer Instanz. Die vorliegende Erklärung beschreibt die Datenverarbeitung, die der App selbst zugrunde liegt.
+Für Auskünfte, Löschung und alle weiteren Betroffenenrechte hinsichtlich der auf einer Instanz gespeicherten Daten wenden Sie sich bitte an den Betreiber Ihrer Instanz; es gelten dessen Datenschutzhinweise.
 
-## § 3 Kategorien verarbeiteter Daten
+## § 3 Datenverarbeitung durch die App auf Ihrem Gerät
 
-Im Rahmen der Nutzung des Dienstes verarbeiten wir insbesondere:
+Die App selbst verarbeitet Daten ausschließlich lokal auf Ihrem Gerät, soweit dies für ihre Funktion technisch erforderlich ist:
 
-**a) Bestands- und Kontodaten**
+- die von Ihnen eingetragene(n) Serveradresse(n),
+- Anmelde-Token (Access-/Refresh-Token) für die gewählte(n) Instanz(en),
+- Anwendungseinstellungen (z. B. Sprache, Design, Benachrichtigungseinstellungen).
 
-- Name bzw. Anzeigename und Benutzername
-- E-Mail-Adresse
-- Passwort (ausschließlich als kryptografischer Hash gespeichert, niemals im Klartext)
-- optionales Profilbild (Avatar) sowie Profilangaben
-- Spracheinstellung und Anwendungseinstellungen
+Diese Daten verbleiben auf Ihrem Gerät und werden nicht an den App-Herausgeber übermittelt. Die App verwendet **keine** Cookies oder vergleichbaren Technologien zu Analyse- oder Werbezwecken, bindet **keine** Tracking-Dienste ein und sendet **keine** Telemetrie an den App-Herausgeber. Rechtsgrundlage der lokalen Speicherung ist Art. 6 Abs. 1 lit. b DSGVO bzw. § 25 Abs. 2 TDDDG (technische Erforderlichkeit).
 
-**b) Authentifizierungs- und Sicherheitsdaten**
+## § 4 Kommunikation mit der von Ihnen gewählten Server-Instanz
 
-- Anmeldesitzungen (Sessions) einschließlich Sitzungskennung, Zeitstempel und Gerätekennung
-- Zugriffs- und Erneuerungs-Token (Access-/Refresh-Token)
-- bei aktivierter Zwei-Faktor-Authentifizierung: TOTP-Geheimnis und Wiederherstellungscodes
-- bei Anmeldung über einen externen Identitätsanbieter (Single Sign-On): die von diesem übermittelte Nutzerkennung
-- ggf. persönliche Zugriffstoken für Schnittstellen (z. B. den MCP-Server)
+Alle Daten, die Sie in der App eingeben (z. B. Zugangsdaten, Inhalte, Kommentare, Dateien, Sprachnachrichten), überträgt die App unmittelbar und transportverschlüsselt (TLS/HTTPS) an die von Ihnen gewählte Server-Instanz. Der App-Herausgeber ist an dieser Übertragung nicht beteiligt und kann sie nicht einsehen. Verantwortlicher für die Verarbeitung dieser Daten ist ausschließlich der Betreiber der Instanz (§ 2).
 
-**c) Inhaltsdaten**
+## § 5 Push-Benachrichtigungen (Hinata Connect und Firebase Cloud Messaging)
 
-- Projekte, Vorgänge (Issues), Aufgaben, Epics und Teilaufgaben
-- Kommentare einschließlich Sprachnachrichten (Audioaufnahmen) und Reaktionen
-- Datei-Anhänge und Bilder
-- Zeiterfassung (Worklogs) und Berichte
-- Wissensdatenbank-Artikel, Teams und deren Zuordnungen
+Wenn Sie Push-Benachrichtigungen aktivieren, werden diese technisch über eine zentrale Relay-Komponente („Hinata Connect") zugestellt, die vom App-Herausgeber betrieben wird, sowie über den Dienst Firebase Cloud Messaging (FCM) der Google Ireland Limited bzw. Google LLC. Dabei verarbeitet der App-Herausgeber:
 
-**d) Kommunikationsdaten**
+- eine geräte- bzw. installationsbezogene Push-Kennung (FCM-Token),
+- den Inhalt der jeweiligen Benachrichtigung — ausschließlich transient zum Zweck der Zustellung; eine dauerhafte Speicherung der Benachrichtigungsinhalte durch den App-Herausgeber erfolgt nicht.
 
-- ein- und ausgehende E-Mails im Rahmen der Funktion „E-Mail zu Vorgang"
-- In-App- und Push-Benachrichtigungen sowie deren Einstellungen
+Rechtsgrundlage ist Art. 6 Abs. 1 lit. a DSGVO (Ihre Einwilligung durch Aktivierung der Push-Benachrichtigungen). Push-Benachrichtigungen sind optional; Sie können sie jederzeit in den Systemeinstellungen Ihres Geräts oder in den Benachrichtigungseinstellungen der App deaktivieren. Ohne Push-Benachrichtigungen findet keinerlei Datenverarbeitung durch den App-Herausgeber statt.
 
-**e) Nutzungs- und Protokolldaten**
+## § 6 Datenübermittlung in Drittländer
 
-- server- und sicherheitsseitige Protokolle (Logs) einschließlich IP-Adresse, Datum und Uhrzeit des Zugriffs
-- Prüf-/Audit-Protokolle über sicherheitsrelevante Aktionen im Konto
-- technische Angaben zu Gerät, Betriebssystem und Browser/App-Version
+Bei der Nutzung von Firebase Cloud Messaging (§ 5) kann es zu einer Verarbeitung von Daten durch die Google LLC in den USA kommen. Die Google LLC ist unter dem EU-U.S. Data Privacy Framework zertifiziert; ergänzend werden Standardvertragsklauseln der Europäischen Kommission (Art. 46 Abs. 2 lit. c DSGVO) als geeignete Garantien herangezogen. Darüber hinaus findet durch den App-Herausgeber keine Drittlandübermittlung statt. Ob und wohin der Betreiber Ihrer Server-Instanz Daten übermittelt, entnehmen Sie bitte dessen Datenschutzhinweisen.
 
-**f) Push-Token**
+## § 7 Speicherdauer
 
-Wenn Sie Push-Benachrichtigungen aktivieren, verarbeiten wir eine gerätebezogene Push-Kennung (FCM-Token), um Ihnen Benachrichtigungen zustellen zu können (siehe § 6).
+Der App-Herausgeber speichert personenbezogene Daten nur, soweit und solange dies für die Push-Zustellung erforderlich ist (§ 5); Push-Kennungen werden gelöscht, wenn sie ungültig werden oder Sie Push-Benachrichtigungen deaktivieren. Die lokalen Daten auf Ihrem Gerät (§ 3) können Sie jederzeit selbst löschen, indem Sie die App-Daten löschen oder die App deinstallieren. Für die Speicherdauer serverseitiger Daten ist der jeweilige Instanzbetreiber verantwortlich.
 
-## § 4 Zwecke und Rechtsgrundlagen der Verarbeitung
+## § 8 Ihre Rechte als betroffene Person
 
-Wir verarbeiten Ihre Daten zu folgenden Zwecken und auf folgenden Rechtsgrundlagen:
+Ihnen stehen nach der DSGVO insbesondere die Rechte auf Auskunft (Art. 15), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20), Widerspruch gegen Verarbeitungen auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO (Art. 21) sowie auf Widerruf erteilter Einwilligungen mit Wirkung für die Zukunft (Art. 7 Abs. 3) zu.
 
-- Bereitstellung, Betrieb und Funktionsumfang des Dienstes, Verwaltung Ihres Kontos und Ihrer Inhalte — Art. 6 Abs. 1 lit. b DSGVO (Vertrag bzw. vorvertragliche Maßnahmen).
-- Gewährleistung von Sicherheit, Stabilität und Missbrauchsabwehr (z. B. Protokolle, Audit-Log, Sitzungsverwaltung) — Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem sicheren Betrieb).
-- Versand von Push- und E-Mail-Benachrichtigungen sowie Nutzung optionaler Integrationen — Art. 6 Abs. 1 lit. a DSGVO (Einwilligung), soweit gesondert aktiviert; im Übrigen Art. 6 Abs. 1 lit. b DSGVO.
-- Erfüllung rechtlicher Verpflichtungen (z. B. Beantwortung von Betroffenenanfragen) — Art. 6 Abs. 1 lit. c DSGVO.
-
-## § 5 Empfänger und Auftragsverarbeiter
-
-Ihre Daten werden grundsätzlich nur zur Erbringung des Dienstes verarbeitet. Eine Weitergabe erfolgt nur, soweit dies zur Zweckerfüllung erforderlich ist. Wir setzen sorgfältig ausgewählte Dienstleister ein, mit denen — soweit erforderlich — Verträge zur Auftragsverarbeitung nach Art. 28 DSGVO bestehen:
-
-- Hosting/Infrastruktur: Die Server- und Speicherdienste (u. a. Datenbank und Objektspeicher für Anhänge) werden auf der Infrastruktur des jeweiligen Instanzbetreibers bzw. eines von diesem beauftragten Hosting-Anbieters betrieben.
-- Push-Benachrichtigungen: Google (Firebase Cloud Messaging), siehe § 6 und § 7.
-- E-Mail-Versand: der zur Zustellung von System- und Benachrichtigungs-E-Mails eingesetzte E-Mail-/SMTP-Anbieter.
-- Single Sign-On: der von Ihnen bzw. Ihrer Organisation gewählte externe Identitätsanbieter (nur bei Nutzung von SSO).
-- Optionale Integrationen: mit dem Dienst verbundene externe Anbieter (z. B. Git-Dienste wie GitHub, GitLab oder Bitbucket), sofern Sie eine solche Integration einrichten.
-
-Eine Übermittlung an Behörden erfolgt nur im Rahmen zwingender gesetzlicher Vorschriften.
-
-## § 6 Push-Benachrichtigungen (Firebase Cloud Messaging)
-
-Zur Zustellung von Push-Benachrichtigungen an mobile Geräte nutzen wir den Dienst Firebase Cloud Messaging (FCM) der Google Ireland Limited bzw. Google LLC. Hierbei wird eine geräte- bzw. installationsbezogene Push-Kennung verarbeitet und der Nachrichtentext zur Zustellung an den Push-Dienst übergeben. Die Zustellung erfolgt technisch über eine zentrale Relay-Komponente („Hinata Connect").
-
-Push-Benachrichtigungen sind optional. Sie können sie in den Systemeinstellungen Ihres Geräts sowie in den Benachrichtigungseinstellungen der App jederzeit deaktivieren.
-
-## § 7 Datenübermittlung in Drittländer
-
-Soweit wir Firebase Cloud Messaging einsetzen, kann es zu einer Verarbeitung von Daten durch die Google LLC in den USA kommen. Die Google LLC ist unter dem EU-U.S. Data Privacy Framework zertifiziert; ergänzend werden Standardvertragsklauseln der Europäischen Kommission (Art. 46 Abs. 2 lit. c DSGVO) als geeignete Garantien herangezogen. Im Übrigen findet eine Verarbeitung Ihrer Daten grundsätzlich innerhalb der Europäischen Union bzw. des Europäischen Wirtschaftsraums statt, sofern der jeweilige Instanzbetreiber nichts anderes vorsieht.
-
-## § 8 Cookies und lokale Speicherung
-
-Die App verwendet keine Cookies oder vergleichbaren Technologien zu Analyse- oder Werbezwecken und bindet keine Tracking-Dienste Dritter ein. Zur Bereitstellung der Funktionen werden technisch notwendige Informationen lokal auf Ihrem Gerät gespeichert (u. a. Anmelde-Token, die gewählte Serveradresse sowie Ihre Anwendungseinstellungen). Diese lokale Speicherung ist für den Betrieb erforderlich; Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO bzw. § 25 Abs. 2 TDDDG.
-
-## § 9 Speicherdauer und Löschung
-
-Wir speichern personenbezogene Daten nur so lange, wie es für die genannten Zwecke erforderlich ist oder gesetzliche Aufbewahrungspflichten dies vorschreiben. Konto- und Inhaltsdaten werden im Wesentlichen für die Dauer des Bestehens Ihres Kontos gespeichert.
-
-Sie können Ihr Konto jederzeit selbst löschen. Bei einer Löschung werden Ihre Konto- und zugehörigen Daten entfernt bzw. anonymisiert, soweit keine gesetzlichen Aufbewahrungspflichten oder überwiegenden berechtigten Interessen (z. B. Sicherheits-Protokolle für einen begrenzten Zeitraum) entgegenstehen. Protokolldaten werden nach kurzer Frist gelöscht bzw. gekürzt.
-
-## § 10 Ihre Rechte als betroffene Person
-
-Ihnen stehen nach der DSGVO insbesondere folgende Rechte zu:
-
-- Auskunft über die zu Ihnen gespeicherten Daten (Art. 15 DSGVO). Eine Datenauskunft/‑export können Sie direkt in der App anstoßen.
-- Berichtigung unrichtiger Daten (Art. 16 DSGVO).
-- Löschung Ihrer Daten (Art. 17 DSGVO). Die Löschung Ihres Kontos ist unmittelbar in der App möglich.
-- Einschränkung der Verarbeitung (Art. 18 DSGVO).
-- Datenübertragbarkeit (Art. 20 DSGVO).
-- Widerspruch gegen Verarbeitungen, die auf Art. 6 Abs. 1 lit. f DSGVO beruhen (Art. 21 DSGVO).
-- Widerruf erteilter Einwilligungen mit Wirkung für die Zukunft (Art. 7 Abs. 3 DSGVO).
-
-Zur Ausübung Ihrer Rechte genügt eine formlose Mitteilung an die in § 1 genannte Kontaktadresse.
-
-**Beschwerderecht bei einer Aufsichtsbehörde**
+- Für die in dieser Erklärung beschriebene Verarbeitung (App, Push-Zustellung) richten Sie Ihre Anliegen an die in § 1 genannte Kontaktadresse.
+- Für Konto- und Inhaltsdaten auf einer Server-Instanz ist der jeweilige Betreiber der richtige Ansprechpartner. Die App stellt hierfür — abhängig von der Instanz — Selbstbedienungsfunktionen bereit (z. B. Datenauskunft/-export nach Art. 15 DSGVO und Kontolöschung nach Art. 17 DSGVO direkt in der App); die Verarbeitung dieser Anfragen erfolgt durch die jeweilige Instanz.
 
 Unbeschadet anderweitiger Rechtsbehelfe steht Ihnen gemäß Art. 77 DSGVO ein Beschwerderecht bei einer Datenschutz-Aufsichtsbehörde zu, insbesondere in dem Mitgliedstaat Ihres Aufenthaltsorts, Ihres Arbeitsplatzes oder des Orts des mutmaßlichen Verstoßes.
 
-## § 11 Erforderlichkeit der Bereitstellung
+## § 9 Keine automatisierte Entscheidungsfindung
 
-Die Bereitstellung bestimmter Daten (insbesondere E-Mail-Adresse und Passwort bzw. eine SSO-Anmeldung) ist für die Einrichtung und Nutzung eines Kontos erforderlich. Ohne diese Daten können wir den Dienst nicht bereitstellen. Weitere Angaben (z. B. Profilbild) sind freiwillig.
+Eine ausschließlich automatisierte Entscheidungsfindung einschließlich Profiling im Sinne des Art. 22 DSGVO durch den App-Herausgeber findet nicht statt.
 
-## § 12 Keine automatisierte Entscheidungsfindung
+## § 10 Minderjährige
 
-Eine ausschließlich automatisierte Entscheidungsfindung einschließlich Profiling im Sinne des Art. 22 DSGVO findet nicht statt.
+Die App richtet sich nicht an Kinder unter 16 Jahren. Personen unter 16 Jahren sollten die App nur mit Einwilligung der Sorgeberechtigten nutzen.
 
-## § 13 Minderjährige
+## § 11 Datensicherheit
 
-Der Dienst richtet sich nicht an Kinder unter 16 Jahren. Personen unter 16 Jahren sollten den Dienst nur mit Einwilligung der Sorgeberechtigten nutzen.
+Die App überträgt Daten ausschließlich transportverschlüsselt (TLS/HTTPS) und speichert Anmelde-Token in den geschützten Speicherbereichen des jeweiligen Betriebssystems. Für die Sicherheit der serverseitigen Verarbeitung ist der jeweilige Instanzbetreiber verantwortlich.
 
-## § 14 Datensicherheit
+## § 12 Änderungen dieser Datenschutzerklärung
 
-Wir treffen technische und organisatorische Maßnahmen, um Ihre Daten gegen unbefugten Zugriff, Verlust oder Manipulation zu schützen. Dazu zählen unter anderem eine verschlüsselte Übertragung (TLS/HTTPS), die ausschließlich gehashte Speicherung von Passwörtern sowie eine optionale Zwei-Faktor-Authentifizierung.
+Wir passen diese Datenschutzerklärung an, wenn Änderungen der App oder der Rechtslage dies erfordern. Es gilt jeweils die zum Zeitpunkt Ihrer Nutzung abrufbare Fassung. Das Datum am Anfang dieser Erklärung gibt den Stand der aktuellen Fassung an. Hinweis: Der Betreiber Ihrer Server-Instanz kann diese Erklärung um eigene, instanzspezifische Datenschutzhinweise ergänzen bzw. ersetzen; maßgeblich für die serverseitige Verarbeitung sind stets die Hinweise des Betreibers.
 
-## § 15 Änderungen dieser Datenschutzerklärung
+## § 13 Kontakt
 
-Wir passen diese Datenschutzerklärung an, wenn Änderungen der Datenverarbeitung oder der Rechtslage dies erfordern. Es gilt jeweils die zum Zeitpunkt Ihrer Nutzung abrufbare Fassung. Das Datum am Anfang dieser Erklärung gibt den Stand der aktuellen Fassung an.
-
-## § 16 Kontakt
-
-Bei Fragen zum Datenschutz oder zur Ausübung Ihrer Rechte erreichen Sie uns unter: rebar.ahmad@gmail.com
+Bei Fragen zum Datenschutz in Bezug auf die App erreichen Sie uns unter: mail@ahmadre.com

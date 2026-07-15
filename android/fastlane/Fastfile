@@ -4,7 +4,7 @@ platform :android do
   desc "Build the app bundle and upload it to the Play Store internal track"
   lane :internal do
     Dir.chdir("../..") do
-      # White-label: the store app must NOT pin a backend. A fresh install asks
+      # No baked-in backend: the store app must NOT pin a backend. A fresh install asks
       # for the server URL on first launch, so no HINATA_DEFAULT_SERVER define.
       sh("flutter", "build", "appbundle", "--release")
     end
