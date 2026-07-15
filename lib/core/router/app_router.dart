@@ -28,8 +28,6 @@ import '../../features/issues/issue_detail_sheet.dart' show IssueRouteArgs;
 import '../../features/issues/issue_filter.dart' show IssuesInitialView;
 import '../../features/issues/issues_screen.dart';
 import '../../features/knowledge/knowledge_screen.dart';
-import '../../features/legal/legal_models.dart';
-import '../../features/legal/legal_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/oauth/oauth_consent_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
@@ -112,13 +110,6 @@ GoRouter buildRouter({
       if (location == '/invite' ||
           location == '/reset-password' ||
           location == '/verify-email') {
-        return null;
-      }
-
-      // The legal pages must be publicly reachable at their exact paths even
-      // before a server is chosen or the user is authenticated (store crawlers,
-      // logged-out visitors). They are self-contained and bundle their content.
-      if (location == '/privacy-policy' || location == '/terms-of-service') {
         return null;
       }
 
@@ -221,16 +212,6 @@ GoRouter buildRouter({
           token: state.uri.queryParameters['token'] ?? '',
           server: state.uri.queryParameters['server'],
         ),
-      ),
-      // Public legal pages — bundled content, no server/auth required. The
-      // privacy-policy path is fixed by legal/store requirements.
-      GoRoute(
-        path: '/privacy-policy',
-        builder: (_, _) => const LegalScreen(type: LegalDocType.privacy),
-      ),
-      GoRoute(
-        path: '/terms-of-service',
-        builder: (_, _) => const LegalScreen(type: LegalDocType.terms),
       ),
       GoRoute(
         path: '/oauth-consent',

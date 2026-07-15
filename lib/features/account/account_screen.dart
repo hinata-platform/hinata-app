@@ -26,6 +26,7 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveSwitch;
 import '../../core/widgets/honeycomb_background.dart';
 import '../connect/server_switcher.dart';
+import '../legal/legal_links.dart';
 import '../sprint/modals/glass_modal.dart'
     show showGlassToast, GlassToastKind;
 import '../shell/page_chrome.dart';
@@ -1480,8 +1481,8 @@ class _AccountScreenState extends State<AccountScreen> {
           label: context.t('legal.privacyPolicy'),
           icon: LucideIcons.shieldAlert,
           trailing: IconButton(
-            icon: const Icon(LucideIcons.chevronRight, size: 18),
-            onPressed: () => context.go('/privacy-policy'),
+            icon: const Icon(LucideIcons.externalLink, size: 18),
+            onPressed: () => openPrivacyPolicy(context),
           ),
         ),
         Divider(height: 1, color: AppColors.hairline2),
@@ -1489,8 +1490,8 @@ class _AccountScreenState extends State<AccountScreen> {
           label: context.t('legal.termsOfService'),
           icon: LucideIcons.scrollText,
           trailing: IconButton(
-            icon: const Icon(LucideIcons.chevronRight, size: 18),
-            onPressed: () => context.go('/terms-of-service'),
+            icon: const Icon(LucideIcons.externalLink, size: 18),
+            onPressed: () => openTermsOfService(context),
           ),
         ),
         // Operator-configured external privacy notice (optional supplement to

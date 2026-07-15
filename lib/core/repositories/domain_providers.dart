@@ -15,9 +15,6 @@ import 'repositories.dart';
 /// modal's widget tree can never crash at runtime for a missing provider.
 List<RepositoryProvider> domainRepositoryProviders(BuildContext source) => [
   RepositoryProvider<MetaRepository>.value(value: source.read<MetaRepository>()),
-  RepositoryProvider<LegalRepository>.value(
-    value: source.read<LegalRepository>(),
-  ),
   RepositoryProvider<AuthRepository>.value(value: source.read<AuthRepository>()),
   RepositoryProvider<AccountRepository>.value(
     value: source.read<AccountRepository>(),

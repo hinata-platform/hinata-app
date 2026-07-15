@@ -1,15 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 
-/// A centred pair of links to the public legal pages (terms of service +
+/// The app's legal documents are hosted centrally on the project website so
+/// they are reachable independently of any server instance (store listings
+/// reference the same URLs). `/privacy-policy` and `/terms-of-service` are
+/// language-neutral entry points; the language-specific pages live under
+/// `/{lang}/{slug}`.
+const String _legalBaseUrl = 'https://hinata.ahmadre.com';
+
+/// Public URL of a hosted legal page, matching the app's current locale.
+Uri legalUrl(BuildContext context, String slug) {
+  final lang =
+      Localizations.localeOf(context).languageCode == 'de' ? 'de' : 'en';
+  return Uri.parse('$_legalBaseUrl/$lang/$slug');
+}
+
+/// Opens the hosted privacy policy in the external browser.
+Future<void> openPrivacyPolicy(BuildContext context) =>
+    launchUrl(legalUrl(context, 'privacy-policy'),
+        mode: LaunchMode.externalApplication);
+
+/// Opens the hosted terms of service in the external browser.
+Future<void> openTermsOfService(BuildContext context) =>
+    launchUrl(legalUrl(context, 'terms-of-service'),
+        mode: LaunchMode.externalApplication);
+
+/// A centred pair of links to the hosted legal pages (terms of service +
 /// privacy policy), used as a footer in the auth area (login / register).
-///
-/// Navigates via [GoRouter] so the URL becomes the clean public path
-/// (`/terms-of-service`, `/privacy-policy`) and the pages are reachable
-/// directly by their address.
 class LegalLinks extends StatelessWidget {
   const LegalLinks({super.key});
 
@@ -27,12 +47,12 @@ class LegalLinks extends StatelessWidget {
       spacing: 10,
       children: [
         InkWell(
-          onTap: () => context.go('/terms-of-service'),
+          onTap: () => openTermsOfService(context),
           child: Text(context.t('auth.termsOfService'), style: linkStyle),
         ),
         Text('·', style: TextStyle(color: AppColors.textSecondary)),
         InkWell(
-          onTap: () => context.go('/privacy-policy'),
+          onTap: () => openPrivacyPolicy(context),
           child: Text(context.t('auth.privacyPolicy'), style: linkStyle),
         ),
       ],
