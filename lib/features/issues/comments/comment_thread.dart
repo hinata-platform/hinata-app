@@ -4,6 +4,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show
         GlassContainer,
         GlassMenuAlignment,
+        GlassPopover,
         GlassQuality,
         LiquidGlassSettings,
         LiquidRoundedSuperellipse;
@@ -14,7 +15,6 @@ import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/hive_widgets.dart';
-import '../../../core/widgets/morph_blur_popover.dart';
 import '../../knowledge/markdown/markdown_renderer.dart';
 import 'voice/voice_player.dart';
 
@@ -87,11 +87,11 @@ class CommentSortButton extends StatelessWidget {
     final label = sort == CommentSort.newest
         ? context.t('comments.sortNewest')
         : context.t('comments.sortOldest');
-    return MorphBlurPopover(
+    return GlassPopover(
       alignment: GlassMenuAlignment.bottomRight,
       popoverWidth: 200,
       popoverBorderRadius: 18,
-      baseSettings: _navGlass(dark),
+      settings: _navGlass(dark),
       quality: GlassQuality.standard,
       triggerBuilder: (context, toggle) => Material(
         color: Colors.transparent,

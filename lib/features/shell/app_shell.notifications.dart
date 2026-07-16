@@ -175,12 +175,13 @@ class _NotificationBellState extends State<_NotificationBell> {
               );
               // iOS-26 liquid morph: the popover grows out of the bell trigger
               // (same dual-blob metaball pattern as the comment sort button).
-              // MorphBlurPopover ramps the backdrop blur in over the morph
-              // instead of paying its full raster cost from frame one.
-              return MorphBlurPopover(
+              // GlassPopover ramps the backdrop blur in over the morph
+              // (blurRampDuration) instead of paying its full raster cost from
+              // frame one — the perf fix that used to live in MorphBlurPopover.
+              return GlassPopover(
                 popoverWidth: (media.size.width - 24).clamp(0.0, 340.0),
                 popoverBorderRadius: AppTheme.radiusCard,
-                baseSettings: liquidGlassPanelSettings(
+                settings: liquidGlassPanelSettings(
                   glassFill: glassFill,
                   dark: dark,
                 ),

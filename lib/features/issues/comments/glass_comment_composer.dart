@@ -6,6 +6,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
         GlassButton,
         GlassContainer,
         GlassMenuAlignment,
+        GlassPopover,
         GlassQuality,
         LiquidGlassSettings,
         LiquidRoundedSuperellipse;
@@ -16,7 +17,6 @@ import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/markdown_toolbar.dart';
-import '../../../core/widgets/morph_blur_popover.dart';
 import '../../knowledge/markdown/markdown_renderer.dart';
 import '../../knowledge/markdown/mention_field.dart';
 import '../../sprint/modals/glass_modal.dart' show showGlassErrorToast;
@@ -321,14 +321,14 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
       );
     }
     final dark = AppColors.brightness == Brightness.dark;
-    return MorphBlurPopover(
+    return GlassPopover(
       alignment: GlassMenuAlignment.bottomLeft,
       popoverWidth: 268,
       popoverBorderRadius: 24,
       // Same near-opaque dark-slate / frost tint as the rest of the composer so
       // the morphing panel reads identically to the field pill and "+" menu of
       // old — the metaball just adds the liquid growth on top.
-      baseSettings: _composerGlass(dark),
+      settings: _composerGlass(dark),
       // The metaball neck (SDF blend of the two blobs) only renders on the
       // premium Impeller pipeline; standard silently drops the blend. This is a
       // transient, heavily-tinted overlay (not a surface floating over the

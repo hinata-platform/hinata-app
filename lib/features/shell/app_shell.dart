@@ -36,11 +36,11 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
         GlassTab,
         GlassButton,
         GlassContainer,
+        GlassPopover,
         GlassQuality,
         LiquidGlassSettings,
         LiquidRoundedSuperellipse;
 import '../../core/widgets/glass_panel.dart';
-import '../../core/widgets/morph_blur_popover.dart';
 import '../search/global_search_dialog.dart';
 import '../search/search_tokens.dart';
 import 'page_chrome.dart';
