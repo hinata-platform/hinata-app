@@ -19,6 +19,22 @@ class AdminRepository {
       await _api.put('/api/v1/admin/settings', body: settings)
           as Map<String, dynamic>;
 
+  // --- Hinata Connect (push + universal-link relay) ------------------------------
+
+  /// Enrolment/verification state of this instance with Hinata Connect.
+  Future<Map<String, dynamic>> connectStatus() async =>
+      await _api.get('/api/v1/admin/connect') as Map<String, dynamic>;
+
+  /// Exchanges a one-time enrolment token from the Connect portal for this
+  /// instance's credentials (persisted server-side; the token is never stored).
+  Future<Map<String, dynamic>> connectEnroll(String token) async =>
+      await _api.post('/api/v1/admin/connect/enroll', body: {'token': token})
+          as Map<String, dynamic>;
+
+  /// Drops the local enrolment (the portal side is revoked by the operator).
+  Future<Map<String, dynamic>> connectDisconnect() async =>
+      await _api.delete('/api/v1/admin/connect') as Map<String, dynamic>;
+
   // --- E-mail-to-ticket connections ---------------------------------------------
 
   Future<List<IngestConnection>> ingestConnections() async =>

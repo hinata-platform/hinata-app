@@ -16,6 +16,7 @@ import '../sprint/modals/glass_modal.dart'
 import 'admin_sso_section.dart';
 import 'sections/admin_app_section.dart';
 import 'sections/admin_audit_section.dart';
+import 'sections/admin_connect_section.dart';
 import 'sections/admin_email_section.dart';
 import 'sections/admin_general_section.dart';
 import 'sections/admin_git_section.dart';
@@ -28,6 +29,7 @@ enum _AdminSection {
   general,
   app,
   authentication,
+  connect,
   email,
   git,
   mcp,
@@ -67,6 +69,12 @@ const _navItems = <_SectionMeta>[
     section: _AdminSection.authentication,
     icon: LucideIcons.lock,
     labelKey: 'admin.authentication',
+    group: 'navIntegrations',
+  ),
+  (
+    section: _AdminSection.connect,
+    icon: LucideIcons.radioTower,
+    labelKey: 'admin.connect',
     group: 'navIntegrations',
   ),
   (
@@ -257,6 +265,7 @@ String _sectionTitleKey(_AdminSection section) => switch (section) {
   _AdminSection.general => 'admin.general',
   _AdminSection.app => 'admin.app',
   _AdminSection.authentication => 'admin.authentication',
+  _AdminSection.connect => 'admin.connect',
   _AdminSection.email => 'admin.email',
   _AdminSection.git => 'admin.gitIntegration',
   _AdminSection.mcp => 'admin.mcp',
@@ -416,7 +425,9 @@ class _MobileDetailView extends StatelessWidget {
   final bool saving;
   final VoidCallback onSave;
 
-  bool get _hasSave => section != _AdminSection.auditLog;
+  // Connect + audit log manage themselves (no shared settings draft to save).
+  bool get _hasSave =>
+      section != _AdminSection.auditLog && section != _AdminSection.connect;
 
   @override
   Widget build(BuildContext context) {
@@ -483,6 +494,7 @@ class _MobileDetailView extends StatelessWidget {
     _AdminSection.general => AdminGeneralSection(settings: settings),
     _AdminSection.app => AdminAppSection(settings: settings),
     _AdminSection.authentication => AdminSsoSection(settings: settings),
+    _AdminSection.connect => const AdminConnectSection(),
     _AdminSection.email => AdminEmailSection(settings: settings),
     _AdminSection.git => AdminGitSection(settings: settings),
     _AdminSection.mcp => AdminMcpSection(settings: settings),
@@ -604,6 +616,7 @@ class _DesktopSectionContent extends StatelessWidget {
     _AdminSection.general => context.t('admin.general'),
     _AdminSection.app => context.t('admin.app'),
     _AdminSection.authentication => context.t('admin.authentication'),
+    _AdminSection.connect => context.t('admin.connect'),
     _AdminSection.email => context.t('admin.email'),
     _AdminSection.git => context.t('admin.gitIntegration'),
     _AdminSection.mcp => context.t('admin.mcp'),
@@ -612,7 +625,9 @@ class _DesktopSectionContent extends StatelessWidget {
     _AdminSection.users => context.t('admin.users'),
   };
 
-  bool get _hasSave => section != _AdminSection.auditLog;
+  // Connect + audit log manage themselves (no shared settings draft to save).
+  bool get _hasSave =>
+      section != _AdminSection.auditLog && section != _AdminSection.connect;
 
   @override
   Widget build(BuildContext context) {
@@ -686,6 +701,7 @@ class _DesktopSectionContent extends StatelessWidget {
     _AdminSection.general => AdminGeneralSection(settings: settings),
     _AdminSection.app => AdminAppSection(settings: settings),
     _AdminSection.authentication => AdminSsoSection(settings: settings),
+    _AdminSection.connect => const AdminConnectSection(),
     _AdminSection.email => AdminEmailSection(settings: settings),
     _AdminSection.git => AdminGitSection(settings: settings),
     _AdminSection.mcp => AdminMcpSection(settings: settings),
