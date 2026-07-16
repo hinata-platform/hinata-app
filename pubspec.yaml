@@ -48,8 +48,13 @@ dependencies:
   fl_chart: ^1.1.1
 
   # Liquid Glass UI (vendored source under packages/ — full control, MIT)
+  # Our maintained fork (hinata-platform): upstream 0.21.6 + the two Hinata
+  # popover patches + the ProgressiveBlur primitive, all on the `hinata` branch
+  # and pinned by tag. Replaces the old vendored path copy — one source of truth.
   liquid_glass_widgets:
-    path: packages/liquid_glass_widgets
+    git:
+      url: https://github.com/hinata-platform/liquid_glass_widgets.git
+      ref: v0.21.6-hinata.3
 
   # Reporting / export
   pdf: ^3.11.0
@@ -130,10 +135,6 @@ flutter:
     - assets/i18n/en/
     - assets/i18n/de/
     - assets/branding/
-  shaders:
-    # Single-pass progressive (graduated) backdrop blur — the iOS-26 header
-    # dissolve, sampling the real backdrop via ImageFilter.shader (Impeller).
-    - shaders/progressive_blur.frag
   fonts:
     - family: Sora
       fonts:
