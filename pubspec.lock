@@ -856,11 +856,11 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v0.21.6-hinata.4"
-      resolved-ref: "2b5c07b4215ae3c489bcdec96ab32c0e0f4a51cb"
+      ref: main
+      resolved-ref: "4c62c2016c6e54dc4b9958c585ec6f7543cfc6dd"
       url: "https://github.com/hinata-platform/liquid_glass_widgets.git"
     source: git
-    version: "0.21.6+hinata.4"
+    version: "0.22.1"
   logging:
     dependency: transitive
     description:

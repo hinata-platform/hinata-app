@@ -53,8 +53,11 @@ dependencies:
   # and pinned by tag. Replaces the old vendored path copy — one source of truth.
   liquid_glass_widgets:
     git:
+      # All Hinata patches (blur ramp, ProgressiveBlur, popover positioning fixes)
+      # were merged upstream and released as 0.22.1 — track mainline instead of
+      # the old patched hinata branch.
       url: https://github.com/hinata-platform/liquid_glass_widgets.git
-      ref: v0.21.6-hinata.4
+      ref: main
 
   # Reporting / export
   pdf: ^3.11.0
