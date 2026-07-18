@@ -56,22 +56,37 @@ class _GlassCard extends StatelessWidget {
         ],
       );
     }
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(_radius),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF2D2B55).withValues(alpha: dark ? .48 : .26),
-            blurRadius: 40,
-            spreadRadius: -24,
-            offset: const Offset(0, 22),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(_radius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+    // Frosted translucent fill — deliberately NO per-card BackdropFilter. The
+    // app-wide AmbientBackground behind the dashboard is already heavily blurred
+    // (σ90 blobs over a soft gradient), so a real-time backdrop blur here only
+    // re-blurs an already low-frequency image: visually negligible, yet each is
+    // a full gaussian pass that cannot be raster-cached (it samples the moving
+    // backdrop as the list scrolls). Stacked across the up-to-7 dashboard cards
+    // that was ~7 blur passes per frame, pushing raster past the 120 Hz
+    // (8.33 ms) budget so the surface quantised to 60 fps — the whole reason the
+    // dashboard sat at 60 while every other screen reached 120. Frost, border
+    // and shadow are unchanged; only the redundant blur is gone.
+    //
+    // RepaintBoundary: the dashboard scrolls inside a SingleChildScrollView
+    // which — unlike a sliver list — does NOT isolate its children, so without
+    // this every card's fill, border, shadow and CustomPaint re-rasterised on
+    // each scroll frame. Isolated, a card is cached once and merely
+    // re-composited at its new offset while scrolling.
+    return RepaintBoundary(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(_radius),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF2D2B55).withValues(alpha: dark ? .48 : .26),
+              blurRadius: 40,
+              spreadRadius: -24,
+              offset: const Offset(0, 22),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(_radius),
           child: content,
         ),
       ),

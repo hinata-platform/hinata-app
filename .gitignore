@@ -69,3 +69,4 @@ docs/screenshots/raw/
 *.provisionprofile
 .env.fastlane
 docs/screenshots/ios/raw/**
+.DS_Store

@@ -14,3 +14,4 @@ android/app/build
 .vscode
 coverage
 test
+docs
