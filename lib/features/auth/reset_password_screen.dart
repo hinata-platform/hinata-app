@@ -49,8 +49,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     final storage = context.read<AppStorage>();
     if (storage.serverUrl != server) {
       await storage.setServerUrl(server);
-      if (mounted)
+      if (mounted) {
         context.read<AppConfigBloc>().add(ServerUrlSubmitted(server));
+      }
     }
   }
 

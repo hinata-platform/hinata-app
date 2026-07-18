@@ -57,8 +57,9 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
     final storage = context.read<AppStorage>();
     if (storage.serverUrl != server) {
       await storage.setServerUrl(server);
-      if (mounted)
+      if (mounted) {
         context.read<AppConfigBloc>().add(ServerUrlSubmitted(server));
+      }
     }
   }
 
