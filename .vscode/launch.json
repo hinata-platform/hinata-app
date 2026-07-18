@@ -1,0 +1,24 @@
+{
+  // Standalone app configs. For the whole system in one button use the
+  // mono-repo root: .vscode ▸ "Full Stack — Local".
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // App in Chrome against the LOCAL server on :8080 (docker-compose.dev.yml +
+      // the server from the debugger). web/config.js already defaults to
+      // http://localhost:8080, so it auto-connects.
+      "name": "App · Web (local server :8080)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": ["-d", "chrome", "--web-port", "3000"]
+    },
+    {
+      "name": "App · Device / Simulator",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "flutterMode": "debug"
+    }
+  ]
+}
