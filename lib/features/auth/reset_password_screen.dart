@@ -11,7 +11,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/storage/app_storage.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
-import '../../core/widgets/soft_card.dart';
+import 'auth_shell.dart';
 
 /// Lands here from the reset deep link (web URL or `hinata://reset-password`).
 /// Lets the user choose a new password in the app's UI, then signs them in.
@@ -49,7 +49,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     final storage = context.read<AppStorage>();
     if (storage.serverUrl != server) {
       await storage.setServerUrl(server);
-      if (mounted) context.read<AppConfigBloc>().add(ServerUrlSubmitted(server));
+      if (mounted)
+        context.read<AppConfigBloc>().add(ServerUrlSubmitted(server));
     }
   }
 
@@ -67,11 +68,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       _error = null;
     });
     try {
-      final tokens = await context
-          .read<AuthRepository>()
-          .acceptPasswordReset(widget.token, _password.text);
+      final tokens = await context.read<AuthRepository>().acceptPasswordReset(
+        widget.token,
+        _password.text,
+      );
       if (!mounted) return;
-      context.read<AuthBloc>().add(SsoTokensReceived(tokens.access, tokens.refresh));
+      context.read<AuthBloc>().add(
+        SsoTokensReceived(tokens.access, tokens.refresh),
+      );
       context.go('/dashboard');
     } on ApiFailure catch (failure) {
       if (!mounted) return;
@@ -85,21 +89,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final invalid = widget.token.isEmpty;
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
-              child: SoftCard(
-                padding: const EdgeInsets.all(32),
-                child: invalid ? _invalid(context) : _form(context),
-              ),
-            ),
-          ),
-        ),
-      ),
+    return AuthShell(
+      maxContentWidth: 460,
+      child: AuthGlassCard(child: invalid ? _invalid(context) : _form(context)),
     );
   }
 
@@ -107,15 +99,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(LucideIcons.triangleAlert, size: 40, color: AppColors.danger),
+        const Icon(
+          LucideIcons.triangleAlert,
+          size: 40,
+          color: AppColors.danger,
+        ),
         const SizedBox(height: 16),
         Text(
           context.t('reset.invalidTitle'),
           textAlign: TextAlign.center,
-          style: Theme.of(context)
-              .textTheme
-              .titleLarge
-              ?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         Text(
@@ -141,10 +136,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         children: [
           Text(
             context.t('reset.title'),
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Text(

@@ -11,7 +11,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/storage/app_storage.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
-import '../../core/widgets/soft_card.dart';
+import 'auth_shell.dart';
 
 /// Lands here from the email-verification deep link (web URL or
 /// `hinata://verify-email`). Confirms the token, then either signs the user in
@@ -54,15 +54,20 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       }
     }
     try {
-      final result =
-          await context.read<AuthRepository>().verifyEmail(widget.token);
+      final result = await context.read<AuthRepository>().verifyEmail(
+        widget.token,
+      );
       if (!mounted) return;
-      if (result.pendingApproval || result.access == null || result.refresh == null) {
+      if (result.pendingApproval ||
+          result.access == null ||
+          result.refresh == null) {
         setState(() => _phase = _Phase.pending);
         return;
       }
       // Verified & active → sign in and head to the dashboard.
-      context.read<AuthBloc>().add(SsoTokensReceived(result.access!, result.refresh!));
+      context.read<AuthBloc>().add(
+        SsoTokensReceived(result.access!, result.refresh!),
+      );
       context.go('/dashboard');
     } on ApiFailure {
       if (!mounted) return;
@@ -72,24 +77,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: SoftCard(
-                padding: const EdgeInsets.all(32),
-                child: switch (_phase) {
-                  _Phase.verifying => _verifying(context),
-                  _Phase.pending => _pending(context),
-                  _Phase.invalid => _invalid(context),
-                },
-              ),
-            ),
-          ),
-        ),
+    return AuthShell(
+      maxContentWidth: 440,
+      child: AuthGlassCard(
+        child: switch (_phase) {
+          _Phase.verifying => _verifying(context),
+          _Phase.pending => _pending(context),
+          _Phase.invalid => _invalid(context),
+        },
       ),
     );
   }
@@ -160,10 +155,9 @@ class _Message extends StatelessWidget {
         Text(
           title,
           textAlign: TextAlign.center,
-          style: Theme.of(context)
-              .textTheme
-              .titleLarge
-              ?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         Text(

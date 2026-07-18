@@ -216,6 +216,13 @@
     "termsOfService": "Terms of Service",
     "legalNotice": "By continuing you agree to our Terms of Service and Privacy Policy."
   },
+  "authShell": {
+    "heroTitle": "Where your team's work comes together.",
+    "heroBody": "Plan sprints, track every issue, and ship as one — calm, focused project management.",
+    "chipBoards": "Boards",
+    "chipSprints": "Sprints",
+    "chipTeam": "Team"
+  },
   "legal": {
     "lastUpdated": "Last updated",
     "privacyPolicy": "Privacy Policy",

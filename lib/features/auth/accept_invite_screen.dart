@@ -11,7 +11,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/storage/app_storage.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
-import '../../core/widgets/soft_card.dart';
+import 'auth_shell.dart';
 
 /// Lands here from the invitation deep link (web URL or `hinata://invite`).
 /// Validates the invitation, lets the invitee set a password in the app's UI,
@@ -57,7 +57,8 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
     final storage = context.read<AppStorage>();
     if (storage.serverUrl != server) {
       await storage.setServerUrl(server);
-      if (mounted) context.read<AppConfigBloc>().add(ServerUrlSubmitted(server));
+      if (mounted)
+        context.read<AppConfigBloc>().add(ServerUrlSubmitted(server));
     }
   }
 
@@ -73,7 +74,9 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
       _loadError = null;
     });
     try {
-      final info = await context.read<AuthRepository>().inviteInfo(widget.token);
+      final info = await context.read<AuthRepository>().inviteInfo(
+        widget.token,
+      );
       if (!mounted) return;
       setState(() {
         _email = info.email;
@@ -95,11 +98,14 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
       _submitError = null;
     });
     try {
-      final tokens = await context
-          .read<AuthRepository>()
-          .acceptInvite(widget.token, _password.text);
+      final tokens = await context.read<AuthRepository>().acceptInvite(
+        widget.token,
+        _password.text,
+      );
       if (!mounted) return;
-      context.read<AuthBloc>().add(SsoTokensReceived(tokens.access, tokens.refresh));
+      context.read<AuthBloc>().add(
+        SsoTokensReceived(tokens.access, tokens.refresh),
+      );
       context.go('/dashboard');
     } on ApiFailure catch (failure) {
       if (!mounted) return;
@@ -112,27 +118,17 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
-              child: SoftCard(
-                padding: const EdgeInsets.all(32),
-                child: _loading
-                    ? const Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Center(child: HiveLoader()),
-                      )
-                    : _loadError != null
-                        ? _invalid(context)
-                        : _form(context),
-              ),
-            ),
-          ),
-        ),
+    return AuthShell(
+      maxContentWidth: 460,
+      child: AuthGlassCard(
+        child: _loading
+            ? const Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(child: HiveLoader()),
+              )
+            : _loadError != null
+            ? _invalid(context)
+            : _form(context),
       ),
     );
   }
@@ -146,10 +142,9 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
         Text(
           context.t('invite.invalidTitle'),
           textAlign: TextAlign.center,
-          style: Theme.of(context)
-              .textTheme
-              .titleLarge
-              ?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         Text(
@@ -175,10 +170,9 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
         children: [
           Text(
             context.t('invite.title'),
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Text(
