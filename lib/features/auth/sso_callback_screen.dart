@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
+import 'auth_shell.dart';
 
 /// Landing screen for the web SSO flow: the server redirects to
 /// `<origin>/#/auth-callback?access_token=...&refresh_token=...` after a
@@ -41,14 +42,15 @@ class _SsoCallbackScreenState extends State<SsoCallbackScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
+    return AuthShell(
+      maxContentWidth: 360,
+      child: AuthGlassCard(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const HiveLoader(),
             const SizedBox(height: 16),
-            Text(context.t('auth.signingIn')),
+            Text(context.t('auth.signingIn'), textAlign: TextAlign.center),
           ],
         ),
       ),

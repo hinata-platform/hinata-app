@@ -8,7 +8,7 @@ import '../../core/repositories/auth_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
-import '../../core/widgets/soft_card.dart';
+import 'auth_shell.dart';
 
 /// Public "forgot password" entry point (logged-out). Emails a reset link that
 /// deep-links back into [ResetPasswordScreen]. The confirmation is intentionally
@@ -41,7 +41,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _error = null;
     });
     try {
-      await context.read<AuthRepository>().requestPasswordReset(_email.text.trim());
+      await context.read<AuthRepository>().requestPasswordReset(
+        _email.text.trim(),
+      );
       if (!mounted) return;
       setState(() {
         _submitting = false;
@@ -58,21 +60,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: SoftCard(
-                padding: const EdgeInsets.all(32),
-                child: _sent ? _sentView(context) : _form(context),
-              ),
-            ),
-          ),
-        ),
-      ),
+    return AuthShell(
+      maxContentWidth: 440,
+      child: AuthGlassCard(child: _sent ? _sentView(context) : _form(context)),
     );
   }
 
@@ -85,10 +75,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         children: [
           Text(
             context.t('forgotPassword.title'),
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Text(
@@ -145,20 +134,25 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Icon(LucideIcons.mailCheck, size: 40, color: AppColors.accentStrong),
+        const Icon(
+          LucideIcons.mailCheck,
+          size: 40,
+          color: AppColors.accentStrong,
+        ),
         const SizedBox(height: 16),
         Text(
           context.t('forgotPassword.sentTitle'),
           textAlign: TextAlign.center,
-          style: Theme.of(context)
-              .textTheme
-              .titleLarge
-              ?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         Text(
-          context.t('forgotPassword.sentBody',
-              variables: {'email': _email.text.trim()}),
+          context.t(
+            'forgotPassword.sentBody',
+            variables: {'email': _email.text.trim()},
+          ),
           textAlign: TextAlign.center,
           style: TextStyle(color: AppColors.textSecondary),
         ),

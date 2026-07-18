@@ -216,6 +216,13 @@
     "termsOfService": "Nutzungsbedingungen",
     "legalNotice": "Mit der Nutzung stimmst du unseren Nutzungsbedingungen und der Datenschutzerklärung zu."
   },
+  "authShell": {
+    "heroTitle": "Wo die Arbeit deines Teams zusammenläuft.",
+    "heroBody": "Plane Sprints, behalte jeden Vorgang im Blick und liefert als Team — ruhiges, fokussiertes Projektmanagement.",
+    "chipBoards": "Boards",
+    "chipSprints": "Sprints",
+    "chipTeam": "Team"
+  },
   "legal": {
     "lastUpdated": "Stand",
     "privacyPolicy": "Datenschutzerklärung",
