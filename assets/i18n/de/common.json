@@ -566,8 +566,8 @@
       "label": "Sortieren",
       "createdDesc": "Neueste zuerst",
       "createdAsc": "Älteste zuerst",
-      "updatedDesc": "Änderungsdatum (neueste)",
-      "updatedAsc": "Änderungsdatum (älteste)"
+      "updatedDesc": "Änderungsdatum (neu)",
+      "updatedAsc": "Änderungsdatum (alt)"
     },
     "countFiltered": "{{count}} von {{total}} Aufgaben",
     "emptyFiltered": "Keine Aufgaben passen zu deinen Filtern",

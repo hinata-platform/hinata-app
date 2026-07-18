@@ -566,8 +566,8 @@
       "label": "Sort",
       "createdDesc": "Newest first",
       "createdAsc": "Oldest first",
-      "updatedDesc": "Last modified (newest)",
-      "updatedAsc": "Last modified (oldest)"
+      "updatedDesc": "Last modified (new)",
+      "updatedAsc": "Last modified (old)"
     },
     "countFiltered": "{{count}} of {{total}} issues",
     "emptyFiltered": "No issues match your filters",
