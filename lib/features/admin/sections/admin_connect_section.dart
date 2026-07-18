@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/i18n/i18n.dart';
@@ -35,6 +38,12 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
   bool _busy = false;
   String? _errorKey;
 
+  // Automated "Jetzt verbinden" handshake state.
+  Timer? _pollTimer;
+  bool _handshakeStarting = false;
+  bool _waiting = false;
+  String? _handshakePortalUrl;
+
   bool get _enrolled => _status?['enrolled'] == true;
   bool get _verified => _status?['domainVerified'] == true;
 
@@ -46,6 +55,7 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _token.dispose();
     super.dispose();
   }
@@ -62,12 +72,121 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
         _status = status;
         _loading = false;
       });
+      // Resume the waiting UI if a handshake was still in flight (e.g. the admin
+      // reopened the app before approving in the portal).
+      if (status['enrolled'] != true && status['handshakePending'] == true) {
+        _waiting = true;
+        _handshakePortalUrl = status['handshakePortalUrl'] as String?;
+        _startPolling();
+      }
     } on ApiFailure catch (failure) {
       if (!mounted) return;
       setState(() {
         _loading = false;
         _errorKey = failure.message;
       });
+    }
+  }
+
+  // ── Automated "Jetzt verbinden" handshake ─────────────────────────────────
+
+  Future<void> _startHandshake() async {
+    setState(() => _handshakeStarting = true);
+    try {
+      final res = await _repo.connectHandshakeStart();
+      final url = res['portalUrl'] as String?;
+      if (!mounted) return;
+      if (url == null || url.isEmpty) {
+        // Gateway has no portal URL configured — fall back to the token flow.
+        showGlassErrorToast(context, context.t('admin.connectAutoUnavailable'));
+        return;
+      }
+      final launched = await _openUrl(url);
+      if (!mounted) return;
+      setState(() {
+        _waiting = true;
+        _handshakePortalUrl = url;
+      });
+      _startPolling();
+      if (!launched) {
+        showGlassToast(context, context.t('admin.connectOpenPortalManually'));
+      }
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      showGlassErrorToast(context, context.t(failure.message));
+    } finally {
+      if (mounted) setState(() => _handshakeStarting = false);
+    }
+  }
+
+  Future<bool> _openUrl(String url) async {
+    try {
+      return await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) => _pollOnce());
+  }
+
+  Future<void> _pollOnce() async {
+    try {
+      final status = await _repo.connectStatus();
+      if (!mounted) return;
+      final enrolled = status['enrolled'] == true;
+      final pending = status['handshakePending'] == true;
+      setState(() => _status = status);
+      if (enrolled) {
+        _stopWaiting();
+        showGlassToast(
+          context,
+          context.t('admin.connectEnrolledToast'),
+          kind: GlassToastKind.success,
+        );
+      } else if (!pending) {
+        // The server dropped the handshake (expired / denied / cancelled).
+        _stopWaiting();
+        showGlassToast(context, context.t('admin.connectHandshakeEnded'));
+      }
+    } on ApiFailure {
+      // Transient — keep polling; the timer fires again shortly.
+    }
+  }
+
+  void _stopWaiting() {
+    _pollTimer?.cancel();
+    _pollTimer = null;
+    if (mounted) {
+      setState(() {
+        _waiting = false;
+        _handshakePortalUrl = null;
+      });
+    }
+  }
+
+  Future<void> _cancelHandshake() async {
+    _pollTimer?.cancel();
+    _pollTimer = null;
+    setState(() => _busy = true);
+    try {
+      final status = await _repo.connectHandshakeCancel();
+      if (!mounted) return;
+      setState(() {
+        _status = status;
+        _waiting = false;
+        _handshakePortalUrl = null;
+      });
+    } on ApiFailure {
+      if (!mounted) return;
+      setState(() {
+        _waiting = false;
+        _handshakePortalUrl = null;
+      });
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -223,7 +342,71 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
         ),
         const SizedBox(height: 16),
 
-        // ── Enrolment ─────────────────────────────────────────────────────
+        // ── Automated "Jetzt verbinden" ───────────────────────────────────
+        if (!_enrolled) ...[
+          AdminSectionCard(
+            icon: LucideIcons.sparkles,
+            title: context.t('admin.connectAutoTitle'),
+            subtitle: context.t('admin.connectAutoHint'),
+            children: [
+              if (_waiting) ...[
+                Row(
+                  children: [
+                    const HiveLoader(size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        context.t('admin.connectWaiting'),
+                        style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    if (_handshakePortalUrl != null)
+                      FilledButton.icon(
+                        onPressed: () => _openUrl(_handshakePortalUrl!),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.navy,
+                          foregroundColor: Colors.white,
+                        ),
+                        icon: const Icon(LucideIcons.externalLink, size: 16),
+                        label: Text(context.t('admin.connectReopenPortal')),
+                      ),
+                    if (_handshakePortalUrl != null) const SizedBox(width: 10),
+                    TextButton(
+                      onPressed: _busy ? null : _cancelHandshake,
+                      child: Text(context.t('common.cancel')),
+                    ),
+                  ],
+                ),
+              ] else
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: _handshakeStarting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: HiveLoader(strokeWidth: 2),
+                        )
+                      : FilledButton.icon(
+                          onPressed: _startHandshake,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.navy,
+                            foregroundColor: Colors.white,
+                          ),
+                          icon: const Icon(LucideIcons.zap, size: 16),
+                          label: Text(context.t('admin.connectAutoAction')),
+                        ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // ── Manual enrolment (paste token) ────────────────────────────────
         if (!_enrolled)
           AdminSectionCard(
             icon: LucideIcons.ticket,

@@ -21,6 +21,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hex_mark.dart' show HexMark;
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/status_widgets.dart';
+import '../admin/connect_hint.dart';
 import '../issues/issue_detail_sheet.dart';
 import '../sprint/modals/glass_modal.dart'
     show
@@ -112,6 +113,10 @@ class _DashboardViewState extends State<_DashboardView> {
     )..load();
     _issueSub = IssueEvents.instance.changes.listen((_) => _cubit.load());
     _loadPickerData();
+    // One-time nudge for admins on a not-yet-connected self-hosted instance.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) maybeShowConnectHint(context);
+    });
   }
 
   Future<void> _loadPickerData() async {

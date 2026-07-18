@@ -112,7 +112,11 @@ const _navItems = <_SectionMeta>[
 // ─────────────────────────── Root screen ─────────────────────────────────
 
 class AdminScreen extends StatefulWidget {
-  const AdminScreen({super.key});
+  const AdminScreen({super.key, this.initialSection});
+
+  /// Optional section to open on entry (e.g. a deep link `/admin?section=connect`).
+  /// Matched against the [_AdminSection] enum names.
+  final String? initialSection;
 
   @override
   State<AdminScreen> createState() => _AdminScreenState();
@@ -133,7 +137,24 @@ class _AdminScreenState extends State<AdminScreen> {
   @override
   void initState() {
     super.initState();
+    _applyInitialSection();
     _load();
+  }
+
+  /// Preselects the section named by [AdminScreen.initialSection] (deep link).
+  /// Sets both the desktop and mobile targets so the right one is honoured once
+  /// the layout resolves at build time. `users` opens its own screen, so it is
+  /// left to the normal tap flow.
+  void _applyInitialSection() {
+    final name = widget.initialSection;
+    if (name == null || name.isEmpty) return;
+    for (final s in _AdminSection.values) {
+      if (s != _AdminSection.users && s.name == name) {
+        _desktopSection = s;
+        _mobileSection = s;
+        return;
+      }
+    }
   }
 
   Future<void> _load() async {

@@ -400,7 +400,10 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/admin',
-            pageBuilder: (_, state) => _transition(state, const AdminScreen()),
+            pageBuilder: (_, state) => _transition(
+              state,
+              AdminScreen(initialSection: state.uri.queryParameters['section']),
+            ),
           ),
           GoRoute(
             path: '/admin/users',

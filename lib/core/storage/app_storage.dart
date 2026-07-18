@@ -20,6 +20,7 @@ class AppStorage {
   static const _kAccessToken = 'access_token';
   static const _kRefreshToken = 'refresh_token';
   static const _kOnboardingDone = 'onboarding_done';
+  static const _kConnectHintSeen = 'connect_hint_seen';
   static const _kLocale = 'locale';
   static const _kRecentSearch = 'hinata.recentSearch.v1';
 
@@ -149,6 +150,25 @@ class AppStorage {
 
   bool get onboardingDone => _prefs.getBool(_kOnboardingDone) ?? false;
   Future<void> setOnboardingDone() => _prefs.setBool(_kOnboardingDone, true);
+
+  // --- Hinata Connect first-login hint (scoped per server) -------------------
+
+  String _connectHintKey(String url) => '$_kConnectHintSeen::$url';
+
+  /// Whether the "get a Connect licence" hint has already been shown for the
+  /// current server. Scoped per instance — each self-hosted server an admin
+  /// connects to is prompted once. Returns true (suppressed) when no server is
+  /// selected yet.
+  bool get connectHintSeen {
+    final url = serverUrl;
+    return url == null ? true : (_prefs.getBool(_connectHintKey(url)) ?? false);
+  }
+
+  Future<void> setConnectHintSeen() async {
+    final url = serverUrl;
+    if (url == null) return;
+    await _prefs.setBool(_connectHintKey(url), true);
+  }
 
   String? get locale => _prefs.getString(_kLocale);
   Future<void> setLocale(String code) => _prefs.setString(_kLocale, code);

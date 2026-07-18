@@ -35,6 +35,19 @@ class AdminRepository {
   Future<Map<String, dynamic>> connectDisconnect() async =>
       await _api.delete('/api/v1/admin/connect') as Map<String, dynamic>;
 
+  /// Starts the automated "Jetzt verbinden" handshake and returns
+  /// `{portalUrl, expiresAt}` — the portal URL the admin opens to approve. The
+  /// server then collects its credentials over the back channel; the app just
+  /// watches [connectStatus] until `enrolled` flips.
+  Future<Map<String, dynamic>> connectHandshakeStart() async =>
+      await _api.post('/api/v1/admin/connect/handshake/start')
+          as Map<String, dynamic>;
+
+  /// Cancels an in-flight handshake and returns the refreshed connect status.
+  Future<Map<String, dynamic>> connectHandshakeCancel() async =>
+      await _api.delete('/api/v1/admin/connect/handshake')
+          as Map<String, dynamic>;
+
   // --- E-mail-to-ticket connections ---------------------------------------------
 
   Future<List<IngestConnection>> ingestConnections() async =>
