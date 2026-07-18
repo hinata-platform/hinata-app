@@ -663,29 +663,139 @@ class _GlassFloatingTopBar extends StatelessWidget {
           const SizedBox(width: 6),
           _NotificationBell(active: location.startsWith('/notifications')),
           const SizedBox(width: 10),
-          Tooltip(
-            message: context.t('nav.settings'),
-            child: Material(
-              color: Colors.transparent,
-              shape: const CircleBorder(),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: () => context.go('/settings'),
-                child: Padding(
-                  padding: const EdgeInsets.all(1),
-                  child: AppAvatar(
-                    name: user?.displayName ?? '?',
-                    imageUrl: user?.avatarUrl,
-                    radius: 18,
-                  ),
-                ),
-              ),
-            ),
+          _AvatarMenuButton(
+            name: user?.displayName ?? '?',
+            imageUrl: user?.avatarUrl,
           ),
         ],
       ),
     );
   }
+}
+
+/// The top-right avatar on the desktop / tablet topbar. Tapping it opens a
+/// Liquid-Glass options menu anchored beneath the avatar with quick account
+/// actions — edit the profile inline (no detour through Settings) or sign out.
+class _AvatarMenuButton extends StatefulWidget {
+  const _AvatarMenuButton({required this.name, this.imageUrl});
+
+  final String name;
+  final String? imageUrl;
+
+  @override
+  State<_AvatarMenuButton> createState() => _AvatarMenuButtonState();
+}
+
+class _AvatarMenuButtonState extends State<_AvatarMenuButton> {
+  final GlobalKey _avatarKey = GlobalKey();
+
+  Rect? _anchorRect() {
+    final box = _avatarKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.attached) return null;
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
+
+  Future<void> _openMenu() async {
+    final choice = await showGlassOptions<String>(
+      context,
+      title: context.t('account.title'),
+      anchorRect: _anchorRect(),
+      options: [
+        (
+          value: 'profile',
+          child: _menuRow(LucideIcons.pencil, context.t('account.editProfile')),
+        ),
+        (
+          value: 'logout',
+          child: _menuRow(
+            LucideIcons.logOut,
+            context.t('account.signOut'),
+            danger: true,
+          ),
+        ),
+      ],
+    );
+    if (!mounted || choice == null) return;
+    switch (choice) {
+      case 'profile':
+        await _editProfile();
+      case 'logout':
+        context.read<AuthBloc>().add(const LogoutRequested());
+    }
+  }
+
+  /// Opens the profile-edit modal directly (fetches the fresh [Me] first) and
+  /// keeps the shell avatar / name in sync on save — mirrors the account
+  /// screen's edit flow so both entry points behave identically.
+  Future<void> _editProfile() async {
+    final repo = context.read<AccountRepository>();
+    final authBloc = context.read<AuthBloc>();
+    final savedToast = context.t('account.profileUpdated');
+    final Me me;
+    try {
+      me = await repo.meAccount();
+    } on ApiFailure catch (failure) {
+      if (mounted) {
+        showGlassToast(
+          context,
+          context.t(failure.message),
+          kind: GlassToastKind.error,
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
+    final saved = await showEditProfile(context, repo, me);
+    if (saved != null && mounted) {
+      authBloc.add(const AuthChecked());
+      showGlassToast(context, savedToast);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: context.t('account.title'),
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: _openMenu,
+          child: Padding(
+            padding: const EdgeInsets.all(1),
+            child: AppAvatar(
+              key: _avatarKey,
+              name: widget.name,
+              imageUrl: widget.imageUrl,
+              radius: 18,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A leading-icon + label row for the avatar options menu; [danger] tints the
+/// destructive sign-out entry.
+Widget _menuRow(IconData icon, String label, {bool danger = false}) {
+  return Builder(
+    builder: (context) {
+      final color = danger ? AppColors.danger : AppColors.ink;
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: TextStyle(fontSize: 13.5, color: color),
+          ),
+        ],
+      );
+    },
+  );
 }
 
 /// Slim contextual bar shown on sub-pages under the floating topbar: a back

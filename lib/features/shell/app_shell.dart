@@ -40,9 +40,15 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
         GlassQuality,
         LiquidGlassSettings,
         LiquidRoundedSuperellipse;
+import '../../core/api/api_client.dart' show ApiFailure;
+import '../../core/models/account_models.dart' show Me;
+import '../../core/repositories/account_repository.dart';
 import '../../core/widgets/glass_panel.dart';
+import '../account/account_modals.dart' show showEditProfile;
 import '../search/global_search_dialog.dart';
 import '../search/search_tokens.dart';
+import '../sprint/modals/glass_modal.dart'
+    show showGlassOptions, showGlassToast, GlassToastKind;
 import 'page_chrome.dart';
 import 'swipe_back.dart';
 
