@@ -39,22 +39,26 @@ void main() {
 
   // The lightweight mention/resolve endpoints return a minimal summary.
   group('IssueRef.fromJson', () {
-    test('parses the id/readableId/title triple', () {
+    test('parses the id/readableId/title/type fields', () {
       final ref = IssueRef.fromJson(const {
         'id': '507f1f77bcf86cd799439011',
         'readableId': 'HIN-1',
         'title': 'Board redesign',
+        'type': 'STORY',
       });
       expect(ref.id, '507f1f77bcf86cd799439011');
       expect(ref.readableId, 'HIN-1');
       expect(ref.title, 'Board redesign');
+      expect(ref.type, 'STORY');
     });
 
-    test('tolerates missing fields with empty-string fallbacks', () {
+    test('tolerates missing fields with sensible fallbacks', () {
       final ref = IssueRef.fromJson(const {'readableId': 'HIN-2'});
       expect(ref.id, '');
       expect(ref.readableId, 'HIN-2');
       expect(ref.title, '');
+      // Type falls back to TASK so the menu still picks a glyph.
+      expect(ref.type, 'TASK');
     });
   });
 }

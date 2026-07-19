@@ -154,13 +154,15 @@ class IssueRepository {
           .map((r) => IssueRef.fromJson(r as Map<String, dynamic>))
           .toList();
 
-  /// Batch-resolves readable ids (e.g. `HIN-1,HIN-2`) to minimal summaries for
-  /// `{{issue:KEY}}` chip rendering — ACL-scoped and capped server-side.
-  Future<List<IssueRef>> resolveIssueKeys(List<String> keys) async {
+  /// Batch-resolves readable ids (e.g. `HIN-1,HIN-2`) to the full issues needed
+  /// to render `{{issue:KEY}}` chips + hover cards (state, assignee, priority,
+  /// labels) — ACL-scoped and capped server-side, so only the keys actually
+  /// referenced are fetched instead of draining the whole project.
+  Future<List<Issue>> resolveIssues(List<String> keys) async {
     if (keys.isEmpty) return const [];
     return ((await _api.get('/api/v1/issues/resolve', query: {'keys': keys}))
             as List<dynamic>)
-        .map((r) => IssueRef.fromJson(r as Map<String, dynamic>))
+        .map((i) => Issue.fromJson(i as Map<String, dynamic>))
         .toList();
   }
 
