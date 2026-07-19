@@ -223,27 +223,35 @@ class _InputPane extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Center(child: HivBrandLockup(hexSize: 34)),
+              Center(child: HivBrandLockup(hexSize: context.isCompact ? 34 : 44)),
               const SizedBox(height: 18),
               child,
             ],
           )
         : child;
-    final content = SafeArea(
-      child: LayoutBuilder(
-        builder: (context, constraints) => SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: veil ? 36 : 24,
-                vertical: veil ? 40 : 18,
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxContentWidth),
-                  child: paneChild,
-                ),
+    // No SafeArea: the backdrop and the scroll view run edge-to-edge to the
+    // display bounds (immersive — no boxed-in clip line where scrolling content
+    // gets cut). The safe-area insets are folded into the scroll padding
+    // instead, so the first/last items still clear the status bar / home
+    // indicator without the content being cut off.
+    final insets = MediaQuery.paddingOf(context);
+    final hPad = veil ? 36.0 : 24.0;
+    final vPad = veil ? 40.0 : 18.0;
+    final content = LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              hPad,
+              vPad + insets.top,
+              hPad,
+              vPad + insets.bottom,
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxContentWidth),
+                child: paneChild,
               ),
             ),
           ),

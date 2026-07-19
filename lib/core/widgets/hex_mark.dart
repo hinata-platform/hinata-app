@@ -50,7 +50,7 @@ class HivBrandLockup extends StatelessWidget {
           'hinata',
           style: TextStyle(
             fontFamily: AppTheme.fontBrand,
-            fontSize: hexSize * 0.34,
+            fontSize: hexSize * 0.58,
             fontWeight: FontWeight.w700,
             color: AppColors.ink,
             letterSpacing: -0.5,
