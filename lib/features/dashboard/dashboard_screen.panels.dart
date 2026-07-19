@@ -21,7 +21,10 @@ class _FocusCard extends StatelessWidget {
           if (issues.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 18),
-              child: Text(context.t('dashboard.noTasks'), style: TextStyle(color: AppColors.inkSoft)),
+              child: Text(
+                context.t('dashboard.noTasks'),
+                style: TextStyle(color: AppColors.inkSoft),
+              ),
             )
           else
             for (final issue in issues.take(5))
@@ -43,7 +46,8 @@ class _FocusItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final compact = context.isCompact;
-    final hasEstimate = issue.estimateMinutes != null && issue.estimateMinutes! > 0;
+    final hasEstimate =
+        issue.estimateMinutes != null && issue.estimateMinutes! > 0;
     final progress = hasEstimate
         ? (issue.spentMinutes / issue.estimateMinutes!).clamp(0.0, 1.0)
         : 0.0;
@@ -73,7 +77,10 @@ class _FocusItem extends StatelessWidget {
                       issue.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 3),
                     Row(
@@ -86,7 +93,9 @@ class _FocusItem extends StatelessWidget {
                             style: TextStyle(
                               fontFamily: AppTheme.fontMono,
                               fontSize: 11,
-                              color: due.late ? AppColors.danger : AppColors.inkFaint,
+                              color: due.late
+                                  ? AppColors.danger
+                                  : AppColors.inkFaint,
                             ),
                           ),
                         ],
@@ -97,10 +106,14 @@ class _FocusItem extends StatelessWidget {
               ),
               if (!compact && hasEstimate) ...[
                 const SizedBox(width: 10),
-                SizedBox(width: 64, child: HiveProgress(value: progress, height: 5)),
+                SizedBox(
+                  width: 64,
+                  child: HiveProgress(value: progress, height: 5),
+                ),
               ],
               const SizedBox(width: 10),
-              if (issue.assigneeId != null) HiveAvatar(name: issue.assigneeId!, size: 26),
+              if (issue.assigneeId != null)
+                HiveAvatar(name: issue.assigneeId!, size: 26),
             ],
           ),
         ),
@@ -130,7 +143,10 @@ class _CompletionCard extends StatelessWidget {
         children: [
           _CardHead(
             title: context.t('dashboard.projectProgress'),
-            subLabel: context.t('dashboard.issuesCount', variables: {'count': '$total'}),
+            subLabel: context.t(
+              'dashboard.issuesCount',
+              variables: {'count': '$total'},
+            ),
           ),
           const SizedBox(height: 18),
           Row(
@@ -145,9 +161,13 @@ class _CompletionCard extends StatelessWidget {
                       tween: Tween(begin: 0, end: total == 0 ? 0.0 : 1.0),
                       duration: const Duration(milliseconds: 1200),
                       curve: hiveEase,
-                      builder: (_, t, _) => CustomPaint(
-                        size: const Size.square(132),
-                        painter: _DonutPainter([for (final (_, v, c) in segs) (v.toDouble(), c)], t),
+                      builder: (_, t, _) => RepaintBoundary(
+                        child: CustomPaint(
+                          size: const Size.square(132),
+                          painter: _DonutPainter([
+                            for (final (_, v, c) in segs) (v.toDouble(), c),
+                          ], t),
+                        ),
                       ),
                     ),
                     Column(
@@ -165,7 +185,10 @@ class _CompletionCard extends StatelessWidget {
                         ),
                         Text(
                           context.t('dashboard.resolved'),
-                          style: TextStyle(fontSize: 10, color: AppColors.inkFaint),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppColors.inkFaint,
+                          ),
                         ),
                       ],
                     ),
@@ -185,14 +208,20 @@ class _CompletionCard extends StatelessWidget {
                             Container(
                               width: 9,
                               height: 9,
-                              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                              ),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 label,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: AppColors.inkSoft,
+                                ),
                               ),
                             ),
                             Text(
@@ -242,14 +271,21 @@ class _DonutPainter extends CustomPainter {
           ..strokeWidth = stroke
           ..strokeCap = StrokeCap.round
           ..color = color;
-        canvas.drawArc(Rect.fromCircle(center: center, radius: radius), start, sweep, false, paint);
+        canvas.drawArc(
+          Rect.fromCircle(center: center, radius: radius),
+          start,
+          sweep,
+          false,
+          paint,
+        );
       }
       start += full;
     }
   }
 
   @override
-  bool shouldRepaint(_DonutPainter old) => old.t != t || old.segments != segments;
+  bool shouldRepaint(_DonutPainter old) =>
+      old.t != t || old.segments != segments;
 }
 
 // ══════════════════════════ Focus-time tracker ═════════════════════════════
@@ -273,11 +309,16 @@ class _TrackerCardState extends State<_TrackerCard> {
     if (monthly) {
       for (var i = 0; i < widget.month.length; i++) {
         final w = widget.month[i];
-        bars.add(_BarData(
-          label: context.t('dashboard.weekLabel', variables: {'n': '${w.week}'}),
-          minutes: w.focusMinutes,
-          today: i == widget.month.length - 1,
-        ));
+        bars.add(
+          _BarData(
+            label: context.t(
+              'dashboard.weekLabel',
+              variables: {'n': '${w.week}'},
+            ),
+            minutes: w.focusMinutes,
+            today: i == widget.month.length - 1,
+          ),
+        );
       }
     } else {
       final code = Localizations.localeOf(context).languageCode;
@@ -289,11 +330,13 @@ class _TrackerCardState extends State<_TrackerCard> {
         } catch (_) {
           label = DateFormat.E().format(d.date);
         }
-        bars.add(_BarData(
-          label: label.replaceAll('.', ''),
-          minutes: d.focusMinutes,
-          today: i == widget.week.length - 1,
-        ));
+        bars.add(
+          _BarData(
+            label: label.replaceAll('.', ''),
+            minutes: d.focusMinutes,
+            today: i == widget.week.length - 1,
+          ),
+        );
       }
     }
     final totalMinutes = bars.fold<int>(0, (s, b) => s + b.minutes);
@@ -306,16 +349,30 @@ class _TrackerCardState extends State<_TrackerCard> {
               Expanded(
                 child: Text(
                   context.t('dashboard.focusTime'),
-                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.ink),
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                  ),
                 ),
               ),
               Text(
-                context.t('dashboard.hours', variables: {'value': _hours(context, totalMinutes)}),
-                style: TextStyle(fontFamily: AppTheme.fontMono, fontSize: 12, color: AppColors.inkSoft),
+                context.t(
+                  'dashboard.hours',
+                  variables: {'value': _hours(context, totalMinutes)},
+                ),
+                style: TextStyle(
+                  fontFamily: AppTheme.fontMono,
+                  fontSize: 12,
+                  color: AppColors.inkSoft,
+                ),
               ),
               const SizedBox(width: 10),
               _Segmented(
-                options: [context.t('dashboard.week'), context.t('dashboard.month')],
+                options: [
+                  context.t('dashboard.week'),
+                  context.t('dashboard.month'),
+                ],
                 index: _range,
                 onChanged: (i) => setState(() => _range = i),
               ),
@@ -330,12 +387,18 @@ class _TrackerCardState extends State<_TrackerCard> {
 
   String _hours(BuildContext context, int minutes) {
     final v = (minutes / 60).toStringAsFixed(1);
-    return Localizations.localeOf(context).languageCode == 'de' ? v.replaceAll('.', ',') : v;
+    return Localizations.localeOf(context).languageCode == 'de'
+        ? v.replaceAll('.', ',')
+        : v;
   }
 }
 
 class _BarData {
-  const _BarData({required this.label, required this.minutes, required this.today});
+  const _BarData({
+    required this.label,
+    required this.minutes,
+    required this.today,
+  });
   final String label;
   final int minutes;
   final bool today;
@@ -358,7 +421,10 @@ class _Bars extends StatelessWidget {
               builder: (context, c) {
                 final areaH = c.maxHeight - 24;
                 final frac = b.minutes / max;
-                final target = math.max(frac * areaH, b.minutes > 0 ? 8.0 : 3.0);
+                final target = math.max(
+                  frac * areaH,
+                  b.minutes > 0 ? 8.0 : 3.0,
+                );
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -375,17 +441,20 @@ class _Bars extends StatelessWidget {
                               ? const LinearGradient(
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
-                                  colors: [_cAmberHi, _cAmberLo])
+                                  colors: [_cAmberHi, _cAmberLo],
+                                )
                               : null,
                           color: b.today
                               ? null
                               : (dark
-                                  ? Colors.white.withValues(alpha: .22)
-                                  : AppColors.navy.withValues(alpha: .75)),
+                                    ? Colors.white.withValues(alpha: .22)
+                                    : AppColors.navy.withValues(alpha: .75)),
                           boxShadow: b.today
                               ? [
                                   BoxShadow(
-                                    color: AppColors.accent.withValues(alpha: .4),
+                                    color: AppColors.accent.withValues(
+                                      alpha: .4,
+                                    ),
                                     blurRadius: 12,
                                     offset: const Offset(0, 3),
                                   ),
@@ -402,7 +471,9 @@ class _Bars extends StatelessWidget {
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
                         fontSize: 10.5,
-                        color: b.today ? AppColors.accentStrong : AppColors.inkFaint,
+                        color: b.today
+                            ? AppColors.accentStrong
+                            : AppColors.inkFaint,
                         fontWeight: b.today ? FontWeight.w700 : FontWeight.w400,
                       ),
                     ),
@@ -417,7 +488,11 @@ class _Bars extends StatelessWidget {
 }
 
 class _Segmented extends StatelessWidget {
-  const _Segmented({required this.options, required this.index, required this.onChanged});
+  const _Segmented({
+    required this.options,
+    required this.index,
+    required this.onChanged,
+  });
   final List<String> options;
   final int index;
   final ValueChanged<int> onChanged;
@@ -428,7 +503,9 @@ class _Segmented extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: dark ? Colors.white.withValues(alpha: .06) : Colors.black.withValues(alpha: .04),
+        color: dark
+            ? Colors.white.withValues(alpha: .06)
+            : Colors.black.withValues(alpha: .04),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -440,7 +517,10 @@ class _Segmented extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 curve: hiveEase,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: i == index ? AppColors.accent : Colors.transparent,
                   borderRadius: BorderRadius.circular(999),
@@ -450,7 +530,9 @@ class _Segmented extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: i == index ? const Color(0xFF2A2410) : AppColors.inkSoft,
+                    color: i == index
+                        ? const Color(0xFF2A2410)
+                        : AppColors.inkSoft,
                   ),
                 ),
               ),
@@ -469,15 +551,14 @@ class _GitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repo = events.map((e) => e.repo).firstWhere((r) => r != null && r.isNotEmpty, orElse: () => null);
+    final repo = events
+        .map((e) => e.repo)
+        .firstWhere((r) => r != null && r.isNotEmpty, orElse: () => null);
     return _GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _CardHead(
-            title: context.t('dashboard.gitActivity'),
-            subLabel: repo,
-          ),
+          _CardHead(title: context.t('dashboard.gitActivity'), subLabel: repo),
           const SizedBox(height: 8),
           for (final e in events.take(5))
             Padding(
@@ -523,25 +604,27 @@ class _GitRow extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text.rich(
-                TextSpan(children: [
-                  TextSpan(
-                    text: event.ref,
-                    style: const TextStyle(
-                      fontFamily: AppTheme.fontMono,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.accentStrong,
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: event.ref,
+                      style: const TextStyle(
+                        fontFamily: AppTheme.fontMono,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.accentStrong,
+                      ),
                     ),
-                  ),
-                  TextSpan(
-                    text: '  ·  ${event.text}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.ink,
+                    TextSpan(
+                      text: '  ·  ${event.text}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.ink,
+                      ),
                     ),
-                  ),
-                ]),
+                  ],
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -573,11 +656,11 @@ class _GitRow extends StatelessWidget {
   }
 
   (IconData, Color) _kindStyle(String kind) => switch (kind) {
-        'pr' => (LucideIcons.eye, _cToday),
-        'deploy' => (LucideIcons.rocket, _cDone),
-        'merge' => (LucideIcons.circleCheckBig, const Color(0xFFA45CC7)),
-        _ => (LucideIcons.circleDot, AppColors.accentStrong),
-      };
+    'pr' => (LucideIcons.eye, _cToday),
+    'deploy' => (LucideIcons.rocket, _cDone),
+    'merge' => (LucideIcons.circleCheckBig, const Color(0xFFA45CC7)),
+    _ => (LucideIcons.circleDot, AppColors.accentStrong),
+  };
 
   String _rel(DateTime at) {
     final d = DateTime.now().difference(at);
@@ -609,7 +692,10 @@ class _LeaderboardCard extends StatelessWidget {
           if (shown.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 14),
-              child: Text(context.t('dashboard.noRanking'), style: TextStyle(color: AppColors.inkSoft)),
+              child: Text(
+                context.t('dashboard.noRanking'),
+                style: TextStyle(color: AppColors.inkSoft),
+              ),
             ),
           for (final (i, entry) in shown.indexed)
             Container(
@@ -624,7 +710,11 @@ class _LeaderboardCard extends StatelessWidget {
                   SizedBox(
                     width: 20,
                     child: i == 0
-                        ? const Icon(LucideIcons.star, size: 14, color: AppColors.accentStrong)
+                        ? const Icon(
+                            LucideIcons.star,
+                            size: 14,
+                            color: AppColors.accentStrong,
+                          )
                         : Text(
                             '${i + 1}',
                             style: TextStyle(
@@ -634,7 +724,11 @@ class _LeaderboardCard extends StatelessWidget {
                             ),
                           ),
                   ),
-                  HiveAvatar(name: entry.displayName, imageUrl: entry.avatarUrl, size: 30),
+                  HiveAvatar(
+                    name: entry.displayName,
+                    imageUrl: entry.avatarUrl,
+                    size: 30,
+                  ),
                   const SizedBox(width: 11),
                   Expanded(
                     child: Column(
@@ -644,20 +738,29 @@ class _LeaderboardCard extends StatelessWidget {
                           entry.displayName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         if (entry.title != null)
                           Text(
                             entry.title!,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 11, color: AppColors.inkSoft),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.inkSoft,
+                            ),
                           ),
                       ],
                     ),
                   ),
                   Text(
-                    context.t('dashboard.pointsShort', variables: {'count': '${entry.points}'}),
+                    context.t(
+                      'dashboard.pointsShort',
+                      variables: {'count': '${entry.points}'},
+                    ),
                     style: const TextStyle(
                       fontFamily: AppTheme.fontMono,
                       fontSize: 12.5,

@@ -65,6 +65,12 @@ class _OtpInputState extends State<OtpInput> {
   static const _length = 6;
   final _controllers = List.generate(_length, (_) => TextEditingController());
   final _nodes = List.generate(_length, (_) => FocusNode());
+  // Stable focus nodes for the per-digit KeyboardListeners. Building these inline
+  // in build() leaked 6 undisposed FocusNodes on every rebuild (paste/busy/error).
+  final _keyNodes = List.generate(
+    _length,
+    (_) => FocusNode(skipTraversal: true),
+  );
 
   @override
   void dispose() {
@@ -72,6 +78,9 @@ class _OtpInputState extends State<OtpInput> {
       c.dispose();
     }
     for (final n in _nodes) {
+      n.dispose();
+    }
+    for (final n in _keyNodes) {
       n.dispose();
     }
     super.dispose();
@@ -108,7 +117,7 @@ class _OtpInputState extends State<OtpInput> {
             child: Padding(
               padding: EdgeInsets.only(right: i == _length - 1 ? 0 : 8),
               child: KeyboardListener(
-                focusNode: FocusNode(skipTraversal: true),
+                focusNode: _keyNodes[i],
                 onKeyEvent: (event) {
                   if (event is KeyDownEvent &&
                       event.logicalKey == LogicalKeyboardKey.backspace &&
@@ -140,12 +149,19 @@ class _OtpInputState extends State<OtpInput> {
                     filled: true,
                     fillColor: AppColors.surface.withValues(alpha: 0.7),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.radiusControl,
+                      ),
                       borderSide: BorderSide(color: AppColors.hairline),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                      borderSide: const BorderSide(color: AppColors.accent, width: 1.6),
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.radiusControl,
+                      ),
+                      borderSide: const BorderSide(
+                        color: AppColors.accent,
+                        width: 1.6,
+                      ),
                     ),
                   ),
                   onChanged: (v) => _onChanged(i, v),
@@ -271,14 +287,14 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
   }
 
   Widget _errorBox(String message) => Padding(
-        key: const ValueKey('err'),
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: AccountNote(
-          text: message,
-          icon: LucideIcons.triangleAlert,
-          tone: AccountNoteTone.danger,
-        ),
-      );
+    key: const ValueKey('err'),
+    padding: const EdgeInsets.symmetric(vertical: 24),
+    child: AccountNote(
+      text: message,
+      icon: LucideIcons.triangleAlert,
+      tone: AccountNoteTone.danger,
+    ),
+  );
 
   Widget _scanBody() {
     final setup = _setup;
@@ -288,7 +304,11 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
       children: [
         Text(
           context.t('twofa.scanHint'),
-          style: TextStyle(fontSize: 12.5, height: 1.45, color: AppColors.inkSoft),
+          style: TextStyle(
+            fontSize: 12.5,
+            height: 1.45,
+            color: AppColors.inkSoft,
+          ),
         ),
         const SizedBox(height: 16),
         Center(
@@ -309,7 +329,10 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
                     width: 180,
                     height: 180,
                     child: CustomPaint(
-                      painter: _QrPainter(setup.otpauthUri, const Color(0xFF1A1830)),
+                      painter: _QrPainter(
+                        setup.otpauthUri,
+                        const Color(0xFF1A1830),
+                      ),
                     ),
                   ),
           ),
@@ -337,7 +360,11 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
       children: [
         Text(
           context.t('twofa.verifyHint'),
-          style: TextStyle(fontSize: 12.5, height: 1.45, color: AppColors.inkSoft),
+          style: TextStyle(
+            fontSize: 12.5,
+            height: 1.45,
+            color: AppColors.inkSoft,
+          ),
         ),
         const SizedBox(height: 18),
         OtpInput(onChanged: (v) => setState(() => _code = v)),
@@ -394,7 +421,8 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
               icon: LucideIcons.copy,
               onPressed: () {
                 Clipboard.setData(
-                    ClipboardData(text: _recoveryCodes.join('\n')));
+                  ClipboardData(text: _recoveryCodes.join('\n')),
+                );
                 showGlassToast(
                   context,
                   context.t('twofa.codesCopied'),
@@ -442,9 +470,14 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
         children: [
           const Spacer(),
           TextButton(
-            onPressed: _busy ? null : () => Navigator.of(context).maybePop(_saved),
-            child: Text(context.t(
-                _step == _Step.recovery ? 'twofa.close' : 'common.cancel')),
+            onPressed: _busy
+                ? null
+                : () => Navigator.of(context).maybePop(_saved),
+            child: Text(
+              context.t(
+                _step == _Step.recovery ? 'twofa.close' : 'common.cancel',
+              ),
+            ),
           ),
           const SizedBox(width: 8),
           if (_step != _Step.recovery)
@@ -463,15 +496,25 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
                   ? const SizedBox(
                       width: 15,
                       height: 15,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Icon(LucideIcons.arrowRight, size: 15),
-              label: Text(context.t(
-                  _step == _Step.scan ? 'twofa.continueStep' : 'twofa.verifyEnable')),
+              label: Text(
+                context.t(
+                  _step == _Step.scan
+                      ? 'twofa.continueStep'
+                      : 'twofa.verifyEnable',
+                ),
+              ),
             )
           else
             FilledButton.icon(
-              onPressed: _saved ? () => Navigator.of(context).maybePop(true) : null,
+              onPressed: _saved
+                  ? () => Navigator.of(context).maybePop(true)
+                  : null,
               style: _primaryStyle(),
               icon: const Icon(LucideIcons.check, size: 15),
               label: Text(context.t('twofa.finish')),
@@ -482,13 +525,13 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
   }
 
   ButtonStyle _primaryStyle() => FilledButton.styleFrom(
-        backgroundColor: AppColors.navy,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        ),
-      );
+    backgroundColor: AppColors.navy,
+    foregroundColor: Colors.white,
+    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+    ),
+  );
 }
 
 /// Manage modal: shows remaining recovery codes count + regenerate (requires a
@@ -622,28 +665,47 @@ class _CodeGatedActionState extends State<_CodeGatedAction> {
             children: [
               const Spacer(),
               TextButton(
-                onPressed: _busy ? null : () => Navigator.of(context).maybePop(),
-                child: Text(context.t(_result != null ? 'twofa.close' : 'common.cancel')),
+                onPressed: _busy
+                    ? null
+                    : () => Navigator.of(context).maybePop(),
+                child: Text(
+                  context.t(_result != null ? 'twofa.close' : 'common.cancel'),
+                ),
               ),
               const SizedBox(width: 8),
               if (_result == null)
                 FilledButton.icon(
                   onPressed: _busy || _code.length < 6 ? null : _confirm,
                   style: FilledButton.styleFrom(
-                    backgroundColor: widget.danger ? AppColors.danger : AppColors.navy,
+                    backgroundColor: widget.danger
+                        ? AppColors.danger
+                        : AppColors.navy,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 13,
+                    ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.radiusControl,
+                      ),
                     ),
                   ),
                   icon: _busy
                       ? const SizedBox(
                           width: 15,
                           height: 15,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
-                      : Icon(widget.danger ? LucideIcons.shieldOff : LucideIcons.check, size: 15),
+                      : Icon(
+                          widget.danger
+                              ? LucideIcons.shieldOff
+                              : LucideIcons.check,
+                          size: 15,
+                        ),
                   label: Text(widget.confirmLabel),
                 ),
             ],

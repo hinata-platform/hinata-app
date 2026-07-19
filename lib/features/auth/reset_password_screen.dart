@@ -9,7 +9,7 @@ import '../../core/repositories/auth_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
-import '../../core/storage/app_storage.dart';
+import '../../core/util/server_link.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
 import 'auth_shell.dart';
@@ -43,18 +43,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     _applyServer();
   }
 
-  /// Point a freshly opened web/app at the backend named in the link.
-  Future<void> _applyServer() async {
-    final server = widget.server;
-    if (server == null || server.isEmpty) return;
-    final storage = context.read<AppStorage>();
-    if (storage.serverUrl != server) {
-      await storage.setServerUrl(server);
-      if (mounted) {
-        context.read<AppConfigBloc>().add(ServerUrlSubmitted(server));
-      }
-    }
-  }
+  /// Point a freshly opened web/app at the backend named in the link —
+  /// validated + consent-gated (see [applyServerFromLink]).
+  Future<void> _applyServer() => applyServerFromLink(context, widget.server);
 
   @override
   void dispose() {

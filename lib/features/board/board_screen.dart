@@ -368,7 +368,10 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     });
     try {
       final results = await Future.wait([
-        context.read<BoardRepository>().boardView(widget.boardId, sprintId: _sprintId),
+        context.read<BoardRepository>().boardView(
+          widget.boardId,
+          sprintId: _sprintId,
+        ),
         context.read<UserRepository>().users(),
         context.read<ProjectRepository>().projects(),
         context.read<TeamRepository>().teams(),
@@ -421,7 +424,9 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     // clamps size to 100), so the by-id index and backlog never silently miss
     // issues beyond the first page.
     final pages = await Future.wait(
-      projectIds.map((p) => context.read<IssueRepository>().allIssues(projectId: p)),
+      projectIds.map(
+        (p) => context.read<IssueRepository>().allIssues(projectId: p),
+      ),
     );
     final seen = <String>{};
     final out = <Issue>[];
@@ -902,19 +907,21 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     final items = _backlog.where((i) => _passes(i) && i.isStandard).toList()
       ..sort((a, b) => prio(b).compareTo(prio(a)));
 
-    return RefreshIndicator(
-      onRefresh: _load,
-      color: AppColors.accent,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
-          context.pageGutter,
-          0,
-          context.pageGutter,
-          context.pageGutter + context.bottomGutter,
-        ),
-        children: [
-          if (items.isEmpty)
+    final padding = EdgeInsets.fromLTRB(
+      context.pageGutter,
+      0,
+      context.pageGutter,
+      context.pageGutter + context.bottomGutter,
+    );
+
+    if (items.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.accent,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: padding,
+          children: [
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 72),
               child: Center(
@@ -923,9 +930,26 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
                   style: TextStyle(color: AppColors.inkSoft),
                 ),
               ),
-            )
-          else ...[
-            Padding(
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Lazy builder (not a concrete children list): the backlog pages the whole
+    // cross-project set into memory, so only visible IssueRows should be built.
+    // Leading entries: the count subtitle, plus a table header on wide layouts.
+    final leading = context.isCompact ? 1 : 2;
+    return RefreshIndicator(
+      onRefresh: _load,
+      color: AppColors.accent,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: padding,
+        itemCount: items.length + leading,
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Text(
                 context.t(
@@ -934,20 +958,20 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
                 ),
                 style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
               ),
+            );
+          }
+          if (leading == 2 && index == 1) return const _BacklogTableHeader();
+          final issue = items[index - leading];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 7),
+            child: IssueRow(
+              issue: issue,
+              assignee: _names[issue.assigneeId],
+              assigneeAvatar: _avatars[issue.assigneeId],
+              onTap: () => _openIssue(issue),
             ),
-            if (!context.isCompact) const _BacklogTableHeader(),
-            for (final issue in items)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 7),
-                child: IssueRow(
-                  issue: issue,
-                  assignee: _names[issue.assigneeId],
-                  assigneeAvatar: _avatars[issue.assigneeId],
-                  onTap: () => _openIssue(issue),
-                ),
-              ),
-          ],
-        ],
+          );
+        },
       ),
     );
   }

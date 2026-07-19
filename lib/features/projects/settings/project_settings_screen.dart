@@ -558,123 +558,132 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
     required Widget danger,
   }) {
     const gap = SizedBox(height: 16);
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(
-            context.pageGutter,
-            16 + context.topGutter,
-            context.pageGutter,
-            // Reserve room so the last card clears the floating save bar.
-            (_dirty ? 96 : 24) + context.bottomGutter,
-          ),
-          children: [
-            Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: contentMax),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _Header(draft: draft),
-                    const SizedBox(height: 20),
-                    if (twoColumn)
-                      // φ:1 golden split — heavy editing surfaces live in the
-                      // wide column, light toggles/meta in the narrow one.
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            flex: 1618,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                general,
-                                gap,
-                                members,
-                                gap,
-                                workflow,
-                                gap,
-                                git,
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 20),
-                          Expanded(
-                            flex: 1000,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [labels, gap, archive, gap, danger],
-                            ),
-                          ),
-                        ],
-                      )
-                    else ...[
-                      general,
-                      gap,
-                      members,
-                      gap,
-                      labels,
-                      gap,
-                      workflow,
-                      gap,
-                      git,
-                      gap,
-                      archive,
-                      gap,
-                      danger,
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          // No SafeArea here: context.bottomGutter already carries the floating
-          // nav's footprint + device inset (injected by the shell), so wrapping
-          // in SafeArea would count that bottom inset twice and float the bar
-          // up into the middle of the screen. When the keyboard is open, ride
-          // above it instead of the nav.
-          child: Padding(
+    // The multiline Description field's return key inserts a newline (never
+    // resigns first responder), and this screen has no Scaffold/global unfocus —
+    // so give it the same escape hatches as the admin forms: tap-outside to
+    // unfocus + drag-to-dismiss. Otherwise the keyboard is trapped on phones.
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: EdgeInsets.fromLTRB(
               context.pageGutter,
-              0,
+              16 + context.topGutter,
               context.pageGutter,
-              context.isCompact
-                  ? math.max(
-                          context.bottomGutter,
-                          MediaQuery.viewInsetsOf(context).bottom,
-                        ) -
-                        20
-                  : 12 +
-                        math.max(
-                          context.bottomGutter,
-                          MediaQuery.viewInsetsOf(context).bottom,
-                        ),
+              // Reserve room so the last card clears the floating save bar.
+              (_dirty ? 96 : 24) + context.bottomGutter,
             ),
-            child: Center(
-              child: ConstrainedBox(
-                // Match the content column so the bar visually docks to it.
-                constraints: BoxConstraints(
-                  maxWidth: math.min(contentMax, 880),
+            children: [
+              Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: contentMax),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _Header(draft: draft),
+                      const SizedBox(height: 20),
+                      if (twoColumn)
+                        // φ:1 golden split — heavy editing surfaces live in the
+                        // wide column, light toggles/meta in the narrow one.
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 1618,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  general,
+                                  gap,
+                                  members,
+                                  gap,
+                                  workflow,
+                                  gap,
+                                  git,
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 20),
+                            Expanded(
+                              flex: 1000,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [labels, gap, archive, gap, danger],
+                              ),
+                            ),
+                          ],
+                        )
+                      else ...[
+                        general,
+                        gap,
+                        members,
+                        gap,
+                        labels,
+                        gap,
+                        workflow,
+                        gap,
+                        git,
+                        gap,
+                        archive,
+                        gap,
+                        danger,
+                      ],
+                    ],
+                  ),
                 ),
-                child: _SaveBar(
-                  visible: _dirty,
-                  valid: _valid,
-                  saving: _saving,
-                  onDiscard: _discard,
-                  onSave: _save,
+              ),
+            ],
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            // No SafeArea here: context.bottomGutter already carries the floating
+            // nav's footprint + device inset (injected by the shell), so wrapping
+            // in SafeArea would count that bottom inset twice and float the bar
+            // up into the middle of the screen. When the keyboard is open, ride
+            // above it instead of the nav.
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                context.pageGutter,
+                0,
+                context.pageGutter,
+                context.isCompact
+                    ? math.max(
+                            context.bottomGutter,
+                            MediaQuery.viewInsetsOf(context).bottom,
+                          ) -
+                          20
+                    : 12 +
+                          math.max(
+                            context.bottomGutter,
+                            MediaQuery.viewInsetsOf(context).bottom,
+                          ),
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  // Match the content column so the bar visually docks to it.
+                  constraints: BoxConstraints(
+                    maxWidth: math.min(contentMax, 880),
+                  ),
+                  child: _SaveBar(
+                    visible: _dirty,
+                    valid: _valid,
+                    saving: _saving,
+                    onDiscard: _discard,
+                    onSave: _save,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -26,24 +26,26 @@ class SoftCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = color ?? AppColors.surface;
+    final r = borderRadius ?? BorderRadius.circular(AppTheme.radiusCard);
+    // The Material clips the ink ripple (clipBehavior) and the decoration rounds
+    // the surface, so no extra ClipRRect layer is needed — one fewer clip per
+    // SoftCard, and SoftCard backs nearly every list row in the app.
     return Material(
       color: bg,
-      borderRadius: borderRadius ?? BorderRadius.circular(AppTheme.radiusCard),
+      borderRadius: r,
+      clipBehavior: Clip.antiAlias,
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: borderRadius ?? BorderRadius.circular(AppTheme.radiusCard),
+          borderRadius: r,
           border: border ?? Border.all(color: AppColors.hairline),
         ),
-        child: ClipRRect(
-          borderRadius: borderRadius ?? BorderRadius.circular(AppTheme.radiusCard),
-          child: onTap == null
-              ? Padding(padding: padding, child: child)
-              : InkWell(
-                  onTap: onTap,
-                  borderRadius: borderRadius ?? BorderRadius.circular(AppTheme.radiusCard),
-                  child: Padding(padding: padding, child: child),
-                ),
-        ),
+        child: onTap == null
+            ? Padding(padding: padding, child: child)
+            : InkWell(
+                onTap: onTap,
+                borderRadius: r,
+                child: Padding(padding: padding, child: child),
+              ),
       ),
     );
   }
@@ -51,8 +53,12 @@ class SoftCard extends StatelessWidget {
 
 /// Section title row with an optional trailing action.
 class SectionHeader extends StatelessWidget {
-  const SectionHeader(
-      {super.key, required this.title, this.actionLabel, this.onAction});
+  const SectionHeader({
+    super.key,
+    required this.title,
+    this.actionLabel,
+    this.onAction,
+  });
 
   final String title;
   final String? actionLabel;
@@ -66,18 +72,22 @@ class SectionHeader extends StatelessWidget {
           child: Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.ink,
-                ),
+              fontWeight: FontWeight.w700,
+              color: AppColors.ink,
+            ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
         if (actionLabel != null)
           TextButton(
             onPressed: onAction,
-            style: TextButton.styleFrom(foregroundColor: AppColors.accentStrong),
-            child: Text(actionLabel!,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.accentStrong,
+            ),
+            child: Text(
+              actionLabel!,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
           ),
       ],
     );

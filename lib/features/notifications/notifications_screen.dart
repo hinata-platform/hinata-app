@@ -61,11 +61,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _markAllRead(List<AppNotification> items) async {
-    final unread = items.where((n) => !n.read).map((n) => n.id).toList();
-    if (unread.isEmpty || _markingAll) return;
+    final hasUnread = items.any((n) => !n.read);
+    if (!hasUnread || _markingAll) return;
     setState(() => _markingAll = true);
     try {
-      await _repo.markNotificationsRead(unread);
+      await _repo.markAllNotificationsRead();
     } catch (_) {
       // Non-critical; the reload below reflects server truth.
     }
@@ -132,77 +132,105 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               final notifications = state.items;
               final unreadCount = notifications.where((n) => !n.read).length;
               final groups = _groupByBucket(notifications);
-              return ListView(
+              final showEmpty = notifications.isEmpty;
+              final showLoader = state.isLoadingMore;
+              // Lazy builder instead of a concrete children list: the feed paginates
+              // (infinite scroll), so as pages accumulate only the on-screen group
+              // cards should be built, not every past group up-front.
+              final itemCount =
+                  1 +
+                  (showEmpty ? 1 : 0) +
+                  groups.length +
+                  (showLoader ? 1 : 0);
+              return ListView.builder(
                 controller: _scroll,
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: context.pagePadding,
-                children: [
-                  SectionHeader(
-                    title: context.t('notifications.title'),
-                    actionLabel: unreadCount > 0 && !_markingAll
-                        ? context.t('notifications.markAllRead')
-                        : null,
-                    onAction: () => _markAllRead(notifications),
-                  ),
-                  if (unreadCount > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        context.t(
-                          'notifications.unreadCount',
-                          variables: {'count': '$unreadCount'},
+                itemCount: itemCount,
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SectionHeader(
+                          title: context.t('notifications.title'),
+                          actionLabel: unreadCount > 0 && !_markingAll
+                              ? context.t('notifications.markAllRead')
+                              : null,
+                          onAction: () => _markAllRead(notifications),
                         ),
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.accentStrong,
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 12),
-                  if (notifications.isEmpty)
-                    HiveEmptyState(
-                      title: context.t('notifications.title'),
-                      message: context.t('notifications.empty'),
-                    ),
-                  for (final group in groups) ...[
-                    _GroupLabel(
-                      label: context.t(
-                        'notifications.group.${group.bucket.key}',
-                      ),
-                    ),
-                    SoftCard(
-                      padding: EdgeInsets.zero,
-                      child: Column(
-                        children: [
-                          for (var i = 0; i < group.items.length; i++) ...[
-                            if (i > 0)
-                              Divider(
-                                height: 1,
-                                indent: 62,
-                                color: AppColors.hairline2,
+                        if (unreadCount > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              context.t(
+                                'notifications.unreadCount',
+                                variables: {'count': '$unreadCount'},
                               ),
-                            NotificationSwipe(
-                              notification: group.items[i],
-                              onDelete: _delete,
-                              onToggleRead: _toggleRead,
-                              child: _NotificationTile(
-                                notification: group.items[i],
-                                onTap: () => _open(group.items[i]),
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.accentStrong,
                               ),
                             ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                  ],
-                  if (state.isLoadingMore)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
-                      child: Center(child: HiveLoader(size: 30)),
-                    ),
-                ],
+                          ),
+                        const SizedBox(height: 12),
+                      ],
+                    );
+                  }
+                  var i = index - 1;
+                  if (showEmpty) {
+                    if (i == 0) {
+                      return HiveEmptyState(
+                        title: context.t('notifications.title'),
+                        message: context.t('notifications.empty'),
+                      );
+                    }
+                    i -= 1;
+                  }
+                  if (i < groups.length) {
+                    final group = groups[i];
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _GroupLabel(
+                          label: context.t(
+                            'notifications.group.${group.bucket.key}',
+                          ),
+                        ),
+                        SoftCard(
+                          padding: EdgeInsets.zero,
+                          child: Column(
+                            children: [
+                              for (var j = 0; j < group.items.length; j++) ...[
+                                if (j > 0)
+                                  Divider(
+                                    height: 1,
+                                    indent: 62,
+                                    color: AppColors.hairline2,
+                                  ),
+                                NotificationSwipe(
+                                  notification: group.items[j],
+                                  onDelete: _delete,
+                                  onToggleRead: _toggleRead,
+                                  child: _NotificationTile(
+                                    notification: group.items[j],
+                                    onTap: () => _open(group.items[j]),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                      ],
+                    );
+                  }
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Center(child: HiveLoader(size: 30)),
+                  );
+                },
               );
             },
           ),

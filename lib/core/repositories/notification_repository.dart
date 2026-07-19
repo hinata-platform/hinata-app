@@ -50,8 +50,8 @@ class NotificationRepository {
   Future<void> deleteNotification(String id) =>
       _api.delete('/api/v1/notifications/$id');
 
-  /// Marks every supplied notification id as read. The backend exposes no bulk
-  /// endpoint, so we fan the per-id calls out concurrently.
-  Future<void> markNotificationsRead(Iterable<String> ids) =>
-      Future.wait(ids.map(markNotificationRead));
+  /// Marks ALL of the caller's unread notifications read in a single scoped
+  /// request, instead of fanning out one POST + DB write per id.
+  Future<void> markAllNotificationsRead() =>
+      _api.post('/api/v1/notifications/read-all');
 }
