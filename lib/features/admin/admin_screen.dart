@@ -494,7 +494,7 @@ class _MobileDetailView extends StatelessWidget {
 
 /// Widest the settings forms are allowed to stretch — beyond this, fields read
 /// as sparse. The audit log opts out and fills the full pane (dense timeline).
-const double _kAdminContentMax = 860;
+const double _kAdminContentMax = 1400;
 
 class _WideAdminShell extends StatelessWidget {
   const _WideAdminShell({
@@ -512,7 +512,7 @@ class _WideAdminShell extends StatelessWidget {
     final gutter = context.pageGutter;
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1260),
+        constraints: const BoxConstraints(maxWidth: 1618),
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: gutter),
           child: Row(
