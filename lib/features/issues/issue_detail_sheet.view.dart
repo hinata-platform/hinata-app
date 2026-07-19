@@ -604,9 +604,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       }
       try {
         // init() still powers the composer's {{doc:…}} mention menu + chip
-        // previews (that corpus coupling is B2-A11 territory), but the issue↔
+        // previews (a separate corpus concern), but the issue↔
         // article backlinks now come from the dedicated server endpoint instead
-        // of a client-side regex scan over every article body (B2-A04) — it is
+        // of a client-side regex scan over every article body — it is
         // ACL-correct and O(matches), not O(articles × body length).
         await _knowledge.init();
         _documentedIn = await _knowledge.articlesReferencingIssue(

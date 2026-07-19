@@ -111,8 +111,8 @@ class IssueFilter {
       final ids = issue.assigneeIds.isNotEmpty
           ? issue.assigneeIds
           : (issue.assigneeId != null && issue.assigneeId!.isNotEmpty
-              ? [issue.assigneeId!]
-              : const <String>[]);
+                ? [issue.assigneeId!]
+                : const <String>[]);
       final matchesId = ids.any(assignees.contains);
       final matchesNone = ids.isEmpty && assignees.contains(noAssignee);
       if (!matchesId && !matchesNone) return false;
@@ -164,7 +164,7 @@ class IssueFilter {
 
 /// Canonical facet code lists, display-ordered, mirroring the backend enums
 /// (`Issue.Type` / `Issue.Priority`). Used so the filter can always offer every
-/// value even though the loaded list is now server-filtered (B2-A02) and would
+/// value even though the loaded list is now server-filtered and would
 /// otherwise only surface the codes present in the current result page.
 const kIssueTypeCodes = ['EPIC', 'STORY', 'TASK', 'BUG', 'FEATURE', 'SUBTASK'];
 const kIssuePriorityCodes = [
@@ -217,7 +217,7 @@ class IssueFilterOptions {
   /// Builds the full facet value space from reference data (all workflow states
   /// across projects, the whole directory, every project) plus the fixed type /
   /// priority enums — independent of which issues are currently loaded, so
-  /// server-side filtering (B2-A02) never shrinks the pickable options.
+  /// server-side filtering never shrinks the pickable options.
   factory IssueFilterOptions.reference({
     required List<String> states,
     required List<String> assignees,
@@ -355,12 +355,16 @@ class IssueTimeRange {
     final now = clock ?? DateTime.now();
     if (preset == IssueTimePreset.overdue) {
       final due = issue.dueDate;
-      return due != null && _dayOf(due).isBefore(_dayOf(now)) && !issue.resolved;
+      return due != null &&
+          _dayOf(due).isBefore(_dayOf(now)) &&
+          !issue.resolved;
     }
     if (preset == IssueTimePreset.dueByToday) {
       // Due today or overdue, still open — mirrors the backend "today's tasks".
       final due = issue.dueDate;
-      return due != null && !_dayOf(due).isAfter(_dayOf(now)) && !issue.resolved;
+      return due != null &&
+          !_dayOf(due).isAfter(_dayOf(now)) &&
+          !issue.resolved;
     }
     final range = resolve(now);
     if (range == null) return true;

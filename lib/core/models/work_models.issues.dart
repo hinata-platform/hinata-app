@@ -1,7 +1,7 @@
 part of 'work_models.dart';
 
 /// Minimal issue summary returned by the mention-search / resolve endpoints
-/// (B2-A11) — just enough to render an @-mention row or a `{{issue:KEY}}` chip,
+/// just enough to render an @-mention row or a `{{issue:KEY}}` chip,
 /// without paging the full issue objects into memory.
 class IssueRef extends Equatable {
   const IssueRef({
@@ -82,8 +82,7 @@ class Issue extends Equatable {
   final List<String> tags;
 
   /// Whether this issue was created via email-to-ticket (has a sender to reply to).
-  bool get isEmailSourced =>
-      reporterEmail != null && reporterEmail!.isNotEmpty;
+  bool get isEmailSourced => reporterEmail != null && reporterEmail!.isNotEmpty;
   final String? parentId;
   final List<String> dependsOnIds;
   final String? sprintId;
@@ -379,10 +378,11 @@ class CommentReaction extends Equatable {
   final String emoji;
   final String userId;
 
-  factory CommentReaction.fromJson(Map<String, dynamic> json) => CommentReaction(
-    emoji: json['emoji'] as String? ?? '',
-    userId: json['userId'] as String? ?? '',
-  );
+  factory CommentReaction.fromJson(Map<String, dynamic> json) =>
+      CommentReaction(
+        emoji: json['emoji'] as String? ?? '',
+        userId: json['userId'] as String? ?? '',
+      );
 
   @override
   List<Object?> get props => [emoji, userId];
@@ -569,4 +569,3 @@ class IssueActivity extends Equatable {
   @override
   List<Object?> get props => [id, field, fromValue, toValue, createdAt];
 }
-

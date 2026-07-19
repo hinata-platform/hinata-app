@@ -26,7 +26,7 @@ class IssueRepository {
     String? sort,
     int page = 0,
     int size = 50,
-    // Repeatable server-side facets (B2-A02): let the backend return an already
+    // Repeatable server-side facets: let the backend return an already
     // reduced page so the client no longer has to drain every page and filter in
     // memory. Empty/null means "no restriction" for that facet.
     List<String>? states,
@@ -136,7 +136,7 @@ class IssueRepository {
     return out;
   }
 
-  /// Lightweight type-ahead for the comment @-mention menu (B2-A11): a small,
+  /// Lightweight type-ahead for the comment @-mention menu: a small,
   /// server-capped list of `{id, readableId, title}` for [query] within
   /// [projectId], instead of draining the whole project issue set client-side.
   Future<List<IssueRef>> mentionSearch({
@@ -145,20 +145,20 @@ class IssueRepository {
   }) async =>
       ((await _api.get(
                 '/api/v1/issues/mention-search',
-                query: {'projectId': ?projectId, if (query.isNotEmpty) 'q': query},
+                query: {
+                  'projectId': ?projectId,
+                  if (query.isNotEmpty) 'q': query,
+                },
               ))
               as List<dynamic>)
           .map((r) => IssueRef.fromJson(r as Map<String, dynamic>))
           .toList();
 
   /// Batch-resolves readable ids (e.g. `HIN-1,HIN-2`) to minimal summaries for
-  /// `{{issue:KEY}}` chip rendering (B2-A11) — ACL-scoped and capped server-side.
+  /// `{{issue:KEY}}` chip rendering — ACL-scoped and capped server-side.
   Future<List<IssueRef>> resolveIssueKeys(List<String> keys) async {
     if (keys.isEmpty) return const [];
-    return ((await _api.get(
-              '/api/v1/issues/resolve',
-              query: {'keys': keys},
-            ))
+    return ((await _api.get('/api/v1/issues/resolve', query: {'keys': keys}))
             as List<dynamic>)
         .map((r) => IssueRef.fromJson(r as Map<String, dynamic>))
         .toList();
@@ -206,11 +206,7 @@ class IssueRepository {
     List<String> attachmentIds = const [],
   }) => _api.post(
     '/api/v1/issues/$issueId/reply-email',
-    body: {
-      'subject': subject,
-      'body': body,
-      'attachmentIds': attachmentIds,
-    },
+    body: {'subject': subject, 'body': body, 'attachmentIds': attachmentIds},
   );
 
   /// Whether the current user may hard-delete the issue (platform admin,

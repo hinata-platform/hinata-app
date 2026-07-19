@@ -73,8 +73,16 @@ GoRouter buildRouter({
   // app is ready gets parked here so it can be restored afterwards instead of
   // being lost to the default /dashboard.
   const gates = {
-    '/connect', '/connecting', '/setup', '/onboarding', '/login', '/update',
-    '/auth-callback', '/register', '/forgot-password', '/verify-email',
+    '/connect',
+    '/connecting',
+    '/setup',
+    '/onboarding',
+    '/login',
+    '/update',
+    '/auth-callback',
+    '/register',
+    '/forgot-password',
+    '/verify-email',
   };
   String? pendingDeepLink;
 
@@ -99,7 +107,8 @@ GoRouter buildRouter({
       // (re)connecting — without this guard the config switch below would bounce
       // us to /connect and discard the tokens before SsoCallbackScreen reads
       // them. Hold the route until the tokens have signed the user in.
-      if (location == '/auth-callback' && authStatus != AuthStatus.authenticated) {
+      if (location == '/auth-callback' &&
+          authStatus != AuthStatus.authenticated) {
         return null;
       }
 
@@ -147,7 +156,10 @@ GoRouter buildRouter({
         // /auth-callback carries the SSO token pair and signs the user in;
         // /register + /forgot-password are the public logged-out auth flows.
         const allowed = {
-          '/login', '/auth-callback', '/register', '/forgot-password',
+          '/login',
+          '/auth-callback',
+          '/register',
+          '/forgot-password',
         };
         if (allowed.contains(location)) return null;
         parkIfDeepLink();
@@ -164,10 +176,7 @@ GoRouter buildRouter({
     },
     routes: [
       GoRoute(path: '/connect', builder: (_, _) => const ConnectScreen()),
-      GoRoute(
-        path: '/connecting',
-        builder: (_, _) => const ConnectingScreen(),
-      ),
+      GoRoute(path: '/connecting', builder: (_, _) => const ConnectingScreen()),
       GoRoute(path: '/setup', builder: (_, _) => const SetupScreen()),
       GoRoute(
         path: '/update',
@@ -182,7 +191,9 @@ GoRouter buildRouter({
         builder: (context, _) => OnboardingScreen(
           storage: storage,
           onDone: () => GoRouter.of(context).go(
-            auth.state.status == AuthStatus.authenticated ? '/dashboard' : '/login',
+            auth.state.status == AuthStatus.authenticated
+                ? '/dashboard'
+                : '/login',
           ),
         ),
       ),
@@ -223,7 +234,7 @@ GoRouter buildRouter({
         path: '/auth-callback',
         builder: (_, state) => SsoCallbackScreen(
           // A single-use handoff code, redeemed for tokens via a POST — the
-          // bearer tokens are never carried in the URL (B2-S06). `access_token`/
+          // bearer tokens are never carried in the URL. `access_token`/
           // `refresh_token` are still read as a fallback for older redirects.
           code: state.uri.queryParameters['code'],
           accessToken: state.uri.queryParameters['access_token'],
@@ -235,11 +246,13 @@ GoRouter buildRouter({
         routes: [
           GoRoute(
             path: '/dashboard',
-            pageBuilder: (_, state) => _transition(state, const DashboardScreen()),
+            pageBuilder: (_, state) =>
+                _transition(state, const DashboardScreen()),
           ),
           GoRoute(
             path: '/projects',
-            pageBuilder: (_, state) => _transition(state, const ProjectsScreen()),
+            pageBuilder: (_, state) =>
+                _transition(state, const ProjectsScreen()),
           ),
           GoRoute(
             path: '/projects/:id/settings',
@@ -277,7 +290,8 @@ GoRouter buildRouter({
                 state,
                 IssuesScreen(
                   key: ValueKey(
-                      'issues-${view?.name ?? 'all'}-${projectId ?? ''}-${scope.join(',')}'),
+                    'issues-${view?.name ?? 'all'}-${projectId ?? ''}-${scope.join(',')}',
+                  ),
                   projectId: projectId,
                   initialView: view,
                   scopeProjectIds: scope,
@@ -290,8 +304,7 @@ GoRouter buildRouter({
           // /issues/*, so we redirect here rather than duplicating the screen.
           GoRoute(
             path: '/browse/:key',
-            redirect: (_, state) =>
-                '/issues/${state.pathParameters['key']!}',
+            redirect: (_, state) => '/issues/${state.pathParameters['key']!}',
           ),
           GoRoute(
             path: '/issues/:id',
@@ -324,8 +337,7 @@ GoRouter buildRouter({
           // redirects to the issue itself.
           GoRoute(
             path: '/issues/:id/reply-email',
-            redirect: (_, state) =>
-                state.extra is EmailReplyRouteArgs
+            redirect: (_, state) => state.extra is EmailReplyRouteArgs
                 ? null
                 : '/issues/${state.pathParameters['id']!}',
             pageBuilder: (_, state) {
@@ -368,15 +380,18 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/timesheet',
-            pageBuilder: (_, state) => _transition(state, const TimesheetScreen()),
+            pageBuilder: (_, state) =>
+                _transition(state, const TimesheetScreen()),
           ),
           GoRoute(
             path: '/reports',
-            pageBuilder: (_, state) => _transition(state, const ReportsScreen()),
+            pageBuilder: (_, state) =>
+                _transition(state, const ReportsScreen()),
           ),
           GoRoute(
             path: '/knowledge',
-            pageBuilder: (_, state) => _transition(state, const KnowledgeScreen()),
+            pageBuilder: (_, state) =>
+                _transition(state, const KnowledgeScreen()),
           ),
           GoRoute(
             path: '/knowledge/:id',
@@ -416,7 +431,8 @@ GoRouter buildRouter({
               UserManagementScreen(
                 // In-app links carry the focus user as `user`; the Connect relay
                 // (native email deep-link) delivers it as the relay `token`.
-                focusUserId: state.uri.queryParameters['user'] ??
+                focusUserId:
+                    state.uri.queryParameters['user'] ??
                     state.uri.queryParameters['token'],
               ),
             ),
@@ -443,12 +459,12 @@ GoRouter buildRouter({
 /// through during the brief hand-off.
 /// Maps the `/issues?view=…` query value to a preset filter (dashboard KPIs).
 IssuesInitialView? _issuesView(String? value) => switch (value) {
-      'today' => IssuesInitialView.today,
-      'inprogress' => IssuesInitialView.inProgress,
-      'backlog' => IssuesInitialView.backlog,
-      'done' => IssuesInitialView.done,
-      _ => null,
-    };
+  'today' => IssuesInitialView.today,
+  'inprogress' => IssuesInitialView.inProgress,
+  'backlog' => IssuesInitialView.backlog,
+  'done' => IssuesInitialView.done,
+  _ => null,
+};
 
 CustomTransitionPage<void> _transition(GoRouterState state, Widget child) =>
     CustomTransitionPage<void>(
@@ -458,10 +474,10 @@ CustomTransitionPage<void> _transition(GoRouterState state, Widget child) =>
       child: child,
       transitionsBuilder: (context, animation, secondaryAnimation, child) =>
           SharedAxisTransition(
-        animation: animation,
-        secondaryAnimation: secondaryAnimation,
-        transitionType: SharedAxisTransitionType.vertical,
-        fillColor: Colors.transparent,
-        child: child,
-      ),
+            animation: animation,
+            secondaryAnimation: secondaryAnimation,
+            transitionType: SharedAxisTransitionType.vertical,
+            fillColor: Colors.transparent,
+            child: child,
+          ),
     );

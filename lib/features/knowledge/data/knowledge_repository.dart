@@ -102,7 +102,8 @@ class KnowledgeRepository {
     // and every listed space is a real, deletable backend entity.
     final ordered = <String>[
       ..._backendSpaces.keys,
-      ...(articleNames.where((n) => !_backendSpaces.containsKey(n)).toList()..sort()),
+      ...(articleNames.where((n) => !_backendSpaces.containsKey(n)).toList()
+        ..sort()),
     ];
     _spaces
       ..clear()
@@ -112,11 +113,11 @@ class KnowledgeRepository {
   // ── mappers ───────────────────────────────────────────────────────────────
 
   KbUser _toKbUser(DirectoryUser u) => KbUser(
-        id: u.id,
-        name: u.displayName,
-        title: u.title ?? '',
-        hue: _hueFor(u.id),
-      );
+    id: u.id,
+    name: u.displayName,
+    title: u.title ?? '',
+    hue: _hueFor(u.id),
+  );
 
   KbArticle _toKbArticle(Article a) {
     final author = a.authorId ?? '';
@@ -152,8 +153,7 @@ class KnowledgeRepository {
     );
   }
 
-  static int _hueFor(String id) =>
-      id.isEmpty ? 248 : (id.hashCode.abs() % 360);
+  static int _hueFor(String id) => id.isEmpty ? 248 : (id.hashCode.abs() % 360);
 
   static String _ago(DateTime? t) {
     if (t == null) return 'just now';
@@ -173,8 +173,18 @@ class KnowledgeRepository {
       return 'Today';
     }
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[t.month - 1]} ${t.day}, ${t.year}';
   }
@@ -182,8 +192,10 @@ class KnowledgeRepository {
   // ── lookups ─────────────────────────────────────────────────────────────
 
   KbUser? userById(String id) => _users[id];
-  KbSpace? spaceById(String id) =>
-      _spaces.cast<KbSpace?>().firstWhere((s) => s?.id == id, orElse: () => null);
+  KbSpace? spaceById(String id) => _spaces.cast<KbSpace?>().firstWhere(
+    (s) => s?.id == id,
+    orElse: () => null,
+  );
   KbArticle? articleById(String id) => _articles[id];
 
   List<KbUser> get users => _users.values.toList(growable: false);
@@ -227,11 +239,13 @@ class KnowledgeRepository {
     return out;
   }
 
-  /// Server-resolved backlinks (B2-A04): fetches the articles referencing
+  /// Server-resolved backlinks: fetches the articles referencing
   /// [issueReadableId] via the dedicated endpoint, so the issue-detail
   /// "Documented in" panel never has to drain and regex-scan the whole KB corpus
   /// client-side (the old path called [init] + [articlesForIssue]).
-  Future<List<KbArticle>> articlesReferencingIssue(String issueReadableId) async {
+  Future<List<KbArticle>> articlesReferencingIssue(
+    String issueReadableId,
+  ) async {
     final refs = await _articleApi.articlesReferencingIssue(issueReadableId);
     return refs.map(_toKbArticle).toList();
   }

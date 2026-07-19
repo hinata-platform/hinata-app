@@ -11,7 +11,7 @@ import 'auth_shell.dart';
 /// the server redirects to `<origin>/auth-callback?code=...` (web) or
 /// `hinata://auth-callback?code=...` (native). The `code` is a single-use
 /// handoff token; this screen redeems it for the real access/refresh pair via a
-/// POST (so bearer tokens never travel in the URL — B2-S06) and hands them to
+/// POST (so bearer tokens never travel in the URL) and hands them to
 /// [AuthBloc], which routes the now-authenticated user to the dashboard.
 class SsoCallbackScreen extends StatefulWidget {
   const SsoCallbackScreen({
@@ -56,7 +56,9 @@ class _SsoCallbackScreenState extends State<SsoCallbackScreen> {
     try {
       final pair = await context.read<AuthRepository>().exchangeSso(code);
       if (!mounted) return;
-      context.read<AuthBloc>().add(SsoTokensReceived(pair.access, pair.refresh));
+      context.read<AuthBloc>().add(
+        SsoTokensReceived(pair.access, pair.refresh),
+      );
     } catch (_) {
       // Invalid/expired/replayed code — fall back to the login screen.
       if (!mounted) return;

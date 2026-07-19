@@ -435,7 +435,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
     filter: _filter,
     // Options come from reference data (all states/projects/users + the fixed
     // type/priority enums), not the loaded issues — the list is now
-    // server-filtered (B2-A02), so deriving options from it would hide facet
+    // server-filtered, so deriving options from it would hide facet
     // values the current result page happens not to contain.
     options: IssueFilterOptions.reference(
       states: data.stateOrder,
@@ -769,7 +769,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
             : null;
 
         // State/priority/type/assignee facets are now applied by the backend
-        // (B2-A02), so the returned pages are already reduced and normal paged
+        // so the returned pages are already reduced and normal paged
         // scroll suffices. Only the residual client-side facets (multi-project,
         // time range, "unassigned") still filter the loaded pages, so we eagerly
         // pull the remaining (already server-reduced) pages ONLY then —
@@ -1002,7 +1002,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
 
   bool get _hasActiveView => !_filter.isEmpty || _timeRange.isActive;
 
-  // ── server-pushed facets (B2-A02) ──────────────────────────────────────────
+  // ── server-pushed facets ──────────────────────────────────────────
   // The backend expresses state/priority/type/assignee directly, so a filtered
   // page comes back already reduced and we no longer drain every page for them.
 
