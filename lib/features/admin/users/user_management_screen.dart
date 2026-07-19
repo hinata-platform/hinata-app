@@ -12,16 +12,19 @@ import '../../../core/models/admin_user_models.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/glass_popup_menu.dart';
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../shell/page_chrome.dart';
 import '../../sprint/modals/glass_modal.dart'
     show showGlassToast, GlassToastKind;
+import '../glass_filter_bar.dart';
 import 'user_management_modals.dart';
 import 'user_management_widgets.dart';
 
 part 'user_management_screen.rows.dart';
+
+/// Docked-toolbar height on compact: search row + gap + chip row.
+const double _kUmDockHeight = kAdminPillHeight * 2 + 8;
 
 /// Admin **User management** board: a paginated directory of every platform
 /// user with search, role/status/origin filters, sortable columns, a per-user
@@ -136,8 +139,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     showGlassToast(context, context.t(msg), kind: GlassToastKind.success);
   }
 
-  void _toastRaw(String msg,
-      {GlassToastKind kind = GlassToastKind.error}) {
+  void _toastRaw(String msg, {GlassToastKind kind = GlassToastKind.error}) {
     if (!mounted) return;
     showGlassToast(context, msg, kind: kind);
   }
@@ -320,85 +322,23 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final compact = context.isCompact;
+    // Title + Invite action + the search/filter toolbar all ride in the shell's
+    // glass app bar (via PageChrome) — the screen body draws no chrome of its own.
     return PageChrome(
       title: context.t('admin.um.title'),
+      actions: [
+        PageAction(
+          icon: LucideIcons.userPlus,
+          label: context.t('admin.um.inviteUsers'),
+          onTap: _invite,
+          primary: true,
+        ),
+      ],
+      bottom: _dockedToolbar(context, compact: compact),
+      bottomHeight: compact ? _kUmDockHeight : 0,
       child: Stack(
-        children: [
-          Column(
-            children: [
-              _header(context),
-              Expanded(child: _body(context)),
-            ],
-          ),
-          if (_sel.isNotEmpty) _bulkBar(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _header(BuildContext context) {
-    final counts = _page?.counts ?? AdminUserCounts.empty;
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        context.pageGutter,
-        12 + context.topGutter,
-        context.pageGutter,
-        12,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border(bottom: BorderSide(color: AppColors.hairline)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  context.t('admin.um.title'),
-                  style: TextStyle(
-                    fontFamily: AppTheme.fontBrand,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
-                    color: AppColors.ink,
-                  ),
-                ),
-                Text(
-                  context.t(
-                    'admin.um.subtitle',
-                    variables: {'n': '${counts.total}'},
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
-                ),
-              ],
-            ),
-          ),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            child: context.isCompact
-                ? IconButton.filled(
-                    onPressed: _invite,
-                    icon: const Icon(LucideIcons.userPlus, size: 16),
-                  )
-                : FilledButton.icon(
-                    onPressed: _invite,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.navy,
-                      foregroundColor: Colors.white,
-                      textStyle: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                    ),
-                    icon: const Icon(LucideIcons.userPlus, size: 16),
-                    label: Text(context.t('admin.um.inviteUsers')),
-                  ),
-          ),
-        ],
+        children: [_body(context), if (_sel.isNotEmpty) _bulkBar(context)],
       ),
     );
   }
@@ -429,14 +369,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     return ListView(
       padding: EdgeInsets.fromLTRB(
         context.pageGutter,
-        14,
+        14 + context.topGutter,
         context.pageGutter,
         16 + context.bottomGutter + (_sel.isNotEmpty ? 64 : 0),
       ),
       children: [
         _kpis(context, page.counts),
-        const SizedBox(height: 14),
-        _toolbar(context),
         const SizedBox(height: 14),
         _directory(context, page),
         if (page.total > 0) ...[
@@ -537,70 +475,86 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     );
   }
 
-  // ── Toolbar ────────────────────────────────────────────────────────────
-  Widget _toolbar(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
+  // ── Docked toolbar (search + filters, in the glass app bar) ──────────────
+  /// Search + Role/Status/Origin filter chips, rendered as real glass components
+  /// docked into the ProgressiveBlur app bar. Stacked (search over a scrollable
+  /// chip row) on compact; a single row on wide.
+  Widget _dockedToolbar(BuildContext context, {required bool compact}) {
+    final search = AdminGlassSearchField(
+      hint: context.t('admin.um.searchHint'),
+      onChanged: _onSearch,
+    );
+    final roleChip = AdminFilterChip<AdminRole?>(
+      icon: LucideIcons.shield,
+      label: context.t('admin.um.filterRole'),
+      value: _roleF,
+      options: [
+        (null, context.t('admin.um.allRoles')),
+        (AdminRole.admin, context.t('admin.um.roleAdmin')),
+        (AdminRole.user, context.t('admin.um.roleUser')),
+      ],
+      onChanged: _setRoleFilter,
+    );
+    final statusChip = AdminFilterChip<UserStatus?>(
+      icon: LucideIcons.circleDot,
+      label: context.t('admin.um.filterStatus'),
+      value: _statusF,
+      options: [
+        (null, context.t('admin.um.anyStatus')),
+        (UserStatus.active, context.t('admin.um.statusActive')),
+        (UserStatus.disabled, context.t('admin.um.statusDisabled')),
+        (UserStatus.invited, context.t('admin.um.statusInvited')),
+        (UserStatus.pendingApproval, context.t('admin.um.statusPending')),
+      ],
+      onChanged: _setStatusFilter,
+    );
+    final originChip = AdminFilterChip<UserOrigin?>(
+      icon: LucideIcons.keyRound,
+      label: context.t('admin.um.filterOrigin'),
+      value: _originF,
+      options: [
+        (null, context.t('admin.um.allOrigins')),
+        (UserOrigin.local, 'Local'),
+        (UserOrigin.oidc, 'OIDC (SSO)'),
+        (UserOrigin.saml, 'SAML (SSO)'),
+        (UserOrigin.ldap, 'LDAP (SSO)'),
+      ],
+      onChanged: _setOriginFilter,
+    );
+
+    final chipRow = SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          roleChip,
+          const SizedBox(width: 8),
+          statusChip,
+          const SizedBox(width: 8),
+          originChip,
+        ],
+      ),
+    );
+
+    if (compact) {
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            search,
+            const SizedBox(height: 8),
+            SizedBox(height: kAdminPillHeight, child: chipRow),
+          ],
+        ),
+      );
+    }
+    // Wide: a single row — bounded search + inline chips.
+    return Row(
       children: [
-        SizedBox(
-          width: 280,
-          height: 40,
-          child: TextField(
-            onChanged: _onSearch,
-            decoration: InputDecoration(
-              hintText: context.t('admin.um.searchHint'),
-              prefixIcon: Icon(
-                LucideIcons.search,
-                size: 18,
-                color: AppColors.inkSoft,
-              ),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
-              ),
-            ),
-          ),
-        ),
-        _FilterDropdown<AdminRole?>(
-          icon: LucideIcons.shield,
-          label: context.t('admin.um.filterRole'),
-          value: _roleF,
-          options: [
-            (null, context.t('admin.um.allRoles')),
-            (AdminRole.admin, context.t('admin.um.roleAdmin')),
-            (AdminRole.user, context.t('admin.um.roleUser')),
-          ],
-          onChanged: _setRoleFilter,
-        ),
-        _FilterDropdown<UserStatus?>(
-          icon: LucideIcons.circleDot,
-          label: context.t('admin.um.filterStatus'),
-          value: _statusF,
-          options: [
-            (null, context.t('admin.um.anyStatus')),
-            (UserStatus.active, context.t('admin.um.statusActive')),
-            (UserStatus.disabled, context.t('admin.um.statusDisabled')),
-            (UserStatus.invited, context.t('admin.um.statusInvited')),
-            (UserStatus.pendingApproval, context.t('admin.um.statusPending')),
-          ],
-          onChanged: _setStatusFilter,
-        ),
-        _FilterDropdown<UserOrigin?>(
-          icon: LucideIcons.keyRound,
-          label: context.t('admin.um.filterOrigin'),
-          value: _originF,
-          options: [
-            (null, context.t('admin.um.allOrigins')),
-            (UserOrigin.local, 'Local'),
-            (UserOrigin.oidc, 'OIDC (SSO)'),
-            (UserOrigin.saml, 'SAML (SSO)'),
-            (UserOrigin.ldap, 'LDAP (SSO)'),
-          ],
-          onChanged: _setOriginFilter,
-        ),
+        SizedBox(width: 300, child: search),
+        const SizedBox(width: 12),
+        Expanded(child: chipRow),
       ],
     );
   }

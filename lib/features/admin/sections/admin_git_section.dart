@@ -35,7 +35,7 @@ class AdminGitSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _InfoBanner(text: context.t('admin.gitHint')),
+        AdminNote(text: context.t('admin.gitHint')),
         const SizedBox(height: 16),
 
         // ── Provider OAuth apps ───────────────────────────────────────────
@@ -97,7 +97,11 @@ class AdminGitSection extends StatelessWidget {
             ),
             _TokenSecretStatus(configured: _flag('tokenSecretConfigured')),
             const SizedBox(height: 10),
-            _WarningNote(text: context.t('admin.gitTokenSecretWarning')),
+            AdminNote(
+              text: context.t('admin.gitTokenSecretWarning'),
+              icon: LucideIcons.triangleAlert,
+              tone: AdminNoteTone.warning,
+            ),
           ],
         ),
       ],
@@ -343,74 +347,6 @@ class _TokenSecretStatus extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Top explainer banner (accent-tinted), Row(icon + wrapping text) → no overflow.
-class _InfoBanner extends StatelessWidget {
-  const _InfoBanner({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.accentSoft,
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.accentLine),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(LucideIcons.info, size: 16, color: AppColors.accentStrong),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 12.5,
-                height: 1.4,
-                color: AppColors.ink,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Amber warning note (used for the destructive token-secret rotation caveat).
-class _WarningNote extends StatelessWidget {
-  const _WarningNote({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: hueSoft(45),
-        borderRadius: BorderRadius.circular(9),
-        border: Border.all(color: hueBorder(45)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(LucideIcons.triangleAlert, size: 15, color: hueChipText(45)),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(fontSize: 12, height: 1.4, color: hueChipText(45)),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

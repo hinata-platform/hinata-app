@@ -788,10 +788,7 @@ Widget _menuRow(IconData icon, String label, {bool danger = false}) {
         children: [
           Icon(icon, size: 16, color: color),
           const SizedBox(width: 10),
-          Text(
-            label,
-            style: TextStyle(fontSize: 13.5, color: color),
-          ),
+          Text(label, style: TextStyle(fontSize: 13.5, color: color)),
         ],
       );
     },
@@ -811,33 +808,124 @@ class _SubPageBar extends StatelessWidget {
     final chrome = PageChromeScope.of(context);
     final title = chrome.titleFor(location) ?? context.t(titleKey);
     final override = chrome.onBackFor(location);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 14, 24, 0),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => _handleBack(context, location, override),
-            visualDensity: VisualDensity.compact,
-            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-            icon: Icon(
-              LucideIcons.arrowLeft,
-              size: 20,
-              color: AppColors.inkSoft,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.ink,
+    final actions = chrome.actionsFor(location);
+    // A page may dock a toolbar (search + filters) below the title row; on wide
+    // this flows as a normal row above the content (no overlay blur to share).
+    final bottom = chrome.bottomFor(location);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 24, 0),
+          child: Row(
+            children: [
+              IconButton(
+                onPressed: () => _handleBack(context, location, override),
+                visualDensity: VisualDensity.compact,
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                icon: Icon(
+                  LucideIcons.arrowLeft,
+                  size: 20,
+                  color: AppColors.inkSoft,
+                ),
               ),
-              overflow: TextOverflow.ellipsis,
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.ink,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              for (final action in actions) ...[
+                const SizedBox(width: 8),
+                _WidePageAction(action: action),
+              ],
+            ],
+          ),
+        ),
+        if (bottom != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 24, 0),
+            child: bottom,
+          ),
+      ],
+    );
+  }
+}
+
+/// A sub-page's [PageAction] rendered in the wide sub-page bar: an icon+label
+/// pill — amber-filled when [PageAction.primary], otherwise a hairline-outlined
+/// surface pill. While [PageAction.busy] it shows a spinner and ignores taps.
+class _WidePageAction extends StatelessWidget {
+  const _WidePageAction({required this.action});
+
+  final PageAction action;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = action.primary;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+
+    // On native, a real iOS-26 glass pill (its own layer); on web, a frosted
+    // surface pill (nested backdrop blur pixelates on Skia). Primary actions get
+    // an amber glyph so the CTA still reads clearly on the translucent bar.
+    final fg = primary
+        ? AppColors.accentStrong
+        : (dark ? AppColors.inkDark : AppColors.ink);
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (action.busy)
+            SizedBox(
+              width: 15,
+              height: 15,
+              child: HiveLoader(size: 15, strokeWidth: 2, color: fg),
+            )
+          else
+            Icon(action.icon, size: 15, color: fg),
+          const SizedBox(width: 7),
+          Text(
+            action.label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: fg,
             ),
           ),
         ],
+      ),
+    );
+
+    if (isNativeApp) {
+      return GlassButton.custom(
+        onTap: action.busy ? () {} : (action.onTap ?? () {}),
+        height: 40,
+        shape: const LiquidRoundedSuperellipse(borderRadius: 20),
+        useOwnLayer: true,
+        settings: dark ? kNavGlassDark : kNavGlassLight,
+        glowColor: AppColors.accent,
+        stretch: 0.15,
+        child: content,
+      );
+    }
+    return FrostedSurface(
+      borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+      dark: dark,
+      child: Material(
+        type: MaterialType.transparency,
+        borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: action.busy ? null : action.onTap,
+          child: content,
+        ),
       ),
     );
   }

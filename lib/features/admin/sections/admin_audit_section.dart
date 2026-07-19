@@ -19,12 +19,17 @@ import '../../../core/widgets/glass_popup_menu.dart';
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../search/search_tokens.dart';
+import '../../shell/page_chrome.dart';
 import '../../sprint/modals/glass_modal.dart'
     show showGlassToast, GlassToastKind;
+import '../glass_filter_bar.dart';
 
 part 'admin_audit_section.filters.dart';
 part 'admin_audit_section.timeline.dart';
 part 'admin_audit_section.detail.dart';
+
+/// Docked-toolbar height on compact: search row + gap + chip row.
+const double _kAuditDockHeight = kAdminPillHeight * 2 + 8;
 
 /// The admin **Audit log** — a live, filtered, infinite-scrolling timeline of
 /// security-relevant events (sign-ins, role changes, settings updates…).
@@ -37,7 +42,11 @@ part 'admin_audit_section.detail.dart';
 /// entries are grouped under day headers and rendered as a vertical timeline
 /// with severity-tinted glyphs. Tapping a row opens a liquid-glass detail sheet.
 class AdminAuditSection extends StatefulWidget {
-  const AdminAuditSection({super.key});
+  const AdminAuditSection({super.key, this.onBack});
+
+  /// Compact only: the shell back handler. When set, the section owns its own
+  /// [PageChrome] so it can dock the filter bar into the glass app bar.
+  final VoidCallback? onBack;
 
   @override
   State<AdminAuditSection> createState() => _AdminAuditSectionState();
@@ -208,26 +217,59 @@ class _AdminAuditSectionState extends State<AdminAuditSection> {
 
   @override
   Widget build(BuildContext context) {
+    final compact = context.isCompact;
+    final filterBar = _FilterBar(
+      searchCtrl: _searchCtrl,
+      onSearch: _onSearchChanged,
+      category: _category,
+      severity: _severity,
+      outcome: _outcome,
+      total: _total,
+      hasFilters: _hasFilters,
+      loading: _initialLoading,
+      onCategory: _setCategory,
+      onSeverity: _setSeverity,
+      onOutcome: _setOutcome,
+      onClear: _clearFilters,
+      compact: compact,
+    );
+
+    // Compact: search + chips dock into the glass app bar (the section owns its
+    // own PageChrome). Wide: the section lives inside the admin shell's own
+    // PageChrome + rail, so the glass filter bar stays in-pane above the timeline.
+    if (compact) {
+      return PageChrome(
+        title: context.t('admin.auditLog'),
+        onBack: widget.onBack,
+        bottom: Padding(
+          padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
+          child: filterBar,
+        ),
+        bottomHeight: _kAuditDockHeight,
+        child: _buildBody(context),
+      );
+    }
     return Column(
       children: [
-        _FilterBar(
-          searchCtrl: _searchCtrl,
-          onSearch: _onSearchChanged,
-          category: _category,
-          severity: _severity,
-          outcome: _outcome,
-          total: _total,
-          hasFilters: _hasFilters,
-          loading: _initialLoading,
-          onCategory: _setCategory,
-          onSeverity: _setSeverity,
-          onOutcome: _setOutcome,
-          onClear: _clearFilters,
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            context.pageGutter,
+            0,
+            context.pageGutter,
+            12,
+          ),
+          child: filterBar,
         ),
         Expanded(child: _buildBody(context)),
       ],
     );
   }
+
+  /// On compact the timeline scrolls *under* the glass app bar (which now holds
+  /// the docked filter bar), so it must clear [context.topGutter]. On wide the
+  /// filter bar sits in-pane above the timeline, so no extra inset is needed.
+  double _bodyTopInset(BuildContext context) =>
+      context.isCompact ? context.topGutter : 0;
 
   Widget _buildBody(BuildContext context) {
     if (_initialLoading) {
@@ -245,13 +287,17 @@ class _AdminAuditSectionState extends State<AdminAuditSection> {
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.fromLTRB(
-              context.pageGutter, 24, context.pageGutter, 24 + context.bottomGutter),
+            context.pageGutter,
+            24 + _bodyTopInset(context),
+            context.pageGutter,
+            24 + context.bottomGutter,
+          ),
           children: [
             HiveEmptyState(
               title: context.t(
-                  _hasFilters ? 'audit.empty.filtered' : 'audit.empty.title'),
-              message:
-                  _hasFilters ? null : context.t('audit.empty.message'),
+                _hasFilters ? 'audit.empty.filtered' : 'audit.empty.title',
+              ),
+              message: _hasFilters ? null : context.t('audit.empty.message'),
               action: _hasFilters
                   ? OutlinedButton.icon(
                       onPressed: _clearFilters,
@@ -277,7 +323,11 @@ class _AdminAuditSectionState extends State<AdminAuditSection> {
         controller: _scroll,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(
-            gutter, 12, gutter, 16 + context.bottomGutter),
+          gutter,
+          12 + _bodyTopInset(context),
+          gutter,
+          16 + context.bottomGutter,
+        ),
         // +1 footer row (load-more spinner / end marker).
         itemCount: _rows.length + 1,
         itemBuilder: (context, index) {
@@ -288,8 +338,8 @@ class _AdminAuditSectionState extends State<AdminAuditSection> {
           }
           final entry = row as AuditEntry;
           // Continuous timeline rail unless the next row starts a new day.
-          final isLastInGroup = index + 1 >= _rows.length ||
-              _rows[index + 1] is _DayHeader;
+          final isLastInGroup =
+              index + 1 >= _rows.length || _rows[index + 1] is _DayHeader;
           return _AuditTimelineTile(
             entry: entry,
             isLastInGroup: isLastInGroup,
@@ -335,4 +385,3 @@ class _AdminAuditSectionState extends State<AdminAuditSection> {
     return const SizedBox(height: 8);
   }
 }
-

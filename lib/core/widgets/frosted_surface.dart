@@ -31,18 +31,22 @@ class FrostedSurface extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: borderRadius,
-        // Light frost lift in dark, a brighter wash in light — translucent so
-        // the progressive blur behind stays visible through the surface.
+        // In LIGHT mode a bright white wash reads as frosted glass over the
+        // blur. In DARK mode a white wash instead makes the surface a pale grey
+        // blob that floats OFF the dark canvas — so dark tints toward black
+        // (mirroring the native dark glass `glassColor` 0x4D0A0A0A): a subtly
+        // darkened body with a crisp light rim reads as real dark glass. The
+        // faint top→bottom shift keeps a soft specular sheen.
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: dark
-              ? const [Color(0x33FFFFFF), Color(0x1FFFFFFF)]
+              ? const [Color(0x420C0C14), Color(0x590C0C14)]
               : const [Color(0x6BFFFFFF), Color(0x4DFFFFFF)],
         ),
         border: Border.all(
-          color: dark ? const Color(0x40FFFFFF) : const Color(0x66FFFFFF),
-          width: 0.6,
+          color: dark ? const Color(0x30FFFFFF) : const Color(0x66FFFFFF),
+          width: dark ? 0.8 : 0.6,
         ),
       ),
       child: child,

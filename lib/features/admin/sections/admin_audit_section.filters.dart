@@ -16,6 +16,7 @@ class _FilterBar extends StatelessWidget {
     required this.onSeverity,
     required this.onOutcome,
     required this.onClear,
+    required this.compact,
   });
 
   final TextEditingController searchCtrl;
@@ -30,147 +31,78 @@ class _FilterBar extends StatelessWidget {
   final ValueChanged<AuditSeverity> onSeverity;
   final ValueChanged<AuditOutcome> onOutcome;
   final VoidCallback onClear;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    final gutter = context.pageGutter;
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.canvas,
-        border: Border(bottom: BorderSide(color: AppColors.hairline)),
-      ),
-      padding: EdgeInsets.only(top: context.topGutter),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final search = AdminGlassSearchField(
+      hint: context.t('audit.searchHint'),
+      controller: searchCtrl,
+      onChanged: onSearch,
+    );
+    final chips = SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
         children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(gutter, 12, gutter, 0),
-            child: Row(
-              children: [
-                Expanded(child: _searchField(context)),
-                if (hasFilters) ...[
-                  const SizedBox(width: 8),
-                  _ClearButton(onTap: onClear),
-                ],
-              ],
-            ),
+          AdminCountPill(
+            label: loading
+                ? '…'
+                : context.t('audit.count', variables: {'count': total}),
           ),
-          // Horizontally scrollable filter chips — never overflows on narrow
-          // screens.
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.fromLTRB(gutter, 10, gutter, 12),
-            child: Row(
-              children: [
-                _CountPill(total: total, loading: loading),
-                const SizedBox(width: 8),
-                _CategoryFilterChip(value: category, onSelected: onCategory),
-                const SizedBox(width: 8),
-                _SeverityFilterChip(value: severity, onSelected: onSeverity),
-                const SizedBox(width: 8),
-                _OutcomeFilterChip(value: outcome, onSelected: onOutcome),
-              ],
-            ),
-          ),
+          const SizedBox(width: 8),
+          _CategoryFilterChip(value: category, onSelected: onCategory),
+          const SizedBox(width: 8),
+          _SeverityFilterChip(value: severity, onSelected: onSeverity),
+          const SizedBox(width: 8),
+          _OutcomeFilterChip(value: outcome, onSelected: onOutcome),
+          if (hasFilters) ...[
+            const SizedBox(width: 8),
+            _ClearButton(onTap: onClear),
+          ],
         ],
       ),
     );
-  }
 
-  Widget _searchField(BuildContext context) {
-    return SizedBox(
-      height: 40,
-      child: TextField(
-        controller: searchCtrl,
-        onChanged: onSearch,
-        textInputAction: TextInputAction.search,
-        style: TextStyle(fontSize: 14, color: AppColors.ink),
-        decoration: InputDecoration(
-          isDense: true,
-          hintText: context.t('audit.searchHint'),
-          hintStyle: TextStyle(fontSize: 14, color: AppColors.inkFaint),
-          prefixIcon: Icon(LucideIcons.search, size: 17, color: AppColors.inkFaint),
-          prefixIconConstraints:
-              const BoxConstraints(minWidth: 38, minHeight: 38),
-          filled: true,
-          fillColor: AppColors.surface,
-          contentPadding: const EdgeInsets.symmetric(vertical: 10),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            borderSide: BorderSide(color: AppColors.hairline),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
-          ),
-        ),
-      ),
+    if (compact) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          search,
+          const SizedBox(height: 8),
+          SizedBox(height: kAdminPillHeight, child: chips),
+        ],
+      );
+    }
+    return Row(
+      children: [
+        SizedBox(width: 320, child: search),
+        const SizedBox(width: 12),
+        Expanded(child: chips),
+      ],
     );
   }
 }
 
+/// A glass "clear filters" pill (icon-only), matched to the chip height.
 class _ClearButton extends StatelessWidget {
   const _ClearButton({required this.onTap});
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        side: BorderSide(color: AppColors.hairline),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(LucideIcons.filterX, size: 17, color: AppColors.inkSoft),
-        ),
+    return AdminGlassPill(
+      onTap: onTap,
+      child: SizedBox(
+        width: kAdminPillHeight,
+        child: Icon(LucideIcons.filterX, size: 17, color: AppColors.inkSoft),
       ),
     );
   }
 }
 
-class _CountPill extends StatelessWidget {
-  const _CountPill({required this.total, required this.loading});
-  final int total;
-  final bool loading;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 32,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: AppColors.accentSoft,
-        borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-      ),
-      alignment: Alignment.center,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(LucideIcons.history, size: 13, color: AppColors.accentStrong),
-          const SizedBox(width: 6),
-          Text(
-            loading
-                ? '…'
-                : context.t('audit.count', variables: {'count': total}),
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: AppColors.accentStrong,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Shared visual for an inactive/active filter chip that anchors a glass menu.
+/// Shared visual for an inactive/active filter chip that anchors a glass menu —
+/// a real [AdminGlassPill] (glass on native / frosted on web).
 class _FilterChip extends StatelessWidget {
   const _FilterChip({
     required this.icon,
@@ -185,31 +117,27 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = active ? AppColors.accentStrong : AppColors.inkSoft;
-    return Container(
-      height: 32,
-      padding: const EdgeInsets.symmetric(horizontal: 11),
-      decoration: BoxDecoration(
-        color: active ? AppColors.accentSoft : AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-        border: Border.all(
-            color: active ? AppColors.accentLine : AppColors.hairline),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-              color: active ? AppColors.accentStrong : AppColors.ink,
+    return AdminGlassPill(
+      active: active,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 7),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+                color: active ? AppColors.accentStrong : AppColors.ink,
+              ),
             ),
-          ),
-          const SizedBox(width: 3),
-          Icon(LucideIcons.chevronDown, size: 13, color: color),
-        ],
+            const SizedBox(width: 4),
+            Icon(LucideIcons.chevronDown, size: 13, color: color),
+          ],
+        ),
       ),
     );
   }
@@ -282,8 +210,11 @@ class _SeverityFilterChip extends StatelessWidget {
           GlassMenuItem(
             value: s,
             label: context.t('audit.severity.${s.name}'),
-            leading: Icon(LucideIcons.circle,
-                size: 12, color: _severityColor(s)),
+            leading: Icon(
+              LucideIcons.circle,
+              size: 12,
+              color: _severityColor(s),
+            ),
           ),
       ],
       child: _FilterChip(
@@ -317,12 +248,20 @@ class _OutcomeFilterChip extends StatelessWidget {
         GlassMenuItem(
           value: AuditOutcome.success,
           label: context.t('audit.outcome.success'),
-          leading: const Icon(LucideIcons.circleCheck, size: 16, color: AppColors.success),
+          leading: const Icon(
+            LucideIcons.circleCheck,
+            size: 16,
+            color: AppColors.success,
+          ),
         ),
         GlassMenuItem(
           value: AuditOutcome.failure,
           label: context.t('audit.outcome.failure'),
-          leading: const Icon(LucideIcons.circleX, size: 16, color: AppColors.danger),
+          leading: const Icon(
+            LucideIcons.circleX,
+            size: 16,
+            color: AppColors.danger,
+          ),
         ),
       ],
       child: _FilterChip(
@@ -335,4 +274,3 @@ class _OutcomeFilterChip extends StatelessWidget {
     );
   }
 }
-
