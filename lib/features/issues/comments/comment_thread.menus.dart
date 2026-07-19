@@ -175,7 +175,10 @@ class _GlassEmojiOverlay extends StatelessWidget {
       final h = (size.height * 0.55).clamp(300.0, _panelH);
       positioned = Positioned(
         left: 10,
-        bottom: media.padding.bottom + 12,
+        // Ride above the keyboard: the emoji picker has its own search field,
+        // so include viewInsets.bottom (0 when the keyboard is down, when
+        // padding.bottom covers the home indicator instead).
+        bottom: media.viewInsets.bottom + media.padding.bottom + 12,
         child: _GlassEmojiPanel(
           width: size.width - 20,
           height: h,

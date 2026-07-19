@@ -172,6 +172,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   String? _error;
   bool _busy = false;
 
+  // In-flight latch for posting a comment (text or voice) so an impatient
+  // double-tap on send can't POST the same comment twice.
+  bool _sendingComment = false;
+
   // Whether the current user may hard-delete this issue (platform admin,
   // project lead, or team admin of a team owning the project). Regular
   // members only get the archive action. Defaults to false until the
@@ -616,10 +620,20 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           _error = failure.message;
         });
       }
+    } catch (_) {
+      // Anything other than an ApiFailure (e.g. a payload-shape TypeError) must
+      // still leave a visible error state, not an eternal HiveLoader.
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = 'errors.unexpected';
+        });
+      }
     }
   }
 
   Future<void> _patch(Map<String, dynamic> patch) async {
+    if (!mounted) return;
     setState(() => _busy = true);
     try {
       final updated = await _issueApi.updateIssue(widget.issueId, patch);
@@ -641,6 +655,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       await _reloadHierarchy();
     } on ApiFailure catch (failure) {
       _toast(failure.message);
+    } catch (_) {
+      _toast('errors.unexpected');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -721,7 +737,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   Future<void> _submitComment() async {
     final text = _comment.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || _sendingComment) return;
     // Editing an existing comment inline → save instead of posting a new one.
     final editing = _editingComment;
     if (editing != null) {
@@ -735,6 +751,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       }
       return;
     }
+    _sendingComment = true;
     try {
       final replyTarget = _replyingTo;
       final created = await _commentApi.addComment(
@@ -753,6 +770,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       }
     } on ApiFailure catch (failure) {
       _toast(failure.message);
+    } catch (_) {
+      _toast('errors.unexpected');
+    } finally {
+      _sendingComment = false;
     }
   }
 
@@ -854,6 +875,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     } on ApiFailure catch (failure) {
       _toast(failure.message);
       return false;
+    } catch (_) {
+      _toast('errors.unexpected');
+      return false;
     }
   }
 
@@ -863,7 +887,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       width: 420,
       builder: (_) => const _DeleteCommentConfirm(),
     );
-    if (confirmed != true) return;
+    if (confirmed != true || !mounted) return;
     try {
       await _commentApi.deleteComment(widget.issueId, comment.id);
       if (mounted) {
@@ -871,6 +895,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       }
     } on ApiFailure catch (failure) {
       _toast(failure.message);
+    } catch (_) {
+      _toast('errors.unexpected');
     }
   }
 
@@ -1073,22 +1099,33 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       builder: (_) => _DeleteCommentConfirm(count: ids.length),
     );
     if (confirmed != true) return;
+    // Track which deletes actually succeeded so we don't wipe a comment from the
+    // UI that the server still has — that would make it "come back" on the next
+    // SSE resync with no explanation.
+    final deleted = <String>[];
+    var failed = false;
     for (final id in ids) {
       try {
         await _commentApi.deleteComment(widget.issueId, id);
+        deleted.add(id);
       } catch (_) {
-        // Skip failures; the rest still delete and a resync reconciles.
+        failed = true;
       }
     }
     if (!mounted) return;
+    final remaining = ids.where((id) => !deleted.contains(id)).toSet();
     setState(() {
-      for (final id in ids) {
+      for (final id in deleted) {
         final c = _findComment(id);
         if (c != null) _removeComment(c);
       }
-      _selectionMode = false;
-      _selectedIds.clear();
+      _selectedIds
+        ..clear()
+        ..addAll(remaining);
+      // Stay in selection mode if some failed, so the user can retry them.
+      _selectionMode = remaining.isNotEmpty;
     });
+    if (failed) _toast('comments.deleteFailed');
     _bumpComposer();
   }
 
@@ -1475,7 +1512,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     }
     if (!mounted) return;
     if (match == null) {
-      _toast('Issue $readableId not found');
+      _toast(context.t('issues.linkedNotFound', variables: {'id': readableId}));
       return;
     }
     await showIssueDetailSheet(context, issueId: match.id);
@@ -1872,7 +1909,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     final resolved = _project?.resolvedStates ?? const [];
     final states = _project?.stateNames ?? const [];
     final String target;
-    if (child.resolved) {
+    // Decide direction from the same authoritative "done" check that renders the
+    // checkbox (project resolved-states), not the issue's stale `resolved` flag —
+    // otherwise a state/flag mismatch makes the toggle a silent no-op.
+    if (_childDone(child)) {
       target = states.firstWhere(
         (s) => !resolved.contains(s),
         orElse: () => child.state,
@@ -2627,6 +2667,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// Uploads a recorded voice message as a comment, then refreshes to the newest
   /// page so the playable bubble appears at the bottom of the thread.
   Future<void> _sendVoiceComment(VoiceRecording recording) async {
+    if (_sendingComment) return;
+    _sendingComment = true;
     try {
       final replyTarget = _replyingTo;
       final created = await _commentApi.addVoiceComment(
@@ -2649,6 +2691,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     } catch (_) {
       if (!mounted) return;
       showGlassErrorToast(context, context.t('comments.voiceFailed'));
+    } finally {
+      _sendingComment = false;
     }
   }
 

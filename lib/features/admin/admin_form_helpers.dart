@@ -246,7 +246,13 @@ class AdminField extends StatelessWidget {
 }
 
 /// A numeric text field bound to a map key.
-class AdminNumberField extends StatelessWidget {
+///
+/// Uses a controller so the field and the saved draft never diverge: in-range
+/// values propagate live while typing, and when the field loses focus (or the
+/// user hits Done) the value is clamped to [min]/[max] — or reset from an empty
+/// field — and that clamped value is written back into the field itself, so the
+/// admin always saves exactly what they see.
+class AdminNumberField extends StatefulWidget {
   const AdminNumberField({
     super.key,
     required this.label,
@@ -265,23 +271,82 @@ class AdminNumberField extends StatelessWidget {
   final int? max;
 
   @override
+  State<AdminNumberField> createState() => _AdminNumberFieldState();
+}
+
+class _AdminNumberFieldState extends State<AdminNumberField> {
+  late final TextEditingController _ctrl = TextEditingController(
+    text: '${widget.value}',
+  );
+  final FocusNode _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(() {
+      if (!_focus.hasFocus) _commit();
+    });
+  }
+
+  @override
+  void didUpdateWidget(AdminNumberField old) {
+    super.didUpdateWidget(old);
+    // Reflect an externally-changed value (e.g. a form reset) when the user
+    // isn't actively editing this field.
+    if (!_focus.hasFocus && widget.value != old.value) {
+      _ctrl.text = '${widget.value}';
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  int _clamp(int v) {
+    final lo = widget.min;
+    final hi = widget.max;
+    if (lo != null && v < lo) return lo;
+    if (hi != null && v > hi) return hi;
+    return v;
+  }
+
+  /// Snap the field to a valid value on blur / submit and write it back so the
+  /// display matches what will be saved.
+  void _commit() {
+    final clamped = _clamp(int.tryParse(_ctrl.text.trim()) ?? widget.value);
+    if (_ctrl.text != '$clamped') _ctrl.text = '$clamped';
+    if (clamped != widget.value) widget.onChanged(clamped);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
-        initialValue: '$value',
+        controller: _ctrl,
+        focusNode: _focus,
         keyboardType: TextInputType.number,
+        textInputAction: TextInputAction.done,
         style: TextStyle(fontSize: 14, color: AppColors.ink),
-        decoration: adminInputDecoration(context, label: label, suffix: suffix),
+        decoration: adminInputDecoration(
+          context,
+          label: widget.label,
+          suffix: widget.suffix,
+        ),
         onChanged: (v) {
+          // Propagate live only while the value is already in range — clamping
+          // mid-keystroke would fight the user (typing "30" would stick at min).
           final parsed = int.tryParse(v);
-          if (parsed == null) return;
-          final clamped = min != null && parsed < min!
-              ? min!
-              : max != null && parsed > max!
-              ? max!
-              : parsed;
-          onChanged(clamped);
+          if (parsed != null && _clamp(parsed) == parsed) {
+            widget.onChanged(parsed);
+          }
+        },
+        onEditingComplete: () {
+          _commit();
+          _focus.unfocus();
         },
       ),
     );
@@ -378,6 +443,11 @@ class ProviderTile extends StatefulWidget {
 }
 
 class _ProviderTileState extends State<ProviderTile> {
+  // Lets us programmatically unfold the tile when the provider is switched on —
+  // ExpansionTile only honours initiallyExpanded on first build, so without this
+  // toggling enable wouldn't reveal the credential fields the admin now needs.
+  final ExpansibleController _expansion = ExpansibleController();
+
   @override
   Widget build(BuildContext context) {
     final enabled = widget.section['enabled'] == true;
@@ -400,6 +470,7 @@ class _ProviderTileState extends State<ProviderTile> {
           borderRadius: BorderRadius.circular(10),
           clipBehavior: Clip.antiAlias,
           child: ExpansionTile(
+            controller: _expansion,
             initiallyExpanded: widget.initiallyExpanded || enabled,
             tilePadding: const EdgeInsets.symmetric(
               horizontal: 14,
@@ -413,6 +484,8 @@ class _ProviderTileState extends State<ProviderTile> {
                   onChanged: (value) {
                     setState(() => widget.section['enabled'] = value);
                     widget.onChanged();
+                    // Reveal the credential fields the moment it's enabled.
+                    if (value) _expansion.expand();
                   },
                 ),
                 const SizedBox(width: 8),

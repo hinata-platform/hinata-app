@@ -22,6 +22,21 @@ typedef IssueExportRow = ({
 /// export holds a single group with an empty [title].
 typedef IssueExportGroup = ({String title, List<IssueExportRow> rows});
 
+/// Localised chrome strings for the PDF (title, headers, footer). Resolved by
+/// the caller (which has a BuildContext) so the export builders stay i18n-free.
+typedef IssueExportLabels = ({
+  String reportTitle,
+  String issuesCount, // already substituted, e.g. "12 issues" / "12 Aufgaben"
+  String generatedPrefix,
+  String pageLabel,
+  String colId,
+  String colTitle,
+  String colStatus,
+  String colPriority,
+  String colAssignee,
+  String colDue,
+});
+
 /// Everything needed to render the issues export in any format.
 class IssueExportData {
   IssueExportData({
@@ -30,10 +45,14 @@ class IssueExportData {
     required this.generatedAt,
     required this.groups,
     required this.grouped,
+    required this.labels,
     this.groupByLabel,
     this.filterSummary = const [],
     this.logoBytes,
   });
+
+  /// Localised chrome strings for the PDF export.
+  final IssueExportLabels labels;
 
   final String orgName;
 
@@ -63,10 +82,19 @@ class IssueExportData {
 
 // ─────────────────────────── CSV ──────────────────────────────────────────
 
-String _csvEsc(String s) =>
-    (s.contains(',') || s.contains('"') || s.contains('\n'))
-    ? '"${s.replaceAll('"', '""')}"'
-    : s;
+String _csvEsc(String s) {
+  var v = s;
+  // Defuse CSV/spreadsheet formula injection: a cell that starts with =, +, -,
+  // @, tab or CR is evaluated as a formula by Excel/LibreOffice. Issue titles,
+  // names and project names are user-controlled, so prefix such cells with a
+  // single quote to force them to plain text.
+  if (v.isNotEmpty && '=+-@\t\r'.contains(v[0])) {
+    v = "'$v";
+  }
+  return (v.contains(',') || v.contains('"') || v.contains('\n'))
+      ? '"${v.replaceAll('"', '""')}"'
+      : v;
+}
 
 String buildIssuesCsv(IssueExportData data) {
   final buf = StringBuffer();
@@ -185,7 +213,8 @@ Future<pw.Document> _buildDocument(IssueExportData data) async {
         alignment: pw.Alignment.centerRight,
         margin: const pw.EdgeInsets.only(top: 10),
         child: pw.Text(
-          'Hinata · page ${context.pageNumber}/${context.pagesCount}',
+          'Hinata · ${data.labels.pageLabel} '
+          '${context.pageNumber}/${context.pagesCount}',
           style: const pw.TextStyle(fontSize: 9, color: _inkFaint),
         ),
       ),
@@ -242,7 +271,7 @@ pw.Widget _header(IssueExportData data, String generated, pw.Widget? logo) {
                 ),
               pw.SizedBox(height: 10),
               pw.Text(
-                'Issues report',
+                data.labels.reportTitle,
                 style: const pw.TextStyle(
                   color: PdfColors.white,
                   fontSize: 22,
@@ -251,7 +280,7 @@ pw.Widget _header(IssueExportData data, String generated, pw.Widget? logo) {
               ),
               pw.SizedBox(height: 2),
               pw.Text(
-                '${data.scopeLabel} · ${data.totalIssues} issues',
+                '${data.scopeLabel} · ${data.labels.issuesCount}',
                 style: const pw.TextStyle(
                   color: PdfColor.fromInt(0xFFC9C7E0),
                   fontSize: 12,
@@ -269,7 +298,7 @@ pw.Widget _header(IssueExportData data, String generated, pw.Widget? logo) {
             ),
             pw.SizedBox(height: 4),
             pw.Text(
-              'Generated $generated',
+              '${data.labels.generatedPrefix} $generated',
               style: const pw.TextStyle(
                 color: PdfColor.fromInt(0xFF807EA0),
                 fontSize: 9,
@@ -326,12 +355,12 @@ List<pw.Widget> _groupBlock(IssueExportData data, IssueExportGroup group) {
           ],
         ),
       ),
-    _table(group.rows),
+    _table(group.rows, data.labels),
     pw.SizedBox(height: 16),
   ];
 }
 
-pw.Widget _table(List<IssueExportRow> rows) {
+pw.Widget _table(List<IssueExportRow> rows, IssueExportLabels labels) {
   pw.Widget cell(
     String text, {
     bool header = false,
@@ -371,12 +400,12 @@ pw.Widget _table(List<IssueExportRow> rows) {
       pw.TableRow(
         decoration: const pw.BoxDecoration(color: _canvas2),
         children: [
-          cell('ID', header: true),
-          cell('TITLE', header: true),
-          cell('STATUS', header: true),
-          cell('PRIORITY', header: true),
-          cell('ASSIGNEE', header: true),
-          cell('DUE', header: true, align: pw.TextAlign.right),
+          cell(labels.colId, header: true),
+          cell(labels.colTitle, header: true),
+          cell(labels.colStatus, header: true),
+          cell(labels.colPriority, header: true),
+          cell(labels.colAssignee, header: true),
+          cell(labels.colDue, header: true, align: pw.TextAlign.right),
         ],
       ),
       for (final r in rows)

@@ -24,6 +24,11 @@ class VoicePlaybackController extends ChangeNotifier {
   }) : _loader = loader,
        _duration = fallbackDuration;
 
+  /// The bubble whose audio is currently playing, app-wide. Starting playback
+  /// on one voice comment pauses this one first, so two clips never overlap
+  /// (WhatsApp / iMessage behaviour).
+  static VoicePlaybackController? _current;
+
   final VoiceAudioLoader _loader;
   final AudioPlayer _player = AudioPlayer();
 
@@ -65,6 +70,13 @@ class VoicePlaybackController extends ChangeNotifier {
     if (_position >= duration && duration > Duration.zero) {
       await _player.seek(Duration.zero);
     }
+    // Pause whichever other bubble is currently playing before starting this
+    // one, so voices never overlap.
+    final prev = _current;
+    if (prev != null && !identical(prev, this)) {
+      await prev._player.pause();
+    }
+    _current = this;
     await _player.play();
   }
 
@@ -81,10 +93,21 @@ class VoicePlaybackController extends ChangeNotifier {
         Uint8List.fromList(audio.bytes),
         audio.contentType,
       );
+      // Disposed while the source was being built: dispose() already ran with
+      // _disposeSource still null, so release the temp file / blob URL here and
+      // don't touch the (now disposed) player. No await separates this check
+      // from the assignment below, so dispose() can't slip in between.
+      if (_disposed) {
+        await source.dispose();
+        return;
+      }
       _disposeSource = source.dispose;
       final resolved = await _player.setAudioSource(
         AudioSource.uri(Uri.parse(source.uri)),
       );
+      // Disposed during setAudioSource: the source is now owned by dispose()
+      // (via _disposeSource); just stop before wiring streams on a dead player.
+      if (_disposed) return;
       if (resolved != null && resolved > Duration.zero) _duration = resolved;
       _wireStreams();
       _loaded = true;

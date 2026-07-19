@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +11,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
 import 'package:liquid_glass_widgets/widgets/interactive/glass_button.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
@@ -23,6 +24,7 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/project_palette.dart';
+import '../../core/util/file_download.dart';
 import '../../core/widgets/frosted_surface.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
@@ -513,11 +515,20 @@ class _IssuesScreenState extends State<IssuesScreen> {
         variables: {'format': format.toUpperCase()},
       );
       if (kIsWeb) {
-        final uri = Uri.parse(
-          'data:$mime;charset=utf-8,${Uri.encodeComponent(content)}',
+        // Browsers block window.open() to a data: URL ("Not allowed to navigate
+        // top frame to data URL"), so trigger a real Blob download instead —
+        // and surface a proper error if it fails rather than a false success.
+        final outcome = await downloadBytes(
+          'issues-export.${isCsv ? 'csv' : 'json'}',
+          Uint8List.fromList(utf8.encode(content)),
+          mime,
         );
-        await launchUrl(uri, webOnlyWindowName: '_blank');
-        _toast(exportedMsg, kind: GlassToastKind.success);
+        if (!mounted) return;
+        if (outcome == DownloadOutcome.failed) {
+          _toast(context.t('reports.exportFailed'), kind: GlassToastKind.error);
+        } else {
+          _toast(exportedMsg, kind: GlassToastKind.success);
+        }
       } else {
         await Clipboard.setData(ClipboardData(text: content));
         _toast(copiedMsg, kind: GlassToastKind.success);
@@ -583,6 +594,21 @@ class _IssuesScreenState extends State<IssuesScreen> {
           ? '${context.t('board.groupBy')}: ${_groupingLabel(context, _grouping)}'
           : null,
       filterSummary: _filterSummary(names, projectNames),
+      labels: (
+        reportTitle: context.t('reports.issuesReport'),
+        issuesCount: context.t(
+          'issues.countSummary',
+          variables: {'count': '${list.length}'},
+        ),
+        generatedPrefix: context.t('reports.generatedPrefix'),
+        pageLabel: context.t('reports.page'),
+        colId: context.t('issues.colId'),
+        colTitle: context.t('issues.colTitle'),
+        colStatus: context.t('issues.colStatus'),
+        colPriority: context.t('issues.colPriority'),
+        colAssignee: context.t('issues.colAssignee'),
+        colDue: context.t('issues.colDue'),
+      ),
     );
   }
 
@@ -751,7 +777,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
                                       context,
                                       projectId: widget.projectId,
                                     );
-                                    if (created != null) _reload();
+                                    if (created != null && mounted) _reload();
                                   },
                                 )
                               : Tooltip(
@@ -762,7 +788,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
                                         context,
                                         projectId: widget.projectId,
                                       );
-                                      if (created != null) _reload();
+                                      if (created != null && mounted) _reload();
                                     },
                                     width: context.isCompact ? 46 : null,
                                     height: 46,
@@ -869,20 +895,25 @@ class _IssuesScreenState extends State<IssuesScreen> {
                         context.pageGutter,
                         14,
                       ),
-                      sliver: SliverList.list(
-                        children: _grouping == IssueGrouping.none
-                            ? _flatRows(
-                                list,
-                                ref.names,
-                                ref.avatars,
-                                ref.palette,
-                              )
-                            : _groupedRows(
-                                sections,
-                                ref.names,
-                                ref.avatars,
-                                ref.palette,
-                              ),
+                      sliver: Builder(
+                        builder: (context) {
+                          // Lightweight row descriptors (headers / issues /
+                          // spacers) fed to a lazy builder, so only on-screen
+                          // rows are ever built — a workspace with thousands of
+                          // issues no longer constructs every SoftCard per frame.
+                          final entries = _grouping == IssueGrouping.none
+                              ? _flatEntries(list)
+                              : _groupedEntries(sections);
+                          return SliverList.builder(
+                            itemCount: entries.length,
+                            itemBuilder: (context, i) => _buildEntry(
+                              entries[i],
+                              ref.names,
+                              ref.avatars,
+                              ref.palette,
+                            ),
+                          );
+                        },
                       ),
                     ),
                   // Infinite-scroll footer: the standard HiveLoader while the next
@@ -922,64 +953,99 @@ class _IssuesScreenState extends State<IssuesScreen> {
     return context.t('issues.countSummary', variables: {'count': '$total'});
   }
 
-  List<Widget> _flatRows(
-    List<Issue> list,
-    Map<String, String> names,
-    Map<String, String> avatars,
-    ProjectPalette palette,
-  ) => [
-    if (!context.isCompact) const _IssueTableHeader(),
-    for (final issue in list)
-      Padding(
-        padding: const EdgeInsets.only(bottom: 7),
-        child: IssueRow(
-          issue: issue,
-          assignee: names[issue.assigneeId],
-          assigneeAvatar: avatars[issue.assigneeId],
-          palette: palette,
-          onChanged: _reload,
-        ),
-      ),
+  /// Flat (ungrouped) row descriptors: an optional table header then one entry
+  /// per issue. Cheap to build every frame — the actual [IssueRow] widgets are
+  /// constructed lazily by [_buildEntry] only when scrolled into view.
+  List<_RowEntry> _flatEntries(List<Issue> list) => [
+    if (!context.isCompact) const _RowEntry.tableHeader(),
+    for (final issue in list) _RowEntry.issue(issue),
   ];
 
-  List<Widget> _groupedRows(
-    List<_Section> sections,
+  /// Grouped row descriptors: a collapsible header per section, its issues (when
+  /// expanded), and a trailing spacer.
+  List<_RowEntry> _groupedEntries(List<_Section> sections) {
+    final rows = <_RowEntry>[];
+    for (final section in sections) {
+      final collapsed = _collapsed.contains(section.key);
+      rows.add(_RowEntry.sectionHeader(section, collapsed));
+      if (!collapsed) {
+        for (final issue in section.issues) {
+          rows.add(_RowEntry.issue(issue));
+        }
+      }
+      rows.add(_RowEntry.spacer(collapsed ? 6 : 10));
+    }
+    return rows;
+  }
+
+  /// Builds the widget for a single [_RowEntry] on demand.
+  Widget _buildEntry(
+    _RowEntry entry,
     Map<String, String> names,
     Map<String, String> avatars,
     ProjectPalette palette,
   ) {
-    final rows = <Widget>[];
-    for (final section in sections) {
-      final collapsed = _collapsed.contains(section.key);
-      rows.add(
-        _CollapsibleHeader(
-          collapsed: collapsed,
+    switch (entry.kind) {
+      case _RowKind.tableHeader:
+        return const _IssueTableHeader();
+      case _RowKind.spacer:
+        return SizedBox(height: entry.height);
+      case _RowKind.sectionHeader:
+        final section = entry.section!;
+        return _CollapsibleHeader(
+          collapsed: entry.collapsed,
           header: section.header,
           onTap: () => setState(() {
             if (!_collapsed.remove(section.key)) _collapsed.add(section.key);
           }),
-        ),
-      );
-      if (!collapsed) {
-        for (final issue in section.issues) {
-          rows.add(
-            Padding(
-              padding: const EdgeInsets.only(bottom: 7),
-              child: IssueRow(
-                issue: issue,
-                assignee: names[issue.assigneeId],
-                assigneeAvatar: avatars[issue.assigneeId],
-                palette: palette,
-                onChanged: _reload,
-              ),
-            ),
-          );
-        }
-      }
-      rows.add(SizedBox(height: collapsed ? 6 : 10));
+        );
+      case _RowKind.issue:
+        final issue = entry.issue!;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 7),
+          child: IssueRow(
+            issue: issue,
+            assignee: names[issue.assigneeId],
+            assigneeAvatar: avatars[issue.assigneeId],
+            palette: palette,
+            onChanged: _reload,
+          ),
+        );
     }
-    return rows;
   }
+}
+
+enum _RowKind { tableHeader, sectionHeader, issue, spacer }
+
+/// A lightweight descriptor for one row in the issues sliver, so the list can be
+/// built lazily (only visible rows) instead of materializing every widget.
+class _RowEntry {
+  const _RowEntry.tableHeader()
+    : kind = _RowKind.tableHeader,
+      issue = null,
+      section = null,
+      collapsed = false,
+      height = 0;
+  const _RowEntry.issue(this.issue)
+    : kind = _RowKind.issue,
+      section = null,
+      collapsed = false,
+      height = 0;
+  const _RowEntry.sectionHeader(this.section, this.collapsed)
+    : kind = _RowKind.sectionHeader,
+      issue = null,
+      height = 0;
+  const _RowEntry.spacer(this.height)
+    : kind = _RowKind.spacer,
+      issue = null,
+      section = null,
+      collapsed = false;
+
+  final _RowKind kind;
+  final Issue? issue;
+  final _Section? section;
+  final bool collapsed;
+  final double height;
 }
 
 /// Sentinel group key for "no assignee".

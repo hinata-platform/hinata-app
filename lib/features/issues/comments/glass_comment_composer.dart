@@ -222,6 +222,15 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
       }
       return;
     }
+    // The composer may have been disposed while the permission prompt / native
+    // start was in flight (issue sheet closed, navigated away). dispose() ran
+    // with _recorder still null, so committing here would leak an open mic
+    // session + a forever-firing timer. Release it instead.
+    if (!mounted) {
+      await recorder.cancel();
+      await recorder.dispose();
+      return;
+    }
     _recorder = recorder;
     _recElapsed = Duration.zero;
     _recTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
@@ -247,10 +256,22 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
     _recorder = null;
     if (mounted) setState(() => _mode = _Mode.idle);
     if (r == null) return;
-    final recording = await r.stop();
-    await r.dispose();
+    VoiceRecording? recording;
+    try {
+      recording = await r.stop();
+    } catch (_) {
+      // Native stop failure / web blob read failure — fall through to the
+      // error toast below rather than throwing into the void.
+      recording = null;
+    } finally {
+      await r.dispose();
+    }
     if (recording != null && recording.durationMs > 300) {
       widget.onSendVoice(recording);
+    } else if (mounted) {
+      // The recording bar already closed; without this the message would just
+      // vanish with no explanation (stop failed, empty bytes, or too short).
+      showGlassErrorToast(context, context.t('comments.voiceFailed'));
     }
   }
 

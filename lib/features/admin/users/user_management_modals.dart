@@ -150,7 +150,7 @@ Widget _scaffold({
 }
 
 /// Compact affected-users preview used by the confirm modals.
-Widget _previewList(List<AdminUser> users) {
+Widget _previewList(BuildContext context, List<AdminUser> users) {
   return Column(
     children: [
       for (final u in users.take(6))
@@ -194,7 +194,10 @@ Widget _previewList(List<AdminUser> users) {
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              '+${users.length - 6} more',
+              context.t(
+                'admin.um.andMore',
+                variables: {'n': '${users.length - 6}'},
+              ),
               style: TextStyle(fontSize: 12, color: AppColors.inkFaint),
             ),
           ),
@@ -275,7 +278,7 @@ Future<bool> showResendModal(BuildContext context, List<AdminUser> users) {
               ),
             ),
           ),
-        _previewList(users),
+        _previewList(context, users),
       ],
     ),
   );
@@ -299,7 +302,7 @@ Future<bool> showDeactivateModal(BuildContext context, List<AdminUser> users) {
           style: TextStyle(fontSize: 13, height: 1.5, color: AppColors.ink),
         ),
         const SizedBox(height: 12),
-        _previewList(users),
+        _previewList(context, users),
       ],
     ),
   );
@@ -313,7 +316,7 @@ Future<bool> showRevokeAdminModal(BuildContext context, List<AdminUser> users) {
     subtitle: context.t('admin.um.revokeAdminSub'),
     confirmLabel: context.t('admin.um.revokeAdmin'),
     confirmIcon: LucideIcons.shieldMinus,
-    body: _previewList(users),
+    body: _previewList(context, users),
   );
 }
 
@@ -330,7 +333,7 @@ Future<bool> showResetModal(BuildContext context, List<AdminUser> users) {
           ),
     confirmLabel: context.t('admin.um.sendReset'),
     confirmIcon: LucideIcons.send,
-    body: _previewList(users),
+    body: _previewList(context, users),
   );
 }
 
@@ -401,7 +404,7 @@ class _DeleteModalState extends State<_DeleteModal> {
               style: TextStyle(fontSize: 13, height: 1.5, color: AppColors.ink),
             ),
             const SizedBox(height: 12),
-            _previewList(widget.users),
+            _previewList(context, widget.users),
             if (widget.requireTyping) ...[
               const SizedBox(height: 14),
               Text(

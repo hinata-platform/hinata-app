@@ -169,8 +169,10 @@ class _AdminScreenState extends State<AdminScreen> {
     });
     try {
       _settings = await context.read<AdminRepository>().adminSettings();
+      if (!mounted) return;
       setState(() => _loading = false);
     } on ApiFailure catch (failure) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
         _error = failure.message;
@@ -464,14 +466,21 @@ class _MobileDetailView extends StatelessWidget {
     // bar by topGutter. The audit log owns its own scroll + pagination, so it
     // renders directly; every other section uses the shared scroll wrapper.
     if (section == _AdminSection.auditLog) return const AdminAuditSection();
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        16,
-        16 + context.topGutter,
-        16,
-        16 + context.bottomGutter,
+    // The iOS numeric keypad has no Done key, so give the admin forms two ways
+    // out of it: tap anywhere outside a field, or drag-scroll the body.
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16 + context.topGutter,
+          16,
+          16 + context.bottomGutter,
+        ),
+        child: _sectionBody(section),
       ),
-      child: _sectionBody(section),
     );
   }
 
@@ -552,6 +561,7 @@ class _WideAdminShell extends StatelessWidget {
       );
     }
     return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: EdgeInsets.fromLTRB(
         0,
         context.topGutter + 14,

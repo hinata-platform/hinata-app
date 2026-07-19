@@ -48,13 +48,12 @@ class _AdminEmailSectionState extends State<AdminEmailSection> {
                 children: [
                   Expanded(
                     flex: 2,
-                    child: AdminField(
+                    child: AdminNumberField(
                       label: context.t('admin.smtpPort'),
-                      initialValue:
-                          '${(_smtp['port'] as int?) ?? 587}',
-                      keyboardType: TextInputType.number,
-                      onChanged: (v) =>
-                          _smtp['port'] = int.tryParse(v) ?? 587,
+                      value: (_smtp['port'] as int?) ?? 587,
+                      min: 1,
+                      max: 65535,
+                      onChanged: (v) => _smtp['port'] = v,
                     ),
                   ),
                   const SizedBox(width: 12),

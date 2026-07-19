@@ -80,8 +80,9 @@ String statusLabel(BuildContext c, UserStatus s) => c.t(switch (s) {
   UserStatus.pendingApproval => 'admin.um.statusPending',
 });
 
-String originLabel(UserOrigin o) => switch (o) {
-  UserOrigin.local => 'Local',
+String originLabel(BuildContext c, UserOrigin o) => switch (o) {
+  // "Local" is an ordinary word (→ "Lokal"); the rest are protocol acronyms.
+  UserOrigin.local => c.t('admin.um.originLocal'),
   UserOrigin.oidc => 'OIDC',
   UserOrigin.saml => 'SAML',
   UserOrigin.ldap => 'LDAP',
@@ -101,11 +102,14 @@ String umRelTime(BuildContext c, DateTime? t) {
   if (d.inDays < 30) {
     return c.t('admin.um.daysAgo', variables: {'n': '${d.inDays}'});
   }
-  return umPrettyDate(t);
+  return umPrettyDate(c, t);
 }
 
-String umPrettyDate(DateTime? t) =>
-    t == null ? '—' : DateFormat('MMM d, y').format(t);
+/// Locale-aware medium date (e.g. "Jul 19, 2026" / "19. Juli 2026"), instead of
+/// a hardcoded US-English pattern.
+String umPrettyDate(BuildContext c, DateTime? t) => t == null
+    ? '—'
+    : DateFormat.yMMMd(Localizations.localeOf(c).languageCode).format(t);
 
 /// A user is "idle" when last active over two weeks ago — greys the cell.
 bool isIdle(DateTime? t) =>
@@ -239,7 +243,7 @@ class OriginTag extends StatelessWidget {
         ),
         const SizedBox(width: 6),
         Text(
-          originLabel(origin),
+          originLabel(context, origin),
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,

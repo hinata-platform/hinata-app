@@ -560,9 +560,10 @@ class _CountBadge extends StatelessWidget {
 
 String _timeLabel(BuildContext context, IssueTimeRange r) {
   if (r.preset == IssueTimePreset.custom && r.custom != null) {
-    String d(DateTime x) =>
-        '${x.day.toString().padLeft(2, '0')}.${x.month.toString().padLeft(2, '0')}.';
-    return '${d(r.custom!.start)} – ${d(r.custom!.end)}';
+    // Locale-aware short (month/day) date — the day-month order flips per locale
+    // instead of being hardcoded to the German 'dd.MM.' pattern.
+    final fmt = DateFormat.Md(Localizations.localeOf(context).languageCode);
+    return '${fmt.format(r.custom!.start)} – ${fmt.format(r.custom!.end)}';
   }
   return switch (r.preset) {
     IssueTimePreset.all => context.t('issues.timeRange'),
@@ -602,7 +603,7 @@ class _TimeRangeButton extends StatelessWidget {
         initialRange: value.custom,
         title: context.t('issues.time.selectRange'),
       );
-      if (picked != null) {
+      if (picked != null && context.mounted) {
         onChanged(
           IssueTimeRange(preset: IssueTimePreset.custom, custom: picked),
         );

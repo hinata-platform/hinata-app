@@ -12,6 +12,7 @@ import '../../../core/models/admin_user_models.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/glass_popup_menu.dart';
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../shell/page_chrome.dart';
@@ -55,6 +56,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   int _pageNum = 1;
   int _perPage = 10;
 
+  // Bumped on every load so a slower earlier request (rapid pager / sort / typed
+  // search) can't land after a newer one and show the wrong page/filter.
+  int _loadGen = 0;
+
   final Set<String> _sel = {};
 
   /// Guards the one-shot deep-link drawer open so filter/page reloads don't
@@ -92,6 +97,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   Future<void> _load() async {
+    final gen = ++_loadGen;
     setState(() {
       _loading = true;
       _error = null;
@@ -107,7 +113,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         page: _pageNum,
         perPage: _perPage,
       );
-      if (!mounted) return;
+      // Drop a response that a newer load has already superseded.
+      if (!mounted || gen != _loadGen) return;
       setState(() {
         _page = page;
         _pageNum = page.page;
@@ -115,7 +122,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       });
       _openFocusedUser();
     } on ApiFailure catch (failure) {
-      if (!mounted) return;
+      if (!mounted || gen != _loadGen) return;
       setState(() {
         _loading = false;
         _error = failure.message;
@@ -125,6 +132,17 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   void _resetAndReload() {
     _pageNum = 1;
+    _load();
+  }
+
+  /// Navigates to [page], clearing the selection — it's per-page, so carrying it
+  /// across navigation would strand off-page ids that no bulk action can reach
+  /// and resurrect stale checkmarks on return.
+  void _goToPage(int page) {
+    setState(() {
+      _pageNum = page;
+      _sel.clear();
+    });
     _load();
   }
 
@@ -141,7 +159,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   void _toastRaw(String msg, {GlassToastKind kind = GlassToastKind.error}) {
     if (!mounted) return;
-    showGlassToast(context, msg, kind: kind);
+    // context.t is idempotent for already-localized text but maps a fallback
+    // key like 'errors.unexpected' (an ApiFailure.message) to real copy.
+    showGlassToast(context, context.t(msg), kind: kind);
   }
 
   Future<void> _run(
@@ -514,10 +534,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       value: _originF,
       options: [
         (null, context.t('admin.um.allOrigins')),
-        (UserOrigin.local, 'Local'),
-        (UserOrigin.oidc, 'OIDC (SSO)'),
-        (UserOrigin.saml, 'SAML (SSO)'),
-        (UserOrigin.ldap, 'LDAP (SSO)'),
+        (UserOrigin.local, originLabel(context, UserOrigin.local)),
+        (UserOrigin.oidc, '${originLabel(context, UserOrigin.oidc)} (SSO)'),
+        (UserOrigin.saml, '${originLabel(context, UserOrigin.saml)} (SSO)'),
+        (UserOrigin.ldap, '${originLabel(context, UserOrigin.ldap)} (SSO)'),
       ],
       onChanged: _setOriginFilter,
     );
@@ -715,29 +735,51 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
             ),
             const SizedBox(width: 8),
-            DropdownButton<int>(
+            GlassPopupMenu<int>(
               value: _perPage,
-              underline: const SizedBox.shrink(),
-              isDense: true,
-              items: const [
-                DropdownMenuItem(value: 10, child: Text('10')),
-                DropdownMenuItem(value: 25, child: Text('25')),
-                DropdownMenuItem(value: 50, child: Text('50')),
-              ],
-              onChanged: (v) {
-                if (v == null) return;
+              width: 120,
+              onSelected: (v) {
                 setState(() => _perPage = v);
                 _resetAndReload();
               },
+              items: const [
+                GlassMenuItem<int>(value: 10, label: '10'),
+                GlassMenuItem<int>(value: 25, label: '25'),
+                GlassMenuItem<int>(value: 50, label: '50'),
+              ],
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceMuted,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+                  border: Border.all(color: AppColors.hairline),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$_perPage',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      LucideIcons.chevronDown,
+                      size: 15,
+                      color: AppColors.inkSoft,
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             _PagerButton(
               icon: LucideIcons.chevronLeft,
               enabled: _pageNum > 1,
-              onTap: () {
-                setState(() => _pageNum -= 1);
-                _load();
-              },
+              onTap: () => _goToPage(_pageNum - 1),
             ),
             for (final p in _pageList(_pageNum, pages))
               p == -1
@@ -748,18 +790,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   : _PageNumber(
                       n: p,
                       active: p == _pageNum,
-                      onTap: () {
-                        setState(() => _pageNum = p);
-                        _load();
-                      },
+                      onTap: () => _goToPage(p),
                     ),
             _PagerButton(
               icon: LucideIcons.chevronRight,
               enabled: _pageNum < pages,
-              onTap: () {
-                setState(() => _pageNum += 1);
-                _load();
-              },
+              onTap: () => _goToPage(_pageNum + 1),
             ),
           ],
         ),

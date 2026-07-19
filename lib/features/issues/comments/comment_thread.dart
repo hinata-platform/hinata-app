@@ -99,8 +99,12 @@ class CommentSortButton extends StatelessWidget {
         child: InkWell(
           onTap: toggle,
           borderRadius: BorderRadius.circular(9),
-          child: Tooltip(
-            message: compact ? label : '',
+          // Only attach a tooltip in the icon-only (compact) layout — the wide
+          // layout shows the label inline, so an empty-message tooltip there
+          // would pop a blank grey bubble on hover.
+          child: _CompactTooltip(
+            enabled: compact,
+            message: label,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               child: Row(
@@ -159,6 +163,27 @@ class CommentSortButton extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Wraps [child] in a [Tooltip] only when [enabled]; otherwise returns it
+/// untouched, so a control that shows its label inline doesn't also pop an
+/// empty tooltip bubble.
+class _CompactTooltip extends StatelessWidget {
+  const _CompactTooltip({
+    required this.enabled,
+    required this.message,
+    required this.child,
+  });
+
+  final bool enabled;
+  final String message;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!enabled) return child;
+    return Tooltip(message: message, child: child);
   }
 }
 

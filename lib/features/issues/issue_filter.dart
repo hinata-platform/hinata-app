@@ -213,11 +213,18 @@ class IssueFilterOptions {
       if (issue.priority.isNotEmpty) {
         priorities.add(issue.priority.toUpperCase());
       }
-      final a = issue.assigneeId;
-      if (a != null && a.isNotEmpty) {
-        assignees.add(a);
-      } else {
+      // Collect every assignee (primary AND secondary), mirroring
+      // IssueFilter.matches — otherwise someone who is only a co-assignee never
+      // shows up as a selectable filter value.
+      final ids = issue.assigneeIds.isNotEmpty
+          ? issue.assigneeIds
+          : (issue.assigneeId != null && issue.assigneeId!.isNotEmpty
+                ? [issue.assigneeId!]
+                : const <String>[]);
+      if (ids.isEmpty) {
         hasUnassigned = true;
+      } else {
+        assignees.addAll(ids);
       }
       if (issue.projectId.isNotEmpty) projects.add(issue.projectId);
       if (issue.type.isNotEmpty) types.add(issue.type.toUpperCase());

@@ -20,6 +20,7 @@ import '../../core/models/core_models.dart' show PlatformFlags;
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/app_avatar.dart';
 import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_loader.dart';
@@ -1455,15 +1456,42 @@ class _AccountScreenState extends State<AccountScreen> {
           label: context.t('settings.language'),
           icon: LucideIcons.globe,
           stack: context.isCompact,
-          trailing: DropdownButton<String>(
+          trailing: GlassPopupMenu<String>(
             value: locale.languageCode,
-            underline: const SizedBox.shrink(),
-            borderRadius: BorderRadius.circular(14),
+            width: 220,
+            onSelected: _setLanguage,
             items: [
               for (final entry in I18n.localeNames.entries)
-                DropdownMenuItem(value: entry.key, child: Text(entry.value)),
+                GlassMenuItem(value: entry.key, label: entry.value),
             ],
-            onChanged: (code) => code == null ? null : _setLanguage(code),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+                border: Border.all(color: AppColors.hairline),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    I18n.localeNames[locale.languageCode] ??
+                        locale.languageCode,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(
+                    LucideIcons.chevronDown,
+                    size: 16,
+                    color: AppColors.inkSoft,
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
         Divider(height: 1, color: AppColors.hairline2),

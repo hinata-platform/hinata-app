@@ -165,6 +165,15 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
           _error = failure.message;
         });
       }
+    } catch (_) {
+      // Never leave the body stuck on an eternal HiveLoader if something other
+      // than an ApiFailure escapes (mapping error, race) — surface it instead.
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = 'errors.unexpected';
+        });
+      }
     }
   }
 
@@ -265,6 +274,13 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
       if (mounted) {
         widget.controller.phase = IssueCreatePhase.idle;
         setState(() => _error = failure.message);
+      }
+    } catch (_) {
+      // Any non-ApiFailure must still reset the save button out of its spinner,
+      // otherwise it's stuck disabled forever (phase never returns to idle).
+      if (mounted) {
+        widget.controller.phase = IssueCreatePhase.idle;
+        setState(() => _error = 'errors.unexpected');
       }
     }
   }
@@ -785,7 +801,19 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
       onDelete: pid == null
           ? null
           : (l) async {
-              await _projectApi.deleteProjectLabel(pid, l);
+              try {
+                await _projectApi.deleteProjectLabel(pid, l);
+              } on ApiFailure catch (failure) {
+                if (mounted) {
+                  showGlassErrorToast(context, context.t(failure.message));
+                }
+                return;
+              } catch (_) {
+                if (mounted) {
+                  showGlassErrorToast(context, context.t('errors.unexpected'));
+                }
+                return;
+              }
               _deletedLabels.add(l);
               if (mounted) {
                 setState(() => _labels = _labels.where((x) => x != l).toList());

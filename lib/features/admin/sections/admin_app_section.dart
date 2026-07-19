@@ -5,6 +5,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/models/core_models.dart' show PlatformFlags;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/hive_widgets.dart';
+import '../../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import '../admin_form_helpers.dart';
 
 /// App/client settings served to the apps via /api/v1/meta: the minimum
@@ -228,9 +229,20 @@ class _FeatureFlagEditorState extends State<_FeatureFlagEditor> {
 
   void _add() {
     final name = _newFlag.text.trim();
-    if (name.isEmpty ||
-        widget.flags.containsKey(name) ||
-        widget.hidden.contains(name)) {
+    if (name.isEmpty) return;
+    // Explain why an add did nothing instead of a dead button.
+    if (widget.flags.containsKey(name)) {
+      showGlassErrorToast(
+        context,
+        context.t('admin.featureFlagExists', variables: {'name': name}),
+      );
+      return;
+    }
+    if (widget.hidden.contains(name)) {
+      showGlassErrorToast(
+        context,
+        context.t('admin.featureFlagReserved', variables: {'name': name}),
+      );
       return;
     }
     setState(() {

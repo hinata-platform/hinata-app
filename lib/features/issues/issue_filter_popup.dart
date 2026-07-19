@@ -217,6 +217,9 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
     final tokens = SearchTokens.of(Theme.of(context).brightness);
     final size = MediaQuery.sizeOf(context);
     final pad = MediaQuery.paddingOf(context);
+    // Subtract the keyboard height so the panel (with its search field) rides
+    // above the software keyboard instead of hiding the option list / footer.
+    final insets = MediaQuery.viewInsetsOf(context);
     final compact = size.width < _kCompactBreakpoint;
     final anim = ModalRoute.of(context)!.animation!;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
@@ -234,7 +237,7 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
     );
 
     final belowTop = anchor.bottom + 8;
-    final roomBelow = size.height - belowTop - margin - pad.bottom;
+    final roomBelow = size.height - belowTop - margin - pad.bottom - insets.bottom;
     final roomAbove = anchor.top - 8 - margin - pad.top;
     final placeAbove = roomBelow < 280 && roomAbove > roomBelow;
     final maxHeight = (placeAbove ? roomAbove : roomBelow).clamp(220.0, 560.0);
@@ -370,6 +373,8 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
                     ),
                   )
                 : ListView.builder(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: const EdgeInsets.symmetric(
                       vertical: 6,
                       horizontal: 8,
