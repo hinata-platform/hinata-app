@@ -6,6 +6,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
+import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_panel.dart';
@@ -160,14 +161,13 @@ class AuthShell extends StatelessWidget {
 /// for the old `SoftCard` on these screens. Real refraction over the hero, with
 /// a clipped drop shadow and glass fill tuned for text contrast.
 class AuthGlassCard extends StatelessWidget {
-  const AuthGlassCard({
-    super.key,
-    required this.child,
-    this.padding = const EdgeInsets.all(32),
-  });
+  const AuthGlassCard({super.key, required this.child, this.padding});
 
   final Widget child;
-  final EdgeInsetsGeometry padding;
+
+  /// Defaults to a tighter inset on compact (phone) layouts so first-run
+  /// screens like login fit on one screen without scrolling.
+  final EdgeInsetsGeometry? padding;
 
   static const double _radius = 26;
 
@@ -175,6 +175,7 @@ class AuthGlassCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final tokens = SearchTokens.of(brightness);
+    final pad = padding ?? EdgeInsets.all(context.isCompact ? 22 : 32);
     return GlassPanelShadow(
       radius: BorderRadius.circular(_radius),
       shadows: tokens.panelShadow,
@@ -189,7 +190,7 @@ class AuthGlassCard extends StatelessWidget {
         ),
         child: Material(
           type: MaterialType.transparency,
-          child: Padding(padding: padding, child: child),
+          child: Padding(padding: pad, child: child),
         ),
       ),
     );
@@ -222,8 +223,8 @@ class _InputPane extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Center(child: HivBrandLockup(hexSize: 40)),
-              const SizedBox(height: 26),
+              const Center(child: HivBrandLockup(hexSize: 34)),
+              const SizedBox(height: 18),
               child,
             ],
           )
@@ -236,7 +237,7 @@ class _InputPane extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: veil ? 36 : 24,
-                vertical: 40,
+                vertical: veil ? 40 : 18,
               ),
               child: Center(
                 child: ConstrainedBox(

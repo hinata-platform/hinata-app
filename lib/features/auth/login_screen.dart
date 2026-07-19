@@ -120,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     // Let the user re-target a different backend before
                     // signing in (or add a new one).
                     const ServerSelectorButton(),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     Text(
                       organization ?? 'Hinata',
                       textAlign: TextAlign.center,
@@ -136,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
                     if (localAuth) ...[
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 20),
                       TextFormField(
                         controller: _identifier,
                         enabled: !busy,
@@ -203,7 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     // The "or" divider only makes sense when both local
                     // sign-in and SSO are offered.
                     if (localAuth && _providers.isNotEmpty) ...[
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 18),
                       Row(
                         children: [
                           const Expanded(child: Divider()),
@@ -221,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     // SSO buttons are shown whenever a provider exists,
                     // including SSO-only mode (localAuth == false).
                     if (_providers.isNotEmpty) ...[
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       for (final provider in _providers)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 10),

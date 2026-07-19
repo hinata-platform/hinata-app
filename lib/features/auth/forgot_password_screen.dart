@@ -84,7 +84,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             context.t('forgotPassword.subtitle'),
             style: TextStyle(color: AppColors.textSecondary),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           TextFormField(
             controller: _email,
             enabled: !_submitting,

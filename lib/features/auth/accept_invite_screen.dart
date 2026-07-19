@@ -187,7 +187,7 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
               context.t('invite.subtitle', variables: {'email': _email ?? ''}),
               style: TextStyle(color: AppColors.textSecondary),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             TextFormField(
               controller: _password,
               obscureText: _obscure,

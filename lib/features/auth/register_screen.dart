@@ -121,7 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const ServerSelectorButton(),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Text(
               organization ?? 'Hinata',
               textAlign: TextAlign.center,
@@ -135,7 +135,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             TextFormField(
               controller: _displayName,
               enabled: !_submitting,
