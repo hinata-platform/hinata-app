@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hinata/core/responsive/responsive.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -31,32 +32,37 @@ class HivBrandLockup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tile = hexSize + 16;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: tile,
-          height: tile,
-          decoration: BoxDecoration(
-            color: AppColors.accentSoft,
-            borderRadius: BorderRadius.circular(tile * 0.26),
-            border: Border.all(color: AppColors.accentLine),
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 250),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: tile,
+            height: tile,
+            decoration: BoxDecoration(
+              color: AppColors.accentSoft,
+              borderRadius: BorderRadius.circular(tile * 0.26),
+              border: Border.all(color: AppColors.accentLine),
+            ),
+            alignment: Alignment.center,
+            child: HexMark(size: hexSize * 0.68),
           ),
-          alignment: Alignment.center,
-          child: HexMark(size: hexSize * 0.68),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'hinata',
-          style: TextStyle(
-            fontFamily: AppTheme.fontBrand,
-            fontSize: hexSize * 0.58,
-            fontWeight: FontWeight.w700,
-            color: AppColors.ink,
-            letterSpacing: -0.5,
-          ),
-        ),
-      ],
+          if (!context.isCompact) ...[
+            const SizedBox(height: 12),
+            Text(
+              'hinata',
+              style: TextStyle(
+                fontFamily: AppTheme.fontBrand,
+                fontSize: hexSize * 0.58,
+                fontWeight: FontWeight.w700,
+                color: AppColors.ink,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
