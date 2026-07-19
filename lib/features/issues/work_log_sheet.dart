@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -90,6 +91,7 @@ class _WorkLogBodyState extends State<_WorkLogBody> {
                   child: TextFormField(
                     controller: _hours,
                     keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: InputDecoration(
                       labelText: context.t('time.hours'),
                     ),
@@ -101,6 +103,7 @@ class _WorkLogBodyState extends State<_WorkLogBody> {
                   child: TextFormField(
                     controller: _minutes,
                     keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: InputDecoration(
                       labelText: context.t('time.minutes'),
                     ),
@@ -121,7 +124,9 @@ class _WorkLogBodyState extends State<_WorkLogBody> {
                     value: activity,
                     // The value stays the canonical English key sent to the API;
                     // only the visible label is localized.
-                    child: Text(context.t('time.activity.${activity.toLowerCase()}')),
+                    child: Text(
+                      context.t('time.activity.${activity.toLowerCase()}'),
+                    ),
                   ),
               ],
               onChanged: (value) =>
@@ -147,6 +152,7 @@ class _WorkLogBodyState extends State<_WorkLogBody> {
             const SizedBox(height: 14),
             TextFormField(
               controller: _note,
+              textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(labelText: context.t('time.note')),
             ),
             if (_error != null) ...[

@@ -406,6 +406,8 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
             TextFormField(
               controller: _name,
               autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              textInputAction: TextInputAction.done,
               decoration: InputDecoration(labelText: context.t('board.name')),
               validator: (value) => (value == null || value.trim().isEmpty)
                   ? context.t('errors.required')

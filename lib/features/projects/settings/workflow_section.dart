@@ -187,6 +187,7 @@ class _StateRow extends StatelessWidget {
             child: TextField(
               controller: controller,
               onChanged: onRename,
+              textCapitalization: TextCapitalization.sentences,
               style: const TextStyle(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,

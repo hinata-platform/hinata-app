@@ -146,7 +146,11 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
       case IssueFilterFacet.state:
         return [
           for (final s in widget.options.states)
-            _Opt(value: s, label: stateLabel(s), leading: _StateDot(state: s)),
+            _Opt(
+              value: s,
+              label: stateLabel(s),
+              leading: _StateDot(state: s),
+            ),
         ];
       case IssueFilterFacet.priority:
         return [
@@ -404,6 +408,7 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
               autofocus: false,
               cursorColor: tokens.ink,
               onChanged: (v) => setState(() => _query = v),
+              textInputAction: TextInputAction.search,
               style: TextStyle(
                 fontSize: 14.5,
                 fontWeight: FontWeight.w500,

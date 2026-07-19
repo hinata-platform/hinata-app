@@ -13,7 +13,11 @@ import '../sprint/modals/glass_modal.dart'
 import 'account_widgets.dart';
 
 /// Edit display name / job title / locale → PATCH /me. Returns the saved [Me].
-Future<Me?> showEditProfile(BuildContext context, AccountRepository repo, Me me) {
+Future<Me?> showEditProfile(
+  BuildContext context,
+  AccountRepository repo,
+  Me me,
+) {
   return showGlassModal<Me>(
     context,
     width: 480,
@@ -83,8 +87,12 @@ class _EditProfileModalState extends State<_EditProfileModal> {
                   label: context.t('account.editModal.displayName'),
                   child: TextField(
                     controller: _name,
+                    textCapitalization: TextCapitalization.words,
+                    autofillHints: const [AutofillHints.name],
+                    textInputAction: TextInputAction.next,
                     decoration: glassInputDecoration(
-                        hint: context.t('account.editModal.nameHint')),
+                      hint: context.t('account.editModal.nameHint'),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -94,8 +102,11 @@ class _EditProfileModalState extends State<_EditProfileModal> {
                     enabled: false,
                     controller: TextEditingController(text: widget.me.username),
                     decoration: glassInputDecoration().copyWith(
-                      prefixIcon: Icon(LucideIcons.atSign,
-                          size: 16, color: AppColors.inkFaint),
+                      prefixIcon: Icon(
+                        LucideIcons.atSign,
+                        size: 16,
+                        color: AppColors.inkFaint,
+                      ),
                     ),
                   ),
                 ),
@@ -104,8 +115,10 @@ class _EditProfileModalState extends State<_EditProfileModal> {
                   label: context.t('account.editModal.jobTitle'),
                   child: TextField(
                     controller: _title,
+                    textInputAction: TextInputAction.done,
                     decoration: glassInputDecoration(
-                        hint: context.t('account.editModal.jobTitleHint')),
+                      hint: context.t('account.editModal.jobTitleHint'),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -179,7 +192,10 @@ class _LocaleDropdown extends StatelessWidget {
 
 /// Change email → POST /me/email-change (double opt-in). Returns true if sent.
 Future<bool?> showChangeEmail(
-    BuildContext context, AccountRepository repo, Me me) {
+  BuildContext context,
+  AccountRepository repo,
+  Me me,
+) {
   return showGlassModal<bool>(
     context,
     width: 460,
@@ -245,14 +261,19 @@ class _ChangeEmailModalState extends State<_ChangeEmailModal> {
               GlassField(
                 label: context.t('account.emailModal.current'),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 13,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surface.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(AppTheme.radiusControl),
                     border: Border.all(color: AppColors.hairline2),
                   ),
-                  child: Text(widget.me.email,
-                      style: TextStyle(color: AppColors.inkSoft)),
+                  child: Text(
+                    widget.me.email,
+                    style: TextStyle(color: AppColors.inkSoft),
+                  ),
                 ),
               ),
               const SizedBox(height: 14),
@@ -261,6 +282,8 @@ class _ChangeEmailModalState extends State<_ChangeEmailModal> {
                 child: TextField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
+                  autofillHints: const [AutofillHints.email],
+                  autocorrect: false,
                   autofocus: true,
                   decoration: glassInputDecoration(hint: 'new@example.com'),
                 ),
@@ -553,6 +576,8 @@ class _DeleteAccountModalState extends State<_DeleteAccountModal> {
                 child: TextField(
                   controller: _confirm,
                   autofocus: true,
+                  autocorrect: false,
+                  enableSuggestions: false,
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z]')),
                   ],
@@ -625,7 +650,10 @@ class _Footer extends StatelessWidget {
                 backgroundColor: danger ? AppColors.danger : AppColors.navy,
                 foregroundColor: Colors.white,
                 disabledBackgroundColor: AppColors.hairline,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 13,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppTheme.radiusControl),
                 ),
@@ -634,7 +662,10 @@ class _Footer extends StatelessWidget {
                   ? const SizedBox(
                       width: 15,
                       height: 15,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : Icon(icon, size: 15),
               label: Text(label),

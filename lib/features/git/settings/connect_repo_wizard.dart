@@ -869,6 +869,8 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
           child: TextField(
             controller: _urlCtrl,
             autofocus: true,
+            keyboardType: TextInputType.url,
+            autocorrect: false,
             onChanged: (_) => setState(() {}),
             decoration: glassInputDecoration(
               hint: 'https://gitlab.example.com/hinata/hinata-app',
@@ -881,6 +883,8 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
           child: TextField(
             controller: _tokenCtrl,
             obscureText: true,
+            autocorrect: false,
+            enableSuggestions: false,
             onChanged: (_) => setState(() {}),
             style: const TextStyle(fontFamily: AppTheme.fontMono),
             decoration: glassInputDecoration(hint: 'glpat-••••••••••••••••••••'),

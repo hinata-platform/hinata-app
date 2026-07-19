@@ -124,6 +124,8 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
                   child: TextField(
                     controller: _name,
                     autofocus: true,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.done,
                     onSubmitted: (_) => _save(),
                     decoration: glassInputDecoration(),
                   ),

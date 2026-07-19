@@ -381,6 +381,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
               controller: _text,
               focusNode: _fieldNode,
               autofocus: true,
+              textInputAction: TextInputAction.search,
               cursorColor: tokens.ink,
               onChanged: _c.setQuery,
               style: TextStyle(

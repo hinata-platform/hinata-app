@@ -220,12 +220,18 @@ class AdminField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final noAutocorrect =
+        isSecret ||
+        keyboardType == TextInputType.url ||
+        keyboardType == TextInputType.emailAddress;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         initialValue: initialValue,
         obscureText: isSecret,
         keyboardType: keyboardType,
+        autocorrect: !noAutocorrect,
+        enableSuggestions: !isSecret,
         style: TextStyle(fontSize: 14, color: AppColors.ink),
         decoration: adminInputDecoration(
           context,
@@ -443,6 +449,8 @@ class _ProviderTileState extends State<ProviderTile> {
                   child: TextFormField(
                     initialValue: (widget.section[key] as String?) ?? '',
                     obscureText: secret,
+                    autocorrect: false,
+                    enableSuggestions: !secret,
                     style: TextStyle(fontSize: 14, color: AppColors.ink),
                     decoration: adminInputDecoration(
                       context,

@@ -99,6 +99,7 @@ class _KnowledgeHomeState extends State<KnowledgeHome> {
           Expanded(
             child: TextField(
               controller: _search,
+              textInputAction: TextInputAction.search,
               onChanged: (v) => setState(() => _query = v),
               style: const TextStyle(fontSize: 15),
               decoration: InputDecoration(

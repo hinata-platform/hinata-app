@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show TextInput;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -104,6 +105,9 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
         _password.text,
       );
       if (!mounted) return;
+      // Password set — let the password manager offer to save the new
+      // credential for this account.
+      TextInput.finishAutofillContext();
       context.read<AuthBloc>().add(
         SsoTokensReceived(tokens.access, tokens.refresh),
       );
@@ -165,60 +169,66 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
   Widget _form(BuildContext context) {
     return Form(
       key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            context.t('invite.title'),
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            context.t('invite.subtitle', variables: {'email': _email ?? ''}),
-            style: TextStyle(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 24),
-          TextFormField(
-            controller: _password,
-            obscureText: _obscure,
-            autofocus: true,
-            decoration: InputDecoration(
-              labelText: context.t('invite.passwordLabel'),
-              hintText: context.t('invite.passwordHint'),
-              prefixIcon: const Icon(LucideIcons.lock),
-              suffixIcon: IconButton(
-                icon: Icon(_obscure ? LucideIcons.eye : LucideIcons.eyeOff),
-                onPressed: () => setState(() => _obscure = !_obscure),
-              ),
+      // Lets a password manager capture the new password (and offer to save it
+      // for this invited account) on submit.
+      child: AutofillGroup(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              context.t('invite.title'),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
-            onFieldSubmitted: (_) => _submit(),
-            validator: (v) => (v ?? '').length >= 10
-                ? null
-                : context.t('errors.passwordTooShort'),
-          ),
-          if (_submitError != null) ...[
             const SizedBox(height: 8),
             Text(
-              context.t(_submitError!),
-              style: const TextStyle(color: AppColors.danger),
-              textAlign: TextAlign.center,
+              context.t('invite.subtitle', variables: {'email': _email ?? ''}),
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 24),
+            TextFormField(
+              controller: _password,
+              obscureText: _obscure,
+              autofocus: true,
+              autofillHints: const [AutofillHints.newPassword],
+              textInputAction: TextInputAction.done,
+              decoration: InputDecoration(
+                labelText: context.t('invite.passwordLabel'),
+                hintText: context.t('invite.passwordHint'),
+                prefixIcon: const Icon(LucideIcons.lock),
+                suffixIcon: IconButton(
+                  icon: Icon(_obscure ? LucideIcons.eye : LucideIcons.eyeOff),
+                  onPressed: () => setState(() => _obscure = !_obscure),
+                ),
+              ),
+              onFieldSubmitted: (_) => _submit(),
+              validator: (v) => (v ?? '').length >= 10
+                  ? null
+                  : context.t('errors.passwordTooShort'),
+            ),
+            if (_submitError != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                context.t(_submitError!),
+                style: const TextStyle(color: AppColors.danger),
+                textAlign: TextAlign.center,
+              ),
+            ],
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: _submitting ? null : _submit,
+              child: _submitting
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: HiveLoader(strokeWidth: 2, color: Colors.white),
+                    )
+                  : Text(context.t('invite.createAccount')),
             ),
           ],
-          const SizedBox(height: 16),
-          FilledButton(
-            onPressed: _submitting ? null : _submit,
-            child: _submitting
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: HiveLoader(strokeWidth: 2, color: Colors.white),
-                  )
-                : Text(context.t('invite.createAccount')),
-          ),
-        ],
+        ),
       ),
     );
   }

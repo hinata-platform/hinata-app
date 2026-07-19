@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show TextInput;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -63,6 +64,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: _password.text,
       );
       if (!mounted) return;
+      // Account created — let the password manager offer to save the new
+      // username/password it just captured.
+      TextInput.finishAutofillContext();
       setState(() {
         _submitting = false;
         _sent = true;
@@ -109,148 +113,160 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final organization = meta?.organizationName;
     return Form(
       key: _formKey,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const ServerSelectorButton(),
-          const SizedBox(height: 20),
-          Text(
-            organization ?? 'Hinata',
-            textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            context.t('register.subtitle'),
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 24),
-          TextFormField(
-            controller: _displayName,
-            enabled: !_submitting,
-            textCapitalization: TextCapitalization.words,
-            autofillHints: const [AutofillHints.name],
-            decoration: InputDecoration(
-              labelText: context.t('register.displayName'),
-              hintText: context.t('register.displayNameHint'),
-              prefixIcon: const Icon(LucideIcons.user),
-            ),
-            validator: (v) => (v == null || v.trim().isEmpty)
-                ? context.t('errors.required')
-                : null,
-          ),
-          const SizedBox(height: 14),
-          TextFormField(
-            controller: _email,
-            enabled: !_submitting,
-            keyboardType: TextInputType.emailAddress,
-            autofillHints: const [AutofillHints.email],
-            decoration: InputDecoration(
-              labelText: context.t('register.email'),
-              prefixIcon: const Icon(LucideIcons.mail),
-            ),
-            validator: (v) => (v != null && v.contains('@'))
-                ? null
-                : context.t('errors.invalidEmail'),
-          ),
-          const SizedBox(height: 14),
-          TextFormField(
-            controller: _username,
-            enabled: !_submitting,
-            autofillHints: const [AutofillHints.newUsername],
-            decoration: InputDecoration(
-              labelText: context.t('register.username'),
-              hintText: context.t('register.usernameHint'),
-              prefixIcon: const Icon(LucideIcons.atSign),
-            ),
-            validator: (v) =>
-                RegExp(r'^[a-zA-Z0-9._-]{3,40}$').hasMatch(v ?? '')
-                ? null
-                : context.t('errors.invalidUsername'),
-          ),
-          const SizedBox(height: 14),
-          TextFormField(
-            controller: _password,
-            enabled: !_submitting,
-            obscureText: _obscure,
-            autofillHints: const [AutofillHints.newPassword],
-            decoration: InputDecoration(
-              labelText: context.t('register.password'),
-              hintText: context.t('register.passwordHint'),
-              prefixIcon: const Icon(LucideIcons.lock),
-              suffixIcon: IconButton(
-                icon: Icon(_obscure ? LucideIcons.eye : LucideIcons.eyeOff),
-                onPressed: () => setState(() => _obscure = !_obscure),
-              ),
-            ),
-            validator: (v) => (v ?? '').length >= 10
-                ? null
-                : context.t('errors.passwordTooShort'),
-          ),
-          const SizedBox(height: 14),
-          TextFormField(
-            controller: _confirm,
-            enabled: !_submitting,
-            obscureText: _obscure,
-            decoration: InputDecoration(
-              labelText: context.t('register.confirmPassword'),
-              prefixIcon: const Icon(LucideIcons.lock),
-            ),
-            onFieldSubmitted: (_) => _submit(),
-            validator: (v) => (v == _password.text)
-                ? null
-                : context.t('errors.passwordsDoNotMatch'),
-          ),
-          if (meta?.adminApprovalRequired ?? false) ...[
-            const SizedBox(height: 16),
-            _InfoNote(text: context.t('register.approvalHint')),
-          ],
-          if (_error != null) ...[
-            const SizedBox(height: 12),
+      // Groups every credential field so a password manager can capture the
+      // whole set and offer to save it once the account is created.
+      child: AutofillGroup(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const ServerSelectorButton(),
+            const SizedBox(height: 20),
             Text(
-              context.t(_error!),
-              style: const TextStyle(color: AppColors.danger),
+              organization ?? 'Hinata',
               textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
             ),
-          ],
-          const SizedBox(height: 20),
-          FilledButton(
-            onPressed: _submitting ? null : _submit,
-            child: _submitting
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: HiveLoader(strokeWidth: 2, color: Colors.white),
-                  )
-                : Text(context.t('register.submit')),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                context.t('register.haveAccount'),
-                style: TextStyle(color: AppColors.textSecondary),
+            const SizedBox(height: 8),
+            Text(
+              context.t('register.subtitle'),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 24),
+            TextFormField(
+              controller: _displayName,
+              enabled: !_submitting,
+              textCapitalization: TextCapitalization.words,
+              autofillHints: const [AutofillHints.name],
+              textInputAction: TextInputAction.next,
+              decoration: InputDecoration(
+                labelText: context.t('register.displayName'),
+                hintText: context.t('register.displayNameHint'),
+                prefixIcon: const Icon(LucideIcons.user),
               ),
-              TextButton(
-                onPressed: _submitting ? null : () => context.go('/login'),
-                child: Text(context.t('register.signIn')),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? context.t('errors.required')
+                  : null,
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _email,
+              enabled: !_submitting,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.email],
+              textInputAction: TextInputAction.next,
+              autocorrect: false,
+              decoration: InputDecoration(
+                labelText: context.t('register.email'),
+                prefixIcon: const Icon(LucideIcons.mail),
+              ),
+              validator: (v) => (v != null && v.contains('@'))
+                  ? null
+                  : context.t('errors.invalidEmail'),
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _username,
+              enabled: !_submitting,
+              autofillHints: const [AutofillHints.newUsername],
+              textInputAction: TextInputAction.next,
+              autocorrect: false,
+              decoration: InputDecoration(
+                labelText: context.t('register.username'),
+                hintText: context.t('register.usernameHint'),
+                prefixIcon: const Icon(LucideIcons.atSign),
+              ),
+              validator: (v) =>
+                  RegExp(r'^[a-zA-Z0-9._-]{3,40}$').hasMatch(v ?? '')
+                  ? null
+                  : context.t('errors.invalidUsername'),
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _password,
+              enabled: !_submitting,
+              obscureText: _obscure,
+              autofillHints: const [AutofillHints.newPassword],
+              textInputAction: TextInputAction.next,
+              decoration: InputDecoration(
+                labelText: context.t('register.password'),
+                hintText: context.t('register.passwordHint'),
+                prefixIcon: const Icon(LucideIcons.lock),
+                suffixIcon: IconButton(
+                  icon: Icon(_obscure ? LucideIcons.eye : LucideIcons.eyeOff),
+                  onPressed: () => setState(() => _obscure = !_obscure),
+                ),
+              ),
+              validator: (v) => (v ?? '').length >= 10
+                  ? null
+                  : context.t('errors.passwordTooShort'),
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _confirm,
+              enabled: !_submitting,
+              obscureText: _obscure,
+              autofillHints: const [AutofillHints.newPassword],
+              textInputAction: TextInputAction.done,
+              decoration: InputDecoration(
+                labelText: context.t('register.confirmPassword'),
+                prefixIcon: const Icon(LucideIcons.lock),
+              ),
+              onFieldSubmitted: (_) => _submit(),
+              validator: (v) => (v == _password.text)
+                  ? null
+                  : context.t('errors.passwordsDoNotMatch'),
+            ),
+            if (meta?.adminApprovalRequired ?? false) ...[
+              const SizedBox(height: 16),
+              _InfoNote(text: context.t('register.approvalHint')),
+            ],
+            if (_error != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                context.t(_error!),
+                style: const TextStyle(color: AppColors.danger),
+                textAlign: TextAlign.center,
               ),
             ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            context.t('auth.legalNotice'),
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-          ),
-          const SizedBox(height: 8),
-          const LegalLinks(),
-        ],
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: _submitting ? null : _submit,
+              child: _submitting
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: HiveLoader(strokeWidth: 2, color: Colors.white),
+                    )
+                  : Text(context.t('register.submit')),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  context.t('register.haveAccount'),
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+                TextButton(
+                  onPressed: _submitting ? null : () => context.go('/login'),
+                  child: Text(context.t('register.signIn')),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              context.t('auth.legalNotice'),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+            const LegalLinks(),
+          ],
+        ),
       ),
     );
   }

@@ -55,7 +55,8 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       final names = {for (final u in users) u.id: u.displayName};
       final avatars = {
         for (final u in users)
-          if (u.avatarUrl != null && u.avatarUrl!.isNotEmpty) u.id: u.avatarUrl!,
+          if (u.avatarUrl != null && u.avatarUrl!.isNotEmpty)
+            u.id: u.avatarUrl!,
       };
       return (
         active: active,
@@ -153,7 +154,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     hasScrollBody: false,
                     child: Padding(
                       padding: EdgeInsets.symmetric(
-                          horizontal: context.pageGutter, vertical: 24),
+                        horizontal: context.pageGutter,
+                        vertical: 24,
+                      ),
                       child: Center(
                         child: HiveEmptyState(
                           title: context.t('projects.title'),
@@ -254,8 +257,8 @@ class _ProjectCard extends StatelessWidget {
     // Only project leads (and platform admins) may open project settings —
     // regular members work on the project but never see its configuration.
     final me = context.read<AuthBloc>().state.user;
-    final canManage = me != null &&
-        (me.isAdmin || project.leadIds.contains(me.id));
+    final canManage =
+        me != null && (me.isAdmin || project.leadIds.contains(me.id));
     final color = _projectColor(project);
     final glyphColor = project.archived
         ? HSLColor.fromColor(color).withSaturation(0.25).toColor()
@@ -304,7 +307,9 @@ class _ProjectCard extends StatelessWidget {
                   children: [
                     // Leave room for the corner gear only when it's shown.
                     Padding(
-                      padding: EdgeInsets.only(right: compact && canManage ? 26 : 0),
+                      padding: EdgeInsets.only(
+                        right: compact && canManage ? 26 : 0,
+                      ),
                       child: Text(
                         project.name,
                         maxLines: 1,
@@ -574,6 +579,9 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
                   label: context.t('projects.descriptionOptional'),
                   child: TextField(
                     controller: _description,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
+                    textCapitalization: TextCapitalization.sentences,
                     minLines: 2,
                     maxLines: 4,
                     decoration: glassInputDecoration(
@@ -626,6 +634,8 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
       child: TextField(
         controller: _name,
         autofocus: true,
+        textCapitalization: TextCapitalization.words,
+        textInputAction: TextInputAction.next,
         decoration: glassInputDecoration(hint: 'e.g. Billing & Plans'),
       ),
     );
@@ -634,12 +644,13 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
       child: TextField(
         controller: _key,
         textCapitalization: TextCapitalization.characters,
+        autocorrect: false,
         maxLength: 10,
         style: const TextStyle(fontFamily: AppTheme.fontMono),
         inputFormatters: [_UpperAlphaNumFormatter()],
-        decoration: glassInputDecoration(hint: 'BILL').copyWith(
-          counterText: '',
-        ),
+        decoration: glassInputDecoration(
+          hint: 'BILL',
+        ).copyWith(counterText: ''),
       ),
     );
 
@@ -782,7 +793,10 @@ class _LeadDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = users.isEmpty && value != null
         ? [
-            DropdownMenuItem(value: value, child: Text(context.t('projects.you'))),
+            DropdownMenuItem(
+              value: value,
+              child: Text(context.t('projects.you')),
+            ),
           ]
         : [
             for (final u in users)
@@ -800,7 +814,11 @@ class _LeadDropdown extends StatelessWidget {
     return DropdownButtonFormField<String>(
       initialValue: value,
       isExpanded: true,
-      icon: Icon(LucideIcons.chevronsUpDown, size: 16, color: AppColors.inkSoft),
+      icon: Icon(
+        LucideIcons.chevronsUpDown,
+        size: 16,
+        color: AppColors.inkSoft,
+      ),
       decoration: glassInputDecoration(),
       items: items,
       onChanged: onChanged,

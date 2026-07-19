@@ -400,6 +400,9 @@ class _DeleteFlowState extends State<_DeleteFlow> {
         TextField(
           controller: _confirmCtrl,
           autofocus: true,
+          autocorrect: false,
+          enableSuggestions: false,
+          textInputAction: TextInputAction.done,
           onChanged: (_) => setState(() {}),
           decoration: _fieldDecoration(hint: widget.confirmName),
         ),

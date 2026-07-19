@@ -227,6 +227,8 @@ class _AddProjectBodyState extends State<_AddProjectBody> {
                   controller: _name,
                   autofocus: true,
                   onChanged: (_) => setState(() {}),
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
                   decoration: teamFieldDecoration(
                     context,
                     hint: context.t('teams.projectNamePlaceholder'),
@@ -245,6 +247,7 @@ class _AddProjectBodyState extends State<_AddProjectBody> {
                 TextField(
                   controller: _key,
                   textCapitalization: TextCapitalization.characters,
+                  autocorrect: false,
                   maxLength: 4,
                   buildCounter:
                       (
@@ -266,6 +269,9 @@ class _AddProjectBodyState extends State<_AddProjectBody> {
       FieldLabel(context.t('teams.description'), optional: true),
       TextField(
         controller: _desc,
+        keyboardType: TextInputType.multiline,
+        textInputAction: TextInputAction.newline,
+        textCapitalization: TextCapitalization.sentences,
         minLines: 2,
         maxLines: 3,
         decoration: teamFieldDecoration(

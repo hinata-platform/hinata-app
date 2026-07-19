@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
@@ -89,6 +90,7 @@ class _AdminMcpSectionState extends State<AdminMcpSection> {
             TextFormField(
               controller: _maxPats,
               keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               style: TextStyle(fontSize: 14, color: AppColors.ink),
               decoration: adminInputDecoration(
                 context,

@@ -128,6 +128,8 @@ class _KnowledgeEditorState extends State<KnowledgeEditor> {
             child: TextField(
               controller: _title,
               autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
+              textInputAction: TextInputAction.next,
               style: const TextStyle(
                 fontFamily: AppTheme.fontBrand,
                 fontSize: 22,

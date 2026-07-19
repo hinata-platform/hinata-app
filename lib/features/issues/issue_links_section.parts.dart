@@ -247,13 +247,16 @@ class _LinkEditorState extends State<_LinkEditor> {
   List<Issue> get _suggestions {
     final q = _query.trim().toLowerCase();
     final selectedIds = {for (final s in _selected) s.id};
-    return _candidates.where((i) {
-      if (i.id == widget.issueId) return false;
-      if (selectedIds.contains(i.id)) return false;
-      if (q.isEmpty) return true;
-      return i.readableId.toLowerCase().contains(q) ||
-          i.title.toLowerCase().contains(q);
-    }).take(60).toList();
+    return _candidates
+        .where((i) {
+          if (i.id == widget.issueId) return false;
+          if (selectedIds.contains(i.id)) return false;
+          if (q.isEmpty) return true;
+          return i.readableId.toLowerCase().contains(q) ||
+              i.title.toLowerCase().contains(q);
+        })
+        .take(60)
+        .toList();
   }
 
   void _add(Issue issue) {
@@ -365,7 +368,10 @@ class _LinkEditorState extends State<_LinkEditor> {
                 onPressed: _createLinked,
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.inkSoft,
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
                 ),
                 icon: const Icon(LucideIcons.plus, size: 15),
                 label: Text(
@@ -420,11 +426,7 @@ class _LinkEditorState extends State<_LinkEditor> {
                   Flexible(child: create),
                   Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: [
-                      confirm,
-                      const SizedBox(width: 6),
-                      cancel,
-                    ],
+                    children: [confirm, const SizedBox(width: 6), cancel],
                   ),
                 ],
               );
@@ -451,64 +453,68 @@ class _LinkEditorState extends State<_LinkEditor> {
                 onTap: _focus.requestFocus,
                 child: Container(
                   constraints: const BoxConstraints(minHeight: 46),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                  border: Border.all(
-                    color: _focus.hasFocus
-                        ? AppColors.accent
-                        : AppColors.hairline,
-                    width: _focus.hasFocus ? 1.4 : 1,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
                   ),
-                ),
-                child: Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    for (final issue in _selected)
-                      _LinkChip(
-                        issue: issue,
-                        onRemove: () => _removeChip(issue),
-                      ),
-                    // The text field fills the full width of the run it lands on
-                    // (its own line beneath the chips, or the whole field when
-                    // empty) instead of a fixed 160px stub — otherwise the input
-                    // caret sat in a cramped half-width box. `_fieldWidth` is the
-                    // container's outer width; subtract its 10px horizontal
-                    // padding on each side to get the Wrap's content width.
-                    SizedBox(
-                      width: (_fieldWidth - 20).clamp(120.0, double.infinity),
-                      child: TextField(
-                        controller: _searchCtrl,
-                        focusNode: _focus,
-                        onChanged: (v) {
-                          setState(() => _query = v);
-                          if (!_overlay.isShowing) _overlay.show();
-                        },
-                        style: const TextStyle(fontSize: 13.5),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                          ),
-                          hintText: _selected.isEmpty
-                              ? context.t('issues.links.fieldHint')
-                              : null,
-                          hintStyle: TextStyle(
-                            color: AppColors.inkFaint,
-                            fontSize: 13.5,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                    border: Border.all(
+                      color: _focus.hasFocus
+                          ? AppColors.accent
+                          : AppColors.hairline,
+                      width: _focus.hasFocus ? 1.4 : 1,
+                    ),
+                  ),
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      for (final issue in _selected)
+                        _LinkChip(
+                          issue: issue,
+                          onRemove: () => _removeChip(issue),
+                        ),
+                      // The text field fills the full width of the run it lands on
+                      // (its own line beneath the chips, or the whole field when
+                      // empty) instead of a fixed 160px stub — otherwise the input
+                      // caret sat in a cramped half-width box. `_fieldWidth` is the
+                      // container's outer width; subtract its 10px horizontal
+                      // padding on each side to get the Wrap's content width.
+                      SizedBox(
+                        width: (_fieldWidth - 20).clamp(120.0, double.infinity),
+                        child: TextField(
+                          controller: _searchCtrl,
+                          focusNode: _focus,
+                          onChanged: (v) {
+                            setState(() => _query = v);
+                            if (!_overlay.isShowing) _overlay.show();
+                          },
+                          textInputAction: TextInputAction.search,
+                          style: const TextStyle(fontSize: 13.5),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                            ),
+                            hintText: _selected.isEmpty
+                                ? context.t('issues.links.fieldHint')
+                                : null,
+                            hintStyle: TextStyle(
+                              color: AppColors.inkFaint,
+                              fontSize: 13.5,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
               ),
             );
           },
@@ -773,10 +779,7 @@ class _GlassDropdownPanel extends StatelessWidget {
             glassFill: tokens.glassFill,
             dark: dark,
           ),
-          child: Material(
-            type: MaterialType.transparency,
-            child: child,
-          ),
+          child: Material(type: MaterialType.transparency, child: child),
         ),
       ),
     );

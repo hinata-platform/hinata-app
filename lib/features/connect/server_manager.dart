@@ -725,6 +725,8 @@ class _AddServerPageState extends State<_AddServerPage> {
                 enabled: _phase != _Phase.testing,
                 keyboardType: TextInputType.url,
                 autofillHints: const [AutofillHints.url],
+                autocorrect: false,
+                textInputAction: TextInputAction.done,
                 style: const TextStyle(fontFamily: AppTheme.fontMono, fontSize: 14),
                 decoration: glassInputDecoration(hint: 'server.hinata.com')
                     .copyWith(

@@ -157,6 +157,8 @@ class _TeamFormBodyState extends State<_TeamFormBody> {
                       controller: _name,
                       autofocus: true,
                       onChanged: (_) => setState(() {}),
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
                       decoration: teamFieldDecoration(
                         context,
                         hint: context.t('teams.namePlaceholder'),
@@ -175,6 +177,7 @@ class _TeamFormBodyState extends State<_TeamFormBody> {
                     TextField(
                       controller: _key,
                       textCapitalization: TextCapitalization.characters,
+                      autocorrect: false,
                       maxLength: 5,
                       buildCounter:
                           (
@@ -195,6 +198,9 @@ class _TeamFormBodyState extends State<_TeamFormBody> {
           FieldLabel(context.t('teams.description'), optional: true),
           TextField(
             controller: _desc,
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.newline,
+            textCapitalization: TextCapitalization.sentences,
             minLines: 2,
             maxLines: 4,
             decoration: teamFieldDecoration(
@@ -229,4 +235,3 @@ class _TeamFormBodyState extends State<_TeamFormBody> {
     );
   }
 }
-

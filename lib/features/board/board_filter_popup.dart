@@ -185,7 +185,11 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
             _Opt(
               value: id,
               label: name(id),
-              leading: HiveAvatar(name: name(id), imageUrl: avatar(id), size: 20),
+              leading: HiveAvatar(
+                name: name(id),
+                imageUrl: avatar(id),
+                size: 20,
+              ),
             ),
         ];
       case BoardFilterFacet.author:
@@ -194,7 +198,11 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
             _Opt(
               value: id,
               label: name(id),
-              leading: HiveAvatar(name: name(id), imageUrl: avatar(id), size: 20),
+              leading: HiveAvatar(
+                name: name(id),
+                imageUrl: avatar(id),
+                size: 20,
+              ),
             ),
         ];
       case BoardFilterFacet.sprint:
@@ -437,6 +445,7 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
           Expanded(
             child: TextField(
               autofocus: false,
+              textInputAction: TextInputAction.search,
               cursorColor: tokens.ink,
               onChanged: (v) => setState(() => _query = v),
               style: TextStyle(

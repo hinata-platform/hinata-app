@@ -20,12 +20,10 @@ class AdminAppSection extends StatefulWidget {
 
 class _AdminAppSectionState extends State<AdminAppSection> {
   Map<String, dynamic> get _app =>
-      (widget.settings['app'] ??= <String, dynamic>{})
-          as Map<String, dynamic>;
+      (widget.settings['app'] ??= <String, dynamic>{}) as Map<String, dynamic>;
 
   Map<String, dynamic> get _flags =>
-      (_app['featureFlags'] ??= <String, dynamic>{})
-          as Map<String, dynamic>;
+      (_app['featureFlags'] ??= <String, dynamic>{}) as Map<String, dynamic>;
 
   /// Flags that have a dedicated, described toggle above — hidden from the raw
   /// name→enabled editor so they aren't shown twice.
@@ -55,24 +53,29 @@ class _AdminAppSectionState extends State<AdminAppSection> {
               initialValue: (_app['privacyPolicyUrl'] as String?) ?? '',
               onChanged: (v) => _app['privacyPolicyUrl'] = v,
               hint: 'https://example.com/privacy',
+              keyboardType: TextInputType.url,
             ),
             AdminField(
               label: context.t('admin.iosStoreUrl'),
               initialValue: (_app['iosStoreUrl'] as String?) ?? '',
               onChanged: (v) => _app['iosStoreUrl'] = v,
               hint: 'https://apps.apple.com/app/id000000000',
+              keyboardType: TextInputType.url,
             ),
             AdminField(
               label: context.t('admin.androidStoreUrl'),
               initialValue: (_app['androidStoreUrl'] as String?) ?? '',
               onChanged: (v) => _app['androidStoreUrl'] = v,
-              hint: 'https://play.google.com/store/apps/details?id=hn.asta.hinata',
+              hint:
+                  'https://play.google.com/store/apps/details?id=hn.asta.hinata',
+              keyboardType: TextInputType.url,
             ),
             AdminField(
               label: context.t('admin.macosStoreUrl'),
               initialValue: (_app['macosStoreUrl'] as String?) ?? '',
               onChanged: (v) => _app['macosStoreUrl'] = v,
               hint: 'https://apps.apple.com/app/id000000000',
+              keyboardType: TextInputType.url,
             ),
           ],
         ),
@@ -115,8 +118,8 @@ class _AdminAppSectionState extends State<AdminAppSection> {
               title: context.t('admin.multiAssigneeTitle'),
               description: context.t('admin.multiAssigneeHint'),
               value: _flags[PlatformFlags.multiAssignee] == true,
-              onChanged: (v) => setState(
-                  () => _flags[PlatformFlags.multiAssignee] = v),
+              onChanged: (v) =>
+                  setState(() => _flags[PlatformFlags.multiAssignee] = v),
             ),
             const SizedBox(height: 14),
             _PlatformToggle(
@@ -172,14 +175,19 @@ class _PlatformToggle extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.ink)),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.ink,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(description,
-                  style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft)),
+              Text(
+                description,
+                style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+              ),
             ],
           ),
         ),
@@ -257,9 +265,10 @@ class _FeatureFlagEditorState extends State<_FeatureFlagEditor> {
                   child: Text(
                     entry.key,
                     style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.ink),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
                 HiveSwitch(
@@ -270,8 +279,11 @@ class _FeatureFlagEditorState extends State<_FeatureFlagEditor> {
                   },
                 ),
                 IconButton(
-                  icon: Icon(LucideIcons.trash2,
-                      size: 16, color: AppColors.inkFaint),
+                  icon: Icon(
+                    LucideIcons.trash2,
+                    size: 16,
+                    color: AppColors.inkFaint,
+                  ),
                   tooltip: context.t('common.delete'),
                   onPressed: () {
                     setState(() => widget.flags.remove(entry.key));
@@ -287,6 +299,9 @@ class _FeatureFlagEditorState extends State<_FeatureFlagEditor> {
             Expanded(
               child: TextField(
                 controller: _newFlag,
+                autocorrect: false,
+                enableSuggestions: false,
+                textInputAction: TextInputAction.done,
                 decoration: InputDecoration(
                   labelText: context.t('admin.featureFlagName'),
                   isDense: true,

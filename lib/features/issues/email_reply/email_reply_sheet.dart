@@ -152,7 +152,10 @@ class _EmailWideDialogType extends WoltDialogType {
   @override
   BoxConstraints layoutModal(Size availableSize) {
     const pad = 48.0;
-    final width = math.min(720.0, math.max(360.0, availableSize.width - pad * 2));
+    final width = math.min(
+      720.0,
+      math.max(360.0, availableSize.width - pad * 2),
+    );
     return BoxConstraints(
       minWidth: width,
       maxWidth: width,
@@ -327,7 +330,11 @@ class EmailReplyDraft {
 /// uploads aren't handed over (they can't resume in a fresh composer); the file
 /// keeps uploading onto the issue regardless.
 class EmailDraftAttachment {
-  const EmailDraftAttachment({required this.name, this.id, this.failed = false});
+  const EmailDraftAttachment({
+    required this.name,
+    this.id,
+    this.failed = false,
+  });
 
   final String name;
   final String? id;
@@ -397,7 +404,9 @@ class EmailReplyComposerState extends State<EmailReplyComposer> {
     final original = widget.issue.inboundSubject?.trim();
     if (original == null || original.isEmpty) return '';
     // Don't stack "Re: Re: …" if the source subject already carries one.
-    return original.toLowerCase().startsWith('re:') ? original : 'Re: $original';
+    return original.toLowerCase().startsWith('re:')
+        ? original
+        : 'Re: $original';
   }
 
   @override
@@ -488,7 +497,10 @@ class EmailReplyComposerState extends State<EmailReplyComposer> {
       );
     } catch (_) {
       if (mounted) {
-        showGlassErrorToast(context, context.t('issues.attachments.pickFailed'));
+        showGlassErrorToast(
+          context,
+          context.t('issues.attachments.pickFailed'),
+        );
       }
       return;
     }
@@ -510,7 +522,9 @@ class EmailReplyComposerState extends State<EmailReplyComposer> {
         multipart,
       );
       // The just-added attachment is the newest one on the returned issue.
-      final id = saved.attachments.isNotEmpty ? saved.attachments.last.id : null;
+      final id = saved.attachments.isNotEmpty
+          ? saved.attachments.last.id
+          : null;
       if (!mounted) return;
       _set(() {
         draft.id = id;
@@ -628,12 +642,16 @@ class EmailReplyComposerState extends State<EmailReplyComposer> {
       child: TextField(
         controller: _subject,
         onChanged: (_) => _set(() {}),
+        textInputAction: TextInputAction.next,
+        textCapitalization: TextCapitalization.sentences,
         // Scroll the focused field clear of keyboard + sticky send bar (the
         // sheet doesn't resize for the keyboard).
         scrollPadding: EdgeInsets.only(
           bottom: MediaQuery.viewInsetsOf(context).bottom + 120,
         ),
-        decoration: _inputDecoration(context.t('issues.replyEmail.subjectHint')),
+        decoration: _inputDecoration(
+          context.t('issues.replyEmail.subjectHint'),
+        ),
       ),
     );
   }
@@ -647,6 +665,8 @@ class EmailReplyComposerState extends State<EmailReplyComposer> {
       maxLines: expand ? null : 12,
       textAlignVertical: expand ? TextAlignVertical.top : null,
       keyboardType: TextInputType.multiline,
+      textInputAction: TextInputAction.newline,
+      textCapitalization: TextCapitalization.sentences,
       scrollPadding: EdgeInsets.only(
         bottom: MediaQuery.viewInsetsOf(context).bottom + 120,
       ),
@@ -815,7 +835,9 @@ class _EmailRouteTopBar extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(4, 6, 6, 8),
         decoration: BoxDecoration(
           border: Border(
-            bottom: BorderSide(color: AppColors.hairline.withValues(alpha: 0.7)),
+            bottom: BorderSide(
+              color: AppColors.hairline.withValues(alpha: 0.7),
+            ),
           ),
         ),
         child: Row(

@@ -58,8 +58,9 @@ class _StartSprintBody extends StatefulWidget {
 }
 
 class _StartSprintBodyState extends State<_StartSprintBody> {
-  late final TextEditingController _goal =
-      TextEditingController(text: widget.initialGoal ?? '');
+  late final TextEditingController _goal = TextEditingController(
+    text: widget.initialGoal ?? '',
+  );
   int _weeks = 2;
 
   DateTime get _end => autoEndDate(widget.start, _weeks);
@@ -72,7 +73,8 @@ class _StartSprintBodyState extends State<_StartSprintBody> {
 
   @override
   Widget build(BuildContext context) {
-    final over = widget.capacityPoints != null &&
+    final over =
+        widget.capacityPoints != null &&
         widget.committedPoints > widget.capacityPoints!;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -104,9 +106,13 @@ class _StartSprintBodyState extends State<_StartSprintBody> {
                             ),
                             children: [
                               _b('${widget.issueCount}'),
-                              TextSpan(text: ' ${context.t('sprint.issuesWord')} · '),
+                              TextSpan(
+                                text: ' ${context.t('sprint.issuesWord')} · ',
+                              ),
                               _b('${widget.committedPoints}'),
-                              TextSpan(text: ' ${context.t('sprint.pointsCommitted')}'),
+                              TextSpan(
+                                text: ' ${context.t('sprint.pointsCommitted')}',
+                              ),
                             ],
                           ),
                         ),
@@ -132,10 +138,14 @@ class _StartSprintBodyState extends State<_StartSprintBody> {
                   child: TextField(
                     controller: _goal,
                     autofocus: true,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
+                    textCapitalization: TextCapitalization.sentences,
                     minLines: 2,
                     maxLines: 4,
-                    decoration:
-                        glassInputDecoration(hint: context.t('sprint.goalHint')),
+                    decoration: glassInputDecoration(
+                      hint: context.t('sprint.goalHint'),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -146,7 +156,10 @@ class _StartSprintBodyState extends State<_StartSprintBody> {
                       for (var w = 1; w <= 4; w++)
                         w == 1
                             ? context.t('sprint.week')
-                            : context.t('sprint.weeksN', variables: {'count': '$w'}),
+                            : context.t(
+                                'sprint.weeksN',
+                                variables: {'count': '$w'},
+                              ),
                     ],
                     selected: _weeks - 1,
                     onChanged: (i) => setState(() => _weeks = i + 1),
@@ -157,7 +170,10 @@ class _StartSprintBodyState extends State<_StartSprintBody> {
                   icon: LucideIcons.calendarDays,
                   child: Text.rich(
                     TextSpan(
-                      style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: AppColors.inkSoft,
+                      ),
                       children: [
                         TextSpan(text: '${context.t('sprint.runs')} '),
                         _b(prettyDate(widget.start)),

@@ -233,6 +233,8 @@ class _InlineTitleEditor extends StatelessWidget {
           controller: controller,
           autofocus: true,
           maxLines: null,
+          textInputAction: TextInputAction.done,
+          textCapitalization: TextCapitalization.sentences,
           style: const TextStyle(
             fontFamily: AppTheme.fontBrand,
             fontSize: 20,
@@ -805,6 +807,7 @@ class _PeoplePickerState extends State<_PeoplePicker> {
       child: TextField(
         autofocus: true,
         onChanged: (v) => setState(() => _query = v),
+        textInputAction: TextInputAction.search,
         decoration: InputDecoration(
           isDense: true,
           prefixIcon: const Icon(LucideIcons.search, size: 18),

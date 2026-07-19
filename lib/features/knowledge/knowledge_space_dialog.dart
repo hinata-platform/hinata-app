@@ -125,6 +125,7 @@ class _CreateSpaceFormState extends State<_CreateSpaceForm> {
                 child: TextField(
                   controller: _name,
                   autofocus: true,
+                  textCapitalization: TextCapitalization.words,
                   textInputAction: TextInputAction.next,
                   decoration: glassInputDecoration(
                     hint: context.t('knowledge.spaceNameHint'),
@@ -137,6 +138,9 @@ class _CreateSpaceFormState extends State<_CreateSpaceForm> {
                 label: context.t('knowledge.spaceDescription'),
                 child: TextField(
                   controller: _desc,
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
+                  textCapitalization: TextCapitalization.sentences,
                   decoration: glassInputDecoration(
                     hint: context.t('knowledge.spaceDescriptionHint'),
                   ),

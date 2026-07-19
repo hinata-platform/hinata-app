@@ -6,7 +6,8 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/frosted_surface.dart';
 import '../../core/widgets/glass_popup_menu.dart';
-import '../shell/app_shell.dart' show kNavGlassDark, kNavGlassLight, isNativeApp;
+import '../shell/app_shell.dart'
+    show kNavGlassDark, kNavGlassLight, isNativeApp;
 
 /// Height of one docked control row (search / chip row) — the pill height.
 const double kAdminPillHeight = 42;
@@ -101,6 +102,7 @@ class AdminGlassSearchField extends StatelessWidget {
               child: TextField(
                 controller: controller,
                 onChanged: onChanged,
+                textInputAction: TextInputAction.search,
                 style: TextStyle(fontSize: 14, color: AppColors.ink),
                 cursorColor: AppColors.accentStrong,
                 // The pill itself is the surface — strip every field border/fill

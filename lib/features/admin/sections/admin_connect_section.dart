@@ -121,7 +121,10 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
 
   Future<bool> _openUrl(String url) async {
     try {
-      return await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      return await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      );
     } catch (_) {
       return false;
     }
@@ -357,7 +360,10 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
                     Expanded(
                       child: Text(
                         context.t('admin.connectWaiting'),
-                        style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: AppColors.inkSoft,
+                        ),
                       ),
                     ),
                   ],
@@ -417,6 +423,7 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
                 controller: _token,
                 autocorrect: false,
                 enableSuggestions: false,
+                textInputAction: TextInputAction.done,
                 style: const TextStyle(fontFamily: AppTheme.fontMono),
                 decoration: InputDecoration(
                   labelText: context.t('admin.connectTokenLabel'),
@@ -531,7 +538,11 @@ class _StatusRow extends StatelessWidget {
 
 /// A label + monospaced value line, optionally copyable.
 class _MonoRow extends StatelessWidget {
-  const _MonoRow({required this.label, required this.value, this.copyable = false});
+  const _MonoRow({
+    required this.label,
+    required this.value,
+    this.copyable = false,
+  });
 
   final String label;
   final String value;

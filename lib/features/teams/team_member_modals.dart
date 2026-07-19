@@ -489,6 +489,7 @@ class _SearchField extends StatelessWidget {
     return TextField(
       autofocus: true,
       onChanged: onChanged,
+      textInputAction: TextInputAction.search,
       decoration:
           teamFieldDecoration(
             context,

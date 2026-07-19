@@ -91,6 +91,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             autofocus: true,
             keyboardType: TextInputType.emailAddress,
             autofillHints: const [AutofillHints.email],
+            textInputAction: TextInputAction.done,
+            autocorrect: false,
             decoration: InputDecoration(
               labelText: context.t('forgotPassword.email'),
               prefixIcon: const Icon(LucideIcons.mail),

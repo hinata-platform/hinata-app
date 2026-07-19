@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -120,8 +121,7 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
       message,
       kind: kind,
       actionLabel: context.t('common.ok'),
-      onAction:
-          () => toast.close(),
+      onAction: () => toast.close(),
     );
   }
 
@@ -301,7 +301,12 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
             context.t('admin.ingest.name'),
             hint: context.t('admin.ingest.nameHint'),
           ),
-          _field(_host, context.t('admin.smtpHost'), hint: 'imap.example.com'),
+          _field(
+            _host,
+            context.t('admin.smtpHost'),
+            hint: 'imap.example.com',
+            keyboardType: TextInputType.url,
+          ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -474,12 +479,21 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
     bool obscure = false,
     TextInputType? keyboardType,
   }) {
+    final noAutocorrect =
+        obscure ||
+        keyboardType == TextInputType.url ||
+        keyboardType == TextInputType.emailAddress;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: controller,
         obscureText: obscure,
         keyboardType: keyboardType,
+        autocorrect: !noAutocorrect,
+        enableSuggestions: !obscure,
+        inputFormatters: keyboardType == TextInputType.number
+            ? [FilteringTextInputFormatter.digitsOnly]
+            : null,
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
@@ -600,6 +614,7 @@ class _ProjectSearchPanelState extends State<_ProjectSearchPanel> {
             controller: _searchCtrl,
             autofocus: true,
             onChanged: _onQueryChanged,
+            textInputAction: TextInputAction.search,
             decoration: InputDecoration(
               isDense: true,
               prefixIcon: const Icon(LucideIcons.search, size: 16),

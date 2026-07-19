@@ -100,6 +100,8 @@ class _CreateSprintBodyState extends State<_CreateSprintBody> {
                   child: TextField(
                     controller: _name,
                     autofocus: true,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.next,
                     decoration: glassInputDecoration(),
                   ),
                 ),
@@ -112,6 +114,9 @@ class _CreateSprintBodyState extends State<_CreateSprintBody> {
                   ),
                   child: TextField(
                     controller: _goal,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
+                    textCapitalization: TextCapitalization.sentences,
                     minLines: 2,
                     maxLines: 4,
                     decoration: glassInputDecoration(

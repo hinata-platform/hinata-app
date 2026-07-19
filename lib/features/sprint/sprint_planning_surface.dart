@@ -220,6 +220,7 @@ class _SearchFieldState extends State<_SearchField> {
     return TextField(
       controller: _c,
       onChanged: widget.onQuery,
+      textInputAction: TextInputAction.search,
       style: const TextStyle(fontSize: 13),
       decoration: InputDecoration(
         isDense: true,

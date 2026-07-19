@@ -66,14 +66,19 @@ class _SetupScreenState extends State<SetupScreen> {
                         style: TextStyle(color: AppColors.textSecondary),
                       ),
                       const SizedBox(height: 24),
-                      _field(_organization, 'setup.organization', LucideIcons.building2),
-                      _field(_displayName, 'setup.displayName', LucideIcons.idCard),
+                      _field(_organization, 'setup.organization', LucideIcons.building2,
+                          textCapitalization: TextCapitalization.words),
+                      _field(_displayName, 'setup.displayName', LucideIcons.idCard,
+                          textCapitalization: TextCapitalization.words),
                       _field(_email, 'setup.email', LucideIcons.atSign,
                           keyboardType: TextInputType.emailAddress,
+                          autofillHints: const [AutofillHints.email],
+                          autocorrect: false,
                           validator: (v) => v != null && v.contains('@')
                               ? null
                               : context.t('errors.invalidEmail')),
                       _field(_username, 'setup.username', LucideIcons.user,
+                          autocorrect: false,
                           validator: (v) => RegExp(r'^[a-zA-Z0-9._-]{3,40}$')
                                   .hasMatch(v ?? '')
                               ? null
@@ -118,6 +123,9 @@ class _SetupScreenState extends State<SetupScreen> {
     IconData icon, {
     bool obscure = false,
     TextInputType? keyboardType,
+    List<String>? autofillHints,
+    bool autocorrect = true,
+    TextCapitalization textCapitalization = TextCapitalization.none,
     String? Function(String?)? validator,
   }) {
     return Padding(
@@ -126,6 +134,9 @@ class _SetupScreenState extends State<SetupScreen> {
         controller: controller,
         obscureText: obscure,
         keyboardType: keyboardType,
+        autofillHints: autofillHints,
+        autocorrect: autocorrect,
+        textCapitalization: textCapitalization,
         decoration:
             InputDecoration(labelText: context.t(labelKey), prefixIcon: Icon(icon)),
         validator: validator ??

@@ -216,7 +216,10 @@ Future<int?> _showGlassColorPopover(
       ],
     ),
     transitionBuilder: (_, animation, _, child) {
-      final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutBack);
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutBack,
+      );
       return FadeTransition(
         opacity: animation,
         child: ScaleTransition(
@@ -252,8 +255,10 @@ class _GlassColorCard extends StatelessWidget {
         quality: GlassQuality.premium,
         clipBehavior: Clip.antiAlias,
         shape: const LiquidRoundedSuperellipse(borderRadius: 20),
-        settings:
-            liquidGlassPanelSettings(glassFill: tokens.glassFill, dark: dark),
+        settings: liquidGlassPanelSettings(
+          glassFill: tokens.glassFill,
+          dark: dark,
+        ),
         child: Material(
           type: MaterialType.transparency,
           child: SizedBox(
@@ -368,15 +373,17 @@ class _MemberPickerState extends State<_MemberPicker> {
           padding: const EdgeInsets.fromLTRB(22, 0, 22, 12),
           child: TextField(
             onChanged: (v) => setState(() => _query = v),
-            decoration: glassInputDecoration(
-              hint: context.t('projectSettings.searchPeople'),
-            ).copyWith(
-              prefixIcon: Icon(
-                LucideIcons.search,
-                size: 18,
-                color: AppColors.inkSoft,
-              ),
-            ),
+            textInputAction: TextInputAction.search,
+            decoration:
+                glassInputDecoration(
+                  hint: context.t('projectSettings.searchPeople'),
+                ).copyWith(
+                  prefixIcon: Icon(
+                    LucideIcons.search,
+                    size: 18,
+                    color: AppColors.inkSoft,
+                  ),
+                ),
           ),
         ),
         AnimatedSwitcher(
@@ -725,9 +732,7 @@ class _TargetRow extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  selected
-                      ? LucideIcons.circleCheckBig
-                      : LucideIcons.circle,
+                  selected ? LucideIcons.circleCheckBig : LucideIcons.circle,
                   size: 18,
                   color: selected ? AppColors.accentStrong : AppColors.inkFaint,
                 ),

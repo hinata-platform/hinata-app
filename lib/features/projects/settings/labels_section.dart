@@ -154,6 +154,7 @@ class _LabelChip extends StatelessWidget {
               child: TextField(
                 controller: controller,
                 onChanged: onRename,
+                textCapitalization: TextCapitalization.sentences,
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
@@ -212,6 +213,8 @@ class _AddLabelRow extends StatelessWidget {
           child: TextField(
             controller: controller,
             onSubmitted: (_) => onAdd(),
+            textInputAction: TextInputAction.done,
+            textCapitalization: TextCapitalization.sentences,
             decoration: settingsInput(
               context,
               hint: context.t('projectSettings.addLabelHint'),

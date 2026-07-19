@@ -71,6 +71,8 @@ class _ConnectScreenState extends State<ConnectScreen> {
                             enabled: !connecting,
                             keyboardType: TextInputType.url,
                             autofillHints: const [AutofillHints.url],
+                            autocorrect: false,
+                            textInputAction: TextInputAction.done,
                             decoration: InputDecoration(
                               hintText: 'https://hinata.example.org',
                               prefixIcon: const Icon(LucideIcons.server),

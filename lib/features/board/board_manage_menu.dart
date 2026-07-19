@@ -309,6 +309,8 @@ class _RenameBoardBodyState extends State<_RenameBoardBody> {
                   child: TextField(
                     controller: _name,
                     autofocus: true,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.done,
                     onSubmitted: (_) => _save(),
                     decoration: glassInputDecoration(),
                   ),

@@ -65,6 +65,9 @@ class GeneralSection extends StatelessWidget {
           FieldLabel(text: context.t('issues.description')),
           TextField(
             controller: descController,
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.newline,
+            textCapitalization: TextCapitalization.sentences,
             minLines: 2,
             maxLines: 5,
             decoration: settingsInput(
@@ -94,6 +97,8 @@ class _NameField extends StatelessWidget {
         FieldLabel(text: context.t('projects.name'), required: true),
         TextField(
           controller: controller,
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.next,
           decoration: settingsInput(
             context,
             hint: context.t('projects.name'),
@@ -126,6 +131,7 @@ class _KeyField extends StatelessWidget {
         TextField(
           controller: controller,
           textCapitalization: TextCapitalization.characters,
+          autocorrect: false,
           maxLength: 10,
           style: const TextStyle(fontFamily: AppTheme.fontMono),
           inputFormatters: [_UpperAlphaNum()],

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show TextInput;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -108,183 +109,194 @@ class _LoginScreenState extends State<LoginScreen> {
           return AuthGlassCard(
             child: Form(
               key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Let the user re-target a different backend before
-                  // signing in (or add a new one).
-                  const ServerSelectorButton(),
-                  const SizedBox(height: 20),
-                  Text(
-                    organization ?? 'Hinata',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    localAuth
-                        ? context.t('auth.subtitle')
-                        : context.t('auth.ssoOnlyBody'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                  if (localAuth) ...[
-                    const SizedBox(height: 28),
-                    TextFormField(
-                      controller: _identifier,
-                      enabled: !busy,
-                      autofillHints: const [AutofillHints.username],
-                      decoration: InputDecoration(
-                        labelText: context.t('auth.identifier'),
-                        prefixIcon: const Icon(LucideIcons.user),
-                      ),
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? context.t('errors.required')
-                          : null,
-                    ),
-                    const SizedBox(height: 14),
-                    TextFormField(
-                      controller: _password,
-                      enabled: !busy,
-                      obscureText: true,
-                      autofillHints: const [AutofillHints.password],
-                      decoration: InputDecoration(
-                        labelText: context.t('auth.password'),
-                        prefixIcon: const Icon(LucideIcons.lock),
-                      ),
-                      validator: (v) => (v == null || v.isEmpty)
-                          ? context.t('errors.required')
-                          : null,
-                      onFieldSubmitted: (_) => _submit(),
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: busy
-                            ? null
-                            : () => context.go('/forgot-password'),
-                        child: Text(context.t('auth.forgotPassword')),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    FilledButton(
-                      onPressed: busy ? null : _submit,
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: passwordBusy
-                            ? const SizedBox(
-                                key: ValueKey('loader'),
-                                width: 22,
-                                height: 22,
-                                child: HiveLoader(
-                                  size: 22,
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                context.t('auth.signIn'),
-                                key: const ValueKey('label'),
-                              ),
-                      ),
-                    ),
-                  ],
-                  // The "or" divider only makes sense when both local
-                  // sign-in and SSO are offered.
-                  if (localAuth && _providers.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        const Expanded(child: Divider()),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(
-                            context.t('auth.or'),
-                            style: TextStyle(color: AppColors.textSecondary),
-                          ),
-                        ),
-                        const Expanded(child: Divider()),
-                      ],
-                    ),
-                  ],
-                  // SSO buttons are shown whenever a provider exists,
-                  // including SSO-only mode (localAuth == false).
-                  if (_providers.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    for (final provider in _providers)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: OutlinedButton.icon(
-                          onPressed: busy ? null : () => _launchSso(provider),
-                          icon: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child: _launchingSsoId == provider.id
-                                ? const SizedBox(
-                                    key: ValueKey('loader'),
-                                    width: 18,
-                                    height: 18,
-                                    child: HiveLoader(size: 18, strokeWidth: 2),
-                                  )
-                                : const Icon(
-                                    LucideIcons.shield,
-                                    size: 18,
-                                    key: ValueKey('icon'),
-                                  ),
-                          ),
-                          label: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child: _launchingSsoId == provider.id
-                                ? Text(
-                                    context.t('auth.signingIn'),
-                                    key: const ValueKey('signing'),
-                                  )
-                                : Text(
-                                    context.t(
-                                      'auth.continueWith',
-                                      variables: {
-                                        'provider': provider.displayName,
-                                      },
-                                    ),
-                                    key: const ValueKey('continue'),
-                                  ),
-                          ),
-                        ),
-                      ),
-                  ],
-                  // SSO-only, but no provider configured yet — the user
-                  // has no way to sign in; point them at their admin.
-                  if (!localAuth && _providers.isEmpty) ...[
-                    const SizedBox(height: 16),
+              // Groups the identifier + password fields so the OS/password
+              // manager fills both when a saved credential is picked, and can
+              // offer to save the pair on submit.
+              child: AutofillGroup(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Let the user re-target a different backend before
+                    // signing in (or add a new one).
+                    const ServerSelectorButton(),
+                    const SizedBox(height: 20),
                     Text(
-                      context.t('auth.ssoOnlyNoProviders'),
+                      organization ?? 'Hinata',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      localAuth
+                          ? context.t('auth.subtitle')
+                          : context.t('auth.ssoOnlyBody'),
                       textAlign: TextAlign.center,
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
-                  ],
-                  if (localAuth && registrationEnabled) ...[
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          context.t('auth.noAccount'),
-                          style: TextStyle(color: AppColors.textSecondary),
+                    if (localAuth) ...[
+                      const SizedBox(height: 28),
+                      TextFormField(
+                        controller: _identifier,
+                        enabled: !busy,
+                        autofillHints: const [AutofillHints.username],
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        autocorrect: false,
+                        decoration: InputDecoration(
+                          labelText: context.t('auth.identifier'),
+                          prefixIcon: const Icon(LucideIcons.user),
                         ),
-                        TextButton(
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? context.t('errors.required')
+                            : null,
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: _password,
+                        enabled: !busy,
+                        obscureText: true,
+                        autofillHints: const [AutofillHints.password],
+                        textInputAction: TextInputAction.done,
+                        decoration: InputDecoration(
+                          labelText: context.t('auth.password'),
+                          prefixIcon: const Icon(LucideIcons.lock),
+                        ),
+                        validator: (v) => (v == null || v.isEmpty)
+                            ? context.t('errors.required')
+                            : null,
+                        onFieldSubmitted: (_) => _submit(),
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
                           onPressed: busy
                               ? null
-                              : () => context.go('/register'),
-                          child: Text(context.t('auth.createAccount')),
+                              : () => context.go('/forgot-password'),
+                          child: Text(context.t('auth.forgotPassword')),
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 10),
+                      FilledButton(
+                        onPressed: busy ? null : _submit,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          child: passwordBusy
+                              ? const SizedBox(
+                                  key: ValueKey('loader'),
+                                  width: 22,
+                                  height: 22,
+                                  child: HiveLoader(
+                                    size: 22,
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  context.t('auth.signIn'),
+                                  key: const ValueKey('label'),
+                                ),
+                        ),
+                      ),
+                    ],
+                    // The "or" divider only makes sense when both local
+                    // sign-in and SSO are offered.
+                    if (localAuth && _providers.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          const Expanded(child: Divider()),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text(
+                              context.t('auth.or'),
+                              style: TextStyle(color: AppColors.textSecondary),
+                            ),
+                          ),
+                          const Expanded(child: Divider()),
+                        ],
+                      ),
+                    ],
+                    // SSO buttons are shown whenever a provider exists,
+                    // including SSO-only mode (localAuth == false).
+                    if (_providers.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      for (final provider in _providers)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: OutlinedButton.icon(
+                            onPressed: busy ? null : () => _launchSso(provider),
+                            icon: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 200),
+                              child: _launchingSsoId == provider.id
+                                  ? const SizedBox(
+                                      key: ValueKey('loader'),
+                                      width: 18,
+                                      height: 18,
+                                      child: HiveLoader(
+                                        size: 18,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      LucideIcons.shield,
+                                      size: 18,
+                                      key: ValueKey('icon'),
+                                    ),
+                            ),
+                            label: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 200),
+                              child: _launchingSsoId == provider.id
+                                  ? Text(
+                                      context.t('auth.signingIn'),
+                                      key: const ValueKey('signing'),
+                                    )
+                                  : Text(
+                                      context.t(
+                                        'auth.continueWith',
+                                        variables: {
+                                          'provider': provider.displayName,
+                                        },
+                                      ),
+                                      key: const ValueKey('continue'),
+                                    ),
+                            ),
+                          ),
+                        ),
+                    ],
+                    // SSO-only, but no provider configured yet — the user
+                    // has no way to sign in; point them at their admin.
+                    if (!localAuth && _providers.isEmpty) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        context.t('auth.ssoOnlyNoProviders'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                    ],
+                    if (localAuth && registrationEnabled) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            context.t('auth.noAccount'),
+                            style: TextStyle(color: AppColors.textSecondary),
+                          ),
+                          TextButton(
+                            onPressed: busy
+                                ? null
+                                : () => context.go('/register'),
+                            child: Text(context.t('auth.createAccount')),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    const LegalLinks(),
                   ],
-                  const SizedBox(height: 8),
-                  const LegalLinks(),
-                ],
+                ),
               ),
             ),
           );
@@ -295,6 +307,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
+      // Commit the autofill context so the OS/password manager can offer to
+      // save or update the entered credentials.
+      TextInput.finishAutofillContext();
       context.read<AuthBloc>().add(
         LoginSubmitted(_identifier.text.trim(), _password.text),
       );

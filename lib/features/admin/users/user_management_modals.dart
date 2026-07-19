@@ -497,7 +497,8 @@ class _InviteModalState extends State<_InviteModal> {
   }
 
   bool get _valid =>
-      _effectiveEmails.isNotEmpty && _effectiveEmails.every((e) => _re.hasMatch(e));
+      _effectiveEmails.isNotEmpty &&
+      _effectiveEmails.every((e) => _re.hasMatch(e));
 
   /// Commits whatever is still in the field, then returns the final list.
   List<String> _finalize() {
@@ -541,6 +542,7 @@ class _InviteModalState extends State<_InviteModal> {
                           controller: _controller,
                           focusNode: _focus,
                           keyboardType: TextInputType.emailAddress,
+                          autocorrect: false,
                           onChanged: _onChanged,
                           onSubmitted: (v) {
                             _commit(v);
@@ -588,6 +590,9 @@ class _InviteModalState extends State<_InviteModal> {
               child: TextField(
                 controller: _message,
                 maxLines: 3,
+                keyboardType: TextInputType.multiline,
+                textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.newline,
                 decoration: glassInputDecoration(
                   hint: context.t('admin.um.inviteMessageHint'),
                 ),
@@ -629,7 +634,11 @@ class _InviteModalState extends State<_InviteModal> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (invalid) ...[
-            const Icon(LucideIcons.mailWarning, size: 13, color: AppColors.danger),
+            const Icon(
+              LucideIcons.mailWarning,
+              size: 13,
+              color: AppColors.danger,
+            ),
             const SizedBox(width: 4),
           ],
           Text(
@@ -704,6 +713,8 @@ class _EditModalState extends State<_EditModal> {
               label: context.t('admin.um.fieldName'),
               child: TextField(
                 controller: _name,
+                textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.next,
                 decoration: glassInputDecoration(),
               ),
             ),
@@ -712,6 +723,7 @@ class _EditModalState extends State<_EditModal> {
               label: context.t('admin.um.fieldTitle'),
               child: TextField(
                 controller: _title,
+                textInputAction: TextInputAction.next,
                 decoration: glassInputDecoration(),
               ),
             ),
@@ -725,6 +737,8 @@ class _EditModalState extends State<_EditModal> {
                 controller: _email,
                 enabled: !sso,
                 keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
+                textInputAction: TextInputAction.done,
                 decoration: glassInputDecoration(
                   hint: sso ? context.t('admin.um.emailLockedHint') : null,
                 ),

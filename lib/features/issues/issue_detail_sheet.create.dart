@@ -65,7 +65,6 @@ class IssueCreateBody extends StatefulWidget {
 }
 
 class IssueCreateBodyState extends State<IssueCreateBody> {
-
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
 
@@ -139,7 +138,10 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
       _error = null;
     });
     try {
-      final results = await Future.wait([_projectApi.projects(), _userApi.users()]);
+      final results = await Future.wait([
+        _projectApi.projects(),
+        _userApi.users(),
+      ]);
       _projects = results[0] as List<Project>;
       _users = results[1] as List<DirectoryUser>;
       _projectId ??= _projects.firstOrNull?.id;
@@ -363,6 +365,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
           controller: _titleCtrl,
           maxLines: null,
           textInputAction: TextInputAction.next,
+          textCapitalization: TextCapitalization.sentences,
           style: const TextStyle(
             fontFamily: AppTheme.fontBrand,
             fontSize: 20,
@@ -372,7 +375,10 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
           decoration: InputDecoration(
             hintText: context.t('issues.title'),
             errorStyle: const TextStyle(color: AppColors.danger, fontSize: 12),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 8,
+            ),
           ),
           validator: (value) => (value == null || value.trim().isEmpty)
               ? context.t('errors.required')
@@ -871,4 +877,3 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     }
   }
 }
-

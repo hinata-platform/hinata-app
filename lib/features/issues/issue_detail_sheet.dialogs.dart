@@ -460,7 +460,11 @@ class _SubtaskQuickAddState extends State<_SubtaskQuickAdd> {
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            icon: const Icon(LucideIcons.plus, size: 18, color: AppColors.stTodo),
+            icon: const Icon(
+              LucideIcons.plus,
+              size: 18,
+              color: AppColors.stTodo,
+            ),
           ),
         const SizedBox(width: 4),
         Expanded(
@@ -481,6 +485,7 @@ class _SubtaskQuickAddState extends State<_SubtaskQuickAdd> {
                 if (_ctrl.text.trim().isEmpty) _collapse();
               },
               textInputAction: TextInputAction.done,
+              textCapitalization: TextCapitalization.sentences,
               style: const TextStyle(fontSize: 13.5),
               decoration: InputDecoration(
                 isDense: true,
@@ -521,4 +526,3 @@ Future<T?> _pickOption<T>(
     anchorRect: anchorRect,
   );
 }
-

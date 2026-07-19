@@ -24,9 +24,7 @@ import '../sprint/modals/glass_modal.dart'
 /// - [issue] non-null → attach that issue as parent (patch `parentId: id`).
 class EpicPickResult {
   const EpicPickResult.pick(this.issue) : clear = false;
-  const EpicPickResult.clear()
-      : issue = null,
-        clear = true;
+  const EpicPickResult.clear() : issue = null, clear = true;
 
   final Issue? issue;
   final bool clear;
@@ -149,8 +147,7 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
 
   void _onScroll() {
     if (!_scroll.hasClients) return;
-    if (_scroll.position.pixels >=
-        _scroll.position.maxScrollExtent - 120) {
+    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 120) {
       _runSearch(reset: false);
     }
   }
@@ -227,8 +224,8 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
     final isEmptyQuery = _query.trim().isEmpty;
     final headerKey = isEmptyQuery
         ? (widget.forSubtask
-            ? 'issues.epicPicker.recentParents'
-            : 'issues.epicPicker.recent')
+              ? 'issues.epicPicker.recentParents'
+              : 'issues.epicPicker.recent')
         : 'issues.epicPicker.results';
     // Only standard issues can detach to "no epic"; sub-tasks always need a
     // parent, so the clear row is offered for epics only.
@@ -265,6 +262,7 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
         controller: _searchCtrl,
         focusNode: _focus,
         onChanged: _onQueryChanged,
+        textInputAction: TextInputAction.search,
         style: const TextStyle(fontSize: 14),
         decoration: InputDecoration(
           isDense: true,
