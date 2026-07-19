@@ -585,6 +585,42 @@ class _WideAdminShell extends StatelessWidget {
 
 // ─────────────────────────── Glass nav rail ──────────────────────────────
 
+/// Ambient shadow for the *docked* nav rail. Deliberately NOT the search
+/// palette's `panelShadow` — that one is tuned for a modal floating mid-screen
+/// (a ~60px side penumbra + heavy downward smear) and, on a rail docked one
+/// [pageGutter] from the content-clip edge, its left half gets chopped into a
+/// hard vertical line. These keep the horizontal bleed (≈ blur − spread ≤ 22px)
+/// inside the gutter so the float reads cleanly at every width, light or dark.
+const List<BoxShadow> _kRailShadowLight = [
+  BoxShadow(
+    color: Color.fromRGBO(20, 18, 45, 0.13),
+    offset: Offset(0, 12),
+    blurRadius: 30,
+    spreadRadius: -10,
+  ),
+  BoxShadow(
+    color: Color.fromRGBO(20, 18, 45, 0.07),
+    offset: Offset(0, 2),
+    blurRadius: 8,
+    spreadRadius: -3,
+  ),
+];
+
+const List<BoxShadow> _kRailShadowDark = [
+  BoxShadow(
+    color: Color.fromRGBO(0, 0, 0, 0.40),
+    offset: Offset(0, 14),
+    blurRadius: 34,
+    spreadRadius: -14,
+  ),
+  BoxShadow(
+    color: Color.fromRGBO(0, 0, 0, 0.28),
+    offset: Offset(0, 2),
+    blurRadius: 8,
+    spreadRadius: -4,
+  ),
+];
+
 /// The desktop nav rail: a floating liquid-glass panel (refracting the ambient
 /// canvas behind it) with a brand header + grouped, amber-active section list.
 class _AdminNavRail extends StatelessWidget {
@@ -605,7 +641,7 @@ class _AdminNavRail extends StatelessWidget {
 
     return GlassPanelShadow(
       radius: BorderRadius.circular(24),
-      shadows: tokens.panelShadow,
+      shadows: dark ? _kRailShadowDark : _kRailShadowLight,
       child: GlassContainer(
         useOwnLayer: true,
         quality: GlassQuality.premium,

@@ -93,7 +93,7 @@ class AuthShell extends StatelessWidget {
               return Row(
                 children: [
                   Expanded(
-                    flex: 382,
+                    flex: 352,
                     // The form side rides on the procedural Aurora Hive so the
                     // glass card refracts real structure and the honeycomb
                     // lattice echoes the hero.
@@ -107,7 +107,7 @@ class AuthShell extends StatelessWidget {
                     ),
                   ),
                   Expanded(
-                    flex: 618,
+                    flex: 648,
                     child: _ImageHero(
                       image: dark ? hero.desktopDark : hero.desktopLight,
                       dark: dark,
@@ -133,7 +133,7 @@ class AuthShell extends StatelessWidget {
                 ? Row(
                     children: [
                       Expanded(
-                        flex: 382,
+                        flex: 352,
                         child: _InputPane(
                           maxContentWidth: maxContentWidth,
                           veil: true,
@@ -141,7 +141,7 @@ class AuthShell extends StatelessWidget {
                           child: child,
                         ),
                       ),
-                      const Expanded(flex: 618, child: _AuthHero()),
+                      const Expanded(flex: 648, child: _AuthHero()),
                     ],
                   )
                 : _InputPane(
