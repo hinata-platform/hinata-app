@@ -40,9 +40,15 @@ class MetaRepository {
   /// Fetches the configured organization logo through the server-side proxy
   /// (`/api/v1/meta/logo`) so it is delivered same-origin (no browser CORS).
   /// Returns the raw bytes plus whether the payload is SVG, or null when no
-  /// logo is configured / reachable.
-  Future<({List<int> bytes, bool isSvg})?> organizationLogo() async {
-    final result = await _api.getBytes('/api/v1/meta/logo');
+  /// logo is configured / reachable. Pass [cacheBust] (e.g. an incrementing
+  /// token) to force a fresh fetch past the HTTP cache after a re-upload.
+  Future<({List<int> bytes, bool isSvg})?> organizationLogo({
+    int? cacheBust,
+  }) async {
+    final path = cacheBust == null
+        ? '/api/v1/meta/logo'
+        : '/api/v1/meta/logo?v=$cacheBust';
+    final result = await _api.getBytes(path);
     if (result == null) return null;
     final head = String.fromCharCodes(result.bytes.take(256)).toLowerCase();
     final isSvg =

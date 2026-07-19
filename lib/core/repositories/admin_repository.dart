@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart' show MultipartFile;
+
 import '../api/api_client.dart';
 import '../models/admin_user_models.dart';
 import '../models/audit_models.dart';
@@ -18,6 +20,20 @@ class AdminRepository {
   ) async =>
       await _api.put('/api/v1/admin/settings', body: settings)
           as Map<String, dynamic>;
+
+  /// Uploads an organization logo into the server's object storage and returns
+  /// the internal, cache-busted logo URL to write back into
+  /// `settings['general']['logoUrl']`. The server serves it same-origin via
+  /// `/api/v1/meta/logo`, so it works on web without CORS.
+  Future<String> uploadOrganizationLogo(MultipartFile file) async {
+    final result = await _api.upload('/api/v1/admin/settings/logo', file)
+        as Map<String, dynamic>;
+    return result['logoUrl'] as String;
+  }
+
+  /// Removes an uploaded logo (deletes the stored object and clears the URL).
+  Future<void> deleteOrganizationLogo() =>
+      _api.delete('/api/v1/admin/settings/logo');
 
   // --- Hinata Connect (push + universal-link relay) ------------------------------
 
