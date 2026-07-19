@@ -5,6 +5,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hinata/core/widgets/hive_loader.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
@@ -227,10 +229,7 @@ class _AdminGeneralSectionState extends State<AdminGeneralSection> {
           hint: 'https://example.com/logo.png',
           keyboardType: TextInputType.url,
         ),
-        AdminNote(
-          text: context.t('admin.logoHint'),
-          tone: AdminNoteTone.info,
-        ),
+        AdminNote(text: context.t('admin.logoHint'), tone: AdminNoteTone.info),
       ],
     );
   }
@@ -390,9 +389,6 @@ class _LogoPreviewState extends State<_LogoPreview> {
 
   @override
   Widget build(BuildContext context) {
-    // SVG (only reachable via an external URL) can't decode to Image.memory
-    // without a vector renderer, so fall back to the placeholder glyph.
-    final hasRaster = _bytes != null && !_svg;
     return Container(
       width: 64,
       height: 64,
@@ -404,20 +400,28 @@ class _LogoPreviewState extends State<_LogoPreview> {
       ),
       alignment: Alignment.center,
       child: _loading
-          ? SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppColors.inkFaint,
-              ),
+          ? HiveLoader(size: 22, color: AppColors.inkFaint)
+          : _preview(),
+    );
+  }
+
+  Widget _preview() {
+    final bytes = _bytes;
+    if (bytes == null) {
+      return Icon(LucideIcons.image, size: 22, color: AppColors.inkFaint);
+    }
+    return Padding(
+      padding: const EdgeInsets.all(6),
+      child: _svg
+          // Render SVG logos (e.g. an .svg URL) with the vector renderer so they
+          // preview correctly instead of falling back to the placeholder glyph.
+          ? SvgPicture.memory(
+              bytes,
+              fit: BoxFit.contain,
+              placeholderBuilder: (_) =>
+                  Icon(LucideIcons.image, size: 22, color: AppColors.inkFaint),
             )
-          : hasRaster
-          ? Padding(
-              padding: const EdgeInsets.all(6),
-              child: Image.memory(_bytes!, fit: BoxFit.contain),
-            )
-          : Icon(LucideIcons.image, size: 22, color: AppColors.inkFaint),
+          : Image.memory(bytes, fit: BoxFit.contain),
     );
   }
 }
