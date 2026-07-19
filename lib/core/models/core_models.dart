@@ -34,6 +34,7 @@ class ServerMeta extends Equatable {
     this.localAuthEnabled = true,
     this.registrationEnabled = true,
     this.adminApprovalRequired = false,
+    this.passwordMinLength = 10,
     this.uploadLimits = const UploadLimits(),
   });
 
@@ -62,6 +63,11 @@ class ServerMeta extends Equatable {
   /// Whether a verified sign-up still needs admin approval (shown as a hint on
   /// the sign-up screen).
   final bool adminApprovalRequired;
+
+  /// Minimum password length the server enforces for local accounts (sign-up,
+  /// reset, invite acceptance). Defaults to 10 for servers that predate the
+  /// field so the client stays in sync with the backend policy.
+  final int passwordMinLength;
   final UploadLimits uploadLimits;
 
   factory ServerMeta.fromJson(Map<String, dynamic> json) => ServerMeta(
@@ -82,6 +88,7 @@ class ServerMeta extends Equatable {
     localAuthEnabled: json['localAuthEnabled'] as bool? ?? true,
     registrationEnabled: json['registrationEnabled'] as bool? ?? true,
     adminApprovalRequired: json['adminApprovalRequired'] as bool? ?? false,
+    passwordMinLength: (json['passwordMinLength'] as num?)?.toInt() ?? 10,
     uploadLimits: json['uploadLimits'] is Map<String, dynamic>
         ? UploadLimits.fromJson(json['uploadLimits'] as Map<String, dynamic>)
         : const UploadLimits(),
@@ -109,6 +116,7 @@ class ServerMeta extends Equatable {
     localAuthEnabled,
     registrationEnabled,
     adminApprovalRequired,
+    passwordMinLength,
   ];
 }
 

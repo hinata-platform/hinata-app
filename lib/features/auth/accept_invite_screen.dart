@@ -167,6 +167,9 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
   }
 
   Widget _form(BuildContext context) {
+    final passwordMin = context.select(
+      (AppConfigBloc b) => b.state.meta?.passwordMinLength ?? 10,
+    );
     return Form(
       key: _formKey,
       // Lets a password manager capture the new password (and offer to save it
@@ -204,9 +207,12 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
                 ),
               ),
               onFieldSubmitted: (_) => _submit(),
-              validator: (v) => (v ?? '').length >= 10
+              validator: (v) => (v ?? '').length >= passwordMin
                   ? null
-                  : context.t('errors.passwordTooShort'),
+                  : context.t(
+                      'errors.passwordTooShort',
+                      variables: {'min': passwordMin},
+                    ),
             ),
             if (_submitError != null) ...[
               const SizedBox(height: 8),

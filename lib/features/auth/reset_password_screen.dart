@@ -133,6 +133,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   }
 
   Widget _form(BuildContext context) {
+    final passwordMin = context.select(
+      (AppConfigBloc b) => b.state.meta?.passwordMinLength ?? 10,
+    );
     return Form(
       key: _formKey,
       // Pairs the new + confirm password fields so a manager can capture and
@@ -169,9 +172,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),
               ),
-              validator: (v) => (v ?? '').length >= 10
+              validator: (v) => (v ?? '').length >= passwordMin
                   ? null
-                  : context.t('errors.passwordTooShort'),
+                  : context.t(
+                      'errors.passwordTooShort',
+                      variables: {'min': passwordMin},
+                    ),
             ),
             const SizedBox(height: 14),
             TextFormField(

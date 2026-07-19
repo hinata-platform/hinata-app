@@ -111,6 +111,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _form(BuildContext context) {
     final meta = context.select((AppConfigBloc b) => b.state.meta);
     final organization = meta?.organizationName;
+    final passwordMin = meta?.passwordMinLength ?? 10;
     return Form(
       key: _formKey,
       // Groups every credential field so a password manager can capture the
@@ -200,9 +201,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),
               ),
-              validator: (v) => (v ?? '').length >= 10
+              validator: (v) => (v ?? '').length >= passwordMin
                   ? null
-                  : context.t('errors.passwordTooShort'),
+                  : context.t(
+                      'errors.passwordTooShort',
+                      variables: {'min': passwordMin},
+                    ),
             ),
             const SizedBox(height: 14),
             TextFormField(

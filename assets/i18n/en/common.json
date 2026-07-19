@@ -73,7 +73,7 @@
     "required": "This field is required",
     "invalidEmail": "Please enter a valid e-mail address",
     "invalidUsername": "3-40 characters: letters, digits, . _ -",
-    "passwordTooShort": "At least 10 characters required",
+    "passwordTooShort": "At least {{min}} characters required",
     "invalidNumber": "Please enter a valid number",
     "invalidProjectKey": "2-10 characters, starting with a letter",
     "connection": "Could not reach the server. Please check your connection.",
