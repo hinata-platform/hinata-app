@@ -73,8 +73,13 @@ class VoicePlaybackController extends ChangeNotifier {
     // Pause whichever other bubble is currently playing before starting this
     // one, so voices never overlap.
     final prev = _current;
-    if (prev != null && !identical(prev, this)) {
-      await prev._player.pause();
+    if (prev != null && !identical(prev, this) && !prev._disposed) {
+      // Guard against a disposed peer: pausing a disposed just_audio player
+      // throws, which would abort toggle() before play() and permanently stall
+      // playback. try/catch keeps a fresh clip starting no matter what.
+      try {
+        await prev._player.pause();
+      } catch (_) {}
     }
     _current = this;
     await _player.play();
@@ -156,6 +161,9 @@ class VoicePlaybackController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    // Clear the app-wide pointer if it referenced us, so the next bubble's
+    // toggle() never dereferences a disposed controller.
+    if (identical(_current, this)) _current = null;
     for (final s in _subs) {
       s.cancel();
     }

@@ -62,6 +62,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   final Set<String> _sel = {};
 
+  /// Every [AdminUser] we've seen — current page items plus any directly-fetched
+  /// deep-link focus user. Confirm modals resolve their affected users from here
+  /// so an off-page/drawer user still carries its real name/role (and the
+  /// type-DELETE safeguard) into the dialog instead of degrading to an empty list.
+  final Map<String, AdminUser> _known = {};
+
   /// Guards the one-shot deep-link drawer open so filter/page reloads don't
   /// keep re-opening it.
   bool _focusHandled = false;
@@ -84,6 +90,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     try {
       final user = await _repo.adminUser(id);
       if (!mounted) return;
+      _known[user.id] = user;
       _actions.openDrawer(user);
     } on ApiFailure {
       // User was deleted/not found — silently stay on the board.
@@ -115,6 +122,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       );
       // Drop a response that a newer load has already superseded.
       if (!mounted || gen != _loadGen) return;
+      for (final u in page.items) {
+        _known[u.id] = u;
+      }
       setState(() {
         _page = page;
         _pageNum = page.page;
@@ -131,7 +141,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   void _resetAndReload() {
-    _pageNum = 1;
+    // Replacing the result set (filter/sort/search/per-page/KPI) strands the
+    // per-page selection off-page, so clear it — same rationale as _goToPage.
+    setState(() {
+      _pageNum = 1;
+      _sel.clear();
+    });
     _load();
   }
 
@@ -279,7 +294,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   List<AdminUser> _usersFor(List<String> ids) =>
-      _page?.items.where((u) => ids.contains(u.id)).toList() ?? const [];
+      ids.map((id) => _known[id]).whereType<AdminUser>().toList();
 
   Future<void> _invite() async {
     final result = await showInviteModal(context);
@@ -336,6 +351,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         _sortKey = key;
         _desc = key != UserSortKey.name;
       }
+      _sel.clear();
     });
     _load();
   }
@@ -748,7 +764,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 GlassMenuItem<int>(value: 50, label: '50'),
               ],
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceMuted,
                   borderRadius: BorderRadius.circular(AppTheme.radiusPill),

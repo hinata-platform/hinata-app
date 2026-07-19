@@ -332,6 +332,7 @@
     "micDenied": "Microphone access is needed to record a voice message.",
     "voiceFailed": "Voice message couldn't be sent — please try again.",
     "deleteFailed": "Some comments couldn't be deleted.",
+    "jumpNotFound": "That comment couldn't be found — it may have been deleted.",
     "recording": "Recording",
     "attaching": "Uploading attachment…",
     "attached": "Attachment added",
@@ -544,7 +545,8 @@
       "typeTitle": "Link type",
       "fieldHint": "Enter URL, search or paste",
       "suggestionsTitle": "Current issues",
-      "noMatches": "No matching issues"
+      "noMatches": "No matching issues",
+      "loadFailed": "Couldn't load linked issues."
     },
     "epicPicker": {
       "recent": "Recent epics",

@@ -449,6 +449,12 @@ class _ProviderTileState extends State<ProviderTile> {
   final ExpansibleController _expansion = ExpansibleController();
 
   @override
+  void dispose() {
+    _expansion.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final enabled = widget.section['enabled'] == true;
     return Theme(

@@ -460,7 +460,7 @@ class _ActivityTile extends StatelessWidget {
     // more muted fill to distinguish change events from real messages.
     final bubble = Container(
       constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width * 0.72,
+        maxWidth: MediaQuery.sizeOf(context).width * 0.72,
       ),
       decoration: BoxDecoration(
         color: dark ? const Color(0xFF1E1D29) : AppColors.surfaceMuted,

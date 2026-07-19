@@ -484,7 +484,11 @@ class _ReplyThreadView extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: keyed == null ? row : KeyedSubtree(key: keyed, child: row),
+              child: RepaintBoundary(
+                child: keyed == null
+                    ? row
+                    : KeyedSubtree(key: keyed, child: row),
+              ),
             ),
           ),
         ],

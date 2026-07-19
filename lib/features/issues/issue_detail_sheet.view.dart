@@ -109,8 +109,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   // half-open stream is cycled instead of silently going stale) and a resync on
   // every reconnect to catch up anything missed while it was down.
   late final SseConnection _commentSse = SseConnection(
-    open: (cancelToken) =>
-        _commentApi.commentEventStream(widget.issueId, cancelToken: cancelToken),
+    open: (cancelToken) => _commentApi.commentEventStream(
+      widget.issueId,
+      cancelToken: cancelToken,
+    ),
     onEvent: (_) => _scheduleCommentResync(),
     onReconnect: _scheduleCommentResync,
   );
@@ -202,13 +204,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// action isn't available (not email-sourced, or the admin flag is off).
   VoidCallback? _replyEmailAction(Issue issue) {
     final enabled =
-        context.read<AppConfigBloc>().state.meta?.isFlagEnabled(
-          'emailReply',
-        ) ??
+        context.read<AppConfigBloc>().state.meta?.isFlagEnabled('emailReply') ??
         false;
     if (!issue.isEmailSourced || !enabled) return null;
-    return () =>
-        showEmailReplySheet(context, issue: issue, repo: _issueApi);
+    return () => showEmailReplySheet(context, issue: issue, repo: _issueApi);
   }
 
   CommentRepository get _commentApi => context.read<CommentRepository>();
@@ -302,7 +301,11 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     try {
       final want = math.max(_comments.length, _commentPageSize);
       final results = await Future.wait([
-        _commentApi.comments(widget.issueId, size: want, sort: _commentSort.api),
+        _commentApi.comments(
+          widget.issueId,
+          size: want,
+          sort: _commentSort.api,
+        ),
         _commentApi.pinnedComments(widget.issueId),
       ]);
       if (!mounted) return;
@@ -330,7 +333,11 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       if (t == null || !mounted) continue;
       final want = math.max(t.replies.length, _replyPageSize);
       try {
-        final p = await _commentApi.commentReplies(widget.issueId, rootId, size: want);
+        final p = await _commentApi.commentReplies(
+          widget.issueId,
+          rootId,
+          size: want,
+        );
         if (!mounted) return;
         setState(() {
           _replyThreads[rootId] = t.copyWith(
@@ -506,8 +513,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     if (_activityFilter != _ActivityFilter.comments) return;
     if (_comments.isEmpty) return;
     // Newest-first → the new comment is at the top; oldest-first → at the bottom.
-    final newest =
-        _commentSort == CommentSort.newest ? _comments.first : _comments.last;
+    final newest = _commentSort == CommentSort.newest
+        ? _comments.first
+        : _comments.last;
     _revealComment(newest.id, alignment: 0.15);
   }
 
@@ -530,6 +538,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   }
 
   Future<void> _load() async {
+    // Callers may await this after their own awaits (e.g. a sheet closing), so
+    // the body could already be torn down — guard the first setState.
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -629,6 +640,25 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           _error = 'errors.unexpected';
         });
       }
+    }
+  }
+
+  /// Light refresh after logging work: refetch just the work items (and the
+  /// issue for its aggregated time totals) instead of a full [_load], so the
+  /// comment window, loaded pages and scroll position are preserved.
+  Future<void> _reloadWorkItems() async {
+    try {
+      final results = await Future.wait([
+        _issueApi.workItems(widget.issueId),
+        _issueApi.issue(widget.issueId),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _workItems = results[0] as List<WorkItem>;
+        _issue = results[1] as Issue;
+      });
+    } catch (_) {
+      // Non-critical; totals catch up on the next full load.
     }
   }
 
@@ -935,7 +965,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       final rootId = comment.replyToId!;
       final t = _threadOf(rootId);
       _replyThreads[rootId] = t.copyWith(
-        replies: [for (final r in t.replies) if (r.id != id) r],
+        replies: [
+          for (final r in t.replies)
+            if (r.id != id) r,
+        ],
         total: t.total > 0 ? t.total - 1 : 0,
       );
       IssueComment dec(IssueComment c) =>
@@ -944,8 +977,14 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       _pinned = [for (final c in _pinned) c.id == rootId ? dec(c) : c];
       return;
     }
-    _comments = [for (final c in _comments) if (c.id != id) c];
-    _pinned = [for (final c in _pinned) if (c.id != id) c];
+    _comments = [
+      for (final c in _comments)
+        if (c.id != id) c,
+    ];
+    _pinned = [
+      for (final c in _pinned)
+        if (c.id != id) c,
+    ];
     _replyThreads.remove(id);
     if (_commentsTotal > 0) _commentsTotal--;
   }
@@ -992,6 +1031,12 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     } on ApiFailure catch (failure) {
       _toast(failure.message);
       _scheduleCommentResync();
+    } catch (_) {
+      // A non-ApiFailure error (payload shape, stale-socket) would otherwise
+      // escape as a global 'errors.unexpected' and leave the optimistic
+      // reaction stuck — surface it and let the resync reconcile.
+      _toast('errors.unexpected');
+      _scheduleCommentResync();
     }
   }
 
@@ -1011,6 +1056,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       });
     } on ApiFailure catch (failure) {
       _toast(failure.message);
+    } catch (_) {
+      _toast('errors.unexpected');
     }
   }
 
@@ -1143,6 +1190,19 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       await _loadMoreComments();
     }
     if (!mounted) return;
+    // Still not among roots/pinned → the target is likely a reply living in a
+    // lazily-loaded, collapsed thread. Expand and fully page each root that
+    // owns replies until the reply surfaces (bounded).
+    if (!found()) {
+      await _resolveReplyTarget(commentId, found);
+      if (!mounted) return;
+    }
+    if (!found()) {
+      // Genuinely unreachable (deleted, or in a thread we couldn't resolve) —
+      // tell the user instead of silently doing nothing.
+      _toast('comments.jumpNotFound');
+      return;
+    }
     if (_activityFilter == _ActivityFilter.history) {
       setState(() => _activityFilter = _ActivityFilter.comments);
     }
@@ -1164,6 +1224,40 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         if (mounted) setState(() => _highlightedCommentId = null);
       });
     });
+  }
+
+  /// Surfaces a reply [commentId] hidden in a collapsed/lazy thread: walks the
+  /// loaded roots that own replies, expands each and pages its thread until the
+  /// reply appears or the thread is exhausted. Bounded so it can't spin.
+  Future<void> _resolveReplyTarget(
+    String commentId,
+    bool Function() found,
+  ) async {
+    final roots = [
+      for (final c in _comments)
+        if (c.isRoot && c.hasReplies) c,
+    ];
+    for (final root in roots) {
+      if (found()) return;
+      // Load the first page (and expand) if the thread is untouched.
+      if (_threadOf(root.id).replies.isEmpty) {
+        await _fetchReplies(root.id, page: 0, replace: true);
+      } else if (!_threadOf(root.id).expanded) {
+        setState(
+          () => _replyThreads[root.id] = _threadOf(
+            root.id,
+          ).copyWith(expanded: true),
+        );
+      }
+      if (!mounted) return;
+      // Page the rest of this thread until the reply shows or it runs out.
+      var guard = 0;
+      while (!found() && _threadOf(root.id).hasMore && guard++ < 50) {
+        await _loadMoreReplies(root);
+        if (!mounted) return;
+      }
+      if (found()) return;
+    }
   }
 
   bool get _hasMoreComments => _comments.length < _commentsTotal;
@@ -1901,6 +1995,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     } on ApiFailure catch (failure) {
       _toast(failure.message);
       return false;
+    } catch (_) {
+      _toast('errors.unexpected');
+      return false;
     }
   }
 
@@ -1926,6 +2023,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       await _reloadHierarchy();
     } on ApiFailure catch (failure) {
       _toast(failure.message);
+    } catch (_) {
+      _toast('errors.unexpected');
     }
   }
 
@@ -2173,9 +2272,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
               GestureDetector(
                 onTap: () async {
                   final logged = await showWorkLogSheet(context, issue.id);
-                  if (logged == true) {
+                  if (logged == true && mounted) {
                     widget.onChanged?.call();
-                    await _load();
+                    await _reloadWorkItems();
                   }
                 },
                 child: Text(
@@ -2732,13 +2831,19 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       onLoadMoreReplies: _loadMoreReplies,
     );
     // Same flat tile as the Comments tab, so comments look identical in every
-    // tab (voice comments stay playable in the merged "All" feed too).
-    Widget commentTile(IssueComment c) => CommentBubbleRow(
-      comment: c,
-      interactions: interactions,
-      selectionMode: _selectionMode,
-      selected: _selectedIds.contains(c.id),
-      onToggleSelected: _toggleSelected,
+    // tab (voice comments stay playable in the merged "All" feed too). The
+    // ValueKey gives each row a stable identity so a live reorder never reuses
+    // one comment's State (e.g. a voice controller) for a different comment;
+    // the RepaintBoundary keeps a bubble's glass/blur repaint from cascading.
+    Widget commentTile(IssueComment c) => RepaintBoundary(
+      key: ValueKey('cmt-${c.id}'),
+      child: CommentBubbleRow(
+        comment: c,
+        interactions: interactions,
+        selectionMode: _selectionMode,
+        selected: _selectedIds.contains(c.id),
+        onToggleSelected: _toggleSelected,
+      ),
     );
     final issueIds = {
       for (final i in _projectIssues.values) i.id: i.readableId,
@@ -2881,7 +2986,11 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         const Spacer(),
         TextButton.icon(
           onPressed: _selectedIds.isEmpty ? null : _deleteSelected,
-          icon: const Icon(LucideIcons.trash2, size: 16, color: AppColors.danger),
+          icon: const Icon(
+            LucideIcons.trash2,
+            size: 16,
+            color: AppColors.danger,
+          ),
           label: Text(
             context.t('common.delete'),
             style: const TextStyle(
@@ -3193,8 +3302,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     final action = await showGlassModal<_IssueRemovalAction>(
       context,
       width: 420,
-      builder: (_) =>
-          _RemoveIssueConfirm(issue: issue, canDelete: _canDelete),
+      builder: (_) => _RemoveIssueConfirm(issue: issue, canDelete: _canDelete),
     );
     if (action == null) return;
     try {
@@ -3221,4 +3329,3 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     }
   }
 }
-

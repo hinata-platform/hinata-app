@@ -237,7 +237,8 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
     );
 
     final belowTop = anchor.bottom + 8;
-    final roomBelow = size.height - belowTop - margin - pad.bottom - insets.bottom;
+    final roomBelow =
+        size.height - belowTop - margin - pad.bottom - insets.bottom;
     final roomAbove = anchor.top - 8 - margin - pad.top;
     final placeAbove = roomBelow < 280 && roomAbove > roomBelow;
     final maxHeight = (placeAbove ? roomAbove : roomBelow).clamp(220.0, 560.0);
@@ -379,7 +380,9 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
                       vertical: 6,
                       horizontal: 8,
                     ),
-                    shrinkWrap: true,
+                    // No shrinkWrap: the enclosing Flexible already bounds the
+                    // height, so the list builds rows lazily instead of laying
+                    // out every option (hundreds on a large workspace) up front.
                     itemCount: shown.length,
                     itemBuilder: (_, i) {
                       final o = shown[i];

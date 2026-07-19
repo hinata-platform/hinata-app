@@ -136,15 +136,21 @@ class _AdminGeneralSectionState extends State<AdminGeneralSection> {
     required List<({String value, String label})> options,
     required ValueChanged<String> onChanged,
   }) {
-    final current = options.firstWhere(
+    // The server may persist a value outside the hardcoded list (e.g. any IANA
+    // zone). Append it so it both displays and highlights, instead of silently
+    // falling back to the first option and risking an accidental overwrite.
+    final opts = (value.isEmpty || options.any((o) => o.value == value))
+        ? options
+        : [...options, (value: value, label: value)];
+    final current = opts.firstWhere(
       (o) => o.value == value,
-      orElse: () => options.first,
+      orElse: () => opts.first,
     );
     return GlassPopupMenu<String>(
       value: value,
       onSelected: onChanged,
       items: [
-        for (final o in options) GlassMenuItem(value: o.value, label: o.label),
+        for (final o in opts) GlassMenuItem(value: o.value, label: o.label),
       ],
       child: InputDecorator(
         decoration: adminInputDecoration(context, label: label),
@@ -263,14 +269,7 @@ class _AdminGeneralSectionState extends State<AdminGeneralSection> {
             mainAxisSize: MainAxisSize.min,
             children: [
               busy
-                  ? SizedBox(
-                      width: 15,
-                      height: 15,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: color,
-                      ),
-                    )
+                  ? HiveLoader(size: 15, color: color)
                   : Icon(icon, size: 15, color: color),
               const SizedBox(width: 7),
               Text(
@@ -401,11 +400,11 @@ class _LogoPreviewState extends State<_LogoPreview> {
       alignment: Alignment.center,
       child: _loading
           ? HiveLoader(size: 22, color: AppColors.inkFaint)
-          : _preview(),
+          : _preview(context),
     );
   }
 
-  Widget _preview() {
+  Widget _preview(BuildContext context) {
     final bytes = _bytes;
     if (bytes == null) {
       return Icon(LucideIcons.image, size: 22, color: AppColors.inkFaint);
@@ -421,7 +420,13 @@ class _LogoPreviewState extends State<_LogoPreview> {
               placeholderBuilder: (_) =>
                   Icon(LucideIcons.image, size: 22, color: AppColors.inkFaint),
             )
-          : Image.memory(bytes, fit: BoxFit.contain),
+          // Decode down to the 64px box (× DPR) instead of the raw upload, so a
+          // large PNG doesn't bloat the image cache for a thumbnail.
+          : Image.memory(
+              bytes,
+              fit: BoxFit.contain,
+              cacheWidth: (64 * MediaQuery.devicePixelRatioOf(context)).round(),
+            ),
     );
   }
 }

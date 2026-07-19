@@ -10,6 +10,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../sprint/modals/glass_modal.dart'
     show
@@ -305,13 +306,7 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
     if (_loading) {
       return const Padding(
         padding: EdgeInsets.all(24),
-        child: Center(
-          child: SizedBox(
-            height: 18,
-            width: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
+        child: Center(child: HiveLoader(size: 18)),
       );
     }
     if (_results.isEmpty) {
@@ -336,13 +331,7 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
         if (i >= _results.length) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
-            child: Center(
-              child: SizedBox(
-                height: 16,
-                width: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
+            child: Center(child: HiveLoader(size: 16)),
           );
         }
         return _EpicTile(issue: _results[i], onTap: () => _pick(_results[i]));

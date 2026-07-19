@@ -184,10 +184,20 @@ class _LinkEditor extends StatefulWidget {
 }
 
 class _LinkEditorState extends State<_LinkEditor> {
+  static const _debounceDelay = Duration(milliseconds: 220);
+  static const _searchSize = 25;
+
   IssueRepository get _repo => context.read<IssueRepository>();
 
   IssueLinkOption _option = kIssueLinkOptions.first;
   final List<Issue> _selected = [];
+
+  // Debounced, server-side search (mirrors epic_search_popover): a one-shot
+  // size:100 load + in-memory filter left every issue beyond the first page
+  // unlinkable. The monotonic sequence discards a slow response that lands
+  // after a newer keystroke.
+  Timer? _debounce;
+  int _reqSeq = 0;
 
   final _searchCtrl = TextEditingController();
   final _focus = FocusNode();
@@ -209,11 +219,12 @@ class _LinkEditorState extends State<_LinkEditor> {
   void initState() {
     super.initState();
     _focus.addListener(_onFocusChange);
-    _loadCandidates();
+    _search();
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _focus.removeListener(_onFocusChange);
     _searchCtrl.dispose();
     _focus.dispose();
@@ -227,34 +238,39 @@ class _LinkEditorState extends State<_LinkEditor> {
     }
   }
 
-  Future<void> _loadCandidates() async {
+  /// Runs a debounced server-side search for [_query] (empty → recent issues),
+  /// replacing [_candidates] with the matched page. The backend does the id/title
+  /// matching, so any issue in the project is reachable, not just the first page.
+  Future<void> _search() async {
+    final seq = ++_reqSeq;
+    final query = _query.trim();
+    // Keep the current results visible while re-searching; only show the spinner
+    // on the very first load so typing doesn't flash the dropdown empty.
+    if (_candidates.isEmpty) setState(() => _loadingCandidates = true);
     try {
-      final res = await _repo.issues(projectId: widget.projectId, size: 100);
-      if (mounted) {
-        setState(() {
-          _candidates = res.issues;
-          _loadingCandidates = false;
-        });
-      }
+      final res = await _repo.issues(
+        projectId: widget.projectId,
+        query: query.isEmpty ? null : query,
+        size: _searchSize,
+      );
+      if (!mounted || seq != _reqSeq) return;
+      setState(() {
+        _candidates = res.issues;
+        _loadingCandidates = false;
+      });
     } on ApiFailure {
-      if (mounted) setState(() => _loadingCandidates = false);
+      if (!mounted || seq != _reqSeq) return;
+      setState(() => _loadingCandidates = false);
     }
   }
 
-  /// Project issues that aren't this one and aren't already selected, filtered
-  /// by the live query (readable id or title). Already-linked issues are kept
-  /// (a different relationship may still be valid) but flagged in the tile.
+  /// The searched candidates minus this issue and anything already selected.
+  /// Already-linked issues are kept (a different relationship may still be
+  /// valid) but flagged in the tile. The server already matched the query.
   List<Issue> get _suggestions {
-    final q = _query.trim().toLowerCase();
     final selectedIds = {for (final s in _selected) s.id};
     return _candidates
-        .where((i) {
-          if (i.id == widget.issueId) return false;
-          if (selectedIds.contains(i.id)) return false;
-          if (q.isEmpty) return true;
-          return i.readableId.toLowerCase().contains(q) ||
-              i.title.toLowerCase().contains(q);
-        })
+        .where((i) => i.id != widget.issueId && !selectedIds.contains(i.id))
         .take(60)
         .toList();
   }
@@ -387,14 +403,7 @@ class _LinkEditorState extends State<_LinkEditor> {
                 ),
                 onPressed: _selected.isEmpty || _submitting ? null : _submit,
                 child: _submitting
-                    ? const SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
+                    ? const HiveLoader(size: 16, color: Colors.white)
                     : Text(context.t('issues.links.confirm')),
               );
               final cancel = TextButton(
@@ -491,6 +500,8 @@ class _LinkEditorState extends State<_LinkEditor> {
                           onChanged: (v) {
                             setState(() => _query = v);
                             if (!_overlay.isShowing) _overlay.show();
+                            _debounce?.cancel();
+                            _debounce = Timer(_debounceDelay, _search);
                           },
                           textInputAction: TextInputAction.search,
                           style: const TextStyle(fontSize: 13.5),
@@ -554,13 +565,7 @@ class _LinkEditorState extends State<_LinkEditor> {
     if (_loadingCandidates) {
       return const Padding(
         padding: EdgeInsets.all(20),
-        child: Center(
-          child: SizedBox(
-            height: 18,
-            width: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
+        child: Center(child: HiveLoader(size: 18)),
       );
     }
     final suggestions = _suggestions;

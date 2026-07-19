@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -46,10 +47,15 @@ class IssueExportData {
     required this.groups,
     required this.grouped,
     required this.labels,
+    required this.locale,
     this.groupByLabel,
     this.filterSummary = const [],
     this.logoBytes,
   });
+
+  /// Active app locale (e.g. 'de', 'en') — used to localize the generated date,
+  /// keeping the PDF fully in the user's language like the rest of its chrome.
+  final String locale;
 
   /// Localised chrome strings for the PDF export.
   final IssueExportLabels labels;
@@ -76,8 +82,7 @@ class IssueExportData {
   /// rasterized before this point.
   final Uint8List? logoBytes;
 
-  int get totalIssues =>
-      groups.fold<int>(0, (sum, g) => sum + g.rows.length);
+  int get totalIssues => groups.fold<int>(0, (sum, g) => sum + g.rows.length);
 }
 
 // ─────────────────────────── CSV ──────────────────────────────────────────
@@ -185,13 +190,14 @@ Future<void> shareIssuesPdf(IssueExportData data) async {
       .replaceAll(RegExp(r'^-+|-+$'), '');
   await Printing.sharePdf(
     bytes: await doc.save(),
-    filename: 'hinata-issues-${safeScope.isEmpty ? 'all' : safeScope}-$stamp.pdf',
+    filename:
+        'hinata-issues-${safeScope.isEmpty ? 'all' : safeScope}-$stamp.pdf',
   );
 }
 
 Future<pw.Document> _buildDocument(IssueExportData data) async {
   final doc = pw.Document(title: 'Hinata · Issues', author: 'Hinata');
-  final df = _fmtDate(data.generatedAt);
+  final df = _fmtDate(data.generatedAt, data.locale);
   final logo = data.logoBytes == null
       ? null
       : pw.Image(pw.MemoryImage(data.logoBytes!), fit: pw.BoxFit.contain);
@@ -423,12 +429,10 @@ pw.Widget _table(List<IssueExportRow> rows, IssueExportLabels labels) {
   );
 }
 
-String _fmtDate(DateTime d) {
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', //
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ];
-  final hh = d.hour.toString().padLeft(2, '0');
-  final mm = d.minute.toString().padLeft(2, '0');
-  return '${months[d.month - 1]} ${d.day}, ${d.year} · $hh:$mm';
+String _fmtDate(DateTime d, String locale) {
+  // Localized month + 24h time in the app locale (e.g. "19. Juli 2026 · 14:05"
+  // in German), instead of a hardcoded English month array.
+  final date = DateFormat.yMMMd(locale).format(d);
+  final time = DateFormat.Hm(locale).format(d);
+  return '$date · $time';
 }

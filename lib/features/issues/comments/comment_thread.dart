@@ -330,10 +330,15 @@ class CommentThread extends StatelessWidget {
         trunkBelow: thread.expanded && thread.replies.isNotEmpty,
       );
       final key = commentKeys?[c.id];
+      // Isolate each bubble's glass/blur repaint so one comment's state change
+      // (reaction, pin, voice tick) doesn't repaint the whole eager thread.
+      final boundaried = RepaintBoundary(child: row);
       rows.add(
         Padding(
           padding: EdgeInsets.only(top: idx == 0 ? 0 : 18),
-          child: key == null ? row : KeyedSubtree(key: key, child: row),
+          child: key == null
+              ? boundaried
+              : KeyedSubtree(key: key, child: boundaried),
         ),
       );
       // A root comment carries its own flat reply thread (never in the pinned

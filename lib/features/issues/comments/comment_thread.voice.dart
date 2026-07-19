@@ -69,10 +69,26 @@ class VoiceBubble extends StatefulWidget {
 }
 
 class _VoiceBubbleState extends State<VoiceBubble> {
-  late final VoicePlaybackController _controller = VoicePlaybackController(
+  late VoicePlaybackController _controller = VoicePlaybackController(
     loader: widget.loader,
     fallbackDuration: widget.voice.duration,
   );
+
+  @override
+  void didUpdateWidget(VoiceBubble old) {
+    super.didUpdateWidget(old);
+    // If Flutter reuses this State for a different comment (the keyless 'All'
+    // feed can reconcile adjacent voice rows by position after a live reorder),
+    // rebuild the controller so a fresh, idle player fetches the new clip
+    // instead of replaying the previous comment's audio.
+    if (old.voice != widget.voice || old.loader != widget.loader) {
+      _controller.dispose();
+      _controller = VoicePlaybackController(
+        loader: widget.loader,
+        fallbackDuration: widget.voice.duration,
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -223,34 +239,69 @@ class _Waveform extends StatelessWidget {
       builder: (context, constraints) {
         void seekAt(double dx) =>
             onSeek((dx / constraints.maxWidth).clamp(0.0, 1.0));
+        // A CustomPaint keeps the static peaks out of the widget rebuild: the
+        // enclosing AnimatedBuilder ticks many times a second during playback,
+        // but only `progress` changes, so the painter just repaints the fill
+        // instead of reconstructing ~36 Container widgets each frame.
         return GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTapDown: (d) => seekAt(d.localPosition.dx),
           onHorizontalDragUpdate: (d) => seekAt(d.localPosition.dx),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              for (var i = 0; i < bars.length; i++)
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 0.8),
-                    child: Container(
-                      height: (4 + bars[i] / 100 * 26).clamp(4, 30).toDouble(),
-                      decoration: BoxDecoration(
-                        color: (i + 0.5) / bars.length <= progress
-                            ? AppColors.accent
-                            : idle,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+          child: CustomPaint(
+            size: Size.infinite,
+            painter: _WaveformPainter(
+              bars: bars,
+              progress: progress,
+              fill: AppColors.accent,
+              idle: idle,
+            ),
           ),
         );
       },
     );
   }
+}
+
+class _WaveformPainter extends CustomPainter {
+  _WaveformPainter({
+    required this.bars,
+    required this.progress,
+    required this.fill,
+    required this.idle,
+  });
+
+  final List<int> bars;
+  final double progress;
+  final Color fill;
+  final Color idle;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (bars.isEmpty) return;
+    final n = bars.length;
+    final cellW = size.width / n;
+    const hPad = 0.8; // matches the former per-bar horizontal padding
+    final barW = (cellW - hPad * 2).clamp(0.0, cellW);
+    final fillPaint = Paint()..color = fill;
+    final idlePaint = Paint()..color = idle;
+    for (var i = 0; i < n; i++) {
+      final h = (4 + bars[i] / 100 * 26).clamp(4, 30).toDouble();
+      final cx = i * cellW + cellW / 2;
+      final top = (size.height - h) / 2;
+      final rect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(cx - barW / 2, top, barW, h),
+        const Radius.circular(2),
+      );
+      canvas.drawRRect(rect, (i + 0.5) / n <= progress ? fillPaint : idlePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_WaveformPainter old) =>
+      old.progress != progress ||
+      old.fill != fill ||
+      old.idle != idle ||
+      !identical(old.bars, bars);
 }
 
 /// Local time as `HH:mm` (24h). Comments store UTC; display in the device zone.

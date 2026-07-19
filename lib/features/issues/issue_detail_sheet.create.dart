@@ -225,6 +225,13 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
       _projectId = id;
       _state = null; // reset to the new project's default
       _sprintId = null;
+      // These are all project-scoped: a parent epic and labels from the old
+      // project are meaningless (and invalid) in the new one. Clearing them
+      // stops a stale cross-project parentId/tags being silently submitted while
+      // the form visibly shows "no epic" / no labels.
+      _parentId = null;
+      _labels = const [];
+      _deletedLabels.clear();
     });
     await _loadProjectScoped();
     if (mounted) setState(() {});

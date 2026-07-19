@@ -332,6 +332,7 @@
     "micDenied": "Für eine Sprachnachricht wird Zugriff auf das Mikrofon benötigt.",
     "voiceFailed": "Sprachnachricht konnte nicht gesendet werden — versuch es nochmal.",
     "deleteFailed": "Einige Kommentare konnten nicht gelöscht werden.",
+    "jumpNotFound": "Dieser Kommentar wurde nicht gefunden – er wurde möglicherweise gelöscht.",
     "recording": "Aufnahme",
     "attaching": "Anhang wird hochgeladen…",
     "attached": "Anhang hinzugefügt",
@@ -544,7 +545,8 @@
       "typeTitle": "Verknüpfungsart",
       "fieldHint": "URL eingeben, suchen oder einfügen",
       "suggestionsTitle": "Aktuelle Vorgänge",
-      "noMatches": "Keine passenden Vorgänge"
+      "noMatches": "Keine passenden Vorgänge",
+      "loadFailed": "Verknüpfte Vorgänge konnten nicht geladen werden."
     },
     "epicPicker": {
       "recent": "Letzte Epics",

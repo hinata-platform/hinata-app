@@ -209,9 +209,13 @@ class _WorkLogBodyState extends State<_WorkLogBody> {
       );
       if (mounted) Navigator.of(context).pop(true);
     } on ApiFailure catch (failure) {
+      if (!mounted) return;
       setState(() {
         _saving = false;
-        _error = failure.message;
+        // Localize like every other error surface here: context.t is idempotent
+        // for already-localized backend text but maps a fallback key (e.g.
+        // 'errors.unexpected') to real copy instead of leaking the raw key.
+        _error = context.t(failure.message);
       });
     }
   }

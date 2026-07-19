@@ -177,6 +177,15 @@ class _AdminScreenState extends State<AdminScreen> {
         _loading = false;
         _error = failure.message;
       });
+    } catch (_) {
+      // A malformed 200 payload (e.g. a cast error, an HTML proxy page) throws
+      // outside ApiFailure — surface the generic error + Retry instead of
+      // getting stuck on the loader forever.
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'errors.unexpected';
+      });
     }
   }
 
@@ -560,19 +569,25 @@ class _WideAdminShell extends StatelessWidget {
         child: const AdminAuditSection(),
       );
     }
-    return SingleChildScrollView(
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      padding: EdgeInsets.fromLTRB(
-        0,
-        context.topGutter + 14,
-        0,
-        context.bottomGutter + 28,
-      ),
-      child: Align(
-        alignment: Alignment.topLeft,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: _kAdminContentMax),
-          child: _body(),
+    // The iOS numeric keypad has no Done key, so — as on the compact path —
+    // give the wide/iPad forms tap-outside-to-dismiss on top of drag-scroll.
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: EdgeInsets.fromLTRB(
+          0,
+          context.topGutter + 14,
+          0,
+          context.bottomGutter + 28,
+        ),
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: _kAdminContentMax),
+            child: _body(),
+          ),
         ),
       ),
     );

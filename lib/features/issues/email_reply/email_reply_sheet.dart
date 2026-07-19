@@ -15,6 +15,7 @@ import '../../../core/models/work_models.dart';
 import '../../../core/repositories/issue_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/hive_loader.dart';
 import '../../sprint/modals/glass_modal.dart'
     show GlassToastKind, glassWoltSurface, showGlassErrorToast, showGlassToast;
 
@@ -206,7 +207,7 @@ class _EmailSheetTitle extends StatelessWidget {
 /// by the `/issues/:id/reply-email` route inside the app shell (nav rail + header
 /// stay visible, exactly like a maximized issue). Closing or backing out returns
 /// to the issue.
-class EmailReplyScreen extends StatelessWidget {
+class EmailReplyScreen extends StatefulWidget {
   const EmailReplyScreen({
     super.key,
     required this.issue,
@@ -222,10 +223,27 @@ class EmailReplyScreen extends StatelessWidget {
   final bool canMinimize;
 
   @override
+  State<EmailReplyScreen> createState() => _EmailReplyScreenState();
+}
+
+class _EmailReplyScreenState extends State<EmailReplyScreen> {
+  // Allocated ONCE for the screen's lifetime. Building these in build() handed
+  // the composer a fresh GlobalKey every keyboard-animation frame (viewInsetsOf
+  // is a dependency), which destroyed and re-created the composer State — wiping
+  // the draft and bouncing the keyboard closed.
+  final composerKey = GlobalKey<EmailReplyComposerState>();
+  final rev = ValueNotifier<int>(0);
+
+  @override
+  void dispose() {
+    rev.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final issue = widget.issue;
     final repo = context.read<IssueRepository>();
-    final composerKey = GlobalKey<EmailReplyComposerState>();
-    final rev = ValueNotifier<int>(0);
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -235,7 +253,7 @@ class EmailReplyScreen extends StatelessWidget {
           _EmailRouteTopBar(
             recipient: issue.reporterEmail ?? '',
             onBack: () => Navigator.of(context).maybePop(),
-            onMinimize: canMinimize
+            onMinimize: widget.canMinimize
                 ? () {
                     // Leave this route THROUGH GoRouter (pop), never via
                     // Navigator.removeRoute: removing a page-based route behind
@@ -276,7 +294,7 @@ class EmailReplyScreen extends StatelessWidget {
                       key: composerKey,
                       issue: issue,
                       repo: repo,
-                      initialDraft: initialDraft,
+                      initialDraft: widget.initialDraft,
                       revision: rev,
                       expandBody: true,
                     ),
@@ -505,10 +523,16 @@ class EmailReplyComposerState extends State<EmailReplyComposer> {
       return;
     }
     if (result == null || !mounted) return;
-    for (final f in result.files) {
-      final draft = _Draft(f.name);
-      _set(() => _drafts.add(draft));
-      _upload(draft, f);
+    // Show every chip immediately (as uploading)…
+    final pending = [for (final f in result.files) (_Draft(f.name), f)];
+    _set(() => _drafts.addAll(pending.map((e) => e.$1)));
+    // …then upload them one at a time. The endpoint returns the whole issue and
+    // we read the new id off `attachments.last`, so concurrent uploads would
+    // race and mis-assign ids (or duplicate one). Serializing keeps each POST's
+    // returned issue unambiguously ending with THIS file's attachment.
+    for (final (draft, f) in pending) {
+      if (!mounted) return;
+      await _upload(draft, f);
     }
   }
 
@@ -798,14 +822,7 @@ class _EmailSendBar extends StatelessWidget {
               ),
             ),
             icon: busy
-                ? const SizedBox(
-                    width: 15,
-                    height: 15,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
+                ? const HiveLoader(size: 15, color: Colors.white)
                 : const Icon(LucideIcons.send, size: 15),
             label: Text(context.t('issues.replyEmail.send')),
           ),
@@ -1002,11 +1019,7 @@ class _AttachmentChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (draft.uploading)
-            const SizedBox(
-              width: 13,
-              height: 13,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
+            const HiveLoader(size: 13)
           else
             Icon(
               failed ? LucideIcons.circleAlert : LucideIcons.file,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -13,6 +15,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/hue_colors.dart';
 import '../../core/widgets/glass_panel.dart';
+import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../search/search_tokens.dart';
@@ -66,6 +69,7 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
   List<IssueLink> _links = const [];
   bool _loading = true;
   bool _adding = false;
+  bool _loadError = false;
 
   // SSE live sync (mirrors AttachmentsSection): a payload-free `changed` ping
   // triggers a re-fetch; the shared [SseConnection] adds heartbeat-driven
@@ -97,10 +101,18 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
         setState(() {
           _links = links;
           _loading = false;
+          _loadError = false;
         });
       }
     } on ApiFailure {
-      if (mounted) setState(() => _loading = false);
+      // Surface the failure instead of rendering as an empty (no-links) panel —
+      // a transient fetch error is indistinguishable from "no links" otherwise.
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _loadError = true;
+        });
+      }
     }
   }
 
@@ -128,7 +140,12 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
   Future<void> _remove(IssueLink link) async {
     // Optimistic removal — the SSE ping / returned list reconciles truth.
     final previous = _links;
-    setState(() => _links = [for (final l in _links) if (l.id != link.id) l]);
+    setState(
+      () => _links = [
+        for (final l in _links)
+          if (l.id != link.id) l,
+      ],
+    );
     try {
       final links = await _repo.deleteIssueLink(widget.issueId, link.id);
       if (mounted) setState(() => _links = links);
@@ -194,10 +211,43 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
           if (_loading)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 14),
-              child: SizedBox(
-                height: 16,
-                width: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
+              child: HiveLoader(size: 16),
+            )
+          else if (_loadError && _links.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    LucideIcons.circleAlert,
+                    size: 15,
+                    color: AppColors.inkSoft,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      context.t('issues.links.loadFailed'),
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: AppColors.inkSoft,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() => _loading = true);
+                      _load();
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.stTodo,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                    ),
+                    child: Text(context.t('common.retry')),
+                  ),
+                ],
               ),
             )
           else ...[
@@ -226,10 +276,7 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
                 switchOutCurve: Curves.easeIn,
                 transitionBuilder: (child, anim) => FadeTransition(
                   opacity: anim,
-                  child: SizeTransition(
-                    sizeFactor: anim,
-                    child: child,
-                  ),
+                  child: SizeTransition(sizeFactor: anim, child: child),
                 ),
                 child: _adding
                     ? _LinkEditor(

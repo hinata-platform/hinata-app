@@ -113,6 +113,19 @@ class _IssuesScreenState extends State<IssuesScreen> {
   /// correct across the whole result set, not just the loaded pages.
   IssueSort _sort = IssueSort.defaultSort;
 
+  // Memoized filter/section sweep. While a filter is active the screen pulls
+  // every backend page in the background, and each intermediate rebuild would
+  // otherwise re-run the full _filtered/_sections over the whole growing list.
+  // These cache the last result keyed on the exact inputs, so a rebuild with
+  // unchanged (loaded set + filter/time/grouping/ref) reuses it instead.
+  List<Issue>? _viewAll;
+  Object? _viewRef;
+  IssueFilter? _viewFilter;
+  IssueTimeRange? _viewTimeRange;
+  IssueGrouping? _viewGrouping;
+  List<Issue> _viewList = const [];
+  List<_Section> _viewSections = const [];
+
   /// The deep-link preset is applied once, after projects load (so bucket
   /// presets can resolve to real state names); later refreshes keep the user's
   /// own filter choices.
@@ -279,6 +292,34 @@ class _IssuesScreenState extends State<IssuesScreen> {
   List<Issue> _filtered(List<Issue> issues) =>
       issues.where((i) => _filter.matches(i) && _timeRange.matches(i)).toList();
 
+  /// Returns the filtered list + grouped sections for [all]/[ref], reusing the
+  /// last computation when every input is unchanged. Cheap references — during
+  /// the background page sweep `all` is a new list each page (so it correctly
+  /// recomputes), but the many other rebuilds (SSE on peers, keyboard, theme)
+  /// hit the cache instead of re-sweeping the whole accumulated set.
+  ({List<Issue> list, List<_Section> sections}) _view(
+    List<Issue> all,
+    _RefData ref,
+  ) {
+    if (identical(all, _viewAll) &&
+        identical(ref, _viewRef) &&
+        identical(_filter, _viewFilter) &&
+        identical(_timeRange, _viewTimeRange) &&
+        _grouping == _viewGrouping) {
+      return (list: _viewList, sections: _viewSections);
+    }
+    final list = _filtered(all);
+    final sections = _sections(list, ref);
+    _viewAll = all;
+    _viewRef = ref;
+    _viewFilter = _filter;
+    _viewTimeRange = _timeRange;
+    _viewGrouping = _grouping;
+    _viewList = list;
+    _viewSections = sections;
+    return (list: list, sections: sections);
+  }
+
   // ── grouping ──────────────────────────────────────────────────────────
 
   /// Buckets [list] into ordered sections for the active grouping. Returns an
@@ -421,8 +462,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
     _issues.load();
   }
 
-  void _onTimeRangeChanged(IssueTimeRange r) =>
-      setState(() => _timeRange = r);
+  void _onTimeRangeChanged(IssueTimeRange r) => setState(() => _timeRange = r);
 
   /// Fixed height of the toolbar when docked into the app bar (compact).
   static const double _kDockedToolbarHeight = 56;
@@ -588,6 +628,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
       logoBytes: logoPng,
       scopeLabel: scope,
       generatedAt: DateTime.now(),
+      locale: Localizations.localeOf(context).toString(),
       groups: groups,
       grouped: grouped,
       groupByLabel: grouped
@@ -698,8 +739,9 @@ class _IssuesScreenState extends State<IssuesScreen> {
         final dark = Theme.of(context).brightness == Brightness.dark;
         final ref = _ref ?? _emptyRef;
         final all = state.items;
-        final list = _filtered(all);
-        final sections = _sections(list, ref);
+        final view = _view(all, ref);
+        final list = view.list;
+        final sections = view.sections;
 
         // Project-scoped view: surface which project is open — the project
         // name becomes the page title (and the shell app-bar title via
