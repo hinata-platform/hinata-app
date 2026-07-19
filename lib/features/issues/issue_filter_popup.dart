@@ -380,9 +380,14 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
                       vertical: 6,
                       horizontal: 8,
                     ),
-                    // No shrinkWrap: the enclosing Flexible already bounds the
-                    // height, so the list builds rows lazily instead of laying
-                    // out every option (hundreds on a large workspace) up front.
+                    // shrinkWrap so the panel sizes to its content and then
+                    // scrolls once the option list exceeds the available height
+                    // — without it the list greedily fills the whole [maxHeight]
+                    // (up to 560), leaving a large empty gap above the footer on
+                    // tall windows (web). Matches board_filter_popup. The Flexible
+                    // still caps the height, so long lists scroll rather than
+                    // overflow.
+                    shrinkWrap: true,
                     itemCount: shown.length,
                     itemBuilder: (_, i) {
                       final o = shown[i];
