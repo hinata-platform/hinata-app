@@ -11,7 +11,8 @@ import '../../core/models/work_models.dart';
 import '../../core/repositories/domain_providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../sprint/modals/glass_modal.dart' show glassWoltSurface;
+import '../sprint/modals/glass_modal.dart'
+    show glassWoltSurface, showGlassConfirm;
 import 'issue_detail_sheet.dart';
 
 /// Centered create-issue dialog for wider screens — mirrors the issue detail
@@ -56,6 +57,25 @@ Future<Issue?> showIssueForm(
     context: context,
     useRootNavigator: true,
     barrierDismissible: true,
+    // A stray tap on the barrier (common on desktop) shouldn't silently throw
+    // away a typed draft — confirm first when the form has unsaved content.
+    onModalDismissedWithBarrierTap: () async {
+      final nav = Navigator.of(context, rootNavigator: true);
+      if (!(controller.hasDraft?.call() ?? false)) {
+        nav.pop();
+        return;
+      }
+      final discard = await showGlassConfirm(
+        context,
+        icon: LucideIcons.triangleAlert,
+        title: context.t('issues.discardDraftTitle'),
+        message: context.t('issues.discardDraftMessage'),
+        confirmLabel: context.t('issues.discardDraft'),
+        confirmIcon: LucideIcons.trash2,
+        destructive: true,
+      );
+      if (discard == true) nav.pop();
+    },
     // Let our own sticky save bar own the bottom safe-area inset. Wolt's
     // default (useSafeArea: true) wraps the whole page in SafeArea, which on top
     // of the save bar's own SafeArea double-counts the home indicator — that

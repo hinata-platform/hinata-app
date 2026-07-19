@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -14,6 +15,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/glass_panel.dart';
+import '../../../core/widgets/hive_loader.dart';
 import '../../search/search_tokens.dart';
 import 'attachment_kind.dart';
 
@@ -53,13 +55,54 @@ class LightboxItem {
       isTextPreviewable(name, mime);
 }
 
+/// Byte-bounded LRU cache for lightbox content, keyed by the API download path.
+/// `PageView.builder` disposes off-screen pages, so without this, swiping
+/// A→B→A would re-download A's full-resolution file (spinner + wasted mobile
+/// data) every revisit. A plain map literal keeps insertion order, so
+/// `keys.first` is the least-recently-used entry.
+final Map<String, Uint8List> _lightboxCache = {};
+int _lightboxCacheBytes = 0;
+const int _kLightboxCacheMaxBytes = 48 * 1024 * 1024;
+
 /// Fetches an attachment's raw bytes through the authenticated [ApiClient] from
-/// the server's `/download` endpoint. The object store is internal-only, so the
-/// client never talks to it directly; [LightboxItem.url] holds the relative API
+/// the server's `/download` endpoint, caching them so paging back to an already
+/// viewed item is instant. The object store is internal-only, so the client
+/// never talks to it directly; [LightboxItem.url] holds the relative API
 /// download path, not a storage URL.
 Future<Uint8List> _fetchBytes(BuildContext context, String path) async {
+  final cached = _lightboxCache.remove(path);
+  if (cached != null) {
+    _lightboxCache[path] = cached; // move to most-recently-used
+    return cached;
+  }
   final res = await context.read<ApiClient>().getBytes(path);
-  return Uint8List.fromList(res?.bytes ?? const []);
+  final bytes = Uint8List.fromList(res?.bytes ?? const []);
+  if (bytes.isNotEmpty) {
+    _lightboxCache[path] = bytes;
+    _lightboxCacheBytes += bytes.lengthInBytes;
+    while (_lightboxCacheBytes > _kLightboxCacheMaxBytes &&
+        _lightboxCache.length > 1) {
+      final oldest = _lightboxCache.keys.first;
+      if (oldest == path) break;
+      final removed = _lightboxCache.remove(oldest);
+      if (removed != null) _lightboxCacheBytes -= removed.lengthInBytes;
+    }
+  }
+  return bytes;
+}
+
+/// Decodes text-preview [bytes] to a string and, for JSON, pretty-prints it.
+/// Runs in a background isolate via [compute] so a multi-MB file doesn't stall
+/// the UI isolate; must stay a top-level function for [compute] to send it.
+String _decodeText(({Uint8List bytes, bool isJson}) msg) {
+  // allowMalformed so a stray byte doesn't blow up the whole preview.
+  final raw = utf8.decode(msg.bytes, allowMalformed: true);
+  if (!msg.isJson) return raw;
+  try {
+    return const JsonEncoder.withIndent('  ').convert(jsonDecode(raw));
+  } catch (_) {
+    return raw; // not valid JSON — show it verbatim
+  }
 }
 
 /// Opens the Liquid-Glass image lightbox (radius 22, blurred scrim, spring
@@ -415,18 +458,26 @@ class _ImagePageState extends State<_ImagePage> {
             if (snap.connectionState != ConnectionState.done) {
               return const Padding(
                 padding: EdgeInsets.all(40),
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: HiveLoader(),
               );
             }
             final bytes = snap.data;
             if (bytes == null || bytes.isEmpty) {
               return _FileCard(item: widget.item);
             }
+            // Never decode wider than the physical screen: a full-res photo
+            // rendered here would otherwise decode into a bitmap far larger
+            // than any device could show, spiking memory for no visible gain.
+            final cacheW =
+                (MediaQuery.sizeOf(context).width *
+                        MediaQuery.devicePixelRatioOf(context))
+                    .round();
             return ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.memory(
                 bytes,
                 fit: BoxFit.contain,
+                cacheWidth: cacheW,
                 errorBuilder: (_, _, _) => _FileCard(item: widget.item),
               ),
             );
@@ -483,7 +534,7 @@ class _PdfPageState extends State<_PdfPage> {
       ),
       loadingWidget: const Padding(
         padding: EdgeInsets.all(40),
-        child: CircularProgressIndicator(strokeWidth: 2),
+        child: HiveLoader(),
       ),
       onError: (context, error) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -523,20 +574,13 @@ class _TextPageState extends State<_TextPage> {
 
   Future<String> _load() async {
     final bytes = await _fetchBytes(context, widget.item.url!);
-    // allowMalformed so a stray byte doesn't blow up the whole preview.
-    final raw = utf8.decode(bytes, allowMalformed: true);
-    return _maybePrettyJson(widget.item, raw);
-  }
-
-  static String _maybePrettyJson(LightboxItem item, String raw) {
-    final isJson = (item.mime == 'application/json') ||
-        item.name.toLowerCase().endsWith('.json');
-    if (!isJson) return raw;
-    try {
-      return const JsonEncoder.withIndent('  ').convert(jsonDecode(raw));
-    } catch (_) {
-      return raw; // not valid JSON — show it verbatim
-    }
+    final isJson = (widget.item.mime == 'application/json') ||
+        widget.item.name.toLowerCase().endsWith('.json');
+    // Decoding + (for JSON) parse/pretty-print up to 2 MB is heavy enough to
+    // drop frames on the UI isolate, so hand it to a background isolate. On web
+    // compute() runs inline (no isolates), which is fine — the fetch already
+    // yields the event loop.
+    return compute(_decodeText, (bytes: bytes, isJson: isJson));
   }
 
   @override
@@ -547,9 +591,7 @@ class _TextPageState extends State<_TextPage> {
         if (snap.connectionState != ConnectionState.done) {
           return const Padding(
             padding: EdgeInsets.all(40),
-            child: Center(
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
+            child: Center(child: HiveLoader()),
           );
         }
         if (snap.hasError) return _FileCard(item: widget.item);

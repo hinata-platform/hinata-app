@@ -42,6 +42,13 @@ class _IssueDescriptionEditorState extends State<IssueDescriptionEditor> {
   );
   bool _preview = false;
 
+  // Memoized preview: the parse (and the gesture recognizers it creates) is
+  // only redone when the source text actually changes, not on every unrelated
+  // rebuild of the host form — re-parsing in build() dropped frames and
+  // disposed recognizers still referenced by the mounted RichText.
+  String? _previewSource;
+  List<Widget> _previewNodes = const [];
+
   TextEditingController get _ctrl => widget.controller;
 
   @override
@@ -158,32 +165,36 @@ class _IssueDescriptionEditorState extends State<IssueDescriptionEditor> {
         focusNode: _focus,
         expands: true,
         monospace: true,
-        hintText:
-            'Write in markdown… type @ to link an issue, article or teammate.',
+        hintText: context.t('issues.descriptionHint'),
         onTabIndent: () {},
       ),
     );
   }
 
   Widget _previewPane() {
-    for (final r in _sink) {
-      r.dispose();
+    final source = _ctrl.text;
+    // Only re-parse (and only then dispose + rebuild the recognizers) when the
+    // text has actually changed since the last preview render.
+    if (source != _previewSource) {
+      for (final r in _sink) {
+        r.dispose();
+      }
+      _sink.clear();
+      _previewSource = source;
+      _previewNodes = source.trim().isEmpty
+          ? const []
+          : KbMarkdownParser(fontSize: 14, sink: _sink).parse(source).nodes;
     }
-    _sink.clear();
-    final text = _ctrl.text.trim();
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      child: text.isEmpty
+      child: source.trim().isEmpty
           ? Text(
               context.t('issues.previewEmpty'),
               style: TextStyle(color: AppColors.inkFaint),
             )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: KbMarkdownParser(
-                fontSize: 14,
-                sink: _sink,
-              ).parse(_ctrl.text).nodes,
+              children: _previewNodes,
             ),
     );
   }

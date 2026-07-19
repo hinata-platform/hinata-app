@@ -1850,8 +1850,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     if (created != null) await _reloadHierarchy();
   }
 
-  Future<void> _addSubtask(Issue parent, String title) async {
-    if (title.trim().isEmpty) return;
+  Future<bool> _addSubtask(Issue parent, String title) async {
+    if (title.trim().isEmpty) return false;
     try {
       await _issueApi.createIssue({
         'projectId': parent.projectId,
@@ -1860,8 +1860,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         'parentId': parent.id,
       });
       await _reloadHierarchy();
+      return true;
     } on ApiFailure catch (failure) {
       _toast(failure.message);
+      return false;
     }
   }
 

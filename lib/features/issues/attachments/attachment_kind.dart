@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/i18n/i18n.dart';
+
 /// Visual + semantic metadata for an attachment "kind", mirroring `KIND_META`
 /// in the web design (`view_attachments.jsx`). Colours are sRGB approximations
 /// of the reference oklch values.
@@ -84,17 +86,22 @@ String formatBytes(int b) {
   return '${(b / 1048576).toStringAsFixed(b < 10485760 ? 1 : 0)} MB';
 }
 
-/// Compact relative age, e.g. "now", "5m", "3h", "2d", "3w" — matches the
-/// design's "Xd ago" sublabel without depending on a locale package.
-String relativeAge(DateTime when) {
+/// Localized compact relative age, e.g. "now", "5m ago", "3d ago" — mirrors the
+/// design's "Xd ago" sublabel via the app's i18n so the German build reads
+/// "vor 3 T." instead of a hardcoded English fragment.
+String relativeAgeLabel(BuildContext context, DateTime when) {
   final d = DateTime.now().difference(when);
-  if (d.inSeconds < 45) return 'now';
-  if (d.inMinutes < 60) return '${d.inMinutes}m';
-  if (d.inHours < 24) return '${d.inHours}h';
-  if (d.inDays < 7) return '${d.inDays}d';
-  if (d.inDays < 30) return '${(d.inDays / 7).floor()}w';
-  if (d.inDays < 365) return '${(d.inDays / 30).floor()}mo';
-  return '${(d.inDays / 365).floor()}y';
+  String t(String key, [int? n]) => context.t(
+        'issues.attachments.$key',
+        variables: n == null ? const {} : {'n': n},
+      );
+  if (d.inSeconds < 45) return t('ageNow');
+  if (d.inMinutes < 60) return t('ageMinutes', d.inMinutes);
+  if (d.inHours < 24) return t('ageHours', d.inHours);
+  if (d.inDays < 7) return t('ageDays', d.inDays);
+  if (d.inDays < 30) return t('ageWeeks', (d.inDays / 7).floor());
+  if (d.inDays < 365) return t('ageMonths', (d.inDays / 30).floor());
+  return t('ageYears', (d.inDays / 365).floor());
 }
 
 /// Extensions that are clearly executable / scriptable. Rejected client-side

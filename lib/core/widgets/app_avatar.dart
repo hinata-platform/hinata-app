@@ -10,8 +10,35 @@ import '../theme/app_colors.dart';
 /// avatar URL. `null` marks a URL that failed / 404'd so we don't refetch it on
 /// every rebuild. Because avatar URLs carry a `?v=` token that changes on each
 /// upload, a new picture is always a new key (no stale image).
+///
+/// A plain map literal is a `LinkedHashMap`, so key order is insertion order and
+/// `keys.first` is the oldest entry — that lets [_avatarCachePut] evict LRU.
 final Map<String, Uint8List?> _avatarBytesCache = {};
 final Map<String, Future<void>> _avatarInFlight = {};
+
+/// Soft cap on the *bytes* retained in [_avatarBytesCache]. Avatars themselves
+/// are tiny, but this same cache also backs attachment image thumbnails —
+/// whole-file bytes, multi-MB each — so without a bound it would grow for the
+/// app's entire lifetime (an accumulating leak). Least-recently-used entries
+/// are evicted once the cap is exceeded.
+const int _kAvatarCacheMaxBytes = 32 * 1024 * 1024;
+int _avatarCacheBytes = 0;
+
+/// Stores [bytes] for [path] as most-recently-used, then evicts the oldest
+/// entries until the cache is back under [_kAvatarCacheMaxBytes].
+void _avatarCachePut(String path, Uint8List? bytes) {
+  final prev = _avatarBytesCache.remove(path);
+  if (prev != null) _avatarCacheBytes -= prev.lengthInBytes;
+  _avatarBytesCache[path] = bytes;
+  if (bytes != null) _avatarCacheBytes += bytes.lengthInBytes;
+  while (_avatarCacheBytes > _kAvatarCacheMaxBytes &&
+      _avatarBytesCache.length > 1) {
+    final oldest = _avatarBytesCache.keys.first;
+    if (oldest == path) break; // never evict the entry we just stored
+    final removed = _avatarBytesCache.remove(oldest);
+    if (removed != null) _avatarCacheBytes -= removed.lengthInBytes;
+  }
+}
 
 /// Circular avatar with deterministic pastel background and initials fallback.
 ///
@@ -131,7 +158,11 @@ class ApiImageAvatarState extends State<ApiImageAvatar> {
   Future<void> _resolve() async {
     final path = widget.path;
     if (_avatarBytesCache.containsKey(path)) {
-      _bytes = _avatarBytesCache[path];
+      final cached = _avatarBytesCache[path];
+      // Bump recency so an image that's still on screen isn't the first thing
+      // evicted when the cache is under memory pressure.
+      if (cached != null) _avatarCachePut(path, cached);
+      _bytes = cached;
       return;
     }
     // Coalesce concurrent loads of the same URL (e.g. avatar shown twice).
@@ -143,11 +174,12 @@ class ApiImageAvatarState extends State<ApiImageAvatar> {
   Future<void> _fetch(String path) async {
     try {
       final result = await widget.api.getBytes(path);
-      _avatarBytesCache[path] = result == null
-          ? null
-          : Uint8List.fromList(result.bytes);
+      _avatarCachePut(
+        path,
+        result == null ? null : Uint8List.fromList(result.bytes),
+      );
     } catch (_) {
-      _avatarBytesCache[path] = null;
+      _avatarCachePut(path, null);
     } finally {
       _avatarInFlight.remove(path);
     }

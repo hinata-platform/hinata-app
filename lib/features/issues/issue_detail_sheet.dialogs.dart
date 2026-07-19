@@ -376,7 +376,9 @@ class _DetailRow extends StatelessWidget {
 class _SubtaskQuickAdd extends StatefulWidget {
   const _SubtaskQuickAdd({required this.onSubmit});
 
-  final Future<void> Function(String title) onSubmit;
+  /// Creates the sub-task; returns `true` on success so the field only clears
+  /// when something was actually created (a failed create keeps the title).
+  final Future<bool> Function(String title) onSubmit;
 
   @override
   State<_SubtaskQuickAdd> createState() => _SubtaskQuickAddState();
@@ -409,12 +411,20 @@ class _SubtaskQuickAddState extends State<_SubtaskQuickAdd> {
     final value = _ctrl.text.trim();
     if (value.isEmpty || _busy) return;
     setState(() => _busy = true);
-    await widget.onSubmit(value);
-    if (!mounted) return;
-    _ctrl.clear();
-    setState(() => _busy = false);
-    // Keep the field open + focused so several sub-tasks can be added quickly.
-    _focus.requestFocus();
+    try {
+      final created = await widget.onSubmit(value);
+      if (!mounted) return;
+      // Only wipe the typed title if the sub-task was actually created; on a
+      // failed create (offline, no permission) keep it so it isn't retyped.
+      if (created) _ctrl.clear();
+    } finally {
+      // try/finally so a thrown error can't leave the '+' stuck on a spinner.
+      if (mounted) {
+        setState(() => _busy = false);
+        // Keep the field open + focused so several sub-tasks add quickly.
+        _focus.requestFocus();
+      }
+    }
   }
 
   @override

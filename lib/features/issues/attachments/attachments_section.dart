@@ -264,19 +264,31 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
 
   Future<void> _onDrop(DropDoneDetails detail) async {
     final srcs = <_Src>[];
+    var failed = false;
     for (final item in detail.files) {
-      final len = await item.length();
-      final bytes = kIsWeb ? await item.readAsBytes() : null;
-      srcs.add(
-        _Src(
-          name: item.name,
-          size: len,
-          path: kIsWeb ? null : item.path,
-          bytes: bytes,
-        ),
-      );
+      // Read each item independently so one unreadable drop (a folder, a file
+      // deleted mid-drag, a permission-denied path) doesn't abort the whole
+      // batch — the valid files in the same drop still upload.
+      try {
+        final len = await item.length();
+        final bytes = kIsWeb ? await item.readAsBytes() : null;
+        srcs.add(
+          _Src(
+            name: item.name,
+            size: len,
+            path: kIsWeb ? null : item.path,
+            bytes: bytes,
+          ),
+        );
+      } catch (_) {
+        failed = true;
+      }
     }
-    if (!_disposed) _enqueue(srcs);
+    if (_disposed) return;
+    if (srcs.isNotEmpty) _enqueue(srcs);
+    if (failed && mounted) {
+      _toast(context.t('issues.attachments.pickFailed'));
+    }
   }
 
   void _enqueue(List<_Src> files) {
@@ -358,9 +370,9 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
         );
       }
     } on ApiFailure catch (e) {
-      if (_disposed) return;
+      if (_disposed || !mounted) return;
       setState(() => u.failed = true);
-      _toast(e.message);
+      _toast(context.t(e.message));
     } catch (_) {
       if (_disposed) return;
       setState(() => u.failed = true);
@@ -459,9 +471,9 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
     try {
       await _repo.deleteAttachment(widget.issueId, a.id);
     } on ApiFailure catch (e) {
-      if (_disposed) return;
+      if (_disposed || !mounted) return;
       setState(() => _server = prev);
-      _toast(e.message);
+      _toast(context.t(e.message));
     }
   }
 
@@ -523,7 +535,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
     final by = a.uploaderId == null ? null : widget.userNames[a.uploaderId];
     if (by != null && by.isNotEmpty) parts.add(by);
     if (a.uploadedAt != null) {
-      parts.add('${relativeAge(a.uploadedAt!.toLocal())} ago');
+      parts.add(relativeAgeLabel(context, a.uploadedAt!.toLocal()));
     }
     return parts.join(' · ');
   }

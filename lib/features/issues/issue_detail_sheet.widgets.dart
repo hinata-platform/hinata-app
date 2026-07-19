@@ -826,91 +826,61 @@ class _PeoplePickerState extends State<_PeoplePicker> {
       ),
     );
 
-    final list = ListView(
+    // Header rows (assign-to-me / unassign / divider) only show when not
+    // searching; they're few and fixed, so they lead a lazily-built list of the
+    // (potentially hundreds of) directory users — every user row is built
+    // on demand via ListView.builder rather than eagerly on every keystroke.
+    final header = <Widget>[
+      if (widget.onAssignMe != null && q.isEmpty)
+        ListTile(
+          leading: CircleAvatar(
+            backgroundColor: AppColors.accentSoft,
+            child: const Icon(
+              LucideIcons.user,
+              color: AppColors.accentStrong,
+              size: 18,
+            ),
+          ),
+          title: Text(
+            context.t('issues.assignToMe'),
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          onTap: widget.multiSelect && widget.meId != null
+              ? () {
+                  if (!_selected.contains(widget.meId)) _toggle(widget.meId!);
+                }
+              : widget.onAssignMe,
+        ),
+      if (q.isEmpty)
+        ListTile(
+          leading: CircleAvatar(
+            backgroundColor: AppColors.canvas2,
+            child: Icon(LucideIcons.ban, color: AppColors.inkSoft, size: 18),
+          ),
+          title: Text(
+            context.t(
+              widget.multiSelect ? 'issues.clearAssignees' : 'issues.unassign',
+            ),
+          ),
+          onTap: widget.multiSelect
+              ? () {
+                  setState(_selected.clear);
+                  widget.onSelectionChanged?.call(_selected);
+                }
+              : widget.onUnassign,
+        ),
+      if (q.isEmpty) const Divider(height: 1),
+    ];
+
+    final showEmpty = filtered.isEmpty;
+    final list = ListView.builder(
       padding: EdgeInsets.only(bottom: widget.anchored ? 6 : 16),
       shrinkWrap: widget.anchored,
-      children: [
-        if (widget.onAssignMe != null && q.isEmpty)
-          ListTile(
-            leading: CircleAvatar(
-              backgroundColor: AppColors.accentSoft,
-              child: const Icon(
-                LucideIcons.user,
-                color: AppColors.accentStrong,
-                size: 18,
-              ),
-            ),
-            title: Text(
-              context.t('issues.assignToMe'),
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            onTap: widget.multiSelect && widget.meId != null
-                ? () {
-                    if (!_selected.contains(widget.meId)) _toggle(widget.meId!);
-                  }
-                : widget.onAssignMe,
-          ),
-        if (q.isEmpty)
-          ListTile(
-            leading: CircleAvatar(
-              backgroundColor: AppColors.canvas2,
-              child: Icon(LucideIcons.ban, color: AppColors.inkSoft, size: 18),
-            ),
-            title: Text(
-              context.t(
-                widget.multiSelect
-                    ? 'issues.clearAssignees'
-                    : 'issues.unassign',
-              ),
-            ),
-            onTap: widget.multiSelect
-                ? () {
-                    setState(_selected.clear);
-                    widget.onSelectionChanged?.call(_selected);
-                  }
-                : widget.onUnassign,
-          ),
-        if (q.isEmpty) const Divider(height: 1),
-        for (final u in filtered)
-          ListTile(
-            leading: HiveAvatar(
-              name: u.displayName,
-              imageUrl: u.avatarUrl,
-              size: 34,
-            ),
-            title: Text(
-              u.displayName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            subtitle: Text(
-              '@${u.username}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            trailing: widget.multiSelect
-                ? Icon(
-                    _selected.contains(u.id)
-                        ? LucideIcons.checkSquare
-                        : LucideIcons.square,
-                    size: 20,
-                    color: _selected.contains(u.id)
-                        ? AppColors.accent
-                        : AppColors.inkFaint,
-                  )
-                : (u.id == widget.meId
-                      ? const Icon(
-                          LucideIcons.star,
-                          size: 16,
-                          color: AppColors.accent,
-                        )
-                      : null),
-            onTap: widget.multiSelect
-                ? () => _toggle(u.id)
-                : () => widget.onSelect(u.id),
-          ),
-        if (filtered.isEmpty)
-          Padding(
+      itemCount: header.length + (showEmpty ? 1 : filtered.length),
+      itemBuilder: (context, i) {
+        if (i < header.length) return header[i];
+        if (showEmpty) {
+          return Padding(
             padding: const EdgeInsets.all(24),
             child: Center(
               child: Text(
@@ -918,8 +888,47 @@ class _PeoplePickerState extends State<_PeoplePicker> {
                 style: TextStyle(color: AppColors.inkFaint),
               ),
             ),
+          );
+        }
+        final u = filtered[i - header.length];
+        return ListTile(
+          leading: HiveAvatar(
+            name: u.displayName,
+            imageUrl: u.avatarUrl,
+            size: 34,
           ),
-      ],
+          title: Text(
+            u.displayName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Text(
+            '@${u.username}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: widget.multiSelect
+              ? Icon(
+                  _selected.contains(u.id)
+                      ? LucideIcons.checkSquare
+                      : LucideIcons.square,
+                  size: 20,
+                  color: _selected.contains(u.id)
+                      ? AppColors.accent
+                      : AppColors.inkFaint,
+                )
+              : (u.id == widget.meId
+                    ? const Icon(
+                        LucideIcons.star,
+                        size: 16,
+                        color: AppColors.accent,
+                      )
+                    : null),
+          onTap: widget.multiSelect
+              ? () => _toggle(u.id)
+              : () => widget.onSelect(u.id),
+        );
+      },
     );
 
     // Anchored popover: no grab handle, and the list flexes to the host panel's

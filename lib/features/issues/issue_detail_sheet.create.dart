@@ -21,6 +21,10 @@ class IssueCreateController extends ChangeNotifier {
 
   /// Wired by the body in initState; invoked by the sticky save button.
   Future<void> Function()? submit;
+
+  /// Wired by the body in initState; reports whether the form holds an
+  /// unsaved title/description so the host can confirm before discarding it.
+  bool Function()? hasDraft;
 }
 
 /// The same two-column layout as [IssueDetailBody], but for CREATING an issue:
@@ -97,6 +101,11 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
   bool _loading = true;
   String? _error;
 
+  // Bumped on every project(-scoped) load so a slow response from a previously
+  // selected project can't land after a newer one and overwrite its sprints /
+  // issues (rapid project switching in the picker).
+  int _projectLoadGen = 0;
+
   // Validation stays silent until the first save attempt, then switches to
   // live (onUserInteraction) validation — Flutter's standard form pattern.
   final _formKey = GlobalKey<FormState>();
@@ -122,6 +131,8 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     }
     if (widget.forcedType != null) _type = widget.forcedType!;
     widget.controller.submit = _save;
+    widget.controller.hasDraft = () =>
+        _titleCtrl.text.trim().isNotEmpty || _descCtrl.text.trim().isNotEmpty;
     _load();
   }
 
@@ -157,31 +168,46 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     }
   }
 
-  /// Loads sprints, project issues (for the `@`-menu / smart-links) + a default
-  /// status for the selected project.
+  /// Loads sprints + a default status for the selected project, and kicks off a
+  /// *background* load of the project's issues (for the `@`-menu / smart-links).
+  ///
+  /// The issue list can span many pages (`allIssues` walks the whole project),
+  /// so it must never block the form's first paint or a project switch — the
+  /// `@`-menu / `{{issue:…}}` chips just fill in when it finishes.
   Future<void> _loadProjectScoped() async {
     _state ??= _project?.stateNames.firstOrNull;
     _sprints = const [];
     _projectIssues = const {};
     final pid = _projectId;
+    final gen = ++_projectLoadGen;
     if (pid == null) return;
     try {
-      _sprints = await _sprintApi.sprintsForProject(pid);
+      final sprints = await _sprintApi.sprintsForProject(pid);
+      if (gen != _projectLoadGen) return; // a newer project won the race
+      _sprints = sprints;
     } catch (_) {
-      _sprints = const [];
-    }
-    // Project issues power the description `@`-menu + `{{issue:…}}` chips; the
-    // shared KB seed backs `{{doc:…}}`. Both best-effort.
-    try {
-      final all = await _issueApi.allIssues(projectId: pid);
-      _projectIssues = {for (final i in all) i.readableId: i};
-    } catch (_) {
-      _projectIssues = const {};
+      if (gen == _projectLoadGen) _sprints = const [];
     }
     try {
       await _knowledge.init();
     } catch (_) {
       /* smart-link doc resolution falls back to "not found" */
+    }
+    // Fire-and-forget: don't await the (potentially many-page) issue fetch.
+    unawaited(_loadProjectIssues(pid, gen));
+  }
+
+  /// Best-effort background fetch of the project's issues; discarded if the user
+  /// has since switched projects (stale [gen]).
+  Future<void> _loadProjectIssues(String pid, int gen) async {
+    try {
+      final all = await _issueApi.allIssues(projectId: pid);
+      if (!mounted || gen != _projectLoadGen) return;
+      setState(() {
+        _projectIssues = {for (final i in all) i.readableId: i};
+      });
+    } catch (_) {
+      /* smart-links fall back to a backend search on demand */
     }
   }
 
@@ -230,6 +256,10 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
       // Hold on the green check briefly before handing off to the detail view.
       widget.controller.phase = IssueCreatePhase.success;
       await Future<void>.delayed(const Duration(milliseconds: 750));
+      // The user may have dismissed the sheet during the hold (barrier tap /
+      // Esc / swipe-down) — the wolt page is then unmounted and onCreated would
+      // pop a defunct context. Bail; the issue is already created server-side.
+      if (!mounted) return;
       widget.onCreated(created);
     } on ApiFailure catch (failure) {
       if (mounted) {
@@ -296,7 +326,9 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
               if (_error != null) ...[
                 const SizedBox(height: 14),
                 Text(
-                  _error!,
+                  // ApiFailure.message can be an i18n key (e.g. 'errors.connection');
+                  // context.t is idempotent for already-resolved strings.
+                  context.t(_error!),
                   style: const TextStyle(color: AppColors.danger),
                   textAlign: TextAlign.center,
                 ),

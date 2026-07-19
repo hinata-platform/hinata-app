@@ -181,13 +181,23 @@ class _AttachmentTileState extends State<_AttachmentTile> {
     // (the object store is internal-only); falls back to the type glyph on
     // load/decode failure.
     final path = widget.imagePath!(att.id);
+    // Decode the thumbnail at (roughly) the tile's on-screen pixel size, never
+    // the source's full resolution: a 48 MP photo drawn in a ~168 px tile would
+    // otherwise decode into a ~200 MB bitmap and OOM-crash a photo-dense grid.
+    // ResizeImage is a no-op when the source is already smaller. 168 dp is the
+    // widest tile extent; ×dpr covers the densest screens.
+    final cacheW = (168 * MediaQuery.devicePixelRatioOf(context)).round();
     return ApiImageAvatar(
       key: ValueKey(path),
       path: path,
       api: context.read<ApiClient>(),
       placeholder: glyph,
-      builder: (img) =>
-          img == null ? glyph : Image(image: img, fit: BoxFit.cover),
+      builder: (img) => img == null
+          ? glyph
+          : Image(
+              image: ResizeImage(img, width: cacheW),
+              fit: BoxFit.cover,
+            ),
     );
   }
 
