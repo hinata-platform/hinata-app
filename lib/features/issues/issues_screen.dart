@@ -150,6 +150,10 @@ class _IssuesScreenState extends State<IssuesScreen> {
         final result = await context.read<IssueRepository>().issues(
           projectId: widget.projectId,
           archived: _filter.archivedOnly,
+          states: _serverStates,
+          priorities: _serverPriorities,
+          types: _serverTypes,
+          assigneeIds: _serverAssignees,
           sort: _sort.wire,
           page: page,
           size: size,
@@ -425,20 +429,30 @@ class _IssuesScreenState extends State<IssuesScreen> {
 
   // ── actions ───────────────────────────────────────────────────────────
 
-  void _openFilter(_RefData data, List<Issue> issues) => openIssueFilter(
+  void _openFilter(_RefData data) => openIssueFilter(
     context,
     anchorKey: _filterKey,
     filter: _filter,
-    options: IssueFilterOptions.from(issues),
+    // Options come from reference data (all states/projects/users + the fixed
+    // type/priority enums), not the loaded issues — the list is now
+    // server-filtered (B2-A02), so deriving options from it would hide facet
+    // values the current result page happens not to contain.
+    options: IssueFilterOptions.reference(
+      states: data.stateOrder,
+      assignees: data.names.keys.toList(),
+      projects: data.projectNames.keys.toList(),
+    ),
     names: data.names,
     avatars: data.avatars,
     projectNames: data.projectNames,
     onChanged: (f) {
-      // The archived facet is server-side — flipping it swaps the whole
-      // backend result set, so the page cache must be refetched.
-      final refetch = f.archivedOnly != _filter.archivedOnly;
+      // Facets the backend expresses (state/priority/type/assignee + archived)
+      // change the server query, so the page cache must be refetched when the
+      // server-query signature changes. Purely client-side facets (project /
+      // time range / "unassigned") only need a rebuild.
+      final before = _serverQuerySignature;
       setState(() => _filter = f);
-      if (refetch) _issues.load();
+      if (_serverQuerySignature != before) _issues.load();
     },
   );
 
@@ -446,8 +460,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
   /// data. Used as a stable callback for the pinned toolbar so its header
   /// delegate need not rebuild every time a new page loads (it reads the fresh
   /// data at tap time instead of closing over a build snapshot).
-  void _openFilterCurrent() =>
-      _openFilter(_ref ?? _emptyRef, _issues.state.items);
+  void _openFilterCurrent() => _openFilter(_ref ?? _emptyRef);
 
   void _onGroupingChanged(IssueGrouping g) => setState(() {
     _grouping = g;
@@ -502,6 +515,10 @@ class _IssuesScreenState extends State<IssuesScreen> {
         all = await issueApi.allIssues(
           projectId: widget.projectId,
           archived: _filter.archivedOnly,
+          states: _serverStates,
+          priorities: _serverPriorities,
+          types: _serverTypes,
+          assigneeIds: _serverAssignees,
           sort: _sort.wire,
         );
       } catch (_) {
@@ -751,21 +768,23 @@ class _IssuesScreenState extends State<IssuesScreen> {
             ? ref.projectNames[widget.projectId]
             : null;
 
-        // Filters/grouping/sorting run client-side over the loaded pages, so
-        // while a filter is active we eagerly pull the remaining pages in the
-        // background — otherwise a match living beyond the first page would
-        // never surface (the user can't scroll a list that filtered to empty).
-        if (_hasActiveView && state.hasMore && !state.isLoadingMore) {
+        // State/priority/type/assignee facets are now applied by the backend
+        // (B2-A02), so the returned pages are already reduced and normal paged
+        // scroll suffices. Only the residual client-side facets (multi-project,
+        // time range, "unassigned") still filter the loaded pages, so we eagerly
+        // pull the remaining (already server-reduced) pages ONLY then —
+        // otherwise a match beyond the first page would never surface.
+        if (_hasClientResidual && state.hasMore && !state.isLoadingMore) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) _issues.loadMore();
           });
         }
 
-        // True while an active filter is still pulling pages but has matched
-        // nothing yet — show a spinner instead of a premature "no results".
+        // True while a residual client-side filter is still pulling pages but has
+        // matched nothing yet — show a spinner instead of a premature "no results".
         final searchingMore =
             list.isEmpty &&
-            (state.isLoadingMore || (_hasActiveView && state.hasMore));
+            (state.isLoadingMore || (_hasClientResidual && state.hasMore));
 
         final compact = context.isCompact;
         return PageChrome(
@@ -982,6 +1001,46 @@ class _IssuesScreenState extends State<IssuesScreen> {
   }
 
   bool get _hasActiveView => !_filter.isEmpty || _timeRange.isActive;
+
+  // ── server-pushed facets (B2-A02) ──────────────────────────────────────────
+  // The backend expresses state/priority/type/assignee directly, so a filtered
+  // page comes back already reduced and we no longer drain every page for them.
+
+  List<String>? get _serverStates =>
+      _filter.states.isEmpty ? null : _filter.states.toList();
+  List<String>? get _serverPriorities =>
+      _filter.priorities.isEmpty ? null : _filter.priorities.toList();
+  List<String>? get _serverTypes =>
+      _filter.types.isEmpty ? null : _filter.types.toList();
+
+  /// Assignee ids are server-pushable only when the "unassigned" sentinel is not
+  /// among them — the backend `$in` can't also express "has no assignee", so
+  /// that case falls back to client-side filtering (and paging).
+  List<String>? get _serverAssignees =>
+      (_filter.assignees.isEmpty ||
+          _filter.assignees.contains(IssueFilter.noAssignee))
+      ? null
+      : _filter.assignees.toList();
+
+  /// Facets that still run client-side ([_filtered]) because the backend can't
+  /// express them: the multi-project facet, the schedule-aware time range, and
+  /// the "unassigned" sentinel. While any is active a server page may still be
+  /// reduced locally, so we page the (already server-reduced) result set to keep
+  /// the filtered list complete — the same behaviour as before, over far less
+  /// data.
+  bool get _hasClientResidual =>
+      _filter.projects.isNotEmpty ||
+      _timeRange.isActive ||
+      _filter.assignees.contains(IssueFilter.noAssignee);
+
+  /// Signature of the facets sent to the backend; when it changes the paged
+  /// cubit must refetch from page 0 because the server query itself changed.
+  String get _serverQuerySignature {
+    String csv(Iterable<String> v) => (v.toList()..sort()).join(',');
+    return '${csv(_filter.states)}|${csv(_filter.priorities)}|'
+        '${csv(_filter.types)}|${csv(_serverAssignees ?? const [])}|'
+        '${_filter.archivedOnly}';
+  }
 
   /// [shown] is the number of currently-matched rows; [total] is the backend's
   /// full count (so it reflects everything, not just the pages loaded so far).

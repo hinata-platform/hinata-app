@@ -1,15 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/repositories/team_repository.dart';
+import '../../core/repositories/user_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
 import '../../core/models/team_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import 'team_modal_kit.dart';
 import 'team_widgets.dart';
@@ -18,16 +22,16 @@ import 'team_widgets.dart';
 Future<bool?> showAddMembersModal(
   BuildContext context, {
   required Team team,
-  required List<DirectoryUser> candidates,
   required Map<String, Project> projectsById,
 }) {
   final repo = context.read<TeamRepository>();
+  final userRepo = context.read<UserRepository>();
   return showTeamModal<bool>(
     context,
     _AddMembersBody(
       repo: repo,
+      userRepo: userRepo,
       team: team,
-      candidates: candidates,
       projectsById: projectsById,
     ),
   );
@@ -68,14 +72,14 @@ mixin _ProjectLookup {
 class _AddMembersBody extends StatefulWidget {
   const _AddMembersBody({
     required this.repo,
+    required this.userRepo,
     required this.team,
-    required this.candidates,
     required this.projectsById,
   });
 
   final TeamRepository repo;
+  final UserRepository userRepo;
   final Team team;
-  final List<DirectoryUser> candidates;
   final Map<String, Project> projectsById;
 
   @override
@@ -83,6 +87,11 @@ class _AddMembersBody extends StatefulWidget {
 }
 
 class _AddMembersBodyState extends State<_AddMembersBody> with _ProjectLookup {
+  // Debounced server-side type-ahead over the directory (replaces draining the
+  // whole org via users() and filtering in Dart).
+  static const _debounceDelay = Duration(milliseconds: 250);
+  static const _pageSize = 25;
+
   int _step = 1;
   String _query = '';
   final _selected = <String>{};
@@ -92,19 +101,60 @@ class _AddMembersBodyState extends State<_AddMembersBody> with _ProjectLookup {
   bool _busy = false;
   String? _error;
 
+  Timer? _debounce;
+
+  /// Monotonic request token — a debounced search that lands after a newer one
+  /// started is discarded, so a slow response can never overwrite fresh results.
+  int _reqSeq = 0;
+  final List<DirectoryUser> _results = [];
+  bool _loading = true;
+
+  /// Ids already on the team — excluded from the picker rows so we only offer
+  /// people who can actually be added.
+  late final Set<String> _memberIds = widget.team.members
+      .map((m) => m.userId)
+      .toSet();
+
   @override
   Map<String, Project> get projectsById => widget.projectsById;
 
-  List<DirectoryUser> get _filtered {
-    final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return widget.candidates;
-    return widget.candidates
-        .where(
-          (u) =>
-              u.displayName.toLowerCase().contains(q) ||
-              (u.title ?? '').toLowerCase().contains(q),
-        )
-        .toList();
+  @override
+  void initState() {
+    super.initState();
+    // Empty query = first page of all active users (server-sorted).
+    _runSearch();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onQueryChanged(String v) {
+    setState(() => _query = v);
+    _debounce?.cancel();
+    _debounce = Timer(_debounceDelay, _runSearch);
+  }
+
+  Future<void> _runSearch() async {
+    _debounce?.cancel();
+    final seq = ++_reqSeq;
+    final query = _query.trim();
+    setState(() => _loading = true);
+    try {
+      final res = await widget.userRepo.searchUsers(query, size: _pageSize);
+      if (!mounted || seq != _reqSeq) return;
+      setState(() {
+        _results
+          ..clear()
+          ..addAll(res.items.where((u) => !_memberIds.contains(u.id)));
+        _loading = false;
+      });
+    } on ApiFailure {
+      if (!mounted || seq != _reqSeq) return;
+      setState(() => _loading = false);
+    }
   }
 
   Future<void> _commit() async {
@@ -183,34 +233,40 @@ class _AddMembersBodyState extends State<_AddMembersBody> with _ProjectLookup {
   }
 
   List<Widget> _peopleStep(BuildContext context) {
-    final filtered = _filtered;
     return [
-      _SearchField(onChanged: (v) => setState(() => _query = v)),
+      _SearchField(onChanged: _onQueryChanged),
       const SizedBox(height: 12),
-      if (filtered.isEmpty)
+      if (_loading)
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 20),
+          child: Center(child: HiveLoader(size: 18)),
+        )
+      else if (_results.isEmpty)
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Text(
-            context.t('teams.everyoneOnTeam'),
+            _query.trim().isEmpty
+                ? context.t('teams.everyoneOnTeam')
+                : context.t('common.noMatches'),
             style: TextStyle(fontSize: 12.5, color: AppColors.inkFaint),
           ),
         )
       else
-        for (var i = 0; i < filtered.length; i++) ...[
+        for (var i = 0; i < _results.length; i++) ...[
           if (i > 0) const SizedBox(height: 6),
           CheckRow(
-            selected: _selected.contains(filtered[i].id),
+            selected: _selected.contains(_results[i].id),
             onTap: () => setState(() {
-              final id = filtered[i].id;
+              final id = _results[i].id;
               _selected.contains(id) ? _selected.remove(id) : _selected.add(id);
             }),
             leading: HiveAvatar(
-              name: filtered[i].displayName,
-              imageUrl: filtered[i].avatarUrl,
+              name: _results[i].displayName,
+              imageUrl: _results[i].avatarUrl,
               size: 34,
             ),
-            title: filtered[i].displayName,
-            subtitle: filtered[i].title,
+            title: _results[i].displayName,
+            subtitle: _results[i].title,
           ),
         ],
     ];

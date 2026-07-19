@@ -162,6 +162,19 @@ class IssueFilter {
   static const empty = IssueFilter();
 }
 
+/// Canonical facet code lists, display-ordered, mirroring the backend enums
+/// (`Issue.Type` / `Issue.Priority`). Used so the filter can always offer every
+/// value even though the loaded list is now server-filtered (B2-A02) and would
+/// otherwise only surface the codes present in the current result page.
+const kIssueTypeCodes = ['EPIC', 'STORY', 'TASK', 'BUG', 'FEATURE', 'SUBTASK'];
+const kIssuePriorityCodes = [
+  'SHOWSTOPPER',
+  'CRITICAL',
+  'MAJOR',
+  'NORMAL',
+  'MINOR',
+];
+
 /// The distinct facet values available to filter on, derived from the issues
 /// currently loaded (plus the known projects so the project facet resolves
 /// names). Preserves first-seen order.
@@ -200,6 +213,23 @@ class IssueFilterOptions {
       assignees.isEmpty &&
       projects.isEmpty &&
       types.isEmpty;
+
+  /// Builds the full facet value space from reference data (all workflow states
+  /// across projects, the whole directory, every project) plus the fixed type /
+  /// priority enums — independent of which issues are currently loaded, so
+  /// server-side filtering (B2-A02) never shrinks the pickable options.
+  factory IssueFilterOptions.reference({
+    required List<String> states,
+    required List<String> assignees,
+    required List<String> projects,
+  }) => IssueFilterOptions(
+    states: states,
+    priorities: kIssuePriorityCodes,
+    assignees: assignees,
+    projects: projects,
+    types: kIssueTypeCodes,
+    hasUnassigned: true,
+  );
 
   factory IssueFilterOptions.from(Iterable<Issue> issues) {
     final states = <String>{};

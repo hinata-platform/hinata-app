@@ -213,6 +213,7 @@ class KnowledgeRepository {
   }
 
   /// All articles that mention [issueReadableId] — the issue's "Documented in".
+  /// In-memory variant kept for the KB screen, which already holds the corpus.
   List<KbArticle> articlesForIssue(String issueReadableId) {
     final out = <KbArticle>[];
     for (final a in articles) {
@@ -224,6 +225,15 @@ class KnowledgeRepository {
       }
     }
     return out;
+  }
+
+  /// Server-resolved backlinks (B2-A04): fetches the articles referencing
+  /// [issueReadableId] via the dedicated endpoint, so the issue-detail
+  /// "Documented in" panel never has to drain and regex-scan the whole KB corpus
+  /// client-side (the old path called [init] + [articlesForIssue]).
+  Future<List<KbArticle>> articlesReferencingIssue(String issueReadableId) async {
+    final refs = await _articleApi.articlesReferencingIssue(issueReadableId);
+    return refs.map(_toKbArticle).toList();
   }
 
   /// Related articles referenced via `{{doc:…}}` tokens in [body].

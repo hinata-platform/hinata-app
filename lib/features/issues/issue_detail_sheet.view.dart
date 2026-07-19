@@ -603,8 +603,15 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         _canDelete = false;
       }
       try {
+        // init() still powers the composer's {{doc:…}} mention menu + chip
+        // previews (that corpus coupling is B2-A11 territory), but the issue↔
+        // article backlinks now come from the dedicated server endpoint instead
+        // of a client-side regex scan over every article body (B2-A04) — it is
+        // ACL-correct and O(matches), not O(articles × body length).
         await _knowledge.init();
-        _documentedIn = _knowledge.articlesForIssue(issue.readableId);
+        _documentedIn = await _knowledge.articlesReferencingIssue(
+          issue.readableId,
+        );
       } catch (_) {
         _documentedIn = const [];
       }

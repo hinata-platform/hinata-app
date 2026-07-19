@@ -222,6 +222,10 @@ GoRouter buildRouter({
       GoRoute(
         path: '/auth-callback',
         builder: (_, state) => SsoCallbackScreen(
+          // A single-use handoff code, redeemed for tokens via a POST — the
+          // bearer tokens are never carried in the URL (B2-S06). `access_token`/
+          // `refresh_token` are still read as a fallback for older redirects.
+          code: state.uri.queryParameters['code'],
           accessToken: state.uri.queryParameters['access_token'],
           refreshToken: state.uri.queryParameters['refresh_token'],
         ),

@@ -26,16 +26,38 @@ class IssueRepository {
     String? sort,
     int page = 0,
     int size = 50,
+    // Repeatable server-side facets (B2-A02): let the backend return an already
+    // reduced page so the client no longer has to drain every page and filter in
+    // memory. Empty/null means "no restriction" for that facet.
+    List<String>? states,
+    List<String>? assigneeIds,
+    List<String>? types,
+    List<String>? priorities,
+    DateTime? createdFrom,
+    DateTime? createdTo,
+    DateTime? dueFrom,
+    DateTime? dueTo,
   }) async {
+    String? day(DateTime? d) => d?.toIso8601String().substring(0, 10);
     final data =
         await _api.get(
               '/api/v1/issues',
               query: {
                 'projectId': ?projectId,
                 'state': ?state,
+                if (states != null && states.isNotEmpty) 'states': states,
                 'assigneeId': ?assigneeId,
+                if (assigneeIds != null && assigneeIds.isNotEmpty)
+                  'assigneeIds': assigneeIds,
                 'sprintId': ?sprintId,
                 'type': ?type,
+                if (types != null && types.isNotEmpty) 'types': types,
+                if (priorities != null && priorities.isNotEmpty)
+                  'priorities': priorities,
+                'createdFrom': ?day(createdFrom),
+                'createdTo': ?day(createdTo),
+                'dueFrom': ?day(dueFrom),
+                'dueTo': ?day(dueTo),
                 if (noSprint) 'noSprint': true,
                 if (archived) 'archived': true,
                 'sort': ?sort,
@@ -71,6 +93,14 @@ class IssueRepository {
     bool noSprint = false,
     bool archived = false,
     String? sort,
+    List<String>? states,
+    List<String>? assigneeIds,
+    List<String>? types,
+    List<String>? priorities,
+    DateTime? createdFrom,
+    DateTime? createdTo,
+    DateTime? dueFrom,
+    DateTime? dueTo,
   }) async {
     const size = 100;
     final out = <Issue>[];
@@ -86,6 +116,14 @@ class IssueRepository {
         noSprint: noSprint,
         archived: archived,
         sort: sort,
+        states: states,
+        assigneeIds: assigneeIds,
+        types: types,
+        priorities: priorities,
+        createdFrom: createdFrom,
+        createdTo: createdTo,
+        dueFrom: dueFrom,
+        dueTo: dueTo,
         page: page,
         size: size,
       );
@@ -96,6 +134,34 @@ class IssueRepository {
       page++;
     }
     return out;
+  }
+
+  /// Lightweight type-ahead for the comment @-mention menu (B2-A11): a small,
+  /// server-capped list of `{id, readableId, title}` for [query] within
+  /// [projectId], instead of draining the whole project issue set client-side.
+  Future<List<IssueRef>> mentionSearch({
+    String? projectId,
+    required String query,
+  }) async =>
+      ((await _api.get(
+                '/api/v1/issues/mention-search',
+                query: {'projectId': ?projectId, if (query.isNotEmpty) 'q': query},
+              ))
+              as List<dynamic>)
+          .map((r) => IssueRef.fromJson(r as Map<String, dynamic>))
+          .toList();
+
+  /// Batch-resolves readable ids (e.g. `HIN-1,HIN-2`) to minimal summaries for
+  /// `{{issue:KEY}}` chip rendering (B2-A11) — ACL-scoped and capped server-side.
+  Future<List<IssueRef>> resolveIssueKeys(List<String> keys) async {
+    if (keys.isEmpty) return const [];
+    return ((await _api.get(
+              '/api/v1/issues/resolve',
+              query: {'keys': keys},
+            ))
+            as List<dynamic>)
+        .map((r) => IssueRef.fromJson(r as Map<String, dynamic>))
+        .toList();
   }
 
   Future<Issue> issue(String id) async => Issue.fromJson(

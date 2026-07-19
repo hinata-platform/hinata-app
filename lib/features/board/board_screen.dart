@@ -13,7 +13,6 @@ import '../../core/api/api_client.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
-import '../../core/models/core_models.dart';
 import '../../core/models/team_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
@@ -367,20 +366,27 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       _error = null;
     });
     try {
+      // Captured before the awaits so the directory lookup below doesn't reach
+      // through `context` across an async gap.
+      final userRepo = context.read<UserRepository>();
       final results = await Future.wait([
         context.read<BoardRepository>().boardView(
           widget.boardId,
           sprintId: _sprintId,
         ),
-        context.read<UserRepository>().users(),
         context.read<ProjectRepository>().projects(),
         context.read<TeamRepository>().teams(),
       ]);
       final view = results[0] as BoardView;
-      final users = results[1] as List<DirectoryUser>;
-      final projects = results[2] as List<Project>;
+      final projects = results[1] as List<Project>;
       final loaded = await _loadBacklog(view.board.projectIds);
       final backlog = loaded.backlog;
+      // Resolve display names/avatars for only the people this board actually
+      // references (issue assignees + reporters) via the capped by-ids endpoint,
+      // rather than draining the whole org directory. The set is bounded by the
+      // board's membership; the interactive assignee/author pickers derive their
+      // own options from these same issues, so nothing here shows the directory.
+      final users = await userRepo.usersByIds(_boardPeopleIds(view, backlog));
       if (!mounted) return;
       final boardProjectIds = view.board.projectIds.toSet();
       setState(() {
@@ -438,6 +444,29 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       }
     }
     return (backlog: out, byId: byId);
+  }
+
+  /// The distinct directory ids this board needs to resolve to names/avatars:
+  /// every assignee and reporter across the board columns and the backlog. Feeds
+  /// the bounded by-ids lookup that replaces the old whole-directory fetch — the
+  /// assignee/author pickers only ever offer people already present here.
+  List<String> _boardPeopleIds(BoardView view, List<Issue> backlog) {
+    final ids = <String>{};
+    void collect(Issue i) {
+      final a = i.assigneeId;
+      if (a != null && a.isNotEmpty) ids.add(a);
+      for (final id in i.assigneeIds) {
+        if (id.isNotEmpty) ids.add(id);
+      }
+      final r = i.reporterId;
+      if (r != null && r.isNotEmpty) ids.add(r);
+    }
+
+    for (final column in view.columns) {
+      column.issues.forEach(collect);
+    }
+    backlog.forEach(collect);
+    return ids.toList();
   }
 
   // ---- derived views ----

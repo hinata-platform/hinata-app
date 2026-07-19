@@ -1,5 +1,29 @@
 part of 'work_models.dart';
 
+/// Minimal issue summary returned by the mention-search / resolve endpoints
+/// (B2-A11) — just enough to render an @-mention row or a `{{issue:KEY}}` chip,
+/// without paging the full issue objects into memory.
+class IssueRef extends Equatable {
+  const IssueRef({
+    required this.id,
+    required this.readableId,
+    required this.title,
+  });
+
+  final String id;
+  final String readableId;
+  final String title;
+
+  factory IssueRef.fromJson(Map<String, dynamic> json) => IssueRef(
+    id: json['id'] as String? ?? '',
+    readableId: json['readableId'] as String? ?? '',
+    title: json['title'] as String? ?? '',
+  );
+
+  @override
+  List<Object?> get props => [id, readableId, title];
+}
+
 class Issue extends Equatable {
   const Issue({
     required this.id,
