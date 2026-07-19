@@ -48,12 +48,9 @@ class _NotificationBellState extends State<_NotificationBell> {
   }
 
   Future<void> _markAllRead(List<AppNotification> items) async {
-    final unread = items.where((n) => !n.read).map((n) => n.id).toList();
-    if (unread.isEmpty) return;
+    if (!items.any((n) => !n.read)) return;
     try {
-      await context.read<NotificationRepository>().markNotificationsRead(
-        unread,
-      );
+      await context.read<NotificationRepository>().markAllNotificationsRead();
     } catch (_) {
       // Non-critical; the reload below reflects server truth.
     }

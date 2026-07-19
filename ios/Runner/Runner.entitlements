@@ -2,6 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Keychain access for flutter_secure_storage (auth tokens live in the
+	     Keychain, not plaintext prefs). An empty array uses the app's default
+	     access group and needs no App Group / special provisioning. -->
+	<key>keychain-access-groups</key>
+	<array/>
 	<!-- Push notifications (FCM/APNs). The value must match the signing profile's
 	     aps-environment. CI archives are signed with the App Store distribution
 	     profile (aps-environment = production), so this is "production". For local

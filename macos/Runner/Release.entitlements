@@ -6,6 +6,11 @@
 	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
+	<!-- Keychain access for flutter_secure_storage (auth tokens live in the
+	     Keychain). Empty array = the app's default access group; no App Group or
+	     special provisioning required, so it's safe in both debug and release. -->
+	<key>keychain-access-groups</key>
+	<array/>
 	<!-- Voice comments: record from the microphone. -->
 	<key>com.apple.security.device.audio-input</key>
 	<true/>

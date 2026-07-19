@@ -37,6 +37,9 @@ class _EditProfileModal extends StatefulWidget {
 class _EditProfileModalState extends State<_EditProfileModal> {
   late final _name = TextEditingController(text: widget.me.displayName);
   late final _title = TextEditingController(text: widget.me.title ?? '');
+  // Read-only username field — a single State-owned controller, not one
+  // reconstructed every build (which leaked an undisposed controller per rebuild).
+  late final _username = TextEditingController(text: widget.me.username);
   late String _locale = widget.me.locale;
   bool _busy = false;
   String? _error;
@@ -45,6 +48,7 @@ class _EditProfileModalState extends State<_EditProfileModal> {
   void dispose() {
     _name.dispose();
     _title.dispose();
+    _username.dispose();
     super.dispose();
   }
 
@@ -100,7 +104,7 @@ class _EditProfileModalState extends State<_EditProfileModal> {
                   label: context.t('account.editModal.username'),
                   child: TextField(
                     enabled: false,
-                    controller: TextEditingController(text: widget.me.username),
+                    controller: _username,
                     decoration: glassInputDecoration().copyWith(
                       prefixIcon: Icon(
                         LucideIcons.atSign,

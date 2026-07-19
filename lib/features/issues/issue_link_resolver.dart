@@ -14,7 +14,7 @@ import '../knowledge/markdown/smart_link_resolver.dart';
 /// (`{{doc:…}}`) still resolve against the shared [KnowledgeRepository] since
 /// they live only in the KB. Clicks delegate to the host (which owns the
 /// `BuildContext`) to open the real issue sheet or navigate to the article.
-class IssueLinkResolver implements SmartLinkResolver {
+class IssueLinkResolver extends SmartLinkResolver {
   IssueLinkResolver({
     required this.issuesByReadable,
     required this.users,
@@ -22,16 +22,23 @@ class IssueLinkResolver implements SmartLinkResolver {
     required this.stateColorFor,
     required this.onOpenIssue,
     required this.onOpenDoc,
+    required this.searchIssues,
     this.onOpenUser,
   });
 
-  /// Project issues keyed by readable id (e.g. `HIV-208`).
+  /// Issues referenced by `{{issue:…}}` tokens, keyed by readable id (e.g.
+  /// `HIV-208`). Populated by resolving only the keys actually referenced (chips
+  /// + hover cards need the full issue), never a whole-project drain.
   final Map<String, Issue> issuesByReadable;
   final List<DirectoryUser> users;
   final KnowledgeRepository knowledgeRepo;
   final Color Function(String state) stateColorFor;
   final void Function(String readableId) onOpenIssue;
   final void Function(String articleId) onOpenDoc;
+
+  /// Backend issue type-ahead for the @-mention menu (lightweight refs), so the
+  /// menu need not hold the whole project issue set in memory.
+  final Future<List<IssueRef>> Function(String query) searchIssues;
   final void Function(String userId)? onOpenUser;
 
   @override
@@ -73,26 +80,31 @@ class IssueLinkResolver implements SmartLinkResolver {
   void openPerson(String id) => onOpenUser?.call(id);
 
   @override
+  bool get asyncIssueMentions => true;
+
+  @override
+  Future<List<MentionCandidate>> searchIssueMentions(String query) async {
+    final refs = await searchIssues(query);
+    return [
+      for (final r in refs)
+        MentionCandidate(
+          kind: 'issue',
+          id: r.readableId,
+          title: r.title,
+          sub: r.readableId,
+          issueType: typeMeta(r.type).icon,
+          issueColor: KbTokens.issueChipColor(typeMeta(r.type).hue),
+        ),
+    ];
+  }
+
+  @override
   List<MentionCandidate> mentions(String query, {required bool commentMode}) {
     final q = query.toLowerCase();
     final res = <MentionCandidate>[];
 
-    for (final it in issuesByReadable.values) {
-      final hay = '${it.readableId} ${it.title}'.toLowerCase();
-      if (q.isEmpty || hay.contains(q)) {
-        final tm = typeMeta(it.type);
-        res.add(
-          MentionCandidate(
-            kind: 'issue',
-            id: it.readableId,
-            title: it.title,
-            sub: it.readableId,
-            issueType: tm.icon,
-            issueColor: KbTokens.issueChipColor(tm.hue),
-          ),
-        );
-      }
-    }
+    // Issues come from the async backend type-ahead (searchIssueMentions), not
+    // an in-memory drain — only docs + people resolve synchronously here.
     for (final a in knowledgeRepo.articles) {
       final sp = knowledgeRepo.spaceById(a.spaceId);
       final hay = '${a.title} ${sp?.name ?? ''}'.toLowerCase();

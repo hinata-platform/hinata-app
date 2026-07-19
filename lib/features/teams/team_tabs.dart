@@ -31,14 +31,11 @@ Future<void> openAddMembers(
   TeamDetailData data,
   Future<void> Function() reload,
 ) async {
-  final inTeam = data.team.members.map((m) => m.userId).toSet();
-  final candidates =
-      data.usersById.values.where((u) => !inTeam.contains(u.id)).toList()
-        ..sort((a, b) => a.displayName.compareTo(b.displayName));
+  // The picker now type-aheads the directory server-side (excluding current
+  // members itself), so we no longer drain data.usersById here.
   final changed = await showAddMembersModal(
     context,
     team: data.team,
-    candidates: candidates,
     projectsById: data.projectsById,
   );
   if (changed == true) await reload();

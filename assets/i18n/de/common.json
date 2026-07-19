@@ -214,7 +214,13 @@
     "ssoOnlyNoProviders": "Die Anmeldung mit Passwort ist deaktiviert und es ist noch kein Single-Sign-On-Anbieter konfiguriert. Bitte wende dich an deine Administratorin oder deinen Administrator.",
     "privacyPolicy": "Datenschutzerklärung",
     "termsOfService": "Nutzungsbedingungen",
-    "legalNotice": "Mit der Nutzung stimmst du unseren Nutzungsbedingungen und der Datenschutzerklärung zu."
+    "legalNotice": "Mit der Nutzung stimmst du unseren Nutzungsbedingungen und der Datenschutzerklärung zu.",
+    "serverLink": {
+      "invalid": "Dieser Link verweist auf einen ungültigen Server und wurde ignoriert.",
+      "title": "Server wechseln?",
+      "body": "Dieser Link verweist auf einen anderen Server ({{host}}). Dorthin wechseln?",
+      "confirm": "Server wechseln"
+    }
   },
   "authShell": {
     "heroTitle": "Wo die Arbeit deines Teams zusammenläuft.",

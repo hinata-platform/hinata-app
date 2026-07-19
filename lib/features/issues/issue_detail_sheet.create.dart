@@ -91,6 +91,14 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
   String _priority = 'NORMAL';
   String _type = 'TASK';
   String? _parentId;
+
+  /// The chosen/loaded parent (epic) issue, so its chip renders without needing
+  /// the whole project issue set in memory.
+  Issue? _parentIssue;
+
+  /// Debounces resolving the `{{issue:KEY}}` chips referenced by the description
+  /// as the user types, so the preview resolves them without a project drain.
+  Timer? _descRefsDebounce;
   String? _sprintId;
   int? _storyPoints;
   DateTime? _startDate;
@@ -133,11 +141,13 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     widget.controller.submit = _save;
     widget.controller.hasDraft = () =>
         _titleCtrl.text.trim().isNotEmpty || _descCtrl.text.trim().isNotEmpty;
+    _descCtrl.addListener(_onDescriptionChanged);
     _load();
   }
 
   @override
   void dispose() {
+    _descRefsDebounce?.cancel();
     _titleCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
@@ -156,6 +166,15 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
       _projects = results[0] as List<Project>;
       _users = results[1] as List<DirectoryUser>;
       _projectId ??= _projects.firstOrNull?.id;
+      // A forced parent (e.g. "add sub-task" / "add to epic") is passed by id —
+      // resolve it once so its chip renders without a project-wide drain.
+      if (widget.parentId != null) {
+        try {
+          _parentIssue = await _issueApi.issue(widget.parentId!);
+        } catch (_) {
+          /* the parent row falls back to a placeholder */
+        }
+      }
       await _loadProjectScoped();
       if (mounted) setState(() => _loading = false);
     } on ApiFailure catch (failure) {
@@ -177,12 +196,10 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     }
   }
 
-  /// Loads sprints + a default status for the selected project, and kicks off a
-  /// *background* load of the project's issues (for the `@`-menu / smart-links).
-  ///
-  /// The issue list can span many pages (`allIssues` walks the whole project),
-  /// so it must never block the form's first paint or a project switch — the
-  /// `@`-menu / `{{issue:…}}` chips just fill in when it finishes.
+  /// Loads sprints + a default status for the selected project. The `@`-menu now
+  /// fetches issue candidates from the backend on demand and `{{issue:…}}` chips
+  /// resolve only the referenced keys, so this no longer drains the project's
+  /// whole issue set.
   Future<void> _loadProjectScoped() async {
     _state ??= _project?.stateNames.firstOrNull;
     _sprints = const [];
@@ -202,22 +219,45 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     } catch (_) {
       /* smart-link doc resolution falls back to "not found" */
     }
-    // Fire-and-forget: don't await the (potentially many-page) issue fetch.
-    unawaited(_loadProjectIssues(pid, gen));
+    // Resolve any issues already referenced by the draft description (e.g. a
+    // pre-filled template); typed/picked ones resolve via the debounced listener.
+    unawaited(_resolveDescriptionRefs());
   }
 
-  /// Best-effort background fetch of the project's issues; discarded if the user
-  /// has since switched projects (stale [gen]).
-  Future<void> _loadProjectIssues(String pid, int gen) async {
+  static final _issueTokenRe = RegExp(r'\{\{issue:([A-Za-z]+-\d+)\}\}');
+
+  /// Resolves the full issues referenced by `{{issue:KEY}}` tokens in the draft
+  /// description that aren't already loaded, so their preview chips render —
+  /// fetching only the referenced keys, never the whole project.
+  Future<void> _resolveDescriptionRefs() async {
+    final keys = <String>{};
+    for (final m in _issueTokenRe.allMatches(_descCtrl.text)) {
+      keys.add(m.group(1)!);
+    }
+    final missing = keys.where((k) => !_projectIssues.containsKey(k)).toList();
+    if (missing.isEmpty) return;
     try {
-      final all = await _issueApi.allIssues(projectId: pid);
-      if (!mounted || gen != _projectLoadGen) return;
+      final resolved = await _issueApi.resolveIssues(missing);
+      if (!mounted || resolved.isEmpty) return;
       setState(() {
-        _projectIssues = {for (final i in all) i.readableId: i};
+        _projectIssues = {
+          ..._projectIssues,
+          for (final i in resolved) i.readableId: i,
+        };
       });
     } catch (_) {
-      /* smart-links fall back to a backend search on demand */
+      // Unresolved keys render as a plain token chip; non-fatal.
     }
+  }
+
+  /// Debounced trigger for [_resolveDescriptionRefs], wired to the description
+  /// controller so chips resolve shortly after a mention is inserted/typed.
+  void _onDescriptionChanged() {
+    _descRefsDebounce?.cancel();
+    _descRefsDebounce = Timer(
+      const Duration(milliseconds: 300),
+      _resolveDescriptionRefs,
+    );
   }
 
   Future<void> _onProjectChanged(String id) async {
@@ -377,6 +417,8 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
         _projStateColor(_project, s) ?? AppColors.stateColor(s),
     onOpenIssue: _openLinkedIssue,
     onOpenDoc: _openArticle,
+    searchIssues: (q) =>
+        _issueApi.mentionSearch(projectId: _projectId, query: q),
   );
 
   /// Opens the real issue for a readable id (e.g. `HIN-12`): tries the loaded
@@ -738,10 +780,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
   /// when the parent was forced by the launching panel.
   Widget _createParentRow() {
     final isSubtask = _type.toUpperCase() == 'SUBTASK';
-    final pid = _parentId;
-    final parent = pid == null
-        ? null
-        : _projectIssues.values.where((i) => i.id == pid).firstOrNull;
+    final parent = _parentId == null ? null : _parentIssue;
     final locked = widget.parentId != null;
     return _DetailRow(
       label: isSubtask ? context.t('issues.parent') : context.t('issues.epic'),
@@ -756,8 +795,23 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
   }
 
   Future<void> _pickParent(Rect anchor) async {
-    final epics = _projectIssues.values.where((i) => i.isEpic).toList()
-      ..sort((a, b) => a.readableId.compareTo(b.readableId));
+    final pid = _projectId;
+    if (pid == null) return;
+    // Fetch the project's epics on demand (a bounded set) instead of filtering a
+    // drained whole-project list.
+    List<Issue> epics;
+    try {
+      final res = await _issueApi.issues(
+        projectId: pid,
+        types: const ['EPIC'],
+        size: 100,
+      );
+      epics = res.issues.toList()
+        ..sort((a, b) => a.readableId.compareTo(b.readableId));
+    } on ApiFailure {
+      epics = const [];
+    }
+    if (!mounted) return;
     final chosen = await _pickOption<String>(
       context,
       title: context.t('issues.epic'),
@@ -774,7 +828,12 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
       ],
     );
     if (chosen != null) {
-      setState(() => _parentId = chosen == _none ? null : chosen);
+      setState(() {
+        _parentId = chosen == _none ? null : chosen;
+        _parentIssue = chosen == _none
+            ? null
+            : epics.where((e) => e.id == chosen).firstOrNull;
+      });
     }
   }
 

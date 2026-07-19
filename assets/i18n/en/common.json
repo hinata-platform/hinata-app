@@ -214,7 +214,13 @@
     "ssoOnlyNoProviders": "Password sign-in is disabled and no single sign-on provider is configured yet. Please contact your administrator.",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
-    "legalNotice": "By continuing you agree to our Terms of Service and Privacy Policy."
+    "legalNotice": "By continuing you agree to our Terms of Service and Privacy Policy.",
+    "serverLink": {
+      "invalid": "That link points to an invalid server and was ignored.",
+      "title": "Switch server?",
+      "body": "This link points to a different server ({{host}}). Switch to it?",
+      "confirm": "Switch server"
+    }
   },
   "authShell": {
     "heroTitle": "Where your team's work comes together.",

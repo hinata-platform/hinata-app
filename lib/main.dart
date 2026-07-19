@@ -44,7 +44,11 @@ Future<void> main() async {
   // as a red box. Linking the module here, before runApp, makes every later
   // access a cheap cache hit. Release builds (dart2js/wasm) have no such lazy
   // linker, so this is a no-op there; the read keeps it from being tree-shaken.
-  if (LucideIcons.server.codePoint == 0) debugPrint('lucide warm-up');
+  // Only web DDC (debug) has the lazy icon-module linker this works around; gate
+  // it so it doesn't run on native/release startup where it's dead code.
+  if (kIsWeb && kDebugMode && LucideIcons.server.codePoint == 0) {
+    debugPrint('lucide warm-up');
+  }
 
   // Firebase (push). Skipped on web — no web Firebase app is configured — and
   // guarded so a misconfiguration never blocks app startup. The background
@@ -68,7 +72,8 @@ Future<void> main() async {
     storageDirectory: kIsWeb
         ? HydratedStorageDirectory.web
         : HydratedStorageDirectory(
-            (await getApplicationDocumentsDirectory()).path),
+            (await getApplicationDocumentsDirectory()).path,
+          ),
   );
 
   // Pre-warm the liquid-glass shaders so the first frame of the bottom nav
@@ -83,9 +88,11 @@ Future<void> main() async {
   final apiClient = ApiClient(storage);
   final repositories = HinataRepositories(apiClient);
 
-  runApp(HinataApp(
-    storage: storage,
-    apiClient: apiClient,
-    repositories: repositories,
-  ));
+  runApp(
+    HinataApp(
+      storage: storage,
+      apiClient: apiClient,
+      repositories: repositories,
+    ),
+  );
 }

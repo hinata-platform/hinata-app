@@ -11,7 +11,10 @@ import 'markdown/smart_link_resolver.dart';
 /// from the seed [KnowledgeRepository]; **issues resolve against the real
 /// backend** (a pre-loaded `readableId → Issue` map), so an article links and
 /// opens genuine issues — not generated demo data.
-class KnowledgeLinkResolver implements SmartLinkResolver {
+///
+/// Keeps issues in the synchronous [mentions] list (it already holds the map),
+/// so it inherits [asyncIssueMentions] = false from the base.
+class KnowledgeLinkResolver extends SmartLinkResolver {
   KnowledgeLinkResolver({
     required this.repo,
     required this.issuesByReadable,
@@ -141,7 +144,8 @@ SmartIssue smartIssueFromReal(
   String? Function(String? userId) nameFor,
 ) {
   final tm = typeMeta(it.type);
-  final pri = _realPriority[it.priority.toUpperCase()] ?? (it.priority, 'equal');
+  final pri =
+      _realPriority[it.priority.toUpperCase()] ?? (it.priority, 'equal');
   return SmartIssue(
     id: it.readableId,
     title: it.title,

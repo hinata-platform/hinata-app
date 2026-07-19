@@ -38,6 +38,19 @@ class AuthRepository {
           .map((p) => SsoProvider.fromJson(p as Map<String, dynamic>))
           .toList();
 
+  /// Redeems the single-use SSO handoff [code] delivered to `/auth-callback`
+  /// for the real token pair. The tokens travel only in this POST response body
+  /// over TLS — never in a URL — so they can't leak into history/proxy logs.
+  Future<({String access, String refresh})> exchangeSso(String code) async {
+    final data =
+        await _api.post('/api/v1/auth/sso/exchange', body: {'code': code})
+            as Map<String, dynamic>;
+    return (
+      access: data['accessToken'] as String,
+      refresh: data['refreshToken'] as String,
+    );
+  }
+
   Future<void> changePassword(String current, String next) => _api.post(
     '/api/v1/auth/password',
     body: {'currentPassword': current, 'newPassword': next},

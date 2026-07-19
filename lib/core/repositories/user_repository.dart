@@ -33,4 +33,16 @@ class UserRepository {
       total: data['totalElements'] as int? ?? 0,
     );
   }
+
+  /// Resolves a bounded, specific set of directory users by id (the endpoint is
+  /// capped server-side). Lets a screen render names/avatars for exactly the
+  /// people it references — e.g. the assignees/reporters on a board — without
+  /// draining the whole directory. Returns only the users that still exist.
+  Future<List<DirectoryUser>> usersByIds(List<String> ids) async {
+    if (ids.isEmpty) return const [];
+    return ((await _api.get('/api/v1/users/by-ids', query: {'ids': ids}))
+            as List<dynamic>)
+        .map((u) => DirectoryUser.fromJson(u as Map<String, dynamic>))
+        .toList();
+  }
 }

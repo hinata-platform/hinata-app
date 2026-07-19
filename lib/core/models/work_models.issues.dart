@@ -1,5 +1,32 @@
 part of 'work_models.dart';
 
+/// Minimal issue summary returned by the mention-search endpoint — just enough
+/// to render an @-mention menu row (readable id, title) and pick its type glyph,
+/// without paging the full issue objects into memory.
+class IssueRef extends Equatable {
+  const IssueRef({
+    required this.id,
+    required this.readableId,
+    required this.title,
+    this.type = 'TASK',
+  });
+
+  final String id;
+  final String readableId;
+  final String title;
+  final String type;
+
+  factory IssueRef.fromJson(Map<String, dynamic> json) => IssueRef(
+    id: json['id'] as String? ?? '',
+    readableId: json['readableId'] as String? ?? '',
+    title: json['title'] as String? ?? '',
+    type: json['type'] as String? ?? 'TASK',
+  );
+
+  @override
+  List<Object?> get props => [id, readableId, title, type];
+}
+
 class Issue extends Equatable {
   const Issue({
     required this.id,
@@ -58,8 +85,7 @@ class Issue extends Equatable {
   final List<String> tags;
 
   /// Whether this issue was created via email-to-ticket (has a sender to reply to).
-  bool get isEmailSourced =>
-      reporterEmail != null && reporterEmail!.isNotEmpty;
+  bool get isEmailSourced => reporterEmail != null && reporterEmail!.isNotEmpty;
   final String? parentId;
   final List<String> dependsOnIds;
   final String? sprintId;
@@ -355,10 +381,11 @@ class CommentReaction extends Equatable {
   final String emoji;
   final String userId;
 
-  factory CommentReaction.fromJson(Map<String, dynamic> json) => CommentReaction(
-    emoji: json['emoji'] as String? ?? '',
-    userId: json['userId'] as String? ?? '',
-  );
+  factory CommentReaction.fromJson(Map<String, dynamic> json) =>
+      CommentReaction(
+        emoji: json['emoji'] as String? ?? '',
+        userId: json['userId'] as String? ?? '',
+      );
 
   @override
   List<Object?> get props => [emoji, userId];
@@ -545,4 +572,3 @@ class IssueActivity extends Equatable {
   @override
   List<Object?> get props => [id, field, fromValue, toValue, createdAt];
 }
-

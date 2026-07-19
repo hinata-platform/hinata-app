@@ -5,10 +5,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/repositories/auth_repository.dart';
-import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
-import '../../core/storage/app_storage.dart';
+import '../../core/util/server_link.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
 import 'auth_shell.dart';
@@ -43,16 +42,10 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       setState(() => _phase = _Phase.invalid);
       return;
     }
-    // Point a freshly opened web/app at the backend named in the link first.
-    final server = widget.server;
-    if (server != null && server.isNotEmpty) {
-      final storage = context.read<AppStorage>();
-      if (storage.serverUrl != server) {
-        await storage.setServerUrl(server);
-        if (!mounted) return;
-        context.read<AppConfigBloc>().add(ServerUrlSubmitted(server));
-      }
-    }
+    // Point a freshly opened web/app at the backend named in the link first —
+    // validated + consent-gated (see [applyServerFromLink]).
+    await applyServerFromLink(context, widget.server);
+    if (!mounted) return;
     try {
       final result = await context.read<AuthRepository>().verifyEmail(
         widget.token,

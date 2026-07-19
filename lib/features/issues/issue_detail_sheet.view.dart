@@ -316,6 +316,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         _pinned = results[1] as List<IssueComment>;
       });
       await _resyncExpandedThreads();
+      unawaited(_syncReferencedIssues());
     } catch (_) {
       // Keep the current view; the next event or manual reload reconciles.
     }
@@ -411,6 +412,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           total: p.total,
         );
       });
+      unawaited(_syncReferencedIssues());
     } catch (_) {
       if (mounted) {
         setState(
@@ -442,6 +444,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         _commentsTotal = p.total;
         _loadArmed = true;
       });
+      unawaited(_syncReferencedIssues());
     } catch (_) {
       // Keep the current view.
     }
@@ -582,14 +585,12 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       } catch (_) {
         _sprints = const [];
       }
-      // Project issues power the comment `@`-menu + `{{issue:…}}` chip previews;
-      // KB backlinks come from the shared seed. Both best-effort.
-      try {
-        final all = await _issueApi.allIssues(projectId: issue.projectId);
-        _projectIssues = {for (final i in all) i.readableId: i};
-      } catch (_) {
-        _projectIssues = const {};
-      }
+      // `{{issue:…}}` chip previews resolve only the issues actually referenced
+      // by the description + loaded comments (the full issue is needed for the
+      // hover card), not the whole project — the `@`-menu fetches its candidates
+      // from the backend on demand. Best-effort.
+      _projectIssues = const {};
+      await _syncReferencedIssues(commit: false);
       try {
         _hierarchy = await _issueApi.issueHierarchy(widget.issueId);
       } catch (_) {
@@ -603,8 +604,15 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         _canDelete = false;
       }
       try {
+        // init() still powers the composer's {{doc:…}} mention menu + chip
+        // previews (a separate corpus concern), but the issue↔
+        // article backlinks now come from the dedicated server endpoint instead
+        // of a client-side regex scan over every article body — it is
+        // ACL-correct and O(matches), not O(articles × body length).
         await _knowledge.init();
-        _documentedIn = _knowledge.articlesForIssue(issue.readableId);
+        _documentedIn = await _knowledge.articlesReferencingIssue(
+          issue.readableId,
+        );
       } catch (_) {
         _documentedIn = const [];
       }
@@ -821,6 +829,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       _commentsTotal = p.total;
     });
     _revealNewestComment();
+    unawaited(_syncReferencedIssues());
   }
 
   /// After a reply: bump the root's reply count and splice the reply into its
@@ -1299,6 +1308,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         _commentsTotal = p.total;
         _loadingMore = false;
       });
+      unawaited(_syncReferencedIssues());
     } catch (_) {
       // Keep what we have; the user can retry.
       if (mounted) setState(() => _loadingMore = false);
@@ -1368,6 +1378,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     setState(() => _editingDesc = false);
     if (value == (_issue!.description ?? '')) return;
     await _patch({'description': value});
+    // The edited description may reference new issues — resolve their chips.
+    await _syncReferencedIssues();
   }
 
   /// The route back button (compact full-screen has no shell nav to fall back
@@ -1577,9 +1589,58 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   // ── smart-link wiring ────────────────────────────────────────────────────
 
-  /// Resolver for the chips/`@`-menu: issues+people from the backend, articles
-  /// from the shared KB seed. Rebuilt per frame (cheap) so it always reflects
-  /// the freshly-loaded project issues / users.
+  static final _issueTokenRe = RegExp(r'\{\{issue:([A-Za-z]+-\d+)\}\}');
+
+  /// Resolves the full issues referenced by `{{issue:KEY}}` tokens in the current
+  /// description + comments that aren't already loaded, so their chips + hover
+  /// cards render richly — fetching only the referenced keys, never the whole
+  /// project. Pass [commit] false during the initial load (the caller's own
+  /// `setState` will render the result).
+  Future<void> _syncReferencedIssues({bool commit = true}) async {
+    final keys = <String>{};
+    void scan(String? t) {
+      if (t == null || t.isEmpty) return;
+      for (final m in _issueTokenRe.allMatches(t)) {
+        keys.add(m.group(1)!);
+      }
+    }
+
+    scan(_issue?.description);
+    for (final c in _comments) {
+      scan(c.text);
+    }
+    for (final c in _pinned) {
+      scan(c.text);
+    }
+    for (final t in _replyThreads.values) {
+      for (final r in t.replies) {
+        scan(r.text);
+      }
+    }
+    keys.remove(_issue?.readableId);
+    final missing = keys.where((k) => !_projectIssues.containsKey(k)).toList();
+    if (missing.isEmpty) return;
+    try {
+      final resolved = await _issueApi.resolveIssues(missing);
+      if (!mounted || resolved.isEmpty) return;
+      final merged = {
+        ..._projectIssues,
+        for (final i in resolved) i.readableId: i,
+      };
+      if (commit) {
+        setState(() => _projectIssues = merged);
+      } else {
+        _projectIssues = merged;
+      }
+    } catch (_) {
+      // Unresolved keys render as a plain token chip; non-fatal.
+    }
+  }
+
+  /// Resolver for the chips/`@`-menu: issue chips resolve against the referenced
+  /// issues, the `@`-menu type-ahead hits the backend, people come from the
+  /// loaded directory and articles from the shared KB seed. Rebuilt per frame
+  /// (cheap) so it always reflects the freshly-resolved issues / users.
   IssueLinkResolver _buildResolver(Issue issue) => IssueLinkResolver(
     issuesByReadable: {issue.readableId: issue, ..._projectIssues},
     users: _users,
@@ -1588,6 +1649,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         _projStateColor(_project, s) ?? AppColors.stateColor(s),
     onOpenIssue: _openLinkedIssue,
     onOpenDoc: _openArticle,
+    searchIssues: (q) =>
+        _issueApi.mentionSearch(projectId: issue.projectId, query: q),
   );
 
   /// Opens the real issue for a readable id (e.g. `HIV-208`): tries the loaded
@@ -2845,8 +2908,14 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         onToggleSelected: _toggleSelected,
       ),
     );
+    // id → readable id for the activity feed's PARENT rows. Drawn from the
+    // referenced issues plus the loaded hierarchy (which always includes this
+    // issue's parent), so a parent-change entry keeps its readable id without
+    // draining the whole project.
     final issueIds = {
       for (final i in _projectIssues.values) i.id: i.readableId,
+      for (final a in _hierarchy.ancestors) a.id: a.readableId,
+      for (final c in _hierarchy.children) c.id: c.readableId,
     };
     Widget activityTile(IssueActivity a) => _ActivityTile(
       activity: a,

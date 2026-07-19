@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/server_profile.dart';
@@ -8,12 +9,15 @@ import '../models/server_profile.dart';
 ///
 /// The app can hold several saved servers and switch between them. The
 /// currently selected server lives under [_kServerUrl]; the full list lives
-/// under [_kServers]. Auth tokens are kept here too and are **scoped per
-/// server** (keyed by URL) so the token issued by one backend is never sent to
-/// another. On mobile SharedPreferences is sandboxed per-app, and the refresh
-/// token is short-lived enough for this app class.
+/// under [_kServers], both in SharedPreferences (non-secret).
+///
+/// Auth tokens (access + refresh) are **scoped per server** (keyed by URL) and
+/// persisted in [FlutterSecureStorage] (Keychain on iOS/macOS, EncryptedShared-
+/// Preferences on Android) — never plaintext SharedPreferences. They are mirrored
+/// into an in-memory cache at startup so the getters stay synchronous for the
+/// Dio interceptor / auth hot paths.
 class AppStorage {
-  AppStorage(this._prefs);
+  AppStorage(this._prefs, this._secure);
 
   static const _kServerUrl = 'server_url';
   static const _kServers = 'servers.v1';
@@ -28,10 +32,23 @@ class AppStorage {
   static const recentSearchMax = 6;
 
   final SharedPreferences _prefs;
+  final FlutterSecureStorage _secure;
+
+  /// Per-server token caches (keyed by server URL), populated from secure
+  /// storage at [create] so [accessToken]/[refreshToken] can stay synchronous.
+  final Map<String, String> _accessCache = {};
+  final Map<String, String> _refreshCache = {};
 
   static Future<AppStorage> create() async {
-    final storage = AppStorage(await SharedPreferences.getInstance());
+    // flutter_secure_storage 10.x defaults to strong encryption on every
+    // platform (Android: RSA-OAEP key + AES-GCM storage; iOS/macOS: Keychain),
+    // so no per-platform options are needed — the deprecated Android
+    // encryptedSharedPreferences flag is intentionally not set.
+    const secure = FlutterSecureStorage();
+    final storage = AppStorage(await SharedPreferences.getInstance(), secure);
     await storage._migrateToMultiServer();
+    await storage._migrateTokensToSecureStorage();
+    await storage._loadTokenCache();
     return storage;
   }
 
@@ -87,15 +104,17 @@ class AppStorage {
   /// switches elsewhere or routes back to the connect screen).
   Future<void> removeServer(String url) async {
     await _saveServers(servers.where((s) => s.url != url).toList());
-    await _prefs.remove(_accessKey(url));
-    await _prefs.remove(_refreshKey(url));
+    _accessCache.remove(url);
+    _refreshCache.remove(url);
+    await _secure.delete(key: _accessKey(url));
+    await _secure.delete(key: _refreshKey(url));
     if (serverUrl == url) await _prefs.remove(_kServerUrl);
   }
 
   Future<void> _saveServers(List<ServerProfile> list) => _prefs.setString(
-        _kServers,
-        jsonEncode(list.map((s) => s.toJson()).toList()),
-      );
+    _kServers,
+    jsonEncode(list.map((s) => s.toJson()).toList()),
+  );
 
   // --- tokens (scoped to the current server) ---------------------------------
 
@@ -104,32 +123,90 @@ class AppStorage {
 
   String? get accessToken {
     final url = serverUrl;
-    return url == null ? null : _prefs.getString(_accessKey(url));
+    return url == null ? null : _accessCache[url];
   }
 
   String? get refreshToken {
     final url = serverUrl;
-    return url == null ? null : _prefs.getString(_refreshKey(url));
+    return url == null ? null : _refreshCache[url];
   }
 
-  Future<void> setTokens({required String access, required String refresh}) async {
+  Future<void> setTokens({
+    required String access,
+    required String refresh,
+  }) async {
     final url = serverUrl;
     if (url == null) return;
-    await _prefs.setString(_accessKey(url), access);
-    await _prefs.setString(_refreshKey(url), refresh);
+    // Cache first so the (synchronous) getters serve the new tokens immediately,
+    // even if the secure-storage write is momentarily unavailable on some
+    // platform — the session still works this run; worst case is a re-login next
+    // launch rather than a crash.
+    _accessCache[url] = access;
+    _refreshCache[url] = refresh;
+    try {
+      await _secure.write(key: _accessKey(url), value: access);
+      await _secure.write(key: _refreshKey(url), value: refresh);
+    } catch (_) {
+      // Non-fatal: keep the in-memory session.
+    }
   }
 
   Future<void> clearTokens() async {
     final url = serverUrl;
     if (url == null) return;
-    await _prefs.remove(_accessKey(url));
-    await _prefs.remove(_refreshKey(url));
+    _accessCache.remove(url);
+    _refreshCache.remove(url);
+    await _secure.delete(key: _accessKey(url));
+    await _secure.delete(key: _refreshKey(url));
+  }
+
+  /// Loads every saved server's tokens from secure storage into the in-memory
+  /// caches so the synchronous getters can serve them on the hot path.
+  Future<void> _loadTokenCache() async {
+    for (final server in servers) {
+      try {
+        final access = await _secure.read(key: _accessKey(server.url));
+        final refresh = await _secure.read(key: _refreshKey(server.url));
+        if (access != null) _accessCache[server.url] = access;
+        if (refresh != null) _refreshCache[server.url] = refresh;
+      } catch (_) {
+        // Secure storage unavailable for this server — treat as signed out.
+      }
+    }
+  }
+
+  /// One-time migration of any plaintext per-server tokens still living in
+  /// SharedPreferences (from a build before secure storage) into secure storage,
+  /// wiping the plaintext copies afterwards.
+  Future<void> _migrateTokensToSecureStorage() async {
+    for (final server in servers) {
+      final legacyAccess = _prefs.getString(_accessKey(server.url));
+      final legacyRefresh = _prefs.getString(_refreshKey(server.url));
+      try {
+        if (legacyAccess != null) {
+          await _secure.write(key: _accessKey(server.url), value: legacyAccess);
+          await _prefs.remove(_accessKey(server.url));
+        }
+        if (legacyRefresh != null) {
+          await _secure.write(
+            key: _refreshKey(server.url),
+            value: legacyRefresh,
+          );
+          await _prefs.remove(_refreshKey(server.url));
+        }
+      } catch (_) {
+        // If secure storage is unavailable, leave the plaintext copy in place
+        // rather than dropping the user's session; retried next launch.
+      }
+    }
   }
 
   /// One-time upgrade from the single-server layout (a lone `server_url` plus
   /// global `access_token`/`refresh_token`) to the multi-server layout: seed the
   /// server list from the existing URL and move its tokens into the per-server
-  /// keys. Runs once — the presence of [_kServers] marks it done.
+  /// keys. Runs once — the presence of [_kServers] marks it done. (Tokens land in
+  /// prefs here and are then lifted into secure storage by
+  /// [_migrateTokensToSecureStorage], which runs right after.)
   Future<void> _migrateToMultiServer() async {
     if (_prefs.containsKey(_kServers)) return;
     final url = _prefs.getString(_kServerUrl);
@@ -182,6 +259,5 @@ class AppStorage {
       _prefs.getStringList(_kRecentSearch) ?? const [];
 
   Future<void> setRecentSearches(List<String> list) =>
-      _prefs.setStringList(
-          _kRecentSearch, list.take(recentSearchMax).toList());
+      _prefs.setStringList(_kRecentSearch, list.take(recentSearchMax).toList());
 }

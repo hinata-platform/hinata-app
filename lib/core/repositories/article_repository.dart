@@ -24,6 +24,20 @@ class ArticleRepository {
     await _api.get('/api/v1/articles/$id') as Map<String, dynamic>,
   );
 
+  /// Articles that reference [issueReadableId] via a `{{issue:KEY}}` token,
+  /// resolved server-side (ACL-scoped, capped) so the issue-detail "Documented
+  /// in" panel never has to drain and regex-scan the whole KB corpus client-side.
+  Future<List<Article>> articlesReferencingIssue(
+    String issueReadableId,
+  ) async =>
+      ((await _api.get(
+                '/api/v1/articles',
+                query: {'referencesIssue': issueReadableId},
+              ))
+              as List<dynamic>)
+          .map((a) => Article.fromJson(a as Map<String, dynamic>))
+          .toList();
+
   Future<Article> saveArticle({
     String? id,
     required String title,

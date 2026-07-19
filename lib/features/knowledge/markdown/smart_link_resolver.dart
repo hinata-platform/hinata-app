@@ -102,8 +102,10 @@ class MentionCandidate {
 }
 
 /// Resolves smart-link tokens to display DTOs, handles clicks, and supplies
-/// `@`-mention candidates. Synchronous on purpose — candidates come from
-/// in-memory, pre-loaded lists so the mention menu stays snappy.
+/// `@`-mention candidates. [mentions] is synchronous — doc/user candidates come
+/// from in-memory lists so the menu stays snappy. Issue candidates may instead
+/// be fetched from the backend on demand (see [asyncIssueMentions]) so a world
+/// with a huge issue set never has to hold it all in memory.
 abstract class SmartLinkResolver {
   SmartIssue? issue(String id);
   SmartDoc? doc(String id);
@@ -113,7 +115,20 @@ abstract class SmartLinkResolver {
   void openDoc(String id);
   void openPerson(String id);
 
+  /// Synchronous candidates (always docs + people; issues too when
+  /// [asyncIssueMentions] is false).
   List<MentionCandidate> mentions(String query, {required bool commentMode});
+
+  /// When true, the mention menu fetches issue candidates via
+  /// [searchIssueMentions] (debounced) instead of expecting them in [mentions] —
+  /// used by the issue detail so it needn't drain the whole project issue set.
+  /// The KB editor keeps its issues in [mentions] and returns false.
+  bool get asyncIssueMentions => false;
+
+  /// Debounced backend issue type-ahead for the menu; only called when
+  /// [asyncIssueMentions] is true. Returns issue-kind [MentionCandidate]s.
+  Future<List<MentionCandidate>> searchIssueMentions(String query) async =>
+      const [];
 }
 
 /// Ambient access to the active [SmartLinkResolver]. Provided by the KB shell

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
@@ -66,6 +68,15 @@ class MentionFieldState extends State<MentionField> {
   List<MentionCandidate> _items = const [];
   int _sel = 0;
   int _from = 0; // index of the '@'
+  String _query = '';
+
+  // Async issue candidates (issue detail only): fetched from the backend,
+  // debounced, and merged ahead of the synchronous doc/user candidates. Empty
+  // in the KB editor, which keeps issues in the synchronous mentions() list.
+  List<MentionCandidate> _issueItems = const [];
+  Timer? _issueDebounce;
+  int _issueReq = 0;
+  String? _issueQuery;
 
   TextEditingController get _ctrl => widget.controller;
   int get _max => widget.commentMode ? 6 : 8;
@@ -80,6 +91,7 @@ class MentionFieldState extends State<MentionField> {
 
   @override
   void dispose() {
+    _issueDebounce?.cancel();
     _ctrl.removeListener(_onChanged);
     _focus.removeListener(_onFocusChange);
     _removeMenu();
@@ -113,19 +125,52 @@ class MentionFieldState extends State<MentionField> {
       return;
     }
     final query = m.group(1)!;
+    _query = query;
     setState(() {
       _from = caret - query.length - 1;
       _items = _build(query);
       _sel = 0;
     });
     _showMenu();
+    _scheduleIssueSearch(query);
+  }
+
+  /// Fires a debounced backend issue type-ahead (issue detail only) and merges
+  /// the results into the menu when they arrive. No-op in the KB editor, which
+  /// keeps issues in the synchronous [SmartLinkResolver.mentions] list.
+  void _scheduleIssueSearch(String query) {
+    final resolver = SmartLinkScope.of(context);
+    if (!resolver.asyncIssueMentions) return;
+    if (_issueQuery == query) return; // already searching/searched this query
+    _issueQuery = query;
+    _issueDebounce?.cancel();
+    final req = ++_issueReq;
+    _issueDebounce = Timer(const Duration(milliseconds: 220), () async {
+      List<MentionCandidate> issues;
+      try {
+        issues = await resolver.searchIssueMentions(query);
+      } catch (_) {
+        return; // keep the previous issue candidates on error
+      }
+      // Drop if superseded, unmounted, or the menu closed while we waited.
+      if (!mounted || req != _issueReq || _menu == null) return;
+      setState(() {
+        _issueItems = issues;
+        _items = _build(_query);
+        if (_sel >= _items.length) _sel = 0;
+      });
+      _showMenu();
+    });
   }
 
   List<MentionCandidate> _build(String rawQuery) {
-    final res = SmartLinkScope.of(
+    final sync = SmartLinkScope.of(
       context,
     ).mentions(rawQuery, commentMode: widget.commentMode);
-    return res.length > _max ? res.sublist(0, _max) : res;
+    // Backend issue candidates (if any) lead, then the synchronous doc/user
+    // candidates — matching the previous issues-first ordering.
+    final merged = _issueItems.isEmpty ? sync : [..._issueItems, ...sync];
+    return merged.length > _max ? merged.sublist(0, _max) : merged;
   }
 
   // ── keyboard ──
@@ -200,8 +245,15 @@ class MentionFieldState extends State<MentionField> {
   }
 
   void _close() {
+    _issueDebounce?.cancel();
+    _issueQuery = null;
     if (_menu != null) _removeMenu();
-    if (_items.isNotEmpty) setState(() => _items = const []);
+    if (_items.isNotEmpty || _issueItems.isNotEmpty) {
+      setState(() {
+        _items = const [];
+        _issueItems = const [];
+      });
+    }
   }
 
   // ── overlay menu ──
