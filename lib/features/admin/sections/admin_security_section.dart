@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
-import '../../../core/theme/app_colors.dart';
 import '../admin_form_helpers.dart';
 
 /// Security hardening settings: password policy, session lifetime, rate limiting.
@@ -21,8 +20,7 @@ class _AdminSecuritySectionState extends State<AdminSecuritySection> {
           as Map<String, dynamic>;
 
   int _intVal(String key, int def) => (_sec[key] as int?) ?? def;
-  bool _boolVal(String key, {required bool def}) =>
-      (_sec[key] as bool?) ?? def;
+  bool _boolVal(String key, {required bool def}) => (_sec[key] as bool?) ?? def;
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +39,7 @@ class _AdminSecuritySectionState extends State<AdminSecuritySection> {
               min: 8,
               max: 128,
               suffix: context.t('admin.chars'),
-              onChanged: (v) =>
-                  setState(() => _sec['passwordMinLength'] = v),
+              onChanged: (v) => setState(() => _sec['passwordMinLength'] = v),
             ),
           ],
         ),
@@ -58,8 +55,7 @@ class _AdminSecuritySectionState extends State<AdminSecuritySection> {
               label: context.t('admin.rateLimitEnabled'),
               subtitle: context.t('admin.rateLimitSubtitle'),
               value: _boolVal('rateLimitEnabled', def: true),
-              onChanged: (v) =>
-                  setState(() => _sec['rateLimitEnabled'] = v),
+              onChanged: (v) => setState(() => _sec['rateLimitEnabled'] = v),
             ),
             const SizedBox(height: 4),
             AdminNumberField(
@@ -68,8 +64,7 @@ class _AdminSecuritySectionState extends State<AdminSecuritySection> {
               min: 1,
               max: 50,
               suffix: context.t('admin.attempts'),
-              onChanged: (v) =>
-                  setState(() => _sec['maxLoginAttempts'] = v),
+              onChanged: (v) => setState(() => _sec['maxLoginAttempts'] = v),
             ),
             AdminNumberField(
               label: context.t('admin.lockoutMinutes'),
@@ -77,8 +72,7 @@ class _AdminSecuritySectionState extends State<AdminSecuritySection> {
               min: 1,
               max: 1440,
               suffix: context.t('admin.minutes'),
-              onChanged: (v) =>
-                  setState(() => _sec['lockoutMinutes'] = v),
+              onChanged: (v) => setState(() => _sec['lockoutMinutes'] = v),
             ),
           ],
         ),
@@ -104,30 +98,9 @@ class _AdminSecuritySectionState extends State<AdminSecuritySection> {
         const SizedBox(height: 16),
 
         // ─── OWASP info box ──────────────────────────────────────
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.accentSoft,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.accentLine),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(LucideIcons.shieldCheck,
-                  size: 18, color: AppColors.accentStrong),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  context.t('admin.owaspNote'),
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.inkSoft,
-                      height: 1.5),
-                ),
-              ),
-            ],
-          ),
+        AdminNote(
+          text: context.t('admin.owaspNote'),
+          icon: LucideIcons.shieldCheck,
         ),
       ],
     );

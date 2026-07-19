@@ -1,8 +1,114 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_widgets.dart';
+
+/// Tone of an [AdminNote] — drives its tint, rim and glyph colour.
+enum AdminNoteTone { accent, info, warning, danger }
+
+/// A tinted info/callout banner (icon + text) shared across the admin sections,
+/// so every "note" (OWASP tip, integration hint, warning) reads identically.
+class AdminNote extends StatelessWidget {
+  const AdminNote({
+    super.key,
+    required this.text,
+    this.icon = LucideIcons.info,
+    this.tone = AdminNoteTone.accent,
+  });
+
+  final String text;
+  final IconData icon;
+  final AdminNoteTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final (bg, border, glyph) = switch (tone) {
+      AdminNoteTone.accent => (
+        AppColors.accentSoft,
+        AppColors.accentLine,
+        AppColors.accentStrong,
+      ),
+      AdminNoteTone.info => (
+        AppColors.surfaceMuted,
+        AppColors.hairline2,
+        AppColors.inkSoft,
+      ),
+      AdminNoteTone.warning => (
+        AppColors.warning.withValues(alpha: 0.12),
+        AppColors.warning.withValues(alpha: 0.35),
+        AppColors.warning,
+      ),
+      AdminNoteTone.danger => (
+        AppColors.dangerSoft,
+        AppColors.danger.withValues(alpha: 0.35),
+        AppColors.danger,
+      ),
+    };
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 17, color: glyph),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 12.5,
+                height: 1.5,
+                color: AppColors.inkSoft,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shared input decoration for admin form fields — a filled, rounded field with
+/// a hairline rim that lifts to the amber accent on focus. Keeps every section's
+/// text/number inputs visually identical to the rest of the settings surfaces.
+InputDecoration adminInputDecoration(
+  BuildContext context, {
+  String? label,
+  String? hint,
+  String? helper,
+  String? suffix,
+}) {
+  OutlineInputBorder border(Color color, [double width = 1]) =>
+      OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        borderSide: BorderSide(color: color, width: width),
+      );
+  return InputDecoration(
+    labelText: label,
+    hintText: hint,
+    helperText: helper,
+    suffixText: suffix,
+    filled: true,
+    fillColor: AppColors.surfaceMuted,
+    isDense: true,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    border: border(AppColors.hairline),
+    enabledBorder: border(AppColors.hairline),
+    focusedBorder: border(AppColors.accent, 1.4),
+    labelStyle: TextStyle(fontSize: 13.5, color: AppColors.inkSoft),
+    floatingLabelStyle: const TextStyle(
+      fontSize: 13.5,
+      color: AppColors.accentStrong,
+    ),
+  );
+}
 
 /// Card that groups related admin settings with an icon, title and subtitle.
 class AdminSectionCard extends StatelessWidget {
@@ -32,12 +138,12 @@ class AdminSectionCard extends StatelessWidget {
         children: [
           // Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
             child: Row(
               children: [
                 Container(
-                  width: 36,
-                  height: 36,
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
                     color: AppColors.accentSoft,
                     borderRadius: BorderRadius.circular(10),
@@ -53,17 +159,23 @@ class AdminSectionCard extends StatelessWidget {
                       Text(
                         title,
                         style: TextStyle(
+                          fontFamily: AppTheme.fontBrand,
                           fontWeight: FontWeight.w700,
-                          fontSize: 14,
+                          fontSize: 15,
+                          letterSpacing: -0.2,
                           color: AppColors.ink,
                         ),
                       ),
                       if (subtitle != null)
-                        Text(
-                          subtitle!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.inkSoft,
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            subtitle!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              height: 1.3,
+                              color: AppColors.inkSoft,
+                            ),
                           ),
                         ),
                     ],
@@ -72,10 +184,10 @@ class AdminSectionCard extends StatelessWidget {
               ],
             ),
           ),
-          Divider(height: 1, color: AppColors.hairline),
+          Divider(height: 1, color: AppColors.hairline2),
           // Fields
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: children,
@@ -114,19 +226,16 @@ class AdminField extends StatelessWidget {
         initialValue: initialValue,
         obscureText: isSecret,
         keyboardType: keyboardType,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          helperText: isSecret ? _secretHint(context) : null,
+        style: TextStyle(fontSize: 14, color: AppColors.ink),
+        decoration: adminInputDecoration(
+          context,
+          label: label,
+          hint: hint,
+          helper: isSecret ? context.t('admin.secretHint') : null,
         ),
         onChanged: onChanged,
       ),
     );
-  }
-
-  String _secretHint(BuildContext context) {
-    // We reuse the existing translation key
-    return 'Leave blank to keep the stored value';
   }
 }
 
@@ -156,7 +265,8 @@ class AdminNumberField extends StatelessWidget {
       child: TextFormField(
         initialValue: '$value',
         keyboardType: TextInputType.number,
-        decoration: InputDecoration(labelText: label, suffixText: suffix),
+        style: TextStyle(fontSize: 14, color: AppColors.ink),
+        decoration: adminInputDecoration(context, label: label, suffix: suffix),
         onChanged: (v) {
           final parsed = int.tryParse(v);
           if (parsed == null) return;
@@ -190,12 +300,12 @@ class AdminToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         onTap: () => onChanged(!value),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
+          padding: const EdgeInsets.symmetric(vertical: 6),
           child: Row(
             children: [
               Expanded(
@@ -213,11 +323,12 @@ class AdminToggle extends StatelessWidget {
                     ),
                     if (subtitle != null)
                       Padding(
-                        padding: const EdgeInsets.only(top: 2),
+                        padding: const EdgeInsets.only(top: 3),
                         child: Text(
                           subtitle!,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 12.5,
+                            height: 1.35,
                             color: AppColors.inkSoft,
                           ),
                         ),
@@ -225,7 +336,7 @@ class AdminToggle extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               HiveSwitch(value: value, onChanged: onChanged),
             ],
           ),
@@ -268,8 +379,8 @@ class _ProviderTileState extends State<ProviderTile> {
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surfaceMuted,
-          borderRadius: BorderRadius.circular(10),
+          color: enabled ? AppColors.accentSoft : AppColors.surfaceMuted,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: enabled ? AppColors.accentLine : AppColors.hairline2,
           ),
@@ -332,11 +443,11 @@ class _ProviderTileState extends State<ProviderTile> {
                   child: TextFormField(
                     initialValue: (widget.section[key] as String?) ?? '',
                     obscureText: secret,
-                    decoration: InputDecoration(
-                      labelText: label,
-                      helperText: secret
-                          ? 'Leave blank to keep the stored value'
-                          : null,
+                    style: TextStyle(fontSize: 14, color: AppColors.ink),
+                    decoration: adminInputDecoration(
+                      context,
+                      label: label,
+                      helper: secret ? context.t('admin.secretHint') : null,
                     ),
                     onChanged: (value) => widget.section[key] = value,
                   ),

@@ -47,7 +47,10 @@ Color _hue(double h, {double s = 0.5, double l = 0.5}) =>
   UserStatus.active => (_hue(155, s: .4, l: .92), _hue(155, s: .45, l: .38)),
   UserStatus.disabled => (_hue(20, s: .5, l: .93), _hue(20, s: .5, l: .47)),
   UserStatus.invited => (_hue(45, s: .6, l: .92), _hue(45, s: .55, l: .42)),
-  UserStatus.pendingApproval => (_hue(265, s: .5, l: .93), _hue(265, s: .5, l: .5)),
+  UserStatus.pendingApproval => (
+    _hue(265, s: .5, l: .93),
+    _hue(265, s: .5, l: .5),
+  ),
 };
 
 Color originColor(UserOrigin origin) => switch (origin) {
@@ -296,20 +299,22 @@ class UmKpiCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
+        duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: active ? AppColors.accentSoft : AppColors.surface,
           borderRadius: BorderRadius.circular(AppTheme.radiusCard),
           border: Border.all(
             color: active ? AppColors.accentLine : AppColors.hairline,
+            width: active ? 1.4 : 1,
           ),
           boxShadow: active
               ? [
                   BoxShadow(
-                    color: AppColors.accent.withValues(alpha: 0.25),
-                    blurRadius: 0,
-                    spreadRadius: 3,
+                    color: AppColors.accent.withValues(alpha: 0.18),
+                    blurRadius: 14,
+                    spreadRadius: -4,
+                    offset: const Offset(0, 4),
                   ),
                 ]
               : null,

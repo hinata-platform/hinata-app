@@ -88,8 +88,9 @@ class _CompactShellState extends State<_CompactShell> {
                 // when the page publishes/updates its docked toolbar.
                 final bottomH = widget.immersive
                     ? 0.0
-                    : PageChromeScope.of(context)
-                        .bottomHeightFor(widget.location);
+                    : PageChromeScope.of(
+                        context,
+                      ).bottomHeightFor(widget.location);
                 // Glass app bar: status-bar inset + bar content height (+ any
                 // docked toolbar). Immersive routes hide the bar, so only the
                 // status-bar inset remains.
@@ -307,60 +308,62 @@ class _GlassTopBar extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               GlassAppBar(
-            backgroundColor: Colors.transparent,
-            centerTitle: true,
-            preferredSize: const Size.fromHeight(_kCompactBarHeight),
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            leading: onBack != null
-                ? Tooltip(
-                    message: MaterialLocalizations.of(
-                      context,
-                    ).backButtonTooltip,
-                    child: !isNativeApp
-                        ? _FrostedCircleButton(
-                            icon: LucideIcons.arrowLeft,
-                            onTap: onBack,
-                          )
-                        : GlassButton(
-                            icon: const Icon(LucideIcons.arrowLeft),
-                            onTap: onBack,
-                            width: 42,
-                            height: 42,
-                            iconSize: 18,
-                            useOwnLayer: true,
-                            settings: dark ? kNavGlassDark : kNavGlassLight,
-                            iconColor: dark ? AppColors.inkDark : AppColors.ink,
-                            glowColor: AppColors.accent,
+                backgroundColor: Colors.transparent,
+                centerTitle: true,
+                preferredSize: const Size.fromHeight(_kCompactBarHeight),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                leading: onBack != null
+                    ? Tooltip(
+                        message: MaterialLocalizations.of(
+                          context,
+                        ).backButtonTooltip,
+                        child: !isNativeApp
+                            ? _FrostedCircleButton(
+                                icon: LucideIcons.arrowLeft,
+                                onTap: onBack,
+                              )
+                            : GlassButton(
+                                icon: const Icon(LucideIcons.arrowLeft),
+                                onTap: onBack,
+                                width: 42,
+                                height: 42,
+                                iconSize: 18,
+                                useOwnLayer: true,
+                                settings: dark ? kNavGlassDark : kNavGlassLight,
+                                iconColor: dark
+                                    ? AppColors.inkDark
+                                    : AppColors.ink,
+                                glowColor: AppColors.accent,
 
-                            // Keep the tactile press-scale but damp the liquid drag-follow so the
-                            // isolated button doesn't over-stretch on tap.
-                            stretch: 0.15,
+                                // Keep the tactile press-scale but damp the liquid drag-follow so the
+                                // isolated button doesn't over-stretch on tap.
+                                stretch: 0.15,
+                              ),
+                      )
+                    : Tooltip(
+                        message: context.t('nav.dashboard'),
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => context.go('/dashboard'),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10),
+                            child: HexMark(size: 24, color: AppColors.accent),
                           ),
-                  )
-                : Tooltip(
-                    message: context.t('nav.dashboard'),
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => context.go('/dashboard'),
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: HexMark(size: 24, color: AppColors.accent),
+                        ),
                       ),
-                    ),
+                title: Text(
+                  titleText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: AppTheme.fontBrand,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                    color: AppColors.ink,
                   ),
-            title: Text(
-              titleText,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: AppTheme.fontBrand,
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.3,
-                color: AppColors.ink,
-              ),
-            ),
+                ),
                 actions: [_GlassTopActions(location: location, dark: dark)],
               ),
               if (bottom != null)
@@ -391,9 +394,17 @@ class _GlassTopActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Trailing actions the visible sub-page published into the bar (Save,
+    // Invite, …), rendered as icon-only frosted circles ahead of the persistent
+    // notification + settings controls.
+    final pageActions = PageChromeScope.of(context).actionsFor(location);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        for (final action in pageActions) ...[
+          _PageActionButton(action: action, dark: dark),
+          const SizedBox(width: 8),
+        ],
         _NotificationBell(
           active: location.startsWith('/notifications'),
           frosted: true,
@@ -539,6 +550,58 @@ class _FrostedCircleButton extends StatelessWidget {
       ),
     );
     return tooltip != null ? Tooltip(message: tooltip!, child: button) : button;
+  }
+}
+
+/// A sub-page's [PageAction] rendered in the compact glass bar. On native it is
+/// a real iOS-26 [GlassButton] (its own glass layer), matching the bell/settings
+/// controls; on web it falls back to the frosted circle (a nested backdrop blur
+/// pixelates on Skia). [PageAction.primary] gets an amber glyph; [PageAction.busy]
+/// shows a small spinner and ignores taps.
+class _PageActionButton extends StatelessWidget {
+  const _PageActionButton({required this.action, required this.dark});
+
+  final PageAction action;
+  final bool dark;
+
+  @override
+  Widget build(BuildContext context) {
+    if (action.busy) {
+      return _FrostedSurface(
+        borderRadius: BorderRadius.circular(20),
+        dark: dark,
+        child: const SizedBox(
+          width: 40,
+          height: 40,
+          child: Center(child: HiveLoader(size: 18, strokeWidth: 2)),
+        ),
+      );
+    }
+    if (isNativeApp) {
+      return Tooltip(
+        message: action.label,
+        child: GlassButton(
+          icon: Icon(action.icon),
+          onTap: action.onTap ?? () {},
+          width: 42,
+          height: 42,
+          iconSize: 18,
+          useOwnLayer: true,
+          settings: dark ? kNavGlassDark : kNavGlassLight,
+          iconColor: action.primary
+              ? AppColors.accentStrong
+              : (dark ? AppColors.inkDark : AppColors.ink),
+          glowColor: AppColors.accent,
+          stretch: 0.15,
+        ),
+      );
+    }
+    return _FrostedCircleButton(
+      icon: action.icon,
+      tooltip: action.label,
+      active: action.primary,
+      onTap: action.onTap ?? () {},
+    );
   }
 }
 

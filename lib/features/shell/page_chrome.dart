@@ -1,11 +1,49 @@
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+/// A single primary action a sub-page publishes into the shell's glass app bar
+/// (e.g. Save, Invite). The shell renders it in the app bar's trailing slot:
+/// an icon-only frosted circle on compact, an icon+label frosted pill on wide.
+/// A [primary] action is tinted amber; a [busy] one swaps its glyph for a small
+/// spinner and ignores taps.
+///
+/// It's a value type (with [==]/[hashCode]) so the shell can diff action lists
+/// cheaply and pages can rebuild them freely each frame without churning the bar.
+@immutable
+class PageAction {
+  const PageAction({
+    required this.icon,
+    required this.label,
+    this.onTap,
+    this.primary = false,
+    this.busy = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final bool primary;
+  final bool busy;
+
+  @override
+  bool operator ==(Object other) =>
+      other is PageAction &&
+      other.icon == icon &&
+      other.label == label &&
+      identical(other.onTap, onTap) &&
+      other.primary == primary &&
+      other.busy == busy;
+
+  @override
+  int get hashCode => Object.hash(icon, label, onTap, primary, busy);
+}
+
 /// Chrome a sub-page hands the app shell to render in its top app bar: the
-/// page's real (often dynamic) [title] and an optional [onBack] override for
+/// page's real (often dynamic) [title], an optional [onBack] override for
 /// back navigation that isn't a plain route pop — e.g. an in-page master→detail
-/// step. When a page publishes nothing the shell falls back to a route-derived
-/// title and a pop/parent-route back.
+/// step — and optional trailing [actions]. When a page publishes nothing the
+/// shell falls back to a route-derived title and a pop/parent-route back.
 @immutable
 class PageChromeData {
   const PageChromeData({
@@ -14,6 +52,7 @@ class PageChromeData {
     this.onBack,
     this.bottom,
     this.bottomHeight = 0,
+    this.actions = const [],
   });
 
   /// The route this chrome belongs to. The shell only honours an override whose
@@ -30,6 +69,11 @@ class PageChromeData {
   /// clears the whole bar. Compact shell only; the wide shell ignores it.
   final Widget? bottom;
   final double bottomHeight;
+
+  /// Trailing primary actions the page surfaces in the shell's glass app bar,
+  /// so pages no longer draw their own header/save chrome. Rendered by both the
+  /// compact and wide shells (see [PageAction]).
+  final List<PageAction> actions;
 }
 
 /// Carries the chrome published by the visible sub-page to the shell's top bar.
@@ -48,12 +92,16 @@ class PageChromeController extends ChangeNotifier {
   double bottomHeightFor(String location) =>
       _data.location == location ? _data.bottomHeight : 0;
 
+  List<PageAction> actionsFor(String location) =>
+      _data.location == location ? _data.actions : const [];
+
   void publish(PageChromeData data) {
     if (_data.location == data.location &&
         _data.title == data.title &&
         identical(_data.onBack, data.onBack) &&
         identical(_data.bottom, data.bottom) &&
-        _data.bottomHeight == data.bottomHeight) {
+        _data.bottomHeight == data.bottomHeight &&
+        listEquals(_data.actions, data.actions)) {
       return;
     }
     _data = data;
@@ -92,6 +140,7 @@ class PageChrome extends StatefulWidget {
     this.onBack,
     this.bottom,
     this.bottomHeight = 0,
+    this.actions = const [],
     required this.child,
   });
 
@@ -102,6 +151,10 @@ class PageChrome extends StatefulWidget {
   /// See [PageChromeData.bottom].
   final Widget? bottom;
   final double bottomHeight;
+
+  /// Trailing primary actions rendered in the shell's glass app bar.
+  /// See [PageChromeData.actions].
+  final List<PageAction> actions;
   final Widget child;
 
   @override
@@ -124,7 +177,8 @@ class _PageChromeState extends State<PageChrome> {
     if (oldWidget.title != widget.title ||
         !identical(oldWidget.onBack, widget.onBack) ||
         !identical(oldWidget.bottom, widget.bottom) ||
-        oldWidget.bottomHeight != widget.bottomHeight) {
+        oldWidget.bottomHeight != widget.bottomHeight ||
+        !listEquals(oldWidget.actions, widget.actions)) {
       _schedulePublish();
     }
   }
@@ -136,13 +190,16 @@ class _PageChromeState extends State<PageChrome> {
       if (!mounted) return;
       final controller = PageChromeScope.maybeRead(context);
       if (controller == null) return;
-      controller.publish(PageChromeData(
-        location: GoRouterState.of(context).matchedLocation,
-        title: widget.title,
-        onBack: widget.onBack,
-        bottom: widget.bottom,
-        bottomHeight: widget.bottomHeight,
-      ));
+      controller.publish(
+        PageChromeData(
+          location: GoRouterState.of(context).matchedLocation,
+          title: widget.title,
+          onBack: widget.onBack,
+          bottom: widget.bottom,
+          bottomHeight: widget.bottomHeight,
+          actions: widget.actions,
+        ),
+      );
     });
   }
 

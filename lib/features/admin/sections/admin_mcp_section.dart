@@ -54,7 +54,7 @@ class _AdminMcpSectionState extends State<AdminMcpSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _InfoBanner(text: context.t('admin.mcpHint')),
+        AdminNote(text: context.t('admin.mcpHint')),
         const SizedBox(height: 16),
 
         // ── Server info (read-only) ───────────────────────────────────────
@@ -89,10 +89,12 @@ class _AdminMcpSectionState extends State<AdminMcpSection> {
             TextFormField(
               controller: _maxPats,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: context.t('admin.mcpMaxPats'),
-                helperText: context.t('admin.mcpMaxPatsHint'),
-                suffixText: context.t('admin.mcpMaxPatsSuffix'),
+              style: TextStyle(fontSize: 14, color: AppColors.ink),
+              decoration: adminInputDecoration(
+                context,
+                label: context.t('admin.mcpMaxPats'),
+                helper: context.t('admin.mcpMaxPatsHint'),
+                suffix: context.t('admin.mcpMaxPatsSuffix'),
               ),
               onChanged: _onMaxPatsChanged,
             ),
@@ -138,42 +140,6 @@ class _ReadOnlyRow extends StatelessWidget {
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
                 fontFamily: AppTheme.fontMono,
-                color: AppColors.ink,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Top explainer banner (accent-tinted), mirroring the Git section's banner.
-class _InfoBanner extends StatelessWidget {
-  const _InfoBanner({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.accentSoft,
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.accentLine),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(LucideIcons.info, size: 16, color: AppColors.accentStrong),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 12.5,
-                height: 1.4,
                 color: AppColors.ink,
               ),
             ),
