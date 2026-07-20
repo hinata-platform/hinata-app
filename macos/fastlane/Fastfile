@@ -161,7 +161,7 @@ platform :mac do
       # Upload the localized macOS listing (fastlane/metadata) + the framed
       # 2880x1800 MacBook screenshots (fastlane/screenshots).
       skip_metadata: false,
-      skip_screenshots: false,
+      skip_screenshots: true,
       overwrite_screenshots: true
     )
   end
