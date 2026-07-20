@@ -164,7 +164,7 @@ platform :ios do
       # description, promo, what's-new, URLs, copyright, categories, review info)
       # and the framed 6.9" iPhone + 13" iPad screenshots (fastlane/screenshots).
       skip_metadata: false,
-      skip_screenshots: false,
+      skip_screenshots: true,
       overwrite_screenshots: true
     )
   end
