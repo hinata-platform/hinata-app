@@ -35,51 +35,72 @@ class _FilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final gutter = context.pageGutter;
     final search = AdminGlassSearchField(
       hint: context.t('audit.searchHint'),
       controller: searchCtrl,
       onChanged: onSearch,
     );
-    final chips = SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          AdminCountPill(
-            label: loading
-                ? '…'
-                : context.t('audit.count', variables: {'count': total}),
-          ),
+    final chipRow = Row(
+      children: [
+        AdminCountPill(
+          label: loading
+              ? '…'
+              : context.t('audit.count', variables: {'count': total}),
+        ),
+        const SizedBox(width: 8),
+        _CategoryFilterChip(value: category, onSelected: onCategory),
+        const SizedBox(width: 8),
+        _SeverityFilterChip(value: severity, onSelected: onSeverity),
+        const SizedBox(width: 8),
+        _OutcomeFilterChip(value: outcome, onSelected: onOutcome),
+        if (hasFilters) ...[
           const SizedBox(width: 8),
-          _CategoryFilterChip(value: category, onSelected: onCategory),
-          const SizedBox(width: 8),
-          _SeverityFilterChip(value: severity, onSelected: onSeverity),
-          const SizedBox(width: 8),
-          _OutcomeFilterChip(value: outcome, onSelected: onOutcome),
-          if (hasFilters) ...[
-            const SizedBox(width: 8),
-            _ClearButton(onTap: onClear),
-          ],
+          _ClearButton(onTap: onClear),
         ],
-      ),
+      ],
     );
 
     if (compact) {
+      // The chip row scrolls edge-to-edge: the section gutter becomes the
+      // scroll view's OWN padding, so the last chip can scroll fully into view
+      // at the display edge instead of being clipped by a surrounding inset —
+      // while still resting at the same gutter. The search field keeps the
+      // gutter directly (the caller no longer pads this whole bar).
       return Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          search,
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: gutter),
+            child: search,
+          ),
           const SizedBox(height: 8),
-          SizedBox(height: kAdminPillHeight, child: chips),
+          SizedBox(
+            height: kAdminPillHeight,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: gutter),
+              child: chipRow,
+            ),
+          ),
         ],
       );
     }
-    return Row(
-      children: [
-        SizedBox(width: 320, child: search),
-        const SizedBox(width: 12),
-        Expanded(child: chips),
-      ],
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: gutter),
+      child: Row(
+        children: [
+          SizedBox(width: 320, child: search),
+          const SizedBox(width: 12),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: chipRow,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

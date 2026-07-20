@@ -241,10 +241,9 @@ class _AdminAuditSectionState extends State<AdminAuditSection> {
       return PageChrome(
         title: context.t('admin.auditLog'),
         onBack: widget.onBack,
-        bottom: Padding(
-          padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
-          child: filterBar,
-        ),
+        // The filter bar applies the section gutter itself so its chip row can
+        // scroll edge-to-edge; don't double-pad here.
+        bottom: filterBar,
         bottomHeight: _kAuditDockHeight,
         child: _buildBody(context),
       );
@@ -252,12 +251,7 @@ class _AdminAuditSectionState extends State<AdminAuditSection> {
     return Column(
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(
-            context.pageGutter,
-            0,
-            context.pageGutter,
-            12,
-          ),
+          padding: const EdgeInsets.only(bottom: 12),
           child: filterBar,
         ),
         Expanded(child: _buildBody(context)),
