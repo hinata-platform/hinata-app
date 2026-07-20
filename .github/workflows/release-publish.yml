@@ -1,0 +1,119 @@
+name: Publish (button)
+
+# One-click "publish to the App Stores for review" from the GitHub UI.
+#
+#   Actions tab → "Publish (button)" → Run workflow → pick patch/minor/major
+#   (or type an exact version) → Run.
+#
+# What it does, in order:
+#   1. Bumps pubspec.yaml on main (Android versionCode always +1).
+#   2. Auto-generates SEMANTIC "What's New" release notes from the commits since
+#      the last release and writes them into every platform's Fastlane changelog:
+#        android/fastlane/metadata/android/<loc>/changelogs/<versionCode>.txt
+#        ios/fastlane/metadata/<loc>/release_notes.txt
+#        macos/fastlane/metadata/<loc>/release_notes.txt
+#      (Claude writes clean EN+DE copy when ANTHROPIC_API_KEY is set; otherwise a
+#       deterministic Conventional-Commit fallback runs.)
+#   3. Commits + tags vX.Y.Z.
+#   4. Builds & SUBMITS to the stores for review — App Store + Mac App Store
+#      (submit_for_review) and Google Play (production track).
+#
+# For a dry/draft run instead (no submission), use the "Release (button)" workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump (ignored if "version" is set)'
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      version:
+        description: 'Exact version X.Y.Z (optional — overrides the bump above)'
+        type: string
+        default: ''
+
+jobs:
+  prepare:
+    name: Bump · generate changelog · tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.bump.outputs.tag }}
+      version: ${{ steps.bump.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0            # full history so the changelog sees every commit
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Bump, generate changelog, commit & tag
+        id: bump
+        env:
+          BUMP: ${{ inputs.bump }}
+          EXPLICIT: ${{ inputs.version }}
+          # Optional: enables Claude-written, semantic EN+DE release notes.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          line=$(grep '^version:' pubspec.yaml | head -1)
+          current=${line#version: }                 # e.g. 6.0.0+63
+          name=${current%%+*}; code=${current##*+}
+          IFS='.' read -r MA MI PA <<<"$name"
+
+          if [ -n "$EXPLICIT" ]; then
+            echo "$EXPLICIT" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' \
+              || { echo "✗ '$EXPLICIT' is not a valid X.Y.Z"; exit 1; }
+            new_name="$EXPLICIT"
+          else
+            case "$BUMP" in
+              patch) new_name="$MA.$MI.$((PA+1))" ;;
+              minor) new_name="$MA.$((MI+1)).0" ;;
+              major) new_name="$((MA+1)).0.0" ;;
+            esac
+          fi
+          new_code=$((code+1))
+          new_version="$new_name+$new_code"
+          tag="v$new_name"
+          git rev-parse "$tag" >/dev/null 2>&1 && { echo "✗ Tag $tag exists"; exit 1; }
+
+          # 1) generate localized changelogs from the commits since the last tag
+          python3 tool/gen_changelog.py "$new_code" --version "$new_name" --write
+
+          # 2) bump the version
+          sed -i "s/^version: .*/version: $new_version/" pubspec.yaml
+
+          # 3) commit everything (pubspec + generated changelog files) + tag
+          git add pubspec.yaml \
+            android/fastlane/metadata/android ios/fastlane/metadata macos/fastlane/metadata
+          git commit -m "release: $new_version"
+          git tag "$tag"
+          git push origin HEAD:main
+          git push origin "$tag"
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$new_version" >> "$GITHUB_OUTPUT"
+          {
+            echo "## 🚀 Publishing $new_version (tag \`$tag\`)"
+            echo "- Android versionCode **$new_code** → Play **production** (review)"
+            echo "- iOS + macOS → App Store / Mac App Store, **submitted for review**"
+            echo ""
+            echo "### Generated release notes (en-US)"
+            echo '```'
+            cat ios/fastlane/metadata/en-US/release_notes.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  publish:
+    name: Build & submit to the stores
+    needs: prepare
+    uses: ./.github/workflows/release.yml
+    secrets: inherit
+    with:
+      ref: ${{ needs.prepare.outputs.tag }}
+      submit: "true"

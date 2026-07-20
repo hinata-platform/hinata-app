@@ -15,6 +15,13 @@ on:
         description: Git ref (tag) to build. Empty = the triggering tag.
         type: string
         required: false
+      submit:
+        description: >-
+          "true" submits to the stores for review (App Store + Mac App Store
+          submit_for_review; Play production track). Default uploads drafts only.
+        type: string
+        required: false
+        default: "false"
 
 jobs:
   android:
@@ -74,6 +81,7 @@ jobs:
       - name: Build & upload via Fastlane
         env:
           PLAY_JSON_KEY: ${{ secrets.PLAY_JSON_KEY }}
+          SUBMIT: ${{ inputs.submit }}
         run: |
           cd android
           bundle exec fastlane internal
@@ -103,6 +111,7 @@ jobs:
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          SUBMIT: ${{ inputs.submit }}
         run: |
           cd ios
           bundle exec fastlane release
@@ -133,6 +142,7 @@ jobs:
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          SUBMIT: ${{ inputs.submit }}
         run: |
           cd macos
           bundle exec fastlane release
