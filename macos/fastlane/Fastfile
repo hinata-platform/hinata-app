@@ -97,21 +97,30 @@ platform :mac do
           platform: "macos", additional_cert_types: ["mac_installer_distribution"],
           readonly: ci?)
 
-    # No baked-in backend: the store app must NOT pin a backend. A fresh install asks
-    # for the server URL on first launch, so no HINATA_DEFAULT_SERVER define.
-    flutter("build", "macos", "--release",
-            "--build-number=#{next_build_number}")
-
-    # The macOS Runner target has no DEVELOPMENT_TEAM, so the archive has no team
-    # ("exportArchive No Team Found in Archive"). Pin team + the match App Store
-    # profile before archiving.
+    # Pin the Runner target to manual signing with the App Store profile match just
+    # installed BEFORE building. Unlike `flutter build ios`, `flutter build macos`
+    # has no --no-codesign flag, so the flutter build itself invokes xcodebuild and
+    # signs the .app. With the project's default Automatic signing, that build fails
+    # on CI ("No profiles for 'com.ahmadre.hinata' were found … Automatic signing is
+    # disabled"), because CI has no interactive Apple account to generate a Mac App
+    # Development profile and only the appstore profile is installed. Forcing manual
+    # signing to the exact installed profile name lets the flutter build sign
+    # directly against it — and also gives the archive a team (avoids the later
+    # "exportArchive No Team Found in Archive"). The ID in the profile name drifts on
+    # regeneration, so resolve it from match's lane context instead of hardcoding.
     update_code_signing_settings(
       use_automatic_signing: false,
       path: "Runner.xcodeproj",
       team_id: "T852K29HWS",
       targets: ["Runner"],
-      profile_name: "match AppStore com.ahmadre.hinata macos"
+      code_sign_identity: "Apple Distribution",
+      profile_name: lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING][APP_IDENTIFIER]
     )
+
+    # No baked-in backend: the store app must NOT pin a backend. A fresh install asks
+    # for the server URL on first launch, so no HINATA_DEFAULT_SERVER define.
+    flutter("build", "macos", "--release",
+            "--build-number=#{next_build_number}")
 
     build_app(
       workspace: WORKSPACE,
