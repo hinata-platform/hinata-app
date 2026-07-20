@@ -4,4 +4,9 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Debug-only: allow cleartext HTTP so debug builds can reach a local dev
+         server (emulator host 10.0.2.2:8080) and the store-screenshot pipeline
+         can drive the seeded local backend. The release/store build keeps the
+         platform default (cleartext disabled). -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>

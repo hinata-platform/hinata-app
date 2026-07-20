@@ -105,7 +105,7 @@ jobs:
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
         run: |
           cd ios
-          bundle exec fastlane beta
+          bundle exec fastlane release
 
   macos:
     name: macOS → TestFlight (Mac App Store)
@@ -135,4 +135,4 @@ jobs:
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
         run: |
           cd macos
-          bundle exec fastlane beta
+          bundle exec fastlane release

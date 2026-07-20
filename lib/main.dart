@@ -4,6 +4,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
@@ -20,6 +21,8 @@ import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  const screenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
 
   // High refresh rate. Android renders the Flutter surface at the panel's
   // *default* mode (usually 60 Hz) unless the app explicitly opts into the
@@ -53,7 +56,10 @@ Future<void> main() async {
   // Firebase (push). Skipped on web — no web Firebase app is configured — and
   // guarded so a misconfiguration never blocks app startup. The background
   // handler must be registered at the top level before runApp.
-  if (!kIsWeb) {
+  // Store-screenshot builds (`--dart-define=SCREENSHOT_MODE=true`) skip Firebase
+  // entirely so the OS never raises the notification-permission prompt over the
+  // screen being captured. No effect on normal/release builds.
+  if (!kIsWeb && !screenshotMode) {
     try {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
@@ -85,6 +91,18 @@ Future<void> main() async {
   } catch (_) {}
 
   final storage = await AppStorage.create();
+
+  // Store-screenshot tablet captures (iPad, Android 10") are taken in LANDSCAPE.
+  // A simulator/emulator can't be rotated reliably, so the harness sets a
+  // `screenshot_landscape` pref and the app pins the orientation itself. No-op
+  // in normal use (the pref is absent).
+  if (screenshotMode && storage.screenshotLandscape) {
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+  }
+
   final apiClient = ApiClient(storage);
   final repositories = HinataRepositories(apiClient);
 

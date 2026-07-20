@@ -148,17 +148,22 @@ platform :ios do
     )
   end
 
-  desc "Build and submit to the App Store (does not auto-publish)"
+  desc "Build + upload the binary, metadata & screenshots to App Store Connect (draft, not submitted)"
   lane :release do
     build
     upload_to_app_store(
       ipa: "#{IPA_DIR}/#{IPA_NAME}",
-      submit_for_review: false,
+      submit_for_review: false,   # user submits manually
       automatic_release: false,
-      force: true,
+      force: true,                # no HTML preview / confirmation on CI
+      run_precheck_before_submit: false,
       precheck_include_in_app_purchases: false,
-      skip_metadata: true,
-      skip_screenshots: true
+      # Upload the localized listing (fastlane/metadata: name, subtitle, keywords,
+      # description, promo, what's-new, URLs, copyright, categories, review info)
+      # and the framed 6.9" iPhone + 13" iPad screenshots (fastlane/screenshots).
+      skip_metadata: false,
+      skip_screenshots: false,
+      overwrite_screenshots: true
     )
   end
 end

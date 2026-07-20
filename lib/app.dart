@@ -150,7 +150,10 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         _streamServer = server;
       }
       _accountEvents.start();
-      _fcm.start();
+      // Screenshot mode (tooling: a pre-seeded `screenshot_route` pref) never
+      // starts push — otherwise the OS notification-permission prompt would pop
+      // over the very screen we're capturing. Normal launches are unaffected.
+      if (widget.storage.screenshotRoute == null) _fcm.start();
     } else {
       _streamServer = null;
       _accountEvents.stop();

@@ -136,18 +136,22 @@ platform :mac do
     )
   end
 
-  desc "Build and submit to the Mac App Store (does not auto-publish)"
+  desc "Build + upload the .pkg, metadata & screenshots to the Mac App Store (draft, not submitted)"
   lane :release do
     build
     upload_to_app_store(
       pkg: "#{PKG_DIR}/#{PKG_NAME}",
       platform: "osx",
-      submit_for_review: false,
+      submit_for_review: false,   # user submits manually
       automatic_release: false,
       force: true,
+      run_precheck_before_submit: false,
       precheck_include_in_app_purchases: false,
-      skip_metadata: true,
-      skip_screenshots: true
+      # Upload the localized macOS listing (fastlane/metadata) + the framed
+      # 2880x1800 MacBook screenshots (fastlane/screenshots).
+      skip_metadata: false,
+      skip_screenshots: false,
+      overwrite_screenshots: true
     )
   end
 end
