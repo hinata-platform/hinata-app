@@ -32,30 +32,40 @@ INK = (235, 235, 240, 255)  # light glyphs for the (dark-island) status bar
 
 
 # ---- screen-cutout detection ------------------------------------------------
-@functools.lru_cache(maxsize=4)
+@functools.lru_cache(maxsize=8)
 def _frame_and_screen(device):
-    """The frame RGBA + an L mask (255 = the interior screen cut-out) + its bbox."""
+    """The frame RGBA + an L mask (255 = the interior screen cut-out) + its bbox.
+
+    Handles two kinds of frame: ones with a genuinely transparent screen cut-out
+    (iPhone/MacBook/iPad), and ones whose screen is painted OPAQUE white (the
+    Pixel frames) — those are hollowed out first so the app shows through."""
     frame = Image.open(os.path.join(FRAME_DIR, f"{device}.png")).convert("RGBA")
-    # 0 where transparent, 255 where the device body is opaque.
-    m = frame.getchannel("A").point(lambda v: 0 if v < 8 else 255)
-    # Flood the *exterior* transparent area (reachable from the corners) to 128,
-    # leaving only the enclosed screen cut-out at 0.
-    for corner in [(0, 0), (frame.width - 1, 0), (0, frame.height - 1),
-                   (frame.width - 1, frame.height - 1)]:
-        ImageDraw.floodfill(m, corner, 128, thresh=10)
-    screen = m.point(lambda v: 255 if v == 0 else 0)
+    # If the screen area is opaque near-white (a painted placeholder), flood it
+    # to transparent from a point inside it (upper-third, clear of any camera).
+    px = (frame.width // 2, frame.height // 3)
+    r, g, b, a = frame.getpixel(px)
+    if a > 200 and min(r, g, b) > 175:
+        ImageDraw.floodfill(frame, px, (0, 0, 0, 0), thresh=48)
+    # Identify the screen as the single transparent region CONNECTED to the
+    # frame's centre — flood-filling from there ignores stray transparent pockets
+    # (e.g. the gap around a side button) that would otherwise inflate the bbox.
+    work = frame.getchannel("A").point(lambda v: 255 if v >= 8 else 0)  # opaque=255
+    ImageDraw.floodfill(work, px, 200, thresh=10)  # connected transparent → 200
+    screen = work.point(lambda v: 255 if v == 200 else 0)
     return frame, screen, screen.getbbox()
 
 
 # ---- helpers ----------------------------------------------------------------
-def _fit_cover(img, box):
-    """Scale `img` to cover `box` (w,h), centre-crop the overflow."""
+def _fit_cover(img, box, anchor="center"):
+    """Scale `img` to cover `box` (w,h), cropping the overflow. `anchor='top'`
+    keeps the top edge (so a status bar is never trimmed); default centres."""
     bw, bh = box
     iw, ih = img.size
     scale = max(bw / iw, bh / ih)
     nw, nh = round(iw * scale), round(ih * scale)
     img = img.resize((nw, nh), Image.LANCZOS)
-    left, top = (nw - bw) // 2, (nh - bh) // 2
+    left = (nw - bw) // 2
+    top = 0 if anchor == "top" else (nh - bh) // 2
     return img.crop((left, top, left + bw, top + bh))
 
 
@@ -121,23 +131,52 @@ def frame_device(device, shot, status_bar=False):
         band = max(0, round(shot.width * bh / bw) - shot.height)
         shot = _status_bar(shot, band)
 
-    fitted = _fit_cover(shot, (bw, bh))
+    # Android phones: the emulator screen is taller than the frame cut-out, so
+    # anchor the TOP when cropping so the status bar is never trimmed.
+    anchor = "top" if device in ("android",) else "center"
+    fitted = _fit_cover(shot, (bw, bh), anchor=anchor)
     layer = Image.new("RGBA", frame.size, (0, 0, 0, 0))
     layer.paste(fitted, (bbox[0], bbox[1]))
     layer.putalpha(screen)          # clip to the exact screen shape
     layer.alpha_composite(frame)    # device chrome (bezel · notch · island) on top
-    return layer
+    # Trim transparent margins so the device sits tight (no invisible padding
+    # pushing it down/around when the caller positions it).
+    box = layer.getbbox()
+    return layer.crop(box) if box else layer
 
 
 def frame_macbook(shot):
     return frame_device("macbook", shot)
 
 
-def frame_iphone(shot):
-    return frame_device("iphone", shot, status_bar=True)
+def frame_iphone(shot, status_bar=True):
+    # Web captures have no safe-area inset → synthesize a status bar. Native
+    # simulator captures already include a real status bar → pass status_bar=False.
+    return frame_device("iphone", shot, status_bar=status_bar)
 
 
-FRAMES = {"macbook": frame_macbook, "iphone": frame_iphone}
+# Native device frames used by the store-screenshot pipeline. The screen cut-out
+# is auto-detected for every frame, so these all go through frame_device; native
+# captures already carry a real status bar, so no synthesis is needed.
+def frame_ipad(shot):
+    return frame_device("ipad", shot)
+
+
+def frame_android(shot):
+    return frame_device("android", shot)
+
+
+def frame_android_tablet(shot):
+    return frame_device("android_tablet", shot)
+
+
+FRAMES = {
+    "macbook": frame_macbook,
+    "iphone": lambda s: frame_iphone(s, status_bar=False),
+    "ipad": frame_ipad,
+    "android": frame_android,
+    "android_tablet": frame_android_tablet,
+}
 
 
 def main(argv):

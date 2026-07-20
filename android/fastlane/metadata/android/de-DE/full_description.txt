@@ -1,0 +1,33 @@
+Hinata ist ein quelloffener, selbst gehosteter Client für Projekt- und Vorgangsverwaltung. Du verbindest ihn mit deinem eigenen Hinata-Server – so bleibt die Arbeit deines Teams auf einer Infrastruktur, die du kontrollierst: ohne Preis pro Nutzer und ohne Board-Limit.
+
+Eine App für jeden Bildschirm: Smartphone, Tablet und Desktop teilen sich eine vollständig responsive Oberfläche, die sich über Breakpoints nach dem Goldenen Schnitt anpasst – im hellen oder dunklen Design.
+
+DAS KANNST DU TUN
+• Agile Boards – Drag & Drop über Spalten, WIP-Limits sowie Board-, Backlog- und Timeline-Ansicht
+• Sprints – planen, durchführen und auswerten mit Kapazität, Story Points und Burndown
+• Vorgänge – Hierarchie aus Epic → Story → Unteraufgabe, Abhängigkeiten, Labels und Archivierung
+• Gantt & Timeline – Start-/Fälligkeitsdaten, Abhängigkeiten und Live-Fortschritt
+• Berichte – Burndown, Velocity, Durchlaufzeit und Verteilungen
+• Zeiterfassung – wöchentliche Zeiten je Aktivität
+• Kommentare – Antwort-Threads, Emoji-Reaktionen und Sprachnotizen, live aktualisiert
+• Anhänge – Dateien, Fotos und Videos per Drag & Drop mit Glass-Lightbox
+• Wissensdatenbank – ein integriertes, hierarchisches Markdown-Wiki mit Smart Links
+• Befehlspalette – ⌘K-Suche über alles
+• Benachrichtigungen – in der App, per E-Mail und Push für Zuweisungen, @Erwähnungen und Fälligkeiten
+
+FÜR TEAMS GEMACHT
+• Projekte & Teams mit projektbezogenen Workflows, Schlüsseln und Mitgliedern
+• Anmeldung mit lokalen Zugangsdaten und optionaler Zwei-Faktor-Authentifizierung (TOTP) oder SSO (OpenID Connect, OAuth 2.0, SAML, LDAP)
+• Selbstregistrierung mit E-Mail-Bestätigung und Passwort-vergessen
+• Multi-Server: mehrere Server speichern und wechseln, jeder mit eigener sicherer Sitzung
+
+DEINE DATEN, DEIN SERVER
+Hinata sammelt selbst nichts. Alle Inhalte liegen auf dem Hinata-Server, mit dem du dich verbindest. Push-Benachrichtigungen werden über Firebase Cloud Messaging nur mit einem Geräte-Token zugestellt – kein Tracking, keine Analyse.
+
+Zur Anmeldung wird ein Hinata-Server benötigt. Wie du selbst hostest, erfährst du auf hinata.ahmadre.com.
+
+BERECHTIGUNGEN & WARUM WIR SIE BENÖTIGEN
+• Benachrichtigungen – Zuweisungen, @Erwähnungen, Kommentar-Antworten und Fälligkeiten
+• Mikrofon – Sprachkommentare und Ton für Videos, die du anhängst
+• Kamera & Fotos – Fotos/Videos aufnehmen oder auswählen, um sie an Vorgänge anzuhängen
+Wir fragen jede Berechtigung erst ab, wenn du die zugehörige Funktion zum ersten Mal nutzt.

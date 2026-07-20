@@ -1,0 +1,169 @@
+# Hinata — Permission Register (single source of truth)
+#
+# Every OS permission / entitlement / capability the app declares has exactly one
+# entry here, with the user-facing feature that needs it, the rationale, what (if
+# anything) leaves the device, and where each store declaration lands. Audited by
+# `scripts/permission_audit.py` before every submission.
+#
+# Positioning note: Hinata is a CLIENT for a self-hosted Hinata Server. All app
+# data lives on the server the user connects to (their own instance) — the app
+# itself collects nothing for Hinata. The only third party involved is Firebase
+# Cloud Messaging, used solely to deliver push notifications.
+
+app:
+  bundle_id: com.ahmadre.hinata
+  version: 6.0.0
+  locales: [en, de]
+  third_parties:
+    - name: Firebase Cloud Messaging (Google)
+      purpose: Deliver push notifications to the device.
+      data: FCM registration token (device identifier). No content, no analytics.
+
+permissions:
+  - id: internet
+    platforms:
+      android: android.permission.INTERNET
+    feature: "Connect to your Hinata Server"
+    rationale: "The app is a client for a self-hosted server; it needs network access to talk to the server URL you enter."
+    requested: first-launch
+    data_collected: none
+    store_declarations:
+      play_data_safety: "n/a (transport only; no data collected by the app)"
+      apple_privacy_label: "n/a"
+    usage_description:
+      en: "Required to reach the Hinata Server you connect to."
+      de: "Erforderlich, um den Hinata-Server zu erreichen, mit dem du dich verbindest."
+
+  - id: notifications
+    platforms:
+      android: android.permission.POST_NOTIFICATIONS
+      ios: aps-environment                # entitlement (+ UIBackgroundModes: remote-notification)
+      macos: aps-environment
+    feature: "Notifications (assignments, mentions, due dates, comments)"
+    rationale: "Shows push notifications for work assigned to you, @mentions, comment replies and due items."
+    requested: in-context
+    data_collected: "FCM registration token (device identifier), shared with Firebase Cloud Messaging to route pushes."
+    store_declarations:
+      play_data_safety: "Device or other IDs — collected & shared with Firebase for app functionality (push). Not used for tracking."
+      apple_privacy_label: "Identifiers → Device ID → App Functionality (push delivery). Not linked to identity, not used for tracking."
+    usage_description:
+      en: "Notifies you about assignments, @mentions, comment replies and due dates."
+      de: "Benachrichtigt dich über Zuweisungen, @Erwähnungen, Kommentar-Antworten und Fälligkeiten."
+
+  - id: microphone
+    platforms:
+      android: android.permission.RECORD_AUDIO
+      ios: NSMicrophoneUsageDescription
+      macos: com.apple.security.device.audio-input   # + NSMicrophoneUsageDescription
+    feature: "Voice comments & video attachments"
+    rationale: "Records voice comments and captures sound for videos you attach to issues."
+    requested: in-context
+    data_collected: "Recorded audio is uploaded only to the server you connect to (your own instance)."
+    store_declarations:
+      play_data_safety: "Audio — collected, sent to the user's own server only. Not shared with third parties, not used for tracking."
+      apple_privacy_label: "User Content → Audio Data → App Functionality. Stored on the user's own server."
+    usage_description:
+      en: "Records voice comments and captures audio for videos you attach to issues."
+      de: "Nimmt Sprachkommentare auf und erfasst Ton für Videos, die du an Vorgänge anhängst."
+
+  - id: camera
+    platforms:
+      ios: NSCameraUsageDescription
+      macos: NSCameraUsageDescription     # gated by files/user-selected capture flow
+    feature: "Attach a photo or video"
+    rationale: "Lets you take a photo or record a video on the spot to attach to an issue or comment."
+    requested: in-context
+    data_collected: "Captured media is uploaded only to the server you connect to."
+    store_declarations:
+      play_data_safety: "n/a (Android uses the system picker/camera intent — no CAMERA permission declared)"
+      apple_privacy_label: "User Content → Photos or Videos → App Functionality. Stored on the user's own server."
+    usage_description:
+      en: "Take a photo or record a video to attach to an issue."
+      de: "Ein Foto aufnehmen oder ein Video aufzeichnen, um es an einen Vorgang anzuhängen."
+
+  - id: photo_library
+    platforms:
+      ios: NSPhotoLibraryUsageDescription
+      macos: NSPhotoLibraryUsageDescription
+    feature: "Attach photos & videos"
+    rationale: "Lets you pick existing photos or videos from your library to attach to issues and comments."
+    requested: in-context
+    data_collected: "Only the media you explicitly pick is uploaded, and only to your own server."
+    store_declarations:
+      play_data_safety: "Photos or videos — collected, sent to the user's own server only. Not shared, not used for tracking."
+      apple_privacy_label: "User Content → Photos or Videos → App Functionality. Stored on the user's own server."
+    usage_description:
+      en: "Attach photos and videos from your library to issues and comments."
+      de: "Fotos und Videos aus deiner Mediathek an Vorgänge und Kommentare anhängen."
+
+  - id: media_location
+    platforms:
+      ios: NSLocationWhenInUseUsageDescription
+    feature: "Attach photos & videos (location metadata)"
+    rationale: "Hinata never tracks your location. iOS asks for this only so location metadata already embedded in a photo/video you choose to attach is preserved."
+    requested: in-context
+    data_collected: "No location is collected by the app. EXIF metadata already inside media you attach is uploaded to your own server as part of that file."
+    store_declarations:
+      play_data_safety: "n/a"
+      apple_privacy_label: "Not used for tracking. No location collection; only pre-existing media metadata."
+    usage_description:
+      en: "Hinata does not track your location. This only preserves location data already saved inside photos or videos you choose to attach."
+      de: "Hinata verfolgt deinen Standort nicht. Dies bewahrt nur Standortdaten, die bereits in von dir angehängten Fotos oder Videos gespeichert sind."
+
+  - id: files_read
+    platforms:
+      macos: com.apple.security.files.user-selected.read-only
+    feature: "Attach files"
+    rationale: "Reads the file you explicitly pick in the system open panel so it can be attached."
+    requested: in-context
+    data_collected: "Only the file you pick is uploaded, and only to your own server."
+    store_declarations:
+      play_data_safety: "n/a"
+      apple_privacy_label: "User Content → Other → App Functionality. Stored on the user's own server."
+    usage_description:
+      en: "Reads a file you pick to attach it to an issue."
+      de: "Liest eine von dir gewählte Datei, um sie an einen Vorgang anzuhängen."
+
+  - id: secure_storage
+    platforms:
+      ios: keychain-access-groups
+      macos: keychain-access-groups
+    feature: "Stay signed in securely"
+    rationale: "Stores your per-server access & refresh tokens in the Keychain (encrypted), never in plaintext."
+    requested: first-launch
+    data_collected: none
+    store_declarations:
+      play_data_safety: "n/a (on-device secure storage)"
+      apple_privacy_label: "n/a"
+    usage_description:
+      en: "Keeps your session tokens encrypted in the Keychain."
+      de: "Bewahrt deine Sitzungs-Tokens verschlüsselt im Schlüsselbund auf."
+
+  - id: associated_domains
+    platforms:
+      ios: com.apple.developer.associated-domains
+      macos: com.apple.developer.associated-domains
+    feature: "Universal Links (Hinata Connect)"
+    rationale: "Opens connect.hinata.ahmadre.com links (enrollment / deep links) directly in the app."
+    requested: n/a
+    data_collected: none
+    store_declarations:
+      play_data_safety: "n/a"
+      apple_privacy_label: "n/a"
+    usage_description:
+      en: "Opens Hinata Connect links directly in the app."
+      de: "Öffnet Hinata-Connect-Links direkt in der App."
+
+  - id: network_client
+    platforms:
+      macos: com.apple.security.network.client
+    feature: "Connect to your Hinata Server"
+    rationale: "The sandboxed macOS app needs outbound network access to reach the server."
+    requested: first-launch
+    data_collected: none
+    store_declarations:
+      play_data_safety: "n/a"
+      apple_privacy_label: "n/a"
+    usage_description:
+      en: "Required to reach the Hinata Server you connect to."
+      de: "Erforderlich, um den Hinata-Server zu erreichen, mit dem du dich verbindest."

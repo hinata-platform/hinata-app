@@ -1,0 +1,35 @@
+Hinata is an open-source, self-hosted project- and issue-tracking client. You connect it to your own Hinata Server, so your team's work stays on infrastructure you control — with no per-user pricing and no board limits.
+
+One app, every screen: phone, tablet and desktop share a single, fully responsive interface that adapts through golden-ratio breakpoints, in a light or dark theme.
+
+WHAT YOU CAN DO
+• Agile boards — drag & drop across columns, WIP limits, and Board, Backlog and Timeline views
+• Sprints — plan, run and review with capacity, story points and burndown
+• Issues — Epic → Story → Sub-task hierarchy, dependencies, labels and archiving
+• Gantt & Timeline — start/due dates, dependencies and live progress
+• Reports — burndown, velocity, cycle time and distribution charts
+• Timesheets — weekly time tracking by activity
+• Comments — threaded replies, emoji reactions and voice notes, updating live
+• Attachments — drag-and-drop files, photos and videos with a glass lightbox
+• Knowledge base — a built-in, hierarchical Markdown wiki with smart links
+• Command palette — ⌘K global search across everything
+• Notifications — in-app, e-mail and push for assignments, @mentions and due dates
+
+BUILT FOR TEAMS
+• Projects & teams with per-project workflows, keys and members
+• Sign in with local credentials and optional two-factor (TOTP), or SSO (OpenID Connect, OAuth 2.0, SAML, LDAP)
+• Self-registration with e-mail verification, and forgot-password
+• Multi-server: save several servers and switch between them, each with its own secure session
+
+YOUR DATA, YOUR SERVER
+Hinata collects nothing for itself. All content lives on the Hinata Server you connect to. Push notifications are delivered through Firebase Cloud Messaging using only a device token — no tracking, no analytics.
+
+On the Mac, Hinata runs as a native, sandboxed desktop app with the same full feature set.
+
+Requires a Hinata Server to sign in. Learn how to self-host at hinata.ahmadre.com.
+
+PERMISSIONS & WHY WE NEED THEM
+• Notifications — assignments, @mentions, comment replies and due dates
+• Microphone — voice comments and sound for videos you attach
+• Camera & Photos — take or pick photos/videos to attach to issues
+We ask for each permission only when you first use the feature that needs it.

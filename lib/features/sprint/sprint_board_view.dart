@@ -61,7 +61,11 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
   IssueRepository get _issueApi => context.read<IssueRepository>();
   SprintRepository get _sprintApi => context.read<SprintRepository>();
 
-  _Tab _tab = _Tab.planning;
+  // Store-screenshot builds open straight on the Active-sprint board (the kanban
+  // columns) rather than Planning, so the marketing shot shows the live board.
+  _Tab _tab = const bool.fromEnvironment('SCREENSHOT_MODE')
+      ? _Tab.active
+      : _Tab.planning;
 
   List<Sprint> _sprints = const [];
   String? _activeSprintId;

@@ -62,7 +62,7 @@ docs/screenshots/raw/
 **/fastlane/Preview.html
 **/fastlane/README.md
 **/fastlane/test_output/
-**/fastlane/screenshots/
+# **/fastlane/screenshots/
 *.ipa
 *.pkg
 *.mobileprovision

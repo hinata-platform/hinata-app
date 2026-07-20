@@ -1,0 +1,16 @@
+Hinata is a CLIENT for a self-hosted Hinata Server; it has no built-in backend.
+
+TO REVIEW:
+1. Launch the app. On the first screen ("Connect"), enter the demo server URL:
+      https://api.track.asta.hn        <-- please confirm this is reachable
+2. Tap Continue, then sign in on the Login screen with:
+      Username: 4hm4dr3
+      Password: w%D0T63u]P'VWYOLIYdB$oRu0OC-\nNB
+3. You now have full access to a demo organization (projects, boards, sprints,
+   issues, reports, knowledge base).
+
+Notes:
+- SSO buttons open an external browser and return via the hinata://auth-callback
+  deep link; local login above is sufficient to review all features.
+- The app bakes in no server URL by design (self-hosting), which is why the demo
+  server must be entered on first launch.
