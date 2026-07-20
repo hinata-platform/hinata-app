@@ -166,6 +166,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   Future<void> _onSsoTokens(SsoTokensReceived event, Emitter<AuthState> emit) async {
     await storage.setTokens(access: event.accessToken, refresh: event.refreshToken);
+    // Emit a transient "authenticating" BEFORE re-checking. _onChecked ends with
+    // emit(AuthState(authenticated, user)); if that user equals a previous
+    // attempt's, Equatable suppresses the emit, so auth.stream stays silent and
+    // the router's refreshListenable never re-runs the redirect — the tokens are
+    // stored yet the user is left on /login (only an app restart, which
+    // re-evaluates the redirect fresh, then "fixes" it). This transient state
+    // guarantees the following `authenticated` is always a distinct emit, so the
+    // redirect always re-runs and navigates to the dashboard.
+    emit(const AuthState(status: AuthStatus.authenticating));
     add(const AuthChecked());
   }
 

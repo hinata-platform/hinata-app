@@ -180,11 +180,15 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     if (uri.scheme == 'hinata') {
       switch (uri.host) {
         case 'auth-callback':
-          final access = uri.queryParameters['access_token'];
-          final refresh = uri.queryParameters['refresh_token'];
-          if (access != null && refresh != null) {
-            _auth.add(SsoTokensReceived(access, refresh));
-          }
+          // SSO handoff. Modern servers redirect natively with a single-use
+          // `code` (hinata://auth-callback?code=…); older ones embed the token
+          // pair directly. Forward the whole query to the /auth-callback route
+          // so SsoCallbackScreen redeems the code (or accepts the legacy
+          // tokens) through the exact same path the web flow uses. The previous
+          // handler only understood access_token/refresh_token and silently
+          // dropped the modern `code`, so a native SSO login stored nothing and
+          // stranded the user on the login screen.
+          _router.go('/auth-callback?${uri.query}');
         case 'invite':
           await _openTokenFlow(uri, '/invite');
         case 'reset-password':
