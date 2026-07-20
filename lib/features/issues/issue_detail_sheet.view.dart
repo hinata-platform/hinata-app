@@ -1217,14 +1217,41 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     }
     _commentKeys.putIfAbsent(commentId, () => GlobalKey());
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final ctx = _commentKeys[commentId]?.currentContext;
-      if (ctx != null) {
-        await Scrollable.ensureVisible(
-          ctx,
-          duration: const Duration(milliseconds: 420),
-          curve: Curves.easeOutCubic,
-          alignment: 0.3,
-        );
+      // Two things break a naive single ensureVisible here (the deep-link
+      // "jump to comment" bug):
+      //  1. The feed is (re)built the frame AFTER `_loading` flips false and the
+      //     comments filter is applied, so the target row's GlobalKey has no
+      //     context on this first post-frame — wait for it to lay out.
+      //  2. Right after the first scroll the feed keeps GROWING (reply-count
+      //     previews resolve, an SSE resync reloads the window), which shifts the
+      //     target out of view while the offset stays put. So re-assert the scroll
+      //     a few times until it stops moving. ensureVisible is a no-op once the
+      //     row is already visible, so the extra passes are cheap and smooth.
+      BuildContext? ctx = _commentKeys[commentId]?.currentContext;
+      for (var i = 0; ctx == null && i < 60; i++) {
+        await WidgetsBinding.instance.endOfFrame;
+        if (!mounted) return;
+        ctx = _commentKeys[commentId]?.currentContext;
+      }
+      if (ctx == null || !ctx.mounted) return;
+      double lastMax = -1;
+      for (var pass = 0; pass < 10 && mounted; pass++) {
+        final row = _commentKeys[commentId]?.currentContext;
+        if (row != null && row.mounted) {
+          await Scrollable.ensureVisible(
+            row,
+            duration: Duration(milliseconds: pass == 0 ? 420 : 160),
+            curve: Curves.easeOutCubic,
+            alignment: 0.3,
+          );
+        }
+        if (!mounted) return;
+        // Stop once the content height has settled for a beat.
+        final sc = widget.sheetScroll;
+        final max = sc?.hasClients == true ? sc!.position.maxScrollExtent : -1.0;
+        if (pass > 0 && max == lastMax) break;
+        lastMax = max;
+        await Future.delayed(const Duration(milliseconds: 220));
       }
       if (!mounted) return;
       setState(() => _highlightedCommentId = commentId);

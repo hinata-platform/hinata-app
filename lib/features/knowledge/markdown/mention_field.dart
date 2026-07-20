@@ -308,11 +308,19 @@ class MentionFieldState extends State<MentionField> {
       left = overlayBox.size.width - w - 12;
     }
     if (left < 8) left = 8;
-    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    // Flip above the caret line when the menu would overflow the bottom.
+    final media = MediaQuery.maybeOf(context);
+    final reduce = media?.disableAnimations ?? false;
+    // Flip above the caret line when the menu would overflow the visible area.
+    // On mobile the caret sits just above the on-screen keyboard, so the flip
+    // decision must exclude the keyboard inset — otherwise the menu opens
+    // downward into the region the keyboard covers and is unreachable. The
+    // `bottom` offset below still uses the full overlay height, since a flipped
+    // menu sits above the caret (above the keyboard) and is anchored to the
+    // overlay's true bottom edge.
     final viewportH = overlayBox.size.height;
+    final visibleH = viewportH - (media?.viewInsets.bottom ?? 0.0);
     final estHeight = (60 + _items.length * 44).clamp(0, 280).toDouble();
-    final flipUp = anchor.dy + estHeight > viewportH - 8;
+    final flipUp = anchor.dy + estHeight > visibleH - 8;
     final menu = _MentionMenu(
       items: _items,
       selected: _sel,
