@@ -148,13 +148,15 @@ platform :ios do
     )
   end
 
-  desc "Build + upload the binary, metadata & screenshots to App Store Connect (draft, not submitted)"
+  desc "Build + upload binary, metadata & screenshots to App Store Connect. SUBMIT=true also submits for review."
   lane :release do
     build
+    submit = ENV["SUBMIT"] == "true"
     upload_to_app_store(
       ipa: "#{IPA_DIR}/#{IPA_NAME}",
-      submit_for_review: false,   # user submits manually
-      automatic_release: false,
+      submit_for_review: submit,  # SUBMIT=true → auto-submit; else upload a draft
+      automatic_release: false,   # you still control the go-live after approval
+      submission_information: submit ? { add_id_info_uses_idfa: false } : nil,
       force: true,                # no HTML preview / confirmation on CI
       run_precheck_before_submit: false,
       precheck_include_in_app_purchases: false,

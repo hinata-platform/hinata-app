@@ -8,11 +8,14 @@ platform :android do
       # for the server URL on first launch, so no HINATA_DEFAULT_SERVER define.
       sh("flutter", "build", "appbundle", "--release")
     end
+    # SUBMIT=true publishes to production (Play auto-reviews it, then rolls out);
+    # otherwise it lands on the internal track as a draft to finish by hand.
+    submit = ENV["SUBMIT"] == "true"
     upload_to_play_store(
       json_key_data: ENV["PLAY_JSON_KEY"], # Play service account JSON (secret)
-      track: "internal",
+      track: submit ? "production" : "internal",
       aab: "../build/app/outputs/bundle/release/app-release.aab",
-      release_status: "draft",
+      release_status: submit ? "completed" : "draft",
       # Upload the full store listing too: title/short/full descriptions +
       # localized changelogs (fastlane/metadata/android) and the framed phone +
       # 10" tablet screenshots (fastlane/metadata/android/<loc>/images). The app
