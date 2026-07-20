@@ -1,0 +1,1 @@
+• Enhance SSO handling to support modern token exchange and ensure proper authentication state updates

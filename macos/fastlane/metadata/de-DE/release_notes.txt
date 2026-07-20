@@ -1,9 +1,1 @@
-Hinata 6.0 — ein großes Update.
-
-• Schnellere, flüssigere Navigation und Listen in der ganzen App
-• Neu gebaute Vorgangs-Filter und Type-ahead-Suche
-• Überarbeiteter Admin-Bereich und Anmeldebildschirme
-• Sprachkommentare, Emoji-Reaktionen und Antwort-Threads
-• Stabilitätsfixes für Live-Updates, Anhänge und Benachrichtigungen
-
-Danke, dass du Hinata nutzt! Feedback: hinata.ahmadre.com
+• Neue Funktionen, Verbesserungen und Fehlerbehebungen.
