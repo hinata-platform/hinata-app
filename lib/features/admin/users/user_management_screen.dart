@@ -558,31 +558,40 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       onChanged: _setOriginFilter,
     );
 
-    final chipRow = SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          roleChip,
-          const SizedBox(width: 8),
-          statusChip,
-          const SizedBox(width: 8),
-          originChip,
-        ],
-      ),
+    final gutter = context.pageGutter;
+    final chipRow = Row(
+      children: [
+        roleChip,
+        const SizedBox(width: 8),
+        statusChip,
+        const SizedBox(width: 8),
+        originChip,
+      ],
     );
 
     if (compact) {
-      return Padding(
-        padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            search,
-            const SizedBox(height: 8),
-            SizedBox(height: kAdminPillHeight, child: chipRow),
-          ],
-        ),
+      // The chip row scrolls edge-to-edge: the gutter becomes the scroll view's
+      // OWN padding so the last chip scrolls fully into view at the display edge
+      // instead of being clipped by a surrounding inset — while still resting at
+      // the same gutter. The search field keeps the gutter directly.
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: gutter),
+            child: search,
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: kAdminPillHeight,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: gutter),
+              child: chipRow,
+            ),
+          ),
+        ],
       );
     }
     // Wide: a single row — bounded search + inline chips.
@@ -590,7 +599,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       children: [
         SizedBox(width: 300, child: search),
         const SizedBox(width: 12),
-        Expanded(child: chipRow),
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: chipRow,
+          ),
+        ),
       ],
     );
   }
