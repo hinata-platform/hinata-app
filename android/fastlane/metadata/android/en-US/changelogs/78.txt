@@ -1,0 +1,2 @@
+• Harden SSO callback to always exit the spinner
+• Surface camera access failures on desktop instead of silently returning null
