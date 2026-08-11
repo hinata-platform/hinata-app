@@ -1,0 +1,3 @@
+• Add base tint, rim, and popover scrim to anchored dropdowns
+• Open launch notification deep link once per notification, ever
+• Broadcast board mutations via BoardEvents for cross-screen sync
