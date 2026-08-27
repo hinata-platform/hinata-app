@@ -1,0 +1,5 @@
+• Exports now read in your own language, not always in English
+• Dates and times in an export are shown in your time zone, in your language's format
+• Mentions and links to issues, people and wiki pages now appear by name in an export instead of as internal ids
+• Saving or sharing an export no longer fails
+• Several smaller fixes and refinements
