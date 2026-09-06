@@ -1,0 +1,5 @@
+• Der Bildplatzhalter beim Anlegen eines Projekts wird wieder richtig gezeichnet
+• Projekte und Teams anlegen öffnet ein Blatt, das sich der Bildschirmgröße anpasst, wie andere Dialoge auch
+• Arabisch folgt durchgehend der Leserichtung — Abstände, Ausrichtung, Pfeile und Zurück-Schaltflächen
+• Fälligkeiten in der Vorgangsliste werden nicht mehr abgeschnitten, wenn eine Sprache die Einheit ausschreibt
+• Kleinere Verbesserungen an Gestaltung und Geschwindigkeit

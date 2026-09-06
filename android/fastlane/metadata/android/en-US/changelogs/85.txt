@@ -1,0 +1,5 @@
+• The image placeholder is drawn correctly again when you create a project
+• Creating a project or a team now opens a sheet that fits the screen it is on, as other dialogs do
+• Arabic follows the reading direction throughout — spacing, alignment, arrows and back buttons
+• Due dates in the issue list are no longer cut short in languages that spell the unit out
+• Smaller design and performance refinements
