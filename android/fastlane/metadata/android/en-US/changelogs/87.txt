@@ -1,0 +1,1 @@
+• The new-item button is honey gold again in dark mode, and keeps its colour while you press it
