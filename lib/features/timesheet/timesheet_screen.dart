@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/blocs/auth_bloc.dart';
+import '../../core/blocs/paged_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
 import '../../core/models/work_models.dart';
@@ -48,7 +49,6 @@ class TimesheetScreen extends StatefulWidget {
 
 class _TimesheetScreenState extends State<TimesheetScreen> {
   /// One page of the user filter's type-ahead.
-  static const int _filterPageSize = 25;
 
   /// Width of a filter field and of the popover it opens, so the dropdown lines
   /// up with the field instead of hanging off it.
@@ -277,9 +277,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
             person: true,
           ),
       ],
-      exhausted:
-          result.items.length < _filterPageSize ||
-          (page + 1) * _filterPageSize >= result.total,
+      total: result.total,
     );
   }
 
@@ -302,9 +300,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
             secondary: project.key,
           ),
       ],
-      exhausted:
-          result.projects.length < _filterPageSize ||
-          (page + 1) * _filterPageSize >= result.total,
+      total: result.total,
     );
   }
 
@@ -631,7 +627,10 @@ class _FilterOption {
   final bool person;
 }
 
-typedef _FilterPage = ({List<_FilterOption> items, bool exhausted});
+typedef _FilterPage = PageResult<_FilterOption>;
+
+/// How many options one page of a filter list holds.
+const int _filterPageSize = 25;
 
 /// What a filter panel resolves to. [id] null means "everything" — which is a
 /// real choice, and therefore not the same as dismissing the panel (null).
@@ -776,26 +775,25 @@ class _FilterPanelState extends State<_FilterPanel> {
   final _scroll = ScrollController();
   Timer? _debounceTimer;
 
-  final List<_FilterOption> _options = [];
-  final Set<String> _seen = {};
+  /// The list itself is the house's paged cubit — the same one the "all
+  /// entries" sheet uses. It owns the accumulated items, the page counter, the
+  /// two loading flags, the de-duplication across pages and the token that
+  /// drops a slow answer overtaken by a newer one; what stays here is the
+  /// search box in front of it.
+  late final PagedCubit<_FilterOption> _cubit = PagedCubit<_FilterOption>(
+    (page, size) => widget.load(_query.trim(), page),
+    pageSize: _filterPageSize,
+    keyOf: (option) => option.id,
+  );
 
   String _query = '';
-  int _page = 0;
-  bool _loading = true;
-  bool _loadingMore = false;
-  bool _exhausted = false;
-  String? _error;
-
-  /// Monotonic request token: a debounced search that lands after a newer one
-  /// started is dropped, so a slow answer never overwrites fresh results.
-  int _reqSeq = 0;
 
   @override
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
     _focus.addListener(_onFocusChanged);
-    unawaited(_run(reset: true));
+    unawaited(_cubit.load());
   }
 
   @override
@@ -806,6 +804,7 @@ class _FilterPanelState extends State<_FilterPanel> {
     _searchCtrl.dispose();
     _focus.removeListener(_onFocusChanged);
     _focus.dispose();
+    unawaited(_cubit.close());
     super.dispose();
   }
 
@@ -816,57 +815,15 @@ class _FilterPanelState extends State<_FilterPanel> {
   void _onQueryChanged(String value) {
     setState(() => _query = value);
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(_debounce, () => unawaited(_run(reset: true)));
+    // A new term starts the list over: `load` resets to page 0, and the cubit's
+    // own token discards whatever the previous term was still fetching.
+    _debounceTimer = Timer(_debounce, () => unawaited(_cubit.load()));
   }
 
   void _onScroll() {
     if (!_scroll.hasClients) return;
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 100) {
-      unawaited(_run(reset: false));
-    }
-  }
-
-  Future<void> _run({required bool reset}) async {
-    if (reset) {
-      _debounceTimer?.cancel();
-    } else if (_loading || _loadingMore || _exhausted) {
-      return;
-    }
-
-    final seq = ++_reqSeq;
-    final page = reset ? 0 : _page + 1;
-    setState(() {
-      if (reset) {
-        _loading = true;
-      } else {
-        _loadingMore = true;
-      }
-      _error = null;
-    });
-
-    try {
-      final result = await widget.load(_query.trim(), page);
-      if (!mounted || seq != _reqSeq) return;
-      setState(() {
-        if (reset) {
-          _options.clear();
-          _seen.clear();
-        }
-        for (final option in result.items) {
-          if (_seen.add(option.id)) _options.add(option);
-        }
-        _page = page;
-        _exhausted = result.exhausted;
-        _loading = false;
-        _loadingMore = false;
-      });
-    } on ApiFailure catch (failure) {
-      if (!mounted || seq != _reqSeq) return;
-      setState(() {
-        _loading = false;
-        _loadingMore = false;
-        _error = failure.message;
-      });
+      unawaited(_cubit.loadMore());
     }
   }
 
@@ -970,72 +927,80 @@ class _FilterPanelState extends State<_FilterPanel> {
   }
 
   Widget _list() {
-    if (_loading && _options.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 26),
-        child: Center(child: HiveLoader(size: 18)),
-      );
-    }
-    if (_error != null && _options.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
-        child: Text(
-          context.t(_error!),
-          style: const TextStyle(fontSize: 12.5, color: AppColors.danger),
-        ),
-      );
-    }
-
-    // "Everything" only belongs at the top of an unfiltered list: while a
-    // query is running it is not one of the matches.
-    final hasAllRow = _query.trim().isEmpty;
-    final leading = hasAllRow ? 1 : 0;
-    final trailing =
-        (_options.isEmpty && !_loading && !_loadingMore) || _loadingMore
-        ? 1
-        : 0;
-
-    // Built on demand, not assembled into a list first: a search rebuilds this
-    // on every debounced keystroke, and materialising every loaded option each
-    // time is the cost the builder exists to avoid.
-    return ListView.builder(
-      controller: _scroll,
-      shrinkWrap: true,
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      itemCount: leading + _options.length + trailing,
-      itemBuilder: (_, index) {
-        if (hasAllRow && index == 0) {
-          return _FilterRow(
-            label: context.t(widget.allLabelKey),
-            selected: widget.selectedId == null,
-            onTap: () => _pick(const _FilterChoice(null, null)),
-          );
-        }
-        final at = index - leading;
-        if (at < _options.length) {
-          final option = _options[at];
-          return _FilterRow(
-            label: option.label,
-            secondary: option.secondary,
-            avatar: option.person,
-            avatarUrl: option.avatarUrl,
-            pronouns: option.pronouns,
-            selected: widget.selectedId == option.id,
-            onTap: () => _pick(_FilterChoice(option.id, option.label)),
-          );
-        }
-        if (_loadingMore) {
+    return BlocBuilder<PagedCubit<_FilterOption>, PagedState<_FilterOption>>(
+      bloc: _cubit,
+      builder: (context, state) {
+        final options = state.items;
+        if (state.isLoading && options.isEmpty) {
           return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Center(child: HiveLoader(size: 15)),
+            padding: EdgeInsets.symmetric(vertical: 26),
+            child: Center(child: HiveLoader(size: 18)),
           );
         }
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-          child: Text(
-            context.t('common.noMatches'),
-            style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
-          ),
+        if (state.errorKey != null && options.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+            child: Text(
+              context.t(state.errorKey!),
+              style: const TextStyle(fontSize: 12.5, color: AppColors.danger),
+            ),
+          );
+        }
+
+        // "Everything" only belongs at the top of an unfiltered list: while a
+        // query is running it is not one of the matches.
+        final hasAllRow = _query.trim().isEmpty;
+        final leading = hasAllRow ? 1 : 0;
+        final empty =
+            options.isEmpty && !state.isLoading && !state.isLoadingMore;
+        final trailing = empty || state.isLoadingMore ? 1 : 0;
+
+        // Built on demand, not assembled into a list first: a search rebuilds
+        // this on every debounced keystroke, and materialising every loaded
+        // option each time is the cost the builder exists to avoid.
+        return ListView.builder(
+          controller: _scroll,
+          shrinkWrap: true,
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          itemCount: leading + options.length + trailing,
+          itemBuilder: (_, index) {
+            if (hasAllRow && index == 0) {
+              return _FilterRow(
+                label: context.t(widget.allLabelKey),
+                selected: widget.selectedId == null,
+                onTap: () => _pick(const _FilterChoice(null, null)),
+              );
+            }
+            final at = index - leading;
+            if (at < options.length) {
+              final option = options[at];
+              return _FilterRow(
+                label: option.label,
+                secondary: option.secondary,
+                avatar: option.person,
+                avatarUrl: option.avatarUrl,
+                pronouns: option.pronouns,
+                selected: widget.selectedId == option.id,
+                onTap: () => _pick(_FilterChoice(option.id, option.label)),
+              );
+            }
+            if (state.isLoadingMore) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Center(child: HiveLoader(size: 15)),
+              );
+            }
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+              child: Text(
+                context.t('common.noMatches'),
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            );
+          },
         );
       },
     );

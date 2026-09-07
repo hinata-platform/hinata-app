@@ -52,6 +52,7 @@ void main() {
     List<Project> projects = const [project],
     _FakeTimesheetRepository? timesheet,
     _FakeProjectRepository? projectRepository,
+    _FakeUserRepository? userRepository,
   }) {
     final router = GoRouter(
       routes: [
@@ -66,7 +67,7 @@ void main() {
                     value: timesheet ?? _FakeTimesheetRepository(rows),
                   ),
                   RepositoryProvider<UserRepository>.value(
-                    value: _FakeUserRepository(directory),
+                    value: userRepository ?? _FakeUserRepository(directory),
                   ),
                   RepositoryProvider<ProjectRepository>.value(
                     value:
@@ -207,6 +208,50 @@ void main() {
     });
   });
 
+  group('the filter list', () {
+    testWidgets('pages the directory as the reader scrolls it', (tester) async {
+      // Enough people to fill three pages of 25, so the panel has something to
+      // page through rather than one short answer.
+      final directory = [
+        for (var i = 0; i < 60; i++)
+          DirectoryUser(
+            id: 'u$i',
+            username: 'user$i',
+            displayName: 'Person $i',
+          ),
+      ];
+      final users = _FakeUserRepository(directory);
+      await tester.pumpWidget(
+        host(
+          rows: [row(userId: 'u1', projectId: 'p1')],
+          admin: true,
+          directory: directory,
+          userRepository: users,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('timesheet.allUsers').first);
+      await tester.pumpAndSettle();
+
+      expect(users.pagesAsked, [0], reason: 'one page to open with');
+
+      await tester.drag(find.byType(ListView).last, const Offset(0, -1200));
+      await tester.pumpAndSettle();
+
+      expect(
+        users.pagesAsked.length,
+        greaterThan(1),
+        reason: 'scrolling to the end asks for the next page',
+      );
+      expect(
+        users.pagesAsked.toSet(),
+        hasLength(users.pagesAsked.length),
+        reason: 'no page is asked for twice',
+      );
+    });
+  });
+
   group('what the page fetches', () {
     testWidgets('names only the projects its rows mention', (tester) async {
       final projects = _FakeProjectRepository(const [
@@ -344,20 +389,30 @@ class _FakeUserRepository implements UserRepository {
       if (ids.contains(user.id)) user,
   ];
 
+  /// Which pages the panel asked for, in order.
+  final List<int> pagesAsked = [];
+
   @override
   Future<({List<DirectoryUser> items, int total})> searchUsers(
     String query, {
     int page = 0,
     int size = 25,
   }) async {
+    pagesAsked.add(page);
     final needle = query.trim().toLowerCase();
     final matches = [
       for (final user in directory)
         if (needle.isEmpty || user.displayName.toLowerCase().contains(needle))
           user,
     ];
+    final start = page * size;
     return (
-      items: page == 0 ? matches : const <DirectoryUser>[],
+      items: start >= matches.length
+          ? const <DirectoryUser>[]
+          : matches.sublist(
+              start,
+              start + size > matches.length ? matches.length : start + size,
+            ),
       total: matches.length,
     );
   }
