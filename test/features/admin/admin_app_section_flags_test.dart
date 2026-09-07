@@ -152,7 +152,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('admin.timeTracking.envDefault'), findsOneWidget);
+      expect(find.text('admin.envDefault'), findsOneWidget);
       expect(find.text('admin.stateOff'), findsNothing);
     });
   });

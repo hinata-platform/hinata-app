@@ -1377,8 +1377,6 @@
       "envDefault": "قيمة البيئة",
       "envDefaultHint": "لا توجد قيمة محفوظة — بيئة هذا الخادم هي التي تقرّر. اضغط لتعيين قيمة صريحة.",
       "useEnvDefault": "استخدام قيمة البيئة",
-      "stateOn": "مفعّل",
-      "stateOff": "معطّل",
       "moduleTitle": "الوحدة",
       "moduleHint": "المفتاح الرئيسي لوحدة تتبّع الوقت الموسّع.",
       "advancedTitle": "تتبّع الوقت الموسّع",
@@ -1473,7 +1471,7 @@
       "descriptionPurgeLabel": "إفراغ الأوصاف بعد",
       "descriptionPurgeHint": "يُفرغ أوصاف قيود المستخدمين المحذوفين بعد هذا العدد من الأشهر. فارغ ← قيمة البيئة.",
       "entryPurgeLabel": "حذف القيود بعد",
-      "entryPurgeHint": "يحذف القيود الأقدم من ذلك. المستندات ذات الالتزام الضريبي بالحفظ مستثناة. 24 شهرًا تغطي ArbZG وMiLoG.",
+      "entryPurgeHint": "يحذف القيود الأقدم من ذلك، للجميع. 24 شهرًا تغطي ArbZG و MiLoG.",
       "monthsSuffix": "شهرًا",
       "privacyNoticeLabel": "إشعار الخصوصية",
       "privacyNoticeHint": "يُعرض في التطبيق مع بيانات الوقت الخاصة بالوحدة. فارغ ← النص المدمج.",
@@ -1778,7 +1776,8 @@
     "windowsStoreUrl": "عنوان متجر Microsoft Store",
     "linuxStoreUrl": "عنوان تنزيل Linux",
     "stateOn": "مفعّل",
-    "stateOff": "معطّل"
+    "stateOff": "معطّل",
+    "envDefault": "قيمة البيئة"
   },
   "audit": {
     "title": "سجل التدقيق",

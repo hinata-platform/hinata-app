@@ -1377,8 +1377,6 @@
       "envDefault": "Valor del entorno",
       "envDefaultHint": "No hay valor guardado: decide el entorno de este servidor. Toca para fijar un valor explícito.",
       "useEnvDefault": "Usar el valor del entorno",
-      "stateOn": "Activado",
-      "stateOff": "Desactivado",
       "moduleTitle": "Módulo",
       "moduleHint": "El interruptor principal del módulo de registro de tiempo ampliado.",
       "advancedTitle": "Registro de tiempo ampliado",
@@ -1473,7 +1471,7 @@
       "descriptionPurgeLabel": "Vaciar descripciones tras",
       "descriptionPurgeHint": "Vacía las descripciones de las entradas de usuarios borrados tras estos meses. Vacío → valor del entorno.",
       "entryPurgeLabel": "Borrar entradas tras",
-      "entryPurgeHint": "Elimina las entradas más antiguas. Los documentos con obligación fiscal de conservación quedan excluidos. 24 meses cubren ArbZG y MiLoG.",
+      "entryPurgeHint": "Elimina las entradas más antiguas, para todos. 24 meses cubren ArbZG y MiLoG.",
       "monthsSuffix": "meses",
       "privacyNoticeLabel": "Aviso de privacidad",
       "privacyNoticeHint": "Se muestra en la app junto a los datos de tiempo del módulo. Vacío → el texto integrado.",
@@ -1778,7 +1776,8 @@
     "windowsStoreUrl": "URL de Microsoft Store",
     "linuxStoreUrl": "URL de descarga para Linux",
     "stateOn": "Activado",
-    "stateOff": "Desactivado"
+    "stateOff": "Desactivado",
+    "envDefault": "Valor del entorno"
   },
   "audit": {
     "title": "Registro de auditoría",

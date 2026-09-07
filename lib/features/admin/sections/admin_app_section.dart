@@ -283,12 +283,18 @@ class _PlatformLink extends StatelessWidget {
       ),
     );
     if (onOpen == null) return row;
-    return InkWell(
-      onTap: onOpen,
-      borderRadius: BorderRadius.circular(10),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: row,
+    // The Material has to sit ABOVE the InkWell: a splash paints on the nearest
+    // ancestor Material, and the card behind this row paints opaquely, so an
+    // InkWell with the Material below it ripples where nobody can see it.
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onOpen,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: row,
+        ),
       ),
     );
   }
@@ -307,35 +313,32 @@ class _PlatformRow extends StatelessWidget {
   final Widget trailing;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.transparent,
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.ink,
-                ),
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
               ),
-              const SizedBox(height: 2),
-              Text(
-                description,
-                style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              description,
+              style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        trailing,
-      ],
-    ),
+      ),
+      const SizedBox(width: 12),
+      trailing,
+    ],
   );
 }
 
@@ -363,7 +366,7 @@ class _StateChip extends StatelessWidget {
       child: Text(
         context.t(
           !known
-              ? 'admin.timeTracking.envDefault'
+              ? 'admin.envDefault'
               : lit
               ? 'admin.stateOn'
               : 'admin.stateOff',

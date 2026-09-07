@@ -357,7 +357,7 @@ void main() {
       expect(
         find.descendant(
           of: policy('admin.timeTracking.advancedTitle'),
-          matching: find.textContaining('admin.timeTracking.stateOn'),
+          matching: find.textContaining('admin.stateOn'),
         ),
         findsOneWidget,
       );

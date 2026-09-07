@@ -53,12 +53,20 @@ bool isFlagGatedRoute(String path) {
   );
 }
 
-/// The path portion of [path] — dio hands us whatever the caller passed, which
-/// may carry a query string or a fragment.
-String _routeOf(String path) {
-  final cut = path.indexOf(RegExp(r'[?#]'));
-  return cut == -1 ? path : path.substring(0, cut);
-}
+/// The path portion of whatever dio was handed.
+///
+/// It is handed the whole URL: [ApiClient] never sets a `baseUrl` on its
+/// `BaseOptions` and passes `'$baseUrl$path'` to every call, so
+/// `requestOptions.path` reads `https://track.asta.hn/api/v1/time`, not
+/// `/api/v1/time`. Matching prefixes against that without stripping the origin
+/// matches nothing at all — which is a silent failure, because the server still
+/// refuses correctly and only the app's recovery goes quiet.
+///
+/// [Uri.path] handles the origin, the query and the fragment in one step. It
+/// also percent-decodes, which is safe here only because the match below is
+/// `==`/`startsWith` on segment boundaries: a `%2F` smuggled into a value
+/// decodes to a slash but still lands mid-path, never at the start.
+String _routeOf(String path) => Uri.tryParse(path)?.path ?? path;
 
 /// Whether this response means "the module is switched off".
 ///

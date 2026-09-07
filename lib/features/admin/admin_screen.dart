@@ -211,7 +211,9 @@ class _AdminScreenState extends State<AdminScreen> {
         // These settings decide what /meta reports — feature flags above all.
         // Re-read it so the admin sees the nav entry they just switched on
         // appear behind them, instead of after the next restart.
-        context.read<AppConfigBloc>().add(const MetaRefreshRequested());
+        context.read<AppConfigBloc>().add(
+          const MetaRefreshRequested(force: true),
+        );
         showGlassToast(
           context,
           context.t('admin.saved'),

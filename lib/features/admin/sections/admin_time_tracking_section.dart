@@ -147,6 +147,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
           title: context.t('${field.$2}Title'),
           description: context.t('${field.$2}Hint'),
           value: _nested<bool>('requiredFields', field.$1),
+          effective: _effectiveNested<bool>('requiredFields', field.$1),
           onChanged: (v) => _setNested('requiredFields', field.$1, v),
           pending: true,
         ),
@@ -182,6 +183,10 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         // The increment is a number on the wire but a fixed set of choices in
         // the UI — a free number field would invite 7-minute rounding.
         value: _nested<num>('rounding', 'increment')?.toInt().toString(),
+        effective: _effectiveNested<num>(
+          'rounding',
+          'increment',
+        )?.toInt().toString(),
         options: {
           for (final minutes in const [5, 10, 15, 30, 60])
             '$minutes': 'admin.timeTracking.increment.m$minutes',
@@ -197,6 +202,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         title: context.t('admin.timeTracking.limitTagAccessTitle'),
         description: context.t('admin.timeTracking.limitTagAccessHint'),
         value: _value<bool>('limitTagAccess'),
+        effective: _effectiveValue<bool>('limitTagAccess'),
         onChanged: (v) => _set('limitTagAccess', v),
         pending: true,
       ),
@@ -204,6 +210,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         title: context.t('admin.timeTracking.defaultBillableTitle'),
         description: context.t('admin.timeTracking.defaultBillableHint'),
         value: _value<bool>('defaultBillable'),
+        effective: _effectiveValue<bool>('defaultBillable'),
         onChanged: (v) => _set('defaultBillable', v),
         pending: true,
       ),
@@ -232,6 +239,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         title: context.t('admin.timeTracking.leadsSeeMemberEntriesTitle'),
         description: context.t('admin.timeTracking.leadsSeeMemberEntriesHint'),
         value: _value<bool>('leadsSeeMemberEntries'),
+        effective: _effectiveValue<bool>('leadsSeeMemberEntries'),
         onChanged: (v) => _set('leadsSeeMemberEntries', v),
         monitoring: true,
         pending: true,
@@ -240,6 +248,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         title: context.t('admin.timeTracking.approvalsTitle'),
         description: context.t('admin.timeTracking.approvalsHint'),
         value: _value<bool>('approvalsEnabled'),
+        effective: _effectiveValue<bool>('approvalsEnabled'),
         onChanged: (v) => _set('approvalsEnabled', v),
         monitoring: true,
         pending: true,
@@ -253,6 +262,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         label: context.t('admin.timeTracking.approvalPeriodLabel'),
         helper: context.t('admin.timeTracking.approvalPeriodHint'),
         value: _nested<String>('approvalPeriod', 'type'),
+        effective: _effectiveNested<String>('approvalPeriod', 'type'),
         options: const {
           'WEEKLY': 'admin.timeTracking.period.weekly',
           'BIWEEKLY': 'admin.timeTracking.period.biweekly',
@@ -269,6 +279,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         label: context.t('admin.timeTracking.weekStartsOnLabel'),
         helper: context.t('admin.timeTracking.weekStartsOnHint'),
         value: _nested<String>('approvalPeriod', 'weekStartsOn'),
+        effective: _effectiveNested<String>('approvalPeriod', 'weekStartsOn'),
         options: const {
           'MONDAY': 'admin.timeTracking.weekday.monday',
           'TUESDAY': 'admin.timeTracking.weekday.tuesday',
@@ -310,6 +321,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         title: context.t('admin.timeTracking.workloadReportsTitle'),
         description: context.t('admin.timeTracking.workloadReportsHint'),
         value: _value<bool>('workloadReportsEnabled'),
+        effective: _effectiveValue<bool>('workloadReportsEnabled'),
         onChanged: (v) => _set('workloadReportsEnabled', v),
         monitoring: true,
         pending: true,
@@ -318,6 +330,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         title: context.t('admin.timeTracking.alertsTitle'),
         description: context.t('admin.timeTracking.alertsHint'),
         value: _value<bool>('alertsEnabled'),
+        effective: _effectiveValue<bool>('alertsEnabled'),
         onChanged: (v) => _set('alertsEnabled', v),
         monitoring: true,
         pending: true,
@@ -326,6 +339,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         title: context.t('admin.timeTracking.targetRemindersTitle'),
         description: context.t('admin.timeTracking.targetRemindersHint'),
         value: _value<bool>('targetRemindersEnabled'),
+        effective: _effectiveValue<bool>('targetRemindersEnabled'),
         onChanged: (v) => _set('targetRemindersEnabled', v),
         monitoring: true,
         pending: true,
@@ -334,6 +348,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         title: context.t('admin.timeTracking.arbzgHintsTitle'),
         description: context.t('admin.timeTracking.arbzgHintsHint'),
         value: _value<bool>('arbzgHintsEnabled'),
+        effective: _effectiveValue<bool>('arbzgHintsEnabled'),
         onChanged: (v) => _set('arbzgHintsEnabled', v),
         monitoring: true,
         pending: true,
@@ -351,6 +366,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         title: context.t('admin.timeTracking.billingEnabledTitle'),
         description: context.t('admin.timeTracking.billingEnabledHint'),
         value: _value<bool>('billingEnabled'),
+        effective: _effectiveValue<bool>('billingEnabled'),
         onChanged: (v) => _set('billingEnabled', v),
         // Profitability per person is a performance figure, whatever it is
         // called on the report.
@@ -364,7 +380,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         hint: 'EUR',
         maxLength: 3,
         value: _value<String>('currency'),
-        onChanged: (v) => _set('currency', v?.toUpperCase()),
+        onChanged: (v) => _setQuietly('currency', v?.toUpperCase()),
         pending: true,
       ),
     ],
@@ -381,7 +397,9 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         helper: context.t('admin.timeTracking.descriptionPurgeHint'),
         suffix: context.t('admin.timeTracking.monthsSuffix'),
         value: _nested<num>('retention', 'descriptionPurgeMonths')?.toInt(),
-        onChanged: (v) => _setNested('retention', 'descriptionPurgeMonths', v),
+        onChanged: (v) =>
+            _setNestedQuietly('retention', 'descriptionPurgeMonths', v),
+        maxValue: _retentionMaxMonths,
         pending: true,
       ),
       PolicyNumber(

@@ -42,6 +42,54 @@ void main() {
     }
   });
 
+  test('the absolute URL dio actually reports is recognised', () {
+    // ApiClient sets no baseUrl on its BaseOptions and passes '$baseUrl$path'
+    // to every call, so requestOptions.path is the whole URL. Feeding this
+    // function a bare path — as every other case here does — tests a shape the
+    // app never produces, and prefix matching against an origin-prefixed URL
+    // matches nothing while the server goes on refusing correctly. Nothing
+    // looks broken; the recovery is simply never attempted.
+    for (final url in const [
+      'https://track.asta.hn/api/v1/time',
+      'https://track.asta.hn/api/v1/time/entries',
+      'http://localhost:8080/api/v1/me/timer',
+      'https://track.asta.hn/api/v1/time?from=2026-09-01',
+      'https://track.asta.hn:4456/api/v1/billing/invoices',
+    ]) {
+      expect(
+        isFeatureDisabledResponse(path: url, status: 404),
+        isTrue,
+        reason: url,
+      );
+    }
+    // And the same URL shape must not swallow an ordinary 404.
+    expect(
+      isFeatureDisabledResponse(
+        path: 'https://track.asta.hn/api/v1/timesheet',
+        status: 404,
+      ),
+      isFalse,
+    );
+    expect(
+      isFeatureDisabledResponse(
+        path: 'https://track.asta.hn/api/v1/issues/HIN-1',
+        status: 404,
+      ),
+      isFalse,
+    );
+  });
+
+  test('a host that merely contains the words is not the route', () {
+    // A self-hosted server could be called anything.
+    expect(
+      isFeatureDisabledResponse(
+        path: 'https://api.v1.time.example.com/api/v1/issues/1',
+        status: 404,
+      ),
+      isFalse,
+    );
+  });
+
   test('a query string does not hide the route', () {
     expect(
       isFeatureDisabledResponse(

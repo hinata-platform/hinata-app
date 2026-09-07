@@ -45,7 +45,18 @@ class SetupFinished extends AppConfigEvent {
 /// of a flag is stale, so the honest reaction is to ask again rather than to
 /// show "not found".
 class MetaRefreshRequested extends AppConfigEvent {
-  const MetaRefreshRequested();
+  const MetaRefreshRequested({this.force = false});
+
+  /// Skip the rate limit, because this caller *knows* the answer changed.
+  ///
+  /// The three senders are not equally informed. A window regaining focus and a
+  /// request that came back "feature disabled" are guesses — worth acting on,
+  /// worth throttling. An administrator who just saved the settings is not
+  /// guessing: they changed the thing, and the whole point of this event is
+  /// that the nav entry appears behind them rather than after the next restart.
+  /// A cooldown that swallowed that save would recreate the exact failure this
+  /// event exists to prevent, on the one path with certain knowledge.
+  final bool force;
 }
 
 enum AppConfigStatus {
@@ -181,7 +192,8 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
   /// moment must not throw a working session back to the connect screen —
   /// unlike boot, there is a perfectly good previous answer to keep using.
   ///
-  /// Rate-limited, because the triggers are cheaper than the call. On desktop
+  /// Rate-limited, because the *guessing* triggers are cheaper than the call
+  /// ([MetaRefreshRequested.force] is the exception, and the reason it exists). On desktop
   /// and web `resumed` fires on every window focus, so alt-tabbing would be a
   /// round trip each time; and a screen that keeps calling a switched-off route
   /// would ask once per failed request. `/meta` shares the per-IP API budget
@@ -194,7 +206,8 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
   ) async {
     if (state.status != AppConfigStatus.ready) return;
     final last = _lastMetaRefresh;
-    if (last != null &&
+    if (!event.force &&
+        last != null &&
         DateTime.now().difference(last) < _metaRefreshCooldown) {
       return;
     }

@@ -1377,8 +1377,6 @@
       "envDefault": "Env-Default",
       "envDefaultHint": "Kein Wert gespeichert — es entscheidet die Umgebung dieses Servers. Tippen, um einen festen Wert zu setzen.",
       "useEnvDefault": "Env-Default übernehmen",
-      "stateOn": "Ein",
-      "stateOff": "Aus",
       "moduleTitle": "Modul",
       "moduleHint": "Der Hauptschalter für das erweiterte Time-Tracking.",
       "advancedTitle": "Erweitertes Time-Tracking",
@@ -1473,7 +1471,7 @@
       "descriptionPurgeLabel": "Beschreibungen leeren nach",
       "descriptionPurgeHint": "Leert die Beschreibungen der Einträge gelöschter Nutzer nach so vielen Monaten. Leer → Env-Default.",
       "entryPurgeLabel": "Einträge löschen nach",
-      "entryPurgeHint": "Entfernt ältere Einträge. Steuerlich aufbewahrungspflichtige Belege sind ausgenommen. 24 Monate decken ArbZG und MiLoG ab.",
+      "entryPurgeHint": "Entfernt ältere Einträge — für alle. 24 Monate decken ArbZG und MiLoG ab.",
       "monthsSuffix": "Monate",
       "privacyNoticeLabel": "Datenschutzhinweis",
       "privacyNoticeHint": "Wird in der App bei den Zeitdaten des Moduls angezeigt. Leer → der eingebaute Text.",
@@ -1778,7 +1776,8 @@
     "windowsStoreUrl": "Microsoft-Store-URL",
     "linuxStoreUrl": "Linux-Download-URL",
     "stateOn": "An",
-    "stateOff": "Aus"
+    "stateOff": "Aus",
+    "envDefault": "Env-Default"
   },
   "audit": {
     "title": "Audit-Protokoll",

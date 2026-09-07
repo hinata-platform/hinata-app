@@ -1377,8 +1377,6 @@
       "envDefault": "परिवेश डिफ़ॉल्ट",
       "envDefaultHint": "कोई मान सहेजा नहीं गया — इस सर्वर का परिवेश तय करता है। स्पष्ट मान तय करने के लिए टैप करें।",
       "useEnvDefault": "परिवेश डिफ़ॉल्ट अपनाएँ",
-      "stateOn": "चालू",
-      "stateOff": "बंद",
       "moduleTitle": "मॉड्यूल",
       "moduleHint": "विस्तारित समय-ट्रैकिंग मॉड्यूल का मुख्य स्विच।",
       "advancedTitle": "विस्तारित समय ट्रैकिंग",
@@ -1473,7 +1471,7 @@
       "descriptionPurgeLabel": "विवरण खाली करें इतने बाद",
       "descriptionPurgeHint": "हटाए गए उपयोगकर्ताओं की प्रविष्टियों के विवरण इतने महीनों बाद खाली कर देता है। खाली → परिवेश डिफ़ॉल्ट।",
       "entryPurgeLabel": "प्रविष्टियाँ हटाएँ इतने बाद",
-      "entryPurgeHint": "इससे पुरानी प्रविष्टियाँ हटाता है। कर-संबंधी दस्तावेज़ इससे मुक्त हैं। 24 महीने ArbZG और MiLoG को कवर करते हैं।",
+      "entryPurgeHint": "इससे पुरानी प्रविष्टियाँ हटाता है — सभी की। 24 महीने ArbZG और MiLoG को कवर करते हैं।",
       "monthsSuffix": "महीने",
       "privacyNoticeLabel": "गोपनीयता सूचना",
       "privacyNoticeHint": "ऐप में मॉड्यूल के समय डेटा के साथ दिखाई जाती है। खाली → अंतर्निहित पाठ।",
@@ -1778,7 +1776,8 @@
     "windowsStoreUrl": "Microsoft Store का URL",
     "linuxStoreUrl": "Linux डाउनलोड URL",
     "stateOn": "चालू",
-    "stateOff": "बंद"
+    "stateOff": "बंद",
+    "envDefault": "परिवेश डिफ़ॉल्ट"
   },
   "audit": {
     "title": "ऑडिट लॉग",

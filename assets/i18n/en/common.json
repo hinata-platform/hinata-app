@@ -1377,8 +1377,6 @@
       "envDefault": "Env default",
       "envDefaultHint": "No value stored — this server's environment decides. Tap to set an explicit value.",
       "useEnvDefault": "Use env default",
-      "stateOn": "On",
-      "stateOff": "Off",
       "moduleTitle": "Module",
       "moduleHint": "The master switch for the extended time-tracking module.",
       "advancedTitle": "Extended time tracking",
@@ -1473,7 +1471,7 @@
       "descriptionPurgeLabel": "Clear descriptions after",
       "descriptionPurgeHint": "Empties the descriptions on deleted users' entries after this many months. Empty → the env default.",
       "entryPurgeLabel": "Delete entries after",
-      "entryPurgeHint": "Removes entries older than this. Records kept for tax reasons are excluded. 24 months covers ArbZG and MiLoG.",
+      "entryPurgeHint": "Removes entries older than this, for everyone. 24 months covers ArbZG and MiLoG.",
       "monthsSuffix": "months",
       "privacyNoticeLabel": "Privacy notice",
       "privacyNoticeHint": "Shown in the app alongside the module's time data. Empty → the built-in text.",
@@ -1778,7 +1776,8 @@
     "windowsStoreUrl": "Microsoft Store URL",
     "linuxStoreUrl": "Linux download URL",
     "stateOn": "On",
-    "stateOff": "Off"
+    "stateOff": "Off",
+    "envDefault": "Env default"
   },
   "audit": {
     "title": "Audit log",

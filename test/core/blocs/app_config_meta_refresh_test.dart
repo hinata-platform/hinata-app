@@ -95,6 +95,28 @@ void main() {
     expect(repository.calls - before, 1);
   });
 
+  test('an admin save is never held back by the cooldown', () async {
+    // The three senders are not equally informed. A window regaining focus is
+    // a guess; an admin who just pressed save is not. Throttling that one
+    // recreates the failure this whole event exists to prevent — "Gespeichert",
+    // and the nav entry does not appear until the next restart — and it is the
+    // likeliest path to hit, because opening the admin area means focusing the
+    // window first.
+    final (bloc, repository) = await ready();
+    addTearDown(bloc.close);
+
+    bloc.add(const MetaRefreshRequested());
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    final afterFirst = repository.calls;
+
+    repository.next = meta(advancedTime: true);
+    bloc.add(const MetaRefreshRequested(force: true));
+    final state = await bloc.stream.first;
+
+    expect(repository.calls, afterFirst + 1);
+    expect(state.meta!.advancedTimeTracking, isTrue);
+  });
+
   test(
     'a refresh that never reached the server is not held against the next',
     () async {

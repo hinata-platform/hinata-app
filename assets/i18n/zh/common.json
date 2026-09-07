@@ -1377,8 +1377,6 @@
       "envDefault": "环境默认值",
       "envDefaultHint": "未保存任何值——由本服务器的环境决定。点按可设置明确的值。",
       "useEnvDefault": "改用环境默认值",
-      "stateOn": "开",
-      "stateOff": "关",
       "moduleTitle": "模块",
       "moduleHint": "扩展工时模块的总开关。",
       "advancedTitle": "扩展工时",
@@ -1473,7 +1471,7 @@
       "descriptionPurgeLabel": "多久后清空说明",
       "descriptionPurgeHint": "在这么多个月后清空已删除用户记录中的说明。留空 → 环境默认值。",
       "entryPurgeLabel": "多久后删除记录",
-      "entryPurgeHint": "删除早于此期限的记录。有税务保存义务的凭证除外。24 个月可覆盖 ArbZG 与 MiLoG。",
+      "entryPurgeHint": "删除早于此时长的记录，对所有人生效。24 个月可满足 ArbZG 与 MiLoG。",
       "monthsSuffix": "个月",
       "privacyNoticeLabel": "隐私说明",
       "privacyNoticeHint": "在应用中与本模块的工时数据一同显示。留空 → 使用内置文本。",
@@ -1778,7 +1776,8 @@
     "windowsStoreUrl": "Microsoft Store URL",
     "linuxStoreUrl": "Linux 下载 URL",
     "stateOn": "开启",
-    "stateOff": "关闭"
+    "stateOff": "关闭",
+    "envDefault": "环境默认值"
   },
   "audit": {
     "title": "审计日志",

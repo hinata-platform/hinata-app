@@ -1377,8 +1377,6 @@
       "envDefault": "環境の既定値",
       "envDefaultHint": "値は保存されていません — このサーバーの環境が決めます。タップすると明示的な値を設定できます。",
       "useEnvDefault": "環境の既定値に戻す",
-      "stateOn": "オン",
-      "stateOff": "オフ",
       "moduleTitle": "モジュール",
       "moduleHint": "拡張時間管理モジュールのメインスイッチ。",
       "advancedTitle": "拡張時間管理",
@@ -1473,7 +1471,7 @@
       "descriptionPurgeLabel": "説明を消去するまで",
       "descriptionPurgeHint": "削除されたユーザーの記録の説明を、この月数の後に空にします。空欄 → 環境の既定値。",
       "entryPurgeLabel": "記録を削除するまで",
-      "entryPurgeHint": "これより古い記録を削除します。税務上の保存義務がある書類は対象外です。24か月で ArbZG と MiLoG を満たします。",
+      "entryPurgeHint": "これより古い記録を全員分削除します。24 か月で ArbZG と MiLoG を満たします。",
       "monthsSuffix": "か月",
       "privacyNoticeLabel": "プライバシー通知",
       "privacyNoticeHint": "モジュールの時間データと一緒にアプリに表示されます。空欄 → 組み込みの文面。",
@@ -1778,7 +1776,8 @@
     "windowsStoreUrl": "Microsoft Store の URL",
     "linuxStoreUrl": "Linux のダウンロード URL",
     "stateOn": "オン",
-    "stateOff": "オフ"
+    "stateOff": "オフ",
+    "envDefault": "環境の既定値"
   },
   "audit": {
     "title": "監査ログ",

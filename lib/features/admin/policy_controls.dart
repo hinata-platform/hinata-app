@@ -288,11 +288,7 @@ class PolicySwitch extends StatelessWidget {
               onTap: () => onChanged(effective ?? false),
               effective: effective == null
                   ? null
-                  : context.t(
-                      effective!
-                          ? 'admin.timeTracking.stateOn'
-                          : 'admin.timeTracking.stateOff',
-                    ),
+                  : context.t(effective! ? 'admin.stateOn' : 'admin.stateOff'),
             )
           : HiveSwitch(value: current, onChanged: onChanged),
     );
@@ -573,7 +569,19 @@ class _PolicyNumberState extends State<PolicyNumber> {
     final parsed = int.tryParse(trimmed);
     if (parsed == null) return;
     final max = widget.maxValue;
-    widget.onChanged(max != null && parsed > max ? max : parsed);
+    if (max != null && parsed > max) {
+      // Write the clamped value back into the field as well. Clamping only the
+      // document would leave the screen showing 5000 over a stored 1200, and
+      // the save would succeed — the same "what you were told is not what was
+      // recorded" this screen spent the round removing.
+      _controller.value = TextEditingValue(
+        text: '$max',
+        selection: TextSelection.collapsed(offset: '$max'.length),
+      );
+      widget.onChanged(max);
+      return;
+    }
+    widget.onChanged(parsed);
   }
 
   void _reset() {

@@ -1377,8 +1377,6 @@
       "envDefault": "Valeur d'environnement",
       "envDefaultHint": "Aucune valeur enregistrée : c'est l'environnement de ce serveur qui décide. Touchez pour fixer une valeur explicite.",
       "useEnvDefault": "Utiliser la valeur d'environnement",
-      "stateOn": "Activé",
-      "stateOff": "Désactivé",
       "moduleTitle": "Module",
       "moduleHint": "L'interrupteur principal du module de suivi du temps étendu.",
       "advancedTitle": "Suivi du temps étendu",
@@ -1473,7 +1471,7 @@
       "descriptionPurgeLabel": "Vider les descriptions après",
       "descriptionPurgeHint": "Vide les descriptions des entrées des utilisateurs supprimés après ce nombre de mois. Vide → valeur d'environnement.",
       "entryPurgeLabel": "Supprimer les entrées après",
-      "entryPurgeHint": "Supprime les entrées plus anciennes. Les pièces à conservation fiscale obligatoire sont exclues. 24 mois couvrent l'ArbZG et le MiLoG.",
+      "entryPurgeHint": "Supprime les entrées plus anciennes, pour tout le monde. 24 mois couvrent ArbZG et MiLoG.",
       "monthsSuffix": "mois",
       "privacyNoticeLabel": "Note de confidentialité",
       "privacyNoticeHint": "Affichée dans l'app à côté des données de temps du module. Vide → le texte intégré.",
@@ -1778,7 +1776,8 @@
     "windowsStoreUrl": "URL du Microsoft Store",
     "linuxStoreUrl": "URL de téléchargement Linux",
     "stateOn": "Activé",
-    "stateOff": "Désactivé"
+    "stateOff": "Désactivé",
+    "envDefault": "Valeur d'environnement"
   },
   "audit": {
     "title": "Journal d'audit",
