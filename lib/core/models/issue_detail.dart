@@ -18,6 +18,7 @@ class IssueDetail {
     required this.activity,
     required this.activityTotal,
     required this.workItems,
+    required this.workItemsTotal,
     required this.hierarchy,
     required this.sprints,
     required this.users,
@@ -31,7 +32,15 @@ class IssueDetail {
   final List<IssueComment> pinnedComments;
   final List<IssueActivity> activity;
   final int activityTotal;
+
+  /// The newest work items only (the server caps the aggregate at 50); the
+  /// full list pages through `/work-items/page`.
   final List<WorkItem> workItems;
+
+  /// How many work items the issue has in total — what the "all entries"
+  /// button counts. Falls back to the shipped list's length on a server that
+  /// predates the cap.
+  final int workItemsTotal;
   final IssueHierarchy hierarchy;
   final List<Sprint> sprints;
 
@@ -52,6 +61,7 @@ class IssueDetail {
         (json['comments'] as Map<String, dynamic>?) ?? const {};
     final activityPage =
         (json['activity'] as Map<String, dynamic>?) ?? const {};
+    final workItems = parseList(json['workItems'], WorkItem.fromJson);
     return IssueDetail(
       issue: Issue.fromJson(json['issue'] as Map<String, dynamic>),
       project: json['project'] == null
@@ -62,7 +72,9 @@ class IssueDetail {
       pinnedComments: parseList(json['pinnedComments'], IssueComment.fromJson),
       activity: parseList(activityPage['content'], IssueActivity.fromJson),
       activityTotal: activityPage['totalElements'] as int? ?? 0,
-      workItems: parseList(json['workItems'], WorkItem.fromJson),
+      workItems: workItems,
+      workItemsTotal:
+          (json['workItemsTotal'] as num?)?.toInt() ?? workItems.length,
       hierarchy: json['hierarchy'] == null
           ? IssueHierarchy.empty
           : IssueHierarchy.fromJson(json['hierarchy'] as Map<String, dynamic>),

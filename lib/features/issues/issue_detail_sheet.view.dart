@@ -144,7 +144,18 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   String? _highlightedCommentId;
   Timer? _highlightTimer;
   final Map<String, GlobalKey> _commentKeys = {};
+  // The newest entries (the aggregate and the reload both cap at
+  // [_workItemPageSize]) plus the server's full count for the "all entries"
+  // button.
   List<WorkItem> _workItems = const [];
+  int _workItemsTotal = 0;
+
+  /// How many entries the card fetches. The card draws eight; anything beyond
+  /// that is thrown away, and this is the app's most-opened read — asking for
+  /// fifty of them on every open of a long-running issue meant six times the
+  /// payload for the same eight rows. The rest is the sheet's job, and the
+  /// sheet pages.
+  static const _workItemPageSize = WorkItemList.headCount;
   Project? _project;
   // Cross-feature smart-links: project issues (keyed by readable id) feed the
   // comment composer's `@`-menu and resolve `{{issue:…}}` chips; KB articles
@@ -599,6 +610,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       _commentsTotal = detail.commentsTotal;
       _pinned = detail.pinnedComments;
       _workItems = detail.workItems;
+      _workItemsTotal = detail.workItemsTotal;
       _project = detail.project;
       // The aggregate ships only the users this issue references; the full
       // directory (for pickers) is hydrated after first paint below.
@@ -674,18 +686,25 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     }
   }
 
-  /// Light refresh after logging work: refetch just the work items (and the
-  /// issue for its aggregated time totals) instead of a full [_load], so the
-  /// comment window, loaded pages and scroll position are preserved.
+  /// Light refresh after logging, correcting or removing work: refetch just
+  /// the head of the work items (and the issue for its aggregated time totals)
+  /// instead of a full [_load], so the comment window, loaded pages and scroll
+  /// position are preserved.
   Future<void> _reloadWorkItems() async {
     try {
-      final results = await Future.wait([
-        _issueApi.workItems(widget.issueId),
+      final results = await Future.wait<Object>([
+        _issueApi.workItemsPage(
+          widget.issueId,
+          page: 0,
+          size: _workItemPageSize,
+        ),
         _issueApi.issue(widget.issueId),
       ]);
       if (!mounted) return;
+      final page = results[0] as ({List<WorkItem> items, int total});
       setState(() {
-        _workItems = results[0] as List<WorkItem>;
+        _workItems = page.items;
+        _workItemsTotal = page.total;
         _adoptIssue(results[1] as Issue);
       });
     } catch (_) {
@@ -2662,47 +2681,69 @@ class IssueDetailBodyState extends State<IssueDetailBody>
             context.t(
               'issues.spent',
               variables: {
-                'spent': fmtDuration(issue.spentMinutes),
-                'estimate': fmtDuration(issue.estimateMinutes),
+                'spent': fmtDuration(context, issue.spentMinutes),
+                'estimate': fmtDuration(context, issue.estimateMinutes),
               },
             ),
             style: TextStyle(color: AppColors.inkSoft, fontSize: 13),
           ),
-          for (final item in _workItems.take(8))
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Row(
-                children: [
-                  const Icon(
-                    LucideIcons.timer,
-                    size: 16,
-                    color: AppColors.accentStrong,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '${fmtDuration(item.durationMinutes)} · ${item.activityType}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                  if (item.date != null)
-                    Text(
-                      MaterialLocalizations.of(
-                        context,
-                      ).formatShortDate(item.date!),
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: AppColors.inkFaint,
-                      ),
-                    ),
-                ],
-              ),
-            ),
+          WorkItemList(
+            items: _workItems,
+            total: _workItemsTotal,
+            access: _workItemAccess,
+            nameFor: (id) => _names[id],
+            avatarFor: (id) => _avatars[id],
+            onEdit: (item) => _editWorkItem(issue, item),
+            onDelete: _deleteWorkItem,
+            onShowAll: () => _showAllWorkItems(issue),
+          ),
         ],
       ),
     );
+  }
+
+  /// Who may correct which entry: me for my own, plus everyone's for a lead
+  /// of this project or an admin — the rule the server enforces, read from
+  /// the session and the project rather than guessed per row.
+  WorkItemAccess get _workItemAccess {
+    final me = context.read<AuthBloc>().state.user;
+    if (me == null) return WorkItemAccess.none;
+    final leads = _project?.leadIds ?? const <String>[];
+    return WorkItemAccess(
+      meId: me.id,
+      managesProject: me.isAdmin || leads.contains(me.id),
+    );
+  }
+
+  Future<void> _editWorkItem(Issue issue, WorkItem item) async {
+    if (await showEditWorkItem(context, issue.id, item) == null || !mounted) {
+      return;
+    }
+    _notifyChanged();
+    await _reloadWorkItems();
+  }
+
+  Future<void> _deleteWorkItem(WorkItem item) async {
+    if (!await confirmDeleteWorkItem(context, item) || !mounted) return;
+    _notifyChanged();
+    await _reloadWorkItems();
+  }
+
+  /// The full, paged history in a sheet. Its own edits and deletes refresh
+  /// the sheet as they happen; the card catches up once it closes.
+  Future<void> _showAllWorkItems(Issue issue) async {
+    var changed = false;
+    await showAllWorkItemsSheet(
+      context,
+      issue: issue,
+      access: _workItemAccess,
+      nameFor: (id) => _names[id],
+      avatarFor: (id) => _avatars[id],
+      onChanged: () => changed = true,
+    );
+    if (!changed || !mounted) return;
+    _notifyChanged();
+    await _reloadWorkItems();
   }
 
   /// Baseline issue provenance shown as a separate block directly beneath the

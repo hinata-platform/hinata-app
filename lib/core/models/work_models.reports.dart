@@ -116,6 +116,11 @@ class GanttView extends Equatable {
   List<Object?> get props => [tasks, links];
 }
 
+/// One user × project line of the weekly timesheet.
+///
+/// [projectId] is null for time that belongs to no project (an entry whose
+/// issue was deleted, say) — the server groups those on their own line rather
+/// than dropping them.
 class TimesheetRow extends Equatable {
   const TimesheetRow({
     required this.userId,
@@ -125,13 +130,13 @@ class TimesheetRow extends Equatable {
   });
 
   final String userId;
-  final String projectId;
+  final String? projectId;
   final Map<DateTime, int> minutesPerDay;
   final int totalMinutes;
 
   factory TimesheetRow.fromJson(Map<String, dynamic> json) => TimesheetRow(
     userId: json['userId'] as String? ?? '',
-    projectId: json['projectId'] as String? ?? '',
+    projectId: _optionalId(json['projectId']),
     totalMinutes: json['totalMinutes'] as int? ?? 0,
     minutesPerDay: ((json['minutesPerDay'] as Map<String, dynamic>?) ?? {}).map(
       (k, v) => MapEntry(parseDate(k)!, v as int),

@@ -809,7 +809,24 @@
       "support": "Support"
     },
     "date": "Date",
-    "note": "Note (optional)"
+    "note": "Note (optional)",
+    "fmt": {
+      "hours": "{{h}}h",
+      "minutes": "{{m}}m",
+      "hoursMinutes": "{{h}}h {{m}}m",
+      "none": "—"
+    },
+    "editEntry": "Edit entry",
+    "allEntries": "All entries ({{count}})",
+    "allEntriesTitle": "All entries",
+    "loggedTotal": "{{spent}} logged in total",
+    "deletedUser": "Deleted user",
+    "legacySource": "Smart commits (before 2.0)",
+    "deleteTitle": "Delete entry",
+    "deleteConfirm": "Remove {{duration}} logged on {{date}}? This cannot be undone.",
+    "deleted": "Entry deleted",
+    "noEntries": "No time logged yet",
+    "entryActions": "Entry actions"
   },
   "projects": {
     "title": "Projects",
@@ -981,7 +998,15 @@
     "empty": "No work items recorded in this week.",
     "member": "Member",
     "project": "Project",
-    "total": "Total"
+    "total": "Total",
+    "today": "Today",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "unassigned": "Not assigned",
+    "allUsers": "All users",
+    "allProjects": "All projects",
+    "searchUsers": "Search users…",
+    "searchProjects": "Search projects…"
   },
   "reports": {
     "title": "Reports",
@@ -1757,7 +1782,10 @@
       "UNKNOWN": "Unknown event",
       "ISSUE_MOVED": "Issue moved",
       "ISSUE_CLONED": "Issue cloned",
-      "ISSUE_EXPORTED": "Issue exported"
+      "ISSUE_EXPORTED": "Issue exported",
+      "TIME_ENTRY_UPDATED": "Time entry updated",
+      "TIME_ENTRY_DELETED": "Time entry deleted",
+      "TIME_ENTRY_CREATED_FOR": "Time booked for someone else"
     },
     "meta": {
       "oldRole": "Previous role",

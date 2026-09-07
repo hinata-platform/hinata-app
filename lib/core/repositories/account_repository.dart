@@ -15,11 +15,15 @@ class AccountRepository {
   Future<Me> meAccount() async =>
       Me.fromJson(await _api.get('/api/v1/me') as Map<String, dynamic>);
 
+  /// Patches the profile; only the fields passed travel. [timezone] is an IANA
+  /// id (`Europe/Berlin`) — the server validates it and answers 400 for one it
+  /// cannot resolve.
   Future<Me> updateMyProfile({
     String? displayName,
     String? title,
     String? pronouns,
     String? locale,
+    String? timezone,
   }) async => Me.fromJson(
     await _api.patch(
           '/api/v1/me',
@@ -28,6 +32,7 @@ class AccountRepository {
             'title': ?title,
             'pronouns': ?pronouns,
             'locale': ?locale,
+            'timezone': ?timezone,
           },
         )
         as Map<String, dynamic>,

@@ -483,7 +483,7 @@ class _Hero extends StatelessWidget {
         LucideIcons.timer,
         context.t(
           'weeklySummary.youFocused',
-          variables: {'time': focusLabel(data.team.focusMinutes)},
+          variables: {'time': fmtDuration(context, data.team.focusMinutes)},
         ),
       ),
     ],
@@ -574,7 +574,7 @@ class _StatRow extends StatelessWidget {
       ),
       _StatCard(
         label: context.t('weeklySummary.statFocus'),
-        value: focusLabel(team.focusMinutes),
+        value: fmtDuration(context, team.focusMinutes),
         icon: LucideIcons.timer,
         hue: _cFocus,
         onTap: () => context.go('/timesheet'),
@@ -1149,15 +1149,6 @@ class _CardTitle extends StatelessWidget {
       ],
     );
   }
-}
-
-/// "3h 20m" / "45m" / "0m" from a minute count.
-String focusLabel(int minutes) {
-  if (minutes <= 0) return '0m';
-  final h = minutes ~/ 60;
-  final m = minutes % 60;
-  if (h == 0) return '${m}m';
-  return m == 0 ? '${h}h' : '${h}h ${m}m';
 }
 
 String _rangeLabel(BuildContext context, DateTime? start, DateTime? end) {

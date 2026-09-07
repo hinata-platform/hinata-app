@@ -478,10 +478,33 @@ class IssueRepository {
 
   // --- Time tracking ----------------------------------------------------------
 
+  /// The issue's work items, newest first — capped server-side at 200. For
+  /// anything that wants the whole history, page with [workItemsPage].
   Future<List<WorkItem>> workItems(String issueId) async =>
       ((await _api.get('/api/v1/issues/$issueId/work-items')) as List<dynamic>)
           .map((w) => WorkItem.fromJson(w as Map<String, dynamic>))
           .toList();
+
+  /// One page of an issue's work items (date desc, ≤ 100 per page) plus the
+  /// backend total, for the timeline card's head and the "all entries" sheet.
+  Future<({List<WorkItem> items, int total})> workItemsPage(
+    String issueId, {
+    int page = 0,
+    int size = 50,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/issues/$issueId/work-items/page',
+              query: {'page': page, 'size': size},
+            )
+            as Map<String, dynamic>;
+    return (
+      items: ((data['content'] as List<dynamic>?) ?? [])
+          .map((w) => WorkItem.fromJson(w as Map<String, dynamic>))
+          .toList(),
+      total: (data['totalElements'] as num?)?.toInt() ?? 0,
+    );
+  }
 
   Future<WorkItem> addWorkItem(
     String issueId, {
@@ -503,4 +526,34 @@ class IssueRepository {
           as Map<String, dynamic>,
     );
   }
+
+  /// Corrects one work item. Only the fields passed travel — the server leaves
+  /// an absent field as it is — so a caller sends exactly what changed. Allowed
+  /// for the entry's owner, a lead of its project, or an admin; anyone else
+  /// gets a 403 whose message is already localized.
+  Future<WorkItem> updateWorkItem(
+    String id, {
+    int? minutes,
+    String? activityType,
+    String? description,
+    DateTime? date,
+  }) async {
+    return WorkItem.fromJson(
+      await _api.patch(
+            '/api/v1/work-items/$id',
+            body: {
+              'durationMinutes': ?minutes,
+              'activityType': ?activityType,
+              'description': ?description,
+              if (date != null) 'date': date.toIso8601String().substring(0, 10),
+            },
+          )
+          as Map<String, dynamic>,
+    );
+  }
+
+  /// Removes one work item (same permission rule as [updateWorkItem]). The
+  /// issue's spent total is recomputed server-side.
+  Future<void> deleteWorkItem(String id) =>
+      _api.delete('/api/v1/work-items/$id');
 }

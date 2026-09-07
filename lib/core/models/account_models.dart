@@ -43,6 +43,7 @@ class Me extends Equatable {
     this.title,
     this.pronouns,
     this.locale = 'en',
+    this.timezone,
     this.avatarUrl,
     this.createdAt,
     this.passwordChangedAt,
@@ -57,6 +58,11 @@ class Me extends Equatable {
   final String? title;
   final String? pronouns;
   final String locale;
+
+  /// The IANA zone the account is stamped with (`Europe/Berlin`) — what the
+  /// server renders documents and checks "not in the future" against. Kept in
+  /// step with the device by `TimeZoneSync`; null until a client has said.
+  final String? timezone;
   final String? avatarUrl;
   final AuthOrigin origin;
   final List<String> roles;
@@ -82,6 +88,7 @@ class Me extends Equatable {
     title: title ?? this.title,
     pronouns: pronouns ?? this.pronouns,
     locale: locale,
+    timezone: timezone,
     avatarUrl: clearAvatar ? null : (avatarUrl ?? this.avatarUrl),
     origin: origin,
     roles: roles,
@@ -113,6 +120,10 @@ class Me extends Equatable {
     title: json['title'] as String?,
     pronouns: json['pronouns'] as String?,
     locale: json['locale'] as String? ?? 'en',
+    timezone: switch (json['timezone']) {
+      final String zone when zone.trim().isNotEmpty => zone.trim(),
+      _ => null,
+    },
     avatarUrl: json['avatarUrl'] as String?,
     origin: AuthOrigin.fromWire(json['origin'] as String?),
     roles: ((json['roles'] as List<dynamic>?) ?? const []).cast<String>(),
@@ -137,6 +148,7 @@ class Me extends Equatable {
     title,
     pronouns,
     locale,
+    timezone,
     twoFactor,
   ];
 }

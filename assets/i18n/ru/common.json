@@ -809,7 +809,24 @@
       "support": "Поддержка"
     },
     "date": "Дата",
-    "note": "Заметка (необязательно)"
+    "note": "Заметка (необязательно)",
+    "fmt": {
+      "hours": "{{h}} ч",
+      "minutes": "{{m}} мин",
+      "hoursMinutes": "{{h}} ч {{m}} мин",
+      "none": "—"
+    },
+    "editEntry": "Изменить запись",
+    "allEntries": "Все записи ({{count}})",
+    "allEntriesTitle": "Все записи",
+    "loggedTotal": "Всего учтено {{spent}}",
+    "deletedUser": "Удалённый пользователь",
+    "legacySource": "Смарт-коммиты (до 2.0)",
+    "deleteTitle": "Удалить запись",
+    "deleteConfirm": "Удалить {{duration}}, учтённые {{date}}? Это действие нельзя отменить.",
+    "deleted": "Запись удалена",
+    "noEntries": "Время ещё не учтено",
+    "entryActions": "Действия с записью"
   },
   "projects": {
     "title": "Проекты",
@@ -981,7 +998,15 @@
     "empty": "На этой неделе записей о работе нет.",
     "member": "Участник",
     "project": "Проект",
-    "total": "Итого"
+    "total": "Итого",
+    "today": "Сегодня",
+    "previousWeek": "Предыдущая неделя",
+    "nextWeek": "Следующая неделя",
+    "unassigned": "Без проекта",
+    "allUsers": "Все пользователи",
+    "allProjects": "Все проекты",
+    "searchUsers": "Поиск пользователей…",
+    "searchProjects": "Поиск проектов…"
   },
   "reports": {
     "title": "Отчёты",
@@ -1757,7 +1782,10 @@
       "UNKNOWN": "Неизвестное событие",
       "ISSUE_MOVED": "Задача перенесена",
       "ISSUE_CLONED": "Задача клонирована",
-      "ISSUE_EXPORTED": "Задача экспортирована"
+      "ISSUE_EXPORTED": "Задача экспортирована",
+      "TIME_ENTRY_UPDATED": "Запись времени изменена",
+      "TIME_ENTRY_DELETED": "Запись времени удалена",
+      "TIME_ENTRY_CREATED_FOR": "Время записано за другого"
     },
     "meta": {
       "oldRole": "Прежняя роль",

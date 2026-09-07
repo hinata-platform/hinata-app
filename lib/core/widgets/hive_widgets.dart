@@ -895,11 +895,18 @@ IconData backArrow(BuildContext context) =>
 double chevronTurn(BuildContext context) =>
     Directionality.of(context) == TextDirection.rtl ? -0.25 : 0.25;
 
-/// Format minutes as `2h 30m`.
-String fmtDuration(int? minutes) {
-  if (minutes == null) return '—';
+/// A minute count as the reader's language writes it — `2 h 30 min`, `2 時間
+/// 30 分`, `2 ч 30 мин` (`time.fmt.*`). Null is "no value" and renders as a
+/// dash, so a missing estimate never reads as zero.
+///
+/// The one duration formatter in the app: every board card, timeline row,
+/// timesheet cell and report line goes through here, which is what keeps them
+/// from drifting apart. Server-rendered documents format their own.
+String fmtDuration(BuildContext context, int? minutes) {
+  if (minutes == null) return context.t('time.fmt.none');
   final h = minutes ~/ 60;
   final m = minutes % 60;
-  if (h == 0) return '${m}m';
-  return m == 0 ? '${h}h' : '${h}h ${m}m';
+  if (h == 0) return context.t('time.fmt.minutes', variables: {'m': '$m'});
+  if (m == 0) return context.t('time.fmt.hours', variables: {'h': '$h'});
+  return context.t('time.fmt.hoursMinutes', variables: {'h': '$h', 'm': '$m'});
 }

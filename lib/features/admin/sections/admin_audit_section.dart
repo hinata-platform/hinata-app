@@ -23,14 +23,14 @@ import '../../search/search_tokens.dart';
 import '../../shell/page_chrome.dart';
 import '../../sprint/modals/glass_modal.dart'
     show showGlassToast, GlassToastKind;
-import '../glass_filter_bar.dart';
+import '../../../core/widgets/glass_filter_bar.dart';
 
 part 'admin_audit_section.filters.dart';
 part 'admin_audit_section.timeline.dart';
 part 'admin_audit_section.detail.dart';
 
 /// Docked-toolbar height on compact: search row + gap + chip row.
-const double _kAuditDockHeight = kAdminPillHeight * 2 + 8;
+const double _kAuditDockHeight = kGlassPillHeight * 2 + 8;
 
 /// The admin **Audit log** — a live, filtered, infinite-scrolling timeline of
 /// security-relevant events (sign-ins, role changes, settings updates…).

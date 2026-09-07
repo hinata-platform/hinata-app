@@ -197,32 +197,116 @@ class BoardView extends Equatable {
   List<Object?> get props => [board, sprints, columns];
 }
 
+/// One logged unit of work (`work_items`).
+///
+/// Only the 1.x fields are guaranteed on the wire; everything Time-Tracking 2.0
+/// added is optional and parsed leniently, so an older server's answer still
+/// reads with the same defaults the server itself applies ([source] `APP`,
+/// [billable] false, no tags). [userId] is null for entries credited to nobody
+/// — see [isLegacy].
 class WorkItem extends Equatable {
   const WorkItem({
     required this.id,
-    required this.userId,
     required this.durationMinutes,
     required this.activityType,
+    this.userId,
+    this.issueId,
+    this.projectId,
     this.date,
     this.description,
+    this.createdAt,
+    this.startedAt,
+    this.endedAt,
+    this.billable = false,
+    this.tags = const [],
+    this.source = sourceApp,
+    this.updatedAt,
+    this.updatedBy,
+    this.sharedFromId,
   });
 
+  /// Logged by hand in the app — the default when a server sends no source.
+  static const sourceApp = 'APP';
+
+  /// Minutes that smart commits booked straight onto the issue before 2.0.
+  /// The migration parks them in one entry per issue that belongs to nobody.
+  static const sourceLegacy = 'LEGACY';
+
   final String id;
-  final String userId;
+  final String? userId;
+  final String? issueId;
+  final String? projectId;
   final int durationMinutes;
   final String activityType;
+
+  /// The calendar day the work is booked on — a pure date, never shifted
+  /// across zones (only [startedAt]/[endedAt] are instants).
   final DateTime? date;
   final String? description;
+  final DateTime? createdAt;
+  final DateTime? startedAt;
+  final DateTime? endedAt;
+  final bool billable;
+  final List<String> tags;
+
+  /// Where the entry came from: `APP`, `TIMER`, `MCP`, `SMART_COMMIT`,
+  /// `LEGACY`, `CALENDAR`, `CSV` or `SHARED`.
+  final String source;
+  final DateTime? updatedAt;
+  final String? updatedBy;
+  final String? sharedFromId;
+
+  /// Whether this is the pre-2.0 remainder the migration credited to nobody.
+  /// Rendered under its own label rather than a person, and never editable.
+  bool get isLegacy => source == sourceLegacy;
 
   factory WorkItem.fromJson(Map<String, dynamic> json) => WorkItem(
     id: json['id'] as String,
-    userId: json['userId'] as String? ?? '',
-    durationMinutes: json['durationMinutes'] as int? ?? 0,
+    userId: _optionalId(json['userId']),
+    issueId: _optionalId(json['issueId']),
+    projectId: _optionalId(json['projectId']),
+    durationMinutes: (json['durationMinutes'] as num?)?.toInt() ?? 0,
     activityType: json['activityType'] as String? ?? 'Development',
     date: _date(json['date']),
     description: json['description'] as String?,
+    createdAt: _instant(json['createdAt']),
+    startedAt: _instant(json['startedAt']),
+    endedAt: _instant(json['endedAt']),
+    billable: json['billable'] as bool? ?? false,
+    tags: ((json['tags'] as List<dynamic>?) ?? const [])
+        .whereType<String>()
+        .toList(),
+    source: _optionalId(json['source']) ?? sourceApp,
+    updatedAt: _instant(json['updatedAt']),
+    updatedBy: _optionalId(json['updatedBy']),
+    sharedFromId: _optionalId(json['sharedFromId']),
   );
 
   @override
-  List<Object?> get props => [id, userId, durationMinutes, date];
+  List<Object?> get props => [
+    id,
+    userId,
+    issueId,
+    projectId,
+    durationMinutes,
+    activityType,
+    date,
+    description,
+    startedAt,
+    endedAt,
+    billable,
+    tags,
+    source,
+    createdAt,
+    updatedAt,
+    updatedBy,
+    sharedFromId,
+  ];
+}
+
+/// A string field that may arrive as null *or* blank — both mean "none".
+String? _optionalId(dynamic value) {
+  if (value is! String) return null;
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
 }
