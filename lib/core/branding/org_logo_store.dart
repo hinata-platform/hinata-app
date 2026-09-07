@@ -145,14 +145,19 @@ class OrgLogoStore extends Cubit<OrgLogoState> {
       }
       if (asset.bytes.length > maxBytes) {
         if (kDebugMode) {
-          debugPrint('[branding] logo is ${asset.bytes.length} bytes — ignored');
+          debugPrint(
+            '[branding] logo is ${asset.bytes.length} bytes — ignored',
+          );
         }
         _emitNow(OrgLogoState(key: key));
         return;
       }
       if (asset.isSvg) {
         _emitNow(
-          OrgLogoState(key: key, svg: utf8.decode(asset.bytes, allowMalformed: true)),
+          OrgLogoState(
+            key: key,
+            svg: utf8.decode(asset.bytes, allowMalformed: true),
+          ),
         );
         return;
       }

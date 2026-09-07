@@ -909,12 +909,7 @@ class _SubPageBar extends StatelessWidget {
           child: Row(
             children: [
               IconButton(
-                onPressed: () => _handleBack(
-                  context,
-                  location,
-                  override,
-                  advancedTime: advancedTime,
-                ),
+                onPressed: () => _handleBack(context, location, override),
                 visualDensity: VisualDensity.compact,
                 tooltip: MaterialLocalizations.of(context).backButtonTooltip,
                 icon: Icon(

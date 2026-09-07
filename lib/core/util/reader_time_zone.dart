@@ -62,8 +62,9 @@ class ReaderTimeZone {
   @visibleForTesting
   static bool looksLikeZoneId(String name) {
     if (name.isEmpty || name.length > 64) return false;
-    return RegExp(r'^[A-Za-z][A-Za-z0-9+_-]*(/[A-Za-z0-9+_-]+){0,2}$')
-        .hasMatch(name);
+    return RegExp(
+      r'^[A-Za-z][A-Za-z0-9+_-]*(/[A-Za-z0-9+_-]+){0,2}$',
+    ).hasMatch(name);
   }
 
   /// Forgets the cached answer. Tests only — the value is process-wide.

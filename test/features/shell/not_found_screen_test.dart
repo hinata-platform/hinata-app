@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:hinata/core/router/app_router.dart' show timeModulePage;
 import 'package:hinata/core/widgets/hive_empty_state.dart';
 import 'package:hinata/features/shell/not_found_screen.dart';
+import 'package:hinata/features/time/time_calendar_screen.dart';
 import 'package:hinata/features/time/time_screen.dart';
+import 'package:hinata/features/time/time_views.dart';
+import 'package:hinata/features/timesheet/timesheet_screen.dart';
 
 /// A link that leads nowhere used to render an empty page under the brand mark,
 /// which reads as a broken app. It now says what happened and offers the way
@@ -109,6 +112,35 @@ void main() {
       // Stage 3 replaced the placeholder: `/time` is now the module's own
       // list, and the timesheet keeps its own route underneath it.
       expect(timeModulePage(advancedTime: true), isA<TimeScreen>());
+    });
+
+    test('each of the module\'s three routes builds its own view', () {
+      expect(
+        timeModulePage(advancedTime: true, view: TimeView.list),
+        isA<TimeScreen>(),
+      );
+      expect(
+        timeModulePage(advancedTime: true, view: TimeView.calendar),
+        isA<TimeCalendarScreen>(),
+      );
+      // The same grid the base `/timesheet` draws, told it belongs to the
+      // module: paged rows, and a cell of your own that can be typed into.
+      final sheet = timeModulePage(
+        advancedTime: true,
+        view: TimeView.timesheet,
+      );
+      expect(sheet, isA<TimesheetScreen>());
+      expect((sheet as TimesheetScreen).moduleView, isTrue);
+    });
+
+    test('with the module off, none of the three exists', () {
+      for (final view in TimeView.values) {
+        expect(
+          timeModulePage(advancedTime: false, view: view),
+          isA<NotFoundScreen>(),
+          reason: view.route,
+        );
+      }
     });
   });
 }

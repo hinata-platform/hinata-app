@@ -2,6 +2,7 @@ import '../api/api_client.dart';
 import '../blocs/paged_cubit.dart';
 import '../models/time_models.dart';
 import '../models/work_models.dart';
+import '../util/dates.dart';
 
 /// The extended time-tracking module: the running timer and the personal list
 /// of entries.
@@ -161,6 +162,58 @@ class TimeRepository {
   }
 
   Future<void> delete(String id) => _api.delete('/api/v1/time/entries/$id');
+
+  // --- the grid views --------------------------------------------------------
+
+  /// Everything the caller logged inside a window, for the calendar to draw.
+  ///
+  /// A window, not a page: a grid places the whole range or places nothing. The
+  /// server bounds it instead — a month wide at most, and a cap on the entries
+  /// with [CalendarWindow.truncated] when it was reached.
+  Future<CalendarWindow> calendar(DateTime from, DateTime to) async {
+    final data =
+        await _api.get(
+              '/api/v1/time/calendar',
+              query: {'from': formatDateOnly(from), 'to': formatDateOnly(to)},
+            )
+            as Map<String, dynamic>;
+    return CalendarWindow.fromJson(data);
+  }
+
+  /// One page of the timesheet matrix: a row per person and project, its days
+  /// as columns.
+  ///
+  /// The module's own route rather than the 1.x `/timesheet`, which answers with
+  /// every row at once. Same scope either way — a non-admin gets their own rows
+  /// and naming somebody else is refused, not quietly narrowed.
+  Future<PageResult<TimesheetRow>> timesheet({
+    required DateTime from,
+    required DateTime to,
+    String? userId,
+    String? projectId,
+    int page = 0,
+    int size = 50,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/time/timesheet',
+              query: {
+                'from': formatDateOnly(from),
+                'to': formatDateOnly(to),
+                'userId': ?userId,
+                'projectId': ?projectId,
+                'page': page,
+                'size': size,
+              },
+            )
+            as Map<String, dynamic>;
+    return (
+      items: ((data['content'] as List<dynamic>?) ?? const [])
+          .map((e) => TimesheetRow.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      total: (data['totalElements'] as num?)?.toInt() ?? 0,
+    );
+  }
 
   /// Starts a timer carrying an existing entry's description and placement.
   Future<RunningTimer> continueEntry(String id) async {

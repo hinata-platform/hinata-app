@@ -11,7 +11,7 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/gantt_links.dart';
-import '../../core/widgets/glass_panel.dart';
+import '../../core/widgets/glass_switch_chip.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
@@ -1209,133 +1209,50 @@ class _ViewSwitcher extends StatelessWidget {
     final iconOnly = context.isCompact;
     final dark = Theme.of(context).brightness == Brightness.dark;
     final tokens = SearchTokens.of(dark ? Brightness.dark : Brightness.light);
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth.clamp(140.0, 420.0)),
-      child: GlassFloatingSurface(
-        // A pill, not a rounded box: half the switcher's own height, so the
-        // ends stay perfectly round whichever mode it is in.
-        radius: (iconOnly ? 44 : 42) / 2,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _SwitchChip(
-                  key: optionsKey,
-                  label: context.t('gantt.options.short'),
-                  icon: LucideIcons.gitFork,
-                  active: linksActive,
-                  iconOnly: iconOnly,
-                  onTap: onOptions,
-                ),
-                const SizedBox(width: 2),
-                _SwitchChip(
-                  label: context.t('gantt.today'),
-                  icon: LucideIcons.locateFixed,
-                  active: false,
-                  iconOnly: iconOnly,
-                  onTap: onToday,
-                ),
-                Container(
-                  width: 1,
-                  height: 22,
-                  margin: const EdgeInsets.symmetric(horizontal: 6),
-                  color: tokens.hairline,
-                ),
-                _SwitchChip(
-                  label: context.t('gantt.week'),
-                  // A span of days vs. the full month grid — the two zoom
-                  // levels read apart at a glance without their labels.
-                  icon: LucideIcons.calendarRange,
-                  active: zoom == GanttZoom.week,
-                  iconOnly: iconOnly,
-                  onTap: () => onZoom(GanttZoom.week),
-                ),
-                const SizedBox(width: 2),
-                _SwitchChip(
-                  label: context.t('gantt.month'),
-                  icon: LucideIcons.calendarDays,
-                  active: zoom == GanttZoom.month,
-                  iconOnly: iconOnly,
-                  onTap: () => onZoom(GanttZoom.month),
-                ),
-              ],
-            ),
-          ),
+    return GlassSwitchBar(
+      compact: iconOnly,
+      maxWidth: maxWidth.clamp(140.0, 420.0),
+      chips: [
+        GlassSwitchChip(
+          key: optionsKey,
+          label: context.t('gantt.options.short'),
+          icon: LucideIcons.gitFork,
+          active: linksActive,
+          iconOnly: iconOnly,
+          onTap: onOptions,
         ),
-      ),
-    );
-  }
-}
-
-class _SwitchChip extends StatelessWidget {
-  const _SwitchChip({
-    super.key,
-    required this.label,
-    required this.active,
-    required this.onTap,
-    this.icon,
-    this.iconOnly = false,
-  });
-
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-  final IconData? icon;
-
-  /// Drops the label and keeps it as the tooltip — the compact layout, where a
-  /// four-chip switcher with words would run past the screen.
-  final bool iconOnly;
-
-  @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final tokens = SearchTokens.of(dark ? Brightness.dark : Brightness.light);
-    // On glass the active pill is a translucent amber wash, not an opaque
-    // fill — an opaque chip would sit on the lens like a sticker.
-    final fg = active
-        ? (dark ? AppColors.accent : AppColors.accentStrong)
-        : tokens.inkSoft;
-    final compact = iconOnly && icon != null;
-    final chip = Material(
-      color: active
-          ? AppColors.accent.withValues(alpha: dark ? 0.30 : 0.22)
-          : Colors.transparent,
-      borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 11 : 12,
-            vertical: 7,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: compact ? 18 : 15, color: fg),
-                if (!compact) const SizedBox(width: 5),
-              ],
-              if (!compact)
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.clip,
-                  softWrap: false,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: fg,
-                  ),
-                ),
-            ],
-          ),
+        const SizedBox(width: 2),
+        GlassSwitchChip(
+          label: context.t('gantt.today'),
+          icon: LucideIcons.locateFixed,
+          active: false,
+          iconOnly: iconOnly,
+          onTap: onToday,
         ),
-      ),
+        Container(
+          width: 1,
+          height: 22,
+          margin: const EdgeInsets.symmetric(horizontal: 6),
+          color: tokens.hairline,
+        ),
+        GlassSwitchChip(
+          label: context.t('gantt.week'),
+          // A span of days vs. the full month grid — the two zoom
+          // levels read apart at a glance without their labels.
+          icon: LucideIcons.calendarRange,
+          active: zoom == GanttZoom.week,
+          iconOnly: iconOnly,
+          onTap: () => onZoom(GanttZoom.week),
+        ),
+        const SizedBox(width: 2),
+        GlassSwitchChip(
+          label: context.t('gantt.month'),
+          icon: LucideIcons.calendarDays,
+          active: zoom == GanttZoom.month,
+          iconOnly: iconOnly,
+          onTap: () => onZoom(GanttZoom.month),
+        ),
+      ],
     );
-    return compact ? Tooltip(message: label, child: chip) : chip;
   }
 }

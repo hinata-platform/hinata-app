@@ -31,6 +31,7 @@ import 'placement_picker.dart';
 Future<SavedTimeEntry?> showTimeEntrySheet(
   BuildContext context, {
   WorkItem? entry,
+  ({DateTime start, DateTime end})? span,
 }) {
   // The sheet rides the root navigator, outside the app's provider scope, so
   // what it reads has to be carried across. Three repositories by name rather
@@ -55,7 +56,7 @@ Future<SavedTimeEntry?> showTimeEntrySheet(
     width: 480,
     builder: (_) => MultiRepositoryProvider(
       providers: providers,
-      child: _TimeEntryForm(entry: entry),
+      child: _TimeEntryForm(entry: entry, span: span),
     ),
   );
 }
@@ -64,9 +65,14 @@ Future<SavedTimeEntry?> showTimeEntrySheet(
 enum _EntryMode { interval, duration }
 
 class _TimeEntryForm extends StatefulWidget {
-  const _TimeEntryForm({this.entry});
+  const _TimeEntryForm({this.entry, this.span});
 
   final WorkItem? entry;
+
+  /// Hours swept out on the calendar, for a new entry. Opens the form on its
+  /// interval side with those hours already in it — the drag was the answer to
+  /// "when", and asking again would be asking twice.
+  final ({DateTime start, DateTime end})? span;
 
   @override
   State<_TimeEntryForm> createState() => _TimeEntryFormState();
@@ -81,14 +87,24 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   );
 
   late _EntryMode _mode =
-      widget.entry?.startedAt != null && widget.entry?.endedAt != null
+      widget.span != null ||
+          (widget.entry?.startedAt != null && widget.entry?.endedAt != null)
       ? _EntryMode.interval
       : _EntryMode.duration;
 
-  late DateTime _day = _dayOf(widget.entry);
-  late DateTime _start = widget.entry?.startedAt ?? _defaultStart();
+  late DateTime _day = widget.span != null
+      ? DateTime(
+          widget.span!.start.year,
+          widget.span!.start.month,
+          widget.span!.start.day,
+        )
+      : _dayOf(widget.entry);
+  late DateTime _start =
+      widget.span?.start ?? widget.entry?.startedAt ?? _defaultStart();
   late DateTime _end =
-      widget.entry?.endedAt ?? _defaultStart().add(const Duration(hours: 1));
+      widget.span?.end ??
+      widget.entry?.endedAt ??
+      _defaultStart().add(const Duration(hours: 1));
 
   late TimePlacement _placement = TimePlacement(
     projectId: widget.entry?.projectId,

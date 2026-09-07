@@ -6,6 +6,8 @@ import 'package:hinata/core/blocs/auth_bloc.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
+import 'package:hinata/core/blocs/paged_cubit.dart';
+import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/core/repositories/timesheet_repository.dart';
 import 'package:hinata/core/repositories/user_repository.dart';
 import 'package:hinata/core/widgets/hive_empty_state.dart';
@@ -53,6 +55,8 @@ void main() {
     _FakeTimesheetRepository? timesheet,
     _FakeProjectRepository? projectRepository,
     _FakeUserRepository? userRepository,
+    _FakeTimeRepository? time,
+    bool moduleView = false,
   }) {
     final router = GoRouter(
       routes: [
@@ -73,10 +77,13 @@ void main() {
                     value:
                         projectRepository ?? _FakeProjectRepository(projects),
                   ),
+                  RepositoryProvider<TimeRepository>.value(
+                    value: time ?? _FakeTimeRepository(rows),
+                  ),
                 ],
                 child: BlocProvider<AuthBloc>.value(
                   value: _FakeAuthBloc(admin: admin),
-                  child: const TimesheetScreen(),
+                  child: TimesheetScreen(moduleView: moduleView),
                 ),
               ),
             ),
@@ -89,6 +96,95 @@ void main() {
       routerConfig: router,
     );
   }
+
+  group('the module\'s own page', () {
+    testWidgets('rows come from the paged route, not the array one', (
+      tester,
+    ) async {
+      final module = _FakeTimeRepository([row(userId: 'me')]);
+      final base = _FakeTimesheetRepository([row(userId: 'me')]);
+      await tester.pumpWidget(
+        host(rows: const [], moduleView: true, time: module, timesheet: base),
+      );
+      await tester.pumpAndSettle();
+
+      expect(module.calls, 1);
+      expect(base.calls, isEmpty, reason: 'the base route is the other page');
+    });
+
+    testWidgets('the base page still reads the array route', (tester) async {
+      final module = _FakeTimeRepository(const []);
+      final base = _FakeTimesheetRepository([row(userId: 'me')]);
+      await tester.pumpWidget(
+        host(rows: const [], time: module, timesheet: base),
+      );
+      await tester.pumpAndSettle();
+
+      expect(base.calls, hasLength(1));
+      expect(module.calls, isZero);
+    });
+
+    testWidgets('a matrix the page could not fit says how much it is showing', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          rows: const [],
+          moduleView: true,
+          admin: true,
+          time: _FakeTimeRepository.withTotal([row(userId: 'me')], 137),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('timesheet.truncated'), findsOneWidget);
+    });
+
+    testWidgets('a week that fits says nothing at all', (tester) async {
+      await tester.pumpWidget(
+        host(
+          rows: const [],
+          moduleView: true,
+          time: _FakeTimeRepository([row(userId: 'me')]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('timesheet.truncated'), findsNothing);
+    });
+
+    testWidgets('your own cell can be typed into; a colleague\'s cannot', (
+      tester,
+    ) async {
+      // The server refuses the write either way. A cell that opens a form
+      // before being told no is a worse way to learn that — and a lead reading
+      // a report has no business being offered one.
+      await tester.pumpWidget(
+        host(
+          rows: const [],
+          moduleView: true,
+          admin: true,
+          time: _FakeTimeRepository([
+            row(userId: 'me'),
+            row(userId: 'u1'),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Seven days of the week, on the reader's own row and no other.
+      expect(_tappableCells(tester), 7);
+    });
+
+    testWidgets('the base page never offers a cell, even to its owner', (
+      tester,
+    ) async {
+      await tester.pumpWidget(host(rows: [row(userId: 'me')]));
+      await tester.pumpAndSettle();
+
+      expect(_tappableCells(tester), isZero);
+    });
+  });
 
   group('the week grid', () {
     testWidgets('names time that belongs to no project', (tester) async {
@@ -496,6 +592,49 @@ class _FakeProjectRepository implements ProjectRepository {
 
 /// Only the signed-in user's role is read, so a stub in a settled state is
 /// enough — no repository, no storage, no sign-in to drive.
+/// The module's paged route. Counts its calls, because which of the two routes
+/// a page reads is exactly what these tests are about.
+/// How many cells of the grid answer a tap.
+///
+/// [DataCell] is not a widget — it is data the table holds — so it cannot be
+/// found in the tree; the table itself has to be asked.
+int _tappableCells(WidgetTester tester) => tester
+    .widget<DataTable>(find.byType(DataTable))
+    .rows
+    .expand((row) => row.cells)
+    .where((cell) => cell.onTap != null)
+    .length;
+
+class _FakeTimeRepository implements TimeRepository {
+  _FakeTimeRepository(this.rows) : total = null;
+
+  final List<TimesheetRow> rows;
+  int calls = 0;
+
+  _FakeTimeRepository.withTotal(this.rows, this.total);
+
+  /// What the whole matrix holds, which is only ever more than [rows] when the
+  /// server's page ran out.
+  int? total;
+
+  @override
+  Future<PageResult<TimesheetRow>> timesheet({
+    required DateTime from,
+    required DateTime to,
+    String? userId,
+    String? projectId,
+    int page = 0,
+    int size = 50,
+  }) async {
+    calls++;
+    return (items: rows, total: total ?? rows.length);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not faked');
+}
+
 class _FakeAuthBloc extends Bloc<AuthEvent, AuthState> implements AuthBloc {
   _FakeAuthBloc({required bool admin})
     : super(
