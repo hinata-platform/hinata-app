@@ -998,7 +998,15 @@
     "empty": "Aucune saisie de temps enregistrée cette semaine.",
     "member": "Membre",
     "project": "Projet",
-    "total": "Total"
+    "total": "Total",
+    "today": "Aujourd'hui",
+    "previousWeek": "Semaine précédente",
+    "nextWeek": "Semaine suivante",
+    "unassigned": "Non attribué",
+    "allUsers": "Tous les utilisateurs",
+    "allProjects": "Tous les projets",
+    "searchUsers": "Rechercher des utilisateurs…",
+    "searchProjects": "Rechercher des projets…"
   },
   "reports": {
     "title": "Rapports",

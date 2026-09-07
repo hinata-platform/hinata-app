@@ -998,7 +998,15 @@
     "empty": "No work items recorded in this week.",
     "member": "Member",
     "project": "Project",
-    "total": "Total"
+    "total": "Total",
+    "today": "Today",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "unassigned": "Not assigned",
+    "allUsers": "All users",
+    "allProjects": "All projects",
+    "searchUsers": "Search users…",
+    "searchProjects": "Search projects…"
   },
   "reports": {
     "title": "Reports",

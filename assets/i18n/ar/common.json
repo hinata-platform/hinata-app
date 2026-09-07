@@ -998,7 +998,15 @@
     "empty": "لا توجد سجلات عمل في هذا الأسبوع.",
     "member": "العضو",
     "project": "المشروع",
-    "total": "الإجمالي"
+    "total": "الإجمالي",
+    "today": "اليوم",
+    "previousWeek": "الأسبوع السابق",
+    "nextWeek": "الأسبوع التالي",
+    "unassigned": "غير مُسنَد",
+    "allUsers": "كل المستخدمين",
+    "allProjects": "كل المشاريع",
+    "searchUsers": "ابحث في المستخدمين…",
+    "searchProjects": "ابحث في المشاريع…"
   },
   "reports": {
     "title": "التقارير",

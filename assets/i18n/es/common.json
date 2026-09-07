@@ -998,7 +998,15 @@
     "empty": "No se han registrado horas esta semana.",
     "member": "Miembro",
     "project": "Proyecto",
-    "total": "Total"
+    "total": "Total",
+    "today": "Hoy",
+    "previousWeek": "Semana anterior",
+    "nextWeek": "Semana siguiente",
+    "unassigned": "Sin asignar",
+    "allUsers": "Todos los usuarios",
+    "allProjects": "Todos los proyectos",
+    "searchUsers": "Buscar usuarios…",
+    "searchProjects": "Buscar proyectos…"
   },
   "reports": {
     "title": "Informes",

@@ -998,7 +998,15 @@
     "empty": "In dieser Woche wurden keine Arbeitszeiten erfasst.",
     "member": "Mitglied",
     "project": "Projekt",
-    "total": "Gesamt"
+    "total": "Gesamt",
+    "today": "Heute",
+    "previousWeek": "Vorherige Woche",
+    "nextWeek": "Nächste Woche",
+    "unassigned": "Nicht zugeordnet",
+    "allUsers": "Alle Nutzer",
+    "allProjects": "Alle Projekte",
+    "searchUsers": "Benutzer suchen…",
+    "searchProjects": "Projekte suchen …"
   },
   "reports": {
     "title": "Berichte",

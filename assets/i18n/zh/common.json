@@ -998,7 +998,15 @@
     "empty": "本周没有记录任何工时。",
     "member": "成员",
     "project": "项目",
-    "total": "合计"
+    "total": "合计",
+    "today": "今天",
+    "previousWeek": "上一周",
+    "nextWeek": "下一周",
+    "unassigned": "未分配",
+    "allUsers": "所有用户",
+    "allProjects": "所有项目",
+    "searchUsers": "搜索用户…",
+    "searchProjects": "搜索项目…"
   },
   "reports": {
     "title": "报表",

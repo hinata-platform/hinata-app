@@ -998,7 +998,15 @@
     "empty": "इस सप्ताह कोई कार्य समय दर्ज नहीं किया गया।",
     "member": "सदस्य",
     "project": "प्रोजेक्ट",
-    "total": "कुल"
+    "total": "कुल",
+    "today": "आज",
+    "previousWeek": "पिछला सप्ताह",
+    "nextWeek": "अगला सप्ताह",
+    "unassigned": "असाइन नहीं",
+    "allUsers": "सभी उपयोगकर्ता",
+    "allProjects": "सभी प्रोजेक्ट",
+    "searchUsers": "उपयोगकर्ता खोजें…",
+    "searchProjects": "प्रोजेक्ट खोजें…"
   },
   "reports": {
     "title": "रिपोर्ट",

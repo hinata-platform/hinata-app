@@ -998,7 +998,15 @@
     "empty": "この週に記録された作業はありません。",
     "member": "メンバー",
     "project": "プロジェクト",
-    "total": "合計"
+    "total": "合計",
+    "today": "今日",
+    "previousWeek": "前の週",
+    "nextWeek": "次の週",
+    "unassigned": "未割り当て",
+    "allUsers": "すべてのユーザー",
+    "allProjects": "すべてのプロジェクト",
+    "searchUsers": "ユーザーを検索…",
+    "searchProjects": "プロジェクトを検索…"
   },
   "reports": {
     "title": "レポート",
