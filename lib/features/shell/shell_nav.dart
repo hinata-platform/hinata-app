@@ -130,11 +130,14 @@ String? subPageTitleKey(String location, {required bool advancedTime}) {
   if (location == '/notifications') return 'nav.notifications';
   if (location == '/weekly-summary') return 'weeklySummary.title';
   if (location == '/settings') return 'nav.settings';
-  // The two ends of the flag. With the module on, the plain timesheet is one of
-  // its pages: it loses its own nav entry and needs a title plus a way back to
-  // the module. With the module off, `/time` is a route that leads nowhere, and
-  // a bar that says so beats an empty page under the brand mark.
-  if (location == '/timesheet') return advancedTime ? 'nav.timesheet' : null;
+  // With the module off, `/time` is a route that leads nowhere, and a bar that
+  // says so beats an empty page under the brand mark. `/timesheet` is then the
+  // nav destination it has always been, and needs no title of its own.
+  //
+  // With the module on there is nothing to answer for either: `/timesheet`
+  // redirects to `/time/timesheet`, and the module's three pages are one
+  // destination seen three ways — they carry the module's own head, not a
+  // sub-page bar with a back button to a page the switcher already reaches.
   if (location == '/time') return advancedTime ? null : 'notFound.title';
   if (location.startsWith('/issues/')) return 'nav.issues';
   if (location.startsWith('/knowledge/')) return 'nav.knowledge';
@@ -146,11 +149,15 @@ String? subPageTitleKey(String location, {required bool advancedTime}) {
 
 /// Parent route to fall back to when a sub-page cannot simply pop — opened by a
 /// deep link, with nothing on the navigation stack behind it.
-String subPageBackRoute(String location, {required bool advancedTime}) {
+///
+/// The time-tracking flag used to reach in here, because with the module on the
+/// base timesheet was one of its pages and had to lead back to it. `/timesheet`
+/// now redirects to `/time/timesheet` instead, so no answer below depends on
+/// the flag and the parameter is gone rather than left to be passed and
+/// ignored.
+String subPageBackRoute(String location) {
   if (location.startsWith('/admin/users')) return '/admin';
   if (location == '/admin') return '/settings';
-  // Only while the module exists; without it there is nowhere else to be.
-  if (location == '/timesheet' && advancedTime) return '/time';
   if (location.startsWith('/issues/')) return '/issues';
   if (location.startsWith('/knowledge/')) return '/knowledge';
   if (location.startsWith('/boards/')) return '/board';

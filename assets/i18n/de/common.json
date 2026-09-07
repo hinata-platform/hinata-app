@@ -898,6 +898,19 @@
       "modeInterval": "Beginn und Ende",
       "noDescription": "Ohne Beschreibung",
       "continue": "Fortsetzen"
+    },
+    "view": {
+      "list": "Liste",
+      "calendar": "Kalender",
+      "timesheet": "Stundenzettel"
+    },
+    "calendar": {
+      "untimed": "Ohne Uhrzeit",
+      "previous": "Zurück",
+      "next": "Weiter",
+      "day": "Tag",
+      "week": "Woche",
+      "truncated": "In diesem Zeitraum liegen mehr Einträge, als der Kalender zeigt. Grenze ihn ein, um alle zu sehen."
     }
   },
   "projects": {
@@ -1078,7 +1091,11 @@
     "allUsers": "Alle Nutzer",
     "allProjects": "Alle Projekte",
     "searchUsers": "Nutzer suchen…",
-    "searchProjects": "Projekte suchen…"
+    "searchProjects": "Projekte suchen…",
+    "cell": {
+      "none": "Noch nichts erfasst.",
+      "add": "Zeit hinzufügen"
+    }
   },
   "reports": {
     "title": "Berichte",

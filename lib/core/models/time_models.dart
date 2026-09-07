@@ -249,3 +249,43 @@ class TimeEntryFilter extends Equatable {
   @override
   List<Object?> get props => [from, to, projectId, query];
 }
+
+/// One window of the personal calendar: what was asked for, what came back, and
+/// whether the server had more than it hands out.
+///
+/// The window is echoed so a client can tell this answer apart from the one it
+/// asked for two navigations ago — a slow week that resolves after the reader
+/// has paged on must not be drawn over the week now on screen.
+///
+/// Only entries for now. The later layers this view grows — absences and
+/// holidays, then subscribed calendar events — arrive as their own fields when
+/// the stages that produce them land; a missing layer reads as an empty one, so
+/// nothing here has to move for them.
+class CalendarWindow extends Equatable {
+  const CalendarWindow({
+    required this.from,
+    required this.to,
+    this.entries = const [],
+    this.truncated = false,
+  });
+
+  final DateTime from;
+  final DateTime to;
+  final List<WorkItem> entries;
+
+  /// The window held more than the server returns. The grid says so rather than
+  /// quietly drawing a partial week.
+  final bool truncated;
+
+  factory CalendarWindow.fromJson(Map<String, dynamic> json) => CalendarWindow(
+    from: parseDate(json['from'] as String?) ?? DateTime.now(),
+    to: parseDate(json['to'] as String?) ?? DateTime.now(),
+    entries: ((json['entries'] as List<dynamic>?) ?? const [])
+        .map((e) => WorkItem.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    truncated: json['truncated'] as bool? ?? false,
+  );
+
+  @override
+  List<Object?> get props => [from, to, entries, truncated];
+}

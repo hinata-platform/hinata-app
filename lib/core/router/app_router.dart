@@ -40,7 +40,9 @@ import '../../features/shell/app_shell.dart';
 import '../../features/shell/not_found_screen.dart';
 import '../../features/teams/team_detail_screen.dart';
 import '../../features/teams/teams_screen.dart';
+import '../../features/time/time_calendar_screen.dart';
 import '../../features/time/time_screen.dart';
+import '../../features/time/time_views.dart';
 import '../../features/timesheet/timesheet_screen.dart';
 import '../../features/weekly_summary/weekly_summary_screen.dart';
 import '../blocs/app_config_bloc.dart';
@@ -433,8 +435,16 @@ GoRouter buildRouter({
             path: '/gantt',
             pageBuilder: (_, state) => _transition(state, const GanttScreen()),
           ),
+          // The base timesheet. With the module on it is one of the module's
+          // pages and lives under `/time/timesheet`, so this path forwards
+          // there — deep links and the published app both still reach it, and
+          // with the module off it stays exactly where it has always been.
           GoRoute(
             path: '/timesheet',
+            redirect: (_, _) =>
+                (appConfig.state.meta?.advancedTimeTracking ?? false)
+                ? '/time/timesheet'
+                : null,
             pageBuilder: (_, state) =>
                 _transition(state, const TimesheetScreen()),
           ),
@@ -456,6 +466,28 @@ GoRouter buildRouter({
               timeModulePage(
                 advancedTime:
                     appConfig.state.meta?.advancedTimeTracking ?? false,
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '/time/calendar',
+            pageBuilder: (_, state) => _transition(
+              state,
+              timeModulePage(
+                advancedTime:
+                    appConfig.state.meta?.advancedTimeTracking ?? false,
+                view: TimeView.calendar,
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '/time/timesheet',
+            pageBuilder: (_, state) => _transition(
+              state,
+              timeModulePage(
+                advancedTime:
+                    appConfig.state.meta?.advancedTimeTracking ?? false,
+                view: TimeView.timesheet,
               ),
             ),
           ),
@@ -532,8 +564,19 @@ GoRouter buildRouter({
 /// the not-found page, and `standalone: false` is what keeps it inside the shell
 /// — where the back button and the title come from.
 @visibleForTesting
-Widget timeModulePage({required bool advancedTime}) =>
-    advancedTime ? const TimeScreen() : const NotFoundScreen(standalone: false);
+Widget timeModulePage({
+  required bool advancedTime,
+  TimeView view = TimeView.list,
+}) {
+  if (!advancedTime) return const NotFoundScreen(standalone: false);
+  return switch (view) {
+    TimeView.list => const TimeScreen(),
+    TimeView.calendar => const TimeCalendarScreen(),
+    // The same grid the base route draws, told that it belongs to the module:
+    // paged rows, and a cell of your own that can be typed into.
+    TimeView.timesheet => const TimesheetScreen(moduleView: true),
+  };
+}
 
 /// Maps the `/issues?view=…` query value to a preset filter (dashboard KPIs).
 IssuesInitialView? _issuesView(String? value) => switch (value) {

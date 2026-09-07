@@ -12,6 +12,9 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/repositories/project_repository.dart';
+import '../../core/repositories/time_repository.dart';
+import '../time/time_views.dart';
+import '../time/timesheet_cell_sheet.dart';
 import '../../core/repositories/timesheet_repository.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/responsive/responsive.dart';
@@ -42,7 +45,18 @@ import '../sprint/modals/glass_modal.dart'
 /// rows that were already fetched. Everyone else sees only their own time (the
 /// server refuses another user's), so a filter would have nothing to offer.
 class TimesheetScreen extends StatefulWidget {
-  const TimesheetScreen({super.key});
+  const TimesheetScreen({super.key, this.moduleView = false});
+
+  /// Whether this is the extended module's `/time/timesheet` rather than the
+  /// base `/timesheet`.
+  ///
+  /// One screen for both, because they are the same grid: a week of days across
+  /// people and projects, the same labels resolved the same way, the same
+  /// filters. What the flag changes is where the rows come from — the module's
+  /// paged route rather than the array-shaped one the published app reads — and
+  /// that a cell of your own can be typed into. Two files would be one grid
+  /// maintained twice.
+  final bool moduleView;
 
   @override
   State<TimesheetScreen> createState() => _TimesheetScreenState();
@@ -52,6 +66,14 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// Width of a filter field and of the popover it opens, so the dropdown lines
   /// up with the field instead of hanging off it.
   static const double _filterWidth = 232;
+
+  /// Rows per request on the module's paged route.
+  ///
+  /// A hundred is the server's ceiling and far more than a week of one person
+  /// holds; an administrator's instance-wide week can run past it, and that is
+  /// the case this cap exists for — the grid says so rather than pretending the
+  /// hundredth row is the last.
+  static const int _pageSize = 100;
 
   late DateTime _from;
   late DateTime _to;
@@ -85,21 +107,38 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// paged on can never overwrite the week now on screen.
   int _loadSeq = 0;
 
+  /// Set on the first [didChangeDependencies], not in [initState]: the week's
+  /// first day comes from [MaterialLocalizations], which is not reachable
+  /// before the element is in the tree.
+  bool _started = false;
+
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
     _from = _weekStart(DateTime.now());
     _to = _addDays(_from, 6);
     unawaited(_load());
   }
 
-  /// Monday of [day]'s week, at local midnight.
+  /// The first day of [day]'s week, at local midnight, in the reader's locale.
+  ///
+  /// `firstDayOfWeekIndex` is 0 for Sunday and 1 for Monday: German weeks start
+  /// on Monday, American ones on Sunday, and a grid that always began on Monday
+  /// was simply wrong for several of the nine languages the app speaks. The
+  /// server's own weeks stay ISO — approval periods are a different question
+  /// and not this grid's — and nothing here depends on them, because the range
+  /// travels as two explicit dates.
   ///
   /// Built through the constructor rather than by subtracting a [Duration]:
   /// a duration is an exact number of hours, so in a week that changes clocks
   /// it lands at 23:00 on the day before and the whole grid shifts by one.
-  static DateTime _weekStart(DateTime day) =>
-      DateTime(day.year, day.month, day.day - (day.weekday - 1));
+  DateTime _weekStart(DateTime day) {
+    final first = MaterialLocalizations.of(context).firstDayOfWeekIndex;
+    final delta = (day.weekday % 7 - first + 7) % 7;
+    return DateTime(day.year, day.month, day.day - delta);
+  }
 
   static DateTime _addDays(DateTime day, int days) =>
       DateTime(day.year, day.month, day.day + days);
@@ -146,12 +185,24 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
       _error = null;
     });
     try {
-      final rows = await context.read<TimesheetRepository>().timesheet(
-        _from,
-        _to,
-        userId: _userFilter,
-        projectId: _projectFilter,
-      );
+      // The module's route is a page of rows; the base one is every row at
+      // once. Same scope either way — the server refuses another person's rows
+      // to a non-admin on both — so the difference is how many arrive, and a
+      // week of one person's projects is never more than the first page.
+      final rows = widget.moduleView
+          ? (await context.read<TimeRepository>().timesheet(
+              from: _from,
+              to: _to,
+              userId: _userFilter,
+              projectId: _projectFilter,
+              size: _pageSize,
+            )).items
+          : await context.read<TimesheetRepository>().timesheet(
+              _from,
+              _to,
+              userId: _userFilter,
+              projectId: _projectFilter,
+            );
       if (!mounted || seq != _loadSeq) return;
       final labels = await Future.wait([
         _resolveUsers(rows),
@@ -402,8 +453,16 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                     12,
                   ),
                   child: PageHead(
-                    title: context.t('timesheet.title'),
-                    actions: [_todayButton()],
+                    title: context.t(
+                      widget.moduleView ? 'nav.time' : 'timesheet.title',
+                    ),
+                    actions: [
+                      if (widget.moduleView) ...[
+                        const TimeViewSwitcher(current: TimeView.timesheet),
+                        const SizedBox(width: 8),
+                      ],
+                      _todayButton(),
+                    ],
                   ),
                 ),
                 Padding(
@@ -454,6 +513,12 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
         // inset around the whole row.
         padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
         children: [
+          // First in the row, so the way between the module's three pages is
+          // the first thing a thumb reaches on the leading edge.
+          if (widget.moduleView) ...[
+            const TimeViewSwitcher(current: TimeView.timesheet),
+            const SizedBox(width: 8),
+          ],
           GlassPill(
             height: kGlassControlHeight,
             child: Row(
@@ -667,7 +732,15 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                 cells: [
                   DataCell(_memberCell(row)),
                   DataCell(Text(_projectLabel(row.projectId))),
-                  for (final day in days) DataCell(Text(_cell(row, day))),
+                  for (final day in days)
+                    DataCell(
+                      Text(_cell(row, day)),
+                      // Only your own hours, and only in the module. Somebody
+                      // else's row is a report; the server would refuse the
+                      // write anyway, and a cell that opens a form before being
+                      // told no is a worse way to learn that.
+                      onTap: _canEdit(row) ? () => _openCell(row, day) : null,
+                    ),
                   DataCell(
                     Text(
                       fmtDuration(context, row.totalMinutes),
@@ -716,6 +789,27 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
         Text(name),
       ],
     );
+  }
+
+  /// Whether this row's cells answer a tap.
+  ///
+  /// The module's page only, and only the reader's own row: an entry is filed
+  /// by the person who worked, and a timesheet cell is a shortcut to filing
+  /// one, not a way to file on somebody's behalf.
+  bool _canEdit(TimesheetRow row) {
+    if (!widget.moduleView) return false;
+    final me = context.read<AuthBloc>().state.user?.id;
+    return me != null && row.userId == me;
+  }
+
+  Future<void> _openCell(TimesheetRow row, DateTime day) async {
+    final changed = await showTimesheetCellSheet(
+      context,
+      day: day,
+      projectId: row.projectId,
+      projectLabel: _projectLabel(row.projectId),
+    );
+    if (changed && mounted) unawaited(_load());
   }
 
   String _cell(TimesheetRow row, DateTime day) {

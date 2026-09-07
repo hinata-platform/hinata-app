@@ -237,7 +237,7 @@ class _AppShellState extends State<AppShell> {
       return true;
     }
     if (subPageTitleKey(location, advancedTime: _advancedTime) != null) {
-      router.go(subPageBackRoute(location, advancedTime: _advancedTime));
+      router.go(subPageBackRoute(location));
       return true;
     }
     if (location != '/dashboard') {
@@ -268,6 +268,6 @@ void _handleBack(
   } else if (context.canPop()) {
     context.pop();
   } else {
-    context.go(subPageBackRoute(location, advancedTime: advancedTime));
+    context.go(subPageBackRoute(location));
   }
 }

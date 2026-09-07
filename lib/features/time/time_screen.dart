@@ -28,6 +28,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassDateRangePicker,
         showGlassToast;
 import 'placement_picker.dart';
+import 'time_views.dart';
 import 'time_entry_sheet.dart';
 import 'timer_bar.dart';
 
@@ -164,6 +165,8 @@ class _TimeScreenState extends State<TimeScreen> {
                   child: PageHead(
                     title: context.t('nav.time'),
                     actions: [
+                      const TimeViewSwitcher(current: TimeView.list),
+                      const SizedBox(width: 8),
                       PrimaryButton(
                         icon: LucideIcons.plus,
                         label: context.t('time.entry.new'),
@@ -241,7 +244,16 @@ class _TimeScreenState extends State<TimeScreen> {
             // come fully into view at the display edge instead of being
             // clipped by an inset around the whole row.
             padding: EdgeInsets.symmetric(horizontal: gutter),
-            child: Row(children: _filterPills()),
+            child: Row(
+              children: [
+                // The way between the module's three pages, ahead of the
+                // filters: it is navigation, and it belongs on the leading edge
+                // where a thumb reaches first.
+                const TimeViewSwitcher(current: TimeView.list),
+                const SizedBox(width: 8),
+                ..._filterPills(),
+              ],
+            ),
           ),
         ),
       ],

@@ -53,7 +53,7 @@ void main() {
       // renders inside the shell — which then owes it a title and a back route
       // rather than a blank page under the brand mark.
       expect(subPageTitleKey('/time', advancedTime: off), 'notFound.title');
-      expect(subPageBackRoute('/time', advancedTime: off), '/dashboard');
+      expect(subPageBackRoute('/time'), '/dashboard');
     });
 
     test('and it lights up no entry at all', () {
@@ -107,13 +107,15 @@ void main() {
       expect(isNavActive('/timesheet', '/time', advancedTime: on), isTrue);
     });
 
-    test('the timesheet becomes a sub-page of the module', () {
-      expect(subPageTitleKey('/timesheet', advancedTime: on), 'nav.timesheet');
-      expect(subPageBackRoute('/timesheet', advancedTime: on), '/time');
-    });
-
-    test('the module itself is a top-level page', () {
-      expect(subPageTitleKey('/time', advancedTime: on), isNull);
+    test('all three of the module\'s pages are top-level, not sub-pages', () {
+      // They are one destination seen three ways, and the switcher is how a
+      // reader moves between them — so none of them wears a back button, and
+      // none needs a title of its own in the shell's bar.
+      for (final page in ['/time', '/time/calendar', '/time/timesheet']) {
+        expect(subPageTitleKey(page, advancedTime: on), isNull, reason: page);
+        expect(isNavActive(page, '/time', advancedTime: on), isTrue,
+            reason: page);
+      }
     });
   });
 
@@ -164,11 +166,11 @@ void main() {
           isNull,
         );
         expect(
-          subPageBackRoute('/issues/HIN-1', advancedTime: advancedTime),
+          subPageBackRoute('/issues/HIN-1'),
           '/issues',
         );
         expect(
-          subPageBackRoute('/nowhere', advancedTime: advancedTime),
+          subPageBackRoute('/nowhere'),
           '/dashboard',
         );
       });
