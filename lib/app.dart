@@ -10,6 +10,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import 'core/api/account_event_stream.dart';
 import 'core/api/api_client.dart';
+import 'core/api/time_zone_sync.dart';
 import 'core/blocs/app_config_bloc.dart';
 import 'core/branding/org_logo_store.dart';
 import 'core/blocs/auth_bloc.dart';
@@ -83,6 +84,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   late final OrgLogoStore _orgLogo;
   late final GoRouter _router;
   late final AccountEventStream _accountEvents;
+  late final TimeZoneSync _timeZone;
   late final FcmService _fcm;
   StreamSubscription<AuthState>? _authSub;
   StreamSubscription<AppConfigState>? _configSub;
@@ -139,6 +141,10 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       repository: domains.account,
       onLogout: () => _auth.add(const LogoutRequested()),
     );
+    // The server decides "not in the future" and stamps every rendered document
+    // in a zone; this is the only place that can tell it which one the reader is
+    // actually in. Driven from the same auth lifecycle as the stream above.
+    _timeZone = TimeZoneSync(account: domains.account);
     _router = buildRouter(
       appConfig: _appConfig,
       auth: _auth,
@@ -205,6 +211,10 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         _streamServer = server;
       }
       _accountEvents.start();
+      // Once per sign-in, and only when the device's zone is not the one the
+      // account already carries. Fire-and-forget: nothing on screen waits for
+      // it and a failure is retried on the next resume.
+      unawaited(_timeZone.sync());
       // Screenshot mode (tooling: a pre-seeded `screenshot_route` pref) never
       // starts push — otherwise the OS notification-permission prompt would pop
       // over the very screen we're capturing. Normal launches are unaffected.
@@ -212,6 +222,9 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     } else {
       _streamServer = null;
       _accountEvents.stop();
+      // Whatever the server said about the previous account's zone must not be
+      // compared against the next one that signs in on this device.
+      _timeZone.reset();
       _fcm.stop();
     }
     _warnIfSessionWontPersist(state);
@@ -521,6 +534,14 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
       FocusManager.instance.primaryFocus?.unfocus();
+    }
+    // Coming back to the foreground is the retry hook for the time-zone sync:
+    // the sign-in attempt may have had no network, or the account may simply
+    // never have been stamped. Once the two agree, this costs nothing — no
+    // request is made at all (see [TimeZoneSync]).
+    if (state == AppLifecycleState.resumed &&
+        _auth.state.status == AuthStatus.authenticated) {
+      unawaited(_timeZone.sync());
     }
     super.didChangeAppLifecycleState(state);
   }
