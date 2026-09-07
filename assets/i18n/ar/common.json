@@ -809,7 +809,24 @@
       "support": "دعم"
     },
     "date": "التاريخ",
-    "note": "ملاحظة (اختياري)"
+    "note": "ملاحظة (اختياري)",
+    "fmt": {
+      "hours": "{{h}} س",
+      "minutes": "{{m}} د",
+      "hoursMinutes": "{{h}} س {{m}} د",
+      "none": "—"
+    },
+    "editEntry": "تعديل الإدخال",
+    "allEntries": "كل الإدخالات ({{count}})",
+    "allEntriesTitle": "كل الإدخالات",
+    "loggedTotal": "إجمالي المسجَّل {{spent}}",
+    "deletedUser": "مستخدم محذوف",
+    "legacySource": "الإيداعات الذكية (قبل 2.0)",
+    "deleteTitle": "حذف الإدخال",
+    "deleteConfirm": "هل تريد إزالة {{duration}} المسجَّلة بتاريخ {{date}}؟ لا يمكن التراجع عن ذلك.",
+    "deleted": "تم حذف الإدخال",
+    "noEntries": "لم يُسجَّل أي وقت بعد",
+    "entryActions": "إجراءات الإدخال"
   },
   "projects": {
     "title": "المشاريع",
@@ -981,7 +998,15 @@
     "empty": "لا توجد سجلات عمل في هذا الأسبوع.",
     "member": "العضو",
     "project": "المشروع",
-    "total": "الإجمالي"
+    "total": "الإجمالي",
+    "today": "اليوم",
+    "previousWeek": "الأسبوع السابق",
+    "nextWeek": "الأسبوع التالي",
+    "unassigned": "غير مُسنَد",
+    "allUsers": "كل المستخدمين",
+    "allProjects": "كل المشاريع",
+    "searchUsers": "ابحث في المستخدمين…",
+    "searchProjects": "ابحث في المشاريع…"
   },
   "reports": {
     "title": "التقارير",
@@ -1757,7 +1782,10 @@
       "UNKNOWN": "حدث غير معروف",
       "ISSUE_MOVED": "نقل مهمة",
       "ISSUE_CLONED": "استنساخ مهمة",
-      "ISSUE_EXPORTED": "تصدير مهمة"
+      "ISSUE_EXPORTED": "تصدير مهمة",
+      "TIME_ENTRY_UPDATED": "تم تحديث إدخال الوقت",
+      "TIME_ENTRY_DELETED": "تم حذف إدخال الوقت",
+      "TIME_ENTRY_CREATED_FOR": "تم تسجيل الوقت لشخص آخر"
     },
     "meta": {
       "oldRole": "الدور السابق",

@@ -809,7 +809,24 @@
       "support": "Support"
     },
     "date": "Datum",
-    "note": "Notiz (optional)"
+    "note": "Notiz (optional)",
+    "fmt": {
+      "hours": "{{h}} h",
+      "minutes": "{{m}} min",
+      "hoursMinutes": "{{h}} h {{m}} min",
+      "none": "—"
+    },
+    "editEntry": "Eintrag bearbeiten",
+    "allEntries": "Alle Einträge ({{count}})",
+    "allEntriesTitle": "Alle Einträge",
+    "loggedTotal": "{{spent}} insgesamt erfasst",
+    "deletedUser": "Gelöschter Nutzer",
+    "legacySource": "Smart Commits (vor 2.0)",
+    "deleteTitle": "Eintrag löschen",
+    "deleteConfirm": "{{duration}} vom {{date}} entfernen? Das lässt sich nicht rückgängig machen.",
+    "deleted": "Eintrag gelöscht",
+    "noEntries": "Noch keine Zeit erfasst",
+    "entryActions": "Aktionen für den Eintrag"
   },
   "projects": {
     "title": "Projekte",
@@ -981,7 +998,15 @@
     "empty": "In dieser Woche wurden keine Arbeitszeiten erfasst.",
     "member": "Mitglied",
     "project": "Projekt",
-    "total": "Gesamt"
+    "total": "Gesamt",
+    "today": "Heute",
+    "previousWeek": "Vorherige Woche",
+    "nextWeek": "Nächste Woche",
+    "unassigned": "Nicht zugeordnet",
+    "allUsers": "Alle Nutzer",
+    "allProjects": "Alle Projekte",
+    "searchUsers": "Nutzer suchen…",
+    "searchProjects": "Projekte suchen…"
   },
   "reports": {
     "title": "Berichte",
@@ -1757,7 +1782,10 @@
       "UNKNOWN": "Unbekanntes Ereignis",
       "ISSUE_MOVED": "Vorgang verschoben",
       "ISSUE_CLONED": "Vorgang geklont",
-      "ISSUE_EXPORTED": "Vorgang exportiert"
+      "ISSUE_EXPORTED": "Vorgang exportiert",
+      "TIME_ENTRY_UPDATED": "Zeiteintrag geändert",
+      "TIME_ENTRY_DELETED": "Zeiteintrag gelöscht",
+      "TIME_ENTRY_CREATED_FOR": "Zeit für jemand anderen gebucht"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",

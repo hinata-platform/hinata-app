@@ -115,13 +115,33 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
       return;
     }
     final token = _token;
-    final next = state.page + 1;
+    // Derived from the rows actually held, not from a counter that walks up on
+    // its own. Pages are offsets, so a row removed locally shifts every
+    // boundary below it: counting up from the last page fetched would then ask
+    // for an offset past the rows the reader has, and whatever slid into the
+    // gap would be requested by nobody. Asking for the page the held rows end
+    // inside re-reads that boundary; [keyOf] discards the overlap.
+    final next = state.items.length ~/ pageSize;
     emit(state.copyWith(isLoadingMore: true));
     try {
       final result = await _fetch(next, pageSize);
       // A refresh started while we were fetching — discard this stale page.
       if (token != _token) return;
       final merged = _append(state.items, result.items);
+      if (result.items.isNotEmpty && merged.length == state.items.length) {
+        // A whole page of rows the list already holds. That happens when the
+        // ordering shifts under the reader, and without a stop here `hasMore`
+        // would stay true forever — every scroll at the bottom asking again for
+        // a page that adds nothing. Take the count as the truth instead.
+        emit(
+          state.copyWith(
+            total: merged.length,
+            page: next,
+            isLoadingMore: false,
+          ),
+        );
+        return;
+      }
       emit(
         state.copyWith(
           items: merged,
@@ -134,6 +154,42 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
       if (token != _token) return;
       emit(state.copyWith(isLoadingMore: false));
     }
+  }
+
+  /// Replaces one loaded item in place, without going back to page 0.
+  ///
+  /// A correction to a row the reader is looking at should not cost them the
+  /// pages they have already scrolled through: [load] starts over, which on a
+  /// long list throws away everything below the fold, drops the scroll position
+  /// and — because the list is suddenly short again — immediately asks for the
+  /// next page. Needs [keyOf]; without it there is no way to say which item.
+  void replaceItem(T item) {
+    final key = keyOf;
+    if (key == null) return;
+    final id = key(item);
+    emit(
+      state.copyWith(
+        items: [
+          for (final existing in state.items)
+            if (key(existing) == id) item else existing,
+        ],
+      ),
+    );
+  }
+
+  /// Drops one loaded item and counts one fewer, for the same reason.
+  ///
+  /// Safe to do mid-list because [loadMore] asks for the page the held rows end
+  /// inside rather than counting pages up — see the note there.
+  void removeItem(Object id) {
+    final key = keyOf;
+    if (key == null) return;
+    final kept = [
+      for (final existing in state.items)
+        if (key(existing) != id) existing,
+    ];
+    if (kept.length == state.items.length) return;
+    emit(state.copyWith(items: kept, total: state.total - 1));
   }
 
   List<T> _append(List<T> current, List<T> incoming) {

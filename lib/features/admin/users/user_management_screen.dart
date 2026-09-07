@@ -19,7 +19,7 @@ import '../../../core/widgets/user_pronouns.dart';
 import '../../shell/page_chrome.dart';
 import '../../sprint/modals/glass_modal.dart'
     show showGlassToast, GlassToastKind;
-import '../glass_filter_bar.dart';
+import '../../../core/widgets/glass_filter_bar.dart';
 import 'user_management_modals.dart';
 import 'user_management_widgets.dart';
 import '../../../core/widgets/hive_widgets.dart'
@@ -28,7 +28,7 @@ import '../../../core/widgets/hive_widgets.dart'
 part 'user_management_screen.rows.dart';
 
 /// Docked-toolbar height on compact: search row + gap + chip row.
-const double _kUmDockHeight = kAdminPillHeight * 2 + 8;
+const double _kUmDockHeight = kGlassPillHeight * 2 + 8;
 
 /// Admin **User management** board: a paginated directory of every platform
 /// user with search, role/status/origin filters, sortable columns, a per-user
@@ -519,11 +519,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   /// docked into the ProgressiveBlur app bar. Stacked (search over a scrollable
   /// chip row) on compact; a single row on wide.
   Widget _dockedToolbar(BuildContext context, {required bool compact}) {
-    final search = AdminGlassSearchField(
+    final search = GlassSearchField(
       hint: context.t('admin.um.searchHint'),
       onChanged: _onSearch,
     );
-    final roleChip = AdminFilterChip<AdminRole?>(
+    final roleChip = GlassFilterChip<AdminRole?>(
       icon: LucideIcons.shield,
       label: context.t('admin.um.filterRole'),
       value: _roleF,
@@ -534,7 +534,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       ],
       onChanged: _setRoleFilter,
     );
-    final statusChip = AdminFilterChip<UserStatus?>(
+    final statusChip = GlassFilterChip<UserStatus?>(
       icon: LucideIcons.circleDot,
       label: context.t('admin.um.filterStatus'),
       value: _statusF,
@@ -547,7 +547,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       ],
       onChanged: _setStatusFilter,
     );
-    final originChip = AdminFilterChip<UserOrigin?>(
+    final originChip = GlassFilterChip<UserOrigin?>(
       icon: LucideIcons.keyRound,
       label: context.t('admin.um.filterOrigin'),
       value: _originF,
@@ -587,7 +587,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           ),
           const SizedBox(height: 8),
           SizedBox(
-            height: kAdminPillHeight,
+            height: kGlassPillHeight,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.symmetric(horizontal: gutter),

@@ -593,7 +593,7 @@ class _BoardCard extends StatelessWidget {
                             issue.estimateMinutes! > 0)
                           _MiniMeta(
                             icon: LucideIcons.timer,
-                            text: fmtDuration(issue.spentMinutes),
+                            text: fmtDuration(context, issue.spentMinutes),
                           ),
                         if (due != null) ...[
                           if (issue.estimateMinutes != null)

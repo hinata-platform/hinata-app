@@ -809,7 +809,24 @@
       "support": "Soporte"
     },
     "date": "Fecha",
-    "note": "Nota (opcional)"
+    "note": "Nota (opcional)",
+    "fmt": {
+      "hours": "{{h}} h",
+      "minutes": "{{m}} min",
+      "hoursMinutes": "{{h}} h {{m}} min",
+      "none": "—"
+    },
+    "editEntry": "Editar registro",
+    "allEntries": "Todos los registros ({{count}})",
+    "allEntriesTitle": "Todos los registros",
+    "loggedTotal": "{{spent}} registrado en total",
+    "deletedUser": "Usuario eliminado",
+    "legacySource": "Smart commits (antes de 2.0)",
+    "deleteTitle": "Eliminar registro",
+    "deleteConfirm": "¿Eliminar {{duration}} registrado el {{date}}? Esta acción no se puede deshacer.",
+    "deleted": "Registro eliminado",
+    "noEntries": "Aún no hay tiempo registrado",
+    "entryActions": "Acciones del registro"
   },
   "projects": {
     "title": "Proyectos",
@@ -981,7 +998,15 @@
     "empty": "No se han registrado horas esta semana.",
     "member": "Miembro",
     "project": "Proyecto",
-    "total": "Total"
+    "total": "Total",
+    "today": "Hoy",
+    "previousWeek": "Semana anterior",
+    "nextWeek": "Semana siguiente",
+    "unassigned": "Sin asignar",
+    "allUsers": "Todos los usuarios",
+    "allProjects": "Todos los proyectos",
+    "searchUsers": "Buscar usuarios…",
+    "searchProjects": "Buscar proyectos…"
   },
   "reports": {
     "title": "Informes",
@@ -1757,7 +1782,10 @@
       "UNKNOWN": "Evento desconocido",
       "ISSUE_MOVED": "Incidencia movida",
       "ISSUE_CLONED": "Incidencia clonada",
-      "ISSUE_EXPORTED": "Incidencia exportada"
+      "ISSUE_EXPORTED": "Incidencia exportada",
+      "TIME_ENTRY_UPDATED": "Registro de tiempo actualizado",
+      "TIME_ENTRY_DELETED": "Registro de tiempo eliminado",
+      "TIME_ENTRY_CREATED_FOR": "Tiempo registrado para otra persona"
     },
     "meta": {
       "oldRole": "Rol anterior",

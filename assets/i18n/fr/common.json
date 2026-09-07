@@ -809,7 +809,24 @@
       "support": "Assistance"
     },
     "date": "Date",
-    "note": "Note (facultative)"
+    "note": "Note (facultative)",
+    "fmt": {
+      "hours": "{{h}} h",
+      "minutes": "{{m}} min",
+      "hoursMinutes": "{{h}} h {{m}} min",
+      "none": "—"
+    },
+    "editEntry": "Modifier la saisie",
+    "allEntries": "Toutes les saisies ({{count}})",
+    "allEntriesTitle": "Toutes les saisies",
+    "loggedTotal": "{{spent}} saisi au total",
+    "deletedUser": "Utilisateur supprimé",
+    "legacySource": "Smart commits (avant 2.0)",
+    "deleteTitle": "Supprimer la saisie",
+    "deleteConfirm": "Supprimer {{duration}} saisi le {{date}} ? Cette action est irréversible.",
+    "deleted": "Saisie supprimée",
+    "noEntries": "Aucun temps saisi pour l'instant",
+    "entryActions": "Actions sur la saisie"
   },
   "projects": {
     "title": "Projets",
@@ -981,7 +998,15 @@
     "empty": "Aucune saisie de temps enregistrée cette semaine.",
     "member": "Membre",
     "project": "Projet",
-    "total": "Total"
+    "total": "Total",
+    "today": "Aujourd'hui",
+    "previousWeek": "Semaine précédente",
+    "nextWeek": "Semaine suivante",
+    "unassigned": "Non attribué",
+    "allUsers": "Tous les utilisateurs",
+    "allProjects": "Tous les projets",
+    "searchUsers": "Rechercher des utilisateurs…",
+    "searchProjects": "Rechercher des projets…"
   },
   "reports": {
     "title": "Rapports",
@@ -1757,7 +1782,10 @@
       "UNKNOWN": "Événement inconnu",
       "ISSUE_MOVED": "Ticket déplacé",
       "ISSUE_CLONED": "Ticket cloné",
-      "ISSUE_EXPORTED": "Ticket exporté"
+      "ISSUE_EXPORTED": "Ticket exporté",
+      "TIME_ENTRY_UPDATED": "Saisie de temps modifiée",
+      "TIME_ENTRY_DELETED": "Saisie de temps supprimée",
+      "TIME_ENTRY_CREATED_FOR": "Temps saisi pour quelqu’un d’autre"
     },
     "meta": {
       "oldRole": "Rôle précédent",

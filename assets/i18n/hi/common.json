@@ -809,7 +809,24 @@
       "support": "सपोर्ट"
     },
     "date": "तिथि",
-    "note": "नोट (वैकल्पिक)"
+    "note": "नोट (वैकल्पिक)",
+    "fmt": {
+      "hours": "{{h}} घं",
+      "minutes": "{{m}} मि",
+      "hoursMinutes": "{{h}} घं {{m}} मि",
+      "none": "—"
+    },
+    "editEntry": "प्रविष्टि संपादित करें",
+    "allEntries": "सभी प्रविष्टियाँ ({{count}})",
+    "allEntriesTitle": "सभी प्रविष्टियाँ",
+    "loggedTotal": "कुल {{spent}} दर्ज",
+    "deletedUser": "हटाया गया उपयोगकर्ता",
+    "legacySource": "स्मार्ट कमिट (2.0 से पहले)",
+    "deleteTitle": "प्रविष्टि हटाएँ",
+    "deleteConfirm": "{{date}} को दर्ज {{duration}} हटाएँ? इसे पूर्ववत नहीं किया जा सकता।",
+    "deleted": "प्रविष्टि हटा दी गई",
+    "noEntries": "अभी तक कोई समय दर्ज नहीं",
+    "entryActions": "प्रविष्टि क्रियाएँ"
   },
   "projects": {
     "title": "प्रोजेक्ट",
@@ -981,7 +998,15 @@
     "empty": "इस सप्ताह कोई कार्य समय दर्ज नहीं किया गया।",
     "member": "सदस्य",
     "project": "प्रोजेक्ट",
-    "total": "कुल"
+    "total": "कुल",
+    "today": "आज",
+    "previousWeek": "पिछला सप्ताह",
+    "nextWeek": "अगला सप्ताह",
+    "unassigned": "असाइन नहीं",
+    "allUsers": "सभी उपयोगकर्ता",
+    "allProjects": "सभी प्रोजेक्ट",
+    "searchUsers": "उपयोगकर्ता खोजें…",
+    "searchProjects": "प्रोजेक्ट खोजें…"
   },
   "reports": {
     "title": "रिपोर्ट",
@@ -1757,7 +1782,10 @@
       "UNKNOWN": "अज्ञात घटना",
       "ISSUE_MOVED": "इश्यू स्थानांतरित किया गया",
       "ISSUE_CLONED": "इश्यू क्लोन किया गया",
-      "ISSUE_EXPORTED": "इश्यू निर्यात किया गया"
+      "ISSUE_EXPORTED": "इश्यू निर्यात किया गया",
+      "TIME_ENTRY_UPDATED": "समय प्रविष्टि अपडेट की गई",
+      "TIME_ENTRY_DELETED": "समय प्रविष्टि हटाई गई",
+      "TIME_ENTRY_CREATED_FOR": "किसी और के लिए समय दर्ज"
     },
     "meta": {
       "oldRole": "पिछली भूमिका",

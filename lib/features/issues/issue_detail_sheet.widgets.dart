@@ -701,7 +701,7 @@ class _ActivityTile extends StatelessWidget {
       'STATE' => stateLabel(raw),
       'PRIORITY' => context.t('priority.${raw.toLowerCase()}'),
       'TYPE' => context.t('type.${raw.toLowerCase()}'),
-      'ESTIMATE' => fmtDuration(int.tryParse(raw)),
+      'ESTIMATE' => fmtDuration(context, int.tryParse(raw)),
       'START_DATE' || 'DUE_DATE' => _fmtDate(context, raw),
       _ => raw,
     };

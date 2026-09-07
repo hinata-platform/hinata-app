@@ -1,28 +1,47 @@
+/// The docked filter bar's parts: a liquid-glass pill, and the controls built
+/// on it — a search field, a count, a dropdown chip.
+///
+/// They live in core rather than under one feature because this is what a
+/// toolbar docked into the app bar's blur looks like everywhere in the app: a
+/// row of real glass floating in the band the bar is already blurring, with the
+/// active control washed amber. The admin audit log was the first to need it;
+/// it is not the last.
+library;
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
 
-import '../../core/theme/app_colors.dart';
-import '../../core/widgets/frosted_surface.dart';
-import '../../core/widgets/glass_popup_menu.dart';
-import '../shell/app_shell.dart' show isNativeApp;
-import '../../core/theme/glass_chrome.dart' show kNavGlassDark, kNavGlassLight;
+import '../theme/app_colors.dart';
+import 'frosted_surface.dart';
+import 'glass_popup_menu.dart';
+import '../../features/shell/app_shell.dart' show isNativeApp;
+import '../theme/glass_chrome.dart' show kNavGlassDark, kNavGlassLight;
 
-/// Height of one docked control row (search / chip row) — the pill height.
-const double kAdminPillHeight = 42;
+/// Height of a docked search field. A text input needs the room; a control
+/// does not, which is what [kGlassControlHeight] is for.
+const double kGlassPillHeight = 42;
+
+/// Height of a docked control pill — a chip, a filter, a button.
+///
+/// Deliberately shorter than the search field. At 42 a 13pt label leaves eleven
+/// and a half points of air above and below it, so the pill reads as a box the
+/// text happens to sit in rather than as a control; at 36 the proportion is the
+/// one every other control in the app keeps.
+const double kGlassControlHeight = 36;
 
 /// A liquid-glass pill surface used by every docked filter control. On native it
 /// is a real [GlassContainer] (its own glass layer, iOS-26 refraction); on web it
 /// is a [FrostedSurface] (a nested backdrop blur pixelates on Skia). [active]
 /// lays an amber wash over the glass so a live filter reads clearly on both.
-class AdminGlassPill extends StatelessWidget {
-  const AdminGlassPill({
+class GlassPill extends StatelessWidget {
+  const GlassPill({
     super.key,
     required this.child,
     this.onTap,
     this.active = false,
-    this.height = kAdminPillHeight,
+    this.height = kGlassPillHeight,
   });
 
   final Widget child;
@@ -77,8 +96,8 @@ class AdminGlassPill extends StatelessWidget {
 
 /// A glass search field for a docked toolbar — the pill surface wrapping a bare,
 /// transparent [TextField].
-class AdminGlassSearchField extends StatelessWidget {
-  const AdminGlassSearchField({
+class GlassSearchField extends StatelessWidget {
+  const GlassSearchField({
     super.key,
     required this.hint,
     required this.onChanged,
@@ -91,7 +110,7 @@ class AdminGlassSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AdminGlassPill(
+    return GlassPill(
       child: Padding(
         padding: const EdgeInsetsDirectional.only(start: 14, end: 10),
         child: Row(
@@ -130,8 +149,8 @@ class AdminGlassSearchField extends StatelessWidget {
 }
 
 /// A read-only amber count pill (e.g. "200 Ereignisse").
-class AdminCountPill extends StatelessWidget {
-  const AdminCountPill({
+class GlassCountPill extends StatelessWidget {
+  const GlassCountPill({
     super.key,
     required this.label,
     this.icon = LucideIcons.history,
@@ -142,8 +161,9 @@ class AdminCountPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AdminGlassPill(
+    return GlassPill(
       active: true,
+      height: kGlassControlHeight,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14),
         child: Row(
@@ -166,11 +186,11 @@ class AdminCountPill extends StatelessWidget {
   }
 }
 
-/// A glass dropdown filter chip ("Kategorie ▾"). The trigger is an [AdminGlassPill]
+/// A glass dropdown filter chip ("Kategorie ▾"). The trigger is an [GlassPill]
 /// (real glass on native / frosted on web) and the menu itself is the app's glass
 /// [GlassPopupMenu]. [value] `null` (or the first option) means "no filter".
-class AdminFilterChip<T> extends StatelessWidget {
-  const AdminFilterChip({
+class GlassFilterChip<T> extends StatelessWidget {
+  const GlassFilterChip({
     super.key,
     required this.icon,
     required this.label,
@@ -207,8 +227,9 @@ class AdminFilterChip<T> extends StatelessWidget {
         for (var i = 0; i < options.length; i++)
           GlassMenuItem(value: i, label: options[i].$2),
       ],
-      child: AdminGlassPill(
+      child: GlassPill(
         active: active,
+        height: kGlassControlHeight,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Row(
