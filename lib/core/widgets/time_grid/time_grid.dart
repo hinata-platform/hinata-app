@@ -29,6 +29,14 @@ const double kTimeGridHeader = 46;
 /// Height of one band row under the headings.
 const double kTimeGridBandRow = 26;
 
+/// Most rows one band layer is drawn in.
+///
+/// A band row holds one item per day, so a day with six untimed entries needs
+/// six rows — and six rows of chips push the hour canvas off a phone. Past the
+/// ceiling the last row says how many are left; the list view is where somebody
+/// reads all of them anyway.
+const int kTimeGridBandRowsMax = 3;
+
 /// Narrowest a day column is drawn before the grid scrolls sideways instead of
 /// squeezing. Seven columns of less than this on a phone is a chart nobody can
 /// read, so the week scrolls.
@@ -156,7 +164,20 @@ class _TimeGridState extends State<TimeGrid> {
       .where((l) => l.placement == TimeGridPlacement.background)
       .toList();
 
-  double get _bandHeight => _bandLayers.length * kTimeGridBandRow;
+  double get _bandHeight => _bandLayers
+      .map((layer) => _bandRows(layer) * kTimeGridBandRow)
+      .fold(0.0, (sum, height) => sum + height);
+
+  /// How many rows [layer] needs: as many as its busiest day has items, capped
+  /// at [kTimeGridBandRowsMax].
+  int _bandRows(TimeGridLayer layer) {
+    var most = 1;
+    for (final day in widget.days) {
+      final count = _itemsOn(layer, day).length;
+      if (count > most) most = count;
+    }
+    return most.clamp(1, kTimeGridBandRowsMax);
+  }
 
   double _columnWidth(double available) => math.max(
     widget.minColumnWidth,
@@ -336,10 +357,11 @@ class _TimeGridState extends State<TimeGrid> {
                               ),
                             ),
                             for (final layer in _bandLayers)
-                              _BandRow(
+                              _BandRows(
                                 layer: layer,
                                 days: widget.days,
                                 columnWidth: columnWidth,
+                                rows: _bandRows(layer),
                                 onTap: widget.onTap,
                               ),
                           ],
@@ -389,8 +411,13 @@ class _TimeGridState extends State<TimeGrid> {
     _didInitialScroll = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !_vertical.hasClients) return;
+      // A little above the hour, not exactly on it: the axis writes each label
+      // seven pixels above its line, so landing on the line cuts the label the
+      // grid opened on in half.
       final target =
-          (widget.initialScrollHour - _metrics.firstHour) * _metrics.hourExtent;
+          (widget.initialScrollHour - _metrics.firstHour) *
+              _metrics.hourExtent -
+          10;
       _vertical.jumpTo(target.clamp(0.0, _vertical.position.maxScrollExtent));
     });
   }
@@ -401,16 +428,24 @@ class _TimeGridState extends State<TimeGrid> {
       const SizedBox(height: kTimeGridHeader),
       for (final layer in _bandLayers)
         SizedBox(
-          height: kTimeGridBandRow,
+          height: _bandRows(layer) * kTimeGridBandRow,
           child: Padding(
             padding: const EdgeInsets.only(right: 6),
             child: Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: Text(
-                layer.label ?? '',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 10, color: AppColors.inkFaint),
+              alignment: AlignmentDirectional.topEnd,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 6),
+                // The gutter is narrower than most words for "untimed", so the
+                // label ellipsises and the tooltip carries the rest.
+                child: Tooltip(
+                  message: layer.label ?? '',
+                  child: Text(
+                    layer.label ?? '',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 10, color: AppColors.inkFaint),
+                  ),
+                ),
               ),
             ),
           ),
@@ -604,58 +639,103 @@ class _HourAxis extends StatelessWidget {
   }
 }
 
-/// One row of all-day things across the columns they cover.
-class _BandRow extends StatelessWidget {
-  const _BandRow({
+/// The all-day strip: one row per item a day holds, up to the ceiling.
+///
+/// A day with four untimed entries needs four rows, not four chips stacked in
+/// the same place — which is what one row per *layer* drew, and it read as a
+/// single entry with the others invisible underneath it. The strip is as tall
+/// as the busiest day in the window, so the days line up and a reader can count
+/// them across.
+class _BandRows extends StatelessWidget {
+  const _BandRows({
     required this.layer,
     required this.days,
     required this.columnWidth,
+    required this.rows,
     this.onTap,
   });
 
   final TimeGridLayer layer;
   final List<DateTime> days;
   final double columnWidth;
+  final int rows;
   final void Function(TimeGridItem)? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final tint = layer.tint ?? AppColors.accent;
     return SizedBox(
-      height: kTimeGridBandRow,
+      height: rows * kTimeGridBandRow,
       child: Stack(
         children: [
           for (var index = 0; index < days.length; index++)
-            for (final item in layer.items.where(
-              (item) => _sameDay(item.start, days[index]),
-            ))
-              Positioned(
-                left: index * columnWidth + 3,
-                top: 3,
-                width: columnWidth - 6,
-                height: kTimeGridBandRow - 6,
-                child: GestureDetector(
-                  onTap: onTap == null ? null : () => onTap!(item),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    alignment: AlignmentDirectional.centerStart,
-                    decoration: BoxDecoration(
-                      color: (item.tint ?? layer.tint ?? AppColors.accent)
-                          .withValues(alpha: 0.22),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Text(
-                      item.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 10, color: AppColors.ink),
-                    ),
-                  ),
-                ),
-              ),
+            ..._chipsFor(context, index, tint),
         ],
       ),
     );
   }
+
+  Iterable<Widget> _chipsFor(
+    BuildContext context,
+    int index,
+    Color tint,
+  ) sync* {
+    final onDay = layer.items
+        .where((item) => _sameDay(item.start, days[index]))
+        .toList();
+    // The last row is given over to a count when there are more than fit, so
+    // the number on screen is never a lie about how much is there.
+    final shown = onDay.length > rows ? rows - 1 : onDay.length;
+    for (var row = 0; row < shown; row++) {
+      yield _positioned(index, row, _chip(context, onDay[row], tint));
+    }
+    if (onDay.length > shown) {
+      yield _positioned(
+        index,
+        shown,
+        _more(context, onDay.length - shown, tint),
+      );
+    }
+  }
+
+  Widget _positioned(int index, int row, Widget child) => Positioned(
+    left: index * columnWidth + 3,
+    top: row * kTimeGridBandRow + 3,
+    width: columnWidth - 6,
+    height: kTimeGridBandRow - 6,
+    child: child,
+  );
+
+  Widget _chip(BuildContext context, TimeGridItem item, Color tint) =>
+      GestureDetector(
+        onTap: onTap == null ? null : () => onTap!(item),
+        child: Tooltip(
+          message: item.title,
+          child: _pill(
+            (item.tint ?? tint).withValues(alpha: 0.22),
+            item.title,
+            AppColors.ink,
+          ),
+        ),
+      );
+
+  Widget _more(BuildContext context, int count, Color tint) =>
+      _pill(tint.withValues(alpha: 0.12), '+$count', AppColors.inkSoft);
+
+  Widget _pill(Color background, String label, Color ink) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 6),
+    alignment: AlignmentDirectional.centerStart,
+    decoration: BoxDecoration(
+      color: background,
+      borderRadius: BorderRadius.circular(5),
+    ),
+    child: Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(fontSize: 10, color: ink),
+    ),
+  );
 }
 
 class _Block extends StatelessWidget {

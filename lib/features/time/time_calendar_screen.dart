@@ -480,7 +480,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       // laid out in a Row takes whatever width its labels want, and in a
       // language with long words for "day" and "week" that is more than the
       // row has. Past the ceiling the two chips scroll inside the pill.
-      constraints: const BoxConstraints(maxWidth: 230),
+      constraints: BoxConstraints(maxWidth: context.isCompact ? 130 : 230),
       child: GlassFloatingSurface(
         radius: 21,
         child: Padding(
@@ -490,10 +490,14 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Icons only on a phone, the way the view switcher goes: the
+                // row already carries two arrows, a date and a way back to
+                // today, and two more words do not fit beside them.
                 GlassSwitchChip(
                   label: context.t('time.calendar.day'),
                   icon: LucideIcons.calendar,
                   active: _span == _Span.day,
+                  iconOnly: context.isCompact,
                   onTap: () => _setSpan(_Span.day),
                 ),
                 const SizedBox(width: 2),
@@ -501,6 +505,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
                   label: context.t('time.calendar.week'),
                   icon: LucideIcons.calendarRange,
                   active: _span == _Span.week,
+                  iconOnly: context.isCompact,
                   onTap: () => _setSpan(_Span.week),
                 ),
               ],
@@ -519,14 +524,24 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     ],
   ];
 
+  /// The window, named as briefly as the width allows.
+  ///
+  /// A phone gets the numeric form: spelled out, a week reads "7. Sept. 2026 –
+  /// 13. Sept. 2026", which is most of the row and pushed the day/week control
+  /// off the edge of it.
   String _rangeLabel() {
     final localizations = MaterialLocalizations.of(context);
+    final compact = context.isCompact;
     final days = _days;
     if (days.length == 1) {
-      return localizations.formatMediumDate(days.first);
+      return compact
+          ? localizations.formatCompactDate(days.first)
+          : localizations.formatMediumDate(days.first);
     }
-    return '${localizations.formatShortDate(days.first)} – '
-        '${localizations.formatShortDate(days.last)}';
+    String short(DateTime day) => compact
+        ? localizations.formatCompactDate(day)
+        : localizations.formatShortDate(day);
+    return '${short(days.first)} – ${short(days.last)}';
   }
 
   /// The phone's controls, in the band the app bar is already blurring — the
@@ -542,16 +557,12 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
           child: Row(
             children: [
               SizedBox(width: gutter),
+              // The switcher alone. The range belongs beside the arrows that
+              // move it, one row down — printed here as well it was the same
+              // sentence twice, and it pushed the day/week control off the
+              // edge of the row that needed the space.
               const TimeViewSwitcher(current: TimeView.calendar),
               const Spacer(),
-              Text(
-                _rangeLabel(),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.ink,
-                ),
-              ),
               SizedBox(width: gutter),
             ],
           ),

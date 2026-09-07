@@ -206,6 +206,65 @@ void main() {
     );
   });
 
+  testWidgets('several all-day items on one day are rows, not a pile', (
+    tester,
+  ) async {
+    // One row per *layer* drew them all in the same place: the strip looked
+    // like a single entry with the rest invisible underneath it, which is
+    // exactly what four demo entries on one day produced.
+    await tester.pumpWidget(
+      host(
+        layers: [
+          TimeGridLayer(
+            id: 'untimed',
+            label: 'no clock',
+            placement: TimeGridPlacement.band,
+            items: [
+              entry('first', 0, 0),
+              entry('second', 0, 0),
+            ],
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('first'), findsOneWidget);
+    expect(find.text('second'), findsOneWidget);
+    expect(
+      tester.getCenter(find.text('second')).dy -
+          tester.getCenter(find.text('first')).dy,
+      kTimeGridBandRow,
+      reason: 'one row apart, not on top of each other',
+    );
+  });
+
+  testWidgets('past the ceiling the strip counts what it cannot show', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        layers: [
+          TimeGridLayer(
+            id: 'untimed',
+            placement: TimeGridPlacement.band,
+            items: [
+              for (var i = 0; i < 6; i++) entry('item$i', 0, 0),
+            ],
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Two chips and a count of the other four: the number on screen is never a
+    // lie about how much is there.
+    expect(find.text('item0'), findsOneWidget);
+    expect(find.text('item1'), findsOneWidget);
+    expect(find.text('+4'), findsOneWidget);
+    expect(find.text('item2'), findsNothing);
+  });
+
   testWidgets('an empty grid still draws its axis and headings', (
     tester,
   ) async {
