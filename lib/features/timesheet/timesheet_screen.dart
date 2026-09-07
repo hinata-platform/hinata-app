@@ -388,7 +388,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     return PageChrome(
       fullWidth: true,
       bottom: compact ? _dockedBar(admin) : null,
-      bottomHeight: compact ? kGlassPillHeight + 10 : 0,
+      bottomHeight: compact ? kGlassControlHeight + 10 : 0,
       child: compact
           ? _body()
           : Column(
@@ -446,7 +446,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   Widget _dockedBar(bool admin) {
     final localizations = MaterialLocalizations.of(context);
     return SizedBox(
-      height: kGlassPillHeight,
+      height: kGlassControlHeight,
       child: ListView(
         scrollDirection: Axis.horizontal,
         // The gutter is the scroller's own padding, so the last pill can come
@@ -455,6 +455,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
         padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
         children: [
           GlassPill(
+            height: kGlassControlHeight,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -482,6 +483,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
           const SizedBox(width: 8),
           GlassPill(
             active: !_isCurrentWeek,
+            height: kGlassControlHeight,
             onTap: _goToToday,
             child: _PillLabel(
               icon: LucideIcons.calendarCheck,
@@ -1224,7 +1226,7 @@ class _PillIcon extends StatelessWidget {
         onTap: onTap,
         radius: 20,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
           child: Icon(icon, size: 18, color: AppColors.inkSoft),
         ),
       ),
@@ -1298,6 +1300,7 @@ class _DockedFilterPill extends StatelessWidget {
       child: Builder(
         builder: (pillContext) => GlassPill(
           active: active,
+          height: kGlassControlHeight,
           onTap: () {
             final box = pillContext.findRenderObject() as RenderBox?;
             onTap(

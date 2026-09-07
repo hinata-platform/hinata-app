@@ -19,8 +19,17 @@ import 'glass_popup_menu.dart';
 import '../../features/shell/app_shell.dart' show isNativeApp;
 import '../theme/glass_chrome.dart' show kNavGlassDark, kNavGlassLight;
 
-/// Height of one docked control row (search / chip row) — the pill height.
+/// Height of a docked search field. A text input needs the room; a control
+/// does not, which is what [kGlassControlHeight] is for.
 const double kGlassPillHeight = 42;
+
+/// Height of a docked control pill — a chip, a filter, a button.
+///
+/// Deliberately shorter than the search field. At 42 a 13pt label leaves eleven
+/// and a half points of air above and below it, so the pill reads as a box the
+/// text happens to sit in rather than as a control; at 36 the proportion is the
+/// one every other control in the app keeps.
+const double kGlassControlHeight = 36;
 
 /// A liquid-glass pill surface used by every docked filter control. On native it
 /// is a real [GlassContainer] (its own glass layer, iOS-26 refraction); on web it
@@ -154,6 +163,7 @@ class GlassCountPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return GlassPill(
       active: true,
+      height: kGlassControlHeight,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14),
         child: Row(
@@ -219,6 +229,7 @@ class GlassFilterChip<T> extends StatelessWidget {
       ],
       child: GlassPill(
         active: active,
+        height: kGlassControlHeight,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Row(
