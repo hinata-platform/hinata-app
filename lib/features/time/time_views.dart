@@ -4,7 +4,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
 import '../../core/responsive/responsive.dart';
-import '../../core/widgets/glass_panel.dart';
 import '../../core/widgets/glass_switch_chip.dart';
 
 /// The extended time module's three ways of looking at the same hours.
@@ -45,42 +44,26 @@ class TimeViewSwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconOnly = context.isCompact;
-    return ConstrainedBox(
-      // Self-limiting, because it is handed to `PageHead.actions` and to a
-      // docked row, neither of which bounds what it is given: three chips with
-      // long words in them would push the page's title off its own head. Past
-      // the ceiling the chips scroll inside the pill — the same shape the Gantt
-      // switcher has.
-      constraints: BoxConstraints(maxWidth: iconOnly ? 170 : 330),
-      child: GlassFloatingSurface(
-        radius: (iconOnly ? 44 : 42) / 2,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final view in TimeView.values) ...[
-                  if (view != TimeView.values.first) const SizedBox(width: 2),
-                  GlassSwitchChip(
-                    label: context.t(view.labelKey),
-                    icon: view.icon,
-                    active: view == current,
-                    iconOnly: iconOnly,
-                    // Going rather than pushing: the three are one destination
-                    // seen three ways, so stepping back from the calendar belongs
-                    // outside the module, not on the list you came through.
-                    onTap: view == current
-                        ? () {}
-                        : () => context.go(view.route),
-                  ),
-                ],
-              ],
-            ),
+    return GlassSwitchBar(
+      compact: iconOnly,
+      maxWidth: iconOnly ? 170 : 330,
+      chips: [
+        for (final view in TimeView.values) ...[
+          if (view != TimeView.values.first) const SizedBox(width: 2),
+          GlassSwitchChip(
+            label: context.t(view.labelKey),
+            icon: view.icon,
+            active: view == current,
+            iconOnly: iconOnly,
+            // Going rather than pushing: the three are one destination seen
+            // three ways, so stepping back from the calendar belongs outside
+            // the module, not on the list you came through. The one you are on
+            // is not a button — null, so it does not ripple, take focus, or
+            // announce itself as one.
+            onTap: view == current ? null : () => context.go(view.route),
           ),
-        ),
-      ),
+        ],
+      ],
     );
   }
 }

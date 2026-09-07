@@ -1095,7 +1095,8 @@
     "cell": {
       "none": "Nothing logged yet.",
       "add": "Add time"
-    }
+    },
+    "truncated": "Showing {{shown}} of {{total}} rows. Narrow the filters to see the rest."
   },
   "reports": {
     "title": "Reports",

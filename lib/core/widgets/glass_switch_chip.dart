@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../features/search/search_tokens.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import 'glass_panel.dart';
 
 /// One segment of a switcher that rides on glass.
 ///
@@ -16,14 +17,18 @@ class GlassSwitchChip extends StatelessWidget {
     super.key,
     required this.label,
     required this.active,
-    required this.onTap,
+    this.onTap,
     this.icon,
     this.iconOnly = false,
   });
 
   final String label;
   final bool active;
-  final VoidCallback onTap;
+
+  /// Null makes the chip inert — what the segment you are already on wants: it
+  /// stops rippling, stops taking focus, and stops telling a screen reader that
+  /// it leads somewhere.
+  final VoidCallback? onTap;
   final IconData? icon;
 
   /// Drops the label and keeps it as the tooltip — the compact layout, where a
@@ -77,4 +82,46 @@ class GlassSwitchChip extends StatelessWidget {
     );
     return compact ? Tooltip(message: label, child: chip) : chip;
   }
+}
+
+/// The glass pill a row of [GlassSwitchChip]s rides in.
+///
+/// Lifted for the same reason the chip was: three switchers had grown the same
+/// wrapper — the Gantt's zoom, the time module's view switcher, and the
+/// calendar's day/week control, the last two side by side in one row — and three
+/// copies of a container is how one control starts looking like three.
+///
+/// It bounds its own width because its callers do not: `PageHead.actions` and a
+/// docked toolbar row both hand a widget whatever it asks for, and a switcher
+/// with long words in it asked for more than the page had. Past the ceiling the
+/// chips scroll inside the pill rather than pushing the title off the head.
+class GlassSwitchBar extends StatelessWidget {
+  const GlassSwitchBar({
+    super.key,
+    required this.chips,
+    required this.maxWidth,
+    this.compact = false,
+  });
+
+  final List<Widget> chips;
+  final double maxWidth;
+
+  /// The icon-only shape, which is a little taller so the glyphs are not
+  /// cramped. Pass the same value the chips are given.
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) => ConstrainedBox(
+    constraints: BoxConstraints(maxWidth: maxWidth),
+    child: GlassFloatingSurface(
+      radius: (compact ? 44 : 42) / 2,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(mainAxisSize: MainAxisSize.min, children: chips),
+        ),
+      ),
+    ),
+  );
 }

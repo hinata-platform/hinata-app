@@ -260,9 +260,8 @@ bool _isImmersive(String location) => location.startsWith('/issues/');
 void _handleBack(
   BuildContext context,
   String location,
-  VoidCallback? override, {
-  required bool advancedTime,
-}) {
+  VoidCallback? override,
+) {
   if (override != null) {
     override();
   } else if (context.canPop()) {

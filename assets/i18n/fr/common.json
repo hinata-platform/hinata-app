@@ -1095,7 +1095,8 @@
     "cell": {
       "none": "Rien de saisi pour l’instant.",
       "add": "Ajouter du temps"
-    }
+    },
+    "truncated": "{{shown}} lignes sur {{total}} sont affichées. Affinez les filtres pour voir le reste."
   },
   "reports": {
     "title": "Rapports",

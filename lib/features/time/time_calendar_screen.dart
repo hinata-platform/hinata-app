@@ -14,9 +14,9 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/hue_colors.dart';
+import '../../core/util/dates.dart';
 import '../../core/widgets/glass_switch_chip.dart';
 import '../../core/widgets/glass_filter_bar.dart';
-import '../../core/widgets/glass_panel.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
@@ -93,30 +93,11 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     return DateTime(now.year, now.month, now.day);
   }
 
-  /// The first day of [_anchor]'s week, in the reader's own locale.
-  ///
-  /// `firstDayOfWeekIndex` is 0 for Sunday, 1 for Monday — en-US starts on
-  /// Sunday and German on Monday, and a calendar that always started on Monday
-  /// would be wrong for half the app's languages. The server's weeks stay ISO;
-  /// they are a different question (approval periods, stage 7) and are not
-  /// this grid's business.
-  DateTime _weekStart(DateTime day) {
-    final first = MaterialLocalizations.of(context).firstDayOfWeekIndex;
-    final delta = (day.weekday % 7 - first + 7) % 7;
-    return DateTime(day.year, day.month, day.day - delta);
-  }
-
   List<DateTime> get _days {
     if (_span == _Span.day) return [_anchor];
-    final start = _weekStart(_anchor);
-    return [for (var i = 0; i < 7; i++) _addDays(start, i)];
+    final start = weekStartFor(context, _anchor);
+    return [for (var i = 0; i < 7; i++) addDays(start, i)];
   }
-
-  static DateTime _addDays(DateTime day, int days) =>
-      // Through the constructor, not a Duration: a duration is an exact number
-      // of hours, so in a week that changes clocks it lands at 23:00 the day
-      // before and the whole grid shifts by one column.
-      DateTime(day.year, day.month, day.day + days);
 
   bool get _isCurrent {
     final today = _today();
@@ -157,7 +138,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
 
   void _move(int steps) {
     setState(
-      () => _anchor = _addDays(_anchor, steps * (_span == _Span.day ? 1 : 7)),
+      () => _anchor = addDays(_anchor, steps * (_span == _Span.day ? 1 : 7)),
     );
     unawaited(_load());
   }
@@ -475,44 +456,29 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       ),
     ),
     const SizedBox(width: 10),
-    ConstrainedBox(
-      // Bounded like the view switcher, and for the same reason: a glass pill
-      // laid out in a Row takes whatever width its labels want, and in a
-      // language with long words for "day" and "week" that is more than the
-      // row has. Past the ceiling the two chips scroll inside the pill.
-      constraints: BoxConstraints(maxWidth: context.isCompact ? 130 : 230),
-      child: GlassFloatingSurface(
-        radius: 21,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Icons only on a phone, the way the view switcher goes: the
-                // row already carries two arrows, a date and a way back to
-                // today, and two more words do not fit beside them.
-                GlassSwitchChip(
-                  label: context.t('time.calendar.day'),
-                  icon: LucideIcons.calendar,
-                  active: _span == _Span.day,
-                  iconOnly: context.isCompact,
-                  onTap: () => _setSpan(_Span.day),
-                ),
-                const SizedBox(width: 2),
-                GlassSwitchChip(
-                  label: context.t('time.calendar.week'),
-                  icon: LucideIcons.calendarRange,
-                  active: _span == _Span.week,
-                  iconOnly: context.isCompact,
-                  onTap: () => _setSpan(_Span.week),
-                ),
-              ],
-            ),
-          ),
+    GlassSwitchBar(
+      compact: context.isCompact,
+      maxWidth: context.isCompact ? 130 : 230,
+      chips: [
+        // Icons only on a phone, the way the view switcher goes: the row
+        // already carries two arrows, a date and a way back to today, and two
+        // more words do not fit beside them.
+        GlassSwitchChip(
+          label: context.t('time.calendar.day'),
+          icon: LucideIcons.calendar,
+          active: _span == _Span.day,
+          iconOnly: context.isCompact,
+          onTap: () => _setSpan(_Span.day),
         ),
-      ),
+        const SizedBox(width: 2),
+        GlassSwitchChip(
+          label: context.t('time.calendar.week'),
+          icon: LucideIcons.calendarRange,
+          active: _span == _Span.week,
+          iconOnly: context.isCompact,
+          onTap: () => _setSpan(_Span.week),
+        ),
+      ],
     ),
     if (!_isCurrent) ...[
       const SizedBox(width: 8),

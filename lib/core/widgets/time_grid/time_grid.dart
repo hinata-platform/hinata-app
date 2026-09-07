@@ -14,6 +14,7 @@ library;
 
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
@@ -44,6 +45,9 @@ const double kTimeGridMinColumn = 104;
 
 /// What a drag produced, before anything has been saved.
 typedef TimeGridSpan = ({DateTime start, DateTime end});
+
+/// One block, worked out: where it goes and what colour it is.
+typedef _Placed = ({TimeGridSlot slot, Rect rect, Color tint});
 
 class TimeGrid extends StatefulWidget {
   const TimeGrid({
@@ -99,13 +103,23 @@ enum _DragKind { create, move, resize }
 class _Drag {
   _Drag({
     required this.kind,
+    required this.anchor,
     required this.start,
     required this.end,
     this.item,
-    this.dayIndex = 0,
+    required this.dayIndex,
   });
 
   final _DragKind kind;
+
+  /// Where the finger went down, and the one end of a sweep that does not move.
+  ///
+  /// Its own field because [start] and [end] are the *current* span and are
+  /// rewritten on every pointer sample: reading the anchor back off [start], as
+  /// this did, means the anchor follows the highest point the finger reached
+  /// and a sweep can never be walked back down.
+  final DateTime anchor;
+
   DateTime start;
   DateTime end;
 
@@ -125,6 +139,21 @@ class _TimeGridState extends State<TimeGrid> {
 
   _Drag? _drag;
   bool _didInitialScroll = false;
+
+  /// The last placement worked out, and the inputs it was worked out from.
+  ///
+  /// Filtering, packing and rectangle arithmetic do not depend on the drag, and
+  /// a drag rebuilds on every pointer sample: recomputing them there meant, per
+  /// frame, one pass over every item per column, seven sorts, and four
+  /// allocations per block. At a hundred-odd entries in a week that is a couple
+  /// of thousand objects a frame — steady churn through a gesture that changes
+  /// none of it.
+  List<_Placed>? _placed;
+  Object? _placedKey;
+
+  /// The same, for how many rows each band layer needs: three call sites asked
+  /// for it and each walked every item in the layer.
+  Map<String, int>? _bandRowCounts;
 
   @override
   void initState() {
@@ -171,6 +200,13 @@ class _TimeGridState extends State<TimeGrid> {
   /// How many rows [layer] needs: as many as its busiest day has items, capped
   /// at [kTimeGridBandRowsMax].
   int _bandRows(TimeGridLayer layer) {
+    final counts = _bandRowCounts ??= {
+      for (final band in _bandLayers) band.id: _countBandRows(band),
+    };
+    return counts[layer.id] ?? 1;
+  }
+
+  int _countBandRows(TimeGridLayer layer) {
     var most = 1;
     for (final day in widget.days) {
       final count = _itemsOn(layer, day).length;
@@ -213,8 +249,32 @@ class _TimeGridState extends State<TimeGrid> {
     return null;
   }
 
-  Iterable<TimeGridItem> _itemsOn(TimeGridLayer layer, DateTime day) =>
-      layer.items.where((item) => _sameDay(item.start, day));
+  /// [layer]'s items as [day]'s column sees them.
+  ///
+  /// A span that runs past midnight appears in every column it touches, cut to
+  /// that column's hours — placed only in its start's column it was drawn from
+  /// its start to the bottom of the canvas and the rest appeared nowhere, which
+  /// for a night shift (HIN-44's ordinary case, not its edge) is most of the
+  /// block missing.
+  ///
+  /// The clipped copy keeps the original's id and data, so a tap or a drag on
+  /// either half is a gesture on the one item.
+  Iterable<TimeGridItem> _itemsOn(TimeGridLayer layer, DateTime day) sync* {
+    final dayStart = DateTime(day.year, day.month, day.day);
+    final dayEnd = DateTime(day.year, day.month, day.day + 1);
+    for (final item in layer.items) {
+      if (_sameDay(item.start, day) && !item.end.isAfter(dayEnd)) {
+        yield item; // the ordinary case: one day, uncut
+        continue;
+      }
+      if (item.start.isBefore(dayEnd) && item.end.isAfter(dayStart)) {
+        yield item.movedTo(
+          item.start.isBefore(dayStart) ? dayStart : item.start,
+          item.end.isAfter(dayEnd) ? dayEnd : item.end,
+        );
+      }
+    }
+  }
 
   Rect _rectOf(TimeGridSlot slot, int dayIndex, double columnWidth) {
     final day = _dayAt(dayIndex);
@@ -240,6 +300,7 @@ class _TimeGridState extends State<TimeGrid> {
       setState(() {
         _drag = _Drag(
           kind: hit.onEdge ? _DragKind.resize : _DragKind.move,
+          anchor: hit.item.start,
           start: hit.item.start,
           end: hit.item.end,
           item: hit.item,
@@ -253,6 +314,7 @@ class _TimeGridState extends State<TimeGrid> {
     setState(() {
       _drag = _Drag(
         kind: _DragKind.create,
+        anchor: at,
         start: at,
         end: at.add(widget.step),
         dayIndex: index,
@@ -268,26 +330,42 @@ class _TimeGridState extends State<TimeGrid> {
     if (drag == null) return;
     final local = details.localPosition;
     final index = _dayIndexAt(local.dx, columnWidth);
-    final at = _metrics.timeAt(local.dy, _dayAt(index), step: widget.step);
     setState(() {
       switch (drag.kind) {
         case _DragKind.create:
-          // Sweeping upwards is a span too — the anchor is wherever the finger
-          // went down, not necessarily the earlier end.
-          final anchor = drag.item?.start ?? drag.start;
-          drag.start = at.isBefore(anchor) ? at : anchor;
-          drag.end = at.isBefore(anchor) ? anchor : at;
+          // A sweep stays in the column it began in: the anchor is a time on
+          // that day, and pairing it with a time read off another one produces
+          // a span across midnight that the grid cannot draw and the editor
+          // would not have been asked for.
+          final at = _metrics.timeAt(
+            local.dy,
+            _dayAt(drag.dayIndex),
+            step: widget.step,
+          );
+          // Upwards is a span too — the anchor is where the finger went down,
+          // not whichever end is earlier.
+          drag.start = at.isBefore(drag.anchor) ? at : drag.anchor;
+          drag.end = at.isBefore(drag.anchor) ? drag.anchor : at;
           if (!drag.end.isAfter(drag.start)) {
             drag.end = drag.start.add(widget.step);
           }
-          drag.dayIndex = index;
         case _DragKind.move:
+          final at = _metrics.timeAt(
+            local.dy,
+            _dayAt(index),
+            step: widget.step,
+          );
           final length = drag.item!.duration;
           drag.start = at;
           drag.end = at.add(length);
           drag.dayIndex = index;
         case _DragKind.resize:
           // The start stays put; only the end follows, and never past it.
+          final at = _metrics.timeAt(
+            local.dy,
+            _dayAt(drag.dayIndex),
+            step: widget.step,
+          );
           drag.end = at.isAfter(drag.start) ? at : drag.start.add(widget.step);
       }
     });
@@ -468,30 +546,39 @@ class _TimeGridState extends State<TimeGrid> {
       onLongPressEnd: _onLongPressEnd,
       child: Stack(
         children: [
+          // Its own layer: the vertical viewport marks its child for paint on
+          // every scroll offset, and without a boundary that re-records every
+          // line, wash and block instead of moving a layer that is already
+          // rasterised.
           Positioned.fill(
-            child: CustomPaint(
-              painter: _GridPainter(
-                days: widget.days,
-                metrics: _metrics,
-                columnWidth: columnWidth,
-                now: _nowOnGrid(),
-                lineColor: AppColors.hairline,
-                hourColor: AppColors.hairline2,
-                weekendColor: AppColors.canvas2,
-                nowColor: AppColors.accentStrong,
-                washes: [
-                  for (final layer in _washLayers)
-                    for (final item in layer.items)
-                      (
-                        day: DateTime(
-                          item.start.year,
-                          item.start.month,
-                          item.start.day,
+            child: RepaintBoundary(
+              child: CustomPaint(
+                isComplex: true,
+                willChange: false,
+                painter: _GridPainter(
+                  days: widget.days,
+                  metrics: _metrics,
+                  columnWidth: columnWidth,
+                  now: _nowOnGrid(),
+                  lineColor: AppColors.hairline,
+                  hourColor: AppColors.hairline2,
+                  weekendColor: AppColors.canvas2,
+                  nowColor: AppColors.accentStrong,
+                  washes: [
+                    for (final layer in _washLayers)
+                      for (final item in layer.items)
+                        (
+                          day: DateTime(
+                            item.start.year,
+                            item.start.month,
+                            item.start.day,
+                          ),
+                          color:
+                              (item.tint ?? layer.tint ?? AppColors.accentSoft)
+                                  .withValues(alpha: 0.35),
                         ),
-                        color: (item.tint ?? layer.tint ?? AppColors.accentSoft)
-                            .withValues(alpha: 0.35),
-                      ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -510,20 +597,45 @@ class _TimeGridState extends State<TimeGrid> {
     );
   }
 
-  Iterable<({TimeGridSlot slot, Rect rect, Color tint})> _placedBlocks(
-    double columnWidth,
-  ) sync* {
+  List<_Placed> _placedBlocks(double columnWidth) {
+    final key = Object.hash(
+      columnWidth,
+      Object.hashAll(widget.days),
+      Object.hashAll(widget.layers.map((layer) => layer.items.length)),
+      Object.hashAll(widget.layers.map((layer) => layer.id)),
+      _metrics.hourExtent,
+      _metrics.firstHour,
+      _metrics.lastHour,
+    );
+    final cached = _placed;
+    if (cached != null && _placedKey == key) return cached;
+    final placed = <_Placed>[];
     for (final layer in _blockLayers) {
       for (var index = 0; index < widget.days.length; index++) {
-        final slots = packOverlaps(_itemsOn(layer, _dayAt(index)));
-        for (final slot in slots) {
-          yield (
+        for (final slot in packOverlaps(_itemsOn(layer, _dayAt(index)))) {
+          placed.add((
             slot: slot,
             rect: _rectOf(slot, index, columnWidth),
             tint: slot.item.tint ?? layer.tint ?? AppColors.accent,
-          );
+          ));
         }
       }
+    }
+    _placed = placed;
+    _placedKey = key;
+    return placed;
+  }
+
+  @override
+  void didUpdateWidget(TimeGrid old) {
+    super.didUpdateWidget(old);
+    // The key above counts items rather than comparing them, which is cheap and
+    // catches everything except an edit that keeps the count. A new layer list
+    // is the signal for that, and it is the one the caller always gives.
+    if (!identical(old.layers, widget.layers) ||
+        !identical(old.days, widget.days)) {
+      _placed = null;
+      _bandRowCounts = null;
     }
   }
 
@@ -544,9 +656,18 @@ class _TimeGridState extends State<TimeGrid> {
     ];
   }
 
+  /// Where the "now" line goes, to the minute.
+  ///
+  /// Truncated on purpose. `DateTime.now()` is microsecond-resolution, so an
+  /// untruncated value differs on every single build — and it is compared in
+  /// [_GridPainter.shouldRepaint], which therefore never returned false and
+  /// re-recorded the whole canvas on every frame of every drag. At the grid's
+  /// zoom the line moves one pixel a minute; anything finer is a repaint for a
+  /// difference nobody can see.
   DateTime? _nowOnGrid() {
     final now = widget.now ?? DateTime.now();
-    return widget.days.any((day) => _sameDay(now, day)) ? now : null;
+    if (!widget.days.any((day) => _sameDay(now, day))) return null;
+    return DateTime(now.year, now.month, now.day, now.hour, now.minute);
   }
 
   bool _isToday(DateTime day) => _sameDay(widget.now ?? DateTime.now(), day);
@@ -669,17 +790,16 @@ class _BandRows extends StatelessWidget {
       child: Stack(
         children: [
           for (var index = 0; index < days.length; index++)
-            ..._chipsFor(context, index, tint),
+            ..._chipsFor(index, tint),
         ],
       ),
     );
   }
 
-  Iterable<Widget> _chipsFor(
-    BuildContext context,
-    int index,
-    Color tint,
-  ) sync* {
+  Iterable<Widget> _chipsFor(int index, Color tint) sync* {
+    // The band's items occupy a day rather than a span of hours, so the start's
+    // day is the whole question here — unlike the hour canvas, which has to cut
+    // a span across every column it touches.
     final onDay = layer.items
         .where((item) => _sameDay(item.start, days[index]))
         .toList();
@@ -687,14 +807,10 @@ class _BandRows extends StatelessWidget {
     // the number on screen is never a lie about how much is there.
     final shown = onDay.length > rows ? rows - 1 : onDay.length;
     for (var row = 0; row < shown; row++) {
-      yield _positioned(index, row, _chip(context, onDay[row], tint));
+      yield _positioned(index, row, _chip(onDay[row], tint));
     }
     if (onDay.length > shown) {
-      yield _positioned(
-        index,
-        shown,
-        _more(context, onDay.length - shown, tint),
-      );
+      yield _positioned(index, shown, _more(onDay.length - shown, tint));
     }
   }
 
@@ -706,20 +822,19 @@ class _BandRows extends StatelessWidget {
     child: child,
   );
 
-  Widget _chip(BuildContext context, TimeGridItem item, Color tint) =>
-      GestureDetector(
-        onTap: onTap == null ? null : () => onTap!(item),
-        child: Tooltip(
-          message: item.title,
-          child: _pill(
-            (item.tint ?? tint).withValues(alpha: 0.22),
-            item.title,
-            AppColors.ink,
-          ),
-        ),
-      );
+  Widget _chip(TimeGridItem item, Color tint) => GestureDetector(
+    onTap: onTap == null ? null : () => onTap!(item),
+    child: Tooltip(
+      message: item.title,
+      child: _pill(
+        (item.tint ?? tint).withValues(alpha: 0.22),
+        item.title,
+        AppColors.ink,
+      ),
+    ),
+  );
 
-  Widget _more(BuildContext context, int count, Color tint) =>
+  Widget _more(int count, Color tint) =>
       _pill(tint.withValues(alpha: 0.12), '+$count', AppColors.inkSoft);
 
   Widget _pill(Color background, String label, Color ink) => Container(
@@ -909,8 +1024,13 @@ class _GridPainter extends CustomPainter {
       old.metrics.lastHour != metrics.lastHour ||
       old.now != now ||
       old.lineColor != lineColor ||
+      old.hourColor != hourColor ||
       old.weekendColor != weekendColor ||
-      old.washes.length != washes.length ||
+      old.nowColor != nowColor ||
+      // Element-wise, not by count: a wash that moves from Monday to Tuesday,
+      // or changes colour, leaves the list exactly as long. That is the shape
+      // stage 10's holidays and absences arrive in.
+      !listEquals(old.washes, washes) ||
       !_sameDays(old.days, days);
 
   static bool _sameDays(List<DateTime> a, List<DateTime> b) {

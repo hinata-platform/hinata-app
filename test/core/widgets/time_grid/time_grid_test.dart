@@ -94,6 +94,56 @@ void main() {
     }
   });
 
+  testWidgets('a span across midnight is drawn in both days', (tester) async {
+    // Placed only in its start's column, a night shift was drawn from 22:00 to
+    // the bottom of the canvas and the rest appeared nowhere. HIN-44 is shift
+    // planning, where this is the ordinary case rather than the edge.
+    await tester.pumpWidget(
+      host(
+        days: week,
+        layers: [
+          blocks([
+            TimeGridItem(
+              id: 'night',
+              start: DateTime(2026, 9, 7, 22),
+              end: DateTime(2026, 9, 8, 6),
+              title: 'night shift',
+            ),
+          ]),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // One block per day it touches, and both are the same entry.
+    expect(find.text('night shift'), findsNWidgets(2));
+  });
+
+  testWidgets('a block that ends exactly at midnight stays in its own day', (
+    tester,
+  ) async {
+    // The boundary either way: 22:00–24:00 belongs to the 7th alone, and must
+    // not open an empty sliver on the 8th.
+    await tester.pumpWidget(
+      host(
+        days: week,
+        layers: [
+          blocks([
+            TimeGridItem(
+              id: 'late',
+              start: DateTime(2026, 9, 7, 22),
+              end: DateTime(2026, 9, 8),
+              title: 'late shift',
+            ),
+          ]),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('late shift'), findsOneWidget);
+  });
+
   testWidgets('tapping a block hands the block back', (tester) async {
     TimeGridItem? tapped;
     await tester.pumpWidget(
@@ -130,6 +180,64 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(created, isNotNull);
+    expect(created!.end.difference(created!.start), const Duration(hours: 1));
+  });
+
+  testWidgets('a sweep that changes its mind keeps the point it started from', (
+    tester,
+  ) async {
+    // The anchor used to be read back off the span the sweep was writing, so it
+    // followed the highest point the finger reached: sweep up, come back down,
+    // and the span stayed pinned to the top instead of shrinking.
+    TimeGridSpan? created;
+    await tester.pumpWidget(
+      host(layers: [blocks(const [])], onCreate: (span) => created = span),
+    );
+    await tester.pumpAndSettle();
+
+    final canvas = tester.getRect(find.byType(TimeGrid));
+    final from = Offset(canvas.left + kTimeGridGutter + 40, canvas.top + 300);
+    final gesture = await tester.startGesture(from);
+    await tester.pump(const Duration(milliseconds: 600));
+    await gesture.moveBy(const Offset(0, -120)); // two hours up
+    await tester.pump();
+    await gesture.moveBy(const Offset(0, 60)); // one hour back down
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(created, isNotNull);
+    expect(created!.end.difference(created!.start), const Duration(hours: 1));
+  });
+
+  testWidgets('a sweep that wanders sideways stays in its own day', (
+    tester,
+  ) async {
+    // Anchored on one day and read on another, the two ends straddle midnight:
+    // the grid draws a block it cannot place and the editor is handed a span
+    // nobody swept.
+    TimeGridSpan? created;
+    await tester.pumpWidget(
+      host(
+        layers: [blocks(const [])],
+        days: week,
+        onCreate: (span) => created = span,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final canvas = tester.getRect(find.byType(TimeGrid));
+    final gesture = await tester.startGesture(
+      Offset(canvas.left + kTimeGridGutter + 40, canvas.top + 300),
+    );
+    await tester.pump(const Duration(milliseconds: 600));
+    await gesture.moveBy(const Offset(220, 60)); // two columns over, an hour down
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(created, isNotNull);
+    expect(created!.start.day, created!.end.day);
     expect(created!.end.difference(created!.start), const Duration(hours: 1));
   });
 

@@ -13,20 +13,21 @@ import '../../core/models/core_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/time_repository.dart';
-import '../time/time_views.dart';
-import '../time/timesheet_cell_sheet.dart';
 import '../../core/repositories/timesheet_repository.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/responsive/responsive.dart';
+import '../../core/util/dates.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_avatar.dart';
+import '../../core/widgets/glass_filter_bar.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
-import '../../core/widgets/glass_filter_bar.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../shell/page_chrome.dart';
+import '../time/time_views.dart';
+import '../time/timesheet_cell_sheet.dart';
 import '../sprint/modals/glass_modal.dart'
     show
         kGlassPopoverBreakpoint,
@@ -70,15 +71,20 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// Rows per request on the module's paged route.
   ///
   /// A hundred is the server's ceiling and far more than a week of one person
-  /// holds; an administrator's instance-wide week can run past it, and that is
-  /// the case this cap exists for — the grid says so rather than pretending the
-  /// hundredth row is the last.
+  /// holds. An administrator's instance-wide week can run past it, and that is
+  /// what [_shown]/[_total] are for: a working-time record that quietly omits
+  /// every row past the hundredth is a wrong answer wearing the shape of a
+  /// right one.
   static const int _pageSize = 100;
 
   late DateTime _from;
   late DateTime _to;
 
   List<TimesheetRow> _rows = const [];
+
+  /// How many rows the whole matrix has, against how many are on screen. Equal
+  /// on every ordinary week; apart only when the server's page ran out.
+  int _total = 0;
 
   /// Only the people the fetched rows actually name — resolved by id rather
   /// than by draining the whole directory, which grows without bound.
@@ -117,33 +123,12 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     super.didChangeDependencies();
     if (_started) return;
     _started = true;
-    _from = _weekStart(DateTime.now());
-    _to = _addDays(_from, 6);
+    _from = weekStartFor(context, DateTime.now());
+    _to = addDays(_from, 6);
     unawaited(_load());
   }
 
-  /// The first day of [day]'s week, at local midnight, in the reader's locale.
-  ///
-  /// `firstDayOfWeekIndex` is 0 for Sunday and 1 for Monday: German weeks start
-  /// on Monday, American ones on Sunday, and a grid that always began on Monday
-  /// was simply wrong for several of the nine languages the app speaks. The
-  /// server's own weeks stay ISO — approval periods are a different question
-  /// and not this grid's — and nothing here depends on them, because the range
-  /// travels as two explicit dates.
-  ///
-  /// Built through the constructor rather than by subtracting a [Duration]:
-  /// a duration is an exact number of hours, so in a week that changes clocks
-  /// it lands at 23:00 on the day before and the whole grid shifts by one.
-  DateTime _weekStart(DateTime day) {
-    final first = MaterialLocalizations.of(context).firstDayOfWeekIndex;
-    final delta = (day.weekday % 7 - first + 7) % 7;
-    return DateTime(day.year, day.month, day.day - delta);
-  }
-
-  static DateTime _addDays(DateTime day, int days) =>
-      DateTime(day.year, day.month, day.day + days);
-
-  bool get _isCurrentWeek => _weekStart(DateTime.now()) == _from;
+  bool get _isCurrentWeek => weekStartFor(context, DateTime.now()) == _from;
 
   bool get _isAdmin => context.watch<AuthBloc>().state.user?.isAdmin ?? false;
 
@@ -189,20 +174,29 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
       // once. Same scope either way — the server refuses another person's rows
       // to a non-admin on both — so the difference is how many arrive, and a
       // week of one person's projects is never more than the first page.
-      final rows = widget.moduleView
-          ? (await context.read<TimeRepository>().timesheet(
-              from: _from,
-              to: _to,
-              userId: _userFilter,
-              projectId: _projectFilter,
-              size: _pageSize,
-            )).items
-          : await context.read<TimesheetRepository>().timesheet(
-              _from,
-              _to,
-              userId: _userFilter,
-              projectId: _projectFilter,
-            );
+      final List<TimesheetRow> rows;
+      final int total;
+      if (widget.moduleView) {
+        final page = await context.read<TimeRepository>().timesheet(
+          from: _from,
+          to: _to,
+          userId: _userFilter,
+          projectId: _projectFilter,
+          size: _pageSize,
+        );
+        rows = page.items;
+        total = page.total;
+      } else {
+        rows = await context.read<TimesheetRepository>().timesheet(
+          _from,
+          _to,
+          userId: _userFilter,
+          projectId: _projectFilter,
+        );
+        // The array-shaped route answers with every row it has, so what arrived
+        // is the whole of it by definition.
+        total = rows.length;
+      }
       if (!mounted || seq != _loadSeq) return;
       final labels = await Future.wait([
         _resolveUsers(rows),
@@ -213,6 +207,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
       final projects = labels[1] as Map<String, Project>?;
       setState(() {
         _rows = rows;
+        _total = total;
         _users = users ?? _users;
         _projectsById = projects ?? _projectsById;
         _directoryAnswered = users != null;
@@ -250,8 +245,8 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
 
   void _shiftWeek(int direction) {
     setState(() {
-      _from = _addDays(_from, 7 * direction);
-      _to = _addDays(_from, 6);
+      _from = addDays(_from, 7 * direction);
+      _to = addDays(_from, 6);
     });
     unawaited(_load());
   }
@@ -264,8 +259,8 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// on screen, so the action doubles as a refresh rather than doing nothing.
   void _goToToday() {
     setState(() {
-      _from = _weekStart(DateTime.now());
-      _to = _addDays(_from, 6);
+      _from = weekStartFor(context, DateTime.now());
+      _to = addDays(_from, 6);
     });
     unawaited(_load());
   }
@@ -700,7 +695,16 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                 ),
               ),
             )
-          : _table(),
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (_total > _rows.length) ...[
+                  _TruncatedRows(shown: _rows.length, total: _total),
+                  const SizedBox(height: 10),
+                ],
+                _table(),
+              ],
+            ),
     );
   }
 
@@ -708,7 +712,8 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// two label columns does not fit a phone — while the page itself never does.
   Widget _table() {
     final localizations = MaterialLocalizations.of(context);
-    final days = [for (var i = 0; i < 7; i++) _addDays(_from, i)];
+    final days = [for (var i = 0; i < 7; i++) addDays(_from, i)];
+    final editable = _editableUserId;
     return SoftCard(
       padding: const EdgeInsets.all(8),
       child: SingleChildScrollView(
@@ -739,7 +744,9 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                       // else's row is a report; the server would refuse the
                       // write anyway, and a cell that opens a form before being
                       // told no is a worse way to learn that.
-                      onTap: _canEdit(row) ? () => _openCell(row, day) : null,
+                      onTap: editable != null && row.userId == editable
+                          ? () => _openCell(row, day)
+                          : null,
                     ),
                   DataCell(
                     Text(
@@ -791,15 +798,18 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     );
   }
 
-  /// Whether this row's cells answer a tap.
+  /// Whose rows answer a tap, or null when none do.
   ///
-  /// The module's page only, and only the reader's own row: an entry is filed
-  /// by the person who worked, and a timesheet cell is a shortcut to filing
-  /// one, not a way to file on somebody's behalf.
-  bool _canEdit(TimesheetRow row) {
-    if (!widget.moduleView) return false;
-    final me = context.read<AuthBloc>().state.user?.id;
-    return me != null && row.userId == me;
+  /// The module's page only, and only the reader's own row: an entry is filed by
+  /// the person who worked, and a timesheet cell is a shortcut to filing one,
+  /// not a way to file on somebody's behalf.
+  ///
+  /// Read once per table rather than per cell — the answer changes once a
+  /// session, and a hundred rows of seven days asked it seven hundred times on
+  /// every rebuild.
+  String? get _editableUserId {
+    if (!widget.moduleView) return null;
+    return context.read<AuthBloc>().state.user?.id;
   }
 
   Future<void> _openCell(TimesheetRow row, DateTime day) async {
@@ -821,6 +831,44 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
         ? context.t('time.fmt.none')
         : fmtDuration(context, minutes);
   }
+}
+
+/// Says how much of the matrix is on screen when it is not all of it.
+///
+/// Only ever seen by an administrator looking at a whole instance: a person's
+/// own week is a handful of rows. But a timesheet is a record somebody may have
+/// to stand behind, and a view that silently stops at the hundredth row does not
+/// look any different from a complete one.
+class _TruncatedRows extends StatelessWidget {
+  const _TruncatedRows({required this.shown, required this.total});
+
+  final int shown;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(
+      color: AppColors.accentSoft,
+      borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+      border: Border.all(color: AppColors.accentLine),
+    ),
+    child: Row(
+      children: [
+        const Icon(LucideIcons.info, size: 15, color: AppColors.accentStrong),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            context.t(
+              'timesheet.truncated',
+              variables: {'shown': '$shown', 'total': '$total'},
+            ),
+            style: TextStyle(fontSize: 12.5, color: AppColors.ink),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 // ── Filter plumbing ──────────────────────────────────────────────────────────

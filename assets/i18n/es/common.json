@@ -1095,7 +1095,8 @@
     "cell": {
       "none": "Todavía no hay registros.",
       "add": "Añadir tiempo"
-    }
+    },
+    "truncated": "Se muestran {{shown}} de {{total}} filas. Ajusta los filtros para ver el resto."
   },
   "reports": {
     "title": "Informes",

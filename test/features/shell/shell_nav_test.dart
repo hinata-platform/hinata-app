@@ -119,6 +119,26 @@ void main() {
     });
   });
 
+  group('with the module off, every one of its routes explains itself', () {
+    const off = false;
+
+    test('not only /time', () {
+      // The router answers all three with the not-found page; a deep link into
+      // the calendar deserves the same title and back button as one into the
+      // list, or it is the empty page under the brand mark this rule exists to
+      // prevent.
+      for (final page in ['/time', '/time/calendar', '/time/timesheet']) {
+        expect(subPageTitleKey(page, advancedTime: off), 'notFound.title',
+            reason: page);
+      }
+    });
+
+    test('and the base timesheet is untouched by it', () {
+      expect(subPageTitleKey('/timesheet', advancedTime: off), isNull);
+      expect(isTimeModuleRoute('/timesheet'), isFalse);
+    });
+  });
+
   group('the /time — /timesheet prefix collision', () {
     test('the timesheet never lights up the module entry by accident', () {
       // The bug a plain `startsWith` produces: with the module off there is no

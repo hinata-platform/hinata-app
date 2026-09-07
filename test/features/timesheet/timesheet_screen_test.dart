@@ -124,6 +124,35 @@ void main() {
       expect(module.calls, isZero);
     });
 
+    testWidgets('a matrix the page could not fit says how much it is showing', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          rows: const [],
+          moduleView: true,
+          admin: true,
+          time: _FakeTimeRepository.withTotal([row(userId: 'me')], 137),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('timesheet.truncated'), findsOneWidget);
+    });
+
+    testWidgets('a week that fits says nothing at all', (tester) async {
+      await tester.pumpWidget(
+        host(
+          rows: const [],
+          moduleView: true,
+          time: _FakeTimeRepository([row(userId: 'me')]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('timesheet.truncated'), findsNothing);
+    });
+
     testWidgets('your own cell can be typed into; a colleague\'s cannot', (
       tester,
     ) async {
@@ -577,10 +606,16 @@ int _tappableCells(WidgetTester tester) => tester
     .length;
 
 class _FakeTimeRepository implements TimeRepository {
-  _FakeTimeRepository(this.rows);
+  _FakeTimeRepository(this.rows) : total = null;
 
   final List<TimesheetRow> rows;
   int calls = 0;
+
+  _FakeTimeRepository.withTotal(this.rows, this.total);
+
+  /// What the whole matrix holds, which is only ever more than [rows] when the
+  /// server's page ran out.
+  int? total;
 
   @override
   Future<PageResult<TimesheetRow>> timesheet({
@@ -592,7 +627,7 @@ class _FakeTimeRepository implements TimeRepository {
     int size = 50,
   }) async {
     calls++;
-    return (items: rows, total: rows.length);
+    return (items: rows, total: total ?? rows.length);
   }
 
   @override

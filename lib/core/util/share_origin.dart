@@ -54,7 +54,8 @@ import 'package:flutter/widgets.dart';
 Rect shareOriginOf(BuildContext context, {Rect? preferred}) {
   final window = MediaQuery.sizeOf(context);
   final box = context.findRenderObject() as RenderBox?;
-  final candidate = preferred ??
+  final candidate =
+      preferred ??
       ((box != null && box.hasSize)
           ? box.localToGlobal(Offset.zero) & box.size
           : null);
@@ -100,10 +101,14 @@ Rect shareAnchorWithin(Rect? candidate, Size window) {
   // is and give it enough size to be accepted, pushed back inside if that grew
   // it past an edge.
   const side = _minimumSide;
-  final left =
-      candidate.left.clamp(0.0, (window.width - side).clamp(0.0, double.infinity));
-  final top =
-      candidate.top.clamp(0.0, (window.height - side).clamp(0.0, double.infinity));
+  final left = candidate.left.clamp(
+    0.0,
+    (window.width - side).clamp(0.0, double.infinity),
+  );
+  final top = candidate.top.clamp(
+    0.0,
+    (window.height - side).clamp(0.0, double.infinity),
+  );
   return Rect.fromLTWH(left, top, side, side);
 }
 
