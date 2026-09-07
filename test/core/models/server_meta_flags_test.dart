@@ -30,7 +30,9 @@ void main() {
       expect(
         meta(flags: const {PlatformFlags.advancedTimeTracking: true}),
         isNot(
-          equals(meta(flags: const {PlatformFlags.advancedTimeTracking: false})),
+          equals(
+            meta(flags: const {PlatformFlags.advancedTimeTracking: false}),
+          ),
         ),
       );
     });

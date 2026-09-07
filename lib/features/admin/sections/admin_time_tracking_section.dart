@@ -139,8 +139,11 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
           for (final minutes in const [5, 10, 15, 30, 60])
             '$minutes': 'admin.timeTracking.increment.m$minutes',
         },
-        onChanged: (v) =>
-            _setNested('rounding', 'increment', v == null ? null : int.parse(v)),
+        onChanged: (v) => _setNested(
+          'rounding',
+          'increment',
+          v == null ? null : int.parse(v),
+        ),
       ),
       PolicySwitch(
         title: context.t('admin.timeTracking.limitTagAccessTitle'),

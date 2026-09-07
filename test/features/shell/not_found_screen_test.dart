@@ -15,7 +15,11 @@ import 'package:hinata/features/timesheet/timesheet_screen.dart';
 void main() {
   Widget host(Widget child, {double width = 400}) => MaterialApp(
     debugShowCheckedModeBanner: false,
-    home: Scaffold(body: Center(child: SizedBox(width: width, child: child))),
+    home: Scaffold(
+      body: Center(
+        child: SizedBox(width: width, child: child),
+      ),
+    ),
   );
 
   testWidgets('says what happened and offers a way out', (tester) async {
@@ -74,19 +78,16 @@ void main() {
     final router = GoRouter(
       initialLocation: '/nowhere',
       routes: [
-        GoRoute(
-          path: '/nowhere',
-          builder: (_, _) => const NotFoundScreen(),
-        ),
-        GoRoute(
-          path: '/dashboard',
-          builder: (_, _) => const Text('dashboard'),
-        ),
+        GoRoute(path: '/nowhere', builder: (_, _) => const NotFoundScreen()),
+        GoRoute(path: '/dashboard', builder: (_, _) => const Text('dashboard')),
       ],
     );
     addTearDown(router.dispose);
     await tester.pumpWidget(
-      MaterialApp.router(debugShowCheckedModeBanner: false, routerConfig: router),
+      MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        routerConfig: router,
+      ),
     );
     await tester.pumpAndSettle();
 

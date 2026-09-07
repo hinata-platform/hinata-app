@@ -38,7 +38,10 @@ void main() {
     });
 
     test('the timesheet entry lights up on the timesheet', () {
-      expect(isNavActive('/timesheet', '/timesheet', advancedTime: off), isTrue);
+      expect(
+        isNavActive('/timesheet', '/timesheet', advancedTime: off),
+        isTrue,
+      );
     });
 
     test('the timesheet is a top-level page, not a sub-page', () {
@@ -76,7 +79,9 @@ void main() {
     });
 
     test('the More sheet follows', () {
-      final routes = moreSheetDestinations(advancedTime: on).map((d) => d.route);
+      final routes = moreSheetDestinations(
+        advancedTime: on,
+      ).map((d) => d.route);
       expect(routes, contains('/time'));
       expect(routes, isNot(contains('/timesheet')));
     });
@@ -127,7 +132,10 @@ void main() {
     test('no other route is caught by either', () {
       for (final location in const ['/timeline', '/timers', '/timezone']) {
         expect(isNavActive(location, '/time', advancedTime: true), isFalse);
-        expect(isNavActive(location, '/timesheet', advancedTime: false), isFalse);
+        expect(
+          isNavActive(location, '/timesheet', advancedTime: false),
+          isFalse,
+        );
       }
     });
   });
@@ -135,15 +143,34 @@ void main() {
   group('everything else is unchanged by the flag', () {
     for (final advancedTime in const [false, true]) {
       test('with the flag ${advancedTime ? 'on' : 'off'}', () {
-        expect(isNavActive('/boards/abc', '/board', advancedTime: advancedTime), isTrue);
         expect(
-          isNavActive('/projects/p1/boards', '/projects', advancedTime: advancedTime),
+          isNavActive('/boards/abc', '/board', advancedTime: advancedTime),
           isTrue,
         );
-        expect(subPageTitleKey('/admin', advancedTime: advancedTime), 'admin.title');
-        expect(subPageTitleKey('/dashboard', advancedTime: advancedTime), isNull);
-        expect(subPageBackRoute('/issues/HIN-1', advancedTime: advancedTime), '/issues');
-        expect(subPageBackRoute('/nowhere', advancedTime: advancedTime), '/dashboard');
+        expect(
+          isNavActive(
+            '/projects/p1/boards',
+            '/projects',
+            advancedTime: advancedTime,
+          ),
+          isTrue,
+        );
+        expect(
+          subPageTitleKey('/admin', advancedTime: advancedTime),
+          'admin.title',
+        );
+        expect(
+          subPageTitleKey('/dashboard', advancedTime: advancedTime),
+          isNull,
+        );
+        expect(
+          subPageBackRoute('/issues/HIN-1', advancedTime: advancedTime),
+          '/issues',
+        );
+        expect(
+          subPageBackRoute('/nowhere', advancedTime: advancedTime),
+          '/dashboard',
+        );
       });
     }
 

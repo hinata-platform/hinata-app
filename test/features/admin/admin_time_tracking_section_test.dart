@@ -30,20 +30,24 @@ void main() {
     'admin.timeTracking.billingEnabledTitle',
   };
 
-  Widget host(Map<String, dynamic> settings, {double width = 900}) =>
-      MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: Scaffold(
-          body: Center(
-            child: SizedBox(
-              width: width,
-              child: SingleChildScrollView(
-                child: AdminTimeTrackingSection(settings: settings),
-              ),
-            ),
+  Widget host(
+    Map<String, dynamic> settings, {
+    double width = 900,
+    ThemeData? theme,
+  }) => MaterialApp(
+    debugShowCheckedModeBanner: false,
+    theme: theme,
+    home: Scaffold(
+      body: Center(
+        child: SizedBox(
+          width: width,
+          child: SingleChildScrollView(
+            child: AdminTimeTrackingSection(settings: settings),
           ),
         ),
-      );
+      ),
+    ),
+  );
 
   Finder policy(String titleKey) => find.ancestor(
     of: find.text(titleKey),
@@ -63,7 +67,10 @@ void main() {
           .map((p) => p.title)
           .toSet();
       expect(flagged, monitoring);
-      expect(find.byType(CodeterminationNote), findsNWidgets(monitoring.length));
+      expect(
+        find.byType(CodeterminationNote),
+        findsNWidgets(monitoring.length),
+      );
     });
 
     testWidgets('and nowhere it would be noise', (tester) async {
@@ -148,7 +155,9 @@ void main() {
         matching: find.byType(EnvDefaultAction),
       );
       await tester.ensureVisible(reset);
-      await tester.tap(find.descendant(of: reset, matching: find.byType(TextButton)));
+      await tester.tap(
+        find.descendant(of: reset, matching: find.byType(TextButton)),
+      );
       await tester.pumpAndSettle();
 
       final tt = settings['timeTracking'] as Map<String, dynamic>;
@@ -278,18 +287,10 @@ void main() {
     }
 
     testWidgets('reads on a dark page too', (tester) async {
+      // A mutable draft, like every other test here: the section writes the
+      // operator's edits straight into the map it was handed.
       await tester.pumpWidget(
-        MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData.dark(),
-          // Deliberately not a const map: the section writes the operator's
-          // edits straight into this draft.
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: AdminTimeTrackingSection(settings: <String, dynamic>{}),
-            ),
-          ),
-        ),
+        host(<String, dynamic>{}, theme: ThemeData.dark()),
       );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);

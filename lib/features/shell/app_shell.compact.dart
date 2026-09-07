@@ -295,12 +295,8 @@ class _GlassTopBar extends StatelessWidget {
     if (subKey != null) {
       titleText = chrome.titleFor(location) ?? context.t(subKey);
       final override = chrome.onBackFor(location);
-      onBack = () => _handleBack(
-        context,
-        location,
-        override,
-        advancedTime: advancedTime,
-      );
+      onBack = () =>
+          _handleBack(context, location, override, advancedTime: advancedTime);
     } else {
       final current = allDestinations(advancedTime: advancedTime).firstWhere(
         (d) => isNavActive(location, d.route, advancedTime: advancedTime),

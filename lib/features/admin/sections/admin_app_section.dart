@@ -275,7 +275,10 @@ class _PlatformToggle extends StatelessWidget {
       child: InkWell(
         onTap: open,
         borderRadius: BorderRadius.circular(10),
-        child: Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: row),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: row,
+        ),
       ),
     );
   }

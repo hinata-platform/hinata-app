@@ -90,7 +90,9 @@ void main() {
     });
 
     testWidgets('and offers no switch of its own', (tester) async {
-      await tester.pumpWidget(host(<String, dynamic>{}, onOpenTimeTracking: () {}));
+      await tester.pumpWidget(
+        host(<String, dynamic>{}, onOpenTimeTracking: () {}),
+      );
       await tester.pumpAndSettle();
 
       // Three real platform toggles (multi-assignee, e-mail reply) plus the
