@@ -71,7 +71,10 @@ class OrgLogo extends StatelessWidget {
     }
 
     final meta = context.select<AppConfigBloc, ({String? logo, String? name})>(
-      (bloc) => (logo: bloc.state.meta?.logoUrl, name: bloc.state.meta?.organizationName),
+      (bloc) => (
+        logo: bloc.state.meta?.logoUrl,
+        name: bloc.state.meta?.organizationName,
+      ),
     );
     // Idempotent and cheap; the store ignores a key it already has or is
     // already fetching, so calling it from build is the simplest correct place.
@@ -87,7 +90,10 @@ class OrgLogo extends StatelessWidget {
       // fallback the moment the logo arrives — which is a visible collapse to
       // zero width and back in the middle of the chrome.
       child: picture == null
-          ? KeyedSubtree(key: const ValueKey('org-logo-fallback'), child: fallback)
+          ? KeyedSubtree(
+              key: const ValueKey('org-logo-fallback'),
+              child: fallback,
+            )
           : SizedBox(
               key: const ValueKey('org-logo-picture'),
               height: height,

@@ -898,6 +898,19 @@
       "modeInterval": "Start and end",
       "noDescription": "No description",
       "continue": "Continue"
+    },
+    "view": {
+      "list": "List",
+      "calendar": "Calendar",
+      "timesheet": "Timesheet"
+    },
+    "calendar": {
+      "untimed": "Untimed",
+      "previous": "Previous",
+      "next": "Next",
+      "day": "Day",
+      "week": "Week",
+      "truncated": "This range holds more entries than the calendar shows. Narrow it to see them all."
     }
   },
   "projects": {
@@ -1078,7 +1091,12 @@
     "allUsers": "All users",
     "allProjects": "All projects",
     "searchUsers": "Search users…",
-    "searchProjects": "Search projects…"
+    "searchProjects": "Search projects…",
+    "cell": {
+      "none": "Nothing logged yet.",
+      "add": "Add time"
+    },
+    "truncated": "Showing {{shown}} of {{total}} rows. Narrow the filters to see the rest."
   },
   "reports": {
     "title": "Reports",

@@ -53,7 +53,7 @@ void main() {
       // renders inside the shell — which then owes it a title and a back route
       // rather than a blank page under the brand mark.
       expect(subPageTitleKey('/time', advancedTime: off), 'notFound.title');
-      expect(subPageBackRoute('/time', advancedTime: off), '/dashboard');
+      expect(subPageBackRoute('/time'), '/dashboard');
     });
 
     test('and it lights up no entry at all', () {
@@ -107,13 +107,35 @@ void main() {
       expect(isNavActive('/timesheet', '/time', advancedTime: on), isTrue);
     });
 
-    test('the timesheet becomes a sub-page of the module', () {
-      expect(subPageTitleKey('/timesheet', advancedTime: on), 'nav.timesheet');
-      expect(subPageBackRoute('/timesheet', advancedTime: on), '/time');
+    test('all three of the module\'s pages are top-level, not sub-pages', () {
+      // They are one destination seen three ways, and the switcher is how a
+      // reader moves between them — so none of them wears a back button, and
+      // none needs a title of its own in the shell's bar.
+      for (final page in ['/time', '/time/calendar', '/time/timesheet']) {
+        expect(subPageTitleKey(page, advancedTime: on), isNull, reason: page);
+        expect(isNavActive(page, '/time', advancedTime: on), isTrue,
+            reason: page);
+      }
+    });
+  });
+
+  group('with the module off, every one of its routes explains itself', () {
+    const off = false;
+
+    test('not only /time', () {
+      // The router answers all three with the not-found page; a deep link into
+      // the calendar deserves the same title and back button as one into the
+      // list, or it is the empty page under the brand mark this rule exists to
+      // prevent.
+      for (final page in ['/time', '/time/calendar', '/time/timesheet']) {
+        expect(subPageTitleKey(page, advancedTime: off), 'notFound.title',
+            reason: page);
+      }
     });
 
-    test('the module itself is a top-level page', () {
-      expect(subPageTitleKey('/time', advancedTime: on), isNull);
+    test('and the base timesheet is untouched by it', () {
+      expect(subPageTitleKey('/timesheet', advancedTime: off), isNull);
+      expect(isTimeModuleRoute('/timesheet'), isFalse);
     });
   });
 
@@ -164,11 +186,11 @@ void main() {
           isNull,
         );
         expect(
-          subPageBackRoute('/issues/HIN-1', advancedTime: advancedTime),
+          subPageBackRoute('/issues/HIN-1'),
           '/issues',
         );
         expect(
-          subPageBackRoute('/nowhere', advancedTime: advancedTime),
+          subPageBackRoute('/nowhere'),
           '/dashboard',
         );
       });

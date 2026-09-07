@@ -898,6 +898,19 @@
       "modeInterval": "开始和结束",
       "noDescription": "无描述",
       "continue": "继续"
+    },
+    "view": {
+      "list": "列表",
+      "calendar": "日历",
+      "timesheet": "工时表"
+    },
+    "calendar": {
+      "untimed": "无时段",
+      "previous": "上一个",
+      "next": "下一个",
+      "day": "日",
+      "week": "周",
+      "truncated": "此时间段的记录多于日历所显示的。缩小时间段即可查看全部。"
     }
   },
   "projects": {
@@ -1078,7 +1091,12 @@
     "allUsers": "所有用户",
     "allProjects": "所有项目",
     "searchUsers": "搜索用户…",
-    "searchProjects": "搜索项目…"
+    "searchProjects": "搜索项目…",
+    "cell": {
+      "none": "尚未记录。",
+      "add": "添加时间"
+    },
+    "truncated": "正在显示 {{total}} 行中的 {{shown}} 行。缩小筛选范围即可查看其余部分。"
   },
   "reports": {
     "title": "报表",

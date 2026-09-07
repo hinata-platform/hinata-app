@@ -898,6 +898,19 @@
       "modeInterval": "Début et fin",
       "noDescription": "Sans description",
       "continue": "Reprendre"
+    },
+    "view": {
+      "list": "Liste",
+      "calendar": "Calendrier",
+      "timesheet": "Feuille de temps"
+    },
+    "calendar": {
+      "untimed": "Sans heure",
+      "previous": "Précédent",
+      "next": "Suivant",
+      "day": "Jour",
+      "week": "Semaine",
+      "truncated": "Cette période contient plus d’entrées que le calendrier n’en affiche. Réduisez-la pour toutes les voir."
     }
   },
   "projects": {
@@ -1078,7 +1091,12 @@
     "allUsers": "Tous les utilisateurs",
     "allProjects": "Tous les projets",
     "searchUsers": "Rechercher des utilisateurs…",
-    "searchProjects": "Rechercher des projets…"
+    "searchProjects": "Rechercher des projets…",
+    "cell": {
+      "none": "Rien de saisi pour l’instant.",
+      "add": "Ajouter du temps"
+    },
+    "truncated": "{{shown}} lignes sur {{total}} sont affichées. Affinez les filtres pour voir le reste."
   },
   "reports": {
     "title": "Rapports",

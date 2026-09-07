@@ -898,6 +898,19 @@
       "modeInterval": "開始と終了",
       "noDescription": "説明なし",
       "continue": "続ける"
+    },
+    "view": {
+      "list": "リスト",
+      "calendar": "カレンダー",
+      "timesheet": "タイムシート"
+    },
+    "calendar": {
+      "untimed": "時刻なし",
+      "previous": "前へ",
+      "next": "次へ",
+      "day": "日",
+      "week": "週",
+      "truncated": "この期間にはカレンダーに表示しきれない記録があります。期間を狭めるとすべて表示されます。"
     }
   },
   "projects": {
@@ -1078,7 +1091,12 @@
     "allUsers": "すべてのユーザー",
     "allProjects": "すべてのプロジェクト",
     "searchUsers": "ユーザーを検索…",
-    "searchProjects": "プロジェクトを検索…"
+    "searchProjects": "プロジェクトを検索…",
+    "cell": {
+      "none": "まだ記録がありません。",
+      "add": "時間を追加"
+    },
+    "truncated": "{{total}} 行のうち {{shown}} 行を表示しています。絞り込むと残りが表示されます。"
   },
   "reports": {
     "title": "レポート",

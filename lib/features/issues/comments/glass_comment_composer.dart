@@ -23,7 +23,8 @@ import 'package:lexical_editor_flutter/lexical_editor_flutter.dart'
 import '../../../core/lexical/hinata_editor.dart';
 import '../../../core/lexical/hinata_editor_controller.dart';
 import '../../../core/lexical/hinata_editing.dart';
-import '../../../core/lexical/hinata_markdown_preview.dart' show markdownToDocument;
+import '../../../core/lexical/hinata_markdown_preview.dart'
+    show markdownToDocument;
 import '../../knowledge/markdown/mention_field.dart';
 import '../../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import 'voice/voice_recorder.dart';
@@ -179,7 +180,6 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
   /// out as markdown on the way out — the wire format for a comment is still a
   /// markdown string, and this is a change of editor, not of API.
   HinataEditorController? _doc;
-
 
   /// Reaches the editor so this composer's own button row can drive it.
   final GlobalKey<HinataEditorState> _docKey = GlobalKey<HinataEditorState>();
@@ -575,6 +575,4 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
       ),
     );
   }
-
-
 }

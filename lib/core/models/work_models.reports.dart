@@ -144,7 +144,10 @@ class TimesheetRow extends Equatable {
   );
 
   @override
-  List<Object?> get props => [userId, projectId, totalMinutes];
+  // The days are part of the row's identity, not decoration: the paged view
+  // navigates week by week, and two weeks of the same person on the same
+  // project would otherwise compare equal and never repaint.
+  List<Object?> get props => [userId, projectId, totalMinutes, minutesPerDay];
 }
 
 // ─────────────────────────── Sprint insights report ───────────────────────
