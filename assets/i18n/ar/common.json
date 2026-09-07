@@ -1784,7 +1784,8 @@
       "ISSUE_CLONED": "استنساخ مهمة",
       "ISSUE_EXPORTED": "تصدير مهمة",
       "TIME_ENTRY_UPDATED": "تم تحديث إدخال الوقت",
-      "TIME_ENTRY_DELETED": "تم حذف إدخال الوقت"
+      "TIME_ENTRY_DELETED": "تم حذف إدخال الوقت",
+      "TIME_ENTRY_CREATED_FOR": "تم تسجيل الوقت لشخص آخر"
     },
     "meta": {
       "oldRole": "الدور السابق",

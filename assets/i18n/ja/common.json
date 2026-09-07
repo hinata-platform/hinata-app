@@ -1784,7 +1784,8 @@
       "ISSUE_CLONED": "課題を複製",
       "ISSUE_EXPORTED": "課題をエクスポート",
       "TIME_ENTRY_UPDATED": "作業時間の記録を更新",
-      "TIME_ENTRY_DELETED": "作業時間の記録を削除"
+      "TIME_ENTRY_DELETED": "作業時間の記録を削除",
+      "TIME_ENTRY_CREATED_FOR": "他の人の作業時間を記録"
     },
     "meta": {
       "oldRole": "変更前のロール",

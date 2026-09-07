@@ -1784,7 +1784,8 @@
       "ISSUE_CLONED": "Vorgang geklont",
       "ISSUE_EXPORTED": "Vorgang exportiert",
       "TIME_ENTRY_UPDATED": "Zeiteintrag geändert",
-      "TIME_ENTRY_DELETED": "Zeiteintrag gelöscht"
+      "TIME_ENTRY_DELETED": "Zeiteintrag gelöscht",
+      "TIME_ENTRY_CREATED_FOR": "Zeit für jemand anderen gebucht"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",

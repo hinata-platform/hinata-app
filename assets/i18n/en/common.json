@@ -1784,7 +1784,8 @@
       "ISSUE_CLONED": "Issue cloned",
       "ISSUE_EXPORTED": "Issue exported",
       "TIME_ENTRY_UPDATED": "Time entry updated",
-      "TIME_ENTRY_DELETED": "Time entry deleted"
+      "TIME_ENTRY_DELETED": "Time entry deleted",
+      "TIME_ENTRY_CREATED_FOR": "Time booked for someone else"
     },
     "meta": {
       "oldRole": "Previous role",

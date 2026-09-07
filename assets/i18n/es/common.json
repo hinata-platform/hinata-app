@@ -1784,7 +1784,8 @@
       "ISSUE_CLONED": "Incidencia clonada",
       "ISSUE_EXPORTED": "Incidencia exportada",
       "TIME_ENTRY_UPDATED": "Registro de tiempo actualizado",
-      "TIME_ENTRY_DELETED": "Registro de tiempo eliminado"
+      "TIME_ENTRY_DELETED": "Registro de tiempo eliminado",
+      "TIME_ENTRY_CREATED_FOR": "Tiempo registrado para otra persona"
     },
     "meta": {
       "oldRole": "Rol anterior",

@@ -1784,7 +1784,8 @@
       "ISSUE_CLONED": "Ticket cloné",
       "ISSUE_EXPORTED": "Ticket exporté",
       "TIME_ENTRY_UPDATED": "Saisie de temps modifiée",
-      "TIME_ENTRY_DELETED": "Saisie de temps supprimée"
+      "TIME_ENTRY_DELETED": "Saisie de temps supprimée",
+      "TIME_ENTRY_CREATED_FOR": "Temps saisi pour quelqu’un d’autre"
     },
     "meta": {
       "oldRole": "Rôle précédent",

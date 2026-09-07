@@ -1784,7 +1784,8 @@
       "ISSUE_CLONED": "इश्यू क्लोन किया गया",
       "ISSUE_EXPORTED": "इश्यू निर्यात किया गया",
       "TIME_ENTRY_UPDATED": "समय प्रविष्टि अपडेट की गई",
-      "TIME_ENTRY_DELETED": "समय प्रविष्टि हटाई गई"
+      "TIME_ENTRY_DELETED": "समय प्रविष्टि हटाई गई",
+      "TIME_ENTRY_CREATED_FOR": "किसी और के लिए समय दर्ज"
     },
     "meta": {
       "oldRole": "पिछली भूमिका",

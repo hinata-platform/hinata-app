@@ -1784,7 +1784,8 @@
       "ISSUE_CLONED": "事项已克隆",
       "ISSUE_EXPORTED": "事项已导出",
       "TIME_ENTRY_UPDATED": "工时记录已更新",
-      "TIME_ENTRY_DELETED": "工时记录已删除"
+      "TIME_ENTRY_DELETED": "工时记录已删除",
+      "TIME_ENTRY_CREATED_FOR": "为他人记录工时"
     },
     "meta": {
       "oldRole": "原角色",

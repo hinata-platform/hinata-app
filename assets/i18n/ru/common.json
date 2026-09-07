@@ -1784,7 +1784,8 @@
       "ISSUE_CLONED": "Задача клонирована",
       "ISSUE_EXPORTED": "Задача экспортирована",
       "TIME_ENTRY_UPDATED": "Запись времени изменена",
-      "TIME_ENTRY_DELETED": "Запись времени удалена"
+      "TIME_ENTRY_DELETED": "Запись времени удалена",
+      "TIME_ENTRY_CREATED_FOR": "Время записано за другого"
     },
     "meta": {
       "oldRole": "Прежняя роль",
