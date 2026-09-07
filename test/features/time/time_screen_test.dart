@@ -66,6 +66,9 @@ void main() {
     required _FakeTimeRepository time,
     TimerState timer = const TimerState(),
     Size size = const Size(1400, 900),
+    // What the compact shell hands the page as the height of the glass app bar
+    // plus whatever the page docked into it. Zero unless a test is about it.
+    EdgeInsets padding = EdgeInsets.zero,
   }) {
     final router = GoRouter(
       routes: [
@@ -95,7 +98,7 @@ void main() {
       ],
     );
     return MediaQuery(
-      data: MediaQueryData(size: size),
+      data: MediaQueryData(size: size, padding: padding),
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
         routerConfig: router,
@@ -104,6 +107,85 @@ void main() {
   }
 
   group('the list', () {
+    /// The page the reader opens is behind the app bar unless the body spends
+    /// the gutter itself.
+    ///
+    /// On a phone the shell does not reserve the bar's height: it publishes it
+    /// as `MediaQuery.padding.top` so content can scroll *through* the blur, and
+    /// every page pays it where it wants the content to begin. This one did not,
+    /// and the first day of the list — its header and its first rows — sat
+    /// permanently behind the bar, smeared into it rather than clipped, so the
+    /// page read as empty with something indistinct above it.
+    testWidgets('on a phone the list starts below the glass header', (
+      tester,
+    ) async {
+      const dock = EdgeInsets.only(top: 180);
+      await tester.pumpWidget(
+        host(
+          time: _FakeTimeRepository([entry(id: 'a', description: 'first')]),
+          size: const Size(390, 844),
+          padding: dock,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final list = tester.widget<ListView>(find.byType(ListView));
+      expect(list.padding?.resolve(TextDirection.ltr).top, dock.top);
+      // And the refresh spinner drops from the same line, not from behind
+      // the bar.
+      expect(
+        tester.widget<RefreshIndicator>(find.byType(RefreshIndicator)).edgeOffset,
+        dock.top,
+      );
+    });
+
+    testWidgets('on a wide window the head above the list has already paid it', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          time: _FakeTimeRepository([entry(id: 'a', description: 'first')]),
+          size: const Size(1400, 900),
+          padding: const EdgeInsets.only(top: 180),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Paying it twice would push the list a bar's height down the page.
+      final list = tester.widget<ListView>(find.byType(ListView));
+      expect(list.padding?.resolve(TextDirection.ltr).top, 0);
+    });
+
+    testWidgets('the empty state begins below the header, not behind it', (
+      tester,
+    ) async {
+      const dock = 180.0;
+      await tester.pumpWidget(
+        host(
+          time: _FakeTimeRepository(const []),
+          size: const Size(390, 844),
+          padding: const EdgeInsets.only(top: dock),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Centred in the bare window its top edge lands around 90 — a third of
+      // the card behind the blur, which is how the page came to look like it
+      // was showing nothing at all.
+      expect(
+        tester.getTopLeft(find.byType(HiveEmptyState)).dy,
+        greaterThanOrEqualTo(dock),
+      );
+      // And it is a card around a sentence, not a rectangle the height of the
+      // page: HiveEmptyState fills whatever height it is given, so handing it
+      // the body's full height drew one empty box from the toolbar to the
+      // navigation.
+      expect(
+        tester.getSize(find.byType(HiveEmptyState)).height,
+        lessThan(844 - dock),
+      );
+    });
+
     testWidgets(
       'a person with nothing tracked is told so, not shown a spinner',
       (tester) async {
