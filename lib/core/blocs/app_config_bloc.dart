@@ -182,7 +182,9 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
       // here exactly as the boot path does rather than letting a too-old client
       // keep talking to it.
       if (isVersionBelow(state.appVersion, meta.minAppVersion)) {
-        emit(state.copyWith(status: AppConfigStatus.updateRequired, meta: meta));
+        emit(
+          state.copyWith(status: AppConfigStatus.updateRequired, meta: meta),
+        );
         return;
       }
       emit(state.copyWith(meta: meta));

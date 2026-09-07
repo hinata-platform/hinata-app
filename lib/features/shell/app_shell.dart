@@ -197,22 +197,16 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  /// Routes the system back (Android back button / edge-swipe gesture) through
-  /// the same fallback chain as the shell's on-screen back button instead of
-  /// letting it close the app: pop whatever sits on a navigator stack (pushed
-  /// pages, dialogs), then a page-published in-page back override (e.g. the
-  /// settings/admin section → index step), then the sub-page's parent route,
-  /// then home. Only on /dashboard with nothing left to unwind does the system
-  /// take over and background the app.
+  /// The flag, read rather than watched: the two methods below run from a
+  /// gesture or a hardware button, where the current value is what matters and
+  /// subscribing from outside a build would be wrong.
+  bool get _advancedTime =>
+      context.read<AppConfigBloc>().state.meta?.advancedTimeTracking ?? false;
+
   /// Whether the swipe-back gesture has anywhere to go right now: something
   /// on a navigator stack, an in-page back override, or a sub-page's parent
   /// route. Primary tabs (dashboard, issues, board, …) don't swipe — the
   /// gesture is for unwinding, not for jumping between tabs.
-  /// The flag outside a build: these run from a gesture or a hardware button,
-  /// where reading the current value is right and subscribing would be wrong.
-  bool get _advancedTime =>
-      context.read<AppConfigBloc>().state.meta?.advancedTimeTracking ?? false;
-
   bool _canSwipeBack() {
     final router = GoRouter.of(context);
     if (router.canPop()) return true;
@@ -221,6 +215,13 @@ class _AppShellState extends State<AppShell> {
         subPageTitleKey(location, advancedTime: _advancedTime) != null;
   }
 
+  /// Routes the system back (Android back button / edge-swipe gesture) through
+  /// the same fallback chain as the shell's on-screen back button instead of
+  /// letting it close the app: pop whatever sits on a navigator stack (pushed
+  /// pages, dialogs), then a page-published in-page back override (e.g. the
+  /// settings/admin section → index step), then the sub-page's parent route,
+  /// then home. Only on /dashboard with nothing left to unwind does the system
+  /// take over and background the app.
   Future<bool> _onSystemBack() async {
     final router = GoRouter.of(context);
     if (router.canPop()) {
