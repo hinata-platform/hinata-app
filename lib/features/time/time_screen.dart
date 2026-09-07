@@ -358,53 +358,107 @@ class _TimeScreenState extends State<TimeScreen> {
     });
   }
 
+  /// What the body has to leave clear at the top.
+  ///
+  /// On a phone the body scrolls *under* the glass app bar — which is also
+  /// carrying this page's docked search and filters — and the shell hands that
+  /// height over as [BuildContext.topGutter] rather than reserving it, so the
+  /// page spends it itself. On a wide window the head, the timer and the filters
+  /// sit above the body in the column and have already spent it.
+  ///
+  /// Without it the day this list opens on is behind the header: not clipped,
+  /// which would at least look broken, but blurred into the bar — so the page
+  /// reads as an empty screen with a smear of something above it.
+  double _bodyTopInset(BuildContext context) =>
+      context.isCompact ? context.topGutter : 0;
+
+  /// A state that is not a list: below the header, hugging its own content, on
+  /// a surface that can still be pulled to refresh.
+  ///
+  /// In a scroll view rather than straight into the column, for two reasons a
+  /// [HiveEmptyState] makes plain. Given a tight height its card fills it — on a
+  /// phone that is one empty rectangle from the toolbar down past the
+  /// navigation, which reads as a broken page rather than an empty one. And an
+  /// empty page is exactly where a reader reaches for pull-to-refresh, which a
+  /// fixed child cannot offer them.
+  Widget _placeholder(Widget child) => RefreshIndicator(
+    onRefresh: _reload,
+    edgeOffset: _bodyTopInset(context),
+    child: ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(
+        0,
+        _bodyTopInset(context) + 24,
+        0,
+        context.bottomGutter + 24,
+      ),
+      children: [child],
+    ),
+  );
+
   Widget _list() {
     return BlocBuilder<PagedCubit<WorkItem>, PagedState<WorkItem>>(
       builder: (context, state) {
         if (state.isLoading && !state.hasData) {
-          return const Center(child: HiveLoader(size: 44));
+          // Not a placeholder card: a spinner has nothing to refresh yet, and
+          // it belongs in the middle of the page a reader is waiting on.
+          return Padding(
+            padding: EdgeInsets.only(top: _bodyTopInset(context)),
+            child: const Center(child: HiveLoader(size: 44)),
+          );
         }
         if (state.errorKey != null && !state.hasData) {
-          return HiveEmptyState(
-            title: context.t('time.error.title'),
-            message: context.t(state.errorKey!),
-            action: FilledButton.icon(
-              onPressed: _reload,
-              icon: const Icon(LucideIcons.refreshCw, size: 15),
-              label: Text(context.t('common.retry')),
+          return _placeholder(
+            HiveEmptyState(
+              title: context.t('time.error.title'),
+              message: context.t(state.errorKey!),
+              action: FilledButton.icon(
+                onPressed: _reload,
+                icon: const Icon(LucideIcons.refreshCw, size: 15),
+                label: Text(context.t('common.retry')),
+              ),
             ),
           );
         }
         if (state.items.isEmpty) {
-          return HiveEmptyState(
-            title: context.t(
-              _filter.isEmpty ? 'time.empty.title' : 'time.empty.filtered',
+          return _placeholder(
+            HiveEmptyState(
+              title: context.t(
+                _filter.isEmpty ? 'time.empty.title' : 'time.empty.filtered',
+              ),
+              message: context.t(
+                _filter.isEmpty ? 'time.empty.message' : 'time.empty.tryOther',
+              ),
+              action: _filter.isEmpty
+                  ? FilledButton.icon(
+                      onPressed: _newEntry,
+                      icon: const Icon(LucideIcons.plus, size: 15),
+                      label: Text(context.t('time.entry.new')),
+                    )
+                  : TextButton.icon(
+                      onPressed: () {
+                        _searchController.clear();
+                        _applyFilter(const TimeEntryFilter());
+                      },
+                      icon: const Icon(LucideIcons.x, size: 15),
+                      label: Text(context.t('common.clear')),
+                    ),
             ),
-            message: context.t(
-              _filter.isEmpty ? 'time.empty.message' : 'time.empty.tryOther',
-            ),
-            action: _filter.isEmpty
-                ? FilledButton.icon(
-                    onPressed: _newEntry,
-                    icon: const Icon(LucideIcons.plus, size: 15),
-                    label: Text(context.t('time.entry.new')),
-                  )
-                : TextButton.icon(
-                    onPressed: () {
-                      _searchController.clear();
-                      _applyFilter(const TimeEntryFilter());
-                    },
-                    icon: const Icon(LucideIcons.x, size: 15),
-                    label: Text(context.t('common.clear')),
-                  ),
           );
         }
         final groups = _groupByDay(state.items);
         return RefreshIndicator(
           onRefresh: _reload,
+          // Where the spinner drops from. Without it the refresh indicator
+          // appears behind the glass bar, which on a phone is most of the way
+          // to invisible.
+          edgeOffset: _bodyTopInset(context),
           child: ListView.builder(
             controller: _scroll,
-            padding: EdgeInsets.only(bottom: context.bottomGutter + 24),
+            padding: EdgeInsets.only(
+              top: _bodyTopInset(context),
+              bottom: context.bottomGutter + 24,
+            ),
             itemCount: groups.length + (state.isLoadingMore ? 1 : 0),
             itemBuilder: (context, index) {
               if (index >= groups.length) {
