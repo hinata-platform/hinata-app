@@ -35,6 +35,20 @@ import 'timer_bar.dart';
 /// shift planning draws shifts. This page is the part that is about *time
 /// entries*: which window to ask for, what to do with a swept span, and where a
 /// dropped block ends up.
+///
+/// **Which clock the blocks are laid out on.** The device's, through
+/// `toLocal()`, and that is the account's: `TimeZoneSync` stamps the account
+/// with the device's zone at sign-in and on every resume, and the server files
+/// an entry's reporting day in the account's zone. Drawing on any other clock
+/// would put an entry near midnight in a different column from the day it is
+/// filed under — and would disagree with the list and the timesheet beside it,
+/// which read `toLocal()` too.
+///
+/// A second pipeline through the tz database would resolve to the same answer,
+/// so there is not one. The place a real conversion belongs is HIN-44, where an
+/// event carries a zone of its own that is nobody's device — and [TimeGrid]
+/// already takes wall-clock times, so that stage converts on the way in without
+/// touching the grid.
 class TimeCalendarScreen extends StatefulWidget {
   const TimeCalendarScreen({super.key});
 
@@ -49,7 +63,8 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   _Span _span = _Span.week;
 
   /// The day the view is anchored on — the day itself, or a day inside the week.
-  late DateTime _anchor = _today();
+  /// The day the view is anchored on.
+  DateTime _anchor = _today();
 
   List<WorkItem> _entries = const [];
   bool _loading = true;
@@ -393,6 +408,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     final title = entry.description?.trim().isNotEmpty == true
         ? entry.description!.trim()
         : context.t('time.entry.noDescription');
+    // `toLocal()`, and deliberately so — see the zone note on this class.
     final start = entry.startedAt?.toLocal();
     final end = entry.endedAt?.toLocal();
     if (start != null && end != null) {
