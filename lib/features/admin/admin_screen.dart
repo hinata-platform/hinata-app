@@ -10,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/blocs/app_config_bloc.dart';
 import '../../core/repositories/admin_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/responsive/responsive.dart';
@@ -199,6 +200,10 @@ class _AdminScreenState extends State<AdminScreen> {
         _settings!,
       );
       if (mounted) {
+        // These settings decide what /meta reports — feature flags above all.
+        // Re-read it so the admin sees the nav entry they just switched on
+        // appear behind them, instead of after the next restart.
+        context.read<AppConfigBloc>().add(const MetaRefreshRequested());
         showGlassToast(
           context,
           context.t('admin.saved'),

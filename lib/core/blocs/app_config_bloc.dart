@@ -36,6 +36,18 @@ class SetupFinished extends AppConfigEvent {
   const SetupFinished();
 }
 
+/// Re-read `/api/v1/meta` on a running app, because what it says can change
+/// under us: an admin flips a platform flag and the nav entry, the routes and
+/// the endpoints behind it change with it.
+///
+/// Fired on app resume, right after an admin saves the settings, and whenever
+/// the server answers `error.feature.disabled` — that last one means our idea
+/// of a flag is stale, so the honest reaction is to ask again rather than to
+/// show "not found".
+class MetaRefreshRequested extends AppConfigEvent {
+  const MetaRefreshRequested();
+}
+
 enum AppConfigStatus {
   initial,
   connecting,
@@ -80,6 +92,9 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
     on<AppConfigStarted>(_onStarted, transformer: restartable());
     on<ServerUrlSubmitted>(_onServerUrlSubmitted, transformer: droppable());
     on<SetupFinished>(_onSetupFinished);
+    // Droppable: resume, admin-save and a feature-disabled response can all
+    // land within the same second, and one fresh /meta answers all three.
+    on<MetaRefreshRequested>(_onMetaRefresh, transformer: droppable());
   }
 
   final MetaRepository repository;
@@ -147,6 +162,33 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
     Emitter<AppConfigState> emit,
   ) async {
     await _verify(emit);
+  }
+
+  /// Refreshes the server metadata in place, without disturbing the connection
+  /// state machine. Only meaningful once the app is up: before that, `_verify`
+  /// owns the flow and would fight this.
+  ///
+  /// A failed read keeps the metadata we already have. Losing the network for a
+  /// moment must not throw a working session back to the connect screen —
+  /// unlike boot, there is a perfectly good previous answer to keep using.
+  Future<void> _onMetaRefresh(
+    MetaRefreshRequested event,
+    Emitter<AppConfigState> emit,
+  ) async {
+    if (state.status != AppConfigStatus.ready) return;
+    try {
+      final meta = await repository.meta();
+      // The server can also raise its minimum version while we run; honour it
+      // here exactly as the boot path does rather than letting a too-old client
+      // keep talking to it.
+      if (isVersionBelow(state.appVersion, meta.minAppVersion)) {
+        emit(state.copyWith(status: AppConfigStatus.updateRequired, meta: meta));
+        return;
+      }
+      emit(state.copyWith(meta: meta));
+    } catch (_) {
+      // Keep the last known metadata.
+    }
   }
 
   Future<void> _verify(Emitter<AppConfigState> emit) async {
