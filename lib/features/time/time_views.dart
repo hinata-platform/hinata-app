@@ -23,12 +23,6 @@ enum TimeView {
   final String labelKey;
   final IconData icon;
 
-  /// Which view a location belongs to. Anything unrecognised is the list, which
-  /// is the module's front door.
-  static TimeView of(String location) => values.firstWhere(
-    (view) => view.route == location,
-    orElse: () => TimeView.list,
-  );
 }
 
 /// The switcher every page of the module wears.

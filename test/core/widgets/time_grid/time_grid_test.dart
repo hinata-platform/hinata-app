@@ -38,6 +38,9 @@ void main() {
     void Function(TimeGridItem, TimeGridSpan)? onMoved,
     void Function(TimeGridItem)? onTap,
     Size size = const Size(900, 700),
+    // The grid opens on the working day; a test about hours outside it has to
+    // say so or the block it means is scrolled out of reach.
+    int initialScrollHour = 8,
   }) => MediaQuery(
     data: MediaQueryData(size: size),
     child: MaterialApp(
@@ -52,6 +55,7 @@ void main() {
             // Fixed, so a test never depends on the day it runs on.
             now: DateTime(2026, 9, 7, 10, 30),
             metrics: const TimeGridMetrics(hourExtent: 60),
+            initialScrollHour: initialScrollHour,
             onCreate: onCreate,
             onMoved: onMoved,
             onTap: onTap,
@@ -117,6 +121,52 @@ void main() {
 
     // One block per day it touches, and both are the same entry.
     expect(find.text('night shift'), findsNWidgets(2));
+  });
+
+  testWidgets('dragging half of a night shift moves the whole entry', (
+    tester,
+  ) async {
+    // The clipping is geometry. A drag computes from the item's own span, so
+    // handing it the half that was grabbed made an eight-hour entry save as six
+    // — silently, in a working-time record. A stopped overnight timer produces
+    // exactly this entry; it is not only HIN-44's problem.
+    TimeGridItem? moved;
+    TimeGridSpan? span;
+    final night = TimeGridItem(
+      id: 'night',
+      start: DateTime(2026, 9, 7, 22),
+      end: DateTime(2026, 9, 8, 6),
+      title: 'night shift',
+      movable: true,
+    );
+    await tester.pumpWidget(
+      host(
+        days: week,
+        layers: [blocks([night])],
+        initialScrollHour: 0,
+        onMoved: (item, dropped) {
+          moved = item;
+          span = dropped;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The Tuesday half — 00:00–06:00, the one whose clipped duration is wrong.
+    final halves = tester.widgetList<Text>(find.text('night shift')).length;
+    expect(halves, 2);
+    final tuesday = tester.getCenter(find.text('night shift').last);
+    final gesture = await tester.startGesture(tuesday);
+    await tester.pump(const Duration(milliseconds: 600));
+    await gesture.moveBy(const Offset(0, 40));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(moved?.id, 'night');
+    // The entry the caller gets back carries its own span, not the column's.
+    expect(moved!.end.difference(moved!.start), const Duration(hours: 8));
+    expect(span!.end.difference(span!.start), const Duration(hours: 8));
   });
 
   testWidgets('a block that ends exactly at midnight stays in its own day', (

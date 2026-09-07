@@ -87,6 +87,10 @@ class TimeGrid extends StatefulWidget {
   /// where it was dropped.
   final void Function(TimeGridItem item, TimeGridSpan span)? onMoved;
 
+  /// A block or a band chip was tapped — both, deliberately: an entry with no
+  /// clock is still an entry, and opening it is the same act as opening one on
+  /// the canvas. The item is always the caller's own, never the copy a column
+  /// was drawn from.
   final void Function(TimeGridItem item)? onTap;
 
   /// The hour the grid opens on, so a reader lands on the working day instead
@@ -153,7 +157,7 @@ class _TimeGridState extends State<TimeGrid> {
 
   /// The same, for how many rows each band layer needs: three call sites asked
   /// for it and each walked every item in the layer.
-  Map<String, int>? _bandRowCounts;
+  Map<TimeGridLayer, int>? _bandRowCounts;
 
   @override
   void initState() {
@@ -200,10 +204,13 @@ class _TimeGridState extends State<TimeGrid> {
   /// How many rows [layer] needs: as many as its busiest day has items, capped
   /// at [kTimeGridBandRowsMax].
   int _bandRows(TimeGridLayer layer) {
+    // Keyed on the layer, not its id: nothing requires an id to be unique, and
+    // two layers sharing one would collapse to a single count while the height
+    // above still summed both.
     final counts = _bandRowCounts ??= {
-      for (final band in _bandLayers) band.id: _countBandRows(band),
+      for (final band in _bandLayers) band: _countBandRows(band),
     };
-    return counts[layer.id] ?? 1;
+    return counts[layer] ?? 1;
   }
 
   int _countBandRows(TimeGridLayer layer) {
@@ -231,6 +238,14 @@ class _TimeGridState extends State<TimeGrid> {
 
   /// The block under a canvas point, if any — and whether the point is on its
   /// bottom edge, which is what makes a drag a resize instead of a move.
+  ///
+  /// The item handed back is the caller's, never the clipped copy the column was
+  /// drawn from. Clipping is geometry; a gesture is about the entry. A drag reads
+  /// the item's own `start`, `end` and `duration` to work out where it lands, so
+  /// grabbing the second half of a 22:00–06:00 entry and dropping it at nine
+  /// would otherwise report a six-hour span — and the save that follows rewrites
+  /// the entry to it. Eight hours becomes six, silently, in a working-time
+  /// record.
   ({TimeGridItem item, bool onEdge})? _hitTest(
     Offset local,
     double columnWidth,
@@ -242,11 +257,22 @@ class _TimeGridState extends State<TimeGrid> {
       for (final slot in slots.reversed) {
         final rect = _rectOf(slot, index, columnWidth);
         if (rect.contains(local)) {
-          return (item: slot.item, onEdge: local.dy > rect.bottom - 10);
+          return (
+            item: _originalOf(layer, slot.item),
+            onEdge: local.dy > rect.bottom - 10,
+          );
         }
       }
     }
     return null;
+  }
+
+  /// The item [drawn] was cut from, or [drawn] itself when nothing was cut.
+  TimeGridItem _originalOf(TimeGridLayer layer, TimeGridItem drawn) {
+    for (final item in layer.items) {
+      if (item.id == drawn.id) return item;
+    }
+    return drawn;
   }
 
   /// [layer]'s items as [day]'s column sees them.
@@ -257,8 +283,11 @@ class _TimeGridState extends State<TimeGrid> {
   /// for a night shift (HIN-44's ordinary case, not its edge) is most of the
   /// block missing.
   ///
-  /// The clipped copy keeps the original's id and data, so a tap or a drag on
-  /// either half is a gesture on the one item.
+  /// The clipped copy keeps the original's id and data, but its span is the
+  /// column's — so it is for drawing and hit *testing* only. Every gesture
+  /// resolves back to the caller's item through [_originalOf] before it reaches
+  /// a callback, because a drag computes from the item's own span and would
+  /// otherwise rewrite the entry to the half that was grabbed.
   Iterable<TimeGridItem> _itemsOn(TimeGridLayer layer, DateTime day) sync* {
     final dayStart = DateTime(day.year, day.month, day.day);
     final dayEnd = DateTime(day.year, day.month, day.day + 1);
@@ -440,6 +469,7 @@ class _TimeGridState extends State<TimeGrid> {
                                 days: widget.days,
                                 columnWidth: columnWidth,
                                 rows: _bandRows(layer),
+                                itemsOn: (day) => _itemsOn(layer, day),
                                 onTap: widget.onTap,
                               ),
                           ],
@@ -585,10 +615,16 @@ class _TimeGridState extends State<TimeGrid> {
           for (final placed in _placedBlocks(columnWidth))
             Positioned.fromRect(
               rect: placed.rect,
-              child: _Block(
-                item: placed.slot.item,
-                tint: placed.tint,
-                dimmed: drag?.item?.id == placed.slot.item.id,
+              // Each block its own layer. The painter's boundary retains the
+              // lines and washes; without one here the blocks — a decoration and
+              // a paragraph or two each — are still re-recorded on every scroll
+              // frame, and at a hundred-odd entries they are the larger half.
+              child: RepaintBoundary(
+                child: _Block(
+                  item: placed.slot.item,
+                  tint: placed.tint,
+                  dimmed: drag?.item?.id == placed.slot.item.id,
+                ),
               ),
             ),
           if (drag != null) ..._dragPreview(drag, columnWidth),
@@ -598,14 +634,34 @@ class _TimeGridState extends State<TimeGrid> {
   }
 
   List<_Placed> _placedBlocks(double columnWidth) {
-    final key = Object.hash(
+    // A record, not a hash: records compare structurally, and a hash is a
+    // fingerprint — a collision would hand back a stale placement while
+    // `_hitTest`, which is not memoised, kept computing the real one. The two
+    // would then disagree, and a tap would land on a block nobody can see.
+    //
+    // Spans rather than counts, so an edit that keeps the number of items — a
+    // block dragged an hour, which is the common case — is a different key. A
+    // few hundred hashCodes per build buys away an invariant the caller would
+    // otherwise have to know about.
+    final key = (
       columnWidth,
-      Object.hashAll(widget.days),
-      Object.hashAll(widget.layers.map((layer) => layer.items.length)),
-      Object.hashAll(widget.layers.map((layer) => layer.id)),
       _metrics.hourExtent,
       _metrics.firstHour,
       _metrics.lastHour,
+      Object.hashAll(widget.days),
+      Object.hashAll([
+        for (final layer in widget.layers) ...[
+          layer.id,
+          layer.placement,
+          layer.tint,
+          for (final item in layer.items) ...[
+            item.id,
+            item.start,
+            item.end,
+            item.tint,
+          ],
+        ],
+      ]),
     );
     final cached = _placed;
     if (cached != null && _placedKey == key) return cached;
@@ -773,6 +829,7 @@ class _BandRows extends StatelessWidget {
     required this.days,
     required this.columnWidth,
     required this.rows,
+    required this.itemsOn,
     this.onTap,
   });
 
@@ -780,6 +837,12 @@ class _BandRows extends StatelessWidget {
   final List<DateTime> days;
   final double columnWidth;
   final int rows;
+
+  /// The same filter the row count was worked out from — passed in rather than
+  /// reimplemented, because two answers to "which items does this column hold"
+  /// is exactly how the strip came to reserve rows it never filled.
+  final Iterable<TimeGridItem> Function(DateTime day) itemsOn;
+
   final void Function(TimeGridItem)? onTap;
 
   @override
@@ -797,12 +860,12 @@ class _BandRows extends StatelessWidget {
   }
 
   Iterable<Widget> _chipsFor(int index, Color tint) sync* {
-    // The band's items occupy a day rather than a span of hours, so the start's
-    // day is the whole question here — unlike the hour canvas, which has to cut
-    // a span across every column it touches.
-    final onDay = layer.items
-        .where((item) => _sameDay(item.start, days[index]))
-        .toList();
+    // Every column the item covers, which is what `TimeGridPlacement.band`
+    // promises — an absence spanning a week is one item and belongs in all seven
+    // of them. The row *count* is worked out the same way, and the two used to
+    // disagree: rows were reserved across the week for a chip drawn in one
+    // column, leaving blank strips beside it.
+    final onDay = itemsOn(days[index]).toList();
     // The last row is given over to a count when there are more than fit, so
     // the number on screen is never a lie about how much is there.
     final shown = onDay.length > rows ? rows - 1 : onDay.length;

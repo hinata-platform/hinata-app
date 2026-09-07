@@ -63,10 +63,18 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   _Span _span = _Span.week;
 
   /// The day the view is anchored on — the day itself, or a day inside the week.
-  /// The day the view is anchored on.
   DateTime _anchor = _today();
 
   List<WorkItem> _entries = const [];
+
+  /// The entries turned into what the grid draws, derived once per answer.
+  ///
+  /// Not per build. It allocates an item per entry, resolves a colour per entry
+  /// and asks i18n for a name per entry — and because it hands the grid a fresh
+  /// list every time, a build that changed nothing also threw away the grid's
+  /// own placement memo and made it re-filter and re-pack. A week navigation
+  /// paid all of that twice, once for entries that had not arrived yet.
+  List<TimeGridLayer> _layers = const [];
   bool _loading = true;
   String? _errorKey;
   bool _truncated = false;
@@ -124,6 +132,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       if (!mounted || seq != _loadSeq) return;
       setState(() {
         _entries = window.entries;
+        _layers = _layersOf(window.entries);
         _truncated = window.truncated;
         _loading = false;
       });
@@ -170,17 +179,24 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     unawaited(_load());
   }
 
-  /// A block dropped somewhere else. Optimistic: the grid already draws it in
-  /// its new place, and a refusal puts it back by reloading the window.
+  /// A block dropped somewhere else.
+  ///
+  /// Optimistic: the grid draws it in its new place before the server has
+  /// agreed, and a refusal puts the previous entries straight back — no reload,
+  /// because the answer is already here and a round trip would only leave the
+  /// block sitting wrong for longer. The reload is on the way *out* of a
+  /// successful save, where the server may have adjusted something.
   Future<void> _moveEntry(TimeGridItem item, TimeGridSpan span) async {
     final entry = item.data;
     if (entry is! WorkItem) return;
     final previous = _entries;
+    final optimistic = [
+      for (final existing in _entries)
+        if (existing.id == entry.id) _moved(existing, span) else existing,
+    ];
     setState(() {
-      _entries = [
-        for (final existing in _entries)
-          if (existing.id == entry.id) _moved(existing, span) else existing,
-      ];
+      _entries = optimistic;
+      _layers = _layersOf(optimistic);
     });
     try {
       await context.read<TimeRepository>().update(
@@ -196,7 +212,10 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       if (mounted) unawaited(_load());
     } on ApiFailure catch (failure) {
       if (!mounted) return;
-      setState(() => _entries = previous);
+      setState(() {
+        _entries = previous;
+        _layers = _layersOf(previous);
+      });
       showGlassToast(
         context,
         context.t(failure.message),
@@ -347,7 +366,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     }
     return TimeGrid(
       days: _days,
-      layers: _layers(),
+      layers: _layers,
       step: const Duration(minutes: 15),
       onCreate: _createFrom,
       onMoved: _moveEntry,
@@ -362,11 +381,13 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   /// occupies no hours — but leaving them out would make a day somebody logged
   /// look empty. They ride in the band under the headings instead, which is
   /// also where absences and holidays go when stage 10 lands.
-  List<TimeGridLayer> _layers() {
+  List<TimeGridLayer> _layersOf(List<WorkItem> entries) {
+    // Hoisted out of the loop: one lookup, not one per entry.
+    final noDescription = context.t('time.entry.noDescription');
     final timed = <TimeGridItem>[];
     final untimed = <TimeGridItem>[];
-    for (final entry in _entries) {
-      final item = _itemFor(entry);
+    for (final entry in entries) {
+      final item = _itemFor(entry, noDescription);
       if (item == null) continue;
       (entry.startedAt != null && entry.endedAt != null ? timed : untimed).add(
         item,
@@ -385,10 +406,10 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     ];
   }
 
-  TimeGridItem? _itemFor(WorkItem entry) {
+  TimeGridItem? _itemFor(WorkItem entry, String noDescription) {
     final title = entry.description?.trim().isNotEmpty == true
         ? entry.description!.trim()
-        : context.t('time.entry.noDescription');
+        : noDescription;
     // `toLocal()`, and deliberately so — see the zone note on this class.
     final start = entry.startedAt?.toLocal();
     final end = entry.endedAt?.toLocal();
@@ -425,8 +446,12 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   Color _tintFor(WorkItem entry) {
     final projectId = entry.projectId;
     if (projectId == null) return AppColors.accent;
-    return hueColor(projectId.hashCode.abs() % 360);
+    // Remembered per project: `hueColor` is an OKLCH conversion, and a week of
+    // one project's entries asked for the same answer once per entry.
+    return _tints[projectId] ??= hueColor(projectId.hashCode.abs() % 360);
   }
+
+  final Map<String, Color> _tints = {};
 
   // --- the controls -------------------------------------------------------------
 

@@ -38,7 +38,8 @@ class TimeGridMetrics {
     return (minutes / 60 * hourExtent).clamp(0.0, canvasHeight);
   }
 
-  /// What the canvas position [offset] means on [day], rounded down to [step].
+  /// What the canvas position [offset] means on [day], rounded to the nearest
+  /// [step].
   DateTime timeAt(double offset, DateTime day, {Duration? step}) {
     final minutes =
         (offset.clamp(0.0, canvasHeight) / hourExtent * 60).round() +
