@@ -16,13 +16,14 @@ void main() {
     String? userId = 'u1',
     String source = WorkItem.sourceApp,
     int minutes = 90,
+    String? description,
   }) => WorkItem(
     id: id,
     userId: userId,
     durationMinutes: minutes,
     activityType: 'Development',
     date: DateTime(2026, 9, 4),
-    description: 'note $id',
+    description: description ?? 'note $id',
     source: source,
   );
 
@@ -68,8 +69,58 @@ void main() {
         host(row(item('w1', userId: 'u2'), const WorkItemAccess(meId: 'u1'))),
       );
       expect(find.byIcon(LucideIcons.ellipsis), findsNothing);
-      // The row still says whose it is.
+    });
+
+    testWidgets('a colleague\'s hours show, their name and note do not', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          row(
+            item('w1', userId: 'u2', description: 'rewrote the parser'),
+            const WorkItemAccess(meId: 'u1'),
+          ),
+        ),
+      );
+
+      // The work is visible — that is what the card is for. (An untranslated
+      // bundle falls the activity back to its raw value, which is what a
+      // widget test sees.)
+      expect(find.textContaining('Development'), findsOneWidget);
+      // Who did it, and what they wrote about it, is not: a per-person reading
+      // of a colleague's day is a policy, not a default.
+      expect(find.textContaining('Linus Pauling'), findsNothing);
+      expect(find.textContaining('rewrote the parser'), findsNothing);
+      expect(find.byIcon(LucideIcons.user), findsOneWidget);
+    });
+
+    testWidgets('a lead sees the name and the note on the same entry', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          row(
+            item('w1', userId: 'u2', description: 'rewrote the parser'),
+            const WorkItemAccess(meId: 'u1', managesProject: true),
+          ),
+        ),
+      );
+
       expect(find.textContaining('Linus Pauling'), findsOneWidget);
+      expect(find.textContaining('rewrote the parser'), findsOneWidget);
+    });
+
+    testWidgets('your own entry always names you', (tester) async {
+      await tester.pumpWidget(
+        host(
+          row(
+            item('w1', userId: 'u1', description: 'my own note'),
+            const WorkItemAccess(meId: 'u1'),
+          ),
+        ),
+      );
+
+      expect(find.textContaining('my own note'), findsOneWidget);
     });
 
     testWidgets('a lead may delete but not edit someone else\'s entry', (
@@ -152,7 +203,12 @@ void main() {
     ) async {
       await tester.pumpWidget(
         host(
-          row(item('w1', userId: 'ghost'), const WorkItemAccess(meId: 'u1')),
+          row(
+            item('w1', userId: 'ghost'),
+            // A closed account's entry is by definition not the reader's own,
+            // so a lead is who sees it named at all.
+            const WorkItemAccess(meId: 'u1', managesProject: true),
+          ),
         ),
       );
       expect(find.textContaining('time.deletedUser'), findsOneWidget);

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 
 import '../repositories/account_repository.dart';
 import '../util/reader_time_zone.dart';
+import 'api_client.dart';
 
 /// Whether the device's zone is worth writing to the account.
 ///
@@ -43,22 +44,32 @@ class TimeZoneSync {
   /// exercised without a platform channel; production passes nothing.
   final Future<String?> Function() _deviceZone;
 
-  /// What the server last said this account's zone is, remembered for the life
-  /// of the process. Once it agrees with the device, a resume costs nothing at
-  /// all — no request, not even a read.
+  /// What this account's zone is as far as we know, remembered for the life of
+  /// the process. Once it agrees with the device, a resume costs nothing at all
+  /// — no request, not even a read.
   String? _accountZone;
   bool _known = false;
+
+  /// A zone the server refused. Kept so a device the server cannot parse — an
+  /// id from a tz database newer than the one its JDK ships, say — is asked
+  /// about once rather than on every foregrounding for the life of the install.
+  String? _refused;
 
   /// One run at a time, so a resume that lands while sign-in's run is still
   /// in flight cannot send the same PATCH twice.
   bool _running = false;
 
+  /// Bumped by [reset]. An answer that arrives after a sign-out belongs to the
+  /// account that has gone, and must not be written onto the one that follows.
+  int _generation = 0;
+
   Future<void> sync() async {
     if (_running) return;
     _running = true;
+    final generation = _generation;
     try {
       final device = await _deviceZone();
-      if (device == null) return;
+      if (device == null || device == _refused) return;
       // Already reconciled in this process: nothing changed on our side, so
       // there is nothing to ask the server about.
       if (_known &&
@@ -66,15 +77,28 @@ class TimeZoneSync {
         return;
       }
       if (!_known) {
-        _accountZone = (await _account.meAccount()).timezone;
+        final zone = (await _account.meAccount()).timezone;
+        if (generation != _generation) return;
+        _accountZone = zone;
         _known = true;
       }
       if (!shouldSyncTimeZone(deviceZone: device, accountZone: _accountZone)) {
         return;
       }
-      _accountZone = (await _account.updateMyProfile(
-        timezone: device,
-      )).timezone;
+      await _account.updateMyProfile(timezone: device);
+      if (generation != _generation) return;
+      // What was sent, not what came back. A server older than this field
+      // answers without it, and believing that answer would leave the two
+      // disagreeing forever — one PATCH per foregrounding, for good. The write
+      // was accepted; that is the fact worth remembering.
+      _accountZone = device;
+    } on ApiFailure catch (failure) {
+      if (failure.statusCode == 400 && generation == _generation) {
+        // The server has answered, and its answer is no. Asking again with the
+        // same value would only ever get the same no.
+        _refused = await _deviceZone();
+      }
+      if (kDebugMode) debugPrint('[timezone] not synced: $failure');
     } catch (error) {
       // Broad on purpose: a transport oddity or an unexpected body shape must
       // not take down a sign-in, and the retry is free. `_known` is only set
@@ -88,7 +112,9 @@ class TimeZoneSync {
 
   /// Forgets what the server said. Called on sign-out.
   void reset() {
+    _generation++;
     _known = false;
     _accountZone = null;
+    _refused = null;
   }
 }

@@ -151,6 +151,64 @@ void main() {
       expect(account.reads, 2);
       expect(account.patched, ['Asia/Tokyo']);
     });
+
+    test('a server that does not echo the field back is still written once', () async {
+      // Every self-hosted server older than this field answers a PATCH without
+      // a timezone. Believing that answer would mean the two never agree, and
+      // every single foregrounding of the app would send another write.
+      final account = _FakeAccountRepository(zone: null, echoesTimezone: false);
+      final sync = TimeZoneSync(
+        account: account,
+        deviceZone: () async => 'Asia/Tokyo',
+      );
+
+      await sync.sync();
+      await sync.sync();
+      await sync.sync();
+
+      expect(account.patched, ['Asia/Tokyo']);
+      expect(account.reads, 1);
+    });
+
+    test('a zone the server refuses is offered once, not forever', () async {
+      // A device on a newer tz database than the server's — "Europe/Kyiv"
+      // against a JDK that only knows "Europe/Kiev". The app cannot tell in
+      // advance; what it must not do is ask again on every resume.
+      final account = _FakeAccountRepository(zone: null, refusePatch: true);
+      final sync = TimeZoneSync(
+        account: account,
+        deviceZone: () async => 'Europe/Kyiv',
+      );
+
+      await sync.sync();
+      await sync.sync();
+      await sync.sync();
+
+      expect(account.patched, ['Europe/Kyiv']);
+    });
+
+    test('an answer that lands after sign-out is not written onto the next account', () async {
+      // The read is in flight when the user signs out. Its answer describes the
+      // account that has gone; comparing the next one against it would leave
+      // the new account never stamped at all.
+      final account = _FakeAccountRepository(zone: 'Europe/Berlin');
+      final sync = TimeZoneSync(
+        account: account,
+        deviceZone: () async => 'Europe/Berlin',
+      );
+      account.onRead = sync.reset;
+
+      await sync.sync();
+
+      // The stale answer was dropped, so the next run reads again — and this
+      // time writes, because the new account has no zone.
+      account.onRead = null;
+      account.zone = null;
+      await sync.sync();
+
+      expect(account.reads, 2);
+      expect(account.patched, ['Europe/Berlin']);
+    });
   });
 }
 
@@ -159,11 +217,23 @@ class _FakeAccountRepository implements AccountRepository {
     required this.zone,
     this.failRead = false,
     this.failPatch = false,
+    this.refusePatch = false,
+    this.echoesTimezone = true,
   });
 
   String? zone;
   bool failRead;
   bool failPatch;
+
+  /// Answers a write with 400, the way a server that cannot parse the zone does.
+  bool refusePatch;
+
+  /// Whether the PATCH answer carries the field at all — a server older than
+  /// this feature does not.
+  bool echoesTimezone;
+
+  /// Runs while a read is "in flight", so a sign-out can land mid-await.
+  void Function()? onRead;
 
   int reads = 0;
   final List<String?> patched = [];
@@ -172,6 +242,7 @@ class _FakeAccountRepository implements AccountRepository {
   Future<Me> meAccount() async {
     reads++;
     if (failRead) throw ApiFailure('errors.network');
+    onRead?.call();
     return _me(zone);
   }
 
@@ -184,9 +255,12 @@ class _FakeAccountRepository implements AccountRepository {
     String? timezone,
   }) async {
     patched.add(timezone);
+    if (refusePatch) {
+      throw ApiFailure('error.user.invalidTimezone', statusCode: 400);
+    }
     if (failPatch) throw ApiFailure('errors.unexpected');
     zone = timezone;
-    return _me(timezone);
+    return _me(echoesTimezone ? timezone : null);
   }
 
   @override

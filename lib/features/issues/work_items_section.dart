@@ -20,6 +20,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassErrorToast,
         showGlassModal,
         showGlassToast;
+import 'work_item_labels.dart';
 import 'work_log_sheet.dart';
 
 /// Who may do what to a work item — resolved once by the host from the auth
@@ -49,28 +50,19 @@ class WorkItemAccess {
   bool canEdit(WorkItem item) => isOwn(item);
 
   bool canDelete(WorkItem item) => isOwn(item) || managesProject;
-}
 
-/// The activity's translated name, or the raw value for one the bundle does
-/// not know — an MCP client may send its own.
-String activityLabel(BuildContext context, String activity) {
-  final key = 'time.activity.${activity.toLowerCase()}';
-  final label = context.t(key);
-  return label == key ? activity : label;
-}
-
-/// Who the entry is credited to: the person's name, the legacy label for the
-/// pre-2.0 remainder, and "deleted user" for an id the directory no longer
-/// answers to — never a raw id.
-String workItemPersonLabel(
-  BuildContext context,
-  WorkItem item,
-  String? Function(String userId) nameFor,
-) {
-  if (item.isLegacy) return context.t('time.legacySource');
-  final userId = item.userId;
-  if (userId == null) return context.t('time.deletedUser');
-  return nameFor(userId) ?? context.t('time.deletedUser');
+  /// Whether the reader may see *whose* entry this is, and what they wrote in
+  /// it.
+  ///
+  /// Everyone on the project sees that the hours exist — that is what makes the
+  /// card answer "why did a one-day job take three". Who worked them is a
+  /// different question: a per-person, per-day breakdown of a colleague's
+  /// working time is exactly the reading of time data that has to be switched
+  /// on deliberately rather than shipped as the default (§ 87 Abs. 1 Nr. 6
+  /// BetrVG, Art. 25 DSGVO). So it is your own entries, plus those of a project
+  /// you lead, and the operator policy that opens it up comes with the policy
+  /// model itself.
+  bool canSeeAuthor(WorkItem item) => isOwn(item) || managesProject;
 }
 
 /// Opens the entry in the work-log sheet's edit mode. True once it was saved.
@@ -205,8 +197,10 @@ class WorkItemRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final canEdit = access.canEdit(item);
     final canDelete = access.canDelete(item);
-    final who = workItemPersonLabel(context, item, nameFor);
-    final description = item.description?.trim() ?? '';
+    // The legacy remainder belongs to nobody, so naming it discloses nothing.
+    final named = access.canSeeAuthor(item) || item.isLegacy;
+    final who = named ? workItemPersonLabel(context, item, nameFor) : null;
+    final description = named ? item.description?.trim() ?? '' : '';
     final date = item.date;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,13 +237,15 @@ class WorkItemRow extends StatelessWidget {
                   ],
                 ],
               ),
-              const SizedBox(height: 2),
-              Text(
-                description.isEmpty ? who : '$who · $description',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
-              ),
+              if (who != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  description.isEmpty ? who : '$who · $description',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                ),
+              ],
             ],
           ),
         ),
@@ -266,10 +262,19 @@ class WorkItemRow extends StatelessWidget {
     );
   }
 
-  /// A face for a person; a mark for the two kinds of nobody — the pre-2.0
-  /// remainder (a commit glyph) and a deleted account.
-  Widget _leading(String who) {
+  /// A face for a person; a mark for the three kinds of nobody — the pre-2.0
+  /// remainder (a commit glyph), a deleted account, and a colleague this reader
+  /// is not shown (a plain figure, which says "someone" without saying who).
+  Widget _leading(String? who) {
     final userId = item.userId;
+    if (who == null) {
+      return HiveAvatar(
+        name: '',
+        size: 24,
+        background: AppColors.inkFaint,
+        glyph: const Icon(LucideIcons.user, size: 12, color: Colors.white),
+      );
+    }
     if (item.isLegacy || userId == null || nameFor(userId) == null) {
       return HiveAvatar(
         name: who,

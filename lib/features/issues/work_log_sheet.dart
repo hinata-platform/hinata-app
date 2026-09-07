@@ -10,6 +10,7 @@ import '../../core/models/work_models.dart';
 import '../../core/repositories/issue_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
+import 'work_item_labels.dart';
 import '../sprint/modals/glass_modal.dart'
     show glassWoltSurface, showGlassDatePicker;
 
@@ -167,7 +168,7 @@ class _WorkLogFormState extends State<WorkLogForm> {
                     value: activity,
                     // The value stays the canonical English key sent to the API;
                     // only the visible label is localized.
-                    child: Text(_activityLabel(activity)),
+                    child: Text(activityLabel(context, activity)),
                   ),
               ],
               onChanged: (value) =>
@@ -212,11 +213,6 @@ class _WorkLogFormState extends State<WorkLogForm> {
     );
   }
 
-  String _activityLabel(String activity) {
-    final key = 'time.activity.${activity.toLowerCase()}';
-    final label = context.t(key);
-    return label == key ? activity : label;
-  }
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
