@@ -90,9 +90,16 @@ double floatingNavTopEdge(
 /// every inset it has to spend: the horizontal safe area, its own gaps, and the
 /// lift out of system chrome.
 class FloatingNavPadding extends StatelessWidget {
-  const FloatingNavPadding({super.key, required this.child});
+  const FloatingNavPadding({super.key, required this.child, this.above});
 
   final Widget child;
+
+  /// Rendered directly above [child], inside the same insets.
+  ///
+  /// The running-timer bar, and anything later that has to float with the
+  /// navigation rather than beside it: sharing this padding is what keeps the
+  /// two from drifting apart when the keyboard moves or the device is turned.
+  final Widget? above;
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +122,13 @@ class FloatingNavPadding extends StatelessWidget {
           kFloatingNavPaddingH,
           kFloatingNavPaddingV + lift,
         ),
-        child: child,
+        child: above == null
+            ? child
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [above!, child],
+              ),
       ),
     );
   }

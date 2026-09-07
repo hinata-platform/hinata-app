@@ -21,7 +21,9 @@
     "ok": "OK",
     "next": "Weiter",
     "clear": "Zurücksetzen",
-    "paste": "Einfügen"
+    "paste": "Einfügen",
+    "today": "Heute",
+    "yesterday": "Gestern"
   },
   "delete": {
     "cta": "Löschen",
@@ -837,7 +839,66 @@
     "deleteConfirm": "{{duration}} vom {{date}} entfernen? Das lässt sich nicht rückgängig machen.",
     "deleted": "Eintrag gelöscht",
     "noEntries": "Noch keine Zeit erfasst",
-    "entryActions": "Aktionen für den Eintrag"
+    "entryActions": "Aktionen für den Eintrag",
+    "billable": "Abrechenbar",
+    "deleteMessage": "Dieser Eintrag wird gelöscht. Das lässt sich nicht rückgängig machen.",
+    "overlapWarning": "Überschneidet sich mit einem anderen Eintrag an diesem Tag.",
+    "overlapWarning_plural": "Überschneidet sich mit {{count}} anderen Einträgen an diesem Tag.",
+    "unit": {
+      "hours": "Stunden",
+      "hoursShort": "Std.",
+      "minutes": "Minuten",
+      "minutesShort": "Min."
+    },
+    "timer": {
+      "idle": "Kein Timer läuft",
+      "start": "Starten",
+      "stop": "Stoppen",
+      "discard": "Timer verwerfen",
+      "noDescription": "Ohne Beschreibung",
+      "title": "Timer"
+    },
+    "placement": {
+      "none": "Ohne Projekt",
+      "assigned": "Zugeordnet",
+      "search": "Projekte und Vorgänge suchen",
+      "searchProjects": "Projekte suchen"
+    },
+    "filter": {
+      "search": "Einträge durchsuchen",
+      "allTime": "Gesamter Zeitraum",
+      "allProjects": "Alle Projekte",
+      "range": "Zeitraum"
+    },
+    "empty": {
+      "title": "Noch nichts erfasst",
+      "message": "Starte den Timer oder trage die Zeit von Hand ein.",
+      "filtered": "Keine Treffer",
+      "tryOther": "Versuch einen anderen Zeitraum oder Suchbegriff."
+    },
+    "error": {
+      "title": "Deine Zeiten konnten nicht geladen werden",
+      "duration": "Gib eine Dauer an, zum Beispiel 1h 30m.",
+      "interval": "Das Ende muss nach dem Beginn liegen.",
+      "tooLong": "Ein Eintrag darf höchstens 24 Stunden lang sein."
+    },
+    "entry": {
+      "new": "Neuer Eintrag",
+      "edit": "Eintrag bearbeiten",
+      "subtitle": "Entweder eine Dauer an einem Tag oder Beginn und Ende.",
+      "description": "Woran hast du gearbeitet?",
+      "placement": "Projekt oder Vorgang",
+      "day": "Tag",
+      "duration": "Dauer",
+      "pickDuration": "Dauer auswählen",
+      "start": "Beginn",
+      "end": "Ende",
+      "activity": "Tätigkeit",
+      "modeDuration": "Dauer",
+      "modeInterval": "Beginn und Ende",
+      "noDescription": "Ohne Beschreibung",
+      "continue": "Fortsetzen"
+    }
   },
   "projects": {
     "title": "Projekte",
@@ -2347,6 +2408,10 @@
         "security": {
           "label": "Sicherheitshinweise",
           "desc": "Neue Anmeldungen, Passwort- & E-Mail-Änderungen"
+        },
+        "time": {
+          "label": "Zeiterfassung",
+          "desc": "Hinweise zu deinem Timer und deinen Zeiten"
         }
       },
       "pushUnsupported": "Hier kein Push-Dienst — gilt weiterhin für dein Handy und deine anderen Geräte"

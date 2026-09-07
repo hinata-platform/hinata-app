@@ -94,6 +94,11 @@ const _notifEvents = <({String id, IconData icon, bool locked})>[
   (id: 'sprint', icon: LucideIcons.goal, locked: false),
   (id: 'invites', icon: LucideIcons.usersRound, locked: false),
   (id: 'digest', icon: LucideIcons.newspaper, locked: false),
+  // Only ever about the reader's own time — a timer the server ended at its
+  // 24-hour ceiling, and from HIN-89 a timesheet decision. Push on, e-mail
+  // off, and switchable off entirely: a notice about somebody's working
+  // pattern that could not be turned off would sit badly against R7.
+  (id: 'time', icon: LucideIcons.timer, locked: false),
   (id: 'security', icon: LucideIcons.shieldCheck, locked: true),
 ];
 
