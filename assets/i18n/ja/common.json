@@ -809,7 +809,13 @@
       "support": "サポート"
     },
     "date": "日付",
-    "note": "メモ（任意）"
+    "note": "メモ（任意）",
+    "fmt": {
+      "hours": "{{h}} 時間",
+      "minutes": "{{m}} 分",
+      "hoursMinutes": "{{h}} 時間 {{m}} 分",
+      "none": "—"
+    }
   },
   "projects": {
     "title": "プロジェクト",

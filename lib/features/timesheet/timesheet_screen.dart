@@ -163,7 +163,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                             DataCell(Text(_formatCell(row, day))),
                           DataCell(
                             Text(
-                              _formatMinutes(row.totalMinutes),
+                              fmtDuration(context, row.totalMinutes),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w800,
                               ),
@@ -211,13 +211,6 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
               entry.key.day == day.day,
         )
         .fold<int>(0, (sum, entry) => sum + entry.value);
-    return minutes == 0 ? '–' : _formatMinutes(minutes);
-  }
-
-  String _formatMinutes(int minutes) {
-    final hours = minutes ~/ 60;
-    final rest = minutes % 60;
-    if (hours == 0) return '${rest}m';
-    return rest == 0 ? '${hours}h' : '${hours}h ${rest}m';
+    return minutes == 0 ? '–' : fmtDuration(context, minutes);
   }
 }

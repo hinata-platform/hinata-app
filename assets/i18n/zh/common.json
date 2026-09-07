@@ -809,7 +809,13 @@
       "support": "支持"
     },
     "date": "日期",
-    "note": "备注（可选）"
+    "note": "备注（可选）",
+    "fmt": {
+      "hours": "{{h}} 小时",
+      "minutes": "{{m}} 分钟",
+      "hoursMinutes": "{{h}} 小时 {{m}} 分钟",
+      "none": "—"
+    }
   },
   "projects": {
     "title": "项目",

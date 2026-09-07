@@ -809,7 +809,13 @@
       "support": "Support"
     },
     "date": "Datum",
-    "note": "Notiz (optional)"
+    "note": "Notiz (optional)",
+    "fmt": {
+      "hours": "{{h}} h",
+      "minutes": "{{m}} min",
+      "hoursMinutes": "{{h}} h {{m}} min",
+      "none": "—"
+    }
   },
   "projects": {
     "title": "Projekte",

@@ -258,7 +258,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           (
             label: d.label,
             value: d.value,
-            display: duration ? fmtDuration(d.value) : '${d.value}',
+            display: duration ? fmtDuration(context, d.value) : '${d.value}',
             color: d.color,
           ),
       ];
@@ -720,7 +720,7 @@ class _BarReportCard extends StatelessWidget {
                     SizedBox(
                       width: durationValues ? 64 : 40,
                       child: Text(
-                        durationValues ? fmtDuration(d.value) : '${d.value}',
+                        durationValues ? fmtDuration(context, d.value) : '${d.value}',
                         textAlign: TextAlign.right,
                         style: TextStyle(
                           fontFamily: AppTheme.fontMono,

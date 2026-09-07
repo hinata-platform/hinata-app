@@ -2662,8 +2662,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
             context.t(
               'issues.spent',
               variables: {
-                'spent': fmtDuration(issue.spentMinutes),
-                'estimate': fmtDuration(issue.estimateMinutes),
+                'spent': fmtDuration(context, issue.spentMinutes),
+                'estimate': fmtDuration(context, issue.estimateMinutes),
               },
             ),
             style: TextStyle(color: AppColors.inkSoft, fontSize: 13),
@@ -2681,7 +2681,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${fmtDuration(item.durationMinutes)} · ${item.activityType}',
+                      '${fmtDuration(context, item.durationMinutes)} · ${item.activityType}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 13),
