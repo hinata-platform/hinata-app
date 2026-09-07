@@ -85,6 +85,11 @@ class _CompactShellState extends State<_CompactShell> {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
+    // Whether the timer bar is on screen — a scalar, so the shell rebuilds when
+    // a timer starts or stops and not once a second as it counts.
+    final timerRunning = context.select<TimerCubit, bool>(
+      (cubit) => cubit.state.isRunning,
+    );
     return Scaffold(
       backgroundColor: AppColors.canvas,
       // Content fills the whole screen and scrolls *behind* the translucent
@@ -130,10 +135,18 @@ class _CompactShellState extends State<_CompactShell> {
                 // the Scaffold body's, keyboard-adjusted — the pill reads the
                 // same one, so the two can never disagree.
                 // Immersive routes hide the nav, so only the safe-area remains.
+                // A running timer puts a bar above the pill, so the space
+                // reserved for the navigation has to grow by exactly what the
+                // bar occupies — otherwise the last entry of a list sits under
+                // it, which is the one row a reader is most likely to want.
+                final timerFootprint = widget.immersive || !timerRunning
+                    ? 0.0
+                    : kCompactTimerBarHeight;
                 final navFootprint = widget.immersive
                     ? mq.viewPadding.bottom
                     : floatingNavTopEdge(mq.viewPadding.bottom) +
-                          mq.viewPadding.bottom;
+                          mq.viewPadding.bottom +
+                          timerFootprint;
                 // Likewise for the root overlay — so a toast rides above the
                 // nav where there is one, and drops to the bottom edge on the
                 // routes that hide it.
@@ -185,6 +198,11 @@ class _CompactShellState extends State<_CompactShell> {
               right: 0,
               bottom: 0,
               child: FloatingNavPadding(
+                // The bar rides inside the nav's own padding so the two share
+                // one safe-area inset and cannot drift apart when the keyboard
+                // moves. TimerBar collapses itself to nothing when no timer is
+                // running, which is what keeps the footprint above honest.
+                above: const TimerBar(compact: true),
                 // iOS-26 layout: the tab pill and a detached global-search
                 // button. The button is the package's own `extraButton` rather
                 // than a GlassButton we place beside the bar in a Row — that

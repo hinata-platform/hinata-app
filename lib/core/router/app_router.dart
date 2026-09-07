@@ -40,6 +40,7 @@ import '../../features/shell/app_shell.dart';
 import '../../features/shell/not_found_screen.dart';
 import '../../features/teams/team_detail_screen.dart';
 import '../../features/teams/teams_screen.dart';
+import '../../features/time/time_screen.dart';
 import '../../features/timesheet/timesheet_screen.dart';
 import '../../features/weekly_summary/weekly_summary_screen.dart';
 import '../blocs/app_config_bloc.dart';
@@ -531,9 +532,8 @@ GoRouter buildRouter({
 /// the not-found page, and `standalone: false` is what keeps it inside the shell
 /// — where the back button and the title come from.
 @visibleForTesting
-Widget timeModulePage({required bool advancedTime}) => advancedTime
-    ? const TimesheetScreen()
-    : const NotFoundScreen(standalone: false);
+Widget timeModulePage({required bool advancedTime}) =>
+    advancedTime ? const TimeScreen() : const NotFoundScreen(standalone: false);
 
 /// Maps the `/issues?view=…` query value to a preset filter (dashboard KPIs).
 IssuesInitialView? _issuesView(String? value) => switch (value) {

@@ -1839,3 +1839,607 @@ class _GlassToastState extends State<_GlassToast>
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Time and duration
+// ---------------------------------------------------------------------------
+
+/// A Liquid-Glass duration picker: hours and minutes, plus the handful of
+/// lengths people actually pick.
+///
+/// Separate from [showGlassDateTimePicker] even though both are built on the
+/// same wheels, because they are not the same question and must not be able to
+/// answer each other's: 14:30 is half past two and 14h 30m is most of a working
+/// day, and a picker that could return either would eventually return the wrong
+/// one.
+///
+/// Resolves to the picked duration in minutes, or null if dismissed.
+Future<int?> showGlassDurationPicker(
+  BuildContext context, {
+  required int initialMinutes,
+  required String title,
+  int maxHours = 23,
+}) {
+  return showGlassModal<int>(
+    context,
+    adaptive: false,
+    width: 340,
+    builder: (modalContext) => _GlassDurationPicker(
+      initialMinutes: initialMinutes,
+      title: title,
+      maxHours: maxHours,
+    ),
+  );
+}
+
+/// A day and a time in one modal — what a time entry's start and end actually
+/// are.
+///
+/// Asking for them separately would be two modals for one answer, and the
+/// second one would open with no idea which day it is on: a start of "23:30"
+/// means something different on the day the entry moved to.
+///
+/// Resolves to the picked local [DateTime], or null if dismissed.
+Future<DateTime?> showGlassDateTimePicker(
+  BuildContext context, {
+  required DateTime initial,
+  required DateTime firstDate,
+  required DateTime lastDate,
+  required String title,
+}) {
+  return showGlassModal<DateTime>(
+    context,
+    adaptive: false,
+    width: 380,
+    builder: (modalContext) => _GlassDateTimePicker(
+      initial: initial,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      title: title,
+    ),
+  );
+}
+
+/// The wheel both pickers are built from: a fixed-extent list on glass, with
+/// the selected row lit rather than boxed.
+class _GlassWheel extends StatefulWidget {
+  const _GlassWheel({
+    required this.count,
+    required this.index,
+    required this.label,
+    required this.onChanged,
+    this.semanticsLabel,
+  });
+
+  final int count;
+
+  /// The selected row. Controlled, not merely initial: a picker that sets its
+  /// value from somewhere other than this wheel — the "now" shortcut, or the
+  /// meridiem wheel moving the hour — has to be able to move it, and a wheel
+  /// that only read an initial index simply ignored that.
+  final int index;
+
+  /// What row [index] reads as — already formatted, because an hour is written
+  /// differently from a minute and from a count of hours.
+  final String Function(int index) label;
+  final ValueChanged<int> onChanged;
+  final String? semanticsLabel;
+
+  @override
+  State<_GlassWheel> createState() => _GlassWheelState();
+}
+
+class _GlassWheelState extends State<_GlassWheel> {
+  late final FixedExtentScrollController _controller =
+      FixedExtentScrollController(initialItem: widget.index);
+  late int _selected = widget.index;
+
+  @override
+  void didUpdateWidget(covariant _GlassWheel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Only when the value moved from outside. A change this wheel just reported
+    // comes back as the same index, and animating to where we already are would
+    // fight the finger that is still on it.
+    if (widget.index != _selected && _controller.hasClients) {
+      setState(() => _selected = widget.index);
+      _controller.animateToItem(
+        widget.index,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: widget.semanticsLabel,
+      child: SizedBox(
+        height: 176,
+        child: ListWheelScrollView.useDelegate(
+          controller: _controller,
+          itemExtent: 40,
+          // A gentle curve: the app's glass is flat, and a strongly barrelled
+          // wheel would be the one skeuomorphic surface in it.
+          diameterRatio: 2.2,
+          perspective: 0.002,
+          physics: const FixedExtentScrollPhysics(),
+          onSelectedItemChanged: (index) {
+            setState(() => _selected = index);
+            widget.onChanged(index);
+          },
+          childDelegate: ListWheelChildBuilderDelegate(
+            childCount: widget.count,
+            builder: (_, index) {
+              final selected = index == _selected;
+              return Center(
+                child: AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 120),
+                  style: TextStyle(
+                    fontSize: selected ? 26 : 20,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    fontFeatures: const [ui.FontFeature.tabularFigures()],
+                    color: selected ? AppColors.ink : AppColors.inkFaint,
+                  ),
+                  child: Text(widget.label(index)),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The lit band behind the selected row of a set of wheels, and the wheels
+/// themselves. Shared so the two pickers cannot drift apart visually.
+class _WheelRow extends StatelessWidget {
+  const _WheelRow({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // The selection band. Behind the wheels and ignoring pointers, so it
+          // reads as a highlight on the surface rather than a control.
+          IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                // The app's active wash, which resolves against the theme; a
+                // navy tint would be a dark band on the dark canvas.
+                color: AppColors.accentSoft,
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              ),
+              child: const SizedBox(height: 42, width: double.infinity),
+            ),
+          ),
+          Row(children: children),
+        ],
+      ),
+    );
+  }
+}
+
+/// The separator between two wheels — a colon for a clock time, a gap for a
+/// duration (whose units are written on the wheels themselves).
+class _WheelSeparator extends StatelessWidget {
+  const _WheelSeparator({this.text});
+
+  final String? text;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 18,
+    child: text == null
+        ? null
+        : Text(
+            text!,
+            textAlign: TextAlign.center,
+            // Not const: the ink tokens are theme-aware getters, so a const
+            // style would freeze the light-mode colour into the dark theme.
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: AppColors.inkSoft,
+            ),
+          ),
+  );
+}
+
+/// The hour and minute wheels, and the meridiem wheel when the locale wants
+/// one.
+///
+/// One widget rather than a pair per picker: a modal that shows "2:30 PM" in
+/// its header and then offers a 00–23 wheel underneath is a modal that was
+/// written twice, and only one of the two copies knew about twelve-hour
+/// locales.
+class _TimeWheels extends StatelessWidget {
+  const _TimeWheels({
+    required this.value,
+    required this.use24,
+    required this.onChanged,
+  });
+
+  final TimeOfDay value;
+  final bool use24;
+  final ValueChanged<TimeOfDay> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = MaterialLocalizations.of(context);
+    return _WheelRow(
+      children: [
+        Expanded(
+          child: _GlassWheel(
+            count: use24 ? 24 : 12,
+            index: use24 ? value.hour : value.hour % 12,
+            semanticsLabel: localizations.timePickerHourLabel,
+            label: (index) => use24
+                ? index.toString().padLeft(2, '0')
+                : (index == 0 ? 12 : index).toString(),
+            onChanged: (index) => onChanged(
+              TimeOfDay(
+                // Keep the half of the day the meridiem wheel is showing.
+                hour: use24
+                    ? index
+                    : (index % 12) + (value.hour >= 12 ? 12 : 0),
+                minute: value.minute,
+              ),
+            ),
+          ),
+        ),
+        const _WheelSeparator(text: ':'),
+        Expanded(
+          child: _GlassWheel(
+            count: 60,
+            index: value.minute,
+            semanticsLabel: localizations.timePickerMinuteLabel,
+            label: (index) => index.toString().padLeft(2, '0'),
+            onChanged: (index) =>
+                onChanged(TimeOfDay(hour: value.hour, minute: index)),
+          ),
+        ),
+        if (!use24) ...[
+          const _WheelSeparator(),
+          Expanded(
+            child: _GlassWheel(
+              count: 2,
+              index: value.hour >= 12 ? 1 : 0,
+              label: (index) => index == 0
+                  ? localizations.anteMeridiemAbbreviation
+                  : localizations.postMeridiemAbbreviation,
+              onChanged: (index) => onChanged(
+                TimeOfDay(
+                  hour: (value.hour % 12) + (index == 1 ? 12 : 0),
+                  minute: value.minute,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Whether the locale writes the time on a twelve-hour clock.
+bool _isTwelveHour(TimeOfDayFormat format) =>
+    format == TimeOfDayFormat.h_colon_mm_space_a ||
+    format == TimeOfDayFormat.a_space_h_colon_mm;
+
+class _GlassDurationPicker extends StatefulWidget {
+  const _GlassDurationPicker({
+    required this.initialMinutes,
+    required this.title,
+    required this.maxHours,
+  });
+
+  final int initialMinutes;
+  final String title;
+  final int maxHours;
+
+  @override
+  State<_GlassDurationPicker> createState() => _GlassDurationPickerState();
+}
+
+class _GlassDurationPickerState extends State<_GlassDurationPicker> {
+  late int _hours = (widget.initialMinutes ~/ 60).clamp(0, widget.maxHours);
+  late int _minutes = widget.initialMinutes % 60;
+
+  int get _total => _hours * 60 + _minutes;
+
+  /// The lengths people pick without thinking. Offered as chips because
+  /// scrolling two wheels to reach "30m" is three gestures for one of the four
+  /// most common answers.
+  static const _presets = [15, 30, 45, 60, 90, 120];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GlassModalHeader(
+          icon: LucideIcons.hourglass,
+          title: widget.title,
+          subtitle: fmtDuration(context, _total),
+        ),
+        const SizedBox(height: 6),
+        _WheelRow(
+          children: [
+            Expanded(
+              child: _GlassWheel(
+                count: widget.maxHours + 1,
+                index: _hours,
+                semanticsLabel: context.t('time.unit.hours'),
+                label: (index) => '$index ${context.t('time.unit.hoursShort')}',
+                onChanged: (index) => setState(() => _hours = index),
+              ),
+            ),
+            const _WheelSeparator(),
+            Expanded(
+              child: _GlassWheel(
+                count: 60,
+                index: _minutes,
+                semanticsLabel: context.t('time.unit.minutes'),
+                label: (index) =>
+                    '$index ${context.t('time.unit.minutesShort')}',
+                onChanged: (index) => setState(() => _minutes = index),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              for (final preset in _presets)
+                _PresetChip(
+                  label: fmtDuration(context, preset),
+                  selected: _total == preset,
+                  onTap: () => setState(() {
+                    _hours = preset ~/ 60;
+                    _minutes = preset % 60;
+                  }),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        GlassModalFooter(
+          confirmLabel: MaterialLocalizations.of(context).okButtonLabel,
+          // A duration of nothing is not a duration; the entry it would make is
+          // refused by the server anyway, so the button says so first.
+          onConfirm: _total <= 0
+              ? null
+              : () => Navigator.of(context).pop(_total),
+        ),
+      ],
+    );
+  }
+}
+
+class _PresetChip extends StatelessWidget {
+  const _PresetChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected
+                ? AppColors.accentSoft
+                : AppColors.hairline.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: selected ? AppColors.accentLine : Colors.transparent,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: selected ? AppColors.accentStrong : AppColors.inkSoft,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassDateTimePicker extends StatefulWidget {
+  const _GlassDateTimePicker({
+    required this.initial,
+    required this.firstDate,
+    required this.lastDate,
+    required this.title,
+  });
+
+  final DateTime initial;
+  final DateTime firstDate;
+  final DateTime lastDate;
+  final String title;
+
+  @override
+  State<_GlassDateTimePicker> createState() => _GlassDateTimePickerState();
+}
+
+class _GlassDateTimePickerState extends State<_GlassDateTimePicker> {
+  late DateTime _day = DateTime(
+    widget.initial.year,
+    widget.initial.month,
+    widget.initial.day,
+  );
+  late TimeOfDay _time = TimeOfDay.fromDateTime(widget.initial);
+
+  /// Which half is on screen. A calendar and two wheels do not fit one modal on
+  /// a phone, and stacking them makes a form that has to be scrolled to be
+  /// confirmed.
+  bool _pickingTime = false;
+
+  DateTime get _value =>
+      DateTime(_day.year, _day.month, _day.day, _time.hour, _time.minute);
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = MaterialLocalizations.of(context);
+    final use24 =
+        MediaQuery.alwaysUse24HourFormatOf(context) ||
+        !_isTwelveHour(localizations.timeOfDayFormat());
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GlassModalHeader(
+          icon: LucideIcons.calendarClock,
+          title: widget.title,
+          subtitle:
+              '${localizations.formatMediumDate(_value)} · '
+              '${localizations.formatTimeOfDay(_time, alwaysUse24HourFormat: use24)}',
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          child: Row(
+            children: [
+              Expanded(
+                child: _SegmentButton(
+                  icon: LucideIcons.calendar,
+                  label: localizations.formatMediumDate(_day),
+                  selected: !_pickingTime,
+                  onTap: () => setState(() => _pickingTime = false),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _SegmentButton(
+                  icon: LucideIcons.clock,
+                  label: localizations.formatTimeOfDay(
+                    _time,
+                    alwaysUse24HourFormat: use24,
+                  ),
+                  selected: _pickingTime,
+                  onTap: () => setState(() => _pickingTime = true),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 320,
+          child: _pickingTime
+              ? Center(
+                  child: _TimeWheels(
+                    value: _time,
+                    use24: use24,
+                    onChanged: (picked) => setState(() => _time = picked),
+                  ),
+                )
+              : Theme(
+                  data: _glassCalendarTheme(context),
+                  child: CalendarDatePicker(
+                    initialDate: _day,
+                    firstDate: widget.firstDate,
+                    lastDate: widget.lastDate,
+                    onDateChanged: (picked) => setState(() => _day = picked),
+                  ),
+                ),
+        ),
+        GlassModalFooter(
+          confirmLabel: localizations.okButtonLabel,
+          onConfirm: () => Navigator.of(context).pop(_value),
+        ),
+      ],
+    );
+  }
+}
+
+/// One half of the date/time toggle above the picker body.
+class _SegmentButton extends StatelessWidget {
+  const _SegmentButton({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.accentSoft : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+            border: Border.all(
+              color: selected ? AppColors.accentLine : AppColors.hairline,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 15,
+                color: selected ? AppColors.accentStrong : AppColors.inkSoft,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: selected
+                        ? AppColors.accentStrong
+                        : AppColors.inkSoft,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

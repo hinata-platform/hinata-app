@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hinata/core/router/app_router.dart' show timeModulePage;
 import 'package:hinata/core/widgets/hive_empty_state.dart';
 import 'package:hinata/features/shell/not_found_screen.dart';
-import 'package:hinata/features/timesheet/timesheet_screen.dart';
+import 'package:hinata/features/time/time_screen.dart';
 
 /// A link that leads nowhere used to render an empty page under the brand mark,
 /// which reads as a broken app. It now says what happened and offers the way
@@ -106,7 +106,9 @@ void main() {
     });
 
     test('with the module on, it is the module', () {
-      expect(timeModulePage(advancedTime: true), isA<TimesheetScreen>());
+      // Stage 3 replaced the placeholder: `/time` is now the module's own
+      // list, and the timesheet keeps its own route underneath it.
+      expect(timeModulePage(advancedTime: true), isA<TimeScreen>());
     });
   });
 }

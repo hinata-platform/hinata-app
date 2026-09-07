@@ -16,6 +16,7 @@ import 'core/branding/org_logo_store.dart';
 import 'core/blocs/auth_bloc.dart';
 import 'core/blocs/locale_cubit.dart';
 import 'core/blocs/theme_cubit.dart';
+import 'core/blocs/timer_cubit.dart';
 import 'core/i18n/i18n.dart';
 import 'core/notifications/fcm_service.dart';
 import 'core/notifications/wns_channel.dart';
@@ -84,6 +85,19 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   late final OrgLogoStore _orgLogo;
   late final GoRouter _router;
   late final AccountEventStream _accountEvents;
+
+  /// The running timer, rebuilt whenever the account behind it changes.
+  ///
+  /// Not `late final`: what it persists is keyed by server URL and user id
+  /// ([TimerCubit.storageId]), so a sign-out, a sign-in as somebody else or a
+  /// server switch has to produce a different cubit rather than a renamed one.
+  /// Signed out it is a cubit with no session to read — the bar is not on
+  /// screen then, and providing one unconditionally is what lets the shell and
+  /// the page read it without a null check that would be wrong exactly once.
+  late TimerCubit _timer;
+
+  /// The identity [_timer] was built for, so the rebuild happens once.
+  String? _timerIdentity;
   late final TimeZoneSync _timeZone;
   late final FcmService _fcm;
   StreamSubscription<AuthState>? _authSub;
@@ -145,6 +159,13 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     _accountEvents = AccountEventStream(
       repository: domains.account,
       onLogout: () => _auth.add(const LogoutRequested()),
+      // A timer started or stopped on another device. The frame says only that
+      // something changed; the truth is re-read, because the stream is
+      // best-effort and scoped to one server instance.
+      onTimerChanged: () => unawaited(_timer.refresh()),
+      // And after a gap in the stream, whatever happened during it is invisible
+      // — so the same question is asked unconditionally.
+      onReconnect: () => unawaited(_timer.refresh()),
     );
     // The server decides "not in the future" and stamps every rendered document
     // in a zone; this is the only place that can tell it which one the reader is
@@ -179,6 +200,9 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         if (link != null) _router.go(link);
       }),
     );
+    // Before the first _syncAccountStream below, which replaces it as soon as
+    // there is an account to key it to. There is always one to provide.
+    _timer = TimerCubit(domains.time, storageId: 'anonymous');
     // Record the server the boot-time AuthChecked above runs against, so the
     // listener below doesn't redundantly re-check it on the first `ready`.
     _authServer = widget.storage.serverUrl;
@@ -224,6 +248,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       // starts push — otherwise the OS notification-permission prompt would pop
       // over the very screen we're capturing. Normal launches are unaffected.
       if (widget.storage.screenshotRoute == null) _fcm.start();
+      _syncTimer(state.user?.id);
     } else {
       _streamServer = null;
       _accountEvents.stop();
@@ -231,8 +256,45 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       // compared against the next one that signs in on this device.
       _timeZone.reset();
       _fcm.stop();
+      _syncTimer(null);
     }
     _warnIfSessionWontPersist(state);
+  }
+
+  /// Rebuilds the timer cubit when the account behind it changes, and asks the
+  /// server what is running.
+  ///
+  /// The identity is the server plus the user, because that is what the
+  /// persisted timer is scoped to. Two people signing in on the same machine
+  /// against the same server must not see each other's timer — on a shared
+  /// desktop that would show what the other person is working on — and the same
+  /// person on two servers has two independent timers.
+  void _syncTimer(String? userId) {
+    final identity = userId == null
+        ? null
+        : '${widget.storage.serverUrl ?? ''}#$userId';
+    if (identity == _timerIdentity) return;
+    _timerIdentity = identity;
+    final previous = _timer;
+    // Reached only when the identity actually changed, which the boot-time
+    // call cannot do: it runs with no account, and the cubit built above is
+    // already the one for "no account".
+    setState(() {
+      _timer = TimerCubit(
+        widget.repositories.time,
+        storageId: identity ?? 'anonymous',
+      );
+    });
+    // The session that just ended leaves a persisted timer behind, and that
+    // timer names what the person was working on in up to two thousand
+    // characters of free text. Every path here matters, not only the sign-out
+    // button: an admin terminating the session, a password reset, an account
+    // deletion — all of them arrive as a transition away from `authenticated`.
+    // The ticker is stopped first, so a tick cannot write the blob back after
+    // the delete. Only this key: the theme and the language live in the same
+    // store and are the device's, not the session's.
+    unawaited(previous.close().then((_) => previous.clear()));
+    if (identity != null) unawaited(_timer.refresh());
   }
 
   /// Says once per launch when the sign-in cannot be written to the OS secret
@@ -550,6 +612,10 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       // Platform flags and the minimum app version can have moved while we were
       // in the background — this is the cheapest moment to notice.
       _appConfig.add(const MetaRefreshRequested());
+      // So can the timer: it may have been stopped on another device, or by the
+      // server's own 24-hour ceiling. The local ticker would otherwise keep
+      // counting a timer that no longer exists.
+      unawaited(_timer.refresh());
     }
     super.didChangeAppLifecycleState(state);
   }
@@ -561,6 +627,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     _authSub?.cancel();
     _configSub?.cancel();
     _accountEvents.stop();
+    unawaited(_timer.close());
     _router.dispose();
     _appConfig.close();
     _auth.close();
@@ -590,6 +657,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         RepositoryProvider<BoardRepository>.value(value: domains.boards),
         RepositoryProvider<SprintRepository>.value(value: domains.sprints),
         RepositoryProvider<TimesheetRepository>.value(value: domains.timesheet),
+        RepositoryProvider<TimeRepository>.value(value: domains.time),
         RepositoryProvider<SearchRepository>.value(value: domains.search),
         RepositoryProvider<ArticleRepository>.value(value: domains.articles),
         RepositoryProvider<DashboardRepository>.value(value: domains.dashboard),
@@ -609,6 +677,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
           BlocProvider.value(value: _auth),
           BlocProvider.value(value: _locale),
           BlocProvider.value(value: _orgLogo),
+          BlocProvider.value(value: _timer),
           BlocProvider(create: (_) => ThemeCubit()),
         ],
         child: BlocBuilder<ThemeCubit, ThemeMode>(

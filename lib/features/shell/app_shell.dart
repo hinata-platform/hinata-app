@@ -22,6 +22,7 @@ import '../../core/notifications/notification_swipe.dart';
 import '../../core/notifications/notification_visuals.dart';
 import '../../core/repositories/notification_repository.dart';
 import '../../core/responsive/responsive.dart';
+import '../../core/blocs/timer_cubit.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ambient_background.dart';
@@ -53,6 +54,7 @@ import '../search/global_search_dialog.dart';
 import '../search/search_tokens.dart';
 import '../sprint/modals/glass_modal.dart'
     show showGlassOptions, showGlassToast, GlassToastKind;
+import '../time/timer_bar.dart';
 import 'floating_nav.dart';
 import 'page_chrome.dart';
 import 'shell_nav.dart';

@@ -42,3 +42,15 @@ DateTime? parseDate(Object? value) {
   if (dt == null) return null;
   return DateTime(dt.year, dt.month, dt.day);
 }
+
+/// Formats a [DateTime] as the `yyyy-MM-dd` the backend expects for a pure
+/// calendar date — the inverse of [parseDate].
+///
+/// Reads the wall-clock fields directly rather than going through
+/// `toIso8601String()`: a value that is a *day* must be sent as the day it
+/// says, and a UTC-flagged `DateTime` would otherwise be formatted in UTC and
+/// slide to the previous day for anyone east of Greenwich.
+String formatDateOnly(DateTime date) =>
+    '${date.year.toString().padLeft(4, '0')}-'
+    '${date.month.toString().padLeft(2, '0')}-'
+    '${date.day.toString().padLeft(2, '0')}';

@@ -311,7 +311,8 @@ class GlassModalFooter extends StatelessWidget {
       // screen edge, but as the last row of a bottom sheet it sits exactly where
       // the home indicator is. `top: false` because the sheet's top is the
       // header's problem, not this one's.
-      padding: const EdgeInsets.fromLTRB(22, 14, 22, 18) +
+      padding:
+          const EdgeInsets.fromLTRB(22, 14, 22, 18) +
           EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(context).bottom),
       decoration: BoxDecoration(
         border: Border(
@@ -322,32 +323,54 @@ class GlassModalFooter extends StatelessWidget {
         children: [
           if (hint != null) Expanded(child: hint!) else const Spacer(),
           const SizedBox(width: 8),
-          TextButton(
-            onPressed: busy ? null : () => Navigator.of(context).maybePop(),
-            child: Text(context.t('common.cancel')),
-          ),
-          const SizedBox(width: 8),
-          FilledButton.icon(
-            onPressed: busy ? null : onConfirm,
-            style: FilledButton.styleFrom(
-              backgroundColor: confirmColor ?? AppColors.navy,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          // Flexible on the buttons themselves, not on their labels: a label
+          // sits inside an Align (TextButton) or an already-flexed Row
+          // (FilledButton.icon), neither of which a Flexible may parent. The
+          // footer is a fixed 480 points in nine languages and the two buttons
+          // are what fills it — a verbose pair overflowed by a couple of points
+          // rather than shortening, visible as the striped bar and only in
+          // whichever language happened to be long.
+          Flexible(
+            child: TextButton(
+              onPressed: busy ? null : () => Navigator.of(context).maybePop(),
+              child: Text(
+                context.t('common.cancel'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            icon: busy
-                ? const SizedBox(
-                    width: 15,
-                    height: 15,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Icon(confirmIcon, size: 15),
-            label: Text(confirmLabel),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FilledButton.icon(
+              onPressed: busy ? null : onConfirm,
+              style: FilledButton.styleFrom(
+                backgroundColor: confirmColor ?? AppColors.navy,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 13,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                ),
+              ),
+              icon: busy
+                  ? const SizedBox(
+                      width: 15,
+                      height: 15,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Icon(confirmIcon, size: 15),
+              label: Text(
+                confirmLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ),
         ],
       ),

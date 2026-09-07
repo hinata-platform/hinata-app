@@ -21,7 +21,9 @@
     "ok": "确定",
     "next": "下一步",
     "clear": "清除",
-    "paste": "粘贴"
+    "paste": "粘贴",
+    "today": "今天",
+    "yesterday": "昨天"
   },
   "delete": {
     "cta": "删除",
@@ -837,7 +839,66 @@
     "deleteConfirm": "要删除 {{date}} 记录的 {{duration}} 吗？此操作无法撤销。",
     "deleted": "条目已删除",
     "noEntries": "尚未记录时间",
-    "entryActions": "条目操作"
+    "entryActions": "条目操作",
+    "billable": "可计费",
+    "deleteMessage": "该记录将被删除，且无法恢复。",
+    "overlapWarning": "与当天的另一条记录重叠。",
+    "overlapWarning_plural": "与当天的 {{count}} 条记录重叠。",
+    "unit": {
+      "hours": "小时",
+      "hoursShort": "小时",
+      "minutes": "分钟",
+      "minutesShort": "分"
+    },
+    "timer": {
+      "idle": "没有正在运行的计时器",
+      "start": "开始",
+      "stop": "停止",
+      "discard": "放弃计时器",
+      "noDescription": "无描述",
+      "title": "计时器"
+    },
+    "placement": {
+      "none": "无项目",
+      "assigned": "已归属",
+      "search": "搜索项目和事项",
+      "searchProjects": "搜索项目"
+    },
+    "filter": {
+      "search": "搜索记录",
+      "allTime": "全部时间",
+      "allProjects": "所有项目",
+      "range": "时间段"
+    },
+    "empty": {
+      "title": "尚未记录任何工时",
+      "message": "启动计时器，或手动添加一条记录。",
+      "filtered": "没有匹配项",
+      "tryOther": "换一个时间段或搜索词试试。"
+    },
+    "error": {
+      "title": "无法加载你的工时",
+      "duration": "请输入时长，例如 1h 30m。",
+      "interval": "结束时间必须晚于开始时间。",
+      "tooLong": "单条记录最长 24 小时。"
+    },
+    "entry": {
+      "new": "新建记录",
+      "edit": "编辑记录",
+      "subtitle": "可以是某天的时长，也可以是开始和结束时间。",
+      "description": "你做了什么？",
+      "placement": "项目或事项",
+      "day": "日期",
+      "duration": "时长",
+      "pickDuration": "选择时长",
+      "start": "开始",
+      "end": "结束",
+      "activity": "活动类型",
+      "modeDuration": "时长",
+      "modeInterval": "开始和结束",
+      "noDescription": "无描述",
+      "continue": "继续"
+    }
   },
   "projects": {
     "title": "项目",
@@ -2347,6 +2408,10 @@
         "security": {
           "label": "安全提醒",
           "desc": "新的登录、密码与邮箱变更"
+        },
+        "time": {
+          "label": "工时记录",
+          "desc": "关于你的计时器和工时的通知"
         }
       },
       "pushUnsupported": "此处没有推送服务，该设置仍对你的手机和其他设备生效"

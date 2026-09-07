@@ -21,7 +21,9 @@
     "ok": "OK",
     "next": "Siguiente",
     "clear": "Borrar",
-    "paste": "Pegar"
+    "paste": "Pegar",
+    "today": "Hoy",
+    "yesterday": "Ayer"
   },
   "delete": {
     "cta": "Eliminar",
@@ -837,7 +839,66 @@
     "deleteConfirm": "¿Eliminar {{duration}} registrado el {{date}}? Esta acción no se puede deshacer.",
     "deleted": "Registro eliminado",
     "noEntries": "Aún no hay tiempo registrado",
-    "entryActions": "Acciones del registro"
+    "entryActions": "Acciones del registro",
+    "billable": "Facturable",
+    "deleteMessage": "Se eliminará esta entrada. No se puede deshacer.",
+    "overlapWarning": "Se solapa con otra entrada de este día.",
+    "overlapWarning_plural": "Se solapa con {{count}} entradas de este día.",
+    "unit": {
+      "hours": "Horas",
+      "hoursShort": "h",
+      "minutes": "Minutos",
+      "minutesShort": "min"
+    },
+    "timer": {
+      "idle": "Ningún temporizador en marcha",
+      "start": "Iniciar",
+      "stop": "Detener",
+      "discard": "Descartar temporizador",
+      "noDescription": "Sin descripción",
+      "title": "Temporizador"
+    },
+    "placement": {
+      "none": "Sin proyecto",
+      "assigned": "Asignado",
+      "search": "Buscar proyectos e incidencias",
+      "searchProjects": "Buscar proyectos"
+    },
+    "filter": {
+      "search": "Buscar entradas",
+      "allTime": "Cualquier fecha",
+      "allProjects": "Todos los proyectos",
+      "range": "Periodo"
+    },
+    "empty": {
+      "title": "Aún no hay tiempo registrado",
+      "message": "Inicia el temporizador o añade una entrada a mano.",
+      "filtered": "Sin coincidencias",
+      "tryOther": "Prueba otro periodo u otro término."
+    },
+    "error": {
+      "title": "No se pudo cargar tu tiempo",
+      "duration": "Indica una duración, por ejemplo 1h 30m.",
+      "interval": "El fin debe ser posterior al inicio.",
+      "tooLong": "Una entrada puede durar como máximo 24 horas."
+    },
+    "entry": {
+      "new": "Nueva entrada",
+      "edit": "Editar entrada",
+      "subtitle": "Una duración en un día, o un inicio y un fin.",
+      "description": "¿En qué has trabajado?",
+      "placement": "Proyecto o incidencia",
+      "day": "Día",
+      "duration": "Duración",
+      "pickDuration": "Elegir duración",
+      "start": "Inicio",
+      "end": "Fin",
+      "activity": "Actividad",
+      "modeDuration": "Duración",
+      "modeInterval": "Inicio y fin",
+      "noDescription": "Sin descripción",
+      "continue": "Continuar"
+    }
   },
   "projects": {
     "title": "Proyectos",
@@ -2347,6 +2408,10 @@
         "security": {
           "label": "Alertas de seguridad",
           "desc": "Nuevos inicios de sesión y cambios de contraseña y de correo"
+        },
+        "time": {
+          "label": "Control de tiempo",
+          "desc": "Avisos sobre tu temporizador y tus horas"
         }
       },
       "pushUnsupported": "Aquí no hay servicio push; esto sigue aplicándose a tu móvil y a tus otros dispositivos"

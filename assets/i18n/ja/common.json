@@ -21,7 +21,9 @@
     "ok": "OK",
     "next": "次へ",
     "clear": "クリア",
-    "paste": "貼り付け"
+    "paste": "貼り付け",
+    "today": "今日",
+    "yesterday": "昨日"
   },
   "delete": {
     "cta": "削除",
@@ -837,7 +839,66 @@
     "deleteConfirm": "{{date}} に記録した {{duration}} を削除しますか？この操作は取り消せません。",
     "deleted": "記録を削除しました",
     "noEntries": "まだ時間が記録されていません",
-    "entryActions": "記録の操作"
+    "entryActions": "記録の操作",
+    "billable": "請求対象",
+    "deleteMessage": "この記録を削除します。元に戻せません。",
+    "overlapWarning": "同じ日の別の記録と重なっています。",
+    "overlapWarning_plural": "同じ日の {{count}} 件の記録と重なっています。",
+    "unit": {
+      "hours": "時間",
+      "hoursShort": "時間",
+      "minutes": "分",
+      "minutesShort": "分"
+    },
+    "timer": {
+      "idle": "タイマーは動作していません",
+      "start": "開始",
+      "stop": "停止",
+      "discard": "タイマーを破棄",
+      "noDescription": "説明なし",
+      "title": "タイマー"
+    },
+    "placement": {
+      "none": "プロジェクトなし",
+      "assigned": "割り当て済み",
+      "search": "プロジェクトと課題を検索",
+      "searchProjects": "プロジェクトを検索"
+    },
+    "filter": {
+      "search": "記録を検索",
+      "allTime": "全期間",
+      "allProjects": "すべてのプロジェクト",
+      "range": "期間"
+    },
+    "empty": {
+      "title": "まだ記録がありません",
+      "message": "タイマーを開始するか、手動で記録を追加してください。",
+      "filtered": "該当なし",
+      "tryOther": "別の期間または検索語をお試しください。"
+    },
+    "error": {
+      "title": "作業時間を読み込めませんでした",
+      "duration": "長さを入力してください（例: 1h 30m）。",
+      "interval": "終了は開始より後である必要があります。",
+      "tooLong": "1 件の記録は最大 24 時間です。"
+    },
+    "entry": {
+      "new": "新しい記録",
+      "edit": "記録を編集",
+      "subtitle": "ある日の長さ、または開始と終了のどちらかです。",
+      "description": "何に取り組みましたか？",
+      "placement": "プロジェクトまたは課題",
+      "day": "日",
+      "duration": "長さ",
+      "pickDuration": "長さを選択",
+      "start": "開始",
+      "end": "終了",
+      "activity": "作業種別",
+      "modeDuration": "長さ",
+      "modeInterval": "開始と終了",
+      "noDescription": "説明なし",
+      "continue": "続ける"
+    }
   },
   "projects": {
     "title": "プロジェクト",
@@ -2347,6 +2408,10 @@
         "security": {
           "label": "セキュリティ通知",
           "desc": "新しいログイン、パスワードとメールアドレスの変更"
+        },
+        "time": {
+          "label": "時間管理",
+          "desc": "自分のタイマーと勤務時間に関する通知"
         }
       },
       "pushUnsupported": "ここではプッシュ通知を利用できません。設定はスマートフォンや他のデバイスに適用されます"

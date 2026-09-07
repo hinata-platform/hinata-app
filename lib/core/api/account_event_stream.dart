@@ -18,12 +18,17 @@ class AccountEventStream {
   AccountEventStream({
     required AccountRepository repository,
     required this.onLogout,
+    this.onTimerChanged,
+    void Function()? onReconnect,
   }) : _repo = repository {
     _sse = SseConnection(
       open: (cancelToken) => _repo.meEventStream(cancelToken: cancelToken),
       onEvent: _onEvent,
-      // Nothing to reconcile on reconnect: sign-out is purely event-driven, and
-      // the watchdog already guarantees a dead stream is re-established.
+      // Sign-out needs nothing on reconnect — it is purely event-driven and the
+      // watchdog already guarantees a dead stream is re-established. The timer
+      // does: it is *state*, and a frame that arrived while the stream was down
+      // arrived nowhere. Whoever owns that state re-reads it here.
+      onReconnect: onReconnect,
     );
   }
 
@@ -31,6 +36,14 @@ class AccountEventStream {
 
   /// Invoked when the server signals this device should sign out.
   final void Function() onLogout;
+
+  /// Invoked when the running timer started, stopped or changed elsewhere.
+  ///
+  /// Carries no payload on purpose. The frame says that something happened;
+  /// what is now true is a question for `GET /me/timer`, and a client that
+  /// trusted the frame would be wrong every time one went missing — which the
+  /// stream, being best-effort and scoped to a single server instance, allows.
+  final void Function()? onTimerChanged;
 
   late final SseConnection _sse;
 
@@ -44,6 +57,10 @@ class AccountEventStream {
     if (ev.event == 'logout') {
       _sse.stop();
       onLogout();
+      return;
+    }
+    if (ev.event == 'timer') {
+      onTimerChanged?.call();
     }
   }
 }

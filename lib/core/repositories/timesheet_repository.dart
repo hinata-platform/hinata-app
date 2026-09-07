@@ -1,4 +1,5 @@
 import '../api/api_client.dart';
+import '../util/dates.dart';
 import '../models/work_models.dart';
 
 /// The cross-project timesheet aggregate.
@@ -17,8 +18,8 @@ class TimesheetRepository {
         await _api.get(
               '/api/v1/timesheet',
               query: {
-                'from': from.toIso8601String().substring(0, 10),
-                'to': to.toIso8601String().substring(0, 10),
+                'from': formatDateOnly(from),
+                'to': formatDateOnly(to),
                 'userId': ?userId,
                 'projectId': ?projectId,
               },

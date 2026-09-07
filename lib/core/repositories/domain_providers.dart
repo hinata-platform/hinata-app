@@ -47,6 +47,9 @@ List<RepositoryProvider> domainRepositoryProviders(BuildContext source) => [
   RepositoryProvider<TimesheetRepository>.value(
     value: source.read<TimesheetRepository>(),
   ),
+  RepositoryProvider<TimeRepository>.value(
+    value: source.read<TimeRepository>(),
+  ),
   RepositoryProvider<SearchRepository>.value(
     value: source.read<SearchRepository>(),
   ),
