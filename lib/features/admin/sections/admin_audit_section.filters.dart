@@ -36,14 +36,14 @@ class _FilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gutter = context.pageGutter;
-    final search = AdminGlassSearchField(
+    final search = GlassSearchField(
       hint: context.t('audit.searchHint'),
       controller: searchCtrl,
       onChanged: onSearch,
     );
     final chipRow = Row(
       children: [
-        AdminCountPill(
+        GlassCountPill(
           label: loading
               ? '…'
               : context.t('audit.count', variables: {'count': total}),
@@ -77,7 +77,7 @@ class _FilterBar extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SizedBox(
-            height: kAdminPillHeight,
+            height: kGlassPillHeight,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.symmetric(horizontal: gutter),
@@ -112,10 +112,10 @@ class _ClearButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AdminGlassPill(
+    return GlassPill(
       onTap: onTap,
       child: SizedBox(
-        width: kAdminPillHeight,
+        width: kGlassPillHeight,
         child: Icon(LucideIcons.filterX, size: 17, color: AppColors.inkSoft),
       ),
     );
@@ -123,7 +123,7 @@ class _ClearButton extends StatelessWidget {
 }
 
 /// Shared visual for an inactive/active filter chip that anchors a glass menu —
-/// a real [AdminGlassPill] (glass on native / frosted on web).
+/// a real [GlassPill] (glass on native / frosted on web).
 class _FilterChip extends StatelessWidget {
   const _FilterChip({
     required this.icon,
@@ -138,7 +138,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = active ? AppColors.accentStrong : AppColors.inkSoft;
-    return AdminGlassPill(
+    return GlassPill(
       active: active,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 13),

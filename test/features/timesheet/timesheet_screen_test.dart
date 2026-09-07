@@ -99,6 +99,24 @@ void main() {
       expect(find.text('Ada Lovelace'), findsOneWidget);
     });
 
+    testWidgets('time that never had an owner is not called a deleted user', (
+      tester,
+    ) async {
+      // The pre-2.0 smart-commit remainders carry no user at all. Calling them
+      // a deleted account asserts that somebody was erased, which is a
+      // different and untrue statement.
+      await tester.pumpWidget(
+        host(
+          rows: [row(userId: '', projectId: 'p1')],
+          admin: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('time.legacySource'), findsOneWidget);
+      expect(find.text('time.deletedUser'), findsNothing);
+    });
+
     testWidgets('an id the directory no longer knows reads as deleted', (
       tester,
     ) async {

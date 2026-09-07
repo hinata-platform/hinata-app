@@ -20,6 +20,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_avatar.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
+import '../../core/widgets/glass_filter_bar.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../shell/page_chrome.dart';
@@ -342,10 +343,17 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
 
   // ── Labels ─────────────────────────────────────────────────────────────────
 
-  /// Whose row this is. An id the directory answered about but does not carry
-  /// belongs to an erased account — work items keep the id as a pseudonym — and
-  /// says so, rather than showing the raw id to everyone who opens the week.
+  /// Whose row this is.
+  ///
+  /// Three different nobodies, and they must not be confused. No id at all is
+  /// time that never belonged to a person — the pre-2.0 smart-commit
+  /// remainders are the only entries written without an owner, and calling
+  /// those a deleted user would assert that somebody was erased. An id the
+  /// directory answered about but does not carry *is* an erased account, since
+  /// entries keep the id as a pseudonym. And an id nobody has been asked about
+  /// yet is neither, so it stays blank until the answer arrives.
   String _userLabel(String id) {
+    if (id.isEmpty) return context.t('time.legacySource');
     final user = _users[id];
     if (user != null) {
       return user.displayName.isEmpty ? user.username : user.displayName;
@@ -365,56 +373,138 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   @override
   Widget build(BuildContext context) {
     final admin = _isAdmin;
-    // [PageChrome] is here for `fullWidth` — a seven-day grid wants the whole
-    // page, not the reading column. Its title and actions are not: the shell
-    // draws those in the sub-page bar, and a destination in the nav has no
-    // sub-page bar, so on a wide window they would simply never appear. A
-    // top-level page wears its own head, the way Reports, Gantt and Board do.
+    final compact = context.isCompact;
+    // [PageChrome] carries two things the shell owns. `fullWidth`, because a
+    // seven-day grid wants the whole page rather than the reading column. And
+    // on a phone the controls themselves, docked into the glass app bar the way
+    // the audit log docks its filters: laid out down the page they cost a third
+    // of the screen before a single row of the week is visible, and the bar is
+    // already blurring that band.
+    //
+    // Its title and actions are deliberately not used. The shell draws those in
+    // the sub-page bar, and a destination in the nav has no sub-page bar, so on
+    // a wide window they would never appear at all — which is why a top-level
+    // page wears its own head, the way Reports, Gantt and Board do.
     return PageChrome(
       fullWidth: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              context.pageGutter,
-              18 + context.topGutter,
-              context.pageGutter,
-              12,
-            ),
-            child: PageHead(
-              title: context.t('timesheet.title'),
-              actions: [
-                // Amber only when there is somewhere to come back from; on
-                // this week it is still there, and still re-reads it, but it
-                // does not ask for attention it has not earned.
-                if (_isCurrentWeek)
-                  GhostButton(
-                    icon: LucideIcons.calendarCheck,
-                    label: context.t('timesheet.today'),
-                    onPressed: _goToToday,
-                    collapseToIcon: true,
-                  )
-                else
-                  PrimaryButton(
-                    icon: LucideIcons.calendarCheck,
-                    label: context.t('timesheet.today'),
-                    onPressed: _goToToday,
-                    collapseToIcon: true,
+      bottom: compact ? _dockedBar(admin) : null,
+      bottomHeight: compact ? kGlassPillHeight + 10 : 0,
+      child: compact
+          ? _body()
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    context.pageGutter,
+                    18 + context.topGutter,
+                    context.pageGutter,
+                    12,
                   ),
+                  child: PageHead(
+                    title: context.t('timesheet.title'),
+                    actions: [_todayButton()],
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    context.pageGutter,
+                    0,
+                    context.pageGutter,
+                    12,
+                  ),
+                  child: _toolbar(admin),
+                ),
+                Expanded(child: _body()),
+              ],
+            ),
+    );
+  }
+
+  /// Back to the current week — and a re-read while it is at it, so it doubles
+  /// as refresh. Amber only when there is somewhere to come back from.
+  Widget _todayButton() => _isCurrentWeek
+      ? GhostButton(
+          icon: LucideIcons.calendarCheck,
+          label: context.t('timesheet.today'),
+          onPressed: _goToToday,
+          collapseToIcon: true,
+        )
+      : PrimaryButton(
+          icon: LucideIcons.calendarCheck,
+          label: context.t('timesheet.today'),
+          onPressed: _goToToday,
+          collapseToIcon: true,
+        );
+
+  /// The phone's controls, in one row inside the app bar's blur: the week and
+  /// its arrows on a glass pill, then a pill each for what would otherwise be
+  /// two full-width fields. Real glass, in the band the bar is already blurring
+  /// — the same shape the audit log's docked filters use, so a reader meets one
+  /// toolbar idiom in the app and not two. A set filter wears the amber wash,
+  /// so a narrowing nobody meant cannot be mistaken for an empty week.
+  Widget _dockedBar(bool admin) {
+    final localizations = MaterialLocalizations.of(context);
+    return SizedBox(
+      height: kGlassPillHeight,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        // The gutter is the scroller's own padding, so the last pill can come
+        // fully into view at the display edge instead of being clipped by an
+        // inset around the whole row.
+        padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
+        children: [
+          GlassPill(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _PillIcon(
+                  icon: backChevron(context),
+                  tooltip: context.t('timesheet.previousWeek'),
+                  onTap: _previousWeek,
+                ),
+                Text(
+                  '${localizations.formatCompactDate(_from)} – '
+                  '${localizations.formatCompactDate(_to)}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                _PillIcon(
+                  icon: forwardChevron(context),
+                  tooltip: context.t('timesheet.nextWeek'),
+                  onTap: _nextWeek,
+                ),
               ],
             ),
           ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              context.pageGutter,
-              0,
-              context.pageGutter,
-              12,
+          const SizedBox(width: 8),
+          GlassPill(
+            active: !_isCurrentWeek,
+            onTap: _goToToday,
+            child: _PillLabel(
+              icon: LucideIcons.calendarCheck,
+              label: context.t('timesheet.today'),
+              active: !_isCurrentWeek,
             ),
-            child: _toolbar(admin),
           ),
-          Expanded(child: _body()),
+          if (admin) ...[
+            const SizedBox(width: 8),
+            _DockedFilterPill(
+              icon: LucideIcons.userRound,
+              label: _userFilterLabel ?? context.t('timesheet.allUsers'),
+              active: _userFilter != null,
+              onTap: _pickUser,
+            ),
+            const SizedBox(width: 8),
+            _DockedFilterPill(
+              icon: LucideIcons.folderKanban,
+              label: _projectFilterLabel ?? context.t('timesheet.allProjects'),
+              active: _projectFilter != null,
+              onTap: _pickProject,
+            ),
+          ],
         ],
       ),
     );
@@ -522,7 +612,12 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         context.pageGutter,
-        0,
+        // On a phone the grid scrolls *under* the glass app bar, which now
+        // carries the controls, so it starts below the whole band — a gutter
+        // clear of it, the same distance every other scrolling page keeps
+        // (see `pagePadding`). On wide the head and the toolbar sit in the
+        // page and have already spent that room.
+        context.isCompact ? context.topGutter + context.pageGutter : 0,
         context.pageGutter,
         context.pageGutter + context.bottomGutter,
       ),
@@ -592,13 +687,21 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (user == null)
-          // The same treatment the issue timeline gives an id nobody answers
-          // to, so a reader who sees both in one session reads them the same.
+          // The same treatment the issue timeline gives these two, so a reader
+          // who meets both in one session reads them the same: a commit mark
+          // for time that never had an owner, a crossed-out figure for an
+          // account that had one and closed it.
           HiveAvatar(
             name: name,
             size: 24,
             background: AppColors.inkFaint,
-            glyph: const Icon(LucideIcons.userX, size: 12, color: Colors.white),
+            glyph: Icon(
+              row.userId.isEmpty
+                  ? LucideIcons.gitCommitHorizontal
+                  : LucideIcons.userX,
+              size: 12,
+              color: Colors.white,
+            ),
           )
         else
           AppAvatar(
@@ -1094,6 +1197,121 @@ class _FilterRow extends StatelessWidget {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A tappable glyph inside a pill — the week arrows, which sit on the same
+/// surface as the range they move.
+class _PillIcon extends StatelessWidget {
+  const _PillIcon({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkResponse(
+        onTap: onTap,
+        radius: 20,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+          child: Icon(icon, size: 18, color: AppColors.inkSoft),
+        ),
+      ),
+    );
+  }
+}
+
+/// A pill's contents when it reads as one control: glyph, label, chevron.
+class _PillLabel extends StatelessWidget {
+  const _PillLabel({
+    required this.icon,
+    required this.label,
+    required this.active,
+    this.chevron = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool active;
+  final bool chevron;
+
+  @override
+  Widget build(BuildContext context) {
+    final tint = active ? AppColors.accentStrong : AppColors.inkSoft;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: tint),
+          const SizedBox(width: 7),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: active ? AppColors.accentStrong : AppColors.ink,
+            ),
+          ),
+          if (chevron) ...[
+            const SizedBox(width: 5),
+            Icon(LucideIcons.chevronDown, size: 14, color: tint),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// One docked filter: a glass pill that opens the shared filter panel anchored
+/// to itself, and wears the amber wash while it is narrowing anything.
+class _DockedFilterPill extends StatelessWidget {
+  const _DockedFilterPill({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool active;
+  final ValueChanged<Rect> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 190),
+      child: Builder(
+        builder: (pillContext) => GlassPill(
+          active: active,
+          onTap: () {
+            final box = pillContext.findRenderObject() as RenderBox?;
+            onTap(
+              box != null && box.hasSize
+                  ? box.localToGlobal(Offset.zero) & box.size
+                  : Rect.zero,
+            );
+          },
+          child: _PillLabel(
+            icon: icon,
+            label: label,
+            active: active,
+            chevron: true,
+          ),
         ),
       ),
     );
