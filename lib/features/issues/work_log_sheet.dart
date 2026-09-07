@@ -64,15 +64,6 @@ class WorkLogForm extends StatefulWidget {
 }
 
 class _WorkLogFormState extends State<WorkLogForm> {
-  static const _defaultActivities = [
-    'Development',
-    'Testing',
-    'Documentation',
-    'Design',
-    'Meeting',
-    'Support',
-  ];
-
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _hours;
   late final TextEditingController _minutes;
@@ -99,12 +90,9 @@ class _WorkLogFormState extends State<WorkLogForm> {
     _hours = TextEditingController(text: '${minutes ~/ 60}');
     _minutes = TextEditingController(text: '${minutes % 60}');
     _note = TextEditingController(text: existing?.description ?? '');
-    _activity = existing?.activityType ?? _defaultActivities.first;
+    _activity = existing?.activityType ?? workItemActivities.first;
     _date = existing?.date ?? DateTime.now();
-    _activities = [
-      ..._defaultActivities,
-      if (!_defaultActivities.contains(_activity)) _activity,
-    ];
+    _activities = workItemActivityChoices(_activity);
   }
 
   @override
@@ -175,7 +163,7 @@ class _WorkLogFormState extends State<WorkLogForm> {
                   ),
               ],
               onChanged: (value) =>
-                  setState(() => _activity = value ?? _defaultActivities.first),
+                  setState(() => _activity = value ?? workItemActivities.first),
             ),
             const SizedBox(height: 14),
             OutlinedButton.icon(

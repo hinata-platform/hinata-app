@@ -21,7 +21,9 @@
     "ok": "OK",
     "next": "Suivant",
     "clear": "Effacer",
-    "paste": "Coller"
+    "paste": "Coller",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier"
   },
   "delete": {
     "cta": "Supprimer",
@@ -837,7 +839,66 @@
     "deleteConfirm": "Supprimer {{duration}} saisi le {{date}} ? Cette action est irréversible.",
     "deleted": "Saisie supprimée",
     "noEntries": "Aucun temps saisi pour l'instant",
-    "entryActions": "Actions sur la saisie"
+    "entryActions": "Actions sur la saisie",
+    "billable": "Facturable",
+    "deleteMessage": "Cette saisie sera supprimée. Action irréversible.",
+    "overlapWarning": "Chevauche une autre saisie de ce jour.",
+    "overlapWarning_plural": "Chevauche {{count}} autres saisies de ce jour.",
+    "unit": {
+      "hours": "Heures",
+      "hoursShort": "h",
+      "minutes": "Minutes",
+      "minutesShort": "min"
+    },
+    "timer": {
+      "idle": "Aucun minuteur en cours",
+      "start": "Démarrer",
+      "stop": "Arrêter",
+      "discard": "Abandonner le minuteur",
+      "noDescription": "Sans description",
+      "title": "Minuteur"
+    },
+    "placement": {
+      "none": "Sans projet",
+      "assigned": "Affecté",
+      "search": "Rechercher projets et tickets",
+      "searchProjects": "Rechercher des projets"
+    },
+    "filter": {
+      "search": "Rechercher des saisies",
+      "allTime": "Toute la période",
+      "allProjects": "Tous les projets",
+      "range": "Période"
+    },
+    "empty": {
+      "title": "Rien de saisi pour l'instant",
+      "message": "Lance le minuteur ou ajoute une saisie à la main.",
+      "filtered": "Aucun résultat",
+      "tryOther": "Essaie une autre période ou un autre terme."
+    },
+    "error": {
+      "title": "Impossible de charger tes temps",
+      "duration": "Indique une durée, par exemple 1h 30m.",
+      "interval": "La fin doit être après le début.",
+      "tooLong": "Une saisie ne peut pas dépasser 24 heures."
+    },
+    "entry": {
+      "new": "Nouvelle saisie",
+      "edit": "Modifier la saisie",
+      "subtitle": "Soit une durée sur une journée, soit un début et une fin.",
+      "description": "Sur quoi as-tu travaillé ?",
+      "placement": "Projet ou ticket",
+      "day": "Jour",
+      "duration": "Durée",
+      "pickDuration": "Choisir une durée",
+      "start": "Début",
+      "end": "Fin",
+      "activity": "Activité",
+      "modeDuration": "Durée",
+      "modeInterval": "Début et fin",
+      "noDescription": "Sans description",
+      "continue": "Reprendre"
+    }
   },
   "projects": {
     "title": "Projets",
@@ -2347,6 +2408,10 @@
         "security": {
           "label": "Alertes de sécurité",
           "desc": "Nouvelles connexions, changements de mot de passe et d'adresse e-mail"
+        },
+        "time": {
+          "label": "Suivi du temps",
+          "desc": "Avis sur votre minuteur et vos temps"
         }
       },
       "pushUnsupported": "Aucun service push ici — cela s'applique tout de même à votre téléphone et à vos autres appareils"

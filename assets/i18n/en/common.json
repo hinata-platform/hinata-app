@@ -21,7 +21,9 @@
     "ok": "OK",
     "next": "Next",
     "clear": "Clear",
-    "paste": "Paste"
+    "paste": "Paste",
+    "today": "Today",
+    "yesterday": "Yesterday"
   },
   "delete": {
     "cta": "Delete",
@@ -837,7 +839,66 @@
     "deleteConfirm": "Remove {{duration}} logged on {{date}}? This cannot be undone.",
     "deleted": "Entry deleted",
     "noEntries": "No time logged yet",
-    "entryActions": "Entry actions"
+    "entryActions": "Entry actions",
+    "billable": "Billable",
+    "deleteMessage": "This entry will be removed. This cannot be undone.",
+    "overlapWarning": "Overlaps another entry on this day.",
+    "overlapWarning_plural": "Overlaps {{count}} other entries on this day.",
+    "unit": {
+      "hours": "Hours",
+      "hoursShort": "h",
+      "minutes": "Minutes",
+      "minutesShort": "m"
+    },
+    "timer": {
+      "idle": "No timer running",
+      "start": "Start",
+      "stop": "Stop",
+      "discard": "Discard timer",
+      "noDescription": "No description",
+      "title": "Timer"
+    },
+    "placement": {
+      "none": "No project",
+      "assigned": "Assigned",
+      "search": "Search projects and issues",
+      "searchProjects": "Search projects"
+    },
+    "filter": {
+      "search": "Search entries",
+      "allTime": "Any time",
+      "allProjects": "All projects",
+      "range": "Period"
+    },
+    "empty": {
+      "title": "Nothing tracked yet",
+      "message": "Start the timer, or add an entry by hand.",
+      "filtered": "Nothing matches",
+      "tryOther": "Try another period or search term."
+    },
+    "error": {
+      "title": "Could not load your time",
+      "duration": "Enter a duration, for example 1h 30m.",
+      "interval": "The end has to be after the start.",
+      "tooLong": "An entry can be at most 24 hours."
+    },
+    "entry": {
+      "new": "New entry",
+      "edit": "Edit entry",
+      "subtitle": "Either a duration on a day, or a start and an end.",
+      "description": "What did you work on?",
+      "placement": "Project or issue",
+      "day": "Day",
+      "duration": "Duration",
+      "pickDuration": "Pick a duration",
+      "start": "Start",
+      "end": "End",
+      "activity": "Activity",
+      "modeDuration": "Duration",
+      "modeInterval": "Start and end",
+      "noDescription": "No description",
+      "continue": "Continue"
+    }
   },
   "projects": {
     "title": "Projects",
@@ -2347,6 +2408,10 @@
         "security": {
           "label": "Security alerts",
           "desc": "New sign-ins, password & email changes"
+        },
+        "time": {
+          "label": "Time tracking",
+          "desc": "Your own timer and timesheet notices"
         }
       },
       "pushUnsupported": "No push service here — this still applies to your phone and your other devices"
