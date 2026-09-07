@@ -134,6 +134,11 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       ..add(const AuthChecked());
     widget.apiClient.onSessionExpired = () =>
         _auth.add(const LogoutRequested());
+    // A flag-gated module answering "switched off" means our /meta is stale —
+    // an admin flipped the flag while this app was running. Re-read it so the
+    // nav entry and the routes follow within one request, not one restart.
+    widget.apiClient.onFeatureDisabled = () =>
+        _appConfig.add(const MetaRefreshRequested());
     // Real-time sign-out: hold the account event stream open while signed in so
     // the server can push a `logout` (revoked session) and end this device's
     // session at once, rather than waiting for the next request to 401.
@@ -542,6 +547,9 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed &&
         _auth.state.status == AuthStatus.authenticated) {
       unawaited(_timeZone.sync());
+      // Platform flags and the minimum app version can have moved while we were
+      // in the background — this is the cheapest moment to notice.
+      _appConfig.add(const MetaRefreshRequested());
     }
     super.didChangeAppLifecycleState(state);
   }

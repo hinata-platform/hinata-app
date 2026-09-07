@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/blocs/theme_cubit.dart';
@@ -54,6 +55,7 @@ import '../sprint/modals/glass_modal.dart'
     show showGlassOptions, showGlassToast, GlassToastKind;
 import 'floating_nav.dart';
 import 'page_chrome.dart';
+import 'shell_nav.dart';
 import 'swipe_back.dart';
 import '../../core/theme/glass_chrome.dart' show kNavGlassDark, kNavGlassLight;
 import '../../core/widgets/hive_widgets.dart' show backArrow, forwardArrow;
@@ -61,37 +63,6 @@ import '../../core/widgets/hive_widgets.dart' show backArrow, forwardArrow;
 part 'app_shell.wide.dart';
 part 'app_shell.notifications.dart';
 part 'app_shell.compact.dart';
-
-class _Destination {
-  const _Destination(this.route, this.labelKey, this.icon);
-
-  final String route;
-  final String labelKey;
-  final IconData icon;
-}
-
-const _primary = [
-  _Destination('/dashboard', 'nav.dashboard', LucideIcons.layoutDashboard),
-  _Destination('/teams', 'nav.teams', LucideIcons.usersRound),
-  _Destination('/projects', 'nav.projects', LucideIcons.folder),
-  _Destination('/issues', 'nav.issues', LucideIcons.circleCheckBig),
-  _Destination('/board', 'nav.board', LucideIcons.squareKanban),
-];
-
-const _secondary = [
-  _Destination('/watched', 'nav.watched', LucideIcons.eye),
-  _Destination('/gantt', 'nav.gantt', LucideIcons.chartColumnStacked),
-  _Destination('/timesheet', 'nav.timesheet', LucideIcons.table),
-  _Destination('/reports', 'nav.reports', LucideIcons.chartLine),
-  _Destination('/knowledge', 'nav.knowledge', LucideIcons.bookOpen),
-];
-
-const _bottomTabs = [
-  _Destination('/dashboard', 'nav.dashboard', LucideIcons.layoutDashboard),
-  _Destination('/issues', 'nav.issues', LucideIcons.circleCheckBig),
-  _Destination('/board', 'nav.board', LucideIcons.squareKanban),
-  _Destination('/more', 'nav.more', LucideIcons.layoutGrid),
-];
 
 bool get isNativeApp =>
     !kIsWeb &&
@@ -168,6 +139,15 @@ class _AppShellState extends State<AppShell> {
     // brightness for ThemeMode.system.
     context.watch<ThemeCubit>();
     MediaQuery.platformBrightnessOf(context);
+    // Which navigation this server asks for. Watched, not read: an admin can
+    // switch the extended time-tracking module on while this app is running,
+    // and the entry has to appear without a restart. `select` narrows that to
+    // the flag itself so the rest of AppConfig's traffic doesn't rebuild the
+    // shell. Resolved once here and handed down, so the rail, the app bar and
+    // the "More" sheet can never disagree about it within a frame.
+    final advancedTime = context.select<AppConfigBloc, bool>(
+      (bloc) => bloc.state.meta?.advancedTimeTracking ?? false,
+    );
     // `widget.location` (from the ShellRoute builder's state) goes STALE after
     // an imperative `push` of a nested route — it keeps reporting the underlying
     // page (e.g. `/board`) while a pushed `/issues/:id` is on screen, so the top
@@ -201,9 +181,14 @@ class _AppShellState extends State<AppShell> {
                     ? _CompactShell(
                         location: location,
                         immersive: immersive,
+                        advancedTime: advancedTime,
                         child: content,
                       )
-                    : _WideShell(location: location, child: content);
+                    : _WideShell(
+                        location: location,
+                        advancedTime: advancedTime,
+                        child: content,
+                      );
               },
             );
           },
@@ -212,13 +197,12 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  /// Routes the system back (Android back button / edge-swipe gesture) through
-  /// the same fallback chain as the shell's on-screen back button instead of
-  /// letting it close the app: pop whatever sits on a navigator stack (pushed
-  /// pages, dialogs), then a page-published in-page back override (e.g. the
-  /// settings/admin section → index step), then the sub-page's parent route,
-  /// then home. Only on /dashboard with nothing left to unwind does the system
-  /// take over and background the app.
+  /// The flag, read rather than watched: the two methods below run from a
+  /// gesture or a hardware button, where the current value is what matters and
+  /// subscribing from outside a build would be wrong.
+  bool get _advancedTime =>
+      context.read<AppConfigBloc>().state.meta?.advancedTimeTracking ?? false;
+
   /// Whether the swipe-back gesture has anywhere to go right now: something
   /// on a navigator stack, an in-page back override, or a sub-page's parent
   /// route. Primary tabs (dashboard, issues, board, …) don't swipe — the
@@ -228,9 +212,16 @@ class _AppShellState extends State<AppShell> {
     if (router.canPop()) return true;
     final location = router.state.matchedLocation;
     return _chrome.onBackFor(location) != null ||
-        _subPageTitleKey(location) != null;
+        subPageTitleKey(location, advancedTime: _advancedTime) != null;
   }
 
+  /// Routes the system back (Android back button / edge-swipe gesture) through
+  /// the same fallback chain as the shell's on-screen back button instead of
+  /// letting it close the app: pop whatever sits on a navigator stack (pushed
+  /// pages, dialogs), then a page-published in-page back override (e.g. the
+  /// settings/admin section → index step), then the sub-page's parent route,
+  /// then home. Only on /dashboard with nothing left to unwind does the system
+  /// take over and background the app.
   Future<bool> _onSystemBack() async {
     final router = GoRouter.of(context);
     if (router.canPop()) {
@@ -243,8 +234,8 @@ class _AppShellState extends State<AppShell> {
       override();
       return true;
     }
-    if (_subPageTitleKey(location) != null) {
-      router.go(_subPageBackRoute(location));
+    if (subPageTitleKey(location, advancedTime: _advancedTime) != null) {
+      router.go(subPageBackRoute(location, advancedTime: _advancedTime));
       return true;
     }
     if (location != '/dashboard') {
@@ -261,69 +252,20 @@ class _AppShellState extends State<AppShell> {
 bool _isImmersive(String location) => location.startsWith('/issues/');
 
 // ─────────────────────────── Sub-page chrome ──────────────────────────────
-// A "sub-page" is any route that isn't a primary nav destination — its top bar
-// shows a back button + the page's own title instead of the brand mark + the
-// nav-derived breadcrumb. The i18n key here is only a fallback; pages with a
-// dynamic title (an issue, an article, a board…) override it through
-// [PageChrome].
-
-/// Fallback title key for a sub-page route, or null if [location] is a primary
-/// nav destination (dashboard, projects, issues, board, …).
-String? _subPageTitleKey(String location) {
-  if (location == '/admin') return 'admin.title';
-  if (location.startsWith('/admin/users')) return 'admin.users';
-  if (location == '/notifications') return 'nav.notifications';
-  if (location == '/weekly-summary') return 'weeklySummary.title';
-  if (location == '/settings') return 'nav.settings';
-  if (location.startsWith('/issues/')) return 'nav.issues';
-  if (location.startsWith('/knowledge/')) return 'nav.knowledge';
-  if (location.startsWith('/boards/')) return 'nav.board';
-  if (location.startsWith('/projects/')) return 'board.boards';
-  if (location.startsWith('/teams/')) return 'nav.teams';
-  return null;
-}
-
-/// Parent route to fall back to when a sub-page can't simply pop (e.g. opened
-/// via a deep link with nothing on the navigation stack).
-String _subPageBackRoute(String location) {
-  if (location.startsWith('/admin/users')) return '/admin';
-  if (location == '/admin') return '/settings';
-  if (location.startsWith('/issues/')) return '/issues';
-  if (location.startsWith('/knowledge/')) return '/knowledge';
-  if (location.startsWith('/boards/')) return '/board';
-  if (location.startsWith('/projects/')) return '/projects';
-  if (location.startsWith('/teams/')) return '/teams';
-  return '/dashboard';
-}
 
 /// Resolves the back action for a sub-page: a page-supplied [override] wins,
 /// otherwise pop the stack, otherwise jump to the parent route.
 void _handleBack(
   BuildContext context,
   String location,
-  VoidCallback? override,
-) {
+  VoidCallback? override, {
+  required bool advancedTime,
+}) {
   if (override != null) {
     override();
   } else if (context.canPop()) {
     context.pop();
   } else {
-    context.go(_subPageBackRoute(location));
+    context.go(subPageBackRoute(location, advancedTime: advancedTime));
   }
-}
-
-// Maps the current location to the nav route that should appear active.
-// /boards/:id      → /board (Board nav item)
-// /projects/:id/*  → /projects (Projects nav item)
-bool _isActive(String location, String navRoute) {
-  if (navRoute == '/board') {
-    return location.startsWith('/board') || location.startsWith('/boards/');
-  }
-  if (navRoute == '/projects') {
-    return location.startsWith('/projects');
-  }
-  if (navRoute == '/teams') {
-    return location.startsWith('/teams');
-  }
-  return location.startsWith(navRoute);
 }

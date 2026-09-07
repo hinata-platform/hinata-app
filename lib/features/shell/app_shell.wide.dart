@@ -10,10 +10,18 @@ const double _kTopBarHeight = 60;
 const double _kTopBarGapBelow = 10;
 
 class _WideShell extends StatefulWidget {
-  const _WideShell({required this.location, required this.child});
+  const _WideShell({
+    required this.location,
+    required this.child,
+    required this.advancedTime,
+  });
 
   final String location;
   final Widget child;
+
+  /// Whether the extended time-tracking module is switched on for this server —
+  /// resolved once by the shell so the rail and the sub-page bar agree.
+  final bool advancedTime;
 
   @override
   State<_WideShell> createState() => _WideShellState();
@@ -38,7 +46,10 @@ class _WideShellState extends State<_WideShell> {
     final isMedium = context.layoutSize == LayoutSize.medium;
     final collapsed = isMedium || _collapsed;
     final railWidth = collapsed ? 76.0 : 244.0;
-    final subKey = _subPageTitleKey(widget.location);
+    final subKey = subPageTitleKey(
+      widget.location,
+      advancedTime: widget.advancedTime,
+    );
     final dark = Theme.of(context).brightness == Brightness.dark;
 
     // The ambient backdrop is painted app-wide; the floating glass topbar and
@@ -70,6 +81,7 @@ class _WideShellState extends State<_WideShell> {
                       children: [
                         _NavRail(
                           location: widget.location,
+                          advancedTime: widget.advancedTime,
                           collapsed: collapsed,
                           width: railWidth,
                           canToggle: !isMedium,
@@ -93,6 +105,7 @@ class _WideShellState extends State<_WideShell> {
                                     child: _SubPageBar(
                                       location: widget.location,
                                       titleKey: subKey,
+                                      advancedTime: widget.advancedTime,
                                     ),
                                   ),
                                 Expanded(
@@ -221,6 +234,7 @@ Future<void> _createIssue(BuildContext context) async {
 class _NavRail extends StatelessWidget {
   const _NavRail({
     required this.location,
+    required this.advancedTime,
     required this.collapsed,
     required this.width,
     this.canToggle = false,
@@ -228,6 +242,7 @@ class _NavRail extends StatelessWidget {
   });
 
   final String location;
+  final bool advancedTime;
   final bool collapsed;
   final double width;
 
@@ -372,19 +387,29 @@ class _NavRail extends StatelessWidget {
 
                           // Primary group
                           if (!collapsed) const _RailGroupLabel('WORK'),
-                          for (final dest in _primary)
+                          for (final dest in primaryDestinations)
                             _RailItem(
                               destination: dest,
-                              selected: _isActive(location, dest.route),
+                              selected: isNavActive(
+                                location,
+                                dest.route,
+                                advancedTime: advancedTime,
+                              ),
                               collapsed: collapsed,
                             ),
 
                           const SizedBox(height: 8),
                           if (!collapsed) const _RailGroupLabel('PLAN'),
-                          for (final dest in _secondary)
+                          for (final dest in secondaryDestinations(
+                            advancedTime: advancedTime,
+                          ))
                             _RailItem(
                               destination: dest,
-                              selected: _isActive(location, dest.route),
+                              selected: isNavActive(
+                                location,
+                                dest.route,
+                                advancedTime: advancedTime,
+                              ),
                               collapsed: collapsed,
                             ),
                         ],
@@ -401,12 +426,16 @@ class _NavRail extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 4, bottom: 8),
                     child: _RailItem(
-                      destination: const _Destination(
+                      destination: const NavDestination(
                         '/settings',
                         'nav.settings',
                         LucideIcons.settings,
                       ),
-                      selected: _isActive(location, '/settings'),
+                      selected: isNavActive(
+                        location,
+                        '/settings',
+                        advancedTime: advancedTime,
+                      ),
                       collapsed: collapsed,
                     ),
                   ),
@@ -504,7 +533,7 @@ class _RailItem extends StatelessWidget {
     required this.collapsed,
   });
 
-  final _Destination destination;
+  final NavDestination destination;
   final bool selected;
   final bool collapsed;
 
@@ -853,10 +882,15 @@ Widget _menuRow(IconData icon, String label, {bool danger = false}) {
 /// Slim contextual bar shown on sub-pages under the floating topbar: a back
 /// button + the page's title (published via [PageChrome]).
 class _SubPageBar extends StatelessWidget {
-  const _SubPageBar({required this.location, required this.titleKey});
+  const _SubPageBar({
+    required this.location,
+    required this.titleKey,
+    required this.advancedTime,
+  });
 
   final String location;
   final String titleKey;
+  final bool advancedTime;
 
   @override
   Widget build(BuildContext context) {
@@ -875,7 +909,12 @@ class _SubPageBar extends StatelessWidget {
           child: Row(
             children: [
               IconButton(
-                onPressed: () => _handleBack(context, location, override),
+                onPressed: () => _handleBack(
+                  context,
+                  location,
+                  override,
+                  advancedTime: advancedTime,
+                ),
                 visualDensity: VisualDensity.compact,
                 tooltip: MaterialLocalizations.of(context).backButtonTooltip,
                 icon: Icon(

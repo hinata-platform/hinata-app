@@ -9,11 +9,16 @@ class _CompactShell extends StatefulWidget {
   const _CompactShell({
     required this.location,
     required this.child,
+    required this.advancedTime,
     this.immersive = false,
   });
 
   final String location;
   final Widget child;
+
+  /// Whether the extended time-tracking module is switched on for this server —
+  /// resolved once by the shell so every bar and sheet below agrees.
+  final bool advancedTime;
 
   /// A full-screen route that supplies its own chrome: hide the shell's glass
   /// app bar + floating nav and drop their footprints from the content gutters.
@@ -25,8 +30,14 @@ class _CompactShell extends StatefulWidget {
 
 class _CompactShellState extends State<_CompactShell> {
   int get _selectedIndex {
-    for (var i = 0; i < _bottomTabs.length - 1; i++) {
-      if (_isActive(widget.location, _bottomTabs[i].route)) return i;
+    for (var i = 0; i < bottomTabs.length - 1; i++) {
+      if (isNavActive(
+        widget.location,
+        bottomTabs[i].route,
+        advancedTime: widget.advancedTime,
+      )) {
+        return i;
+      }
     }
     // Anything that isn't one of the first three tabs (dashboard · issues ·
     // board) lives behind the "More" sheet — teams, projects, gantt, timesheet,
@@ -38,7 +49,7 @@ class _CompactShellState extends State<_CompactShell> {
   }
 
   void _onTap(int index) {
-    final tab = _bottomTabs[index];
+    final tab = bottomTabs[index];
     if (tab.route == '/more') {
       _showMoreSheet();
     } else {
@@ -61,6 +72,7 @@ class _CompactShellState extends State<_CompactShell> {
       barrierColor: Colors.black.withValues(alpha: 0.32),
       builder: (sheetCtx) => _MoreSheet(
         location: widget.location,
+        advancedTime: widget.advancedTime,
         user: user,
         onNavigate: (route) {
           Navigator.of(sheetCtx).pop();
@@ -221,7 +233,7 @@ class _CompactShellState extends State<_CompactShell> {
                       : AppColors.accentStrong,
                   unselectedIconColor: dark ? AppColors.inkDark : AppColors.ink,
                   tabs: [
-                    for (final d in _bottomTabs)
+                    for (final d in bottomTabs)
                       GlassTab(
                         icon: Icon(d.icon),
                         label: context.t(d.labelKey),
@@ -237,7 +249,11 @@ class _CompactShellState extends State<_CompactShell> {
               top: 0,
               left: 0,
               right: 0,
-              child: _GlassTopBar(location: widget.location, dark: dark),
+              child: _GlassTopBar(
+                location: widget.location,
+                dark: dark,
+                advancedTime: widget.advancedTime,
+              ),
             ),
         ],
       ),
@@ -251,10 +267,15 @@ class _CompactShellState extends State<_CompactShell> {
 /// left, the always-visible action icons (search · notifications · settings)
 /// grouped in a glass capsule on the right.
 class _GlassTopBar extends StatelessWidget {
-  const _GlassTopBar({required this.location, required this.dark});
+  const _GlassTopBar({
+    required this.location,
+    required this.dark,
+    required this.advancedTime,
+  });
 
   final String location;
   final bool dark;
+  final bool advancedTime;
 
   @override
   Widget build(BuildContext context) {
@@ -268,19 +289,19 @@ class _GlassTopBar extends StatelessWidget {
 
     // Sub-page → back button + the page's own title; primary nav page → brand
     // mark + the nav-derived title.
-    final subKey = _subPageTitleKey(location);
+    final subKey = subPageTitleKey(location, advancedTime: advancedTime);
     final String titleText;
     VoidCallback? onBack;
     if (subKey != null) {
       titleText = chrome.titleFor(location) ?? context.t(subKey);
       final override = chrome.onBackFor(location);
-      onBack = () => _handleBack(context, location, override);
+      onBack = () =>
+          _handleBack(context, location, override, advancedTime: advancedTime);
     } else {
-      final all = [..._primary, ..._secondary];
-      final current = all.firstWhere(
-        (d) => _isActive(location, d.route),
+      final current = allDestinations(advancedTime: advancedTime).firstWhere(
+        (d) => isNavActive(location, d.route, advancedTime: advancedTime),
         orElse: () =>
-            const _Destination('/', 'nav.dashboard', LucideIcons.house),
+            const NavDestination('/', 'nav.dashboard', LucideIcons.house),
       );
       titleText = context.t(current.labelKey);
     }
@@ -698,24 +719,14 @@ class _MoreSheet extends StatelessWidget {
   const _MoreSheet({
     required this.location,
     required this.onNavigate,
+    required this.advancedTime,
     this.user,
   });
 
   final String location;
   final void Function(String route) onNavigate;
+  final bool advancedTime;
   final AuthUser? user;
-
-  static const _items = [
-    _Destination('/projects', 'nav.projects', LucideIcons.folder),
-    _Destination('/teams', 'nav.teams', LucideIcons.usersRound),
-    _Destination('/watched', 'nav.watched', LucideIcons.eye),
-    _Destination('/gantt', 'nav.gantt', LucideIcons.chartColumnStacked),
-    _Destination('/timesheet', 'nav.timesheet', LucideIcons.table),
-    _Destination('/reports', 'nav.reports', LucideIcons.chartLine),
-    _Destination('/knowledge', 'nav.knowledge', LucideIcons.bookOpen),
-    // Notifications intentionally omitted — they live in the always-visible
-    // top bar bell, so they need no entry in the overflow sheet.
-  ];
 
   static const double _radius = 28;
 
@@ -723,6 +734,7 @@ class _MoreSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = SearchTokens.of(Theme.of(context).brightness);
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final items = moreSheetDestinations(advancedTime: advancedTime);
 
     final subtitle = user?.title?.isNotEmpty == true
         ? user!.title!
@@ -823,12 +835,16 @@ class _MoreSheet extends StatelessWidget {
                   crossAxisSpacing: 8,
                   childAspectRatio: 1.1,
                 ),
-                itemCount: _items.length,
+                itemCount: items.length,
                 itemBuilder: (context, i) => _MoreTile(
                   tokens: tokens,
-                  destination: _items[i],
-                  active: location.startsWith(_items[i].route),
-                  onTap: () => onNavigate(_items[i].route),
+                  destination: items[i],
+                  active: isNavActive(
+                    location,
+                    items[i].route,
+                    advancedTime: advancedTime,
+                  ),
+                  onTap: () => onNavigate(items[i].route),
                 ),
               ),
             ],
@@ -856,7 +872,7 @@ class _MoreTile extends StatelessWidget {
   });
 
   final SearchTokens tokens;
-  final _Destination destination;
+  final NavDestination destination;
   final bool active;
   final VoidCallback onTap;
 

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 
 import '../models/core_models.dart';
 import '../storage/app_storage.dart';
+import 'feature_gate.dart';
 // Native-only HTTP connection tuning (idle keep-alive socket handling); a no-op
 // on the web, selected by conditional import so `dart:io` never reaches the web
 // build.
@@ -20,10 +21,19 @@ import 'sse_transport_web.dart'
 
 /// Exception with a user-presentable message key.
 class ApiFailure implements Exception {
-  ApiFailure(this.message, {this.statusCode});
+  ApiFailure(this.message, {this.statusCode, this.featureDisabled = false});
 
   final String message;
   final int? statusCode;
+
+  /// The route is gated behind a platform feature flag that is currently off —
+  /// "not switched on", not "not found".
+  ///
+  /// Nothing branches on this yet: the reaction that matters happens without the
+  /// caller, in [ApiClient.onFeatureDisabled], which re-reads `/meta` so the app
+  /// stops offering the route at all. It is here for the screens stage 3 brings,
+  /// which can say something better than a dead end.
+  final bool featureDisabled;
 
   @override
   String toString() => message;
@@ -101,6 +111,16 @@ class ApiClient {
             }
             onSessionExpired?.call();
           }
+          // A module that is switched off answers 404 on its own routes. We only
+          // asked because our copy of /meta said the module was on, so that copy
+          // is stale — ask for a fresh one instead of showing "not found".
+          if (isFeatureDisabledResponse(
+            path: error.requestOptions.path,
+            status: error.response?.statusCode,
+            message: () => _messageOf(_asMessageBody(error.response?.data)),
+          )) {
+            onFeatureDisabled?.call();
+          }
           handler.next(error);
         },
       ),
@@ -127,6 +147,10 @@ class ApiClient {
 
   /// Invoked when the session can no longer be refreshed.
   void Function()? onSessionExpired;
+
+  /// Invoked when the server says a flag-gated module is switched off — the cue
+  /// to re-read `/api/v1/meta`, because our feature flags are out of date.
+  void Function()? onFeatureDisabled;
 
   /// Language code sent as `Accept-Language` so the server localizes error
   /// messages. Kept in sync with the app's [LocaleCubit] (see HinataApp).
@@ -407,11 +431,27 @@ class ApiClient {
     }
   }
 
+  /// The server's message out of an already-decoded error body, if there is one.
+  static String? _messageOf(Object? data) =>
+      (data is Map && data['message'] is String)
+      ? data['message'] as String
+      : null;
+
   ApiFailure _toFailure(DioException error) {
     final status = error.response?.statusCode;
     final data = _asMessageBody(error.response?.data);
-    if (data is Map && data['message'] is String) {
-      return ApiFailure(data['message'] as String, statusCode: status);
+    final message = _messageOf(data);
+    final featureDisabled = isFeatureDisabledResponse(
+      path: error.requestOptions.path,
+      status: status,
+      message: () => message,
+    );
+    if (message != null) {
+      return ApiFailure(
+        message,
+        statusCode: status,
+        featureDisabled: featureDisabled,
+      );
     }
     return switch (error.type) {
       DioExceptionType.connectionTimeout ||
@@ -420,7 +460,11 @@ class ApiClient {
         'errors.connection',
         statusCode: status,
       ),
-      _ => ApiFailure('errors.unexpected', statusCode: status),
+      _ => ApiFailure(
+        featureDisabled ? kFeatureDisabledCode : 'errors.unexpected',
+        statusCode: status,
+        featureDisabled: featureDisabled,
+      ),
     };
   }
 }
