@@ -48,8 +48,6 @@ class TimesheetScreen extends StatefulWidget {
 }
 
 class _TimesheetScreenState extends State<TimesheetScreen> {
-  /// One page of the user filter's type-ahead.
-
   /// Width of a filter field and of the popover it opens, so the dropdown lines
   /// up with the field instead of hanging off it.
   static const double _filterWidth = 232;
@@ -367,17 +365,13 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   @override
   Widget build(BuildContext context) {
     final admin = _isAdmin;
+    // [PageChrome] is here for `fullWidth` — a seven-day grid wants the whole
+    // page, not the reading column. Its title and actions are not: the shell
+    // draws those in the sub-page bar, and a destination in the nav has no
+    // sub-page bar, so on a wide window they would simply never appear. A
+    // top-level page wears its own head, the way Reports, Gantt and Board do.
     return PageChrome(
-      title: context.t('timesheet.title'),
       fullWidth: true,
-      actions: [
-        PageAction(
-          icon: LucideIcons.calendarCheck,
-          label: context.t('timesheet.today'),
-          onTap: _goToToday,
-          primary: !_isCurrentWeek,
-        ),
-      ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -385,6 +379,36 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
             padding: EdgeInsets.fromLTRB(
               context.pageGutter,
               18 + context.topGutter,
+              context.pageGutter,
+              12,
+            ),
+            child: PageHead(
+              title: context.t('timesheet.title'),
+              actions: [
+                // Amber only when there is somewhere to come back from; on
+                // this week it is still there, and still re-reads it, but it
+                // does not ask for attention it has not earned.
+                if (_isCurrentWeek)
+                  GhostButton(
+                    icon: LucideIcons.calendarCheck,
+                    label: context.t('timesheet.today'),
+                    onPressed: _goToToday,
+                    collapseToIcon: true,
+                  )
+                else
+                  PrimaryButton(
+                    icon: LucideIcons.calendarCheck,
+                    label: context.t('timesheet.today'),
+                    onPressed: _goToToday,
+                    collapseToIcon: true,
+                  ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              context.pageGutter,
+              0,
               context.pageGutter,
               12,
             ),

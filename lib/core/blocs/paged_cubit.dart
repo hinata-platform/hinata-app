@@ -115,13 +115,33 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
       return;
     }
     final token = _token;
-    final next = state.page + 1;
+    // Derived from the rows actually held, not from a counter that walks up on
+    // its own. Pages are offsets, so a row removed locally shifts every
+    // boundary below it: counting up from the last page fetched would then ask
+    // for an offset past the rows the reader has, and whatever slid into the
+    // gap would be requested by nobody. Asking for the page the held rows end
+    // inside re-reads that boundary; [keyOf] discards the overlap.
+    final next = state.items.length ~/ pageSize;
     emit(state.copyWith(isLoadingMore: true));
     try {
       final result = await _fetch(next, pageSize);
       // A refresh started while we were fetching — discard this stale page.
       if (token != _token) return;
       final merged = _append(state.items, result.items);
+      if (result.items.isNotEmpty && merged.length == state.items.length) {
+        // A whole page of rows the list already holds. That happens when the
+        // ordering shifts under the reader, and without a stop here `hasMore`
+        // would stay true forever — every scroll at the bottom asking again for
+        // a page that adds nothing. Take the count as the truth instead.
+        emit(
+          state.copyWith(
+            total: merged.length,
+            page: next,
+            isLoadingMore: false,
+          ),
+        );
+        return;
+      }
       emit(
         state.copyWith(
           items: merged,
@@ -158,6 +178,9 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
   }
 
   /// Drops one loaded item and counts one fewer, for the same reason.
+  ///
+  /// Safe to do mid-list because [loadMore] asks for the page the held rows end
+  /// inside rather than counting pages up — see the note there.
   void removeItem(Object id) {
     final key = keyOf;
     if (key == null) return;

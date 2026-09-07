@@ -167,7 +167,9 @@ void main() {
   });
 
   group('the way back to this week', () {
-    testWidgets('is published into the shell app bar', (tester) async {
+    testWidgets('is on the page, not published into a bar nobody draws', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         host(
           rows: [row(userId: 'u1', projectId: 'p1')],
@@ -175,12 +177,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(
-        chrome.actionsFor('/').map((a) => a.label),
-        contains('timesheet.today'),
-      );
-      expect(chrome.titleFor('/'), 'timesheet.title');
-      // The grid is a layout to scan across, not prose to read.
+      // The shell renders PageChrome actions in its sub-page bar, and a
+      // destination in the nav has no sub-page bar — a title and an action
+      // handed over that way are simply never drawn on a wide window. So they
+      // live in the page's own head, and the test looks where a reader does.
+      expect(find.text('timesheet.title'), findsOneWidget);
+      expect(find.text('timesheet.today'), findsOneWidget);
+      // The grid is a layout to scan across, not prose to read — and that
+      // *is* the shell's business.
       expect(chrome.fullWidthFor('/'), isTrue);
     });
 
@@ -199,10 +203,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(repository.calls.last.from, isNot(thisWeek));
 
-      chrome
-          .actionsFor('/')
-          .firstWhere((a) => a.label == 'timesheet.today')
-          .onTap!();
+      await tester.tap(find.text('timesheet.today'));
       await tester.pumpAndSettle();
       expect(repository.calls.last.from, thisWeek);
     });
@@ -249,6 +250,15 @@ void main() {
         hasLength(users.pagesAsked.length),
         reason: 'no page is asked for twice',
       );
+
+      // And it stops. Termination is what the paged cubit changed here — the
+      // explicit "exhausted" flag gave way to a count — so it is the property
+      // worth pinning, not just that paging starts.
+      for (var i = 0; i < 4; i++) {
+        await tester.drag(find.byType(ListView).last, const Offset(0, -1200));
+        await tester.pumpAndSettle();
+      }
+      expect(users.pagesAsked, [0, 1, 2]);
     });
   });
 

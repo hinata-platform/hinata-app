@@ -1,11 +1,12 @@
+/// How an entry names its activity and its author — in one place, because both
+/// the timeline row and the edit sheet draw the same entry and must not
+/// disagree about what it says.
+library;
+
 import 'package:flutter/material.dart';
 
 import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
-
-/// How an entry names its activity and its author — in one place, because both
-/// the timeline row and the edit sheet draw the same entry and must not
-/// disagree about what it says.
 
 /// The activity's translated name, or the raw value for one the bundle does
 /// not know — an MCP client may send its own.

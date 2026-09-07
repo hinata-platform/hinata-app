@@ -67,8 +67,10 @@ class TimeZoneSync {
     if (_running) return;
     _running = true;
     final generation = _generation;
+    String? device;
+    var offered = false;
     try {
-      final device = await _deviceZone();
+      device = await _deviceZone();
       if (device == null || device == _refused) return;
       // Already reconciled in this process: nothing changed on our side, so
       // there is nothing to ask the server about.
@@ -85,6 +87,11 @@ class TimeZoneSync {
       if (!shouldSyncTimeZone(deviceZone: device, accountZone: _accountZone)) {
         return;
       }
+      // From here on a refusal is a refusal *of this zone*. Before it, a 400
+      // would have been about the read — which sent no zone at all — and
+      // latching on that would disable the sync for the rest of the process
+      // over something it never asked for.
+      offered = true;
       await _account.updateMyProfile(timezone: device);
       if (generation != _generation) return;
       // What was sent, not what came back. A server older than this field
@@ -93,10 +100,16 @@ class TimeZoneSync {
       // was accepted; that is the fact worth remembering.
       _accountZone = device;
     } on ApiFailure catch (failure) {
-      if (failure.statusCode == 400 && generation == _generation) {
+      if (offered && failure.statusCode == 400 && generation == _generation) {
         // The server has answered, and its answer is no. Asking again with the
         // same value would only ever get the same no.
-        _refused = await _deviceZone();
+        //
+        // The value is the one already in hand, not a fresh read: awaiting the
+        // platform again would let a sign-out land in between, and the latch
+        // would then outlive the account it belongs to — the next person on
+        // this device would have their zone refused by a decision made about
+        // somebody else's.
+        _refused = device;
       }
       if (kDebugMode) debugPrint('[timezone] not synced: $failure');
     } catch (error) {

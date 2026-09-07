@@ -51,8 +51,7 @@ class WorkItemAccess {
 
   bool canDelete(WorkItem item) => isOwn(item) || managesProject;
 
-  /// Whether the reader may see *whose* entry this is, and what they wrote in
-  /// it.
+  /// Whether the reader may see *whose* entry this is.
   ///
   /// Everyone on the project sees that the hours exist — that is what makes the
   /// card answer "why did a one-day job take three". Who worked them is a
@@ -63,6 +62,15 @@ class WorkItemAccess {
   /// you lead, and the operator policy that opens it up comes with the policy
   /// model itself.
   bool canSeeAuthor(WorkItem item) => isOwn(item) || managesProject;
+
+  /// Whether the reader may see what the person wrote on the entry.
+  ///
+  /// The same answer as [canSeeAuthor] today, and a separate question: a note
+  /// usually describes the work ("fixed the login redirect") rather than the
+  /// worker, so an operator policy could reasonably open notes without opening
+  /// names. Asking it separately here means that day is one line, not an audit
+  /// of every call site.
+  bool canSeeNote(WorkItem item) => isOwn(item) || managesProject;
 }
 
 /// Opens the entry in the work-log sheet's edit mode. Answers the patched
@@ -207,8 +215,9 @@ class WorkItemRow extends StatelessWidget {
     final canDelete = access.canDelete(item);
     // The legacy remainder belongs to nobody, so naming it discloses nothing.
     final named = access.canSeeAuthor(item) || item.isLegacy;
+    final noted = access.canSeeNote(item) || item.isLegacy;
     final who = named ? workItemPersonLabel(context, item, nameFor) : null;
-    final description = named ? item.description?.trim() ?? '' : '';
+    final description = noted ? item.description?.trim() ?? '' : '';
     final date = item.date;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -11,6 +11,13 @@ class ProjectRepository {
 
   final ApiClient _api;
 
+  /// How many ids travel in one `resolve` request. They are comma-joined into a
+  /// single parameter, so the ceiling is far higher than the one `by-ids` hits
+  /// — but the failure is the same one, and it is silent: a request line the
+  /// container refuses never reaches a controller, and the caller reads that as
+  /// "no project has a name".
+  static const resolveChunk = 200;
+
   Future<List<Project>> projects({bool archived = false}) async =>
       ((await _api.get(
                 '/api/v1/projects',
@@ -57,13 +64,22 @@ class ProjectRepository {
   /// say — without paging until those projects happen to come up.
   Future<List<Project>> resolveProjects(List<String> ids) async {
     if (ids.isEmpty) return const [];
-    return ((await _api.get(
-              '/api/v1/projects/resolve',
-              query: {'ids': ids.join(',')},
-            ))
-            as List<dynamic>)
-        .map((p) => Project.fromJson(p as Map<String, dynamic>))
-        .toList();
+    final projects = <Project>[];
+    for (var start = 0; start < ids.length; start += resolveChunk) {
+      final chunk = ids.sublist(
+        start,
+        start + resolveChunk > ids.length ? ids.length : start + resolveChunk,
+      );
+      projects.addAll(
+        ((await _api.get(
+                  '/api/v1/projects/resolve',
+                  query: {'ids': chunk.join(',')},
+                ))
+                as List<dynamic>)
+            .map((p) => Project.fromJson(p as Map<String, dynamic>)),
+      );
+    }
+    return projects;
   }
 
   Future<Project> project(String id) async => Project.fromJson(
