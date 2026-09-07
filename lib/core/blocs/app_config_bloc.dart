@@ -36,6 +36,29 @@ class SetupFinished extends AppConfigEvent {
   const SetupFinished();
 }
 
+/// Re-read `/api/v1/meta` on a running app, because what it says can change
+/// under us: an admin flips a platform flag and the nav entry, the routes and
+/// the endpoints behind it change with it.
+///
+/// Fired on app resume, right after an admin saves the settings, and whenever
+/// the server answers `error.feature.disabled` — that last one means our idea
+/// of a flag is stale, so the honest reaction is to ask again rather than to
+/// show "not found".
+class MetaRefreshRequested extends AppConfigEvent {
+  const MetaRefreshRequested({this.force = false});
+
+  /// Skip the rate limit, because this caller *knows* the answer changed.
+  ///
+  /// The three senders are not equally informed. A window regaining focus and a
+  /// request that came back "feature disabled" are guesses — worth acting on,
+  /// worth throttling. An administrator who just saved the settings is not
+  /// guessing: they changed the thing, and the whole point of this event is
+  /// that the nav entry appears behind them rather than after the next restart.
+  /// A cooldown that swallowed that save would recreate the exact failure this
+  /// event exists to prevent, on the one path with certain knowledge.
+  final bool force;
+}
+
 enum AppConfigStatus {
   initial,
   connecting,
@@ -80,10 +103,22 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
     on<AppConfigStarted>(_onStarted, transformer: restartable());
     on<ServerUrlSubmitted>(_onServerUrlSubmitted, transformer: droppable());
     on<SetupFinished>(_onSetupFinished);
+    // Droppable: resume, admin-save and a feature-disabled response can all
+    // land within the same second, and one fresh /meta answers all three.
+    on<MetaRefreshRequested>(_onMetaRefresh, transformer: droppable());
   }
 
   final MetaRepository repository;
   final AppStorage storage;
+
+  /// How long a successful `/meta` read stands before another is worth making.
+  /// See [_onMetaRefresh]; also the ceiling on how stale a flag can be, so it
+  /// is a minute rather than an hour.
+  static const Duration _metaRefreshCooldown = Duration(seconds: 60);
+
+  /// When the last refresh actually reached the server. Null until one does, so
+  /// the first request after start is never held back.
+  DateTime? _lastMetaRefresh;
 
   /// The default server URL that actually applies on this platform.
   ///
@@ -147,6 +182,51 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
     Emitter<AppConfigState> emit,
   ) async {
     await _verify(emit);
+  }
+
+  /// Refreshes the server metadata in place, without disturbing the connection
+  /// state machine. Only meaningful once the app is up: before that, `_verify`
+  /// owns the flow and would fight this.
+  ///
+  /// A failed read keeps the metadata we already have. Losing the network for a
+  /// moment must not throw a working session back to the connect screen —
+  /// unlike boot, there is a perfectly good previous answer to keep using.
+  ///
+  /// Rate-limited, because the *guessing* triggers are cheaper than the call
+  /// ([MetaRefreshRequested.force] is the exception, and the reason it exists). On desktop
+  /// and web `resumed` fires on every window focus, so alt-tabbing would be a
+  /// round trip each time; and a screen that keeps calling a switched-off route
+  /// would ask once per failed request. `/meta` shares the per-IP API budget
+  /// with everything else, and behind an office NAT that budget is shared with
+  /// everyone. A platform flag that changes about once a month does not need
+  /// checking more often than this.
+  Future<void> _onMetaRefresh(
+    MetaRefreshRequested event,
+    Emitter<AppConfigState> emit,
+  ) async {
+    if (state.status != AppConfigStatus.ready) return;
+    final last = _lastMetaRefresh;
+    if (!event.force &&
+        last != null &&
+        DateTime.now().difference(last) < _metaRefreshCooldown) {
+      return;
+    }
+    try {
+      final meta = await repository.meta();
+      _lastMetaRefresh = DateTime.now();
+      // The server can also raise its minimum version while we run; honour it
+      // here exactly as the boot path does rather than letting a too-old client
+      // keep talking to it.
+      if (isVersionBelow(state.appVersion, meta.minAppVersion)) {
+        emit(
+          state.copyWith(status: AppConfigStatus.updateRequired, meta: meta),
+        );
+        return;
+      }
+      emit(state.copyWith(meta: meta));
+    } catch (_) {
+      // Keep the last known metadata.
+    }
   }
 
   Future<void> _verify(Emitter<AppConfigState> emit) async {

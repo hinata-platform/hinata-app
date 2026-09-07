@@ -11,9 +11,18 @@ import '../admin_form_helpers.dart';
 /// App/client settings served to the apps via /api/v1/meta: the minimum
 /// required app version, the privacy policy URL and optional feature flags.
 class AdminAppSection extends StatefulWidget {
-  const AdminAppSection({super.key, required this.settings});
+  const AdminAppSection({
+    super.key,
+    required this.settings,
+    this.onOpenTimeTracking,
+  });
 
   final Map<String, dynamic> settings;
+
+  /// Opens Adminbereich → Zeiterfassung. The extended time-tracking flag is
+  /// derived from that module's own settings, so this section can only point at
+  /// it — a switch here would write somewhere the server does not read.
+  final VoidCallback? onOpenTimeTracking;
 
   @override
   State<AdminAppSection> createState() => _AdminAppSectionState();
@@ -26,11 +35,26 @@ class _AdminAppSectionState extends State<AdminAppSection> {
   Map<String, dynamic> get _flags =>
       (_app['featureFlags'] ??= <String, dynamic>{}) as Map<String, dynamic>;
 
+  /// Read-only here — the section that owns these values is Zeiterfassung.
+  Map<String, dynamic> get _timeTracking =>
+      widget.settings['timeTracking'] is Map<String, dynamic>
+      ? widget.settings['timeTracking'] as Map<String, dynamic>
+      : const {};
+
   /// Flags that have a dedicated, described toggle above — hidden from the raw
-  /// name→enabled editor so they aren't shown twice.
+  /// name→enabled editor so they aren't shown twice, and blocked from being
+  /// re-created there by name. `advanced_time_tracking` is in the list for the
+  /// second reason above all: the server derives it from the time-tracking
+  /// module's own settings, so a hand-typed flag of that name would sit in the
+  /// document looking authoritative and change nothing.
   static const _dedicatedFlags = {
     PlatformFlags.multiAssignee,
     PlatformFlags.emailReply,
+    PlatformFlags.advancedTimeTracking,
+    // Same reason: the server derives `mcp` from the MCP module's own settings,
+    // so a row of that name here would be a switch that looks authoritative,
+    // flips nothing, and cannot be deleted again.
+    PlatformFlags.mcp,
   };
 
   @override
@@ -144,6 +168,27 @@ class _AdminAppSectionState extends State<AdminAppSection> {
               onChanged: (v) =>
                   setState(() => _flags[PlatformFlags.emailReply] = v),
             ),
+            const SizedBox(height: 14),
+            // Listed here because this is where an admin looks for platform
+            // behaviour, but it is not switched here: the flag reported by
+            // /meta is derived from the time-tracking module's own policies,
+            // and it shares a screen with the co-determination notes that
+            // belong beside it.
+            _PlatformLink(
+              title: context.t('admin.timeTracking.advancedTitle'),
+              description: context.t('admin.timeTracking.advancedFromSection'),
+              // The stored value when an admin has decided one, otherwise what
+              // the environment resolves to. Reading only the stored field
+              // showed "off" on every instance that had never saved the
+              // section — including one an operator had switched on through
+              // HINATA_TIME_TRACKING_ADVANCED_ENABLED.
+              state:
+                  _timeTracking['advancedEnabled'] as bool? ??
+                  (_timeTracking['effective']
+                          as Map<String, dynamic>?)?['advancedEnabled']
+                      as bool?,
+              onOpen: widget.onOpenTimeTracking,
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -182,33 +227,158 @@ class _PlatformToggle extends StatelessWidget {
   final ValueChanged<bool> onChanged;
 
   @override
+  Widget build(BuildContext context) => _PlatformRow(
+    title: title,
+    description: description,
+    trailing: HiveSwitch(value: value, onChanged: onChanged),
+  );
+}
+
+/// A row that *points at* a setting instead of being it: it reports the state
+/// and opens the section that owns it.
+///
+/// Separate from [_PlatformToggle] rather than a mode of it. One widget with a
+/// switch callback and an open callback, only one of which is ever called, made
+/// every caller pass a no-op to satisfy a `required` parameter documented as
+/// dead — and nothing would have stopped the next caller passing a real handler
+/// and wondering why it never fired.
+class _PlatformLink extends StatelessWidget {
+  const _PlatformLink({
+    required this.title,
+    required this.description,
+    required this.state,
+    required this.onOpen,
+  });
+
+  final String title;
+  final String description;
+
+  /// The value in force, or null when nothing here decides it — a flag left to
+  /// the deployment's environment is neither on nor off from this screen.
+  final bool? state;
+
+  /// Null where there is nowhere to go — then the row reports the state and
+  /// draws no chevron, rather than offering a journey it cannot make.
+  final VoidCallback? onOpen;
+
+  @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.ink,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                description,
-                style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
-              ),
+    final row = _PlatformRow(
+      title: title,
+      description: description,
+      // Bounded so a long translation of "on"/"off" ellipsizes instead of
+      // pushing the chevron off a narrow phone.
+      trailing: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 130),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(child: _StateChip(on: state)),
+            if (onOpen != null) ...[
+              const SizedBox(width: 6),
+              Icon(forwardChevron(context), size: 18, color: AppColors.inkSoft),
             ],
-          ),
+          ],
         ),
-        const SizedBox(width: 12),
-        HiveSwitch(value: value, onChanged: onChanged),
-      ],
+      ),
+    );
+    if (onOpen == null) return row;
+    // The Material has to sit ABOVE the InkWell: a splash paints on the nearest
+    // ancestor Material, and the card behind this row paints opaquely, so an
+    // InkWell with the Material below it ripples where nobody can see it.
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onOpen,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: row,
+        ),
+      ),
+    );
+  }
+}
+
+/// The shared frame both of the rows above draw.
+class _PlatformRow extends StatelessWidget {
+  const _PlatformRow({
+    required this.title,
+    required this.description,
+    required this.trailing,
+  });
+
+  final String title;
+  final String description;
+  final Widget trailing;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              description,
+              style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(width: 12),
+      trailing,
+    ],
+  );
+}
+
+/// The current state of a setting that is configured elsewhere.
+class _StateChip extends StatelessWidget {
+  const _StateChip({required this.on});
+
+  /// On, off, or — null — decided somewhere this screen cannot see, which is a
+  /// third state and not a synonym for off.
+  final bool? on;
+
+  @override
+  Widget build(BuildContext context) {
+    final lit = on == true;
+    final known = on != null;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: lit ? AppColors.accentSoft : AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: lit ? AppColors.accentLine : AppColors.hairline2,
+        ),
+      ),
+      child: Text(
+        context.t(
+          !known
+              ? 'admin.envDefault'
+              : lit
+              ? 'admin.stateOn'
+              : 'admin.stateOff',
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+          color: lit ? AppColors.accentStrong : AppColors.inkSoft,
+        ),
+      ),
     );
   }
 }

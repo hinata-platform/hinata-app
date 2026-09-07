@@ -16,6 +16,12 @@ class PlatformFlags {
   /// Expose the embedded MCP server surface: Personal Access Token management in
   /// account settings (and the admin MCP configuration section).
   static const mcp = 'mcp';
+
+  /// Expose the extended time-tracking module (timer, policies, approvals,
+  /// reports, billing). Off → the plain timesheet stays exactly as it is and
+  /// the server answers every extended route with 404 `error.feature.disabled`.
+  /// Configured in Adminbereich → Zeiterfassung, not in the raw flag editor.
+  static const advancedTimeTracking = 'advanced_time_tracking';
 }
 
 /// Server metadata from GET /api/v1/meta (version gate, branding, flags).
@@ -111,6 +117,12 @@ class ServerMeta extends Equatable {
   /// Reply-by-email to the sender of email-to-ticket issues (default off).
   bool get emailReply => isFlagEnabled(PlatformFlags.emailReply);
 
+  /// The extended time-tracking module (default off). The base timesheet is
+  /// always available; this only decides whether the module's routes, nav entry
+  /// and endpoints exist for this client.
+  bool get advancedTimeTracking =>
+      isFlagEnabled(PlatformFlags.advancedTimeTracking);
+
   @override
   List<Object?> get props => [
     serverVersion,
@@ -128,6 +140,12 @@ class ServerMeta extends Equatable {
     registrationEnabled,
     adminApprovalRequired,
     passwordMinLength,
+    // Both were missing here, and a value left out of `props` is a value the UI
+    // never hears about: an admin flipping a feature flag (or raising an upload
+    // limit) produced a ServerMeta *equal* to the old one, so every bloc
+    // listener and `context.watch` saw no change and nothing rebuilt.
+    featureFlags,
+    uploadLimits,
   ];
 }
 
