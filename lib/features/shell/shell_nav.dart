@@ -19,7 +19,6 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-
 /// One entry in the navigation: where it goes, what it is called, what it looks
 /// like.
 class NavDestination {

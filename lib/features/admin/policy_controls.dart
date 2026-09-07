@@ -47,16 +47,47 @@ class CodeterminationNote extends StatelessWidget {
   );
 }
 
+/// "Recorded, not yet acted on."
+///
+/// A policy screen that describes a rule in the present indicative is a promise.
+/// Most of these rules are stored by this stage and enforced by a later one, and
+/// an administrator who sets a lock date to freeze a closed payroll period —
+/// because an auditor or a works agreement asked for it — would otherwise get a
+/// green toast and no lock at all. Nothing about that failure is visible until
+/// somebody edits a frozen entry.
+///
+/// Each stage that implements a policy drops this from the controls it took
+/// over, and the note disappears on its own.
+class PendingNote extends StatelessWidget {
+  const PendingNote({super.key});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 8),
+    child: AdminNote(
+      icon: LucideIcons.hourglass,
+      text: context.t('admin.timeTracking.notYetEnforced'),
+    ),
+  );
+}
+
 /// The badge that stands where a control would be while the value is absent.
 ///
-/// It deliberately does not draw a switch in some arbitrary position: we do not
-/// know what the environment says, and guessing would be a lie the operator
-/// would have no way to catch. Tapping it commits an explicit value, which is
-/// the only way a control can honestly appear.
+/// It deliberately does not draw a switch in some arbitrary position — that
+/// would say "off" where the truth is "whatever this deployment decided". What
+/// it does say is what the deployment decided: the server sends the resolved
+/// value alongside the stored one, so the badge reads "Env: On" rather than
+/// leaving the operator to guess. Tapping it commits an explicit value, which
+/// is the only way a control can honestly appear.
 class _EnvDefaultBadge extends StatelessWidget {
-  const _EnvDefaultBadge({required this.onTap});
+  const _EnvDefaultBadge({required this.onTap, this.effective});
 
   final VoidCallback onTap;
+
+  /// What the environment currently resolves this policy to, already localized.
+  /// Null when the server did not say — an older server, or a value that has no
+  /// short rendering.
+  final String? effective;
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +106,9 @@ class _EnvDefaultBadge extends StatelessWidget {
               border: Border.all(color: AppColors.hairline2),
             ),
             child: Text(
-              context.t('admin.timeTracking.envDefault'),
+              effective == null
+                  ? context.t('admin.timeTracking.envDefault')
+                  : '${context.t('admin.timeTracking.envDefault')}: $effective',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -138,6 +171,7 @@ class _PolicyRow extends StatelessWidget {
     required this.isDefault,
     required this.onReset,
     required this.monitoring,
+    this.pending = false,
   });
 
   final String title;
@@ -146,6 +180,7 @@ class _PolicyRow extends StatelessWidget {
   final bool isDefault;
   final VoidCallback onReset;
   final bool monitoring;
+  final bool pending;
 
   @override
   Widget build(BuildContext context) {
@@ -196,6 +231,7 @@ class _PolicyRow extends StatelessWidget {
             ],
           ),
           if (monitoring) const CodeterminationNote(),
+          if (pending) const PendingNote(),
           EnvDefaultAction(isDefault: isDefault, onReset: onReset),
         ],
       ),
@@ -212,6 +248,8 @@ class PolicySwitch extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.monitoring = false,
+    this.pending = false,
+    this.effective,
   });
 
   final String title;
@@ -225,6 +263,12 @@ class PolicySwitch extends StatelessWidget {
   /// carries the co-determination note.
   final bool monitoring;
 
+  /// Whether the policy is recorded but not yet acted on — see [PendingNote].
+  final bool pending;
+
+  /// What the environment resolves this policy to while nothing is stored.
+  final bool? effective;
+
   @override
   Widget build(BuildContext context) {
     final current = value;
@@ -234,8 +278,22 @@ class PolicySwitch extends StatelessWidget {
       isDefault: current == null,
       onReset: () => onChanged(null),
       monitoring: monitoring,
+      pending: pending,
       control: current == null
-          ? _EnvDefaultBadge(onTap: () => onChanged(false))
+          ? _EnvDefaultBadge(
+              // Commits what is already in force, not its opposite. The tap
+              // exists to make the switch appear, not to change the policy —
+              // and on a monitoring-capable switch a tap that silently turned
+              // something on would be the worst possible reading of it.
+              onTap: () => onChanged(effective ?? false),
+              effective: effective == null
+                  ? null
+                  : context.t(
+                      effective!
+                          ? 'admin.timeTracking.stateOn'
+                          : 'admin.timeTracking.stateOff',
+                    ),
+            )
           : HiveSwitch(value: current, onChanged: onChanged),
     );
   }
@@ -252,6 +310,8 @@ class PolicyChoice extends StatefulWidget {
     required this.options,
     required this.onChanged,
     this.helper,
+    this.pending = false,
+    this.effective,
   });
 
   final String label;
@@ -263,6 +323,13 @@ class PolicyChoice extends StatefulWidget {
   final Map<String, String> options;
   final ValueChanged<String?> onChanged;
   final String? helper;
+
+  /// Recorded but not yet acted on — see [PendingNote].
+  final bool pending;
+
+  /// The option the environment resolves to while nothing is stored, so the
+  /// placeholder can name it instead of saying only "Env default".
+  final String? effective;
 
   @override
   State<PolicyChoice> createState() => _PolicyChoiceState();
@@ -301,7 +368,25 @@ class _PolicyChoiceState extends State<PolicyChoice> {
 
   @override
   Widget build(BuildContext context) {
-    final labelKey = widget.value == null ? null : widget.options[widget.value];
+    final stored = widget.value;
+    // A stored value the option list does not offer used to render exactly like
+    // "nothing is stored", so the field said "Env default" while the reset
+    // button beside it offered to clear a value — two statements contradicting
+    // each other, over a value the operator then could not choose again.
+    assert(
+      stored == null || widget.options.containsKey(stored),
+      'PolicyChoice "${widget.label}" holds "$stored", which is not one of '
+      '${widget.options.keys.toList()} — the option list has fallen behind the '
+      'server enum and the value cannot be selected again.',
+    );
+    final labelKey = stored == null ? null : widget.options[stored];
+    final effectiveKey = widget.effective == null
+        ? null
+        : widget.options[widget.effective];
+    final envLabel = effectiveKey == null
+        ? context.t('admin.timeTracking.envDefault')
+        : '${context.t('admin.timeTracking.envDefault')}: '
+              '${context.t(effectiveKey)}';
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -312,14 +397,15 @@ class _PolicyChoiceState extends State<PolicyChoice> {
             label: widget.label,
             helper: widget.helper,
             onTap: _pick,
-            value: labelKey == null
-                ? context.t('admin.timeTracking.envDefault')
-                : context.t(labelKey),
-            muted: labelKey == null,
+            // A stored value we cannot name is shown raw rather than disguised
+            // as the default — in release, where the assert above is off.
+            value: stored == null ? envLabel : context.t(labelKey ?? stored),
+            muted: stored == null,
             icon: LucideIcons.chevronDown,
           ),
+          if (widget.pending) const PendingNote(),
           EnvDefaultAction(
-            isDefault: widget.value == null,
+            isDefault: stored == null,
             onReset: () => widget.onChanged(null),
           ),
         ],
@@ -337,6 +423,7 @@ class PolicyDate extends StatefulWidget {
     required this.value,
     required this.onChanged,
     this.helper,
+    this.pending = false,
   });
 
   final String label;
@@ -345,6 +432,9 @@ class PolicyDate extends StatefulWidget {
   final String? value;
   final ValueChanged<String?> onChanged;
   final String? helper;
+
+  /// Recorded but not yet acted on — see [PendingNote].
+  final bool pending;
 
   @override
   State<PolicyDate> createState() => _PolicyDateState();
@@ -415,6 +505,7 @@ class _PolicyDateState extends State<PolicyDate> {
             muted: value == null,
             icon: LucideIcons.calendar,
           ),
+          if (widget.pending) const PendingNote(),
           EnvDefaultAction(
             isDefault: value == null,
             onReset: () => widget.onChanged(null),
@@ -436,13 +527,22 @@ class PolicyNumber extends StatefulWidget {
     required this.onChanged,
     this.helper,
     this.suffix,
+    this.pending = false,
+    this.maxValue,
   });
 
   final String label;
   final int? value;
   final ValueChanged<int?> onChanged;
   final String? helper;
+
+  /// Recorded but not yet acted on — see [PendingNote].
+  final bool pending;
   final String? suffix;
+
+  /// The largest value the server will store. Clamped here so the operator
+  /// is not told about it by a failed save of an unrelated section.
+  final int? maxValue;
 
   @override
   State<PolicyNumber> createState() => _PolicyNumberState();
@@ -465,8 +565,15 @@ class _PolicyNumberState extends State<PolicyNumber> {
       widget.onChanged(null);
       return;
     }
+    // digitsOnly on the field already rules out a minus sign, so there is no
+    // floor to apply here — a second guard would only suggest one was needed.
+    // The ceiling is real: the server refuses anything above it, and without
+    // this the operator finds that out as a validation error on a save that
+    // touched five other sections.
     final parsed = int.tryParse(trimmed);
-    if (parsed != null) widget.onChanged(parsed < 0 ? 0 : parsed);
+    if (parsed == null) return;
+    final max = widget.maxValue;
+    widget.onChanged(max != null && parsed > max ? max : parsed);
   }
 
   void _reset() {
@@ -499,6 +606,7 @@ class _PolicyNumberState extends State<PolicyNumber> {
               setState(() {});
             },
           ),
+          if (widget.pending) const PendingNote(),
           EnvDefaultAction(
             isDefault: _controller.text.trim().isEmpty,
             onReset: _reset,
@@ -521,12 +629,16 @@ class PolicyText extends StatefulWidget {
     this.hint,
     this.maxLines = 1,
     this.maxLength,
+    this.pending = false,
   });
 
   final String label;
   final String? value;
   final ValueChanged<String?> onChanged;
   final String? helper;
+
+  /// Recorded but not yet acted on — see [PendingNote].
+  final bool pending;
   final String? hint;
   final int maxLines;
   final int? maxLength;
@@ -576,6 +688,7 @@ class _PolicyTextState extends State<PolicyText> {
               setState(() {});
             },
           ),
+          if (widget.pending) const PendingNote(),
           EnvDefaultAction(
             isDefault: _controller.text.trim().isEmpty,
             onReset: _reset,

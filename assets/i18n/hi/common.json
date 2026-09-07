@@ -1399,6 +1399,7 @@
       "roundingModeLabel": "पूर्णांकन",
       "roundingModeHint": "केवल रिपोर्ट पर लागू; सहेजे गए मिनट कभी नहीं बदलते।",
       "roundingMode": {
+        "none": "कोई गोलाई नहीं",
         "up": "ऊपर की ओर",
         "down": "नीचे की ओर",
         "nearest": "निकटतम तक"
@@ -1475,7 +1476,8 @@
       "entryPurgeHint": "इससे पुरानी प्रविष्टियाँ हटाता है। कर-संबंधी दस्तावेज़ इससे मुक्त हैं। 24 महीने ArbZG और MiLoG को कवर करते हैं।",
       "monthsSuffix": "महीने",
       "privacyNoticeLabel": "गोपनीयता सूचना",
-      "privacyNoticeHint": "ऐप में मॉड्यूल के समय डेटा के साथ दिखाई जाती है। खाली → अंतर्निहित पाठ।"
+      "privacyNoticeHint": "ऐप में मॉड्यूल के समय डेटा के साथ दिखाई जाती है। खाली → अंतर्निहित पाठ।",
+      "notYetEnforced": "सहेजा जाता है, पर अभी लागू नहीं होता — इस नीति के पीछे की सुविधा समय-ट्रैकिंग के किसी बाद के चरण में आएगी।"
     },
     "passwordPolicy": "पासवर्ड नीति",
     "passwordPolicyHint": "उपयोगकर्ता पासवर्ड के लिए न्यूनतम आवश्यकताएँ।",
@@ -1774,7 +1776,9 @@
       "reprocessDone": "{{scanned}} जाँचे गए · {{updated}} फिर से बनाए गए · {{created}} नए बनाए गए"
     },
     "windowsStoreUrl": "Microsoft Store का URL",
-    "linuxStoreUrl": "Linux डाउनलोड URL"
+    "linuxStoreUrl": "Linux डाउनलोड URL",
+    "stateOn": "चालू",
+    "stateOff": "बंद"
   },
   "audit": {
     "title": "ऑडिट लॉग",

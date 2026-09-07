@@ -1399,6 +1399,7 @@
       "roundingModeLabel": "丸め",
       "roundingModeHint": "レポートにのみ適用されます。保存された分は変わりません。",
       "roundingMode": {
+        "none": "丸めなし",
         "up": "切り上げ",
         "down": "切り捨て",
         "nearest": "四捨五入"
@@ -1475,7 +1476,8 @@
       "entryPurgeHint": "これより古い記録を削除します。税務上の保存義務がある書類は対象外です。24か月で ArbZG と MiLoG を満たします。",
       "monthsSuffix": "か月",
       "privacyNoticeLabel": "プライバシー通知",
-      "privacyNoticeHint": "モジュールの時間データと一緒にアプリに表示されます。空欄 → 組み込みの文面。"
+      "privacyNoticeHint": "モジュールの時間データと一緒にアプリに表示されます。空欄 → 組み込みの文面。",
+      "notYetEnforced": "保存はされますが、まだ適用されません。このポリシーの機能は時間記録の後の段階で追加されます。"
     },
     "passwordPolicy": "パスワードポリシー",
     "passwordPolicyHint": "ユーザーのパスワードに求める最低条件。",
@@ -1774,7 +1776,9 @@
       "reprocessDone": "スキャン {{scanned}} 件 · 再構築 {{updated}} 件 · 作成 {{created}} 件"
     },
     "windowsStoreUrl": "Microsoft Store の URL",
-    "linuxStoreUrl": "Linux のダウンロード URL"
+    "linuxStoreUrl": "Linux のダウンロード URL",
+    "stateOn": "オン",
+    "stateOff": "オフ"
   },
   "audit": {
     "title": "監査ログ",

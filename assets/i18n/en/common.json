@@ -1399,6 +1399,7 @@
       "roundingModeLabel": "Rounding",
       "roundingModeHint": "Applies to reports only; the stored minutes are never changed.",
       "roundingMode": {
+        "none": "No rounding",
         "up": "Round up",
         "down": "Round down",
         "nearest": "Round to nearest"
@@ -1475,7 +1476,8 @@
       "entryPurgeHint": "Removes entries older than this. Records kept for tax reasons are excluded. 24 months covers ArbZG and MiLoG.",
       "monthsSuffix": "months",
       "privacyNoticeLabel": "Privacy notice",
-      "privacyNoticeHint": "Shown in the app alongside the module's time data. Empty → the built-in text."
+      "privacyNoticeHint": "Shown in the app alongside the module's time data. Empty → the built-in text.",
+      "notYetEnforced": "Recorded, but not yet acted on — the function behind this policy arrives in a later stage of the time-tracking work."
     },
     "passwordPolicy": "Password policy",
     "passwordPolicyHint": "Minimum requirements for user passwords.",
@@ -1774,7 +1776,9 @@
       "reprocessDone": "{{scanned}} scanned · {{updated}} rebuilt · {{created}} created"
     },
     "windowsStoreUrl": "Microsoft Store URL",
-    "linuxStoreUrl": "Linux download URL"
+    "linuxStoreUrl": "Linux download URL",
+    "stateOn": "On",
+    "stateOff": "Off"
   },
   "audit": {
     "title": "Audit log",

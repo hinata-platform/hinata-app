@@ -103,7 +103,10 @@ void main() {
       isFalse,
     );
     expect(
-      isFeatureDisabledResponse(path: '/api/v1/issues/api/v1/time', status: 404),
+      isFeatureDisabledResponse(
+        path: '/api/v1/issues/api/v1/time',
+        status: 404,
+      ),
       isFalse,
     );
   });

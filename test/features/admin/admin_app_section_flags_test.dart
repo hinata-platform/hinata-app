@@ -121,17 +121,39 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('admin.timeTracking.stateOn'), findsOneWidget);
-      expect(find.text('admin.timeTracking.stateOff'), findsNothing);
+      expect(find.text('admin.stateOn'), findsOneWidget);
+      expect(find.text('admin.stateOff'), findsNothing);
     });
 
-    testWidgets('and reads "off" when nothing is set', (tester) async {
+    testWidgets('falls back to what the environment resolves to', (
+      tester,
+    ) async {
+      // The stored field is empty on every instance that has never saved the
+      // section — including one an operator switched on through
+      // HINATA_TIME_TRACKING_ADVANCED_ENABLED. Reading only the stored value
+      // showed "off" there, next to a module that was running.
+      await tester.pumpWidget(
+        host(<String, dynamic>{
+          'timeTracking': <String, dynamic>{
+            'effective': <String, dynamic>{'advancedEnabled': true},
+          },
+        }, onOpenTimeTracking: () {}),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('admin.stateOn'), findsOneWidget);
+    });
+
+    testWidgets('says so when nothing anywhere has decided', (tester) async {
+      // Neither on nor off: an older server sends no effective block, and
+      // guessing "off" would be a claim this screen cannot support.
       await tester.pumpWidget(
         host(<String, dynamic>{}, onOpenTimeTracking: () {}),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('admin.timeTracking.stateOff'), findsOneWidget);
+      expect(find.text('admin.timeTracking.envDefault'), findsOneWidget);
+      expect(find.text('admin.stateOff'), findsNothing);
     });
   });
 

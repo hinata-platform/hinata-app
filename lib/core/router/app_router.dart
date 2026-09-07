@@ -523,20 +523,6 @@ GoRouter buildRouter({
   );
 }
 
-/// v2 page transition: a soft vertical "fade through" — content rises from
-/// just below and fades in, with no overlap of the old and new pages.
-///
-/// Replaces the platform default (a horizontal Cupertino slide on macOS/desktop
-/// where the new page flies in from the right and the old one slides out left,
-/// briefly overlapping).
-///
-/// The earlier hand-rolled crossfade only faded the *incoming* page, so the
-/// outgoing page sat fully opaque underneath and the two visibly overlapped
-/// mid-transition. [SharedAxisTransition] (vertical) instead coordinates both
-/// pages on a shared timeline: the outgoing page fades + drifts up and out
-/// first, then the incoming page fades + rises in — they are never both visible
-/// at once. `fillColor` is transparent so the canvas (not an opaque box) shows
-/// through during the brief hand-off.
 /// The page behind `/time`, for a server whose extended time-tracking module is
 /// ([advancedTime]) or is not switched on.
 ///
@@ -558,6 +544,20 @@ IssuesInitialView? _issuesView(String? value) => switch (value) {
   _ => null,
 };
 
+/// v2 page transition: a soft vertical "fade through" — content rises from
+/// just below and fades in, with no overlap of the old and new pages.
+///
+/// Replaces the platform default (a horizontal Cupertino slide on macOS/desktop
+/// where the new page flies in from the right and the old one slides out left,
+/// briefly overlapping).
+///
+/// The earlier hand-rolled crossfade only faded the *incoming* page, so the
+/// outgoing page sat fully opaque underneath and the two visibly overlapped
+/// mid-transition. [SharedAxisTransition] (vertical) instead coordinates both
+/// pages on a shared timeline: the outgoing page fades + drifts up and out
+/// first, then the incoming page fades + rises in — they are never both visible
+/// at once. `fillColor` is transparent so the canvas (not an opaque box) shows
+/// through during the brief hand-off.
 CustomTransitionPage<void> _transition(GoRouterState state, Widget child) =>
     CustomTransitionPage<void>(
       key: state.pageKey,

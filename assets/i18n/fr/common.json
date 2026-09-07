@@ -1399,6 +1399,7 @@
       "roundingModeLabel": "Arrondi",
       "roundingModeHint": "Ne s'applique qu'aux rapports ; les minutes enregistrées ne changent jamais.",
       "roundingMode": {
+        "none": "Aucun arrondi",
         "up": "Arrondir au supérieur",
         "down": "Arrondir à l'inférieur",
         "nearest": "Arrondir au plus proche"
@@ -1475,7 +1476,8 @@
       "entryPurgeHint": "Supprime les entrées plus anciennes. Les pièces à conservation fiscale obligatoire sont exclues. 24 mois couvrent l'ArbZG et le MiLoG.",
       "monthsSuffix": "mois",
       "privacyNoticeLabel": "Note de confidentialité",
-      "privacyNoticeHint": "Affichée dans l'app à côté des données de temps du module. Vide → le texte intégré."
+      "privacyNoticeHint": "Affichée dans l'app à côté des données de temps du module. Vide → le texte intégré.",
+      "notYetEnforced": "Enregistré, mais pas encore appliqué — la fonction correspondante arrivera à une étape ultérieure du suivi du temps."
     },
     "passwordPolicy": "Politique de mots de passe",
     "passwordPolicyHint": "Exigences minimales pour les mots de passe des utilisateurs.",
@@ -1774,7 +1776,9 @@
       "reprocessDone": "{{scanned}} analysés · {{updated}} reconstruits · {{created}} créés"
     },
     "windowsStoreUrl": "URL du Microsoft Store",
-    "linuxStoreUrl": "URL de téléchargement Linux"
+    "linuxStoreUrl": "URL de téléchargement Linux",
+    "stateOn": "Activé",
+    "stateOff": "Désactivé"
   },
   "audit": {
     "title": "Journal d'audit",

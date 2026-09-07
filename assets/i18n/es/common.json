@@ -1399,6 +1399,7 @@
       "roundingModeLabel": "Redondeo",
       "roundingModeHint": "Solo se aplica a los informes; los minutos guardados nunca cambian.",
       "roundingMode": {
+        "none": "Sin redondeo",
         "up": "Redondear hacia arriba",
         "down": "Redondear hacia abajo",
         "nearest": "Redondear al más cercano"
@@ -1475,7 +1476,8 @@
       "entryPurgeHint": "Elimina las entradas más antiguas. Los documentos con obligación fiscal de conservación quedan excluidos. 24 meses cubren ArbZG y MiLoG.",
       "monthsSuffix": "meses",
       "privacyNoticeLabel": "Aviso de privacidad",
-      "privacyNoticeHint": "Se muestra en la app junto a los datos de tiempo del módulo. Vacío → el texto integrado."
+      "privacyNoticeHint": "Se muestra en la app junto a los datos de tiempo del módulo. Vacío → el texto integrado.",
+      "notYetEnforced": "Se guarda, pero aún no se aplica: la función detrás de esta política llegará en una fase posterior del registro de tiempo."
     },
     "passwordPolicy": "Política de contraseñas",
     "passwordPolicyHint": "Requisitos mínimos de las contraseñas de los usuarios.",
@@ -1774,7 +1776,9 @@
       "reprocessDone": "{{scanned}} revisados · {{updated}} reconstruidos · {{created}} creados"
     },
     "windowsStoreUrl": "URL de Microsoft Store",
-    "linuxStoreUrl": "URL de descarga para Linux"
+    "linuxStoreUrl": "URL de descarga para Linux",
+    "stateOn": "Activado",
+    "stateOff": "Desactivado"
   },
   "audit": {
     "title": "Registro de auditoría",

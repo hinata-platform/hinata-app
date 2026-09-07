@@ -1399,6 +1399,7 @@
       "roundingModeLabel": "取整",
       "roundingModeHint": "仅用于报表；已保存的分钟数不会改变。",
       "roundingMode": {
+        "none": "不取整",
         "up": "向上取整",
         "down": "向下取整",
         "nearest": "四舍五入"
@@ -1475,7 +1476,8 @@
       "entryPurgeHint": "删除早于此期限的记录。有税务保存义务的凭证除外。24 个月可覆盖 ArbZG 与 MiLoG。",
       "monthsSuffix": "个月",
       "privacyNoticeLabel": "隐私说明",
-      "privacyNoticeHint": "在应用中与本模块的工时数据一同显示。留空 → 使用内置文本。"
+      "privacyNoticeHint": "在应用中与本模块的工时数据一同显示。留空 → 使用内置文本。",
+      "notYetEnforced": "会保存，但尚未生效——该策略背后的功能将在工时记录的后续阶段推出。"
     },
     "passwordPolicy": "密码策略",
     "passwordPolicyHint": "用户密码的最低要求。",
@@ -1774,7 +1776,9 @@
       "reprocessDone": "已扫描 {{scanned}} 封 · 重建 {{updated}} 个 · 新建 {{created}} 个"
     },
     "windowsStoreUrl": "Microsoft Store URL",
-    "linuxStoreUrl": "Linux 下载 URL"
+    "linuxStoreUrl": "Linux 下载 URL",
+    "stateOn": "开启",
+    "stateOff": "关闭"
   },
   "audit": {
     "title": "审计日志",

@@ -194,7 +194,8 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
   ) async {
     if (state.status != AppConfigStatus.ready) return;
     final last = _lastMetaRefresh;
-    if (last != null && DateTime.now().difference(last) < _metaRefreshCooldown) {
+    if (last != null &&
+        DateTime.now().difference(last) < _metaRefreshCooldown) {
       return;
     }
     try {

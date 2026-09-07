@@ -21,6 +21,14 @@ void main() {
   /// The policies whose default must be off and which must carry the note.
   /// Named by their title key, which is what a widget test can see.
   const monitoring = {
+    // The master switch first: turning it on is the introduction of the
+    // facility itself — a running timer per person, a calendar view of their
+    // day — which is what § 87 Abs. 1 Nr. 6 BetrVG co-determines *before* it
+    // runs. Without it here the notes below would read as "and this one is
+    // fine". ICS import belongs for a narrower reason: subscribed appointment
+    // titles routinely carry other people's names.
+    'admin.timeTracking.advancedTitle',
+    'admin.timeTracking.icsImportTitle',
     'admin.timeTracking.leadsSeeMemberEntriesTitle',
     'admin.timeTracking.approvalsTitle',
     'admin.timeTracking.workloadReportsTitle',
@@ -82,7 +90,6 @@ void main() {
         'admin.timeTracking.requiredProjectTitle',
         'admin.timeTracking.defaultBillableTitle',
         'admin.timeTracking.limitTagAccessTitle',
-        'admin.timeTracking.advancedTitle',
       ]) {
         expect(
           find.descendant(
@@ -296,6 +303,113 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('honesty about what is in force', () {
+    testWidgets('every policy the server does not enforce yet says so', (
+      tester,
+    ) async {
+      await tester.pumpWidget(host(<String, dynamic>{}));
+      await tester.pumpAndSettle();
+
+      // The master switch is the one thing this stage actually enforces: the
+      // request gate reads it. Everything else is recorded and idle until a
+      // later stage, and a screen that says "entries on this day can no longer
+      // be changed" while nothing stops them is how an administrator freezes a
+      // payroll period, sees a green toast, and finds out months later.
+      expect(
+        find.descendant(
+          of: policy('admin.timeTracking.advancedTitle'),
+          matching: find.byType(PendingNote),
+        ),
+        findsNothing,
+      );
+      for (final title in const [
+        'admin.timeTracking.leadsSeeMemberEntriesTitle',
+        'admin.timeTracking.limitTagAccessTitle',
+        'admin.timeTracking.arbzgHintsTitle',
+      ]) {
+        expect(
+          find.descendant(
+            of: policy(title),
+            matching: find.byType(PendingNote),
+          ),
+          findsOneWidget,
+          reason: title,
+        );
+      }
+    });
+
+    testWidgets('the badge names what the environment answers', (tester) async {
+      // Without this the badge said only "Env-Default" — true, and useless: an
+      // operator could not tell an instance that is on from one that is off
+      // without reading the deployment's environment.
+      await tester.pumpWidget(
+        host(<String, dynamic>{
+          'timeTracking': <String, dynamic>{
+            'effective': <String, dynamic>{'advancedEnabled': true},
+          },
+        }),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: policy('admin.timeTracking.advancedTitle'),
+          matching: find.textContaining('admin.timeTracking.stateOn'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('adopting the environment value does not change it', (
+      tester,
+    ) async {
+      // The tap materialises the switch; it must not also flip the policy. On
+      // a monitoring-capable switch, a tap that quietly turned something on
+      // would be the worst possible reading of "make this visible".
+      final settings = <String, dynamic>{
+        'timeTracking': <String, dynamic>{
+          'effective': <String, dynamic>{'advancedEnabled': true},
+        },
+      };
+      await tester.pumpWidget(host(settings));
+      await tester.pumpAndSettle();
+
+      final badge = find.descendant(
+        of: policy('admin.timeTracking.advancedTitle'),
+        matching: find.textContaining('admin.timeTracking.envDefault'),
+      );
+      await tester.ensureVisible(badge);
+      await tester.tap(badge);
+      await tester.pumpAndSettle();
+
+      expect(
+        (settings['timeTracking'] as Map)['advancedEnabled'],
+        isTrue,
+        reason: 'the value in force was true, so adopting it must store true',
+      );
+    });
+
+    testWidgets('rounding can be set back to none', (tester) async {
+      // NONE is one of the four the server accepts and the one it starts on.
+      // Leaving it out of the list meant an operator who once chose "round up"
+      // could only go back to whatever the environment said — which on a fleet
+      // configured for NEAREST is not "off".
+      await tester.pumpWidget(
+        host(<String, dynamic>{
+          'timeTracking': <String, dynamic>{
+            'rounding': <String, dynamic>{'mode': 'NONE'},
+          },
+        }),
+      );
+      await tester.pumpAndSettle();
+
+      // Rendered as itself, not disguised as "the environment decides" — which
+      // is what an unknown value used to look like, next to a reset button
+      // offering to clear the value the field claimed was not there.
+      expect(find.text('admin.timeTracking.roundingMode.none'), findsOneWidget);
     });
   });
 }

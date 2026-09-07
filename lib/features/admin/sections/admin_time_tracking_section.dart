@@ -31,13 +31,44 @@ class AdminTimeTrackingSection extends StatefulWidget {
 }
 
 class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
+  /// A hundred years — the ceiling the server puts on a retention. Clamped in
+  /// the field so an operator is not told about it by a rejected save of five
+  /// unrelated sections. Mirrors TimePolicy.RETENTION_MAX_MONTHS.
+  static const int _retentionMaxMonths = 1200;
+
   Map<String, dynamic> get _tt =>
       (widget.settings['timeTracking'] ??= <String, dynamic>{})
           as Map<String, dynamic>;
 
+  /// What the server says these policies currently resolve to. Read-only: the
+  /// server sends it beside the stored block so the screen can show what is in
+  /// force without an operator adopting it by pressing save.
+  Map<String, dynamic> get _effective =>
+      _tt['effective'] is Map<String, dynamic>
+      ? _tt['effective'] as Map<String, dynamic>
+      : const {};
+
   T? _value<T>(String key) => _tt[key] as T?;
 
+  T? _effectiveValue<T>(String key) => _effective[key] as T?;
+
+  T? _effectiveNested<T>(String group, String key) =>
+      _effective[group] is Map<String, dynamic>
+      ? (_effective[group] as Map<String, dynamic>)[key] as T?
+      : null;
+
   void _set(String key, Object? value) => setState(() => _tt[key] = value);
+
+  /// For the controls that own a TextEditingController. They hold their own
+  /// text and ignore the value handed back down, so rebuilding the section on
+  /// every keystroke repaints two dozen policy controls under the shell's blur
+  /// and changes nothing on screen.
+  void _setQuietly(String key, Object? value) => _tt[key] = value;
+
+  void _setNestedQuietly(String group, String key, Object? value) {
+    final map = (_tt[group] ??= <String, dynamic>{}) as Map<String, dynamic>;
+    map[key] = value;
+  }
 
   /// Nested policy groups are read without being created: a group the operator
   /// never touched stays exactly as the server sent it — including absent —
@@ -84,11 +115,18 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
     title: context.t('admin.timeTracking.moduleTitle'),
     subtitle: context.t('admin.timeTracking.moduleHint'),
     children: [
+      // The one switch that is not a configuration detail: turning it on
+      // introduces the facility — a running timer per person, a calendar view
+      // of their day — which is what § 87 Abs. 1 Nr. 6 BetrVG makes
+      // co-determined *before* it runs. Without the note here the seven below
+      // read as "and this one is fine".
       PolicySwitch(
         title: context.t('admin.timeTracking.advancedTitle'),
         description: context.t('admin.timeTracking.advancedHint'),
         value: _value<bool>('advancedEnabled'),
+        effective: _effectiveValue<bool>('advancedEnabled'),
         onChanged: (v) => _set('advancedEnabled', v),
+        monitoring: true,
       ),
     ],
   );
@@ -110,6 +148,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
           description: context.t('${field.$2}Hint'),
           value: _nested<bool>('requiredFields', field.$1),
           onChanged: (v) => _setNested('requiredFields', field.$1, v),
+          pending: true,
         ),
       const SizedBox(height: 8),
       PolicyDate(
@@ -117,17 +156,25 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         helper: context.t('admin.timeTracking.lockBeforeHint'),
         value: _value<String>('lockBefore'),
         onChanged: (v) => _set('lockBefore', v),
+        pending: true,
       ),
       PolicyChoice(
         label: context.t('admin.timeTracking.roundingModeLabel'),
         helper: context.t('admin.timeTracking.roundingModeHint'),
         value: _nested<String>('rounding', 'mode'),
+        effective: _effectiveNested<String>('rounding', 'mode'),
+        // NONE is one of the four the server accepts, and the one it starts on.
+        // Leaving it out meant an operator who once chose "round up" had no way
+        // back to no rounding at all — only back to whatever the environment
+        // said, which on a fleet configured for NEAREST is not "off".
         options: const {
+          'NONE': 'admin.timeTracking.roundingMode.none',
           'UP': 'admin.timeTracking.roundingMode.up',
           'DOWN': 'admin.timeTracking.roundingMode.down',
           'NEAREST': 'admin.timeTracking.roundingMode.nearest',
         },
         onChanged: (v) => _setNested('rounding', 'mode', v),
+        pending: true,
       ),
       PolicyChoice(
         label: context.t('admin.timeTracking.roundingIncrementLabel'),
@@ -144,24 +191,33 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
           'increment',
           v == null ? null : int.parse(v),
         ),
+        pending: true,
       ),
       PolicySwitch(
         title: context.t('admin.timeTracking.limitTagAccessTitle'),
         description: context.t('admin.timeTracking.limitTagAccessHint'),
         value: _value<bool>('limitTagAccess'),
         onChanged: (v) => _set('limitTagAccess', v),
+        pending: true,
       ),
       PolicySwitch(
         title: context.t('admin.timeTracking.defaultBillableTitle'),
         description: context.t('admin.timeTracking.defaultBillableHint'),
         value: _value<bool>('defaultBillable'),
         onChanged: (v) => _set('defaultBillable', v),
+        pending: true,
       ),
+      // Subscribed appointments carry titles, and titles routinely carry other
+      // people's names — pulled into a system where a lead can later be given
+      // sight of the entries they become.
       PolicySwitch(
         title: context.t('admin.timeTracking.icsImportTitle'),
         description: context.t('admin.timeTracking.icsImportHint'),
         value: _value<bool>('icsImportEnabled'),
+        effective: _effectiveValue<bool>('icsImportEnabled'),
         onChanged: (v) => _set('icsImportEnabled', v),
+        monitoring: true,
+        pending: true,
       ),
     ],
   );
@@ -178,6 +234,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         value: _value<bool>('leadsSeeMemberEntries'),
         onChanged: (v) => _set('leadsSeeMemberEntries', v),
         monitoring: true,
+        pending: true,
       ),
       PolicySwitch(
         title: context.t('admin.timeTracking.approvalsTitle'),
@@ -185,6 +242,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         value: _value<bool>('approvalsEnabled'),
         onChanged: (v) => _set('approvalsEnabled', v),
         monitoring: true,
+        pending: true,
       ),
       const SizedBox(height: 8),
       // How often timesheets are handed in is an operator decision, never a
@@ -205,6 +263,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
           'FREE': 'admin.timeTracking.period.free',
         },
         onChanged: (v) => _setNested('approvalPeriod', 'type', v),
+        pending: true,
       ),
       PolicyChoice(
         label: context.t('admin.timeTracking.weekStartsOnLabel'),
@@ -220,19 +279,23 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
           'SUNDAY': 'admin.timeTracking.weekday.sunday',
         },
         onChanged: (v) => _setNested('approvalPeriod', 'weekStartsOn', v),
+        pending: true,
       ),
       PolicyDate(
         label: context.t('admin.timeTracking.anchorDateLabel'),
         helper: context.t('admin.timeTracking.anchorDateHint'),
         value: _nested<String>('approvalPeriod', 'anchorDate'),
         onChanged: (v) => _setNested('approvalPeriod', 'anchorDate', v),
+        pending: true,
       ),
       PolicyNumber(
         label: context.t('admin.timeTracking.periodDaysLabel'),
         helper: context.t('admin.timeTracking.periodDaysHint'),
         suffix: context.t('admin.timeTracking.daysSuffix'),
         value: _nested<num>('approvalPeriod', 'days')?.toInt(),
-        onChanged: (v) => _setNested('approvalPeriod', 'days', v),
+        onChanged: (v) => _setNestedQuietly('approvalPeriod', 'days', v),
+        maxValue: 366,
+        pending: true,
       ),
     ],
   );
@@ -249,6 +312,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         value: _value<bool>('workloadReportsEnabled'),
         onChanged: (v) => _set('workloadReportsEnabled', v),
         monitoring: true,
+        pending: true,
       ),
       PolicySwitch(
         title: context.t('admin.timeTracking.alertsTitle'),
@@ -256,6 +320,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         value: _value<bool>('alertsEnabled'),
         onChanged: (v) => _set('alertsEnabled', v),
         monitoring: true,
+        pending: true,
       ),
       PolicySwitch(
         title: context.t('admin.timeTracking.targetRemindersTitle'),
@@ -263,6 +328,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         value: _value<bool>('targetRemindersEnabled'),
         onChanged: (v) => _set('targetRemindersEnabled', v),
         monitoring: true,
+        pending: true,
       ),
       PolicySwitch(
         title: context.t('admin.timeTracking.arbzgHintsTitle'),
@@ -270,6 +336,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         value: _value<bool>('arbzgHintsEnabled'),
         onChanged: (v) => _set('arbzgHintsEnabled', v),
         monitoring: true,
+        pending: true,
       ),
     ],
   );
@@ -288,6 +355,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         // Profitability per person is a performance figure, whatever it is
         // called on the report.
         monitoring: true,
+        pending: true,
       ),
       const SizedBox(height: 8),
       PolicyText(
@@ -297,6 +365,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         maxLength: 3,
         value: _value<String>('currency'),
         onChanged: (v) => _set('currency', v?.toUpperCase()),
+        pending: true,
       ),
     ],
   );
@@ -313,20 +382,24 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         suffix: context.t('admin.timeTracking.monthsSuffix'),
         value: _nested<num>('retention', 'descriptionPurgeMonths')?.toInt(),
         onChanged: (v) => _setNested('retention', 'descriptionPurgeMonths', v),
+        pending: true,
       ),
       PolicyNumber(
         label: context.t('admin.timeTracking.entryPurgeLabel'),
         helper: context.t('admin.timeTracking.entryPurgeHint'),
         suffix: context.t('admin.timeTracking.monthsSuffix'),
         value: _nested<num>('retention', 'entryPurgeMonths')?.toInt(),
-        onChanged: (v) => _setNested('retention', 'entryPurgeMonths', v),
+        onChanged: (v) => _setNestedQuietly('retention', 'entryPurgeMonths', v),
+        maxValue: _retentionMaxMonths,
+        pending: true,
       ),
       PolicyText(
         label: context.t('admin.timeTracking.privacyNoticeLabel'),
         helper: context.t('admin.timeTracking.privacyNoticeHint'),
         maxLines: 5,
         value: _value<String>('privacyNotice'),
-        onChanged: (v) => _set('privacyNotice', v),
+        onChanged: (v) => _setQuietly('privacyNotice', v),
+        pending: true,
       ),
     ],
   );

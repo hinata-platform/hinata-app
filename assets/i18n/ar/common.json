@@ -1399,6 +1399,7 @@
       "roundingModeLabel": "التقريب",
       "roundingModeHint": "يُطبَّق على التقارير فقط؛ الدقائق المحفوظة لا تتغيّر.",
       "roundingMode": {
+        "none": "بدون تقريب",
         "up": "التقريب لأعلى",
         "down": "التقريب لأسفل",
         "nearest": "التقريب للأقرب"
@@ -1475,7 +1476,8 @@
       "entryPurgeHint": "يحذف القيود الأقدم من ذلك. المستندات ذات الالتزام الضريبي بالحفظ مستثناة. 24 شهرًا تغطي ArbZG وMiLoG.",
       "monthsSuffix": "شهرًا",
       "privacyNoticeLabel": "إشعار الخصوصية",
-      "privacyNoticeHint": "يُعرض في التطبيق مع بيانات الوقت الخاصة بالوحدة. فارغ ← النص المدمج."
+      "privacyNoticeHint": "يُعرض في التطبيق مع بيانات الوقت الخاصة بالوحدة. فارغ ← النص المدمج.",
+      "notYetEnforced": "يُحفظ لكنه لا يُطبَّق بعد — الوظيفة خلف هذه السياسة تصل في مرحلة لاحقة من تتبُّع الوقت."
     },
     "passwordPolicy": "سياسة كلمات المرور",
     "passwordPolicyHint": "الحد الأدنى من متطلبات كلمات مرور المستخدمين.",
@@ -1774,7 +1776,9 @@
       "reprocessDone": "فُحصت {{scanned}} · أُعيد بناء {{updated}} · أُنشئت {{created}}"
     },
     "windowsStoreUrl": "عنوان متجر Microsoft Store",
-    "linuxStoreUrl": "عنوان تنزيل Linux"
+    "linuxStoreUrl": "عنوان تنزيل Linux",
+    "stateOn": "مفعّل",
+    "stateOff": "معطّل"
   },
   "audit": {
     "title": "سجل التدقيق",

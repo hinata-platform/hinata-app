@@ -1399,6 +1399,7 @@
       "roundingModeLabel": "Rundung",
       "roundingModeHint": "Gilt nur für Berichte; die gespeicherten Minuten bleiben unverändert.",
       "roundingMode": {
+        "none": "Keine Rundung",
         "up": "Aufrunden",
         "down": "Abrunden",
         "nearest": "Kaufmännisch runden"
@@ -1475,7 +1476,8 @@
       "entryPurgeHint": "Entfernt ältere Einträge. Steuerlich aufbewahrungspflichtige Belege sind ausgenommen. 24 Monate decken ArbZG und MiLoG ab.",
       "monthsSuffix": "Monate",
       "privacyNoticeLabel": "Datenschutzhinweis",
-      "privacyNoticeHint": "Wird in der App bei den Zeitdaten des Moduls angezeigt. Leer → der eingebaute Text."
+      "privacyNoticeHint": "Wird in der App bei den Zeitdaten des Moduls angezeigt. Leer → der eingebaute Text.",
+      "notYetEnforced": "Wird gespeichert, aber noch nicht angewendet — die Funktion hinter dieser Richtlinie kommt in einer späteren Stufe der Zeiterfassung."
     },
     "passwordPolicy": "Passwortrichtlinie",
     "passwordPolicyHint": "Mindestanforderungen für Benutzerpasswörter.",
@@ -1774,7 +1776,9 @@
       "reprocessDone": "{{scanned}} geprüft · {{updated}} neu aufgebaut · {{created}} erstellt"
     },
     "windowsStoreUrl": "Microsoft-Store-URL",
-    "linuxStoreUrl": "Linux-Download-URL"
+    "linuxStoreUrl": "Linux-Download-URL",
+    "stateOn": "An",
+    "stateOff": "Aus"
   },
   "audit": {
     "title": "Audit-Protokoll",

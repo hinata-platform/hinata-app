@@ -174,11 +174,19 @@ class _AdminAppSectionState extends State<AdminAppSection> {
             // /meta is derived from the time-tracking module's own policies,
             // and it shares a screen with the co-determination notes that
             // belong beside it.
-            _PlatformToggle(
+            _PlatformLink(
               title: context.t('admin.timeTracking.advancedTitle'),
               description: context.t('admin.timeTracking.advancedFromSection'),
-              value: _timeTracking['advancedEnabled'] == true,
-              onChanged: (_) {},
+              // The stored value when an admin has decided one, otherwise what
+              // the environment resolves to. Reading only the stored field
+              // showed "off" on every instance that had never saved the
+              // section — including one an operator had switched on through
+              // HINATA_TIME_TRACKING_ADVANCED_ENABLED.
+              state:
+                  _timeTracking['advancedEnabled'] as bool? ??
+                  (_timeTracking['effective']
+                          as Map<String, dynamic>?)?['advancedEnabled']
+                      as bool?,
               onOpen: widget.onOpenTimeTracking,
             ),
           ],
@@ -211,7 +219,6 @@ class _PlatformToggle extends StatelessWidget {
     required this.description,
     required this.value,
     required this.onChanged,
-    this.onOpen,
   });
 
   final String title;
@@ -219,15 +226,90 @@ class _PlatformToggle extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
 
-  /// When set, this row *points at* the setting instead of being it: the state
-  /// is shown, and the row opens the section that owns it. [onChanged] is then
-  /// never called.
+  @override
+  Widget build(BuildContext context) => _PlatformRow(
+    title: title,
+    description: description,
+    trailing: HiveSwitch(value: value, onChanged: onChanged),
+  );
+}
+
+/// A row that *points at* a setting instead of being it: it reports the state
+/// and opens the section that owns it.
+///
+/// Separate from [_PlatformToggle] rather than a mode of it. One widget with a
+/// switch callback and an open callback, only one of which is ever called, made
+/// every caller pass a no-op to satisfy a `required` parameter documented as
+/// dead — and nothing would have stopped the next caller passing a real handler
+/// and wondering why it never fired.
+class _PlatformLink extends StatelessWidget {
+  const _PlatformLink({
+    required this.title,
+    required this.description,
+    required this.state,
+    required this.onOpen,
+  });
+
+  final String title;
+  final String description;
+
+  /// The value in force, or null when nothing here decides it — a flag left to
+  /// the deployment's environment is neither on nor off from this screen.
+  final bool? state;
+
+  /// Null where there is nowhere to go — then the row reports the state and
+  /// draws no chevron, rather than offering a journey it cannot make.
   final VoidCallback? onOpen;
 
   @override
   Widget build(BuildContext context) {
-    final open = onOpen;
-    final row = Row(
+    final row = _PlatformRow(
+      title: title,
+      description: description,
+      // Bounded so a long translation of "on"/"off" ellipsizes instead of
+      // pushing the chevron off a narrow phone.
+      trailing: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 130),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(child: _StateChip(on: state)),
+            if (onOpen != null) ...[
+              const SizedBox(width: 6),
+              Icon(forwardChevron(context), size: 18, color: AppColors.inkSoft),
+            ],
+          ],
+        ),
+      ),
+    );
+    if (onOpen == null) return row;
+    return InkWell(
+      onTap: onOpen,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: row,
+      ),
+    );
+  }
+}
+
+/// The shared frame both of the rows above draw.
+class _PlatformRow extends StatelessWidget {
+  const _PlatformRow({
+    required this.title,
+    required this.description,
+    required this.trailing,
+  });
+
+  final String title;
+  final String description;
+  final Widget trailing;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.transparent,
+    child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
@@ -251,70 +333,47 @@ class _PlatformToggle extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        if (open == null)
-          HiveSwitch(value: value, onChanged: onChanged)
-        else
-          // Bounded so a long translation of "on"/"off" ellipsizes instead of
-          // pushing the chevron off a narrow phone.
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 130),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(child: _StateChip(on: value)),
-                const SizedBox(width: 6),
-                Icon(
-                  forwardChevron(context),
-                  size: 18,
-                  color: AppColors.inkFaint,
-                ),
-              ],
-            ),
-          ),
+        trailing,
       ],
-    );
-    if (open == null) return row;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: open,
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: row,
-        ),
-      ),
-    );
-  }
+    ),
+  );
 }
 
 /// The current state of a setting that is configured elsewhere.
 class _StateChip extends StatelessWidget {
   const _StateChip({required this.on});
 
-  final bool on;
+  /// On, off, or — null — decided somewhere this screen cannot see, which is a
+  /// third state and not a synonym for off.
+  final bool? on;
 
   @override
   Widget build(BuildContext context) {
+    final lit = on == true;
+    final known = on != null;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: on ? AppColors.accentSoft : AppColors.surfaceMuted,
+        color: lit ? AppColors.accentSoft : AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: on ? AppColors.accentLine : AppColors.hairline2,
+          color: lit ? AppColors.accentLine : AppColors.hairline2,
         ),
       ),
       child: Text(
         context.t(
-          on ? 'admin.timeTracking.stateOn' : 'admin.timeTracking.stateOff',
+          !known
+              ? 'admin.timeTracking.envDefault'
+              : lit
+              ? 'admin.stateOn'
+              : 'admin.stateOff',
         ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontSize: 11.5,
           fontWeight: FontWeight.w600,
-          color: on ? AppColors.accentStrong : AppColors.inkSoft,
+          color: lit ? AppColors.accentStrong : AppColors.inkSoft,
         ),
       ),
     );
