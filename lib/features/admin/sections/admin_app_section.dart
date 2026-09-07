@@ -11,9 +11,18 @@ import '../admin_form_helpers.dart';
 /// App/client settings served to the apps via /api/v1/meta: the minimum
 /// required app version, the privacy policy URL and optional feature flags.
 class AdminAppSection extends StatefulWidget {
-  const AdminAppSection({super.key, required this.settings});
+  const AdminAppSection({
+    super.key,
+    required this.settings,
+    this.onOpenTimeTracking,
+  });
 
   final Map<String, dynamic> settings;
+
+  /// Opens Adminbereich → Zeiterfassung. The extended time-tracking flag is
+  /// derived from that module's own settings, so this section can only point at
+  /// it — a switch here would write somewhere the server does not read.
+  final VoidCallback? onOpenTimeTracking;
 
   @override
   State<AdminAppSection> createState() => _AdminAppSectionState();
@@ -26,11 +35,22 @@ class _AdminAppSectionState extends State<AdminAppSection> {
   Map<String, dynamic> get _flags =>
       (_app['featureFlags'] ??= <String, dynamic>{}) as Map<String, dynamic>;
 
+  /// Read-only here — the section that owns these values is Zeiterfassung.
+  Map<String, dynamic> get _timeTracking =>
+      widget.settings['timeTracking'] is Map<String, dynamic>
+      ? widget.settings['timeTracking'] as Map<String, dynamic>
+      : const {};
+
   /// Flags that have a dedicated, described toggle above — hidden from the raw
-  /// name→enabled editor so they aren't shown twice.
+  /// name→enabled editor so they aren't shown twice, and blocked from being
+  /// re-created there by name. `advanced_time_tracking` is in the list for the
+  /// second reason above all: the server derives it from the time-tracking
+  /// module's own settings, so a hand-typed flag of that name would sit in the
+  /// document looking authoritative and change nothing.
   static const _dedicatedFlags = {
     PlatformFlags.multiAssignee,
     PlatformFlags.emailReply,
+    PlatformFlags.advancedTimeTracking,
   };
 
   @override
@@ -144,6 +164,19 @@ class _AdminAppSectionState extends State<AdminAppSection> {
               onChanged: (v) =>
                   setState(() => _flags[PlatformFlags.emailReply] = v),
             ),
+            const SizedBox(height: 14),
+            // Listed here because this is where an admin looks for platform
+            // behaviour, but it is not switched here: the flag reported by
+            // /meta is derived from the time-tracking module's own policies,
+            // and it shares a screen with the co-determination notes that
+            // belong beside it.
+            _PlatformToggle(
+              title: context.t('admin.timeTracking.advancedTitle'),
+              description: context.t('admin.timeTracking.advancedFromSection'),
+              value: _timeTracking['advancedEnabled'] == true,
+              onChanged: (_) {},
+              onOpen: widget.onOpenTimeTracking,
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -174,6 +207,7 @@ class _PlatformToggle extends StatelessWidget {
     required this.description,
     required this.value,
     required this.onChanged,
+    this.onOpen,
   });
 
   final String title;
@@ -181,9 +215,15 @@ class _PlatformToggle extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
 
+  /// When set, this row *points at* the setting instead of being it: the state
+  /// is shown, and the row opens the section that owns it. [onChanged] is then
+  /// never called.
+  final VoidCallback? onOpen;
+
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final open = onOpen;
+    final row = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
@@ -207,8 +247,69 @@ class _PlatformToggle extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        HiveSwitch(value: value, onChanged: onChanged),
+        if (open == null)
+          HiveSwitch(value: value, onChanged: onChanged)
+        else
+          // Bounded so a long translation of "on"/"off" ellipsizes instead of
+          // pushing the chevron off a narrow phone.
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 130),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(child: _StateChip(on: value)),
+                const SizedBox(width: 6),
+                Icon(
+                  forwardChevron(context),
+                  size: 18,
+                  color: AppColors.inkFaint,
+                ),
+              ],
+            ),
+          ),
       ],
+    );
+    if (open == null) return row;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: open,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: row),
+      ),
+    );
+  }
+}
+
+/// The current state of a setting that is configured elsewhere.
+class _StateChip extends StatelessWidget {
+  const _StateChip({required this.on});
+
+  final bool on;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: on ? AppColors.accentSoft : AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: on ? AppColors.accentLine : AppColors.hairline2,
+        ),
+      ),
+      child: Text(
+        context.t(
+          on ? 'admin.timeTracking.stateOn' : 'admin.timeTracking.stateOff',
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+          color: on ? AppColors.accentStrong : AppColors.inkSoft,
+        ),
+      ),
     );
   }
 }

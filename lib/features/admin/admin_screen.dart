@@ -29,6 +29,7 @@ import 'sections/admin_general_section.dart';
 import 'sections/admin_git_section.dart';
 import 'sections/admin_mcp_section.dart';
 import 'sections/admin_security_section.dart';
+import 'sections/admin_time_tracking_section.dart';
 import '../../core/widgets/hive_widgets.dart' show forwardChevron;
 
 // ─────────────────────────── Section enum ────────────────────────────────
@@ -36,6 +37,7 @@ import '../../core/widgets/hive_widgets.dart' show forwardChevron;
 enum _AdminSection {
   general,
   app,
+  timeTracking,
   authentication,
   connect,
   email,
@@ -71,6 +73,12 @@ const _navItems = <_SectionMeta>[
     section: _AdminSection.security,
     icon: LucideIcons.shield,
     labelKey: 'admin.security',
+    group: 'navGeneral',
+  ),
+  (
+    section: _AdminSection.timeTracking,
+    icon: LucideIcons.timer,
+    labelKey: 'admin.timeTracking.title',
     group: 'navGeneral',
   ),
   (
@@ -280,7 +288,12 @@ class _AdminScreenState extends State<AdminScreen> {
               title: context.t(_sectionTitleKey(current)),
               onBack: () => setState(() => _mobileSection = null),
               actions: _saveActions(context, current),
-              child: _MobileDetailView(section: current, settings: settings),
+              child: _MobileDetailView(
+                section: current,
+                settings: settings,
+                onOpenTimeTracking: () =>
+                    _selectSection(_AdminSection.timeTracking, mobile: true),
+              ),
             );
           }
           return PageChrome(
@@ -333,6 +346,7 @@ bool _sectionHasSave(_AdminSection section) =>
 String _sectionTitleKey(_AdminSection section) => switch (section) {
   _AdminSection.general => 'admin.general',
   _AdminSection.app => 'admin.app',
+  _AdminSection.timeTracking => 'admin.timeTracking.title',
   _AdminSection.authentication => 'admin.authentication',
   _AdminSection.connect => 'admin.connect',
   _AdminSection.email => 'admin.email',
@@ -470,10 +484,18 @@ class _MobileNavTile extends StatelessWidget {
 // ─────────────────────────── Mobile: detail view ─────────────────────────
 
 class _MobileDetailView extends StatelessWidget {
-  const _MobileDetailView({required this.section, required this.settings});
+  const _MobileDetailView({
+    required this.section,
+    required this.settings,
+    required this.onOpenTimeTracking,
+  });
 
   final _AdminSection section;
   final Map<String, dynamic> settings;
+
+  /// Jump to the Zeiterfassung section — the App section points at it rather
+  /// than duplicating the module's master switch.
+  final VoidCallback onOpenTimeTracking;
 
   @override
   Widget build(BuildContext context) {
@@ -502,7 +524,11 @@ class _MobileDetailView extends StatelessWidget {
 
   Widget _sectionBody(_AdminSection sec) => switch (sec) {
     _AdminSection.general => AdminGeneralSection(settings: settings),
-    _AdminSection.app => AdminAppSection(settings: settings),
+    _AdminSection.app => AdminAppSection(
+      settings: settings,
+      onOpenTimeTracking: onOpenTimeTracking,
+    ),
+    _AdminSection.timeTracking => AdminTimeTrackingSection(settings: settings),
     _AdminSection.authentication => AdminSsoSection(settings: settings),
     _AdminSection.connect => const AdminConnectSection(),
     _AdminSection.email => AdminEmailSection(settings: settings),
@@ -531,6 +557,10 @@ class _WideAdminShell extends StatelessWidget {
   final _AdminSection section;
   final Map<String, dynamic> settings;
   final ValueChanged<_AdminSection> onSectionChanged;
+
+  /// Same jump as on the compact layout: the App section's row for the extended
+  /// time-tracking flag opens the section that actually owns it.
+  void _openTimeTracking() => onSectionChanged(_AdminSection.timeTracking);
 
   @override
   Widget build(BuildContext context) {
@@ -602,7 +632,11 @@ class _WideAdminShell extends StatelessWidget {
 
   Widget _body() => switch (section) {
     _AdminSection.general => AdminGeneralSection(settings: settings),
-    _AdminSection.app => AdminAppSection(settings: settings),
+    _AdminSection.app => AdminAppSection(
+      settings: settings,
+      onOpenTimeTracking: _openTimeTracking,
+    ),
+    _AdminSection.timeTracking => AdminTimeTrackingSection(settings: settings),
     _AdminSection.authentication => AdminSsoSection(settings: settings),
     _AdminSection.connect => const AdminConnectSection(),
     _AdminSection.email => AdminEmailSection(settings: settings),
