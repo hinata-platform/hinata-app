@@ -720,7 +720,9 @@ class _BarReportCard extends StatelessWidget {
                     SizedBox(
                       width: durationValues ? 64 : 40,
                       child: Text(
-                        durationValues ? fmtDuration(context, d.value) : '${d.value}',
+                        durationValues
+                            ? fmtDuration(context, d.value)
+                            : '${d.value}',
                         textAlign: TextAlign.right,
                         style: TextStyle(
                           fontFamily: AppTheme.fontMono,

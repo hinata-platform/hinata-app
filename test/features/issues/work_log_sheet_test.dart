@@ -44,7 +44,11 @@ void main() {
     ),
   );
 
-  Future<void> open(WidgetTester tester, WorkItem? entry, List<bool?> results) async {
+  Future<void> open(
+    WidgetTester tester,
+    WorkItem? entry,
+    List<bool?> results,
+  ) async {
     tester.view.physicalSize = const Size(1000, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);

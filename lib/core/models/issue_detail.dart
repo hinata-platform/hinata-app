@@ -32,6 +32,7 @@ class IssueDetail {
   final List<IssueComment> pinnedComments;
   final List<IssueActivity> activity;
   final int activityTotal;
+
   /// The newest work items only (the server caps the aggregate at 50); the
   /// full list pages through `/work-items/page`.
   final List<WorkItem> workItems;

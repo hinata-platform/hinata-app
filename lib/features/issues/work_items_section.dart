@@ -211,10 +211,7 @@ class WorkItemRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 1),
-          child: _leading(who),
-        ),
+        Padding(padding: const EdgeInsets.only(top: 1), child: _leading(who)),
         const SizedBox(width: 10),
         Expanded(
           child: Column(

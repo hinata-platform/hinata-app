@@ -554,5 +554,6 @@ class IssueRepository {
 
   /// Removes one work item (same permission rule as [updateWorkItem]). The
   /// issue's spent total is recomputed server-side.
-  Future<void> deleteWorkItem(String id) => _api.delete('/api/v1/work-items/$id');
+  Future<void> deleteWorkItem(String id) =>
+      _api.delete('/api/v1/work-items/$id');
 }

@@ -114,7 +114,10 @@ void main() {
     });
 
     test('a failed read is asked again rather than assumed', () async {
-      final account = _FakeAccountRepository(zone: 'Asia/Tokyo', failRead: true);
+      final account = _FakeAccountRepository(
+        zone: 'Asia/Tokyo',
+        failRead: true,
+      );
       final sync = TimeZoneSync(
         account: account,
         deviceZone: () async => 'Asia/Tokyo',

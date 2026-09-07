@@ -14,8 +14,7 @@ import '../util/reader_time_zone.dart';
 bool shouldSyncTimeZone({
   required String? deviceZone,
   required String? accountZone,
-}) =>
-    deviceZone != null && deviceZone.isNotEmpty && deviceZone != accountZone;
+}) => deviceZone != null && deviceZone.isNotEmpty && deviceZone != accountZone;
 
 /// Keeps `User.timezone` in step with the zone the device is set to.
 ///
@@ -63,20 +62,14 @@ class TimeZoneSync {
       // Already reconciled in this process: nothing changed on our side, so
       // there is nothing to ask the server about.
       if (_known &&
-          !shouldSyncTimeZone(
-            deviceZone: device,
-            accountZone: _accountZone,
-          )) {
+          !shouldSyncTimeZone(deviceZone: device, accountZone: _accountZone)) {
         return;
       }
       if (!_known) {
         _accountZone = (await _account.meAccount()).timezone;
         _known = true;
       }
-      if (!shouldSyncTimeZone(
-        deviceZone: device,
-        accountZone: _accountZone,
-      )) {
+      if (!shouldSyncTimeZone(deviceZone: device, accountZone: _accountZone)) {
         return;
       }
       _accountZone = (await _account.updateMyProfile(

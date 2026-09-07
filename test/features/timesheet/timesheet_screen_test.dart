@@ -35,7 +35,11 @@ void main() {
 
   const project = Project(id: 'p1', key: 'HIN', name: 'Hinata');
 
-  const ada = DirectoryUser(id: 'u1', username: 'ada', displayName: 'Ada Lovelace');
+  const ada = DirectoryUser(
+    id: 'u1',
+    username: 'ada',
+    displayName: 'Ada Lovelace',
+  );
 
   late PageChromeController chrome;
 
@@ -85,9 +89,7 @@ void main() {
 
   group('the week grid', () {
     testWidgets('names time that belongs to no project', (tester) async {
-      await tester.pumpWidget(
-        host(rows: [row(userId: 'u1', projectId: null)]),
-      );
+      await tester.pumpWidget(host(rows: [row(userId: 'u1', projectId: null)]));
       await tester.pumpAndSettle();
 
       expect(find.text('timesheet.unassigned'), findsOneWidget);
@@ -98,7 +100,9 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        host(rows: [row(userId: 'ghost', projectId: 'p1')]),
+        host(
+          rows: [row(userId: 'ghost', projectId: 'p1')],
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -138,13 +142,16 @@ void main() {
       addTearDown(tester.view.reset);
 
       await tester.pumpWidget(
-        host(rows: [row(userId: 'u1', projectId: 'p1')]),
+        host(
+          rows: [row(userId: 'u1', projectId: 'p1')],
+        ),
       );
       await tester.pumpAndSettle();
 
       // The table scrolls sideways inside its own box …
       final horizontal = find.byWidgetPredicate(
-        (w) => w is SingleChildScrollView && w.scrollDirection == Axis.horizontal,
+        (w) =>
+            w is SingleChildScrollView && w.scrollDirection == Axis.horizontal,
       );
       expect(horizontal, findsOneWidget);
       expect(
@@ -159,7 +166,9 @@ void main() {
   group('the way back to this week', () {
     testWidgets('is published into the shell app bar', (tester) async {
       await tester.pumpWidget(
-        host(rows: [row(userId: 'u1', projectId: 'p1')]),
+        host(
+          rows: [row(userId: 'u1', projectId: 'p1')],
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -187,7 +196,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(repository.calls.last.from, isNot(thisWeek));
 
-      chrome.actionsFor('/').firstWhere((a) => a.label == 'timesheet.today')
+      chrome
+          .actionsFor('/')
+          .firstWhere((a) => a.label == 'timesheet.today')
           .onTap!();
       await tester.pumpAndSettle();
       expect(repository.calls.last.from, thisWeek);
@@ -201,7 +212,10 @@ void main() {
       addTearDown(tester.view.reset);
 
       await tester.pumpWidget(
-        host(rows: [row(userId: 'u1', projectId: 'p1')], admin: true),
+        host(
+          rows: [row(userId: 'u1', projectId: 'p1')],
+          admin: true,
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -217,7 +231,9 @@ void main() {
       addTearDown(tester.view.reset);
 
       await tester.pumpWidget(
-        host(rows: [row(userId: 'u1', projectId: 'p1')]),
+        host(
+          rows: [row(userId: 'u1', projectId: 'p1')],
+        ),
       );
       await tester.pumpAndSettle();
 

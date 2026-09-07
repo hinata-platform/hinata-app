@@ -151,7 +151,9 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        host(row(item('w1', userId: 'ghost'), const WorkItemAccess(meId: 'u1'))),
+        host(
+          row(item('w1', userId: 'ghost'), const WorkItemAccess(meId: 'u1')),
+        ),
       );
       expect(find.textContaining('time.deletedUser'), findsOneWidget);
       expect(find.textContaining('ghost'), findsNothing);
@@ -207,7 +209,7 @@ void main() {
   });
 
   group('AllWorkItemsSheet', () {
-    final issue = Issue(
+    const issue = Issue(
       id: 'i1',
       projectId: 'p1',
       readableId: 'HIN-1',
@@ -260,7 +262,10 @@ void main() {
       await tester.drag(find.byType(ListView), const Offset(0, -400));
       await tester.pumpAndSettle();
       expect(repository.pagesAsked, contains(1));
-      expect(repository.pagesAsked, orderedEquals(repository.pagesAsked.toSet()));
+      expect(
+        repository.pagesAsked,
+        orderedEquals(repository.pagesAsked.toSet()),
+      );
 
       // Scrolling on until the server's total is reached.
       await tester.drag(find.byType(ListView), const Offset(0, -400));

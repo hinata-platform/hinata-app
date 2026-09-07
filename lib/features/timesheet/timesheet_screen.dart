@@ -106,8 +106,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
 
   bool get _isCurrentWeek => _weekStart(DateTime.now()) == _from;
 
-  bool get _isAdmin =>
-      context.watch<AuthBloc>().state.user?.isAdmin ?? false;
+  bool get _isAdmin => context.watch<AuthBloc>().state.user?.isAdmin ?? false;
 
   /// The visible project catalogue — both the label source for the table's
   /// project column and the content of the project filter. Loaded once: it does
@@ -396,8 +395,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                 child: _FilterField(
                   icon: LucideIcons.userRound,
                   label: context.t('timesheet.member'),
-                  value:
-                      _userFilterLabel ?? context.t('timesheet.allUsers'),
+                  value: _userFilterLabel ?? context.t('timesheet.allUsers'),
                   active: _userFilter != null,
                   onTap: _pickUser,
                 ),
@@ -956,7 +954,7 @@ class _FilterPanelState extends State<_FilterPanel> {
         padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
         child: Text(
           context.t(_error!),
-          style: TextStyle(fontSize: 12.5, color: AppColors.danger),
+          style: const TextStyle(fontSize: 12.5, color: AppColors.danger),
         ),
       );
     }
