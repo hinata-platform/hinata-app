@@ -99,6 +99,16 @@
     },
     "filePickFailed": "Der Dateidialog ließ sich nicht öffnen. Bitte versuche es erneut."
   },
+  "error": {
+    "feature": {
+      "disabled": "Diese Funktion ist auf diesem Server nicht eingeschaltet."
+    }
+  },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "message": "Dieser Link führt auf diesem Server nirgendwohin. Er ist womöglich veraltet, oder die Funktion dahinter ist hier nicht eingeschaltet.",
+    "home": "Zur Startseite"
+  },
   "connect": {
     "title": "Mit deinem Server verbinden",
     "subtitle": "Hinata ist self-hosted. Gib die URL des Hinata-Servers deiner Organisation ein, um zu starten.",
@@ -263,6 +273,7 @@
     "board": "Board",
     "gantt": "Gantt",
     "timesheet": "Stundenzettel",
+    "time": "Zeit",
     "reports": "Berichte",
     "watched": "Beobachtet",
     "knowledge": "Wissen",

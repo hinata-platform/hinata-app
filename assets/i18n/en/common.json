@@ -99,6 +99,16 @@
     },
     "filePickFailed": "Couldn't open the file dialog. Please try again."
   },
+  "error": {
+    "feature": {
+      "disabled": "This feature isn't switched on for this server."
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "message": "This link doesn't lead anywhere on this server. It may be outdated, or the feature behind it isn't switched on here.",
+    "home": "Go to home"
+  },
   "connect": {
     "title": "Connect to your server",
     "subtitle": "Hinata is self-hosted. Enter the URL of your organization's Hinata server to get started.",
@@ -263,6 +273,7 @@
     "board": "Board",
     "gantt": "Gantt",
     "timesheet": "Timesheet",
+    "time": "Time",
     "reports": "Reports",
     "watched": "Watched",
     "knowledge": "Knowledge",

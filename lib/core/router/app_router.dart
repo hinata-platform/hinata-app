@@ -37,6 +37,7 @@ import '../../features/projects/settings/project_settings_screen.dart';
 import '../../features/reports/reports_screen.dart';
 import '../../features/setup/setup_screen.dart';
 import '../../features/shell/app_shell.dart';
+import '../../features/shell/not_found_screen.dart';
 import '../../features/teams/team_detail_screen.dart';
 import '../../features/teams/teams_screen.dart';
 import '../../features/timesheet/timesheet_screen.dart';
@@ -224,6 +225,9 @@ GoRouter buildRouter({
       hasServerUrl: storage.serverUrl != null,
       onboardingDone: storage.onboardingDone,
     ),
+    // A path that matches nothing used to render an empty page under the brand
+    // mark, which reads as a broken app rather than a bad link.
+    errorBuilder: (_, _) => const NotFoundScreen(),
     routes: [
       GoRoute(path: '/connect', builder: (_, _) => const ConnectScreen()),
       GoRoute(path: '/connecting', builder: (_, _) => const ConnectingScreen()),
@@ -433,6 +437,27 @@ GoRouter buildRouter({
             pageBuilder: (_, state) =>
                 _transition(state, const TimesheetScreen()),
           ),
+          // The extended time-tracking module. Its routes exist for the client
+          // only while `advanced_time_tracking` is on — with the flag off the
+          // server answers 404 on every one of them, and a deep link must land
+          // on the same not-found page any unknown path would.
+          //
+          // The gate sits in the builder rather than in the route table because
+          // go_router fixes that table at construction while the flag is a
+          // runtime value an admin can flip mid-session. The router's
+          // refreshListenable already carries AppConfig, so a flipped flag swaps
+          // this page without a restart. Inside the shell, so the chrome (back
+          // button, title, nav) stays right either way.
+          GoRoute(
+            path: '/time',
+            pageBuilder: (_, state) => _transition(
+              state,
+              timeModulePage(
+                advancedTime:
+                    appConfig.state.meta?.advancedTimeTracking ?? false,
+              ),
+            ),
+          ),
           GoRoute(
             path: '/watched',
             pageBuilder: (_, state) =>
@@ -512,6 +537,18 @@ GoRouter buildRouter({
 /// first, then the incoming page fades + rises in — they are never both visible
 /// at once. `fillColor` is transparent so the canvas (not an opaque box) shows
 /// through during the brief hand-off.
+/// The page behind `/time`, for a server whose extended time-tracking module is
+/// ([advancedTime]) or is not switched on.
+///
+/// Named rather than inlined because the second branch is the whole point of the
+/// route: a deep link into a module this server does not offer has to land on
+/// the not-found page, and `standalone: false` is what keeps it inside the shell
+/// — where the back button and the title come from.
+@visibleForTesting
+Widget timeModulePage({required bool advancedTime}) => advancedTime
+    ? const TimesheetScreen()
+    : const NotFoundScreen(standalone: false);
+
 /// Maps the `/issues?view=…` query value to a preset filter (dashboard KPIs).
 IssuesInitialView? _issuesView(String? value) => switch (value) {
   'today' => IssuesInitialView.today,

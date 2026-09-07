@@ -99,6 +99,16 @@
     },
     "filePickFailed": "Impossible d'ouvrir la fenêtre de sélection de fichiers. Réessayez."
   },
+  "error": {
+    "feature": {
+      "disabled": "Cette fonction n'est pas activée sur ce serveur."
+    }
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "message": "Ce lien ne mène nulle part sur ce serveur. Il est peut-être obsolète, ou la fonction associée n'est pas activée ici.",
+    "home": "Aller à l'accueil"
+  },
   "connect": {
     "title": "Connectez-vous à votre serveur",
     "subtitle": "Hinata est auto-hébergé. Saisissez l'URL du serveur Hinata de votre organisation pour commencer.",
@@ -263,6 +273,7 @@
     "board": "Tableau",
     "gantt": "Gantt",
     "timesheet": "Feuille de temps",
+    "time": "Temps",
     "reports": "Rapports",
     "watched": "Observés",
     "knowledge": "Connaissances",

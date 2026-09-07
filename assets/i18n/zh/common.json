@@ -99,6 +99,16 @@
     },
     "filePickFailed": "无法打开文件对话框。请重试。"
   },
+  "error": {
+    "feature": {
+      "disabled": "此功能未在该服务器上启用。"
+    }
+  },
+  "notFound": {
+    "title": "未找到页面",
+    "message": "此链接在该服务器上无处可去。它可能已经过时，或者其背后的功能未在此处启用。",
+    "home": "前往首页"
+  },
   "connect": {
     "title": "连接到你的服务器",
     "subtitle": "hinata 采用自托管方式。请输入你所在组织的 hinata 服务器 URL 以开始使用。",
@@ -263,6 +273,7 @@
     "board": "看板",
     "gantt": "甘特图",
     "timesheet": "工时表",
+    "time": "时间",
     "reports": "报表",
     "watched": "已关注",
     "knowledge": "知识库",

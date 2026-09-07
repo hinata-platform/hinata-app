@@ -99,6 +99,16 @@
     },
     "filePickFailed": "No se pudo abrir el diálogo de archivos. Inténtalo de nuevo."
   },
+  "error": {
+    "feature": {
+      "disabled": "Esta función no está activada en este servidor."
+    }
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "message": "Este enlace no lleva a ninguna parte en este servidor. Puede estar obsoleto o la función correspondiente no está activada aquí.",
+    "home": "Ir al inicio"
+  },
   "connect": {
     "title": "Conecta con tu servidor",
     "subtitle": "Hinata es autoalojado. Introduce la URL del servidor de Hinata de tu organización para empezar.",
@@ -263,6 +273,7 @@
     "board": "Tablero",
     "gantt": "Gantt",
     "timesheet": "Hoja de horas",
+    "time": "Tiempo",
     "reports": "Informes",
     "watched": "Seguidas",
     "knowledge": "Conocimiento",
