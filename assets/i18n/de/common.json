@@ -1005,8 +1005,8 @@
     "unassigned": "Nicht zugeordnet",
     "allUsers": "Alle Nutzer",
     "allProjects": "Alle Projekte",
-    "searchUsers": "Benutzer suchen…",
-    "searchProjects": "Projekte suchen …"
+    "searchUsers": "Nutzer suchen…",
+    "searchProjects": "Projekte suchen…"
   },
   "reports": {
     "title": "Berichte",

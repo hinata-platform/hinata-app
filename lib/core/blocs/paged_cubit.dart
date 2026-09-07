@@ -136,6 +136,39 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
     }
   }
 
+  /// Replaces one loaded item in place, without going back to page 0.
+  ///
+  /// A correction to a row the reader is looking at should not cost them the
+  /// pages they have already scrolled through: [load] starts over, which on a
+  /// long list throws away everything below the fold, drops the scroll position
+  /// and — because the list is suddenly short again — immediately asks for the
+  /// next page. Needs [keyOf]; without it there is no way to say which item.
+  void replaceItem(T item) {
+    final key = keyOf;
+    if (key == null) return;
+    final id = key(item);
+    emit(
+      state.copyWith(
+        items: [
+          for (final existing in state.items)
+            if (key(existing) == id) item else existing,
+        ],
+      ),
+    );
+  }
+
+  /// Drops one loaded item and counts one fewer, for the same reason.
+  void removeItem(Object id) {
+    final key = keyOf;
+    if (key == null) return;
+    final kept = [
+      for (final existing in state.items)
+        if (key(existing) != id) existing,
+    ];
+    if (kept.length == state.items.length) return;
+    emit(state.copyWith(items: kept, total: state.total - 1));
+  }
+
   List<T> _append(List<T> current, List<T> incoming) {
     if (keyOf == null) return [...current, ...incoming];
     final seen = {for (final item in current) keyOf!(item)};

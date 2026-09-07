@@ -18,14 +18,17 @@ import '../sprint/modals/glass_modal.dart'
 ///
 /// With [existing] the same sheet corrects that entry instead: every field is
 /// prefilled, the title says so, and saving patches only what changed.
-/// Resolves to `true` once something was written, `false`/null otherwise.
-Future<bool?> showWorkLogSheet(
+/// Resolves to the patched [WorkItem] when an existing entry was corrected,
+/// to `true` when a new one was logged, and to `false`/null when nothing was
+/// written. Handing the entry back lets a list update the one row that changed
+/// instead of starting its paging over.
+Future<Object?> showWorkLogSheet(
   BuildContext context,
   String issueId, {
   WorkItem? existing,
 }) {
   final repository = context.read<IssueRepository>();
-  return WoltModalSheet.show<bool?>(
+  return WoltModalSheet.show<Object?>(
     context: context,
     pageContentDecorator: glassWoltSurface,
     pageListBuilder: (modalContext) => [
@@ -213,7 +216,6 @@ class _WorkLogFormState extends State<WorkLogForm> {
     );
   }
 
-
   Future<void> _pickDate() async {
     final now = DateTime.now();
     final first = DateUtils.dateOnly(now.subtract(const Duration(days: 365)));
@@ -279,13 +281,15 @@ class _WorkLogFormState extends State<WorkLogForm> {
           if (mounted) Navigator.of(context).pop(false);
           return;
         }
-        await repository.updateWorkItem(
+        final patched = await repository.updateWorkItem(
           existing.id,
           minutes: total == existing.durationMinutes ? null : total,
           activityType: _activity == existing.activityType ? null : _activity,
           description: sameNote ? null : note,
           date: sameDate ? null : _date,
         );
+        if (mounted) Navigator.of(context).pop(patched);
+        return;
       }
       if (mounted) Navigator.of(context).pop(true);
     } on ApiFailure catch (failure) {

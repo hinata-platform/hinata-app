@@ -65,12 +65,16 @@ class WorkItemAccess {
   bool canSeeAuthor(WorkItem item) => isOwn(item) || managesProject;
 }
 
-/// Opens the entry in the work-log sheet's edit mode. True once it was saved.
-Future<bool> showEditWorkItem(
+/// Opens the entry in the work-log sheet's edit mode. Answers the patched
+/// entry once it was saved, and null when nothing changed.
+Future<WorkItem?> showEditWorkItem(
   BuildContext context,
   String issueId,
   WorkItem item,
-) async => await showWorkLogSheet(context, issueId, existing: item) == true;
+) async {
+  final saved = await showWorkLogSheet(context, issueId, existing: item);
+  return saved is WorkItem ? saved : null;
+}
 
 /// Asks, then deletes. True when the entry is gone; a refused or failed
 /// delete answers false — the failure (a 403 for someone else's entry, say)
@@ -124,8 +128,12 @@ class WorkItemList extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onShowAll,
-    this.limit = 8,
+    this.limit = headCount,
   });
+
+  /// How many entries the card shows — and, because nothing else is drawn,
+  /// exactly how many the issue detail asks the server for.
+  static const headCount = 8;
 
   final List<WorkItem> items;
 
@@ -483,16 +491,21 @@ class _AllWorkItemsSheetState extends State<AllWorkItemsSheet> {
     if (position.pixels >= position.maxScrollExtent - 240) _cubit.loadMore();
   }
 
+  /// A correction updates the row in place. Reloading would start the paging
+  /// over, which on a long-running issue throws away every page the reader has
+  /// scrolled through, drops them back to the top and immediately fetches the
+  /// next page — all to change one line they are looking at.
   Future<void> _edit(WorkItem item) async {
-    if (!await showEditWorkItem(context, widget.issue.id, item)) return;
+    final patched = await showEditWorkItem(context, widget.issue.id, item);
+    if (patched == null) return;
+    _cubit.replaceItem(patched);
     widget.onChanged();
-    await _cubit.load();
   }
 
   Future<void> _delete(WorkItem item) async {
     if (!await confirmDeleteWorkItem(context, item)) return;
+    _cubit.removeItem(item.id);
     widget.onChanged();
-    await _cubit.load();
   }
 
   @override

@@ -23,7 +23,7 @@ void main() {
   setUp(() => repository = _FakeIssueRepository());
 
   /// Hosts a button that opens the sheet, so the sheet has a route to pop.
-  Widget host(WorkItem? entry, void Function(bool?) onClosed) => MaterialApp(
+  Widget host(WorkItem? entry, void Function(Object?) onClosed) => MaterialApp(
     debugShowCheckedModeBanner: false,
     home: RepositoryProvider<IssueRepository>.value(
       value: repository,
@@ -47,7 +47,7 @@ void main() {
   Future<void> open(
     WidgetTester tester,
     WorkItem? entry,
-    List<bool?> results,
+    List<Object?> results,
   ) async {
     tester.view.physicalSize = const Size(1000, 900);
     tester.view.devicePixelRatio = 1;
@@ -61,7 +61,7 @@ void main() {
       tester.widgetList<TextFormField>(find.byType(TextFormField)).toList();
 
   testWidgets('edit mode shows the entry as it is', (tester) async {
-    final results = <bool?>[];
+    final results = <Object?>[];
     await open(tester, existing, results);
 
     expect(find.text('time.editEntry'), findsOneWidget);
@@ -76,7 +76,7 @@ void main() {
   });
 
   testWidgets('saving patches only what changed', (tester) async {
-    final results = <bool?>[];
+    final results = <Object?>[];
     await open(tester, existing, results);
 
     await tester.enterText(find.byType(TextFormField).at(1), '45');
@@ -92,11 +92,14 @@ void main() {
     expect(patch.activityType, isNull, reason: 'unchanged fields stay home');
     expect(patch.description, isNull, reason: 'trailing whitespace is no edit');
     expect(patch.date, isNull);
-    expect(results, [true]);
+    // The patched entry travels back, so a list can update the one row it
+    // changed instead of paging from the top again.
+    expect(results.single, isA<WorkItem>());
+    expect((results.single as WorkItem).durationMinutes, 165);
   });
 
   testWidgets('nothing changed means nothing written', (tester) async {
-    final results = <bool?>[];
+    final results = <Object?>[];
     await open(tester, existing, results);
 
     await tester.tap(find.text('common.save'));
@@ -107,7 +110,7 @@ void main() {
   });
 
   testWidgets('a cleared note travels as an empty description', (tester) async {
-    final results = <bool?>[];
+    final results = <Object?>[];
     await open(tester, existing, results);
 
     await tester.enterText(find.byType(TextFormField).at(2), '');
@@ -118,7 +121,7 @@ void main() {
   });
 
   testWidgets('logging new time still posts', (tester) async {
-    final results = <bool?>[];
+    final results = <Object?>[];
     await open(tester, null, results);
 
     expect(find.text('issues.logTime'), findsOneWidget);

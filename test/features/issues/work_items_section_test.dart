@@ -319,8 +319,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(repository.pagesAsked, contains(1));
       expect(
-        repository.pagesAsked,
-        orderedEquals(repository.pagesAsked.toSet()),
+        repository.pagesAsked.toSet(),
+        hasLength(repository.pagesAsked.length),
+        reason: 'no page is asked for twice',
       );
 
       // Scrolling on until the server's total is reached.

@@ -149,7 +149,13 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   // button.
   List<WorkItem> _workItems = const [];
   int _workItemsTotal = 0;
-  static const _workItemPageSize = 50;
+
+  /// How many entries the card fetches. The card draws eight; anything beyond
+  /// that is thrown away, and this is the app's most-opened read — asking for
+  /// fifty of them on every open of a long-running issue meant six times the
+  /// payload for the same eight rows. The rest is the sheet's job, and the
+  /// sheet pages.
+  static const _workItemPageSize = WorkItemList.headCount;
   Project? _project;
   // Cross-feature smart-links: project issues (keyed by readable id) feed the
   // comment composer's `@`-menu and resolve `{{issue:…}}` chips; KB articles
@@ -2710,7 +2716,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   }
 
   Future<void> _editWorkItem(Issue issue, WorkItem item) async {
-    if (!await showEditWorkItem(context, issue.id, item) || !mounted) return;
+    if (await showEditWorkItem(context, issue.id, item) == null || !mounted) {
+      return;
+    }
     _notifyChanged();
     await _reloadWorkItems();
   }

@@ -51,6 +51,7 @@ void main() {
     List<DirectoryUser> directory = const [ada],
     List<Project> projects = const [project],
     _FakeTimesheetRepository? timesheet,
+    _FakeProjectRepository? projectRepository,
   }) {
     final router = GoRouter(
       routes: [
@@ -68,7 +69,8 @@ void main() {
                     value: _FakeUserRepository(directory),
                   ),
                   RepositoryProvider<ProjectRepository>.value(
-                    value: _FakeProjectRepository(projects),
+                    value:
+                        projectRepository ?? _FakeProjectRepository(projects),
                   ),
                 ],
                 child: BlocProvider<AuthBloc>.value(
@@ -202,6 +204,29 @@ void main() {
           .onTap!();
       await tester.pumpAndSettle();
       expect(repository.calls.last.from, thisWeek);
+    });
+  });
+
+  group('what the page fetches', () {
+    testWidgets('names only the projects its rows mention', (tester) async {
+      final projects = _FakeProjectRepository(const [
+        project,
+        Project(id: 'p2', key: 'MOB', name: 'Mobile'),
+        Project(id: 'p3', key: 'INF', name: 'Infra'),
+      ]);
+      await tester.pumpWidget(
+        host(
+          rows: [row(userId: 'u1', projectId: 'p1')],
+          admin: true,
+          projectRepository: projects,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Never the whole catalogue: an instance can hold hundreds of projects
+      // and a week's table names a handful.
+      expect(projects.resolved, hasLength(1));
+      expect(projects.resolved.single, ['p1']);
     });
   });
 
@@ -347,8 +372,39 @@ class _FakeProjectRepository implements ProjectRepository {
 
   final List<Project> catalogue;
 
+  /// Ids the screen asked to have named. The screen must never drain the whole
+  /// catalogue — it resolves exactly the projects its rows mention.
+  final List<List<String>> resolved = [];
+
   @override
-  Future<List<Project>> projects({bool archived = false}) async => catalogue;
+  Future<List<Project>> resolveProjects(List<String> ids) async {
+    resolved.add(ids);
+    return [
+      for (final project in catalogue)
+        if (ids.contains(project.id)) project,
+    ];
+  }
+
+  @override
+  Future<({List<Project> projects, int total})> searchProjects({
+    String? query,
+    int page = 0,
+    int size = 25,
+    bool archived = false,
+  }) async {
+    final needle = (query ?? '').trim().toLowerCase();
+    final matches = [
+      for (final project in catalogue)
+        if (needle.isEmpty ||
+            project.name.toLowerCase().contains(needle) ||
+            project.key.toLowerCase().contains(needle))
+          project,
+    ];
+    return (
+      projects: page == 0 ? matches : const <Project>[],
+      total: matches.length,
+    );
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) =>

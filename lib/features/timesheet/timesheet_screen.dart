@@ -67,7 +67,9 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// that is missing from [_users] means "not looked up yet", not "deleted".
   bool _directoryAnswered = false;
 
-  List<Project> _projects = const [];
+  /// Only the projects this week's rows actually name. The whole catalogue is
+  /// never loaded: an instance can hold hundreds of projects, and a week's
+  /// table names a handful.
   Map<String, Project> _projectsById = const {};
 
   bool _loading = true;
@@ -89,7 +91,6 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     super.initState();
     _from = _weekStart(DateTime.now());
     _to = _addDays(_from, 6);
-    unawaited(_loadProjects());
     unawaited(_load());
   }
 
@@ -108,25 +109,38 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
 
   bool get _isAdmin => context.watch<AuthBloc>().state.user?.isAdmin ?? false;
 
-  /// The visible project catalogue — both the label source for the table's
-  /// project column and the content of the project filter. Loaded once: it does
-  /// not change from week to week.
-  Future<void> _loadProjects() async {
+  /// Names for exactly the projects [rows] mention. Null when the lookup could
+  /// not be made — the table then keeps whatever it already had rather than
+  /// blanking a column over a failed label fetch.
+  Future<Map<String, Project>?> _resolveProjects(
+    List<TimesheetRow> rows,
+  ) async {
+    final ids = {
+      for (final row in rows)
+        if (row.projectId != null) row.projectId!,
+    };
+    if (ids.isEmpty) return const {};
     try {
-      final projects = await context.read<ProjectRepository>().projects();
-      if (!mounted) return;
-      setState(() {
-        _projects = projects;
-        _projectsById = {for (final project in projects) project.id: project};
-      });
+      final projects = await context.read<ProjectRepository>().resolveProjects(
+        ids.toList(),
+      );
+      return {for (final project in projects) project.id: project};
     } on ApiFailure {
-      // The table falls back to a dash for a project it cannot name; the hours
-      // are still right, and failing the whole page over the labels would be a
-      // worse trade.
+      return null;
     }
   }
 
   Future<void> _load() async {
+    // A filter is an admin affordance, and losing the role hides the field but
+    // would not by itself forget the pick behind it — every later week would go
+    // on asking for a colleague's rows. (The server refuses, which is what
+    // actually protects them; this is so the page stops asking.)
+    if (!(context.read<AuthBloc>().state.user?.isAdmin ?? false)) {
+      _userFilter = null;
+      _userFilterLabel = null;
+      _projectFilter = null;
+      _projectFilterLabel = null;
+    }
     final seq = ++_loadSeq;
     setState(() {
       _loading = true;
@@ -140,11 +154,17 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
         projectId: _projectFilter,
       );
       if (!mounted || seq != _loadSeq) return;
-      final users = await _resolveUsers(rows);
+      final labels = await Future.wait([
+        _resolveUsers(rows),
+        _resolveProjects(rows),
+      ]);
       if (!mounted || seq != _loadSeq) return;
+      final users = labels[0] as Map<String, DirectoryUser>?;
+      final projects = labels[1] as Map<String, Project>?;
       setState(() {
         _rows = rows;
         _users = users ?? _users;
+        _projectsById = projects ?? _projectsById;
         _directoryAnswered = users != null;
         _loading = false;
       });
@@ -263,26 +283,28 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     );
   }
 
-  /// The project filter narrows the catalogue the page already holds: it is the
-  /// list of projects this account may see, which is bounded by membership and
-  /// already on screen in the table's project column.
+  /// The project filter reads the server a page at a time, like the user one.
+  /// Holding the whole catalogue to filter it here would mean downloading every
+  /// project an admin can see — with its workflow states, its labels and its
+  /// colours — to fill one dropdown.
   Future<_FilterPage> _searchProjects(String query, int page) async {
-    final needle = query.trim().toLowerCase();
+    final result = await context.read<ProjectRepository>().searchProjects(
+      query: query,
+      page: page,
+      size: _filterPageSize,
+    );
     return (
-      items: page > 0
-          ? const <_FilterOption>[]
-          : [
-              for (final project in _projects)
-                if (needle.isEmpty ||
-                    project.name.toLowerCase().contains(needle) ||
-                    project.key.toLowerCase().contains(needle))
-                  _FilterOption(
-                    id: project.id,
-                    label: project.name,
-                    secondary: project.key,
-                  ),
-            ],
-      exhausted: true,
+      items: [
+        for (final project in result.projects)
+          _FilterOption(
+            id: project.id,
+            label: project.name,
+            secondary: project.key,
+          ),
+      ],
+      exhausted:
+          result.projects.length < _filterPageSize ||
+          (page + 1) * _filterPageSize >= result.total,
     );
   }
 
@@ -550,7 +572,14 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (user == null)
-          Icon(LucideIcons.userX, size: 18, color: AppColors.textSecondary)
+          // The same treatment the issue timeline gives an id nobody answers
+          // to, so a reader who sees both in one session reads them the same.
+          HiveAvatar(
+            name: name,
+            size: 24,
+            background: AppColors.inkFaint,
+            glyph: const Icon(LucideIcons.userX, size: 12, color: Colors.white),
+          )
         else
           AppAvatar(
             name: name,
@@ -565,15 +594,13 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   }
 
   String _cell(TimesheetRow row, DateTime day) {
-    final minutes = row.minutesPerDay.entries
-        .where(
-          (entry) =>
-              entry.key.year == day.year &&
-              entry.key.month == day.month &&
-              entry.key.day == day.day,
-        )
-        .fold<int>(0, (sum, entry) => sum + entry.value);
-    return minutes == 0 ? '–' : fmtDuration(context, minutes);
+    // A lookup, not a scan: `parseDate` builds the keys at local midnight and
+    // so does `_addDays`, so the day is an exact hit. The scan this replaces
+    // cost seven comparisons per cell on every rebuild.
+    final minutes = row.minutesPerDay[day] ?? 0;
+    return minutes == 0
+        ? context.t('time.fmt.none')
+        : fmtDuration(context, minutes);
   }
 }
 
@@ -959,46 +986,58 @@ class _FilterPanelState extends State<_FilterPanel> {
       );
     }
 
-    final rows = <Widget>[
-      // "Everything" only belongs at the top of an unfiltered list: while a
-      // query is running it is not one of the matches.
-      if (_query.trim().isEmpty)
-        _FilterRow(
-          label: context.t(widget.allLabelKey),
-          selected: widget.selectedId == null,
-          onTap: () => _pick(const _FilterChoice(null, null)),
-        ),
-      for (final option in _options)
-        _FilterRow(
-          label: option.label,
-          secondary: option.secondary,
-          avatar: option.person,
-          avatarUrl: option.avatarUrl,
-          pronouns: option.pronouns,
-          selected: widget.selectedId == option.id,
-          onTap: () => _pick(_FilterChoice(option.id, option.label)),
-        ),
-      if (_options.isEmpty && !_loading && !_loadingMore)
-        Padding(
+    // "Everything" only belongs at the top of an unfiltered list: while a
+    // query is running it is not one of the matches.
+    final hasAllRow = _query.trim().isEmpty;
+    final leading = hasAllRow ? 1 : 0;
+    final trailing =
+        (_options.isEmpty && !_loading && !_loadingMore) || _loadingMore
+        ? 1
+        : 0;
+
+    // Built on demand, not assembled into a list first: a search rebuilds this
+    // on every debounced keystroke, and materialising every loaded option each
+    // time is the cost the builder exists to avoid.
+    return ListView.builder(
+      controller: _scroll,
+      shrinkWrap: true,
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      itemCount: leading + _options.length + trailing,
+      itemBuilder: (_, index) {
+        if (hasAllRow && index == 0) {
+          return _FilterRow(
+            label: context.t(widget.allLabelKey),
+            selected: widget.selectedId == null,
+            onTap: () => _pick(const _FilterChoice(null, null)),
+          );
+        }
+        final at = index - leading;
+        if (at < _options.length) {
+          final option = _options[at];
+          return _FilterRow(
+            label: option.label,
+            secondary: option.secondary,
+            avatar: option.person,
+            avatarUrl: option.avatarUrl,
+            pronouns: option.pronouns,
+            selected: widget.selectedId == option.id,
+            onTap: () => _pick(_FilterChoice(option.id, option.label)),
+          );
+        }
+        if (_loadingMore) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: Center(child: HiveLoader(size: 15)),
+          );
+        }
+        return Padding(
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
           child: Text(
             context.t('common.noMatches'),
             style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
           ),
-        ),
-      if (_loadingMore)
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 10),
-          child: Center(child: HiveLoader(size: 15)),
-        ),
-    ];
-
-    return ListView.builder(
-      controller: _scroll,
-      shrinkWrap: true,
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      itemCount: rows.length,
-      itemBuilder: (_, index) => rows[index],
+        );
+      },
     );
   }
 }

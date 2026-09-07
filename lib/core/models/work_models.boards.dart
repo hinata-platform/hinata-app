@@ -297,7 +297,10 @@ class WorkItem extends Equatable {
     billable,
     tags,
     source,
+    createdAt,
     updatedAt,
+    updatedBy,
+    sharedFromId,
   ];
 }
 

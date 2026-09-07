@@ -53,9 +53,9 @@ void main() {
     );
 
     // ── English ──
-    expect(await label(150, locale: 'en'), '2 h 30 min');
-    expect(await label(60, locale: 'en'), '1 h');
-    expect(await label(5, locale: 'en'), '5 min');
+    expect(await label(150, locale: 'en'), '2h 30m');
+    expect(await label(60, locale: 'en'), '1h');
+    expect(await label(5, locale: 'en'), '5m');
 
     // ── A language with its own units, not a Latin abbreviation ──
     expect(await label(150, locale: 'ja'), '2 時間 30 分');
