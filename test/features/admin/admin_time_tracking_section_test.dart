@@ -170,7 +170,9 @@ void main() {
     testWidgets('and it is offered on every policy switch that has a value', (
       tester,
     ) async {
-      // Nine of them, all set: every one must offer the way back.
+      // Every switch given an explicit value must offer the way back to the
+      // environment; the count is read off the tree below rather than asserted
+      // here, because a policy added later must not need this comment edited.
       final settings = <String, dynamic>{
         'timeTracking': <String, dynamic>{
           'advancedEnabled': true,

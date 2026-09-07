@@ -51,6 +51,10 @@ class _AdminAppSectionState extends State<AdminAppSection> {
     PlatformFlags.multiAssignee,
     PlatformFlags.emailReply,
     PlatformFlags.advancedTimeTracking,
+    // Same reason: the server derives `mcp` from the MCP module's own settings,
+    // so a row of that name here would be a switch that looks authoritative,
+    // flips nothing, and cannot be deleted again.
+    PlatformFlags.mcp,
   };
 
   @override

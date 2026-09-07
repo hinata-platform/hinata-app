@@ -95,9 +95,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Three real platform toggles (multi-assignee, e-mail reply) plus the
-      // three auth switches — but nothing beside the time-tracking row, which
-      // would write somewhere the server does not read.
+      // The section's own switches are here — the platform toggles it owns and
+      // the auth ones — but nothing beside the time-tracking row: that row
+      // reports a state the server derives elsewhere, and a switch next to it
+      // would write where nothing reads.
       final switches = find.byType(HiveSwitch);
       expect(switches, findsWidgets);
       expect(

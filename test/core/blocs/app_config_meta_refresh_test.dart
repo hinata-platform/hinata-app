@@ -76,6 +76,43 @@ void main() {
     expect(state.meta!.advancedTimeTracking, isTrue);
   });
 
+  test('a burst of triggers costs one read, not one each', () async {
+    // On desktop and web `resumed` fires on every window focus, so alt-tabbing
+    // would be a round trip each time; and a screen calling a switched-off route
+    // asks once per failed request. /meta shares the per-IP rate-limit budget
+    // with everything else, and behind an office NAT that budget is shared with
+    // colleagues doing unrelated work.
+    final (bloc, repository) = await ready();
+    addTearDown(bloc.close);
+    final before = repository.calls;
+
+    for (var i = 0; i < 5; i++) {
+      bloc.add(const MetaRefreshRequested());
+      await Future<void>.delayed(Duration.zero);
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(repository.calls - before, 1);
+  });
+
+  test('a refresh that never reached the server is not held against the next', () async {
+    // The cooldown starts when an answer arrives, not when one is attempted:
+    // going offline for a moment must not also mean waiting out the window
+    // before the app may try again.
+    final (bloc, repository) = await ready();
+    addTearDown(bloc.close);
+    repository.fail = true;
+    bloc.add(const MetaRefreshRequested());
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    repository.fail = false;
+    repository.next = meta(advancedTime: true);
+    bloc.add(const MetaRefreshRequested());
+
+    final state = await bloc.stream.first;
+    expect(state.meta!.advancedTimeTracking, isTrue);
+  });
+
   test('a failed refresh keeps the metadata we already have', () async {
     final (bloc, repository) = await ready();
     addTearDown(bloc.close);

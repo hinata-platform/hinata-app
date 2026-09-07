@@ -1,21 +1,27 @@
-import 'package:flutter/widgets.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
-
 /// The shell's navigation model: which destinations exist, which entry the
 /// current location belongs to, and what a route that is *not* a destination
 /// calls itself.
 ///
 /// It lives here, apart from the widgets, because it is the part that has to
-/// agree with itself. The same location is asked about from five places — the
-/// desktop rail, the compact "More" sheet, the active-tab index, the app bar's
-/// title, and the back button's fallback — and a location that only four of
-/// them recognise produces exactly the bugs you cannot see in a screenshot: an
-/// entry that highlights nothing, a sub-page whose bar has no title, a back
-/// button that jumps somewhere unrelated.
+/// agree with itself. The same location is asked about from the desktop rail,
+/// the compact "More" sheet, that sheet's own highlight, the active-tab index,
+/// the app bar's title and the back button's fallback — and a location that
+/// only some of them recognise produces exactly the bugs you cannot see in a
+/// screenshot: an entry that highlights nothing, a sub-page whose bar has no
+/// title, a back button that jumps somewhere unrelated. (The sheet's highlight
+/// was the one nobody had counted: it had grown a `startsWith` of its own.)
 ///
 /// Since HIN-83 those answers also depend on a platform flag, which doubles the
 /// number of ways they can disagree — so they are pure functions with the flag
 /// as a parameter, and they are tested.
+library;
+
+import 'package:flutter/widgets.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+
+/// One entry in the navigation: where it goes, what it is called, what it looks
+/// like.
 class NavDestination {
   const NavDestination(this.route, this.labelKey, this.icon);
 

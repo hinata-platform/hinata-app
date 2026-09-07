@@ -3,8 +3,8 @@
 ///
 /// Optional server modules are gated by a platform feature flag. While the flag
 /// is off the module's routes do not exist *for the client*: the server answers
-/// 404 with the code `error.feature.disabled` rather than 403, so a client that
-/// was never meant to know the module exists cannot probe for it.
+/// 404 rather than 403, because "denied" would be the wrong word for something
+/// that is not on this server at all.
 ///
 /// The app has to tell that 404 apart from an ordinary one, because the two
 /// deserve opposite reactions. An ordinary 404 is a dead link. This one means
@@ -15,39 +15,60 @@ library;
 /// The wire code the server answers with when a flag-gated route is off.
 ///
 /// The server localizes its error messages, so a live server sends a sentence
-/// here, not this code — which is why [isFeatureDisabledResponse] matches on the
-/// *route* first. The code is still matched because a server whose message
-/// bundle lacks the key falls back to emitting the key itself, and because the
-/// app's own bundle carries a translation for it.
+/// here, not this code — which is why [isFeatureDisabledResponse] decides on the
+/// *route* first. The code is still matched, for a server whose message bundle
+/// lacks the key and falls back to emitting it.
 const String kFeatureDisabledCode = 'error.feature.disabled';
 
 /// Route prefixes that exist only while `advanced_time_tracking` is on.
 ///
-/// Mirrors the single server-side prefix interceptor (HIN-83). Kept as a list of
-/// prefixes rather than a regex because that is exactly how the server matches
-/// them, and the two lists have to be readable side by side.
+/// These mirror `AdvancedTimeTrackingGate.GATED_PATTERNS` in hinata-server, and
+/// they have to be written the same way the server writes them: as the prefix
+/// itself, with no trailing slash. The server gates both `/api/v1/time` and
+/// everything under it, because the bare path is what a client calls for a
+/// collection — `GET /api/v1/time?from=…` is the entry list. A list here that
+/// only recognised `/api/v1/time/` would miss exactly that request, and the
+/// stale-flag recovery would never fire on the one screen most likely to hit it.
+///
+/// Adding a sixth prefix means editing this list and that one. `gated prefixes`
+/// in a search finds both.
 const List<String> kFlagGatedRoutePrefixes = [
-  '/api/v1/time/',
+  '/api/v1/time',
   '/api/v1/me/timer',
-  '/api/v1/availability/',
-  '/api/v1/billing/',
+  '/api/v1/availability',
+  '/api/v1/billing',
   '/api/v1/me/calendar-subscriptions',
 ];
 
 /// Whether [path] is served by a module that can be switched off.
-bool isFlagGatedRoute(String path) =>
-    kFlagGatedRoutePrefixes.any(path.contains);
+///
+/// Matched on segment boundaries, not as a substring: `/api/v1/timesheet` is the
+/// base timesheet that exists on every server and must never be read as part of
+/// the module, and a filter value that happened to contain `/api/v1/billing`
+/// must not turn an unrelated 404 into "the module is off".
+bool isFlagGatedRoute(String path) {
+  final route = _routeOf(path);
+  return kFlagGatedRoutePrefixes.any(
+    (prefix) => route == prefix || route.startsWith('$prefix/'),
+  );
+}
+
+/// The path portion of [path] — dio hands us whatever the caller passed, which
+/// may carry a query string or a fragment.
+String _routeOf(String path) {
+  final cut = path.indexOf(RegExp(r'[?#]'));
+  return cut == -1 ? path : path.substring(0, cut);
+}
 
 /// Whether this response means "the module is switched off".
 ///
-/// A 404 from a flag-gated route is the reliable signal; the localized message
-/// cannot be matched. The code is accepted on its own as well, for a server that
-/// hands back the raw key.
+/// [message] is a callback because reading it can mean decoding a byte body,
+/// and for everything that is not a 404 the answer is already no.
 bool isFeatureDisabledResponse({
   required String path,
   required int? status,
-  String? message,
+  String? Function()? message,
 }) {
   if (status != 404) return false;
-  return isFlagGatedRoute(path) || message == kFeatureDisabledCode;
+  return isFlagGatedRoute(path) || message?.call() == kFeatureDisabledCode;
 }

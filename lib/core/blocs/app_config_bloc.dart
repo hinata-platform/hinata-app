@@ -100,6 +100,15 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
   final MetaRepository repository;
   final AppStorage storage;
 
+  /// How long a successful `/meta` read stands before another is worth making.
+  /// See [_onMetaRefresh]; also the ceiling on how stale a flag can be, so it
+  /// is a minute rather than an hour.
+  static const Duration _metaRefreshCooldown = Duration(seconds: 60);
+
+  /// When the last refresh actually reached the server. Null until one does, so
+  /// the first request after start is never held back.
+  DateTime? _lastMetaRefresh;
+
   /// The default server URL that actually applies on this platform.
   ///
   /// No-baked-backend rule: the shipped image/app bakes **no** backend. The hosted
@@ -171,13 +180,26 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
   /// A failed read keeps the metadata we already have. Losing the network for a
   /// moment must not throw a working session back to the connect screen —
   /// unlike boot, there is a perfectly good previous answer to keep using.
+  ///
+  /// Rate-limited, because the triggers are cheaper than the call. On desktop
+  /// and web `resumed` fires on every window focus, so alt-tabbing would be a
+  /// round trip each time; and a screen that keeps calling a switched-off route
+  /// would ask once per failed request. `/meta` shares the per-IP API budget
+  /// with everything else, and behind an office NAT that budget is shared with
+  /// everyone. A platform flag that changes about once a month does not need
+  /// checking more often than this.
   Future<void> _onMetaRefresh(
     MetaRefreshRequested event,
     Emitter<AppConfigState> emit,
   ) async {
     if (state.status != AppConfigStatus.ready) return;
+    final last = _lastMetaRefresh;
+    if (last != null && DateTime.now().difference(last) < _metaRefreshCooldown) {
+      return;
+    }
     try {
       final meta = await repository.meta();
+      _lastMetaRefresh = DateTime.now();
       // The server can also raise its minimum version while we run; honour it
       // here exactly as the boot path does rather than letting a too-old client
       // keep talking to it.

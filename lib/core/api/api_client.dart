@@ -27,8 +27,12 @@ class ApiFailure implements Exception {
   final int? statusCode;
 
   /// The route is gated behind a platform feature flag that is currently off —
-  /// "not switched on", not "not found". Callers that can offer something
-  /// better than a dead end (a hint, a fallback view) branch on this.
+  /// "not switched on", not "not found".
+  ///
+  /// Nothing branches on this yet: the reaction that matters happens without the
+  /// caller, in [ApiClient.onFeatureDisabled], which re-reads `/meta` so the app
+  /// stops offering the route at all. It is here for the screens stage 3 brings,
+  /// which can say something better than a dead end.
   final bool featureDisabled;
 
   @override
@@ -113,7 +117,7 @@ class ApiClient {
           if (isFeatureDisabledResponse(
             path: error.requestOptions.path,
             status: error.response?.statusCode,
-            message: _messageOf(_asMessageBody(error.response?.data)),
+            message: () => _messageOf(_asMessageBody(error.response?.data)),
           )) {
             onFeatureDisabled?.call();
           }
@@ -440,7 +444,7 @@ class ApiClient {
     final featureDisabled = isFeatureDisabledResponse(
       path: error.requestOptions.path,
       status: status,
-      message: message,
+      message: () => message,
     );
     if (message != null) {
       return ApiFailure(
