@@ -815,7 +815,18 @@
       "minutes": "{{m}} 分钟",
       "hoursMinutes": "{{h}} 小时 {{m}} 分钟",
       "none": "—"
-    }
+    },
+    "editEntry": "编辑条目",
+    "allEntries": "全部条目（{{count}}）",
+    "allEntriesTitle": "全部条目",
+    "loggedTotal": "共记录 {{spent}}",
+    "deletedUser": "已删除的用户",
+    "legacySource": "智能提交（2.0 之前）",
+    "deleteTitle": "删除条目",
+    "deleteConfirm": "要删除 {{date}} 记录的 {{duration}} 吗？此操作无法撤销。",
+    "deleted": "条目已删除",
+    "noEntries": "尚未记录时间",
+    "entryActions": "条目操作"
   },
   "projects": {
     "title": "项目",
@@ -1763,7 +1774,9 @@
       "UNKNOWN": "未知事件",
       "ISSUE_MOVED": "事项已移动",
       "ISSUE_CLONED": "事项已克隆",
-      "ISSUE_EXPORTED": "事项已导出"
+      "ISSUE_EXPORTED": "事项已导出",
+      "TIME_ENTRY_UPDATED": "工时记录已更新",
+      "TIME_ENTRY_DELETED": "工时记录已删除"
     },
     "meta": {
       "oldRole": "原角色",

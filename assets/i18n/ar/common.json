@@ -815,7 +815,18 @@
       "minutes": "{{m}} د",
       "hoursMinutes": "{{h}} س {{m}} د",
       "none": "—"
-    }
+    },
+    "editEntry": "تعديل الإدخال",
+    "allEntries": "كل الإدخالات ({{count}})",
+    "allEntriesTitle": "كل الإدخالات",
+    "loggedTotal": "إجمالي المسجَّل {{spent}}",
+    "deletedUser": "مستخدم محذوف",
+    "legacySource": "الإيداعات الذكية (قبل 2.0)",
+    "deleteTitle": "حذف الإدخال",
+    "deleteConfirm": "هل تريد إزالة {{duration}} المسجَّلة بتاريخ {{date}}؟ لا يمكن التراجع عن ذلك.",
+    "deleted": "تم حذف الإدخال",
+    "noEntries": "لم يُسجَّل أي وقت بعد",
+    "entryActions": "إجراءات الإدخال"
   },
   "projects": {
     "title": "المشاريع",
@@ -1763,7 +1774,9 @@
       "UNKNOWN": "حدث غير معروف",
       "ISSUE_MOVED": "نقل مهمة",
       "ISSUE_CLONED": "استنساخ مهمة",
-      "ISSUE_EXPORTED": "تصدير مهمة"
+      "ISSUE_EXPORTED": "تصدير مهمة",
+      "TIME_ENTRY_UPDATED": "تم تحديث إدخال الوقت",
+      "TIME_ENTRY_DELETED": "تم حذف إدخال الوقت"
     },
     "meta": {
       "oldRole": "الدور السابق",

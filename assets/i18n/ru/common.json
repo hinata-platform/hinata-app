@@ -815,7 +815,18 @@
       "minutes": "{{m}} мин",
       "hoursMinutes": "{{h}} ч {{m}} мин",
       "none": "—"
-    }
+    },
+    "editEntry": "Изменить запись",
+    "allEntries": "Все записи ({{count}})",
+    "allEntriesTitle": "Все записи",
+    "loggedTotal": "Всего учтено {{spent}}",
+    "deletedUser": "Удалённый пользователь",
+    "legacySource": "Смарт-коммиты (до 2.0)",
+    "deleteTitle": "Удалить запись",
+    "deleteConfirm": "Удалить {{duration}}, учтённые {{date}}? Это действие нельзя отменить.",
+    "deleted": "Запись удалена",
+    "noEntries": "Время ещё не учтено",
+    "entryActions": "Действия с записью"
   },
   "projects": {
     "title": "Проекты",
@@ -1763,7 +1774,9 @@
       "UNKNOWN": "Неизвестное событие",
       "ISSUE_MOVED": "Задача перенесена",
       "ISSUE_CLONED": "Задача клонирована",
-      "ISSUE_EXPORTED": "Задача экспортирована"
+      "ISSUE_EXPORTED": "Задача экспортирована",
+      "TIME_ENTRY_UPDATED": "Запись времени изменена",
+      "TIME_ENTRY_DELETED": "Запись времени удалена"
     },
     "meta": {
       "oldRole": "Прежняя роль",

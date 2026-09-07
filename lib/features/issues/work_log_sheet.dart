@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/models/work_models.dart';
 import '../../core/repositories/issue_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
@@ -13,7 +14,15 @@ import '../sprint/modals/glass_modal.dart'
     show glassWoltSurface, showGlassDatePicker;
 
 /// Log work on an issue (YouTrack work item): duration, activity, note.
-Future<bool?> showWorkLogSheet(BuildContext context, String issueId) {
+///
+/// With [existing] the same sheet corrects that entry instead: every field is
+/// prefilled, the title says so, and saving patches only what changed.
+/// Resolves to `true` once something was written, `false`/null otherwise.
+Future<bool?> showWorkLogSheet(
+  BuildContext context,
+  String issueId, {
+  WorkItem? existing,
+}) {
   final repository = context.read<IssueRepository>();
   return WoltModalSheet.show<bool?>(
     context: context,
@@ -25,33 +34,33 @@ Future<bool?> showWorkLogSheet(BuildContext context, String issueId) {
         hasTopBarLayer: false,
         child: RepositoryProvider.value(
           value: repository,
-          child: _WorkLogBody(issueId: issueId),
+          child: WorkLogForm(issueId: issueId, existing: existing),
         ),
       ),
     ],
   );
 }
 
-class _WorkLogBody extends StatefulWidget {
-  const _WorkLogBody({required this.issueId});
+/// The sheet's body — public so it can be pumped without the modal around it.
+///
+/// Pops with `true` after a successful write. The date is drawn within the
+/// server's rules (not in the future, at most a year back); an entry older
+/// than that can still be corrected, its date just starts at the edge of the
+/// picker rather than outside it.
+class WorkLogForm extends StatefulWidget {
+  const WorkLogForm({super.key, required this.issueId, this.existing});
 
   final String issueId;
 
+  /// The entry being corrected; null logs a new one.
+  final WorkItem? existing;
+
   @override
-  State<_WorkLogBody> createState() => _WorkLogBodyState();
+  State<WorkLogForm> createState() => _WorkLogFormState();
 }
 
-class _WorkLogBodyState extends State<_WorkLogBody> {
-  final _formKey = GlobalKey<FormState>();
-  final _hours = TextEditingController(text: '1');
-  final _minutes = TextEditingController(text: '0');
-  final _note = TextEditingController();
-  String _activity = 'Development';
-  DateTime _date = DateTime.now();
-  bool _saving = false;
-  String? _error;
-
-  static const _activities = [
+class _WorkLogFormState extends State<WorkLogForm> {
+  static const _defaultActivities = [
     'Development',
     'Testing',
     'Documentation',
@@ -59,6 +68,40 @@ class _WorkLogBodyState extends State<_WorkLogBody> {
     'Meeting',
     'Support',
   ];
+
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _hours;
+  late final TextEditingController _minutes;
+  late final TextEditingController _note;
+  late String _activity;
+  late DateTime _date;
+
+  /// The canonical activities plus, when correcting, whatever the entry has —
+  /// an MCP client may have logged one the app does not list, and a dropdown
+  /// whose value is not among its items asserts.
+  late final List<String> _activities;
+  bool _saving = false;
+  String? _error;
+
+  WorkItem? get _existing => widget.existing;
+
+  bool get _editing => _existing != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final existing = _existing;
+    final minutes = existing?.durationMinutes ?? 60;
+    _hours = TextEditingController(text: '${minutes ~/ 60}');
+    _minutes = TextEditingController(text: '${minutes % 60}');
+    _note = TextEditingController(text: existing?.description ?? '');
+    _activity = existing?.activityType ?? _defaultActivities.first;
+    _date = existing?.date ?? DateTime.now();
+    _activities = [
+      ..._defaultActivities,
+      if (!_defaultActivities.contains(_activity)) _activity,
+    ];
+  }
 
   @override
   void dispose() {
@@ -79,7 +122,7 @@ class _WorkLogBodyState extends State<_WorkLogBody> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              context.t('issues.logTime'),
+              context.t(_editing ? 'time.editEntry' : 'issues.logTime'),
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -124,13 +167,11 @@ class _WorkLogBodyState extends State<_WorkLogBody> {
                     value: activity,
                     // The value stays the canonical English key sent to the API;
                     // only the visible label is localized.
-                    child: Text(
-                      context.t('time.activity.${activity.toLowerCase()}'),
-                    ),
+                    child: Text(_activityLabel(activity)),
                   ),
               ],
               onChanged: (value) =>
-                  setState(() => _activity = value ?? 'Development'),
+                  setState(() => _activity = value ?? _defaultActivities.first),
             ),
             const SizedBox(height: 14),
             OutlinedButton.icon(
@@ -138,16 +179,7 @@ class _WorkLogBodyState extends State<_WorkLogBody> {
               label: Text(
                 MaterialLocalizations.of(context).formatShortDate(_date),
               ),
-              onPressed: () async {
-                final picked = await showGlassDatePicker(
-                  context,
-                  title: context.t('time.date'),
-                  initialDate: _date,
-                  firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                  lastDate: DateTime.now(),
-                );
-                if (picked != null) setState(() => _date = picked);
-              },
+              onPressed: _pickDate,
             ),
             const SizedBox(height: 14),
             TextFormField(
@@ -180,6 +212,33 @@ class _WorkLogBodyState extends State<_WorkLogBody> {
     );
   }
 
+  String _activityLabel(String activity) {
+    final key = 'time.activity.${activity.toLowerCase()}';
+    final label = context.t(key);
+    return label == key ? activity : label;
+  }
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final first = DateUtils.dateOnly(now.subtract(const Duration(days: 365)));
+    final last = DateUtils.dateOnly(now);
+    // The picker asserts on an initial date outside its range; an entry older
+    // than the window (a legacy remainder, say) opens at the edge instead.
+    final initial = _date.isBefore(first)
+        ? first
+        : _date.isAfter(last)
+        ? last
+        : _date;
+    final picked = await showGlassDatePicker(
+      context,
+      title: context.t('time.date'),
+      initialDate: initial,
+      firstDate: first,
+      lastDate: last,
+    );
+    if (picked != null) setState(() => _date = picked);
+  }
+
   String? _numberValidator(String? value) {
     final number = int.tryParse(value ?? '');
     if (number == null || number < 0) return context.t('errors.invalidNumber');
@@ -195,18 +254,43 @@ class _WorkLogBodyState extends State<_WorkLogBody> {
       setState(() => _error = context.t('errors.invalidNumber'));
       return;
     }
+    final note = _note.text.trim();
+    final repository = context.read<IssueRepository>();
     setState(() {
       _saving = true;
       _error = null;
     });
     try {
-      await context.read<IssueRepository>().addWorkItem(
-        widget.issueId,
-        minutes: total,
-        activityType: _activity,
-        description: _note.text.trim().isEmpty ? null : _note.text.trim(),
-        date: _date,
-      );
+      final existing = _existing;
+      if (existing == null) {
+        await repository.addWorkItem(
+          widget.issueId,
+          minutes: total,
+          activityType: _activity,
+          description: note.isEmpty ? null : note,
+          date: _date,
+        );
+      } else {
+        // Only what changed travels: the server leaves an absent field as it
+        // is, and the audit entry then names exactly the corrected fields.
+        final sameDate =
+            existing.date != null && DateUtils.isSameDay(existing.date, _date);
+        final sameNote = note == (existing.description ?? '').trim();
+        if (total == existing.durationMinutes &&
+            _activity == existing.activityType &&
+            sameNote &&
+            sameDate) {
+          if (mounted) Navigator.of(context).pop(false);
+          return;
+        }
+        await repository.updateWorkItem(
+          existing.id,
+          minutes: total == existing.durationMinutes ? null : total,
+          activityType: _activity == existing.activityType ? null : _activity,
+          description: sameNote ? null : note,
+          date: sameDate ? null : _date,
+        );
+      }
       if (mounted) Navigator.of(context).pop(true);
     } on ApiFailure catch (failure) {
       if (!mounted) return;

@@ -815,7 +815,18 @@
       "minutes": "{{m}} min",
       "hoursMinutes": "{{h}} h {{m}} min",
       "none": "—"
-    }
+    },
+    "editEntry": "Modifier la saisie",
+    "allEntries": "Toutes les saisies ({{count}})",
+    "allEntriesTitle": "Toutes les saisies",
+    "loggedTotal": "{{spent}} saisi au total",
+    "deletedUser": "Utilisateur supprimé",
+    "legacySource": "Smart commits (avant 2.0)",
+    "deleteTitle": "Supprimer la saisie",
+    "deleteConfirm": "Supprimer {{duration}} saisi le {{date}} ? Cette action est irréversible.",
+    "deleted": "Saisie supprimée",
+    "noEntries": "Aucun temps saisi pour l'instant",
+    "entryActions": "Actions sur la saisie"
   },
   "projects": {
     "title": "Projets",
@@ -1763,7 +1774,9 @@
       "UNKNOWN": "Événement inconnu",
       "ISSUE_MOVED": "Ticket déplacé",
       "ISSUE_CLONED": "Ticket cloné",
-      "ISSUE_EXPORTED": "Ticket exporté"
+      "ISSUE_EXPORTED": "Ticket exporté",
+      "TIME_ENTRY_UPDATED": "Saisie de temps modifiée",
+      "TIME_ENTRY_DELETED": "Saisie de temps supprimée"
     },
     "meta": {
       "oldRole": "Rôle précédent",

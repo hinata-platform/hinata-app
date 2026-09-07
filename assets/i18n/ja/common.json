@@ -815,7 +815,18 @@
       "minutes": "{{m}} 分",
       "hoursMinutes": "{{h}} 時間 {{m}} 分",
       "none": "—"
-    }
+    },
+    "editEntry": "記録を編集",
+    "allEntries": "すべての記録（{{count}}）",
+    "allEntriesTitle": "すべての記録",
+    "loggedTotal": "合計 {{spent}} を記録",
+    "deletedUser": "削除されたユーザー",
+    "legacySource": "スマートコミット（2.0 以前）",
+    "deleteTitle": "記録を削除",
+    "deleteConfirm": "{{date}} に記録した {{duration}} を削除しますか？この操作は取り消せません。",
+    "deleted": "記録を削除しました",
+    "noEntries": "まだ時間が記録されていません",
+    "entryActions": "記録の操作"
   },
   "projects": {
     "title": "プロジェクト",
@@ -1763,7 +1774,9 @@
       "UNKNOWN": "不明なイベント",
       "ISSUE_MOVED": "課題を移動",
       "ISSUE_CLONED": "課題を複製",
-      "ISSUE_EXPORTED": "課題をエクスポート"
+      "ISSUE_EXPORTED": "課題をエクスポート",
+      "TIME_ENTRY_UPDATED": "作業時間の記録を更新",
+      "TIME_ENTRY_DELETED": "作業時間の記録を削除"
     },
     "meta": {
       "oldRole": "変更前のロール",

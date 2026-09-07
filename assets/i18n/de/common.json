@@ -815,7 +815,18 @@
       "minutes": "{{m}} min",
       "hoursMinutes": "{{h}} h {{m}} min",
       "none": "—"
-    }
+    },
+    "editEntry": "Eintrag bearbeiten",
+    "allEntries": "Alle Einträge ({{count}})",
+    "allEntriesTitle": "Alle Einträge",
+    "loggedTotal": "{{spent}} insgesamt erfasst",
+    "deletedUser": "Gelöschter Nutzer",
+    "legacySource": "Smart Commits (vor 2.0)",
+    "deleteTitle": "Eintrag löschen",
+    "deleteConfirm": "{{duration}} vom {{date}} entfernen? Das lässt sich nicht rückgängig machen.",
+    "deleted": "Eintrag gelöscht",
+    "noEntries": "Noch keine Zeit erfasst",
+    "entryActions": "Aktionen für den Eintrag"
   },
   "projects": {
     "title": "Projekte",
@@ -1763,7 +1774,9 @@
       "UNKNOWN": "Unbekanntes Ereignis",
       "ISSUE_MOVED": "Vorgang verschoben",
       "ISSUE_CLONED": "Vorgang geklont",
-      "ISSUE_EXPORTED": "Vorgang exportiert"
+      "ISSUE_EXPORTED": "Vorgang exportiert",
+      "TIME_ENTRY_UPDATED": "Zeiteintrag geändert",
+      "TIME_ENTRY_DELETED": "Zeiteintrag gelöscht"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",
