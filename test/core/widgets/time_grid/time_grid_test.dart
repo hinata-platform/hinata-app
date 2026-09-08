@@ -488,6 +488,66 @@ void main() {
     expect(created!.end.difference(created!.start), const Duration(hours: 1));
   });
 
+  testWidgets('a short entry draws without overflowing its block', (
+    tester,
+  ) async {
+    // A quarter-hour entry is fifteen points tall at this hour extent and is
+    // floored to twenty; two lines of text are thirty-two. The difference used
+    // to be painted across the entry as a striped overflow bar.
+    await tester.pumpWidget(
+      host(
+        layers: [
+          TimeGridLayer(
+            id: 'entries',
+            items: [
+              TimeGridItem(
+                id: 'short',
+                start: DateTime(2026, 9, 7, 18, 45),
+                end: DateTime(2026, 9, 7, 19),
+                title: 'Standup',
+                subtitle: 'Development',
+              ),
+            ],
+          ),
+        ],
+        initialScrollHour: 18,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Standup'), findsOneWidget);
+    // The second line is dropped rather than squeezed: there is room for one
+    // whole line and no more, and half a line of type is not information.
+    expect(find.text('Development'), findsNothing);
+  });
+
+  testWidgets('an entry with room for both lines shows both', (tester) async {
+    await tester.pumpWidget(
+      host(
+        layers: [
+          TimeGridLayer(
+            id: 'entries',
+            items: [
+              TimeGridItem(
+                id: 'long',
+                start: DateTime(2026, 9, 7, 9),
+                end: DateTime(2026, 9, 7, 11),
+                title: 'Pairing',
+                subtitle: 'Development',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Pairing'), findsOneWidget);
+    expect(find.text('Development'), findsOneWidget);
+  });
+
   testWidgets('a block that may not be moved is not moved', (tester) async {
     TimeGridItem? moved;
     await tester.pumpWidget(

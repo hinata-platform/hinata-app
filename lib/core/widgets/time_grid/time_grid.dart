@@ -48,6 +48,29 @@ const double kTimeGridMinColumn = 104;
 typedef TimeGridSpan = ({DateTime start, DateTime end});
 
 /// One block, worked out: where it goes and what colour it is.
+/// The line box of a block's title, and of the line under it.
+///
+/// Written down rather than left to the font, and set as an explicit `height`
+/// on both styles, because the block's *minimum* height is derived from these
+/// numbers — see [_kBlockMinHeight]. A line that turned out taller than the box
+/// reserved for it is a bottom overflow on every short entry.
+const double _kBlockPadV = 3;
+const double _kBlockTitleLine = 14;
+const double _kBlockSubLine = 12;
+
+/// How short a block may be drawn: one title line and its padding.
+///
+/// A one-minute entry is still worth grabbing, so a block never draws thinner
+/// than a finger can find — and never thinner than the one line it always
+/// shows, which is the half that was missing. At an hour extent of 60 a
+/// quarter-hour entry is fifteen points tall and was given eighteen; its two
+/// lines of text needed thirty-two.
+const double _kBlockMinHeight = 2 * _kBlockPadV + _kBlockTitleLine;
+
+/// How tall a block has to be before the second line is worth showing.
+const double _kBlockTwoLines =
+    2 * _kBlockPadV + _kBlockTitleLine + _kBlockSubLine;
+
 typedef _Placed = ({TimeGridSlot slot, Rect rect, Color tint});
 
 class TimeGrid extends StatefulWidget {
@@ -352,9 +375,7 @@ class _TimeGridState extends State<TimeGrid> {
       dayIndex * columnWidth + 3 + slot.column * laneWidth,
       top,
       dayIndex * columnWidth + 3 + (slot.column + 1) * laneWidth - 2,
-      // A one-minute entry is still worth grabbing, so a block never draws
-      // thinner than a finger can find.
-      math.max(bottom, top + 18),
+      math.max(bottom, top + _kBlockMinHeight),
     );
   }
 
@@ -867,7 +888,7 @@ class _TimeGridState extends State<TimeGrid> {
           drag.dayIndex * columnWidth + 3,
           top,
           (drag.dayIndex + 1) * columnWidth - 3,
-          math.max(bottom, top + 18),
+          math.max(bottom, top + _kBlockMinHeight),
         ),
         child: _DragPreview(label: _spanLabel(context, drag.start, drag.end)),
       ),
@@ -1093,34 +1114,56 @@ class _Block extends StatelessWidget {
     return Opacity(
       opacity: dimmed ? 0.35 : 1,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 6,
+          vertical: _kBlockPadV,
+        ),
         decoration: BoxDecoration(
           color: tint.withValues(alpha: 0.20),
           borderRadius: BorderRadius.circular(6),
           border: Border(left: BorderSide(color: tint, width: 2.5)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              item.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.ink,
-              ),
-            ),
-            if (item.subtitle != null)
-              Text(
-                item.subtitle!,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 10, color: AppColors.inkSoft),
-              ),
-          ],
+        // What fits, decided from the height the block was actually given.
+        // A quarter-hour entry is fifteen points tall; two lines of text are
+        // thirty-two, and the difference used to be painted as a striped bar
+        // across the entry. The title is always shown — a block with no words
+        // in it is not worth drawing — and the second line only where there is
+        // room for a whole one.
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final room = constraints.maxHeight;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  item.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    // Explicit, so the line box is the number the geometry
+                    // above reserves rather than whatever the font asks for.
+                    height: _kBlockTitleLine / 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.ink,
+                  ),
+                ),
+                if (item.subtitle != null &&
+                    room >= _kBlockTwoLines - 2 * _kBlockPadV)
+                  Text(
+                    item.subtitle!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10,
+                      height: _kBlockSubLine / 10,
+                      color: AppColors.inkSoft,
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -1146,6 +1189,9 @@ class _DragPreview extends StatelessWidget {
       overflow: TextOverflow.ellipsis,
       style: const TextStyle(
         fontSize: 11,
+        // The preview is drawn in the same rect a block gets, down to the same
+        // floor, so its line has to fit in the same box.
+        height: _kBlockTitleLine / 11,
         fontWeight: FontWeight.w600,
         color: AppColors.accentStrong,
       ),
