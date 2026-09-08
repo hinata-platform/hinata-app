@@ -856,7 +856,8 @@
       "stop": "停止",
       "discard": "放弃计时器",
       "noDescription": "无描述",
-      "title": "计时器"
+      "title": "计时器",
+      "chooseMode": "选择计时方式"
     },
     "placement": {
       "none": "无项目",
@@ -913,6 +914,31 @@
       "truncated": "此时间段的记录多于日历所显示的。缩小时间段即可查看全部。",
       "more": "另外 {{count}} 项",
       "more_plural": "另外 {{count}} 项"
+    },
+    "mode": {
+      "stopwatch": "秒表",
+      "countdown": "倒计时",
+      "pomodoro": "番茄钟"
+    },
+    "phase": {
+      "work": "专注",
+      "shortBreak": "短休息",
+      "longBreak": "长休息"
+    },
+    "focus": {
+      "title": "专注",
+      "leave": "退出",
+      "idle": "没有在计时",
+      "resume": "继续工作",
+      "takeBreak": "开始休息",
+      "endSession": "结束这一轮"
+    },
+    "signal": {
+      "countdown": "倒计时结束了。",
+      "breakOver": "休息结束——准备好就继续。",
+      "workOver": "完成 1 个专注区间，休息一下吧。",
+      "workOver_plural": "完成 {{count}} 个专注区间，休息一下吧。",
+      "titleFlash": "区间结束"
     }
   },
   "projects": {
@@ -1330,7 +1356,12 @@
       "reports": "前往报表",
       "knowledge": "前往知识库",
       "newIssue": "新建事项",
-      "toggleTheme": "切换浅色 / 深色外观"
+      "toggleTheme": "切换浅色 / 深色外观",
+      "toggleTimer": "启动或停止计时器",
+      "logTime": "记录工时",
+      "focusMode": "专注模式",
+      "time": "工时",
+      "timesheet": "工时表"
     }
   },
   "settings": {
@@ -2503,6 +2534,23 @@
     "tokens": {
       "title": "访问令牌",
       "subtitle": "用于 MCP 服务器和 API 访问的个人访问令牌。"
+    },
+    "timeTracking": {
+      "title": "工时记录",
+      "subtitle": "你自己的节奏——时长、倒计时，以及区间结束时的提示音。",
+      "pomodoro": "番茄钟",
+      "work": "专注区间",
+      "shortBreak": "短休息",
+      "longBreak": "长休息",
+      "cycles": "长休息前的区间数",
+      "countdown": "倒计时",
+      "countdownLength": "默认时长",
+      "sound": "播放提示音",
+      "soundHint": "区间结束时的一声轻响。提示消息始终会出现。",
+      "minutes": "{{count}} 分钟",
+      "intervals": "{{count}} 个区间",
+      "intervals_plural": "{{count}} 个区间",
+      "saveFailed": "无法保存你的偏好设置。"
     }
   },
   "twofa": {
@@ -2838,6 +2886,22 @@
     "empty": {
       "title": "还没有关注任何内容",
       "message": "打开一个事项并开启“关注”，即可接收它的每一次变更通知。"
+    }
+  },
+  "shortcuts": {
+    "title": "键盘快捷键",
+    "subtitle": "无论你在哪个页面，现在可用的快捷键。",
+    "none": "此页面没有快捷键。",
+    "group": {
+      "general": "通用",
+      "time": "工时"
+    },
+    "app": {
+      "search": "搜索并跳转",
+      "shortcuts": "键盘快捷键"
+    },
+    "focus": {
+      "leave": "退出专注模式"
     }
   }
 }

@@ -13,6 +13,7 @@ import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/locale_cubit.dart';
 import '../../core/blocs/theme_cubit.dart';
+import '../../core/blocs/time_preferences_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/account_models.dart';
 import '../../core/models/core_models.dart' show PlatformFlags;
@@ -34,6 +35,7 @@ import '../sprint/modals/glass_modal.dart' show showGlassToast, GlassToastKind;
 import '../shell/page_chrome.dart';
 import 'account_modals.dart';
 import 'account_widgets.dart';
+import 'time_preferences_section.dart';
 import 'pat_section.dart';
 import 'twofa_modals.dart';
 import 'package:hinata/core/widgets/user_pronouns.dart';
@@ -47,6 +49,7 @@ enum _SettingsSection {
   security,
   sessions,
   notifications,
+  time,
   access,
   tokens,
   appearance,
@@ -61,6 +64,7 @@ const _settingsMenu = <({_SettingsSection section, IconData icon})>[
   (section: _SettingsSection.security, icon: LucideIcons.shieldCheck),
   (section: _SettingsSection.sessions, icon: LucideIcons.monitorSmartphone),
   (section: _SettingsSection.notifications, icon: LucideIcons.bell),
+  (section: _SettingsSection.time, icon: LucideIcons.timer),
   (section: _SettingsSection.access, icon: LucideIcons.layers),
   (section: _SettingsSection.appearance, icon: LucideIcons.sunMoon),
   (section: _SettingsSection.tokens, icon: LucideIcons.keyRound),
@@ -112,6 +116,13 @@ class _AccountScreenState extends State<AccountScreen> {
         PlatformFlags.mcp,
       ) ??
       false;
+
+  /// Whether the extended time module is on. Watched rather than read: an
+  /// administrator can switch it on while this page is open, and a settings
+  /// list that needed a restart to show a section would be the one place in the
+  /// app where the flag does not take effect immediately.
+  bool get _advancedTime =>
+      context.watch<AppConfigBloc>().state.meta?.advancedTimeTracking ?? false;
 
   Me? _me;
   List<DeviceSession> _sessions = const [];
@@ -166,6 +177,12 @@ class _AccountScreenState extends State<AccountScreen> {
       ]);
       if (!mounted) return;
       final page = results[1] as ({List<DeviceSession> items, int total});
+      // The account read that just happened carries the timer rhythm too, so
+      // the cubit that holds it takes this one rather than making its own
+      // request a moment later.
+      context.read<TimePreferencesCubit>().adopt(
+        (results[0] as Me).timePreferences,
+      );
       setState(() {
         _me = results[0] as Me;
         _sessions = page.items;
@@ -454,6 +471,10 @@ class _AccountScreenState extends State<AccountScreen> {
       _sessionsSection(),
       const SizedBox(height: 16),
       _notificationsSection(),
+      if (_advancedTime) ...[
+        const SizedBox(height: 16),
+        const TimePreferencesSection(),
+      ],
     ];
     final right = <Widget>[
       _accessSection(),
@@ -539,9 +560,12 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget _sectionMenu() {
     final isAdmin = context.read<AuthBloc>().state.user?.isAdmin ?? false;
     final mcpEnabled = _mcpEnabled;
+    final advancedTime = _advancedTime;
     final tiles = <Widget>[];
     for (final item in _settingsMenu) {
       if (item.section == _SettingsSection.tokens && !mcpEnabled) continue;
+      // Nothing to configure where there is no pomodoro to configure.
+      if (item.section == _SettingsSection.time && !advancedTime) continue;
       tiles.add(
         _navTile(
           icon: item.icon,
@@ -657,6 +681,7 @@ class _AccountScreenState extends State<AccountScreen> {
     _SettingsSection.security => 'account.security.title',
     _SettingsSection.sessions => 'account.sessions.title',
     _SettingsSection.notifications => 'account.notifications.title',
+    _SettingsSection.time => 'account.timeTracking.title',
     _SettingsSection.access => 'account.access.title',
     _SettingsSection.tokens => 'account.tokens.title',
     _SettingsSection.appearance => 'account.appearance.title',
@@ -668,6 +693,7 @@ class _AccountScreenState extends State<AccountScreen> {
     _SettingsSection.security => 'account.security.subtitle',
     _SettingsSection.sessions => 'account.sessions.subtitle',
     _SettingsSection.notifications => 'account.notifications.subtitle',
+    _SettingsSection.time => 'account.timeTracking.subtitle',
     _SettingsSection.access => 'account.access.subtitle',
     _SettingsSection.tokens => 'account.tokens.subtitle',
     _SettingsSection.appearance => 'account.appearance.subtitle',
@@ -679,6 +705,7 @@ class _AccountScreenState extends State<AccountScreen> {
     _SettingsSection.security => _securitySection(),
     _SettingsSection.sessions => _sessionsSection(),
     _SettingsSection.notifications => _notificationsSection(),
+    _SettingsSection.time => const TimePreferencesSection(),
     _SettingsSection.access => _accessSection(),
     _SettingsSection.tokens => const PatSection(),
     _SettingsSection.appearance => _appearanceSection(),

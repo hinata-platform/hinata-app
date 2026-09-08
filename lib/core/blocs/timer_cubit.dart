@@ -7,6 +7,38 @@ import '../api/api_client.dart';
 import '../models/time_models.dart';
 import '../repositories/time_repository.dart';
 
+/// What a timer just reached, said once.
+///
+/// A one-shot on the state rather than a stream, for the same reason
+/// [TimerState.errorMessage] is one: it belongs to the moment it happened, the
+/// next state clears it, and whoever is listening app-wide sees it exactly
+/// once. It names the interval that *ended*, because that is what the person is
+/// being told about — "your work interval is over", not "a break is running".
+class TimerSignal extends Equatable {
+  const TimerSignal({
+    required this.timerId,
+    required this.mode,
+    this.phase,
+    this.cyclesDone = 0,
+  });
+
+  /// Which timer reached its target. Also what keeps it from being said twice.
+  final String timerId;
+  final TimerMode mode;
+
+  /// The pomodoro half that ended, or null for a countdown.
+  final TimerPhase? phase;
+
+  /// Work intervals done *including* the one that just ended.
+  final int cyclesDone;
+
+  /// Whether what ended was a break — so the offer is "carry on", not "rest".
+  bool get endedABreak => phase?.isBreak ?? false;
+
+  @override
+  List<Object?> get props => [timerId, mode, phase, cyclesDone];
+}
+
 /// The running timer, as the app knows it.
 ///
 /// Two clocks meet here and only one of them is the truth. The **server** owns
@@ -21,12 +53,19 @@ import '../repositories/time_repository.dart';
 /// corrects itself reads as a bug. What is persisted is a cache, never an
 /// authority: [refresh] runs on start, on resume and on every stream reconnect,
 /// and its answer replaces whatever was restored.
+///
+/// That cache now includes which half of a pomodoro is running, so a relaunch
+/// does not spend a round trip claiming a break is work. It is a device-local
+/// copy of what the server already holds, keyed per account and wiped on sign-
+/// out — not a record of anybody's pauses, which the module keeps nowhere
+/// (HIN-60 R7): a break leaves no entry, and this line disappears with it.
 class TimerState extends Equatable {
   const TimerState({
     this.timer,
     this.elapsed = Duration.zero,
     this.isBusy = false,
     this.errorMessage,
+    this.signal,
   });
 
   /// The timer the server last told us about, or null when none runs.
@@ -46,23 +85,44 @@ class TimerState extends Equatable {
   /// what arrives here is already in the reader's language.
   final String? errorMessage;
 
+  /// The interval that just ran out, for one state only.
+  final TimerSignal? signal;
+
   bool get isRunning => timer != null;
+
+  /// What the screen shows: down where there is a target, up where there is
+  /// not.
+  ///
+  /// Derived from the emitted [elapsed] rather than from `DateTime.now()`, so
+  /// it is a pure function of this state — a selector over it can therefore
+  /// report "unchanged", which one sampling the wall clock never can. Clamped
+  /// at zero for the same reason [RunningTimer.remaining] is: a timer past its
+  /// target is not owed negative time.
+  Duration get shown {
+    final target = timer?.target;
+    if (target == null) return elapsed;
+    final left = target - elapsed;
+    return left.isNegative ? Duration.zero : left;
+  }
 
   TimerState copyWith({
     RunningTimer? timer,
     Duration? elapsed,
     bool? isBusy,
     String? errorMessage,
+    TimerSignal? signal,
   }) => TimerState(
     timer: timer ?? this.timer,
     elapsed: elapsed ?? this.elapsed,
     isBusy: isBusy ?? this.isBusy,
     // Always replaced: an error belongs to the action that produced it.
     errorMessage: errorMessage,
+    // And so does a signal — it is said once, by the state that carries it.
+    signal: signal,
   );
 
   @override
-  List<Object?> get props => [timer, elapsed, isBusy, errorMessage];
+  List<Object?> get props => [timer, elapsed, isBusy, errorMessage, signal];
 }
 
 class TimerCubit extends HydratedCubit<TimerState> {
@@ -106,6 +166,8 @@ class TimerCubit extends HydratedCubit<TimerState> {
     }
   }
 
+  /// Starts one. How it counts is decided here and cannot be changed by a
+  /// later [patch] — see [TimeRepository.startTimer].
   Future<void> start({
     String? projectId,
     String? issueId,
@@ -113,6 +175,9 @@ class TimerCubit extends HydratedCubit<TimerState> {
     String? activityType,
     List<String> tags = const [],
     bool? billable,
+    TimerMode mode = TimerMode.stopwatch,
+    int? plannedMinutes,
+    PomodoroConfig? pomodoro,
   }) => _act(
     () => _repository.startTimer(
       projectId: projectId,
@@ -121,8 +186,22 @@ class TimerCubit extends HydratedCubit<TimerState> {
       activityType: activityType,
       tags: tags,
       billable: billable,
+      mode: mode,
+      plannedMinutes: plannedMinutes,
+      pomodoro: pomodoro,
     ),
   );
+
+  /// Ends the running pomodoro phase and begins the next.
+  ///
+  /// A work interval becomes an entry on the way; a break becomes nothing. The
+  /// running timer's id goes with it, so a retry after a timeout answers with
+  /// the phase that is running instead of skipping the next one.
+  Future<void> advancePhase() {
+    final running = state.timer;
+    if (running == null) return Future.value();
+    return _act(() => _repository.advancePhase(timerId: running.id));
+  }
 
   /// Changes one or two things about the running timer, keeping the rest.
   ///
@@ -152,6 +231,28 @@ class TimerCubit extends HydratedCubit<TimerState> {
         billable: billable ?? current.billable,
       ),
     );
+  }
+
+  /// Ends the running timer, whatever kind it is, and returns what it filed.
+  ///
+  /// One method because it is one intention — "I am done with this" — and the
+  /// branch it hides is a server contract, not a preference: a break is never
+  /// filed, so ending one is a discard, and `stop` on a break is refused
+  /// outright with `error.time.breakNotRecorded`. Written out at each place
+  /// that ends a timer, the next one would meet that refusal.
+  ///
+  /// Null when there was nothing to file — a break, no timer, or a stop that
+  /// failed. Callers need that back: the entry carries the overlap advice, and
+  /// a screen that dropped it would tell the person less than the screen beside
+  /// it does about the same action.
+  Future<SavedTimeEntry?> end() async {
+    final running = state.timer;
+    if (running == null) return null;
+    if (running.isBreak) {
+      await discard();
+      return null;
+    }
+    return stop();
   }
 
   Future<void> continueEntry(String entryId) =>
@@ -203,6 +304,10 @@ class TimerCubit extends HydratedCubit<TimerState> {
   /// Applies what the server said, and starts or stops the local ticker to
   /// match. The one place the timer field changes.
   void _apply(RunningTimer? timer) {
+    // A different timer is a different interval, so whatever was announced
+    // about the last one does not carry. Kept when the id is the same, because
+    // a plain refresh must not make the app say the same thing twice.
+    if (timer?.id != _signalled) _signalled = null;
     emit(
       timer == null
           ? const TimerState()
@@ -234,17 +339,59 @@ class TimerCubit extends HydratedCubit<TimerState> {
     _ticker = null;
   }
 
+  /// The timer this cubit has already announced the end of.
+  ///
+  /// Every phase is a new document with a new id, so one id per announcement is
+  /// exactly one announcement per interval — and it survives the app being
+  /// backgrounded past the end and coming back to find the target long gone.
+  String? _signalled;
+
   void _tick() {
     final timer = state.timer;
     if (timer == null) {
       _stopTicking();
       return;
     }
-    final elapsed = timer.elapsed(DateTime.now());
+    final now = DateTime.now();
+    final elapsed = timer.elapsed(now);
+    final reached = timer.hasReachedTarget(now) && _signalled != timer.id;
     // Only whole seconds move the state: the bar renders to the second, and
-    // emitting an identical duration would rebuild it for nothing.
-    if (elapsed.inSeconds != state.elapsed.inSeconds) {
+    // emitting an identical duration would rebuild it for nothing. An interval
+    // running out is worth a state of its own whatever the second says.
+    if (!reached && elapsed.inSeconds == state.elapsed.inSeconds) return;
+    if (!reached) {
       emit(state.copyWith(elapsed: elapsed));
+      return;
+    }
+    _signalled = timer.id;
+    emit(
+      state.copyWith(
+        elapsed: elapsed,
+        signal: TimerSignal(
+          timerId: timer.id,
+          mode: timer.mode,
+          phase: timer.phase,
+          // The interval that just ended counts, so a work phase reports the
+          // number it completes rather than the number it started after.
+          cyclesDone: timer.phase == TimerPhase.work
+              ? timer.cyclesDone + 1
+              : timer.cyclesDone,
+        ),
+      ),
+    );
+    if (timer.mode == TimerMode.countdown) {
+      // A countdown ends itself. The person asked for twenty-five minutes and
+      // is not necessarily at the screen when they are up; the server decides
+      // the entry's length against its own clock, so what arrives late is still
+      // worth exactly what was asked for. A pomodoro deliberately does *not*
+      // do this — the next phase is the person's decision, and the toast is
+      // where they make it.
+      //
+      // A stop that fails is not retried: the timer keeps running, the person
+      // ends it when they see it, and the entry is still exactly the target
+      // because the server caps it there. Retrying on the next tick would mean
+      // a request a second for as long as the network is down.
+      unawaited(stop());
     }
   }
 
@@ -306,8 +453,12 @@ class TimerCubit extends HydratedCubit<TimerState> {
         'activityType': timer.activityType,
         'tags': timer.tags,
         'billable': timer.billable,
-        'mode': timer.mode.name.toUpperCase(),
+        'mode': timer.mode.wire,
         'plannedMinutes': timer.plannedMinutes,
+        'pomodoro': timer.pomodoro?.toJson(),
+        'phase': timer.phase?.wire,
+        'phaseStartedAt': timer.phaseStartedAt?.toUtc().toIso8601String(),
+        'cyclesDone': timer.cyclesDone,
       },
     };
   }
@@ -328,5 +479,16 @@ class TimerCubit extends HydratedCubit<TimerState> {
           timer.billable,
           timer.mode.name,
           timer.plannedMinutes,
+          // Spelled out, not the object: `Equatable.toString` expands its
+          // fields in debug and answers "Instance of …" in release, so a token
+          // built from the object would stop noticing a config change the
+          // moment it shipped.
+          timer.pomodoro?.work,
+          timer.pomodoro?.shortBreak,
+          timer.pomodoro?.longBreak,
+          timer.pomodoro?.cycles,
+          timer.phase?.name,
+          timer.phaseStartedAt?.microsecondsSinceEpoch,
+          timer.cyclesDone,
         ].join('|');
 }

@@ -856,7 +856,8 @@
       "stop": "Stoppen",
       "discard": "Timer verwerfen",
       "noDescription": "Ohne Beschreibung",
-      "title": "Timer"
+      "title": "Timer",
+      "chooseMode": "Zählweise wählen"
     },
     "placement": {
       "none": "Ohne Projekt",
@@ -913,6 +914,31 @@
       "truncated": "In diesem Zeitraum liegen mehr Einträge, als der Kalender zeigt. Grenze ihn ein, um alle zu sehen.",
       "more": "+{{count}} weiterer",
       "more_plural": "+{{count}} weitere"
+    },
+    "mode": {
+      "stopwatch": "Stoppuhr",
+      "countdown": "Countdown",
+      "pomodoro": "Pomodoro"
+    },
+    "phase": {
+      "work": "Arbeit",
+      "shortBreak": "Kurze Pause",
+      "longBreak": "Lange Pause"
+    },
+    "focus": {
+      "title": "Fokus",
+      "leave": "Verlassen",
+      "idle": "Nichts läuft",
+      "resume": "Weiterarbeiten",
+      "takeBreak": "Pause starten",
+      "endSession": "Sitzung beenden"
+    },
+    "signal": {
+      "countdown": "Dein Countdown ist abgelaufen.",
+      "breakOver": "Pause vorbei — weiter, wenn du soweit bist.",
+      "workOver": "Ein Intervall geschafft. Zeit für eine Pause.",
+      "workOver_plural": "{{count}} Intervalle geschafft. Zeit für eine Pause.",
+      "titleFlash": "Intervall zu Ende"
     }
   },
   "projects": {
@@ -1330,7 +1356,12 @@
       "reports": "Zu Berichte",
       "knowledge": "Zu Wissen",
       "newIssue": "Neuen Vorgang erstellen",
-      "toggleTheme": "Hell / Dunkel umschalten"
+      "toggleTheme": "Hell / Dunkel umschalten",
+      "toggleTimer": "Timer starten oder stoppen",
+      "logTime": "Zeit erfassen",
+      "focusMode": "Fokus-Modus",
+      "time": "Zeit",
+      "timesheet": "Stundenzettel"
     }
   },
   "settings": {
@@ -2503,6 +2534,23 @@
     "tokens": {
       "title": "Zugriffstokens",
       "subtitle": "Personal Access Tokens für den MCP-Server und den API-Zugriff."
+    },
+    "timeTracking": {
+      "title": "Zeiterfassung",
+      "subtitle": "Dein eigener Rhythmus — Längen, Countdown und der Ton am Intervallende.",
+      "pomodoro": "Pomodoro",
+      "work": "Arbeitsintervall",
+      "shortBreak": "Kurze Pause",
+      "longBreak": "Lange Pause",
+      "cycles": "Intervalle bis zur langen Pause",
+      "countdown": "Countdown",
+      "countdownLength": "Voreingestellte Länge",
+      "sound": "Ton abspielen",
+      "soundHint": "Ein kurzer Klang am Intervallende. Die Meldung erscheint so oder so.",
+      "minutes": "{{count}} Min.",
+      "intervals": "{{count}} Intervall",
+      "intervals_plural": "{{count}} Intervalle",
+      "saveFailed": "Einstellungen konnten nicht gespeichert werden."
     }
   },
   "twofa": {
@@ -2838,6 +2886,22 @@
     "empty": {
       "title": "Nichts beobachtet",
       "message": "Öffne einen Vorgang und schalte „Beobachten“ ein, um über jede Änderung informiert zu werden."
+    }
+  },
+  "shortcuts": {
+    "title": "Tastaturkürzel",
+    "subtitle": "Was gerade funktioniert, wo immer du bist.",
+    "none": "Auf dieser Seite gibt es keine Kürzel.",
+    "group": {
+      "general": "Allgemein",
+      "time": "Zeit"
+    },
+    "app": {
+      "search": "Suchen und springen",
+      "shortcuts": "Tastaturkürzel"
+    },
+    "focus": {
+      "leave": "Fokus-Modus verlassen"
     }
   }
 }

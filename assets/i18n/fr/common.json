@@ -856,7 +856,8 @@
       "stop": "Arrêter",
       "discard": "Abandonner le minuteur",
       "noDescription": "Sans description",
-      "title": "Minuteur"
+      "title": "Minuteur",
+      "chooseMode": "Choisir le décompte"
     },
     "placement": {
       "none": "Sans projet",
@@ -913,6 +914,31 @@
       "truncated": "Cette période contient plus d’entrées que le calendrier n’en affiche. Réduisez-la pour toutes les voir.",
       "more": "+{{count}} autre",
       "more_plural": "+{{count}} autres"
+    },
+    "mode": {
+      "stopwatch": "Chronomètre",
+      "countdown": "Compte à rebours",
+      "pomodoro": "Pomodoro"
+    },
+    "phase": {
+      "work": "Concentration",
+      "shortBreak": "Pause courte",
+      "longBreak": "Pause longue"
+    },
+    "focus": {
+      "title": "Concentration",
+      "leave": "Quitter",
+      "idle": "Rien en cours",
+      "resume": "Reprendre le travail",
+      "takeBreak": "Faire une pause",
+      "endSession": "Terminer la séance"
+    },
+    "signal": {
+      "countdown": "Votre compte à rebours est terminé.",
+      "breakOver": "Pause terminée — reprenez quand vous voulez.",
+      "workOver": "Un intervalle terminé. C'est l'heure d'une pause.",
+      "workOver_plural": "{{count}} intervalles terminés. C'est l'heure d'une pause.",
+      "titleFlash": "Intervalle terminé"
     }
   },
   "projects": {
@@ -1330,7 +1356,12 @@
       "reports": "Aller aux rapports",
       "knowledge": "Aller à la base de connaissances",
       "newIssue": "Créer un ticket",
-      "toggleTheme": "Basculer l'apparence claire / sombre"
+      "toggleTheme": "Basculer l'apparence claire / sombre",
+      "toggleTimer": "Démarrer ou arrêter le minuteur",
+      "logTime": "Saisir du temps",
+      "focusMode": "Mode concentration",
+      "time": "Temps",
+      "timesheet": "Feuille de temps"
     }
   },
   "settings": {
@@ -2503,6 +2534,23 @@
     "tokens": {
       "title": "Jetons d'accès",
       "subtitle": "Jetons d'accès personnels pour le serveur MCP et l'accès à l'API."
+    },
+    "timeTracking": {
+      "title": "Suivi du temps",
+      "subtitle": "Votre propre rythme : durées, compte à rebours et le son de fin d'intervalle.",
+      "pomodoro": "Pomodoro",
+      "work": "Intervalle de travail",
+      "shortBreak": "Pause courte",
+      "longBreak": "Pause longue",
+      "cycles": "Intervalles avant la pause longue",
+      "countdown": "Compte à rebours",
+      "countdownLength": "Durée par défaut",
+      "sound": "Jouer un son",
+      "soundHint": "Un bref carillon à la fin d'un intervalle. Le message s'affiche dans tous les cas.",
+      "minutes": "{{count}} min",
+      "intervals": "{{count}} intervalle",
+      "intervals_plural": "{{count}} intervalles",
+      "saveFailed": "Impossible d'enregistrer vos préférences."
     }
   },
   "twofa": {
@@ -2838,6 +2886,22 @@
     "empty": {
       "title": "Aucun ticket observé",
       "message": "Ouvrez un ticket et activez « Observer » pour être averti de chacune de ses modifications."
+    }
+  },
+  "shortcuts": {
+    "title": "Raccourcis clavier",
+    "subtitle": "Ce qui fonctionne à l'instant, où que vous soyez.",
+    "none": "Aucun raccourci sur cet écran.",
+    "group": {
+      "general": "Général",
+      "time": "Temps"
+    },
+    "app": {
+      "search": "Rechercher et aller à",
+      "shortcuts": "Raccourcis clavier"
+    },
+    "focus": {
+      "leave": "Quitter le mode concentration"
     }
   }
 }

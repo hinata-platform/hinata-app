@@ -24,6 +24,7 @@ class AccountRepository {
     String? pronouns,
     String? locale,
     String? timezone,
+    TimePreferences? timePreferences,
   }) async => Me.fromJson(
     await _api.patch(
           '/api/v1/me',
@@ -33,6 +34,10 @@ class AccountRepository {
             'pronouns': ?pronouns,
             'locale': ?locale,
             'timezone': ?timezone,
+            // Whole when present: five lengths and a switch that one panel
+            // edits together, and the server merges them onto what it holds.
+            if (timePreferences != null)
+              'timePreferences': timePreferences.toJson(),
           },
         )
         as Map<String, dynamic>,

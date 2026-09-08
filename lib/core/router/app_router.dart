@@ -41,6 +41,7 @@ import '../../features/shell/not_found_screen.dart';
 import '../../features/teams/team_detail_screen.dart';
 import '../../features/teams/teams_screen.dart';
 import '../../features/time/time_calendar_screen.dart';
+import '../../features/time/time_focus_screen.dart';
 import '../../features/time/time_screen.dart';
 import '../../features/time/time_views.dart';
 import '../../features/timesheet/timesheet_screen.dart';
@@ -296,6 +297,22 @@ GoRouter buildRouter({
           code: state.uri.queryParameters['code'],
           accessToken: state.uri.queryParameters['access_token'],
           refreshToken: state.uri.queryParameters['refresh_token'],
+        ),
+      ),
+      // The focus view. A top-level route on purpose, outside the ShellRoute:
+      // it is full-screen on *every* width, and the shell's immersive mode is a
+      // compact-only affordance. A rail down the left is exactly what somebody
+      // asking for a focus mode is asking to be rid of.
+      //
+      // Listed before the shell's routes so that the intent reads in order;
+      // nothing under the shell would catch it either way.
+      GoRoute(
+        path: '/time/focus',
+        pageBuilder: (_, state) => _transition(
+          state,
+          timeFocusPage(
+            advancedTime: appConfig.state.meta?.advancedTimeTracking ?? false,
+          ),
         ),
       ),
       ShellRoute(
@@ -577,6 +594,17 @@ Widget timeModulePage({
     TimeView.timesheet => const TimesheetScreen(moduleView: true),
   };
 }
+
+/// The page behind `/time/focus`.
+///
+/// Named for the same reason [timeModulePage] is: the second branch is the
+/// point of the route. Unlike the module's other pages this one is
+/// `standalone` — there is no shell around it to draw a back button, so a deep
+/// link into a module this server does not offer has to land on a page that
+/// can bring you home by itself.
+@visibleForTesting
+Widget timeFocusPage({required bool advancedTime}) =>
+    advancedTime ? const TimeFocusScreen() : const NotFoundScreen();
 
 /// Maps the `/issues?view=…` query value to a preset filter (dashboard KPIs).
 IssuesInitialView? _issuesView(String? value) => switch (value) {
