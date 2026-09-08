@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../features/search/search_tokens.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import 'glass_filter_bar.dart' show kGlassControlHeight, kGlassPillHeight;
 import 'glass_panel.dart';
 
 /// One segment of a switcher that rides on glass.
@@ -52,10 +53,14 @@ class GlassSwitchChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppTheme.radiusPill),
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 11 : 12,
-            vertical: 7,
-          ),
+          // Horizontal only. The height comes from [GlassSwitchBar], which
+          // knows what the row it is docked into is willing to give — and a
+          // chip that adds its own vertical padding on top of that does not
+          // grow the bar, it gets squeezed inside it: the icon box is cut from
+          // 18 points to 12, the glyph is centred in a box smaller than itself,
+          // and the ink drifts below the middle of the pill. That is what "the
+          // icons sit too low" was.
+          padding: EdgeInsets.symmetric(horizontal: compact ? 11 : 12),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -95,6 +100,13 @@ class GlassSwitchChip extends StatelessWidget {
 /// docked toolbar row both hand a widget whatever it asks for, and a switcher
 /// with long words in it asked for more than the page had. Past the ceiling the
 /// chips scroll inside the pill rather than pushing the title off the head.
+///
+/// It states its own height for the same reason, and that one is not cosmetic:
+/// the compact shape used to *ask* for 44 while the row it is docked into gives
+/// [kGlassControlHeight], and a control that asks for more than it is given is
+/// not granted it — it is squeezed. The chips came out 26 points tall, their
+/// 18-point icon boxes were cut to 12, and the glyphs drifted below the middle
+/// of a pill that still looked the right shape.
 class GlassSwitchBar extends StatelessWidget {
   const GlassSwitchBar({
     super.key,
@@ -106,20 +118,34 @@ class GlassSwitchBar extends StatelessWidget {
   final List<Widget> chips;
   final double maxWidth;
 
-  /// The icon-only shape, which is a little taller so the glyphs are not
-  /// cramped. Pass the same value the chips are given.
+  /// The icon-only shape, sized to a docked control row. Pass the same value
+  /// the chips are given.
   final bool compact;
+
+  /// What the bar occupies: a docked control's height on a phone, a search
+  /// field's on a wide window, where it rides beside a page title rather than
+  /// in a toolbar.
+  double get _height => compact ? kGlassControlHeight : kGlassPillHeight;
 
   @override
   Widget build(BuildContext context) => ConstrainedBox(
     constraints: BoxConstraints(maxWidth: maxWidth),
-    child: GlassFloatingSurface(
-      radius: (compact ? 44 : 42) / 2,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(mainAxisSize: MainAxisSize.min, children: chips),
+    child: SizedBox(
+      height: _height,
+      child: GlassFloatingSurface(
+        radius: _height / 2,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              // The chips take the bar's height rather than inventing one, so
+              // there is one place that decides how tall a switcher is.
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: chips,
+            ),
+          ),
         ),
       ),
     ),

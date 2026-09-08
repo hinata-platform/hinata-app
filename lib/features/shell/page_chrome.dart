@@ -26,12 +26,20 @@ class PageAction {
   final bool primary;
   final bool busy;
 
+  /// Callbacks by `==`, not by [identical].
+  ///
+  /// A page that hands the bar `onTap: _newEntry` writes a *tear-off*, and Dart
+  /// gives two tear-offs of the same method on the same object `==` but not
+  /// `identical`. Compared by identity the action looked new on every build, so
+  /// the page re-published its chrome every frame and the bar rebuilt with it.
+  /// Closures are only ever `==` when they are identical, so nothing that used
+  /// to compare unequal now compares equal.
   @override
   bool operator ==(Object other) =>
       other is PageAction &&
       other.icon == icon &&
       other.label == label &&
-      identical(other.onTap, onTap) &&
+      other.onTap == onTap &&
       other.primary == primary &&
       other.busy == busy;
 
@@ -49,6 +57,8 @@ class PageChromeData {
   const PageChromeData({
     this.location,
     this.title,
+    this.onTitleTap,
+    this.titleLeading = false,
     this.onBack,
     this.bottom,
     this.bottomHeight = 0,
@@ -71,6 +81,32 @@ class PageChromeData {
   /// displace the visible page's own chrome.
   final String? location;
   final String? title;
+
+  /// Makes the title a control: the shell draws a chevron after it and calls
+  /// this with the title's own rect when it is tapped, for the page to open a
+  /// menu under. Null means the title is not on screen to measure, which the
+  /// page answers by not opening anything — a popover pinned to the top-left
+  /// corner of the display is not a better answer than none.
+  ///
+  /// It exists because a phone's app bar has room for exactly one trailing
+  /// action. The bar centres its title in `width - 2 * max(leading, actions)`,
+  /// so a second 42-point circle beside the bell and the settings gear leaves
+  /// the title nothing at all — and a module whose pages are three views of one
+  /// thing still has to offer the way between them. The title is already
+  /// naming what you are looking at; tapping it to choose something else is the
+  /// affordance that costs no width.
+  final void Function(Rect? anchor)? onTitleTap;
+
+  /// Whether the title sits on the leading edge instead of centred.
+  ///
+  /// A centred title is laid out in `width - 2 * max(leading, actions)`, so on
+  /// a phone with a logo on one side and three round buttons on the other it
+  /// gets about a hundred points — enough for "Zeit", not for "September". On
+  /// the leading edge it gets everything the two sides do not use, which is
+  /// half as much again, and a title that changes as the page scrolls is worth
+  /// reading in full.
+  final bool titleLeading;
+
   final VoidCallback? onBack;
 
   /// An optional widget the page docks into the app bar *below* the title row —
@@ -78,6 +114,14 @@ class PageChromeData {
   /// glass blur (no separate blurred band). [bottomHeight] is its fixed height,
   /// added to the bar and to the injected top gutter so page content still
   /// clears the whole bar. Compact shell only; the wide shell ignores it.
+  ///
+  /// The bar hands [bottom] that height as a *tight* constraint, so a `SizedBox`
+  /// inside it cannot come in under it — `SizedBox` enforces the incoming
+  /// constraint over its own, and a control asking for 36 in a band of 46 comes
+  /// out 46 tall. A page that reserves more than its controls occupy has to say
+  /// where the slack goes: a `Column` (which lays its children out loosely) or
+  /// an `Align`. The timesheet's docked pills were a head taller than the same
+  /// pills on the two pages beside it until they did.
   final Widget? bottom;
   final double bottomHeight;
 
@@ -113,6 +157,12 @@ class PageChromeController extends ChangeNotifier {
   PageChromeData? _dataFor(String location) => _byLocation[location];
 
   String? titleFor(String location) => _dataFor(location)?.title;
+
+  bool titleLeadingFor(String location) =>
+      _dataFor(location)?.titleLeading ?? false;
+
+  void Function(Rect? anchor)? onTitleTapFor(String location) =>
+      _dataFor(location)?.onTitleTap;
 
   VoidCallback? onBackFor(String location) => _dataFor(location)?.onBack;
 
@@ -174,9 +224,13 @@ class PageChromeController extends ChangeNotifier {
       if (identical(entry.value, owner)) entry.key,
   ];
 
+  /// Callbacks by `==` — see [PageAction.==] for why identity is the wrong
+  /// test for a tear-off.
   static bool _sameChrome(PageChromeData a, PageChromeData b) =>
       a.title == b.title &&
-      identical(a.onBack, b.onBack) &&
+      a.onTitleTap == b.onTitleTap &&
+      a.titleLeading == b.titleLeading &&
+      a.onBack == b.onBack &&
       identical(a.bottom, b.bottom) &&
       a.bottomHeight == b.bottomHeight &&
       a.fullWidth == b.fullWidth &&
@@ -211,6 +265,8 @@ class PageChrome extends StatefulWidget {
   const PageChrome({
     super.key,
     this.title,
+    this.onTitleTap,
+    this.titleLeading = false,
     this.onBack,
     this.bottom,
     this.bottomHeight = 0,
@@ -220,6 +276,13 @@ class PageChrome extends StatefulWidget {
   });
 
   final String? title;
+
+  /// Makes the title a control. See [PageChromeData.onTitleTap].
+  final void Function(Rect? anchor)? onTitleTap;
+
+  /// Puts the title on the leading edge. See [PageChromeData.titleLeading].
+  final bool titleLeading;
+
   final VoidCallback? onBack;
 
   /// Optional toolbar docked into the app bar below the title (compact only).
@@ -266,7 +329,9 @@ class _PageChromeState extends State<PageChrome> {
     // identity — a new instance re-publishes so the docked toolbar reflects the
     // latest grouping/sort/filter selection.
     if (oldWidget.title != widget.title ||
-        !identical(oldWidget.onBack, widget.onBack) ||
+        oldWidget.onTitleTap != widget.onTitleTap ||
+        oldWidget.titleLeading != widget.titleLeading ||
+        oldWidget.onBack != widget.onBack ||
         !identical(oldWidget.bottom, widget.bottom) ||
         oldWidget.bottomHeight != widget.bottomHeight ||
         oldWidget.fullWidth != widget.fullWidth ||
@@ -287,6 +352,8 @@ class _PageChromeState extends State<PageChrome> {
         PageChromeData(
           location: GoRouterState.of(context).matchedLocation,
           title: widget.title,
+          onTitleTap: widget.onTitleTap,
+          titleLeading: widget.titleLeading,
           onBack: widget.onBack,
           bottom: widget.bottom,
           bottomHeight: widget.bottomHeight,

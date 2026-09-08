@@ -126,9 +126,47 @@ void main() {
     expect(draft.startedAt, isNotNull);
     expect(draft.endedAt, isNotNull);
     expect(draft.durationMinutes, isNull);
-    // The day comes from the start, so sending one as well would be a second
-    // opinion about the same fact.
-    expect(draft.date, isNull);
+    // The reporting day too, and the start's own day.
+    //
+    // It used to be omitted, on the reading that the day comes from the start
+    // and sending it as well would be a second opinion. That is true of a
+    // create, which the server derives — and false of an edit, which leaves a
+    // field the patch does not mention alone. Moving an entry's hours from the
+    // 10th to the 20th therefore left it filed on the 10th, where the month and
+    // the timesheet went on counting it while the hour canvas — which draws a
+    // block where its hours are — showed it on neither day.
+    final start = draft.startedAt!;
+    expect(draft.date, DateTime(start.year, start.month, start.day));
+  });
+
+  testWidgets('moving an interval moves the day it is filed under with it', (
+    tester,
+  ) async {
+    // The one that mattered: the server keeps whatever `date` a patch does not
+    // mention, so an edit that only moves the hours has to say where they went.
+    final wasOn = DateTime(2026, 9, 10);
+    await open(
+      tester,
+      entry: WorkItem(
+        id: 'w1',
+        durationMinutes: 120,
+        activityType: 'Development',
+        description: 'moved',
+        date: wasOn,
+        startedAt: DateTime(2026, 9, 10, 9),
+        endedAt: DateTime(2026, 9, 10, 11),
+      ),
+    );
+    await save(tester);
+
+    expect(repository.updated, hasLength(1));
+    final draft = repository.updated.single.$2;
+    final start = draft.startedAt!;
+    expect(
+      draft.date,
+      DateTime(start.year, start.month, start.day),
+      reason: 'the filed day follows the hours it is filed for',
+    );
   });
 
   testWidgets('an existing interval entry opens in interval mode', (

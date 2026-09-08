@@ -134,27 +134,30 @@ void main() {
       // And the refresh spinner drops from the same line, not from behind
       // the bar.
       expect(
-        tester.widget<RefreshIndicator>(find.byType(RefreshIndicator)).edgeOffset,
+        tester
+            .widget<RefreshIndicator>(find.byType(RefreshIndicator))
+            .edgeOffset,
         dock.top,
       );
     });
 
-    testWidgets('on a wide window the head above the list has already paid it', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        host(
-          time: _FakeTimeRepository([entry(id: 'a', description: 'first')]),
-          size: const Size(1400, 900),
-          padding: const EdgeInsets.only(top: 180),
-        ),
-      );
-      await tester.pumpAndSettle();
+    testWidgets(
+      'on a wide window the head above the list has already paid it',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            time: _FakeTimeRepository([entry(id: 'a', description: 'first')]),
+            size: const Size(1400, 900),
+            padding: const EdgeInsets.only(top: 180),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      // Paying it twice would push the list a bar's height down the page.
-      final list = tester.widget<ListView>(find.byType(ListView));
-      expect(list.padding?.resolve(TextDirection.ltr).top, 0);
-    });
+        // Paying it twice would push the list a bar's height down the page.
+        final list = tester.widget<ListView>(find.byType(ListView));
+        expect(list.padding?.resolve(TextDirection.ltr).top, 0);
+      },
+    );
 
     testWidgets('the empty state begins below the header, not behind it', (
       tester,

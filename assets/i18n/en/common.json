@@ -908,9 +908,11 @@
       "untimed": "Untimed",
       "previous": "Previous",
       "next": "Next",
-      "day": "Day",
       "week": "Week",
-      "truncated": "This range holds more entries than the calendar shows. Narrow it to see them all."
+      "month": "Month",
+      "truncated": "This range holds more entries than the calendar shows. Narrow it to see them all.",
+      "more": "+{{count}} more",
+      "more_plural": "+{{count}} more"
     }
   },
   "projects": {

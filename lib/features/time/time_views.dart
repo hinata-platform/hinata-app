@@ -4,6 +4,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
 import '../../core/responsive/responsive.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/glass_switch_chip.dart';
 
 /// The extended time module's three ways of looking at the same hours.
@@ -22,14 +24,13 @@ enum TimeView {
   final String route;
   final String labelKey;
   final IconData icon;
-
 }
 
-/// The switcher every page of the module wears.
+/// The switcher every page of the module wears **on a wide window**.
 ///
-/// A glass pill with one chip per view, the same control the Gantt chart uses
-/// — on a phone it drops to icons and keeps the words in the tooltips, because
-/// three labelled chips plus a date and a way back do not fit across a phone.
+/// A glass pill with one chip per view, the same control the Gantt chart uses.
+/// On a phone there is no room for it in the two lines the chrome is allowed,
+/// and it is [showTimeViewMenu] under the app bar's title instead.
 class TimeViewSwitcher extends StatelessWidget {
   const TimeViewSwitcher({super.key, required this.current});
 
@@ -60,4 +61,117 @@ class TimeViewSwitcher extends StatelessWidget {
       ],
     );
   }
+}
+
+/// One entry of the module menu: a view to go to, or something the page itself
+/// answers.
+///
+/// The two are one list because they are one menu to the reader — "what am I
+/// looking at" and "over what stretch of time" are the same question asked
+/// twice — and because the menu has to come back with exactly one answer.
+@immutable
+class TimeMenuChoice<T extends Object> {
+  const TimeMenuChoice.view(this.view) : extra = null;
+
+  /// A choice only the page knows about — the calendar's week/month, its way
+  /// back to today. [extra] is whatever the page put in and gets back.
+  const TimeMenuChoice.extra(this.extra) : view = null;
+
+  final TimeView? view;
+  final T? extra;
+
+  @override
+  bool operator ==(Object other) =>
+      other is TimeMenuChoice<T> && other.view == view && other.extra == extra;
+
+  @override
+  int get hashCode => Object.hash(view, extra);
+}
+
+/// One row a page adds under the three views.
+@immutable
+class TimeMenuExtra<T extends Object> {
+  const TimeMenuExtra({
+    required this.value,
+    required this.label,
+    required this.icon,
+    this.selected = false,
+    this.first = false,
+  });
+
+  final T value;
+  final String label;
+  final IconData icon;
+
+  /// Whether this row is the one in force — the span the calendar is on.
+  ///
+  /// Its own flag rather than the menu's selected [value], because the menu
+  /// ticks one row and this menu answers two questions: which view you are on,
+  /// and how wide it is. The view keeps the tick; a live extra shows the same
+  /// glyph in its trailing slot, so both read as chosen.
+  final bool selected;
+
+  /// Whether a divider is drawn above this row — set on the first of a group.
+  final bool first;
+}
+
+/// The module's menu, opened by tapping the app bar's title.
+///
+/// This is where the phone keeps the switching that a wide window shows as
+/// chips. The chrome above the page is allowed two lines — the app bar's own
+/// and one docked row — and on the calendar that docked row is the week strip
+/// or the weekday header, which leaves nowhere to put three views, two spans
+/// and a way back to today. A title that already names what you are looking at
+/// is the natural place to ask for something else.
+///
+/// Navigation between the three views happens here — every page would
+/// otherwise write the same three lines — and returns null. [extras] come
+/// straight back to the caller, typed, so its `switch` over them can be
+/// exhaustive and adding a row cannot silently do nothing.
+///
+/// A null [anchor] means the title was not on screen to measure; nothing opens.
+Future<T?> showTimeViewMenu<T extends Object>(
+  BuildContext context, {
+  required Rect? anchor,
+  required TimeView current,
+  List<TimeMenuExtra<T>> extras = const [],
+}) async {
+  if (anchor == null) return null;
+  final chosen = await showGlassMenu<TimeMenuChoice<T>>(
+    context: context,
+    anchorRect: anchor,
+    width: 240,
+    value: TimeMenuChoice<T>.view(current),
+    items: [
+      for (final view in TimeView.values)
+        GlassMenuItem(
+          value: TimeMenuChoice<T>.view(view),
+          label: context.t(view.labelKey),
+          leading: Icon(view.icon, size: 16, color: AppColors.inkSoft),
+        ),
+      for (final extra in extras)
+        GlassMenuItem(
+          value: TimeMenuChoice<T>.extra(extra.value),
+          label: extra.label,
+          leading: Icon(extra.icon, size: 16, color: AppColors.inkSoft),
+          trailing: extra.selected
+              ? const Icon(
+                  LucideIcons.check,
+                  size: 17,
+                  color: AppColors.accentStrong,
+                )
+              : null,
+          dividerAbove: extra.first,
+        ),
+    ],
+  );
+  if (chosen == null) return null;
+  final view = chosen.view;
+  if (view != null) {
+    // The one you are already on is not a navigation; going anyway would
+    // rebuild the page and throw away the month it is showing.
+    if (view != current && context.mounted) context.go(view.route);
+    return null;
+  }
+  return chosen.extra;
 }

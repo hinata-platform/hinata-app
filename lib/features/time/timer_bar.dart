@@ -10,7 +10,8 @@ import '../../core/models/time_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_panel.dart';
-import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
+import '../sprint/modals/glass_modal.dart'
+    show GlassToastKind, anchorRectOfContext, showGlassToast;
 import 'placement_picker.dart';
 
 /// How much room the compact bar takes above the floating nav when a timer is
@@ -221,11 +222,9 @@ class _PlacementLine extends StatelessWidget {
     final unfiled = timer.projectId == null && timer.issueId == null;
     return _InlineTap(
       onTap: () async {
-        final box = context.findRenderObject() as RenderBox?;
-        final origin = box?.localToGlobal(Offset.zero);
         final picked = await showTimePlacementPicker(
           context,
-          anchorRect: origin == null || box == null ? null : origin & box.size,
+          anchorRect: anchorRectOfContext(context),
           current: TimePlacement(
             projectId: timer.projectId,
             issueId: timer.issueId,

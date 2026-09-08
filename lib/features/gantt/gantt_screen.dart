@@ -1229,11 +1229,16 @@ class _ViewSwitcher extends StatelessWidget {
           iconOnly: iconOnly,
           onTap: onToday,
         ),
-        Container(
-          width: 1,
-          height: 22,
-          margin: const EdgeInsets.symmetric(horizontal: 6),
-          color: tokens.hairline,
+        // Centred, because the bar stretches its children to its own height so
+        // the chips cannot invent one — a bare `height: 22` in a stretched row
+        // is overruled and the rule would run the full height of the pill.
+        Center(
+          child: Container(
+            width: 1,
+            height: 22,
+            margin: const EdgeInsets.symmetric(horizontal: 6),
+            color: tokens.hairline,
+          ),
         ),
         GlassSwitchChip(
           label: context.t('gantt.week'),

@@ -79,6 +79,9 @@ class _TimeEntryForm extends StatefulWidget {
 }
 
 class _TimeEntryFormState extends State<_TimeEntryForm> {
+  /// The placement row, so the picker it opens can be anchored to it.
+  final _placementKey = GlobalKey();
+
   late final TextEditingController _description = TextEditingController(
     text: widget.entry?.description ?? '',
   );
@@ -172,7 +175,20 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       // would leave the server to pick a winner, and the pair already defines
       // the length.
       durationMinutes: interval ? null : minutes,
-      date: interval ? null : _day,
+      // The reporting day, always — including for an interval, where it is the
+      // day the interval starts on.
+      //
+      // It used to be omitted here, and the server leaves a field a patch does
+      // not mention alone. So moving an entry's hours from the 10th to the 20th
+      // left it *filed* on the 10th: the month cell and the timesheet went on
+      // counting it there, while the hour canvas — which places a block where
+      // its hours are — drew it on neither day. Hours that exist, invisible in
+      // the view people check their week in.
+      //
+      // The start's own day, read off the local wall clock the picker returned,
+      // so an interval that crosses midnight files where it began — which is
+      // what the running timer does too.
+      date: interval ? DateTime(_start.year, _start.month, _start.day) : _day,
       startedAt: interval ? _start : null,
       endedAt: interval ? _end : null,
       activityType: _activity,
@@ -234,17 +250,20 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                 // that closes the sheet, reports success, and changes nothing.
                 if (!_isEdit) ...[
                   const SizedBox(height: 14),
-                  _FieldButton(
-                    icon: _placement.isUnfiled
-                        ? LucideIcons.circleSlash
-                        : LucideIcons.folder,
-                    label: context.t('time.entry.placement'),
-                    value:
-                        _placement.label ??
-                        (_placement.isUnfiled
-                            ? context.t('time.placement.none')
-                            : context.t('time.placement.assigned')),
-                    onTap: _pickPlacement,
+                  KeyedSubtree(
+                    key: _placementKey,
+                    child: _FieldButton(
+                      icon: _placement.isUnfiled
+                          ? LucideIcons.circleSlash
+                          : LucideIcons.folder,
+                      label: context.t('time.entry.placement'),
+                      value:
+                          _placement.label ??
+                          (_placement.isUnfiled
+                              ? context.t('time.placement.none')
+                              : context.t('time.placement.assigned')),
+                      onTap: _pickPlacement,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 14),
@@ -336,7 +355,15 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   }
 
   Future<void> _pickPlacement() async {
-    final picked = await showTimePlacementPicker(context, current: _placement);
+    final picked = await showTimePlacementPicker(
+      context,
+      // The row's own rectangle: on a wide window the picker hangs off the
+      // field being edited. Without it every caller fell through to the bottom
+      // sheet, so a desktop reader changing one field of a dialog got a panel
+      // rising out of the bottom of the display.
+      anchorRect: anchorRectOf(_placementKey),
+      current: _placement,
+    );
     if (picked == null || !mounted) return;
     setState(() => _placement = picked);
   }

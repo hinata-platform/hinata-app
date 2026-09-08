@@ -62,6 +62,7 @@ class TimeGrid extends StatefulWidget {
     this.onMoved,
     this.onTap,
     this.initialScrollHour = 8,
+    this.showHeadings = true,
   });
 
   /// The columns, as local dates. One for a day view, seven for a week — the
@@ -96,6 +97,14 @@ class TimeGrid extends StatefulWidget {
   /// The hour the grid opens on, so a reader lands on the working day instead
   /// of on midnight.
   final int initialScrollHour;
+
+  /// Whether each column writes its own date above it.
+  ///
+  /// A week has to: seven columns are seven days and nothing else says which.
+  /// A single day drawn under a week strip does not — the strip names the day,
+  /// and the page writes it out in full underneath — so the heading would be
+  /// the third time in four centimetres. The band keeps its place either way.
+  final bool showHeadings;
 
   @override
   State<TimeGrid> createState() => _TimeGridState();
@@ -189,8 +198,17 @@ class _TimeGridState extends State<TimeGrid> {
       .where((l) => l.placement == TimeGridPlacement.blocks)
       .toList();
 
+  /// The band layers that have something to show **on the days drawn** — not
+  /// merely something in them.
+  ///
+  /// The difference is the whole of the "all-day" row's behaviour. A caller may
+  /// hold a fortnight of entries and draw one day of it (the phone's calendar
+  /// does exactly that, so a swipe to the next day has its hours already), and
+  /// `!isEmpty` would then reserve a row on every one of those days because
+  /// some other day has an untimed entry on it. A strip labelled "Ganztägig"
+  /// with nothing in it is a claim about the day that is not true.
   List<TimeGridLayer> get _bandLayers => widget.layers
-      .where((l) => l.placement == TimeGridPlacement.band && !l.isEmpty)
+      .where((l) => l.placement == TimeGridPlacement.band && _bandRows(l) > 0)
       .toList();
 
   List<TimeGridLayer> get _washLayers => widget.layers
@@ -201,25 +219,31 @@ class _TimeGridState extends State<TimeGrid> {
       .map((layer) => _bandRows(layer) * kTimeGridBandRow)
       .fold(0.0, (sum, height) => sum + height);
 
-  /// How many rows [layer] needs: as many as its busiest day has items, capped
-  /// at [kTimeGridBandRowsMax].
+  /// How many rows [layer] needs: as many as its busiest drawn day has items,
+  /// capped at [kTimeGridBandRowsMax]. Zero when no drawn day has any, which is
+  /// how the row disappears rather than standing empty.
   int _bandRows(TimeGridLayer layer) {
-    // Keyed on the layer, not its id: nothing requires an id to be unique, and
-    // two layers sharing one would collapse to a single count while the height
-    // above still summed both.
+    // Counted over every band layer, not over [_bandLayers] — that getter asks
+    // this one which layers have a row, so filling the memo from it would be a
+    // cycle.
     final counts = _bandRowCounts ??= {
-      for (final band in _bandLayers) band: _countBandRows(band),
+      // Keyed on the layer, not its id: nothing requires an id to be unique,
+      // and two layers sharing one would collapse to a single count while the
+      // height above still summed both.
+      for (final band in widget.layers)
+        if (band.placement == TimeGridPlacement.band)
+          band: _countBandRows(band),
     };
-    return counts[layer] ?? 1;
+    return counts[layer] ?? 0;
   }
 
   int _countBandRows(TimeGridLayer layer) {
-    var most = 1;
+    var most = 0;
     for (final day in widget.days) {
       final count = _itemsOn(layer, day).length;
       if (count > most) most = count;
     }
-    return most.clamp(1, kTimeGridBandRowsMax);
+    return most.clamp(0, kTimeGridBandRowsMax);
   }
 
   double _columnWidth(double available) => math.max(
@@ -432,7 +456,7 @@ class _TimeGridState extends State<TimeGrid> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SizedBox(
-              height: kTimeGridHeader + _bandHeight,
+              height: _headerHeight + _bandHeight,
               child: Row(
                 children: [
                   SizedBox(width: kTimeGridGutter, child: _bandLabels()),
@@ -448,21 +472,22 @@ class _TimeGridState extends State<TimeGrid> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            SizedBox(
-                              height: kTimeGridHeader,
-                              child: Row(
-                                children: [
-                                  for (final day in widget.days)
-                                    SizedBox(
-                                      width: columnWidth,
-                                      child: _DayHeading(
-                                        day: day,
-                                        today: _isToday(day),
+                            if (widget.showHeadings)
+                              SizedBox(
+                                height: kTimeGridHeader,
+                                child: Row(
+                                  children: [
+                                    for (final day in widget.days)
+                                      SizedBox(
+                                        width: columnWidth,
+                                        child: _DayHeading(
+                                          day: day,
+                                          today: _isToday(day),
+                                        ),
                                       ),
-                                    ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
                             for (final layer in _bandLayers)
                               _BandRows(
                                 layer: layer,
@@ -497,6 +522,19 @@ class _TimeGridState extends State<TimeGrid> {
                         child: SingleChildScrollView(
                           controller: _hBody,
                           scrollDirection: Axis.horizontal,
+                          // A canvas that already fits must not take the drag.
+                          // A single day inside a horizontal pager is exactly
+                          // that, and a scroller with nowhere to go still wins
+                          // the gesture arena against its parent — which would
+                          // eat the swipe to the next day.
+                          // Half a point of slack, because the width is
+                          // arrived at by dividing and multiplying back:
+                          // `(available / 7) * 7` can exceed `available` by an
+                          // ulp, and an exact compare would leave live physics
+                          // on a canvas with a scroll extent of 1e-13.
+                          physics: canvasWidth <= available + 0.5
+                              ? const NeverScrollableScrollPhysics()
+                              : null,
                           child: SizedBox(
                             width: canvasWidth,
                             child: _canvas(columnWidth),
@@ -530,10 +568,13 @@ class _TimeGridState extends State<TimeGrid> {
     });
   }
 
+  /// What the day headings occupy — nothing when the page writes them itself.
+  double get _headerHeight => widget.showHeadings ? kTimeGridHeader : 0;
+
   Widget _bandLabels() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const SizedBox(height: kTimeGridHeader),
+      SizedBox(height: _headerHeight),
       for (final layer in _bandLayers)
         SizedBox(
           height: _bandRows(layer) * kTimeGridBandRow,

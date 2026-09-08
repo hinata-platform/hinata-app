@@ -109,6 +109,65 @@ class GlassPopupMenu<T> extends StatefulWidget {
   State<GlassPopupMenu<T>> createState() => _GlassPopupMenuState<T>();
 }
 
+/// Opens the same glass popover [GlassPopupMenu] does, for an anchor that is
+/// not a widget this library wraps.
+///
+/// The wrapper covers the ordinary case — a chip or a button that *is* the
+/// menu. It cannot cover a control the app shell draws on a page's behalf: the
+/// title in the compact app bar belongs to the shell and the menu behind it
+/// belongs to the page, so the two meet through a rect and a future rather than
+/// through a widget one of them owns.
+///
+/// Returns the chosen value, or null when the menu was dismissed — so `T` here
+/// should be non-nullable; the widget form is the one that can tell "picked
+/// null" from "dismissed". [anchorRect] is in global coordinates.
+Future<T?> showGlassMenu<T extends Object>({
+  required BuildContext context,
+  required Rect anchorRect,
+  required List<GlassMenuItem<T>> items,
+  required T value,
+  double width = 240,
+  double gap = 8,
+  WidgetBuilder? footerBuilder,
+}) async {
+  final selected = await _showMenuDialog<T>(
+    context: context,
+    anchorRect: anchorRect,
+    items: items,
+    value: value,
+    width: width,
+    gap: gap,
+    footerBuilder: footerBuilder,
+  );
+  return selected?.value;
+}
+
+/// The popover itself, shared by the widget form and the imperative one.
+Future<_MenuResult<T>?> _showMenuDialog<T>({
+  required BuildContext context,
+  required Rect anchorRect,
+  required List<GlassMenuItem<T>> items,
+  required T value,
+  required double width,
+  required double gap,
+  required WidgetBuilder? footerBuilder,
+}) => showGeneralDialog<_MenuResult<T>>(
+  context: context,
+  barrierDismissible: true,
+  barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+  barrierColor: Colors.transparent,
+  transitionDuration: const Duration(milliseconds: 200),
+  pageBuilder: (_, _, _) => _GlassPopupMenuDialog<T>(
+    anchorRect: anchorRect,
+    items: items,
+    value: value,
+    width: width,
+    gap: gap,
+    footerBuilder: footerBuilder,
+  ),
+  transitionBuilder: (_, _, _, child) => child,
+);
+
 class _GlassPopupMenuState<T> extends State<GlassPopupMenu<T>> {
   final GlobalKey _anchorKey = GlobalKey();
 
@@ -134,23 +193,14 @@ class _GlassPopupMenuState<T> extends State<GlassPopupMenu<T>> {
 
     final _MenuResult<T>? selected;
     try {
-      selected = await showGeneralDialog<_MenuResult<T>>(
+      selected = await _showMenuDialog<T>(
         context: context,
-        barrierDismissible: true,
-        barrierLabel: MaterialLocalizations.of(
-          context,
-        ).modalBarrierDismissLabel,
-        barrierColor: Colors.transparent,
-        transitionDuration: const Duration(milliseconds: 200),
-        pageBuilder: (_, _, _) => _GlassPopupMenuDialog<T>(
-          anchorRect: anchorRect,
-          items: widget.items,
-          value: widget.value,
-          width: widget.width,
-          gap: widget.offset,
-          footerBuilder: widget.footerBuilder,
-        ),
-        transitionBuilder: (_, _, _, child) => child,
+        anchorRect: anchorRect,
+        items: widget.items,
+        value: widget.value,
+        width: widget.width,
+        gap: widget.offset,
+        footerBuilder: widget.footerBuilder,
       );
     } finally {
       onOpenChanged?.call(false);

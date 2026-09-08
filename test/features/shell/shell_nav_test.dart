@@ -113,8 +113,11 @@ void main() {
       // none needs a title of its own in the shell's bar.
       for (final page in ['/time', '/time/calendar', '/time/timesheet']) {
         expect(subPageTitleKey(page, advancedTime: on), isNull, reason: page);
-        expect(isNavActive(page, '/time', advancedTime: on), isTrue,
-            reason: page);
+        expect(
+          isNavActive(page, '/time', advancedTime: on),
+          isTrue,
+          reason: page,
+        );
       }
     });
   });
@@ -128,8 +131,11 @@ void main() {
       // list, or it is the empty page under the brand mark this rule exists to
       // prevent.
       for (final page in ['/time', '/time/calendar', '/time/timesheet']) {
-        expect(subPageTitleKey(page, advancedTime: off), 'notFound.title',
-            reason: page);
+        expect(
+          subPageTitleKey(page, advancedTime: off),
+          'notFound.title',
+          reason: page,
+        );
       }
     });
 
@@ -185,14 +191,8 @@ void main() {
           subPageTitleKey('/dashboard', advancedTime: advancedTime),
           isNull,
         );
-        expect(
-          subPageBackRoute('/issues/HIN-1'),
-          '/issues',
-        );
-        expect(
-          subPageBackRoute('/nowhere'),
-          '/dashboard',
-        );
+        expect(subPageBackRoute('/issues/HIN-1'), '/issues');
+        expect(subPageBackRoute('/nowhere'), '/dashboard');
       });
     }
 

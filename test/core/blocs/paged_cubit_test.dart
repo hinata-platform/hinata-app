@@ -55,19 +55,20 @@ void main() {
     expect(cubit.state.total, 5);
 
     await cubit.loadMore();
-    expect(
-      cubit.state.items,
-      ['a', 'c'],
-      reason: 'the boundary page is re-read and the overlap de-duplicated',
-    );
+    expect(cubit.state.items, [
+      'a',
+      'c',
+    ], reason: 'the boundary page is re-read and the overlap de-duplicated');
 
     await cubit.loadMore();
     await cubit.loadMore();
-    expect(
-      cubit.state.items,
-      ['a', 'c', 'd', 'e', 'f'],
-      reason: 'nothing was skipped over',
-    );
+    expect(cubit.state.items, [
+      'a',
+      'c',
+      'd',
+      'e',
+      'f',
+    ], reason: 'nothing was skipped over');
     expect(cubit.state.hasMore, isFalse);
   });
 

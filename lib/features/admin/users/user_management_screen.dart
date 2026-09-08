@@ -27,8 +27,10 @@ import '../../../core/widgets/hive_widgets.dart'
 
 part 'user_management_screen.rows.dart';
 
-/// Docked-toolbar height on compact: search row + gap + chip row.
-const double _kUmDockHeight = kGlassPillHeight * 2 + 8;
+/// Docked-toolbar height on compact: one row, tall enough for the search field
+/// the chips give way to. One and not two, because the blurred band above a
+/// page holds the app bar's title row and exactly one more.
+const double _kUmDockHeight = kGlassDockRow;
 
 /// Admin **User management** board: a paginated directory of every platform
 /// user with search, role/status/origin filters, sortable columns, a per-user
@@ -50,6 +52,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   String? _error;
 
   String _query = '';
+  final TextEditingController _searchCtrl = TextEditingController();
+
+  /// Whether the phone's one docked row is showing the search field instead of
+  /// the filter chips. See [GlassSearchDock].
+  bool _searching = false;
   Timer? _debounce;
   AdminRole? _roleF;
   UserStatus? _statusF;
@@ -103,6 +110,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   @override
   void dispose() {
     _debounce?.cancel();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -521,6 +529,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   Widget _dockedToolbar(BuildContext context, {required bool compact}) {
     final search = GlassSearchField(
       hint: context.t('admin.um.searchHint'),
+      controller: _searchCtrl,
       onChanged: _onSearch,
     );
     final roleChip = GlassFilterChip<AdminRole?>(
@@ -564,6 +573,14 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final gutter = context.pageGutter;
     final chipRow = Row(
       children: [
+        if (compact) ...[
+          GlassSearchButton(
+            tooltip: context.t('admin.um.searchHint'),
+            active: _query.isNotEmpty,
+            onTap: () => setState(() => _searching = true),
+          ),
+          const SizedBox(width: 8),
+        ],
         roleChip,
         const SizedBox(width: 8),
         statusChip,
@@ -573,28 +590,32 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     );
 
     if (compact) {
-      // The chip row scrolls edge-to-edge: the gutter becomes the scroll view's
-      // OWN padding so the last chip scrolls fully into view at the display edge
-      // instead of being clipped by a surrounding inset — while still resting at
-      // the same gutter. The search field keeps the gutter directly.
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: gutter),
-            child: search,
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: kGlassPillHeight,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: gutter),
-              child: chipRow,
+      // One line, because that is all a page gets: the app bar's own title row
+      // plus one docked row. The search used to take a row of its own above the
+      // chips, which made three lines of chrome before the first person — so it
+      // is a pill in the row now, and takes the row over only while somebody is
+      // typing in it.
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: gutter),
+        child: Align(
+          child: GlassSearchDock(
+            searching: _searching,
+            controller: _searchCtrl,
+            hint: context.t('admin.um.searchHint'),
+            onChanged: _onSearch,
+            onClose: () => setState(() => _searching = false),
+            controls: SizedBox(
+              height: kGlassControlHeight,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                // The gutter is spent above; inside the scroller it would clip
+                // the last chip instead of letting it come into view.
+                clipBehavior: Clip.none,
+                child: chipRow,
+              ),
             ),
           ),
-        ],
+        ),
       );
     }
     // Wide: a single row — bounded search + inline chips.

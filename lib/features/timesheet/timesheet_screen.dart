@@ -27,6 +27,7 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../shell/page_chrome.dart';
 import '../time/time_views.dart';
+import '../time/time_entry_sheet.dart';
 import '../time/timesheet_cell_sheet.dart';
 import '../sprint/modals/glass_modal.dart'
     show
@@ -255,6 +256,32 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
 
   void _nextWeek() => _shiftWeek(1);
 
+  void _openModuleMenu(Rect? anchor) => unawaited(
+    showTimeViewMenu<Never>(
+      context,
+      anchor: anchor,
+      current: TimeView.timesheet,
+    ),
+  );
+
+  /// A new entry, on the week the sheet is showing.
+  ///
+  /// Nine in the morning on today when the week contains it, and on the week's
+  /// first day otherwise — the same rule the calendar's button follows, so the
+  /// module's one "new entry" means one thing wherever it is pressed.
+  Future<void> _newEntry() async {
+    final today = DateTime.now();
+    final at = DateTime(today.year, today.month, today.day);
+    final day = !at.isBefore(_from) && !at.isAfter(_to) ? at : _from;
+    final start = DateTime(day.year, day.month, day.day, 9);
+    final saved = await showTimeEntrySheet(
+      context,
+      span: (start: start, end: start.add(const Duration(hours: 1))),
+    );
+    if (saved == null || !mounted) return;
+    unawaited(_load());
+  }
+
   /// Back to the week that contains today. Also re-fetches when it is already
   /// on screen, so the action doubles as a refresh rather than doing nothing.
   void _goToToday() {
@@ -433,8 +460,26 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     // page wears its own head, the way Reports, Gantt and Board do.
     return PageChrome(
       fullWidth: true,
+      // The module's three views live under the app bar's title on a phone —
+      // the docked row below is the one line this page is allowed, and it is
+      // spent on the week it is showing. Off the module (the plain
+      // `/timesheet`) there is nothing to switch between.
+      onTitleTap: compact && widget.moduleView ? _openModuleMenu : null,
+      // Compact only: the module's pages are nav destinations, so a wide
+      // window builds no sub-page bar and would drop these on the floor. There
+      // the same actions are in the page's own head below.
+      actions: compact && widget.moduleView
+          ? [
+              PageAction(
+                icon: LucideIcons.plus,
+                label: context.t('time.entry.new'),
+                primary: true,
+                onTap: _newEntry,
+              ),
+            ]
+          : const [],
       bottom: compact ? _dockedBar(admin) : null,
-      bottomHeight: compact ? kGlassControlHeight + 10 : 0,
+      bottomHeight: compact ? kGlassDockRow : 0,
       child: compact
           ? _body()
           : Column(
@@ -499,75 +544,66 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// so a narrowing nobody meant cannot be mistaken for an empty week.
   Widget _dockedBar(bool admin) {
     final localizations = MaterialLocalizations.of(context);
-    return SizedBox(
-      height: kGlassControlHeight,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        // The gutter is the scroller's own padding, so the last pill can come
-        // fully into view at the display edge instead of being clipped by an
-        // inset around the whole row.
-        padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
-        children: [
-          // First in the row, so the way between the module's three pages is
-          // the first thing a thumb reaches on the leading edge.
-          if (widget.moduleView) ...[
-            const TimeViewSwitcher(current: TimeView.timesheet),
-            const SizedBox(width: 8),
-          ],
-          GlassPill(
-            height: kGlassControlHeight,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _PillIcon(
-                  icon: backChevron(context),
-                  tooltip: context.t('timesheet.previousWeek'),
-                  onTap: _previousWeek,
+    // Centred in the band, and the `Align` is load-bearing: the bar hands the
+    // reserved height down as a *tight* constraint, which a `SizedBox` cannot
+    // come in under. Without it the pills grew to the full row and read as a
+    // taller, softer control than the identical pills on the calendar and the
+    // list. [kGlassDockRow] is that reserved height, shared, so no page can
+    // pick its own and put the same row at a different height.
+    return Align(
+      child: SizedBox(
+        height: kGlassControlHeight,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          // The gutter is the scroller's own padding, so the last pill can come
+          // fully into view at the display edge instead of being clipped by an
+          // inset around the whole row.
+          padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
+          children: [
+            GlassStepperPill(
+              label: Text(
+                '${localizations.formatCompactDate(_from)} – '
+                '${localizations.formatCompactDate(_to)}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                 ),
-                Text(
-                  '${localizations.formatCompactDate(_from)} – '
-                  '${localizations.formatCompactDate(_to)}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                _PillIcon(
-                  icon: forwardChevron(context),
-                  tooltip: context.t('timesheet.nextWeek'),
-                  onTap: _nextWeek,
-                ),
-              ],
+              ),
+              backTooltip: context.t('timesheet.previousWeek'),
+              forwardTooltip: context.t('timesheet.nextWeek'),
+              onBack: _previousWeek,
+              onForward: _nextWeek,
             ),
-          ),
-          const SizedBox(width: 8),
-          GlassPill(
-            active: !_isCurrentWeek,
-            height: kGlassControlHeight,
-            onTap: _goToToday,
-            child: _PillLabel(
-              icon: LucideIcons.calendarCheck,
-              label: context.t('timesheet.today'),
+            const SizedBox(width: 8),
+            GlassPill(
               active: !_isCurrentWeek,
+              height: kGlassControlHeight,
+              onTap: _goToToday,
+              child: _PillLabel(
+                icon: LucideIcons.calendarCheck,
+                label: context.t('timesheet.today'),
+                active: !_isCurrentWeek,
+              ),
             ),
-          ),
-          if (admin) ...[
-            const SizedBox(width: 8),
-            _DockedFilterPill(
-              icon: LucideIcons.userRound,
-              label: _userFilterLabel ?? context.t('timesheet.allUsers'),
-              active: _userFilter != null,
-              onTap: _pickUser,
-            ),
-            const SizedBox(width: 8),
-            _DockedFilterPill(
-              icon: LucideIcons.folderKanban,
-              label: _projectFilterLabel ?? context.t('timesheet.allProjects'),
-              active: _projectFilter != null,
-              onTap: _pickProject,
-            ),
+            if (admin) ...[
+              const SizedBox(width: 8),
+              _DockedFilterPill(
+                icon: LucideIcons.userRound,
+                label: _userFilterLabel ?? context.t('timesheet.allUsers'),
+                active: _userFilter != null,
+                onTap: _pickUser,
+              ),
+              const SizedBox(width: 8),
+              _DockedFilterPill(
+                icon: LucideIcons.folderKanban,
+                label:
+                    _projectFilterLabel ?? context.t('timesheet.allProjects'),
+                active: _projectFilter != null,
+                onTap: _pickProject,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -1341,35 +1377,6 @@ class _FilterRow extends StatelessWidget {
               ),
             ],
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A tappable glyph inside a pill — the week arrows, which sit on the same
-/// surface as the range they move.
-class _PillIcon extends StatelessWidget {
-  const _PillIcon({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: InkResponse(
-        onTap: onTap,
-        radius: 20,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-          child: Icon(icon, size: 18, color: AppColors.inkSoft),
         ),
       ),
     );
