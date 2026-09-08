@@ -23,11 +23,16 @@ import 'core/notifications/wns_channel.dart';
 import 'core/repositories/repositories.dart';
 import 'core/router/app_router.dart';
 import 'core/router/relay_link.dart';
+import 'core/shortcuts/app_shortcuts.dart';
+import 'core/shortcuts/global_shortcuts.dart';
 import 'core/storage/app_storage.dart';
 import 'core/util/server_link.dart' show knownServers, normalizeServerLink;
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'core/blocs/time_preferences_cubit.dart';
 import 'features/knowledge/data/knowledge_repository.dart';
+import 'features/time/time_shortcuts.dart';
+import 'features/time/timer_signals.dart';
 import 'features/sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassToastIn;
 
@@ -95,6 +100,16 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   /// screen then, and providing one unconditionally is what lets the shell and
   /// the page read it without a null check that would be wrong exactly once.
   late TimerCubit _timer;
+
+  /// One registry for the whole application, so a shortcut works whatever is on
+  /// screen — including the focus route, which is outside the shell.
+  final _shortcuts = AppShortcutRegistry();
+
+  /// The account's own timer rhythm. Here rather than in a screen because three
+  /// places need the same live value; see [TimePreferencesCubit].
+  late final TimePreferencesCubit _timePreferences = TimePreferencesCubit(
+    widget.repositories.account,
+  );
 
   /// The identity [_timer] was built for, so the rebuild happens once.
   String? _timerIdentity;
@@ -294,7 +309,14 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     // the delete. Only this key: the theme and the language live in the same
     // store and are the device's, not the session's.
     unawaited(previous.close().then((_) => previous.clear()));
-    if (identity != null) unawaited(_timer.refresh());
+    if (identity != null) {
+      unawaited(_timer.refresh());
+      // The account's own rhythm, read once per session. Not persisted: it is
+      // three numbers and a switch behind a request the app already makes, and
+      // a stale copy of somebody's break length is worth less than the round
+      // trip costs.
+      unawaited(_timePreferences.load());
+    }
   }
 
   /// Says once per launch when the sign-in cannot be written to the OS secret
@@ -678,6 +700,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
           BlocProvider.value(value: _locale),
           BlocProvider.value(value: _orgLogo),
           BlocProvider.value(value: _timer),
+          BlocProvider.value(value: _timePreferences),
           BlocProvider(create: (_) => ThemeCubit()),
         ],
         child: BlocBuilder<ThemeCubit, ThemeMode>(
@@ -734,7 +757,27 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
                       // glass cost per device.
                       // ignore: experimental_member_use
                       adaptiveConfig: kGlassCeiling,
-                      child: child ?? const SizedBox.shrink(),
+                      // Above the router's navigator, so the keys and the
+                      // end-of-interval signal reach every route — the focus
+                      // screen included, which is deliberately not in the shell.
+                      // A shortcut needs a context *below* the navigator to push
+                      // or open anything, which is what the key is for.
+                      child: ShortcutHost(
+                        registry: _shortcuts,
+                        navigatorKey: rootNavigatorKey,
+                        child: ScopedShortcuts(
+                          shortcuts: kGlobalShortcuts,
+                          child: TimeShortcuts(
+                            child: TimerSignals(
+                              appTitle:
+                                  (organization == null || organization.isEmpty)
+                                  ? 'Hinata'
+                                  : organization,
+                              child: child ?? const SizedBox.shrink(),
+                            ),
+                          ),
+                        ),
+                      ),
                     );
                   },
                 );

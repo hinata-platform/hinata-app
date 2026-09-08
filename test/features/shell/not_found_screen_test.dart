@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hinata/core/router/app_router.dart' show timeModulePage;
+import 'package:hinata/core/router/app_router.dart'
+    show timeFocusPage, timeModulePage;
+import 'package:hinata/features/time/time_focus_screen.dart';
 import 'package:hinata/core/widgets/hive_empty_state.dart';
 import 'package:hinata/features/shell/not_found_screen.dart';
 import 'package:hinata/features/time/time_calendar_screen.dart';
@@ -106,6 +108,16 @@ void main() {
       expect(page, isA<NotFoundScreen>());
       // Embedded: the shell around it supplies the back button and the title.
       expect((page as NotFoundScreen).standalone, isFalse);
+    });
+
+    test('the focus route is gated too, and stands on its own', () {
+      final off = timeFocusPage(advancedTime: false);
+      expect(off, isA<NotFoundScreen>());
+      // Standalone, unlike the module's other routes: the focus view is a
+      // top-level route outside the shell, so there is no shell around the
+      // not-found page either and it has to carry its own way home.
+      expect((off as NotFoundScreen).standalone, isTrue);
+      expect(timeFocusPage(advancedTime: true), isA<TimeFocusScreen>());
     });
 
     test('with the module on, it is the module', () {

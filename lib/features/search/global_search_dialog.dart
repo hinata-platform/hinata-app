@@ -17,6 +17,7 @@ import '../../core/widgets/glass_panel.dart';
 import '../../core/branding/org_logo.dart';
 import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_widgets.dart';
+import '../../core/blocs/app_config_bloc.dart';
 import 'global_search_controller.dart';
 import 'search_models.dart';
 import 'search_tokens.dart';
@@ -28,18 +29,36 @@ part 'global_search_dialog.pieces.dart';
 /// slides down from the top (matches the app's phone breakpoint, §3.5).
 const double _kPhoneBreakpoint = 610;
 
+/// Whether a palette is on screen right now.
+///
+/// The shortcut used to guard against stacking two by asking whether the
+/// calling route was current — which only worked because the caller was a
+/// widget inside a route. Dispatching from the shortcut registry, above the
+/// navigator, there is no such route to ask about, and pressing the key twice
+/// stacked two palettes with two scrims. One flag, owned here, covers every
+/// caller: the key, the search bar, and the command that reopens it.
+bool _paletteIsOpen = false;
+
 /// Opens the global search / command palette over a dimmed, blurred app.
 ///
 /// Uses [showGeneralDialog] so we own the scrim, blur and spring (§3.1). The
 /// enter/exit motion lives inside [GlobalSearchDialog], driven by the route
 /// animation, so it can branch between the desktop spring and the mobile sheet.
 Future<void> openGlobalSearch(BuildContext context) {
+  if (_paletteIsOpen) return Future.value();
+  _paletteIsOpen = true;
   final controller = GlobalSearchController(
     repository: context.read<SearchRepository>(),
     storage: context.read<AppStorage>(),
   );
   // Localise command labels against the launching context, then load async.
-  controller.load(t: (key) => context.t(key));
+  // The module's own commands are listed only where the module exists — five
+  // rows leading to a not-found page is worse than five rows fewer.
+  controller.load(
+    t: (key) => context.t(key),
+    advancedTime:
+        context.read<AppConfigBloc>().state.meta?.advancedTimeTracking ?? false,
+  );
 
   return showGeneralDialog<void>(
     context: context,
@@ -51,7 +70,10 @@ Future<void> openGlobalSearch(BuildContext context) {
     // Motion is handled inside the dialog (reads the route animation), so the
     // transition builder is a pass-through.
     transitionBuilder: (_, _, _, child) => child,
-  ).whenComplete(controller.dispose);
+  ).whenComplete(() {
+    _paletteIsOpen = false;
+    controller.dispose();
+  });
 }
 
 class GlobalSearchDialog extends StatefulWidget {

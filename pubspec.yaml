@@ -215,6 +215,10 @@ flutter:
     - assets/i18n/ru/
     - assets/i18n/ar/
     - assets/branding/
+    # The end-of-interval chime (HIN-86). One file, 40 KB: a sound the app
+    # plays is a sound it has to carry on every platform, and a soft two-tone
+    # bell is all an interval ending needs to be.
+    - assets/sounds/
     - assets/backgrounds/
   fonts:
     - family: Sora
