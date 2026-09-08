@@ -399,6 +399,25 @@ Future<T?> showGlassOptions<T>(
   );
 }
 
+/// The on-screen rectangle of a widget, so a picker can hang off it instead of
+/// taking over the display — what [showGlassAnchoredPopover] wants for its
+/// `anchorRect`.
+///
+/// Two ways in, because there are two ways a caller knows the widget. Pass a
+/// [GlobalKey] when the thing that opens the picker is elsewhere in the same
+/// `State`; call it with a `BuildContext` from inside the control itself when
+/// the control is its own widget. Null means the widget is not on screen — a
+/// picker opened from a page that has since been popped — and the caller should
+/// fall back to the sheet rather than anchor to nowhere.
+Rect? anchorRectOf(GlobalKey key) => anchorRectOfContext(key.currentContext);
+
+/// [anchorRectOf] for a control that has its own [BuildContext].
+Rect? anchorRectOfContext(BuildContext? context) {
+  final box = context?.findRenderObject() as RenderBox?;
+  if (box == null || !box.attached || !box.hasSize) return null;
+  return box.localToGlobal(Offset.zero) & box.size;
+}
+
 /// Opens [builder] as a Liquid-Glass dropdown popover anchored beside
 /// [anchorRect] — the wide-screen counterpart to [showGlassBottomSheet] for
 /// inline field editors that need richer content than [showGlassOptions]'s flat

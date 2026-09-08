@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../sprint/modals/glass_modal.dart'
     show
+        anchorRectOf,
         kGlassPopoverBreakpoint,
         showGlassDatePicker,
         showGlassDatePopover,
@@ -777,12 +778,4 @@ class _OptionLabel extends StatelessWidget {
       color: muted ? AppColors.inkSoft : AppColors.ink,
     ),
   );
-}
-
-/// The on-screen rectangle of a field, so a picker can be anchored beside it on
-/// a wide window instead of taking over the screen.
-Rect? anchorRectOf(GlobalKey key) {
-  final box = key.currentContext?.findRenderObject() as RenderBox?;
-  if (box == null || !box.attached) return null;
-  return box.localToGlobal(Offset.zero) & box.size;
 }

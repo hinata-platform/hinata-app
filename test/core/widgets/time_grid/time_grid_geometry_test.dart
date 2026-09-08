@@ -27,21 +27,35 @@ void main() {
     });
 
     test('a drawn window starts at its own first hour, not at midnight', () {
-      const working = TimeGridMetrics(hourExtent: 60, firstHour: 8, lastHour: 20);
+      const working = TimeGridMetrics(
+        hourExtent: 60,
+        firstHour: 8,
+        lastHour: 20,
+      );
 
       expect(working.offsetOf(DateTime(2026, 9, 7, 8), day), 0);
       expect(working.offsetOf(DateTime(2026, 9, 7, 12), day), 240);
       expect(working.canvasHeight, 12 * 60);
     });
 
-    test('a span outside the window is pinned to the edge, not drawn off it', () {
-      const working = TimeGridMetrics(hourExtent: 60, firstHour: 8, lastHour: 20);
+    test(
+      'a span outside the window is pinned to the edge, not drawn off it',
+      () {
+        const working = TimeGridMetrics(
+          hourExtent: 60,
+          firstHour: 8,
+          lastHour: 20,
+        );
 
-      // A night shift would otherwise be positioned above the canvas, where
-      // nothing can be read or grabbed.
-      expect(working.offsetOf(DateTime(2026, 9, 7, 3), day), 0);
-      expect(working.offsetOf(DateTime(2026, 9, 7, 23), day), working.canvasHeight);
-    });
+        // A night shift would otherwise be positioned above the canvas, where
+        // nothing can be read or grabbed.
+        expect(working.offsetOf(DateTime(2026, 9, 7, 3), day), 0);
+        expect(
+          working.offsetOf(DateTime(2026, 9, 7, 23), day),
+          working.canvasHeight,
+        );
+      },
+    );
 
     test('a position reads back as the time it was drawn from', () {
       for (final at in [
@@ -57,13 +71,19 @@ void main() {
       const step = Duration(minutes: 15);
 
       expect(
-        metrics.timeAt(metrics.offsetOf(DateTime(2026, 9, 7, 9, 7), day), day,
-            step: step),
+        metrics.timeAt(
+          metrics.offsetOf(DateTime(2026, 9, 7, 9, 7), day),
+          day,
+          step: step,
+        ),
         DateTime(2026, 9, 7, 9),
       );
       expect(
-        metrics.timeAt(metrics.offsetOf(DateTime(2026, 9, 7, 9, 8), day), day,
-            step: step),
+        metrics.timeAt(
+          metrics.offsetOf(DateTime(2026, 9, 7, 9, 8), day),
+          day,
+          step: step,
+        ),
         DateTime(2026, 9, 7, 9, 15),
       );
     });
@@ -74,12 +94,19 @@ void main() {
       // past the bottom cannot reach into the day after — the offset is clamped
       // before it is ever read as a time.
       expect(
-        metrics.timeAt(metrics.canvasHeight + 500, day,
-            step: const Duration(minutes: 15)),
+        metrics.timeAt(
+          metrics.canvasHeight + 500,
+          day,
+          step: const Duration(minutes: 15),
+        ),
         DateTime(2026, 9, 8),
       );
 
-      const working = TimeGridMetrics(hourExtent: 60, firstHour: 8, lastHour: 20);
+      const working = TimeGridMetrics(
+        hourExtent: 60,
+        firstHour: 8,
+        lastHour: 20,
+      );
       expect(
         working.timeAt(working.canvasHeight + 500, day),
         DateTime(2026, 9, 7, 20),

@@ -319,17 +319,30 @@ class GlassModalFooter extends StatelessWidget {
           top: BorderSide(color: AppColors.hairline.withValues(alpha: 0.6)),
         ),
       ),
+      // The confirm button is measured before any room is handed out, because
+      // it names what is about to happen and half of that name is worse than
+      // useless: "Lösc…" is not a thing anyone should press. It is the only
+      // child here that is not flexible.
+      //
+      // Cancel is, and it is the one that yields: a shortened "Abbrechen" still
+      // reads as the way out, and it shrinks rather than letting the row
+      // overflow. A hint takes at most half of what is left over — `Expanded`,
+      // so a short one simply sits in more space than it needs, which costs
+      // nothing; only two dialogs in the app pass one at all, and both are
+      // wide.
+      //
+      // All three used to be flexible, the leading `Spacer` included, which
+      // reads like "shrink if you must" and is not what a Flex does: the row
+      // was divided in three and each button capped at a third of it. On a
+      // phone that third is about 110 points and the confirm button wants 135,
+      // so the label was cut on every sheet in the app, in every language.
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          if (hint != null) Expanded(child: hint!) else const Spacer(),
-          const SizedBox(width: 8),
-          // Flexible on the buttons themselves, not on their labels: a label
-          // sits inside an Align (TextButton) or an already-flexed Row
-          // (FilledButton.icon), neither of which a Flexible may parent. The
-          // footer is a fixed 480 points in nine languages and the two buttons
-          // are what fills it — a verbose pair overflowed by a couple of points
-          // rather than shortening, visible as the striped bar and only in
-          // whichever language happened to be long.
+          if (hint != null) ...[
+            Expanded(child: hint!),
+            const SizedBox(width: 8),
+          ],
           Flexible(
             child: TextButton(
               onPressed: busy ? null : () => Navigator.of(context).maybePop(),
@@ -341,35 +354,30 @@ class GlassModalFooter extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Flexible(
-            child: FilledButton.icon(
-              onPressed: busy ? null : onConfirm,
-              style: FilledButton.styleFrom(
-                backgroundColor: confirmColor ?? AppColors.navy,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 13,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                ),
+          FilledButton.icon(
+            onPressed: busy ? null : onConfirm,
+            style: FilledButton.styleFrom(
+              backgroundColor: confirmColor ?? AppColors.navy,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
               ),
-              icon: busy
-                  ? const SizedBox(
-                      width: 15,
-                      height: 15,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Icon(confirmIcon, size: 15),
-              label: Text(
-                confirmLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+            ),
+            icon: busy
+                ? const SizedBox(
+                    width: 15,
+                    height: 15,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Icon(confirmIcon, size: 15),
+            label: Text(
+              confirmLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
