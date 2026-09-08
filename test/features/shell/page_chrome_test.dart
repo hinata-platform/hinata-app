@@ -169,4 +169,78 @@ void main() {
     expect(controller.titleFor('/boards/8'), 'Board 8');
     expect(controller.titleFor('/boards/7'), isNull);
   });
+
+  group('a title that is also a control', () {
+    test('the tap and the alignment travel with the rest of the chrome', () {
+      void open(Rect? _) {}
+
+      controller.publish(
+        page,
+        PageChromeData(
+          location: '/time/calendar',
+          title: 'September',
+          onTitleTap: open,
+          titleLeading: true,
+        ),
+      );
+
+      expect(controller.titleFor('/time/calendar'), 'September');
+      expect(controller.onTitleTapFor('/time/calendar'), isNotNull);
+      expect(controller.titleLeadingFor('/time/calendar'), isTrue);
+      // And nothing leaks to the page beside it.
+      expect(controller.onTitleTapFor('/time'), isNull);
+      expect(controller.titleLeadingFor('/time'), isFalse);
+    });
+
+    test('re-publishing the same method tear-off is not a change', () {
+      // A page writes `onTitleTap: _openMenu` and `onTap: _newEntry`, and Dart
+      // gives two tear-offs of the same method on the same object `==` but not
+      // `identical`. Compared by identity the chrome looked new on every build,
+      // so the page re-published every frame and the glass bar rebuilt with it.
+      final owner = _Page();
+      var notified = 0;
+      controller.addListener(() => notified++);
+
+      controller.publish(owner, owner.chrome());
+      expect(notified, 1);
+
+      controller.publish(owner, owner.chrome());
+      expect(notified, 1, reason: 'the same chrome, published twice');
+    });
+
+    test('a different action is still a change', () {
+      final owner = _Page();
+      var notified = 0;
+      controller.addListener(() => notified++);
+
+      controller.publish(owner, owner.chrome());
+      controller.publish(owner, owner.chrome(busy: true));
+
+      expect(notified, 2);
+    });
+  });
+}
+
+/// A stand-in for a page, so a test can hand the controller the *same* method
+/// tear-off twice — which is what a real page does on every rebuild.
+class _Page {
+  void openMenu(Rect? anchor) {}
+
+  void newEntry() {}
+
+  PageChromeData chrome({bool busy = false}) => PageChromeData(
+    location: '/time/calendar',
+    title: 'September',
+    onTitleTap: openMenu,
+    titleLeading: true,
+    actions: [
+      PageAction(
+        icon: Icons.add,
+        label: 'New',
+        onTap: newEntry,
+        primary: true,
+        busy: busy,
+      ),
+    ],
+  );
 }

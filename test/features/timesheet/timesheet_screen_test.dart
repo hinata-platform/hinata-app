@@ -10,6 +10,8 @@ import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/core/repositories/timesheet_repository.dart';
 import 'package:hinata/core/repositories/user_repository.dart';
+import 'package:hinata/core/widgets/glass_filter_bar.dart';
+import 'package:hinata/core/widgets/glass_switch_chip.dart';
 import 'package:hinata/core/widgets/hive_empty_state.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:hinata/features/timesheet/timesheet_screen.dart';
@@ -57,6 +59,7 @@ void main() {
     _FakeUserRepository? userRepository,
     _FakeTimeRepository? time,
     bool moduleView = false,
+    bool dockedBand = false,
   }) {
     final router = GoRouter(
       routes: [
@@ -65,26 +68,51 @@ void main() {
           builder: (_, _) => Scaffold(
             body: PageChromeScope(
               controller: chrome,
-              child: MultiRepositoryProvider(
-                providers: [
-                  RepositoryProvider<TimesheetRepository>.value(
-                    value: timesheet ?? _FakeTimesheetRepository(rows),
-                  ),
-                  RepositoryProvider<UserRepository>.value(
-                    value: userRepository ?? _FakeUserRepository(directory),
-                  ),
-                  RepositoryProvider<ProjectRepository>.value(
-                    value:
-                        projectRepository ?? _FakeProjectRepository(projects),
-                  ),
-                  RepositoryProvider<TimeRepository>.value(
-                    value: time ?? _FakeTimeRepository(rows),
+              child: Column(
+                children: [
+                  // The shell's contract, reproduced: it hands the docked
+                  // toolbar the height the page asked for, as a *tight* one.
+                  // Rendered only where a test is about that band, so every
+                  // other test keeps the plain tree it had.
+                  if (dockedBand)
+                    Builder(
+                      builder: (context) {
+                        final published = PageChromeScope.of(context);
+                        final bottom = published.bottomFor('/');
+                        if (bottom == null) return const SizedBox.shrink();
+                        return SizedBox(
+                          height: published.bottomHeightFor('/'),
+                          width: double.infinity,
+                          child: bottom,
+                        );
+                      },
+                    ),
+                  Expanded(
+                    child: MultiRepositoryProvider(
+                      providers: [
+                        RepositoryProvider<TimesheetRepository>.value(
+                          value: timesheet ?? _FakeTimesheetRepository(rows),
+                        ),
+                        RepositoryProvider<UserRepository>.value(
+                          value:
+                              userRepository ?? _FakeUserRepository(directory),
+                        ),
+                        RepositoryProvider<ProjectRepository>.value(
+                          value:
+                              projectRepository ??
+                              _FakeProjectRepository(projects),
+                        ),
+                        RepositoryProvider<TimeRepository>.value(
+                          value: time ?? _FakeTimeRepository(rows),
+                        ),
+                      ],
+                      child: BlocProvider<AuthBloc>.value(
+                        value: _FakeAuthBloc(admin: admin),
+                        child: TimesheetScreen(moduleView: moduleView),
+                      ),
+                    ),
                   ),
                 ],
-                child: BlocProvider<AuthBloc>.value(
-                  value: _FakeAuthBloc(admin: admin),
-                  child: TimesheetScreen(moduleView: moduleView),
-                ),
               ),
             ),
           ),
@@ -164,10 +192,7 @@ void main() {
           rows: const [],
           moduleView: true,
           admin: true,
-          time: _FakeTimeRepository([
-            row(userId: 'me'),
-            row(userId: 'u1'),
-          ]),
+          time: _FakeTimeRepository([row(userId: 'me'), row(userId: 'u1')]),
         ),
       );
       await tester.pumpAndSettle();
@@ -249,6 +274,39 @@ void main() {
         expect(find.byType(DataTable), findsNothing);
         expect(tester.takeException(), isNull);
       }
+    });
+
+    testWidgets('the docked pills are the height every other page gives them', (
+      tester,
+    ) async {
+      // The band reserves ten points more than the row of controls needs, and
+      // the shell hands that whole height down as a tight constraint — which a
+      // `SizedBox` cannot come in under. Without an `Align` saying where the
+      // slack goes, every pill grew to the full band and the timesheet's
+      // toolbar stood a head taller than the identical toolbar on the calendar
+      // and the list beside it.
+      tester.view.physicalSize = const Size(402, 874);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        host(rows: const [], moduleView: true, dockedBand: true),
+      );
+      await tester.pumpAndSettle();
+
+      final pills = find.byType(GlassPill);
+      expect(pills, findsWidgets);
+      for (var i = 0; i < pills.evaluate().length; i++) {
+        expect(
+          tester.getSize(pills.at(i)).height,
+          kGlassControlHeight,
+          reason: 'docked pill $i',
+        );
+      }
+      // And the module's three views are not among them: on a phone they live
+      // under the app bar's title, so the one docked row this page is allowed
+      // is spent on the week it is showing.
+      expect(find.byType(GlassSwitchBar), findsNothing);
     });
 
     testWidgets('a full week of columns fits a phone without overflowing', (

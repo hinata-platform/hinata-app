@@ -41,6 +41,8 @@ void main() {
     // The grid opens on the working day; a test about hours outside it has to
     // say so or the block it means is scrolled out of reach.
     int initialScrollHour = 8,
+    bool showHeadings = true,
+    double minColumnWidth = kTimeGridMinColumn,
   }) => MediaQuery(
     data: MediaQueryData(size: size),
     child: MaterialApp(
@@ -56,6 +58,8 @@ void main() {
             now: DateTime(2026, 9, 7, 10, 30),
             metrics: const TimeGridMetrics(hourExtent: 60),
             initialScrollHour: initialScrollHour,
+            showHeadings: showHeadings,
+            minColumnWidth: minColumnWidth,
             onCreate: onCreate,
             onMoved: onMoved,
             onTap: onTap,
@@ -69,7 +73,13 @@ void main() {
       TimeGridLayer(id: 'entries', items: items);
 
   testWidgets('a block is drawn where its hours are', (tester) async {
-    await tester.pumpWidget(host(layers: [blocks([entry('a', 9, 11)])]));
+    await tester.pumpWidget(
+      host(
+        layers: [
+          blocks([entry('a', 9, 11)]),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('a'), findsOneWidget);
@@ -84,12 +94,23 @@ void main() {
   testWidgets('a day and a week draw the columns they were given', (
     tester,
   ) async {
-    await tester.pumpWidget(host(layers: [blocks([entry('a', 9, 11)])]));
+    await tester.pumpWidget(
+      host(
+        layers: [
+          blocks([entry('a', 9, 11)]),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('7'), findsOneWidget);
 
     await tester.pumpWidget(
-      host(layers: [blocks([entry('a', 9, 11)])], days: week),
+      host(
+        layers: [
+          blocks([entry('a', 9, 11)]),
+        ],
+        days: week,
+      ),
     );
     await tester.pumpAndSettle();
     // Seven headings, one per day of the week.
@@ -142,7 +163,9 @@ void main() {
     await tester.pumpWidget(
       host(
         days: week,
-        layers: [blocks([night])],
+        layers: [
+          blocks([night]),
+        ],
         initialScrollHour: 0,
         onMoved: (item, dropped) {
           moved = item;
@@ -198,7 +221,9 @@ void main() {
     TimeGridItem? tapped;
     await tester.pumpWidget(
       host(
-        layers: [blocks([entry('a', 9, 11)])],
+        layers: [
+          blocks([entry('a', 9, 11)]),
+        ],
         onTap: (item) => tapped = item,
       ),
     );
@@ -281,7 +306,9 @@ void main() {
       Offset(canvas.left + kTimeGridGutter + 40, canvas.top + 300),
     );
     await tester.pump(const Duration(milliseconds: 600));
-    await gesture.moveBy(const Offset(220, 60)); // two columns over, an hour down
+    await gesture.moveBy(
+      const Offset(220, 60),
+    ); // two columns over, an hour down
     await tester.pump();
     await gesture.up();
     await tester.pumpAndSettle();
@@ -377,10 +404,7 @@ void main() {
             id: 'untimed',
             label: 'no clock',
             placement: TimeGridPlacement.band,
-            items: [
-              entry('first', 0, 0),
-              entry('second', 0, 0),
-            ],
+            items: [entry('first', 0, 0), entry('second', 0, 0)],
           ),
         ],
       ),
@@ -406,9 +430,7 @@ void main() {
           TimeGridLayer(
             id: 'untimed',
             placement: TimeGridPlacement.band,
-            items: [
-              for (var i = 0; i < 6; i++) entry('item$i', 0, 0),
-            ],
+            items: [for (var i = 0; i < 6; i++) entry('item$i', 0, 0)],
           ),
         ],
       ),
@@ -431,5 +453,126 @@ void main() {
 
     expect(find.byType(TimeGrid), findsOneWidget);
     expect(find.text('7'), findsOneWidget);
+  });
+
+  TimeGridItem untimed(String id, DateTime day) => TimeGridItem(
+    id: id,
+    start: DateTime(day.year, day.month, day.day),
+    end: DateTime(day.year, day.month, day.day),
+    title: id,
+    minutes: 60,
+  );
+
+  TimeGridLayer band(List<TimeGridItem> items) => TimeGridLayer(
+    id: 'untimed',
+    label: 'all day',
+    placement: TimeGridPlacement.band,
+    items: items,
+  );
+
+  group('the band is sized by the days on screen', () {
+    testWidgets('a day with an untimed entry gets the strip', (tester) async {
+      await tester.pumpWidget(
+        host(
+          layers: [
+            band([untimed('note', monday)]),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('all day'), findsOneWidget);
+      expect(find.text('note'), findsOneWidget);
+    });
+
+    testWidgets('a day with none does not, even when another day has one', (
+      tester,
+    ) async {
+      // The phone's calendar holds a fortnight and draws one day of it, so a
+      // layer that is not empty says nothing about the day on screen. A strip
+      // labelled "all day" with nothing in it is a claim about that day which
+      // is not true — and it costs a row of the hour canvas to make.
+      await tester.pumpWidget(
+        host(
+          days: [monday],
+          layers: [
+            band([untimed('note', monday.add(const Duration(days: 3)))]),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('all day'), findsNothing);
+      expect(find.text('note'), findsNothing);
+    });
+  });
+
+  testWidgets('a day can be drawn without the grid writing its date', (
+    tester,
+  ) async {
+    // The phone draws one day under a week strip that already names it, and
+    // writes it out in full underneath — a heading over the single column would
+    // be the third time in four centimetres.
+    await tester.pumpWidget(
+      host(
+        layers: [
+          blocks([entry('a', 9, 11)]),
+        ],
+        showHeadings: false,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('7'), findsNothing);
+    expect(find.text('a'), findsOneWidget, reason: 'the hours are still drawn');
+  });
+
+  testWidgets('a canvas that fits leaves the horizontal drag to its parent', (
+    tester,
+  ) async {
+    // A single day inside a pager is exactly this case, and a scroller with
+    // nowhere to go still wins the gesture arena against its parent — which
+    // would eat the swipe to the next day.
+    await tester.pumpWidget(
+      host(
+        layers: [
+          blocks([entry('a', 9, 11)]),
+        ],
+        minColumnWidth: 0,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final scrollers = tester
+        .widgetList<SingleChildScrollView>(find.byType(SingleChildScrollView))
+        .where((view) => view.scrollDirection == Axis.horizontal);
+    expect(scrollers, isNotEmpty);
+    expect(
+      scrollers.map((view) => view.physics),
+      everyElement(isA<NeverScrollableScrollPhysics>()),
+    );
+  });
+
+  testWidgets('a canvas wider than the page keeps its own horizontal scroll', (
+    tester,
+  ) async {
+    // The other half of the rule: seven columns at the minimum width do not fit
+    // a phone, and there the grid has to scroll sideways itself.
+    await tester.pumpWidget(
+      host(
+        layers: [
+          blocks([entry('a', 9, 11)]),
+        ],
+        days: week,
+        size: const Size(402, 700),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final body = tester
+        .widgetList<SingleChildScrollView>(find.byType(SingleChildScrollView))
+        .where((view) => view.scrollDirection == Axis.horizontal)
+        .last;
+    expect(body.physics, isNot(isA<NeverScrollableScrollPhysics>()));
   });
 }

@@ -320,8 +320,14 @@ class _GlassTopBar extends StatelessWidget {
         orElse: () =>
             const NavDestination('/', 'nav.dashboard', LucideIcons.house),
       );
-      titleText = context.t(current.labelKey);
+      // A nav destination that names itself is believed. The route's label is
+      // the name of a *place* — "Zeit" — and some places show something that
+      // changes: the calendar's month is what its title has to say, and it is
+      // the page, not the router, that knows which month is on screen.
+      titleText = chrome.titleFor(location) ?? context.t(current.labelKey);
     }
+    final onTitleTap = chrome.onTitleTapFor(location);
+    final titleLeading = chrome.titleLeadingFor(location);
     // Black scrim, strongest under the status bar, fading to nothing at the
     // bar's lower edge. Subtle in light (keeps dark status-bar icons legible),
     // stronger in dark.
@@ -342,6 +348,13 @@ class _GlassTopBar extends StatelessWidget {
     return SizedBox(
       height: height,
       child: Stack(
+        // The docked controls are floating glass, and floating glass drops a
+        // shadow past its own edge. A Stack clips to its bounds by default, so
+        // that shadow met the bar's lower edge and stopped there — a hard dark
+        // line across the width of the screen, exactly where the blur was
+        // supposed to be dissolving into the content. Nothing else in here
+        // paints outside its box.
+        clipBehavior: Clip.none,
         children: [
           // Smooth progressive blur: strongest at the top, fading to sharp at the
           // bottom edge so the bar dissolves into the content beneath it.
@@ -384,7 +397,10 @@ class _GlassTopBar extends StatelessWidget {
             children: [
               GlassAppBar(
                 backgroundColor: Colors.transparent,
-                centerTitle: true,
+                // Leading-aligned where the page asked for it: a centred title
+                // is laid out in what the *wider* of the two sides leaves on
+                // both, and a month name does not survive that on a phone.
+                centerTitle: !titleLeading,
                 toolbarHeight: _kCompactBarHeight,
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 leading: onBack != null
@@ -439,18 +455,10 @@ class _GlassTopBar extends StatelessWidget {
                           ),
                         ),
                       ),
-                title: Text(
-                  titleText,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: AppTheme.fontBrand,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
-                    color: AppColors.ink,
-                  ),
+                title: _BarTitle(
+                  text: titleText,
+                  leading: titleLeading,
+                  onTap: onTitleTap,
                 ),
                 actions: [_GlassTopActions(location: location, dark: dark)],
               ),
@@ -462,6 +470,54 @@ class _GlassTopBar extends StatelessWidget {
                 ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The bar's title, and — where the page published an [PageChromeData.onTitleTap]
+/// — the control that opens the page's own menu under it.
+///
+/// The chevron is what makes it readable as a control; without it a title that
+/// happens to respond to a tap is a title nobody taps. It sits after the text
+/// and outside the ellipsis, so a title too long for the bar still shows the
+/// affordance rather than truncating it away.
+class _BarTitle extends StatelessWidget {
+  const _BarTitle({required this.text, required this.leading, this.onTap});
+
+  final String text;
+  final bool leading;
+  final void Function(Rect? anchor)? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: leading ? TextAlign.start : TextAlign.center,
+      style: TextStyle(
+        fontFamily: AppTheme.fontBrand,
+        fontSize: 17,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.3,
+        color: AppColors.ink,
+      ),
+    );
+    final open = onTap;
+    if (open == null) return label;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      // The rect of the title itself, so the menu opens under the word it
+      // belongs to instead of under the middle of the bar.
+      onTap: () => open(anchorRectOfContext(context)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(child: label),
+          const SizedBox(width: 3),
+          Icon(LucideIcons.chevronDown, size: 15, color: AppColors.inkSoft),
         ],
       ),
     );

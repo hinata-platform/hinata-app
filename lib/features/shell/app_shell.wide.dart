@@ -896,6 +896,7 @@ class _SubPageBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final chrome = PageChromeScope.of(context);
     final title = chrome.titleFor(location) ?? context.t(titleKey);
+    final onTitleTap = chrome.onTitleTapFor(location);
     final override = chrome.onBackFor(location);
     final actions = chrome.actionsFor(location);
     // A page may dock a toolbar (search + filters) below the title row; on wide
@@ -920,15 +921,7 @@ class _SubPageBar extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.ink,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                child: _SubPageTitle(text: title, onTap: onTitleTap),
               ),
               for (final action in actions) ...[
                 const SizedBox(width: 8),
@@ -943,6 +936,47 @@ class _SubPageBar extends StatelessWidget {
             child: bottom,
           ),
       ],
+    );
+  }
+}
+
+/// The sub-page bar's title, made a control where the page published an
+/// [PageChromeData.onTitleTap]. See the compact bar's `_BarTitle`: this is the
+/// same affordance, so the API does not quietly do nothing on one of the two
+/// shells.
+class _SubPageTitle extends StatelessWidget {
+  const _SubPageTitle({required this.text, this.onTap});
+
+  final String text;
+  final void Function(Rect? anchor)? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = Text(
+      text,
+      style: TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        color: AppColors.ink,
+      ),
+      overflow: TextOverflow.ellipsis,
+    );
+    final open = onTap;
+    if (open == null) return label;
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => open(anchorRectOfContext(context)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(child: label),
+            const SizedBox(width: 3),
+            Icon(LucideIcons.chevronDown, size: 15, color: AppColors.inkSoft),
+          ],
+        ),
+      ),
     );
   }
 }

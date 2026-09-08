@@ -908,9 +908,11 @@
       "untimed": "Sans heure",
       "previous": "Précédent",
       "next": "Suivant",
-      "day": "Jour",
       "week": "Semaine",
-      "truncated": "Cette période contient plus d’entrées que le calendrier n’en affiche. Réduisez-la pour toutes les voir."
+      "month": "Mois",
+      "truncated": "Cette période contient plus d’entrées que le calendrier n’en affiche. Réduisez-la pour toutes les voir.",
+      "more": "+{{count}} autre",
+      "more_plural": "+{{count}} autres"
     }
   },
   "projects": {

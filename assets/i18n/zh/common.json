@@ -908,9 +908,11 @@
       "untimed": "无时段",
       "previous": "上一个",
       "next": "下一个",
-      "day": "日",
       "week": "周",
-      "truncated": "此时间段的记录多于日历所显示的。缩小时间段即可查看全部。"
+      "month": "月",
+      "truncated": "此时间段的记录多于日历所显示的。缩小时间段即可查看全部。",
+      "more": "另外 {{count}} 项",
+      "more_plural": "另外 {{count}} 项"
     }
   },
   "projects": {

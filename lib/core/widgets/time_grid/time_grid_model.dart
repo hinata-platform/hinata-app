@@ -20,6 +20,8 @@ class TimeGridItem {
     this.subtitle,
     this.tint,
     this.movable = false,
+    this.minutes,
+    this.day,
     this.data,
   });
 
@@ -39,14 +41,62 @@ class TimeGridItem {
   /// Whether this one answers a drag or a resize. A holiday does not.
   final bool movable;
 
+  /// How much time this item accounts for, when its span cannot say.
+  ///
+  /// Normally null: a block on the hour canvas accounts for exactly the hours
+  /// it covers, and [accounted] measures them. An entry logged as a plain
+  /// duration has no hours — it begins and ends at midnight — and still counts
+  /// towards its day, which is the number a month is read for.
+  final int? minutes;
+
+  /// The day this item is *filed* under, when that is not simply the day it
+  /// starts on.
+  ///
+  /// The two come apart more easily than they look. A time entry's reporting
+  /// day is a field of its own on the server, set in the account's zone and
+  /// left alone when only the interval is edited — so an entry moved from the
+  /// 10th to the 20th still belongs to the 10th, and that is the day the
+  /// server selected it by and the timesheet adds it into.
+  ///
+  /// **Which of the two a view uses depends on what it is drawing.** Anything
+  /// that *lists* a day files by [filedOn] — the month's cells, the timesheet,
+  /// a day's total — because that is the day the record says the work belongs
+  /// to, and the one the server selected the window by. The hour canvas places
+  /// by the span instead, because a block has to be where its hours are, and
+  /// cuts one that crosses midnight into both columns. The two answers must
+  /// therefore both be reachable: a caller that hands the canvas only the items
+  /// filed on the day it is drawing loses every entry whose hours were moved
+  /// off it, and the tail of every overnight one.
+  final DateTime? day;
+
   /// Whatever the caller needs back in a callback — the entry behind the block.
   final Object? data;
 
+  /// The day this item belongs to: [day] when the caller named one, and
+  /// otherwise the day it starts on.
+  DateTime get filedOn => day ?? DateTime(start.year, start.month, start.day);
+
   Duration get duration => end.difference(start);
+
+  /// What this item adds to a day's total.
+  Duration get accounted =>
+      minutes != null ? Duration(minutes: minutes!) : duration;
 
   /// A copy spanning [start]..[end], for the preview a drag paints before the
   /// server has agreed to it.
-  TimeGridItem movedTo(DateTime start, DateTime end) => TimeGridItem(
+  ///
+  /// [day] and [minutes] carry over by default, which is what the hour canvas
+  /// wants: it clips a block to a column without the entry moving at all, and
+  /// the record's own numbers must survive that. A caller that is moving the
+  /// entry — a drop, which re-files it — passes the new [day] and lets
+  /// [minutes] fall back to the new span, or the preview sits filed under the
+  /// day it came from with the total it used to have.
+  TimeGridItem movedTo(
+    DateTime start,
+    DateTime end, {
+    DateTime? day,
+    bool keepMinutes = true,
+  }) => TimeGridItem(
     id: id,
     start: start,
     end: end,
@@ -54,6 +104,8 @@ class TimeGridItem {
     subtitle: subtitle,
     tint: tint,
     movable: movable,
+    minutes: keepMinutes ? minutes : null,
+    day: day ?? this.day,
     data: data,
   );
 }
@@ -95,6 +147,4 @@ class TimeGridLayer {
 
   /// What the band row is called, shown at its leading edge. Bands only.
   final String? label;
-
-  bool get isEmpty => items.isEmpty;
 }

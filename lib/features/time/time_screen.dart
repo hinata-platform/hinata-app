@@ -24,6 +24,7 @@ import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart'
     show
         GlassToastKind,
+        anchorRectOfContext,
         showGlassConfirm,
         showGlassDateRangePicker,
         showGlassToast;
@@ -54,6 +55,11 @@ class _TimeScreenState extends State<TimeScreen> {
 
   TimeEntryFilter _filter = const TimeEntryFilter();
   Timer? _searchDebounce;
+
+  /// Whether the phone's docked row is showing the search field instead of the
+  /// filters. See [GlassSearchDock] — the band above a page holds two lines,
+  /// and a field plus a row of filters is one too many.
+  bool _searching = false;
 
   /// Names for exactly the projects the loaded rows mention. Never the whole
   /// catalogue: an instance can hold hundreds, and a page of entries names a
@@ -136,6 +142,23 @@ class _TimeScreenState extends State<TimeScreen> {
     // timesheet do.
     return PageChrome(
       fullWidth: true,
+      // The way between the module's three pages, where the calendar keeps it
+      // too: a phone's app bar has room for one trailing action, and that one
+      // is "new entry".
+      onTitleTap: compact ? _openModuleMenu : null,
+      // Compact only: this is a nav destination, so a wide window builds no
+      // sub-page bar and would drop the action on the floor. There the same
+      // button is in the page's own head below.
+      actions: compact
+          ? [
+              PageAction(
+                icon: LucideIcons.plus,
+                label: context.t('time.entry.new'),
+                primary: true,
+                onTap: _newEntry,
+              ),
+            ]
+          : const [],
       // On a phone the filters ride as glass pills inside the app bar's blur
       // rather than as fields down the page: laid out in the body they would
       // cost a third of the screen before the first entry is visible.
@@ -215,50 +238,51 @@ class _TimeScreenState extends State<TimeScreen> {
     );
   }
 
-  /// The phone's filters, in the band the app bar is already blurring.
+  /// The phone's one docked line, in the band the app bar is already blurring.
   ///
-  /// Two rows, the way the audit log docks its own: the search field takes a
-  /// full row, and the pills scroll edge-to-edge under it. Crammed onto one
-  /// line the search box is too narrow to type in and the pills read as
-  /// oversized for the space they are squeezed into.
+  /// One line, not two. It used to be a search field with the filter pills
+  /// under it, which — counting the app bar's own title row — put three lines
+  /// of chrome above the first entry. The field is now a pill like the rest and
+  /// takes the row over only while somebody is typing in it.
   Widget _dockedFilters() {
     final gutter = context.pageGutter;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: gutter),
-          child: GlassSearchField(
-            controller: _searchController,
-            hint: context.t('time.filter.search'),
-            onChanged: _onSearchChanged,
-          ),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: kGlassControlHeight,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            // The gutter is the scroller's own padding, so the last pill can
-            // come fully into view at the display edge instead of being
-            // clipped by an inset around the whole row.
-            padding: EdgeInsets.symmetric(horizontal: gutter),
-            child: Row(
-              children: [
-                // The way between the module's three pages, ahead of the
-                // filters: it is navigation, and it belongs on the leading edge
-                // where a thumb reaches first.
-                const TimeViewSwitcher(current: TimeView.list),
-                const SizedBox(width: 8),
-                ..._filterPills(),
-              ],
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: gutter),
+      child: Align(
+        child: GlassSearchDock(
+          searching: _searching,
+          controller: _searchController,
+          hint: context.t('time.filter.search'),
+          onChanged: _onSearchChanged,
+          onClose: () => setState(() => _searching = false),
+          controls: SizedBox(
+            height: kGlassControlHeight,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              // The gutter is already spent above; inside the scroller it would
+              // clip the last pill instead of letting it come into view.
+              clipBehavior: Clip.none,
+              child: Row(
+                children: [
+                  GlassSearchButton(
+                    tooltip: context.t('time.filter.search'),
+                    active: _filter.query?.isNotEmpty ?? false,
+                    onTap: () => setState(() => _searching = true),
+                  ),
+                  const SizedBox(width: 8),
+                  ..._filterPills(),
+                ],
+              ),
             ),
           ),
         ),
-      ],
+      ),
     );
   }
+
+  void _openModuleMenu(Rect? anchor) => unawaited(
+    showTimeViewMenu<Never>(context, anchor: anchor, current: TimeView.list),
+  );
 
   /// The same controls on a wide window, wrapping rather than scrolling —
   /// there is room for them in one line at most widths, and a second line when
@@ -299,7 +323,7 @@ class _TimeScreenState extends State<TimeScreen> {
             : '${localizations.formatShortDate(_filter.from!)} – '
                   '${localizations.formatShortDate(_filter.to!)}',
         active: _filter.from != null,
-        onTap: _pickRange,
+        onTap: (_) => _pickRange(),
       ),
       const SizedBox(width: 8),
       _FilterPill(
@@ -326,6 +350,12 @@ class _TimeScreenState extends State<TimeScreen> {
     ];
   }
 
+  /// The date range, in the app's date-range dialog.
+  ///
+  /// No anchor: a two-month calendar is a dialog everywhere in this app, and
+  /// hanging one off a filter pill would put a 400-point panel over the page it
+  /// is filtering. The pill beside it opens a searchable list, which is what a
+  /// popover is for.
   Future<void> _pickRange() async {
     final now = DateTime.now();
     final range = await showGlassDateRangePicker(
@@ -341,9 +371,10 @@ class _TimeScreenState extends State<TimeScreen> {
     _applyFilter(_filter.copyWith(from: range.start, to: range.end));
   }
 
-  Future<void> _pickProjectFilter() async {
+  Future<void> _pickProjectFilter(Rect? anchor) async {
     final picked = await showTimePlacementPicker(
       context,
+      anchorRect: anchor,
       current: TimePlacement(projectId: _filter.projectId),
       // The filter narrows by project; an issue row would silently collapse to
       // its project, and "no project" here means "clear the filter" rather than
@@ -576,10 +607,10 @@ class _TimeScreenState extends State<TimeScreen> {
       context.read<TimerCubit>().continueEntry(entry.id);
 }
 
-/// How much of the app bar the docked band takes: a search field, a gap, and a
-/// row of control pills. Stated as a constant because the shell reserves it in
-/// the page's top gutter before the band has laid itself out.
-const double _kDockHeight = kGlassPillHeight + 8 + kGlassControlHeight;
+/// How much of the app bar the docked band takes: the module's one row. Stated
+/// as a constant because the shell reserves it in the page's top gutter before
+/// the band has laid itself out.
+const double _kDockHeight = kGlassDockRow;
 
 /// A docked filter: a glass pill that opens a picker, wearing the amber wash
 /// when it is narrowing something.
@@ -598,7 +629,16 @@ class _FilterPill extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool active;
-  final VoidCallback onTap;
+
+  /// Receives the pill's own rectangle on screen, so what it opens can hang off
+  /// it on a wide window instead of rising out of the bottom of the display.
+  /// Measured here rather than by the caller: the caller holds the page's
+  /// context, and the page is the whole page.
+  ///
+  /// Null when the pill is no longer on screen, which is an answer and not a
+  /// failure — the pickers read it as "no anchor" and fall back to the sheet
+  /// rather than pinning a popover to the top-left corner of the display.
+  final ValueChanged<Rect?> onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -606,7 +646,7 @@ class _FilterPill extends StatelessWidget {
     return GlassPill(
       height: kGlassControlHeight,
       active: active,
-      onTap: onTap,
+      onTap: () => onTap(anchorRectOfContext(context)),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 13),
         child: Row(

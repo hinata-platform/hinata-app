@@ -17,6 +17,9 @@ class _FilterBar extends StatelessWidget {
     required this.onOutcome,
     required this.onClear,
     required this.compact,
+    required this.searching,
+    required this.onOpenSearch,
+    required this.onCloseSearch,
   });
 
   final TextEditingController searchCtrl;
@@ -33,6 +36,12 @@ class _FilterBar extends StatelessWidget {
   final VoidCallback onClear;
   final bool compact;
 
+  /// Whether the phone's one docked row is showing the search field instead of
+  /// the chips. See [GlassSearchDock].
+  final bool searching;
+  final VoidCallback onOpenSearch;
+  final VoidCallback onCloseSearch;
+
   @override
   Widget build(BuildContext context) {
     final gutter = context.pageGutter;
@@ -43,6 +52,14 @@ class _FilterBar extends StatelessWidget {
     );
     final chipRow = Row(
       children: [
+        if (compact) ...[
+          GlassSearchButton(
+            tooltip: context.t('audit.searchHint'),
+            active: searchCtrl.text.isNotEmpty,
+            onTap: onOpenSearch,
+          ),
+          const SizedBox(width: 8),
+        ],
         GlassCountPill(
           label: loading
               ? '…'
@@ -62,29 +79,32 @@ class _FilterBar extends StatelessWidget {
     );
 
     if (compact) {
-      // The chip row scrolls edge-to-edge: the section gutter becomes the
-      // scroll view's OWN padding, so the last chip can scroll fully into view
-      // at the display edge instead of being clipped by a surrounding inset —
-      // while still resting at the same gutter. The search field keeps the
-      // gutter directly (the caller no longer pads this whole bar).
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: gutter),
-            child: search,
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: kGlassPillHeight,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: gutter),
-              child: chipRow,
+      // One line, because that is all a page gets: the app bar's own title row
+      // plus one docked row. The search used to take a row of its own above the
+      // chips, which made three lines of chrome before the first event — so it
+      // is a pill in the row now, and takes the row over only while somebody is
+      // typing in it.
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: gutter),
+        child: Align(
+          child: GlassSearchDock(
+            searching: searching,
+            controller: searchCtrl,
+            hint: context.t('audit.searchHint'),
+            onChanged: onSearch,
+            onClose: onCloseSearch,
+            controls: SizedBox(
+              height: kGlassControlHeight,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                // The gutter is spent above; inside the scroller it would clip
+                // the last chip instead of letting it come into view.
+                clipBehavior: Clip.none,
+                child: chipRow,
+              ),
             ),
           ),
-        ],
+        ),
       );
     }
     return Padding(

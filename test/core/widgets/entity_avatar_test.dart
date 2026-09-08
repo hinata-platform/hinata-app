@@ -246,7 +246,6 @@ void main() {
 
       expect(given, BoxConstraints.tight(const Size(52, 52)));
     });
-
   });
 }
 

@@ -16,12 +16,22 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
 import '../theme/app_colors.dart';
 import 'frosted_surface.dart';
 import 'glass_popup_menu.dart';
+import 'hive_widgets.dart' show backChevron, forwardChevron;
 import '../../features/shell/app_shell.dart' show isNativeApp;
 import '../theme/glass_chrome.dart' show kNavGlassDark, kNavGlassLight;
 
 /// Height of a docked search field. A text input needs the room; a control
 /// does not, which is what [kGlassControlHeight] is for.
 const double kGlassPillHeight = 42;
+
+/// Height a page reserves for its one docked row.
+///
+/// One number, because four pages wear the same row of the same pills and the
+/// shell hands the reserved height down as a *tight* constraint: a page that
+/// picked its own put an identical row of controls at a different height from
+/// the page beside it. Tall enough for the search field the controls give way
+/// to; shorter controls centre in it (see [GlassSearchDock]).
+const double kGlassDockRow = kGlassPillHeight;
 
 /// Height of a docked control pill — a chip, a filter, a button.
 ///
@@ -102,11 +112,17 @@ class GlassSearchField extends StatelessWidget {
     required this.hint,
     required this.onChanged,
     this.controller,
+    this.autofocus = false,
   });
 
   final String hint;
   final ValueChanged<String> onChanged;
   final TextEditingController? controller;
+
+  /// Whether the field takes the keyboard as it appears. True where the field
+  /// *is* the act — a search mode the reader asked for by pressing a button
+  /// has nothing else to be for.
+  final bool autofocus;
 
   @override
   Widget build(BuildContext context) {
@@ -121,6 +137,7 @@ class GlassSearchField extends StatelessWidget {
               child: TextField(
                 controller: controller,
                 onChanged: onChanged,
+                autofocus: autofocus,
                 textInputAction: TextInputAction.search,
                 style: TextStyle(fontSize: 14, color: AppColors.ink),
                 cursorColor: AppColors.accentStrong,
@@ -146,6 +163,232 @@ class GlassSearchField extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The icon-only pill that opens a page's search, for a phone's docked row.
+///
+/// A search *field* is a row of its own, and a page is allowed one docked row
+/// in total — the one it already spends on its filters. So on a phone the field
+/// is not there until it is asked for, and [GlassSearchDock] is what swaps it
+/// in.
+///
+/// [active] washes the pill amber while a query is in force. Leaving the search
+/// clears the query, so on a phone that is normally unreachable — it is for the
+/// window that was wide enough to show the field, had something typed into it,
+/// and then narrowed. Without it that reader is left looking at a filtered list
+/// with nothing on screen to say so.
+class GlassSearchButton extends StatelessWidget {
+  const GlassSearchButton({
+    super.key,
+    required this.tooltip,
+    required this.onTap,
+    this.active = false,
+  });
+
+  final String tooltip;
+  final VoidCallback onTap;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: tooltip,
+    child: GlassPill(
+      height: kGlassControlHeight,
+      onTap: onTap,
+      active: active,
+      child: SizedBox(
+        width: kGlassControlHeight,
+        child: Icon(
+          LucideIcons.search,
+          size: 17,
+          color: active ? AppColors.accentInk : AppColors.inkSoft,
+        ),
+      ),
+    ),
+  );
+}
+
+/// A page's one docked row, which is either its controls or its search.
+///
+/// The rule this exists for: the blurred band above a page holds at most two
+/// lines, the app bar's own title row and one more. A search field and a row of
+/// filters is three, so the field arrives only when it is wanted — sliding down
+/// out of the bar it belongs to, already holding the keyboard — and the round
+/// button at its trailing edge puts the filters back.
+///
+/// On a wide window there is no such shortage and no such swap: pass
+/// [searching] as false and lay the field out beside the filters as usual.
+class GlassSearchDock extends StatelessWidget {
+  const GlassSearchDock({
+    super.key,
+    required this.searching,
+    required this.hint,
+    required this.controller,
+    required this.onChanged,
+    required this.onClose,
+    required this.controls,
+  });
+
+  final bool searching;
+  final String hint;
+
+  /// Required, because closing the search clears it — see [onClose].
+  final TextEditingController controller;
+
+  final ValueChanged<String> onChanged;
+
+  /// Told that the search is over. The dock has already cleared [controller]
+  /// and called [onChanged] with the empty string; this is where the page puts
+  /// [searching] back to false.
+  final VoidCallback onClose;
+
+  /// What the row shows when nothing is being searched for.
+  final Widget controls;
+
+  /// Leaves the search, and clears it.
+  ///
+  /// Here rather than in each page, because it is one rule and three pages had
+  /// three copies of it: a field that is gone cannot say what it is still
+  /// filtering by, and a list quietly cut to three rows with nothing on screen
+  /// to explain it is the bug that would otherwise ship on every one of them.
+  void _close() {
+    if (controller.text.isNotEmpty) {
+      controller.clear();
+      onChanged('');
+    }
+    onClose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedSwitcher(
+    duration: const Duration(milliseconds: 190),
+    switchInCurve: Curves.easeOutCubic,
+    switchOutCurve: Curves.easeInCubic,
+    transitionBuilder: (child, animation) => FadeTransition(
+      opacity: animation,
+      // Down from above, because that is where it came from: the field is part
+      // of the bar, not a panel that appeared over the page.
+      child: SlideTransition(
+        position: Tween(
+          begin: const Offset(0, -0.4),
+          end: Offset.zero,
+        ).animate(animation),
+        child: child,
+      ),
+    ),
+    child: searching
+        ? Row(
+            key: const ValueKey(true),
+            children: [
+              Expanded(
+                child: GlassSearchField(
+                  hint: hint,
+                  controller: controller,
+                  onChanged: onChanged,
+                  autofocus: true,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Tooltip(
+                message: MaterialLocalizations.of(context).closeButtonTooltip,
+                child: GlassPill(
+                  onTap: _close,
+                  child: SizedBox(
+                    width: kGlassPillHeight,
+                    child: Icon(
+                      LucideIcons.x,
+                      size: 18,
+                      color: AppColors.inkSoft,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          )
+        : KeyedSubtree(key: const ValueKey(false), child: controls),
+  );
+}
+
+/// The control that steps a window back and forth: two chevrons and, between
+/// them, the window they are moving.
+///
+/// Its own widget rather than a shape the timesheet assembles inline, because
+/// the chevrons have to be full-height tap targets and that is easy to get
+/// wrong. It has one user today — the timesheet's week navigator; the
+/// calendar's arrows are on the page canvas on a wide window and are round
+/// buttons rather than glass, and on a phone the calendar has no arrows at all.
+///
+/// The chevrons take the pill's full height, so the tap target is the pill and
+/// not an eighteen-point glyph floating in the middle of it.
+class GlassStepperPill extends StatelessWidget {
+  const GlassStepperPill({
+    super.key,
+    required this.label,
+    required this.onBack,
+    required this.onForward,
+    required this.backTooltip,
+    required this.forwardTooltip,
+    this.height = kGlassControlHeight,
+  });
+
+  /// What sits between the arrows — a week, a month, a date.
+  final Widget label;
+
+  final VoidCallback onBack;
+  final VoidCallback onForward;
+  final String backTooltip;
+  final String forwardTooltip;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) => GlassPill(
+    height: height,
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      // Stretched, so each chevron is a full-height tap target.
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _StepperArrow(
+          icon: backChevron(context),
+          tooltip: backTooltip,
+          onTap: onBack,
+        ),
+        Center(child: label),
+        _StepperArrow(
+          icon: forwardChevron(context),
+          tooltip: forwardTooltip,
+          onTap: onForward,
+        ),
+      ],
+    ),
+  );
+}
+
+/// One of [GlassStepperPill]'s chevrons. Private, so nothing can use it outside
+/// a stretched row and quietly get the small tap target back.
+class _StepperArrow extends StatelessWidget {
+  const _StepperArrow({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: tooltip,
+    child: InkResponse(
+      onTap: onTap,
+      radius: 20,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Center(child: Icon(icon, size: 18, color: AppColors.inkSoft)),
+      ),
+    ),
+  );
 }
 
 /// A read-only amber count pill (e.g. "200 Ereignisse").

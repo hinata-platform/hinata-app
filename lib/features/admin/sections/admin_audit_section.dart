@@ -29,8 +29,10 @@ part 'admin_audit_section.filters.dart';
 part 'admin_audit_section.timeline.dart';
 part 'admin_audit_section.detail.dart';
 
-/// Docked-toolbar height on compact: search row + gap + chip row.
-const double _kAuditDockHeight = kGlassPillHeight * 2 + 8;
+/// Docked-toolbar height on compact: one row, tall enough for the search field
+/// the chips give way to. One and not two, because the blurred band above a
+/// page holds the app bar's title row and exactly one more.
+const double _kAuditDockHeight = kGlassDockRow;
 
 /// The admin **Audit log** — a live, filtered, infinite-scrolling timeline of
 /// security-relevant events (sign-ins, role changes, settings updates…).
@@ -58,6 +60,10 @@ class _AdminAuditSectionState extends State<AdminAuditSection> {
 
   final ScrollController _scroll = ScrollController();
   final TextEditingController _searchCtrl = TextEditingController();
+
+  /// Whether the phone's one docked row is showing the search field instead of
+  /// the filter chips. See [GlassSearchDock].
+  bool _searching = false;
   Timer? _debounce;
 
   // Loaded data (accumulated across pages).
@@ -233,6 +239,9 @@ class _AdminAuditSectionState extends State<AdminAuditSection> {
       onOutcome: _setOutcome,
       onClear: _clearFilters,
       compact: compact,
+      searching: _searching,
+      onOpenSearch: () => setState(() => _searching = true),
+      onCloseSearch: () => setState(() => _searching = false),
     );
 
     // Compact: search + chips dock into the glass app bar (the section owns its
