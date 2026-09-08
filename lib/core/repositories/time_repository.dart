@@ -32,6 +32,10 @@ class TimeRepository {
   }
 
   /// Starts one. Throws with status 409 when a timer is already running.
+  ///
+  /// How it counts is settled here and nowhere else: [patchTimer] sends the
+  /// timer's whole *editable* state, so a mode carried there would be cleared by
+  /// every rename.
   Future<RunningTimer> startTimer({
     String? projectId,
     String? issueId,
@@ -39,6 +43,9 @@ class TimeRepository {
     String? activityType,
     List<String> tags = const [],
     bool? billable,
+    TimerMode mode = TimerMode.stopwatch,
+    int? plannedMinutes,
+    PomodoroConfig? pomodoro,
   }) async {
     final data =
         await _api.post(
@@ -50,8 +57,29 @@ class TimeRepository {
                 'activityType': ?activityType,
                 'tags': tags,
                 'billable': ?billable,
+                'mode': mode.wire,
+                // Only where the mode counts towards it. The server drops the
+                // other two anyway; sending them would just make the request say
+                // something it does not mean.
+                if (mode == TimerMode.countdown)
+                  'plannedMinutes': ?plannedMinutes,
+                if (mode == TimerMode.pomodoro && pomodoro != null)
+                  'pomodoro': pomodoro.toJson(),
               },
             )
+            as Map<String, dynamic>;
+    return RunningTimer.fromJson(data);
+  }
+
+  /// Ends the running pomodoro phase and answers with the one that follows.
+  ///
+  /// A work phase becomes an entry on the way; a break becomes nothing. Safe to
+  /// repeat when [timerId] names the phase being ended: a retry that arrives
+  /// after the phase has already turned answers with the phase that is running
+  /// rather than skipping the next one.
+  Future<RunningTimer> advancePhase({String? timerId}) async {
+    final data =
+        await _api.post('/api/v1/me/timer/phase', body: {'timerId': ?timerId})
             as Map<String, dynamic>;
     return RunningTimer.fromJson(data);
   }

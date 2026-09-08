@@ -315,6 +315,7 @@ class _FakeAccountRepository implements AccountRepository {
     String? pronouns,
     String? locale,
     String? timezone,
+    TimePreferences? timePreferences,
   }) async {
     patched.add(timezone);
     if (refusePatch) {

@@ -71,21 +71,31 @@ class TimeViewSwitcher extends StatelessWidget {
 /// twice — and because the menu has to come back with exactly one answer.
 @immutable
 class TimeMenuChoice<T extends Object> {
-  const TimeMenuChoice.view(this.view) : extra = null;
+  const TimeMenuChoice.view(this.view) : extra = null, isFocus = false;
 
   /// A choice only the page knows about — the calendar's week/month, its way
   /// back to today. [extra] is whatever the page put in and gets back.
-  const TimeMenuChoice.extra(this.extra) : view = null;
+  const TimeMenuChoice.extra(this.extra) : view = null, isFocus = false;
+
+  /// The focus view. Its own kind rather than a fourth [TimeView], because it
+  /// is not a way of looking at the module's pages: it is a full-screen route
+  /// outside the shell, and putting it in that enum would light the module's
+  /// nav entry and give it a place in the wide window's switcher.
+  const TimeMenuChoice.focus() : view = null, extra = null, isFocus = true;
 
   final TimeView? view;
   final T? extra;
+  final bool isFocus;
 
   @override
   bool operator ==(Object other) =>
-      other is TimeMenuChoice<T> && other.view == view && other.extra == extra;
+      other is TimeMenuChoice<T> &&
+      other.view == view &&
+      other.extra == extra &&
+      other.isFocus == isFocus;
 
   @override
-  int get hashCode => Object.hash(view, extra);
+  int get hashCode => Object.hash(view, extra, isFocus);
 }
 
 /// One row a page adds under the three views.
@@ -163,9 +173,27 @@ Future<T?> showTimeViewMenu<T extends Object>(
               : null,
           dividerAbove: extra.first,
         ),
+      // Last, and below a divider: it is not one of the three views and not one
+      // of the page's own choices. It is a route outside the shell — a way of
+      // leaving all of this rather than of looking at it — so it is never
+      // ticked, and choosing it goes there rather than answering the caller.
+      GlassMenuItem(
+        value: TimeMenuChoice<T>.focus(),
+        label: context.t('time.focus.title'),
+        leading: Icon(
+          LucideIcons.crosshair,
+          size: 16,
+          color: AppColors.inkSoft,
+        ),
+        dividerAbove: true,
+      ),
     ],
   );
   if (chosen == null) return null;
+  if (chosen.isFocus) {
+    if (context.mounted) context.go('/time/focus');
+    return null;
+  }
   final view = chosen.view;
   if (view != null) {
     // The one you are already on is not a navigation; going anyway would

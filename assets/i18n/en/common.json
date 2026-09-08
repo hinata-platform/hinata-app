@@ -913,6 +913,30 @@
       "truncated": "This range holds more entries than the calendar shows. Narrow it to see them all.",
       "more": "+{{count}} more",
       "more_plural": "+{{count}} more"
+    },
+    "mode": {
+      "stopwatch": "Stopwatch",
+      "countdown": "Countdown",
+      "pomodoro": "Pomodoro"
+    },
+    "phase": {
+      "work": "Focus",
+      "shortBreak": "Short break",
+      "longBreak": "Long break"
+    },
+    "focus": {
+      "title": "Focus",
+      "leave": "Leave",
+      "idle": "Nothing running",
+      "resume": "Back to work",
+      "takeBreak": "Take a break",
+      "endSession": "End session"
+    },
+    "signal": {
+      "countdown": "Your countdown is up.",
+      "breakOver": "Break over — back to it when you are ready.",
+      "workOver": "One interval done. Time for a break.",
+      "workOver_plural": "{{count}} intervals done. Time for a break."
     }
   },
   "projects": {
@@ -1330,7 +1354,12 @@
       "reports": "Go to Reports",
       "knowledge": "Go to Knowledge",
       "newIssue": "Create new issue",
-      "toggleTheme": "Toggle light / dark appearance"
+      "toggleTheme": "Toggle light / dark appearance",
+      "toggleTimer": "Start or stop the timer",
+      "logTime": "Log time",
+      "focusMode": "Focus mode",
+      "time": "Time",
+      "timesheet": "Timesheet"
     }
   },
   "settings": {
@@ -2375,7 +2404,22 @@
       "minutesAgo": "{{count}}m ago",
       "hoursAgo": "{{count}}h ago",
       "daysAgo": "{{count}}d ago",
-      "weeksAgo": "{{count}}w ago"
+      "weeksAgo": "{{count}}w ago",
+      "title": "Time tracking",
+      "subtitle": "Your own rhythm — lengths, countdown and the end-of-interval sound.",
+      "pomodoro": "Pomodoro",
+      "work": "Focus interval",
+      "shortBreak": "Short break",
+      "longBreak": "Long break",
+      "cycles": "Intervals before the long break",
+      "countdown": "Countdown",
+      "countdownLength": "Default length",
+      "sound": "Play a sound",
+      "soundHint": "A short chime when an interval ends. The message appears either way.",
+      "minutes": "{{count}} min",
+      "intervals": "{{count}} interval",
+      "intervals_plural": "{{count}} intervals",
+      "saveFailed": "Could not save your preferences."
     },
     "notifications": {
       "title": "Notifications",
@@ -2838,6 +2882,27 @@
     "empty": {
       "title": "Nothing watched yet",
       "message": "Open an issue and turn on “Watch” to be notified about every change to it."
+    }
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "subtitle": "What works right now, wherever you are.",
+    "none": "No shortcuts on this screen.",
+    "group": {
+      "general": "General",
+      "time": "Time"
+    },
+    "app": {
+      "search": "Search and jump to",
+      "shortcuts": "Keyboard shortcuts"
+    },
+    "time": {
+      "toggle": "Start or stop the timer",
+      "newEntry": "Log time",
+      "focus": "Focus mode"
+    },
+    "focus": {
+      "leave": "Leave focus mode"
     }
   }
 }

@@ -2,12 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/repositories/search_repository.dart';
-import '../../core/blocs/theme_cubit.dart';
+import 'command_registry.dart';
 import '../../core/models/search_api.dart';
 import '../../core/storage/app_storage.dart';
 import '../../core/theme/app_colors.dart';
@@ -89,14 +88,17 @@ class GlobalSearchController extends ChangeNotifier {
   }
 
   /// Builds the client commands (localised via [t]) and fetches initial counts.
-  Future<void> load({required String Function(String) t}) async {
+  Future<void> load({
+    required String Function(String) t,
+    bool advancedTime = false,
+  }) async {
     // i18next echoes the raw key when it can't resolve (e.g. assets not yet
     // reloaded) — a dot marks that case, so never treat it as a keyword.
     final localized = t('search.archivedKeyword').trim().toLowerCase();
     if (localized.isNotEmpty && !localized.contains('.')) {
       _archivedKeywords.add(localized);
     }
-    _commands = _buildCommands(t);
+    _commands = _buildCommands(t, advancedTime: advancedTime);
     _recount();
     _recompose();
     _safeNotify();
@@ -387,52 +389,27 @@ class GlobalSearchController extends ChangeNotifier {
 
   // ─────────────────────────── commands ─────────────────────────────────
 
-  List<SearchEntry> _buildCommands(String Function(String) t) {
-    const nav = <(String, String, IconData)>[
-      ('/dashboard', 'search.cmd.dashboard', LucideIcons.layoutDashboard),
-      ('/projects', 'search.cmd.projects', LucideIcons.squareKanban),
-      ('/issues', 'search.cmd.issues', LucideIcons.circleCheck),
-      ('/board', 'search.cmd.board', LucideIcons.columns3),
-      ('/gantt', 'search.cmd.timeline', LucideIcons.chartColumnStacked),
-      ('/reports', 'search.cmd.reports', LucideIcons.chartLine),
-      ('/knowledge', 'search.cmd.knowledge', LucideIcons.bookOpen),
-    ];
-    return [
-      for (final (route, labelKey, icon) in nav)
-        SearchEntry(
-          cat: SearchCat.commands,
-          key: 'c-$route',
-          title: t(labelKey),
-          keys: '${t(labelKey)} navigate jump $route'.toLowerCase(),
-          leadingIcon: icon,
-          onSelect: (context) => context.go(route),
-        ),
+  /// The palette's commands, from the registry every feature contributes to.
+  ///
+  /// Localized here rather than in the registry: a command is a label plus a
+  /// haystack, and the haystack has to hold both what it is called in the
+  /// reader's language and the English words somebody might reach for anyway.
+  List<SearchEntry> _buildCommands(
+    String Function(String) t, {
+    required bool advancedTime,
+  }) => [
+    for (final command in paletteCommands(advancedTime: advancedTime))
       SearchEntry(
         cat: SearchCat.commands,
-        key: 'c-new',
-        title: t('search.cmd.newIssue'),
-        keys: '${t('search.cmd.newIssue')} new issue create add task bug'
-            .toLowerCase(),
-        leadingIcon: LucideIcons.plus,
-        hint: 'C',
-        onSelect: (context) => context.go('/board'),
+        key: 'c-${command.id}',
+        title: t(command.labelKey),
+        keys: '${t(command.labelKey)} ${command.keywords}'.toLowerCase(),
+        leadingIcon: command.icon,
+        hint: command.hint,
+        closesOnSelect: command.closesOnSelect,
+        onSelect: command.invoke,
       ),
-      SearchEntry(
-        cat: SearchCat.commands,
-        key: 'c-theme',
-        title: t('search.cmd.toggleTheme'),
-        keys: '${t('search.cmd.toggleTheme')} theme dark light appearance mode'
-            .toLowerCase(),
-        leadingIcon: LucideIcons.sunMoon,
-        closesOnSelect: false,
-        onSelect: (context) {
-          final cubit = context.read<ThemeCubit>();
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          cubit.setMode(isDark ? ThemeMode.light : ThemeMode.dark);
-        },
-      ),
-    ];
-  }
+  ];
 
   // ─────────────────────────── helpers ──────────────────────────────────
 

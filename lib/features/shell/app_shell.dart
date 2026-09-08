@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:hinata/features/issues/issue_form.dart' show showIssueForm;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -22,6 +21,7 @@ import '../../core/notifications/notification_swipe.dart';
 import '../../core/notifications/notification_visuals.dart';
 import '../../core/repositories/notification_repository.dart';
 import '../../core/responsive/responsive.dart';
+import '../../core/shortcuts/app_shortcuts.dart' show commandKeyLabel;
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -72,13 +72,14 @@ bool get isNativeApp =>
         defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.macOS);
 
-/// How the search-palette shortcut is spelled on this platform. [_onGlobalKey]
-/// accepts ⌘ and Ctrl everywhere, but the hint has to name the key the user
-/// actually has — a Windows or Linux keyboard has no ⌘.
-String get searchShortcutLabel => switch (defaultTargetPlatform) {
-  TargetPlatform.macOS || TargetPlatform.iOS => '⌘K',
-  _ => 'Ctrl K',
-};
+/// How the search-palette shortcut is spelled on this platform.
+///
+/// The dispatcher accepts ⌘ and Ctrl everywhere, but the hint has to name the
+/// key the user actually has — a Windows or Linux keyboard has no ⌘. The
+/// spelling comes from the shortcut library so the bar and the shortcuts sheet
+/// cannot disagree about it.
+String get searchShortcutLabel =>
+    '$commandKeyLabel${commandKeyLabel == '⌘' ? '' : ' '}K';
 
 /// Responsive scaffold:
 /// • phone/compact (<987): Liquid-Glass floating bottom nav
@@ -98,37 +99,16 @@ class _AppShellState extends State<AppShell> {
   // button + the real page title instead of the brand mark.
   final _chrome = PageChromeController();
 
-  @override
-  void initState() {
-    super.initState();
-    // App-level ⌘K / Ctrl+K opens the global search palette (§4.5). A hardware
-    // key handler is genuinely global and never disturbs widget focus.
-    HardwareKeyboard.instance.addHandler(_onGlobalKey);
-  }
+  // ⌘K used to be a HardwareKeyboard handler written out here, and it was the
+  // only shortcut the app had because adding a second meant writing the same
+  // modifier arithmetic again. It now lives in the shortcut registry with the
+  // rest (`core/shortcuts/`), which is above the router — so it works on the
+  // focus route too, and can be listed in a sheet.
 
   @override
   void dispose() {
-    HardwareKeyboard.instance.removeHandler(_onGlobalKey);
     _chrome.dispose();
     super.dispose();
-  }
-
-  bool _onGlobalKey(KeyEvent event) {
-    if (event is! KeyDownEvent) return false;
-    if (event.logicalKey != LogicalKeyboardKey.keyK) return false;
-    final keys = HardwareKeyboard.instance.logicalKeysPressed;
-    final meta =
-        keys.contains(LogicalKeyboardKey.metaLeft) ||
-        keys.contains(LogicalKeyboardKey.metaRight);
-    final ctrl =
-        keys.contains(LogicalKeyboardKey.controlLeft) ||
-        keys.contains(LogicalKeyboardKey.controlRight);
-    if (!meta && !ctrl) return false;
-    // Don't stack a second palette (or open one over another modal).
-    final route = ModalRoute.of(context);
-    if (route == null || !route.isCurrent) return false;
-    openGlobalSearch(context);
-    return true;
   }
 
   @override

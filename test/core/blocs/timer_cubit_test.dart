@@ -283,6 +283,193 @@ void main() {
       expect(future.elapsed(DateTime.now()), Duration.zero);
     });
   });
+
+  group('how a timer counts', () {
+    RunningTimer pomodoro({
+      required TimerPhase phase,
+      int cyclesDone = 0,
+      Duration ago = Duration.zero,
+      PomodoroConfig config = const PomodoroConfig(),
+    }) => RunningTimer(
+      id: 'p1',
+      startedAt: DateTime.now().subtract(ago),
+      mode: TimerMode.pomodoro,
+      pomodoro: config,
+      phase: phase,
+      cyclesDone: cyclesDone,
+    );
+
+    test(
+      'a countdown counts towards its target and a stopwatch does not',
+      () async {
+        final now = DateTime.now();
+        final countdown = RunningTimer(
+          id: 'c1',
+          startedAt: now.subtract(const Duration(minutes: 10)),
+          mode: TimerMode.countdown,
+          plannedMinutes: 25,
+        );
+        expect(countdown.remaining(now)!.inMinutes, 15);
+        expect(countdown.hasReachedTarget(now), isFalse);
+
+        final plain = RunningTimer(id: 's1', startedAt: now);
+        expect(plain.target, isNull);
+        expect(plain.remaining(now), isNull);
+        // A stopwatch is never "up": nothing is owed and nothing is over.
+        expect(plain.hasReachedTarget(now), isFalse);
+      },
+    );
+
+    test('a long break falls after a full set, a short one before it', () {
+      const config = PomodoroConfig(cycles: 4);
+      expect(config.phaseAfter(1), TimerPhase.shortBreak);
+      expect(config.phaseAfter(3), TimerPhase.shortBreak);
+      expect(config.phaseAfter(4), TimerPhase.longBreak);
+      expect(config.breakAfter(4), 15);
+      expect(config.breakAfter(3), 5);
+    });
+
+    test('a countdown that runs out signals once and stops itself', () async {
+      final repository = _FakeTimeRepository(
+        running: RunningTimer(
+          id: 'c1',
+          // Already past its target when the cubit adopts it — which is what a
+          // phone that was asleep through the end comes back to.
+          startedAt: DateTime.now().subtract(const Duration(minutes: 26)),
+          mode: TimerMode.countdown,
+          plannedMinutes: 25,
+        ),
+      );
+      final cubit = TimerCubit(repository, storageId: 'server#me');
+      final signals = <TimerSignal>[];
+      final sub = cubit.stream
+          .where((state) => state.signal != null)
+          .listen((state) => signals.add(state.signal!));
+
+      await cubit.refresh();
+      await Future<void>.delayed(const Duration(milliseconds: 1200));
+
+      expect(signals, hasLength(1));
+      expect(signals.single.mode, TimerMode.countdown);
+      // The client reports the end; the server decides what the entry is worth.
+      expect(repository.stoppedIds, ['c1']);
+      expect(cubit.state.isRunning, isFalse);
+      await sub.cancel();
+      await cubit.close();
+    });
+
+    test(
+      'a pomodoro work interval signals but does not turn its own phase',
+      () async {
+        final repository = _FakeTimeRepository(
+          running: pomodoro(
+            phase: TimerPhase.work,
+            ago: const Duration(minutes: 26),
+          ),
+        );
+        final cubit = TimerCubit(repository, storageId: 'server#me');
+        final signals = <TimerSignal>[];
+        final sub = cubit.stream
+            .where((state) => state.signal != null)
+            .listen((state) => signals.add(state.signal!));
+
+        await cubit.refresh();
+        await Future<void>.delayed(const Duration(milliseconds: 1200));
+
+        expect(signals, hasLength(1));
+        expect(signals.single.phase, TimerPhase.work);
+        // The interval that just ended is counted, so the message can say "one
+        // interval done" rather than "none".
+        expect(signals.single.cyclesDone, 1);
+        // Whether the break starts now is the person's to say. Nothing was
+        // stopped and nothing was advanced.
+        expect(repository.stoppedIds, isEmpty);
+        expect(repository.phases, isEmpty);
+        expect(cubit.state.isRunning, isTrue);
+        await sub.cancel();
+        await cubit.close();
+      },
+    );
+
+    test('the same interval is never announced twice', () async {
+      final repository = _FakeTimeRepository(
+        running: pomodoro(
+          phase: TimerPhase.shortBreak,
+          cyclesDone: 1,
+          ago: const Duration(minutes: 6),
+        ),
+      );
+      final cubit = TimerCubit(repository, storageId: 'server#me');
+      var announcements = 0;
+      final sub = cubit.stream
+          .where((state) => state.signal != null)
+          .listen((_) => announcements++);
+
+      await cubit.refresh();
+      await Future<void>.delayed(const Duration(milliseconds: 2400));
+      // A refresh of the same timer is not a new interval.
+      await cubit.refresh();
+      await Future<void>.delayed(const Duration(milliseconds: 1200));
+
+      expect(announcements, 1);
+      await sub.cancel();
+      await cubit.close();
+    });
+
+    test('advancing a phase names the timer it means', () async {
+      final repository = _FakeTimeRepository(
+        running: pomodoro(phase: TimerPhase.work),
+      );
+      final cubit = TimerCubit(repository, storageId: 'server#me');
+      await cubit.refresh();
+
+      await cubit.advancePhase();
+
+      expect(cubit.state.timer!.phase, TimerPhase.shortBreak);
+      expect(cubit.state.timer!.cyclesDone, 1);
+      // A new document, so the next interval's entry cannot collide with the
+      // one the last interval already became.
+      expect(cubit.state.timer!.id, isNot('p1'));
+      // And the new interval may be announced in its own right.
+      expect(repository.phases, hasLength(1));
+      await cubit.close();
+    });
+
+    test('a start carries the mode and its configuration', () async {
+      final repository = _FakeTimeRepository();
+      final cubit = TimerCubit(repository, storageId: 'server#me');
+
+      await cubit.start(
+        mode: TimerMode.pomodoro,
+        plannedMinutes: 45,
+        pomodoro: const PomodoroConfig(work: 50, cycles: 3),
+      );
+
+      expect(repository.started!.mode, TimerMode.pomodoro);
+      expect(repository.started!.pomodoro!.work, 50);
+      expect(cubit.state.timer!.phase, TimerPhase.work);
+      await cubit.close();
+    });
+
+    test('what is persisted carries the run, not just the timer', () async {
+      final repository = _FakeTimeRepository(
+        running: pomodoro(phase: TimerPhase.longBreak, cyclesDone: 4),
+      );
+      final first = TimerCubit(repository, storageId: 'server#me');
+      await first.refresh();
+      await first.close();
+
+      // A relaunch restores the phase as well as the clock: a bar that came
+      // back saying "stopwatch" would be wrong for as long as the round trip
+      // takes, on the one screen somebody is watching.
+      final restored = TimerCubit(repository, storageId: 'server#me');
+      expect(restored.state.timer!.mode, TimerMode.pomodoro);
+      expect(restored.state.timer!.phase, TimerPhase.longBreak);
+      expect(restored.state.timer!.cyclesDone, 4);
+      expect(restored.state.timer!.pomodoro!.cycles, 4);
+      await restored.close();
+    });
+  });
 }
 
 class _FakeTimeRepository implements TimeRepository {
@@ -316,11 +503,48 @@ class _FakeTimeRepository implements TimeRepository {
     String? activityType,
     List<String> tags = const [],
     bool? billable,
+    TimerMode mode = TimerMode.stopwatch,
+    int? plannedMinutes,
+    PomodoroConfig? pomodoro,
   }) async {
     if (startFailure != null) {
       throw ApiFailure(startFailure!, statusCode: 409);
     }
-    running = RunningTimer(id: 't1', startedAt: DateTime.now());
+    started = (mode: mode, plannedMinutes: plannedMinutes, pomodoro: pomodoro);
+    running = RunningTimer(
+      id: 't1',
+      startedAt: DateTime.now(),
+      mode: mode,
+      plannedMinutes: mode == TimerMode.countdown ? plannedMinutes : null,
+      pomodoro: mode == TimerMode.pomodoro ? pomodoro : null,
+      phase: mode == TimerMode.pomodoro ? TimerPhase.work : null,
+    );
+    return running!;
+  }
+
+  /// What the last start asked for, so a test can say what it meant rather than
+  /// reading it back off the timer the fake invented.
+  ({TimerMode mode, int? plannedMinutes, PomodoroConfig? pomodoro})? started;
+
+  /// Timers the phase route has handed back, oldest first.
+  final List<RunningTimer> phases = [];
+
+  @override
+  Future<RunningTimer> advancePhase({String? timerId}) async {
+    final current = running!;
+    final wasBreak = current.isBreak;
+    final done = wasBreak ? current.cyclesDone : current.cyclesDone + 1;
+    running = RunningTimer(
+      // A new document per phase, as the server does — the old id belongs to
+      // the entry the work interval became.
+      id: 't${phases.length + 2}',
+      startedAt: DateTime.now(),
+      mode: TimerMode.pomodoro,
+      pomodoro: current.pomodoro,
+      phase: wasBreak ? TimerPhase.work : current.pomodoro!.phaseAfter(done),
+      cyclesDone: done,
+    );
+    phases.add(running!);
     return running!;
   }
 
