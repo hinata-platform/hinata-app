@@ -233,21 +233,26 @@ class TimerCubit extends HydratedCubit<TimerState> {
     );
   }
 
-  /// Ends the running timer, whatever kind it is.
+  /// Ends the running timer, whatever kind it is, and returns what it filed.
   ///
   /// One method because it is one intention — "I am done with this" — and the
   /// branch it hides is a server contract, not a preference: a break is never
   /// filed, so ending one is a discard, and `stop` on a break is refused
-  /// outright with `error.time.breakNotRecorded`. Written out at each of the
-  /// four places that end a timer, the fifth would meet that refusal.
-  Future<void> end() async {
+  /// outright with `error.time.breakNotRecorded`. Written out at each place
+  /// that ends a timer, the next one would meet that refusal.
+  ///
+  /// Null when there was nothing to file — a break, no timer, or a stop that
+  /// failed. Callers need that back: the entry carries the overlap advice, and
+  /// a screen that dropped it would tell the person less than the screen beside
+  /// it does about the same action.
+  Future<SavedTimeEntry?> end() async {
     final running = state.timer;
-    if (running == null) return;
+    if (running == null) return null;
     if (running.isBreak) {
       await discard();
-    } else {
-      await stop();
+      return null;
     }
+    return stop();
   }
 
   Future<void> continueEntry(String entryId) =>

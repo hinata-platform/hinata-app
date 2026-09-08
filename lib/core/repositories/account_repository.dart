@@ -34,8 +34,8 @@ class AccountRepository {
             'pronouns': ?pronouns,
             'locale': ?locale,
             'timezone': ?timezone,
-            // Whole when present: six numbers one panel edits together, and the
-            // server merges them onto what it holds.
+            // Whole when present: five lengths and a switch that one panel
+            // edits together, and the server merges them onto what it holds.
             if (timePreferences != null)
               'timePreferences': timePreferences.toJson(),
           },

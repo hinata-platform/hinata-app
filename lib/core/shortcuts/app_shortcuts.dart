@@ -87,6 +87,11 @@ class AppShortcut {
   /// make — it dispatches from above the navigator and has no idea what is on
   /// screen. Without it, three presses of ⌘/ stack three sheets, each painting
   /// its own full-screen backdrop blur, to be dismissed one Escape at a time.
+  ///
+  /// The search palette is the deliberate exception: it guards itself, because
+  /// it has three ways in — this key, the search bar, and a ⌘K command — and
+  /// only a flag the palette owns can cover all three. Setting `exclusive` there
+  /// and deleting that flag as redundant would silently un-guard the other two.
   final bool exclusive;
 
   /// What to do. Handed a context below the router's navigator, so it can push,
@@ -157,18 +162,19 @@ class AppShortcutRegistry extends ChangeNotifier {
     final existing = _shortcuts[shortcut.id];
     if (existing != null && identical(existing, shortcut)) return;
     _shortcuts[shortcut.id] = shortcut;
-    notifyListeners();
+    _announce();
   }
 
   void registerAll(Iterable<AppShortcut> shortcuts) {
+    if (shortcuts.isEmpty) return;
     for (final shortcut in shortcuts) {
       _shortcuts[shortcut.id] = shortcut;
     }
-    notifyListeners();
+    _announce();
   }
 
   void unregister(String id) {
-    if (_shortcuts.remove(id) != null) notifyListeners();
+    if (_shortcuts.remove(id) != null) _announce();
   }
 
   void unregisterAll(Iterable<String> ids) {
@@ -176,7 +182,36 @@ class AppShortcutRegistry extends ChangeNotifier {
     for (final id in ids) {
       changed |= _shortcuts.remove(id) != null;
     }
-    if (changed) notifyListeners();
+    if (changed) _announce();
+  }
+
+  /// Tells the listeners, but never in the middle of a frame.
+  ///
+  /// A screen releases its shortcuts from `dispose`, which runs inside the
+  /// build phase — and the shortcuts sheet renders through an [AnimatedBuilder]
+  /// on this notifier, so a notification there would be `setState` during a
+  /// build. A microtask drains when the frame's task returns, which is after
+  /// build, layout and paint and soon enough for a list nobody is mid-gesture
+  /// on.
+  ///
+  /// A microtask rather than a post-frame callback because this class holds no
+  /// widgets and should not need a binding to exist — it is registered from
+  /// `initState` and read by one sheet, and a plain unit test of it must not
+  /// have to boot Flutter.
+  void _announce() {
+    if (_disposed) return;
+    scheduleMicrotask(() {
+      if (_disposed) return;
+      notifyListeners();
+    });
+  }
+
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 
   /// The shortcut [event] fires, or null.
@@ -280,11 +315,18 @@ class _ShortcutHostState extends State<ShortcutHost> {
       return true;
     }
     if (!_running.add(shortcut.id)) return true;
+    // `Future.sync`, not `Future.value`: the latter evaluates the callback
+    // first, so a *synchronous* throw inside it escapes before `whenComplete`
+    // is ever attached — leaving the id held for the life of the app and that
+    // shortcut silently dead with no way back. `sync` catches the throw into
+    // the future, so the release always runs.
+    //
     // Swallowed either way: the key was ours, and letting it fall through to
     // whatever is focused underneath would be worse than doing nothing.
-    Future.value(
-      shortcut.onInvoke(context),
-    ).whenComplete(() => _running.remove(shortcut.id));
+    Future.sync(() => shortcut.onInvoke(context))
+        .whenComplete(() => _running.remove(shortcut.id))
+        // Nothing here can act on it. An error is the shortcut's own to report.
+        .ignore();
     return true;
   }
 

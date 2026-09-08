@@ -9,13 +9,18 @@ import 'shortcuts_sheet.dart';
 /// A single list, built once, because [ScopedShortcuts] compares the list it was
 /// given with the one before it — a fresh literal on every build would
 /// unregister and re-register the lot on every frame.
+/// ⌘K. Named, because the search bar prints its label as a hint and must not
+/// have to find it by id — a rename would then be a red screen on every route
+/// rather than a compile error here.
+const AppShortcut kSearchShortcut = AppShortcut(
+  id: 'app.search',
+  key: LogicalKeyboardKey.keyK,
+  labelKey: 'shortcuts.app.search',
+  onInvoke: openGlobalSearch,
+);
+
 final List<AppShortcut> kGlobalShortcuts = [
-  const AppShortcut(
-    id: 'app.search',
-    key: LogicalKeyboardKey.keyK,
-    labelKey: 'shortcuts.app.search',
-    onInvoke: openGlobalSearch,
-  ),
+  kSearchShortcut,
   const AppShortcut(
     id: 'app.shortcuts',
     key: LogicalKeyboardKey.slash,

@@ -69,6 +69,9 @@ final List<AppShortcut> kTimeShortcuts = [
 /// running. What "ending" means for a break is [TimerCubit.end]'s business.
 void toggleTimer(BuildContext context) {
   final cubit = context.read<TimerCubit>();
+  // The entry, if there is one, is not this key's business: the toast that
+  // reports a failure is app-wide, and the overlap advice belongs on the screen
+  // where somebody was looking at the hours.
   unawaited(cubit.state.isRunning ? cubit.end() : cubit.start());
 }
 
@@ -78,16 +81,25 @@ void toggleTimer(BuildContext context) {
 /// the module on while the app is running, and the keys have to start working
 /// without a restart — the same rule the navigation already follows.
 class TimeShortcuts extends StatelessWidget {
-  const TimeShortcuts({super.key, required this.child});
+  const TimeShortcuts({super.key, required this.child, this.enabled = true});
+
+  /// Whether the caller has a reason of its own to withhold them — a session
+  /// that is not signed in. The module's own flag is read here.
+  final bool enabled;
 
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final enabled = context.select<AppConfigBloc, bool>(
+    final moduleOn = context.select<AppConfigBloc, bool>(
       (bloc) => bloc.state.meta?.advancedTimeTracking ?? false,
     );
-    if (!enabled) return child;
-    return ScopedShortcuts(shortcuts: kTimeShortcuts, child: child);
+    // An empty list rather than a different tree: see the note in `app.dart`.
+    // An administrator can switch the module on while the app is running, and
+    // that must not re-inflate the router.
+    return ScopedShortcuts(
+      shortcuts: enabled && moduleOn ? kTimeShortcuts : const [],
+      child: child,
+    );
   }
 }

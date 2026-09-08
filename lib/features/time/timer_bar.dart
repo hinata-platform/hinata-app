@@ -257,17 +257,13 @@ class _TimerBarBody extends StatelessWidget {
 
   /// Ends the timer, and says what the entry collided with if it made one.
   ///
-  /// `end`, not `stop`: a break is never filed, and the server refuses a stop
-  /// on one outright. The cubit owns that branch — see [TimerCubit.end] — so
-  /// the four places that end a timer cannot disagree about it. A break makes
-  /// no entry, so there is nothing to reload and nothing to advise about.
+  /// `end`, not `stop`: a break is never filed, and the server refuses a stop on
+  /// one outright. The cubit owns that branch — see [TimerCubit.end] — so no
+  /// screen has to know it, and none of them can disagree about it. A break
+  /// answers null: nothing was filed, so there is nothing to reload and nothing
+  /// to advise about.
   Future<void> _end(BuildContext context, RunningTimer timer) async {
-    final cubit = context.read<TimerCubit>();
-    if (timer.isBreak) {
-      await cubit.discard();
-      return;
-    }
-    final saved = await cubit.stop();
+    final saved = await context.read<TimerCubit>().end();
     if (saved == null || !context.mounted) return;
     onStopped?.call();
     // The overlap advice, said once, where the decision was made. It is not a
