@@ -856,7 +856,8 @@
       "stop": "Stop",
       "discard": "Discard timer",
       "noDescription": "No description",
-      "title": "Timer"
+      "title": "Timer",
+      "chooseMode": "Choose how it counts"
     },
     "placement": {
       "none": "No project",
@@ -913,6 +914,31 @@
       "truncated": "This range holds more entries than the calendar shows. Narrow it to see them all.",
       "more": "+{{count}} more",
       "more_plural": "+{{count}} more"
+    },
+    "mode": {
+      "stopwatch": "Stopwatch",
+      "countdown": "Countdown",
+      "pomodoro": "Pomodoro"
+    },
+    "phase": {
+      "work": "Focus",
+      "shortBreak": "Short break",
+      "longBreak": "Long break"
+    },
+    "focus": {
+      "title": "Focus",
+      "leave": "Leave",
+      "idle": "Nothing running",
+      "resume": "Back to work",
+      "takeBreak": "Take a break",
+      "endSession": "End session"
+    },
+    "signal": {
+      "countdown": "Your countdown is up.",
+      "breakOver": "Break over — back to it when you are ready.",
+      "workOver": "One interval done. Time for a break.",
+      "workOver_plural": "{{count}} intervals done. Time for a break.",
+      "titleFlash": "Interval over"
     }
   },
   "projects": {
@@ -1330,7 +1356,12 @@
       "reports": "Go to Reports",
       "knowledge": "Go to Knowledge",
       "newIssue": "Create new issue",
-      "toggleTheme": "Toggle light / dark appearance"
+      "toggleTheme": "Toggle light / dark appearance",
+      "toggleTimer": "Start or stop the timer",
+      "logTime": "Log time",
+      "focusMode": "Focus mode",
+      "time": "Time",
+      "timesheet": "Timesheet"
     }
   },
   "settings": {
@@ -2503,6 +2534,23 @@
     "tokens": {
       "title": "Access tokens",
       "subtitle": "Personal Access Tokens for the MCP server and API access."
+    },
+    "timeTracking": {
+      "title": "Time tracking",
+      "subtitle": "Your own rhythm — lengths, countdown and the end-of-interval sound.",
+      "pomodoro": "Pomodoro",
+      "work": "Focus interval",
+      "shortBreak": "Short break",
+      "longBreak": "Long break",
+      "cycles": "Intervals before the long break",
+      "countdown": "Countdown",
+      "countdownLength": "Default length",
+      "sound": "Play a sound",
+      "soundHint": "A short chime when an interval ends. The message appears either way.",
+      "minutes": "{{count}} min",
+      "intervals": "{{count}} interval",
+      "intervals_plural": "{{count}} intervals",
+      "saveFailed": "Could not save your preferences."
     }
   },
   "twofa": {
@@ -2838,6 +2886,22 @@
     "empty": {
       "title": "Nothing watched yet",
       "message": "Open an issue and turn on “Watch” to be notified about every change to it."
+    }
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "subtitle": "What works right now, wherever you are.",
+    "none": "No shortcuts on this screen.",
+    "group": {
+      "general": "General",
+      "time": "Time"
+    },
+    "app": {
+      "search": "Search and jump to",
+      "shortcuts": "Keyboard shortcuts"
+    },
+    "focus": {
+      "leave": "Leave focus mode"
     }
   }
 }

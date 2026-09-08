@@ -856,7 +856,8 @@
       "stop": "Detener",
       "discard": "Descartar temporizador",
       "noDescription": "Sin descripción",
-      "title": "Temporizador"
+      "title": "Temporizador",
+      "chooseMode": "Elegir cómo cuenta"
     },
     "placement": {
       "none": "Sin proyecto",
@@ -913,6 +914,31 @@
       "truncated": "Este periodo tiene más entradas de las que muestra el calendario. Redúcelo para verlas todas.",
       "more": "+{{count}} más",
       "more_plural": "+{{count}} más"
+    },
+    "mode": {
+      "stopwatch": "Cronómetro",
+      "countdown": "Cuenta atrás",
+      "pomodoro": "Pomodoro"
+    },
+    "phase": {
+      "work": "Concentración",
+      "shortBreak": "Pausa corta",
+      "longBreak": "Pausa larga"
+    },
+    "focus": {
+      "title": "Concentración",
+      "leave": "Salir",
+      "idle": "Nada en marcha",
+      "resume": "Volver al trabajo",
+      "takeBreak": "Tomar una pausa",
+      "endSession": "Terminar sesión"
+    },
+    "signal": {
+      "countdown": "Tu cuenta atrás ha terminado.",
+      "breakOver": "Pausa terminada: sigue cuando quieras.",
+      "workOver": "Un intervalo hecho. Hora de una pausa.",
+      "workOver_plural": "{{count}} intervalos hechos. Hora de una pausa.",
+      "titleFlash": "Intervalo terminado"
     }
   },
   "projects": {
@@ -1330,7 +1356,12 @@
       "reports": "Ir a Informes",
       "knowledge": "Ir a Conocimiento",
       "newIssue": "Crear una incidencia",
-      "toggleTheme": "Alternar apariencia clara / oscura"
+      "toggleTheme": "Alternar apariencia clara / oscura",
+      "toggleTimer": "Iniciar o detener el temporizador",
+      "logTime": "Registrar tiempo",
+      "focusMode": "Modo concentración",
+      "time": "Tiempo",
+      "timesheet": "Parte de horas"
     }
   },
   "settings": {
@@ -2503,6 +2534,23 @@
     "tokens": {
       "title": "Tokens de acceso",
       "subtitle": "Tokens de acceso personal para el servidor MCP y el acceso a la API."
+    },
+    "timeTracking": {
+      "title": "Control de tiempo",
+      "subtitle": "Tu propio ritmo: duraciones, cuenta atrás y el sonido al terminar.",
+      "pomodoro": "Pomodoro",
+      "work": "Intervalo de trabajo",
+      "shortBreak": "Pausa corta",
+      "longBreak": "Pausa larga",
+      "cycles": "Intervalos antes de la pausa larga",
+      "countdown": "Cuenta atrás",
+      "countdownLength": "Duración predeterminada",
+      "sound": "Reproducir un sonido",
+      "soundHint": "Un breve tono al terminar un intervalo. El mensaje aparece igualmente.",
+      "minutes": "{{count}} min",
+      "intervals": "{{count}} intervalo",
+      "intervals_plural": "{{count}} intervalos",
+      "saveFailed": "No se han podido guardar tus preferencias."
     }
   },
   "twofa": {
@@ -2838,6 +2886,22 @@
     "empty": {
       "title": "Todavía no sigues nada",
       "message": "Abre una incidencia y activa «Seguir» para recibir avisos de cada cambio."
+    }
+  },
+  "shortcuts": {
+    "title": "Atajos de teclado",
+    "subtitle": "Lo que funciona ahora mismo, estés donde estés.",
+    "none": "No hay atajos en esta pantalla.",
+    "group": {
+      "general": "General",
+      "time": "Tiempo"
+    },
+    "app": {
+      "search": "Buscar e ir a",
+      "shortcuts": "Atajos de teclado"
+    },
+    "focus": {
+      "leave": "Salir del modo concentración"
     }
   }
 }

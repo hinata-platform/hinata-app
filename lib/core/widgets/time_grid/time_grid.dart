@@ -465,9 +465,7 @@ class _TimeGridState extends State<TimeGrid> {
       // a tap says, and it gets the same answer. Without this the two gestures
       // would disagree by three quarters of an hour for no reason a reader
       // could name.
-      widget.onCreate?.call(
-        drag.moved ? drag.span : _spanAt(drag.anchor),
-      );
+      widget.onCreate?.call(drag.moved ? drag.span : _spanAt(drag.anchor));
     } else {
       widget.onMoved?.call(drag.item!, drag.span);
     }
@@ -481,10 +479,8 @@ class _TimeGridState extends State<TimeGrid> {
   }
 
   /// What a gesture that only named a moment asks for.
-  TimeGridSpan _spanAt(DateTime at) => (
-    start: at,
-    end: at.add(widget.newEntryLength),
-  );
+  TimeGridSpan _spanAt(DateTime at) =>
+      (start: at, end: at.add(widget.newEntryLength));
 
   /// One tap opens the block under it; two on empty canvas start an entry.
   ///

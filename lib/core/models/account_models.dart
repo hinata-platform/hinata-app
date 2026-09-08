@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
+
 import '../util/dates.dart';
+import 'time_models.dart' show PomodoroConfig;
 
 /// How an account was provisioned. SSO origins make email + password
 /// read-only ("managed by your identity provider").
@@ -27,6 +29,96 @@ enum AuthOrigin {
 }
 
 /// The signed-in user as seen by the self-service `/me` surface.
+/// How this account's timer counts, when it is left to count by itself.
+///
+/// Bounds are stated here as well as on the server: a stepper that offers a
+/// number the server refuses is a 400 the person cannot make sense of.
+class TimePreferences extends Equatable {
+  const TimePreferences({
+    this.pomodoroWork = 25,
+    this.pomodoroShortBreak = 5,
+    this.pomodoroLongBreak = 15,
+    this.pomodoroCycles = 4,
+    this.countdownMinutes = 25,
+    this.sound = true,
+  });
+
+  static const int minWork = 1;
+  static const int maxWork = 180;
+  static const int minBreak = 1;
+  static const int maxBreak = 60;
+  static const int minLongBreak = 1;
+  static const int maxLongBreak = 180;
+  static const int minCycles = 2;
+  static const int maxCycles = 12;
+  static const int minCountdown = 1;
+  static const int maxCountdown = 24 * 60;
+
+  final int pomodoroWork;
+  final int pomodoroShortBreak;
+  final int pomodoroLongBreak;
+  final int pomodoroCycles;
+
+  /// What the countdown offers first — the last length that was chosen.
+  final int countdownMinutes;
+
+  /// Whether the end of an interval plays a sound. The toast appears either way.
+  final bool sound;
+
+  /// The lengths a pomodoro started now would count by.
+  PomodoroConfig get pomodoro => PomodoroConfig(
+    work: pomodoroWork,
+    shortBreak: pomodoroShortBreak,
+    longBreak: pomodoroLongBreak,
+    cycles: pomodoroCycles,
+  );
+
+  TimePreferences copyWith({
+    int? pomodoroWork,
+    int? pomodoroShortBreak,
+    int? pomodoroLongBreak,
+    int? pomodoroCycles,
+    int? countdownMinutes,
+    bool? sound,
+  }) => TimePreferences(
+    pomodoroWork: pomodoroWork ?? this.pomodoroWork,
+    pomodoroShortBreak: pomodoroShortBreak ?? this.pomodoroShortBreak,
+    pomodoroLongBreak: pomodoroLongBreak ?? this.pomodoroLongBreak,
+    pomodoroCycles: pomodoroCycles ?? this.pomodoroCycles,
+    countdownMinutes: countdownMinutes ?? this.countdownMinutes,
+    sound: sound ?? this.sound,
+  );
+
+  factory TimePreferences.fromJson(Map<String, dynamic> json) =>
+      TimePreferences(
+        pomodoroWork: (json['pomodoroWork'] as num?)?.toInt() ?? 25,
+        pomodoroShortBreak: (json['pomodoroShortBreak'] as num?)?.toInt() ?? 5,
+        pomodoroLongBreak: (json['pomodoroLongBreak'] as num?)?.toInt() ?? 15,
+        pomodoroCycles: (json['pomodoroCycles'] as num?)?.toInt() ?? 4,
+        countdownMinutes: (json['countdownMinutes'] as num?)?.toInt() ?? 25,
+        sound: json['sound'] as bool? ?? true,
+      );
+
+  Map<String, dynamic> toJson() => {
+    'pomodoroWork': pomodoroWork,
+    'pomodoroShortBreak': pomodoroShortBreak,
+    'pomodoroLongBreak': pomodoroLongBreak,
+    'pomodoroCycles': pomodoroCycles,
+    'countdownMinutes': countdownMinutes,
+    'sound': sound,
+  };
+
+  @override
+  List<Object?> get props => [
+    pomodoroWork,
+    pomodoroShortBreak,
+    pomodoroLongBreak,
+    pomodoroCycles,
+    countdownMinutes,
+    sound,
+  ];
+}
+
 class Me extends Equatable {
   const Me({
     required this.id,
@@ -39,6 +131,7 @@ class Me extends Equatable {
     required this.active,
     required this.twoFactor,
     required this.notificationPreferences,
+    this.timePreferences = const TimePreferences(),
     this.pendingEmail,
     this.title,
     this.pronouns,
@@ -71,6 +164,11 @@ class Me extends Equatable {
   final DateTime? passwordChangedAt;
   final TwoFactor twoFactor;
   final NotifPrefs notificationPreferences;
+
+  /// How this person likes their timer to count. Their own, never an
+  /// administrator's: HIN-60 R2/R7 — nobody else prescribes the length of
+  /// somebody's breaks.
+  final TimePreferences timePreferences;
 
   Me copyWith({
     String? displayName,
@@ -136,6 +234,9 @@ class Me extends Equatable {
     notificationPreferences: NotifPrefs.fromJson(
       (json['notificationPreferences'] as Map<String, dynamic>?) ?? const {},
     ),
+    timePreferences: TimePreferences.fromJson(
+      (json['timePreferences'] as Map<String, dynamic>?) ?? const {},
+    ),
   );
 
   @override
@@ -150,6 +251,7 @@ class Me extends Equatable {
     locale,
     timezone,
     twoFactor,
+    timePreferences,
   ];
 }
 

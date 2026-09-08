@@ -856,7 +856,8 @@
       "stop": "停止",
       "discard": "タイマーを破棄",
       "noDescription": "説明なし",
-      "title": "タイマー"
+      "title": "タイマー",
+      "chooseMode": "数え方を選ぶ"
     },
     "placement": {
       "none": "プロジェクトなし",
@@ -913,6 +914,31 @@
       "truncated": "この期間にはカレンダーに表示しきれない記録があります。期間を狭めるとすべて表示されます。",
       "more": "他 {{count}} 件",
       "more_plural": "他 {{count}} 件"
+    },
+    "mode": {
+      "stopwatch": "ストップウォッチ",
+      "countdown": "カウントダウン",
+      "pomodoro": "ポモドーロ"
+    },
+    "phase": {
+      "work": "集中",
+      "shortBreak": "小休憩",
+      "longBreak": "長い休憩"
+    },
+    "focus": {
+      "title": "集中",
+      "leave": "終了",
+      "idle": "計測していません",
+      "resume": "作業に戻る",
+      "takeBreak": "休憩する",
+      "endSession": "セッションを終える"
+    },
+    "signal": {
+      "countdown": "カウントダウンが終わりました。",
+      "breakOver": "休憩は終わりです。準備ができたら再開しましょう。",
+      "workOver": "1 区間完了。休憩しましょう。",
+      "workOver_plural": "{{count}} 区間完了。休憩しましょう。",
+      "titleFlash": "区間終了"
     }
   },
   "projects": {
@@ -1330,7 +1356,12 @@
       "reports": "レポートへ移動",
       "knowledge": "ナレッジへ移動",
       "newIssue": "新しい課題を作成",
-      "toggleTheme": "ライト / ダークの外観を切り替え"
+      "toggleTheme": "ライト / ダークの外観を切り替え",
+      "toggleTimer": "タイマーの開始・停止",
+      "logTime": "作業時間を記録",
+      "focusMode": "集中モード",
+      "time": "時間",
+      "timesheet": "工数表"
     }
   },
   "settings": {
@@ -2503,6 +2534,23 @@
     "tokens": {
       "title": "アクセストークン",
       "subtitle": "MCP サーバーと API へのアクセスに使う個人用アクセストークン。"
+    },
+    "timeTracking": {
+      "title": "時間の記録",
+      "subtitle": "あなた自身のリズム — 長さ、カウントダウン、区間終了の音。",
+      "pomodoro": "ポモドーロ",
+      "work": "作業区間",
+      "shortBreak": "小休憩",
+      "longBreak": "長い休憩",
+      "cycles": "長い休憩までの区間数",
+      "countdown": "カウントダウン",
+      "countdownLength": "既定の長さ",
+      "sound": "音を鳴らす",
+      "soundHint": "区間の終わりに短い音が鳴ります。メッセージはいずれにせよ表示されます。",
+      "minutes": "{{count}} 分",
+      "intervals": "{{count}} 区間",
+      "intervals_plural": "{{count}} 区間",
+      "saveFailed": "設定を保存できませんでした。"
     }
   },
   "twofa": {
@@ -2838,6 +2886,22 @@
     "empty": {
       "title": "ウォッチ中の課題はありません",
       "message": "課題を開いて「ウォッチ」をオンにすると、その課題のすべての変更が通知されます。"
+    }
+  },
+  "shortcuts": {
+    "title": "キーボードショートカット",
+    "subtitle": "どの画面でも、いま使えるショートカットです。",
+    "none": "この画面にショートカットはありません。",
+    "group": {
+      "general": "全般",
+      "time": "時間"
+    },
+    "app": {
+      "search": "検索して移動",
+      "shortcuts": "キーボードショートカット"
+    },
+    "focus": {
+      "leave": "集中モードを終了"
     }
   }
 }

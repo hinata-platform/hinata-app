@@ -343,7 +343,9 @@ void main() {
     expect(created, isNull);
   });
 
-  testWidgets('a mouse sweeps out a span without holding first', (tester) async {
+  testWidgets('a mouse sweeps out a span without holding first', (
+    tester,
+  ) async {
     // The web with a mouse had no create gesture at all: pressing and holding
     // half a second before dragging is something nobody does with a mouse, and
     // a tap only says where. A precise pointer has a one-pixel slop, so a plain

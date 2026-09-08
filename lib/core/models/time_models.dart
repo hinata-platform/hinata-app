@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/widgets.dart' show IconData;
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../util/dates.dart';
 import 'work_models.dart';
@@ -10,8 +12,12 @@ import 'work_models.dart';
 /// panel and the timesheet already read. A second model of the same rows would
 /// be two parsers to keep in step for no gain.
 
-/// How a timer counts. Only [stopwatch] is written before HIN-86; the other two
-/// are stored by the server today so that the value never changes meaning.
+/// How a timer counts.
+///
+/// The server owns this, as it owns whether a timer runs at all: a pomodoro
+/// begun on a phone has to be the same pomodoro on a laptop, half-way through
+/// the same interval. Only [stopwatch] was ever written before HIN-86, so a
+/// stored value never changes meaning.
 enum TimerMode {
   stopwatch,
   countdown,
@@ -22,6 +28,121 @@ enum TimerMode {
     'POMODORO' => TimerMode.pomodoro,
     _ => TimerMode.stopwatch,
   };
+
+  String get wire => switch (this) {
+    TimerMode.stopwatch => 'STOPWATCH',
+    TimerMode.countdown => 'COUNTDOWN',
+    TimerMode.pomodoro => 'POMODORO',
+  };
+
+  /// The i18n key for this mode's name.
+  String get labelKey => 'time.mode.$name';
+
+  /// The glyph every surface draws for it. Here rather than in a `switch` at
+  /// each call site: a fourth mode should be one edit, not three.
+  IconData get icon => switch (this) {
+    TimerMode.stopwatch => LucideIcons.timer,
+    TimerMode.countdown => LucideIcons.hourglass,
+    TimerMode.pomodoro => LucideIcons.circleDot,
+  };
+}
+
+/// Which half of a pomodoro cycle is running. Null outside [TimerMode.pomodoro].
+enum TimerPhase {
+  work,
+  shortBreak,
+  longBreak;
+
+  static TimerPhase? parse(String? raw) => switch (raw) {
+    'WORK' => TimerPhase.work,
+    'BREAK' => TimerPhase.shortBreak,
+    'LONG_BREAK' => TimerPhase.longBreak,
+    _ => null,
+  };
+
+  /// How the server spells it. Beside [parse], because the pairing is the whole
+  /// point: `shortBreak` is `BREAK` on the wire, and a spelling written out at
+  /// a call site somewhere else is one that can be renamed without this one
+  /// noticing — after which a restored pomodoro reads back with no phase.
+  String get wire => switch (this) {
+    TimerPhase.work => 'WORK',
+    TimerPhase.shortBreak => 'BREAK',
+    TimerPhase.longBreak => 'LONG_BREAK',
+  };
+
+  /// Whether this half records nothing. The distinction the whole module turns
+  /// on: booked time is worked time, so a break never becomes an entry.
+  bool get isBreak => this != TimerPhase.work;
+
+  String get labelKey => 'time.phase.$name';
+}
+
+/// The lengths one pomodoro run counts by, in minutes.
+///
+/// A copy of the person's preferences taken when the run started, not a live
+/// reference to them: changing your preferred break length must not rewrite the
+/// run you are in the middle of.
+class PomodoroConfig extends Equatable {
+  const PomodoroConfig({
+    this.work = 25,
+    this.shortBreak = 5,
+    this.longBreak = 15,
+    this.cycles = 4,
+  });
+
+  final int work;
+  final int shortBreak;
+  final int longBreak;
+
+  /// Work intervals per set — after that many, the break is the long one.
+  final int cycles;
+
+  /// Whether work interval number [done] completes a set.
+  ///
+  /// [done] must be positive as well as divide evenly: zero divides by
+  /// everything, so without it a run whose first interval recorded nothing
+  /// would open with the long break — the reward for a set nobody has worked.
+  bool _completesASet(int done) => cycles > 0 && done > 0 && done % cycles == 0;
+
+  /// Minutes of the break that follows work interval number [done].
+  int breakAfter(int done) => _completesASet(done) ? longBreak : shortBreak;
+
+  /// Which break follows work interval number [done].
+  TimerPhase phaseAfter(int done) =>
+      _completesASet(done) ? TimerPhase.longBreak : TimerPhase.shortBreak;
+
+  /// How long [phase] runs, given the intervals already done.
+  int minutesOf(TimerPhase phase, int done) =>
+      phase == TimerPhase.work ? work : breakAfter(done);
+
+  PomodoroConfig copyWith({
+    int? work,
+    int? shortBreak,
+    int? longBreak,
+    int? cycles,
+  }) => PomodoroConfig(
+    work: work ?? this.work,
+    shortBreak: shortBreak ?? this.shortBreak,
+    longBreak: longBreak ?? this.longBreak,
+    cycles: cycles ?? this.cycles,
+  );
+
+  factory PomodoroConfig.fromJson(Map<String, dynamic> json) => PomodoroConfig(
+    work: (json['work'] as num?)?.toInt() ?? 25,
+    shortBreak: (json['shortBreak'] as num?)?.toInt() ?? 5,
+    longBreak: (json['longBreak'] as num?)?.toInt() ?? 15,
+    cycles: (json['cycles'] as num?)?.toInt() ?? 4,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'work': work,
+    'shortBreak': shortBreak,
+    'longBreak': longBreak,
+    'cycles': cycles,
+  };
+
+  @override
+  List<Object?> get props => [work, shortBreak, longBreak, cycles];
 }
 
 /// The timer the server says is running for this account.
@@ -43,6 +164,10 @@ class RunningTimer extends Equatable {
     this.billable = false,
     this.mode = TimerMode.stopwatch,
     this.plannedMinutes,
+    this.pomodoro,
+    this.phase,
+    this.phaseStartedAt,
+    this.cyclesDone = 0,
   });
 
   final String id;
@@ -57,7 +182,25 @@ class RunningTimer extends Equatable {
   final List<String> tags;
   final bool billable;
   final TimerMode mode;
+
+  /// A countdown's target, in minutes; null for the other two modes.
   final int? plannedMinutes;
+
+  /// The lengths a pomodoro run counts by; null for the other two modes.
+  final PomodoroConfig? pomodoro;
+
+  /// Which half of a pomodoro is running; null for the other two modes.
+  final TimerPhase? phase;
+
+  /// When the current [phase] began. Equal to [startedAt] today, because every
+  /// phase change writes a new timer, but they are not the same fact.
+  final DateTime? phaseStartedAt;
+
+  /// Work intervals completed in this run — what decides when the long break
+  /// falls, and what the focus screen counts out.
+  final int cyclesDone;
+
+  bool get isBreak => phase?.isBreak ?? false;
 
   /// How long it has been running as of [now], never negative.
   ///
@@ -67,6 +210,25 @@ class RunningTimer extends Equatable {
   Duration elapsed(DateTime now) {
     final elapsed = now.difference(startedAt);
     return elapsed.isNegative ? Duration.zero : elapsed;
+  }
+
+  /// How long this timer is counting *towards*, or null when it counts towards
+  /// nothing — which is what a stopwatch is.
+  Duration? get target => switch (mode) {
+    TimerMode.stopwatch => null,
+    TimerMode.countdown =>
+      plannedMinutes == null ? null : Duration(minutes: plannedMinutes!),
+    TimerMode.pomodoro =>
+      (pomodoro == null || phase == null)
+          ? null
+          : Duration(minutes: pomodoro!.minutesOf(phase!, cyclesDone)),
+  };
+
+  /// Whether the current interval has reached its target. Always false for a
+  /// stopwatch, which has none.
+  bool hasReachedTarget(DateTime now) {
+    final target = this.target;
+    return target != null && elapsed(now) >= target;
   }
 
   factory RunningTimer.fromJson(Map<String, dynamic> json) => RunningTimer(
@@ -82,6 +244,12 @@ class RunningTimer extends Equatable {
     billable: json['billable'] as bool? ?? false,
     mode: TimerMode.parse(json['mode'] as String?),
     plannedMinutes: (json['plannedMinutes'] as num?)?.toInt(),
+    pomodoro: json['pomodoro'] is Map<String, dynamic>
+        ? PomodoroConfig.fromJson(json['pomodoro'] as Map<String, dynamic>)
+        : null,
+    phase: TimerPhase.parse(json['phase'] as String?),
+    phaseStartedAt: parseInstant(json['phaseStartedAt']),
+    cyclesDone: (json['cyclesDone'] as num?)?.toInt() ?? 0,
   );
 
   @override
@@ -96,6 +264,10 @@ class RunningTimer extends Equatable {
     billable,
     mode,
     plannedMinutes,
+    pomodoro,
+    phase,
+    phaseStartedAt,
+    cyclesDone,
   ];
 }
 
