@@ -47,9 +47,16 @@ class _TimerSignalsState extends State<TimerSignals> {
   AudioPlayer? _player;
   Timer? _titleReset;
 
-  /// Set once the platform has said it cannot play this. Without it a device
-  /// with no audio stack is asked again at the end of every interval, for ever.
-  bool _chimeUnavailable = false;
+  /// How many times playing the chime has failed.
+  ///
+  /// Two strikes, then silence for the rest of the session. One is not enough:
+  /// a browser that has not been interacted with, or an output device unplugged
+  /// mid-session, is a failure that may not repeat, and latching on the first
+  /// would silence somebody's chime for the day over a transient. Unbounded is
+  /// not right either — a platform with no audio stack will not grow one, and
+  /// asking it again at the end of every interval is a decoder it cannot build,
+  /// for ever.
+  int _chimeFailures = 0;
 
   @override
   void dispose() {
@@ -103,11 +110,12 @@ class _TimerSignalsState extends State<TimerSignals> {
     // its own app-level notice.
     final overlay = rootNavigatorKey.currentState?.overlay;
     final message = _message(context, signal);
-    // The chime and the title do not depend on there being a navigator, so they
-    // are not skipped when there is none. Nothing here may throw: an interval
-    // ending is not a moment to lose the sound as well as the message.
+    // The chime does not need a navigator, so it is not skipped when there is
+    // none: an interval ending is not a moment to lose the sound as well as the
+    // message. The title needs one only to localize itself, and it is handed
+    // this context rather than looking one up again.
     if (overlay == null) {
-      _sound(context, message);
+      _sound(context);
       return;
     }
     final cubit = context.read<TimerCubit>();
@@ -127,15 +135,15 @@ class _TimerSignalsState extends State<TimerSignals> {
           ? () => unawaited(cubit.advancePhase())
           : null,
     );
-    _sound(context, message);
+    _sound(context);
   }
 
   /// The two halves that are not the toast.
-  void _sound(BuildContext context, String message) {
+  void _sound(BuildContext context) {
     if (context.read<TimePreferencesCubit>().state.sound) {
       unawaited(_chimeOnce());
     }
-    _flashTitle();
+    _flashTitle(context);
   }
 
   /// What the person is told. It names the interval that *ended*, and for a
@@ -161,16 +169,15 @@ class _TimerSignalsState extends State<TimerSignals> {
   /// with yet, a platform with no audio at all — and that must not turn "your
   /// break is over" into a crash.
   Future<void> _chimeOnce() async {
-    if (_chimeUnavailable) return;
+    if (_chimeFailures >= 2) return;
     try {
       final player = _player ??= AudioPlayer();
       if (player.audioSource == null) await player.setAsset(_chime);
       await player.seek(Duration.zero);
       unawaited(player.play());
     } catch (_) {
-      // Silence is an acceptable outcome; the toast already said it. Asked
-      // once and not again: a platform with no audio will not grow one.
-      _chimeUnavailable = true;
+      // Silence is an acceptable outcome; the toast already said it.
+      _chimeFailures++;
     }
   }
 
@@ -190,10 +197,8 @@ class _TimerSignalsState extends State<TimerSignals> {
   /// Platform-dependent by nature — the web sets the document title, Android the
   /// task-switcher label, and the desktop embedders ignore it. That is why it is
   /// an *addition* to the toast rather than a replacement for it.
-  void _flashTitle() {
+  void _flashTitle(BuildContext context) {
     if (defaultTargetPlatform == TargetPlatform.iOS) return;
-    final context = rootNavigatorKey.currentContext;
-    if (context == null || !context.mounted) return;
     _titleReset?.cancel();
     _setTitle('${context.t('time.signal.titleFlash')} · ${widget.appTitle}');
     _titleReset = Timer(const Duration(seconds: 20), () => _setTitle(null));

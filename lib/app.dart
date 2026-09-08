@@ -807,10 +807,15 @@ class _SignedInShortcuts extends StatelessWidget {
     final signedIn = context.select<AuthBloc, bool>(
       (bloc) => bloc.state.status == AuthStatus.authenticated,
     );
-    if (!signedIn) return child;
+    // The shape does not change with the answer, only the payload. Returning
+    // `child` bare would swap the widget type at this slot on every sign-in and
+    // sign-out, re-inflating the whole router subtree beneath it — throwing away
+    // the warmed audio player and the router's own state for a list that could
+    // simply be empty. `const []` is canonicalized, so the identity comparison
+    // in ScopedShortcuts stays stable across rebuilds.
     return ScopedShortcuts(
-      shortcuts: kGlobalShortcuts,
-      child: TimeShortcuts(child: child),
+      shortcuts: signedIn ? kGlobalShortcuts : const [],
+      child: TimeShortcuts(enabled: signedIn, child: child),
     );
   }
 }

@@ -309,13 +309,26 @@ void main() {
           mode: TimerMode.countdown,
           plannedMinutes: 25,
         );
-        expect(countdown.remaining(now)!.inMinutes, 15);
+        expect(countdown.target, const Duration(minutes: 25));
         expect(countdown.hasReachedTarget(now), isFalse);
+        // What is shown comes off the state, not the wall clock — see
+        // [TimerState.shown] — so the selector over it can report "unchanged".
+        expect(
+          TimerState(
+            timer: countdown,
+            elapsed: const Duration(minutes: 10),
+          ).shown,
+          const Duration(minutes: 15),
+        );
 
         final plain = RunningTimer(id: 's1', startedAt: now);
         expect(plain.target, isNull);
-        expect(plain.remaining(now), isNull);
-        // A stopwatch is never "up": nothing is owed and nothing is over.
+        // A stopwatch counts up: what is shown is simply what has elapsed.
+        expect(
+          TimerState(timer: plain, elapsed: const Duration(minutes: 3)).shown,
+          const Duration(minutes: 3),
+        );
+        // And it is never "up": nothing is owed and nothing is over.
         expect(plain.hasReachedTarget(now), isFalse);
       },
     );

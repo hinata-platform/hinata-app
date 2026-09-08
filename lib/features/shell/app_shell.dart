@@ -21,7 +21,7 @@ import '../../core/notifications/notification_swipe.dart';
 import '../../core/notifications/notification_visuals.dart';
 import '../../core/repositories/notification_repository.dart';
 import '../../core/responsive/responsive.dart';
-import '../../core/shortcuts/global_shortcuts.dart' show kGlobalShortcuts;
+import '../../core/shortcuts/global_shortcuts.dart' show kSearchShortcut;
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -78,9 +78,7 @@ bool get isNativeApp =>
 /// the shortcuts sheet cannot disagree — rebind ⌘K and both follow. The
 /// dispatcher accepts ⌘ and Ctrl everywhere, but the label has to name the key
 /// the reader actually has: a Windows or Linux keyboard has no ⌘.
-String get searchShortcutLabel => kGlobalShortcuts
-    .firstWhere((shortcut) => shortcut.id == 'app.search')
-    .label;
+String get searchShortcutLabel => kSearchShortcut.label;
 
 /// Responsive scaffold:
 /// • phone/compact (<987): Liquid-Glass floating bottom nav

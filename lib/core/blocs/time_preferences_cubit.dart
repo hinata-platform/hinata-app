@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/account_models.dart';
@@ -33,36 +35,66 @@ class TimePreferencesCubit extends Cubit<TimePreferences> {
 
   /// Takes preferences that arrived with an account read somebody else made.
   void adopt(TimePreferences preferences) {
+    _confirmed = preferences;
     if (preferences != state) emit(preferences);
   }
 
-  /// How many saves have been asked for. Only the newest one's answer counts.
-  int _sequence = 0;
+  /// How long a burst of taps is collected before anything is written.
+  ///
+  /// Long enough that pressing `+` five times is one request, short enough that
+  /// somebody who taps once and closes the panel has already saved.
+  static const Duration _settle = Duration(milliseconds: 450);
+
+  Timer? _debounce;
+  Completer<bool>? _awaiting;
+
+  /// The last value the server acknowledged. What a refusal rolls back to —
+  /// rolling back to the previous *optimistic* value would restore a number the
+  /// server never accepted either.
+  TimePreferences _confirmed = const TimePreferences();
 
   /// Writes them, showing the new value at once.
   ///
   /// Optimistic because the panel is a row of steppers: a number that only
   /// moved after a round trip would feel broken, and the only thing at stake is
-  /// a preference. A refusal puts the old value back.
+  /// a preference.
   ///
-  /// A stale answer is dropped rather than adopted. Tapping `+` five times
-  /// sends five requests, and without this the first reply would arrive after
-  /// the fifth tap and set the number *back* to what it was four taps ago —
-  /// the panel visibly counting backwards while somebody is still pressing.
-  /// Out-of-order replies do the same in the other direction.
-  Future<bool> save(TimePreferences next) async {
-    if (next == state) return true;
-    final previous = state;
-    final sequence = ++_sequence;
+  /// The write itself is collected. Five taps of `+` used to be five `PATCH`
+  /// requests, each carrying the whole document, with no ordering guarantee
+  /// between them — so the fourth could land after the fifth and leave the
+  /// server holding a value the client is not showing, uncorrected until the
+  /// next launch. One request per burst makes that impossible rather than
+  /// unlikely.
+  Future<bool> save(TimePreferences next) {
+    if (next == state) return Future.value(true);
     emit(next);
+    _debounce?.cancel();
+    final awaiting = _awaiting ??= Completer<bool>();
+    _debounce = Timer(_settle, () {
+      _awaiting = null;
+      unawaited(_write().then(awaiting.complete));
+    });
+    return awaiting.future;
+  }
+
+  Future<bool> _write() async {
+    final asked = state;
     try {
-      final saved = await _account.updateMyProfile(timePreferences: next);
-      if (sequence == _sequence) adopt(saved.timePreferences);
+      final saved = await _account.updateMyProfile(timePreferences: asked);
+      _confirmed = saved.timePreferences;
+      // Only if nothing newer has been asked for in the meantime — a burst that
+      // started again during the round trip must not be undone by its answer.
+      if (asked == state) adopt(_confirmed);
       return true;
     } catch (_) {
-      // And a refusal only rolls back if nothing newer has been asked for.
-      if (sequence == _sequence) emit(previous);
+      if (asked == state) emit(_confirmed);
       return false;
     }
+  }
+
+  @override
+  Future<void> close() {
+    _debounce?.cancel();
+    return super.close();
   }
 }

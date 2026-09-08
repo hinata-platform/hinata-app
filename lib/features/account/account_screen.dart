@@ -13,6 +13,7 @@ import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/locale_cubit.dart';
 import '../../core/blocs/theme_cubit.dart';
+import '../../core/blocs/time_preferences_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/account_models.dart';
 import '../../core/models/core_models.dart' show PlatformFlags;
@@ -176,6 +177,12 @@ class _AccountScreenState extends State<AccountScreen> {
       ]);
       if (!mounted) return;
       final page = results[1] as ({List<DeviceSession> items, int total});
+      // The account read that just happened carries the timer rhythm too, so
+      // the cubit that holds it takes this one rather than making its own
+      // request a moment later.
+      context.read<TimePreferencesCubit>().adopt(
+        (results[0] as Me).timePreferences,
+      );
       setState(() {
         _me = results[0] as Me;
         _sessions = page.items;

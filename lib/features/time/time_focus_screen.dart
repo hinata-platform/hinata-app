@@ -15,7 +15,8 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ambient_background.dart';
 import '../../core/widgets/glass_switch_chip.dart';
-import '../sprint/modals/glass_modal.dart' show anchorRectOfContext;
+import '../sprint/modals/glass_modal.dart'
+    show GlassToastKind, anchorRectOfContext, showGlassToast;
 import 'placement_picker.dart';
 
 /// The one thing on the screen is the timer.
@@ -509,11 +510,29 @@ class _Actions extends StatelessWidget {
           busy: state.isBusy,
           color: AppColors.danger,
           // `end`, not `stop`: a break is never filed, and the server refuses a
-          // stop on one outright. The cubit owns that branch so that the four
-          // places which end a timer cannot disagree about it.
-          onTap: state.isBusy ? null : () => unawaited(cubit.end()),
+          // stop on one outright. The cubit owns that branch so that no screen
+          // has to know it.
+          onTap: state.isBusy ? null : () => unawaited(_end(context)),
         ),
       ],
+    );
+  }
+
+  /// Ends the timer and passes on what the server noticed while saving.
+  ///
+  /// The overlap advice belongs wherever the decision was made. Without this the
+  /// focus screen and the timer bar answered the same action differently — which
+  /// is the divergence [TimerCubit.end] exists to prevent.
+  Future<void> _end(BuildContext context) async {
+    final saved = await context.read<TimerCubit>().end();
+    if (saved == null || !saved.hasOverlaps || !context.mounted) return;
+    showGlassToast(
+      context,
+      context.t(
+        'time.overlapWarning',
+        variables: {'count': '${saved.overlaps.length}'},
+      ),
+      kind: GlassToastKind.warning,
     );
   }
 

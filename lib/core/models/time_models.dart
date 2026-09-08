@@ -224,15 +224,6 @@ class RunningTimer extends Equatable {
           : Duration(minutes: pomodoro!.minutesOf(phase!, cyclesDone)),
   };
 
-  /// What is left of [target] as of [now], or null for a stopwatch. Clamped at
-  /// zero: a timer that has run past its target is not owed negative time.
-  Duration? remaining(DateTime now) {
-    final target = this.target;
-    if (target == null) return null;
-    final left = target - elapsed(now);
-    return left.isNegative ? Duration.zero : left;
-  }
-
   /// Whether the current interval has reached its target. Always false for a
   /// stopwatch, which has none.
   bool hasReachedTarget(DateTime now) {
