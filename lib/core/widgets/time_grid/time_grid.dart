@@ -15,6 +15,7 @@ library;
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show listEquals;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
@@ -63,6 +64,7 @@ class TimeGrid extends StatefulWidget {
     this.onTap,
     this.initialScrollHour = 8,
     this.showHeadings = true,
+    this.newEntryLength = const Duration(hours: 1),
   });
 
   /// The columns, as local dates. One for a day view, seven for a week — the
@@ -98,6 +100,14 @@ class TimeGrid extends StatefulWidget {
   /// of on midnight.
   final int initialScrollHour;
 
+  /// How long an entry is when the gesture said *where* but not *how long* —
+  /// a tap, or a press that never moved.
+  ///
+  /// An hour rather than [step]: the step is the grain a sweep rounds to, and
+  /// fifteen minutes is a useful grain and a useless default. The sheet opens
+  /// on it either way, so this is a starting point, not a decision.
+  final Duration newEntryLength;
+
   /// Whether each column writes its own date above it.
   ///
   /// A week has to: seven columns are seven days and nothing else says which.
@@ -121,9 +131,13 @@ class _Drag {
     required this.end,
     this.item,
     required this.dayIndex,
-  });
+  }) : moved = false;
 
   final _DragKind kind;
+
+  /// Whether the pointer ever left the point it went down on. A sweep says how
+  /// long; a press that stayed put only says where.
+  bool moved;
 
   /// Where the finger went down, and the one end of a sweep that does not move.
   ///
@@ -344,8 +358,7 @@ class _TimeGridState extends State<TimeGrid> {
     );
   }
 
-  void _onLongPressStart(LongPressStartDetails details, double columnWidth) {
-    final local = details.localPosition;
+  void _beginDrag(Offset local, double columnWidth) {
     final index = _dayIndexAt(local.dx, columnWidth);
     final hit = _hitTest(local, columnWidth);
     if (hit != null) {
@@ -375,14 +388,11 @@ class _TimeGridState extends State<TimeGrid> {
     });
   }
 
-  void _onLongPressMove(
-    LongPressMoveUpdateDetails details,
-    double columnWidth,
-  ) {
+  void _updateDrag(Offset local, double columnWidth) {
     final drag = _drag;
     if (drag == null) return;
-    final local = details.localPosition;
     final index = _dayIndexAt(local.dx, columnWidth);
+    drag.moved = true;
     setState(() {
       switch (drag.kind) {
         case _DragKind.create:
@@ -424,22 +434,67 @@ class _TimeGridState extends State<TimeGrid> {
     });
   }
 
-  void _onLongPressEnd(LongPressEndDetails details) {
+  void _endDrag() {
     final drag = _drag;
     setState(() => _drag = null);
     if (drag == null) return;
-    // A span of nothing is a long press that never moved, not a request.
     if (!drag.end.isAfter(drag.start)) return;
     if (drag.kind == _DragKind.create) {
-      widget.onCreate?.call(drag.span);
+      // A press that never moved said *where*, not *how long* — the same thing
+      // a tap says, and it gets the same answer. Without this the two gestures
+      // would disagree by three quarters of an hour for no reason a reader
+      // could name.
+      widget.onCreate?.call(
+        drag.moved ? drag.span : _spanAt(drag.anchor),
+      );
     } else {
       widget.onMoved?.call(drag.item!, drag.span);
     }
   }
 
-  void _onTapUp(TapUpDetails details, double columnWidth) {
-    final hit = _hitTest(details.localPosition, columnWidth);
-    if (hit != null) widget.onTap?.call(hit.item);
+  /// The pointer went away without finishing. The preview goes with it, and
+  /// nothing is created — a cancelled gesture is not a smaller request.
+  void _cancelDrag() {
+    if (_drag == null) return;
+    setState(() => _drag = null);
+  }
+
+  /// What a gesture that only named a moment asks for.
+  TimeGridSpan _spanAt(DateTime at) => (
+    start: at,
+    end: at.add(widget.newEntryLength),
+  );
+
+  /// One tap opens the block under it; two on empty canvas start an entry.
+  ///
+  /// Two, not one. A single tap on empty canvas is the easiest gesture on the
+  /// grid to make by accident — scrolling, dismissing something, putting the
+  /// window in front — and an editor that opens by itself reads as a bug rather
+  /// than as an offer. A double click is what a calendar has meant by "new
+  /// entry here" for thirty years, and it is the only create gesture a mouse
+  /// gets for free: pressing and holding half a second is something nobody
+  /// does, which is what left the web with no way to create at all.
+  ///
+  /// One [SerialTapGestureRecognizer] rather than a tap and a double tap side
+  /// by side, and that is the load-bearing part. Two recognizers in one arena
+  /// make *every* tap wait out the double-tap window before it fires — three
+  /// hundred milliseconds added to opening an entry, on every entry, to pay for
+  /// a gesture used once an hour. This one reports each tap of the series as it
+  /// happens and tells you which one it was.
+  void _onSerialTapUp(SerialTapUpDetails details, double columnWidth) {
+    final local = details.localPosition;
+    final hit = _hitTest(local, columnWidth);
+    if (hit != null) {
+      // The second click of a double click on a block is the same block again;
+      // opening it twice would stack two editors on one entry.
+      if (details.count == 1) widget.onTap?.call(hit.item);
+      return;
+    }
+    if (details.count != 2 || widget.onCreate == null) return;
+    final index = _dayIndexAt(local.dx, columnWidth);
+    widget.onCreate!.call(
+      _spanAt(_metrics.timeAt(local.dy, _dayAt(index), step: widget.step)),
+    );
   }
 
   // --- build ------------------------------------------------------------------
@@ -604,17 +659,83 @@ class _TimeGridState extends State<TimeGrid> {
 
   Widget _canvas(double columnWidth) {
     final drag = _drag;
-    return GestureDetector(
+    return RawGestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTapUp: (details) => _onTapUp(details, columnWidth),
-      // Long press, then drag — not a plain pan. Inside a scroll view a pan
-      // never wins the arena on touch (its slop is twice the scrollable's), so
-      // a drag-to-create would scroll the grid instead. The long press also
-      // keeps a stray finger from rewriting an entry by brushing past it.
-      onLongPressStart: (details) => _onLongPressStart(details, columnWidth),
-      onLongPressMoveUpdate: (details) =>
-          _onLongPressMove(details, columnWidth),
-      onLongPressEnd: _onLongPressEnd,
+      // Three recognizers, because a finger and a mouse are not the same
+      // instrument and the same gesture is wrong for both.
+      //
+      // A **tap** opens what is under it, and a **double tap** on empty canvas
+      // starts an entry there — both from one serial recognizer, so neither
+      // waits on the other. See [_onSerialTapUp].
+      //
+      // A **long press, then drag** is the sweep on touch. Not a plain pan: a
+      // pan started by a finger inside a scroll view never wins the arena (its
+      // slop is twice the scrollable's), so drag-to-create would scroll the
+      // grid instead. Holding first also keeps a stray finger from rewriting an
+      // entry by brushing past it.
+      //
+      // A **plain pan, for pointing devices only**, is that same sweep with a
+      // mouse or a stylus — where holding still for half a second before
+      // dragging is a gesture nobody performs, and the web was consequently
+      // left with no way to sweep at all. A precise pointer has a one-pixel
+      // slop, so this wins the arena against the scrollables around it the way
+      // a finger's pan cannot. Trackpads are deliberately excluded: a two-finger
+      // scroll arrives as a pan-zoom event, and accepting it here would sweep
+      // out an entry every time somebody scrolled the day.
+      gestures: <Type, GestureRecognizerFactory>{
+        SerialTapGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<SerialTapGestureRecognizer>(
+              SerialTapGestureRecognizer.new,
+              (recognizer) {
+                recognizer.onSerialTapUp = (details) {
+                  _onSerialTapUp(details, columnWidth);
+                };
+              },
+            ),
+        LongPressGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+              LongPressGestureRecognizer.new,
+              (recognizer) {
+                // Block bodies, not arrows: an `=>` inside a cascade swallows
+                // the `..` that follows it, and the next assignment silently
+                // becomes a cascade on the *result* of this callback.
+                recognizer.onLongPressStart = (details) {
+                  _beginDrag(details.localPosition, columnWidth);
+                };
+                recognizer.onLongPressMoveUpdate = (details) {
+                  _updateDrag(details.localPosition, columnWidth);
+                };
+                recognizer.onLongPressEnd = (_) => _endDrag();
+                recognizer.onLongPressCancel = _cancelDrag;
+              },
+            ),
+        PanGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
+              () => PanGestureRecognizer(
+                supportedDevices: const {
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.stylus,
+                  PointerDeviceKind.invertedStylus,
+                },
+              ),
+              (recognizer) {
+                // Where the pointer went *down*, not where the drag was
+                // recognised. The default reports the latter, so a drag begun
+                // on a block and pulled downwards hit-tests a point already
+                // past it — and moving an entry silently created a new one an
+                // hour below instead.
+                recognizer.dragStartBehavior = DragStartBehavior.down;
+                recognizer.onStart = (details) {
+                  _beginDrag(details.localPosition, columnWidth);
+                };
+                recognizer.onUpdate = (details) {
+                  _updateDrag(details.localPosition, columnWidth);
+                };
+                recognizer.onEnd = (_) => _endDrag();
+                recognizer.onCancel = _cancelDrag;
+              },
+            ),
+      },
       child: Stack(
         children: [
           // Its own layer: the vertical viewport marks its child for paint on

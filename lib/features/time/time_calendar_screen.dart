@@ -572,6 +572,18 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
 
   Future<void> _newEntry() => _createFrom(_defaultSpan());
 
+  /// A new entry on a day the reader pointed at in the month.
+  ///
+  /// Given the hour the page would have offered anyway, because a month cell
+  /// says which day and nothing about when — and an entry that opens at
+  /// midnight is one the person has to fix before they can save it.
+  Future<void> _newEntryOn(DateTime day) {
+    final fallback = _defaultSpan();
+    DateTime on(DateTime at) =>
+        DateTime(day.year, day.month, day.day, at.hour, at.minute);
+    return _createFrom((start: on(fallback.start), end: on(fallback.end)));
+  }
+
   Future<void> _createFrom(TimeGridSpan span) async {
     final saved = await showTimeEntrySheet(context, span: span);
     if (saved == null || !mounted) return;
@@ -924,6 +936,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       // block into one would have to invent the hours nobody chose. Tapping a
       // day opens it instead, which is where those hours exist.
       onTapDay: _openDay,
+      onNewOnDay: _newEntryOn,
       onTap: _openEntry,
       onRetryMonth: _retryMonth,
     );

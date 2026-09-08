@@ -1,3 +1,5 @@
+import 'package:flutter/gestures.dart'
+    show PointerDeviceKind, kDoubleTapMinTime, kDoubleTapTimeout;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/widgets/time_grid/time_grid.dart';
@@ -318,12 +320,13 @@ void main() {
     expect(created!.end.difference(created!.start), const Duration(hours: 1));
   });
 
-  testWidgets('a plain drag without the long press does not create anything', (
+  testWidgets('a finger that drags without holding first scrolls, not creates', (
     tester,
   ) async {
-    // Inside a scroll view a pan never wins the arena on touch, so the gesture
-    // is deliberately long-press-first. A drag that skips it must scroll, not
-    // silently write an entry.
+    // Inside a scroll view a pan never wins the arena on touch — its slop is
+    // twice the scrollable's — so the touch gesture is deliberately
+    // long-press-first. A drag that skips it must scroll, not silently write an
+    // entry. The mouse is the opposite case and is the test below.
     TimeGridSpan? created;
     await tester.pumpWidget(
       host(layers: [blocks(const [])], onCreate: (span) => created = span),
@@ -338,6 +341,151 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(created, isNull);
+  });
+
+  testWidgets('a mouse sweeps out a span without holding first', (tester) async {
+    // The web with a mouse had no create gesture at all: pressing and holding
+    // half a second before dragging is something nobody does with a mouse, and
+    // a tap only says where. A precise pointer has a one-pixel slop, so a plain
+    // pan wins the arena here that a finger's never could.
+    TimeGridSpan? created;
+    await tester.pumpWidget(
+      host(layers: [blocks(const [])], onCreate: (span) => created = span),
+    );
+    await tester.pumpAndSettle();
+
+    final canvas = tester.getRect(find.byType(TimeGrid));
+    final gesture = await tester.startGesture(
+      Offset(canvas.left + kTimeGridGutter + 40, canvas.top + 200),
+      kind: PointerDeviceKind.mouse,
+    );
+    await gesture.moveBy(const Offset(0, 60));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(created, isNotNull);
+    expect(created!.end.difference(created!.start), const Duration(hours: 1));
+  });
+
+  testWidgets('a mouse drag on a block moves it, and does not create', (
+    tester,
+  ) async {
+    TimeGridItem? moved;
+    TimeGridSpan? created;
+    await tester.pumpWidget(
+      host(
+        layers: [
+          blocks([entry('a', 9, 10)]),
+        ],
+        onMoved: (item, span) => moved = item,
+        onCreate: (span) => created = span,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final block = tester.getCenter(find.text('a'));
+    final gesture = await tester.startGesture(
+      block,
+      kind: PointerDeviceKind.mouse,
+    );
+    await gesture.moveBy(const Offset(0, 60));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(moved?.id, 'a');
+    expect(created, isNull);
+  });
+
+  testWidgets('a double tap on empty canvas asks for an hour at that time', (
+    tester,
+  ) async {
+    // An hour, not the step: fifteen minutes is the grain a sweep rounds to and
+    // a useless length to open an editor on.
+    TimeGridSpan? created;
+    await tester.pumpWidget(
+      host(layers: [blocks(const [])], onCreate: (span) => created = span),
+    );
+    await tester.pumpAndSettle();
+
+    final canvas = tester.getRect(find.byType(TimeGrid));
+    final at = Offset(canvas.left + kTimeGridGutter + 40, canvas.top + 120);
+    await tester.tapAt(at);
+    await tester.pump(kDoubleTapMinTime);
+    await tester.tapAt(at);
+    await tester.pump(kDoubleTapTimeout);
+    await tester.pumpAndSettle();
+
+    expect(created, isNotNull);
+    expect(created!.end.difference(created!.start), const Duration(hours: 1));
+  });
+
+  testWidgets('one tap on empty canvas creates nothing', (tester) async {
+    // The easiest gesture on the grid to make by accident. An editor that opens
+    // by itself reads as a bug, not as an offer.
+    TimeGridSpan? created;
+    await tester.pumpWidget(
+      host(layers: [blocks(const [])], onCreate: (span) => created = span),
+    );
+    await tester.pumpAndSettle();
+
+    final canvas = tester.getRect(find.byType(TimeGrid));
+    await tester.tapAt(
+      Offset(canvas.left + kTimeGridGutter + 40, canvas.top + 120),
+    );
+    await tester.pump(kDoubleTapTimeout);
+    await tester.pumpAndSettle();
+
+    expect(created, isNull);
+  });
+
+  testWidgets('a tap on a block opens it without waiting on a second', (
+    tester,
+  ) async {
+    // Two recognizers in one arena would make every tap sit out the
+    // double-tap window first. One serial recognizer reports each tap as it
+    // happens, so this fires on the frame after the finger lifts.
+    TimeGridItem? tapped;
+    await tester.pumpWidget(
+      host(
+        layers: [
+          blocks([entry('a', 9, 11)]),
+        ],
+        onTap: (item) => tapped = item,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('a'));
+    await tester.pump();
+    // One frame after the finger lifts, not one double-tap window later.
+    expect(tapped?.id, 'a');
+
+    // The serial recognizer is still listening for a second tap; let it give up
+    // so the test does not end on a pending timer.
+    await tester.pump(kDoubleTapTimeout);
+  });
+
+  testWidgets('a press that never moves asks for an hour where it was', (
+    tester,
+  ) async {
+    TimeGridSpan? created;
+    await tester.pumpWidget(
+      host(layers: [blocks(const [])], onCreate: (span) => created = span),
+    );
+    await tester.pumpAndSettle();
+
+    final canvas = tester.getRect(find.byType(TimeGrid));
+    final gesture = await tester.startGesture(
+      Offset(canvas.left + kTimeGridGutter + 40, canvas.top + 200),
+    );
+    await tester.pump(const Duration(milliseconds: 600));
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(created, isNotNull);
+    expect(created!.end.difference(created!.start), const Duration(hours: 1));
   });
 
   testWidgets('a block that may not be moved is not moved', (tester) async {

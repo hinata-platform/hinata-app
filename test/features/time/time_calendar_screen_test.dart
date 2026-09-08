@@ -1,3 +1,5 @@
+import 'package:flutter/gestures.dart'
+    show kDoubleTapMinTime, kDoubleTapTimeout;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -407,6 +409,104 @@ void main() {
       DateTime(day.year, day.month, day.day + 8),
       reason: 'the day after Sunday is Monday, and the strip follows it',
     );
+  });
+
+  // --- adding an entry by hand ---------------------------------------------
+  //
+  // The grid's own gesture arithmetic is tested next to the grid, on a grid
+  // that is nobody's child. These are about the composition: a hour canvas
+  // inside a horizontal pager inside a vertical scroll view, which is what the
+  // phone actually renders, and a month whose cells are the only surface there
+  // is. A gesture that works in isolation and loses the arena in place is
+  // exactly the failure these exist to catch.
+
+  testWidgets('a long press on the day canvas opens a new entry', (
+    tester,
+  ) async {
+    await pumpPhone(tester, _FakeTimeRepository());
+
+    final canvas = tester.getRect(find.byType(TimeGrid).first);
+    final gesture = await tester.startGesture(
+      Offset(canvas.left + kTimeGridGutter + 40, canvas.top + 120),
+    );
+    await tester.pump(const Duration(milliseconds: 600));
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(find.text('time.entry.subtitle'), findsOneWidget);
+    expect(find.text('time.entry.new'), findsWidgets);
+  });
+
+  testWidgets('a double tap on empty canvas opens a new entry at that hour', (
+    tester,
+  ) async {
+    await pumpPhone(tester, _FakeTimeRepository());
+
+    final canvas = tester.getRect(find.byType(TimeGrid).first);
+    final at = Offset(canvas.left + kTimeGridGutter + 40, canvas.top + 120);
+    await tester.tapAt(at);
+    await tester.pump(kDoubleTapMinTime);
+    await tester.tapAt(at);
+    await tester.pump(kDoubleTapTimeout);
+    await tester.pumpAndSettle();
+
+    expect(find.text('time.entry.subtitle'), findsOneWidget);
+    expect(find.text('time.entry.new'), findsWidgets);
+  });
+
+  testWidgets('a single tap on empty canvas opens nothing', (tester) async {
+    await pumpPhone(tester, _FakeTimeRepository());
+
+    final canvas = tester.getRect(find.byType(TimeGrid).first);
+    await tester.tapAt(
+      Offset(canvas.left + kTimeGridGutter + 40, canvas.top + 120),
+    );
+    await tester.pump(kDoubleTapTimeout);
+    await tester.pumpAndSettle();
+
+    expect(find.text('time.entry.subtitle'), findsNothing);
+  });
+
+  testWidgets('a tap on a block opens that block, not a new entry', (
+    tester,
+  ) async {
+    final repository = _FakeTimeRepository(
+      logged: [
+        entry(
+          id: 'a',
+          description: 'existing',
+          startedAt: DateTime(day.year, day.month, day.day, 9),
+          endedAt: DateTime(day.year, day.month, day.day, 11),
+        ),
+      ],
+    );
+    await pumpPhone(tester, repository);
+
+    await tester.tap(find.text('existing').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('time.entry.subtitle'), findsOneWidget);
+    expect(find.text('time.entry.edit'), findsWidgets);
+  });
+
+  testWidgets('a long press on a month day opens a new entry on that day', (
+    tester,
+  ) async {
+    await pump(tester, _FakeTimeRepository());
+    await tester.ensureVisible(find.text('time.calendar.month'));
+    await tester.tap(find.text('time.calendar.month'));
+    await tester.pumpAndSettle();
+
+    // Whatever today is, its own cell is on screen.
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('${day.day}').first),
+    );
+    await tester.pump(const Duration(milliseconds: 600));
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(find.text('time.entry.subtitle'), findsOneWidget);
+    expect(find.text('time.entry.new'), findsWidgets);
   });
 
   testWidgets('paging back asks for the week before', (tester) async {
