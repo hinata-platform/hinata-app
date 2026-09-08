@@ -856,7 +856,8 @@
       "stop": "停止",
       "discard": "タイマーを破棄",
       "noDescription": "説明なし",
-      "title": "タイマー"
+      "title": "タイマー",
+      "chooseMode": "数え方を選ぶ"
     },
     "placement": {
       "none": "プロジェクトなし",
@@ -936,7 +937,8 @@
       "countdown": "カウントダウンが終わりました。",
       "breakOver": "休憩は終わりです。準備ができたら再開しましょう。",
       "workOver": "1 区間完了。休憩しましょう。",
-      "workOver_plural": "{{count}} 区間完了。休憩しましょう。"
+      "workOver_plural": "{{count}} 区間完了。休憩しましょう。",
+      "titleFlash": "区間終了"
     }
   },
   "projects": {
@@ -2404,22 +2406,7 @@
       "minutesAgo": "{{count}} 分前",
       "hoursAgo": "{{count}} 時間前",
       "daysAgo": "{{count}} 日前",
-      "weeksAgo": "{{count}} 週間前",
-      "title": "時間の記録",
-      "subtitle": "あなた自身のリズム — 長さ、カウントダウン、区間終了の音。",
-      "pomodoro": "ポモドーロ",
-      "work": "作業区間",
-      "shortBreak": "小休憩",
-      "longBreak": "長い休憩",
-      "cycles": "長い休憩までの区間数",
-      "countdown": "カウントダウン",
-      "countdownLength": "既定の長さ",
-      "sound": "音を鳴らす",
-      "soundHint": "区間の終わりに短い音が鳴ります。メッセージはいずれにせよ表示されます。",
-      "minutes": "{{count}} 分",
-      "intervals": "{{count}} 区間",
-      "intervals_plural": "{{count}} 区間",
-      "saveFailed": "設定を保存できませんでした。"
+      "weeksAgo": "{{count}} 週間前"
     },
     "notifications": {
       "title": "通知",
@@ -2547,6 +2534,23 @@
     "tokens": {
       "title": "アクセストークン",
       "subtitle": "MCP サーバーと API へのアクセスに使う個人用アクセストークン。"
+    },
+    "timeTracking": {
+      "title": "時間の記録",
+      "subtitle": "あなた自身のリズム — 長さ、カウントダウン、区間終了の音。",
+      "pomodoro": "ポモドーロ",
+      "work": "作業区間",
+      "shortBreak": "小休憩",
+      "longBreak": "長い休憩",
+      "cycles": "長い休憩までの区間数",
+      "countdown": "カウントダウン",
+      "countdownLength": "既定の長さ",
+      "sound": "音を鳴らす",
+      "soundHint": "区間の終わりに短い音が鳴ります。メッセージはいずれにせよ表示されます。",
+      "minutes": "{{count}} 分",
+      "intervals": "{{count}} 区間",
+      "intervals_plural": "{{count}} 区間",
+      "saveFailed": "設定を保存できませんでした。"
     }
   },
   "twofa": {
@@ -2895,11 +2899,6 @@
     "app": {
       "search": "検索して移動",
       "shortcuts": "キーボードショートカット"
-    },
-    "time": {
-      "toggle": "タイマーの開始・停止",
-      "newEntry": "作業時間を記録",
-      "focus": "集中モード"
     },
     "focus": {
       "leave": "集中モードを終了"

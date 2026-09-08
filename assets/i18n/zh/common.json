@@ -856,7 +856,8 @@
       "stop": "停止",
       "discard": "放弃计时器",
       "noDescription": "无描述",
-      "title": "计时器"
+      "title": "计时器",
+      "chooseMode": "选择计时方式"
     },
     "placement": {
       "none": "无项目",
@@ -936,7 +937,8 @@
       "countdown": "倒计时结束了。",
       "breakOver": "休息结束——准备好就继续。",
       "workOver": "完成 1 个专注区间，休息一下吧。",
-      "workOver_plural": "完成 {{count}} 个专注区间，休息一下吧。"
+      "workOver_plural": "完成 {{count}} 个专注区间，休息一下吧。",
+      "titleFlash": "区间结束"
     }
   },
   "projects": {
@@ -2404,22 +2406,7 @@
       "minutesAgo": "{{count}} 分钟前",
       "hoursAgo": "{{count}} 小时前",
       "daysAgo": "{{count}} 天前",
-      "weeksAgo": "{{count}} 周前",
-      "title": "工时记录",
-      "subtitle": "你自己的节奏——时长、倒计时，以及区间结束时的提示音。",
-      "pomodoro": "番茄钟",
-      "work": "专注区间",
-      "shortBreak": "短休息",
-      "longBreak": "长休息",
-      "cycles": "长休息前的区间数",
-      "countdown": "倒计时",
-      "countdownLength": "默认时长",
-      "sound": "播放提示音",
-      "soundHint": "区间结束时的一声轻响。提示消息始终会出现。",
-      "minutes": "{{count}} 分钟",
-      "intervals": "{{count}} 个区间",
-      "intervals_plural": "{{count}} 个区间",
-      "saveFailed": "无法保存你的偏好设置。"
+      "weeksAgo": "{{count}} 周前"
     },
     "notifications": {
       "title": "通知",
@@ -2547,6 +2534,23 @@
     "tokens": {
       "title": "访问令牌",
       "subtitle": "用于 MCP 服务器和 API 访问的个人访问令牌。"
+    },
+    "timeTracking": {
+      "title": "工时记录",
+      "subtitle": "你自己的节奏——时长、倒计时，以及区间结束时的提示音。",
+      "pomodoro": "番茄钟",
+      "work": "专注区间",
+      "shortBreak": "短休息",
+      "longBreak": "长休息",
+      "cycles": "长休息前的区间数",
+      "countdown": "倒计时",
+      "countdownLength": "默认时长",
+      "sound": "播放提示音",
+      "soundHint": "区间结束时的一声轻响。提示消息始终会出现。",
+      "minutes": "{{count}} 分钟",
+      "intervals": "{{count}} 个区间",
+      "intervals_plural": "{{count}} 个区间",
+      "saveFailed": "无法保存你的偏好设置。"
     }
   },
   "twofa": {
@@ -2895,11 +2899,6 @@
     "app": {
       "search": "搜索并跳转",
       "shortcuts": "键盘快捷键"
-    },
-    "time": {
-      "toggle": "启动或停止计时器",
-      "newEntry": "记录工时",
-      "focus": "专注模式"
     },
     "focus": {
       "leave": "退出专注模式"

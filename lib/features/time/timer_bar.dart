@@ -47,17 +47,11 @@ class TimerBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<TimerCubit, TimerState>(
-      listenWhen: (previous, current) =>
-          current.errorMessage != null &&
-          previous.errorMessage != current.errorMessage,
-      listener: (context, state) => showGlassToast(
-        context,
-        // Already a sentence in the reader's language — the server localizes
-        // its own messages. t() is idempotent for anything that is not a key.
-        context.t(state.errorMessage!),
-        kind: GlassToastKind.error,
-      ),
+    // A failed start or stop is announced by `TimerSignals`, app-wide. It used
+    // to be announced here, which meant it was announced only on the three
+    // screens this bar is mounted on — and the buttons that can fail are now on
+    // the focus route, on three keyboard shortcuts and in the command palette.
+    return BlocBuilder<TimerCubit, TimerState>(
       // Not on every tick. The elapsed reading changes once a second and reads
       // itself off the cubit; everything else in the bar — the glass surface,
       // the description, the buttons — changes only when the timer does. The
@@ -174,37 +168,24 @@ class _TimerBarBody extends StatelessWidget {
                   : () => context.read<TimerCubit>().discard(),
             ),
             const SizedBox(width: 8),
-            // A break is never filed, so there is nothing to stop — ending one
-            // ends the run. The server refuses a stop on a break outright; this
-            // is what keeps anybody from meeting that refusal.
-            if (timer.isBreak)
-              _PrimaryAction(
-                icon: LucideIcons.x,
-                label: context.t('time.focus.endSession'),
-                iconOnly: compact,
-                busy: state.isBusy,
-                color: AppColors.danger,
-                onTap: state.isBusy
-                    ? null
-                    : () => unawaited(context.read<TimerCubit>().discard()),
-              )
-            else
-              _PrimaryAction(
-                icon: LucideIcons.square,
-                label: context.t('time.timer.stop'),
-                // On a phone the label is what the description loses its room
-                // to, and a red square is not ambiguous.
-                iconOnly: compact,
-                busy: state.isBusy,
-                color: AppColors.danger,
-                onTap: state.isBusy ? null : () => _stop(context),
+            _PrimaryAction(
+              icon: timer.isBreak ? LucideIcons.x : LucideIcons.square,
+              label: context.t(
+                timer.isBreak ? 'time.focus.endSession' : 'time.timer.stop',
               ),
+              // On a phone the label is what the description loses its room to,
+              // and a red square is not ambiguous.
+              iconOnly: compact,
+              busy: state.isBusy,
+              color: AppColors.danger,
+              onTap: state.isBusy ? null : () => _end(context, timer),
+            ),
           ] else ...[
             // How the next one counts, chosen before it starts — a running
             // timer's mode is the server's and cannot be changed under it.
             _RoundAction(
               icon: LucideIcons.chevronUp,
-              tooltip: context.t('time.timer.start'),
+              tooltip: context.t('time.timer.chooseMode'),
               onTap: state.isBusy ? null : () => _chooseMode(context),
             ),
             const SizedBox(width: 8),
@@ -262,15 +243,7 @@ class _TimerBarBody extends StatelessWidget {
           GlassMenuItem(
             value: mode,
             label: context.t(mode.labelKey),
-            leading: Icon(
-              switch (mode) {
-                TimerMode.stopwatch => LucideIcons.timer,
-                TimerMode.countdown => LucideIcons.hourglass,
-                TimerMode.pomodoro => LucideIcons.circleDot,
-              },
-              size: 16,
-              color: AppColors.inkSoft,
-            ),
+            leading: Icon(mode.icon, size: 16, color: AppColors.inkSoft),
           ),
       ],
     );
@@ -282,8 +255,18 @@ class _TimerBarBody extends StatelessWidget {
     );
   }
 
-  Future<void> _stop(BuildContext context) async {
+  /// Ends the timer, and says what the entry collided with if it made one.
+  ///
+  /// `end`, not `stop`: a break is never filed, and the server refuses a stop
+  /// on one outright. The cubit owns that branch — see [TimerCubit.end] — so
+  /// the four places that end a timer cannot disagree about it. A break makes
+  /// no entry, so there is nothing to reload and nothing to advise about.
+  Future<void> _end(BuildContext context, RunningTimer timer) async {
     final cubit = context.read<TimerCubit>();
+    if (timer.isBreak) {
+      await cubit.discard();
+      return;
+    }
     final saved = await cubit.stop();
     if (saved == null || !context.mounted) return;
     onStopped?.call();
@@ -443,12 +426,10 @@ class _ElapsedReadout extends StatelessWidget {
     // Down where there is a target, up where there is not. A countdown that
     // showed how long it had been running would be answering a question nobody
     // asked it, and the number is the whole of what this box is for.
-    final elapsed = context.select<TimerCubit, Duration>((cubit) {
-      final state = cubit.state;
-      final timer = state.timer;
-      if (timer == null) return state.elapsed;
-      return timer.remaining(DateTime.now()) ?? state.elapsed;
-    });
+    // Decided by the state, not by the wall clock — see [TimerState.shown].
+    final elapsed = context.select<TimerCubit, Duration>(
+      (cubit) => cubit.state.shown,
+    );
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(

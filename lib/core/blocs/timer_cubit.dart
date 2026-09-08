@@ -53,6 +53,12 @@ class TimerSignal extends Equatable {
 /// corrects itself reads as a bug. What is persisted is a cache, never an
 /// authority: [refresh] runs on start, on resume and on every stream reconnect,
 /// and its answer replaces whatever was restored.
+///
+/// That cache now includes which half of a pomodoro is running, so a relaunch
+/// does not spend a round trip claiming a break is work. It is a device-local
+/// copy of what the server already holds, keyed per account and wiped on sign-
+/// out — not a record of anybody's pauses, which the module keeps nowhere
+/// (HIN-60 R7): a break leaves no entry, and this line disappears with it.
 class TimerState extends Equatable {
   const TimerState({
     this.timer,
@@ -84,11 +90,20 @@ class TimerState extends Equatable {
 
   bool get isRunning => timer != null;
 
-  /// What is left of the current interval, or null when nothing is counting
-  /// towards anything.
-  Duration? get remaining => timer == null
-      ? null
-      : (timer!.target == null ? null : timer!.target! - elapsed);
+  /// What the screen shows: down where there is a target, up where there is
+  /// not.
+  ///
+  /// Derived from the emitted [elapsed] rather than from `DateTime.now()`, so
+  /// it is a pure function of this state — a selector over it can therefore
+  /// report "unchanged", which one sampling the wall clock never can. Clamped
+  /// at zero for the same reason [RunningTimer.remaining] is: a timer past its
+  /// target is not owed negative time.
+  Duration get shown {
+    final target = timer?.target;
+    if (target == null) return elapsed;
+    final left = target - elapsed;
+    return left.isNegative ? Duration.zero : left;
+  }
 
   TimerState copyWith({
     RunningTimer? timer,
@@ -216,6 +231,23 @@ class TimerCubit extends HydratedCubit<TimerState> {
         billable: billable ?? current.billable,
       ),
     );
+  }
+
+  /// Ends the running timer, whatever kind it is.
+  ///
+  /// One method because it is one intention — "I am done with this" — and the
+  /// branch it hides is a server contract, not a preference: a break is never
+  /// filed, so ending one is a discard, and `stop` on a break is refused
+  /// outright with `error.time.breakNotRecorded`. Written out at each of the
+  /// four places that end a timer, the fifth would meet that refusal.
+  Future<void> end() async {
+    final running = state.timer;
+    if (running == null) return;
+    if (running.isBreak) {
+      await discard();
+    } else {
+      await stop();
+    }
   }
 
   Future<void> continueEntry(String entryId) =>
@@ -419,12 +451,7 @@ class TimerCubit extends HydratedCubit<TimerState> {
         'mode': timer.mode.wire,
         'plannedMinutes': timer.plannedMinutes,
         'pomodoro': timer.pomodoro?.toJson(),
-        'phase': switch (timer.phase) {
-          null => null,
-          TimerPhase.work => 'WORK',
-          TimerPhase.shortBreak => 'BREAK',
-          TimerPhase.longBreak => 'LONG_BREAK',
-        },
+        'phase': timer.phase?.wire,
         'phaseStartedAt': timer.phaseStartedAt?.toUtc().toIso8601String(),
         'cyclesDone': timer.cyclesDone,
       },
@@ -447,7 +474,14 @@ class TimerCubit extends HydratedCubit<TimerState> {
           timer.billable,
           timer.mode.name,
           timer.plannedMinutes,
-          timer.pomodoro,
+          // Spelled out, not the object: `Equatable.toString` expands its
+          // fields in debug and answers "Instance of …" in release, so a token
+          // built from the object would stop noticing a config change the
+          // moment it shipped.
+          timer.pomodoro?.work,
+          timer.pomodoro?.shortBreak,
+          timer.pomodoro?.longBreak,
+          timer.pomodoro?.cycles,
           timer.phase?.name,
           timer.phaseStartedAt?.microsecondsSinceEpoch,
           timer.cyclesDone,

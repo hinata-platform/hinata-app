@@ -18,6 +18,10 @@ import 'time_entry_sheet.dart';
 /// feature flag, so a server that does not offer it does not list keys that do
 /// nothing.
 ///
+/// Each borrows the label of the ⌘K command that does the same thing. They are
+/// the same action reached two ways, and translating "start or stop the timer"
+/// twice in nine languages is eighteen strings that have to be edited in pairs.
+///
 /// All three are ⇧ combinations on purpose — see [AppShortcut.allowInTextField].
 /// Nothing types them, no editor claims them, and they therefore keep working
 /// while somebody is writing a description, which is exactly when "stop the
@@ -28,49 +32,44 @@ final List<AppShortcut> kTimeShortcuts = [
     key: LogicalKeyboardKey.keyS,
     shift: true,
     allowInTextField: true,
-    labelKey: 'shortcuts.time.toggle',
+    labelKey: 'search.cmd.toggleTimer',
     groupKey: 'shortcuts.group.time',
     onInvoke: toggleTimer,
   ),
-  AppShortcut(
+  const AppShortcut(
     id: 'time.newEntry',
     key: LogicalKeyboardKey.keyE,
     shift: true,
     allowInTextField: true,
-    labelKey: 'shortcuts.time.newEntry',
+    labelKey: 'search.cmd.logTime',
     groupKey: 'shortcuts.group.time',
-    onInvoke: (context) => unawaited(showTimeEntrySheet(context)),
+    // Held until the sheet closes; two stacked editors would be two half-filled
+    // entries and two backdrop blurs.
+    exclusive: true,
+    onInvoke: showTimeEntrySheet,
   ),
   AppShortcut(
     id: 'time.focus',
     key: LogicalKeyboardKey.keyF,
     shift: true,
     allowInTextField: true,
-    labelKey: 'shortcuts.time.focus',
+    labelKey: 'search.cmd.focusMode',
     groupKey: 'shortcuts.group.time',
     onInvoke: (context) => context.go('/time/focus'),
   ),
 ];
 
-/// Starts a timer, or stops the one that is running.
+/// Starts a timer, or ends the one that is running.
 ///
 /// Public because the ⌘K palette offers the same thing by name — one behaviour
 /// with two ways in, not two implementations of it.
 ///
 /// One key for both, because it is one question — "am I working on this right
 /// now" — and because a key that only starts is a key that leaves timers
-/// running. A pomodoro break is ended rather than stopped: a break is never
-/// filed, and the server refuses a stop on one outright.
+/// running. What "ending" means for a break is [TimerCubit.end]'s business.
 void toggleTimer(BuildContext context) {
   final cubit = context.read<TimerCubit>();
-  final timer = cubit.state.timer;
-  if (timer == null) {
-    unawaited(cubit.start());
-  } else if (timer.isBreak) {
-    unawaited(cubit.discard());
-  } else {
-    unawaited(cubit.stop());
-  }
+  unawaited(cubit.state.isRunning ? cubit.end() : cubit.start());
 }
 
 /// Registers [kTimeShortcuts] for as long as the module is switched on.

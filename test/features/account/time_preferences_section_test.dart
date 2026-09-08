@@ -70,7 +70,7 @@ void main() {
     await pump(tester);
     await tester.pumpAndSettle();
 
-    expect(find.text('account.time.sound'), findsOneWidget);
+    expect(find.text('account.timeTracking.sound'), findsOneWidget);
     expect(cubit.state.sound, isTrue);
   });
 

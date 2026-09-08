@@ -14,6 +14,8 @@
 /// it is mounted and takes it back with it.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -48,6 +50,7 @@ class AppShortcut {
     this.groupKey = 'shortcuts.group.general',
     this.allowInTextField = false,
     this.listed = true,
+    this.exclusive = false,
   });
 
   /// What identifies this shortcut in the registry. Registering the same id
@@ -77,9 +80,21 @@ class AppShortcut {
   /// meaningful on the screen that registered it and reads as noise elsewhere.
   final bool listed;
 
+  /// Whether pressing it again while it is still going does nothing.
+  ///
+  /// True for anything that opens something. The old ⌘K handler refused to fire
+  /// while its own route was not current, which is a guard the registry cannot
+  /// make — it dispatches from above the navigator and has no idea what is on
+  /// screen. Without it, three presses of ⌘/ stack three sheets, each painting
+  /// its own full-screen backdrop blur, to be dismissed one Escape at a time.
+  final bool exclusive;
+
   /// What to do. Handed a context below the router's navigator, so it can push,
   /// show a dialog, or read a bloc.
-  final void Function(BuildContext context) onInvoke;
+  ///
+  /// May return a future — an [exclusive] shortcut is held down until it
+  /// completes, which for one that opens a sheet is until the sheet closes.
+  final FutureOr<void> Function(BuildContext context) onInvoke;
 
   /// Whether [event] is this shortcut, given what is held down.
   bool matches(KeyEvent event, Set<LogicalKeyboardKey> held) {
@@ -166,17 +181,19 @@ class AppShortcutRegistry extends ChangeNotifier {
 
   /// The shortcut [event] fires, or null.
   ///
-  /// [inTextField] is decided by the caller rather than read here, so a test can
-  /// state the case it means instead of building a focused text field to get it.
+  /// [inTextField] is a callback and is decided by the caller: a test can state
+  /// the case it means instead of building a focused text field to get it, and
+  /// the answer — which costs a walk up the element tree — is only wanted for
+  /// the handful of keys that turn out to be shortcuts at all.
   AppShortcut? resolve(
     KeyEvent event, {
     required Set<LogicalKeyboardKey> held,
-    required bool inTextField,
+    required bool Function() inTextField,
   }) {
     if (event is! KeyDownEvent) return null;
     for (final shortcut in _shortcuts.values) {
       if (!shortcut.matches(event, held)) continue;
-      if (inTextField && !shortcut.allowInTextField) return null;
+      if (!shortcut.allowInTextField && inTextField()) return null;
       return shortcut;
     }
     return null;
@@ -239,16 +256,35 @@ class _ShortcutHostState extends State<ShortcutHost> {
     super.dispose();
   }
 
+  /// Ids of [AppShortcut.exclusive] shortcuts whose last invocation has not
+  /// finished — the sheet they opened is still on screen.
+  final Set<String> _running = {};
+
   bool _onKey(KeyEvent event) {
+    // The cheap test first. This runs for every key event in the application,
+    // including every keystroke typed into a text field, and both of the
+    // arguments below cost something: a fresh set of the held keys, and a walk
+    // up the element tree that has no early exit when nothing text-like is
+    // focused.
+    if (event is! KeyDownEvent) return false;
     final shortcut = widget.registry.resolve(
       event,
       held: HardwareKeyboard.instance.logicalKeysPressed,
-      inTextField: textIsBeingEdited(),
+      inTextField: textIsBeingEdited,
     );
     if (shortcut == null) return false;
     final context = widget.navigatorKey.currentContext;
     if (context == null) return false;
-    shortcut.onInvoke(context);
+    if (!shortcut.exclusive) {
+      shortcut.onInvoke(context);
+      return true;
+    }
+    if (!_running.add(shortcut.id)) return true;
+    // Swallowed either way: the key was ours, and letting it fall through to
+    // whatever is focused underneath would be worse than doing nothing.
+    Future.value(
+      shortcut.onInvoke(context),
+    ).whenComplete(() => _running.remove(shortcut.id));
     return true;
   }
 

@@ -304,10 +304,8 @@ GoRouter buildRouter({
       // compact-only affordance. A rail down the left is exactly what somebody
       // asking for a focus mode is asking to be rid of.
       //
-      // Before the shell's routes, because go_router matches in order and
-      // `/time/focus` would otherwise be caught by nothing at all — there is no
-      // `/time/:view` — but the ordering states the intent rather than relying
-      // on it.
+      // Listed before the shell's routes so that the intent reads in order;
+      // nothing under the shell would catch it either way.
       GoRoute(
         path: '/time/focus',
         pageBuilder: (_, state) => _transition(

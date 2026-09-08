@@ -10,7 +10,9 @@ import '../../core/blocs/time_preferences_cubit.dart';
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
-import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
+import '../../core/router/app_router.dart' show rootNavigatorKey;
+import '../sprint/modals/glass_modal.dart'
+    show GlassToastKind, showGlassToastIn;
 
 /// Says, once, that an interval has ended.
 ///
@@ -45,6 +47,10 @@ class _TimerSignalsState extends State<TimerSignals> {
   AudioPlayer? _player;
   Timer? _titleReset;
 
+  /// Set once the platform has said it cannot play this. Without it a device
+  /// with no audio stack is asked again at the end of every interval, for ever.
+  bool _chimeUnavailable = false;
+
   @override
   void dispose() {
     _titleReset?.cancel();
@@ -54,16 +60,59 @@ class _TimerSignalsState extends State<TimerSignals> {
 
   @override
   Widget build(BuildContext context) => BlocListener<TimerCubit, TimerState>(
-    listenWhen: (previous, current) => current.signal != null,
-    listener: (context, state) => _announce(context, state.signal!),
+    listenWhen: (previous, current) =>
+        current.signal != null ||
+        (current.errorMessage != null &&
+            previous.errorMessage != current.errorMessage),
+    listener: (context, state) {
+      final failure = state.errorMessage;
+      if (failure != null) _complain(failure);
+      final signal = state.signal;
+      if (signal != null) _announce(context, signal);
+    },
     child: widget.child,
   );
 
+  /// A start, stop, discard or phase change that failed.
+  ///
+  /// Said here rather than in the timer bar, which is where it used to be said.
+  /// The bar is mounted on three screens; the buttons that can produce these
+  /// failures are now everywhere — the focus route, which is outside the shell,
+  /// three keyboard shortcuts and a command. Pressing ⌘⇧S on the dashboard and
+  /// watching a button do nothing was the alternative, with the server's
+  /// explanation translated into nine languages and unreadable in all of them.
+  void _complain(String message) {
+    final overlay = rootNavigatorKey.currentState?.overlay;
+    final context = rootNavigatorKey.currentContext;
+    if (overlay == null || context == null || !context.mounted) return;
+    showGlassToastIn(
+      overlay,
+      // Already a sentence in the reader's language — the server localizes its
+      // own messages. t() is idempotent for anything that is not a key.
+      context.t(message),
+      kind: GlassToastKind.error,
+    );
+  }
+
   void _announce(BuildContext context, TimerSignal signal) {
+    // The root navigator's own overlay, not `Overlay.of(context)`. This widget
+    // is mounted in `MaterialApp.router`'s builder — above the navigator, which
+    // is the only place it can be if the focus route is to be covered — and
+    // `Overlay.of` looks *upwards*, so from here it finds nothing at all.
+    // `showGlassToastIn` carries the reason; `app.dart` already does this for
+    // its own app-level notice.
+    final overlay = rootNavigatorKey.currentState?.overlay;
     final message = _message(context, signal);
+    // The chime and the title do not depend on there being a navigator, so they
+    // are not skipped when there is none. Nothing here may throw: an interval
+    // ending is not a moment to lose the sound as well as the message.
+    if (overlay == null) {
+      _sound(context, message);
+      return;
+    }
     final cubit = context.read<TimerCubit>();
-    showGlassToast(
-      context,
+    showGlassToastIn(
+      overlay,
       message,
       kind: GlassToastKind.info,
       // The offer, not the decision. A pomodoro does not turn its own phase —
@@ -78,10 +127,15 @@ class _TimerSignalsState extends State<TimerSignals> {
           ? () => unawaited(cubit.advancePhase())
           : null,
     );
+    _sound(context, message);
+  }
+
+  /// The two halves that are not the toast.
+  void _sound(BuildContext context, String message) {
     if (context.read<TimePreferencesCubit>().state.sound) {
       unawaited(_chimeOnce());
     }
-    _flashTitle(message);
+    _flashTitle();
   }
 
   /// What the person is told. It names the interval that *ended*, and for a
@@ -107,30 +161,41 @@ class _TimerSignalsState extends State<TimerSignals> {
   /// with yet, a platform with no audio at all — and that must not turn "your
   /// break is over" into a crash.
   Future<void> _chimeOnce() async {
+    if (_chimeUnavailable) return;
     try {
       final player = _player ??= AudioPlayer();
       if (player.audioSource == null) await player.setAsset(_chime);
       await player.seek(Duration.zero);
       unawaited(player.play());
     } catch (_) {
-      // Silence is an acceptable outcome; the toast already said it.
+      // Silence is an acceptable outcome; the toast already said it. Asked
+      // once and not again: a platform with no audio will not grow one.
+      _chimeUnavailable = true;
     }
   }
 
-  /// Puts the message in the window title for a moment.
+  /// Marks the window title for a moment.
   ///
   /// For the person who alt-tabbed away: the browser tab and the task switcher
   /// are the only place the app can reach without a notification permission.
   /// It reverts on its own, because a title that stayed would be lying by the
   /// time they came back.
   ///
+  /// Deliberately *neutral* — "an interval ended", never which one. A browser
+  /// tab is read by whoever is looking at the screen, and during a screen share
+  /// "your break is over" tells a room full of colleagues that this person is
+  /// on a break. That is the one thing the module is built not to publish
+  /// (HIN-60 R7). What ended is in the toast, on their own screen.
+  ///
   /// Platform-dependent by nature — the web sets the document title, Android the
   /// task-switcher label, and the desktop embedders ignore it. That is why it is
   /// an *addition* to the toast rather than a replacement for it.
-  void _flashTitle(String message) {
+  void _flashTitle() {
     if (defaultTargetPlatform == TargetPlatform.iOS) return;
+    final context = rootNavigatorKey.currentContext;
+    if (context == null || !context.mounted) return;
     _titleReset?.cancel();
-    _setTitle(message);
+    _setTitle('${context.t('time.signal.titleFlash')} · ${widget.appTitle}');
     _titleReset = Timer(const Duration(seconds: 20), () => _setTitle(null));
   }
 

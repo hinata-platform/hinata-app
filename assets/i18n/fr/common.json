@@ -856,7 +856,8 @@
       "stop": "Arrêter",
       "discard": "Abandonner le minuteur",
       "noDescription": "Sans description",
-      "title": "Minuteur"
+      "title": "Minuteur",
+      "chooseMode": "Choisir le décompte"
     },
     "placement": {
       "none": "Sans projet",
@@ -936,7 +937,8 @@
       "countdown": "Votre compte à rebours est terminé.",
       "breakOver": "Pause terminée — reprenez quand vous voulez.",
       "workOver": "Un intervalle terminé. C'est l'heure d'une pause.",
-      "workOver_plural": "{{count}} intervalles terminés. C'est l'heure d'une pause."
+      "workOver_plural": "{{count}} intervalles terminés. C'est l'heure d'une pause.",
+      "titleFlash": "Intervalle terminé"
     }
   },
   "projects": {
@@ -2404,22 +2406,7 @@
       "minutesAgo": "il y a {{count}} min",
       "hoursAgo": "il y a {{count}} h",
       "daysAgo": "il y a {{count}} j",
-      "weeksAgo": "il y a {{count}} sem.",
-      "title": "Suivi du temps",
-      "subtitle": "Votre propre rythme : durées, compte à rebours et le son de fin d'intervalle.",
-      "pomodoro": "Pomodoro",
-      "work": "Intervalle de travail",
-      "shortBreak": "Pause courte",
-      "longBreak": "Pause longue",
-      "cycles": "Intervalles avant la pause longue",
-      "countdown": "Compte à rebours",
-      "countdownLength": "Durée par défaut",
-      "sound": "Jouer un son",
-      "soundHint": "Un bref carillon à la fin d'un intervalle. Le message s'affiche dans tous les cas.",
-      "minutes": "{{count}} min",
-      "intervals": "{{count}} intervalle",
-      "intervals_plural": "{{count}} intervalles",
-      "saveFailed": "Impossible d'enregistrer vos préférences."
+      "weeksAgo": "il y a {{count}} sem."
     },
     "notifications": {
       "title": "Notifications",
@@ -2547,6 +2534,23 @@
     "tokens": {
       "title": "Jetons d'accès",
       "subtitle": "Jetons d'accès personnels pour le serveur MCP et l'accès à l'API."
+    },
+    "timeTracking": {
+      "title": "Suivi du temps",
+      "subtitle": "Votre propre rythme : durées, compte à rebours et le son de fin d'intervalle.",
+      "pomodoro": "Pomodoro",
+      "work": "Intervalle de travail",
+      "shortBreak": "Pause courte",
+      "longBreak": "Pause longue",
+      "cycles": "Intervalles avant la pause longue",
+      "countdown": "Compte à rebours",
+      "countdownLength": "Durée par défaut",
+      "sound": "Jouer un son",
+      "soundHint": "Un bref carillon à la fin d'un intervalle. Le message s'affiche dans tous les cas.",
+      "minutes": "{{count}} min",
+      "intervals": "{{count}} intervalle",
+      "intervals_plural": "{{count}} intervalles",
+      "saveFailed": "Impossible d'enregistrer vos préférences."
     }
   },
   "twofa": {
@@ -2895,11 +2899,6 @@
     "app": {
       "search": "Rechercher et aller à",
       "shortcuts": "Raccourcis clavier"
-    },
-    "time": {
-      "toggle": "Démarrer ou arrêter le minuteur",
-      "newEntry": "Saisir du temps",
-      "focus": "Mode concentration"
     },
     "focus": {
       "leave": "Quitter le mode concentration"

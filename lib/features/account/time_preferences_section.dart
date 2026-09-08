@@ -16,7 +16,7 @@ import 'account_widgets.dart';
 
 /// Settings → Time tracking: the person's own rhythm.
 ///
-/// Six numbers and a switch, and every one of them is theirs. Nothing here is
+/// Five lengths and a switch, and every one of them is theirs. Nothing here is
 /// an administrator's to set — an employer prescribing how long somebody's
 /// breaks are is precisely what HIN-60's R2/R7 exist to prevent — which is why
 /// they live on the account rather than in the server settings.
@@ -36,19 +36,19 @@ class TimePreferencesSection extends StatelessWidget {
       if (!context.mounted) return;
       showGlassToast(
         context,
-        context.t('account.time.saveFailed'),
+        context.t('account.timeTracking.saveFailed'),
         kind: GlassToastKind.error,
       );
     }
 
     return AccountSection(
       icon: LucideIcons.timer,
-      title: context.t('account.time.title'),
-      subtitle: context.t('account.time.subtitle'),
+      title: context.t('account.timeTracking.title'),
+      subtitle: context.t('account.timeTracking.subtitle'),
       children: [
-        _GroupLabel(text: context.t('account.time.pomodoro')),
+        _GroupLabel(text: context.t('account.timeTracking.pomodoro')),
         _MinutesRow(
-          label: context.t('account.time.work'),
+          label: context.t('account.timeTracking.work'),
           value: prefs.pomodoroWork,
           min: TimePreferences.minWork,
           max: TimePreferences.maxWork,
@@ -58,7 +58,7 @@ class TimePreferencesSection extends StatelessWidget {
         ),
         Divider(height: 1, color: AppColors.hairline2),
         _MinutesRow(
-          label: context.t('account.time.shortBreak'),
+          label: context.t('account.timeTracking.shortBreak'),
           value: prefs.pomodoroShortBreak,
           min: TimePreferences.minBreak,
           max: TimePreferences.maxBreak,
@@ -67,7 +67,7 @@ class TimePreferencesSection extends StatelessWidget {
         ),
         Divider(height: 1, color: AppColors.hairline2),
         _MinutesRow(
-          label: context.t('account.time.longBreak'),
+          label: context.t('account.timeTracking.longBreak'),
           value: prefs.pomodoroLongBreak,
           min: TimePreferences.minLongBreak,
           max: TimePreferences.maxLongBreak,
@@ -77,19 +77,20 @@ class TimePreferencesSection extends StatelessWidget {
         ),
         Divider(height: 1, color: AppColors.hairline2),
         _StepperRow(
-          label: context.t('account.time.cycles'),
+          label: context.t('account.timeTracking.cycles'),
           value: prefs.pomodoroCycles,
           min: TimePreferences.minCycles,
           max: TimePreferences.maxCycles,
           step: 1,
           stack: stack,
-          format: (value) => context.t('account.time.intervals', count: value),
+          format: (value) =>
+              context.t('account.timeTracking.intervals', count: value),
           onChanged: (value) => save(prefs.copyWith(pomodoroCycles: value)),
         ),
         Divider(height: 1, color: AppColors.hairline2),
-        _GroupLabel(text: context.t('account.time.countdown')),
+        _GroupLabel(text: context.t('account.timeTracking.countdown')),
         _MinutesRow(
-          label: context.t('account.time.countdownLength'),
+          label: context.t('account.timeTracking.countdownLength'),
           value: prefs.countdownMinutes,
           min: TimePreferences.minCountdown,
           max: TimePreferences.maxCountdown,
@@ -99,8 +100,8 @@ class TimePreferencesSection extends StatelessWidget {
         ),
         Divider(height: 1, color: AppColors.hairline2),
         SettingRow(
-          label: context.t('account.time.sound'),
-          description: context.t('account.time.soundHint'),
+          label: context.t('account.timeTracking.sound'),
+          description: context.t('account.timeTracking.soundHint'),
           icon: LucideIcons.volume2,
           trailing: HiveSwitch(
             value: prefs.sound,
@@ -160,7 +161,7 @@ class _MinutesRow extends StatelessWidget {
     max: max,
     step: step,
     stack: stack,
-    format: (value) => context.t('account.time.minutes', count: value),
+    format: (value) => context.t('account.timeTracking.minutes', count: value),
     onChanged: onChanged,
   );
 }
