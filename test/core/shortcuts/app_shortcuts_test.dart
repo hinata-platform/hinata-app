@@ -51,7 +51,7 @@ void main() {
           registry.resolve(
             down(LogicalKeyboardKey.keyK),
             held: held,
-            inTextField: false,
+            inTextField: () => false,
           ),
           isNotNull,
           reason: 'both modifiers are accepted; only one of them is *shown*',
@@ -66,7 +66,7 @@ void main() {
         registry.resolve(
           down(LogicalKeyboardKey.keyK),
           held: <LogicalKeyboardKey>{},
-          inTextField: false,
+          inTextField: () => false,
         ),
         isNull,
       );
@@ -87,7 +87,7 @@ void main() {
           registry.resolve(
             down(LogicalKeyboardKey.keyK),
             held: metaShift,
-            inTextField: false,
+            inTextField: () => false,
           ),
           isNull,
         );
@@ -96,7 +96,7 @@ void main() {
               .resolve(
                 down(LogicalKeyboardKey.keyS),
                 held: metaShift,
-                inTextField: false,
+                inTextField: () => false,
               )
               ?.id,
           'shifted',
@@ -115,7 +115,7 @@ void main() {
             timeStamp: Duration.zero,
           ),
           held: meta,
-          inTextField: false,
+          inTextField: () => false,
         ),
         isNull,
       );
@@ -136,7 +136,7 @@ void main() {
             .resolve(
               down(LogicalKeyboardKey.escape),
               held: <LogicalKeyboardKey>{},
-              inTextField: false,
+              inTextField: () => false,
             )
             ?.id,
         'leave',
@@ -147,7 +147,7 @@ void main() {
         registry.resolve(
           down(LogicalKeyboardKey.escape),
           held: meta,
-          inTextField: false,
+          inTextField: () => false,
         ),
         isNull,
       );
@@ -164,7 +164,7 @@ void main() {
         registry.resolve(
           down(LogicalKeyboardKey.keyK),
           held: meta,
-          inTextField: true,
+          inTextField: () => true,
         ),
         isNull,
       );
@@ -188,7 +188,7 @@ void main() {
             .resolve(
               down(LogicalKeyboardKey.keyS),
               held: metaShift,
-              inTextField: true,
+              inTextField: () => true,
             )
             ?.id,
         'stop',

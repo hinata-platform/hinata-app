@@ -36,22 +36,32 @@ class TimePreferencesCubit extends Cubit<TimePreferences> {
     if (preferences != state) emit(preferences);
   }
 
+  /// How many saves have been asked for. Only the newest one's answer counts.
+  int _sequence = 0;
+
   /// Writes them, showing the new value at once.
   ///
   /// Optimistic because the panel is a row of steppers: a number that only
   /// moved after a round trip would feel broken, and the only thing at stake is
   /// a preference. A refusal puts the old value back.
+  ///
+  /// A stale answer is dropped rather than adopted. Tapping `+` five times
+  /// sends five requests, and without this the first reply would arrive after
+  /// the fifth tap and set the number *back* to what it was four taps ago —
+  /// the panel visibly counting backwards while somebody is still pressing.
+  /// Out-of-order replies do the same in the other direction.
   Future<bool> save(TimePreferences next) async {
     if (next == state) return true;
     final previous = state;
+    final sequence = ++_sequence;
     emit(next);
     try {
-      adopt(
-        (await _account.updateMyProfile(timePreferences: next)).timePreferences,
-      );
+      final saved = await _account.updateMyProfile(timePreferences: next);
+      if (sequence == _sequence) adopt(saved.timePreferences);
       return true;
     } catch (_) {
-      emit(previous);
+      // And a refusal only rolls back if nothing newer has been asked for.
+      if (sequence == _sequence) emit(previous);
       return false;
     }
   }

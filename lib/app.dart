@@ -765,16 +765,13 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
                       child: ShortcutHost(
                         registry: _shortcuts,
                         navigatorKey: rootNavigatorKey,
-                        child: ScopedShortcuts(
-                          shortcuts: kGlobalShortcuts,
-                          child: TimeShortcuts(
-                            child: TimerSignals(
-                              appTitle:
-                                  (organization == null || organization.isEmpty)
-                                  ? 'Hinata'
-                                  : organization,
-                              child: child ?? const SizedBox.shrink(),
-                            ),
+                        child: _SignedInShortcuts(
+                          child: TimerSignals(
+                            appTitle:
+                                (organization == null || organization.isEmpty)
+                                ? 'Hinata'
+                                : organization,
+                            child: child ?? const SizedBox.shrink(),
                           ),
                         ),
                       ),
@@ -786,6 +783,34 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
           },
         ),
       ),
+    );
+  }
+}
+
+/// The shortcuts that belong to a signed-in session, and only to one.
+///
+/// The dispatcher sits above the router so that the focus route is covered, and
+/// "above the router" includes the sign-in screen. Registered unconditionally,
+/// ⌘K would open the search palette there — and the palette shows the recent
+/// searches held on the device, which on a shared machine are the previous
+/// person's. ⌘⇧S would ask an unauthenticated server to start a timer.
+///
+/// Gated here rather than inside each list, because it is one rule about the
+/// whole registry rather than something each feature should have to remember.
+class _SignedInShortcuts extends StatelessWidget {
+  const _SignedInShortcuts({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final signedIn = context.select<AuthBloc, bool>(
+      (bloc) => bloc.state.status == AuthStatus.authenticated,
+    );
+    if (!signedIn) return child;
+    return ScopedShortcuts(
+      shortcuts: kGlobalShortcuts,
+      child: TimeShortcuts(child: child),
     );
   }
 }

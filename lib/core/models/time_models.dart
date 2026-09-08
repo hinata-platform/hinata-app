@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/widgets.dart' show IconData;
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../util/dates.dart';
 import 'work_models.dart';
@@ -35,6 +37,14 @@ enum TimerMode {
 
   /// The i18n key for this mode's name.
   String get labelKey => 'time.mode.$name';
+
+  /// The glyph every surface draws for it. Here rather than in a `switch` at
+  /// each call site: a fourth mode should be one edit, not three.
+  IconData get icon => switch (this) {
+    TimerMode.stopwatch => LucideIcons.timer,
+    TimerMode.countdown => LucideIcons.hourglass,
+    TimerMode.pomodoro => LucideIcons.circleDot,
+  };
 }
 
 /// Which half of a pomodoro cycle is running. Null outside [TimerMode.pomodoro].
@@ -48,6 +58,16 @@ enum TimerPhase {
     'BREAK' => TimerPhase.shortBreak,
     'LONG_BREAK' => TimerPhase.longBreak,
     _ => null,
+  };
+
+  /// How the server spells it. Beside [parse], because the pairing is the whole
+  /// point: `shortBreak` is `BREAK` on the wire, and a spelling written out at
+  /// a call site somewhere else is one that can be renamed without this one
+  /// noticing — after which a restored pomodoro reads back with no phase.
+  String get wire => switch (this) {
+    TimerPhase.work => 'WORK',
+    TimerPhase.shortBreak => 'BREAK',
+    TimerPhase.longBreak => 'LONG_BREAK',
   };
 
   /// Whether this half records nothing. The distinction the whole module turns
@@ -77,14 +97,19 @@ class PomodoroConfig extends Equatable {
   /// Work intervals per set — after that many, the break is the long one.
   final int cycles;
 
+  /// Whether work interval number [done] completes a set.
+  ///
+  /// [done] must be positive as well as divide evenly: zero divides by
+  /// everything, so without it a run whose first interval recorded nothing
+  /// would open with the long break — the reward for a set nobody has worked.
+  bool _completesASet(int done) => cycles > 0 && done > 0 && done % cycles == 0;
+
   /// Minutes of the break that follows work interval number [done].
-  int breakAfter(int done) =>
-      cycles > 0 && done % cycles == 0 ? longBreak : shortBreak;
+  int breakAfter(int done) => _completesASet(done) ? longBreak : shortBreak;
 
   /// Which break follows work interval number [done].
-  TimerPhase phaseAfter(int done) => cycles > 0 && done % cycles == 0
-      ? TimerPhase.longBreak
-      : TimerPhase.shortBreak;
+  TimerPhase phaseAfter(int done) =>
+      _completesASet(done) ? TimerPhase.longBreak : TimerPhase.shortBreak;
 
   /// How long [phase] runs, given the intervals already done.
   int minutesOf(TimerPhase phase, int done) =>

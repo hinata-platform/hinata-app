@@ -6,18 +6,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/blocs/time_preferences_cubit.dart';
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
-import '../../core/models/account_models.dart' show TimePreferences;
 import '../../core/models/time_models.dart';
-import '../../core/repositories/account_repository.dart';
 import '../../core/shortcuts/app_shortcuts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ambient_background.dart';
 import '../../core/widgets/glass_switch_chip.dart';
-import '../sprint/modals/glass_modal.dart'
-    show GlassToastKind, anchorRectOfContext, showGlassToast;
+import '../sprint/modals/glass_modal.dart' show anchorRectOfContext;
 import 'placement_picker.dart';
 
 /// The one thing on the screen is the timer.
@@ -42,32 +40,23 @@ class _TimeFocusScreenState extends State<TimeFocusScreen> {
   /// The mode the next timer starts in. Only meaningful while none runs — a
   /// running timer's mode is the server's and cannot be changed under it.
   TimerMode _mode = TimerMode.stopwatch;
-  TimePreferences _preferences = const TimePreferences();
 
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_loadPreferences());
-  }
-
-  /// The person's own lengths, so the focus screen starts a pomodoro of the
-  /// shape they set rather than of the default.
+  /// Escape, registered while this screen is mounted and gone with it.
   ///
-  /// Read here rather than held app-wide because this is the one screen that
-  /// needs them before a timer exists; a failure leaves the defaults, which are
-  /// a working rhythm and not a wrong answer.
-  Future<void> _loadPreferences() async {
-    try {
-      final me = await context.read<AccountRepository>().meAccount();
-      if (!mounted) return;
-      setState(() {
-        _preferences = me.timePreferences;
-        _mode = _mode;
-      });
-    } catch (_) {
-      // Defaults stand.
-    }
-  }
+  /// Built once rather than in `build`: [ScopedShortcuts] compares the list it
+  /// was handed with the one before it, and a fresh literal would unregister
+  /// and re-register on every rebuild — leaving a window each time in which
+  /// Escape does nothing.
+  late final List<AppShortcut> _shortcuts = [
+    AppShortcut(
+      id: 'focus.leave',
+      key: LogicalKeyboardKey.escape,
+      modifier: ShortcutModifier.none,
+      labelKey: 'shortcuts.focus.leave',
+      groupKey: 'shortcuts.group.time',
+      onInvoke: (_) => _leave(),
+    ),
+  ];
 
   void _leave() {
     // Back to wherever this was opened from. A focus screen reached by a deep
@@ -84,16 +73,7 @@ class _TimeFocusScreenState extends State<TimeFocusScreen> {
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     return ScopedShortcuts(
-      shortcuts: [
-        AppShortcut(
-          id: 'focus.leave',
-          key: LogicalKeyboardKey.escape,
-          modifier: ShortcutModifier.none,
-          labelKey: 'shortcuts.focus.leave',
-          groupKey: 'shortcuts.group.time',
-          onInvoke: (_) => _leave(),
-        ),
-      ],
+      shortcuts: _shortcuts,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Stack(
@@ -101,6 +81,15 @@ class _TimeFocusScreenState extends State<TimeFocusScreen> {
             Positioned.fill(child: AmbientBackground(dark: dark)),
             SafeArea(
               child: BlocBuilder<TimerCubit, TimerState>(
+                // Not on every tick. The readout counts itself off the cubit;
+                // everything else here — the phase, the description, the mode,
+                // the buttons — changes only when the timer does. Without this
+                // the whole body, two filled buttons and every pip rebuilt once
+                // a second, on the one screen designed to sit open for
+                // twenty-five minutes at a time.
+                buildWhen: (previous, current) =>
+                    previous.timer != current.timer ||
+                    previous.isBusy != current.isBusy,
                 builder: (context, state) => Column(
                   children: [
                     _TopBar(onLeave: _leave),
@@ -116,7 +105,6 @@ class _TimeFocusScreenState extends State<TimeFocusScreen> {
                             child: _Body(
                               state: state,
                               mode: _mode,
-                              preferences: _preferences,
                               onMode: (mode) => setState(() => _mode = mode),
                             ),
                           ),
@@ -166,16 +154,10 @@ class _TopBar extends StatelessWidget {
 }
 
 class _Body extends StatelessWidget {
-  const _Body({
-    required this.state,
-    required this.mode,
-    required this.preferences,
-    required this.onMode,
-  });
+  const _Body({required this.state, required this.mode, required this.onMode});
 
   final TimerState state;
   final TimerMode mode;
-  final TimePreferences preferences;
   final ValueChanged<TimerMode> onMode;
 
   @override
@@ -185,7 +167,7 @@ class _Body extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (timer != null) _PhaseLine(timer: timer),
+        if (timer != null) _PhaseHeader(timer: timer),
         const SizedBox(height: 10),
         const _Readout(),
         const SizedBox(height: 18),
@@ -199,7 +181,7 @@ class _Body extends StatelessWidget {
         else
           _RunningModeLine(timer: timer),
         const SizedBox(height: 22),
-        _Actions(state: state, mode: mode, preferences: preferences),
+        _Actions(state: state, mode: mode),
       ],
     );
   }
@@ -222,44 +204,49 @@ class _Readout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shown = context.select<TimerCubit, Duration?>((cubit) {
-      final state = cubit.state;
-      final timer = state.timer;
-      if (timer == null) return null;
-      // Counting down where there is something to count down to, up where there
-      // is not. A countdown that showed how long it had been running would be
-      // answering a question nobody asked it.
-      final remaining = timer.remaining(DateTime.now());
-      return remaining ?? state.elapsed;
-    });
+    // Down where there is a target, up where there is not — decided by the
+    // state, not by the wall clock, so the selector can actually report
+    // "unchanged" and the countdown reads whole seconds.
+    final shown = context.select<TimerCubit, Duration>(
+      (cubit) => cubit.state.shown,
+    );
+    final running = context.select<TimerCubit, bool>(
+      (cubit) => cubit.state.isRunning,
+    );
     return Text(
-      shown == null ? '0:00' : format(shown),
+      running ? format(shown) : '0:00',
       textAlign: TextAlign.center,
       style: TextStyle(
         fontSize: 68,
         height: 1.05,
         fontWeight: FontWeight.w300,
         fontFeatures: const [FontFeature.tabularFigures()],
-        color: shown == null ? AppColors.inkSoft : AppColors.ink,
+        color: running ? AppColors.ink : AppColors.inkSoft,
       ),
     );
   }
 }
 
 /// Which half of the rhythm is running, and how far through the set.
-class _PhaseLine extends StatelessWidget {
-  const _PhaseLine({required this.timer});
+///
+/// The tall form, for the focus screen: the phase named on its own line with a
+/// row of pips under it. The timer bar draws the same fact as one inline row
+/// (`_PhaseLine` there) — a shared widget switching between the two layouts
+/// would be one widget doing two unrelated things.
+class _PhaseHeader extends StatelessWidget {
+  const _PhaseHeader({required this.timer});
 
   final RunningTimer timer;
 
   @override
   Widget build(BuildContext context) {
     final phase = timer.phase;
-    if (phase == null || timer.pomodoro == null) return const SizedBox.shrink();
-    final cycles = timer.pomodoro!.cycles;
-    // The interval being worked is the one after those already done, and it is
-    // counted from one because that is how people count intervals.
-    final position = (timer.cyclesDone % cycles) + 1;
+    final cycles = timer.pomodoro?.cycles ?? 0;
+    // A configuration with no cycles is not one this app writes, but it is one
+    // the document could hold — `PomodoroConfig.breakAfter` guards for it, so
+    // this must too rather than dividing by zero.
+    if (phase == null || cycles <= 0) return const SizedBox.shrink();
+    final done = timer.cyclesDone % cycles;
     return Column(
       children: [
         Text(
@@ -280,8 +267,8 @@ class _PhaseLine extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 3),
                 child: _Pip(
-                  done: index < timer.cyclesDone % cycles,
-                  current: !phase.isBreak && index == position - 1,
+                  done: index < done,
+                  current: !phase.isBreak && index == done,
                 ),
               ),
           ],
@@ -458,11 +445,7 @@ class _ModeChoice extends StatelessWidget {
           if (each != TimerMode.values.first) const SizedBox(width: 2),
           GlassSwitchChip(
             label: context.t(each.labelKey),
-            icon: switch (each) {
-              TimerMode.stopwatch => LucideIcons.timer,
-              TimerMode.countdown => LucideIcons.hourglass,
-              TimerMode.pomodoro => LucideIcons.circleDot,
-            },
+            icon: each.icon,
             active: each == mode,
             onTap: each == mode ? null : () => onMode(each),
           ),
@@ -487,15 +470,10 @@ class _RunningModeLine extends StatelessWidget {
 }
 
 class _Actions extends StatelessWidget {
-  const _Actions({
-    required this.state,
-    required this.mode,
-    required this.preferences,
-  });
+  const _Actions({required this.state, required this.mode});
 
   final TimerState state;
   final TimerMode mode;
-  final TimePreferences preferences;
 
   @override
   Widget build(BuildContext context) {
@@ -523,9 +501,6 @@ class _Actions extends StatelessWidget {
             onTap: state.isBusy ? null : () => unawaited(cubit.advancePhase()),
           ),
         if (timer.mode == TimerMode.pomodoro) const SizedBox(height: 10),
-        // A break is never filed, so ending one is a discard and says so. The
-        // server refuses a stop on a break outright; this is what keeps anyone
-        // from meeting that refusal.
         _Primary(
           icon: timer.isBreak ? LucideIcons.x : LucideIcons.square,
           label: context.t(
@@ -533,35 +508,22 @@ class _Actions extends StatelessWidget {
           ),
           busy: state.isBusy,
           color: AppColors.danger,
-          onTap: state.isBusy
-              ? null
-              : () => unawaited(
-                  timer.isBreak ? cubit.discard() : _stop(context, cubit),
-                ),
+          // `end`, not `stop`: a break is never filed, and the server refuses a
+          // stop on one outright. The cubit owns that branch so that the four
+          // places which end a timer cannot disagree about it.
+          onTap: state.isBusy ? null : () => unawaited(cubit.end()),
         ),
       ],
     );
   }
 
-  Future<void> _start(BuildContext context) => context.read<TimerCubit>().start(
-    mode: mode,
-    plannedMinutes: preferences.countdownMinutes,
-    pomodoro: preferences.pomodoro,
-  );
-
-  Future<void> _stop(BuildContext context, TimerCubit cubit) async {
-    final saved = await cubit.stop();
-    if (saved == null || !context.mounted) return;
-    if (saved.hasOverlaps) {
-      showGlassToast(
-        context,
-        context.t(
-          'time.overlapWarning',
-          variables: {'count': '${saved.overlaps.length}'},
-        ),
-        kind: GlassToastKind.warning,
-      );
-    }
+  Future<void> _start(BuildContext context) {
+    final preferences = context.read<TimePreferencesCubit>().state;
+    return context.read<TimerCubit>().start(
+      mode: mode,
+      plannedMinutes: preferences.countdownMinutes,
+      pomodoro: preferences.pomodoro,
+    );
   }
 }
 

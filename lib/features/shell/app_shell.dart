@@ -21,7 +21,7 @@ import '../../core/notifications/notification_swipe.dart';
 import '../../core/notifications/notification_visuals.dart';
 import '../../core/repositories/notification_repository.dart';
 import '../../core/responsive/responsive.dart';
-import '../../core/shortcuts/app_shortcuts.dart' show commandKeyLabel;
+import '../../core/shortcuts/global_shortcuts.dart' show kGlobalShortcuts;
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -74,12 +74,13 @@ bool get isNativeApp =>
 
 /// How the search-palette shortcut is spelled on this platform.
 ///
-/// The dispatcher accepts ⌘ and Ctrl everywhere, but the hint has to name the
-/// key the user actually has — a Windows or Linux keyboard has no ⌘. The
-/// spelling comes from the shortcut library so the bar and the shortcuts sheet
-/// cannot disagree about it.
-String get searchShortcutLabel =>
-    '$commandKeyLabel${commandKeyLabel == '⌘' ? '' : ' '}K';
+/// Asked of the shortcut itself, so the hint in the search bar and the row in
+/// the shortcuts sheet cannot disagree — rebind ⌘K and both follow. The
+/// dispatcher accepts ⌘ and Ctrl everywhere, but the label has to name the key
+/// the reader actually has: a Windows or Linux keyboard has no ⌘.
+String get searchShortcutLabel => kGlobalShortcuts
+    .firstWhere((shortcut) => shortcut.id == 'app.search')
+    .label;
 
 /// Responsive scaffold:
 /// • phone/compact (<987): Liquid-Glass floating bottom nav

@@ -20,6 +20,9 @@ final List<AppShortcut> kGlobalShortcuts = [
     id: 'app.shortcuts',
     key: LogicalKeyboardKey.slash,
     labelKey: 'shortcuts.app.shortcuts',
+    // Held until the sheet closes: it is slow to animate in, and pressing again
+    // because nothing seemed to happen would stack a second full-screen blur.
+    exclusive: true,
     onInvoke: showShortcutsSheet,
   ),
 ];

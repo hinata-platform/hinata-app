@@ -856,7 +856,8 @@
       "stop": "Detener",
       "discard": "Descartar temporizador",
       "noDescription": "Sin descripción",
-      "title": "Temporizador"
+      "title": "Temporizador",
+      "chooseMode": "Elegir cómo cuenta"
     },
     "placement": {
       "none": "Sin proyecto",
@@ -936,7 +937,8 @@
       "countdown": "Tu cuenta atrás ha terminado.",
       "breakOver": "Pausa terminada: sigue cuando quieras.",
       "workOver": "Un intervalo hecho. Hora de una pausa.",
-      "workOver_plural": "{{count}} intervalos hechos. Hora de una pausa."
+      "workOver_plural": "{{count}} intervalos hechos. Hora de una pausa.",
+      "titleFlash": "Intervalo terminado"
     }
   },
   "projects": {
@@ -2404,22 +2406,7 @@
       "minutesAgo": "hace {{count}} min",
       "hoursAgo": "hace {{count}} h",
       "daysAgo": "hace {{count}} d",
-      "weeksAgo": "hace {{count}} sem.",
-      "title": "Control de tiempo",
-      "subtitle": "Tu propio ritmo: duraciones, cuenta atrás y el sonido al terminar.",
-      "pomodoro": "Pomodoro",
-      "work": "Intervalo de trabajo",
-      "shortBreak": "Pausa corta",
-      "longBreak": "Pausa larga",
-      "cycles": "Intervalos antes de la pausa larga",
-      "countdown": "Cuenta atrás",
-      "countdownLength": "Duración predeterminada",
-      "sound": "Reproducir un sonido",
-      "soundHint": "Un breve tono al terminar un intervalo. El mensaje aparece igualmente.",
-      "minutes": "{{count}} min",
-      "intervals": "{{count}} intervalo",
-      "intervals_plural": "{{count}} intervalos",
-      "saveFailed": "No se han podido guardar tus preferencias."
+      "weeksAgo": "hace {{count}} sem."
     },
     "notifications": {
       "title": "Notificaciones",
@@ -2547,6 +2534,23 @@
     "tokens": {
       "title": "Tokens de acceso",
       "subtitle": "Tokens de acceso personal para el servidor MCP y el acceso a la API."
+    },
+    "timeTracking": {
+      "title": "Control de tiempo",
+      "subtitle": "Tu propio ritmo: duraciones, cuenta atrás y el sonido al terminar.",
+      "pomodoro": "Pomodoro",
+      "work": "Intervalo de trabajo",
+      "shortBreak": "Pausa corta",
+      "longBreak": "Pausa larga",
+      "cycles": "Intervalos antes de la pausa larga",
+      "countdown": "Cuenta atrás",
+      "countdownLength": "Duración predeterminada",
+      "sound": "Reproducir un sonido",
+      "soundHint": "Un breve tono al terminar un intervalo. El mensaje aparece igualmente.",
+      "minutes": "{{count}} min",
+      "intervals": "{{count}} intervalo",
+      "intervals_plural": "{{count}} intervalos",
+      "saveFailed": "No se han podido guardar tus preferencias."
     }
   },
   "twofa": {
@@ -2895,11 +2899,6 @@
     "app": {
       "search": "Buscar e ir a",
       "shortcuts": "Atajos de teclado"
-    },
-    "time": {
-      "toggle": "Iniciar o detener el temporizador",
-      "newEntry": "Registrar tiempo",
-      "focus": "Modo concentración"
     },
     "focus": {
       "leave": "Salir del modo concentración"

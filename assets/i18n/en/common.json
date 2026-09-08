@@ -856,7 +856,8 @@
       "stop": "Stop",
       "discard": "Discard timer",
       "noDescription": "No description",
-      "title": "Timer"
+      "title": "Timer",
+      "chooseMode": "Choose how it counts"
     },
     "placement": {
       "none": "No project",
@@ -936,7 +937,8 @@
       "countdown": "Your countdown is up.",
       "breakOver": "Break over — back to it when you are ready.",
       "workOver": "One interval done. Time for a break.",
-      "workOver_plural": "{{count}} intervals done. Time for a break."
+      "workOver_plural": "{{count}} intervals done. Time for a break.",
+      "titleFlash": "Interval over"
     }
   },
   "projects": {
@@ -2404,22 +2406,7 @@
       "minutesAgo": "{{count}}m ago",
       "hoursAgo": "{{count}}h ago",
       "daysAgo": "{{count}}d ago",
-      "weeksAgo": "{{count}}w ago",
-      "title": "Time tracking",
-      "subtitle": "Your own rhythm — lengths, countdown and the end-of-interval sound.",
-      "pomodoro": "Pomodoro",
-      "work": "Focus interval",
-      "shortBreak": "Short break",
-      "longBreak": "Long break",
-      "cycles": "Intervals before the long break",
-      "countdown": "Countdown",
-      "countdownLength": "Default length",
-      "sound": "Play a sound",
-      "soundHint": "A short chime when an interval ends. The message appears either way.",
-      "minutes": "{{count}} min",
-      "intervals": "{{count}} interval",
-      "intervals_plural": "{{count}} intervals",
-      "saveFailed": "Could not save your preferences."
+      "weeksAgo": "{{count}}w ago"
     },
     "notifications": {
       "title": "Notifications",
@@ -2547,6 +2534,23 @@
     "tokens": {
       "title": "Access tokens",
       "subtitle": "Personal Access Tokens for the MCP server and API access."
+    },
+    "timeTracking": {
+      "title": "Time tracking",
+      "subtitle": "Your own rhythm — lengths, countdown and the end-of-interval sound.",
+      "pomodoro": "Pomodoro",
+      "work": "Focus interval",
+      "shortBreak": "Short break",
+      "longBreak": "Long break",
+      "cycles": "Intervals before the long break",
+      "countdown": "Countdown",
+      "countdownLength": "Default length",
+      "sound": "Play a sound",
+      "soundHint": "A short chime when an interval ends. The message appears either way.",
+      "minutes": "{{count}} min",
+      "intervals": "{{count}} interval",
+      "intervals_plural": "{{count}} intervals",
+      "saveFailed": "Could not save your preferences."
     }
   },
   "twofa": {
@@ -2895,11 +2899,6 @@
     "app": {
       "search": "Search and jump to",
       "shortcuts": "Keyboard shortcuts"
-    },
-    "time": {
-      "toggle": "Start or stop the timer",
-      "newEntry": "Log time",
-      "focus": "Focus mode"
     },
     "focus": {
       "leave": "Leave focus mode"

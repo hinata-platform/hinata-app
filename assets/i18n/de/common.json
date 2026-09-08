@@ -856,7 +856,8 @@
       "stop": "Stoppen",
       "discard": "Timer verwerfen",
       "noDescription": "Ohne Beschreibung",
-      "title": "Timer"
+      "title": "Timer",
+      "chooseMode": "Zählweise wählen"
     },
     "placement": {
       "none": "Ohne Projekt",
@@ -936,7 +937,8 @@
       "countdown": "Dein Countdown ist abgelaufen.",
       "breakOver": "Pause vorbei — weiter, wenn du soweit bist.",
       "workOver": "Ein Intervall geschafft. Zeit für eine Pause.",
-      "workOver_plural": "{{count}} Intervalle geschafft. Zeit für eine Pause."
+      "workOver_plural": "{{count}} Intervalle geschafft. Zeit für eine Pause.",
+      "titleFlash": "Intervall zu Ende"
     }
   },
   "projects": {
@@ -2404,22 +2406,7 @@
       "minutesAgo": "vor {{count}} Min.",
       "hoursAgo": "vor {{count}} Std.",
       "daysAgo": "vor {{count}} T.",
-      "weeksAgo": "vor {{count}} Wo.",
-      "title": "Zeiterfassung",
-      "subtitle": "Dein eigener Rhythmus — Längen, Countdown und der Ton am Intervallende.",
-      "pomodoro": "Pomodoro",
-      "work": "Arbeitsintervall",
-      "shortBreak": "Kurze Pause",
-      "longBreak": "Lange Pause",
-      "cycles": "Intervalle bis zur langen Pause",
-      "countdown": "Countdown",
-      "countdownLength": "Voreingestellte Länge",
-      "sound": "Ton abspielen",
-      "soundHint": "Ein kurzer Klang am Intervallende. Die Meldung erscheint so oder so.",
-      "minutes": "{{count}} Min.",
-      "intervals": "{{count}} Intervall",
-      "intervals_plural": "{{count}} Intervalle",
-      "saveFailed": "Einstellungen konnten nicht gespeichert werden."
+      "weeksAgo": "vor {{count}} Wo."
     },
     "notifications": {
       "title": "Benachrichtigungen",
@@ -2547,6 +2534,23 @@
     "tokens": {
       "title": "Zugriffstokens",
       "subtitle": "Personal Access Tokens für den MCP-Server und den API-Zugriff."
+    },
+    "timeTracking": {
+      "title": "Zeiterfassung",
+      "subtitle": "Dein eigener Rhythmus — Längen, Countdown und der Ton am Intervallende.",
+      "pomodoro": "Pomodoro",
+      "work": "Arbeitsintervall",
+      "shortBreak": "Kurze Pause",
+      "longBreak": "Lange Pause",
+      "cycles": "Intervalle bis zur langen Pause",
+      "countdown": "Countdown",
+      "countdownLength": "Voreingestellte Länge",
+      "sound": "Ton abspielen",
+      "soundHint": "Ein kurzer Klang am Intervallende. Die Meldung erscheint so oder so.",
+      "minutes": "{{count}} Min.",
+      "intervals": "{{count}} Intervall",
+      "intervals_plural": "{{count}} Intervalle",
+      "saveFailed": "Einstellungen konnten nicht gespeichert werden."
     }
   },
   "twofa": {
@@ -2895,11 +2899,6 @@
     "app": {
       "search": "Suchen und springen",
       "shortcuts": "Tastaturkürzel"
-    },
-    "time": {
-      "toggle": "Timer starten oder stoppen",
-      "newEntry": "Zeit erfassen",
-      "focus": "Fokus-Modus"
     },
     "focus": {
       "leave": "Fokus-Modus verlassen"
