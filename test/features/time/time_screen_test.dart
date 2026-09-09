@@ -78,6 +78,9 @@ void main() {
     // Handed in only where a test has to read back what the page asked the
     // timer to do; otherwise the page gets one built from [timer].
     _FakeTimerCubit? timerCubit,
+    // Likewise, for a test about the rules changing under a session that had
+    // already read them.
+    FakeTimePolicyCubit? policyCubit,
   }) {
     final router = GoRouter(
       routes: [
@@ -105,7 +108,8 @@ void main() {
                     // demands, and what the screens assume until the module
                     // answers otherwise.
                     BlocProvider<TimePolicyCubit>(
-                      create: (_) => FakeTimePolicyCubit(policy, time),
+                      create: (_) =>
+                          policyCubit ?? FakeTimePolicyCubit(policy, time),
                     ),
                   ],
                   child: const TimeScreen(),
@@ -652,6 +656,45 @@ void main() {
         },
       );
 
+      testWidgets('a refusal it did not see coming opens the composer', (
+        tester,
+      ) async {
+        // The bar decides from a snapshot read once a session, and a timer may
+        // have been running since before an administrator turned a field on.
+        // Then the stop this side thinks is complete comes back refused — and
+        // without asking again, pressing stop would do the same thing for ever
+        // while the clock kept running.
+        final cubit = running()..refuseStop = true;
+        final policy = FakeTimePolicyCubit(
+          TimePolicySnapshot.none,
+          _FakeTimeRepository(const []),
+        )..onRefresh = const TimePolicySnapshot(requiredDescription: true);
+        await tester.pumpWidget(
+          host(
+            time: _FakeTimeRepository(const []),
+            size: phone,
+            timerCubit: cubit,
+            policyCubit: policy,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await openMenu(tester);
+
+        await tester.tap(find.text('time.add.timerStop'));
+        await tester.pumpAndSettle();
+
+        expect(
+          policy.refreshes,
+          1,
+          reason: 'asked again, once, on the refusal',
+        );
+        expect(
+          find.text('time.timer.finish'),
+          findsOneWidget,
+          reason: 'the composer for what the fresh policy says is missing',
+        );
+      });
+
       testWidgets('and the answer rides along on the stop', (tester) async {
         final cubit = running();
         await tester.pumpWidget(
@@ -770,6 +813,10 @@ class _FakeTimerCubit extends Cubit<TimerState> implements TimerCubit {
   /// where the required fields are collected has to be able to read them back.
   final List<({DateTime? endedAt, String? description})> stopped = [];
 
+  /// Whether the server turns the next stop down — a policy this side has not
+  /// read yet, which is the one case the bar cannot see coming.
+  bool refuseStop = false;
+
   @override
   Future<SavedTimeEntry?> end() async => state.timer == null ? null : stop();
 
@@ -784,6 +831,7 @@ class _FakeTimerCubit extends Cubit<TimerState> implements TimerCubit {
     bool? billable,
   }) async {
     stopped.add((endedAt: endedAt, description: description));
+    if (refuseStop) return null;
     emit(const TimerState());
     return const SavedTimeEntry(
       entry: WorkItem(

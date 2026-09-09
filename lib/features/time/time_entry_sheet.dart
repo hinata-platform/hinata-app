@@ -341,10 +341,11 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       activityType: _activity,
       // Only what this sheet was asked to change, as on an edit. Sent, the
       // timer's own tags go back through the catalogue on the way out — and
-      // that is the one thing that can refuse a stop: a tag deleted from the
-      // catalogue mid-run, or an instance that limits who may use one. The
-      // timer resolved them when it started; re-resolving them buys nothing
-      // and puts a clock at risk.
+      // that is the one thing that could make a timer *unstoppable*: a
+      // required field can refuse a stop too, but that refusal names a field
+      // and this form can answer it, while a tag deleted from the catalogue
+      // mid-run refuses every stop with no way to answer at all. The timer
+      // resolved them when it started; re-resolving them buys nothing.
       tags: _tagsTouched ? _tags : null,
     );
     if (saved == null && mounted) {

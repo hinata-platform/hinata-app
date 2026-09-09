@@ -288,18 +288,32 @@ Future<void> endTimerAndAdvise(
 }) async {
   final cubit = context.read<TimerCubit>();
   final running = cubit.state.timer;
-  final SavedTimeEntry? saved;
-  if (running != null && !running.isBreak && _needsComposer(context, running)) {
-    saved = await showTimeEntrySheet(
-      context,
-      timer: running,
-      // The interval as it stands at the press. Its end is what the sheet shows
-      // and what the stop will carry, so however long the form stays open, the
-      // entry ends where the button was pressed.
-      span: (start: running.startedAt, end: DateTime.now()),
-    );
+  // The interval as it stands at the press. Its end is what the sheet shows and
+  // what the stop will carry, so however long the form stays open, the entry
+  // ends where the button was pressed.
+  final span = running == null
+      ? null
+      : (start: running.startedAt, end: DateTime.now());
+  final composable = running != null && !running.isBreak;
+  SavedTimeEntry? saved;
+  if (composable && _needsComposer(context, running)) {
+    saved = await showTimeEntrySheet(context, timer: running, span: span);
   } else {
     saved = await cubit.end();
+    if (saved == null && composable && context.mounted) {
+      // The server refused a stop this side thought was complete, and the
+      // likeliest reason is that it is reading a policy the operator has since
+      // changed: the snapshot is loaded once a session, and a timer may have
+      // been running since before an administrator turned a field on. So ask
+      // again, and if the answer is now "something is missing", open the
+      // composer for it — otherwise the refusal is a sentence in a toast and
+      // pressing stop again does exactly the same thing, for ever.
+      await context.read<TimePolicyCubit>().refresh();
+      if (!context.mounted) return;
+      if (_needsComposer(context, running)) {
+        saved = await showTimeEntrySheet(context, timer: running, span: span);
+      }
+    }
   }
   if (saved == null || !context.mounted) return;
   onStopped?.call();
