@@ -44,6 +44,19 @@ abstract final class AppColors {
   static const canvas2Dark = Color(0xFF0E0D14);
   static Color get canvas2 => _dark ? canvas2Dark : canvas2Light; // recessed
 
+  /// A stretch a surface pushes back — today, a weekend column on the
+  /// calendar's hour canvas.
+  ///
+  /// Translucent on purpose, and the reason it is not simply [canvas2]. These
+  /// surfaces are drawn on glass, and an opaque fill stops the window's own
+  /// backdrop dead: the weekend came out as a black slab in the dark theme and
+  /// a grey one in the light, with a hard seam down Saturday morning where the
+  /// aurora behind it was cut off. A tint recedes and lets the same backdrop
+  /// carry on through — the ink over it does the rest of the work.
+  static const recessLight = Color(0x14211F3D);
+  static const recessDark = Color(0x38080610);
+  static Color get recess => _dark ? recessDark : recessLight;
+
   static const surfaceLight = Color(0xFFFFFFFF);
   static const surfaceDark = Color(0xFF1C1B25);
   static Color get surface => _dark ? surfaceDark : surfaceLight; // cards

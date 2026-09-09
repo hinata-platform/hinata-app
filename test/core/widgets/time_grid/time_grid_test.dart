@@ -655,6 +655,130 @@ void main() {
     expect(find.text('item2'), findsNothing);
   });
 
+  testWidgets('the count opens what it stands for', (tester) async {
+    // The count used to be a label and nothing else: the strip said a day held
+    // four more entries and offered no way at all to reach them, at every
+    // window size, because the ceiling is on rows rather than on width.
+    TimeGridItem? opened;
+    await tester.pumpWidget(
+      host(
+        layers: [
+          TimeGridLayer(
+            id: 'untimed',
+            placement: TimeGridPlacement.band,
+            items: [for (var i = 0; i < 6; i++) entry('item$i', 0, 0)],
+          ),
+        ],
+        onTap: (item) => opened = item,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('+4'));
+    await tester.pumpAndSettle();
+
+    // The whole day, not the tail: a reader who taps "+4" wants the day, not a
+    // remainder to reconcile against the chips above.
+    expect(find.text('item5'), findsOneWidget, reason: 'in the popover');
+    expect(
+      find.text('item0'),
+      findsNWidgets(2),
+      reason: 'chip and popover row',
+    );
+
+    await tester.tap(find.text('item5'));
+    await tester.pumpAndSettle();
+
+    expect(opened?.id, 'item5', reason: 'the same callback a chip reports on');
+    expect(find.text('item5'), findsNothing, reason: 'the popover closed');
+  });
+
+  testWidgets('a layer nobody can open counts without offering a menu', (
+    tester,
+  ) async {
+    // The chips of a read-only layer are inert, and the count beside them has
+    // to be too: a popover whose every row silently does nothing is worse than
+    // no popover.
+    await tester.pumpWidget(
+      host(
+        layers: [
+          TimeGridLayer(
+            id: 'untimed',
+            placement: TimeGridPlacement.band,
+            items: [for (var i = 0; i < 6; i++) entry('item$i', 0, 0)],
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('+4'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('item5'), findsNothing);
+  });
+
+  testWidgets('short entries in a row are not drawn through each other', (
+    tester,
+  ) async {
+    // The reported case, measured on the pixels rather than on the arithmetic:
+    // five entries started and stopped one after another inside a quarter of an
+    // hour. None of them overlaps another on the clock, and every one of them
+    // overlapped on screen — a block is never painted thinner than one line of
+    // text, so at this zoom each covers twenty minutes of column.
+    TimeGridItem short(String id, int hour, int minute, {int lasting = 1}) =>
+        TimeGridItem(
+          id: id,
+          start: DateTime(2026, 9, 7, hour, minute),
+          end: DateTime(2026, 9, 7, hour, minute + lasting),
+          title: id,
+          movable: true,
+        );
+
+    final entries = [
+      short('a', 15, 51, lasting: 6),
+      short('b', 15, 58),
+      short('c', 16, 0, lasting: 2),
+      short('d', 16, 3),
+      short('e', 16, 5),
+    ];
+
+    await tester.pumpWidget(
+      host(layers: [blocks(entries)], initialScrollHour: 15),
+    );
+    await tester.pumpAndSettle();
+
+    final drawn = {
+      for (final item in entries)
+        item.id: tester.getRect(
+          find
+              .ancestor(
+                of: find.text(item.id),
+                matching: find.byType(Container),
+              )
+              .first,
+        ),
+    };
+
+    for (final a in entries) {
+      for (final b in entries) {
+        if (a.id.compareTo(b.id) >= 0) continue;
+        expect(
+          drawn[a.id]!.overlaps(drawn[b.id]!),
+          isFalse,
+          reason:
+              '${a.id} at ${drawn[a.id]} is drawn through '
+              '${b.id} at ${drawn[b.id]}',
+        );
+      }
+    }
+    // And each of them is still worth grabbing.
+    expect(
+      drawn.values.map((rect) => rect.height),
+      everyElement(greaterThanOrEqualTo(kTimeGridBlockMinHeight)),
+    );
+  });
+
   testWidgets('an empty grid still draws its axis and headings', (
     tester,
   ) async {
