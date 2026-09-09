@@ -272,10 +272,7 @@ class _TimerBarBody extends StatelessWidget {
     if (saved.hasOverlaps) {
       showGlassToast(
         context,
-        context.t(
-          'time.overlapWarning',
-          variables: {'count': '${saved.overlaps.length}'},
-        ),
+        context.t('time.overlapWarning', count: saved.overlaps.length),
         kind: GlassToastKind.warning,
       );
     }

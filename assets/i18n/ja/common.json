@@ -23,7 +23,13 @@
     "clear": "クリア",
     "paste": "貼り付け",
     "today": "今日",
-    "yesterday": "昨日"
+    "yesterday": "昨日",
+    "rename": "名前を変更",
+    "name": "名前",
+    "loadMore": "さらに読み込む",
+    "saved": "保存しました",
+    "yes": "はい",
+    "no": "いいえ"
   },
   "delete": {
     "cta": "削除",
@@ -898,7 +904,8 @@
       "modeDuration": "長さ",
       "modeInterval": "開始と終了",
       "noDescription": "説明なし",
-      "continue": "続ける"
+      "continue": "続ける",
+      "tags": "タグ"
     },
     "view": {
       "list": "リスト",
@@ -939,6 +946,44 @@
       "workOver": "1 区間完了。休憩しましょう。",
       "workOver_plural": "{{count}} 区間完了。休憩しましょう。",
       "titleFlash": "区間終了"
+    },
+    "tags": {
+      "none": "タグなし",
+      "search": "タグを検索",
+      "create": "「{{name}}」を作成",
+      "noneCurated": "タグはまだありません。このサーバーでは管理者のみが作成できます。"
+    },
+    "policy": {
+      "locked": "この日の記録はロックされており、変更できません",
+      "lockedChip": "ロック中",
+      "needProject": "このサーバーではすべての記録にプロジェクトが必要です",
+      "needIssue": "このサーバーではすべての記録に課題が必要です",
+      "needDescription": "このサーバーではすべての記録に説明が必要です",
+      "needTag": "このサーバーではすべての記録にタグが1つ以上必要です"
+    },
+    "history": {
+      "open": "履歴",
+      "title": "この記録の履歴",
+      "subtitle": "あなた以外の誰が何を変更したか",
+      "emptyTitle": "他の人による変更はありません",
+      "emptyMessage": "この記録を編集したのはあなただけです。自分自身による修正は意図的に記録されません。",
+      "created": "登録 {{when}} · {{source}}",
+      "field": {
+        "minutes": "時間",
+        "date": "日付",
+        "project": "プロジェクト",
+        "issue": "課題"
+      }
+    },
+    "source": {
+      "APP": "手入力",
+      "TIMER": "停止したタイマー",
+      "MCP": "連携から記録",
+      "SMART_COMMIT": "スマートコミット",
+      "LEGACY": "スマートコミット（2.0 より前）",
+      "CALENDAR": "カレンダーから",
+      "CSV": "インポート",
+      "SHARED": "共有された記録のコピー"
     }
   },
   "projects": {
@@ -1504,8 +1549,8 @@
       "requiredDescriptionHint": "記録は何に取り組んだかを示す必要があります。",
       "requiredTagTitle": "タグ必須",
       "requiredTagHint": "記録には少なくとも1つのタグが必要です。",
-      "lockBeforeLabel": "この日まで施錠",
-      "lockBeforeHint": "この日以前の記録は、誰も — API からも — 作成・変更・削除できません。",
+      "lockBeforeLabel": "この日より前を施錠",
+      "lockBeforeHint": "この日より前の記録は、誰も — API からも — 作成・変更・削除できません。指定した当日は開いたままです。",
       "roundingModeLabel": "丸め",
       "roundingModeHint": "レポートにのみ適用されます。保存された分は変わりません。",
       "roundingMode": {
@@ -1587,7 +1632,19 @@
       "monthsSuffix": "か月",
       "privacyNoticeLabel": "プライバシー通知",
       "privacyNoticeHint": "モジュールの時間データと一緒にアプリに表示されます。空欄 → 組み込みの文面。",
-      "notYetEnforced": "保存はされますが、まだ適用されません。このポリシーの機能は時間記録の後の段階で追加されます。"
+      "notYetEnforced": "保存はされますが、まだ適用されません。このポリシーの機能は時間記録の後の段階で追加されます。",
+      "tagsTitle": "タグ",
+      "tagsHint": "記録に付ける語彙です。名前を変更すると、すべての記録がそれに従います。",
+      "tagsEmpty": "タグはまだありません。",
+      "tagNew": "新しいタグ",
+      "tagRename": "タグの名前を変更",
+      "tagNameHint": "最大40文字。大文字と小文字の違いで別のタグにはなりません。",
+      "tagUsage": "{{count}} 件の記録",
+      "tagUsage_plural": "{{count}} 件の記録",
+      "tagDeleteTitle": "タグを削除しますか？",
+      "tagDeleteMessage": "「{{name}}」を {{count}} 件の記録から削除します。記録そのものは残ります。",
+      "tagDeleteMessage_plural": "「{{name}}」を {{count}} 件の記録から削除します。記録そのものは残ります。",
+      "lockBeforeEveryone": "ロックは管理者を含む全員に適用されます。締めた期間を直すには、記録に残る形でロックを解除します。"
     },
     "passwordPolicy": "パスワードポリシー",
     "passwordPolicyHint": "ユーザーのパスワードに求める最低条件。",
@@ -2018,7 +2075,17 @@
       "ISSUE_EXPORTED": "課題をエクスポート",
       "TIME_ENTRY_UPDATED": "作業時間の記録を更新",
       "TIME_ENTRY_DELETED": "作業時間の記録を削除",
-      "TIME_ENTRY_CREATED_FOR": "他の人の作業時間を記録"
+      "TIME_ENTRY_CREATED_FOR": "他の人の作業時間を記録",
+      "TIME_ENTRY_CREATED": "作業時間を記録",
+      "TIME_TIMER_STARTED": "タイマー開始",
+      "TIME_TIMER_STOPPED": "タイマー停止",
+      "TIME_TIMER_DISCARDED": "タイマー破棄",
+      "TIME_POLICY_CHANGED": "時間管理ポリシーを変更",
+      "TIME_LOCK_CHANGED": "ロック日を変更",
+      "TIME_TAG_CREATED": "タグを作成",
+      "TIME_TAG_UPDATED": "タグを変更",
+      "TIME_TAG_DELETED": "タグを削除",
+      "TIME_PROJECT_SETTINGS_CHANGED": "プロジェクトの時間設定を変更"
     },
     "meta": {
       "oldRole": "変更前のロール",
@@ -2202,7 +2269,17 @@
     "migrateTarget": "課題の移動先",
     "migrateManualHint": "ステータスを削除する前に、課題を手動で移動することもできます。",
     "migrateConfirm": "移動して削除",
-    "keyFromName": "名前からキーを生成"
+    "keyFromName": "名前からキーを生成",
+    "time": {
+      "title": "時間管理",
+      "note": "このプロジェクト自身の決定です。サーバー既定のままの項目はインスタンスのポリシーに従います。",
+      "budget": "予算",
+      "budgetHint": "例: 120h — 予算なしなら空欄",
+      "billable": "既定で請求対象",
+      "approvalRequired": "タイムシートに承認が必要",
+      "approvalPeriod": "提出期間",
+      "inherit": "サーバー既定"
+    }
   },
   "teams": {
     "avatar": {

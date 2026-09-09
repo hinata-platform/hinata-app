@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/blocs/app_config_bloc.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/blocs/auth_bloc.dart';
 import '../../../core/i18n/i18n.dart';
@@ -29,6 +30,7 @@ import 'general_section.dart';
 import 'labels_section.dart';
 import 'members_section.dart';
 import 'settings_common.dart';
+import 'time_section.dart';
 import 'workflow_section.dart';
 import '../../../core/repositories/project_repository.dart';
 import '../../../core/repositories/user_repository.dart';
@@ -528,6 +530,16 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
       users: _users,
       onProjectChanged: _onGitChanged,
     );
+    // Only where the module exists. Its routes are behind the platform flag, so
+    // on an instance without it the card would be a spinner that never resolves
+    // — and a budget on a project nobody can log time against is a setting for
+    // a feature that is not there.
+    final timeTracking =
+        context.select<AppConfigBloc, bool>(
+          (bloc) => bloc.state.meta?.advancedTimeTracking ?? false,
+        )
+        ? ProjectTimeSection(projectId: widget.projectId)
+        : null;
     final archive = ArchiveSection(
       archived: draft.archived,
       onChanged: (v) => _mutate((d) => d.copyWith(archived: v)),
@@ -558,6 +570,7 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
           labels: labels,
           workflow: workflow,
           git: git,
+          timeTracking: timeTracking,
           archive: archive,
           danger: danger,
         );
@@ -575,6 +588,7 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
     required Widget labels,
     required Widget workflow,
     required Widget git,
+    required Widget? timeTracking,
     required Widget archive,
     required Widget danger,
   }) {
@@ -626,6 +640,10 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
                                   workflow,
                                   gap,
                                   git,
+                                  if (timeTracking != null) ...[
+                                    gap,
+                                    timeTracking,
+                                  ],
                                 ],
                               ),
                             ),
@@ -649,6 +667,7 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
                         workflow,
                         gap,
                         git,
+                        if (timeTracking != null) ...[gap, timeTracking],
                         gap,
                         archive,
                         gap,
