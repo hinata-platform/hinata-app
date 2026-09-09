@@ -154,10 +154,7 @@ class _TimerSignalsState extends State<TimerSignals> {
       return context.t('time.signal.countdown');
     }
     if (signal.endedABreak) return context.t('time.signal.breakOver');
-    return context.t(
-      'time.signal.workOver',
-      variables: {'count': '${signal.cyclesDone}'},
-    );
+    return context.t('time.signal.workOver', count: signal.cyclesDone);
   }
 
   /// Plays the chime, and never lets a failure reach anybody.

@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
+import '../../core/models/time_policy_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/repositories/issue_repository.dart';
 import '../../core/repositories/project_repository.dart';
@@ -15,6 +19,7 @@ import '../../core/widgets/hive_widgets.dart';
 import '../issues/work_item_labels.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'placement_picker.dart';
+import 'tag_picker.dart';
 
 /// Creates or edits one time entry.
 ///
@@ -50,13 +55,21 @@ Future<SavedTimeEntry?> showTimeEntrySheet(
       value: context.read<IssueRepository>(),
     ),
   ];
+  // The policy travels the same way and for the same reason: the sheet marks
+  // required fields and greys out a frozen day, and it is above the navigator
+  // this modal rides on.
+  final policy = context.read<TimePolicyCubit>();
+  unawaited(policy.ensureLoaded());
   return showGlassModal<SavedTimeEntry>(
     context,
     adaptive: true,
     width: 480,
     builder: (_) => MultiRepositoryProvider(
       providers: providers,
-      child: _TimeEntryForm(entry: entry, span: span),
+      child: BlocProvider<TimePolicyCubit>.value(
+        value: policy,
+        child: _TimeEntryForm(entry: entry, span: span),
+      ),
     ),
   );
 }
@@ -81,6 +94,9 @@ class _TimeEntryForm extends StatefulWidget {
 class _TimeEntryFormState extends State<_TimeEntryForm> {
   /// The placement row, so the picker it opens can be anchored to it.
   final _placementKey = GlobalKey();
+
+  /// The same, for the tag row.
+  final _tagsKey = GlobalKey();
 
   late final TextEditingController _description = TextEditingController(
     text: widget.entry?.description ?? '',
@@ -116,10 +132,61 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
 
   late String _activity = widget.entry?.activityType ?? 'Development';
 
+  late List<String> _tags = List.of(widget.entry?.tags ?? const <String>[]);
+
+  /// Whether the tag field was opened and confirmed.
+  ///
+  /// A patch that mentions tags is an instruction to replace them, so an edit
+  /// that only changes the duration must not mention them. Re-sending what was
+  /// loaded looks harmless and is not: on an instance where only administrators
+  /// may coin a word, an entry carrying a label from before the catalogue
+  /// existed would be refused — its owner told to fix a tag they never touched,
+  /// with no way through but to delete the label off their own record.
+  bool _tagsTouched = false;
+
   bool _saving = false;
   String? _error;
 
   bool get _isEdit => widget.entry != null;
+
+  TimePolicySnapshot get _policy => context.watch<TimePolicyCubit>().state;
+
+  /// The day this entry will be filed on — the interval's start day when there
+  /// is one, the picked day otherwise. The same rule the save applies, so the
+  /// lock is judged against the day the server will judge.
+  DateTime get _filedOn => _mode == _EntryMode.interval
+      ? DateTime(_start.year, _start.month, _start.day)
+      : _day;
+
+  /// The i18n key of the first rule this form does not satisfy, or null.
+  ///
+  /// Shown before the save rather than after it. A required field the server
+  /// alone knows about is a save that fails on a form that looked complete, and
+  /// the person has to guess which of six fields the sentence is about.
+  String? _unmet(TimePolicySnapshot policy) {
+    // The lock first: it is the one that cannot be fixed by typing.
+    if (policy.isLocked(_filedOn) ||
+        (_isEdit && policy.isLocked(widget.entry!.date))) {
+      return 'time.policy.locked';
+    }
+    // Placement is only settled on a create; a patch carries neither field, so
+    // an edit cannot violate the rule and must not be blocked by it.
+    if (!_isEdit) {
+      if (policy.requiredIssue && _placement.issueId == null) {
+        return 'time.policy.needIssue';
+      }
+      if (policy.requiresPlacement && _placement.projectId == null) {
+        return 'time.policy.needProject';
+      }
+    }
+    if (policy.requiredDescription && _description.text.trim().isEmpty) {
+      return 'time.policy.needDescription';
+    }
+    if (policy.requiredTag && _tags.isEmpty) {
+      return 'time.policy.needTag';
+    }
+    return null;
+  }
 
   static DateTime _dayOf(WorkItem? entry) {
     final date = entry?.date ?? DateTime.now();
@@ -193,6 +260,9 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       endedAt: interval ? _end : null,
       activityType: _activity,
       description: _description.text.trim(),
+      // Only what this sheet was asked to change: see [_tagsTouched]. On a
+      // create every field is mentioned anyway.
+      tags: _isEdit && !_tagsTouched ? null : _tags,
     );
     try {
       final saved = _isEdit
@@ -212,6 +282,8 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   @override
   Widget build(BuildContext context) {
     final localizations = MaterialLocalizations.of(context);
+    final policy = _policy;
+    final unmet = _unmet(policy);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -232,8 +304,17 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                   maxLength: 2000,
                   maxLines: 2,
                   minLines: 1,
+                  // The save gate depends on whether this is empty — not on
+                  // what it says — so the form is rebuilt when that flips and
+                  // not once per keystroke.
+                  onChanged: policy.requiredDescription
+                      ? _descriptionChanged
+                      : null,
                   decoration: InputDecoration(
-                    labelText: context.t('time.entry.description'),
+                    labelText: _required(
+                      context.t('time.entry.description'),
+                      policy.requiredDescription,
+                    ),
                     counterText: '',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(
@@ -256,7 +337,10 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                       icon: _placement.isUnfiled
                           ? LucideIcons.circleSlash
                           : LucideIcons.folder,
-                      label: context.t('time.entry.placement'),
+                      label: _required(
+                        context.t('time.entry.placement'),
+                        policy.requiresPlacement,
+                      ),
                       value:
                           _placement.label ??
                           (_placement.isUnfiled
@@ -334,7 +418,29 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                   onChanged: (value) => setState(() => _activity = value),
                 ),
                 const SizedBox(height: 12),
+                KeyedSubtree(
+                  key: _tagsKey,
+                  child: _FieldButton(
+                    icon: LucideIcons.tag,
+                    label: _required(
+                      context.t('time.entry.tags'),
+                      policy.requiredTag,
+                    ),
+                    value: _tags.isEmpty
+                        ? context.t('time.tags.none')
+                        : _tags.join(' · '),
+                    onTap: () => _pickTags(policy),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 _Summary(minutes: _minutes, error: _error),
+                if (unmet != null) ...[
+                  const SizedBox(height: 8),
+                  // Under the total, not instead of it: the sheet is asking for a
+                  // tag, and the ninety minutes somebody was checking should not
+                  // leave the screen to say so.
+                  _PolicyNote(text: context.t(unmet)),
+                ],
               ],
             ),
           ),
@@ -342,7 +448,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
         GlassModalFooter(
           confirmLabel: context.t('common.save'),
           busy: _saving,
-          onConfirm: _saving ? null : _save,
+          onConfirm: _saving || unmet != null ? null : _save,
         ),
       ],
     );
@@ -366,6 +472,35 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
     );
     if (picked == null || !mounted) return;
     setState(() => _placement = picked);
+  }
+
+  Future<void> _pickTags(TimePolicySnapshot policy) async {
+    final picked = await showTimeTagPicker(
+      context,
+      anchorRect: anchorRectOf(_tagsKey),
+      selected: _tags,
+      // Whether a new word may be coined here is the operator's decision. The
+      // row is absent rather than shown and refused.
+      canCreate: !policy.limitTagAccess,
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _tags = picked;
+      _tagsTouched = true;
+    });
+  }
+
+  /// A label with the marker that says the operator requires this field.
+  static String _required(String label, bool required) =>
+      required ? '$label *' : label;
+
+  /// Whether the description was empty at the last rebuild.
+  bool _descriptionWasEmpty = true;
+
+  void _descriptionChanged(String value) {
+    final empty = value.trim().isEmpty;
+    if (empty == _descriptionWasEmpty) return;
+    setState(() => _descriptionWasEmpty = empty);
   }
 
   Future<void> _pickDay() async {
@@ -594,6 +729,32 @@ class _ActivityChip extends StatelessWidget {
 }
 
 /// What the form currently adds up to, or why it does not add up.
+/// The rule this sheet cannot satisfy yet, said under the total rather than in
+/// place of it.
+///
+/// A different tone from [_Summary]'s error, deliberately: an unparseable
+/// duration is a mistake in what was typed, an unmet policy is the operator's
+/// rule arriving at somebody who has done nothing wrong.
+class _PolicyNote extends StatelessWidget {
+  const _PolicyNote({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(LucideIcons.info, size: 15, color: AppColors.inkSoft),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Text(
+          text,
+          style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+        ),
+      ),
+    ],
+  );
+}
+
 class _Summary extends StatelessWidget {
   const _Summary({required this.minutes, this.error});
 

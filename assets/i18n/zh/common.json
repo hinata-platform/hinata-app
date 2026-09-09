@@ -23,7 +23,13 @@
     "clear": "清除",
     "paste": "粘贴",
     "today": "今天",
-    "yesterday": "昨天"
+    "yesterday": "昨天",
+    "rename": "重命名",
+    "name": "名称",
+    "loadMore": "加载更多",
+    "saved": "已保存",
+    "yes": "是",
+    "no": "否"
   },
   "delete": {
     "cta": "删除",
@@ -898,7 +904,8 @@
       "modeDuration": "时长",
       "modeInterval": "开始和结束",
       "noDescription": "无描述",
-      "continue": "继续"
+      "continue": "继续",
+      "tags": "标签"
     },
     "view": {
       "list": "列表",
@@ -939,6 +946,44 @@
       "workOver": "完成 1 个专注区间，休息一下吧。",
       "workOver_plural": "完成 {{count}} 个专注区间，休息一下吧。",
       "titleFlash": "区间结束"
+    },
+    "tags": {
+      "none": "无标签",
+      "search": "搜索标签",
+      "create": "创建“{{name}}”",
+      "noneCurated": "还没有标签。在此服务器上只有管理员可以创建。"
+    },
+    "policy": {
+      "locked": "该日期的记录已锁定，无法再修改",
+      "lockedChip": "已锁定",
+      "needProject": "此服务器要求每条记录都有项目",
+      "needIssue": "此服务器要求每条记录都有事项",
+      "needDescription": "此服务器要求每条记录都有说明",
+      "needTag": "此服务器要求每条记录至少有一个标签"
+    },
+    "history": {
+      "open": "历史",
+      "title": "这条记录的历史",
+      "subtitle": "除你之外谁改的，改了什么",
+      "emptyTitle": "其他人未做修改",
+      "emptyMessage": "只有你编辑过这条记录。你自己的修改在此有意不作记录。",
+      "created": "登记于 {{when}} · {{source}}",
+      "field": {
+        "minutes": "时长",
+        "date": "日期",
+        "project": "项目",
+        "issue": "事项"
+      }
+    },
+    "source": {
+      "APP": "手动录入",
+      "TIMER": "停止的计时器",
+      "MCP": "通过集成录入",
+      "SMART_COMMIT": "Smart commit",
+      "LEGACY": "Smart commits（2.0 之前）",
+      "CALENDAR": "来自日历",
+      "CSV": "导入",
+      "SHARED": "复制自共享记录"
     }
   },
   "projects": {
@@ -1504,8 +1549,8 @@
       "requiredDescriptionHint": "记录必须说明做了什么。",
       "requiredTagTitle": "必须填写标签",
       "requiredTagHint": "记录必须至少带一个标签。",
-      "lockBeforeLabel": "锁定至（含当日）",
-      "lockBeforeHint": "该日及更早的记录无法再新增、修改或删除——任何人都不行，通过 API 也不行。",
+      "lockBeforeLabel": "锁定此日之前",
+      "lockBeforeHint": "此日之前的记录无法再新增、修改或删除——任何人都不行，通过 API 也不行。所填当日本身仍然开放。",
       "roundingModeLabel": "取整",
       "roundingModeHint": "仅用于报表；已保存的分钟数不会改变。",
       "roundingMode": {
@@ -1587,7 +1632,19 @@
       "monthsSuffix": "个月",
       "privacyNoticeLabel": "隐私说明",
       "privacyNoticeHint": "在应用中与本模块的工时数据一同显示。留空 → 使用内置文本。",
-      "notYetEnforced": "会保存，但尚未生效——该策略背后的功能将在工时记录的后续阶段推出。"
+      "notYetEnforced": "会保存，但尚未生效——该策略背后的功能将在工时记录的后续阶段推出。",
+      "tagsTitle": "标签",
+      "tagsHint": "用来标注记录的词汇。重命名会带动所有记录。",
+      "tagsEmpty": "还没有标签。",
+      "tagNew": "新建标签",
+      "tagRename": "重命名标签",
+      "tagNameHint": "最多 40 个字符。大小写不会产生第二个标签。",
+      "tagUsage": "{{count}} 条记录",
+      "tagUsage_plural": "{{count}} 条记录",
+      "tagDeleteTitle": "删除标签？",
+      "tagDeleteMessage": "将从 {{count}} 条记录中移除“{{name}}”。记录本身保留。",
+      "tagDeleteMessage_plural": "将从 {{count}} 条记录中移除“{{name}}”。记录本身保留。",
+      "lockBeforeEveryone": "锁定对所有人生效，管理员也不例外。解除锁定是修改已结算期间的留痕方式。"
     },
     "passwordPolicy": "密码策略",
     "passwordPolicyHint": "用户密码的最低要求。",
@@ -2018,7 +2075,17 @@
       "ISSUE_EXPORTED": "事项已导出",
       "TIME_ENTRY_UPDATED": "工时记录已更新",
       "TIME_ENTRY_DELETED": "工时记录已删除",
-      "TIME_ENTRY_CREATED_FOR": "为他人记录工时"
+      "TIME_ENTRY_CREATED_FOR": "为他人记录工时",
+      "TIME_ENTRY_CREATED": "登记工时记录",
+      "TIME_TIMER_STARTED": "计时器已启动",
+      "TIME_TIMER_STOPPED": "计时器已停止",
+      "TIME_TIMER_DISCARDED": "计时器已丢弃",
+      "TIME_POLICY_CHANGED": "工时策略已更改",
+      "TIME_LOCK_CHANGED": "锁定日期已更改",
+      "TIME_TAG_CREATED": "已创建标签",
+      "TIME_TAG_UPDATED": "已修改标签",
+      "TIME_TAG_DELETED": "已删除标签",
+      "TIME_PROJECT_SETTINGS_CHANGED": "项目工时设置已更改"
     },
     "meta": {
       "oldRole": "原角色",
@@ -2334,7 +2401,17 @@
     "migrateTarget": "将事项迁移到",
     "migrateManualHint": "你也可以在删除状态前手动移动这些事项。",
     "migrateConfirm": "迁移并移除",
-    "keyFromName": "根据名称生成项目键"
+    "keyFromName": "根据名称生成项目键",
+    "time": {
+      "title": "工时记录",
+      "note": "这个项目自己的决定。保持服务器默认的项目遵循实例策略。",
+      "budget": "预算",
+      "budgetHint": "例如 120h — 留空表示不设预算",
+      "billable": "默认可计费",
+      "approvalRequired": "工时表需要审批",
+      "approvalPeriod": "提交周期",
+      "inherit": "服务器默认"
+    }
   },
   "account": {
     "title": "我的账户",

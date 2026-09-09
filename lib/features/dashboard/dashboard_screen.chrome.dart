@@ -257,14 +257,11 @@ class _EditToolbar extends StatelessWidget {
         ? context.t('dashboard.scopeAllProjects')
         : context.t(
             'dashboard.scopeProjectsCount',
-            variables: {'count': '${draft.projectIds.length}'},
+            count: draft.projectIds.length,
           );
     final teamsLabel = draft.teamIds.isEmpty
         ? context.t('dashboard.scopeAllTeams')
-        : context.t(
-            'dashboard.scopeTeamsCount',
-            variables: {'count': '${draft.teamIds.length}'},
-          );
+        : context.t('dashboard.scopeTeamsCount', count: draft.teamIds.length);
 
     return _GlassCard(
       padding: const EdgeInsets.all(16),

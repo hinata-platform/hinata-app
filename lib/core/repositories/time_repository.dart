@@ -1,6 +1,7 @@
 import '../api/api_client.dart';
 import '../blocs/paged_cubit.dart';
 import '../models/time_models.dart';
+import '../models/time_policy_models.dart';
 import '../models/work_models.dart';
 import '../util/dates.dart';
 
@@ -241,6 +242,115 @@ class TimeRepository {
           .toList(),
       total: (data['totalElements'] as num?)?.toInt() ?? 0,
     );
+  }
+
+  // --- the rules everyone is held to -----------------------------------------
+
+  /// What the operator's policies currently demand.
+  ///
+  /// Read once when the module comes up rather than per screen: it changes when
+  /// an administrator saves the settings, which is rare, and every editor needs
+  /// it before it can mark a field required or a day frozen.
+  Future<TimePolicySnapshot> policy() async {
+    final data = await _api.get('/api/v1/time/policy');
+    if (data is! Map<String, dynamic>) return TimePolicySnapshot.none;
+    return TimePolicySnapshot.fromJson(data);
+  }
+
+  /// What has been recorded about one entry, newest first.
+  Future<PageResult<TimeEntryHistoryEntry>> history(
+    String id, {
+    int page = 0,
+    int size = 50,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/time/entries/$id/history',
+              query: {'page': page, 'size': size},
+            )
+            as Map<String, dynamic>;
+    return (
+      items: ((data['content'] as List<dynamic>?) ?? const [])
+          .map((e) => TimeEntryHistoryEntry.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      total: (data['totalElements'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  // --- the tag catalogue -------------------------------------------------------
+
+  /// One page of the catalogue, narrowed by a prefix.
+  ///
+  /// [withUsage] asks the server to count the entries carrying each tag — one
+  /// count per row over the entries collection, which the admin screen needs
+  /// before renaming or deleting one and the picker must never ask for.
+  Future<PageResult<TimeTag>> tags({
+    String? query,
+    int page = 0,
+    int size = 50,
+    bool withUsage = false,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/time/tags',
+              query: {
+                'q': ?query,
+                'page': page,
+                'size': size,
+                if (withUsage) 'withUsage': true,
+              },
+            )
+            as Map<String, dynamic>;
+    return (
+      items: ((data['content'] as List<dynamic>?) ?? const [])
+          .map((e) => TimeTag.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      total: (data['totalElements'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  Future<TimeTag> createTag(String name, {int? hue}) async {
+    final data =
+        await _api.post('/api/v1/time/tags', body: {'name': name, 'hue': ?hue})
+            as Map<String, dynamic>;
+    return TimeTag.fromJson(data);
+  }
+
+  /// Renames or recolours a tag. The answer carries how many entries moved with
+  /// it, which is what the confirmation says.
+  Future<TimeTag> updateTag(String id, {String? name, int? hue}) async {
+    final data =
+        await _api.patch(
+              '/api/v1/time/tags/$id',
+              body: {'name': ?name, 'hue': ?hue},
+            )
+            as Map<String, dynamic>;
+    return TimeTag.fromJson(data);
+  }
+
+  Future<void> deleteTag(String id) => _api.delete('/api/v1/time/tags/$id');
+
+  // --- one project's own settings ------------------------------------------------
+
+  Future<ProjectTimeSettings> projectSettings(String projectId) async {
+    final data = await _api.get('/api/v1/projects/$projectId/time-settings');
+    if (data is! Map<String, dynamic>) return const ProjectTimeSettings();
+    return ProjectTimeSettings.fromJson(data);
+  }
+
+  /// Replaces the whole block: an omitted field means "no override", and a PATCH
+  /// could not say that.
+  Future<ProjectTimeSettings> saveProjectSettings(
+    String projectId,
+    ProjectTimeSettings settings,
+  ) async {
+    final data =
+        await _api.put(
+              '/api/v1/projects/$projectId/time-settings',
+              body: settings.toJson(),
+            )
+            as Map<String, dynamic>;
+    return ProjectTimeSettings.fromJson(data);
   }
 
   /// Starts a timer carrying an existing entry's description and placement.

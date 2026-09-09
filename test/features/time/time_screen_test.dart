@@ -3,9 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
+import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/blocs/timer_cubit.dart';
 import 'package:hinata/core/models/time_models.dart';
+import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/models/work_models.dart';
+import 'package:hinata/core/widgets/glass_popup_menu.dart';
 import 'package:hinata/core/repositories/issue_repository.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
@@ -13,6 +16,8 @@ import 'package:hinata/core/widgets/hive_empty_state.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:hinata/features/time/time_screen.dart';
 import 'package:hinata/features/time/timer_bar.dart';
+
+import 'fake_time_policy_cubit.dart';
 
 /// The `time.fmt.*` key the day header beside [dayKey] renders — the header's
 /// own total, not one of the row durations further down the page.
@@ -65,6 +70,7 @@ void main() {
   Widget host({
     required _FakeTimeRepository time,
     TimerState timer = const TimerState(),
+    TimePolicySnapshot policy = TimePolicySnapshot.none,
     Size size = const Size(1400, 900),
     // What the compact shell hands the page as the height of the glass app bar
     // plus whatever the page docked into it. Zero unless a test is about it.
@@ -87,8 +93,18 @@ void main() {
                     value: _FakeIssueRepository(),
                   ),
                 ],
-                child: BlocProvider<TimerCubit>.value(
-                  value: _FakeTimerCubit(timer),
+                child: MultiBlocProvider(
+                  providers: [
+                    BlocProvider<TimerCubit>.value(
+                      value: _FakeTimerCubit(timer),
+                    ),
+                    // Nothing required, nothing frozen — what a fresh instance
+                    // demands, and what the screens assume until the module
+                    // answers otherwise.
+                    BlocProvider<TimePolicyCubit>(
+                      create: (_) => FakeTimePolicyCubit(policy, time),
+                    ),
+                  ],
                   child: const TimeScreen(),
                 ),
               ),
@@ -261,6 +277,54 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('time.placement.none'), findsOneWidget);
+    });
+
+    testWidgets('a frozen entry is marked, and its menu offers no edit', (
+      tester,
+    ) async {
+      // A row that let somebody open an editor whose save is refused is a row
+      // that teaches them to distrust the screen. The history stays offered:
+      // reading a frozen entry is not forbidden, and "who closed this" is
+      // exactly the question a frozen entry raises.
+      final frozen = DateTime(2026, 9, 3);
+      await tester.pumpWidget(
+        host(
+          time: _FakeTimeRepository([
+            entry(id: 'a', description: 'closed month', day: frozen),
+          ]),
+          policy: TimePolicySnapshot(lockBefore: DateTime(2026, 9, 10)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('time.policy.lockedChip'), findsOneWidget);
+
+      await tester.tap(find.byType(GlassPopupMenu<String>));
+      await tester.pumpAndSettle();
+
+      expect(find.text('time.history.open'), findsOneWidget);
+      expect(find.text('common.edit'), findsNothing);
+      expect(find.text('common.delete'), findsNothing);
+    });
+
+    testWidgets('an ordinary entry keeps both, and gains the history', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          time: _FakeTimeRepository([entry(id: 'a', description: 'today')]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('time.policy.lockedChip'), findsNothing);
+
+      await tester.tap(find.byType(GlassPopupMenu<String>));
+      await tester.pumpAndSettle();
+
+      expect(find.text('common.edit'), findsOneWidget);
+      expect(find.text('common.delete'), findsOneWidget);
+      expect(find.text('time.history.open'), findsOneWidget);
     });
 
     testWidgets('a server that will not answer offers a retry', (tester) async {

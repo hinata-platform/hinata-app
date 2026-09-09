@@ -528,10 +528,7 @@ class _Actions extends StatelessWidget {
     if (saved == null || !saved.hasOverlaps || !context.mounted) return;
     showGlassToast(
       context,
-      context.t(
-        'time.overlapWarning',
-        variables: {'count': '${saved.overlaps.length}'},
-      ),
+      context.t('time.overlapWarning', count: saved.overlaps.length),
       kind: GlassToastKind.warning,
     );
   }

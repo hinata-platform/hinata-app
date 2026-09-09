@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:hinata/core/api/api_client.dart';
+import 'package:hinata/core/blocs/time_policy_cubit.dart';
+import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/blocs/timer_cubit.dart';
 import 'package:hinata/core/models/time_models.dart';
 import 'package:hinata/core/models/work_models.dart';
@@ -19,6 +21,8 @@ import 'package:hinata/core/widgets/time_grid/time_month_grid.dart';
 import 'package:hinata/core/widgets/time_grid/time_month_layout.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:hinata/features/time/time_calendar_screen.dart';
+
+import 'fake_time_policy_cubit.dart';
 
 /// The calendar page: what it asks the server for, what it puts on the grid,
 /// and what it does when the answer is short or missing.
@@ -74,8 +78,19 @@ void main() {
                     value: _FakeIssueRepository(),
                   ),
                 ],
-                child: BlocProvider<TimerCubit>.value(
-                  value: _FakeTimerCubit(const TimerState()),
+                child: MultiBlocProvider(
+                  providers: [
+                    BlocProvider<TimerCubit>.value(
+                      value: _FakeTimerCubit(const TimerState()),
+                    ),
+                    // Nothing required, nothing frozen — what a fresh instance
+                    // demands, and what the editor assumes until the module
+                    // answers otherwise.
+                    BlocProvider<TimePolicyCubit>(
+                      create: (_) =>
+                          FakeTimePolicyCubit(TimePolicySnapshot.none, time),
+                    ),
+                  ],
                   child: const TimeCalendarScreen(),
                 ),
               ),

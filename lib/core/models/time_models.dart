@@ -349,10 +349,11 @@ class TimeEntryDraft extends Equatable {
   ///
   /// Everything else is omitted when the draft does not carry it — the tags
   /// especially. The server reads a present tag list as an instruction and an
-  /// empty one as "remove them all", so a form that does not edit tags must not
-  /// mention them. Sending the default empty list stripped the tags off every
+  /// empty one as "remove them all", so a form must mention them only when it
+  /// edited them. Sending the default empty list stripped the tags off every
   /// entry that was edited, silently, for the one field the screen never shows
-  /// you losing.
+  /// you losing; the entry sheet now shows the field and sends it only once it
+  /// has been opened (`_tagsTouched`).
   Map<String, dynamic> toPatchJson() => {
     'durationMinutes': ?durationMinutes,
     if (date != null) 'date': formatDateOnly(date!),

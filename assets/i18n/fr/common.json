@@ -23,7 +23,13 @@
     "clear": "Effacer",
     "paste": "Coller",
     "today": "Aujourd'hui",
-    "yesterday": "Hier"
+    "yesterday": "Hier",
+    "rename": "Renommer",
+    "name": "Nom",
+    "loadMore": "Charger plus",
+    "saved": "Enregistré",
+    "yes": "Oui",
+    "no": "Non"
   },
   "delete": {
     "cta": "Supprimer",
@@ -898,7 +904,8 @@
       "modeDuration": "Durée",
       "modeInterval": "Début et fin",
       "noDescription": "Sans description",
-      "continue": "Reprendre"
+      "continue": "Reprendre",
+      "tags": "Étiquettes"
     },
     "view": {
       "list": "Liste",
@@ -939,6 +946,44 @@
       "workOver": "Un intervalle terminé. C'est l'heure d'une pause.",
       "workOver_plural": "{{count}} intervalles terminés. C'est l'heure d'une pause.",
       "titleFlash": "Intervalle terminé"
+    },
+    "tags": {
+      "none": "Aucune étiquette",
+      "search": "Rechercher des étiquettes",
+      "create": "Créer \"{{name}}\"",
+      "noneCurated": "Pas encore d'étiquettes. Sur ce serveur, seuls les administrateurs peuvent en créer."
+    },
+    "policy": {
+      "locked": "Les saisies de ce jour sont verrouillées et ne peuvent plus être modifiées",
+      "lockedChip": "Verrouillée",
+      "needProject": "Ce serveur exige un projet sur chaque saisie",
+      "needIssue": "Ce serveur exige un ticket sur chaque saisie",
+      "needDescription": "Ce serveur exige une description sur chaque saisie",
+      "needTag": "Ce serveur exige au moins une étiquette sur chaque saisie"
+    },
+    "history": {
+      "open": "Historique",
+      "title": "Historique de cette saisie",
+      "subtitle": "Qui d'autre l'a modifiée, et ce qui a changé",
+      "emptyTitle": "Personne d'autre ne l'a modifiée",
+      "emptyMessage": "Vous seul avez modifié cette saisie. Vos propres corrections ne sont volontairement pas enregistrées ici.",
+      "created": "Enregistrée {{when}} · {{source}}",
+      "field": {
+        "minutes": "Durée",
+        "date": "Jour",
+        "project": "Projet",
+        "issue": "Ticket"
+      }
+    },
+    "source": {
+      "APP": "Saisie à la main",
+      "TIMER": "Minuteur arrêté",
+      "MCP": "Saisie par une intégration",
+      "SMART_COMMIT": "Smart commit",
+      "LEGACY": "Smart commits (avant la 2.0)",
+      "CALENDAR": "Depuis un calendrier",
+      "CSV": "Importée",
+      "SHARED": "Copiée d'une saisie partagée"
     }
   },
   "projects": {
@@ -1504,8 +1549,8 @@
       "requiredDescriptionHint": "Une entrée doit dire sur quoi le travail a porté.",
       "requiredTagTitle": "Étiquette obligatoire",
       "requiredTagHint": "Une entrée doit porter au moins une étiquette.",
-      "lockBeforeLabel": "Verrouillé jusqu'au",
-      "lockBeforeHint": "Les entrées de ce jour et des jours précédents ne peuvent plus être créées, modifiées ni supprimées — par personne, API comprise.",
+      "lockBeforeLabel": "Verrouillé avant",
+      "lockBeforeHint": "Les entrées antérieures à ce jour ne peuvent plus être créées, modifiées ni supprimées — par personne, API comprise. Le jour indiqué reste ouvert.",
       "roundingModeLabel": "Arrondi",
       "roundingModeHint": "Ne s'applique qu'aux rapports ; les minutes enregistrées ne changent jamais.",
       "roundingMode": {
@@ -1587,7 +1632,19 @@
       "monthsSuffix": "mois",
       "privacyNoticeLabel": "Note de confidentialité",
       "privacyNoticeHint": "Affichée dans l'app à côté des données de temps du module. Vide → le texte intégré.",
-      "notYetEnforced": "Enregistré, mais pas encore appliqué — la fonction correspondante arrivera à une étape ultérieure du suivi du temps."
+      "notYetEnforced": "Enregistré, mais pas encore appliqué — la fonction correspondante arrivera à une étape ultérieure du suivi du temps.",
+      "tagsTitle": "Étiquettes",
+      "tagsHint": "Le vocabulaire qui sert à étiqueter les saisies. Renommer une étiquette entraîne toutes les saisies.",
+      "tagsEmpty": "Pas encore d'étiquettes.",
+      "tagNew": "Nouvelle étiquette",
+      "tagRename": "Renommer l'étiquette",
+      "tagNameHint": "40 caractères au maximum. La casse ne crée pas une deuxième étiquette.",
+      "tagUsage": "{{count}} saisie",
+      "tagUsage_plural": "{{count}} saisies",
+      "tagDeleteTitle": "Supprimer l'étiquette ?",
+      "tagDeleteMessage": "\"{{name}}\" sera retirée de {{count}} saisie. La saisie elle-même reste.",
+      "tagDeleteMessage_plural": "\"{{name}}\" sera retirée de {{count}} saisies. Les saisies elles-mêmes restent.",
+      "lockBeforeEveryone": "Le verrou vaut pour tout le monde, administrateurs compris. Le lever est la manière documentée de modifier une période close."
     },
     "passwordPolicy": "Politique de mots de passe",
     "passwordPolicyHint": "Exigences minimales pour les mots de passe des utilisateurs.",
@@ -2018,7 +2075,17 @@
       "ISSUE_EXPORTED": "Ticket exporté",
       "TIME_ENTRY_UPDATED": "Saisie de temps modifiée",
       "TIME_ENTRY_DELETED": "Saisie de temps supprimée",
-      "TIME_ENTRY_CREATED_FOR": "Temps saisi pour quelqu’un d’autre"
+      "TIME_ENTRY_CREATED_FOR": "Temps saisi pour quelqu’un d’autre",
+      "TIME_ENTRY_CREATED": "Saisie de temps enregistrée",
+      "TIME_TIMER_STARTED": "Minuteur démarré",
+      "TIME_TIMER_STOPPED": "Minuteur arrêté",
+      "TIME_TIMER_DISCARDED": "Minuteur abandonné",
+      "TIME_POLICY_CHANGED": "Politique de suivi du temps modifiée",
+      "TIME_LOCK_CHANGED": "Date de verrouillage modifiée",
+      "TIME_TAG_CREATED": "Étiquette créée",
+      "TIME_TAG_UPDATED": "Étiquette modifiée",
+      "TIME_TAG_DELETED": "Étiquette supprimée",
+      "TIME_PROJECT_SETTINGS_CHANGED": "Réglages de temps du projet modifiés"
     },
     "meta": {
       "oldRole": "Rôle précédent",
@@ -2334,7 +2401,17 @@
     "migrateTarget": "Déplacer les tickets vers",
     "migrateManualHint": "Vous pouvez aussi déplacer les tickets manuellement avant de supprimer le statut.",
     "migrateConfirm": "Migrer et supprimer",
-    "keyFromName": "Générer la clé à partir du nom"
+    "keyFromName": "Générer la clé à partir du nom",
+    "time": {
+      "title": "Suivi du temps",
+      "note": "Ce que ce projet décide pour lui-même. Tout ce qui reste sur la valeur du serveur suit la politique de l'instance.",
+      "budget": "Budget",
+      "budgetHint": "p. ex. 120h — vide pour aucun budget",
+      "billable": "Facturable par défaut",
+      "approvalRequired": "Les feuilles de temps doivent être approuvées",
+      "approvalPeriod": "Période de soumission",
+      "inherit": "Valeur du serveur"
+    }
   },
   "account": {
     "title": "Mon compte",

@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/blocs/paged_cubit.dart';
+import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/models/time_models.dart';
+import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/repositories/issue_repository.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/features/time/time_entry_sheet.dart';
+
+import 'fake_time_policy_cubit.dart';
 
 /// The editor decides what reaches the server. Two things matter here and
 /// nothing else does: that a draft which cannot be an entry is refused before a
@@ -22,6 +27,7 @@ void main() {
     WidgetTester tester, {
     WorkItem? entry,
     Size size = const Size(900, 1200),
+    TimePolicySnapshot policy = TimePolicySnapshot.none,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -38,14 +44,17 @@ void main() {
             value: _FakeIssueRepository(),
           ),
         ],
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          home: Builder(
-            builder: (context) => Scaffold(
-              body: Center(
-                child: ElevatedButton(
-                  onPressed: () => showTimeEntrySheet(context, entry: entry),
-                  child: const Text('open'),
+        child: BlocProvider<TimePolicyCubit>.value(
+          value: FakeTimePolicyCubit(policy, repository),
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: Center(
+                  child: ElevatedButton(
+                    onPressed: () => showTimeEntrySheet(context, entry: entry),
+                    child: const Text('open'),
+                  ),
                 ),
               ),
             ),
@@ -192,14 +201,15 @@ void main() {
     expect(find.text('from a timer'), findsOneWidget);
   });
 
-  testWidgets('editing an entry does not strip the tags it is not editing', (
+  testWidgets('an edit that did not touch the tags does not mention them', (
     tester,
   ) async {
     // The server reads a present tag list as an instruction and an empty one as
-    // "remove them all". This form does not edit tags, so it must not mention
-    // them — sending the default empty list wiped the tags off every entry that
-    // was edited, silently, for the one field nothing on screen shows you
-    // losing.
+    // "remove them all". The sheet now shows the field, but showing is not
+    // editing: re-sending what was loaded reads as harmless and is not — on an
+    // instance where only administrators may coin a word, an entry carrying a
+    // label from before the catalogue existed would be refused, and its owner
+    // told to fix a tag they never touched.
     await open(
       tester,
       entry: WorkItem(
@@ -212,12 +222,101 @@ void main() {
       ),
     );
 
+    // Shown — so nothing is lost silently — and not sent.
+    expect(find.text('focus · deep work'), findsOneWidget);
     await save(tester);
 
     expect(
       repository.updated.single.$2.toPatchJson().containsKey('tags'),
       isFalse,
     );
+  });
+
+  testWidgets('a new entry always states its tags, touched or not', (
+    tester,
+  ) async {
+    // A create has no "leave them alone": every field it omits is a field it
+    // does not have.
+    await open(tester);
+
+    await tester.enterText(
+      find.widgetWithText(TextField, '1h 30m · 90m · 1:30'),
+      '30m',
+    );
+    await save(tester);
+
+    expect(repository.created.single.tags, isEmpty);
+  });
+
+  testWidgets('a required field is marked, and the save waits for it', (
+    tester,
+  ) async {
+    // Before the request, not after it. A rule only the server knows about is a
+    // save that fails on a form that looked complete, and the person is left to
+    // guess which of six fields the sentence was about.
+    await open(
+      tester,
+      policy: const TimePolicySnapshot(requiredDescription: true),
+    );
+
+    expect(find.text('time.entry.description *'), findsOneWidget);
+    await save(tester);
+    expect(repository.created, isEmpty);
+    expect(find.text('time.policy.needDescription'), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'time.entry.description *'),
+      'pairing on the parser',
+    );
+    await tester.pumpAndSettle();
+    await save(tester);
+
+    expect(repository.created.single.description, 'pairing on the parser');
+  });
+
+  testWidgets('a required tag is asked for on the field that carries it', (
+    tester,
+  ) async {
+    await open(tester, policy: const TimePolicySnapshot(requiredTag: true));
+
+    expect(find.text('time.entry.tags *'), findsOneWidget);
+    await save(tester);
+
+    expect(repository.created, isEmpty);
+    expect(find.text('time.policy.needTag'), findsOneWidget);
+  });
+
+  testWidgets('a frozen day cannot be saved, and says why', (tester) async {
+    // The one rule that cannot be met by typing: the editor still opens, so the
+    // entry can be read, and the save is greyed out with the reason under it.
+    await open(
+      tester,
+      policy: TimePolicySnapshot(lockBefore: DateTime(2026, 9, 10)),
+      entry: WorkItem(
+        id: 'w1',
+        durationMinutes: 60,
+        activityType: 'Development',
+        description: 'closed month',
+        date: DateTime(2026, 9, 3),
+      ),
+    );
+
+    expect(find.text('time.policy.locked'), findsOneWidget);
+    await save(tester);
+    expect(repository.updated, isEmpty);
+  });
+
+  testWidgets('nothing is marked required while the policy demands nothing', (
+    tester,
+  ) async {
+    // The safe direction to be wrong in, and the state of a fresh instance:
+    // marking a field required that is not blocks a save the server would have
+    // accepted, with no way for the person to find out why.
+    await open(tester);
+
+    expect(find.text('time.entry.description'), findsOneWidget);
+    expect(find.text('time.entry.tags'), findsOneWidget);
+    expect(find.textContaining('*'), findsNothing);
   });
 
   testWidgets(
@@ -277,6 +376,14 @@ void main() {
 class _FakeTimeRepository implements TimeRepository {
   final List<TimeEntryDraft> created = [];
   final List<(String, TimeEntryDraft)> updated = [];
+
+  @override
+  Future<PageResult<TimeTag>> tags({
+    String? query,
+    int page = 0,
+    int size = 50,
+    bool withUsage = false,
+  }) async => (items: const <TimeTag>[], total: 0);
 
   SavedTimeEntry _saved() => const SavedTimeEntry(
     entry: WorkItem(id: 'w1', durationMinutes: 60, activityType: 'Development'),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
@@ -11,6 +13,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/blocs/app_config_bloc.dart';
+import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/repositories/admin_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/responsive/responsive.dart';
@@ -214,6 +217,10 @@ class _AdminScreenState extends State<AdminScreen> {
         context.read<AppConfigBloc>().add(
           const MetaRefreshRequested(force: true),
         );
+        // And the time-tracking rules, for the same reason one level down: a
+        // lock date that just moved has to reach the screens that grey out a
+        // frozen day, not wait for the next sign-in.
+        unawaited(context.read<TimePolicyCubit>().refresh());
         showGlassToast(
           context,
           context.t('admin.saved'),

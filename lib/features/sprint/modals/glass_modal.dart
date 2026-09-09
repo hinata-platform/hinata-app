@@ -424,9 +424,12 @@ Rect? anchorRectOfContext(BuildContext? context) {
 /// list (e.g. a searchable people picker). Placement mirrors [showGlassOptions]:
 /// below the anchor, flipping above when space is tight and clamped on-screen.
 ///
-/// The popover sizes itself between [minHeight] and [maxHeight]; [builder]'s
-/// content should be self-scrolling (a `Column` with a `Flexible` list, or a
-/// `ListView`). Callers decide *when* to use this vs. the bottom sheet — it does
+/// [maxHeight] caps the panel; [minHeight] is the height it would *like*, and
+/// only decides which side of the anchor it opens on — the panel is never sized
+/// past the room that side actually has, or it would render off-screen. So
+/// [builder]'s content must be self-scrolling (a `Column` with a `Flexible`
+/// list, or a `ListView`): in a short window it will be handed less than it
+/// asked for. Callers decide *when* to use this vs. the bottom sheet — it does
 /// not branch on width itself. Resolves to the value popped from the route.
 Future<T?> showGlassAnchoredPopover<T>(
   BuildContext context, {
@@ -531,9 +534,18 @@ class _AnchoredPanel extends StatelessWidget {
     final belowTop = anchorRect.bottom + _gap;
     final roomBelow = size.height - belowTop - _margin - pad.bottom;
     final roomAbove = anchorRect.top - _gap - _margin - pad.top;
-    final placeAbove = roomBelow < 220 && roomAbove > roomBelow;
-    final maxHeight = (placeAbove ? roomAbove : roomBelow).clamp(
-      minHeight,
+    // How tall the panel would like to be. Flipping is decided against that
+    // rather than a fixed number, so a caller asking for a taller panel (a
+    // searchable list) flips at the point where its own content stops fitting.
+    final wanted = math.min(minHeight, maxHeightCap);
+    final placeAbove = roomBelow < wanted && roomAbove > roomBelow;
+    // Never `clamp(minHeight, ...)`: clamp takes the minimum as a floor, so a
+    // panel asking for 300 in 260 points of room was *sized* to 300 and ran off
+    // the bottom of the window. Whichever side was chosen has the most room
+    // there is; if that is still less than the panel wanted, the content
+    // scrolls -- which is what a popover's builder is required to support.
+    final maxHeight = math.min(
+      math.max(placeAbove ? roomAbove : roomBelow, 0.0),
       maxHeightCap,
     );
     final top = placeAbove ? null : belowTop;

@@ -1,0 +1,74 @@
+import 'dart:async';
+
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../models/time_policy_models.dart';
+import '../repositories/time_repository.dart';
+
+/// The operator's time-tracking rules, held once for the whole app.
+///
+/// Three screens need the same answer — the entry sheet marking a required
+/// field and choosing whether the tag picker offers "create it", the list
+/// drawing a lock on a frozen day, and the timesheet grid refusing to compose
+/// into one — and a value each of them read for itself would be three requests
+/// and three ways to be stale.
+///
+/// The timer bar deliberately does not: starting a timer without a required
+/// project is refused by the server with a message naming the field, and the bar
+/// has no field to mark. What it would need is the composer, which is the entry
+/// sheet.
+///
+/// It starts on [TimePolicySnapshot.none], which is what a fresh instance
+/// demands: nothing. That is the safe direction to be wrong in. Assuming a
+/// field is required when it is not blocks a save the server would have
+/// accepted, with no way for the person to find out why; assuming it is not
+/// costs one refusal that names the field.
+class TimePolicyCubit extends Cubit<TimePolicySnapshot> {
+  TimePolicyCubit(this._time) : super(TimePolicySnapshot.none);
+
+  final TimeRepository _time;
+
+  /// Whether a load has already succeeded, so the screens that ask on open do
+  /// not each pay for a request.
+  bool _loaded = false;
+  Future<void>? _inFlight;
+
+  /// Reads the policy once. Repeated calls while a read is in flight join it.
+  ///
+  /// Callers await it only when they cannot draw without it; the rest fire it
+  /// and rebuild on the emit.
+  Future<void> ensureLoaded() {
+    if (_loaded) return Future.value();
+    return _inFlight ??= _load().whenComplete(() => _inFlight = null);
+  }
+
+  /// Re-reads it — after an administrator saves the settings, and whenever the
+  /// module is switched on while the app is running.
+  Future<void> refresh() {
+    _loaded = false;
+    return ensureLoaded();
+  }
+
+  /// Forgets the rules of the session that just ended.
+  ///
+  /// A new sign-in may be against another server with another lock date, and a
+  /// stale one would grey out a day that is perfectly editable there.
+  void reset() {
+    _loaded = false;
+    _inFlight = null;
+    if (state != TimePolicySnapshot.none) emit(TimePolicySnapshot.none);
+  }
+
+  Future<void> _load() async {
+    try {
+      final policy = await _time.policy();
+      _loaded = true;
+      if (!isClosed && policy != state) emit(policy);
+    } catch (_) {
+      // Nothing here is worth an error message: with the module off the route
+      // does not exist, and with a server that cannot answer, "nothing is
+      // required" is both the old behaviour and the one that lets people work.
+      // The next screen that opens asks again.
+    }
+  }
+}
