@@ -161,9 +161,10 @@ class _TimeScreenState extends State<TimeScreen> {
       // control after it is a control nobody finds twice in the same spot.
       titleLeading: true,
       // Compact only: this is a nav destination, so a wide window builds no
-      // sub-page bar and would drop the action on the floor. There the same
-      // button is in the page's own head below, beside a timer bar that is
-      // always on screen — which is why only the phone's button asks.
+      // sub-page bar and would drop the action on the floor. A wide window
+      // offers the two ways of adding time separately — the entry button in
+      // the page's own head, the timer on the bar beside it — and this one
+      // slot cannot, which is why the phone's button asks which.
       actions: compact
           ? [
               PageAction(

@@ -471,8 +471,10 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
       // wider of the two flanking slots leaves it.
       titleLeading: true,
       // Compact only: the module's pages are nav destinations, so a wide
-      // window builds no sub-page bar and would drop these on the floor. There
-      // the same actions are in the page's own head below.
+      // window builds no sub-page bar and would drop these on the floor. A
+      // wide window reaches both ways of adding time without this button — a
+      // cell is opened by tapping it, and the timer lives on the bar above —
+      // so only the phone needs one, and it asks which.
       actions: compact && widget.moduleView
           ? [
               PageAction(

@@ -289,9 +289,7 @@ Future<void> endTimerAndAdvise(
   final cubit = context.read<TimerCubit>();
   final running = cubit.state.timer;
   final SavedTimeEntry? saved;
-  if (running != null &&
-      !running.isBreak &&
-      _unmetBy(context, running) != null) {
+  if (running != null && !running.isBreak && _needsComposer(context, running)) {
     saved = await showTimeEntrySheet(
       context,
       timer: running,
@@ -317,17 +315,29 @@ Future<void> endTimerAndAdvise(
   }
 }
 
-/// The first rule the running timer's own fields do not satisfy, or null.
+/// Whether stopping [timer] is a question for the person before it is a
+/// request to the server.
 ///
 /// Read off the cubit rather than the policy route, so a stop costs no request:
 /// the snapshot is loaded once per session and refreshed with the module.
-String? _unmetBy(BuildContext context, RunningTimer timer) =>
-    context.read<TimePolicyCubit>().state.unmetBy(
-      projectId: timer.projectId,
-      issueId: timer.issueId,
-      description: timer.description,
-      tags: timer.tags,
-    );
+///
+/// Two conditions, and the second is what keeps the first from becoming a trap.
+/// The composer is worth opening only for something typing can fix: where the
+/// timer's day is frozen it can fix nothing — the composer's own gate refuses a
+/// locked day before it looks at any field, so its save would never enable, and
+/// every other way of stopping leads back into the same dead sheet. A timer is
+/// then better sent straight to the server, which deletes it and says why.
+bool _needsComposer(BuildContext context, RunningTimer timer) {
+  final policy = context.read<TimePolicyCubit>().state;
+  if (policy.isLocked(timer.startedAt)) return false;
+  return policy.unmetBy(
+        projectId: timer.projectId,
+        issueId: timer.issueId,
+        description: timer.description,
+        tags: timer.tags,
+      ) !=
+      null;
+}
 
 /// Which half of a pomodoro is running, and how far through the set.
 class _PhaseLine extends StatelessWidget {

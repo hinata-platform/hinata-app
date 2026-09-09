@@ -234,6 +234,15 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       _end.isAfter(_start) ? _end.difference(_start).inMinutes : null,
   };
 
+  /// The same number as the summary line says it out loud.
+  ///
+  /// A timer stopped inside the minute it started measured no whole minute, and
+  /// the summary would read "0 min" for an entry the server is about to file as
+  /// one: it floors at one, because an entry may not be worth nothing. Showing
+  /// the figure that will be stored is the honest half of a form whose length
+  /// is not its own to decide.
+  int? get _minutesShown => _isTimer && (_minutes ?? 0) < 1 ? 1 : _minutes;
+
   Future<void> _save() async {
     final minutes = _minutes;
     // Not for a timer: its length is the server's arithmetic, and the server
@@ -330,9 +339,19 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       issueId: _placement.issueId,
       description: _description.text.trim(),
       activityType: _activity,
-      tags: _tags,
+      // Only what this sheet was asked to change, as on an edit. Sent, the
+      // timer's own tags go back through the catalogue on the way out — and
+      // that is the one thing that can refuse a stop: a tag deleted from the
+      // catalogue mid-run, or an instance that limits who may use one. The
+      // timer resolved them when it started; re-resolving them buys nothing
+      // and puts a clock at risk.
+      tags: _tagsTouched ? _tags : null,
     );
     if (saved == null && mounted) {
+      // Inline, although [TimerSignals] toasts the same sentence app-wide. A
+      // modal that stays open owes an answer inside itself: the toast lands
+      // behind the sheet's own blur, and a refusal has to be readable next to
+      // the field it is about.
       setState(() {
         _saving = false;
         _error = cubit.state.errorMessage ?? 'errors.unexpected';
@@ -512,10 +531,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                _Summary(
-                  minutes: _isTimer && (_minutes ?? 0) < 1 ? 1 : _minutes,
-                  error: _error,
-                ),
+                _Summary(minutes: _minutesShown, error: _error),
                 if (unmet != null) ...[
                   const SizedBox(height: 8),
                   // Under the total, not instead of it: the sheet is asking for a
@@ -880,8 +896,6 @@ class _Summary extends StatelessWidget {
   }
 }
 
-/// A one-line field that opens a picker — the app's rule against inline
-/// selection lists, applied to the four fields this form has.
 /// The interval a timer measured: shown, not offered for editing.
 ///
 /// A row rather than the two [_FieldButton]s the interval mode uses, because
@@ -918,15 +932,21 @@ class _MeasuredInterval extends StatelessWidget {
               children: [
                 Text(
                   context.t('time.entry.measured'),
-                  style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.inkFaint,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${localizations.formatMediumDate(start)} · '
                   '${at(start)} – ${at(end)}',
-                  style: const TextStyle(
-                    fontSize: 14,
+                  // Not const: AppColors' neutrals are theme-aware getters.
+                  style: TextStyle(
+                    fontSize: 13.5,
                     fontWeight: FontWeight.w600,
+                    color: AppColors.ink,
                   ),
                 ),
               ],
@@ -938,6 +958,8 @@ class _MeasuredInterval extends StatelessWidget {
   }
 }
 
+/// A one-line field that opens a picker — the app's rule against inline
+/// selection lists, applied to the four fields this form has.
 class _FieldButton extends StatelessWidget {
   const _FieldButton({
     required this.icon,

@@ -615,6 +615,43 @@ void main() {
         },
       );
 
+      testWidgets(
+        'a frozen day is sent to the server rather than into a dead form',
+        (tester) async {
+          // The composer is worth opening only for something typing can fix.
+          // Where the timer's day is locked it can fix nothing: the form's own
+          // gate refuses a frozen day before it looks at a single field, so its
+          // save would never enable — and every other way of stopping leads
+          // back into the same sheet. That is a timer the app cannot stop at
+          // all. Sent instead, the server deletes it and says why.
+          final cubit = running();
+          await tester.pumpWidget(
+            host(
+              time: _FakeTimeRepository(const []),
+              size: phone,
+              timerCubit: cubit,
+              policy: TimePolicySnapshot(
+                requiredDescription: true,
+                lockBefore: DateTime.now().add(const Duration(days: 1)),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          await openMenu(tester);
+
+          await tester.tap(find.text('time.add.timerStop'));
+          await tester.pumpAndSettle();
+
+          expect(find.text('time.timer.finish'), findsNothing);
+          expect(cubit.stopped, hasLength(1));
+          expect(
+            cubit.stopped.single.description,
+            isNull,
+            reason: 'straight through, with nothing a composer collected',
+          );
+        },
+      );
+
       testWidgets('and the answer rides along on the stop', (tester) async {
         final cubit = running();
         await tester.pumpWidget(
@@ -630,6 +667,14 @@ void main() {
         await tester.tap(find.text('time.add.timerStop'));
         await tester.pumpAndSettle();
 
+        // Real milliseconds pass while the description is typed, which is the
+        // whole point of the chain being tested: they were not worked, so they
+        // must not be filed. Asserting the instant is merely non-null would
+        // pass just as happily on a stop that sent its own `now`.
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        final whileTyping = DateTime.now();
         await tester.enterText(find.byType(TextField).first, 'pairing');
         await tester.pumpAndSettle();
         await tester.tap(find.text('time.timer.stop').last);
@@ -639,7 +684,11 @@ void main() {
         expect(cubit.stopped.single.description, 'pairing');
         // The end is the one the sheet was opened with — when stop was pressed,
         // not when the field was finally typed.
-        expect(cubit.stopped.single.endedAt, isNotNull);
+        expect(
+          cubit.stopped.single.endedAt!.isBefore(whileTyping),
+          isTrue,
+          reason: 'the minutes spent in the composer are not minutes worked',
+        );
       });
     });
 
