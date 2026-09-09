@@ -863,7 +863,9 @@
       "discard": "タイマーを破棄",
       "noDescription": "説明なし",
       "title": "タイマー",
-      "chooseMode": "数え方を選ぶ"
+      "chooseMode": "数え方を選ぶ",
+      "finish": "タイマーを停止",
+      "finishHint": "タイマーはまだ動いています。このインスタンスが必要とする項目を入力すると記録されます。"
     },
     "placement": {
       "none": "プロジェクトなし",
@@ -905,7 +907,13 @@
       "modeInterval": "開始と終了",
       "noDescription": "説明なし",
       "continue": "続ける",
-      "tags": "タグ"
+      "tags": "タグ",
+      "measured": "計測"
+    },
+    "add": {
+      "title": "追加",
+      "timerStart": "タイマーを開始",
+      "timerStop": "タイマーを停止"
     },
     "view": {
       "list": "リスト",

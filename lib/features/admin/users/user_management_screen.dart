@@ -378,7 +378,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         PageAction(
           icon: LucideIcons.userPlus,
           label: context.t('admin.um.inviteUsers'),
-          onTap: _invite,
+          onTap: (_) => _invite(),
           primary: true,
         ),
       ],

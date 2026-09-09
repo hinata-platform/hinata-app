@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/blocs/time_preferences_cubit.dart';
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
@@ -15,6 +16,7 @@ import '../../core/widgets/glass_popup_menu.dart';
 import '../sprint/modals/glass_modal.dart'
     show GlassToastKind, anchorRectOfContext, showGlassToast;
 import 'placement_picker.dart';
+import 'time_entry_sheet.dart';
 
 /// How much room the compact bar takes above the floating nav when a timer is
 /// running.
@@ -178,7 +180,11 @@ class _TimerBarBody extends StatelessWidget {
               iconOnly: compact,
               busy: state.isBusy,
               color: AppColors.danger,
-              onTap: state.isBusy ? null : () => _end(context, timer),
+              onTap: state.isBusy
+                  ? null
+                  : () => unawaited(
+                      endTimerAndAdvise(context, onStopped: onStopped),
+                    ),
             ),
           ] else ...[
             // How the next one counts, chosen before it starts — a running
@@ -254,29 +260,97 @@ class _TimerBarBody extends StatelessWidget {
       pomodoro: preferences.pomodoro,
     );
   }
+}
 
-  /// Ends the timer, and says what the entry collided with if it made one.
-  ///
-  /// `end`, not `stop`: a break is never filed, and the server refuses a stop on
-  /// one outright. The cubit owns that branch — see [TimerCubit.end] — so no
-  /// screen has to know it, and none of them can disagree about it. A break
-  /// answers null: nothing was filed, so there is nothing to reload and nothing
-  /// to advise about.
-  Future<void> _end(BuildContext context, RunningTimer timer) async {
-    final saved = await context.read<TimerCubit>().end();
-    if (saved == null || !context.mounted) return;
-    onStopped?.call();
-    // The overlap advice, said once, where the decision was made. It is not a
-    // failure and nothing is undone: two entries may legitimately share time,
-    // and the person is the one who knows.
-    if (saved.hasOverlaps) {
-      showGlassToast(
-        context,
-        context.t('time.overlapWarning', count: saved.overlaps.length),
-        kind: GlassToastKind.warning,
-      );
+/// Ends the timer — asking for what the operator requires if the timer does not
+/// already carry it — and says what the entry collided with.
+///
+/// **The one place a timer becomes an entry.** Four controls end a timer (this
+/// bar, the phone's "+" menu, the focus view, ⌘⇧S and the palette behind it),
+/// and each of them has to make the same two decisions, so none of them makes
+/// either one itself.
+///
+/// The first is the break: `end`, not `stop`. A break is never filed and the
+/// server refuses a stop on one outright — [TimerCubit.end] owns that branch.
+///
+/// The second is the policy. A timer starts with nothing, on purpose: the button
+/// is pressed by somebody who has just begun and does not yet know which issue
+/// this will turn out to be, and a stopwatch that has to be described before it
+/// may run is not a stopwatch. So the required fields are asked for here, at the
+/// stop, in the composer — which then stops the timer itself, in one request,
+/// with the answers. Cancelling that composer leaves the timer running; nothing
+/// is filed and nothing is lost.
+///
+/// [onStopped] fires only when an entry was actually filed.
+Future<void> endTimerAndAdvise(
+  BuildContext context, {
+  void Function()? onStopped,
+}) async {
+  final cubit = context.read<TimerCubit>();
+  final running = cubit.state.timer;
+  // The interval as it stands at the press. Its end is what the sheet shows and
+  // what the stop will carry, so however long the form stays open, the entry
+  // ends where the button was pressed.
+  final span = running == null
+      ? null
+      : (start: running.startedAt, end: DateTime.now());
+  final composable = running != null && !running.isBreak;
+  SavedTimeEntry? saved;
+  if (composable && _needsComposer(context, running)) {
+    saved = await showTimeEntrySheet(context, timer: running, span: span);
+  } else {
+    saved = await cubit.end();
+    if (saved == null && composable && context.mounted) {
+      // The server refused a stop this side thought was complete, and the
+      // likeliest reason is that it is reading a policy the operator has since
+      // changed: the snapshot is loaded once a session, and a timer may have
+      // been running since before an administrator turned a field on. So ask
+      // again, and if the answer is now "something is missing", open the
+      // composer for it — otherwise the refusal is a sentence in a toast and
+      // pressing stop again does exactly the same thing, for ever.
+      await context.read<TimePolicyCubit>().refresh();
+      if (!context.mounted) return;
+      if (_needsComposer(context, running)) {
+        saved = await showTimeEntrySheet(context, timer: running, span: span);
+      }
     }
   }
+  if (saved == null || !context.mounted) return;
+  onStopped?.call();
+  // The overlap advice, said once, where the decision was made. It is not a
+  // failure and nothing is undone: two entries may legitimately share time,
+  // and the person is the one who knows.
+  if (saved.hasOverlaps) {
+    showGlassToast(
+      context,
+      context.t('time.overlapWarning', count: saved.overlaps.length),
+      kind: GlassToastKind.warning,
+    );
+  }
+}
+
+/// Whether stopping [timer] is a question for the person before it is a
+/// request to the server.
+///
+/// Read off the cubit rather than the policy route, so a stop costs no request:
+/// the snapshot is loaded once per session and refreshed with the module.
+///
+/// Two conditions, and the second is what keeps the first from becoming a trap.
+/// The composer is worth opening only for something typing can fix: where the
+/// timer's day is frozen it can fix nothing — the composer's own gate refuses a
+/// locked day before it looks at any field, so its save would never enable, and
+/// every other way of stopping leads back into the same dead sheet. A timer is
+/// then better sent straight to the server, which deletes it and says why.
+bool _needsComposer(BuildContext context, RunningTimer timer) {
+  final policy = context.read<TimePolicyCubit>().state;
+  if (policy.isLocked(timer.startedAt)) return false;
+  return policy.unmetBy(
+        projectId: timer.projectId,
+        issueId: timer.issueId,
+        description: timer.description,
+        tags: timer.tags,
+      ) !=
+      null;
 }
 
 /// Which half of a pomodoro is running, and how far through the set.

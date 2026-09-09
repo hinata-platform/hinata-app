@@ -993,6 +993,8 @@ class _WidePageAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final primary = action.primary;
     final dark = Theme.of(context).brightness == Brightness.dark;
+    // See the compact bar's button: the page's menu hangs off this rect.
+    void tap() => action.onTap?.call(anchorRectOfContext(context));
 
     // On native, a real iOS-26 glass pill (its own layer); on web, a frosted
     // surface pill (nested backdrop blur pixelates on Skia). Primary actions get
@@ -1028,7 +1030,7 @@ class _WidePageAction extends StatelessWidget {
 
     if (isNativeApp) {
       return GlassButton.custom(
-        onTap: action.busy ? () {} : (action.onTap ?? () {}),
+        onTap: action.busy ? () {} : tap,
         height: 40,
         shape: const LiquidRoundedSuperellipse(borderRadius: 20),
         useOwnLayer: true,
@@ -1045,10 +1047,7 @@ class _WidePageAction extends StatelessWidget {
         type: MaterialType.transparency,
         borderRadius: BorderRadius.circular(AppTheme.radiusPill),
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: action.busy ? null : action.onTap,
-          child: content,
-        ),
+        child: InkWell(onTap: action.busy ? null : tap, child: content),
       ),
     );
   }

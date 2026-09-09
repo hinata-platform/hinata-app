@@ -9,6 +9,7 @@ import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/shortcuts/app_shortcuts.dart';
 import 'time_entry_sheet.dart';
+import 'timer_bar.dart';
 
 /// The time module's keyboard shortcuts, and the widget that owns them.
 ///
@@ -69,10 +70,11 @@ final List<AppShortcut> kTimeShortcuts = [
 /// running. What "ending" means for a break is [TimerCubit.end]'s business.
 void toggleTimer(BuildContext context) {
   final cubit = context.read<TimerCubit>();
-  // The entry, if there is one, is not this key's business: the toast that
-  // reports a failure is app-wide, and the overlap advice belongs on the screen
-  // where somebody was looking at the hours.
-  unawaited(cubit.state.isRunning ? cubit.end() : cubit.start());
+  // Ending goes through [endTimerAndAdvise] rather than straight to the cubit,
+  // because a stop is not always one request: where the operator requires a
+  // field the timer does not carry, it is a composer first. A key that skipped
+  // that would be the one way of stopping a timer that quietly fails.
+  unawaited(cubit.state.isRunning ? endTimerAndAdvise(context) : cubit.start());
 }
 
 /// Registers [kTimeShortcuts] for as long as the module is switched on.

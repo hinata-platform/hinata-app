@@ -22,7 +22,12 @@ class PageAction {
 
   final IconData icon;
   final String label;
-  final VoidCallback? onTap;
+
+  /// Given the button's own rectangle, so an action that opens a menu can hang
+  /// it off the button the way [PageChromeData.onTitleTap] hangs one off the
+  /// title. The shell draws the button, the page owns the menu, and a rect is
+  /// how the two meet; null means the button was not on screen to measure.
+  final void Function(Rect? anchor)? onTap;
   final bool primary;
   final bool busy;
 

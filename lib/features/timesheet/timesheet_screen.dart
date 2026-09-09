@@ -465,16 +465,33 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
       // spent on the week it is showing. Off the module (the plain
       // `/timesheet`) there is nothing to switch between.
       onTitleTap: compact && widget.moduleView ? _openModuleMenu : null,
+      // Left, like the module's other two pages. The week this sheet is showing
+      // is what the docked row below says; the title above it is the name of a
+      // place, and it belongs where the eye starts rather than wherever the
+      // wider of the two flanking slots leaves it.
+      titleLeading: true,
       // Compact only: the module's pages are nav destinations, so a wide
-      // window builds no sub-page bar and would drop these on the floor. There
-      // the same actions are in the page's own head below.
+      // window builds no sub-page bar and would drop these on the floor. A
+      // wide window reaches both ways of adding time without this button — a
+      // cell is opened by tapping it, and the timer lives on the bar above —
+      // so only the phone needs one, and it asks which.
       actions: compact && widget.moduleView
           ? [
               PageAction(
                 icon: LucideIcons.plus,
-                label: context.t('time.entry.new'),
+                label: context.t('time.add.title'),
                 primary: true,
-                onTap: _newEntry,
+                // The module's one "+", shared by all three of its pages: an
+                // entry in the week on screen, or the timer. See
+                // [showTimeAddMenu].
+                onTap: (anchor) => unawaited(
+                  showTimeAddMenu(
+                    context,
+                    anchor: anchor,
+                    onNewEntry: _newEntry,
+                    onTimerStopped: _load,
+                  ),
+                ),
               ),
             ]
           : const [],
@@ -544,13 +561,16 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// so a narrowing nobody meant cannot be mistaken for an empty week.
   Widget _dockedBar(bool admin) {
     final localizations = MaterialLocalizations.of(context);
-    // Centred in the band, and the `Align` is load-bearing: the bar hands the
-    // reserved height down as a *tight* constraint, which a `SizedBox` cannot
-    // come in under. Without it the pills grew to the full row and read as a
-    // taller, softer control than the identical pills on the calendar and the
-    // list. [kGlassDockRow] is that reserved height, shared, so no page can
-    // pick its own and put the same row at a different height.
+    // Centred in the band's height, and the `Align` is load-bearing: the bar
+    // hands the reserved height down as a *tight* constraint, which a
+    // `SizedBox` cannot come in under. Without it the pills grew to the full
+    // row and read as a taller, softer control than the identical pills on the
+    // calendar and the list. [kGlassDockRow] is that reserved height, shared,
+    // so no page can pick its own and put the same row at a different height.
+    // Across the band it starts at the leading edge, under a title that does
+    // the same.
     return Align(
+      alignment: AlignmentDirectional.centerStart,
       child: SizedBox(
         height: kGlassControlHeight,
         child: ListView(

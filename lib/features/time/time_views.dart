@@ -1,12 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/glass_switch_chip.dart';
+import 'timer_bar.dart';
 
 /// The extended time module's three ways of looking at the same hours.
 ///
@@ -60,6 +65,90 @@ class TimeViewSwitcher extends StatelessWidget {
         ],
       ],
     );
+  }
+}
+
+/// The "+", which is two things.
+///
+/// There are two ways to add time and the bar has room for one button. Writing
+/// down what is already done and starting the clock on what is not are
+/// independent — a timer is not a half-filled entry form — but before this only
+/// the first had a button here, and on a phone the second was reachable only by
+/// knowing that the title opens a menu with the focus view in it. So the button
+/// asks which.
+///
+/// A popover on the button, not a sheet: it is two actions, and the same glass
+/// menu the module's title and every row's `⋮` already open. One menu for all
+/// three of the module's pages, because it is one button on all three — the
+/// same "+" opening the entry sheet here and a menu there is exactly the seam
+/// the module spends the rest of its chrome hiding.
+///
+/// The second row is the timer's one question — "am I working on this right
+/// now" — rather than a start. Offering a start while one is running is a row
+/// that can only fail, and a running timer is on screen to be stopped either
+/// way. [onTimerStopped] fires when this menu is what stopped it, so the page
+/// behind can reload; [onNewEntry] is the page's own sheet, which knows the day
+/// or the cell the reader is looking at.
+///
+/// A null [anchor] means the button was not on screen to measure; nothing
+/// opens, as with [showTimeViewMenu].
+Future<void> showTimeAddMenu(
+  BuildContext context, {
+  required Rect? anchor,
+  required Future<void> Function() onNewEntry,
+  void Function()? onTimerStopped,
+}) async {
+  if (anchor == null) return;
+  final timer = context.read<TimerCubit>().state.timer;
+  final stopping = timer != null;
+  final chosen = await showGlassMenu<String>(
+    context: context,
+    anchorRect: anchor,
+    width: 230,
+    // Two actions, not a choice with a current value: nothing is ticked, the
+    // way the row menus do it.
+    value: '',
+    items: [
+      GlassMenuItem(
+        value: 'entry',
+        label: context.t('time.entry.new'),
+        leading: Icon(
+          LucideIcons.filePlus2,
+          size: 15,
+          color: AppColors.inkSoft,
+        ),
+      ),
+      GlassMenuItem(
+        value: 'timer',
+        label: context.t(
+          !stopping
+              ? 'time.add.timerStart'
+              // A break is never filed, so "stop" would promise an entry that
+              // is not coming. The bar says the same thing.
+              : timer.isBreak
+              ? 'time.focus.endSession'
+              : 'time.add.timerStop',
+        ),
+        leading: Icon(
+          stopping ? LucideIcons.square : LucideIcons.play,
+          size: 15,
+          color: AppColors.inkSoft,
+        ),
+      ),
+    ],
+  );
+  if (chosen == null || !context.mounted) return;
+  if (chosen == 'entry') {
+    await onNewEntry();
+    return;
+  }
+  if (stopping) {
+    await endTimerAndAdvise(context, onStopped: onTimerStopped);
+  } else {
+    // The plain start, which is the stopwatch — the same one the wide bar's
+    // button is. The other two counts are chosen on the bar or in the focus
+    // view, where there is room to say what they are.
+    await context.read<TimerCubit>().start();
   }
 }
 
