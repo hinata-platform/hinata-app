@@ -688,9 +688,19 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
           ? [
               PageAction(
                 icon: LucideIcons.plus,
-                label: context.t('time.entry.new'),
+                label: context.t('time.add.title'),
                 primary: true,
-                onTap: _newEntry,
+                // The module's one "+", shared by all three of its pages: an
+                // entry on the day this page would have offered anyway, or the
+                // timer. See [showTimeAddMenu].
+                onTap: (anchor) => unawaited(
+                  showTimeAddMenu(
+                    context,
+                    anchor: anchor,
+                    onNewEntry: _newEntry,
+                    onTimerStopped: _reload,
+                  ),
+                ),
               ),
             ]
           : const [],

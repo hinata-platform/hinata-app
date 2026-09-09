@@ -212,4 +212,34 @@ void main() {
       ]);
     });
   });
+
+  /// Where the phone's floating timer bar is allowed to be.
+  ///
+  /// It used to be everywhere, which is how a running timer ended up in the
+  /// chrome of pages that have nothing to do with hours.
+  group('the timer bar over the navigation', () {
+    test('rides over the module\'s own pages', () {
+      for (final route in ['/time', '/time/calendar', '/time/timesheet']) {
+        expect(showsTimerBar(route, immersive: false), isTrue, reason: route);
+      }
+    });
+
+    test('and over nothing else', () {
+      for (final route in ['/dashboard', '/issues', '/board', '/reports']) {
+        expect(showsTimerBar(route, immersive: false), isFalse, reason: route);
+      }
+    });
+
+    // Same prefix, different page: the base timesheet exists on every server
+    // and is not the module's, so there is no module timer to show over it.
+    test('the base timesheet is not the module', () {
+      expect(showsTimerBar('/timesheet', immersive: false), isFalse);
+    });
+
+    // An immersive route supplies its own chrome and hides the navigation the
+    // bar rides on; there is nothing for it to sit above.
+    test('and never on a route that hides the navigation', () {
+      expect(showsTimerBar('/time', immersive: true), isFalse);
+    });
+  });
 }

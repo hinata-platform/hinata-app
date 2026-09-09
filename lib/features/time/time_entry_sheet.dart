@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/blocs/time_policy_cubit.dart';
+import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
 import '../../core/models/time_policy_models.dart';
@@ -32,11 +33,19 @@ import 'tag_picker.dart';
 /// forces the first to be fabricated, and offering only the first throws away
 /// what a timer knew.
 ///
+/// A third act shares the form: **finishing a running timer**. Pass [timer]
+/// with the [span] it measured and the sheet collects what the operator's policy
+/// asks for that the timer does not carry, then stops it with the answers — one
+/// request, so the entry is still the one the timer files under its own id. The
+/// interval is shown and not edited: it came off the clock, which is the whole
+/// point of having run one.
+///
 /// Resolves to the saved entry, or null if dismissed.
 Future<SavedTimeEntry?> showTimeEntrySheet(
   BuildContext context, {
   WorkItem? entry,
   ({DateTime start, DateTime end})? span,
+  RunningTimer? timer,
 }) {
   // The sheet rides the root navigator, outside the app's provider scope, so
   // what it reads has to be carried across. Three repositories by name rather
@@ -60,17 +69,26 @@ Future<SavedTimeEntry?> showTimeEntrySheet(
   // this modal rides on.
   final policy = context.read<TimePolicyCubit>();
   unawaited(policy.ensureLoaded());
+  // And the timer cubit where there is a timer to finish, for the same reason:
+  // the stop is the sheet's save, and the cubit is what owns that transition —
+  // going around it would leave a bar counting a timer the server has ended.
+  final timerCubit = timer == null ? null : context.read<TimerCubit>();
   return showGlassModal<SavedTimeEntry>(
     context,
     adaptive: true,
     width: 480,
-    builder: (_) => MultiRepositoryProvider(
-      providers: providers,
-      child: BlocProvider<TimePolicyCubit>.value(
-        value: policy,
-        child: _TimeEntryForm(entry: entry, span: span),
-      ),
-    ),
+    builder: (_) {
+      final form = _TimeEntryForm(entry: entry, span: span, timer: timer);
+      return MultiRepositoryProvider(
+        providers: providers,
+        child: BlocProvider<TimePolicyCubit>.value(
+          value: policy,
+          child: timerCubit == null
+              ? form
+              : BlocProvider<TimerCubit>.value(value: timerCubit, child: form),
+        ),
+      );
+    },
   );
 }
 
@@ -78,7 +96,7 @@ Future<SavedTimeEntry?> showTimeEntrySheet(
 enum _EntryMode { interval, duration }
 
 class _TimeEntryForm extends StatefulWidget {
-  const _TimeEntryForm({this.entry, this.span});
+  const _TimeEntryForm({this.entry, this.span, this.timer});
 
   final WorkItem? entry;
 
@@ -86,6 +104,9 @@ class _TimeEntryForm extends StatefulWidget {
   /// interval side with those hours already in it — the drag was the answer to
   /// "when", and asking again would be asking twice.
   final ({DateTime start, DateTime end})? span;
+
+  /// The running timer this sheet is finishing. See [showTimeEntrySheet].
+  final RunningTimer? timer;
 
   @override
   State<_TimeEntryForm> createState() => _TimeEntryFormState();
@@ -99,7 +120,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   final _tagsKey = GlobalKey();
 
   late final TextEditingController _description = TextEditingController(
-    text: widget.entry?.description ?? '',
+    text: widget.entry?.description ?? widget.timer?.description ?? '',
   );
   late final TextEditingController _duration = TextEditingController(
     text: formatDurationInput(widget.entry?.durationMinutes ?? 60),
@@ -126,13 +147,16 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       _defaultStart().add(const Duration(hours: 1));
 
   late TimePlacement _placement = TimePlacement(
-    projectId: widget.entry?.projectId,
-    issueId: widget.entry?.issueId,
+    projectId: widget.entry?.projectId ?? widget.timer?.projectId,
+    issueId: widget.entry?.issueId ?? widget.timer?.issueId,
   );
 
-  late String _activity = widget.entry?.activityType ?? 'Development';
+  late String _activity =
+      widget.entry?.activityType ?? widget.timer?.activityType ?? 'Development';
 
-  late List<String> _tags = List.of(widget.entry?.tags ?? const <String>[]);
+  late List<String> _tags = List.of(
+    widget.entry?.tags ?? widget.timer?.tags ?? const <String>[],
+  );
 
   /// Whether the tag field was opened and confirmed.
   ///
@@ -148,6 +172,11 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   String? _error;
 
   bool get _isEdit => widget.entry != null;
+
+  /// Whether this sheet is the last step of a stop rather than a form of its
+  /// own. What differs: the interval is shown and not edited, the save is the
+  /// stop, and cancelling leaves the timer running.
+  bool get _isTimer => widget.timer != null;
 
   TimePolicySnapshot get _policy => context.watch<TimePolicyCubit>().state;
 
@@ -169,23 +198,14 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
         (_isEdit && policy.isLocked(widget.entry!.date))) {
       return 'time.policy.locked';
     }
-    // Placement is only settled on a create; a patch carries neither field, so
-    // an edit cannot violate the rule and must not be blocked by it.
-    if (!_isEdit) {
-      if (policy.requiredIssue && _placement.issueId == null) {
-        return 'time.policy.needIssue';
-      }
-      if (policy.requiresPlacement && _placement.projectId == null) {
-        return 'time.policy.needProject';
-      }
-    }
-    if (policy.requiredDescription && _description.text.trim().isEmpty) {
-      return 'time.policy.needDescription';
-    }
-    if (policy.requiredTag && _tags.isEmpty) {
-      return 'time.policy.needTag';
-    }
-    return null;
+    return policy.unmetBy(
+      projectId: _placement.projectId,
+      issueId: _placement.issueId,
+      description: _description.text,
+      tags: _tags,
+      // Only a create settles the placement; see [TimePolicySnapshot.unmetBy].
+      placement: !_isEdit,
+    );
   }
 
   static DateTime _dayOf(WorkItem? entry) {
@@ -216,17 +236,23 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
 
   Future<void> _save() async {
     final minutes = _minutes;
-    if (minutes == null || minutes < 1) {
-      setState(
-        () => _error = _mode == _EntryMode.duration
-            ? 'time.error.duration'
-            : 'time.error.interval',
-      );
-      return;
-    }
-    if (minutes > 24 * 60) {
-      setState(() => _error = 'time.error.tooLong');
-      return;
+    // Not for a timer: its length is the server's arithmetic, and the server
+    // floors it at one minute. Judged here, a timer started and stopped inside
+    // the same minute would be refused by a form that cannot change what it is
+    // refusing — with the clock still running behind it.
+    if (!_isTimer) {
+      if (minutes == null || minutes < 1) {
+        setState(
+          () => _error = _mode == _EntryMode.duration
+              ? 'time.error.duration'
+              : 'time.error.interval',
+        );
+        return;
+      }
+      if (minutes > 24 * 60) {
+        setState(() => _error = 'time.error.tooLong');
+        return;
+      }
     }
     setState(() {
       _saving = true;
@@ -265,10 +291,15 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       tags: _isEdit && !_tagsTouched ? null : _tags,
     );
     try {
-      final saved = _isEdit
+      final saved = _isTimer
+          ? await _stopTimer()
+          : _isEdit
           ? await repository.update(widget.entry!.id, draft)
           : await repository.create(draft);
       if (!mounted) return;
+      // A stop that the server refused answered null and said why in the cubit;
+      // the sheet stays open with the sentence rather than closing on nothing.
+      if (saved == null) return;
       Navigator.of(context).pop(saved);
     } catch (failure) {
       if (!mounted) return;
@@ -277,6 +308,37 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
         _error = failure.toString();
       });
     }
+  }
+
+  /// Ends the running timer with what this form collected.
+  ///
+  /// One request, not a create followed by a discard: the entry a timer files
+  /// carries the timer's own id, which is what makes a retried stop answer with
+  /// the entry the first attempt made instead of writing a second one. Filing it
+  /// by hand and then throwing the timer away would give that up — and would
+  /// leave a duplicate behind whenever the second of the two calls failed.
+  ///
+  /// Billable is not sent, so the timer's own flag survives; there is no control
+  /// for it on this form.
+  Future<SavedTimeEntry?> _stopTimer() async {
+    final cubit = context.read<TimerCubit>();
+    final saved = await cubit.stop(
+      // The end this form is showing, which is when stop was pressed — not when
+      // the last required field was finally typed.
+      endedAt: _end,
+      projectId: _placement.projectId,
+      issueId: _placement.issueId,
+      description: _description.text.trim(),
+      activityType: _activity,
+      tags: _tags,
+    );
+    if (saved == null && mounted) {
+      setState(() {
+        _saving = false;
+        _error = cubit.state.errorMessage ?? 'errors.unexpected';
+      });
+    }
+    return saved;
   }
 
   @override
@@ -288,9 +350,17 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       mainAxisSize: MainAxisSize.min,
       children: [
         GlassModalHeader(
-          icon: LucideIcons.clock,
-          title: context.t(_isEdit ? 'time.entry.edit' : 'time.entry.new'),
-          subtitle: context.t('time.entry.subtitle'),
+          icon: _isTimer ? LucideIcons.square : LucideIcons.clock,
+          title: context.t(
+            _isTimer
+                ? 'time.timer.finish'
+                : _isEdit
+                ? 'time.entry.edit'
+                : 'time.entry.new',
+          ),
+          subtitle: context.t(
+            _isTimer ? 'time.timer.finishHint' : 'time.entry.subtitle',
+          ),
         ),
         Flexible(
           child: SingleChildScrollView(
@@ -351,66 +421,75 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                   ),
                 ],
                 const SizedBox(height: 14),
-                _ModeToggle(
-                  mode: _mode,
-                  onChanged: (mode) => setState(() {
-                    _mode = mode;
-                    _error = null;
-                  }),
-                ),
-                const SizedBox(height: 12),
-                if (_mode == _EntryMode.duration) ...[
-                  _FieldButton(
-                    icon: LucideIcons.calendar,
-                    label: context.t('time.entry.day'),
-                    value: localizations.formatFullDate(_day),
-                    onTap: _pickDay,
+                // A timer's interval is not a field. It came off the clock, and
+                // the two shapes below are the choice between typing a length
+                // and typing hours — neither of which is what just happened.
+                // Correcting it afterwards is what the entry's own editor is
+                // for, where the times can move without the stop having to.
+                if (_isTimer) ...[
+                  _MeasuredInterval(start: _start, end: _end),
+                ] else ...[
+                  _ModeToggle(
+                    mode: _mode,
+                    onChanged: (mode) => setState(() {
+                      _mode = mode;
+                      _error = null;
+                    }),
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _duration,
-                          textInputAction: TextInputAction.done,
-                          onChanged: (_) => setState(() => _error = null),
-                          decoration: InputDecoration(
-                            labelText: context.t('time.entry.duration'),
-                            // The parser accepts far more than this, but a hint
-                            // has to fit: these three are the notations people
-                            // reach for first.
-                            hintText: '1h 30m · 90m · 1:30',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppTheme.radiusControl,
+                  if (_mode == _EntryMode.duration) ...[
+                    _FieldButton(
+                      icon: LucideIcons.calendar,
+                      label: context.t('time.entry.day'),
+                      value: localizations.formatFullDate(_day),
+                      onTap: _pickDay,
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _duration,
+                            textInputAction: TextInputAction.done,
+                            onChanged: (_) => setState(() => _error = null),
+                            decoration: InputDecoration(
+                              labelText: context.t('time.entry.duration'),
+                              // The parser accepts far more than this, but a hint
+                              // has to fit: these three are the notations people
+                              // reach for first.
+                              hintText: '1h 30m · 90m · 1:30',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusControl,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        tooltip: context.t('time.entry.pickDuration'),
-                        onPressed: _pickDuration,
-                        icon: const Icon(LucideIcons.hourglass, size: 18),
-                      ),
-                    ],
-                  ),
-                ] else ...[
-                  _FieldButton(
-                    icon: LucideIcons.play,
-                    label: context.t('time.entry.start'),
-                    value: _formatMoment(context, _start),
-                    onTap: () => _pickMoment(isStart: true),
-                  ),
-                  const SizedBox(height: 12),
-                  _FieldButton(
-                    icon: LucideIcons.square,
-                    label: context.t('time.entry.end'),
-                    value: _formatMoment(context, _end),
-                    onTap: () => _pickMoment(isStart: false),
-                  ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          tooltip: context.t('time.entry.pickDuration'),
+                          onPressed: _pickDuration,
+                          icon: const Icon(LucideIcons.hourglass, size: 18),
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    _FieldButton(
+                      icon: LucideIcons.play,
+                      label: context.t('time.entry.start'),
+                      value: _formatMoment(context, _start),
+                      onTap: () => _pickMoment(isStart: true),
+                    ),
+                    const SizedBox(height: 12),
+                    _FieldButton(
+                      icon: LucideIcons.square,
+                      label: context.t('time.entry.end'),
+                      value: _formatMoment(context, _end),
+                      onTap: () => _pickMoment(isStart: false),
+                    ),
+                  ],
                 ],
                 const SizedBox(height: 12),
                 _ActivityRow(
@@ -433,7 +512,10 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                _Summary(minutes: _minutes, error: _error),
+                _Summary(
+                  minutes: _isTimer && (_minutes ?? 0) < 1 ? 1 : _minutes,
+                  error: _error,
+                ),
                 if (unmet != null) ...[
                   const SizedBox(height: 8),
                   // Under the total, not instead of it: the sheet is asking for a
@@ -446,7 +528,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
           ),
         ),
         GlassModalFooter(
-          confirmLabel: context.t('common.save'),
+          confirmLabel: context.t(_isTimer ? 'time.timer.stop' : 'common.save'),
           busy: _saving,
           onConfirm: _saving || unmet != null ? null : _save,
         ),
@@ -800,6 +882,62 @@ class _Summary extends StatelessWidget {
 
 /// A one-line field that opens a picker — the app's rule against inline
 /// selection lists, applied to the four fields this form has.
+/// The interval a timer measured: shown, not offered for editing.
+///
+/// A row rather than the two [_FieldButton]s the interval mode uses, because
+/// those are controls and this is a fact. Nothing here can be changed by the
+/// person reading it — the stop carries the timer's own start, so a picker would
+/// be a control that closes and changes nothing.
+class _MeasuredInterval extends StatelessWidget {
+  const _MeasuredInterval({required this.start, required this.end});
+
+  final DateTime start;
+  final DateTime end;
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = MaterialLocalizations.of(context);
+    String at(DateTime moment) => localizations.formatTimeOfDay(
+      TimeOfDay.fromDateTime(moment),
+      alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
+    );
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        border: Border.all(color: AppColors.hairline),
+      ),
+      child: Row(
+        children: [
+          Icon(LucideIcons.timer, size: 16, color: AppColors.inkSoft),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  context.t('time.entry.measured'),
+                  style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${localizations.formatMediumDate(start)} · '
+                  '${at(start)} – ${at(end)}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _FieldButton extends StatelessWidget {
   const _FieldButton({
     required this.icon,

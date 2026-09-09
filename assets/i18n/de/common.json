@@ -863,7 +863,9 @@
       "discard": "Timer verwerfen",
       "noDescription": "Ohne Beschreibung",
       "title": "Timer",
-      "chooseMode": "Zählweise wählen"
+      "chooseMode": "Zählweise wählen",
+      "finish": "Timer stoppen",
+      "finishHint": "Der Timer läuft noch. Ergänze, was diese Instanz verlangt, dann wird gebucht."
     },
     "placement": {
       "none": "Ohne Projekt",
@@ -905,7 +907,13 @@
       "modeInterval": "Beginn und Ende",
       "noDescription": "Ohne Beschreibung",
       "continue": "Fortsetzen",
-      "tags": "Tags"
+      "tags": "Tags",
+      "measured": "Gemessen"
+    },
+    "add": {
+      "title": "Hinzufügen",
+      "timerStart": "Timer starten",
+      "timerStop": "Timer stoppen"
     },
     "view": {
       "list": "Liste",

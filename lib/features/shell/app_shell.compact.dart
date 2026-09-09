@@ -90,6 +90,13 @@ class _CompactShellState extends State<_CompactShell> {
     final timerRunning = context.select<TimerCubit, bool>(
       (cubit) => cubit.state.isRunning,
     );
+    // ...and only where it belongs — see [showsTimerBar]. Mounted for the whole
+    // route rather than only while something runs, so the bar keeps its own
+    // collapse animation on the way out; see [TimerBar].
+    final timerMounted = showsTimerBar(
+      widget.location,
+      immersive: widget.immersive,
+    );
     return Scaffold(
       backgroundColor: AppColors.canvas,
       // Content fills the whole screen and scrolls *behind* the translucent
@@ -139,7 +146,7 @@ class _CompactShellState extends State<_CompactShell> {
                 // reserved for the navigation has to grow by exactly what the
                 // bar occupies — otherwise the last entry of a list sits under
                 // it, which is the one row a reader is most likely to want.
-                final timerFootprint = widget.immersive || !timerRunning
+                final timerFootprint = !timerMounted || !timerRunning
                     ? 0.0
                     : kCompactTimerBarHeight;
                 final navFootprint = widget.immersive
@@ -202,7 +209,7 @@ class _CompactShellState extends State<_CompactShell> {
                 // one safe-area inset and cannot drift apart when the keyboard
                 // moves. TimerBar collapses itself to nothing when no timer is
                 // running, which is what keeps the footprint above honest.
-                above: const TimerBar(compact: true),
+                above: timerMounted ? const TimerBar(compact: true) : null,
                 // iOS-26 layout: the tab pill and a detached global-search
                 // button. The button is the package's own `extraButton` rather
                 // than a GlassButton we place beside the bar in a Row — that
@@ -710,6 +717,9 @@ class _PageActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Measured at the press, not at build: the bar scrolls nothing, but the
+    // window can be resized under an open page.
+    void tap() => action.onTap?.call(anchorRectOfContext(context));
     if (action.busy) {
       return _FrostedSurface(
         borderRadius: BorderRadius.circular(20),
@@ -726,7 +736,7 @@ class _PageActionButton extends StatelessWidget {
         message: action.label,
         child: GlassButton(
           icon: Icon(action.icon),
-          onTap: action.onTap ?? () {},
+          onTap: tap,
           width: 42,
           height: 42,
           iconSize: 18,
@@ -744,7 +754,7 @@ class _PageActionButton extends StatelessWidget {
       icon: action.icon,
       tooltip: action.label,
       active: action.primary,
-      onTap: action.onTap ?? () {},
+      onTap: tap,
     );
   }
 }

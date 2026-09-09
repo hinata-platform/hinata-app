@@ -122,6 +122,7 @@ class TimeRepository {
   /// a second one.
   Future<SavedTimeEntry> stopTimer({
     String? timerId,
+    DateTime? endedAt,
     String? projectId,
     String? issueId,
     String? description,
@@ -139,6 +140,14 @@ class TimeRepository {
                 // new one. Named, the retry answers with the entry the first
                 // attempt filed.
                 'timerId': ?timerId,
+                // When the button was pressed. Omitted, the server ends the
+                // timer when the request lands — which is the same instant
+                // unless something happened in between, and something does: a
+                // stop that has to ask for a required field waits for it to be
+                // typed, and the minutes spent typing are not minutes worked.
+                // The server still decides the length: it clamps an end past a
+                // countdown's target or past the run ceiling.
+                'endedAt': ?endedAt?.toUtc().toIso8601String(),
                 'projectId': ?projectId,
                 'issueId': ?issueId,
                 'description': ?description,

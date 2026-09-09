@@ -585,9 +585,14 @@ class _FakeTimeRepository implements TimeRepository {
     return updated;
   }
 
+  /// The end each stop named, so a test can say that the button's instant and
+  /// not the request's is what gets filed.
+  final List<DateTime?> stoppedAt = [];
+
   @override
   Future<SavedTimeEntry> stopTimer({
     String? timerId,
+    DateTime? endedAt,
     String? projectId,
     String? issueId,
     String? description,
@@ -596,6 +601,7 @@ class _FakeTimeRepository implements TimeRepository {
     bool? billable,
   }) async {
     stoppedIds.add(timerId);
+    stoppedAt.add(endedAt);
     running = null;
     return const SavedTimeEntry(
       entry: WorkItem(

@@ -863,7 +863,9 @@
       "discard": "Discard timer",
       "noDescription": "No description",
       "title": "Timer",
-      "chooseMode": "Choose how it counts"
+      "chooseMode": "Choose how it counts",
+      "finish": "Stop timer",
+      "finishHint": "The timer is still running. Fill in what this instance requires, then file it."
     },
     "placement": {
       "none": "No project",
@@ -905,7 +907,13 @@
       "modeInterval": "Start and end",
       "noDescription": "No description",
       "continue": "Continue",
-      "tags": "Tags"
+      "tags": "Tags",
+      "measured": "Measured"
+    },
+    "add": {
+      "title": "Add",
+      "timerStart": "Start timer",
+      "timerStop": "Stop timer"
     },
     "view": {
       "list": "List",

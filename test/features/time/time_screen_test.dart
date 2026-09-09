@@ -75,6 +75,9 @@ void main() {
     // What the compact shell hands the page as the height of the glass app bar
     // plus whatever the page docked into it. Zero unless a test is about it.
     EdgeInsets padding = EdgeInsets.zero,
+    // Handed in only where a test has to read back what the page asked the
+    // timer to do; otherwise the page gets one built from [timer].
+    _FakeTimerCubit? timerCubit,
   }) {
     final router = GoRouter(
       routes: [
@@ -96,7 +99,7 @@ void main() {
                 child: MultiBlocProvider(
                   providers: [
                     BlocProvider<TimerCubit>.value(
-                      value: _FakeTimerCubit(timer),
+                      value: timerCubit ?? _FakeTimerCubit(timer),
                     ),
                     // Nothing required, nothing frozen — what a fresh instance
                     // demands, and what the screens assume until the module
@@ -473,6 +476,185 @@ void main() {
       );
     });
   });
+
+  /// The phone's one trailing action.
+  ///
+  /// A phone's app bar has room for a single button and the module has two ways
+  /// to add time. It used to be "new entry" outright, which left starting a
+  /// timer reachable only by knowing that the title opens a menu — so on a
+  /// phone the module's headline feature had no button at all.
+  group('the phone\'s add button', () {
+    const phone = Size(420, 900);
+
+    Future<void> openMenu(WidgetTester tester) async {
+      final actions = chrome.actionsFor('/');
+      expect(actions, hasLength(1));
+      // The rect the shell would hand it: the menu hangs off the button, so
+      // without one it opens nothing at all.
+      actions.single.onTap!(const Rect.fromLTWH(360, 40, 42, 42));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('asks which kind of add, rather than assuming', (tester) async {
+      // With a row on the page, so the empty state — which offers "new entry"
+      // itself, and is the whole reason the button could not simply be that —
+      // is not on screen to be counted twice.
+      await tester.pumpWidget(
+        host(
+          time: _FakeTimeRepository([entry(id: 'a')]),
+          size: phone,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await openMenu(tester);
+
+      expect(find.text('time.entry.new'), findsOneWidget);
+      expect(find.text('time.add.timerStart'), findsOneWidget);
+    });
+
+    testWidgets('its second row starts the timer', (tester) async {
+      final cubit = _FakeTimerCubit(const TimerState());
+      await tester.pumpWidget(
+        host(
+          time: _FakeTimeRepository(const []),
+          size: phone,
+          timerCubit: cubit,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await openMenu(tester);
+
+      await tester.tap(find.text('time.add.timerStart'));
+      await tester.pumpAndSettle();
+
+      // The plain start, which is the stopwatch — the same one the wide bar's
+      // button is.
+      expect(cubit.started, [TimerMode.stopwatch]);
+    });
+
+    testWidgets('while one runs the row stops it instead of offering a second '
+        'start', (tester) async {
+      // A start would be refused by the server, so the row would be one that
+      // can only fail. It asks the timer's one question instead.
+      final cubit = _FakeTimerCubit(
+        TimerState(
+          timer: RunningTimer(id: 't1', startedAt: DateTime.now()),
+        ),
+      );
+      await tester.pumpWidget(
+        host(
+          time: _FakeTimeRepository(const []),
+          size: phone,
+          timerCubit: cubit,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await openMenu(tester);
+
+      expect(find.text('time.add.timerStop'), findsOneWidget);
+      expect(find.text('time.add.timerStart'), findsNothing);
+      expect(cubit.started, isEmpty);
+    });
+
+    /// A timer starts with nothing — that is the point of one. So the operator's
+    /// required fields are collected at the stop, in the composer, rather than
+    /// asked for at a start that has no fields to ask with.
+    group('and the stop it offers', () {
+      _FakeTimerCubit running() => _FakeTimerCubit(
+        TimerState(
+          timer: RunningTimer(
+            id: 't1',
+            startedAt: DateTime.now().subtract(const Duration(minutes: 30)),
+          ),
+        ),
+      );
+
+      testWidgets('files straight away when nothing is required', (
+        tester,
+      ) async {
+        final cubit = running();
+        await tester.pumpWidget(
+          host(
+            time: _FakeTimeRepository(const []),
+            size: phone,
+            timerCubit: cubit,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await openMenu(tester);
+
+        await tester.tap(find.text('time.add.timerStop'));
+        await tester.pumpAndSettle();
+
+        expect(cubit.stopped, hasLength(1));
+        expect(find.text('time.timer.finish'), findsNothing);
+      });
+
+      testWidgets(
+        'asks first when the policy wants more than the timer holds',
+        (tester) async {
+          final cubit = running();
+          await tester.pumpWidget(
+            host(
+              time: _FakeTimeRepository(const []),
+              size: phone,
+              timerCubit: cubit,
+              policy: const TimePolicySnapshot(requiredDescription: true),
+            ),
+          );
+          await tester.pumpAndSettle();
+          await openMenu(tester);
+
+          await tester.tap(find.text('time.add.timerStop'));
+          await tester.pumpAndSettle();
+
+          // The composer, and nothing filed behind it: the timer is still
+          // running, so cancelling here loses nothing.
+          expect(find.text('time.timer.finish'), findsOneWidget);
+          expect(cubit.stopped, isEmpty);
+        },
+      );
+
+      testWidgets('and the answer rides along on the stop', (tester) async {
+        final cubit = running();
+        await tester.pumpWidget(
+          host(
+            time: _FakeTimeRepository(const []),
+            size: phone,
+            timerCubit: cubit,
+            policy: const TimePolicySnapshot(requiredDescription: true),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await openMenu(tester);
+        await tester.tap(find.text('time.add.timerStop'));
+        await tester.pumpAndSettle();
+
+        await tester.enterText(find.byType(TextField).first, 'pairing');
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('time.timer.stop').last);
+        await tester.pumpAndSettle();
+
+        expect(cubit.stopped, hasLength(1));
+        expect(cubit.stopped.single.description, 'pairing');
+        // The end is the one the sheet was opened with — when stop was pressed,
+        // not when the field was finally typed.
+        expect(cubit.stopped.single.endedAt, isNotNull);
+      });
+    });
+
+    testWidgets('the module title sits on the leading edge', (tester) async {
+      // The module's three pages are one place seen three ways; a title that
+      // moves between the centre and the edge as you step between them reads
+      // as three places.
+      await tester.pumpWidget(
+        host(time: _FakeTimeRepository(const []), size: phone),
+      );
+      await tester.pumpAndSettle();
+
+      expect(chrome.titleLeadingFor('/'), isTrue);
+    });
+  });
 }
 
 class _FakeTimeRepository implements TimeRepository {
@@ -526,8 +708,55 @@ class _FakeIssueRepository implements IssueRepository {
 
 /// A cubit that is only ever asked for the state it was built with — the bar's
 /// rendering is what these tests are about, not the requests behind it.
+///
+/// [start] is the exception: the phone's "+" menu exists to reach it, so a test
+/// about that menu has to be able to say whether it did.
 class _FakeTimerCubit extends Cubit<TimerState> implements TimerCubit {
   _FakeTimerCubit(super.initialState);
+
+  /// The modes it was asked to start in, in order.
+  final List<TimerMode> started = [];
+
+  /// What each stop carried. A timer becomes an entry here, so a test about
+  /// where the required fields are collected has to be able to read them back.
+  final List<({DateTime? endedAt, String? description})> stopped = [];
+
+  @override
+  Future<SavedTimeEntry?> end() async => state.timer == null ? null : stop();
+
+  @override
+  Future<SavedTimeEntry?> stop({
+    DateTime? endedAt,
+    String? projectId,
+    String? issueId,
+    String? description,
+    String? activityType,
+    List<String>? tags,
+    bool? billable,
+  }) async {
+    stopped.add((endedAt: endedAt, description: description));
+    emit(const TimerState());
+    return const SavedTimeEntry(
+      entry: WorkItem(
+        id: 'e1',
+        durationMinutes: 30,
+        activityType: 'Development',
+      ),
+    );
+  }
+
+  @override
+  Future<void> start({
+    String? projectId,
+    String? issueId,
+    String? description,
+    String? activityType,
+    List<String> tags = const [],
+    bool? billable,
+    TimerMode mode = TimerMode.stopwatch,
+    int? plannedMinutes,
+    PomodoroConfig? pomodoro,
+  }) async => started.add(mode);
 
   @override
   dynamic noSuchMethod(Invocation invocation) =>

@@ -154,16 +154,30 @@ class _TimeScreenState extends State<TimeScreen> {
       // too: a phone's app bar has room for one trailing action, and that one
       // is "new entry".
       onTitleTap: compact ? _openModuleMenu : null,
+      // Left, like the calendar's and the timesheet's. The module's three
+      // pages are one place seen three ways, and a title that jumps from the
+      // centre to the edge as you step between them reads as three places. It
+      // is also the edge the chevron belongs on: a centred title with a
+      // control after it is a control nobody finds twice in the same spot.
+      titleLeading: true,
       // Compact only: this is a nav destination, so a wide window builds no
       // sub-page bar and would drop the action on the floor. There the same
-      // button is in the page's own head below.
+      // button is in the page's own head below, beside a timer bar that is
+      // always on screen — which is why only the phone's button asks.
       actions: compact
           ? [
               PageAction(
                 icon: LucideIcons.plus,
-                label: context.t('time.entry.new'),
+                label: context.t('time.add.title'),
                 primary: true,
-                onTap: _newEntry,
+                onTap: (anchor) => unawaited(
+                  showTimeAddMenu(
+                    context,
+                    anchor: anchor,
+                    onNewEntry: _newEntry,
+                    onTimerStopped: _reload,
+                  ),
+                ),
               ),
             ]
           : const [],
@@ -256,7 +270,14 @@ class _TimeScreenState extends State<TimeScreen> {
     final gutter = context.pageGutter;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: gutter),
+      // The `Align` is load-bearing vertically: the bar hands the reserved
+      // height down as a *tight* constraint, and the row has to be able to come
+      // in under it. Its horizontal half is not a detail either — the row sizes
+      // to its pills, so a centred one drifts away from the page's leading edge
+      // as pills are added and removed, under a title that does not move.
+      // Directional, so a right-to-left reading starts where its reader does.
       child: Align(
+        alignment: AlignmentDirectional.centerStart,
         child: GlassSearchDock(
           searching: _searching,
           controller: _searchController,

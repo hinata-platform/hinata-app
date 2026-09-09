@@ -337,7 +337,7 @@ class _AdminScreenState extends State<AdminScreen> {
       PageAction(
         icon: LucideIcons.save,
         label: context.t('common.save'),
-        onTap: _save,
+        onTap: (_) => _save(),
         primary: true,
         busy: _saving,
       ),

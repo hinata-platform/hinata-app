@@ -863,7 +863,9 @@
       "discard": "Abandonner le minuteur",
       "noDescription": "Sans description",
       "title": "Minuteur",
-      "chooseMode": "Choisir le décompte"
+      "chooseMode": "Choisir le décompte",
+      "finish": "Arrêter le minuteur",
+      "finishHint": "Le minuteur tourne encore. Complétez ce que cette instance exige, puis la saisie est enregistrée."
     },
     "placement": {
       "none": "Sans projet",
@@ -905,7 +907,13 @@
       "modeInterval": "Début et fin",
       "noDescription": "Sans description",
       "continue": "Reprendre",
-      "tags": "Étiquettes"
+      "tags": "Étiquettes",
+      "measured": "Mesuré"
+    },
+    "add": {
+      "title": "Ajouter",
+      "timerStart": "Démarrer le minuteur",
+      "timerStop": "Arrêter le minuteur"
     },
     "view": {
       "list": "Liste",
