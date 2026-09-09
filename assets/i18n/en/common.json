@@ -23,7 +23,13 @@
     "clear": "Clear",
     "paste": "Paste",
     "today": "Today",
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "rename": "Rename",
+    "name": "Name",
+    "loadMore": "Load more",
+    "saved": "Saved",
+    "yes": "Yes",
+    "no": "No"
   },
   "delete": {
     "cta": "Delete",
@@ -898,7 +904,8 @@
       "modeDuration": "Duration",
       "modeInterval": "Start and end",
       "noDescription": "No description",
-      "continue": "Continue"
+      "continue": "Continue",
+      "tags": "Tags"
     },
     "view": {
       "list": "List",
@@ -939,6 +946,44 @@
       "workOver": "One interval done. Time for a break.",
       "workOver_plural": "{{count}} intervals done. Time for a break.",
       "titleFlash": "Interval over"
+    },
+    "tags": {
+      "none": "No tags",
+      "search": "Search tags",
+      "create": "Create \"{{name}}\"",
+      "noneCurated": "No tags yet. Only administrators can create them on this server."
+    },
+    "policy": {
+      "locked": "Entries on this day are locked and can no longer be changed",
+      "lockedChip": "Locked",
+      "needProject": "This server requires a project on every entry",
+      "needIssue": "This server requires an issue on every entry",
+      "needDescription": "This server requires a description on every entry",
+      "needTag": "This server requires at least one tag on every entry"
+    },
+    "history": {
+      "open": "History",
+      "title": "History of this entry",
+      "subtitle": "Who else changed it, and what they changed",
+      "emptyTitle": "Nobody else has changed it",
+      "emptyMessage": "Only you have edited this entry. Your own corrections are deliberately not recorded here.",
+      "created": "Filed {{when}} · {{source}}",
+      "field": {
+        "minutes": "Duration",
+        "date": "Day",
+        "project": "Project",
+        "issue": "Issue"
+      }
+    },
+    "source": {
+      "APP": "Logged by hand",
+      "TIMER": "Stopped timer",
+      "MCP": "Logged through an integration",
+      "SMART_COMMIT": "Smart commit",
+      "LEGACY": "Smart commits (before 2.0)",
+      "CALENDAR": "From a calendar",
+      "CSV": "Imported",
+      "SHARED": "Copied from a shared entry"
     }
   },
   "projects": {
@@ -1504,8 +1549,8 @@
       "requiredDescriptionHint": "An entry has to say what was worked on.",
       "requiredTagTitle": "Tag required",
       "requiredTagHint": "An entry has to carry at least one tag.",
-      "lockBeforeLabel": "Locked up to and including",
-      "lockBeforeHint": "Entries on this day and earlier can no longer be created, changed or deleted — by anyone, the API included.",
+      "lockBeforeLabel": "Locked before",
+      "lockBeforeHint": "Entries before this day can no longer be created, changed or deleted — by anyone, the API included. The named day itself stays open.",
       "roundingModeLabel": "Rounding",
       "roundingModeHint": "Applies to reports only; the stored minutes are never changed.",
       "roundingMode": {
@@ -1587,7 +1632,19 @@
       "monthsSuffix": "months",
       "privacyNoticeLabel": "Privacy notice",
       "privacyNoticeHint": "Shown in the app alongside the module's time data. Empty → the built-in text.",
-      "notYetEnforced": "Recorded, but not yet acted on — the function behind this policy arrives in a later stage of the time-tracking work."
+      "notYetEnforced": "Recorded, but not yet acted on — the function behind this policy arrives in a later stage of the time-tracking work.",
+      "tagsTitle": "Tags",
+      "tagsHint": "The vocabulary entries are labelled with. Renaming one carries every entry with it.",
+      "tagsEmpty": "No tags yet.",
+      "tagNew": "New tag",
+      "tagRename": "Rename tag",
+      "tagNameHint": "At most 40 characters. Capitalisation does not create a second tag.",
+      "tagUsage": "{{count}} entry",
+      "tagUsage_plural": "{{count}} entries",
+      "tagDeleteTitle": "Delete tag?",
+      "tagDeleteMessage": "\"{{name}}\" is removed from {{count}} entry. The entry itself stays.",
+      "tagDeleteMessage_plural": "\"{{name}}\" is removed from {{count}} entries. The entries themselves stay.",
+      "lockBeforeEveryone": "The lock applies to everyone, administrators included. Lifting it is the recorded way to edit a frozen period."
     },
     "passwordPolicy": "Password policy",
     "passwordPolicyHint": "Minimum requirements for user passwords.",
@@ -2018,7 +2075,17 @@
       "ISSUE_EXPORTED": "Issue exported",
       "TIME_ENTRY_UPDATED": "Time entry updated",
       "TIME_ENTRY_DELETED": "Time entry deleted",
-      "TIME_ENTRY_CREATED_FOR": "Time booked for someone else"
+      "TIME_ENTRY_CREATED_FOR": "Time booked for someone else",
+      "TIME_ENTRY_CREATED": "Time entry filed",
+      "TIME_TIMER_STARTED": "Timer started",
+      "TIME_TIMER_STOPPED": "Timer stopped",
+      "TIME_TIMER_DISCARDED": "Timer discarded",
+      "TIME_POLICY_CHANGED": "Time-tracking policy changed",
+      "TIME_LOCK_CHANGED": "Lock date changed",
+      "TIME_TAG_CREATED": "Tag created",
+      "TIME_TAG_UPDATED": "Tag changed",
+      "TIME_TAG_DELETED": "Tag deleted",
+      "TIME_PROJECT_SETTINGS_CHANGED": "Project time settings changed"
     },
     "meta": {
       "oldRole": "Previous role",
@@ -2334,7 +2401,17 @@
     "migrateTarget": "Move issues to",
     "migrateManualHint": "You can also move the issues manually before deleting the status.",
     "migrateConfirm": "Migrate & remove",
-    "keyFromName": "Generate key from the name"
+    "keyFromName": "Generate key from the name",
+    "time": {
+      "title": "Time tracking",
+      "note": "What this project decides for itself. Everything left on the server default follows the instance policy.",
+      "budget": "Budget",
+      "budgetHint": "e.g. 120h — empty for no budget",
+      "billable": "Billable by default",
+      "approvalRequired": "Timesheets need approval",
+      "approvalPeriod": "Submission period",
+      "inherit": "Server default"
+    }
   },
   "account": {
     "title": "My account",

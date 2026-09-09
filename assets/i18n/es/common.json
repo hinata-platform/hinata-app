@@ -23,7 +23,13 @@
     "clear": "Borrar",
     "paste": "Pegar",
     "today": "Hoy",
-    "yesterday": "Ayer"
+    "yesterday": "Ayer",
+    "rename": "Renombrar",
+    "name": "Nombre",
+    "loadMore": "Cargar más",
+    "saved": "Guardado",
+    "yes": "Sí",
+    "no": "No"
   },
   "delete": {
     "cta": "Eliminar",
@@ -898,7 +904,8 @@
       "modeDuration": "Duración",
       "modeInterval": "Inicio y fin",
       "noDescription": "Sin descripción",
-      "continue": "Continuar"
+      "continue": "Continuar",
+      "tags": "Etiquetas"
     },
     "view": {
       "list": "Lista",
@@ -939,6 +946,44 @@
       "workOver": "Un intervalo hecho. Hora de una pausa.",
       "workOver_plural": "{{count}} intervalos hechos. Hora de una pausa.",
       "titleFlash": "Intervalo terminado"
+    },
+    "tags": {
+      "none": "Sin etiquetas",
+      "search": "Buscar etiquetas",
+      "create": "Crear \"{{name}}\"",
+      "noneCurated": "Todavía no hay etiquetas. En este servidor solo los administradores pueden crearlas."
+    },
+    "policy": {
+      "locked": "Las entradas de este día están bloqueadas y ya no se pueden modificar",
+      "lockedChip": "Bloqueada",
+      "needProject": "Este servidor exige un proyecto en cada entrada",
+      "needIssue": "Este servidor exige una incidencia en cada entrada",
+      "needDescription": "Este servidor exige una descripción en cada entrada",
+      "needTag": "Este servidor exige al menos una etiqueta en cada entrada"
+    },
+    "history": {
+      "open": "Historial",
+      "title": "Historial de esta entrada",
+      "subtitle": "Quién más la cambió y qué cambió",
+      "emptyTitle": "Nadie más la ha cambiado",
+      "emptyMessage": "Solo tú has editado esta entrada. Tus propias correcciones no se registran aquí de forma deliberada.",
+      "created": "Registrada {{when}} · {{source}}",
+      "field": {
+        "minutes": "Duración",
+        "date": "Día",
+        "project": "Proyecto",
+        "issue": "Incidencia"
+      }
+    },
+    "source": {
+      "APP": "Registrada a mano",
+      "TIMER": "Temporizador detenido",
+      "MCP": "Registrada por una integración",
+      "SMART_COMMIT": "Smart commit",
+      "LEGACY": "Smart commits (antes de 2.0)",
+      "CALENDAR": "Desde un calendario",
+      "CSV": "Importada",
+      "SHARED": "Copiada de una entrada compartida"
     }
   },
   "projects": {
@@ -1504,8 +1549,8 @@
       "requiredDescriptionHint": "Una entrada debe indicar en qué se trabajó.",
       "requiredTagTitle": "Etiqueta obligatoria",
       "requiredTagHint": "Una entrada debe llevar al menos una etiqueta.",
-      "lockBeforeLabel": "Bloqueado hasta e incluido",
-      "lockBeforeHint": "Las entradas de ese día y anteriores ya no se pueden crear, cambiar ni borrar, por nadie, tampoco mediante la API.",
+      "lockBeforeLabel": "Bloqueado antes de",
+      "lockBeforeHint": "Las entradas anteriores a ese día ya no se pueden crear, cambiar ni borrar, por nadie, tampoco vía API. El día indicado sigue abierto.",
       "roundingModeLabel": "Redondeo",
       "roundingModeHint": "Solo se aplica a los informes; los minutos guardados nunca cambian.",
       "roundingMode": {
@@ -1587,7 +1632,19 @@
       "monthsSuffix": "meses",
       "privacyNoticeLabel": "Aviso de privacidad",
       "privacyNoticeHint": "Se muestra en la app junto a los datos de tiempo del módulo. Vacío → el texto integrado.",
-      "notYetEnforced": "Se guarda, pero aún no se aplica: la función detrás de esta política llegará en una fase posterior del registro de tiempo."
+      "notYetEnforced": "Se guarda, pero aún no se aplica: la función detrás de esta política llegará en una fase posterior del registro de tiempo.",
+      "tagsTitle": "Etiquetas",
+      "tagsHint": "El vocabulario con el que se etiquetan las entradas. Renombrar una arrastra todas las entradas.",
+      "tagsEmpty": "Todavía no hay etiquetas.",
+      "tagNew": "Nueva etiqueta",
+      "tagRename": "Renombrar etiqueta",
+      "tagNameHint": "Máximo 40 caracteres. Las mayúsculas no crean una segunda etiqueta.",
+      "tagUsage": "{{count}} entrada",
+      "tagUsage_plural": "{{count}} entradas",
+      "tagDeleteTitle": "¿Eliminar la etiqueta?",
+      "tagDeleteMessage": "\"{{name}}\" se quitará de {{count}} entrada. La entrada se conserva.",
+      "tagDeleteMessage_plural": "\"{{name}}\" se quitará de {{count}} entradas. Las entradas se conservan.",
+      "lockBeforeEveryone": "El bloqueo rige para todos, también para los administradores. Levantarlo es la vía documentada para modificar un periodo cerrado."
     },
     "passwordPolicy": "Política de contraseñas",
     "passwordPolicyHint": "Requisitos mínimos de las contraseñas de los usuarios.",
@@ -2018,7 +2075,17 @@
       "ISSUE_EXPORTED": "Incidencia exportada",
       "TIME_ENTRY_UPDATED": "Registro de tiempo actualizado",
       "TIME_ENTRY_DELETED": "Registro de tiempo eliminado",
-      "TIME_ENTRY_CREATED_FOR": "Tiempo registrado para otra persona"
+      "TIME_ENTRY_CREATED_FOR": "Tiempo registrado para otra persona",
+      "TIME_ENTRY_CREATED": "Entrada de tiempo registrada",
+      "TIME_TIMER_STARTED": "Temporizador iniciado",
+      "TIME_TIMER_STOPPED": "Temporizador detenido",
+      "TIME_TIMER_DISCARDED": "Temporizador descartado",
+      "TIME_POLICY_CHANGED": "Política de registro de tiempo modificada",
+      "TIME_LOCK_CHANGED": "Fecha de bloqueo modificada",
+      "TIME_TAG_CREATED": "Etiqueta creada",
+      "TIME_TAG_UPDATED": "Etiqueta modificada",
+      "TIME_TAG_DELETED": "Etiqueta eliminada",
+      "TIME_PROJECT_SETTINGS_CHANGED": "Ajustes de tiempo del proyecto modificados"
     },
     "meta": {
       "oldRole": "Rol anterior",
@@ -2334,7 +2401,17 @@
     "migrateTarget": "Mover las incidencias a",
     "migrateManualHint": "También puedes mover las incidencias a mano antes de eliminar el estado.",
     "migrateConfirm": "Migrar y quitar",
-    "keyFromName": "Generar la clave a partir del nombre"
+    "keyFromName": "Generar la clave a partir del nombre",
+    "time": {
+      "title": "Registro de tiempo",
+      "note": "Lo que este proyecto decide por sí mismo. Todo lo que quede en el valor del servidor sigue la política de la instancia.",
+      "budget": "Presupuesto",
+      "budgetHint": "p. ej. 120h — vacío para ningún presupuesto",
+      "billable": "Facturable por defecto",
+      "approvalRequired": "Las hojas de horas necesitan aprobación",
+      "approvalPeriod": "Periodo de entrega",
+      "inherit": "Valor del servidor"
+    }
   },
   "account": {
     "title": "Mi cuenta",

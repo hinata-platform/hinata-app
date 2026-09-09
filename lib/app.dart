@@ -29,6 +29,7 @@ import 'core/storage/app_storage.dart';
 import 'core/util/server_link.dart' show knownServers, normalizeServerLink;
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'core/blocs/time_policy_cubit.dart';
 import 'core/blocs/time_preferences_cubit.dart';
 import 'features/knowledge/data/knowledge_repository.dart';
 import 'features/time/time_shortcuts.dart';
@@ -109,6 +110,13 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   /// places need the same live value; see [TimePreferencesCubit].
   late final TimePreferencesCubit _timePreferences = TimePreferencesCubit(
     widget.repositories.account,
+  );
+
+  /// The operator's rules for the module — required fields, the lock date, who
+  /// may coin a tag. App-wide for the same reason the rhythm is; see
+  /// [TimePolicyCubit].
+  late final TimePolicyCubit _timePolicy = TimePolicyCubit(
+    widget.repositories.time,
   );
 
   /// The identity [_timer] was built for, so the rebuild happens once.
@@ -316,6 +324,10 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       // a stale copy of somebody's break length is worth less than the round
       // trip costs.
       unawaited(_timePreferences.load());
+    } else {
+      // Another server may freeze another month. Held rules from the session
+      // that ended would grey out a day that is perfectly editable on the next.
+      _timePolicy.reset();
     }
   }
 
@@ -701,6 +713,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
           BlocProvider.value(value: _orgLogo),
           BlocProvider.value(value: _timer),
           BlocProvider.value(value: _timePreferences),
+          BlocProvider.value(value: _timePolicy),
           BlocProvider(create: (_) => ThemeCubit()),
         ],
         child: BlocBuilder<ThemeCubit, ThemeMode>(

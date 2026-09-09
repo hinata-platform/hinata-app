@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/blocs/paged_cubit.dart';
+import 'package:hinata/core/models/time_policy_models.dart';
+import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/core/widgets/hive_widgets.dart' show HiveSwitch;
 import 'package:hinata/features/admin/policy_controls.dart';
 import 'package:hinata/features/admin/sections/admin_time_tracking_section.dart';
@@ -42,15 +46,20 @@ void main() {
     Map<String, dynamic> settings, {
     double width = 900,
     ThemeData? theme,
-  }) => MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: theme,
-    home: Scaffold(
-      body: Center(
-        child: SizedBox(
-          width: width,
-          child: SingleChildScrollView(
-            child: AdminTimeTrackingSection(settings: settings),
+  }) => RepositoryProvider<TimeRepository>.value(
+    // The tag catalogue card mounts itself as soon as the module is on, and it
+    // reads the catalogue. An empty one is what a fresh instance has.
+    value: _FakeTagRepository(),
+    child: MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: theme,
+      home: Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: width,
+            child: SingleChildScrollView(
+              child: AdminTimeTrackingSection(settings: settings),
+            ),
           ),
         ),
       ),
@@ -313,21 +322,29 @@ void main() {
       await tester.pumpWidget(host(<String, dynamic>{}));
       await tester.pumpAndSettle();
 
-      // The master switch is the one thing this stage actually enforces: the
-      // request gate reads it. Everything else is recorded and idle until a
-      // later stage, and a screen that says "entries on this day can no longer
-      // be changed" while nothing stops them is how an administrator freezes a
-      // payroll period, sees a green toast, and finds out months later.
-      expect(
-        find.descendant(
-          of: policy('admin.timeTracking.advancedTitle'),
-          matching: find.byType(PendingNote),
-        ),
-        findsNothing,
-      );
+      // A screen that says "entries on this day can no longer be changed" while
+      // nothing stops them is how an administrator freezes a payroll period,
+      // sees a green toast, and finds out months later. So the note belongs on
+      // exactly the policies that are still idle, and comes off the moment the
+      // stage that enforces one lands.
+      for (final title in const [
+        // The request gate has read this since stage 2.
+        'admin.timeTracking.advancedTitle',
+        // Stage 6 (this one): the write gate refuses what these demand.
+        'admin.timeTracking.limitTagAccessTitle',
+        'admin.timeTracking.requiredProjectTitle',
+      ]) {
+        expect(
+          find.descendant(
+            of: policy(title),
+            matching: find.byType(PendingNote),
+          ),
+          findsNothing,
+          reason: title,
+        );
+      }
       for (final title in const [
         'admin.timeTracking.leadsSeeMemberEntriesTitle',
-        'admin.timeTracking.limitTagAccessTitle',
         'admin.timeTracking.arbzgHintsTitle',
       ]) {
         expect(
@@ -412,4 +429,18 @@ void main() {
       expect(find.text('admin.timeTracking.roundingMode.none'), findsOneWidget);
     });
   });
+}
+
+class _FakeTagRepository implements TimeRepository {
+  @override
+  Future<PageResult<TimeTag>> tags({
+    String? query,
+    int page = 0,
+    int size = 50,
+    bool withUsage = false,
+  }) async => (items: const <TimeTag>[], total: 0);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not faked');
 }

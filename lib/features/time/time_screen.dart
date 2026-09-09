@@ -5,9 +5,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/blocs/paged_cubit.dart';
+import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
+import '../../core/models/time_policy_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/time_repository.dart';
@@ -29,8 +31,9 @@ import '../sprint/modals/glass_modal.dart'
         showGlassDateRangePicker,
         showGlassToast;
 import 'placement_picker.dart';
-import 'time_views.dart';
+import 'time_entry_history_sheet.dart';
 import 'time_entry_sheet.dart';
+import 'time_views.dart';
 import 'timer_bar.dart';
 
 /// The module's home: what this person has tracked, newest first, with the
@@ -79,6 +82,11 @@ class _TimeScreenState extends State<TimeScreen> {
       keyOf: (entry) => entry.id,
     );
     _scroll.addListener(_onScroll);
+    // The operator's rules, once. Without this the list holds
+    // TimePolicySnapshot.none for the whole session: nothing is ever marked
+    // frozen, and the lock a person would run into on save is invisible until
+    // they hit it.
+    unawaited(context.read<TimePolicyCubit>().ensureLoaded());
     unawaited(_reload());
   }
 
@@ -440,6 +448,11 @@ class _TimeScreenState extends State<TimeScreen> {
   );
 
   Widget _list() {
+    // Watched here, above the builder, rather than inside it: the context an
+    // itemBuilder is handed belongs to the sliver that owns every row, so the
+    // dependency would land there and one emit would rebuild the whole list —
+    // and the lookup would run again for every row the scroll materialises.
+    final policy = context.watch<TimePolicyCubit>().state;
     return BlocBuilder<PagedCubit<WorkItem>, PagedState<WorkItem>>(
       builder: (context, state) {
         if (state.isLoading && !state.hasData) {
@@ -523,6 +536,8 @@ class _TimeScreenState extends State<TimeScreen> {
                 onEdit: _editEntry,
                 onDelete: _deleteEntry,
                 onContinue: _continueEntry,
+                onHistory: _showHistory,
+                policy: policy,
               );
             },
           ),
@@ -570,10 +585,10 @@ class _TimeScreenState extends State<TimeScreen> {
     if (saved.hasOverlaps) {
       showGlassToast(
         context,
-        context.t(
-          'time.overlapWarning',
-          variables: {'count': '${saved.overlaps.length}'},
-        ),
+        // count: rather than a {'count': ...} variable. i18next casts the
+        // variable to int to pick a plural form; a string casts to null, so
+        // "overlaps 3 entries" silently read as the singular form.
+        context.t('time.overlapWarning', count: saved.overlaps.length),
         kind: GlassToastKind.warning,
       );
     }
@@ -605,6 +620,9 @@ class _TimeScreenState extends State<TimeScreen> {
 
   Future<void> _continueEntry(WorkItem entry) =>
       context.read<TimerCubit>().continueEntry(entry.id);
+
+  Future<void> _showHistory(WorkItem entry) =>
+      showTimeEntryHistorySheet(context, entry: entry);
 }
 
 /// How much of the app bar the docked band takes: the module's one row. Stated
@@ -704,6 +722,8 @@ class _DayGroup extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onContinue,
+    required this.onHistory,
+    required this.policy,
   });
 
   final DateTime day;
@@ -716,6 +736,11 @@ class _DayGroup extends StatelessWidget {
   final ValueChanged<WorkItem> onEdit;
   final ValueChanged<WorkItem> onDelete;
   final ValueChanged<WorkItem> onContinue;
+  final ValueChanged<WorkItem> onHistory;
+
+  /// The operator's rules, so a frozen day can say so rather than let somebody
+  /// open an editor whose save is going to be refused.
+  final TimePolicySnapshot policy;
 
   @override
   Widget build(BuildContext context) {
@@ -760,6 +785,8 @@ class _DayGroup extends StatelessWidget {
             onEdit: () => onEdit(entry),
             onDelete: () => onDelete(entry),
             onContinue: () => onContinue(entry),
+            onHistory: () => onHistory(entry),
+            locked: policy.isLocked(entry.date),
           ),
       ],
     );
@@ -782,6 +809,8 @@ class _EntryRow extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onContinue,
+    required this.onHistory,
+    this.locked = false,
   });
 
   final WorkItem entry;
@@ -789,6 +818,13 @@ class _EntryRow extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onContinue;
+  final VoidCallback onHistory;
+
+  /// Whether the operator has frozen this entry's day. The row still opens —
+  /// reading a locked entry is not forbidden, and the editor explains why the
+  /// save is greyed out — but the destructive actions are gone rather than
+  /// offered and refused.
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
@@ -863,6 +899,11 @@ class _EntryRow extends StatelessWidget {
                               icon: LucideIcons.banknote,
                               label: context.t('time.billable'),
                             ),
+                          if (locked)
+                            _MetaChip(
+                              icon: LucideIcons.lock,
+                              label: context.t('time.policy.lockedChip'),
+                            ),
                           for (final tag in entry.tags)
                             _MetaChip(icon: LucideIcons.hash, label: tag),
                         ],
@@ -885,6 +926,8 @@ class _EntryRow extends StatelessWidget {
                   onEdit: onEdit,
                   onDelete: onDelete,
                   onContinue: onContinue,
+                  onHistory: onHistory,
+                  locked: locked,
                 ),
               ],
             ),
@@ -917,11 +960,15 @@ class _RowMenu extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onContinue,
+    required this.onHistory,
+    this.locked = false,
   });
 
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onContinue;
+  final VoidCallback onHistory;
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
@@ -936,27 +983,48 @@ class _RowMenu extends StatelessWidget {
           label: context.t('time.entry.continue'),
           leading: Icon(LucideIcons.play, size: 15, color: AppColors.inkSoft),
         ),
+        if (!locked)
+          GlassMenuItem(
+            value: 'edit',
+            label: context.t('common.edit'),
+            leading: Icon(
+              LucideIcons.pencil,
+              size: 15,
+              color: AppColors.inkSoft,
+            ),
+          ),
+        // Who changed this entry, and when. Offered on every entry, not only
+        // the ones somebody else touched: "nobody but me" is the answer people
+        // most often want, and a menu item that appears only when there is bad
+        // news is a menu item nobody trusts.
         GlassMenuItem(
-          value: 'edit',
-          label: context.t('common.edit'),
-          leading: Icon(LucideIcons.pencil, size: 15, color: AppColors.inkSoft),
-        ),
-        GlassMenuItem(
-          value: 'delete',
-          label: context.t('common.delete'),
-          color: AppColors.danger,
-          dividerAbove: true,
-          leading: const Icon(
-            LucideIcons.trash2,
+          value: 'history',
+          label: context.t('time.history.open'),
+          leading: Icon(
+            LucideIcons.history,
             size: 15,
-            color: AppColors.danger,
+            color: AppColors.inkSoft,
           ),
         ),
+        if (!locked)
+          GlassMenuItem(
+            value: 'delete',
+            label: context.t('common.delete'),
+            color: AppColors.danger,
+            dividerAbove: true,
+            leading: const Icon(
+              LucideIcons.trash2,
+              size: 15,
+              color: AppColors.danger,
+            ),
+          ),
       ],
       onSelected: (value) {
         switch (value) {
           case 'continue':
             onContinue();
+          case 'history':
+            onHistory();
           case 'edit':
             onEdit();
           case 'delete':

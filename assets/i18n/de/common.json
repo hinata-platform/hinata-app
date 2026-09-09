@@ -23,7 +23,13 @@
     "clear": "Zurücksetzen",
     "paste": "Einfügen",
     "today": "Heute",
-    "yesterday": "Gestern"
+    "yesterday": "Gestern",
+    "rename": "Umbenennen",
+    "name": "Name",
+    "loadMore": "Mehr laden",
+    "saved": "Gespeichert",
+    "yes": "Ja",
+    "no": "Nein"
   },
   "delete": {
     "cta": "Löschen",
@@ -898,7 +904,8 @@
       "modeDuration": "Dauer",
       "modeInterval": "Beginn und Ende",
       "noDescription": "Ohne Beschreibung",
-      "continue": "Fortsetzen"
+      "continue": "Fortsetzen",
+      "tags": "Tags"
     },
     "view": {
       "list": "Liste",
@@ -939,6 +946,44 @@
       "workOver": "Ein Intervall geschafft. Zeit für eine Pause.",
       "workOver_plural": "{{count}} Intervalle geschafft. Zeit für eine Pause.",
       "titleFlash": "Intervall zu Ende"
+    },
+    "tags": {
+      "none": "Keine Tags",
+      "search": "Tags suchen",
+      "create": "\"{{name}}\" anlegen",
+      "noneCurated": "Noch keine Tags. Auf diesem Server dürfen sie nur Administratoren anlegen."
+    },
+    "policy": {
+      "locked": "Einträge an diesem Tag sind gesperrt und lassen sich nicht mehr ändern",
+      "lockedChip": "Gesperrt",
+      "needProject": "Dieser Server verlangt ein Projekt bei jedem Eintrag",
+      "needIssue": "Dieser Server verlangt einen Vorgang bei jedem Eintrag",
+      "needDescription": "Dieser Server verlangt eine Beschreibung bei jedem Eintrag",
+      "needTag": "Dieser Server verlangt mindestens ein Tag bei jedem Eintrag"
+    },
+    "history": {
+      "open": "Verlauf",
+      "title": "Verlauf dieses Eintrags",
+      "subtitle": "Wer ihn außer dir geändert hat und was",
+      "emptyTitle": "Niemand sonst hat ihn geändert",
+      "emptyMessage": "Diesen Eintrag hast nur du bearbeitet. Deine eigenen Korrekturen werden hier bewusst nicht protokolliert.",
+      "created": "Angelegt {{when}} · {{source}}",
+      "field": {
+        "minutes": "Dauer",
+        "date": "Tag",
+        "project": "Projekt",
+        "issue": "Vorgang"
+      }
+    },
+    "source": {
+      "APP": "Von Hand erfasst",
+      "TIMER": "Gestoppter Timer",
+      "MCP": "Über eine Integration erfasst",
+      "SMART_COMMIT": "Smart Commit",
+      "LEGACY": "Smart Commits (vor 2.0)",
+      "CALENDAR": "Aus einem Kalender",
+      "CSV": "Importiert",
+      "SHARED": "Aus einem geteilten Eintrag kopiert"
     }
   },
   "projects": {
@@ -1504,8 +1549,8 @@
       "requiredDescriptionHint": "Ein Eintrag muss sagen, woran gearbeitet wurde.",
       "requiredTagTitle": "Tag erforderlich",
       "requiredTagHint": "Ein Eintrag muss mindestens ein Tag tragen.",
-      "lockBeforeLabel": "Gesperrt bis einschließlich",
-      "lockBeforeHint": "Einträge an diesem Tag und davor lassen sich nicht mehr anlegen, ändern oder löschen — von niemandem, auch nicht über die API.",
+      "lockBeforeLabel": "Gesperrt vor",
+      "lockBeforeHint": "Einträge vor diesem Tag lassen sich nicht mehr anlegen, ändern oder löschen — von niemandem, auch nicht über die API. Der genannte Tag selbst bleibt offen.",
       "roundingModeLabel": "Rundung",
       "roundingModeHint": "Gilt nur für Berichte; die gespeicherten Minuten bleiben unverändert.",
       "roundingMode": {
@@ -1587,7 +1632,19 @@
       "monthsSuffix": "Monate",
       "privacyNoticeLabel": "Datenschutzhinweis",
       "privacyNoticeHint": "Wird in der App bei den Zeitdaten des Moduls angezeigt. Leer → der eingebaute Text.",
-      "notYetEnforced": "Wird gespeichert, aber noch nicht angewendet — die Funktion hinter dieser Richtlinie kommt in einer späteren Stufe der Zeiterfassung."
+      "notYetEnforced": "Wird gespeichert, aber noch nicht angewendet — die Funktion hinter dieser Richtlinie kommt in einer späteren Stufe der Zeiterfassung.",
+      "tagsTitle": "Tags",
+      "tagsHint": "Das Vokabular, mit dem Einträge beschriftet werden. Ein Umbenennen zieht alle Einträge mit.",
+      "tagsEmpty": "Noch keine Tags.",
+      "tagNew": "Neues Tag",
+      "tagRename": "Tag umbenennen",
+      "tagNameHint": "Höchstens 40 Zeichen. Groß- und Kleinschreibung ergibt kein zweites Tag.",
+      "tagUsage": "{{count}} Eintrag",
+      "tagUsage_plural": "{{count}} Einträge",
+      "tagDeleteTitle": "Tag löschen?",
+      "tagDeleteMessage": "\"{{name}}\" wird von {{count}} Eintrag entfernt. Der Eintrag selbst bleibt.",
+      "tagDeleteMessage_plural": "\"{{name}}\" wird von {{count}} Einträgen entfernt. Die Einträge selbst bleiben.",
+      "lockBeforeEveryone": "Die Sperre gilt für alle, auch für Administratoren. Sie aufzuheben ist der dokumentierte Weg, einen abgeschlossenen Zeitraum zu ändern."
     },
     "passwordPolicy": "Passwortrichtlinie",
     "passwordPolicyHint": "Mindestanforderungen für Benutzerpasswörter.",
@@ -2018,7 +2075,17 @@
       "ISSUE_EXPORTED": "Vorgang exportiert",
       "TIME_ENTRY_UPDATED": "Zeiteintrag geändert",
       "TIME_ENTRY_DELETED": "Zeiteintrag gelöscht",
-      "TIME_ENTRY_CREATED_FOR": "Zeit für jemand anderen gebucht"
+      "TIME_ENTRY_CREATED_FOR": "Zeit für jemand anderen gebucht",
+      "TIME_ENTRY_CREATED": "Zeiteintrag angelegt",
+      "TIME_TIMER_STARTED": "Timer gestartet",
+      "TIME_TIMER_STOPPED": "Timer gestoppt",
+      "TIME_TIMER_DISCARDED": "Timer verworfen",
+      "TIME_POLICY_CHANGED": "Zeiterfassungs-Richtlinie geändert",
+      "TIME_LOCK_CHANGED": "Sperrdatum geändert",
+      "TIME_TAG_CREATED": "Tag angelegt",
+      "TIME_TAG_UPDATED": "Tag geändert",
+      "TIME_TAG_DELETED": "Tag gelöscht",
+      "TIME_PROJECT_SETTINGS_CHANGED": "Projekt-Zeiteinstellungen geändert"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",
@@ -2334,7 +2401,17 @@
     "migrateTarget": "Aufgaben verschieben nach",
     "migrateManualHint": "Du kannst die Aufgaben auch manuell verschieben, bevor du den Status löschst.",
     "migrateConfirm": "Migrieren & entfernen",
-    "keyFromName": "Schlüssel aus dem Namen erzeugen"
+    "keyFromName": "Schlüssel aus dem Namen erzeugen",
+    "time": {
+      "title": "Zeiterfassung",
+      "note": "Was dieses Projekt für sich entscheidet. Alles auf Server-Vorgabe folgt der Richtlinie der Instanz.",
+      "budget": "Budget",
+      "budgetHint": "z. B. 120h — leer für kein Budget",
+      "billable": "Standardmäßig abrechenbar",
+      "approvalRequired": "Timesheets brauchen eine Freigabe",
+      "approvalPeriod": "Einreichungszeitraum",
+      "inherit": "Server-Vorgabe"
+    }
   },
   "account": {
     "title": "Mein Konto",

@@ -5,8 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
+import '../../core/models/time_policy_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/repositories/time_repository.dart';
 import '../../core/theme/app_colors.dart';
@@ -32,16 +34,24 @@ Future<bool> showTimesheetCellSheet(
   String? projectId,
   required String projectLabel,
 }) async {
+  // The rules travel with it, as they do for the entry sheet: this composer can
+  // collect a duration and a description and nothing else, so a day it may not
+  // write to has to say so instead of offering a field whose save is refused.
+  final policy = context.read<TimePolicyCubit>();
+  unawaited(policy.ensureLoaded());
   final changed = await showGlassModal<bool>(
     context,
     adaptive: true,
     width: 460,
     builder: (_) => RepositoryProvider<TimeRepository>.value(
       value: context.read<TimeRepository>(),
-      child: _CellForm(
-        day: day,
-        projectId: projectId,
-        projectLabel: projectLabel,
+      child: BlocProvider<TimePolicyCubit>.value(
+        value: policy,
+        child: _CellForm(
+          day: day,
+          projectId: projectId,
+          projectLabel: projectLabel,
+        ),
       ),
     ),
   );
@@ -171,9 +181,33 @@ class _CellFormState extends State<_CellForm> {
   int get _total =>
       _entries.fold(0, (sum, entry) => sum + entry.durationMinutes);
 
+  /// The first required field this two-line composer cannot collect, or null.
+  ///
+  /// A cell holds a duration and a description. An instance that requires a tag
+  /// or an issue on every entry has made this shape of composing impossible, and
+  /// saying so is better than a server refusal on a form with no field to fix.
+  String? _unsupported(TimePolicySnapshot policy) {
+    if (policy.requiredIssue) return 'time.policy.needIssue';
+    if (policy.requiredTag) return 'time.policy.needTag';
+    // A project is fine: the cell is a project column, so it always carries one
+    // — except the unfiled column, which by definition does not.
+    if (policy.requiredProject && widget.projectId == null) {
+      return 'time.policy.needProject';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final localizations = MaterialLocalizations.of(context);
+    final policy = context.watch<TimePolicyCubit>().state;
+    // Two ways this cell can be read-only, and they read differently. A frozen
+    // day is closed to everyone and cannot be argued with; a required field this
+    // sheet has no room for is a rule the entry editor can satisfy, so it says
+    // which one and sends people there.
+    final locked = policy.isLocked(widget.day);
+    final missing = _unsupported(policy);
+    final readOnly = locked || missing != null;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -214,7 +248,9 @@ class _CellFormState extends State<_CellForm> {
                     for (final entry in _entries)
                       _EntryRow(
                         entry: entry,
-                        onDelete: _saving ? null : () => _remove(entry),
+                        onDelete: _saving || locked
+                            ? null
+                            : () => _remove(entry),
                       ),
                   if (_entries.isNotEmpty) ...[
                     const SizedBox(height: 6),
@@ -242,25 +278,46 @@ class _CellFormState extends State<_CellForm> {
                   const SizedBox(height: 16),
                   Divider(height: 1, color: AppColors.hairline),
                   const SizedBox(height: 16),
-                  TextField(
-                    controller: _duration,
-                    autofocus: true,
-                    onSubmitted: (_) => _saving ? null : _add(),
-                    decoration: InputDecoration(
-                      labelText: context.t('timesheet.cell.add'),
-                      // Notation, not prose — the same literal the entry sheet
-                      // shows, and nothing to translate. Showing it is what
-                      // makes the field obviously more forgiving than a number
-                      // box.
-                      hintText: '1h 30m · 90m · 1:30',
-                      prefixIcon: const Icon(LucideIcons.clock, size: 16),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.radiusControl,
+                  if (readOnly)
+                    Row(
+                      children: [
+                        Icon(
+                          locked ? LucideIcons.lock : LucideIcons.info,
+                          size: 15,
+                          color: AppColors.inkSoft,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            context.t(locked ? 'time.policy.locked' : missing!),
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: AppColors.inkSoft,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    TextField(
+                      controller: _duration,
+                      autofocus: true,
+                      onSubmitted: (_) => _saving ? null : _add(),
+                      decoration: InputDecoration(
+                        labelText: context.t('timesheet.cell.add'),
+                        // Notation, not prose — the same literal the entry sheet
+                        // shows, and nothing to translate. Showing it is what
+                        // makes the field obviously more forgiving than a number
+                        // box.
+                        hintText: '1h 30m · 90m · 1:30',
+                        prefixIcon: const Icon(LucideIcons.clock, size: 16),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusControl,
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _description,
@@ -293,7 +350,7 @@ class _CellFormState extends State<_CellForm> {
             confirmLabel: context.t('timesheet.cell.add'),
             confirmIcon: LucideIcons.plus,
             busy: _saving,
-            onConfirm: _saving ? null : _add,
+            onConfirm: _saving || readOnly ? null : _add,
           ),
         ],
       ),

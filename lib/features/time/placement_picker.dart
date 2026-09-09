@@ -85,7 +85,13 @@ Future<TimePlacement?> showTimePlacementPicker(
         )
       : showGlassBottomSheet<TimePlacement>(
           context,
-          builder: (_) => SizedBox(height: 460, child: body),
+          // A cap, not a height -- same reason as the tag picker beside it in
+          // the entry sheet: the body is a min-size Column, so a fixed box
+          // leaves dead glass under the buttons on a short list.
+          builder: (_) => ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 460),
+            child: body,
+          ),
         );
 }
 

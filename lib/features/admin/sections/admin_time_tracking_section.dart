@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/i18n/i18n.dart';
 import '../admin_form_helpers.dart';
 import '../policy_controls.dart';
+import 'admin_time_tags_card.dart';
 
 /// Admin → Zeiterfassung.
 ///
@@ -97,6 +98,14 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         _module(context),
         const SizedBox(height: 16),
         _capture(context),
+        // Only where there is a catalogue to manage: the routes behind it are
+        // part of the module, so with the module off they do not exist and a
+        // card that spun forever would be the only thing on the screen that
+        // did not respect the switch above it.
+        if (_effectiveValue<bool>('advancedEnabled') ?? false) ...[
+          const SizedBox(height: 16),
+          const AdminTimeTagsCard(),
+        ],
         const SizedBox(height: 16),
         _visibility(context),
         const SizedBox(height: 16),
@@ -149,7 +158,6 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
           value: _nested<bool>('requiredFields', field.$1),
           effective: _effectiveNested<bool>('requiredFields', field.$1),
           onChanged: (v) => _setNested('requiredFields', field.$1, v),
-          pending: true,
         ),
       const SizedBox(height: 8),
       PolicyDate(
@@ -157,8 +165,21 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         helper: context.t('admin.timeTracking.lockBeforeHint'),
         value: _value<String>('lockBefore'),
         onChanged: (v) => _set('lockBefore', v),
-        pending: true,
       ),
+      // The freeze binds administrators too, and the screen says so where it is
+      // set. A lock that its own author could edit around is not a lock, and
+      // discovering that only by being refused would read as a bug.
+      if (_value<String>('lockBefore') != null ||
+          _effectiveValue<String>('lockBefore') != null) ...[
+        AdminNote(
+          icon: LucideIcons.lock,
+          text: context.t('admin.timeTracking.lockBeforeEveryone'),
+        ),
+        // The next field draws its label floating on its own top edge. With no
+        // gap that label lands on this note's bottom border and the two collide.
+        // Inside the branch, so a screen without the note keeps its spacing.
+        const SizedBox(height: 8),
+      ],
       PolicyChoice(
         label: context.t('admin.timeTracking.roundingModeLabel'),
         helper: context.t('admin.timeTracking.roundingModeHint'),
@@ -204,7 +225,6 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         value: _value<bool>('limitTagAccess'),
         effective: _effectiveValue<bool>('limitTagAccess'),
         onChanged: (v) => _set('limitTagAccess', v),
-        pending: true,
       ),
       PolicySwitch(
         title: context.t('admin.timeTracking.defaultBillableTitle'),
@@ -212,7 +232,6 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         value: _value<bool>('defaultBillable'),
         effective: _effectiveValue<bool>('defaultBillable'),
         onChanged: (v) => _set('defaultBillable', v),
-        pending: true,
       ),
       // Subscribed appointments carry titles, and titles routinely carry other
       // people's names — pulled into a system where a lead can later be given
