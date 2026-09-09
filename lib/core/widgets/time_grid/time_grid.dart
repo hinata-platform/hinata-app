@@ -12,6 +12,7 @@
 /// its own, which HIN-44 needs).
 library;
 
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show listEquals;
@@ -19,6 +20,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
+import '../glass_popup_menu.dart';
 import 'time_grid_geometry.dart';
 import 'time_grid_model.dart';
 
@@ -47,30 +49,16 @@ const double kTimeGridMinColumn = 104;
 /// What a drag produced, before anything has been saved.
 typedef TimeGridSpan = ({DateTime start, DateTime end});
 
-/// One block, worked out: where it goes and what colour it is.
-/// The line box of a block's title, and of the line under it.
-///
-/// Written down rather than left to the font, and set as an explicit `height`
-/// on both styles, because the block's *minimum* height is derived from these
-/// numbers — see [_kBlockMinHeight]. A line that turned out taller than the box
-/// reserved for it is a bottom overflow on every short entry.
-const double _kBlockPadV = 3;
-const double _kBlockTitleLine = 14;
-const double _kBlockSubLine = 12;
-
-/// How short a block may be drawn: one title line and its padding.
-///
-/// A one-minute entry is still worth grabbing, so a block never draws thinner
-/// than a finger can find — and never thinner than the one line it always
-/// shows, which is the half that was missing. At an hour extent of 60 a
-/// quarter-hour entry is fifteen points tall and was given eighteen; its two
-/// lines of text needed thirty-two.
-const double _kBlockMinHeight = 2 * _kBlockPadV + _kBlockTitleLine;
-
 /// How tall a block has to be before the second line is worth showing.
+///
+/// The line boxes themselves, and the floor derived from them, live with the
+/// packing in `time_grid_geometry.dart`: the height a short block is given is
+/// the height the packer has to lay out against, and the two drift apart the
+/// moment they are written down twice.
 const double _kBlockTwoLines =
-    2 * _kBlockPadV + _kBlockTitleLine + _kBlockSubLine;
+    2 * kTimeGridBlockPadV + kTimeGridBlockTitleLine + kTimeGridBlockSubLine;
 
+/// One block, worked out: where it goes and what colour it is.
 typedef _Placed = ({TimeGridSlot slot, Rect rect, Color tint});
 
 class TimeGrid extends StatefulWidget {
@@ -314,7 +302,7 @@ class _TimeGridState extends State<TimeGrid> {
     final index = _dayIndexAt(local.dx, columnWidth);
     final day = _dayAt(index);
     for (final layer in _blockLayers.reversed) {
-      final slots = packOverlaps(_itemsOn(layer, day));
+      final slots = _packedOn(layer, day);
       for (final slot in slots.reversed) {
         final rect = _rectOf(slot, index, columnWidth);
         if (rect.contains(local)) {
@@ -366,18 +354,25 @@ class _TimeGridState extends State<TimeGrid> {
     }
   }
 
-  Rect _rectOf(TimeGridSlot slot, int dayIndex, double columnWidth) {
-    final day = _dayAt(dayIndex);
-    final top = _metrics.offsetOf(slot.item.start, day);
-    final bottom = _metrics.offsetOf(slot.item.end, day);
-    final laneWidth = (columnWidth - 6) / slot.columns;
-    return Rect.fromLTRB(
-      dayIndex * columnWidth + 3 + slot.column * laneWidth,
-      top,
-      dayIndex * columnWidth + 3 + (slot.column + 1) * laneWidth - 2,
-      math.max(bottom, top + _kBlockMinHeight),
-    );
-  }
+  Rect _rectOf(TimeGridSlot slot, int dayIndex, double columnWidth) =>
+      blockRectOf(
+        slot,
+        metrics: _metrics,
+        day: _dayAt(dayIndex),
+        dayIndex: dayIndex,
+        columnWidth: columnWidth,
+      );
+
+  /// [layer]'s items on [day], laid out so that no two of them are painted
+  /// through each other.
+  ///
+  /// The floor travels with the request. A block is never drawn thinner than
+  /// one line of text, so on the canvas a one-minute entry covers twenty-odd
+  /// minutes; asked for the spans alone the packer put a stopwatch's worth of
+  /// short entries in one lane and the painter drew them on top of one
+  /// another.
+  List<TimeGridSlot> _packedOn(TimeGridLayer layer, DateTime day) =>
+      packOverlaps(_itemsOn(layer, day), minExtent: _metrics.minBlockExtent);
 
   void _beginDrag(Offset local, double columnWidth) {
     final index = _dayIndexAt(local.dx, columnWidth);
@@ -771,7 +766,7 @@ class _TimeGridState extends State<TimeGrid> {
                   now: _nowOnGrid(),
                   lineColor: AppColors.hairline,
                   hourColor: AppColors.hairline2,
-                  weekendColor: AppColors.canvas2,
+                  weekendColor: AppColors.recess,
                   nowColor: AppColors.accentStrong,
                   washes: [
                     for (final layer in _washLayers)
@@ -847,7 +842,7 @@ class _TimeGridState extends State<TimeGrid> {
     final placed = <_Placed>[];
     for (final layer in _blockLayers) {
       for (var index = 0; index < widget.days.length; index++) {
-        for (final slot in packOverlaps(_itemsOn(layer, _dayAt(index)))) {
+        for (final slot in _packedOn(layer, _dayAt(index))) {
           placed.add((
             slot: slot,
             rect: _rectOf(slot, index, columnWidth),
@@ -881,10 +876,10 @@ class _TimeGridState extends State<TimeGrid> {
     return [
       Positioned.fromRect(
         rect: Rect.fromLTRB(
-          drag.dayIndex * columnWidth + 3,
+          drag.dayIndex * columnWidth + kTimeGridColumnGutter,
           top,
-          (drag.dayIndex + 1) * columnWidth - 3,
-          math.max(bottom, top + _kBlockMinHeight),
+          (drag.dayIndex + 1) * columnWidth - kTimeGridColumnGutter,
+          math.max(bottom, top + kTimeGridBlockMinHeight),
         ),
         child: _DragPreview(label: _spanLabel(context, drag.start, drag.end)),
       ),
@@ -1052,14 +1047,25 @@ class _BandRows extends StatelessWidget {
       yield _positioned(index, row, _chip(onDay[row], tint));
     }
     if (onDay.length > shown) {
-      yield _positioned(index, shown, _more(onDay.length - shown, tint));
+      yield _positioned(
+        index,
+        shown,
+        _MoreChip(
+          onDay: onDay,
+          hidden: onDay.length - shown,
+          tint: tint,
+          onTap: onTap,
+        ),
+      );
     }
   }
 
   Widget _positioned(int index, int row, Widget child) => Positioned(
-    left: index * columnWidth + 3,
+    left: index * columnWidth + kTimeGridColumnGutter,
+    // The row's own inset, which is not the column's: the same number,
+    // answering a different question.
     top: row * kTimeGridBandRow + 3,
-    width: columnWidth - 6,
+    width: columnWidth - 2 * kTimeGridColumnGutter,
     height: kTimeGridBandRow - 6,
     child: child,
   );
@@ -1068,31 +1074,115 @@ class _BandRows extends StatelessWidget {
     onTap: onTap == null ? null : () => onTap!(item),
     child: Tooltip(
       message: item.title,
-      child: _pill(
+      child: _bandPill(
         (item.tint ?? tint).withValues(alpha: 0.22),
         item.title,
         AppColors.ink,
       ),
     ),
   );
+}
 
-  Widget _more(int count, Color tint) =>
-      _pill(tint.withValues(alpha: 0.12), '+$count', AppColors.inkSoft);
+/// One chip in the band strip: a rounded slab of tint with a line of text.
+Widget _bandPill(Color background, String label, Color ink) => Container(
+  padding: const EdgeInsets.symmetric(horizontal: 6),
+  alignment: AlignmentDirectional.centerStart,
+  decoration: BoxDecoration(
+    color: background,
+    borderRadius: BorderRadius.circular(5),
+  ),
+  child: Text(
+    label,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    style: TextStyle(fontSize: 10, color: ink),
+  ),
+);
 
-  Widget _pill(Color background, String label, Color ink) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 6),
-    alignment: AlignmentDirectional.centerStart,
-    decoration: BoxDecoration(
-      color: background,
-      borderRadius: BorderRadius.circular(5),
-    ),
-    child: Text(
-      label,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(fontSize: 10, color: ink),
-    ),
-  );
+/// The count at the foot of a column, and the way to what it stands for.
+///
+/// It used to be a label and nothing else: the strip said a day held two more
+/// entries and offered no way at all to reach them — on any window size, since
+/// the ceiling is on rows rather than on width. A popover on the pill is the
+/// same gesture the module's other counts and menus answer with, and it costs
+/// the strip no height.
+///
+/// A widget of its own so the rows are built when somebody asks for them. The
+/// band is rebuilt on every pointer sample of a drag on the canvas below, and
+/// the menu's list is as long as the day: assembled in `build`, a day of forty
+/// untimed entries would allocate two hundred objects a frame for a popover
+/// nobody has opened. That is the same churn the grid's memos keep out of a
+/// drag, in a corner they do not cover.
+class _MoreChip extends StatelessWidget {
+  const _MoreChip({
+    required this.onDay,
+    required this.hidden,
+    required this.tint,
+    this.onTap,
+  });
+
+  /// The whole day, not the hidden tail: what a reader wants after tapping
+  /// "+2" is the day, not a remainder they then have to reconcile against the
+  /// two chips above.
+  final List<TimeGridItem> onDay;
+  final int hidden;
+  final Color tint;
+  final void Function(TimeGridItem)? onTap;
+
+  Future<void> _open(BuildContext context) async {
+    final box = context.findRenderObject() as RenderBox?;
+    // Attached as well as sized: a menu asked for as the page is being popped
+    // would otherwise be anchored to a box that has left the tree.
+    if (box == null || !box.attached || !box.hasSize) return;
+    final chosen = await showGlassMenu<String>(
+      context: context,
+      anchorRect: box.localToGlobal(Offset.zero) & box.size,
+      width: 260,
+      // A list of things, not a choice with one in force — nothing is ticked.
+      value: '',
+      items: [
+        for (final item in onDay)
+          GlassMenuItem(
+            value: item.id,
+            label: item.title,
+            leading: Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: (item.tint ?? tint).withValues(alpha: 0.55),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+          ),
+      ],
+    );
+    final open = onTap;
+    if (chosen == null || open == null) return;
+    for (final item in onDay) {
+      if (item.id == chosen) {
+        open(item);
+        return;
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pill = _bandPill(
+      tint.withValues(alpha: 0.12),
+      '+$hidden',
+      AppColors.inkSoft,
+    );
+    // A layer nobody can open is a layer whose count has nothing to show: the
+    // chips beside it are inert for the same reason, and a popover whose every
+    // row silently does nothing is worse than no popover.
+    if (onTap == null) return pill;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => unawaited(_open(context)),
+      child: pill,
+    );
+  }
 }
 
 class _Block extends StatelessWidget {
@@ -1112,7 +1202,7 @@ class _Block extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: 6,
-          vertical: _kBlockPadV,
+          vertical: kTimeGridBlockPadV,
         ),
         decoration: BoxDecoration(
           color: tint.withValues(alpha: 0.20),
@@ -1140,20 +1230,20 @@ class _Block extends StatelessWidget {
                     fontSize: 11,
                     // Explicit, so the line box is the number the geometry
                     // above reserves rather than whatever the font asks for.
-                    height: _kBlockTitleLine / 11,
+                    height: kTimeGridBlockTitleLine / 11,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
                 ),
                 if (item.subtitle != null &&
-                    room >= _kBlockTwoLines - 2 * _kBlockPadV)
+                    room >= _kBlockTwoLines - 2 * kTimeGridBlockPadV)
                   Text(
                     item.subtitle!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 10,
-                      height: _kBlockSubLine / 10,
+                      height: kTimeGridBlockSubLine / 10,
                       color: AppColors.inkSoft,
                     ),
                   ),
@@ -1187,7 +1277,7 @@ class _DragPreview extends StatelessWidget {
         fontSize: 11,
         // The preview is drawn in the same rect a block gets, down to the same
         // floor, so its line has to fit in the same box.
-        height: _kBlockTitleLine / 11,
+        height: kTimeGridBlockTitleLine / 11,
         fontWeight: FontWeight.w600,
         color: AppColors.accentStrong,
       ),
