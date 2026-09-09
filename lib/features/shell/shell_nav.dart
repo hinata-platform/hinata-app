@@ -126,6 +126,20 @@ bool isNavActive(
 bool isTimeModuleRoute(String location) =>
     location == '/time' || location.startsWith('/time/');
 
+/// Whether the phone's floating timer bar belongs over [location].
+///
+/// The module's own pages, and nowhere else. A running timer riding above the
+/// navigation on `/issues` and `/board` puts one feature's state into the
+/// chrome of the whole app, where nobody asked to see it — it belongs where the
+/// hours are. Away from there a running timer is for the system's own surfaces
+/// to carry.
+///
+/// Named rather than written out at the mount, because it is a decision and not
+/// a layout detail: the bar is mounted in one place and its footprint reserved
+/// in another, and the two disagreeing is a list whose last row sits under it.
+bool showsTimerBar(String location, {required bool immersive}) =>
+    !immersive && isTimeModuleRoute(location);
+
 /// Fallback title key for a sub-page route, or null when [location] is a
 /// primary nav destination (dashboard, projects, issues, board, …).
 ///

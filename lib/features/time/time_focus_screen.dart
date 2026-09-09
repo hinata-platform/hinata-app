@@ -15,9 +15,9 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ambient_background.dart';
 import '../../core/widgets/glass_switch_chip.dart';
-import '../sprint/modals/glass_modal.dart'
-    show GlassToastKind, anchorRectOfContext, showGlassToast;
+import '../sprint/modals/glass_modal.dart' show anchorRectOfContext;
 import 'placement_picker.dart';
+import 'timer_bar.dart';
 
 /// The one thing on the screen is the timer.
 ///
@@ -518,20 +518,12 @@ class _Actions extends StatelessWidget {
     );
   }
 
-  /// Ends the timer and passes on what the server noticed while saving.
-  ///
-  /// The overlap advice belongs wherever the decision was made. Without this the
-  /// focus screen and the timer bar answered the same action differently — which
-  /// is the divergence [TimerCubit.end] exists to prevent.
-  Future<void> _end(BuildContext context) async {
-    final saved = await context.read<TimerCubit>().end();
-    if (saved == null || !saved.hasOverlaps || !context.mounted) return;
-    showGlassToast(
-      context,
-      context.t('time.overlapWarning', count: saved.overlaps.length),
-      kind: GlassToastKind.warning,
-    );
-  }
+  /// Ends the timer the way every other control does — see
+  /// [endTimerAndAdvise], which owns both decisions a stop involves: what a
+  /// break means, and what to do when the operator requires a field this timer
+  /// does not carry. Written out here, this screen would answer the same button
+  /// differently from the bar beside it.
+  Future<void> _end(BuildContext context) => endTimerAndAdvise(context);
 
   Future<void> _start(BuildContext context) {
     final preferences = context.read<TimePreferencesCubit>().state;

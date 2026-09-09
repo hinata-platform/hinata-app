@@ -260,6 +260,7 @@ class TimerCubit extends HydratedCubit<TimerState> {
 
   /// Stops the timer and returns the entry it became, or null if it failed.
   Future<SavedTimeEntry?> stop({
+    DateTime? endedAt,
     String? projectId,
     String? issueId,
     String? description,
@@ -275,6 +276,7 @@ class TimerCubit extends HydratedCubit<TimerState> {
         // Name the timer we mean, so a retry after a timeout cannot end a
         // different one that was started in the meantime.
         timerId: running.id,
+        endedAt: endedAt,
         projectId: projectId,
         issueId: issueId,
         description: description,

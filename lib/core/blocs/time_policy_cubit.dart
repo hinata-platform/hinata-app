@@ -7,16 +7,18 @@ import '../repositories/time_repository.dart';
 
 /// The operator's time-tracking rules, held once for the whole app.
 ///
-/// Three screens need the same answer — the entry sheet marking a required
+/// Four readers need the same answer — the entry sheet marking a required
 /// field and choosing whether the tag picker offers "create it", the list
-/// drawing a lock on a frozen day, and the timesheet grid refusing to compose
-/// into one — and a value each of them read for itself would be three requests
-/// and three ways to be stale.
+/// drawing a lock on a frozen day, the timesheet grid refusing to compose into
+/// one, and the timer bar deciding whether stopping is a question for the
+/// person before it is a request to the server — and a value each of them read
+/// for itself would be four requests and four ways to be stale.
 ///
-/// The timer bar deliberately does not: starting a timer without a required
-/// project is refused by the server with a message naming the field, and the bar
-/// has no field to mark. What it would need is the composer, which is the entry
-/// sheet.
+/// The bar is the newest of them and the one that reads it for a decision
+/// rather than for a mark. A timer starts with nothing and may be stopped
+/// hours later against rules that have changed in between, so the bar's copy
+/// can be wrong in a way the others' cannot: it is refreshed on a refusal —
+/// see `endTimerAndAdvise` — rather than trusted for ever.
 ///
 /// It starts on [TimePolicySnapshot.none], which is what a fresh instance
 /// demands: nothing. That is the safe direction to be wrong in. Assuming a

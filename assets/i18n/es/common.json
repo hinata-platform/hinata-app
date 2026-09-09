@@ -863,7 +863,9 @@
       "discard": "Descartar temporizador",
       "noDescription": "Sin descripción",
       "title": "Temporizador",
-      "chooseMode": "Elegir cómo cuenta"
+      "chooseMode": "Elegir cómo cuenta",
+      "finish": "Detener temporizador",
+      "finishHint": "El temporizador sigue corriendo. Completa lo que exige esta instancia y se registrará."
     },
     "placement": {
       "none": "Sin proyecto",
@@ -905,7 +907,13 @@
       "modeInterval": "Inicio y fin",
       "noDescription": "Sin descripción",
       "continue": "Continuar",
-      "tags": "Etiquetas"
+      "tags": "Etiquetas",
+      "measured": "Medido"
+    },
+    "add": {
+      "title": "Añadir",
+      "timerStart": "Iniciar temporizador",
+      "timerStop": "Detener temporizador"
     },
     "view": {
       "list": "Lista",

@@ -312,6 +312,67 @@ void main() {
 
       expect(policy.requiresPlacement, isTrue);
     });
+
+    /// The one rule three screens ask, so all three have to get the same
+    /// answer: the composer greys out its save with it, the stop decides with
+    /// it whether the composer opens at all, and the server enforces it.
+    group('what an entry has to carry', () {
+      const everything = TimePolicySnapshot(
+        requiredIssue: true,
+        requiredDescription: true,
+        requiredTag: true,
+      );
+
+      test('names the first thing that is missing, one at a time', () {
+        expect(everything.unmetBy(), 'time.policy.needIssue');
+        expect(
+          everything.unmetBy(projectId: 'p', issueId: 'i'),
+          'time.policy.needDescription',
+        );
+        expect(
+          everything.unmetBy(projectId: 'p', issueId: 'i', description: 'work'),
+          'time.policy.needTag',
+        );
+        expect(
+          everything.unmetBy(
+            projectId: 'p',
+            issueId: 'i',
+            description: 'work',
+            tags: const ['review'],
+          ),
+          isNull,
+        );
+      });
+
+      test('a description of nothing but spaces is no description', () {
+        const policy = TimePolicySnapshot(requiredDescription: true);
+
+        expect(
+          policy.unmetBy(description: '   '),
+          'time.policy.needDescription',
+        );
+        expect(policy.unmetBy(description: 'work'), isNull);
+      });
+
+      test('nothing required is nothing to answer', () {
+        expect(TimePolicySnapshot.none.unmetBy(), isNull);
+      });
+
+      test('an edit is not asked where its entry sits', () {
+        // `PATCH /time/entries/{id}` carries neither field, so an entry filed
+        // before the rule existed would otherwise be read-only to the owner
+        // trying to bring it into compliance.
+        const policy = TimePolicySnapshot(
+          requiredProject: true,
+          requiredTag: true,
+        );
+
+        expect(policy.unmetBy(tags: const ['x']), 'time.policy.needProject');
+        expect(policy.unmetBy(tags: const ['x'], placement: false), isNull);
+        // The rest of the rules still hold on an edit.
+        expect(policy.unmetBy(placement: false), 'time.policy.needTag');
+      });
+    });
   });
 }
 

@@ -54,6 +54,42 @@ class TimePolicySnapshot extends Equatable {
   /// An issue always brings its project, so requiring one requires the other.
   bool get requiresPlacement => requiredProject || requiredIssue;
 
+  /// The i18n key of the first field rule an entry with these values does not
+  /// satisfy, or null when it satisfies them all.
+  ///
+  /// Here rather than written out at each caller, because it is asked in three
+  /// places that must agree: the composer greys out its save button with it, the
+  /// stop decides with it whether the composer has to open at all, and the
+  /// server enforces the same four rules on the write. Two of those live on
+  /// screens the third never sees.
+  ///
+  /// The lock is *not* part of it. A frozen day is a rule about when, judged
+  /// against a date the caller has and this does not, and it cannot be fixed by
+  /// typing — which is exactly what separates it from these four.
+  String? unmetBy({
+    String? projectId,
+    String? issueId,
+    String? description,
+    List<String> tags = const [],
+    bool placement = true,
+  }) {
+    // [placement] is false where the caller is not settling where the entry
+    // sits: `PATCH /time/entries/{id}` carries neither field, so an edit cannot
+    // violate these two — and an entry filed before the rule existed would
+    // otherwise be read-only to the owner trying to bring it into compliance.
+    if (placement) {
+      if (requiredIssue && issueId == null) return 'time.policy.needIssue';
+      if (requiresPlacement && projectId == null) {
+        return 'time.policy.needProject';
+      }
+    }
+    if (requiredDescription && (description?.trim().isEmpty ?? true)) {
+      return 'time.policy.needDescription';
+    }
+    if (requiredTag && tags.isEmpty) return 'time.policy.needTag';
+    return null;
+  }
+
   /// Whether the day of [date] is frozen. A date-only comparison: the lock is a
   /// calendar day on both sides, and an instant would make it depend on the hour
   /// somebody happened to open the editor.

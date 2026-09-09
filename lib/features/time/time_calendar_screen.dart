@@ -682,15 +682,27 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       titleLeading: true,
       // Compact only, and that is not a style choice: the module's pages are
       // nav destinations, so a wide window builds no sub-page bar and would
-      // drop these on the floor. On a wide window the same button is in the
-      // page's own head.
+      // drop these on the floor. A wide window has room for both ways of
+      // adding time and offers them separately — the entry button in the
+      // page's own head, the timer on the bar above it. One slot cannot, so
+      // the phone's button asks which.
       actions: compact
           ? [
               PageAction(
                 icon: LucideIcons.plus,
-                label: context.t('time.entry.new'),
+                label: context.t('time.add.title'),
                 primary: true,
-                onTap: _newEntry,
+                // The module's one "+", shared by all three of its pages: an
+                // entry on the day this page would have offered anyway, or the
+                // timer. See [showTimeAddMenu].
+                onTap: (anchor) => unawaited(
+                  showTimeAddMenu(
+                    context,
+                    anchor: anchor,
+                    onNewEntry: _newEntry,
+                    onTimerStopped: _reload,
+                  ),
+                ),
               ),
             ]
           : const [],

@@ -88,6 +88,37 @@ void main() {
       await cubit.close();
     });
 
+    test('the end the caller names is the end that is filed', () async {
+      // The composer opens at the press of stop and may stay open for minutes
+      // while a required description is typed. Those minutes were not worked,
+      // so the sheet carries the instant the button was pressed and the stop
+      // sends that — not "now", which is when the last field was finally
+      // filled in. Nothing else in the chain may quietly substitute its own
+      // clock.
+      final repository = _FakeTimeRepository(running: timer());
+      final cubit = TimerCubit(repository, storageId: 'server#me');
+      await cubit.refresh();
+      final pressed = DateTime.utc(2026, 9, 9, 16, 4);
+
+      await cubit.stop(endedAt: pressed, description: 'worked');
+
+      expect(repository.stoppedAt, [pressed]);
+      await cubit.close();
+    });
+
+    test('a plain stop lets the server decide when it ended', () async {
+      // The bar's own button files at once, and the server is the clock that
+      // matters: sending one from here would be a client's opinion of now.
+      final repository = _FakeTimeRepository(running: timer());
+      final cubit = TimerCubit(repository, storageId: 'server#me');
+      await cubit.refresh();
+
+      await cubit.stop();
+
+      expect(repository.stoppedAt, [null]);
+      await cubit.close();
+    });
+
     test('stopping when nothing runs asks the server nothing', () async {
       final repository = _FakeTimeRepository(running: null);
       final cubit = TimerCubit(repository, storageId: 'server#me');
@@ -585,9 +616,14 @@ class _FakeTimeRepository implements TimeRepository {
     return updated;
   }
 
+  /// The end each stop named, so a test can say that the button's instant and
+  /// not the request's is what gets filed.
+  final List<DateTime?> stoppedAt = [];
+
   @override
   Future<SavedTimeEntry> stopTimer({
     String? timerId,
+    DateTime? endedAt,
     String? projectId,
     String? issueId,
     String? description,
@@ -596,6 +632,7 @@ class _FakeTimeRepository implements TimeRepository {
     bool? billable,
   }) async {
     stoppedIds.add(timerId);
+    stoppedAt.add(endedAt);
     running = null;
     return const SavedTimeEntry(
       entry: WorkItem(

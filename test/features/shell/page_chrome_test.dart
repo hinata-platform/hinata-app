@@ -226,7 +226,7 @@ void main() {
 class _Page {
   void openMenu(Rect? anchor) {}
 
-  void newEntry() {}
+  void newEntry(Rect? anchor) {}
 
   PageChromeData chrome({bool busy = false}) => PageChromeData(
     location: '/time/calendar',

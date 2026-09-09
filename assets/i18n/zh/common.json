@@ -863,7 +863,9 @@
       "discard": "放弃计时器",
       "noDescription": "无描述",
       "title": "计时器",
-      "chooseMode": "选择计时方式"
+      "chooseMode": "选择计时方式",
+      "finish": "停止计时器",
+      "finishHint": "计时器仍在运行。补齐此实例要求的内容后即可记录。"
     },
     "placement": {
       "none": "无项目",
@@ -905,7 +907,13 @@
       "modeInterval": "开始和结束",
       "noDescription": "无描述",
       "continue": "继续",
-      "tags": "标签"
+      "tags": "标签",
+      "measured": "已计时"
+    },
+    "add": {
+      "title": "添加",
+      "timerStart": "启动计时器",
+      "timerStop": "停止计时器"
     },
     "view": {
       "list": "列表",

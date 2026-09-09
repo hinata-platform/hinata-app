@@ -14,6 +14,19 @@ class FakeTimePolicyCubit extends TimePolicyCubit {
     if (policy != TimePolicySnapshot.none) emit(policy);
   }
 
+  /// What a re-read finds, when a test is about the rules having changed
+  /// under a session that had already read them.
+  TimePolicySnapshot? onRefresh;
+
+  int refreshes = 0;
+
   @override
   Future<void> ensureLoaded() async {}
+
+  @override
+  Future<void> refresh() async {
+    refreshes++;
+    final fresh = onRefresh;
+    if (fresh != null) emit(fresh);
+  }
 }
