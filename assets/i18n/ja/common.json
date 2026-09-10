@@ -1013,7 +1013,9 @@
       },
       "chip": {
         "lockDate": "締め切り済み",
-        "approval": "提出済み"
+        "approval": "提出済み",
+        "invoice": "請求済み",
+        "unknown": "締め切り済み"
       },
       "request": "修正を依頼",
       "requestTitle": "修正を依頼",

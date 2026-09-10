@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/blocs/timer_cubit.dart';
+import '../../core/api/api_client.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
 import '../../core/models/time_approval_models.dart';
@@ -20,6 +21,7 @@ import '../../core/util/duration_input.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../issues/work_item_labels.dart';
 import '../sprint/modals/glass_modal.dart';
+import 'approval_actions.dart';
 import 'lock_notice.dart';
 import 'placement_picker.dart';
 import 'tag_picker.dart';
@@ -201,12 +203,25 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   /// names somebody to ask and an act to perform — so it is rendered as the
   /// shared [LockNotice] rather than as a sentence, and the sheet's save button
   /// reads both.
+  /// The freeze the server named when it refused this save, if it did.
+  ///
+  /// Held rather than shown once: the form stays open, and the reason it cannot be
+  /// saved has to stay on it.
+  TimeLockInfo? _refusedBy;
+
   TimeLockInfo? _lock(TimePolicySnapshot policy) {
     final entry = widget.entry;
     // Both sides of the change, the way the server's gate is: moving an entry
     // *off* a frozen day changes that day as surely as moving one onto it.
     for (final day in [_filedOn, if (_isEdit) entry?.date]) {
-      final lock = policy.lockFor(day, entryId: entry?.id);
+      final lock = policy.lockFor(
+        day,
+        // The project decides half the freeze: a period is somebody's hours for
+        // one project. On an edit that is the entry's own — a patch cannot move
+        // it — and on a create it is whatever the composer is pointing at.
+        projectId: entry?.projectId ?? _placement.projectId,
+        entryId: entry?.id,
+      );
       if (lock != null) return lock;
     }
     return null;
@@ -329,7 +344,15 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _error = failure.toString();
+        // A refusal that names a freeze becomes the notice, not a sentence at the
+        // bottom of the form: the app's own copy of the rules can be a moment out
+        // of date — somebody else's approval landing between the last policy read
+        // and this save — and then the server's answer is the authority, and it
+        // carries who can lift it and the way back.
+        _refusedBy = failure is ApiFailure
+            ? lockFromFailure(failure, entryId: widget.entry?.id)
+            : null;
+        _error = _refusedBy != null ? null : failure.toString();
       });
     }
   }
@@ -381,7 +404,9 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
     final localizations = MaterialLocalizations.of(context);
     final policy = _policy;
     final unmet = _unmet(policy);
-    final lock = _lock(policy);
+    // The server's answer wins over the app's: it is later, and it is the one
+    // that actually refused.
+    final lock = _refusedBy ?? _lock(policy);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [

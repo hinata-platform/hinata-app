@@ -1013,7 +1013,9 @@
       },
       "chip": {
         "lockDate": "مغلق",
-        "approval": "مُسلَّم"
+        "approval": "مُسلَّم",
+        "invoice": "مفوتر",
+        "unknown": "مغلق"
       },
       "request": "طلب تصحيح",
       "requestTitle": "طلب تصحيح",

@@ -1013,7 +1013,9 @@
       },
       "chip": {
         "lockDate": "बंद",
-        "approval": "प्रस्तुत"
+        "approval": "प्रस्तुत",
+        "invoice": "चालान किया",
+        "unknown": "बंद"
       },
       "request": "सुधार का अनुरोध",
       "requestTitle": "सुधार का अनुरोध",

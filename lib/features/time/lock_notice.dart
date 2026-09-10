@@ -139,9 +139,10 @@ class LockNotice extends StatelessWidget {
         },
       );
     }
-    // A reason this build has never heard of — a server newer than the app. The
-    // honest answer is still "frozen", not "fine".
-    return context.t('time.lock.reason.unknown');
+    // A reason with no dates to fill in, or one this build has never heard of —
+    // a server newer than the app. The honest answer is still "frozen", not
+    // "fine", and never a raw key.
+    return context.t(lock.reasonKey);
   }
 
   Future<void> _ask(BuildContext context) async {
@@ -208,11 +209,7 @@ class LockChip extends StatelessWidget {
             Icon(LucideIcons.lock, size: 11, color: AppColors.textSecondary),
             const SizedBox(width: 4),
             Text(
-              context.t(
-                lock.isApproval
-                    ? 'time.lock.chip.approval'
-                    : 'time.lock.chip.lockDate',
-              ),
+              context.t(lock.chipKey),
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,

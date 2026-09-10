@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/i18n/i18n.dart';
@@ -58,6 +59,11 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
   Map<String, DirectoryUser> _users = const {};
   Map<String, Project> _projects = const {};
 
+  /// Who is reading. A lead's own submissions appear in their own inbox — the
+  /// server does not filter them out, deliberately — and those are the ones they
+  /// may not decide.
+  String? get _myUserId => context.read<AuthBloc>().state.user?.id;
+
   @override
   void initState() {
     super.initState();
@@ -87,7 +93,15 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
   void _onScroll() {
     if (!_scroll.hasClients) return;
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 400) {
-      unawaited(_approvals.loadMore());
+      // Labels for the rows that just arrived. Without this a scroll appends
+      // twenty-five cards whose names were never fetched, and they render as a
+      // deleted account and an unnamed project — which is what those two labels
+      // are *for*, so the page would be saying something false.
+      unawaited(
+        _approvals.loadMore().then((_) {
+          if (mounted) unawaited(_resolveLabels());
+        }),
+      );
     }
   }
 
@@ -107,18 +121,21 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
   /// than as nothing.
   Future<void> _resolveLabels() async {
     final rows = _approvals.state.items;
+    // Only the ids nothing is known about yet: a scroll appends twenty-five rows,
+    // and re-asking for the two hundred already on screen would grow with the list.
     final userIds = {for (final row in rows) row.userId}
-      ..removeWhere((id) => id.isEmpty);
+      ..removeWhere((id) => id.isEmpty || _users.containsKey(id));
     final projectIds = {for (final row in rows) row.projectId}
-      ..removeWhere((id) => id.isEmpty);
+      ..removeWhere((id) => id.isEmpty || _projects.containsKey(id));
+    if (userIds.isEmpty && projectIds.isEmpty) return;
     final resolved = await Future.wait([
       _resolveUsers(userIds),
       _resolveProjects(projectIds),
     ]);
     if (!mounted) return;
     setState(() {
-      _users = (resolved[0] as Map<String, DirectoryUser>?) ?? _users;
-      _projects = (resolved[1] as Map<String, Project>?) ?? _projects;
+      _users = {..._users, ...?(resolved[0] as Map<String, DirectoryUser>?)};
+      _projects = {..._projects, ...?(resolved[1] as Map<String, Project>?)};
     });
   }
 
@@ -306,10 +323,12 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
               approval: state.items[index],
               user: _users[state.items[index].userId],
               project: _projects[state.items[index].projectId],
-              // The inbox is where decisions are made. On one's own list the
-              // same row is read-only: nobody signs off their own period, and a
+              // The inbox is where decisions are made — but not on one's own
+              // rows, and a lead who leads the project they submitted to sees
+              // exactly those in it. Nobody signs off their own period, and a
               // button that always answered 403 would be a worse way to say so.
-              decidable: _scope == 'inbox',
+              decidable:
+                  _scope == 'inbox' && state.items[index].userId != _myUserId,
               onChanged: _reload,
             );
           },
@@ -453,7 +472,7 @@ class _ApprovalCard extends StatelessWidget {
           ),
           if (approval.history.length > 1) ...[
             const SizedBox(height: 10),
-            _History(history: approval.history, users: user),
+            _History(history: approval.history),
           ],
         ],
       ),
@@ -476,11 +495,14 @@ class _ApprovalCard extends StatelessWidget {
 enum _Decision { approve, reject, reopen }
 
 /// The round trip, oldest first — what makes a rejection legible.
+///
+/// The reason is what a reader is here for: a status word and a date say that a
+/// period was sent back, not what has to change about it. The current decision's
+/// reason is on the card above; these are the ones before it.
 class _History extends StatelessWidget {
-  const _History({required this.history, required this.users});
+  const _History({required this.history});
 
   final List<ApprovalEvent> history;
-  final DirectoryUser? users;
 
   @override
   Widget build(BuildContext context) {
@@ -500,13 +522,27 @@ class _History extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: Text(
-                    '${context.t(event.to?.labelKey ?? 'time.approval.status.open')}'
-                    '${event.at == null ? '' : ' · ${localizations.formatShortDate(event.at!.toLocal())}'}',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: AppColors.textSecondary,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${context.t(event.to?.labelKey ?? 'time.approval.status.open')}'
+                        '${event.at == null ? '' : ' · ${localizations.formatShortDate(event.at!.toLocal())}'}',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      if ((event.note ?? '').trim().isNotEmpty)
+                        Text(
+                          event.note!,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            height: 1.4,
+                            color: AppColors.inkSoft,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],
@@ -563,15 +599,32 @@ Future<void> _showEntries(
                 );
               }
               if (state.items.isEmpty) {
+                // A failed load must not read as "this period is empty" — that is
+                // a wrong answer to the one question an approver is here to ask.
+                final failed = state.errorKey != null;
                 return Padding(
                   padding: const EdgeInsets.fromLTRB(22, 4, 22, 24),
-                  child: Text(
-                    innerContext.t('time.noEntries'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        innerContext.t(state.errorKey ?? 'time.noEntries'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      if (failed) ...[
+                        const SizedBox(height: 14),
+                        OutlinedButton(
+                          onPressed: () => unawaited(
+                            innerContext.read<PagedCubit<WorkItem>>().load(),
+                          ),
+                          child: Text(innerContext.t('common.retry')),
+                        ),
+                      ],
+                    ],
                   ),
                 );
               }
@@ -585,8 +638,11 @@ Future<void> _showEntries(
                   }
                   return false;
                 },
+                // No shrinkWrap: it lays out every child to measure itself, which
+                // defeats the lazy building the paging exists for — a quarter's
+                // entries would all be built on every layout pass. The modal's own
+                // Flexible bounds the height instead.
                 child: ListView.separated(
-                  shrinkWrap: true,
                   padding: const EdgeInsets.fromLTRB(22, 4, 22, 20),
                   itemCount: state.items.length + (state.hasMore ? 1 : 0),
                   separatorBuilder: (_, _) =>
