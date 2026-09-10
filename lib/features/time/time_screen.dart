@@ -28,7 +28,6 @@ import '../sprint/modals/glass_modal.dart'
     show
         GlassToastKind,
         anchorRectOfContext,
-        showGlassConfirm,
         showGlassDateRangePicker,
         showGlassToast;
 import 'lock_notice.dart';
@@ -599,7 +598,13 @@ class _TimeScreenState extends State<TimeScreen> {
   }
 
   Future<void> _editEntry(WorkItem entry) async {
-    final saved = await showTimeEntrySheet(context, entry: entry);
+    final saved = await showTimeEntrySheet(
+      context,
+      entry: entry,
+      onDeleted: () {
+        if (mounted) unawaited(_reload());
+      },
+    );
     if (saved == null || !mounted) return;
     _afterSave(saved);
   }
@@ -619,26 +624,10 @@ class _TimeScreenState extends State<TimeScreen> {
   }
 
   Future<void> _deleteEntry(WorkItem entry) async {
-    final confirmed = await showGlassConfirm(
-      context,
-      icon: LucideIcons.trash2,
-      title: context.t('time.deleteTitle'),
-      message: context.t('time.deleteMessage'),
-      confirmLabel: context.t('common.delete'),
-      destructive: true,
-    );
-    if (confirmed != true || !mounted) return;
-    try {
-      await context.read<TimeRepository>().delete(entry.id);
-      if (!mounted) return;
+    // The same one the sheet offers — see confirmAndDeleteTimeEntry for why
+    // there is only one.
+    if (await confirmAndDeleteTimeEntry(context, entry) && mounted) {
       unawaited(_reload());
-    } catch (failure) {
-      if (!mounted) return;
-      showGlassToast(
-        context,
-        context.t(failure.toString()),
-        kind: GlassToastKind.error,
-      );
     }
   }
 
