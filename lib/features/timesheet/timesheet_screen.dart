@@ -1009,7 +1009,15 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                 constraints: const BoxConstraints(maxWidth: 520),
                 child: HiveEmptyState(
                   title: context.t('timesheet.title'),
-                  message: context.t('timesheet.empty'),
+                  // Two sentences, because the window is two different things: a
+                  // week on the plain route, a submission period in the module
+                  // once approvals are on. "In this week" over a month is a
+                  // sentence that contradicts the switcher right above it — and
+                  // the rhythm is the operator's decision, so no copy may assume
+                  // one.
+                  message: context.t(
+                    _period == null ? 'timesheet.empty' : 'timesheet.emptyPeriod',
+                  ),
                   card: false,
                 ),
               ),

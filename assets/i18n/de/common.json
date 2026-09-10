@@ -1264,7 +1264,8 @@
       "none": "Noch nichts erfasst.",
       "add": "Zeit hinzufügen"
     },
-    "truncated": "{{shown}} von {{total}} Zeilen werden angezeigt. Grenze die Filter ein, um den Rest zu sehen."
+    "truncated": "{{shown}} von {{total}} Zeilen werden angezeigt. Grenze die Filter ein, um den Rest zu sehen.",
+    "emptyPeriod": "In diesem Zeitraum wurden keine Arbeitszeiten erfasst."
   },
   "reports": {
     "title": "Berichte",
