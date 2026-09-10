@@ -4,6 +4,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/i18n/i18n.dart';
 import '../admin_form_helpers.dart';
 import '../policy_controls.dart';
+import 'admin_approval_period_preview.dart';
+import 'admin_lock_exceptions_card.dart';
 import 'admin_time_tags_card.dart';
 
 /// Admin → Zeiterfassung.
@@ -105,6 +107,13 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         if (_effectiveValue<bool>('advancedEnabled') ?? false) ...[
           const SizedBox(height: 16),
           const AdminTimeTagsCard(),
+          // Beside the lock date it belongs to, and for the same reason the tag
+          // card is here: the routes behind it are the module's, so with the
+          // module off there is nothing to show. A span reopened inside the
+          // freeze is an event with an author, not a setting, so it saves
+          // immediately rather than with the form.
+          const SizedBox(height: 16),
+          const AdminLockExceptionsCard(),
         ],
         const SizedBox(height: 16),
         _visibility(context),
@@ -165,6 +174,12 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         helper: context.t('admin.timeTracking.lockBeforeHint'),
         value: _value<String>('lockBefore'),
         onChanged: (v) => _set('lockBefore', v),
+        // The server refuses a date in the future, and for a reason worth
+        // meeting here rather than in a rejected save: a freeze that reached
+        // into the present would stop the recording of working time that is
+        // happening right now — the one thing § 16 Abs. 2 ArbZG requires the
+        // system to be able to do (EuGH C-55/18).
+        notAfterToday: true,
       ),
       // The freeze binds administrators too, and the screen says so where it is
       // set. A lock that its own author could edit around is not a lock, and
@@ -270,8 +285,21 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         effective: _effectiveValue<bool>('approvalsEnabled'),
         onChanged: (v) => _set('approvalsEnabled', v),
         monitoring: true,
-        pending: true,
       ),
+      // Switching approvals on makes one person's recorded time legible to
+      // another by design — that is what approving is — so it carries the
+      // visibility policy with it rather than silently depending on it.
+      if ((_value<bool>('approvalsEnabled') ??
+              _effectiveValue<bool>('approvalsEnabled') ??
+              false) &&
+          !(_value<bool>('leadsSeeMemberEntries') ??
+              _effectiveValue<bool>('leadsSeeMemberEntries') ??
+              false))
+        AdminNote(
+          icon: LucideIcons.eye,
+          tone: AdminNoteTone.warning,
+          text: context.t('admin.timeTracking.approvalsNeedVisibility'),
+        ),
       const SizedBox(height: 8),
       // How often timesheets are handed in is an operator decision, never a
       // constant in the code: a monthly rhythm suits one organisation and a
@@ -292,7 +320,6 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
           'FREE': 'admin.timeTracking.period.free',
         },
         onChanged: (v) => _setNested('approvalPeriod', 'type', v),
-        pending: true,
       ),
       PolicyChoice(
         label: context.t('admin.timeTracking.weekStartsOnLabel'),
@@ -309,14 +336,12 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
           'SUNDAY': 'admin.timeTracking.weekday.sunday',
         },
         onChanged: (v) => _setNested('approvalPeriod', 'weekStartsOn', v),
-        pending: true,
       ),
       PolicyDate(
         label: context.t('admin.timeTracking.anchorDateLabel'),
         helper: context.t('admin.timeTracking.anchorDateHint'),
         value: _nested<String>('approvalPeriod', 'anchorDate'),
         onChanged: (v) => _setNested('approvalPeriod', 'anchorDate', v),
-        pending: true,
       ),
       PolicyNumber(
         label: context.t('admin.timeTracking.periodDaysLabel'),
@@ -324,8 +349,19 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         suffix: context.t('admin.timeTracking.daysSuffix'),
         value: _nested<num>('approvalPeriod', 'days')?.toInt(),
         onChanged: (v) => _setNestedQuietly('approvalPeriod', 'days', v),
-        maxValue: 366,
-        pending: true,
+        // 92, not a year: a submission covers at most 92 days (the longest
+        // calendar quarter), so a longer rhythm would cut periods nobody could
+        // ever hand in. The server refuses one.
+        maxValue: 92,
+      ),
+      // What the choice above will actually mean. An operator picking
+      // "biweekly from the 3rd" has no way to know which days that makes
+      // without seeing them, and the answer is the server's arithmetic — so it
+      // is fetched, not derived here.
+      ApprovalPeriodPreview(
+        rhythm:
+            _nested<String>('approvalPeriod', 'type') ??
+            _effectiveNested<String>('approvalPeriod', 'type'),
       ),
     ],
   );

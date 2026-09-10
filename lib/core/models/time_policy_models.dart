@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../util/dates.dart';
+import 'time_approval_models.dart';
 
 /// What the operator's time-tracking policies currently demand, as the people
 /// they apply to are told them.
@@ -21,10 +22,13 @@ class TimePolicySnapshot extends Equatable {
     this.requiredDescription = false,
     this.requiredTag = false,
     this.lockBefore,
+    this.lockExceptions = const [],
     this.roundingMode = 'NONE',
     this.roundingIncrement = 15,
     this.limitTagAccess = false,
     this.defaultBillable = false,
+    this.approvalsEnabled = false,
+    this.approvalRhythm = const ApprovalRhythm(),
   });
 
   /// What a fresh instance demands: nothing. Also what the app assumes while the
@@ -40,7 +44,19 @@ class TimePolicySnapshot extends Equatable {
 
   /// Entries dated before this day cannot be created, changed or deleted.
   /// Null when nothing is frozen.
+  ///
+  /// Never in the future — the server refuses a later date and clamps one that
+  /// arrives from a deployment variable. A freeze that reached into the present
+  /// would block the recording of working time that is happening right now, which
+  /// is the one thing the law requires the system to be able to do.
   final DateTime? lockBefore;
+
+  /// Spans an administrator has reopened inside the freeze, each with a reason.
+  ///
+  /// Published to everyone, note and all, and that is the point: a day that is
+  /// open again inside a closed month is a rule people run into, and an exception
+  /// nobody could see would be indistinguishable from a bug.
+  final List<TimeLockException> lockExceptions;
 
   /// `NONE`, `UP`, `DOWN` or `NEAREST` — how reports fold durations. Never
   /// applied to a stored entry.
@@ -50,6 +66,17 @@ class TimePolicySnapshot extends Equatable {
   /// Whether only administrators may add words to the tag catalogue.
   final bool limitTagAccess;
   final bool defaultBillable;
+
+  /// Whether periods are handed in and signed off on this instance at all.
+  ///
+  /// Read from the policy rather than discovered by calling the approvals route
+  /// and getting a 404: a screen that offered an action which does not exist is
+  /// the opposite of what publishing the rules is for.
+  final bool approvalsEnabled;
+
+  /// How often they are handed in. The app never turns this into dates — that is
+  /// `GET /time/approvals/periods`.
+  final ApprovalRhythm approvalRhythm;
 
   /// An issue always brings its project, so requiring one requires the other.
   bool get requiresPlacement => requiredProject || requiredIssue;
@@ -90,17 +117,73 @@ class TimePolicySnapshot extends Equatable {
     return null;
   }
 
-  /// Whether the day of [date] is frozen. A date-only comparison: the lock is a
-  /// calendar day on both sides, and an instant would make it depend on the hour
-  /// somebody happened to open the editor.
+  /// Whether the day of [date] is frozen by the lock date.
+  ///
+  /// A date-only comparison: the lock is a calendar day on both sides, and an
+  /// instant would make it depend on the hour somebody happened to open the
+  /// editor. An exception that reopens the day makes this false, which is what
+  /// an exception is for.
+  ///
+  /// This is only the *lock date*. A period somebody has handed in freezes its
+  /// entries too, and that answer needs the approvals of the window on screen —
+  /// see [lockFor].
   bool isLocked(DateTime? date) {
     final lock = lockBefore;
     if (lock == null || date == null) return false;
-    return DateTime(
-      date.year,
-      date.month,
-      date.day,
-    ).isBefore(DateTime(lock.year, lock.month, lock.day));
+    final day = DateTime(date.year, date.month, date.day);
+    if (!day.isBefore(DateTime(lock.year, lock.month, lock.day))) return false;
+    return !lockExceptions.any((exception) => exception.covers(day));
+  }
+
+  /// Why [date] cannot be written, or null when it can.
+  ///
+  /// The lock date is asked first, because it is the more absolute answer: a day
+  /// an administrator has archived stays archived whatever a submission says
+  /// about it — and that is exactly how the server resolves it too.
+  ///
+  /// [frozenPeriods] are the submissions that cover the window on screen, for the
+  /// reader's own time and the entry's project. The caller supplies them because
+  /// only the caller knows which window it is drawing; passing none answers about
+  /// the lock date alone, which is the honest answer for an entry with no project
+  /// — those are never handed in.
+  TimeLockInfo? lockFor(
+    DateTime? date, {
+    List<TimesheetApproval> frozenPeriods = const [],
+    String? entryId,
+  }) {
+    if (date == null) return null;
+    if (isLocked(date)) {
+      return TimeLockInfo(
+        reason: 'lockDate',
+        lockDate: lockBefore,
+        entryId: entryId,
+      );
+    }
+    if (!approvalsEnabled) return null;
+    final day = DateTime(date.year, date.month, date.day);
+    for (final period in frozenPeriods) {
+      if (!period.status.freezes) continue;
+      final start = DateTime(
+        period.periodStart.year,
+        period.periodStart.month,
+        period.periodStart.day,
+      );
+      final end = DateTime(
+        period.periodEnd.year,
+        period.periodEnd.month,
+        period.periodEnd.day,
+      );
+      if (!day.isBefore(start) && !day.isAfter(end)) {
+        return TimeLockInfo(
+          reason: 'approval',
+          approvalId: period.id,
+          periodStart: period.periodStart,
+          periodEnd: period.periodEnd,
+          entryId: entryId,
+        );
+      }
+    }
+    return null;
   }
 
   factory TimePolicySnapshot.fromJson(Map<String, dynamic> json) {
@@ -112,10 +195,17 @@ class TimePolicySnapshot extends Equatable {
       requiredDescription: required?['description'] as bool? ?? false,
       requiredTag: required?['tag'] as bool? ?? false,
       lockBefore: parseDate(json['lockBefore']),
+      lockExceptions: ((json['lockExceptions'] as List<dynamic>?) ?? const [])
+          .map((e) => TimeLockException.fromJson(e as Map<String, dynamic>))
+          .toList(growable: false),
       roundingMode: rounding?['mode'] as String? ?? 'NONE',
       roundingIncrement: (rounding?['increment'] as num?)?.toInt() ?? 15,
       limitTagAccess: json['limitTagAccess'] as bool? ?? false,
       defaultBillable: json['defaultBillable'] as bool? ?? false,
+      approvalsEnabled: json['approvalsEnabled'] as bool? ?? false,
+      approvalRhythm: ApprovalRhythm.fromJson(
+        (json['approvalPeriod'] as Map<String, dynamic>?) ?? const {},
+      ),
     );
   }
 
@@ -126,10 +216,13 @@ class TimePolicySnapshot extends Equatable {
     requiredDescription,
     requiredTag,
     lockBefore,
+    lockExceptions,
     roundingMode,
     roundingIncrement,
     limitTagAccess,
     defaultBillable,
+    approvalsEnabled,
+    approvalRhythm,
   ];
 }
 
@@ -176,6 +269,7 @@ class ProjectTimeSettings extends Equatable {
     this.defaultBillable,
     this.approvalRequired,
     this.approvalPeriod,
+    this.lockBefore,
     this.budgetAlertPercent,
     this.estimateAlertPercent,
     this.updatedAt,
@@ -191,6 +285,12 @@ class ProjectTimeSettings extends Equatable {
   /// period covers is the server's arithmetic (HIN-88), never the app's.
   final String? approvalPeriod;
 
+  /// A freeze for this project alone; null leaves the instance lock date in
+  /// force. Only ever closes *more* than the instance — the server takes the
+  /// later of the two, so a lead cannot reopen the month an administrator
+  /// archived.
+  final DateTime? lockBefore;
+
   final int? budgetAlertPercent;
   final int? estimateAlertPercent;
   final DateTime? updatedAt;
@@ -201,6 +301,7 @@ class ProjectTimeSettings extends Equatable {
       defaultBillable == null &&
       approvalRequired == null &&
       approvalPeriod == null &&
+      lockBefore == null &&
       budgetAlertPercent == null &&
       estimateAlertPercent == null;
 
@@ -209,12 +310,14 @@ class ProjectTimeSettings extends Equatable {
     bool? defaultBillable,
     bool? approvalRequired,
     String? approvalPeriod,
+    DateTime? lockBefore,
     int? budgetAlertPercent,
     int? estimateAlertPercent,
     bool clearBudget = false,
     bool clearDefaultBillable = false,
     bool clearApprovalRequired = false,
     bool clearApprovalPeriod = false,
+    bool clearLockBefore = false,
     bool clearBudgetAlert = false,
     bool clearEstimateAlert = false,
   }) => ProjectTimeSettings(
@@ -228,6 +331,7 @@ class ProjectTimeSettings extends Equatable {
     approvalPeriod: clearApprovalPeriod
         ? null
         : (approvalPeriod ?? this.approvalPeriod),
+    lockBefore: clearLockBefore ? null : (lockBefore ?? this.lockBefore),
     budgetAlertPercent: clearBudgetAlert
         ? null
         : (budgetAlertPercent ?? this.budgetAlertPercent),
@@ -246,6 +350,7 @@ class ProjectTimeSettings extends Equatable {
       defaultBillable: json['defaultBillable'] as bool?,
       approvalRequired: json['approvalRequired'] as bool?,
       approvalPeriod: period?['type'] as String?,
+      lockBefore: parseDate(json['lockBefore']),
       budgetAlertPercent: (alerts?['budgetPercent'] as num?)?.toInt(),
       estimateAlertPercent: (alerts?['estimatePercent'] as num?)?.toInt(),
       updatedAt: parseInstant(json['updatedAt']),
@@ -260,6 +365,7 @@ class ProjectTimeSettings extends Equatable {
     'defaultBillable': ?defaultBillable,
     'approvalRequired': ?approvalRequired,
     if (approvalPeriod != null) 'approvalPeriod': {'type': approvalPeriod},
+    if (lockBefore != null) 'lockBefore': formatDateOnly(lockBefore!),
     if (budgetAlertPercent != null || estimateAlertPercent != null)
       'alertThresholds': {
         'budgetPercent': ?budgetAlertPercent,
@@ -273,6 +379,7 @@ class ProjectTimeSettings extends Equatable {
     defaultBillable,
     approvalRequired,
     approvalPeriod,
+    lockBefore,
     budgetAlertPercent,
     estimateAlertPercent,
     updatedAt,

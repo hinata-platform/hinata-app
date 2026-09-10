@@ -260,7 +260,7 @@ void main() {
         policy: TimePolicySnapshot(lockBefore: DateTime(2026, 9, 10)),
       );
 
-      expect(find.text('time.policy.locked'), findsOneWidget);
+      expect(find.text('time.lock.reason.lockDate'), findsOneWidget);
       expect(
         find.widgetWithText(TextField, '1h 30m · 90m · 1:30'),
         findsNothing,
@@ -285,7 +285,7 @@ void main() {
         find.widgetWithText(TextField, '1h 30m · 90m · 1:30'),
         findsOneWidget,
       );
-      expect(find.text('time.policy.locked'), findsNothing);
+      expect(find.text('time.lock.reason.lockDate'), findsNothing);
     });
   });
 

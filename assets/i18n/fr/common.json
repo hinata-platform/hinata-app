@@ -918,7 +918,8 @@
     "view": {
       "list": "Liste",
       "calendar": "Calendrier",
-      "timesheet": "Feuille de temps"
+      "timesheet": "Feuille de temps",
+      "approvals": "Approbations"
     },
     "calendar": {
       "untimed": "Sans heure",
@@ -992,6 +993,92 @@
       "CALENDAR": "Depuis un calendrier",
       "CSV": "Importée",
       "SHARED": "Copiée d'une saisie partagée"
+    },
+    "lock": {
+      "reason": {
+        "lockDate": "Les saisies antérieures au {{date}} sont clôturées.",
+        "approval": "Vous avez soumis {{from}} – {{to}} ; ces saisies sont donc figées.",
+        "invoice": "Une facture émise fait référence à cette saisie.",
+        "unknown": "Cette saisie est fermée aux modifications."
+      },
+      "holder": {
+        "lockDate": "Un administrateur peut réouvrir un intervalle dans la période clôturée.",
+        "approval": "Un responsable du projet, ou un administrateur, peut réouvrir la période.",
+        "invoice": "Celui qui émet les factures régularise par un avoir."
+      },
+      "remedy": {
+        "lockDate": "Demandez une correction — votre motif est consigné et parvient à un administrateur.",
+        "approval": "Demandez une correction, ou la réouverture de la période.",
+        "invoice": "La facture n’est jamais réécrite ; un avoir la régularise."
+      },
+      "chip": {
+        "lockDate": "Clôturé",
+        "approval": "Soumis"
+      },
+      "request": "Demander une correction",
+      "requestTitle": "Demander une correction",
+      "requestHint": "Qu’est-ce qui est faux, et que faudrait-il ?",
+      "requestSend": "Envoyer la demande",
+      "requestSent": "Votre demande a été envoyée et consignée."
+    },
+    "approval": {
+      "status": {
+        "open": "Ouvert",
+        "submitted": "Soumis",
+        "approved": "Approuvé",
+        "rejected": "Renvoyé",
+        "withdrawn": "Retiré"
+      },
+      "rhythm": {
+        "WEEKLY": "Hebdomadaire",
+        "BIWEEKLY": "Toutes les deux semaines",
+        "SEMI_MONTHLY": "Deux fois par mois",
+        "MONTHLY": "Mensuel",
+        "QUARTERLY": "Trimestriel",
+        "CUSTOM_DAYS": "Nombre de jours fixe",
+        "FREE": "Intervalle au choix"
+      },
+      "previousPeriod": "Période précédente",
+      "nextPeriod": "Période suivante",
+      "pickSpan": "Choisir un intervalle",
+      "submitTitle": "Soumettre cette période",
+      "submitConfirm": "Soumettre {{period}} pour approbation ? Ses saisies ne pourront plus être modifiées jusqu’à la décision.",
+      "submitAction": "Soumettre la période",
+      "submitted": "Période soumise.",
+      "withdrawTitle": "Retirer",
+      "withdrawConfirm": "Retirer cette soumission ? Ses saisies redeviennent modifiables.",
+      "withdrawAction": "Retirer",
+      "withdrawFor": "Retirer {{project}}",
+      "withdrawn": "Soumission retirée.",
+      "approveTitle": "Approuver",
+      "approveConfirm": "Approuver cette période ? Ses saisies restent figées jusqu’à une réouverture.",
+      "approveAction": "Approuver",
+      "approved": "Période approuvée.",
+      "rejectTitle": "Renvoyer",
+      "rejectHint": "Que faut-il changer ? La personne le verra.",
+      "rejectAction": "Renvoyer",
+      "rejected": "Période renvoyée.",
+      "reopenTitle": "Réouvrir",
+      "reopenHint": "Pourquoi cette période approuvée est-elle réouverte ?",
+      "reopenAction": "Réouvrir",
+      "reopened": "Période réouverte.",
+      "showEntries": "Voir les saisies",
+      "scope": {
+        "mine": "Les miennes",
+        "inbox": "À décider"
+      },
+      "empty": {
+        "mine": {
+          "title": "Rien de soumis pour l’instant",
+          "message": "Dès que vous soumettez une période, elle apparaît ici avec ce qu’elle est devenue."
+        },
+        "inbox": {
+          "title": "Rien à décider",
+          "message": "Les périodes soumises pour les projets que vous dirigez apparaissent ici."
+        }
+      },
+      "gridClamped": "La grille montre les premiers jours de cette période ; les chiffres ci-dessus couvrent l’ensemble.",
+      "nothingToSubmit": "Aucune heure dans cette période pour l’instant."
     }
   },
   "projects": {
@@ -1558,7 +1645,7 @@
       "requiredTagTitle": "Étiquette obligatoire",
       "requiredTagHint": "Une entrée doit porter au moins une étiquette.",
       "lockBeforeLabel": "Verrouillé avant",
-      "lockBeforeHint": "Les entrées antérieures à ce jour ne peuvent plus être créées, modifiées ni supprimées — par personne, API comprise. Le jour indiqué reste ouvert.",
+      "lockBeforeHint": "Les entrées antérieures à ce jour ne peuvent plus être créées, modifiées ni supprimées — par personne, API comprise. Le jour indiqué reste ouvert. La date ne peut jamais être dans le futur : le temps de travail en cours doit toujours rester enregistrable.",
       "roundingModeLabel": "Arrondi",
       "roundingModeHint": "Ne s'applique qu'aux rapports ; les minutes enregistrées ne changent jamais.",
       "roundingMode": {
@@ -1652,7 +1739,21 @@
       "tagDeleteTitle": "Supprimer l'étiquette ?",
       "tagDeleteMessage": "\"{{name}}\" sera retirée de {{count}} saisie. La saisie elle-même reste.",
       "tagDeleteMessage_plural": "\"{{name}}\" sera retirée de {{count}} saisies. Les saisies elles-mêmes restent.",
-      "lockBeforeEveryone": "Le verrou vaut pour tout le monde, administrateurs compris. Le lever est la manière documentée de modifier une période close."
+      "lockBeforeEveryone": "Le verrou vaut pour tout le monde, administrateurs compris. Le lever est la manière documentée de modifier une période close.",
+      "approvalsNeedVisibility": "Approuver, c’est lire les saisies de quelqu’un : activez aussi « Les responsables voient les saisies des membres », sinon l’approbateur ne voit qu’un total sans rien derrière.",
+      "periodPreviewTitle": "Les prochaines périodes",
+      "periodPreviewHint": "Changer le rythme ne concerne que les soumissions futures. Les périodes déjà soumises gardent les jours qu’elles nommaient.",
+      "periodPreviewFree": "Sans rythme fixe, la personne qui soumet choisit l’intervalle elle-même — 92 jours au plus, et sans recouvrir un intervalle déjà soumis.",
+      "lockExceptionsTitle": "Intervalles réouverts",
+      "lockExceptionsHint": "Ouvrez un seul intervalle dans la période clôturée au lieu de lever toute la date de verrouillage.",
+      "lockExceptionsLegal": "Le temps de travail est une donnée personnelle, et des données personnelles inexactes doivent pouvoir être rectifiées sans délai injustifié (art. 16 RGPD). Une exception est ce chemin de retour : elle ouvre exactement ses jours, porte votre motif et figure dans le journal d’audit.",
+      "lockExceptionsEmpty": "Aucun intervalle n’est actuellement ouvert dans la période clôturée.",
+      "lockExceptionAdd": "Réouvrir un intervalle",
+      "lockExceptionSpan": "Quels jours faut-il réouvrir ?",
+      "lockExceptionReason": "Pourquoi cet intervalle est-il réouvert ?",
+      "lockExceptionReasonHint": "Consigné dans le journal d’audit et visible de tous.",
+      "lockExceptionRemove": "Refermer",
+      "lockExceptionRemoveConfirm": "Refermer {{period}} ? Ses saisies deviendront en lecture seule."
     },
     "passwordPolicy": "Politique de mots de passe",
     "passwordPolicyHint": "Exigences minimales pour les mots de passe des utilisateurs.",
@@ -2093,7 +2194,15 @@
       "TIME_TAG_CREATED": "Étiquette créée",
       "TIME_TAG_UPDATED": "Étiquette modifiée",
       "TIME_TAG_DELETED": "Étiquette supprimée",
-      "TIME_PROJECT_SETTINGS_CHANGED": "Réglages de temps du projet modifiés"
+      "TIME_PROJECT_SETTINGS_CHANGED": "Réglages de temps du projet modifiés",
+      "TIMESHEET_SUBMITTED": "Feuille de temps soumise",
+      "TIMESHEET_WITHDRAWN": "Feuille de temps retirée",
+      "TIMESHEET_APPROVED": "Feuille de temps approuvée",
+      "TIMESHEET_REJECTED": "Feuille de temps renvoyée",
+      "TIMESHEET_REOPENED": "Feuille de temps réouverte",
+      "TIME_CORRECTION_REQUESTED": "Correction demandée",
+      "TIME_LOCK_EXCEPTION_ADDED": "Intervalle réouvert",
+      "TIME_LOCK_EXCEPTION_REMOVED": "Intervalle réouvert refermé"
     },
     "meta": {
       "oldRole": "Rôle précédent",
@@ -2418,7 +2527,10 @@
       "billable": "Facturable par défaut",
       "approvalRequired": "Les feuilles de temps doivent être approuvées",
       "approvalPeriod": "Période de soumission",
-      "inherit": "Valeur du serveur"
+      "inherit": "Valeur du serveur",
+      "lockBefore": "Date de verrouillage propre",
+      "lockBeforeHint": "Clôture les comptes de ce projet plus tôt que le reste de l’instance. Elle ne peut que clôturer davantage, jamais moins.",
+      "instanceDefault": "Politique de l’instance"
     }
   },
   "account": {

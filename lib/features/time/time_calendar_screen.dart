@@ -6,6 +6,7 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
@@ -140,6 +141,15 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   /// it was given, so a fresh list every build threw the memo away and made a
   /// day re-filter and re-pack on every frame of a swipe.
   final Map<int, List<TimeGridLayer>> _layerMemo = {};
+
+  /// The lock date the memo was built against.
+  ///
+  /// The memo exists so a build does not re-pack a day, and the wash rides in it
+  /// — so a freeze an administrator has just lifted would stay drawn for the life
+  /// of the screen unless the memo is told. Compared rather than listened to: the
+  /// policy is read in the builder anyway, and one field is cheaper than a
+  /// subscription that would rebuild the whole canvas.
+  DateTime? _washedAgainst;
 
   /// The `days` lists handed to [TimeGrid], for the same reason and with more
   /// force: the grid drops *both* its memos when the list is not the identical
@@ -667,6 +677,14 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   @override
   Widget build(BuildContext context) {
     final compact = context.isCompact;
+    // The freeze rides in the layer memo, so a lock date that has moved has to
+    // drop it — otherwise a day an administrator just reopened stays washed for
+    // the life of the screen. Watched, so the rebuild happens at all.
+    final lock = context.watch<TimePolicyCubit>().state.lockBefore;
+    if (lock != _washedAgainst) {
+      _washedAgainst = lock;
+      _layerMemo.clear();
+    }
     // Once. Both readers below walk the same months, and in the week span that
     // walk resolves the week twice over.
     final onScreen = _monthsOnScreen;
@@ -1069,25 +1087,68 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   /// it draws, and an entry can be dragged a day off its filed one but not a
   /// week. An entry moved further than that is drawn in the month, in the list
   /// and in the timesheet, all of which file by the day the record names.
-  List<TimeGridLayer> _layersFor(DateTime day) =>
-      _layerMemo[dayKey(day)] ??= _split([
-        ..._itemsForDay(dayKey(addDays(day, -1))),
-        ..._itemsForDay(dayKey(day)),
-        ..._itemsForDay(dayKey(addDays(day, 1))),
-      ]);
+  List<TimeGridLayer> _layersFor(DateTime day) => _layerMemo[dayKey(day)] ??= [
+    ..._split([
+      ..._itemsForDay(dayKey(addDays(day, -1))),
+      ..._itemsForDay(dayKey(day)),
+      ..._itemsForDay(dayKey(addDays(day, 1))),
+    ]),
+    ..._frozenWash([addDays(day, -1), day, addDays(day, 1)]),
+  ];
 
   List<TimeGridLayer> _layersForWeek(List<DateTime> days) {
     // Keyed negatively on the first day, so a week and a day cannot collide in
     // the one memo.
     final key = -dayKey(days.first);
-    return _layerMemo[key] ??= _split([
-      for (final day in [
-        addDays(days.first, -1),
-        ...days,
-        addDays(days.last, 1),
-      ])
-        ..._itemsForDay(dayKey(day)),
-    ]);
+    final window = [addDays(days.first, -1), ...days, addDays(days.last, 1)];
+    return _layerMemo[key] ??= [
+      ..._split([for (final day in window) ..._itemsForDay(dayKey(day))]),
+      ..._frozenWash(window),
+    ];
+  }
+
+  /// The days in [window] nothing can be written to, as one background wash.
+  ///
+  /// Before this the calendar said **nothing** about a frozen day: you found out
+  /// by opening an entry and being refused, which for a closed month is the worst
+  /// possible moment to learn it. The wash is deliberately not the weekend's —
+  /// that one already means "quiet", and a second flat rect in the same tone
+  /// would read as "this is also a weekend". So the tone is darker and the day's
+  /// heading carries a padlock beside its date, which is the part that actually
+  /// says *what* the wash means.
+  ///
+  /// Only the lock date, and that is not a gap: a period somebody has handed in
+  /// freezes their entries for **one project**, while a column is a whole day
+  /// across every project. A wash over it would claim more than is true, and a
+  /// wrong statement about a freeze is worse than none. Those entries carry the
+  /// lock on themselves — see the chip in the list and the notice in the sheet.
+  List<TimeGridLayer> _frozenWash(List<DateTime> window) {
+    final policy = context.read<TimePolicyCubit>().state;
+    if (policy.lockBefore == null) return const [];
+    final frozen = [
+      for (final day in window)
+        if (policy.isLocked(day))
+          TimeGridItem(
+            id: 'frozen-${dayKey(day)}',
+            start: DateTime(day.year, day.month, day.day),
+            end: DateTime(day.year, day.month, day.day, 23, 59),
+            title: '',
+            movable: false,
+          ),
+    ];
+    if (frozen.isEmpty) return const [];
+    return [
+      TimeGridLayer(
+        id: 'frozen',
+        placement: TimeGridPlacement.background,
+        items: frozen,
+        // Doubled against the weekend's own wash, measured on glass in both
+        // themes: enough to read as a different statement, not enough to bury
+        // the hour lines or the entries already drawn on the day.
+        tint: AppColors.recess,
+        glyph: LucideIcons.lock,
+      ),
+    ];
   }
 
   /// Two layers over the same entries: the ones that happened between two

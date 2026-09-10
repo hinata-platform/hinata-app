@@ -21,10 +21,25 @@ import 'sse_transport_web.dart'
 
 /// Exception with a user-presentable message key.
 class ApiFailure implements Exception {
-  ApiFailure(this.message, {this.statusCode, this.featureDisabled = false});
+  ApiFailure(
+    this.message, {
+    this.statusCode,
+    this.featureDisabled = false,
+    this.details = const {},
+  });
 
   final String message;
   final int? statusCode;
+
+  /// Machine-readable facts about a refusal, for the few the app has to *act*
+  /// on rather than print.
+  ///
+  /// Empty for almost every error, and meant to stay that way: the localized
+  /// [message] is what a screen shows, and a second copy of it in here would be
+  /// a second contract to keep in step. It exists for the frozen time entry,
+  /// which names why it is frozen, who can lift it and what the way back is —
+  /// so the app can offer that way instead of leaving somebody at a dead end.
+  final Map<String, String> details;
 
   /// The route is gated behind a platform feature flag that is currently off —
   /// "not switched on", not "not found".
@@ -437,6 +452,20 @@ class ApiClient {
       ? data['message'] as String
       : null;
 
+  /// The `details` object of an error body, flattened to strings.
+  ///
+  /// Tolerant on purpose: an older server sends no such key, and a newer one may
+  /// add a field this build has never heard of. Neither is an error — a missing
+  /// key reads as "this refusal has no machine-readable part", which is true.
+  static Map<String, String> _detailsOf(Object? body) {
+    final raw = body is Map ? body['details'] : null;
+    if (raw is! Map) return const {};
+    return {
+      for (final entry in raw.entries)
+        if (entry.value != null) '${entry.key}': '${entry.value}',
+    };
+  }
+
   ApiFailure _toFailure(DioException error) {
     final status = error.response?.statusCode;
     final data = _asMessageBody(error.response?.data);
@@ -451,6 +480,7 @@ class ApiClient {
         message,
         statusCode: status,
         featureDisabled: featureDisabled,
+        details: _detailsOf(data),
       );
     }
     return switch (error.type) {

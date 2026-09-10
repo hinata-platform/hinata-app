@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
+import 'package:hinata/core/blocs/time_policy_cubit.dart';
+import 'package:hinata/core/models/time_approval_models.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/core/widgets/hive_widgets.dart' show HiveSwitch;
@@ -50,15 +52,20 @@ void main() {
     // The tag catalogue card mounts itself as soon as the module is on, and it
     // reads the catalogue. An empty one is what a fresh instance has.
     value: _FakeTagRepository(),
-    child: MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: theme,
-      home: Scaffold(
-        body: Center(
-          child: SizedBox(
-            width: width,
-            child: SingleChildScrollView(
-              child: AdminTimeTrackingSection(settings: settings),
+    child: BlocProvider<TimePolicyCubit>(
+      // So does the lock-exception card, and it reads the policy the way every
+      // screen in the module does — the app provides this cubit once, globally.
+      create: (context) => TimePolicyCubit(context.read<TimeRepository>()),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: theme,
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: width,
+              child: SingleChildScrollView(
+                child: AdminTimeTrackingSection(settings: settings),
+              ),
             ),
           ),
         ),
@@ -439,6 +446,20 @@ class _FakeTagRepository implements TimeRepository {
     int size = 50,
     bool withUsage = false,
   }) async => (items: const <TimeTag>[], total: 0);
+
+  /// The section now carries the lock-exception card and the period preview, and
+  /// both read this repository. Answering empty rather than throwing, because
+  /// what this file is about is the policy *controls* — a preview that refused to
+  /// load would make every assertion below an assertion about an exception.
+  @override
+  Future<List<ApprovalPeriod>> approvalPeriods({
+    required DateTime from,
+    required DateTime to,
+    String? projectId,
+  }) async => const <ApprovalPeriod>[];
+
+  @override
+  Future<TimePolicySnapshot> policy() async => TimePolicySnapshot.none;
 
   @override
   dynamic noSuchMethod(Invocation invocation) =>

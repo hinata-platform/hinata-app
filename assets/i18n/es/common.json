@@ -918,7 +918,8 @@
     "view": {
       "list": "Lista",
       "calendar": "Calendario",
-      "timesheet": "Parte de horas"
+      "timesheet": "Parte de horas",
+      "approvals": "Aprobaciones"
     },
     "calendar": {
       "untimed": "Sin hora",
@@ -992,6 +993,92 @@
       "CALENDAR": "Desde un calendario",
       "CSV": "Importada",
       "SHARED": "Copiada de una entrada compartida"
+    },
+    "lock": {
+      "reason": {
+        "lockDate": "Los registros anteriores al {{date}} están cerrados.",
+        "approval": "Has enviado {{from}} – {{to}}, así que estos registros quedan fijos.",
+        "invoice": "Una factura emitida hace referencia a este registro.",
+        "unknown": "Este registro está cerrado a cambios."
+      },
+      "holder": {
+        "lockDate": "Un administrador puede reabrir un intervalo dentro del periodo cerrado.",
+        "approval": "Quien dirige el proyecto, o un administrador, puede reabrir el periodo.",
+        "invoice": "Quien emite facturas lo compensa con un abono."
+      },
+      "remedy": {
+        "lockDate": "Pide una corrección: tu motivo se registra y llega a un administrador.",
+        "approval": "Pide una corrección o que se reabra el periodo.",
+        "invoice": "La factura nunca se reescribe; un abono la compensa."
+      },
+      "chip": {
+        "lockDate": "Cerrado",
+        "approval": "Enviado"
+      },
+      "request": "Pedir una corrección",
+      "requestTitle": "Pedir una corrección",
+      "requestHint": "¿Qué está mal y qué debería decir?",
+      "requestSend": "Enviar petición",
+      "requestSent": "Tu petición se ha enviado y registrado."
+    },
+    "approval": {
+      "status": {
+        "open": "Abierto",
+        "submitted": "Enviado",
+        "approved": "Aprobado",
+        "rejected": "Devuelto",
+        "withdrawn": "Retirado"
+      },
+      "rhythm": {
+        "WEEKLY": "Semanal",
+        "BIWEEKLY": "Cada dos semanas",
+        "SEMI_MONTHLY": "Dos veces al mes",
+        "MONTHLY": "Mensual",
+        "QUARTERLY": "Trimestral",
+        "CUSTOM_DAYS": "Número fijo de días",
+        "FREE": "Intervalo a elección"
+      },
+      "previousPeriod": "Periodo anterior",
+      "nextPeriod": "Periodo siguiente",
+      "pickSpan": "Elegir un intervalo",
+      "submitTitle": "Enviar este periodo",
+      "submitConfirm": "¿Enviar {{period}} para su aprobación? Sus registros no se podrán cambiar hasta que se decida.",
+      "submitAction": "Enviar periodo",
+      "submitted": "Periodo enviado.",
+      "withdrawTitle": "Retirar",
+      "withdrawConfirm": "¿Retirar este envío? Sus registros vuelven a ser editables.",
+      "withdrawAction": "Retirar",
+      "withdrawFor": "Retirar {{project}}",
+      "withdrawn": "Envío retirado.",
+      "approveTitle": "Aprobar",
+      "approveConfirm": "¿Aprobar este periodo? Sus registros quedan fijos hasta que alguien lo reabra.",
+      "approveAction": "Aprobar",
+      "approved": "Periodo aprobado.",
+      "rejectTitle": "Devolver",
+      "rejectHint": "¿Qué hay que cambiar? La persona lo verá.",
+      "rejectAction": "Devolver",
+      "rejected": "Periodo devuelto.",
+      "reopenTitle": "Reabrir",
+      "reopenHint": "¿Por qué se reabre este periodo aprobado?",
+      "reopenAction": "Reabrir",
+      "reopened": "Periodo reabierto.",
+      "showEntries": "Ver registros",
+      "scope": {
+        "mine": "Míos",
+        "inbox": "Por decidir"
+      },
+      "empty": {
+        "mine": {
+          "title": "Aún no has enviado nada",
+          "message": "Cuando envíes un periodo aparecerá aquí, con lo que haya sido de él."
+        },
+        "inbox": {
+          "title": "Nada que decidir",
+          "message": "Aquí aparecen los periodos enviados de los proyectos que diriges."
+        }
+      },
+      "gridClamped": "La cuadrícula muestra los primeros días de este periodo; las cifras de arriba abarcan todo.",
+      "nothingToSubmit": "Todavía no hay horas en este periodo."
     }
   },
   "projects": {
@@ -1558,7 +1645,7 @@
       "requiredTagTitle": "Etiqueta obligatoria",
       "requiredTagHint": "Una entrada debe llevar al menos una etiqueta.",
       "lockBeforeLabel": "Bloqueado antes de",
-      "lockBeforeHint": "Las entradas anteriores a ese día ya no se pueden crear, cambiar ni borrar, por nadie, tampoco vía API. El día indicado sigue abierto.",
+      "lockBeforeHint": "Las entradas anteriores a ese día ya no se pueden crear, cambiar ni borrar, por nadie, tampoco vía API. El día indicado sigue abierto. La fecha nunca puede estar en el futuro: el tiempo de trabajo actual siempre tiene que poder registrarse.",
       "roundingModeLabel": "Redondeo",
       "roundingModeHint": "Solo se aplica a los informes; los minutos guardados nunca cambian.",
       "roundingMode": {
@@ -1652,7 +1739,21 @@
       "tagDeleteTitle": "¿Eliminar la etiqueta?",
       "tagDeleteMessage": "\"{{name}}\" se quitará de {{count}} entrada. La entrada se conserva.",
       "tagDeleteMessage_plural": "\"{{name}}\" se quitará de {{count}} entradas. Las entradas se conservan.",
-      "lockBeforeEveryone": "El bloqueo rige para todos, también para los administradores. Levantarlo es la vía documentada para modificar un periodo cerrado."
+      "lockBeforeEveryone": "El bloqueo rige para todos, también para los administradores. Levantarlo es la vía documentada para modificar un periodo cerrado.",
+      "approvalsNeedVisibility": "Aprobar significa leer los registros de una persona, así que activa también «Los responsables ven los registros de los miembros»: de lo contrario verán un total sin nada detrás.",
+      "periodPreviewTitle": "Los próximos periodos",
+      "periodPreviewHint": "Cambiar el ritmo solo afecta a los envíos futuros. Los periodos ya enviados conservan los días que nombraron.",
+      "periodPreviewFree": "Sin un ritmo fijo, quien envía elige el intervalo: como máximo 92 días y sin solaparse con uno ya enviado.",
+      "lockExceptionsTitle": "Intervalos reabiertos",
+      "lockExceptionsHint": "Abre un único intervalo dentro del periodo cerrado en lugar de levantar toda la fecha de bloqueo.",
+      "lockExceptionsLegal": "El tiempo de trabajo es un dato personal, y los datos personales inexactos deben poder corregirse sin dilación indebida (art. 16 RGPD). Una excepción es ese camino de vuelta: abre exactamente sus días, lleva tu motivo y queda en el registro de auditoría.",
+      "lockExceptionsEmpty": "Ahora mismo no hay ningún intervalo abierto dentro del periodo cerrado.",
+      "lockExceptionAdd": "Reabrir un intervalo",
+      "lockExceptionSpan": "¿Qué días deben reabrirse?",
+      "lockExceptionReason": "¿Por qué se reabre este intervalo?",
+      "lockExceptionReasonHint": "Queda en el registro de auditoría y es visible para todos.",
+      "lockExceptionRemove": "Cerrar de nuevo",
+      "lockExceptionRemoveConfirm": "¿Cerrar {{period}} de nuevo? Sus registros pasarán a ser de solo lectura."
     },
     "passwordPolicy": "Política de contraseñas",
     "passwordPolicyHint": "Requisitos mínimos de las contraseñas de los usuarios.",
@@ -2093,7 +2194,15 @@
       "TIME_TAG_CREATED": "Etiqueta creada",
       "TIME_TAG_UPDATED": "Etiqueta modificada",
       "TIME_TAG_DELETED": "Etiqueta eliminada",
-      "TIME_PROJECT_SETTINGS_CHANGED": "Ajustes de tiempo del proyecto modificados"
+      "TIME_PROJECT_SETTINGS_CHANGED": "Ajustes de tiempo del proyecto modificados",
+      "TIMESHEET_SUBMITTED": "Hoja de horas enviada",
+      "TIMESHEET_WITHDRAWN": "Hoja de horas retirada",
+      "TIMESHEET_APPROVED": "Hoja de horas aprobada",
+      "TIMESHEET_REJECTED": "Hoja de horas devuelta",
+      "TIMESHEET_REOPENED": "Hoja de horas reabierta",
+      "TIME_CORRECTION_REQUESTED": "Corrección solicitada",
+      "TIME_LOCK_EXCEPTION_ADDED": "Intervalo reabierto",
+      "TIME_LOCK_EXCEPTION_REMOVED": "Intervalo reabierto cerrado"
     },
     "meta": {
       "oldRole": "Rol anterior",
@@ -2418,7 +2527,10 @@
       "billable": "Facturable por defecto",
       "approvalRequired": "Las hojas de horas necesitan aprobación",
       "approvalPeriod": "Periodo de entrega",
-      "inherit": "Valor del servidor"
+      "inherit": "Valor del servidor",
+      "lockBefore": "Fecha de bloqueo propia",
+      "lockBeforeHint": "Cierra las cuentas de este proyecto antes que las del resto de la instancia. Solo puede cerrar más, nunca menos.",
+      "instanceDefault": "Política de la instancia"
     }
   },
   "account": {
