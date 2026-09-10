@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
@@ -23,12 +24,15 @@ void main() {
 
   setUp(() => repository = _FakeTimeRepository());
 
+  var deletions = 0;
+
   Future<void> open(
     WidgetTester tester, {
     WorkItem? entry,
     Size size = const Size(900, 1200),
     TimePolicySnapshot policy = TimePolicySnapshot.none,
   }) async {
+    deletions = 0;
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -52,7 +56,11 @@ void main() {
               builder: (context) => Scaffold(
                 body: Center(
                   child: ElevatedButton(
-                    onPressed: () => showTimeEntrySheet(context, entry: entry),
+                    onPressed: () => showTimeEntrySheet(
+                      context,
+                      entry: entry,
+                      onDeleted: () => deletions++,
+                    ),
                     child: const Text('open'),
                   ),
                 ),
@@ -379,11 +387,81 @@ void main() {
     expect(repository.updated.single.$1, 'w1');
     expect(repository.updated.single.$2.durationMinutes, 45);
   });
+
+  group('deleting from the sheet', () {
+    final entry = WorkItem(
+      id: 'w1',
+      durationMinutes: 45,
+      activityType: 'Testing',
+      date: DateTime.now(),
+    );
+
+    Finder trash() => find.widgetWithIcon(IconButton, LucideIcons.trash2);
+
+    testWidgets('an existing entry can be removed here', (tester) async {
+      // The calendar has no row menu: this sheet is the only way into a block,
+      // so without this an entry opened from the grid could be corrected in
+      // every way except undone.
+      await open(tester, entry: entry);
+      expect(trash(), findsOneWidget);
+
+      await tester.tap(trash());
+      await tester.pumpAndSettle();
+      // It asks first — the same confirmation the list's row menu shows.
+      await tester.tap(find.text('common.delete').last);
+      await tester.pumpAndSettle();
+
+      expect(repository.deleted, ['w1']);
+      // The page behind is told, because the sheet resolves to null the way a
+      // dismissal does and nothing else would make it reload.
+      expect(deletions, 1);
+      expect(find.text('time.entry.edit'), findsNothing, reason: 'and closes');
+    });
+
+    testWidgets('and on a phone, where it is a bottom sheet', (tester) async {
+      // The header row is `[icon, title, actions, close]`; a second icon button
+      // in it is the one shape that needs no room of its own. At 402 points the
+      // title still has about half the row, and a layout that did not fit would
+      // fail this test by overflowing rather than by looking wrong.
+      await open(tester, entry: entry, size: const Size(402, 874));
+
+      expect(trash(), findsOneWidget);
+      expect(tester.widget<IconButton>(trash()).onPressed, isNotNull);
+    });
+
+    testWidgets('a new entry has nothing to remove', (tester) async {
+      await open(tester);
+
+      expect(trash(), findsNothing);
+    });
+
+    testWidgets('a frozen day refuses it before the confirmation', (
+      tester,
+    ) async {
+      // `delete` goes through the server's `assertWritable` like every other
+      // write, so offering it on a frozen day would be a button that asks a
+      // question and then answers 403.
+      await open(
+        tester,
+        entry: entry,
+        policy: TimePolicySnapshot(
+          lockBefore: DateTime.now().add(const Duration(days: 1)),
+        ),
+      );
+
+      expect(trash(), findsOneWidget);
+      expect(tester.widget<IconButton>(trash()).onPressed, isNull);
+    });
+  });
 }
 
 class _FakeTimeRepository implements TimeRepository {
   final List<TimeEntryDraft> created = [];
   final List<(String, TimeEntryDraft)> updated = [];
+  final List<String> deleted = [];
+
+  @override
+  Future<void> delete(String id) async => deleted.add(id);
 
   @override
   Future<PageResult<TimeTag>> tags({
