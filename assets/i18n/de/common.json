@@ -1731,6 +1731,7 @@
       "privacyNoticeLabel": "Datenschutzhinweis",
       "privacyNoticeHint": "Wird in der App bei den Zeitdaten des Moduls angezeigt. Leer → der eingebaute Text.",
       "notYetEnforced": "Wird gespeichert, aber noch nicht angewendet — die Funktion hinter dieser Richtlinie kommt in einer späteren Stufe der Zeiterfassung.",
+      "leadsSeeMemberEntriesPending": "Teilweise angewendet: der Verlauf eines Eintrags und die Einträge hinter einer Einreichung folgen dieser Richtlinie bereits. Die Stundenzettel-Matrix zeigt weiterhin die Summen jeder Person — das folgt in einer späteren Stufe.",
       "tagsTitle": "Tags",
       "tagsHint": "Das Vokabular, mit dem Einträge beschriftet werden. Ein Umbenennen zieht alle Einträge mit.",
       "tagsEmpty": "Noch keine Tags.",

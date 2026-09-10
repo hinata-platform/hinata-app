@@ -208,6 +208,13 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     }
     if (_started) return;
     _started = true;
+    // The rules, on the same terms as every other screen in the module. The
+    // calendar was the one that never asked, and it showed: opened directly —
+    // a bookmark, a reload, a notification's deep link — the freeze wash and
+    // its padlock were simply absent, because the snapshot the wash reads was
+    // still `TimePolicySnapshot.none`. It looked right only after the list or
+    // the timesheet had been visited first in the same session.
+    unawaited(context.read<TimePolicyCubit>().ensureLoaded());
     unawaited(_ensureAround(_focused));
   }
 
@@ -1119,9 +1126,9 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   /// by opening an entry and being refused, which for a closed month is the worst
   /// possible moment to learn it. The wash is deliberately not the weekend's —
   /// that one already means "quiet", and a second flat rect in the same tone
-  /// would read as "this is also a weekend". So the tone is darker and the day's
-  /// heading carries a padlock beside its date, which is the part that actually
-  /// says *what* the wash means.
+  /// would read as "this is also a weekend". So it has its own weight, measured
+  /// per theme in [AppColors.closed], and the day's heading carries a padlock
+  /// beside its date, which is the part that actually says *what* it means.
   ///
   /// Only the lock date, and that is not a gap: a period somebody has handed in
   /// freezes their entries for **one project**, while a column is a whole day
@@ -1148,10 +1155,10 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
         id: 'frozen',
         placement: TimeGridPlacement.background,
         items: frozen,
-        // Doubled against the weekend's own wash, measured on glass in both
-        // themes: enough to read as a different statement, not enough to bury
-        // the hour lines or the entries already drawn on the day.
-        tint: AppColors.recess,
+        // Its own token, not the weekend's: the two have to be told apart at a
+        // glance, and in the dark theme that cannot be done by darkening at all.
+        // The numbers are in [AppColors.closed].
+        tint: AppColors.closed,
         glyph: LucideIcons.lock,
       ),
     ];

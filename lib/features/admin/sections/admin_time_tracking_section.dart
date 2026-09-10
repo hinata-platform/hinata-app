@@ -277,6 +277,10 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         onChanged: (v) => _set('leadsSeeMemberEntries', v),
         monitoring: true,
         pending: true,
+        // Not the blanket "nothing behind this yet": two reads already obey it,
+        // and a switch that opens somebody's entries to a colleague is the last
+        // one an operator should be told is inert.
+        pendingKey: 'admin.timeTracking.leadsSeeMemberEntriesPending',
       ),
       PolicySwitch(
         title: context.t('admin.timeTracking.approvalsTitle'),

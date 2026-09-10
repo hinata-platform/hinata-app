@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
@@ -365,19 +366,30 @@ class _NoteDialogState extends State<_NoteDialog> {
   );
 }
 
-/// "1 – 31 March 2026", in the reader's locale.
+/// "1 Mar – 31 Mar 2026", in the reader's locale.
 ///
 /// The label of a period is the two dates, never a week number and never the word
 /// "week": how often timesheets are handed in is the operator's decision, and a
 /// label that assumed a rhythm would be wrong on most instances. The type is named
 /// separately where there is room for it.
+///
+/// Two things it deliberately is not. It carries **no weekday**, which
+/// `MaterialLocalizations.formatMediumDate` would add: "Tue, 1 Sep – Wed, 30 Sep"
+/// answers which day of the week a month happens to begin on, twice, in the one
+/// place nobody asked — a period is bounded by dates, and the noise is worst in
+/// exactly the narrow switcher where the room is scarcest. And it carries the
+/// **year once**, on the end, which the old shape carried not at all: an approval
+/// list pages back through years, and "1 Jul – 31 Jul" in a history line is a
+/// different month depending on how far down it sits.
 String formatPeriod(BuildContext context, DateTime start, DateTime end) {
-  final localizations = MaterialLocalizations.of(context);
+  final locale = Localizations.localeOf(context).toString();
+  final full = DateFormat.yMMMd(locale);
   if (start.year == end.year &&
       start.month == end.month &&
       start.day == end.day) {
-    return localizations.formatMediumDate(start);
+    return full.format(start);
   }
-  return '${localizations.formatMediumDate(start)} – '
-      '${localizations.formatMediumDate(end)}';
+  // Same year: the start drops it, because repeating it reads as two years.
+  final from = start.year == end.year ? DateFormat.MMMd(locale) : full;
+  return '${from.format(start)} – ${full.format(end)}';
 }
