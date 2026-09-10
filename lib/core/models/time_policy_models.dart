@@ -29,6 +29,7 @@ class TimePolicySnapshot extends Equatable {
     this.defaultBillable = false,
     this.approvalsEnabled = false,
     this.approvalRhythm = const ApprovalRhythm(),
+    this.myFrozenPeriods = const [],
   });
 
   /// What a fresh instance demands: nothing. Also what the app assumes while the
@@ -77,6 +78,15 @@ class TimePolicySnapshot extends Equatable {
   /// How often they are handed in. The app never turns this into dates — that is
   /// `GET /time/approvals/periods`.
   final ApprovalRhythm approvalRhythm;
+
+  /// The reader's own submissions that freeze something, newest first.
+  ///
+  /// Carried with the rules rather than fetched per screen, because "is this day
+  /// of mine frozen" is asked by four of them and a copy each would be four
+  /// requests and four ways to be stale. Bounded by the page the cubit reads: a
+  /// hundred submissions is years of them, and a period older than that is behind
+  /// the lock date anyway.
+  final List<TimesheetApproval> myFrozenPeriods;
 
   /// An issue always brings its project, so requiring one requires the other.
   bool get requiresPlacement => requiredProject || requiredIssue;
@@ -135,22 +145,21 @@ class TimePolicySnapshot extends Equatable {
     return !lockExceptions.any((exception) => exception.covers(day));
   }
 
-  /// Why [date] cannot be written, or null when it can.
+  /// Why [date] of [projectId] cannot be written, or null when it can.
   ///
-  /// The lock date is asked first, because it is the more absolute answer: a day
-  /// an administrator has archived stays archived whatever a submission says
-  /// about it — and that is exactly how the server resolves it too.
+  /// The one resolver, so every screen draws the same lock for the same day: the
+  /// list, the entry sheet, the timesheet cell and the calendar all ask this. The
+  /// lock date is asked first, because it is the more absolute answer — a day an
+  /// administrator has archived stays archived whatever a submission says about
+  /// it — and that is exactly the order the server resolves them in.
   ///
-  /// [frozenPeriods] are the submissions that cover the window on screen, for the
-  /// reader's own time and the entry's project. The caller supplies them because
-  /// only the caller knows which window it is drawing; passing none answers about
-  /// the lock date alone, which is the honest answer for an entry with no project
-  /// — those are never handed in.
-  TimeLockInfo? lockFor(
-    DateTime? date, {
-    List<TimesheetApproval> frozenPeriods = const [],
-    String? entryId,
-  }) {
+  /// The freezing submissions come from [myFrozenPeriods], which the cubit loads
+  /// with the rules. Both halves of the tuple have to match: a period is somebody's
+  /// hours *for one project*, so a submission of project B freezes nothing in
+  /// project A. An entry with no project is never frozen by an approval at all —
+  /// those are private and are never handed in — and falls under the lock date like
+  /// everything else.
+  TimeLockInfo? lockFor(DateTime? date, {String? projectId, String? entryId}) {
     if (date == null) return null;
     if (isLocked(date)) {
       return TimeLockInfo(
@@ -159,10 +168,10 @@ class TimePolicySnapshot extends Equatable {
         entryId: entryId,
       );
     }
-    if (!approvalsEnabled) return null;
+    if (!approvalsEnabled || projectId == null) return null;
     final day = DateTime(date.year, date.month, date.day);
-    for (final period in frozenPeriods) {
-      if (!period.status.freezes) continue;
+    for (final period in myFrozenPeriods) {
+      if (period.projectId != projectId || !period.status.freezes) continue;
       final start = DateTime(
         period.periodStart.year,
         period.periodStart.month,
@@ -185,6 +194,24 @@ class TimePolicySnapshot extends Equatable {
     }
     return null;
   }
+
+  /// The same rules with the reader's freezing submissions attached.
+  TimePolicySnapshot withFrozenPeriods(List<TimesheetApproval> periods) =>
+      TimePolicySnapshot(
+        requiredProject: requiredProject,
+        requiredIssue: requiredIssue,
+        requiredDescription: requiredDescription,
+        requiredTag: requiredTag,
+        lockBefore: lockBefore,
+        lockExceptions: lockExceptions,
+        roundingMode: roundingMode,
+        roundingIncrement: roundingIncrement,
+        limitTagAccess: limitTagAccess,
+        defaultBillable: defaultBillable,
+        approvalsEnabled: approvalsEnabled,
+        approvalRhythm: approvalRhythm,
+        myFrozenPeriods: periods,
+      );
 
   factory TimePolicySnapshot.fromJson(Map<String, dynamic> json) {
     final required = json['requiredFields'] as Map<String, dynamic>?;
@@ -223,6 +250,7 @@ class TimePolicySnapshot extends Equatable {
     defaultBillable,
     approvalsEnabled,
     approvalRhythm,
+    myFrozenPeriods,
   ];
 }
 

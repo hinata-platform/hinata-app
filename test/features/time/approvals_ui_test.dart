@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/blocs/auth_bloc.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
@@ -230,6 +231,17 @@ void main() {
   // --- freezing, as the models see it ---------------------------------------
 
   group('the policy', () {
+    TimesheetApproval approved({
+      ApprovalStatus status = ApprovalStatus.approved,
+    }) => TimesheetApproval(
+      id: 'a1',
+      userId: 'u1',
+      projectId: 'p1',
+      periodStart: DateTime(2026, 8, 1),
+      periodEnd: DateTime(2026, 8, 31),
+      status: status,
+    );
+
     test('answers the lock date first, because it is the more absolute', () {
       // A day an administrator has archived stays archived whatever a submission
       // says about it — which is also the order the server resolves them in.
@@ -237,17 +249,8 @@ void main() {
         lockBefore: DateTime(2026, 9, 1),
         approvalsEnabled: true,
       );
-      final period = TimesheetApproval(
-        id: 'a1',
-        userId: 'u1',
-        projectId: 'p1',
-        periodStart: DateTime(2026, 8, 1),
-        periodEnd: DateTime(2026, 8, 31),
-        status: ApprovalStatus.approved,
-      );
-
       expect(
-        policy.lockFor(DateTime(2026, 8, 10), frozenPeriods: [period])!.reason,
+        policy.lockFor(DateTime(2026, 8, 10), projectId: 'p1')!.reason,
         'lockDate',
       );
     });
@@ -277,29 +280,35 @@ void main() {
     });
 
     test('a submitted period freezes its days once the lock date is clear', () {
-      const policy = TimePolicySnapshot(approvalsEnabled: true);
-      final period = TimesheetApproval(
-        id: 'a1',
-        userId: 'u1',
-        projectId: 'p1',
-        periodStart: DateTime(2026, 8, 1),
-        periodEnd: DateTime(2026, 8, 31),
-        status: ApprovalStatus.submitted,
+      final policy = TimePolicySnapshot(
+        approvalsEnabled: true,
+        myFrozenPeriods: [approved(status: ApprovalStatus.submitted)],
       );
 
       final lock = policy.lockFor(
         DateTime(2026, 8, 31),
-        frozenPeriods: [period],
+        projectId: 'p1',
         entryId: 'w1',
       );
       expect(lock?.reason, 'approval');
       expect(lock?.approvalId, 'a1');
       expect(lock?.entryId, 'w1');
       // And the day after it is not.
-      expect(
-        policy.lockFor(DateTime(2026, 9, 1), frozenPeriods: [period]),
-        isNull,
+      expect(policy.lockFor(DateTime(2026, 9, 1), projectId: 'p1'), isNull);
+    });
+
+    test('and freezes only its own project', () {
+      // Both halves of the tuple have to match: a period is somebody's hours for
+      // *one* project, so a submission of one freezes nothing in another — and an
+      // entry with no project is never handed in at all.
+      final policy = TimePolicySnapshot(
+        approvalsEnabled: true,
+        myFrozenPeriods: [approved()],
       );
+
+      expect(policy.lockFor(DateTime(2026, 8, 10), projectId: 'p1'), isNotNull);
+      expect(policy.lockFor(DateTime(2026, 8, 10), projectId: 'p2'), isNull);
+      expect(policy.lockFor(DateTime(2026, 8, 10)), isNull);
     });
 
     test(
@@ -310,16 +319,10 @@ void main() {
           ApprovalStatus.rejected,
           ApprovalStatus.withdrawn,
         ]) {
-          final period = TimesheetApproval(
-            id: 'a1',
-            userId: 'u1',
-            projectId: 'p1',
-            periodStart: DateTime(2026, 8, 1),
-            periodEnd: DateTime(2026, 8, 31),
-            status: status,
-          );
           expect(
-            policy.lockFor(DateTime(2026, 8, 10), frozenPeriods: [period]),
+            policy
+                .withFrozenPeriods([approved(status: status)])
+                .lockFor(DateTime(2026, 8, 10), projectId: 'p1'),
             isNull,
             reason: '$status must leave the period editable',
           );
@@ -329,20 +332,80 @@ void main() {
 
     test('with approvals off a stale submission freezes nothing either', () {
       // Switching the policy off has to give people their records back.
-      const policy = TimePolicySnapshot();
-      final period = TimesheetApproval(
-        id: 'a1',
-        userId: 'u1',
-        projectId: 'p1',
-        periodStart: DateTime(2026, 8, 1),
-        periodEnd: DateTime(2026, 8, 31),
-        status: ApprovalStatus.approved,
+      final policy = TimePolicySnapshot(myFrozenPeriods: [approved()]);
+
+      expect(policy.lockFor(DateTime(2026, 8, 10), projectId: 'p1'), isNull);
+    });
+  });
+
+  // --- the freeze is visible before it refuses ---------------------------------
+
+  group('the entry form', () {
+    testWidgets('shows the notice for a period the reader has handed in', (
+      tester,
+    ) async {
+      // The whole point of loading the freezing periods with the rules: before
+      // this, a person whose period was submitted opened the form, saw nothing,
+      // typed, and was refused on save. The lock has to be drawn, not discovered.
+      final policy = TimePolicySnapshot(
+        approvalsEnabled: true,
+        myFrozenPeriods: [
+          TimesheetApproval(
+            id: 'a1',
+            userId: 'u1',
+            projectId: 'p1',
+            periodStart: DateTime(2026, 8, 1),
+            periodEnd: DateTime(2026, 8, 31),
+            status: ApprovalStatus.submitted,
+          ),
+        ],
       );
 
-      expect(
-        policy.lockFor(DateTime(2026, 8, 10), frozenPeriods: [period]),
-        isNull,
+      final lock = policy.lockFor(
+        DateTime(2026, 8, 14),
+        projectId: 'p1',
+        entryId: 'w1',
       );
+
+      expect(lock?.reason, 'approval');
+      await tester.pumpWidget(
+        RepositoryProvider<TimeRepository>.value(
+          value: _FakeTimeRepository(),
+          child: MaterialApp(
+            home: Scaffold(body: LockNotice(lock: lock!)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('time.lock.reason.approval'), findsOneWidget);
+      expect(find.text('time.lock.request'), findsOneWidget);
+    });
+
+    test('a refusal the app did not see coming becomes the notice', () {
+      // The rules the app holds can be a moment out of date — somebody else's
+      // approval landing between the last read and this save. Then the server's
+      // answer is the authority, and it carries everything the notice needs.
+      final failure = ApiFailure(
+        'error.time.approvalLocked',
+        statusCode: 403,
+        details: const {
+          'reason': 'approval',
+          'holder': 'approver',
+          'remedy': 'reopen',
+          'approvalId': 'a9',
+          'periodStart': '2026-08-01',
+          'periodEnd': '2026-08-31',
+        },
+      );
+
+      final lock = lockFromFailure(failure, entryId: 'w1');
+
+      expect(lock?.reason, 'approval');
+      expect(lock?.approvalId, 'a9');
+      expect(lock?.periodEnd, DateTime(2026, 8, 31));
+      expect(lock?.entryId, 'w1');
+      // And an ordinary failure names no freeze at all.
+      expect(lockFromFailure(ApiFailure('errors.unexpected')), isNull);
     });
   });
 
@@ -460,13 +523,17 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    /// A submission. [mine] decides whose — and that is the point of the flag: a
+    /// lead's own rows appear in their own inbox (the server does not filter them
+    /// out, deliberately), and those are exactly the ones they may not decide.
     TimesheetApproval approval({
       String id = 'a1',
       ApprovalStatus status = ApprovalStatus.submitted,
       String? note,
+      bool mine = false,
     }) => TimesheetApproval(
       id: id,
-      userId: 'u1',
+      userId: mine ? 'u1' : 'u2',
       projectId: 'p1',
       periodStart: DateTime(2026, 8, 1),
       periodEnd: DateTime(2026, 8, 31),
@@ -480,7 +547,7 @@ void main() {
     ) async {
       // "Mine" is what every member has; the inbox is for whoever can decide
       // something, and opening on it would show most people an empty page.
-      final repository = await open(tester, mine: [approval()]);
+      final repository = await open(tester, mine: [approval(mine: true)]);
 
       expect(repository.scopes, ['mine']);
       expect(find.text('time.approval.status.submitted'), findsOneWidget);
@@ -523,6 +590,19 @@ void main() {
       },
     );
 
+    testWidgets('and never on one\'s own row, even inside the inbox', (
+      tester,
+    ) async {
+      // A lead who leads the project they submitted to sees their own row there.
+      // Nobody signs off their own period, so the buttons are not offered — a
+      // button that always answered 403 would be a worse way to say so.
+      await open(tester, inbox: [approval(mine: true)]);
+      await switchToInbox(tester);
+
+      expect(find.text('time.approval.approveAction'), findsNothing);
+      expect(find.text('time.approval.rejectAction'), findsNothing);
+    });
+
     testWidgets('an approved period offers the reopen instead', (tester) async {
       await open(tester, inbox: [approval(status: ApprovalStatus.approved)]);
       await switchToInbox(tester);
@@ -537,7 +617,11 @@ void main() {
       await open(
         tester,
         mine: [
-          approval(status: ApprovalStatus.rejected, note: 'Friday is missing'),
+          approval(
+            mine: true,
+            status: ApprovalStatus.rejected,
+            note: 'Friday is missing',
+          ),
         ],
       );
 

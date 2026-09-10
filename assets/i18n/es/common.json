@@ -1013,7 +1013,9 @@
       },
       "chip": {
         "lockDate": "Cerrado",
-        "approval": "Enviado"
+        "approval": "Enviado",
+        "invoice": "Facturado",
+        "unknown": "Cerrado"
       },
       "request": "Pedir una corrección",
       "requestTitle": "Pedir una corrección",

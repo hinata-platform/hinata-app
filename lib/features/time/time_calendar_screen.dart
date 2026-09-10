@@ -142,14 +142,14 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   /// day re-filter and re-pack on every frame of a swipe.
   final Map<int, List<TimeGridLayer>> _layerMemo = {};
 
-  /// The lock date the memo was built against.
+  /// The freeze the memo was built against — the lock date *and* its exceptions.
   ///
-  /// The memo exists so a build does not re-pack a day, and the wash rides in it
-  /// — so a freeze an administrator has just lifted would stay drawn for the life
-  /// of the screen unless the memo is told. Compared rather than listened to: the
-  /// policy is read in the builder anyway, and one field is cheaper than a
+  /// The memo exists so a build does not re-pack a day, and the wash rides in it —
+  /// so a freeze an administrator has just lifted would stay drawn for the life of
+  /// the screen unless the memo is told. Compared rather than listened to: the
+  /// policy is read in the builder anyway, and one int is cheaper than a
   /// subscription that would rebuild the whole canvas.
-  DateTime? _washedAgainst;
+  int? _washedAgainst;
 
   /// The `days` lists handed to [TimeGrid], for the same reason and with more
   /// force: the grid drops *both* its memos when the list is not the identical
@@ -677,12 +677,18 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   @override
   Widget build(BuildContext context) {
     final compact = context.isCompact;
-    // The freeze rides in the layer memo, so a lock date that has moved has to
-    // drop it — otherwise a day an administrator just reopened stays washed for
-    // the life of the screen. Watched, so the rebuild happens at all.
-    final lock = context.watch<TimePolicyCubit>().state.lockBefore;
-    if (lock != _washedAgainst) {
-      _washedAgainst = lock;
+    // The freeze rides in the layer memo, so a freeze that has moved has to drop
+    // it — otherwise a day an administrator just reopened stays washed for the
+    // life of the screen. Both halves, and the second is the one that caught this:
+    // reopening a span changes only `lockExceptions`, so comparing the lock date
+    // alone left the padlock painted over a day that was now open.
+    final policy = context.watch<TimePolicyCubit>().state;
+    final washedBy = Object.hash(
+      policy.lockBefore,
+      Object.hashAll(policy.lockExceptions),
+    );
+    if (washedBy != _washedAgainst) {
+      _washedAgainst = washedBy;
       _layerMemo.clear();
     }
     // Once. Both readers below walk the same months, and in the week span that

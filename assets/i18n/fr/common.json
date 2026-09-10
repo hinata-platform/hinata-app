@@ -1013,7 +1013,9 @@
       },
       "chip": {
         "lockDate": "Clôturé",
-        "approval": "Soumis"
+        "approval": "Soumis",
+        "invoice": "Facturé",
+        "unknown": "Fermé"
       },
       "request": "Demander une correction",
       "requestTitle": "Demander une correction",
