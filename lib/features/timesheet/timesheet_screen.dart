@@ -104,6 +104,11 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// stepped through. Null until somebody picks one.
   DateTimeRange? _freeSpan;
 
+  /// The project filter [_period] was resolved under. A period is a project's when
+  /// one is named, so changing the filter has to re-ask even when the anchor has
+  /// not moved.
+  String? _periodFilter;
+
   List<TimesheetRow> _rows = const [];
 
   /// How many rows the whole matrix has, against how many are on screen. Equal
@@ -316,6 +321,19 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// week it already had, so an instance whose approvals route is unreachable
   /// still shows a timesheet.
   Future<void> _resolvePeriod() async {
+    final anchored = _anchor;
+    final current = _period;
+    // The arrows move the anchor one day past an edge, so the answer for a day
+    // already inside the period on screen is the period on screen. Without this
+    // every filter change, every cell edit and every "today" while already on
+    // today paid a round trip to be told what it already had.
+    if (current != null &&
+        _freeSpan == null &&
+        anchored != null &&
+        current.contains(anchored) &&
+        _projectFilter == _periodFilter) {
+      return;
+    }
     final policy = context.read<TimePolicyCubit>().state;
     final span = policy.approvalRhythm.hasGrid
         ? null
@@ -346,6 +364,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
               orElse: () => periods.first,
             );
       _period = period;
+      _periodFilter = _projectFilter;
       if (period != null) {
         _from = DateTime(
           period.start.year,
@@ -360,7 +379,10 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     } on ApiFailure {
       // The grid is still worth drawing. Leaving the period null is what makes
       // the switcher and the submit action disappear rather than lie.
-      if (mounted) _period = null;
+      if (mounted) {
+        _period = null;
+        _periodFilter = null;
+      }
     }
   }
 
@@ -445,6 +467,9 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     setState(() {
       _anchor = DateTime(today.year, today.month, today.day);
       _freeSpan = null;
+      // This action doubles as refresh, and the statuses are half of what it is
+      // refreshing — somebody else may have decided the period since it was drawn.
+      _forgetPeriod();
       _from = weekStartFor(context, today);
       _to = addDays(_from, 6);
     });
@@ -1016,7 +1041,9 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                   // the rhythm is the operator's decision, so no copy may assume
                   // one.
                   message: context.t(
-                    _period == null ? 'timesheet.empty' : 'timesheet.emptyPeriod',
+                    _period == null
+                        ? 'timesheet.empty'
+                        : 'timesheet.emptyPeriod',
                   ),
                   card: false,
                 ),
@@ -1166,6 +1193,13 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     );
   }
 
+  /// Drops the cached period so the next load asks again — after a submission or a
+  /// withdrawal, whose whole visible effect is the status the band draws.
+  void _forgetPeriod() {
+    _period = null;
+    _periodFilter = null;
+  }
+
   Future<void> _submitPeriod(ApprovalPeriod period) async {
     final submitted = await ApprovalActions.submit(
       context,
@@ -1173,19 +1207,31 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
       periodEnd: period.end,
       projectIds: [for (final project in period.submittable) project.projectId],
     );
-    if (submitted && mounted) unawaited(_load());
+    if (submitted && mounted) {
+      _forgetPeriod();
+      unawaited(_load());
+    }
   }
 
   Future<void> _withdraw(String approvalId) async {
     final withdrawn = await ApprovalActions.withdraw(context, approvalId);
-    if (withdrawn && mounted) unawaited(_load());
+    if (withdrawn && mounted) {
+      _forgetPeriod();
+      unawaited(_load());
+    }
   }
 
   /// The grid. It scrolls sideways inside its own card — a week of columns plus
   /// two label columns does not fit a phone — while the page itself never does.
   Widget _table() {
     final localizations = MaterialLocalizations.of(context);
-    final days = [for (var i = 0; i < 7; i++) addDays(_from, i)];
+    // The window, not a fixed week. A monthly period is up to 31 days and the page
+    // fetches all of them; drawing seven meant days 8–31 could not be seen or
+    // tapped, and the other twenty-four days of minutes travelled on every row for
+    // nothing. The table already scrolls sideways inside its own card.
+    final days = [
+      for (var day = _from; !day.isAfter(_to); day = addDays(day, 1)) day,
+    ];
     final editable = _editableUserId;
     return SoftCard(
       padding: const EdgeInsets.all(8),
@@ -1263,31 +1309,16 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
 
   /// Why this cell cannot be written, or null when it can.
   ///
-  /// The lock date first, then the period — the same order the server resolves
-  /// them in, and for the same reason: a day an administrator has archived stays
-  /// archived whatever a submission says about it.
-  TimeLockInfo? _lockFor(TimesheetRow row, DateTime day) {
-    final policy = context.read<TimePolicyCubit>().state;
-    if (policy.isLocked(day)) {
-      return TimeLockInfo(reason: 'lockDate', lockDate: policy.lockBefore);
-    }
-    final period = _period;
-    if (period == null || row.projectId == null || !period.contains(day)) {
-      return null;
-    }
-    for (final project in period.projects) {
-      if (project.projectId != row.projectId) continue;
-      if (project.status?.freezes ?? false) {
-        return TimeLockInfo(
-          reason: 'approval',
-          approvalId: project.approvalId,
-          periodStart: period.start,
-          periodEnd: period.end,
-        );
-      }
-    }
-    return null;
-  }
+  /// The shared resolver, and deliberately not a second one here. This screen used
+  /// to answer the same question its own way — lock date first, then the period's
+  /// per-project status — which is two encodings of one rule and two places for it
+  /// to drift. The rules the cubit holds already carry the reader's freezing
+  /// submissions, so the answer is the same one the list, the composer and the
+  /// calendar give for the same day.
+  TimeLockInfo? _lockFor(TimesheetRow row, DateTime day) => context
+      .read<TimePolicyCubit>()
+      .state
+      .lockFor(day, projectId: row.projectId);
 
   Widget _memberCell(TimesheetRow row) {
     final user = _users[row.userId];

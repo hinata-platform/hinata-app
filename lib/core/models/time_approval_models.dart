@@ -58,12 +58,24 @@ class TimeLockInfo extends Equatable {
     this.entryId,
   });
 
-  /// `lockDate`, `approval` or `invoice` — the server's vocabulary, verbatim.
+  /// `lockDate`, `approval` or `invoice` — the server's vocabulary.
   ///
-  /// An unknown value is kept rather than mapped to an enum: a server newer than
-  /// this build may name a fourth reason, and "frozen, for a reason this app
-  /// cannot name" is a better answer than pretending nothing is wrong.
+  /// An unknown value is kept rather than dropped: a server newer than this build
+  /// may name a fourth reason, and "frozen, for a reason this app cannot name" is
+  /// a better answer than pretending nothing is wrong. It is never used to build a
+  /// key, though — see [knownReason]. The app is multi-server and the URL comes
+  /// from whoever is using it, so a server-supplied string interpolated into an
+  /// i18n key is a server-supplied string painted on screen.
   final String reason;
+
+  /// The reasons this build has words for.
+  static const _known = {'lockDate', 'approval', 'invoice'};
+
+  /// [reason] when it is one this build knows, `unknown` otherwise.
+  ///
+  /// Every key below is built from this and never from [reason], so an
+  /// unrecognised value renders three honest sentences rather than three raw keys.
+  String get knownReason => _known.contains(reason) ? reason : 'unknown';
 
   /// The freeze boundary, when the reason is the lock date. Days *before* it are
   /// shut; the day itself is open.
@@ -82,13 +94,16 @@ class TimeLockInfo extends Equatable {
   bool get isApproval => reason == 'approval';
 
   /// `time.lock.reason.<reason>` — one sentence per reason.
-  String get reasonKey => 'time.lock.reason.$reason';
+  String get reasonKey => 'time.lock.reason.$knownReason';
 
   /// `time.lock.holder.<reason>` — who can lift this one.
-  String get holderKey => 'time.lock.holder.$reason';
+  String get holderKey => 'time.lock.holder.$knownReason';
 
   /// `time.lock.remedy.<reason>` — what to do about it.
-  String get remedyKey => 'time.lock.remedy.$reason';
+  String get remedyKey => 'time.lock.remedy.$knownReason';
+
+  /// `time.lock.chip.<reason>` — the same thing compressed to one word.
+  String get chipKey => 'time.lock.chip.$knownReason';
 
   /// A refusal that names a freeze, or null for any other failure.
   static TimeLockInfo? fromDetails(

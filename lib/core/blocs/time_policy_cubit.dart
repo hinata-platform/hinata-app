@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../models/time_approval_models.dart';
 import '../models/time_policy_models.dart';
 import '../repositories/time_repository.dart';
 
@@ -65,12 +66,38 @@ class TimePolicyCubit extends Cubit<TimePolicySnapshot> {
     try {
       final policy = await _time.policy();
       _loaded = true;
-      if (!isClosed && policy != state) emit(policy);
+      // The freezing submissions come with the rules, because "is this day of
+      // mine frozen" is asked by the list, the entry sheet, the timesheet cell
+      // and the calendar — and a copy each would be four requests and four ways
+      // to be stale. Only when the instance has approvals at all: on every other
+      // instance the route does not exist and the answer is already known.
+      final withPeriods = policy.approvalsEnabled
+          ? policy.withFrozenPeriods(await _frozenPeriods())
+          : policy;
+      if (!isClosed && withPeriods != state) emit(withPeriods);
     } catch (_) {
       // Nothing here is worth an error message: with the module off the route
       // does not exist, and with a server that cannot answer, "nothing is
       // required" is both the old behaviour and the one that lets people work.
       // The next screen that opens asks again.
+    }
+  }
+
+  /// The reader's own submissions that make something immutable.
+  ///
+  /// One page, and the page is the bound: a hundred submissions is years of them,
+  /// and a period older than that is behind the lock date anyway. A failure here
+  /// is not a failure of the rules — the policy still emits, and a lock the app
+  /// did not draw is one the server still refuses, which is the safe direction.
+  Future<List<TimesheetApproval>> _frozenPeriods() async {
+    try {
+      final page = await _time.approvals(scope: 'mine', size: 100);
+      return [
+        for (final approval in page.items)
+          if (approval.status.freezes) approval,
+      ];
+    } catch (_) {
+      return const [];
     }
   }
 }

@@ -206,7 +206,7 @@ class _CellFormState extends State<_CellForm> {
     // day is closed to everyone and cannot be argued with; a required field this
     // sheet has no room for is a rule the entry editor can satisfy, so it says
     // which one and sends people there.
-    final lock = policy.lockFor(widget.day);
+    final lock = policy.lockFor(widget.day, projectId: widget.projectId);
     final missing = _unsupported(policy);
     final readOnly = lock != null || missing != null;
     return PopScope(
