@@ -1264,7 +1264,8 @@
       "none": "Rien de saisi pour l’instant.",
       "add": "Ajouter du temps"
     },
-    "truncated": "{{shown}} lignes sur {{total}} sont affichées. Affinez les filtres pour voir le reste."
+    "truncated": "{{shown}} lignes sur {{total}} sont affichées. Affinez les filtres pour voir le reste.",
+    "emptyPeriod": "Aucun temps n’a été saisi sur cette période."
   },
   "reports": {
     "title": "Rapports",
