@@ -236,6 +236,18 @@ class _TimeGridState extends State<TimeGrid> {
       .where((l) => l.placement == TimeGridPlacement.band && _bandRows(l) > 0)
       .toList();
 
+  /// What a wash is actually painted in.
+  ///
+  /// A tint that carries its own alpha is taken at its word; one that does not is
+  /// a brand colour standing in for a wash and gets the flat 0.35 it always did.
+  /// The difference is what lets a wash be *measured* — the freeze has to out-read
+  /// the weekend in both themes, and a forced alpha cannot do that in the dark one
+  /// (see [AppColors.closed]).
+  static Color _washColor(Color? tint) {
+    final color = tint ?? AppColors.accentSoft;
+    return color.a < 1 ? color : color.withValues(alpha: 0.35);
+  }
+
   List<TimeGridLayer> get _washLayers => widget.layers
       .where((l) => l.placement == TimeGridPlacement.background)
       .toList();
@@ -793,9 +805,7 @@ class _TimeGridState extends State<TimeGrid> {
                             item.start.month,
                             item.start.day,
                           ),
-                          color:
-                              (item.tint ?? layer.tint ?? AppColors.accentSoft)
-                                  .withValues(alpha: 0.35),
+                          color: _washColor(item.tint ?? layer.tint),
                         ),
                   ],
                 ),

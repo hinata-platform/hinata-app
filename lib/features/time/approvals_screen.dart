@@ -470,9 +470,12 @@ class _ApprovalCard extends StatelessWidget {
                 ),
             ],
           ),
-          if (approval.history.length > 1) ...[
+          // Shown from the first event, not from the second: for a period that is
+          // merely waiting, the card carries no date anywhere, and "since when"
+          // is the approver's next question after "what".
+          if (approval.history.isNotEmpty) ...[
             const SizedBox(height: 10),
-            _History(history: approval.history),
+            _History(history: approval.history, currentNote: approval.note),
           ],
         ],
       ),
@@ -497,20 +500,36 @@ enum _Decision { approve, reject, reopen }
 /// The round trip, oldest first — what makes a rejection legible.
 ///
 /// The reason is what a reader is here for: a status word and a date say that a
-/// period was sent back, not what has to change about it. The current decision's
-/// reason is on the card above; these are the ones before it.
+/// period was sent back, not what has to change about it.
+///
+/// Every transition is listed, the current one included, because its *date* is on
+/// the card nowhere else — the chip says where the period stands, not since when.
+/// One note is left out: the one the box above is already showing in larger type,
+/// which printed twice reads as two decisions that happened to agree. It is found
+/// by its text rather than by its position, so a period handed back and handed in
+/// again — where the newest event carries no reason and the box carries none
+/// either — keeps the rejection legible where it happened.
 class _History extends StatelessWidget {
-  const _History({required this.history});
+  const _History({required this.history, required this.currentNote});
 
   final List<ApprovalEvent> history;
+
+  /// The reason on the card above, if it has one.
+  final String? currentNote;
 
   @override
   Widget build(BuildContext context) {
     final localizations = MaterialLocalizations.of(context);
+    final current = (currentNote ?? '').trim();
+    final quiet = current.isEmpty
+        ? -1
+        : history.lastIndexWhere(
+            (event) => (event.note ?? '').trim() == current,
+          );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final event in history)
+        for (final (index, event) in history.indexed)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Row(
@@ -533,7 +552,8 @@ class _History extends StatelessWidget {
                           color: AppColors.textSecondary,
                         ),
                       ),
-                      if ((event.note ?? '').trim().isNotEmpty)
+                      if (index != quiet &&
+                          (event.note ?? '').trim().isNotEmpty)
                         Text(
                           event.note!,
                           style: TextStyle(

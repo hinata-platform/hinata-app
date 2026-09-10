@@ -60,14 +60,22 @@ class CodeterminationNote extends StatelessWidget {
 /// Each stage that implements a policy drops this from the controls it took
 /// over, and the note disappears on its own.
 class PendingNote extends StatelessWidget {
-  const PendingNote({super.key});
+  const PendingNote({super.key, this.textKey});
+
+  /// What to say instead of "nothing behind this yet".
+  ///
+  /// For the policy that is *partly* behind: saying a switch does nothing when
+  /// it already governs two reads is the wrong half of the truth to tell, and it
+  /// is wrong in the direction that matters — an operator who believes a
+  /// visibility switch is inert will set it without weighing what it opens.
+  final String? textKey;
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(top: 8),
     child: AdminNote(
       icon: LucideIcons.hourglass,
-      text: context.t('admin.timeTracking.notYetEnforced'),
+      text: context.t(textKey ?? 'admin.timeTracking.notYetEnforced'),
     ),
   );
 }
@@ -173,6 +181,7 @@ class _PolicyRow extends StatelessWidget {
     required this.onReset,
     required this.monitoring,
     this.pending = false,
+    this.pendingKey,
   });
 
   final String title;
@@ -182,6 +191,9 @@ class _PolicyRow extends StatelessWidget {
   final VoidCallback onReset;
   final bool monitoring;
   final bool pending;
+
+  /// Overrides the pending note's wording — see [PendingNote.textKey].
+  final String? pendingKey;
 
   @override
   Widget build(BuildContext context) {
@@ -232,7 +244,7 @@ class _PolicyRow extends StatelessWidget {
             ],
           ),
           if (monitoring) const CodeterminationNote(),
-          if (pending) const PendingNote(),
+          if (pending) PendingNote(textKey: pendingKey),
           EnvDefaultAction(isDefault: isDefault, onReset: onReset),
         ],
       ),
@@ -250,6 +262,7 @@ class PolicySwitch extends StatelessWidget {
     required this.onChanged,
     this.monitoring = false,
     this.pending = false,
+    this.pendingKey,
     this.effective,
   });
 
@@ -267,6 +280,9 @@ class PolicySwitch extends StatelessWidget {
   /// Whether the policy is recorded but not yet acted on — see [PendingNote].
   final bool pending;
 
+  /// Overrides the pending note's wording — see [PendingNote.textKey].
+  final String? pendingKey;
+
   /// What the environment resolves this policy to while nothing is stored.
   final bool? effective;
 
@@ -280,6 +296,7 @@ class PolicySwitch extends StatelessWidget {
       onReset: () => onChanged(null),
       monitoring: monitoring,
       pending: pending,
+      pendingKey: pendingKey,
       control: current == null
           ? _EnvDefaultBadge(
               // Commits what is already in force, not its opposite. The tap
@@ -654,6 +671,7 @@ class PolicyText extends StatefulWidget {
     this.maxLines = 1,
     this.maxLength,
     this.pending = false,
+    this.pendingKey,
   });
 
   final String label;
@@ -663,6 +681,9 @@ class PolicyText extends StatefulWidget {
 
   /// Recorded but not yet acted on — see [PendingNote].
   final bool pending;
+
+  /// Overrides the pending note's wording — see [PendingNote.textKey].
+  final String? pendingKey;
   final String? hint;
   final int maxLines;
   final int? maxLength;

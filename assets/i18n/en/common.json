@@ -1731,6 +1731,7 @@
       "privacyNoticeLabel": "Privacy notice",
       "privacyNoticeHint": "Shown in the app alongside the module's time data. Empty → the built-in text.",
       "notYetEnforced": "Recorded, but not yet acted on — the function behind this policy arrives in a later stage of the time-tracking work.",
+      "leadsSeeMemberEntriesPending": "Partly applied: an entry's history and the entries behind a submission already follow this policy. The timesheet matrix still shows every person's sums — that follows in a later stage.",
       "tagsTitle": "Tags",
       "tagsHint": "The vocabulary entries are labelled with. Renaming one carries every entry with it.",
       "tagsEmpty": "No tags yet.",
