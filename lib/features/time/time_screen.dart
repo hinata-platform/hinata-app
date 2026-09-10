@@ -9,6 +9,7 @@ import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
+import '../../core/models/time_approval_models.dart';
 import '../../core/models/time_policy_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/repositories/project_repository.dart';
@@ -30,6 +31,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassConfirm,
         showGlassDateRangePicker,
         showGlassToast;
+import 'lock_notice.dart';
 import 'placement_picker.dart';
 import 'time_entry_history_sheet.dart';
 import 'time_entry_sheet.dart';
@@ -808,7 +810,7 @@ class _DayGroup extends StatelessWidget {
             onDelete: () => onDelete(entry),
             onContinue: () => onContinue(entry),
             onHistory: () => onHistory(entry),
-            locked: policy.isLocked(entry.date),
+            lock: policy.lockFor(entry.date, entryId: entry.id),
           ),
       ],
     );
@@ -832,7 +834,7 @@ class _EntryRow extends StatelessWidget {
     required this.onDelete,
     required this.onContinue,
     required this.onHistory,
-    this.locked = false,
+    this.lock,
   });
 
   final WorkItem entry;
@@ -846,7 +848,7 @@ class _EntryRow extends StatelessWidget {
   /// reading a locked entry is not forbidden, and the editor explains why the
   /// save is greyed out — but the destructive actions are gone rather than
   /// offered and refused.
-  final bool locked;
+  final TimeLockInfo? lock;
 
   @override
   Widget build(BuildContext context) {
@@ -921,11 +923,10 @@ class _EntryRow extends StatelessWidget {
                               icon: LucideIcons.banknote,
                               label: context.t('time.billable'),
                             ),
-                          if (locked)
-                            _MetaChip(
-                              icon: LucideIcons.lock,
-                              label: context.t('time.policy.lockedChip'),
-                            ),
+                          // The whole sentence on its tooltip, and the reason in
+                          // its word: "Locked" on its own left somebody with
+                          // nothing to do about it.
+                          if (lock != null) LockChip(lock: lock!),
                           for (final tag in entry.tags)
                             _MetaChip(icon: LucideIcons.hash, label: tag),
                         ],
@@ -949,7 +950,7 @@ class _EntryRow extends StatelessWidget {
                   onDelete: onDelete,
                   onContinue: onContinue,
                   onHistory: onHistory,
-                  locked: locked,
+                  locked: lock != null,
                 ),
               ],
             ),

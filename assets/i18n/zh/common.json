@@ -918,7 +918,8 @@
     "view": {
       "list": "列表",
       "calendar": "日历",
-      "timesheet": "工时表"
+      "timesheet": "工时表",
+      "approvals": "审批"
     },
     "calendar": {
       "untimed": "无时段",
@@ -992,6 +993,92 @@
       "CALENDAR": "来自日历",
       "CSV": "导入",
       "SHARED": "复制自共享记录"
+    },
+    "lock": {
+      "reason": {
+        "lockDate": "{{date}} 之前的记录已结账。",
+        "approval": "你已提交 {{from}} – {{to}}，因此这些记录已固定。",
+        "invoice": "一张已开出的发票引用了这条记录。",
+        "unknown": "这条记录已关闭，无法修改。"
+      },
+      "holder": {
+        "lockDate": "管理员可以重新开启已结账期间中的某段时间。",
+        "approval": "项目负责人或管理员可以重新开启该周期。",
+        "invoice": "开票的人用贷记通知单来冲抵。"
+      },
+      "remedy": {
+        "lockDate": "申请更正——你的原因会被记录并送达管理员。",
+        "approval": "申请更正，或请人重新开启该周期。",
+        "invoice": "发票永不改写；由贷记通知单冲抵。"
+      },
+      "chip": {
+        "lockDate": "已结账",
+        "approval": "已提交"
+      },
+      "request": "申请更正",
+      "requestTitle": "申请更正",
+      "requestHint": "哪里不对，应该是什么？",
+      "requestSend": "发送申请",
+      "requestSent": "你的申请已发送并记录。"
+    },
+    "approval": {
+      "status": {
+        "open": "未提交",
+        "submitted": "已提交",
+        "approved": "已批准",
+        "rejected": "已退回",
+        "withdrawn": "已撤回"
+      },
+      "rhythm": {
+        "WEEKLY": "每周",
+        "BIWEEKLY": "每两周",
+        "SEMI_MONTHLY": "每月两次",
+        "MONTHLY": "每月",
+        "QUARTERLY": "每季度",
+        "CUSTOM_DAYS": "固定天数",
+        "FREE": "自选区间"
+      },
+      "previousPeriod": "上一个周期",
+      "nextPeriod": "下一个周期",
+      "pickSpan": "选择区间",
+      "submitTitle": "提交这个周期",
+      "submitConfirm": "提交 {{period}} 待审批？在有结论前其记录不能再更改。",
+      "submitAction": "提交周期",
+      "submitted": "周期已提交。",
+      "withdrawTitle": "撤回",
+      "withdrawConfirm": "撤回这次提交？其记录将重新可编辑。",
+      "withdrawAction": "撤回",
+      "withdrawFor": "撤回 {{project}}",
+      "withdrawn": "提交已撤回。",
+      "approveTitle": "批准",
+      "approveConfirm": "批准这个周期？在有人重新开启之前其记录将保持固定。",
+      "approveAction": "批准",
+      "approved": "周期已批准。",
+      "rejectTitle": "退回",
+      "rejectHint": "需要改什么？对方会看到。",
+      "rejectAction": "退回",
+      "rejected": "周期已退回。",
+      "reopenTitle": "重新开启",
+      "reopenHint": "为什么要重新开启这个已批准的周期？",
+      "reopenAction": "重新开启",
+      "reopened": "周期已重新开启。",
+      "showEntries": "查看记录",
+      "scope": {
+        "mine": "我的",
+        "inbox": "待决定"
+      },
+      "empty": {
+        "mine": {
+          "title": "还没有提交",
+          "message": "提交周期后，它会连同结果显示在这里。"
+        },
+        "inbox": {
+          "title": "没有待决定的内容",
+          "message": "你负责的项目所提交的周期会显示在这里。"
+        }
+      },
+      "gridClamped": "表格显示这个周期的前几天；上面的数字覆盖整个周期。",
+      "nothingToSubmit": "这个周期还没有工时。"
     }
   },
   "projects": {
@@ -1558,7 +1645,7 @@
       "requiredTagTitle": "必须填写标签",
       "requiredTagHint": "记录必须至少带一个标签。",
       "lockBeforeLabel": "锁定此日之前",
-      "lockBeforeHint": "此日之前的记录无法再新增、修改或删除——任何人都不行，通过 API 也不行。所填当日本身仍然开放。",
+      "lockBeforeHint": "此日之前的记录无法再新增、修改或删除——任何人都不行，通过 API 也不行。所填当日本身仍然开放。 日期永远不能设在未来：正在发生的工作时间必须始终可以记录。",
       "roundingModeLabel": "取整",
       "roundingModeHint": "仅用于报表；已保存的分钟数不会改变。",
       "roundingMode": {
@@ -1652,7 +1739,21 @@
       "tagDeleteTitle": "删除标签？",
       "tagDeleteMessage": "将从 {{count}} 条记录中移除“{{name}}”。记录本身保留。",
       "tagDeleteMessage_plural": "将从 {{count}} 条记录中移除“{{name}}”。记录本身保留。",
-      "lockBeforeEveryone": "锁定对所有人生效，管理员也不例外。解除锁定是修改已结算期间的留痕方式。"
+      "lockBeforeEveryone": "锁定对所有人生效，管理员也不例外。解除锁定是修改已结算期间的留痕方式。",
+      "approvalsNeedVisibility": "批准就意味着读取某个人的记录，因此也请打开“负责人可查看成员记录”——否则审批人只看到一个没有内容的合计。",
+      "periodPreviewTitle": "接下来的周期",
+      "periodPreviewHint": "更改节奏只影响将来的提交。已提交的周期保留它们当时的日期。",
+      "periodPreviewFree": "没有固定节奏时，提交者自行选择区间——最多 92 天，且不与已提交的区间重叠。",
+      "lockExceptionsTitle": "重新开启的区间",
+      "lockExceptionsHint": "在已结账期间内开启单个区间，而不是整体取消锁定日期。",
+      "lockExceptionsLegal": "工作时间属于个人数据，不准确的个人数据必须能够及时更正（GDPR 第 16 条）。例外就是这条退路：它只开启自己的那些天，带着你的原因，并记入审计日志。",
+      "lockExceptionsEmpty": "目前已结账期间内没有开启的区间。",
+      "lockExceptionAdd": "开启一个区间",
+      "lockExceptionSpan": "要重新开启哪些天？",
+      "lockExceptionReason": "为什么要开启这个区间？",
+      "lockExceptionReasonHint": "记入审计日志，所有人可见。",
+      "lockExceptionRemove": "再次关闭",
+      "lockExceptionRemoveConfirm": "再次关闭 {{period}}？其记录将变为只读。"
     },
     "passwordPolicy": "密码策略",
     "passwordPolicyHint": "用户密码的最低要求。",
@@ -2093,7 +2194,15 @@
       "TIME_TAG_CREATED": "已创建标签",
       "TIME_TAG_UPDATED": "已修改标签",
       "TIME_TAG_DELETED": "已删除标签",
-      "TIME_PROJECT_SETTINGS_CHANGED": "项目工时设置已更改"
+      "TIME_PROJECT_SETTINGS_CHANGED": "项目工时设置已更改",
+      "TIMESHEET_SUBMITTED": "工时表已提交",
+      "TIMESHEET_WITHDRAWN": "工时表已撤回",
+      "TIMESHEET_APPROVED": "工时表已批准",
+      "TIMESHEET_REJECTED": "工时表已退回",
+      "TIMESHEET_REOPENED": "工时表已重新开启",
+      "TIME_CORRECTION_REQUESTED": "已申请更正",
+      "TIME_LOCK_EXCEPTION_ADDED": "区间已开启",
+      "TIME_LOCK_EXCEPTION_REMOVED": "已开启的区间被关闭"
     },
     "meta": {
       "oldRole": "原角色",
@@ -2418,7 +2527,10 @@
       "billable": "默认可计费",
       "approvalRequired": "工时表需要审批",
       "approvalPeriod": "提交周期",
-      "inherit": "服务器默认"
+      "inherit": "服务器默认",
+      "lockBefore": "本项目的锁定日期",
+      "lockBeforeHint": "比实例其余部分更早结账本项目。它只能关得更多，不能更少。",
+      "instanceDefault": "实例策略"
     }
   },
   "account": {

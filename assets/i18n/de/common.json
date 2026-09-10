@@ -918,7 +918,8 @@
     "view": {
       "list": "Liste",
       "calendar": "Kalender",
-      "timesheet": "Stundenzettel"
+      "timesheet": "Stundenzettel",
+      "approvals": "Freigaben"
     },
     "calendar": {
       "untimed": "Ohne Uhrzeit",
@@ -992,6 +993,92 @@
       "CALENDAR": "Aus einem Kalender",
       "CSV": "Importiert",
       "SHARED": "Aus einem geteilten Eintrag kopiert"
+    },
+    "lock": {
+      "reason": {
+        "lockDate": "Einträge vor dem {{date}} sind abgeschlossen.",
+        "approval": "Du hast {{from}} – {{to}} eingereicht, diese Einträge stehen damit fest.",
+        "invoice": "Eine gestellte Rechnung verweist auf diesen Eintrag.",
+        "unknown": "Dieser Eintrag ist für Änderungen geschlossen."
+      },
+      "holder": {
+        "lockDate": "Ein Administrator kann einen Zeitraum innerhalb der Sperre wieder öffnen.",
+        "approval": "Die Projektleitung oder ein Administrator kann den Zeitraum wieder öffnen.",
+        "invoice": "Wer Rechnungen stellt, gleicht das über eine Gutschrift aus."
+      },
+      "remedy": {
+        "lockDate": "Bitte um eine Korrektur — deine Begründung wird protokolliert und erreicht einen Administrator.",
+        "approval": "Bitte um eine Korrektur oder lass den Zeitraum wieder öffnen.",
+        "invoice": "Die Rechnung wird nie umgeschrieben; eine Gutschrift gleicht sie aus."
+      },
+      "chip": {
+        "lockDate": "Abgeschlossen",
+        "approval": "Eingereicht"
+      },
+      "request": "Korrektur anfragen",
+      "requestTitle": "Korrektur anfragen",
+      "requestHint": "Was ist falsch, und was müsste dort stehen?",
+      "requestSend": "Anfrage senden",
+      "requestSent": "Deine Anfrage ist gesendet und protokolliert."
+    },
+    "approval": {
+      "status": {
+        "open": "Offen",
+        "submitted": "Eingereicht",
+        "approved": "Freigegeben",
+        "rejected": "Zurückgegeben",
+        "withdrawn": "Zurückgezogen"
+      },
+      "rhythm": {
+        "WEEKLY": "Wöchentlich",
+        "BIWEEKLY": "Alle zwei Wochen",
+        "SEMI_MONTHLY": "Zweimal im Monat",
+        "MONTHLY": "Monatlich",
+        "QUARTERLY": "Quartalsweise",
+        "CUSTOM_DAYS": "Feste Anzahl Tage",
+        "FREE": "Zeitraum nach Wahl"
+      },
+      "previousPeriod": "Vorheriger Zeitraum",
+      "nextPeriod": "Nächster Zeitraum",
+      "pickSpan": "Zeitraum wählen",
+      "submitTitle": "Zeitraum einreichen",
+      "submitConfirm": "{{period}} zur Freigabe einreichen? Die Einträge lassen sich bis zur Entscheidung nicht mehr ändern.",
+      "submitAction": "Zeitraum einreichen",
+      "submitted": "Zeitraum eingereicht.",
+      "withdrawTitle": "Zurückziehen",
+      "withdrawConfirm": "Diese Einreichung zurückziehen? Die Einträge sind danach wieder bearbeitbar.",
+      "withdrawAction": "Zurückziehen",
+      "withdrawFor": "{{project}} zurückziehen",
+      "withdrawn": "Einreichung zurückgezogen.",
+      "approveTitle": "Freigeben",
+      "approveConfirm": "Diesen Zeitraum freigeben? Die Einträge bleiben fest, bis ihn jemand wieder öffnet.",
+      "approveAction": "Freigeben",
+      "approved": "Zeitraum freigegeben.",
+      "rejectTitle": "Zurückgeben",
+      "rejectHint": "Was muss sich ändern? Die Person liest das.",
+      "rejectAction": "Zurückgeben",
+      "rejected": "Zeitraum zurückgegeben.",
+      "reopenTitle": "Wieder öffnen",
+      "reopenHint": "Warum wird dieser freigegebene Zeitraum wieder geöffnet?",
+      "reopenAction": "Wieder öffnen",
+      "reopened": "Zeitraum wieder geöffnet.",
+      "showEntries": "Einträge anzeigen",
+      "scope": {
+        "mine": "Meine",
+        "inbox": "Zu entscheiden"
+      },
+      "empty": {
+        "mine": {
+          "title": "Noch nichts eingereicht",
+          "message": "Sobald du einen Zeitraum einreichst, steht er hier — mit dem, was daraus geworden ist."
+        },
+        "inbox": {
+          "title": "Nichts zu entscheiden",
+          "message": "Eingereichte Zeiträume der Projekte, die du leitest, erscheinen hier."
+        }
+      },
+      "gridClamped": "Das Raster zeigt die ersten Tage dieses Zeitraums; die Zahlen oben gelten für den ganzen.",
+      "nothingToSubmit": "In diesem Zeitraum sind noch keine Stunden erfasst."
     }
   },
   "projects": {
@@ -1558,7 +1645,7 @@
       "requiredTagTitle": "Tag erforderlich",
       "requiredTagHint": "Ein Eintrag muss mindestens ein Tag tragen.",
       "lockBeforeLabel": "Gesperrt vor",
-      "lockBeforeHint": "Einträge vor diesem Tag lassen sich nicht mehr anlegen, ändern oder löschen — von niemandem, auch nicht über die API. Der genannte Tag selbst bleibt offen.",
+      "lockBeforeHint": "Einträge vor diesem Tag lassen sich nicht mehr anlegen, ändern oder löschen — von niemandem, auch nicht über die API. Der genannte Tag selbst bleibt offen. Das Datum darf nie in der Zukunft liegen: laufende Arbeitszeit muss immer erfassbar bleiben.",
       "roundingModeLabel": "Rundung",
       "roundingModeHint": "Gilt nur für Berichte; die gespeicherten Minuten bleiben unverändert.",
       "roundingMode": {
@@ -1652,7 +1739,21 @@
       "tagDeleteTitle": "Tag löschen?",
       "tagDeleteMessage": "\"{{name}}\" wird von {{count}} Eintrag entfernt. Der Eintrag selbst bleibt.",
       "tagDeleteMessage_plural": "\"{{name}}\" wird von {{count}} Einträgen entfernt. Die Einträge selbst bleiben.",
-      "lockBeforeEveryone": "Die Sperre gilt für alle, auch für Administratoren. Sie aufzuheben ist der dokumentierte Weg, einen abgeschlossenen Zeitraum zu ändern."
+      "lockBeforeEveryone": "Die Sperre gilt für alle, auch für Administratoren. Sie aufzuheben ist der dokumentierte Weg, einen abgeschlossenen Zeitraum zu ändern.",
+      "approvalsNeedVisibility": "Freigeben heißt, Einträge einer Person zu lesen — schalte deshalb auch „Projektleitung sieht Einträge der Mitglieder“ ein, sonst sieht die freigebende Person eine Summe ohne Inhalt.",
+      "periodPreviewTitle": "Die nächsten Zeiträume",
+      "periodPreviewHint": "Eine Änderung des Rhythmus betrifft nur künftige Einreichungen. Bereits eingereichte Zeiträume behalten die Tage, die sie benannt haben.",
+      "periodPreviewFree": "Ohne festen Rhythmus wählt die einreichende Person den Zeitraum selbst — höchstens 92 Tage, und ohne Überschneidung mit einem schon eingereichten.",
+      "lockExceptionsTitle": "Wieder geöffnete Zeiträume",
+      "lockExceptionsHint": "Öffne einen einzelnen Zeitraum innerhalb der Sperre, statt das Sperrdatum ganz aufzuheben.",
+      "lockExceptionsLegal": "Arbeitszeit ist ein personenbezogenes Datum, und unrichtige personenbezogene Daten sind unverzüglich zu berichtigen (Art. 16 DSGVO). Eine Ausnahme ist dieser Rückweg: sie öffnet genau ihre Tage, trägt deine Begründung und steht im Audit-Protokoll.",
+      "lockExceptionsEmpty": "Derzeit ist kein Zeitraum innerhalb der Sperre geöffnet.",
+      "lockExceptionAdd": "Zeitraum öffnen",
+      "lockExceptionSpan": "Welche Tage sollen geöffnet werden?",
+      "lockExceptionReason": "Warum wird dieser Zeitraum geöffnet?",
+      "lockExceptionReasonHint": "Steht im Audit-Protokoll und ist für alle sichtbar.",
+      "lockExceptionRemove": "Wieder schließen",
+      "lockExceptionRemoveConfirm": "{{period}} wieder schließen? Die Einträge sind danach nur noch lesbar."
     },
     "passwordPolicy": "Passwortrichtlinie",
     "passwordPolicyHint": "Mindestanforderungen für Benutzerpasswörter.",
@@ -2093,7 +2194,15 @@
       "TIME_TAG_CREATED": "Tag angelegt",
       "TIME_TAG_UPDATED": "Tag geändert",
       "TIME_TAG_DELETED": "Tag gelöscht",
-      "TIME_PROJECT_SETTINGS_CHANGED": "Projekt-Zeiteinstellungen geändert"
+      "TIME_PROJECT_SETTINGS_CHANGED": "Projekt-Zeiteinstellungen geändert",
+      "TIMESHEET_SUBMITTED": "Stundenzettel eingereicht",
+      "TIMESHEET_WITHDRAWN": "Stundenzettel zurückgezogen",
+      "TIMESHEET_APPROVED": "Stundenzettel freigegeben",
+      "TIMESHEET_REJECTED": "Stundenzettel zurückgegeben",
+      "TIMESHEET_REOPENED": "Stundenzettel wieder geöffnet",
+      "TIME_CORRECTION_REQUESTED": "Korrektur angefragt",
+      "TIME_LOCK_EXCEPTION_ADDED": "Zeitraum geöffnet",
+      "TIME_LOCK_EXCEPTION_REMOVED": "Geöffneter Zeitraum geschlossen"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",
@@ -2418,7 +2527,10 @@
       "billable": "Standardmäßig abrechenbar",
       "approvalRequired": "Timesheets brauchen eine Freigabe",
       "approvalPeriod": "Einreichungszeitraum",
-      "inherit": "Server-Vorgabe"
+      "inherit": "Server-Vorgabe",
+      "lockBefore": "Eigenes Sperrdatum",
+      "lockBeforeHint": "Schließt die Bücher dieses Projekts früher als die der Instanz. Es kann nur mehr schließen, nie weniger.",
+      "instanceDefault": "Instanz-Richtlinie"
     }
   },
   "account": {

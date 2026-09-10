@@ -16,6 +16,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/util/duration_input.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show fmtDuration;
+import 'lock_notice.dart';
 import '../sprint/modals/glass_modal.dart'
     show GlassModalFooter, GlassModalHeader, showGlassModal;
 
@@ -205,9 +206,9 @@ class _CellFormState extends State<_CellForm> {
     // day is closed to everyone and cannot be argued with; a required field this
     // sheet has no room for is a rule the entry editor can satisfy, so it says
     // which one and sends people there.
-    final locked = policy.isLocked(widget.day);
+    final lock = policy.lockFor(widget.day);
     final missing = _unsupported(policy);
-    final readOnly = locked || missing != null;
+    final readOnly = lock != null || missing != null;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -248,7 +249,7 @@ class _CellFormState extends State<_CellForm> {
                     for (final entry in _entries)
                       _EntryRow(
                         entry: entry,
-                        onDelete: _saving || locked
+                        onDelete: _saving || lock != null
                             ? null
                             : () => _remove(entry),
                       ),
@@ -278,18 +279,23 @@ class _CellFormState extends State<_CellForm> {
                   const SizedBox(height: 16),
                   Divider(height: 1, color: AppColors.hairline),
                   const SizedBox(height: 16),
-                  if (readOnly)
+                  // The freeze gets the shared notice — it names who can lift it
+                  // and what to do — while a required field this sheet has no room
+                  // for is a sentence that sends people to the editor.
+                  if (lock != null)
+                    LockNotice(lock: lock, compact: true)
+                  else if (missing != null)
                     Row(
                       children: [
                         Icon(
-                          locked ? LucideIcons.lock : LucideIcons.info,
+                          LucideIcons.info,
                           size: 15,
                           color: AppColors.inkSoft,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            context.t(locked ? 'time.policy.locked' : missing!),
+                            context.t(missing),
                             style: TextStyle(
                               fontSize: 12.5,
                               color: AppColors.inkSoft,

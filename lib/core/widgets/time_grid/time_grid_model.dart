@@ -136,6 +136,7 @@ class TimeGridLayer {
     this.placement = TimeGridPlacement.blocks,
     this.tint,
     this.label,
+    this.glyph,
   });
 
   final String id;
@@ -147,4 +148,14 @@ class TimeGridLayer {
 
   /// What the band row is called, shown at its leading edge. Bands only.
   final String? label;
+
+  /// A mark beside the date of every day this layer covers. Background only.
+  ///
+  /// A wash on its own cannot say *what* it means, and the grid already has one:
+  /// the weekend recedes behind exactly such a wash. A second wash would read as
+  /// "this is also a weekend" — so a layer that says something else about a day
+  /// names itself with a glyph in the heading, where the eye is already going for
+  /// the date. The freeze of HIN-88 is the first; holidays and absences (HIN-91)
+  /// are the next, and the same one line carries them.
+  final IconData? glyph;
 }

@@ -301,7 +301,15 @@ void main() {
       ),
     );
 
-    expect(find.text('time.policy.locked'), findsOneWidget);
+    // The reason, not a bare "locked": the notice names why the day is shut and
+    // what to do about it — one component for every freeze there is. The sheet
+    // asks for the compact form, which drops the "who" line: vertical space is
+    // the scarcest thing in a bottom sheet and the remedy already names them.
+    expect(find.text('time.lock.reason.lockDate'), findsOneWidget);
+    expect(find.text('time.lock.remedy.lockDate'), findsOneWidget);
+    expect(find.text('time.lock.holder.lockDate'), findsNothing);
+    // And the way back is offered rather than left to be guessed.
+    expect(find.text('time.lock.request'), findsOneWidget);
     await save(tester);
     expect(repository.updated, isEmpty);
   });

@@ -8,6 +8,7 @@ import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
+import '../../core/models/time_approval_models.dart';
 import '../../core/models/time_policy_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/repositories/issue_repository.dart';
@@ -19,6 +20,7 @@ import '../../core/util/duration_input.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../issues/work_item_labels.dart';
 import '../sprint/modals/glass_modal.dart';
+import 'lock_notice.dart';
 import 'placement_picker.dart';
 import 'tag_picker.dart';
 
@@ -192,12 +194,25 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   /// Shown before the save rather than after it. A required field the server
   /// alone knows about is a save that fails on a form that looked complete, and
   /// the person has to guess which of six fields the sentence is about.
-  String? _unmet(TimePolicySnapshot policy) {
-    // The lock first: it is the one that cannot be fixed by typing.
-    if (policy.isLocked(_filedOn) ||
-        (_isEdit && policy.isLocked(widget.entry!.date))) {
-      return 'time.policy.locked';
+  /// Why this entry cannot be saved at all, or null.
+  ///
+  /// Separate from [_unmet] because it is a different kind of answer. A missing
+  /// tag is fixed by typing; a frozen day is not, and it is the one refusal that
+  /// names somebody to ask and an act to perform — so it is rendered as the
+  /// shared [LockNotice] rather than as a sentence, and the sheet's save button
+  /// reads both.
+  TimeLockInfo? _lock(TimePolicySnapshot policy) {
+    final entry = widget.entry;
+    // Both sides of the change, the way the server's gate is: moving an entry
+    // *off* a frozen day changes that day as surely as moving one onto it.
+    for (final day in [_filedOn, if (_isEdit) entry?.date]) {
+      final lock = policy.lockFor(day, entryId: entry?.id);
+      if (lock != null) return lock;
     }
+    return null;
+  }
+
+  String? _unmet(TimePolicySnapshot policy) {
     return policy.unmetBy(
       projectId: _placement.projectId,
       issueId: _placement.issueId,
@@ -366,6 +381,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
     final localizations = MaterialLocalizations.of(context);
     final policy = _policy;
     final unmet = _unmet(policy);
+    final lock = _lock(policy);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -533,6 +549,17 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                 ),
                 const SizedBox(height: 12),
                 _Summary(minutes: _minutesShown, error: _error),
+                if (lock != null) ...[
+                  const SizedBox(height: 14),
+                  LockNotice(
+                    lock: lock,
+                    compact: true,
+                    // Asking for a correction leaves nothing to save here, so the
+                    // sheet closes: keeping it open over a request that changes
+                    // nothing reads as if the request had failed.
+                    onRequested: () => Navigator.of(context).maybePop(),
+                  ),
+                ],
                 if (unmet != null) ...[
                   const SizedBox(height: 8),
                   // Under the total, not instead of it: the sheet is asking for a
@@ -547,7 +574,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
         GlassModalFooter(
           confirmLabel: context.t(_isTimer ? 'time.timer.stop' : 'common.save'),
           busy: _saving,
-          onConfirm: _saving || unmet != null ? null : _save,
+          onConfirm: _saving || unmet != null || lock != null ? null : _save,
         ),
       ],
     );
