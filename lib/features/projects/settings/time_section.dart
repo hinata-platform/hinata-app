@@ -12,6 +12,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/util/duration_input.dart';
 import '../../../core/widgets/hive_loader.dart';
+import '../../../core/widgets/hive_widgets.dart' show GhostButton;
 import '../../sprint/modals/glass_modal.dart';
 import 'settings_common.dart';
 
@@ -215,6 +216,18 @@ class _ProjectTimeSectionState extends State<ProjectTimeSection> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 10),
+                _LockBeforeRow(
+                  label: context.t('projectSettings.time.lockBefore'),
+                  helper: context.t('projectSettings.time.lockBeforeHint'),
+                  value: _draft.lockBefore,
+                  onChanged: (value) => setState(
+                    () => _draft = _draft.copyWith(
+                      lockBefore: value,
+                      clearLockBefore: value == null,
+                    ),
+                  ),
+                ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
                   Text(
@@ -242,6 +255,82 @@ class _ProjectTimeSectionState extends State<ProjectTimeSection> {
               ],
             ),
     );
+  }
+}
+
+/// A freeze for this project alone, or the instance's.
+///
+/// Capped at today, like the instance-wide one and for the same reason: a freeze
+/// that reached into the present would stop the recording of working time that is
+/// happening right now, and the server answers 400 for it. And it only ever
+/// closes *more* than the instance — the server takes the later of the two — so a
+/// lead can close their own customer's books early but cannot reopen the month an
+/// administrator archived.
+class _LockBeforeRow extends StatelessWidget {
+  const _LockBeforeRow({
+    required this.label,
+    required this.helper,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String helper;
+  final DateTime? value;
+  final ValueChanged<DateTime?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = MaterialLocalizations.of(context);
+    final set = value;
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: TextStyle(fontSize: 13, color: AppColors.ink)),
+              Text(
+                helper,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  height: 1.4,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        GhostButton(
+          icon: LucideIcons.calendarOff,
+          label: set == null
+              ? context.t('projectSettings.time.instanceDefault')
+              : localizations.formatMediumDate(set),
+          onPressed: () => unawaited(_pick(context)),
+        ),
+        if (set != null)
+          IconButton(
+            tooltip: context.t('common.clear'),
+            onPressed: () => onChanged(null),
+            icon: Icon(LucideIcons.x, size: 15, color: AppColors.inkSoft),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _pick(BuildContext context) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final picked = await showGlassDatePicker(
+      context,
+      initialDate: value != null && !value!.isAfter(today) ? value! : today,
+      firstDate: DateTime(today.year - 5),
+      lastDate: today,
+      title: label,
+      onClear: () => onChanged(null),
+    );
+    if (picked != null) onChanged(picked);
   }
 }
 

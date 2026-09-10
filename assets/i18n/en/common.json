@@ -918,7 +918,8 @@
     "view": {
       "list": "List",
       "calendar": "Calendar",
-      "timesheet": "Timesheet"
+      "timesheet": "Timesheet",
+      "approvals": "Approvals"
     },
     "calendar": {
       "untimed": "Untimed",
@@ -992,6 +993,92 @@
       "CALENDAR": "From a calendar",
       "CSV": "Imported",
       "SHARED": "Copied from a shared entry"
+    },
+    "lock": {
+      "reason": {
+        "lockDate": "Entries before {{date}} are closed.",
+        "approval": "You handed in {{from}} – {{to}}, so these entries are fixed.",
+        "invoice": "An issued invoice references this entry.",
+        "unknown": "This entry is closed for editing."
+      },
+      "holder": {
+        "lockDate": "An administrator can reopen a span inside the closed period.",
+        "approval": "A lead of the project, or an administrator, can reopen the period.",
+        "invoice": "Whoever issues invoices can settle it with a credit note."
+      },
+      "remedy": {
+        "lockDate": "Ask for a correction — your reason is recorded and reaches an administrator.",
+        "approval": "Ask for a correction, or have the period reopened.",
+        "invoice": "The invoice is never rewritten; a credit note settles it."
+      },
+      "chip": {
+        "lockDate": "Closed",
+        "approval": "Handed in"
+      },
+      "request": "Request a correction",
+      "requestTitle": "Request a correction",
+      "requestHint": "What is wrong, and what should it say?",
+      "requestSend": "Send request",
+      "requestSent": "Your request has been sent and recorded."
+    },
+    "approval": {
+      "status": {
+        "open": "Open",
+        "submitted": "Handed in",
+        "approved": "Approved",
+        "rejected": "Sent back",
+        "withdrawn": "Withdrawn"
+      },
+      "rhythm": {
+        "WEEKLY": "Weekly",
+        "BIWEEKLY": "Every two weeks",
+        "SEMI_MONTHLY": "Twice a month",
+        "MONTHLY": "Monthly",
+        "QUARTERLY": "Quarterly",
+        "CUSTOM_DAYS": "Fixed number of days",
+        "FREE": "Span of your choice"
+      },
+      "previousPeriod": "Previous period",
+      "nextPeriod": "Next period",
+      "pickSpan": "Choose a span",
+      "submitTitle": "Hand in this period",
+      "submitConfirm": "Hand in {{period}} for approval? Its entries can no longer be changed until it is decided.",
+      "submitAction": "Hand in period",
+      "submitted": "Period handed in.",
+      "withdrawTitle": "Withdraw",
+      "withdrawConfirm": "Take this submission back? Its entries become editable again.",
+      "withdrawAction": "Withdraw",
+      "withdrawFor": "Withdraw {{project}}",
+      "withdrawn": "Submission withdrawn.",
+      "approveTitle": "Approve",
+      "approveConfirm": "Approve this period? Its entries stay fixed until somebody reopens it.",
+      "approveAction": "Approve",
+      "approved": "Period approved.",
+      "rejectTitle": "Send back",
+      "rejectHint": "What needs to change? The person sees this.",
+      "rejectAction": "Send back",
+      "rejected": "Period sent back.",
+      "reopenTitle": "Reopen",
+      "reopenHint": "Why is this approved period being reopened?",
+      "reopenAction": "Reopen",
+      "reopened": "Period reopened.",
+      "showEntries": "Show entries",
+      "scope": {
+        "mine": "Mine",
+        "inbox": "To decide"
+      },
+      "empty": {
+        "mine": {
+          "title": "Nothing handed in yet",
+          "message": "When you hand a period in, it appears here with what became of it."
+        },
+        "inbox": {
+          "title": "Nothing to decide",
+          "message": "Periods handed in for the projects you lead appear here."
+        }
+      },
+      "gridClamped": "The grid shows the first days of this period; the figures above cover all of it.",
+      "nothingToSubmit": "No hours in this period yet."
     }
   },
   "projects": {
@@ -1558,7 +1645,7 @@
       "requiredTagTitle": "Tag required",
       "requiredTagHint": "An entry has to carry at least one tag.",
       "lockBeforeLabel": "Locked before",
-      "lockBeforeHint": "Entries before this day can no longer be created, changed or deleted — by anyone, the API included. The named day itself stays open.",
+      "lockBeforeHint": "Entries before this day can no longer be created, changed or deleted — by anyone, the API included. The named day itself stays open. The date can never lie in the future: working time that is happening now always has to be recordable.",
       "roundingModeLabel": "Rounding",
       "roundingModeHint": "Applies to reports only; the stored minutes are never changed.",
       "roundingMode": {
@@ -1652,7 +1739,21 @@
       "tagDeleteTitle": "Delete tag?",
       "tagDeleteMessage": "\"{{name}}\" is removed from {{count}} entry. The entry itself stays.",
       "tagDeleteMessage_plural": "\"{{name}}\" is removed from {{count}} entries. The entries themselves stay.",
-      "lockBeforeEveryone": "The lock applies to everyone, administrators included. Lifting it is the recorded way to edit a frozen period."
+      "lockBeforeEveryone": "The lock applies to everyone, administrators included. Lifting it is the recorded way to edit a frozen period.",
+      "approvalsNeedVisibility": "Approving means reading somebody's entries, so switch on \"Leads see member entries\" as well — otherwise an approver sees a total with nothing behind it.",
+      "periodPreviewTitle": "The next periods",
+      "periodPreviewHint": "Changing the rhythm affects future submissions only. Periods already handed in keep the days they named.",
+      "periodPreviewFree": "Without a fixed rhythm, the person submitting chooses the span themselves — at most 92 days, and not overlapping one they have already handed in.",
+      "lockExceptionsTitle": "Reopened spans",
+      "lockExceptionsHint": "Open a single span inside the closed period instead of lifting the lock date altogether.",
+      "lockExceptionsLegal": "Working time is personal data, and inaccurate personal data has to be correctable without undue delay (Art. 16 GDPR). An exception is that way back: it opens exactly its own days, carries your reason, and is recorded in the audit log.",
+      "lockExceptionsEmpty": "No span is currently open inside the closed period.",
+      "lockExceptionAdd": "Reopen a span",
+      "lockExceptionSpan": "Which days should be reopened?",
+      "lockExceptionReason": "Why is this span being reopened?",
+      "lockExceptionReasonHint": "Recorded in the audit log and visible to everyone.",
+      "lockExceptionRemove": "Close again",
+      "lockExceptionRemoveConfirm": "Close {{period}} again? Its entries become read-only."
     },
     "passwordPolicy": "Password policy",
     "passwordPolicyHint": "Minimum requirements for user passwords.",
@@ -2093,7 +2194,15 @@
       "TIME_TAG_CREATED": "Tag created",
       "TIME_TAG_UPDATED": "Tag changed",
       "TIME_TAG_DELETED": "Tag deleted",
-      "TIME_PROJECT_SETTINGS_CHANGED": "Project time settings changed"
+      "TIME_PROJECT_SETTINGS_CHANGED": "Project time settings changed",
+      "TIMESHEET_SUBMITTED": "Timesheet handed in",
+      "TIMESHEET_WITHDRAWN": "Timesheet withdrawn",
+      "TIMESHEET_APPROVED": "Timesheet approved",
+      "TIMESHEET_REJECTED": "Timesheet sent back",
+      "TIMESHEET_REOPENED": "Timesheet reopened",
+      "TIME_CORRECTION_REQUESTED": "Correction requested",
+      "TIME_LOCK_EXCEPTION_ADDED": "Span reopened",
+      "TIME_LOCK_EXCEPTION_REMOVED": "Reopened span closed"
     },
     "meta": {
       "oldRole": "Previous role",
@@ -2418,7 +2527,10 @@
       "billable": "Billable by default",
       "approvalRequired": "Timesheets need approval",
       "approvalPeriod": "Submission period",
-      "inherit": "Server default"
+      "inherit": "Server default",
+      "lockBefore": "Own lock date",
+      "lockBeforeHint": "Closes this project's books earlier than the rest of the instance. It can only close more, never less.",
+      "instanceDefault": "Instance policy"
     }
   },
   "account": {

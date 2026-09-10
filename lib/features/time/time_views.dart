@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/blocs/time_policy_cubit.dart';
+import '../../core/models/time_policy_models.dart';
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/responsive/responsive.dart';
@@ -13,23 +15,58 @@ import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/glass_switch_chip.dart';
 import 'timer_bar.dart';
 
-/// The extended time module's three ways of looking at the same hours.
+/// The extended time module's ways of looking at the same hours.
 ///
-/// Three routes rather than three tabs inside one, so each is a link somebody
-/// can send and come back to — and so the shell's back button and title behave
-/// the way they do everywhere else. `shell_nav` already treats anything under
-/// `/time/` as the module, so all three keep the module's entry lit.
+/// Separate routes rather than tabs inside one, so each is a link somebody can
+/// send and come back to — and so the shell's back button and title behave the
+/// way they do everywhere else. `shell_nav` already treats anything under
+/// `/time/` as the module, so all of them keep the module's entry lit.
 enum TimeView {
   list('/time', 'time.view.list', LucideIcons.list),
   calendar('/time/calendar', 'time.view.calendar', LucideIcons.calendarDays),
-  timesheet('/time/timesheet', 'time.view.timesheet', LucideIcons.table);
+  timesheet('/time/timesheet', 'time.view.timesheet', LucideIcons.table),
 
-  const TimeView(this.route, this.labelKey, this.icon);
+  /// Handed-in periods. Unlike the other three this one is **conditional**: it
+  /// exists only while the operator has switched approvals on, because without
+  /// them there is nothing to hand in and nothing to decide. [visibleViews]
+  /// is where that is decided, once, for the pill and the phone's menu alike.
+  approvals(
+    '/time/approvals',
+    'time.view.approvals',
+    LucideIcons.fileCheck2,
+    requiresApprovals: true,
+  );
+
+  const TimeView(
+    this.route,
+    this.labelKey,
+    this.icon, {
+    this.requiresApprovals = false,
+  });
 
   final String route;
   final String labelKey;
   final IconData icon;
+
+  /// Whether this view only exists while timesheets are submitted.
+  final bool requiresApprovals;
 }
+
+/// The views this instance actually has.
+///
+/// One function for both the wide pill and the phone's menu: two filters would
+/// be two chances for the phone to offer a page the desktop hides.
+///
+/// It takes the policy rather than reading it, and that is not ceremony. The pill
+/// is a widget and has to *watch* the cubit so it rebuilds when an administrator
+/// switches approvals on; the menu is opened from an `onTap` and must only ever
+/// *read* it, because listening from outside the tree is an assertion failure in
+/// provider. One function that chose for both would be wrong at one of the two
+/// call sites.
+List<TimeView> visibleViews(TimePolicySnapshot policy) => [
+  for (final view in TimeView.values)
+    if (policy.approvalsEnabled || !view.requiresApprovals) view,
+];
 
 /// The switcher every page of the module wears **on a wide window**.
 ///
@@ -44,12 +81,17 @@ class TimeViewSwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconOnly = context.isCompact;
+    final views = visibleViews(context.watch<TimePolicyCubit>().state);
     return GlassSwitchBar(
       compact: iconOnly,
-      maxWidth: iconOnly ? 170 : 330,
+      // Wider by one chip when the instance submits timesheets, so the fourth
+      // does not squeeze the three that were already there.
+      maxWidth: iconOnly
+          ? (views.length > 3 ? 215 : 170)
+          : (views.length > 3 ? 430 : 330),
       chips: [
-        for (final view in TimeView.values) ...[
-          if (view != TimeView.values.first) const SizedBox(width: 2),
+        for (final view in views) ...[
+          if (view != views.first) const SizedBox(width: 2),
           GlassSwitchChip(
             label: context.t(view.labelKey),
             icon: view.icon,
@@ -242,7 +284,10 @@ Future<T?> showTimeViewMenu<T extends Object>(
     width: 240,
     value: TimeMenuChoice<T>.view(current),
     items: [
-      for (final view in TimeView.values)
+      // The same list the wide pill shows, through the same function: two
+      // filters would be two chances for the phone to offer a page the desktop
+      // hides.
+      for (final view in visibleViews(context.read<TimePolicyCubit>().state))
         GlassMenuItem(
           value: TimeMenuChoice<T>.view(view),
           label: context.t(view.labelKey),

@@ -8,8 +8,11 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/api/api_client.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/paged_cubit.dart';
+import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
+import '../../core/models/time_approval_models.dart';
+import '../../core/models/time_policy_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/time_repository.dart';
@@ -26,6 +29,8 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../shell/page_chrome.dart';
+import '../time/approval_actions.dart';
+import '../time/lock_notice.dart';
 import '../time/time_views.dart';
 import '../time/time_entry_sheet.dart';
 import '../time/timesheet_cell_sheet.dart';
@@ -33,7 +38,8 @@ import '../sprint/modals/glass_modal.dart'
     show
         kGlassPopoverBreakpoint,
         showGlassAnchoredPopover,
-        showGlassBottomSheet;
+        showGlassBottomSheet,
+        showGlassDateRangePicker;
 
 /// Weekly timesheet matrix (user × project × day).
 ///
@@ -81,6 +87,23 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   late DateTime _from;
   late DateTime _to;
 
+  /// The period on screen when this instance submits timesheets, or null.
+  ///
+  /// Handed out by the server — the app derives **no** rhythm of its own. Which
+  /// days "March 2026" or "CW 12" covers is arithmetic that lives once, on the
+  /// server, because two implementations would disagree on exactly one day a year
+  /// and nobody would notice until a payroll period was short.
+  ApprovalPeriod? _period;
+
+  /// The day whose period is shown. The arrows move this, not the window: a
+  /// period's neighbour is found by stepping one day past its edge and asking
+  /// again, because a month is four different lengths.
+  DateTime? _anchor;
+
+  /// Under a FREE rhythm there is no grid, so the span is picked rather than
+  /// stepped through. Null until somebody picks one.
+  DateTimeRange? _freeSpan;
+
   List<TimesheetRow> _rows = const [];
 
   /// How many rows the whole matrix has, against how many are on screen. Equal
@@ -124,14 +147,50 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     super.didChangeDependencies();
     if (_started) return;
     _started = true;
-    _from = weekStartFor(context, DateTime.now());
+    final today = DateTime.now();
+    _from = weekStartFor(context, today);
     _to = addDays(_from, 6);
-    unawaited(_load());
+    _anchor = DateTime(today.year, today.month, today.day);
+    // The rules decide whether the window is a week or a period, so they have to
+    // be in before the first fetch. A cubit that nobody calls is a feature that
+    // works in the test and never appears in the app.
+    unawaited(
+      context.read<TimePolicyCubit>().ensureLoaded().then((_) {
+        if (mounted) unawaited(_load());
+      }),
+    );
   }
 
   bool get _isCurrentWeek => weekStartFor(context, DateTime.now()) == _from;
 
   bool get _isAdmin => context.watch<AuthBloc>().state.user?.isAdmin ?? false;
+
+  /// The operator's rules. Watched, so switching approvals on takes effect
+  /// without a reopen.
+  TimePolicySnapshot get _policy => context.watch<TimePolicyCubit>().state;
+
+  /// Whether the window is a submission period rather than a week.
+  ///
+  /// Only in the module, and only while approvals are on. The plain
+  /// `/timesheet` is the surface the published app reads and stays a week
+  /// whatever this instance has configured.
+  bool _usesPeriods(TimePolicySnapshot policy) =>
+      widget.moduleView && policy.approvalsEnabled;
+
+  /// The period the grid is showing, clamped to what the grid route accepts.
+  ///
+  /// The server caps a timesheet window at a month, and for good reason: every
+  /// row carries a minutes-per-day map. Every common rhythm fits — a week, two
+  /// weeks, half a month, a month. A quarter does not, so the grid shows its
+  /// first days and says so, while the status chips above it carry the figures
+  /// for the **whole** period, which is what submitting is about.
+  static const int _maxGridDays = 31;
+
+  bool get _periodExceedsGrid {
+    final period = _period;
+    if (period == null) return false;
+    return period.end.difference(period.start).inDays + 1 > _maxGridDays;
+  }
 
   /// Names for exactly the projects [rows] mention. Null when the lookup could
   /// not be made — the table then keeps whatever it already had rather than
@@ -171,6 +230,10 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
       _error = null;
     });
     try {
+      if (_usesPeriods(context.read<TimePolicyCubit>().state)) {
+        await _resolvePeriod();
+        if (!mounted || seq != _loadSeq) return;
+      }
       // The module's route is a page of rows; the base one is every row at
       // once. Same scope either way — the server refuses another person's rows
       // to a non-admin on both — so the difference is how many arrive, and a
@@ -244,6 +307,63 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     }
   }
 
+  /// Asks the server which period the anchor day belongs to, and sets the window
+  /// from it.
+  ///
+  /// One request, and the app does none of the arithmetic: the answer carries the
+  /// boundaries, the rhythm's name and each project's standing and minutes for
+  /// the whole period. A failure here is not fatal — the window falls back to the
+  /// week it already had, so an instance whose approvals route is unreachable
+  /// still shows a timesheet.
+  Future<void> _resolvePeriod() async {
+    final policy = context.read<TimePolicyCubit>().state;
+    final span = policy.approvalRhythm.hasGrid
+        ? null
+        : _freeSpan; // FREE: the person picks, and until they do there is none.
+    final anchor = _anchor ?? DateTime.now();
+    final from = span?.start ?? anchor;
+    final to = span?.end ?? anchor;
+    try {
+      final periods = await context.read<TimeRepository>().approvalPeriods(
+        from: DateTime(from.year, from.month, from.day),
+        to: DateTime(to.year, to.month, to.day),
+        projectId: _projectFilter,
+      );
+      if (!mounted) return;
+      // Under a FREE rhythm the server answers with the spans that *exist* —
+      // what this person has already handed in — so an unsubmitted pick has no
+      // period of its own and the picked span is the window.
+      final period = periods.isEmpty
+          ? (span == null
+                ? null
+                : ApprovalPeriod(
+                    start: span.start,
+                    end: span.end,
+                    type: 'FREE',
+                  ))
+          : periods.firstWhere(
+              (candidate) => candidate.contains(anchor),
+              orElse: () => periods.first,
+            );
+      _period = period;
+      if (period != null) {
+        _from = DateTime(
+          period.start.year,
+          period.start.month,
+          period.start.day,
+        );
+        final days = period.end.difference(period.start).inDays + 1;
+        _to = days > _maxGridDays
+            ? addDays(_from, _maxGridDays - 1)
+            : DateTime(period.end.year, period.end.month, period.end.day);
+      }
+    } on ApiFailure {
+      // The grid is still worth drawing. Leaving the period null is what makes
+      // the switcher and the submit action disappear rather than lie.
+      if (mounted) _period = null;
+    }
+  }
+
   void _shiftWeek(int direction) {
     setState(() {
       _from = addDays(_from, 7 * direction);
@@ -252,9 +372,45 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     unawaited(_load());
   }
 
+  /// One period back or forward.
+  ///
+  /// Moves the *anchor* one day past the current period's edge and re-asks, which
+  /// is how you find a neighbour when a period's length is not fixed: a month is
+  /// four lengths, a semi-monthly period four more.
+  void _shiftPeriod(int direction) {
+    final period = _period;
+    if (period == null) return;
+    setState(() {
+      _anchor = direction < 0
+          ? addDays(period.start, -1)
+          : addDays(period.end, 1);
+    });
+    unawaited(_load());
+  }
+
   void _previousWeek() => _shiftWeek(-1);
 
   void _nextWeek() => _shiftWeek(1);
+
+  /// FREE rhythm: pick the span to show and, if its hours are complete, hand in.
+  Future<void> _pickFreeSpan() async {
+    final picked = await showGlassDateRangePicker(
+      context,
+      title: context.t('time.approval.pickSpan'),
+      initialRange: _freeSpan ?? DateTimeRange(start: _from, end: _to),
+      // A year back is what the server accepts for an entry, and today is the
+      // far end: a span that reached into the future would be a period nobody
+      // could have worked yet.
+      firstDate: DateTime.now().subtract(const Duration(days: 366)),
+      lastDate: DateTime.now(),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _freeSpan = picked;
+      _anchor = picked.start;
+    });
+    unawaited(_load());
+  }
 
   void _openModuleMenu(Rect? anchor) => unawaited(
     showTimeViewMenu<Never>(
@@ -285,8 +441,11 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// Back to the week that contains today. Also re-fetches when it is already
   /// on screen, so the action doubles as a refresh rather than doing nothing.
   void _goToToday() {
+    final today = DateTime.now();
     setState(() {
-      _from = weekStartFor(context, DateTime.now());
+      _anchor = DateTime(today.year, today.month, today.day);
+      _freeSpan = null;
+      _from = weekStartFor(context, today);
       _to = addDays(_from, 6);
     });
     unawaited(_load());
@@ -580,20 +739,44 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
           // inset around the whole row.
           padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
           children: [
-            GlassStepperPill(
-              label: Text(
-                '${localizations.formatCompactDate(_from)} – '
-                '${localizations.formatCompactDate(_to)}',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+            // One pill, two meanings, and the label says which: a period when
+            // this instance submits them, a week otherwise. A FREE rhythm has no
+            // grid to step through, so the pill opens the span picker instead of
+            // carrying arrows that would imply one.
+            if (_period != null && !_policy.approvalRhythm.hasGrid)
+              GlassPill(
+                height: kGlassControlHeight,
+                onTap: _pickFreeSpan,
+                child: _PillLabel(
+                  icon: LucideIcons.calendarRange,
+                  label: _windowLabel(localizations),
+                  active: false,
                 ),
+              )
+            else
+              GlassStepperPill(
+                label: Text(
+                  _windowLabel(localizations),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                backTooltip: context.t(
+                  _period != null
+                      ? 'time.approval.previousPeriod'
+                      : 'timesheet.previousWeek',
+                ),
+                forwardTooltip: context.t(
+                  _period != null
+                      ? 'time.approval.nextPeriod'
+                      : 'timesheet.nextWeek',
+                ),
+                onBack: _period != null
+                    ? () => _shiftPeriod(-1)
+                    : _previousWeek,
+                onForward: _period != null ? () => _shiftPeriod(1) : _nextWeek,
               ),
-              backTooltip: context.t('timesheet.previousWeek'),
-              forwardTooltip: context.t('timesheet.nextWeek'),
-              onBack: _previousWeek,
-              onForward: _nextWeek,
-            ),
             const SizedBox(width: 8),
             GlassPill(
               active: !_isCurrentWeek,
@@ -668,7 +851,76 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     );
   }
 
+  /// What the window is called.
+  ///
+  /// The server's period, when there is one: "March 2026", "CW 12", "1 – 15
+  /// March". Never derived from a type name here — the dates are the server's and
+  /// so is the rhythm they came from; the app only formats them for the reader.
+  String _windowLabel(MaterialLocalizations localizations) {
+    final period = _period;
+    if (period != null) {
+      return formatPeriod(context, period.start, period.end);
+    }
+    return '${localizations.formatCompactDate(_from)} – '
+        '${localizations.formatCompactDate(_to)}';
+  }
+
+  /// The rhythm's own name, for the line under the switcher.
+  String? _rhythmLabel() {
+    final period = _period;
+    if (period == null) return null;
+    return context.t('time.approval.rhythm.${period.type}');
+  }
+
   Widget _weekNav(MaterialLocalizations localizations) {
+    final period = _period;
+    if (period != null) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_policy.approvalRhythm.hasGrid) ...[
+            IconButton(
+              onPressed: () => _shiftPeriod(-1),
+              tooltip: context.t('time.approval.previousPeriod'),
+              icon: Icon(backChevron(context)),
+            ),
+            Flexible(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    _windowLabel(localizations),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  Text(
+                    _rhythmLabel() ?? '',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              onPressed: () => _shiftPeriod(1),
+              tooltip: context.t('time.approval.nextPeriod'),
+              icon: Icon(forwardChevron(context)),
+            ),
+          ] else
+            // FREE: there is no grid to step through, so the span is picked. The
+            // arrows would be a lie about a rhythm that does not exist.
+            GhostButton(
+              icon: LucideIcons.calendarRange,
+              label: _windowLabel(localizations),
+              onPressed: _pickFreeSpan,
+            ),
+        ],
+      );
+    }
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -739,29 +991,186 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
         context.pageGutter,
         context.pageGutter + context.bottomGutter,
       ),
-      child: _rows.isEmpty
-          // Capped rather than stretched: a full-width empty card on a desk
-          // monitor is a lot of nothing, and the sentence has to be findable.
-          ? Center(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Above the grid whether or not there are rows: "this period is open
+          // and holds nothing" is an answer, and a person looking for the submit
+          // action must not have to book an hour to find it.
+          if (_period != null) ...[
+            _periodBand(_period!),
+            const SizedBox(height: 10),
+          ],
+          if (_rows.isEmpty)
+            // Capped rather than stretched: a full-width empty card on a desk
+            // monitor is a lot of nothing, and the sentence has to be findable.
+            Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 520),
                 child: HiveEmptyState(
                   title: context.t('timesheet.title'),
                   message: context.t('timesheet.empty'),
+                  card: false,
                 ),
               ),
             )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+          else ...[
+            if (_total > _rows.length) ...[
+              _TruncatedRows(shown: _rows.length, total: _total),
+              const SizedBox(height: 10),
+            ],
+            _table(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Where this period stands, and what can be done about it.
+  ///
+  /// One card above the grid: a chip per project, then the action. The chips are
+  /// per project because that is who approves — a lead signs off the time booked
+  /// against their project and has no business seeing the rest of somebody's
+  /// month — and a single "period status" would have to pick one of them to show.
+  Widget _periodBand(ApprovalPeriod period) {
+    final submittable = period.submittable;
+    final withdrawable = period.withdrawable;
+    final mine = _userFilter == null || _userFilter == _editableUserId;
+    return SoftCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                LucideIcons.fileCheck2,
+                size: 16,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  formatPeriod(context, period.start, period.end),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+              Text(
+                fmtDuration(context, period.minutes),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                  color: AppColors.ink,
+                ),
+              ),
+            ],
+          ),
+          if (_periodExceedsGrid) ...[
+            const SizedBox(height: 8),
+            Text(
+              context.t('time.approval.gridClamped'),
+              style: TextStyle(
+                fontSize: 11.5,
+                height: 1.45,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+          if (period.projects.isEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              context.t('time.approval.nothingToSubmit'),
+              style: TextStyle(
+                fontSize: 11.5,
+                height: 1.45,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                if (_total > _rows.length) ...[
-                  _TruncatedRows(shown: _rows.length, total: _total),
-                  const SizedBox(height: 10),
-                ],
-                _table(),
+                for (final project in period.projects)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        project.projectKey ??
+                            project.projectName ??
+                            context.t('time.fmt.none'),
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      ApprovalStatusChip(
+                        status: project.status,
+                        note: project.note,
+                      ),
+                    ],
+                  ),
               ],
             ),
+          ],
+          // Only about one's own time. An administrator reading somebody else's
+          // rows is reading a report; handing in on their behalf would be signing
+          // a statement that is theirs to make.
+          if (mine && (submittable.isNotEmpty || withdrawable.isNotEmpty)) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (submittable.isNotEmpty)
+                  PrimaryButton(
+                    icon: LucideIcons.send,
+                    label: context.t('time.approval.submitAction'),
+                    onPressed: () => unawaited(_submitPeriod(period)),
+                  ),
+                for (final pending in withdrawable)
+                  GhostButton(
+                    icon: LucideIcons.undo2,
+                    label: context.t(
+                      'time.approval.withdrawFor',
+                      variables: {
+                        'project':
+                            pending.projectKey ??
+                            pending.projectName ??
+                            context.t('time.fmt.none'),
+                      },
+                    ),
+                    onPressed: () => unawaited(_withdraw(pending.approvalId!)),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
+  }
+
+  Future<void> _submitPeriod(ApprovalPeriod period) async {
+    final submitted = await ApprovalActions.submit(
+      context,
+      periodStart: period.start,
+      periodEnd: period.end,
+      projectIds: [for (final project in period.submittable) project.projectId],
+    );
+    if (submitted && mounted) unawaited(_load());
+  }
+
+  Future<void> _withdraw(String approvalId) async {
+    final withdrawn = await ApprovalActions.withdraw(context, approvalId);
+    if (withdrawn && mounted) unawaited(_load());
   }
 
   /// The grid. It scrolls sideways inside its own card — a week of columns plus
@@ -793,17 +1202,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                 cells: [
                   DataCell(_memberCell(row)),
                   DataCell(Text(_projectLabel(row.projectId))),
-                  for (final day in days)
-                    DataCell(
-                      Text(_cell(row, day)),
-                      // Only your own hours, and only in the module. Somebody
-                      // else's row is a report; the server would refuse the
-                      // write anyway, and a cell that opens a form before being
-                      // told no is a worse way to learn that.
-                      onTap: editable != null && row.userId == editable
-                          ? () => _openCell(row, day)
-                          : null,
-                    ),
+                  for (final day in days) _dayCell(row, day, editable),
                   DataCell(
                     Text(
                       fmtDuration(context, row.totalMinutes),
@@ -816,6 +1215,70 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
         ),
       ),
     );
+  }
+
+  /// One day of one row, with a lock where the day cannot be written.
+  ///
+  /// The lock is drawn rather than discovered: a cell that opens a form and is
+  /// then refused is a worse way to learn that a period is closed, and the glyph
+  /// carries the reason on its tooltip — the same vocabulary the refusal would
+  /// have used, which is the whole point of there being one.
+  DataCell _dayCell(TimesheetRow row, DateTime day, String? editable) {
+    final own = editable != null && row.userId == editable;
+    final lock = own ? _lockFor(row, day) : null;
+    if (lock != null) {
+      return DataCell(
+        Tooltip(
+          message: LockNotice.reasonOf(context, lock),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(LucideIcons.lock, size: 11, color: AppColors.inkFaint),
+              const SizedBox(width: 4),
+              Text(
+                _cell(row, day),
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return DataCell(
+      Text(_cell(row, day)),
+      // Only your own hours, and only in the module. Somebody else's row is a
+      // report; the server would refuse the write anyway, and a cell that opens
+      // a form before being told no is a worse way to learn that.
+      onTap: own ? () => _openCell(row, day) : null,
+    );
+  }
+
+  /// Why this cell cannot be written, or null when it can.
+  ///
+  /// The lock date first, then the period — the same order the server resolves
+  /// them in, and for the same reason: a day an administrator has archived stays
+  /// archived whatever a submission says about it.
+  TimeLockInfo? _lockFor(TimesheetRow row, DateTime day) {
+    final policy = context.read<TimePolicyCubit>().state;
+    if (policy.isLocked(day)) {
+      return TimeLockInfo(reason: 'lockDate', lockDate: policy.lockBefore);
+    }
+    final period = _period;
+    if (period == null || row.projectId == null || !period.contains(day)) {
+      return null;
+    }
+    for (final project in period.projects) {
+      if (project.projectId != row.projectId) continue;
+      if (project.status?.freezes ?? false) {
+        return TimeLockInfo(
+          reason: 'approval',
+          approvalId: project.approvalId,
+          periodStart: period.start,
+          periodEnd: period.end,
+        );
+      }
+    }
+    return null;
   }
 
   Widget _memberCell(TimesheetRow row) {

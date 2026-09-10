@@ -304,7 +304,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('time.policy.lockedChip'), findsOneWidget);
+      expect(find.text('time.lock.chip.lockDate'), findsOneWidget);
 
       await tester.tap(find.byType(GlassPopupMenu<String>));
       await tester.pumpAndSettle();
@@ -324,7 +324,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('time.policy.lockedChip'), findsNothing);
+      expect(find.text('time.lock.chip.lockDate'), findsNothing);
 
       await tester.tap(find.byType(GlassPopupMenu<String>));
       await tester.pumpAndSettle();

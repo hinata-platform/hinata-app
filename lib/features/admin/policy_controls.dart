@@ -421,6 +421,7 @@ class PolicyDate extends StatefulWidget {
     required this.onChanged,
     this.helper,
     this.pending = false,
+    this.notAfterToday = false,
   });
 
   final String label;
@@ -432,6 +433,15 @@ class PolicyDate extends StatefulWidget {
 
   /// Recorded but not yet acted on — see [PendingNote].
   final bool pending;
+
+  /// Caps the picker at today.
+  ///
+  /// For the one policy where a future date is not merely odd but refused: a
+  /// time-tracking lock date that reached into the present would stop the
+  /// recording of working time that is happening right now, so the server answers
+  /// 400. The picker ends where the server's rule does, because offering ten years
+  /// of dates that cannot be saved is a worse way to learn it.
+  final bool notAfterToday;
 
   @override
   State<PolicyDate> createState() => _PolicyDateState();
@@ -449,10 +459,15 @@ class _PolicyDateState extends State<PolicyDate> {
       '${day.day.toString().padLeft(2, '0')}';
 
   Future<void> _pick() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     final parsed = DateTime.tryParse(widget.value ?? '');
-    final initial = parsed ?? DateTime.now();
+    var initial = parsed ?? today;
+    if (widget.notAfterToday && initial.isAfter(today)) initial = today;
     final first = DateTime(initial.year - 10);
-    final last = DateTime(initial.year + 10, 12, 31);
+    final last = widget.notAfterToday
+        ? today
+        : DateTime(initial.year + 10, 12, 31);
     final anchor = anchorRectOf(_fieldKey);
     final wide =
         MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint &&

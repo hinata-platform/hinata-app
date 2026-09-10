@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hinata/core/blocs/time_policy_cubit.dart';
+import 'package:hinata/core/models/time_policy_models.dart';
+import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/features/time/time_views.dart';
+
+import 'fake_time_policy_cubit.dart';
 
 /// The menu under the app bar's title — where a phone keeps the switching that
 /// a wide window shows as chips.
@@ -21,7 +27,10 @@ void main() {
     anchor = const Rect.fromLTWH(20, 60, 90, 22);
   });
 
-  Widget host(TimeView current) {
+  Widget host(
+    TimeView current, {
+    TimePolicySnapshot policy = TimePolicySnapshot.none,
+  }) {
     Widget page(BuildContext context, String route) {
       visited.add(route);
       return Scaffold(
@@ -52,22 +61,31 @@ void main() {
       );
     }
 
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      routerConfig: GoRouter(
-        routes: [
-          for (final view in TimeView.values)
-            GoRoute(
-              path: view.route,
-              builder: (context, _) => page(context, view.route),
-            ),
-        ],
-        initialLocation: current.route,
+    // The menu asks the rules which views exist, because one of them is
+    // conditional: approvals are a view only while the operator has switched
+    // them on. Stated here rather than fetched — what this file is about is the
+    // routing, not a round trip. And the menu must *read* the cubit, never watch
+    // it: listening from an onTap is an assertion failure in provider, which is
+    // the failure this host caught the first time.
+    return BlocProvider<TimePolicyCubit>.value(
+      value: FakeTimePolicyCubit(policy, _NoTimeRepository()),
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        routerConfig: GoRouter(
+          routes: [
+            for (final view in TimeView.values)
+              GoRoute(
+                path: view.route,
+                builder: (context, _) => page(context, view.route),
+              ),
+          ],
+          initialLocation: current.route,
+        ),
       ),
     );
   }
 
-  testWidgets('it offers the three views and the page\'s own rows', (
+  testWidgets('it offers the unconditional views and the page\'s own rows', (
     tester,
   ) async {
     await tester.pumpWidget(host(TimeView.calendar));
@@ -76,10 +94,32 @@ void main() {
     await tester.pumpAndSettle();
 
     for (final view in TimeView.values) {
-      expect(find.text(view.labelKey), findsOneWidget);
+      expect(
+        find.text(view.labelKey),
+        // Approvals is a view only while the operator has switched them on, and
+        // this host has not: a menu that offered a page the instance does not
+        // have would be a dead end one tap away.
+        view.requiresApprovals ? findsNothing : findsOneWidget,
+      );
     }
     expect(find.text('time.calendar.week'), findsOneWidget);
     expect(find.text('time.calendar.month'), findsOneWidget);
+  });
+
+  testWidgets('and offers approvals once the operator switches them on', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        TimeView.calendar,
+        policy: const TimePolicySnapshot(approvalsEnabled: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('time.view.approvals'), findsOneWidget);
   });
 
   testWidgets('picking the view you are on navigates nowhere', (tester) async {
@@ -141,4 +181,12 @@ void main() {
     expect(find.text('time.view.timesheet'), findsNothing);
     expect(answered, isNull);
   });
+}
+
+/// A repository nothing asks anything of. The fake cubit already holds the
+/// answer; this is only what its constructor needs.
+class _NoTimeRepository implements TimeRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not faked');
 }
