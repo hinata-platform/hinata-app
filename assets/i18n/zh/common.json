@@ -1731,6 +1731,7 @@
       "privacyNoticeLabel": "隐私说明",
       "privacyNoticeHint": "在应用中与本模块的工时数据一同显示。留空 → 使用内置文本。",
       "notYetEnforced": "会保存，但尚未生效——该策略背后的功能将在工时记录的后续阶段推出。",
+      "leadsSeeMemberEntriesPending": "部分生效：记录的修改历史，以及提交背后的各条记录，已经遵循此策略。工时表矩阵仍会显示每个人的合计 — 这一部分将在后续阶段跟进。",
       "tagsTitle": "标签",
       "tagsHint": "用来标注记录的词汇。重命名会带动所有记录。",
       "tagsEmpty": "还没有标签。",

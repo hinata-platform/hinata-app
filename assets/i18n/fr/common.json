@@ -1731,6 +1731,7 @@
       "privacyNoticeLabel": "Note de confidentialité",
       "privacyNoticeHint": "Affichée dans l'app à côté des données de temps du module. Vide → le texte intégré.",
       "notYetEnforced": "Enregistré, mais pas encore appliqué — la fonction correspondante arrivera à une étape ultérieure du suivi du temps.",
+      "leadsSeeMemberEntriesPending": "Appliquée en partie : l'historique d'une saisie et les saisies derrière un envoi suivent déjà cette règle. La matrice de la feuille de temps affiche encore les totaux de chaque personne — cela viendra dans une étape ultérieure.",
       "tagsTitle": "Étiquettes",
       "tagsHint": "Le vocabulaire qui sert à étiqueter les saisies. Renommer une étiquette entraîne toutes les saisies.",
       "tagsEmpty": "Pas encore d'étiquettes.",

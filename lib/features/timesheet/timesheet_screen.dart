@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
@@ -1224,7 +1225,6 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// The grid. It scrolls sideways inside its own card — a week of columns plus
   /// two label columns does not fit a phone — while the page itself never does.
   Widget _table() {
-    final localizations = MaterialLocalizations.of(context);
     // The window, not a fixed week. A monthly period is up to 31 days and the page
     // fetches all of them; drawing seven meant days 8–31 could not be seen or
     // tapped, and the other twenty-four days of minutes travelled on every row for
@@ -1246,8 +1246,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
           columns: [
             DataColumn(label: Text(context.t('timesheet.member'))),
             DataColumn(label: Text(context.t('timesheet.project'))),
-            for (final day in days)
-              DataColumn(label: Text(localizations.formatShortDate(day))),
+            for (final day in days) DataColumn(label: _dayHeading(day)),
             DataColumn(label: Text(context.t('timesheet.total'))),
           ],
           rows: [
@@ -1268,6 +1267,38 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  /// A day column's label: the weekday over the date.
+  ///
+  /// Without the year, which the period label above states once. Every column
+  /// carried it while the grid drew a week and that was survivable; it is not now
+  /// that the grid draws a month, because "1. Sept. 2026" thirty-one times over
+  /// fits six columns on a 2880-pixel screen and the other twenty-five are behind
+  /// a scroll nobody knows to do.
+  ///
+  /// The weekday is the other half of that trade — it costs less width than the
+  /// year did and answers the question a month-wide grid actually raises, which is
+  /// which of these empty columns are Saturdays.
+  Widget _dayHeading(DateTime day) {
+    final locale = Localizations.localeOf(context).toString();
+    final weekend =
+        day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          DateFormat.E(locale).format(day),
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            color: weekend ? AppColors.inkFaint : AppColors.textSecondary,
+          ),
+        ),
+        Text(DateFormat.MMMd(locale).format(day)),
+      ],
     );
   }
 
