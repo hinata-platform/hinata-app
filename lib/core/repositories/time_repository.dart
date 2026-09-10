@@ -1,5 +1,6 @@
 import '../api/api_client.dart';
 import '../blocs/paged_cubit.dart';
+import '../models/time_approval_models.dart';
 import '../models/time_models.dart';
 import '../models/time_policy_models.dart';
 import '../models/work_models.dart';
@@ -285,6 +286,186 @@ class TimeRepository {
       total: (data['totalElements'] as num?)?.toInt() ?? 0,
     );
   }
+
+  // --- handing periods in ---------------------------------------------------------
+
+  /// The periods overlapping a window, and where the reader stands in each.
+  ///
+  /// The app computes **no** period arithmetic of its own: which days "March" or
+  /// "CW 12" covers is the server's, in one place, because two implementations
+  /// would disagree on exactly one day a year and nobody would notice until a
+  /// payroll period was short.
+  ///
+  /// [projectId] asks about one project's rhythm — which is what the filtered
+  /// timesheet does; asking about none asks about the instance's.
+  Future<List<ApprovalPeriod>> approvalPeriods({
+    required DateTime from,
+    required DateTime to,
+    String? projectId,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/time/approvals/periods',
+              query: {
+                'from': formatDateOnly(from),
+                'to': formatDateOnly(to),
+                'projectId': ?projectId,
+              },
+            )
+            as List<dynamic>;
+    return data
+        .map((p) => ApprovalPeriod.fromJson(p as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
+  /// Hands a span in — one submission per project that has hours in it.
+  Future<List<TimesheetApproval>> submitPeriod({
+    required DateTime periodStart,
+    required DateTime periodEnd,
+    List<String>? projectIds,
+  }) async {
+    final data =
+        await _api.post(
+              '/api/v1/time/approvals/submit',
+              body: {
+                'periodStart': formatDateOnly(periodStart),
+                'periodEnd': formatDateOnly(periodEnd),
+                if (projectIds != null && projectIds.isNotEmpty)
+                  'projectIds': projectIds,
+              },
+            )
+            as List<dynamic>;
+    return data
+        .map((a) => TimesheetApproval.fromJson(a as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
+  /// Takes a submission back. The submitter's own act, and only while pending.
+  Future<TimesheetApproval> withdrawApproval(String id) async =>
+      _approval(await _api.post('/api/v1/time/approvals/$id/withdraw'));
+
+  /// Signs a period off. A reason is optional here and required for a rejection.
+  Future<TimesheetApproval> approve(String id, {String? note}) async =>
+      _approval(
+        await _api.post(
+          '/api/v1/time/approvals/$id/approve',
+          body: {'note': ?note},
+        ),
+      );
+
+  /// Sends a period back. The server refuses a blank reason, on purpose: "no" on
+  /// its own is not something the person on the other end can act on.
+  Future<TimesheetApproval> reject(String id, {required String note}) async =>
+      _approval(
+        await _api.post(
+          '/api/v1/time/approvals/$id/reject',
+          body: {'note': note},
+        ),
+      );
+
+  /// Takes an approved period back so it can be corrected, with a reason.
+  Future<TimesheetApproval> reopen(String id, {required String note}) async =>
+      _approval(
+        await _api.post(
+          '/api/v1/time/approvals/$id/reopen',
+          body: {'note': note},
+        ),
+      );
+
+  /// One page of submissions: the reader's own (`mine`) or theirs to decide
+  /// (`inbox`).
+  Future<PageResult<TimesheetApproval>> approvals({
+    String scope = 'mine',
+    ApprovalStatus? status,
+    int page = 0,
+    int size = 25,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/time/approvals',
+              query: {
+                'scope': scope,
+                'status': ?status?.name.toUpperCase(),
+                'page': page,
+                'size': size,
+              },
+            )
+            as Map<String, dynamic>;
+    return (
+      items: ((data['content'] as List<dynamic>?) ?? const [])
+          .map((a) => TimesheetApproval.fromJson(a as Map<String, dynamic>))
+          .toList(),
+      total: (data['totalElements'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  /// The entries a submission covers — what an approver actually reads.
+  Future<PageResult<WorkItem>> approvalEntries(
+    String id, {
+    int page = 0,
+    int size = 25,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/time/approvals/$id/entries',
+              query: {'page': page, 'size': size},
+            )
+            as Map<String, dynamic>;
+    return (
+      items: ((data['content'] as List<dynamic>?) ?? const [])
+          .map((e) => WorkItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      total: (data['totalElements'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  /// Asks for a frozen entry of one's own to be opened.
+  ///
+  /// Changes nothing by itself — that is the point of it. The request reaches
+  /// whoever can actually lift the freeze and is recorded, so it cannot be lost
+  /// in a chat.
+  Future<void> requestCorrection(String entryId, String note) => _api.post(
+    '/api/v1/time/entries/$entryId/correction-request',
+    body: {'note': note},
+  );
+
+  TimesheetApproval _approval(Object? data) =>
+      TimesheetApproval.fromJson(data as Map<String, dynamic>);
+
+  // --- the way back out of the lock date --------------------------------------------
+
+  /// Reopens a span inside the freeze, with a reason. Administrators only.
+  ///
+  /// Answers with the exceptions as they now stand, so the admin screen needs no
+  /// second request. There is no GET: members read them from the policy, and the
+  /// admin screen already holds the stored settings block it is editing.
+  Future<List<TimeLockException>> addLockException({
+    required DateTime from,
+    required DateTime to,
+    required String note,
+  }) async {
+    final data =
+        await _api.post(
+              '/api/v1/time/lock-exceptions',
+              body: {
+                'from': formatDateOnly(from),
+                'to': formatDateOnly(to),
+                'note': note,
+              },
+            )
+            as List<dynamic>;
+    return _exceptions(data);
+  }
+
+  Future<List<TimeLockException>> removeLockException(String id) async {
+    final data =
+        await _api.delete('/api/v1/time/lock-exceptions/$id') as List<dynamic>;
+    return _exceptions(data);
+  }
+
+  List<TimeLockException> _exceptions(List<dynamic> data) => data
+      .map((e) => TimeLockException.fromJson(e as Map<String, dynamic>))
+      .toList(growable: false);
 
   // --- the tag catalogue -------------------------------------------------------
 

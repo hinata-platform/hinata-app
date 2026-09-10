@@ -240,6 +240,21 @@ class _TimeGridState extends State<TimeGrid> {
       .where((l) => l.placement == TimeGridPlacement.background)
       .toList();
 
+  /// The mark a background layer puts beside this day's date, or null.
+  ///
+  /// First match wins. More than one wash on a day is a design that has already
+  /// gone wrong — two flat rects over each other say nothing legible — so the
+  /// heading says the first thing rather than stacking glyphs.
+  IconData? _glyphFor(DateTime day) {
+    for (final layer in _washLayers) {
+      if (layer.glyph == null) continue;
+      for (final item in layer.items) {
+        if (_sameDay(item.start, day)) return layer.glyph;
+      }
+    }
+    return null;
+  }
+
   double get _bandHeight => _bandLayers
       .map((layer) => _bandRows(layer) * kTimeGridBandRow)
       .fold(0.0, (sum, height) => sum + height);
@@ -550,6 +565,7 @@ class _TimeGridState extends State<TimeGrid> {
                                         child: _DayHeading(
                                           day: day,
                                           today: _isToday(day),
+                                          glyph: _glyphFor(day),
                                         ),
                                       ),
                                   ],
@@ -917,10 +933,14 @@ bool _sameDay(DateTime a, DateTime b) =>
 // ─────────────────────────────── parts ────────────────────────────────────
 
 class _DayHeading extends StatelessWidget {
-  const _DayHeading({required this.day, required this.today});
+  const _DayHeading({required this.day, required this.today, this.glyph});
 
   final DateTime day;
   final bool today;
+
+  /// What a background layer says about this day — a lock, a holiday. Beside the
+  /// date rather than under it, so the column keeps its height.
+  final IconData? glyph;
 
   @override
   Widget build(BuildContext context) {
@@ -937,25 +957,35 @@ class _DayHeading extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 2),
-        Container(
-          width: 26,
-          height: 26,
-          alignment: Alignment.center,
-          decoration: today
-              ? BoxDecoration(
-                  color: AppColors.accentSoft,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.accentLine),
-                )
-              : null,
-          child: Text(
-            '${day.day}',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: today ? AppColors.accentStrong : AppColors.ink,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 26,
+              height: 26,
+              alignment: Alignment.center,
+              decoration: today
+                  ? BoxDecoration(
+                      color: AppColors.accentSoft,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.accentLine),
+                    )
+                  : null,
+              child: Text(
+                '${day.day}',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: today ? AppColors.accentStrong : AppColors.ink,
+                ),
+              ),
             ),
-          ),
+            if (glyph != null)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(start: 1),
+                child: Icon(glyph, size: 11, color: AppColors.inkFaint),
+              ),
+          ],
         ),
       ],
     );

@@ -918,7 +918,8 @@
     "view": {
       "list": "リスト",
       "calendar": "カレンダー",
-      "timesheet": "タイムシート"
+      "timesheet": "タイムシート",
+      "approvals": "承認"
     },
     "calendar": {
       "untimed": "時刻なし",
@@ -992,6 +993,92 @@
       "CALENDAR": "カレンダーから",
       "CSV": "インポート",
       "SHARED": "共有された記録のコピー"
+    },
+    "lock": {
+      "reason": {
+        "lockDate": "{{date}} より前の記録は締め切られています。",
+        "approval": "{{from}} – {{to}} を提出済みのため、これらの記録は確定しています。",
+        "invoice": "発行済みの請求書がこの記録を参照しています。",
+        "unknown": "この記録は編集できません。"
+      },
+      "holder": {
+        "lockDate": "管理者は締め切られた期間の中の一部を再オープンできます。",
+        "approval": "プロジェクトのリードまたは管理者が期間を再オープンできます。",
+        "invoice": "請求を担当する人が貸方票で調整します。"
+      },
+      "remedy": {
+        "lockDate": "修正を依頼してください。理由は記録され、管理者に届きます。",
+        "approval": "修正を依頼するか、期間の再オープンを依頼してください。",
+        "invoice": "請求書は書き換えません。貸方票で調整します。"
+      },
+      "chip": {
+        "lockDate": "締め切り済み",
+        "approval": "提出済み"
+      },
+      "request": "修正を依頼",
+      "requestTitle": "修正を依頼",
+      "requestHint": "どこが誤りで、どうあるべきですか？",
+      "requestSend": "依頼を送信",
+      "requestSent": "依頼を送信し、記録しました。"
+    },
+    "approval": {
+      "status": {
+        "open": "未提出",
+        "submitted": "提出済み",
+        "approved": "承認済み",
+        "rejected": "差し戻し",
+        "withdrawn": "取り下げ"
+      },
+      "rhythm": {
+        "WEEKLY": "毎週",
+        "BIWEEKLY": "隔週",
+        "SEMI_MONTHLY": "月2回",
+        "MONTHLY": "毎月",
+        "QUARTERLY": "四半期ごと",
+        "CUSTOM_DAYS": "日数を指定",
+        "FREE": "自由な期間"
+      },
+      "previousPeriod": "前の期間",
+      "nextPeriod": "次の期間",
+      "pickSpan": "期間を選ぶ",
+      "submitTitle": "この期間を提出",
+      "submitConfirm": "{{period}} を承認のために提出しますか？判断が出るまで記録は変更できません。",
+      "submitAction": "期間を提出",
+      "submitted": "期間を提出しました。",
+      "withdrawTitle": "取り下げ",
+      "withdrawConfirm": "この提出を取り下げますか？記録は再び編集できるようになります。",
+      "withdrawAction": "取り下げ",
+      "withdrawFor": "{{project}} を取り下げ",
+      "withdrawn": "提出を取り下げました。",
+      "approveTitle": "承認",
+      "approveConfirm": "この期間を承認しますか？誰かが再オープンするまで記録は確定します。",
+      "approveAction": "承認",
+      "approved": "期間を承認しました。",
+      "rejectTitle": "差し戻す",
+      "rejectHint": "何を直す必要がありますか？本人が読みます。",
+      "rejectAction": "差し戻す",
+      "rejected": "期間を差し戻しました。",
+      "reopenTitle": "再オープン",
+      "reopenHint": "この承認済みの期間を再オープンする理由は何ですか？",
+      "reopenAction": "再オープン",
+      "reopened": "期間を再オープンしました。",
+      "showEntries": "記録を表示",
+      "scope": {
+        "mine": "自分の",
+        "inbox": "要判断"
+      },
+      "empty": {
+        "mine": {
+          "title": "まだ提出はありません",
+          "message": "期間を提出すると、その結果とともにここに表示されます。"
+        },
+        "inbox": {
+          "title": "判断すべきものはありません",
+          "message": "あなたがリードを務めるプロジェクトの提出がここに表示されます。"
+        }
+      },
+      "gridClamped": "表はこの期間の最初の数日を表示します。上の数値は期間全体のものです。",
+      "nothingToSubmit": "この期間にはまだ時間が記録されていません。"
     }
   },
   "projects": {
@@ -1558,7 +1645,7 @@
       "requiredTagTitle": "タグ必須",
       "requiredTagHint": "記録には少なくとも1つのタグが必要です。",
       "lockBeforeLabel": "この日より前を施錠",
-      "lockBeforeHint": "この日より前の記録は、誰も — API からも — 作成・変更・削除できません。指定した当日は開いたままです。",
+      "lockBeforeHint": "この日より前の記録は、誰も — API からも — 作成・変更・削除できません。指定した当日は開いたままです。 日付を未来にすることはできません。進行中の労働時間は常に記録できる状態でなければなりません。",
       "roundingModeLabel": "丸め",
       "roundingModeHint": "レポートにのみ適用されます。保存された分は変わりません。",
       "roundingMode": {
@@ -1652,7 +1739,21 @@
       "tagDeleteTitle": "タグを削除しますか？",
       "tagDeleteMessage": "「{{name}}」を {{count}} 件の記録から削除します。記録そのものは残ります。",
       "tagDeleteMessage_plural": "「{{name}}」を {{count}} 件の記録から削除します。記録そのものは残ります。",
-      "lockBeforeEveryone": "ロックは管理者を含む全員に適用されます。締めた期間を直すには、記録に残る形でロックを解除します。"
+      "lockBeforeEveryone": "ロックは管理者を含む全員に適用されます。締めた期間を直すには、記録に残る形でロックを解除します。",
+      "approvalsNeedVisibility": "承認とは誰かの記録を読むことです。「リードがメンバーの記録を閲覧」も有効にしてください。そうでないと承認者には中身のない合計だけが見えます。",
+      "periodPreviewTitle": "次の期間",
+      "periodPreviewHint": "リズムの変更は今後の提出にのみ影響します。すでに提出された期間はその日付を保ちます。",
+      "periodPreviewFree": "固定のリズムがない場合、提出する人が期間を自分で選びます（最大92日、既に提出した期間と重ならないこと）。",
+      "lockExceptionsTitle": "再オープンした期間",
+      "lockExceptionsHint": "ロック日そのものを解除する代わりに、締め切られた期間の中の一部だけを開きます。",
+      "lockExceptionsLegal": "労働時間は個人データであり、不正確な個人データは不当な遅滞なく訂正できなければなりません（GDPR第16条）。例外はその戻り道です。対象の日だけを開き、理由を伴い、監査ログに残ります。",
+      "lockExceptionsEmpty": "現在、締め切られた期間の中に開いている期間はありません。",
+      "lockExceptionAdd": "期間を再オープン",
+      "lockExceptionSpan": "どの日を再オープンしますか？",
+      "lockExceptionReason": "この期間を再オープンする理由は何ですか？",
+      "lockExceptionReasonHint": "監査ログに残り、全員に表示されます。",
+      "lockExceptionRemove": "再び閉じる",
+      "lockExceptionRemoveConfirm": "{{period}} を再び閉じますか？記録は読み取り専用になります。"
     },
     "passwordPolicy": "パスワードポリシー",
     "passwordPolicyHint": "ユーザーのパスワードに求める最低条件。",
@@ -2093,7 +2194,15 @@
       "TIME_TAG_CREATED": "タグを作成",
       "TIME_TAG_UPDATED": "タグを変更",
       "TIME_TAG_DELETED": "タグを削除",
-      "TIME_PROJECT_SETTINGS_CHANGED": "プロジェクトの時間設定を変更"
+      "TIME_PROJECT_SETTINGS_CHANGED": "プロジェクトの時間設定を変更",
+      "TIMESHEET_SUBMITTED": "タイムシート提出",
+      "TIMESHEET_WITHDRAWN": "タイムシート取り下げ",
+      "TIMESHEET_APPROVED": "タイムシート承認",
+      "TIMESHEET_REJECTED": "タイムシート差し戻し",
+      "TIMESHEET_REOPENED": "タイムシート再オープン",
+      "TIME_CORRECTION_REQUESTED": "修正依頼",
+      "TIME_LOCK_EXCEPTION_ADDED": "期間を再オープン",
+      "TIME_LOCK_EXCEPTION_REMOVED": "再オープンした期間を閉じた"
     },
     "meta": {
       "oldRole": "変更前のロール",
@@ -2286,7 +2395,10 @@
       "billable": "既定で請求対象",
       "approvalRequired": "タイムシートに承認が必要",
       "approvalPeriod": "提出期間",
-      "inherit": "サーバー既定"
+      "inherit": "サーバー既定",
+      "lockBefore": "独自のロック日",
+      "lockBeforeHint": "このプロジェクトの帳簿をインスタンス全体より早く締めます。締める方向にのみ働き、緩めることはできません。",
+      "instanceDefault": "インスタンスの方針"
     }
   },
   "teams": {

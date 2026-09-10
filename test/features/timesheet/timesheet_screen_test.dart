@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:hinata/core/blocs/auth_bloc.dart';
+import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/models/core_models.dart';
+import 'package:hinata/core/models/time_approval_models.dart';
+import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
@@ -15,6 +19,7 @@ import 'package:hinata/core/widgets/glass_switch_chip.dart';
 import 'package:hinata/core/widgets/hive_empty_state.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:hinata/features/timesheet/timesheet_screen.dart';
+import '../time/fake_time_policy_cubit.dart';
 
 /// The week grid has to answer for rows nobody owns any more and for time that
 /// belongs to no project — both are ordinary states of the data, not errors —
@@ -60,6 +65,7 @@ void main() {
     _FakeTimeRepository? time,
     bool moduleView = false,
     bool dockedBand = false,
+    TimePolicySnapshot policy = TimePolicySnapshot.none,
   }) {
     final router = GoRouter(
       routes: [
@@ -106,8 +112,22 @@ void main() {
                           value: time ?? _FakeTimeRepository(rows),
                         ),
                       ],
-                      child: BlocProvider<AuthBloc>.value(
-                        value: _FakeAuthBloc(admin: admin),
+                      child: MultiBlocProvider(
+                        providers: [
+                          BlocProvider<AuthBloc>.value(
+                            value: _FakeAuthBloc(admin: admin),
+                          ),
+                          // The page asks the rules whether its window is a week
+                          // or a submission period. Stated here rather than
+                          // fetched: a test about the grid must not also be a
+                          // test about a round trip.
+                          BlocProvider<TimePolicyCubit>.value(
+                            value: FakeTimePolicyCubit(
+                              policy,
+                              time ?? _FakeTimeRepository(rows),
+                            ),
+                          ),
+                        ],
                         child: TimesheetScreen(moduleView: moduleView),
                       ),
                     ),
@@ -521,6 +541,247 @@ void main() {
       expect(find.text('Ada Lovelace'), findsWidgets);
     });
   });
+
+  // --- the period, when the instance hands timesheets in ---------------------
+
+  group('the submission period', () {
+    ApprovalPeriod period({
+      required DateTime start,
+      required DateTime end,
+      String type = 'MONTHLY',
+      ApprovalStatus? status,
+      int minutes = 480,
+    }) => ApprovalPeriod(
+      start: start,
+      end: end,
+      type: type,
+      projects: [
+        ApprovalProjectStatus(
+          projectId: 'p1',
+          projectKey: 'HIN',
+          status: status,
+          approvalId: status == null ? null : 'a1',
+          minutes: minutes,
+        ),
+      ],
+    );
+
+    /// A wide window: on a phone the page docks its controls into the shell's
+    /// glass app bar, and this host draws no band unless asked.
+    void wide(WidgetTester tester) {
+      tester.view.physicalSize = const Size(1400, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+    }
+
+    Future<_FakeTimeRepository> open(
+      WidgetTester tester, {
+      required ApprovalPeriod only,
+      String rhythm = 'MONTHLY',
+    }) async {
+      wide(tester);
+      final time = _FakeTimeRepository(const [])..periods = [only];
+      await tester.pumpWidget(
+        host(
+          rows: const [],
+          moduleView: true,
+          time: time,
+          policy: TimePolicySnapshot(
+            approvalsEnabled: true,
+            approvalRhythm: ApprovalRhythm(type: rhythm),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      return time;
+    }
+
+    testWidgets('a monthly rhythm drives the window from the server', (
+      tester,
+    ) async {
+      // The app derives no rhythm of its own: the boundaries, the label and the
+      // status all come from one answer.
+      final time = await open(
+        tester,
+        only: period(start: DateTime(2026, 8, 1), end: DateTime(2026, 8, 31)),
+      );
+
+      expect(time.rowWindows.last, (
+        DateTime(2026, 8, 1),
+        DateTime(2026, 8, 31),
+      ));
+      expect(find.text('time.approval.rhythm.MONTHLY'), findsOneWidget);
+      expect(find.text('time.approval.status.open'), findsOneWidget);
+      expect(find.text('time.approval.submitAction'), findsOneWidget);
+    });
+
+    testWidgets('a weekly rhythm is named as one, with its own window', (
+      tester,
+    ) async {
+      final time = await open(
+        tester,
+        rhythm: 'WEEKLY',
+        only: period(
+          start: DateTime(2026, 8, 3),
+          end: DateTime(2026, 8, 9),
+          type: 'WEEKLY',
+        ),
+      );
+
+      expect(time.rowWindows.last, (
+        DateTime(2026, 8, 3),
+        DateTime(2026, 8, 9),
+      ));
+      expect(find.text('time.approval.rhythm.WEEKLY'), findsOneWidget);
+    });
+
+    testWidgets(
+      'the arrows move the anchor past the period, not by its length',
+      (tester) async {
+        // A month is four different lengths, so a neighbour is found by stepping
+        // one day past the edge and asking again.
+        final time = await open(
+          tester,
+          only: period(start: DateTime(2026, 8, 1), end: DateTime(2026, 8, 31)),
+        );
+        time.periodWindows.clear();
+
+        await tester.tap(find.byTooltip('time.approval.nextPeriod'));
+        await tester.pumpAndSettle();
+
+        expect(time.periodWindows.single, (
+          DateTime(2026, 9, 1),
+          DateTime(2026, 9, 1),
+        ));
+      },
+    );
+
+    testWidgets('a FREE rhythm offers a span to pick instead of arrows', (
+      tester,
+    ) async {
+      // There is no grid to step through, so arrows would be a lie about a
+      // rhythm that does not exist.
+      await open(
+        tester,
+        rhythm: 'FREE',
+        only: period(
+          start: DateTime(2026, 8, 4),
+          end: DateTime(2026, 8, 10),
+          type: 'FREE',
+        ),
+      );
+
+      expect(find.byTooltip('time.approval.nextPeriod'), findsNothing);
+      expect(find.byTooltip('time.approval.previousPeriod'), findsNothing);
+      // The label is the span itself, on a button that opens the picker.
+      expect(find.byIcon(LucideIcons.calendarRange), findsWidgets);
+    });
+
+    testWidgets('handing a period in sends its own dates and projects', (
+      tester,
+    ) async {
+      final time = await open(
+        tester,
+        only: period(start: DateTime(2026, 8, 1), end: DateTime(2026, 8, 31)),
+      );
+
+      await tester.tap(find.text('time.approval.submitAction'));
+      await tester.pumpAndSettle();
+      // The confirmation's own button, not the card's that opened it: both carry
+      // the label, and the dialog's is the later of the two in the tree.
+      await tester.tap(
+        find.widgetWithText(FilledButton, 'time.approval.submitAction').last,
+      );
+      await tester.pumpAndSettle();
+      // The shared confirmation lays its two buttons out in a plain Row, and the
+      // labels here are i18n *keys* — far longer than the words they stand for,
+      // so the row overflows in the test and nowhere else. Asserting its pixels
+      // would be asserting about the key lengths.
+      tester.takeException();
+
+      // Field by field: a record holding a List compares that List by identity,
+      // so the whole-record form passes only by accident.
+      final sent = time.submissions.single;
+      expect(sent.$1, DateTime(2026, 8, 1));
+      expect(sent.$2, DateTime(2026, 8, 31));
+      expect(sent.$3, ['p1']);
+      // The success toast dismisses itself on a timer; letting it finish keeps
+      // that timer out of whichever test runs next.
+      await tester.pumpAndSettle(const Duration(seconds: 6));
+    });
+
+    testWidgets(
+      'a period already in offers the way back, not a second submit',
+      (tester) async {
+        await open(
+          tester,
+          only: period(
+            start: DateTime(2026, 8, 1),
+            end: DateTime(2026, 8, 31),
+            status: ApprovalStatus.submitted,
+          ),
+        );
+
+        expect(find.text('time.approval.status.submitted'), findsOneWidget);
+        expect(find.text('time.approval.submitAction'), findsNothing);
+        expect(
+          find.textContaining('time.approval.withdrawFor'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets('an approved period offers neither — only a reopen can', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        only: period(
+          start: DateTime(2026, 8, 1),
+          end: DateTime(2026, 8, 31),
+          status: ApprovalStatus.approved,
+        ),
+      );
+
+      expect(find.text('time.approval.status.approved'), findsOneWidget);
+      expect(find.text('time.approval.submitAction'), findsNothing);
+      expect(find.textContaining('time.approval.withdrawFor'), findsNothing);
+    });
+
+    testWidgets('a period with no hours offers no submit', (tester) async {
+      await open(
+        tester,
+        only: period(
+          start: DateTime(2026, 8, 1),
+          end: DateTime(2026, 8, 31),
+          minutes: 0,
+        ),
+      );
+
+      expect(find.text('time.approval.submitAction'), findsNothing);
+    });
+
+    testWidgets(
+      'with approvals off the window is a week and nothing is offered',
+      (tester) async {
+        // The plain `/timesheet` is the surface the published app reads, and it
+        // stays a week whatever this instance has configured.
+        wide(tester);
+        final time = _FakeTimeRepository(const [])
+          ..periods = [
+            period(start: DateTime(2026, 8, 1), end: DateTime(2026, 8, 31)),
+          ];
+        await tester.pumpWidget(
+          host(rows: const [], moduleView: true, time: time),
+        );
+        await tester.pumpAndSettle();
+
+        expect(time.periodWindows, isEmpty);
+        expect(find.text('time.approval.submitAction'), findsNothing);
+        expect(find.text('timesheet.today'), findsWidgets);
+      },
+    );
+  });
 }
 
 DateTime _weekStart(DateTime day) =>
@@ -675,6 +936,21 @@ class _FakeTimeRepository implements TimeRepository {
   /// server's page ran out.
   int? total;
 
+  /// The periods the server would hand back. Empty is what an instance without
+  /// approvals answers, and what a FREE rhythm answers before anything has been
+  /// handed in.
+  List<ApprovalPeriod> periods = const [];
+
+  /// Every window the page asked about, so a test can assert that the arrows move
+  /// the *anchor* rather than the window.
+  final List<(DateTime, DateTime)> periodWindows = [];
+
+  /// Every window the grid asked rows for.
+  final List<(DateTime, DateTime)> rowWindows = [];
+
+  final List<(DateTime, DateTime, List<String>?)> submissions = [];
+  final List<String> withdrawals = [];
+
   @override
   Future<PageResult<TimesheetRow>> timesheet({
     required DateTime from,
@@ -685,7 +961,41 @@ class _FakeTimeRepository implements TimeRepository {
     int size = 50,
   }) async {
     calls++;
+    rowWindows.add((from, to));
     return (items: rows, total: total ?? rows.length);
+  }
+
+  @override
+  Future<List<ApprovalPeriod>> approvalPeriods({
+    required DateTime from,
+    required DateTime to,
+    String? projectId,
+  }) async {
+    periodWindows.add((from, to));
+    return periods;
+  }
+
+  @override
+  Future<List<TimesheetApproval>> submitPeriod({
+    required DateTime periodStart,
+    required DateTime periodEnd,
+    List<String>? projectIds,
+  }) async {
+    submissions.add((periodStart, periodEnd, projectIds));
+    return const [];
+  }
+
+  @override
+  Future<TimesheetApproval> withdrawApproval(String id) async {
+    withdrawals.add(id);
+    return TimesheetApproval(
+      id: id,
+      userId: 'me',
+      projectId: 'p1',
+      periodStart: DateTime(2026, 8, 1),
+      periodEnd: DateTime(2026, 8, 31),
+      status: ApprovalStatus.withdrawn,
+    );
   }
 
   @override

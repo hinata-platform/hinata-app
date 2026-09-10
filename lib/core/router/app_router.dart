@@ -40,6 +40,7 @@ import '../../features/shell/app_shell.dart';
 import '../../features/shell/not_found_screen.dart';
 import '../../features/teams/team_detail_screen.dart';
 import '../../features/teams/teams_screen.dart';
+import '../../features/time/approvals_screen.dart';
 import '../../features/time/time_calendar_screen.dart';
 import '../../features/time/time_focus_screen.dart';
 import '../../features/time/time_screen.dart';
@@ -509,6 +510,17 @@ GoRouter buildRouter({
             ),
           ),
           GoRoute(
+            path: '/time/approvals',
+            pageBuilder: (_, state) => _transition(
+              state,
+              timeModulePage(
+                advancedTime:
+                    appConfig.state.meta?.advancedTimeTracking ?? false,
+                view: TimeView.approvals,
+              ),
+            ),
+          ),
+          GoRoute(
             path: '/watched',
             pageBuilder: (_, state) =>
                 _transition(state, const WatchedIssuesScreen()),
@@ -592,6 +604,12 @@ Widget timeModulePage({
     // The same grid the base route draws, told that it belongs to the module:
     // paged rows, and a cell of your own that can be typed into.
     TimeView.timesheet => const TimesheetScreen(moduleView: true),
+    // Reachable even while approvals are switched off, and deliberately: the
+    // route answers with what is there, which is then nothing. Gating it here
+    // would turn a link somebody was sent into a not-found page on the day an
+    // administrator toggles the policy — and the page itself says honestly that
+    // there is nothing to decide.
+    TimeView.approvals => const ApprovalsScreen(),
   };
 }
 
