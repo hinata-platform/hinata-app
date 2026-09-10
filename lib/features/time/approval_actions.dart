@@ -149,6 +149,17 @@ class ApprovalActions {
   }
 }
 
+/// The freeze a refusal names, or null when the refusal is about something else.
+///
+/// The server answers every frozen write with the reason, who can lift it and the
+/// way back, beside the sentence. Reading it is what keeps the app from having to
+/// guess: the app's own resolver works from the rules it holds, and the rules can
+/// be a moment out of date — somebody else's approval landing between the last
+/// policy read and this save. Then the refusal is the authority, and it carries
+/// everything the notice needs.
+TimeLockInfo? lockFromFailure(ApiFailure failure, {String? entryId}) =>
+    TimeLockInfo.fromDetails(failure.details, entryId: entryId);
+
 /// Where one project's period stands, as a chip.
 ///
 /// Four states and a colour each, and the one that carries more than its colour

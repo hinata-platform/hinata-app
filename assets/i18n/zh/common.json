@@ -1013,7 +1013,9 @@
       },
       "chip": {
         "lockDate": "已结账",
-        "approval": "已提交"
+        "approval": "已提交",
+        "invoice": "已开票",
+        "unknown": "已关闭"
       },
       "request": "申请更正",
       "requestTitle": "申请更正",

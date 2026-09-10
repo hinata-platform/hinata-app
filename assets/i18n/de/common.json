@@ -1013,7 +1013,9 @@
       },
       "chip": {
         "lockDate": "Abgeschlossen",
-        "approval": "Eingereicht"
+        "approval": "Eingereicht",
+        "invoice": "Abgerechnet",
+        "unknown": "Geschlossen"
       },
       "request": "Korrektur anfragen",
       "requestTitle": "Korrektur anfragen",

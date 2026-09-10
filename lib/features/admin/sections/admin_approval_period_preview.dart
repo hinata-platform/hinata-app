@@ -27,8 +27,11 @@ import '../admin_form_helpers.dart';
 class ApprovalPeriodPreview extends StatefulWidget {
   const ApprovalPeriodPreview({super.key, required this.rhythm});
 
-  /// The type currently chosen in the form — so the preview follows the picker
-  /// before anything is saved, which is the only moment it is useful.
+  /// The type currently chosen in the form.
+  ///
+  /// The preview itself always shows the *saved* rhythm — the server computes from
+  /// the stored policy, which is the only thing it can honestly do. This is here so
+  /// that a change re-asks, and the note below says which one is being shown.
   final String? rhythm;
 
   @override
@@ -57,27 +60,34 @@ class _ApprovalPeriodPreviewState extends State<ApprovalPeriodPreview> {
 
   Future<void> _load() async {
     if (widget.rhythm == 'FREE') {
-      if (mounted) setState(() => _periods = const []);
+      // Not a fetch and not a failure: there are no periods under a free rhythm,
+      // and saying so *is* the preview. `_failed` is cleared with it, or one
+      // earlier failure would keep hiding this note for the life of the screen.
+      if (mounted) {
+        setState(() {
+          _periods = const [];
+          _failed = false;
+        });
+      }
       return;
     }
     try {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
-      // A quarter back and a quarter on: wide enough for three periods of every
-      // rhythm the form offers, narrow enough to stay inside the route's window.
+      // Just wide enough for three periods of the widest rhythm the form offers —
+      // three quarters — and no wider. The route pays for the window it is given:
+      // an aggregation over the reader's entries and a status per project per
+      // period, all but three of which this widget throws away.
       final periods = await context.read<TimeRepository>().approvalPeriods(
-        from: DateTime(today.year, today.month - 3, 1),
-        to: DateTime(today.year, today.month + 3, 1),
+        from: DateTime(today.year, today.month, 1),
+        to: DateTime(today.year, today.month + 9, 1),
       );
       if (!mounted) return;
-      // The three that matter: the one happening now and the two after it, or
-      // the last three when the instance has no hours in the future.
-      final upcoming = periods.where((p) => !p.end.isBefore(today)).toList();
       setState(() {
-        _periods =
-            (upcoming.isEmpty ? periods.reversed.take(3).toList() : upcoming)
-                .take(3)
-                .toList(growable: false);
+        _periods = periods
+            .where((period) => !period.end.isBefore(today))
+            .take(3)
+            .toList(growable: false);
         _failed = false;
       });
     } on ApiFailure {

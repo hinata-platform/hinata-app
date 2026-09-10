@@ -810,7 +810,11 @@ class _DayGroup extends StatelessWidget {
             onDelete: () => onDelete(entry),
             onContinue: () => onContinue(entry),
             onHistory: () => onHistory(entry),
-            lock: policy.lockFor(entry.date, entryId: entry.id),
+            lock: policy.lockFor(
+              entry.date,
+              projectId: entry.projectId,
+              entryId: entry.id,
+            ),
           ),
       ],
     );
