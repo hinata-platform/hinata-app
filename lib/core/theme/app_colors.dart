@@ -57,6 +57,21 @@ abstract final class AppColors {
   static const recessDark = Color(0x38080610);
   static Color get recess => _dark ? recessDark : recessLight;
 
+  /// A stretch nothing can be written to — a day behind the lock date, a period
+  /// already handed in.
+  ///
+  /// Not [recess] and not a multiple of it, because the two themes need opposite
+  /// answers. Measured on the calendar canvas against the adjacent open day: in
+  /// the light theme this is 1.97 to the weekend's 1.34, which is what makes a
+  /// freeze read as the stronger of the two statements rather than as a second
+  /// weekend. In the dark theme darkening has no headroom at all — the canvas is
+  /// already near black, and *pure black* over it moves the contrast by a fifth —
+  /// so the veil is a pale one there and the weekend keeps the dark. The padlock
+  /// beside the date is what names either of them; the wash only has to be seen.
+  static const closedLight = Color(0x59211F3D);
+  static const closedDark = Color(0x29FFFFFF);
+  static Color get closed => _dark ? closedDark : closedLight;
+
   static const surfaceLight = Color(0xFFFFFFFF);
   static const surfaceDark = Color(0xFF1C1B25);
   static Color get surface => _dark ? surfaceDark : surfaceLight; // cards

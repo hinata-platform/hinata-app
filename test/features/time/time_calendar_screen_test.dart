@@ -17,6 +17,7 @@ import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/core/widgets/hive_empty_state.dart';
 import 'package:hinata/core/widgets/glass_switch_chip.dart';
 import 'package:hinata/core/widgets/time_grid/time_grid.dart';
+import 'package:hinata/core/widgets/time_grid/time_grid_model.dart';
 import 'package:hinata/core/widgets/time_grid/time_month_grid.dart';
 import 'package:hinata/core/widgets/time_grid/time_month_layout.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
@@ -60,6 +61,7 @@ void main() {
   Widget host({
     required _FakeTimeRepository time,
     Size size = const Size(1400, 900),
+    TimePolicySnapshot? policyOnLoad,
   }) {
     final router = GoRouter(
       routes: [
@@ -87,8 +89,11 @@ void main() {
                     // demands, and what the editor assumes until the module
                     // answers otherwise.
                     BlocProvider<TimePolicyCubit>(
-                      create: (_) =>
-                          FakeTimePolicyCubit(TimePolicySnapshot.none, time),
+                      create: (_) => FakeTimePolicyCubit(
+                        TimePolicySnapshot.none,
+                        time,
+                        onLoad: policyOnLoad,
+                      ),
                     ),
                   ],
                   child: const TimeCalendarScreen(),
@@ -115,11 +120,14 @@ void main() {
     WidgetTester tester,
     _FakeTimeRepository time, {
     Size size = const Size(1400, 900),
+    TimePolicySnapshot? policyOnLoad,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(host(time: time, size: size));
+    await tester.pumpWidget(
+      host(time: time, size: size, policyOnLoad: policyOnLoad),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -637,6 +645,36 @@ void main() {
     final asked = repository.windows.map((w) => (w.from.year, w.from.month));
     expect(asked.toSet().length, asked.length);
     expect(repository.windows.length, greaterThanOrEqualTo(before));
+  });
+
+  testWidgets('a calendar opened cold draws the freeze it was never told about', (
+    tester,
+  ) async {
+    // The rest of this file hands the policy in at construction, which is what
+    // let the calendar go a whole stage without ever asking for it: every case
+    // about a frozen day passed, and the page opened from a link — a bookmark, a
+    // reload, a notification — drew no wash and no padlock at all, because the
+    // snapshot it reads was still `none`.
+    final repository = _FakeTimeRepository();
+    await pump(
+      tester,
+      repository,
+      policyOnLoad: TimePolicySnapshot(
+        lockBefore: day.subtract(const Duration(days: 1)),
+      ),
+    );
+
+    final policy =
+        tester.element(find.byType(TimeCalendarScreen)).read<TimePolicyCubit>()
+            as FakeTimePolicyCubit;
+    expect(policy.loads, greaterThan(0), reason: 'the page has to ask');
+
+    final grid = tester.widget<TimeGrid>(find.byType(TimeGrid).first);
+    final wash = grid.layers.where(
+      (layer) => layer.placement == TimeGridPlacement.background,
+    );
+    expect(wash, isNotEmpty, reason: 'yesterday is behind the lock date');
+    expect(wash.first.glyph, isNotNull, reason: 'and it says why');
   });
 }
 
