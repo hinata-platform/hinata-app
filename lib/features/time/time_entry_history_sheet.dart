@@ -67,57 +67,66 @@ class _HistoryBody extends StatelessWidget {
         // the creation event on still has a first line, because the entry
         // carries its own creation date and the way it was filed.
         _Created(entry: entry),
-        Flexible(
-          child:
-              BlocBuilder<
-                PagedCubit<TimeEntryHistoryEntry>,
-                PagedState<TimeEntryHistoryEntry>
-              >(
-                builder: (context, state) {
-                  if (state.isLoading && state.items.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 40),
-                      child: HiveLoader(size: 34),
-                    );
+        // Only the *list* is flexible. Everything else here sizes to what it
+        // says, which is the difference between a panel that fits its content
+        // and one that is nearly always mostly empty: `HiveEmptyState(card:
+        // false)` ends in a `Center`, and a `Center` handed a bounded height
+        // takes all of it. Under a `Flexible` on a desktop that is the whole
+        // modal — a two-line "nobody else changed it" floating in eight hundred
+        // points of nothing.
+        BlocBuilder<
+          PagedCubit<TimeEntryHistoryEntry>,
+          PagedState<TimeEntryHistoryEntry>
+        >(
+          builder: (context, state) {
+            if (state.isLoading && state.items.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: HiveLoader(size: 34),
+              );
+            }
+            if (state.items.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+                child: HiveEmptyState(
+                  title: context.t('time.history.emptyTitle'),
+                  message: context.t('time.history.emptyMessage'),
+                  card: false,
+                ),
+              );
+            }
+            // A `Flexible` reaches the Column's render object through the
+            // builder above it — parent data walks up past widgets that are not
+            // render objects — so the rows still get to fill the space they have
+            // and scroll inside it once there are more than fit.
+            return Flexible(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  if (notification.metrics.pixels >=
+                      notification.metrics.maxScrollExtent - 200) {
+                    context
+                        .read<PagedCubit<TimeEntryHistoryEntry>>()
+                        .loadMore();
                   }
-                  if (state.items.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-                      child: HiveEmptyState(
-                        title: context.t('time.history.emptyTitle'),
-                        message: context.t('time.history.emptyMessage'),
-                        card: false,
-                      ),
-                    );
-                  }
-                  return NotificationListener<ScrollNotification>(
-                    onNotification: (notification) {
-                      if (notification.metrics.pixels >=
-                          notification.metrics.maxScrollExtent - 200) {
-                        context
-                            .read<PagedCubit<TimeEntryHistoryEntry>>()
-                            .loadMore();
-                      }
-                      return false;
-                    },
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      padding: const EdgeInsets.fromLTRB(18, 4, 18, 20),
-                      itemCount:
-                          state.items.length + (state.isLoadingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index >= state.items.length) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
-                            child: Center(child: HiveLoader(size: 24)),
-                          );
-                        }
-                        return _HistoryRow(row: state.items[index]);
-                      },
-                    ),
-                  );
+                  return false;
                 },
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.fromLTRB(18, 4, 18, 20),
+                  itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index >= state.items.length) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(child: HiveLoader(size: 24)),
+                      );
+                    }
+                    return _HistoryRow(row: state.items[index]);
+                  },
+                ),
               ),
+            );
+          },
         ),
       ],
     );

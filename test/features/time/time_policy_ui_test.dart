@@ -188,6 +188,42 @@ void main() {
       expect(find.text('time.history.emptyTitle'), findsOneWidget);
     });
 
+    testWidgets('and does not take a whole desktop screen to say so', (
+      tester,
+    ) async {
+      // The empty state ends in a `Center`, and a `Center` handed a bounded
+      // height takes all of it. Under the panel's `Flexible` that was the whole
+      // modal: two lines of "nobody else changed it" floating in eight hundred
+      // points of nothing, on every screen big enough to allow it.
+      tester.view.physicalSize = const Size(1600, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await open(
+        tester,
+        entry: WorkItem(
+          id: 'w1',
+          durationMinutes: 60,
+          activityType: 'Development',
+          createdAt: DateTime(2026, 9, 3, 9),
+        ),
+        rows: const [],
+      );
+
+      // Header, the creation line and the empty state, and nothing else. The
+      // number is generous on purpose — this guards against the panel taking
+      // the height it is *allowed*, not against a few points of padding.
+      final panel = tester.getSize(
+        find
+            .ancestor(
+              of: find.text('time.history.emptyTitle'),
+              matching: find.byType(Column),
+            )
+            .last,
+      );
+      expect(panel.height, lessThan(420));
+    });
+
     testWidgets('no client address and no user agent reach this screen', (
       tester,
     ) async {
