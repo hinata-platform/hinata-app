@@ -1264,7 +1264,8 @@
       "none": "Nothing logged yet.",
       "add": "Add time"
     },
-    "truncated": "Showing {{shown}} of {{total}} rows. Narrow the filters to see the rest."
+    "truncated": "Showing {{shown}} of {{total}} rows. Narrow the filters to see the rest.",
+    "emptyPeriod": "No time has been recorded in this period."
   },
   "reports": {
     "title": "Reports",
