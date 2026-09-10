@@ -1264,7 +1264,8 @@
       "none": "尚未记录。",
       "add": "添加时间"
     },
-    "truncated": "正在显示 {{total}} 行中的 {{shown}} 行。缩小筛选范围即可查看其余部分。"
+    "truncated": "正在显示 {{total}} 行中的 {{shown}} 行。缩小筛选范围即可查看其余部分。",
+    "emptyPeriod": "这个周期没有记录工时。"
   },
   "reports": {
     "title": "报表",
