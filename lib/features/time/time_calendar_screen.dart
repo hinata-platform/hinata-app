@@ -610,7 +610,16 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   Future<void> _openEntry(TimeGridItem item) async {
     final entry = item.data;
     if (entry is! WorkItem) return;
-    final saved = await showTimeEntrySheet(context, entry: entry);
+    // The grid has no row menu, so the sheet is the only way in — and until it
+    // offered deleting, a block opened from here could be corrected in every
+    // way except undone.
+    final saved = await showTimeEntrySheet(
+      context,
+      entry: entry,
+      onDeleted: () {
+        if (mounted) unawaited(_reload());
+      },
+    );
     if (saved == null || !mounted) return;
     unawaited(_reload());
   }

@@ -44,12 +44,48 @@ import 'tag_picker.dart';
 /// interval is shown and not edited: it came off the clock, which is the whole
 /// point of having run one.
 ///
+/// Asks, then removes one entry. True when it is gone.
+///
+/// One implementation for the two places that offer it — the row menu in the
+/// list and the sheet itself — because they are the same act and a second copy
+/// is how the confirmation wording and the error handling start to disagree.
+/// The caller reloads; this only decides whether there is anything to reload.
+Future<bool> confirmAndDeleteTimeEntry(
+  BuildContext context,
+  WorkItem entry,
+) async {
+  final confirmed = await showGlassConfirm(
+    context,
+    icon: LucideIcons.trash2,
+    title: context.t('time.deleteTitle'),
+    message: context.t('time.deleteMessage'),
+    confirmLabel: context.t('common.delete'),
+    destructive: true,
+  );
+  if (confirmed != true || !context.mounted) return false;
+  final time = context.read<TimeRepository>();
+  try {
+    await time.delete(entry.id);
+    return true;
+  } catch (failure) {
+    if (context.mounted) {
+      showGlassToast(
+        context,
+        context.t(failure.toString()),
+        kind: GlassToastKind.error,
+      );
+    }
+    return false;
+  }
+}
+
 /// Resolves to the saved entry, or null if dismissed.
 Future<SavedTimeEntry?> showTimeEntrySheet(
   BuildContext context, {
   WorkItem? entry,
   ({DateTime start, DateTime end})? span,
   RunningTimer? timer,
+  VoidCallback? onDeleted,
 }) {
   // The sheet rides the root navigator, outside the app's provider scope, so
   // what it reads has to be carried across. Three repositories by name rather
@@ -82,7 +118,12 @@ Future<SavedTimeEntry?> showTimeEntrySheet(
     adaptive: true,
     width: 480,
     builder: (_) {
-      final form = _TimeEntryForm(entry: entry, span: span, timer: timer);
+      final form = _TimeEntryForm(
+        entry: entry,
+        span: span,
+        timer: timer,
+        onDeleted: onDeleted,
+      );
       return MultiRepositoryProvider(
         providers: providers,
         child: BlocProvider<TimePolicyCubit>.value(
@@ -100,7 +141,7 @@ Future<SavedTimeEntry?> showTimeEntrySheet(
 enum _EntryMode { interval, duration }
 
 class _TimeEntryForm extends StatefulWidget {
-  const _TimeEntryForm({this.entry, this.span, this.timer});
+  const _TimeEntryForm({this.entry, this.span, this.timer, this.onDeleted});
 
   final WorkItem? entry;
 
@@ -111,6 +152,12 @@ class _TimeEntryForm extends StatefulWidget {
 
   /// The running timer this sheet is finishing. See [showTimeEntrySheet].
   final RunningTimer? timer;
+
+  /// Told when the entry has been removed from here, so the page behind can
+  /// reload. Deleting resolves the sheet to null like a dismissal does — there
+  /// is no saved entry to hand back — which is why it is a callback rather than
+  /// a second shape of the result.
+  final VoidCallback? onDeleted;
 
   @override
   State<_TimeEntryForm> createState() => _TimeEntryFormState();
@@ -422,6 +469,40 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
           subtitle: context.t(
             _isTimer ? 'time.timer.finishHint' : 'time.entry.subtitle',
           ),
+          // Deleting lives in the header rather than beside Save.
+          //
+          // It is here at all because this sheet is the *only* way into an entry
+          // from the calendar: the grid has no row menu, so a block opened there
+          // could be corrected in every way except undone. And it is here rather
+          // than in the footer because a destructive action next to the button
+          // people press without reading is how the wrong one gets pressed —
+          // and because one icon in a row that already exists needs no room of
+          // its own, which is what makes it survive a phone.
+          //
+          // Off entirely while a timer is being finished: there is no entry yet
+          // to remove, and the way out of that sheet is Cancel.
+          actions: [
+            if (_isEdit && !_isTimer)
+              IconButton(
+                tooltip: lock == null
+                    ? context.t('common.delete')
+                    : LockNotice.reasonOf(context, lock),
+                icon: Icon(
+                  LucideIcons.trash2,
+                  size: 19,
+                  // Grey rather than red when it cannot be pressed: a red
+                  // disabled button reads as a warning about what just happened
+                  // instead of a door that is shut.
+                  color: lock == null && !_saving
+                      ? AppColors.danger
+                      : AppColors.inkFaint,
+                ),
+                // The same gate the server applies — `delete` goes through
+                // `assertWritable` like every other write — so a frozen day
+                // refuses here instead of after the confirmation.
+                onPressed: _saving || lock != null ? null : _delete,
+              ),
+          ],
         ),
         Flexible(
           child: SingleChildScrollView(
@@ -603,6 +684,21 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
         ),
       ],
     );
+  }
+
+  /// Removes the entry this sheet is editing, then closes.
+  ///
+  /// The page behind is told through [_TimeEntryForm.onDeleted] rather than
+  /// through the result: the sheet resolves to a *saved* entry, and there is no
+  /// longer one to hand back. It closes on the way out either way — an entry
+  /// that is gone has nothing left to edit.
+  Future<void> _delete() async {
+    final entry = widget.entry;
+    if (entry == null) return;
+    final removed = await confirmAndDeleteTimeEntry(context, entry);
+    if (!removed || !mounted) return;
+    widget.onDeleted?.call();
+    Navigator.of(context).pop();
   }
 
   String _formatMoment(BuildContext context, DateTime moment) {
