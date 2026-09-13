@@ -3,7 +3,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/work_models.dart';
-import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/hive_widgets.dart';
@@ -12,15 +11,21 @@ import '../sprint_format.dart';
 /// The active-sprint header — the design's discreet single component: a small
 /// white identity card (Active badge + sprint name + goal) with a thin
 /// day-progress track and "Day X/Y" sitting on the canvas to its right.
-/// Full-width (stacked) on phones, content-hugging on wider screens.
+/// Full-width (stacked) where the room is narrow, content-hugging where not.
 class GlassSprintHeader extends StatelessWidget {
   const GlassSprintHeader({super.key, required this.sprint});
 
   final Sprint sprint;
 
+  /// The room the card and its progress need side by side.
+  ///
+  /// Decided by the width the header actually gets, not by the device class: a
+  /// window between a phone and a desktop has the desktop's class and nearly a
+  /// phone's width, and there the row ran past the edge.
+  static const double _sideBySide = 640;
+
   @override
   Widget build(BuildContext context) {
-    final compact = context.isCompact;
     final day = sprintDay(sprint.startDate, sprint.endDate);
     final dayIndex = day?.day ?? 0;
     final dayTotal = day?.total ?? 0;
@@ -112,64 +117,74 @@ class GlassSprintHeader extends StatelessWidget {
       child: HiveProgress(value: ringP, height: 6),
     );
 
-    if (compact) {
-      // Phone: a full-width card — badge + name on top, progress spanning the
-      // full width below.
-      return card(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < _sideBySide) {
+          // Narrow: a full-width card — badge + name on top, progress spanning
+          // the full width below.
+          return card(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(padding: const EdgeInsets.only(top: 1), child: badge),
-                const SizedBox(width: 12),
-                Expanded(child: id),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 1),
+                      child: badge,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: id),
+                  ],
+                ),
+                if (dayTotal > 0) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(child: track()),
+                      const SizedBox(width: 10),
+                      dayLabel,
+                    ],
+                  ),
+                ],
               ],
             ),
-            if (dayTotal > 0) ...[
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(child: track()),
-                  const SizedBox(width: 10),
-                  dayLabel,
-                ],
-              ),
-            ],
-          ],
-        ),
-      );
-    }
+          );
+        }
 
-    // Desktop / tablet: card hugs its content; progress floats on the canvas.
-    return Align(
-      alignment: AlignmentDirectional.centerStart,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460),
-            child: card(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  badge,
-                  const SizedBox(width: 12),
-                  Flexible(child: id),
-                ],
+        // Wide: the card hugs its content and is the part that gives way when
+        // the room runs short; the progress floats on the canvas beside it.
+        return Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 460),
+                  child: card(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        badge,
+                        const SizedBox(width: 12),
+                        Flexible(child: id),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 22),
+              if (dayTotal > 0) ...[
+                track(width: 200),
+                const SizedBox(width: 12),
+                dayLabel,
+              ],
+            ],
           ),
-          const SizedBox(width: 22),
-          if (dayTotal > 0) ...[
-            track(width: 200),
-            const SizedBox(width: 12),
-            dayLabel,
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 }
