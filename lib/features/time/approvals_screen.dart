@@ -18,7 +18,6 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_avatar.dart';
 import '../../core/widgets/glass_filter_bar.dart';
-import '../../core/widgets/glass_switch_chip.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
@@ -240,7 +239,10 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                   ),
                   child: Align(
                     alignment: AlignmentDirectional.centerStart,
-                    child: _scopeSwitch(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: _scopePills(),
+                    ),
                   ),
                 ),
                 Expanded(child: _body()),
@@ -249,33 +251,24 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
     );
   }
 
-  /// The three lists, as one switch. Same control the module's views wear, so a
-  /// reader meets one idiom rather than two.
-  Widget _scopeSwitch() => GlassSwitchBar(
-    maxWidth: 440,
-    chips: [
-      GlassSwitchChip(
-        label: context.t('time.approval.scope.mine'),
-        icon: LucideIcons.user,
-        active: _scope == _mine,
-        onTap: _scope == _mine ? null : () => _switchScope(_mine),
-      ),
-      const SizedBox(width: 2),
-      GlassSwitchChip(
-        label: context.t('time.approval.scope.inbox'),
-        icon: LucideIcons.inbox,
-        active: _scope == _inbox,
-        onTap: _scope == _inbox ? null : () => _switchScope(_inbox),
-      ),
-      const SizedBox(width: 2),
-      GlassSwitchChip(
-        label: context.t('time.approval.scope.corrections'),
-        icon: LucideIcons.messageSquareWarning,
-        active: _scope == _corrections,
-        onTap: _scope == _corrections ? null : () => _switchScope(_corrections),
+  /// The three lists, each a glass pill of its own. The module's other pages
+  /// dock their filters as separate pills, and one joined switch here was the
+  /// odd one out in the same band.
+  List<Widget> _scopePills() => [
+    for (final (scope, icon) in const [
+      (_mine, LucideIcons.user),
+      (_inbox, LucideIcons.inbox),
+      (_corrections, LucideIcons.messageSquareWarning),
+    ]) ...[
+      if (scope != _mine) const SizedBox(width: 8),
+      _ScopePill(
+        icon: icon,
+        label: context.t('time.approval.scope.$scope'),
+        active: _scope == scope,
+        onTap: () => _switchScope(scope),
       ),
     ],
-  );
+  ];
 
   Widget _dockedScopes() => Align(
     alignment: AlignmentDirectional.centerStart,
@@ -284,7 +277,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
-        children: [_scopeSwitch()],
+        children: _scopePills(),
       ),
     ),
   );
@@ -796,3 +789,56 @@ Future<void> _showEntries(
     ),
   ),
 );
+
+/// One of the page's three lists as a glass pill, washed amber while it is the
+/// one showing. The proportions are the filter pills' on the time page, so the
+/// module's docked rows read as one idiom.
+class _ScopePill extends StatelessWidget {
+  const _ScopePill({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: active,
+      child: GlassPill(
+        height: kGlassControlHeight,
+        active: active,
+        onTap: active ? null : onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color: active ? AppColors.accentStrong : AppColors.inkSoft,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                label,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+                  color: active ? AppColors.accentStrong : AppColors.ink,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
