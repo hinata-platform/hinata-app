@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +8,7 @@ import 'package:hinata/core/models/time_privacy_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
+import 'package:hinata/core/widgets/hive_loader.dart';
 import 'package:hinata/features/time/correction_requests.dart';
 
 /// The requests an administrator or a lead answers (HIN-89).
@@ -62,6 +65,33 @@ void main() {
     await tester.pumpAndSettle();
     return repository;
   }
+
+  testWidgets('the loader keeps its size in a page that fills the screen', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MultiRepositoryProvider(
+        providers: [
+          RepositoryProvider<TimeRepository>.value(
+            value: _SlowTimeRepository(),
+          ),
+          RepositoryProvider<ProjectRepository>.value(
+            value: const _FakeProjectRepository(),
+          ),
+        ],
+        // The approvals page holds the list in an IndexedStack that expands
+        // it, which is what hands it tight constraints.
+        child: const MaterialApp(
+          home: Scaffold(
+            body: SizedBox.expand(child: CorrectionRequestsList()),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(tester.getSize(find.byType(HiveLoader)).height, lessThan(100));
+  });
 
   testWidgets('only a request the server lets this reader grant offers it', (
     tester,
@@ -206,4 +236,15 @@ class _FakeProjectRepository implements ProjectRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} is not faked');
+}
+
+/// A first page that never arrives, so the list stays on its loader.
+class _SlowTimeRepository extends _FakeTimeRepository {
+  _SlowTimeRepository() : super(const []);
+
+  @override
+  Future<PageResult<TimeCorrectionRequest>> correctionRequests({
+    int page = 0,
+    int size = 25,
+  }) => Completer<PageResult<TimeCorrectionRequest>>().future;
 }
