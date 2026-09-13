@@ -17,13 +17,13 @@ import 'board_filter.dart';
 
 const double _kCompactBreakpoint = 610;
 
-/// Opens the board filter as a liquid-glass popover anchored to the filter
-/// button (read from [anchorKey]). Mirrors the global-search palette: a search
+/// Opens the board filter as a liquid-glass popover hanging from [anchor], the
+/// filter pill's own rectangle. Mirrors the global-search palette: a search
 /// field, scope chips (one per filter criterion) and a searchable, multi-select
 /// option list. Every toggle applies live through [onChanged].
 Future<void> openBoardFilter(
   BuildContext context, {
-  required GlobalKey anchorKey,
+  required Rect? anchor,
   required BoardFilter filter,
   required BoardFilterOptions options,
   required Map<String, String> names,
@@ -33,10 +33,7 @@ Future<void> openBoardFilter(
   Map<String, String> epicNames = const {},
   required ValueChanged<BoardFilter> onChanged,
 }) {
-  final box = anchorKey.currentContext?.findRenderObject() as RenderBox?;
-  final Rect anchorRect = (box != null && box.hasSize)
-      ? (box.localToGlobal(Offset.zero) & box.size)
-      : Rect.zero;
+  final Rect anchorRect = anchor ?? Rect.zero;
 
   return showGeneralDialog<void>(
     context: context,

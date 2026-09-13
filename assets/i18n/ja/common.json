@@ -1292,7 +1292,8 @@
       "noColumnAvailable": "空いている列がありません。どの列もこのプロジェクトのステータスをすでに持っています。",
       "unassignedHint": "これらのステータスにはまだ列がありません。該当する課題はボードに表示されません。",
       "automatic": "自動に戻す"
-    }
+    },
+    "searchIssues": "課題を検索…"
   },
   "gantt": {
     "title": "タイムライン",
@@ -2371,7 +2372,6 @@
     "completeSprint": "スプリントを完了",
     "planned": "計画済み",
     "filterBacklog": "バックログを絞り込む…",
-    "filterIssues": "課題を絞り込む…",
     "addIssue": "課題を追加",
     "addBacklogItem": "バックログに項目を追加",
     "dragHere": "課題をここにドラッグしてスプリントを計画するか、下から追加してください。",

@@ -1292,7 +1292,8 @@
       "noColumnAvailable": "没有可用的列，每一列都已包含该项目的一个状态。",
       "unassignedHint": "这些状态尚未分配到任何列。处于这些状态的事项不会显示在看板上。",
       "automatic": "恢复自动"
-    }
+    },
+    "searchIssues": "搜索事项…"
   },
   "gantt": {
     "title": "时间轴",
@@ -2371,7 +2372,6 @@
     "completeSprint": "结束迭代",
     "planned": "已规划",
     "filterBacklog": "筛选待办列表…",
-    "filterIssues": "筛选事项…",
     "addIssue": "添加事项",
     "addBacklogItem": "添加待办条目",
     "dragHere": "将事项拖到这里来规划该迭代，或在下方添加。",

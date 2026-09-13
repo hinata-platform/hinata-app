@@ -309,6 +309,45 @@ class GlassSearchDock extends StatelessWidget {
   );
 }
 
+/// A page's tools on a wide window, laid out in the room they actually get.
+///
+/// The wide counterpart of [GlassSearchDock]. A phone has one docked row and
+/// scrolls it sideways; a wide window lays its tools out, and a window dragged
+/// narrower passes through every width on the way, so they wrap instead. One
+/// line while everything fits: [leading] on the leading edge, [trailing]
+/// against the other one. With less room [trailing] takes a line of its own,
+/// and with less still each side wraps among itself. Nothing scrolls out of
+/// sight and nothing is cut in half, which a single scrolling line did to the
+/// boards' search field and filter at some widths.
+class WideToolbar extends StatelessWidget {
+  const WideToolbar({
+    super.key,
+    required this.leading,
+    this.trailing = const [],
+  });
+
+  final List<Widget> leading;
+  final List<Widget> trailing;
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+    spacing: 12,
+    runSpacing: 10,
+    alignment: WrapAlignment.spaceBetween,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [_side(leading), if (trailing.isNotEmpty) _side(trailing)],
+  );
+
+  static Widget _side(List<Widget> tools) => tools.length == 1
+      ? tools.single
+      : Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: tools,
+        );
+}
+
 /// The control that steps a window back and forth: two chevrons and, between
 /// them, the window they are moving.
 ///

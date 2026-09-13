@@ -11,15 +11,17 @@ import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/glass_filter_bar.dart' show WideToolbar;
 import '../../core/widgets/hive_loader.dart';
-import '../../core/widgets/hive_widgets.dart'
-    show SegmentItem, SegmentedControl;
+import '../../core/widgets/hive_widgets.dart' show SegmentItem;
 import '../board/board_drag.dart';
 import '../board/board_filter.dart';
 import '../board/board_filter_popup.dart';
+import '../board/board_header.dart';
 import '../board/board_people_strip.dart';
 import '../board/board_swimlanes.dart';
 import '../board/issue_quick_create.dart';
+import '../shell/page_chrome.dart';
 import 'modals/complete_sprint_dialog.dart';
 import 'modals/glass_modal.dart' show GlassToastKind, showGlassToast;
 import 'modals/create_sprint_dialog.dart';
@@ -49,6 +51,7 @@ class ScrumBoardView extends StatefulWidget {
     required this.projectNames,
     this.projectsById = const {},
     required this.onOpenIssue,
+    this.fullWidth = false,
   });
 
   final BoardView view;
@@ -61,6 +64,10 @@ class ScrumBoardView extends StatefulWidget {
   /// column belongs to a dropped card's own project on a cross-project board.
   final Map<String, Project> projectsById;
   final void Function(Issue) onOpenIssue;
+
+  /// Whether the board breaks out of the reading width. The board screen
+  /// decides it from the columns, for both kinds of board alike.
+  final bool fullWidth;
 
   @override
   State<ScrumBoardView> createState() => _ScrumBoardViewState();
@@ -96,7 +103,13 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
 
   // Shared people/criteria filter for the Planning + Active surfaces.
   BoardFilter _filter = BoardFilter.empty;
-  final GlobalKey _filterKey = GlobalKey();
+
+  // The search over the planning and the active sprint, typed into the head.
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
+
+  /// Whether a phone's docked row shows the search field instead of the tools.
+  bool _searching = false;
 
   // Swimlane grouping for the active-sprint board.
   BoardGrouping _grouping = BoardGrouping.none;
@@ -131,6 +144,8 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
   @override
   void dispose() {
     _issueSub?.cancel();
+    _searchDebounce?.cancel();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -209,9 +224,9 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
     for (final e in _epics) e.id: '${e.readableId}  ${e.title}',
   };
 
-  void _openFilter() => openBoardFilter(
+  void _openFilter(Rect? anchor) => openBoardFilter(
     context,
-    anchorKey: _filterKey,
+    anchor: anchor,
     filter: _filter,
     options: BoardFilterOptions.from(
       issues: _allLoadedIssues,
@@ -312,15 +327,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
       );
       var merged = [for (final pg in pages) ...pg];
       if (query != null) {
-        final q = query.toLowerCase();
-        merged = merged
-            .where(
-              (i) =>
-                  i.readableId.toLowerCase().contains(q) ||
-                  i.title.toLowerCase().contains(q) ||
-                  i.tags.any((t) => t.toLowerCase().contains(q)),
-            )
-            .toList();
+        merged = merged.where((i) => issueMatchesQuery(i, query)).toList();
       }
       _backlogTotal = merged.length;
       final start = _backlogPage * kBacklogPageSize;
@@ -625,132 +632,178 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
     }
   }
 
+  // ── head ────────────────────────────────────────────────────────────────
+
+  /// Narrows the sprint containers and the active board at once, and asks the
+  /// server for the backlog a moment later, so a word typed letter by letter is
+  /// one request rather than one per letter.
+  void _onQuery(String value) {
+    setState(() {
+      _query = value;
+      _backlogPage = 0;
+    });
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(
+      const Duration(milliseconds: 300),
+      () => unawaited(_reloadBacklogOnly()),
+    );
+  }
+
+  void _switchTab(_Tab tab) {
+    setState(() => _tab = tab);
+    if (tab == _Tab.insights && _report == null) _loadReport();
+  }
+
+  /// The bar's button for a new sprint. A method rather than a closure, so the
+  /// action compares equal from one build to the next (see [PageAction.==]).
+  void _createSprintFromBar(Rect? anchor) => unawaited(_createSprint());
+
+  /// The search, the filter and the faces apply to the planning and the active
+  /// sprint. The insights are numbers about the whole sprint.
+  bool get _filterable => _tab != _Tab.insights;
+
+  Widget _tabSwitch({required bool compact}) => BoardViewSwitch(
+    compact: compact,
+    items: [
+      SegmentItem(
+        icon: LucideIcons.listChecks,
+        label: context.t('sprint.tab.planning'),
+      ),
+      SegmentItem(
+        icon: LucideIcons.columns3,
+        label: context.t('sprint.tab.active'),
+      ),
+      SegmentItem(
+        icon: LucideIcons.chartLine,
+        label: context.t('sprint.tab.insights'),
+      ),
+    ],
+    selected: _tab.index,
+    onChanged: (i) => _switchTab(_Tab.values[i]),
+  );
+
+  /// Grouping applies to the active sprint's board only.
+  Widget _groupBy({required bool compact}) => BoardGroupByButton(
+    value: _grouping,
+    compact: compact,
+    options: boardGroupingsFor(
+      crossProject: widget.view.board.projectIds.length > 1,
+    ),
+    onChanged: (g) => setState(() => _grouping = g),
+  );
+
+  Widget _filterPill({bool showLabel = false}) => BoardFilterPill(
+    count: _filter.activeCount,
+    showLabel: showLabel,
+    onTap: _openFilter,
+  );
+
+  Widget _people() => BoardPeopleStrip(
+    userIds: _peopleIds,
+    names: widget.names,
+    avatars: widget.avatars,
+    pronouns: widget.pronouns,
+    selected: _filter.assignees,
+    onToggle: (id) =>
+        setState(() => _filter = _filter.toggle(BoardFilterFacet.assignee, id)),
+  );
+
+  /// The phone's one docked row: the three views, the search and the tools.
+  Widget _dock() => BoardHeaderDock(
+    switcher: _tabSwitch(compact: true),
+    canSearch: _filterable,
+    searching: _searching,
+    searchController: _searchController,
+    onSearchChanged: _onQuery,
+    onSearchOpen: () => setState(() => _searching = true),
+    onSearchClose: () => setState(() => _searching = false),
+    tools: [
+      if (_tab == _Tab.active) _groupBy(compact: true),
+      if (_filterable) _filterPill(),
+      if (_filterable && _peopleIds.isNotEmpty) _people(),
+    ],
+  );
+
+  /// The same tools on a wide window: the views on the leading edge, the rest
+  /// against the trailing one, wrapping to the room the window leaves them.
+  Widget _wideToolbar() {
+    // Faces only where there is plenty of room; a narrower window has the
+    // filter's assignee section for them.
+    final showPeople =
+        context.isExpanded && _filterable && _peopleIds.isNotEmpty;
+    return WideToolbar(
+      leading: [_tabSwitch(compact: false)],
+      trailing: [
+        if (_filterable)
+          BoardSearchField(controller: _searchController, onChanged: _onQuery),
+        if (showPeople) BoardPeopleSlot(child: _people()),
+        if (_tab == _Tab.active) _groupBy(compact: false),
+        if (_filterable) _filterPill(showLabel: true),
+      ],
+    );
+  }
+
   // ── build ──────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
+    final compact = context.isCompact;
+    return PageChrome(
+      title: _board.name,
+      titleLeading: true,
+      fullWidth: widget.fullWidth,
+      // Sprints are made while planning. On a phone this is the bar's one page
+      // action, on a wide window a labelled button in the sub-page bar.
+      actions: _tab == _Tab.planning
+          ? [
+              PageAction(
+                icon: LucideIcons.plus,
+                label: context.t('sprint.createSprint'),
+                primary: true,
+                onTap: _createSprintFromBar,
+              ),
+            ]
+          : const [],
+      // Docked from the first frame, so the bar does not grow a row once the
+      // sprints arrive and push the page down.
+      bottom: compact ? _dock() : null,
+      bottomHeight: compact ? kBoardDockHeight : 0,
+      child: _content(compact),
+    );
+  }
+
+  Widget _content(bool compact) {
     if (_loading && _sprints.isEmpty && _error == null) {
       return const Center(child: HiveLoader());
     }
     if (_error != null && _sprints.isEmpty) {
       return _ErrorRetry(message: context.t(_error!), onRetry: _loadAll);
     }
+    // On a phone the tools are in the bar, and the surface leaves the bar's
+    // height clear itself so its content scrolls up under the blur.
+    if (compact) return _surface(top: context.topGutter + 8);
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
           padding: EdgeInsets.fromLTRB(
             context.pageGutter,
             18 + context.topGutter,
             context.pageGutter,
-            10,
+            12,
           ),
-          child: _tabBar(),
+          child: _wideToolbar(),
         ),
-        Expanded(child: _surface()),
+        Expanded(child: _surface(top: 0)),
       ],
     );
   }
 
-  Widget _tabBar() {
-    final compact = context.isCompact;
-    // Labels are hidden on phones (icons only) to leave room for the filter;
-    // the shared control moves them into tooltips when it does that.
-    final switcher = SegmentedControl(
-      iconsOnly: compact,
-      items: [
-        SegmentItem(
-          icon: LucideIcons.listChecks,
-          label: context.t('sprint.tab.planning'),
-        ),
-        SegmentItem(
-          icon: LucideIcons.columns3,
-          label: context.t('sprint.tab.active'),
-        ),
-        SegmentItem(
-          icon: LucideIcons.chartLine,
-          label: context.t('sprint.tab.insights'),
-        ),
-      ],
-      selected: _tab.index,
-      onChanged: (i) {
-        setState(() => _tab = _Tab.values[i]);
-        if (_tab == _Tab.insights && _report == null) _loadReport();
-      },
-    );
-
-    // The filter applies to Planning + Active sprint (not Insights). The
-    // people strip only appears on wide layouts (plenty of room); narrower
-    // screens rely on the filter popup's assignee facet.
-    final showFilter = _tab != _Tab.insights;
-    final showPeople = context.isExpanded && _peopleIds.isNotEmpty;
-    // A right-aligned cluster: the Expanded fills the space after the switcher
-    // and the Align pins the people strip + filter button flush right.
-    return Row(
-      children: [
-        switcher,
-        Expanded(
-          child: !showFilter
-              ? const SizedBox.shrink()
-              : Align(
-                  alignment: AlignmentDirectional.centerEnd,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (showPeople) ...[
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 360),
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            reverse: true,
-                            child: BoardPeopleStrip(
-                              userIds: _peopleIds,
-                              names: widget.names,
-                              avatars: widget.avatars,
-                              pronouns: widget.pronouns,
-                              selected: _filter.assignees,
-                              onToggle: (id) => setState(
-                                () => _filter = _filter.toggle(
-                                  BoardFilterFacet.assignee,
-                                  id,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                      ],
-                      // Grouping applies to the active-sprint board only.
-                      if (_tab == _Tab.active) ...[
-                        BoardGroupByButton(
-                          value: _grouping,
-                          compact: compact,
-                          options: boardGroupingsFor(
-                            crossProject:
-                                widget.view.board.projectIds.length > 1,
-                          ),
-                          onChanged: (g) => setState(() => _grouping = g),
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-                      _SprintFilterButton(
-                        key: _filterKey,
-                        count: _filter.activeCount,
-                        compact: compact,
-                        onTap: _openFilter,
-                      ),
-                    ],
-                  ),
-                ),
-        ),
-      ],
-    );
-  }
-
-  Widget _surface() {
+  Widget _surface({required double top}) {
     switch (_tab) {
       case _Tab.planning:
         return SprintPlanningSurface(
+          topInset: top,
           sprints: _planningSprints,
           activeSprintId: _activeSprintId,
           issuesBySprint: _bySprint,
@@ -765,13 +818,6 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
           pageSize: kBacklogPageSize,
           selected: _selected,
           query: _query,
-          onQuery: (q) {
-            setState(() {
-              _query = q;
-              _backlogPage = 0;
-            });
-            _reloadBacklogOnly();
-          },
           onPage: (p) {
             setState(() => _backlogPage = p);
             _reloadBacklogOnly();
@@ -786,7 +832,6 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
           onBulkMove: _bulkMove,
           quickCreateSeed: _quickCreateSeed,
           onCreated: _onQuickCreated,
-          onCreateSprint: _createSprint,
           onStartSprint: _startSprint,
           onCompleteSprint: _completeSprint,
         );
@@ -800,9 +845,12 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
           );
         }
         return SprintActiveSurface(
+          topInset: top,
           sprint: sprint,
           columns: widget.view.columns,
-          issues: _activeBoardIssues,
+          issues: _activeBoardIssues
+              .where((i) => issueMatchesQuery(i, _query))
+              .toList(),
           filter: _filter,
           grouping: _grouping,
           issuesById: _issuesById,
@@ -828,6 +876,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
           );
         }
         return SprintInsightsSurface(
+          topInset: top,
           report: _report,
           loading: _reportLoading,
           error: _reportError == null ? null : context.t(_reportError!),
@@ -835,92 +884,6 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
           onRetry: _loadReport,
         );
     }
-  }
-}
-
-/// White pill that opens the glass filter popup; shows an amber count badge.
-/// Collapses to an icon-only button on phones.
-class _SprintFilterButton extends StatelessWidget {
-  const _SprintFilterButton({
-    super.key,
-    required this.count,
-    required this.compact,
-    required this.onTap,
-  });
-
-  final int count;
-  final bool compact;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final active = count > 0;
-    final button = Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 11 : 14,
-            vertical: 10,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(
-              color: active ? AppColors.accentLine : AppColors.hairline,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                LucideIcons.slidersHorizontal,
-                size: 16,
-                color: AppColors.inkSoft,
-              ),
-              if (!compact) ...[
-                const SizedBox(width: 7),
-                Text(
-                  context.t('board.filterButton'),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-              if (active) ...[
-                const SizedBox(width: 7),
-                Container(
-                  constraints: const BoxConstraints(minWidth: 18),
-                  height: 18,
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  decoration: const BoxDecoration(
-                    color: AppColors.accent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    '$count',
-                    style: const TextStyle(
-                      fontFamily: AppTheme.fontMono,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF2A2410),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-    // Only where the label is gone — a tooltip repeating visible text is noise.
-    return compact
-        ? Tooltip(message: context.t('board.filterButton'), child: button)
-        : button;
   }
 }
 
