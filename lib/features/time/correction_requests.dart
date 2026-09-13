@@ -193,7 +193,13 @@ class _CorrectionRequestsListState extends State<CorrectionRequestsList> {
         if (state.isLoading && state.items.isEmpty) {
           return Padding(
             padding: framing.add(const EdgeInsets.symmetric(vertical: 24)),
-            child: const HiveLoader(size: 30),
+            // Aligned, not bare: as a page the list sits in an IndexedStack that
+            // hands it tight constraints, and a bare loader grew to the size of
+            // the whole page while the first requests were on their way.
+            child: const Align(
+              alignment: Alignment.topCenter,
+              child: HiveLoader(size: 30),
+            ),
           );
         }
         if (state.errorKey != null && state.items.isEmpty) {
