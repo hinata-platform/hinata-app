@@ -1419,14 +1419,30 @@ Widget glassWoltSurface(Widget pageContent) {
   );
 }
 
-class _GlassModalScaffold extends StatelessWidget {
+class _GlassModalScaffold extends StatefulWidget {
   const _GlassModalScaffold({required this.width, required this.builder});
 
   final double width;
   final WidgetBuilder builder;
 
   @override
+  State<_GlassModalScaffold> createState() => _GlassModalScaffoldState();
+}
+
+class _GlassModalScaffoldState extends State<_GlassModalScaffold> {
+  /// Keeps the body the same element while the glass around it changes shape.
+  ///
+  /// The materialize transition wraps the glass content in an opacity and a
+  /// blur while it runs, and the glass leaves both out at rest, so the widgets
+  /// above the body change type twice as the modal opens. Without a key each
+  /// change unmounted the body and mounted a fresh one: its state was thrown
+  /// away and whatever it loads in initState was loaded three times. With the
+  /// key the body moves to its new parent instead.
+  final GlobalKey _body = GlobalKey();
+
+  @override
   Widget build(BuildContext context) {
+    final width = widget.width;
     final size = MediaQuery.sizeOf(context);
     // The on-screen keyboard's height. Subscribing rebuilds the modal as the
     // keyboard animates in/out so the panel rides above it and its scrollable
@@ -1458,9 +1474,12 @@ class _GlassModalScaffold extends StatelessWidget {
             glassFill: tokens.glassFill,
             dark: Theme.of(context).brightness == Brightness.dark,
           ),
-          child: Material(
-            type: MaterialType.transparency,
-            child: builder(context),
+          child: KeyedSubtree(
+            key: _body,
+            child: Material(
+              type: MaterialType.transparency,
+              child: widget.builder(context),
+            ),
           ),
         ),
       ),
