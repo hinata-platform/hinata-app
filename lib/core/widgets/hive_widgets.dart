@@ -652,26 +652,38 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final glyph = icon ?? LucideIcons.plus;
     if (collapseToIcon && context.isCompact) {
+      // The collapsed form has no label, so it needs a glyph whatever the caller
+      // passed.
       return GlassCircleButton(
-        icon: glyph,
+        icon: icon ?? LucideIcons.plus,
         amber: true,
         tooltip: label,
         onTap: onPressed,
       );
     }
+    final style = FilledButton.styleFrom(
+      backgroundColor: AppColors.accent,
+      foregroundColor: const Color(0xFF2A2410),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+      ),
+    );
+    // Without an icon the label stands alone: a default glyph put a plus on
+    // "Save" and "Open the days", where nothing is added.
+    final glyph = icon;
+    if (glyph == null) {
+      return FilledButton(
+        onPressed: onPressed,
+        style: style,
+        child: Text(label),
+      );
+    }
     return FilledButton.icon(
       onPressed: onPressed,
-      style: FilledButton.styleFrom(
-        backgroundColor: AppColors.accent,
-        foregroundColor: const Color(0xFF2A2410),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        ),
-      ),
+      style: style,
       icon: Icon(glyph, size: 16),
       label: Text(label),
     );
@@ -697,7 +709,6 @@ class GhostButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final glyph = icon ?? LucideIcons.slidersHorizontal;
     if (collapseToIcon && context.isCompact) {
       return Tooltip(
         message: label,
@@ -711,22 +722,33 @@ class GhostButton extends StatelessWidget {
             minimumSize: const Size(46, 46),
             shape: const CircleBorder(),
           ),
-          child: Icon(glyph, size: 18),
+          child: Icon(icon ?? LucideIcons.slidersHorizontal, size: 18),
         ),
+      );
+    }
+    final style = OutlinedButton.styleFrom(
+      backgroundColor: AppColors.surface,
+      foregroundColor: AppColors.ink,
+      side: BorderSide(color: AppColors.hairline),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+      ),
+    );
+    // Without an icon the label stands alone: the filter glyph a default put
+    // there turned up next to "Cancel".
+    final glyph = icon;
+    if (glyph == null) {
+      return OutlinedButton(
+        onPressed: onPressed,
+        style: style,
+        child: Text(label),
       );
     }
     return OutlinedButton.icon(
       onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.ink,
-        side: BorderSide(color: AppColors.hairline),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        ),
-      ),
+      style: style,
       icon: Icon(glyph, size: 16),
       label: Text(label),
     );

@@ -86,7 +86,7 @@ void main() {
       // The work is visible — that is what the card is for. (An untranslated
       // bundle falls the activity back to its raw value, which is what a
       // widget test sees.)
-      expect(find.textContaining('Development'), findsOneWidget);
+      expect(find.textContaining('Development'), findsNothing);
       // Who did it, and what they wrote about it, is not: a per-person reading
       // of a colleague's day is a policy, not a default.
       expect(find.textContaining('Linus Pauling'), findsNothing);
@@ -109,6 +109,30 @@ void main() {
       expect(find.textContaining('Linus Pauling'), findsOneWidget);
       expect(find.textContaining('rewrote the parser'), findsOneWidget);
     });
+
+    testWidgets(
+      'an entry the server sent without details says whose it is not',
+      (tester) async {
+        final hidden = WorkItem(
+          id: 'w9',
+          durationMinutes: 45,
+          activityType: 'Development',
+          date: DateTime(2026, 9, 4),
+          hidden: true,
+        );
+        await tester.pumpWidget(
+          host(
+            row(hidden, const WorkItemAccess(meId: 'u1', managesProject: true)),
+          ),
+        );
+
+        expect(find.text('time.otherMember'), findsOneWidget);
+        expect(find.text('time.deletedUser'), findsNothing);
+        // A lead the policy does not let read it cannot remove it either, so the
+        // row offers nothing the server would refuse.
+        expect(find.byIcon(LucideIcons.ellipsis), findsNothing);
+      },
+    );
 
     testWidgets('your own entry always names you', (tester) async {
       await tester.pumpWidget(

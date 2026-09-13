@@ -69,7 +69,7 @@ class TimeLockInfo extends Equatable {
   final String reason;
 
   /// The reasons this build has words for.
-  static const _known = {'lockDate', 'approval', 'invoice'};
+  static const _known = {'lockDate', 'approval', 'invoice', 'maxDaysBack'};
 
   /// [reason] when it is one this build knows, `unknown` otherwise.
   ///
@@ -92,6 +92,10 @@ class TimeLockInfo extends Equatable {
 
   bool get isLockDate => reason == 'lockDate';
   bool get isApproval => reason == 'approval';
+
+  /// The day lies further back than `maxDaysBack` allows. [lockDate] then carries
+  /// the oldest day that can be recorded without an administrator opening it.
+  bool get isBeyondLimit => reason == 'maxDaysBack';
 
   /// `time.lock.reason.<reason>` — one sentence per reason.
   String get reasonKey => 'time.lock.reason.$knownReason';

@@ -337,9 +337,15 @@ void main() {
       for (final title in const [
         // The request gate has read this since stage 2.
         'admin.timeTracking.advancedTitle',
-        // Stage 6 (this one): the write gate refuses what these demand.
+        // Stage 6: the write gate refuses what these demand.
         'admin.timeTracking.limitTagAccessTitle',
         'admin.timeTracking.requiredProjectTitle',
+        // Stage 8 (HIN-89): the timesheet was the last reader of the first, and
+        // the self-hints and the retention sweep apply the others.
+        'admin.timeTracking.leadsSeeMemberEntriesTitle',
+        'admin.timeTracking.arbzgHintsTitle',
+        'admin.timeTracking.descriptionPurgeLabel',
+        'admin.timeTracking.entryPurgeLabel',
       ]) {
         expect(
           find.descendant(
@@ -351,8 +357,12 @@ void main() {
         );
       }
       for (final title in const [
-        'admin.timeTracking.leadsSeeMemberEntriesTitle',
-        'admin.timeTracking.arbzgHintsTitle',
+        // The reports, alerts and billing of the later stages.
+        'admin.timeTracking.workloadReportsTitle',
+        'admin.timeTracking.alertsTitle',
+        'admin.timeTracking.targetRemindersTitle',
+        'admin.timeTracking.billingEnabledTitle',
+        'admin.timeTracking.icsImportTitle',
       ]) {
         expect(
           find.descendant(

@@ -6,6 +6,17 @@ import 'package:web/web.dart' as web;
 
 import 'file_download_types.dart';
 
+/// Web: there is no path to stream a file to, so a caller fetches the bytes and
+/// uses [downloadBytes] instead.
+Future<DownloadResult> downloadFile(
+  String filename,
+  String mimeType,
+  Future<void> Function(String path) fetch, {
+  Rect? sharePositionOrigin,
+}) => throw UnsupportedError(
+  'downloadFile streams to a path, which the web does not have; use downloadBytes',
+);
+
 /// Web: trigger a browser download via an in-memory Blob + a temporary
 /// download anchor. The browser owns the save dialog, so [sharePositionOrigin]
 /// is ignored here.

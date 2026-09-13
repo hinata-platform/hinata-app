@@ -24,14 +24,15 @@ import 'work_item_labels.dart';
 import 'work_log_sheet.dart';
 
 /// Who may do what to a work item — resolved once by the host from the auth
-/// state and the project's leads, so every row and the "all entries" sheet
-/// answer the same way without re-deriving it.
+/// state, the project's leads and the time policy, so every row and the "all
+/// entries" sheet answer the same way without re-deriving it.
 ///
-/// Mirrors the server rule (owner, a lead of the entry's project, or an admin
-/// may change or remove it) with one deliberate narrowing: the app only offers
-/// *editing* on your own entries. A lead correcting someone else's hours is
-/// the exception, and deleting the entry and asking for a fresh one keeps the
-/// audit trail honest about who wrote what.
+/// Mirrors the server rule (owner, an admin, or a lead of the entry's project
+/// while leads may read their members' entries may change or remove it) with
+/// one deliberate narrowing: the app only offers *editing* on your own
+/// entries. A lead correcting someone else's hours is the exception, and
+/// deleting the entry and asking for a fresh one keeps the audit trail honest
+/// about who wrote what.
 class WorkItemAccess {
   const WorkItemAccess({required this.meId, this.managesProject = false});
 
@@ -41,15 +42,19 @@ class WorkItemAccess {
   /// The signed-in user, or null while the session is still resolving.
   final String? meId;
 
-  /// Whether the caller leads the entry's project or is an admin — may remove
-  /// other people's entries, and the legacy remainder that belongs to nobody.
+  /// Whether the caller may manage other people's entries on this project: an
+  /// admin, or a lead while the policy lets leads read their members' entries.
+  /// May remove them, and the legacy remainder that belongs to nobody.
   final bool managesProject;
 
   bool isOwn(WorkItem item) => meId != null && item.userId == meId;
 
   bool canEdit(WorkItem item) => isOwn(item);
 
-  bool canDelete(WorkItem item) => isOwn(item) || managesProject;
+  /// An entry the server sent without its details is never the reader's to
+  /// remove: the server would refuse, and the menu would promise otherwise.
+  bool canDelete(WorkItem item) =>
+      isOwn(item) || (managesProject && !item.hidden);
 
   /// Whether the reader may see *whose* entry this is.
   ///
@@ -58,10 +63,11 @@ class WorkItemAccess {
   /// different question: a per-person, per-day breakdown of a colleague's
   /// working time is exactly the reading of time data that has to be switched
   /// on deliberately rather than shipped as the default (§ 87 Abs. 1 Nr. 6
-  /// BetrVG, Art. 25 DSGVO). So it is your own entries, plus those of a project
-  /// you lead, and the operator policy that opens it up comes with the policy
-  /// model itself.
-  bool canSeeAuthor(WorkItem item) => isOwn(item) || managesProject;
+  /// BetrVG, Art. 25 DSGVO). The server decides it and marks the entries it
+  /// sent without a name as [WorkItem.hidden]; for a server that predates the
+  /// rule, it is your own entries plus those of a project you manage.
+  bool canSeeAuthor(WorkItem item) =>
+      !item.hidden && (isOwn(item) || managesProject);
 
   /// Whether the reader may see what the person wrote on the entry.
   ///
@@ -70,7 +76,8 @@ class WorkItemAccess {
   /// worker, so an operator policy could reasonably open notes without opening
   /// names. Asking it separately here means that day is one line, not an audit
   /// of every call site.
-  bool canSeeNote(WorkItem item) => isOwn(item) || managesProject;
+  bool canSeeNote(WorkItem item) =>
+      !item.hidden && (isOwn(item) || managesProject);
 }
 
 /// Opens the entry in the work-log sheet's edit mode. Answers the patched
@@ -232,8 +239,7 @@ class WorkItemRow extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      '${fmtDuration(context, item.durationMinutes)} · '
-                      '${activityLabel(context, item.activityType)}',
+                      fmtDuration(context, item.durationMinutes),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -254,15 +260,19 @@ class WorkItemRow extends StatelessWidget {
                   ],
                 ],
               ),
-              if (who != null) ...[
-                const SizedBox(height: 2),
-                Text(
-                  description.isEmpty ? who : '$who · $description',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
-                ),
-              ],
+              const SizedBox(height: 2),
+              // Said rather than left blank: an entry without a name reads
+              // like a glitch unless the row says whose it is not.
+              Text(
+                who == null
+                    ? context.t('time.otherMember')
+                    : description.isEmpty
+                    ? who
+                    : '$who · $description',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+              ),
             ],
           ),
         ),

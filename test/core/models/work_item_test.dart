@@ -7,6 +7,22 @@ import 'package:hinata/core/models/work_models.dart';
 /// server applies, never as a parse error on the issue sheet.
 void main() {
   group('WorkItem.fromJson', () {
+    test('an entry sent without its details says so', () {
+      final item = WorkItem.fromJson(const {
+        'id': 'w9',
+        'durationMinutes': 45,
+        'date': '2026-09-04',
+        'activityType': 'Meeting',
+        'userId': null,
+        'hidden': true,
+      });
+
+      expect(item.hidden, isTrue);
+      expect(item.userId, isNull);
+      expect(item.isLegacy, isFalse);
+      expect(WorkItem.fromJson(const {'id': 'w1'}).hidden, isFalse);
+    });
+
     test('reads the 2.0 fields', () {
       final item = WorkItem.fromJson(const {
         'id': 'w1',

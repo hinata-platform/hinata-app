@@ -19,9 +19,9 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/util/duration_input.dart';
 import '../../core/widgets/hive_widgets.dart';
-import '../issues/work_item_labels.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'approval_actions.dart';
+import 'correction_requests.dart' show OwnCorrectionRequests;
 import 'lock_notice.dart';
 import 'placement_picker.dart';
 import 'tag_picker.dart';
@@ -202,9 +202,6 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
     issueId: widget.entry?.issueId ?? widget.timer?.issueId,
   );
 
-  late String _activity =
-      widget.entry?.activityType ?? widget.timer?.activityType ?? 'Development';
-
   late List<String> _tags = List.of(
     widget.entry?.tags ?? widget.timer?.tags ?? const <String>[],
   );
@@ -258,6 +255,22 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
 
   TimeLockInfo? _lock(TimePolicySnapshot policy) {
     final entry = widget.entry;
+    // How far back comes first, as it does on the server, and only for a day this
+    // sheet is setting: an entry that already sits beyond the limit stays
+    // editable in its other fields.
+    final filed = _filedOn;
+    final today = DateTime.now();
+    if ((!_isEdit || !DateUtils.isSameDay(filed, entry?.date)) &&
+        !policy.withinReach(filed, today)) {
+      return TimeLockInfo(
+        reason: 'maxDaysBack',
+        lockDate: DateTime(
+          today.year,
+          today.month,
+          today.day - policy.maxDaysBack,
+        ),
+      );
+    }
     // Both sides of the change, the way the server's gate is: moving an entry
     // *off* a frozen day changes that day as surely as moving one onto it.
     for (final day in [_filedOn, if (_isEdit) entry?.date]) {
@@ -288,6 +301,14 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   static DateTime _dayOf(WorkItem? entry) {
     final date = entry?.date ?? DateTime.now();
     return DateTime(date.year, date.month, date.day);
+  }
+
+  /// The earlier of the first recordable day and the day of [shown], so a
+  /// picker opened on an entry older than the limit starts where the entry is
+  /// instead of refusing to open.
+  static DateTime _earliest(DateTime first, DateTime shown) {
+    final day = DateTime(shown.year, shown.month, shown.day);
+    return day.isBefore(first) ? day : first;
   }
 
   /// An hour ago, on the hour — the start somebody correcting a forgotten entry
@@ -370,7 +391,6 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       date: interval ? DateTime(_start.year, _start.month, _start.day) : _day,
       startedAt: interval ? _start : null,
       endedAt: interval ? _end : null,
-      activityType: _activity,
       description: _description.text.trim(),
       // Only what this sheet was asked to change: see [_tagsTouched]. On a
       // create every field is mentioned anyway.
@@ -423,7 +443,6 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       projectId: _placement.projectId,
       issueId: _placement.issueId,
       description: _description.text.trim(),
-      activityType: _activity,
       // Only what this sheet was asked to change, as on an edit. Sent, the
       // timer's own tags go back through the catalogue on the way out — and
       // that is the one thing that could make a timer *unstoppable*: a
@@ -634,11 +653,6 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                   ],
                 ],
                 const SizedBox(height: 12),
-                _ActivityRow(
-                  value: _activity,
-                  onChanged: (value) => setState(() => _activity = value),
-                ),
-                const SizedBox(height: 12),
                 KeyedSubtree(
                   key: _tagsKey,
                   child: _FieldButton(
@@ -660,11 +674,15 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                   LockNotice(
                     lock: lock,
                     compact: true,
+                    day: _filedOn,
                     // Asking for a correction leaves nothing to save here, so the
                     // sheet closes: keeping it open over a request that changes
-                    // nothing reads as if the request had failed.
+                    // nothing reads as if the request had failed. Asking for a
+                    // day keeps it open, with what was typed, for another day.
                     onRequested: () => Navigator.of(context).maybePop(),
                   ),
+                  if (lock.entryId case final entryId?)
+                    OwnCorrectionRequests(entryId: entryId),
                 ],
                 if (unmet != null) ...[
                   const SizedBox(height: 8),
@@ -752,13 +770,22 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
 
   Future<void> _pickDay() async {
     final now = DateTime.now();
+    final policy = context.read<TimePolicyCubit>().state;
     final picked = await showGlassDatePicker(
       context,
       initialDate: _day,
       // The same window the server enforces, so the picker cannot offer a day
-      // the save would refuse.
-      firstDate: DateTime(now.year, now.month, now.day - 365),
+      // the save would refuse — including an older span opened for everyone or
+      // for this person, with the days in between greyed out.
+      firstDate: _earliest(policy.firstRecordableDay(now), _day),
       lastDate: DateTime(now.year, now.month, now.day),
+      selectableDayPredicate: (day) => policy.withinReach(day, now),
+      // The way to a day the picker does not offer.
+      footerAction: GlassPickerAction(
+        label: context.t('time.lock.requestOlderDays'),
+        icon: LucideIcons.calendarPlus,
+        onTap: () => unawaited(requestOlderDays(context)),
+      ),
       title: context.t('time.entry.day'),
     );
     if (picked == null || !mounted) return;
@@ -783,7 +810,10 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
     final picked = await showGlassDateTimePicker(
       context,
       initial: isStart ? _start : _end,
-      firstDate: DateTime(now.year, now.month, now.day - 365),
+      firstDate: _earliest(
+        context.read<TimePolicyCubit>().state.firstRecordableDay(now),
+        isStart ? _start : _end,
+      ),
       // A day either side of today: an entry may not be in the future, but an
       // end at 00:30 belongs to a start on the previous evening.
       lastDate: DateTime(now.year, now.month, now.day + 1),
@@ -886,89 +916,6 @@ class _ModeButton extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    ),
-  );
-}
-
-/// The activity types, as chips. A fixed list rather than free text: it is what
-/// the "time per activity" report groups by, and a typo would silently open a
-/// seventh column. The list is shared with the 1.x work-log sheet, and it keeps
-/// a value it does not recognise so an entry logged through MCP still shows
-/// what it says.
-class _ActivityRow extends StatelessWidget {
-  const _ActivityRow({required this.value, required this.onChanged});
-
-  final String value;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          context.t('time.entry.activity'),
-          style: TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w600,
-            color: AppColors.inkSoft,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final activity in workItemActivityChoices(value))
-              _ActivityChip(
-                label: activityLabel(context, activity),
-                selected: activity == value,
-                onTap: () => onChanged(activity),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _ActivityChip extends StatelessWidget {
-  const _ActivityChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.accentSoft
-              : AppColors.hairline.withValues(alpha: 0.35),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: selected ? AppColors.accentLine : Colors.transparent,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w600,
-            color: selected ? AppColors.accentStrong : AppColors.inkSoft,
-          ),
         ),
       ),
     ),

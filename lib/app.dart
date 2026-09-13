@@ -30,6 +30,7 @@ import 'core/util/server_link.dart' show knownServers, normalizeServerLink;
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'core/blocs/time_policy_cubit.dart';
+import 'core/blocs/time_privacy_cubit.dart';
 import 'core/blocs/time_preferences_cubit.dart';
 import 'features/knowledge/data/knowledge_repository.dart';
 import 'features/time/time_shortcuts.dart';
@@ -116,6 +117,13 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   /// may coin a tag. App-wide for the same reason the rhythm is; see
   /// [TimePolicyCubit].
   late final TimePolicyCubit _timePolicy = TimePolicyCubit(
+    widget.repositories.time,
+  );
+
+  /// The module's privacy notice and whether it was confirmed. App-wide so the
+  /// first-use notice opens once per session, whichever view comes first; see
+  /// [TimePrivacyCubit].
+  late final TimePrivacyCubit _timePrivacy = TimePrivacyCubit(
     widget.repositories.time,
   );
 
@@ -328,6 +336,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       // Another server may freeze another month. Held rules from the session
       // that ended would grey out a day that is perfectly editable on the next.
       _timePolicy.reset();
+      _timePrivacy.reset();
     }
   }
 
@@ -714,6 +723,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
           BlocProvider.value(value: _timer),
           BlocProvider.value(value: _timePreferences),
           BlocProvider.value(value: _timePolicy),
+          BlocProvider.value(value: _timePrivacy),
           BlocProvider(create: (_) => ThemeCubit()),
         ],
         child: BlocBuilder<ThemeCubit, ThemeMode>(

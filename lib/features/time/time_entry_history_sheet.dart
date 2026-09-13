@@ -185,6 +185,15 @@ class _HistoryRow extends StatelessWidget {
   /// could act on — they come back when the response can name them.
   static const _shown = ['minutes', 'date'];
 
+  /// The records whose sentence is the point: a correction request in the
+  /// owner's words, and the answer addressed to them, whether it opened the day
+  /// or not. The server leaves the sentence out for a reader it is not for.
+  static const _spoken = {
+    'TIME_CORRECTION_REQUESTED',
+    'TIME_CORRECTION_ANSWERED',
+    'TIME_BACKFILL_GRANTED',
+  };
+
   @override
   Widget build(BuildContext context) {
     final when = row.timestamp;
@@ -193,6 +202,7 @@ class _HistoryRow extends StatelessWidget {
         if (row.metadata[key] != null)
           '${context.t('time.history.field.$key')}: ${row.metadata[key]}',
     ];
+    final sentence = _spoken.contains(row.action) ? row.metadata['note'] : null;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
@@ -222,6 +232,17 @@ class _HistoryRow extends StatelessWidget {
             row.actorLabel ?? context.t('audit.actor.system'),
             style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
           ),
+          if (sentence != null && sentence.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              sentence,
+              style: TextStyle(
+                fontSize: 12.5,
+                height: 1.45,
+                color: AppColors.ink,
+              ),
+            ),
+          ],
           if (details.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(

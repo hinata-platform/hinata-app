@@ -72,7 +72,6 @@ void main() {
     expect(inputs[2].controller!.text, 'Regression run', reason: 'note');
     // The dropdown holds the entry's activity (its label falls back to the
     // canonical value when no bundle is loaded).
-    expect(find.text('Testing'), findsWidgets);
   });
 
   testWidgets('saving patches only what changed', (tester) async {

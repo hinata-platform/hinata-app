@@ -320,6 +320,67 @@ class ApiClient {
     return Uint8List.fromList((data as List<int>?) ?? const []);
   }
 
+  /// [getFileBytes] with the response's headers, for a file whose headers say
+  /// something about it (whether the server cut it short, for one).
+  Future<({Uint8List bytes, String? Function(String name) header})> getFile(
+    String path, {
+    Duration? receiveTimeout,
+  }) async {
+    final response = await _runResponse(
+      () => _dio.get<List<int>>(
+        '$baseUrl$path',
+        options: Options(
+          responseType: ResponseType.bytes,
+          receiveTimeout: receiveTimeout,
+        ),
+      ),
+      idempotent: true,
+    );
+    final data = response.data;
+    return (
+      bytes: data is Uint8List ? data : Uint8List.fromList(data ?? const []),
+      header: response.headers.value,
+    );
+  }
+
+  /// Streams a file the user asked for straight into [savePath], failing loudly
+  /// the way [getFileBytes] does, and answers the response's headers.
+  ///
+  /// For a file that can run to tens of megabytes: fetched as bytes it would sit
+  /// in memory whole, and then again as a copy, before it ever reached the disk.
+  /// Native only, because the web has no path to write to.
+  Future<String? Function(String name)> downloadTo(
+    String path,
+    String savePath, {
+    Duration? receiveTimeout,
+  }) async {
+    try {
+      final response = await _dio.download(
+        '$baseUrl$path',
+        savePath,
+        options: Options(receiveTimeout: receiveTimeout),
+      );
+      return response.headers.value;
+    } on DioException catch (error) {
+      // A refusal arrives as a stream nobody has read, so the server's own
+      // explanation is read here before it becomes a failure.
+      final response = error.response;
+      final body = response?.data;
+      if (response != null && body is ResponseBody) {
+        try {
+          final bytes = <int>[];
+          await for (final chunk in body.stream) {
+            bytes.addAll(chunk);
+          }
+          response.data = bytes;
+        } catch (_) {
+          response.data = null;
+        }
+      }
+      throw _toFailure(error);
+    }
+  }
+
   Future<dynamic> post(String path, {Object? body}) =>
       _run(() => _dio.post<dynamic>('$baseUrl$path', data: body));
 
@@ -384,9 +445,15 @@ class ApiClient {
   Future<dynamic> _run(
     Future<Response<dynamic>> Function() request, {
     bool idempotent = false,
+  }) async => (await _runResponse(request, idempotent: idempotent)).data;
+
+  /// [_run] for a caller that needs the whole response, headers included.
+  Future<Response<T>> _runResponse<T>(
+    Future<Response<T>> Function() request, {
+    bool idempotent = false,
   }) async {
     try {
-      return (await request()).data;
+      return await request();
     } on DioException catch (error) {
       // A transient connection loss (a keep-alive socket the pool handed us was
       // already closed by the server) is exactly the failure a manual retry
@@ -396,7 +463,7 @@ class ApiClient {
       // and never retry a real HTTP error (it carries a response we must surface).
       if (idempotent && _isRetriableConnectionFailure(error)) {
         try {
-          return (await request()).data;
+          return await request();
         } on DioException catch (retryError) {
           throw _toFailure(retryError);
         }
