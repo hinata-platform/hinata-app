@@ -250,7 +250,10 @@ class GlassModalHeader extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  maxLines: 1,
+                  // Two lines, not one: on a phone the room beside the icon and
+                  // the close button is about 210 points, and "Welche Tage
+                  // brauchst du?" was cut after "brauchst".
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontFamily: AppTheme.fontBrand,
@@ -304,8 +307,44 @@ class GlassModalFooter extends StatelessWidget {
   /// pass [AppColors.danger] for destructive confirmations.
   final Color? confirmColor;
 
+  /// The narrowest footer that still holds a hint beside both buttons.
+  static const double _hintBesideButtons = 400;
+
   @override
   Widget build(BuildContext context) {
+    final hint = this.hint;
+    final cancel = Flexible(
+      child: TextButton(
+        onPressed: busy ? null : () => Navigator.of(context).maybePop(),
+        child: Text(
+          context.t('common.cancel'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+    final confirm = FilledButton.icon(
+      onPressed: busy ? null : onConfirm,
+      style: FilledButton.styleFrom(
+        backgroundColor: confirmColor ?? AppColors.navy,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        ),
+      ),
+      icon: busy
+          ? const SizedBox(
+              width: 15,
+              height: 15,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : Icon(confirmIcon, size: 15),
+      label: Text(confirmLabel, maxLines: 1, overflow: TextOverflow.ellipsis),
+    );
     return Container(
       // The bottom inset is the footer's own: as a dialog it never touched the
       // screen edge, but as the last row of a bottom sheet it sits exactly where
@@ -328,59 +367,44 @@ class GlassModalFooter extends StatelessWidget {
       // reads as the way out, and it shrinks rather than letting the row
       // overflow. A hint takes at most half of what is left over — `Expanded`,
       // so a short one simply sits in more space than it needs, which costs
-      // nothing; only two dialogs in the app pass one at all, and both are
-      // wide.
+      // nothing. A footer too narrow for that gives the hint a row of its own:
+      // squeezed beside both buttons in the date picker, "Ältere Tage anfragen"
+      // broke over three lines.
       //
       // All three used to be flexible, the leading `Spacer` included, which
       // reads like "shrink if you must" and is not what a Flex does: the row
       // was divided in three and each button capped at a third of it. On a
       // phone that third is about 110 points and the confirm button wants 135,
       // so the label was cut on every sheet in the app, in every language.
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          if (hint != null) ...[
-            Expanded(child: hint!),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: TextButton(
-              onPressed: busy ? null : () => Navigator.of(context).maybePop(),
-              child: Text(
-                context.t('common.cancel'),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          FilledButton.icon(
-            onPressed: busy ? null : onConfirm,
-            style: FilledButton.styleFrom(
-              backgroundColor: confirmColor ?? AppColors.navy,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-              ),
-            ),
-            icon: busy
-                ? const SizedBox(
-                    width: 15,
-                    height: 15,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Icon(confirmIcon, size: 15),
-            label: Text(
-              confirmLabel,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (hint != null && constraints.maxWidth < _hintBesideButtons) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                hint,
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [cancel, const SizedBox(width: 8), confirm],
+                ),
+              ],
+            );
+          }
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (hint != null) ...[
+                Expanded(child: hint),
+                const SizedBox(width: 8),
+              ],
+              cancel,
+              const SizedBox(width: 8),
+              confirm,
+            ],
+          );
+        },
       ),
     );
   }

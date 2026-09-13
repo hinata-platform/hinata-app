@@ -14,6 +14,7 @@ import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/core/repositories/user_repository.dart';
+import 'package:hinata/core/widgets/glass_filter_bar.dart';
 import 'package:hinata/features/time/approval_actions.dart';
 import 'package:hinata/features/time/approvals_screen.dart';
 import 'package:hinata/features/time/lock_notice.dart';
@@ -181,48 +182,56 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 6));
     });
 
-    testWidgets('a day beyond the limit is asked for, and the form stays open', (
-      tester,
-    ) async {
-      final repository = _FakeTimeRepository();
-      var requested = 0;
-      await tester.pumpWidget(
-        RepositoryProvider<TimeRepository>.value(
-          value: repository,
-          child: MaterialApp(
-            home: Scaffold(
-              body: LockNotice(
-                lock: TimeLockInfo(
-                  reason: 'maxDaysBack',
-                  lockDate: DateTime(2025, 9, 13),
+    testWidgets(
+      'a day beyond the limit is asked for, and the form stays open',
+      (tester) async {
+        final repository = _FakeTimeRepository();
+        var requested = 0;
+        await tester.pumpWidget(
+          RepositoryProvider<TimeRepository>.value(
+            value: repository,
+            child: MaterialApp(
+              home: Scaffold(
+                body: LockNotice(
+                  lock: TimeLockInfo(
+                    reason: 'maxDaysBack',
+                    lockDate: DateTime(2025, 9, 13),
+                  ),
+                  day: DateTime(2025, 6, 2),
+                  onRequested: () => requested++,
                 ),
-                day: DateTime(2025, 6, 2),
-                onRequested: () => requested++,
               ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // There is no entry yet, so there is nothing to correct: the way out is
-      // asking for the day.
-      expect(find.text('time.lock.request'), findsNothing);
-      await tester.tap(find.text('time.lock.requestDays'));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'Nachtrag nach dem Urlaub');
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('time.lock.requestSend'));
-      await tester.pumpAndSettle();
+        // There is no entry yet, so there is nothing to correct: the way out is
+        // asking for the day.
+        expect(find.text('time.lock.request'), findsNothing);
+        await tester.tap(find.text('time.lock.requestDays'));
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byType(TextField),
+          'Nachtrag nach dem Urlaub',
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('time.lock.requestSend'));
+        await tester.pumpAndSettle();
 
-      expect(repository.backfills, [
-        (DateTime(2025, 6, 2), DateTime(2025, 6, 2), 'Nachtrag nach dem Urlaub'),
-      ]);
-      // Nothing is closed behind it: what was typed into the form is still
-      // wanted once the day opens, or for another day.
-      expect(requested, 0);
-      await tester.pumpAndSettle(const Duration(seconds: 6));
-    });
+        expect(repository.backfills, [
+          (
+            DateTime(2025, 6, 2),
+            DateTime(2025, 6, 2),
+            'Nachtrag nach dem Urlaub',
+          ),
+        ]);
+        // Nothing is closed behind it: what was typed into the form is still
+        // wanted once the day opens, or for another day.
+        expect(requested, 0);
+        await tester.pumpAndSettle(const Duration(seconds: 6));
+      },
+    );
 
     testWidgets('a new entry before the lock date asks for the day as well', (
       tester,
@@ -605,13 +614,13 @@ void main() {
       return repository;
     }
 
-    /// Taps the inbox segment.
+    /// Taps the inbox pill.
     ///
     /// Scrolled into view first, and that is a test artifact worth naming: the
     /// labels render as i18n *keys* here, which are far longer than the words
-    /// they stand for, so the second chip of a 280-point pill is scrolled out of
-    /// it — and a clipped widget does not hit-test. Nothing is wrong with the
-    /// control; asserting its pixels would be.
+    /// they stand for, so a pill can sit outside the row — and a clipped widget
+    /// does not hit-test. Nothing is wrong with the control; asserting its
+    /// pixels would be.
     Future<void> switchToInbox(WidgetTester tester) async {
       await tester.ensureVisible(find.text('time.approval.scope.inbox'));
       await tester.pumpAndSettle();
@@ -637,6 +646,28 @@ void main() {
       totalMinutes: 420,
       note: note,
     );
+
+    testWidgets('the three lists are three pills of their own', (tester) async {
+      await open(tester);
+
+      const scopes = ['mine', 'inbox', 'corrections'];
+      for (final scope in scopes) {
+        final pill = find.ancestor(
+          of: find.text('time.approval.scope.$scope'),
+          matching: find.byType(GlassPill),
+        );
+        expect(pill, findsOneWidget);
+        for (final other in scopes.where((other) => other != scope)) {
+          expect(
+            find.descendant(
+              of: pill,
+              matching: find.text('time.approval.scope.$other'),
+            ),
+            findsNothing,
+          );
+        }
+      }
+    });
 
     testWidgets('opens on one\'s own submissions, never on the inbox', (
       tester,
