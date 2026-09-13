@@ -655,12 +655,18 @@ void main() {
     // about a frozen day passed, and the page opened from a link — a bookmark, a
     // reload, a notification — drew no wash and no padlock at all, because the
     // snapshot it reads was still `none`.
+    //
+    // The lock date is tomorrow, which freezes today: a day is frozen when it
+    // is *before* the lock date, and today is the one day every week the
+    // calendar opens on is guaranteed to show. A lock date of yesterday froze
+    // the day before yesterday, which a week starting on Sunday does not show
+    // on a Sunday or a Monday — so the case failed two days a week.
     final repository = _FakeTimeRepository();
     await pump(
       tester,
       repository,
       policyOnLoad: TimePolicySnapshot(
-        lockBefore: day.subtract(const Duration(days: 1)),
+        lockBefore: DateTime(day.year, day.month, day.day + 1),
       ),
     );
 
