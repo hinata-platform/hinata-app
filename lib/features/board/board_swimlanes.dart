@@ -7,6 +7,8 @@ import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/project_palette.dart';
+import '../../core/widgets/glass_filter_bar.dart'
+    show GlassPill, kGlassControlHeight;
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_widgets.dart';
 import 'board_drag.dart';
@@ -32,7 +34,7 @@ List<BoardGrouping> boardGroupingsFor({required bool crossProject}) => [
 ];
 
 /// The "Group by" control shared by the Kanban board and the Scrum active
-/// surface — a glass dropdown that mirrors the board's filter-button styling.
+/// surface: a glass pill beside the board's filter pill, opening a glass menu.
 class BoardGroupByButton extends StatelessWidget {
   const BoardGroupByButton({
     super.key,
@@ -55,14 +57,45 @@ class BoardGroupByButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Icon-only on phones so the header row still fits the view switcher and
-    // the filter button. An active grouping would otherwise become invisible
-    // once its label is gone, so the icon carries the accent instead.
+    // Icon-only on phones, where it shares a docked row with the views, the
+    // search and the filter. The amber wash says a grouping is on once the
+    // word for it is gone.
     final narrow = compact || context.isCompact;
     final active = value != BoardGrouping.none;
     final label = active
         ? boardGroupingLabel(context, value)
         : context.t('board.groupBy');
+    final ink = active ? AppColors.accentStrong : AppColors.inkSoft;
+    final pill = GlassPill(
+      height: kGlassControlHeight,
+      active: active,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: narrow ? 10 : 14),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(LucideIcons.rows3, size: 16, color: ink),
+            if (!narrow) ...[
+              const SizedBox(width: 7),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: ink,
+                ),
+              ),
+              const SizedBox(width: 5),
+              Icon(
+                LucideIcons.chevronDown,
+                size: 14,
+                color: AppColors.inkFaint,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
     return GlassPopupMenu<BoardGrouping>(
       value: value,
       width: 220,
@@ -71,47 +104,8 @@ class BoardGroupByButton extends StatelessWidget {
         for (final g in options ?? BoardGrouping.values)
           GlassMenuItem(value: g, label: boardGroupingLabel(context, g)),
       ],
-      child: Tooltip(
-        message: label,
-        child: Material(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: narrow ? 11 : 14,
-              vertical: 10,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  LucideIcons.rows3,
-                  size: 16,
-                  color: narrow && active
-                      ? AppColors.accent
-                      : AppColors.inkSoft,
-                ),
-                if (!narrow) ...[
-                  const SizedBox(width: 7),
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    LucideIcons.chevronDown,
-                    size: 15,
-                    color: AppColors.inkFaint,
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
+      // Only where the word is gone; a tooltip repeating visible text is noise.
+      child: narrow ? Tooltip(message: label, child: pill) : pill,
     );
   }
 }

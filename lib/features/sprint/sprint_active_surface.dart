@@ -38,6 +38,7 @@ class SprintActiveSurface extends StatelessWidget {
     this.avatars = const {},
     this.projectNames = const {},
     this.projectsById = const {},
+    this.topInset = 0,
   });
 
   final Sprint sprint;
@@ -73,6 +74,10 @@ class SprintActiveSurface extends StatelessWidget {
   /// The spanned projects, needed to resolve which of a merged column's states
   /// belongs to a dropped card's own project.
   final Map<String, Project> projectsById;
+
+  /// Room left clear above the sprint header, for a phone's app bar and its
+  /// docked row.
+  final double topInset;
 
   /// Every active facet plus the epic facet (resolved per issue).
   bool _passes(Issue i) =>
@@ -165,7 +170,7 @@ class SprintActiveSurface extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(gutter, 0, gutter, 12),
+          padding: EdgeInsets.fromLTRB(gutter, topInset, gutter, 12),
           child: GlassSprintHeader(sprint: sprint),
         ),
         Expanded(
