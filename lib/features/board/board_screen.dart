@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../core/widgets/glass_filter_bar.dart' show WideToolbar;
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
@@ -31,6 +32,7 @@ import '../sprint/modals/glass_modal.dart'
 import '../sprint/sprint_board_view.dart';
 import 'board_drag.dart';
 import 'board_filter.dart';
+import 'board_header.dart';
 import 'board_manage_menu.dart';
 import 'board_swimlanes.dart';
 import 'create_board_dialog.dart';
@@ -372,7 +374,13 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   bool _linksLoaded = false;
   bool _linksLoading = false;
 
-  final GlobalKey _filterKey = GlobalKey();
+  /// The search over the wall's cards, typed into the board's head.
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+
+  /// Whether a phone's docked row shows the search field instead of the tools.
+  /// A wide window shows both side by side and never sets it.
+  bool _searching = false;
 
   /// Re-fetch when an issue is created/changed elsewhere (e.g. the global
   /// nav-rail "new issue" button, which can't reach this screen's state).
@@ -388,6 +396,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   @override
   void dispose() {
     _issueSub?.cancel();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -557,9 +566,12 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     for (final e in _epics) e.id: '${e.readableId}  ${e.title}',
   };
 
-  /// Combined predicate: every facet plus the epic facet (resolved per issue).
+  /// Combined predicate: every facet, the epic facet (resolved per issue) and
+  /// the search.
   bool _passes(Issue i) =>
-      _filter.matches(i) && _filter.matchesEpic(boardEpicOf(i, _issuesById));
+      _filter.matches(i) &&
+      _filter.matchesEpic(boardEpicOf(i, _issuesById)) &&
+      issueMatchesQuery(i, _query);
 
   List<String> get _peopleIds {
     final seen = <String>{};
@@ -688,9 +700,9 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     };
   }
 
-  void _openFilter() => openBoardFilter(
+  void _openFilter(Rect? anchor) => openBoardFilter(
     context,
-    anchorKey: _filterKey,
+    anchor: anchor,
     filter: _filter,
     options: _options,
     names: _names,
@@ -700,6 +712,9 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     epicNames: _epicNames,
     onChanged: (f) => setState(() => _filter = f),
   );
+
+  /// The wall filters what it already holds, so every letter narrows it at once.
+  void _onSearch(String value) => setState(() => _query = value);
 
   @override
   Widget build(BuildContext context) {
@@ -725,51 +740,67 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       );
     }
     final view = _view!;
-    // Scrum boards swap the Kanban/Backlog/Timeline surfaces for the sprint
-    // planning · active · insights surfaces. The sprint view owns its own data
-    // (sprints, story points, report) and reuses the loaded name maps.
+    // Scrum boards swap the Kanban/Timeline surfaces for the sprint planning ·
+    // active · insights surfaces. The sprint view owns its own data (sprints,
+    // story points, report) and its own head, and reuses the loaded name maps.
     if (view.board.isScrum) {
-      return PageChrome(
-        title: view.board.name,
+      return ScrumBoardView(
+        view: view,
         fullWidth: _needsFullWidth(view),
-        child: ScrumBoardView(
-          view: view,
-          names: _names,
-          avatars: _avatars,
-          pronouns: _pronouns,
-          projectNames: _projectNames,
-          projectsById: _projectsById,
-          onOpenIssue: _openIssue,
-        ),
+        names: _names,
+        avatars: _avatars,
+        pronouns: _pronouns,
+        projectNames: _projectNames,
+        projectsById: _projectsById,
+        onOpenIssue: _openIssue,
       );
     }
-    // Back navigation is handled by the shell app bar (via PageChrome). The
-    // in-page PageHead already carries the board name, so the shell shows the
-    // generic section title instead of repeating it.
+    final compact = context.isCompact;
+    final sprint = _activeSprint;
+    // Back navigation is handled by the shell app bar (via PageChrome). On a
+    // phone the board's name is that bar's title and the tools ride in the row
+    // docked under it, so the wall starts right below the bar and its lanes
+    // scroll up under the blur. A wide window keeps the page head, which
+    // carries the name, so its bar names the section instead.
     return PageChrome(
-      title: context.t('nav.board'),
+      title: compact ? view.board.name : context.t('nav.board'),
+      titleLeading: true,
       fullWidth: _needsFullWidth(view),
+      bottom: compact ? _dock() : null,
+      bottomHeight: compact ? kBoardDockHeight : 0,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              context.pageGutter,
-              22 + context.topGutter,
-              context.pageGutter,
-              10,
+          if (!compact)
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                context.pageGutter,
+                22 + context.topGutter,
+                context.pageGutter,
+                10,
+              ),
+              child: _wideHead(view),
             ),
-            child: _header(view),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              context.pageGutter,
-              0,
-              context.pageGutter,
-              10,
+          if (sprint != null)
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                context.pageGutter,
+                compact ? context.topGutter + 8 : 0,
+                context.pageGutter,
+                10,
+              ),
+              child: _sprintRow(view, sprint),
             ),
-            child: _metaArea(view),
-          ),
+          if (!compact)
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                context.pageGutter,
+                0,
+                context.pageGutter,
+                10,
+              ),
+              child: _wideControls(),
+            ),
           Expanded(child: _body()),
         ],
       ),
@@ -787,11 +818,15 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   bool _needsFullWidth(BoardView view) =>
       view.columns.length > BoardWall.columnsPerReadingWidth;
 
-  // ---- header: title + view switcher ----
+  /// What the body leaves clear at its top. On a phone with no sprint card
+  /// above it the wall spends the bar's height itself, so its lanes scroll up
+  /// under the blur instead of stopping at the bar's edge.
+  double get _bodyTop =>
+      context.isCompact && _activeSprint == null ? context.topGutter + 8 : 0;
 
-  /// Deletes the open board, then leaves for the boards overview (a fresh route
-  /// so the list no longer shows it).
-  Widget _header(BoardView view) {
+  // ---- head: name, views, tools ----
+
+  Widget _wideHead(BoardView view) {
     final projectLabel = view.board.projectIds
         .map((id) => _projectNames[id] ?? '')
         .where((s) => s.isNotEmpty)
@@ -799,42 +834,89 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     final subtitle = projectLabel.isEmpty
         ? context.t('board.agileBoard')
         : '$projectLabel · ${context.t('board.agileBoard')}';
-
-    if (context.isCompact) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          PageHead(title: view.board.name, subtitle: subtitle),
-          const SizedBox(height: 12),
-          // Right-aligned and icons-only on phones: the labels used to eat the
-          // width this row shares with group-by and filter, and a handle to
-          // fold them away was one control more than the choice is worth.
-          Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: SegmentedControl(
-              iconsOnly: true,
-              items: _switcherItems(),
-              selected: _viewModes
-                  .indexOf(_mode)
-                  .clamp(0, _viewModes.length - 1),
-              onChanged: (i) => _switchMode(_viewModes[i]),
-            ),
-          ),
-        ],
-      );
-    }
     return PageHead(
       title: view.board.name,
       subtitle: subtitle,
-      actions: [
-        SegmentedControl(
-          items: _switcherItems(),
-          selected: _viewModes.indexOf(_mode).clamp(0, _viewModes.length - 1),
-          onChanged: (i) => setState(() => _mode = _viewModes[i]),
-        ),
-      ],
+      actions: [_viewSwitch(compact: false)],
     );
   }
+
+  /// The phone's one docked row: the views, the search and the board's tools.
+  Widget _dock() => BoardHeaderDock(
+    switcher: _viewSwitch(compact: true),
+    searching: _searching,
+    searchController: _searchController,
+    onSearchChanged: _onSearch,
+    onSearchOpen: () => setState(() => _searching = true),
+    onSearchClose: () => setState(() => _searching = false),
+    tools: [
+      if (_mode == BoardViewMode.board) _groupBy(),
+      _filterPill(),
+      if (_peopleIds.isNotEmpty) _people(),
+    ],
+  );
+
+  /// The same tools on a wide window: the search as a field on the leading
+  /// edge, the people's faces, grouping and the filter against the trailing
+  /// one, wrapping to the room the window leaves them.
+  Widget _wideControls() => WideToolbar(
+    leading: [
+      BoardSearchField(controller: _searchController, onChanged: _onSearch),
+    ],
+    trailing: [
+      if (_peopleIds.isNotEmpty) BoardPeopleSlot(child: _people()),
+      if (_mode == BoardViewMode.board) _groupBy(),
+      _filterPill(showLabel: true),
+    ],
+  );
+
+  Widget _viewSwitch({required bool compact}) => BoardViewSwitch(
+    compact: compact,
+    items: _switcherItems(),
+    selected: _viewModes.indexOf(_mode).clamp(0, _viewModes.length - 1),
+    onChanged: (i) => _switchMode(_viewModes[i]),
+  );
+
+  /// Grouping lays the wall out in lanes, so it is offered on the wall only.
+  Widget _groupBy() => BoardGroupByButton(
+    value: _grouping,
+    options: boardGroupingsFor(crossProject: _isCrossProject),
+    onChanged: (g) => setState(() => _grouping = g),
+  );
+
+  Widget _filterPill({bool showLabel = false}) => BoardFilterPill(
+    count: _filter.activeCount,
+    showLabel: showLabel,
+    onTap: _openFilter,
+  );
+
+  Widget _people() => BoardPeopleStrip(
+    userIds: _peopleIds,
+    names: _names,
+    avatars: _avatars,
+    pronouns: _pronouns,
+    selected: _filter.assignees,
+    onToggle: (id) =>
+        setState(() => _filter = _filter.toggle(BoardFilterFacet.assignee, id)),
+  );
+
+  /// The sprint the wall shows, and the way to another one.
+  Widget _sprintRow(BoardView view, Sprint sprint) => Row(
+    children: [
+      Expanded(child: _SprintHeader(sprint: sprint)),
+      if (view.sprints.length > 1) ...[
+        const SizedBox(width: 12),
+        _SprintSelector(
+          sprints: view.sprints,
+          selected: _sprintId,
+          onChanged: (value) {
+            _sprintId = value;
+            _load();
+          },
+        ),
+      ],
+    ],
+  );
 
   /// Views offered for a (Kanban) board. The Backlog view is a Scrum-only
   /// concept, so it isn't offered here — Scrum boards render the dedicated
@@ -863,75 +945,6 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     for (final mode in _viewModes) _itemFor(mode),
   ];
 
-  // ---- meta area: sprint header + people strip + filter ----
-
-  Widget _metaArea(BoardView view) {
-    final sprint = _activeSprint;
-    final children = <Widget>[];
-    if (sprint != null) {
-      children.add(
-        Row(
-          children: [
-            Expanded(child: _SprintHeader(sprint: sprint)),
-            if (view.sprints.length > 1) ...[
-              const SizedBox(width: 12),
-              _SprintSelector(
-                sprints: view.sprints,
-                selected: _sprintId,
-                onChanged: (value) {
-                  _sprintId = value;
-                  _load();
-                },
-              ),
-            ],
-          ],
-        ),
-      );
-      children.add(const SizedBox(height: 10));
-    }
-    children.add(_controlsRow());
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: children,
-    );
-  }
-
-  Widget _controlsRow() {
-    final people = BoardPeopleStrip(
-      userIds: _peopleIds,
-      names: _names,
-      avatars: _avatars,
-      pronouns: _pronouns,
-      selected: _filter.assignees,
-      onToggle: (id) => setState(
-        () => _filter = _filter.toggle(BoardFilterFacet.assignee, id),
-      ),
-    );
-    return Row(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            reverse: true,
-            child: people,
-          ),
-        ),
-        const SizedBox(width: 10),
-        BoardGroupByButton(
-          value: _grouping,
-          options: boardGroupingsFor(crossProject: _isCrossProject),
-          onChanged: (g) => setState(() => _grouping = g),
-        ),
-        const SizedBox(width: 10),
-        _BoardFilterButton(
-          key: _filterKey,
-          count: _filter.activeCount,
-          onTap: _openFilter,
-        ),
-      ],
-    );
-  }
-
   // ---- body ----
 
   Widget _body() {
@@ -951,7 +964,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
           onOpen: _openIssue,
           padding: EdgeInsets.fromLTRB(
             context.pageGutter,
-            0,
+            _bodyTop,
             context.pageGutter,
             context.pageGutter + context.bottomGutter,
           ),
@@ -992,7 +1005,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
             physics: BoardColumnSnapPhysics.maybe(snap),
             padding: EdgeInsets.fromLTRB(
               context.pageGutter,
-              0,
+              _bodyTop,
               context.pageGutter,
               context.pageGutter + context.bottomGutter,
             ),
@@ -1058,7 +1071,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       lanes: lanes,
       padding: EdgeInsets.fromLTRB(
         context.pageGutter,
-        0,
+        _bodyTop,
         context.pageGutter,
         context.pageGutter + context.bottomGutter,
       ),
@@ -1113,7 +1126,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
 
     final padding = EdgeInsets.fromLTRB(
       context.pageGutter,
-      0,
+      _bodyTop,
       context.pageGutter,
       context.pageGutter + context.bottomGutter,
     );

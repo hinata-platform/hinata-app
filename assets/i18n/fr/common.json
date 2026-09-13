@@ -1292,7 +1292,8 @@
       "noColumnAvailable": "Plus aucune colonne disponible — chacune contient déjà un statut de ce projet.",
       "unassignedHint": "Ces statuts n'ont pas encore de colonne. Les tickets qui s'y trouvent n'apparaîtraient pas sur le tableau.",
       "automatic": "Revenir à l'automatique"
-    }
+    },
+    "searchIssues": "Rechercher des tickets…"
   },
   "gantt": {
     "title": "Chronologie",
@@ -2371,7 +2372,6 @@
     "completeSprint": "Terminer le sprint",
     "planned": "Planifié",
     "filterBacklog": "Filtrer le backlog…",
-    "filterIssues": "Filtrer les tickets…",
     "addIssue": "Ajouter un ticket",
     "addBacklogItem": "Ajouter un élément au backlog",
     "dragHere": "Faites glisser des tickets ici pour planifier ce sprint, ou ajoutez-en un ci-dessous.",

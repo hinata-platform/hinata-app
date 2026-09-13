@@ -23,6 +23,7 @@ class SprintInsightsSurface extends StatelessWidget {
     required this.error,
     required this.names,
     required this.onRetry,
+    this.topInset = 0,
   });
 
   final SprintReport? report;
@@ -30,6 +31,10 @@ class SprintInsightsSurface extends StatelessWidget {
   final String? error;
   final Map<String, String> names;
   final VoidCallback onRetry;
+
+  /// Room left clear above the first card, for a phone's app bar and its
+  /// docked row, which the list scrolls up under.
+  final double topInset;
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +64,7 @@ class SprintInsightsSurface extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.fromLTRB(
         gutter,
-        0,
+        topInset,
         gutter,
         gutter + context.bottomGutter,
       ),
