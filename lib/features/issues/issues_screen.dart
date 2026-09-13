@@ -27,6 +27,8 @@ import '../../core/theme/project_palette.dart';
 import '../../core/util/file_download.dart';
 import '../../core/widgets/frosted_surface.dart';
 import '../../core/widgets/glass_bulk_bar.dart';
+import '../../core/widgets/glass_filter_bar.dart'
+    show GlassPill, WideToolbar, kGlassControlHeight;
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
@@ -848,10 +850,36 @@ class _IssuesScreenState extends State<IssuesScreen> {
             (state.isLoadingMore || (_hasClientResidual && state.hasMore));
 
         final compact = context.isCompact;
+        final head = PageHead(
+          title: projectName ?? context.t('nav.issues'),
+          subtitle: projectName != null
+              ? '${context.t('nav.issues')} · ${_subtitle(list.length, state.total)}'
+              : _subtitle(list.length, state.total),
+          actions: [
+            // One button on every platform: the honey fill is the app's
+            // primary action colour, and the native shell had drifted to a
+            // glass outline that read as secondary. `collapseToIcon` keeps the
+            // phone form — a bare "+" — so only the paint changed.
+            PrimaryButton(
+              icon: LucideIcons.plus,
+              label: context.t('issues.new'),
+              collapseToIcon: true,
+              onPressed: () async {
+                final created = await showIssueForm(
+                  context,
+                  projectId: widget.projectId,
+                );
+                if (created != null && mounted) {
+                  _reload();
+                }
+              },
+            ),
+          ],
+        );
         return PageChrome(
           title: projectName ?? context.t('nav.issues'),
           // On compact the toolbar docks into the app bar (shared blur, no
-          // separate band); on wide it stays an in-scroll row below the title.
+          // separate band); on wide it stands under the title, above the list.
           bottom: compact
               ? Padding(
                   padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
@@ -872,143 +900,137 @@ class _IssuesScreenState extends State<IssuesScreen> {
                   hasData: state.hasData && (_ref != null || _refError),
                   errorKey: state.errorKey,
                   onRetry: _reload,
-                  builder: (context) => CustomScrollView(
-                    controller: _scroll,
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    slivers: [
-                      SliverPadding(
-                        padding: EdgeInsets.fromLTRB(
-                          context.pageGutter,
-                          // topGutter now includes the docked toolbar height on
-                          // compact, so content clears the whole (taller) app bar.
-                          24 + context.topGutter,
-                          context.pageGutter,
-                          14,
-                        ),
-                        sliver: SliverToBoxAdapter(
-                          child: PageHead(
-                            title: projectName ?? context.t('nav.issues'),
-                            subtitle: projectName != null
-                                ? '${context.t('nav.issues')} · ${_subtitle(list.length, state.total)}'
-                                : _subtitle(list.length, state.total),
-                            actions: [
-                              // One button on every platform: the honey fill is
-                              // the app's primary action colour, and the native
-                              // shell had drifted to a glass outline that read
-                              // as secondary. `collapseToIcon` keeps the phone
-                              // form — a bare "+" — so only the paint changed.
-                              PrimaryButton(
-                                icon: LucideIcons.plus,
-                                label: context.t('issues.new'),
-                                collapseToIcon: true,
-                                onPressed: () async {
-                                  final created = await showIssueForm(
-                                    context,
-                                    projectId: widget.projectId,
-                                  );
-                                  if (created != null && mounted) {
-                                    _reload();
-                                  }
-                                },
+                  builder: (context) {
+                    final scroll = CustomScrollView(
+                      controller: _scroll,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        // On a phone the head scrolls with the list, under the
+                        // app bar's blur.
+                        if (compact)
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              context.pageGutter,
+                              // topGutter now includes the docked toolbar height
+                              // on compact, so content clears the whole (taller)
+                              // app bar.
+                              24 + context.topGutter,
+                              context.pageGutter,
+                              14,
+                            ),
+                            sliver: SliverToBoxAdapter(child: head),
+                          ),
+                        if (list.isEmpty && !searchingMore)
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: context.pageGutter,
+                                vertical: 40,
                               ),
-                            ],
+                              child: HiveEmptyState(
+                                title: context.t('nav.issues'),
+                                message: _hasActiveView
+                                    ? context.t('issues.emptyFiltered')
+                                    : context.t('issues.empty'),
+                                action: _hasActiveView
+                                    ? OutlinedButton(
+                                        onPressed: () {
+                                          final refetch = _filter.archivedOnly;
+                                          setState(() {
+                                            _filter = IssueFilter.empty;
+                                            _timeRange = IssueTimeRange.none;
+                                          });
+                                          if (refetch) _issues.load();
+                                        },
+                                        child: Text(
+                                          context.t('board.clearFilters'),
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                            ),
+                          )
+                        else if (list.isNotEmpty)
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              context.pageGutter,
+                              12,
+                              context.pageGutter,
+                              14,
+                            ),
+                            sliver: Builder(
+                              builder: (context) {
+                                // Lightweight row descriptors (headers / issues /
+                                // spacers) fed to a lazy builder, so only on-screen
+                                // rows are ever built — a workspace with thousands of
+                                // issues no longer constructs every SoftCard per frame.
+                                final entries = _grouping == IssueGrouping.none
+                                    ? _flatEntries(list)
+                                    : _groupedEntries(sections);
+                                return SliverList.builder(
+                                  itemCount: entries.length,
+                                  itemBuilder: (context, i) => _buildEntry(
+                                    entries[i],
+                                    ref.names,
+                                    ref.avatars,
+                                    ref.pronouns,
+                                    ref.palette,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        // Infinite-scroll footer: the standard HiveLoader while the next
+                        // page (or a filter's background sweep) is loading.
+                        if (state.isLoadingMore || searchingMore)
+                          const SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 24),
+                              child: Center(child: HiveLoader(size: 30)),
+                            ),
+                          ),
+                        SliverToBoxAdapter(
+                          child: SizedBox(
+                            // Extra room while selecting so the floating bulk bar
+                            // never covers the last row.
+                            height:
+                                context.pageGutter +
+                                context.bottomGutter +
+                                (_selectionMode ? 72 : 0),
                           ),
                         ),
-                      ),
-                      // Toolbar (group · sort · filter · time · export). On compact
-                      // it lives in the app bar (see PageChrome.bottom above); on
-                      // wide it's an in-scroll row below the title.
-                      if (!compact)
-                        SliverPadding(
+                      ],
+                    );
+                    if (compact) return scroll;
+                    // On a wide window the head and the tools stay where they
+                    // are while the list scrolls, as on the boards and the
+                    // time pages: narrowing a long list should not start with
+                    // scrolling back up to its top.
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            context.pageGutter,
+                            24 + context.topGutter,
+                            context.pageGutter,
+                            14,
+                          ),
+                          child: head,
+                        ),
+                        Padding(
                           padding: EdgeInsets.fromLTRB(
                             context.pageGutter,
                             0,
                             context.pageGutter,
                             14,
                           ),
-                          sliver: SliverToBoxAdapter(child: _toolbar()),
+                          child: _toolbar(),
                         ),
-                      if (list.isEmpty && !searchingMore)
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: context.pageGutter,
-                              vertical: 40,
-                            ),
-                            child: HiveEmptyState(
-                              title: context.t('nav.issues'),
-                              message: _hasActiveView
-                                  ? context.t('issues.emptyFiltered')
-                                  : context.t('issues.empty'),
-                              action: _hasActiveView
-                                  ? OutlinedButton(
-                                      onPressed: () {
-                                        final refetch = _filter.archivedOnly;
-                                        setState(() {
-                                          _filter = IssueFilter.empty;
-                                          _timeRange = IssueTimeRange.none;
-                                        });
-                                        if (refetch) _issues.load();
-                                      },
-                                      child: Text(
-                                        context.t('board.clearFilters'),
-                                      ),
-                                    )
-                                  : null,
-                            ),
-                          ),
-                        )
-                      else if (list.isNotEmpty)
-                        SliverPadding(
-                          padding: EdgeInsets.fromLTRB(
-                            context.pageGutter,
-                            12,
-                            context.pageGutter,
-                            14,
-                          ),
-                          sliver: Builder(
-                            builder: (context) {
-                              // Lightweight row descriptors (headers / issues /
-                              // spacers) fed to a lazy builder, so only on-screen
-                              // rows are ever built — a workspace with thousands of
-                              // issues no longer constructs every SoftCard per frame.
-                              final entries = _grouping == IssueGrouping.none
-                                  ? _flatEntries(list)
-                                  : _groupedEntries(sections);
-                              return SliverList.builder(
-                                itemCount: entries.length,
-                                itemBuilder: (context, i) => _buildEntry(
-                                  entries[i],
-                                  ref.names,
-                                  ref.avatars,
-                                  ref.pronouns,
-                                  ref.palette,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      // Infinite-scroll footer: the standard HiveLoader while the next
-                      // page (or a filter's background sweep) is loading.
-                      if (state.isLoadingMore || searchingMore)
-                        const SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 24),
-                            child: Center(child: HiveLoader(size: 30)),
-                          ),
-                        ),
-                      SliverToBoxAdapter(
-                        child: SizedBox(
-                          // Extra room while selecting so the floating bulk bar
-                          // never covers the last row.
-                          height:
-                              context.pageGutter +
-                              context.bottomGutter +
-                              (_selectionMode ? 72 : 0),
-                        ),
-                      ),
-                    ],
-                  ),
+                        Expanded(child: scroll),
+                      ],
+                    );
+                  },
                 ),
               ),
               // Bulk-action bar, docked above the nav while rows are selected.
