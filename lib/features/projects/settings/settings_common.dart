@@ -386,35 +386,45 @@ class _MemberPickerState extends State<_MemberPicker> {
                 ),
           ),
         ),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          child: filtered.isEmpty
-              ? Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 40),
-                  child: Center(
-                    child: Text(
-                      context.t('projectSettings.everyoneMember'),
-                      style: TextStyle(color: AppColors.inkSoft),
-                    ),
-                  ),
-                )
-              : ListView.builder(
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, i) {
-                    final u = filtered[i];
-                    return _MemberRow(
-                      user: u,
-                      selected: _selected.contains(u.id),
-                      onTap: () => setState(
-                        () => _selected.contains(u.id)
-                            ? _selected.remove(u.id)
-                            : _selected.add(u.id),
+        // Flexible is what bounds the list: the modal caps this column's height,
+        // and only a flex child is handed what is left of it. Without it the
+        // list is laid out at full height, overflows the sheet, has nothing to
+        // scroll through (a drag bounces back to the top) and pushes the footer
+        // below the fold. The switcher only cross-fades; it is not a bound.
+        Flexible(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: filtered.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    // heightFactor 1: inside the Flexible a bare Center would
+                    // take every pixel it is allowed and stretch the sheet.
+                    child: Center(
+                      heightFactor: 1,
+                      child: Text(
+                        context.t('projectSettings.everyoneMember'),
+                        style: TextStyle(color: AppColors.inkSoft),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, i) {
+                      final u = filtered[i];
+                      return _MemberRow(
+                        user: u,
+                        selected: _selected.contains(u.id),
+                        onTap: () => setState(
+                          () => _selected.contains(u.id)
+                              ? _selected.remove(u.id)
+                              : _selected.add(u.id),
+                        ),
+                      );
+                    },
+                  ),
+          ),
         ),
         GlassModalFooter(
           confirmLabel: _selected.isEmpty
