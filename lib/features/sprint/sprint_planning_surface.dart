@@ -35,7 +35,6 @@ class SprintPlanningSurface extends StatelessWidget {
     required this.pageSize,
     required this.selected,
     required this.query,
-    required this.onQuery,
     required this.onPage,
     required this.onToggleSelect,
     required this.onClearSelection,
@@ -45,9 +44,9 @@ class SprintPlanningSurface extends StatelessWidget {
     required this.onBulkMove,
     required this.quickCreateSeed,
     required this.onCreated,
-    required this.onCreateSprint,
     required this.onStartSprint,
     required this.onCompleteSprint,
+    this.topInset = 0,
   });
 
   final List<Sprint> sprints;
@@ -68,7 +67,6 @@ class SprintPlanningSurface extends StatelessWidget {
   final int pageSize;
   final Set<String> selected;
   final String query;
-  final ValueChanged<String> onQuery;
   final ValueChanged<int> onPage;
   final ValueChanged<String> onToggleSelect;
   final VoidCallback onClearSelection;
@@ -83,9 +81,12 @@ class SprintPlanningSurface extends StatelessWidget {
 
   /// Fired once a composer created an issue, so the surface reloads.
   final ValueChanged<Issue> onCreated;
-  final VoidCallback onCreateSprint;
   final void Function(Sprint) onStartSprint;
   final void Function(Sprint) onCompleteSprint;
+
+  /// Room left clear above the first sprint. On a phone the app bar and its
+  /// docked row float over the top of the list, which scrolls up under them.
+  final double topInset;
 
   @override
   Widget build(BuildContext context) {
@@ -95,13 +96,11 @@ class SprintPlanningSurface extends StatelessWidget {
         ListView(
           padding: EdgeInsets.fromLTRB(
             gutter,
-            0,
+            topInset,
             gutter,
             gutter + context.bottomGutter + (selected.isNotEmpty ? 72 : 0),
           ),
           children: [
-            _toolbar(context),
-            const SizedBox(height: 14),
             for (final s in sprints) ...[
               _SprintGroup(
                 sprint: s,
@@ -175,106 +174,9 @@ class SprintPlanningSurface extends StatelessWidget {
     );
   }
 
-  /// Free-text match used to filter sprint issues in-memory, mirroring the
-  /// server-side backlog search (id / title / tags). The backlog list is
-  /// already query-filtered upstream, so this only narrows the sprint groups.
-  bool _matchesQuery(Issue issue) {
-    final q = query.trim().toLowerCase();
-    if (q.isEmpty) return true;
-    return issue.readableId.toLowerCase().contains(q) ||
-        issue.title.toLowerCase().contains(q) ||
-        issue.tags.any((t) => t.toLowerCase().contains(q));
-  }
-
-  Widget _toolbar(BuildContext context) {
-    final createButton = PrimaryButton(
-      icon: LucideIcons.plus,
-      label: context.t('sprint.createSprint'),
-      onPressed: onCreateSprint,
-    );
-    final search = _SearchField(query: query, onQuery: onQuery);
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      // Phone: button + search share a single row, search flexes into the
-      // remaining width so it never overflows the viewport. Desktop keeps the
-      // button left and a fixed-width search pinned to the right.
-      child: context.isCompact
-          ? Row(
-              children: [
-                createButton,
-                const SizedBox(width: 12),
-                Expanded(child: search),
-              ],
-            )
-          : Row(
-              children: [
-                createButton,
-                const Spacer(),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 320),
-                  child: search,
-                ),
-              ],
-            ),
-    );
-  }
-}
-
-class _SearchField extends StatefulWidget {
-  const _SearchField({required this.query, required this.onQuery});
-
-  final String query;
-  final ValueChanged<String> onQuery;
-
-  @override
-  State<_SearchField> createState() => _SearchFieldState();
-}
-
-class _SearchFieldState extends State<_SearchField> {
-  late final TextEditingController _c = TextEditingController(
-    text: widget.query,
-  );
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: _c,
-      onChanged: widget.onQuery,
-      textInputAction: TextInputAction.search,
-      style: const TextStyle(fontSize: 13),
-      decoration: InputDecoration(
-        isDense: true,
-        prefixIcon: Icon(
-          LucideIcons.search,
-          size: 18,
-          color: AppColors.inkFaint,
-        ),
-        prefixIconConstraints: const BoxConstraints(minWidth: 38),
-        hintText: context.t('sprint.filterIssues'),
-        filled: true,
-        fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.symmetric(vertical: 11),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-          borderSide: BorderSide(color: AppColors.hairline),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-          borderSide: BorderSide(color: AppColors.hairline),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-          borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
-        ),
-      ),
-    );
-  }
+  /// Narrows the sprint containers to the search. The backlog below comes back
+  /// from the server already searched, by the same rule.
+  bool _matchesQuery(Issue issue) => issueMatchesQuery(issue, query);
 }
 
 /// A collapsible sprint container that is a drop target for issues.

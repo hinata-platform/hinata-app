@@ -1292,7 +1292,8 @@
       "noColumnAvailable": "Keine Spalte möglich — jede enthält schon einen Status dieses Projekts.",
       "unassignedHint": "Diese Status haben noch keine Spalte. Vorgänge darin würden auf dem Board fehlen.",
       "automatic": "Zurück zu automatisch"
-    }
+    },
+    "searchIssues": "Vorgänge durchsuchen…"
   },
   "gantt": {
     "title": "Zeitachse",
@@ -2371,7 +2372,6 @@
     "completeSprint": "Sprint abschließen",
     "planned": "Geplant",
     "filterBacklog": "Backlog filtern…",
-    "filterIssues": "Vorgänge filtern…",
     "addIssue": "Vorgang hinzufügen",
     "addBacklogItem": "Backlog-Eintrag hinzufügen",
     "dragHere": "Vorgänge hierher ziehen, um den Sprint zu planen, oder unten hinzufügen.",

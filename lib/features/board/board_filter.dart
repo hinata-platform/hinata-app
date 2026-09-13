@@ -2,6 +2,20 @@ import 'package:flutter/foundation.dart';
 
 import '../../core/models/work_models.dart';
 
+/// Whether [issue] answers a free-text search: its key, its title or one of its
+/// labels holds [query], ignoring case. A blank query holds every issue.
+///
+/// One rule for both boards and every view on them, the same one the backlog
+/// search on the server applies, so the same words never find a card in one
+/// place and miss it in the next.
+bool issueMatchesQuery(Issue issue, String query) {
+  final q = query.trim().toLowerCase();
+  if (q.isEmpty) return true;
+  return issue.readableId.toLowerCase().contains(q) ||
+      issue.title.toLowerCase().contains(q) ||
+      issue.tags.any((t) => t.toLowerCase().contains(q));
+}
+
 /// Multi-criteria board filter. Empty sets mean "no restriction" for that
 /// facet. State / type / priority are stored as UPPER-CASE backend codes;
 /// [assignees]/[authors] hold user ids, [sprints] hold sprint ids (or

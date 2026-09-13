@@ -1292,7 +1292,8 @@
       "noColumnAvailable": "No queda ninguna columna: todas contienen ya un estado de este proyecto.",
       "unassignedHint": "Estos estados todavía no tienen columna. Las incidencias que estén en ellos no aparecerían en el tablero.",
       "automatic": "Volver a automático"
-    }
+    },
+    "searchIssues": "Buscar incidencias…"
   },
   "gantt": {
     "title": "Línea temporal",
@@ -2371,7 +2372,6 @@
     "completeSprint": "Completar sprint",
     "planned": "Planificado",
     "filterBacklog": "Filtrar el backlog…",
-    "filterIssues": "Filtrar incidencias…",
     "addIssue": "Añadir incidencia",
     "addBacklogItem": "Añadir elemento al backlog",
     "dragHere": "Arrastra incidencias hasta aquí para planificar este sprint, o añade una abajo.",
