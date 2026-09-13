@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
+import 'package:hinata/core/blocs/time_privacy_cubit.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/blocs/timer_cubit.dart';
 import 'package:hinata/core/models/time_models.dart';
@@ -24,6 +25,7 @@ import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:hinata/features/time/time_calendar_screen.dart';
 
 import 'fake_time_policy_cubit.dart';
+import 'fake_time_privacy_cubit.dart';
 
 /// The calendar page: what it asks the server for, what it puts on the grid,
 /// and what it does when the answer is short or missing.
@@ -94,6 +96,9 @@ void main() {
                         time,
                         onLoad: policyOnLoad,
                       ),
+                    ),
+                    BlocProvider<TimePrivacyCubit>(
+                      create: (_) => FakeTimePrivacyCubit(time),
                     ),
                   ],
                   child: const TimeCalendarScreen(),

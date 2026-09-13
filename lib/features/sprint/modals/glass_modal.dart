@@ -6,7 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
+    show
+        GlassContainer,
+        GlassMaterializeTransition,
+        GlassQuality,
+        LiquidRoundedSuperellipse;
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/responsive/responsive.dart';
@@ -669,6 +673,11 @@ class _AnchoredPanel extends StatelessWidget {
 /// Pass [onClear] where the field being edited may hold no date at all: the
 /// footer then offers a "clear" action that fires it and closes. Without it the
 /// picker can only confirm or cancel, as before.
+///
+/// [selectableDayPredicate] greys out the days that cannot be picked. The day
+/// the picker opens on stays pickable whatever it answers, because a calendar
+/// cannot open on a day it refuses. [footerAction] is the way forward when the
+/// day somebody wants is not on offer: the picker closes and the action runs.
 Future<DateTime?> showGlassDatePicker(
   BuildContext context, {
   required DateTime initialDate,
@@ -676,6 +685,8 @@ Future<DateTime?> showGlassDatePicker(
   required DateTime lastDate,
   required String title,
   VoidCallback? onClear,
+  bool Function(DateTime day)? selectableDayPredicate,
+  GlassPickerAction? footerAction,
 }) {
   return showGlassModal<DateTime>(
     context,
@@ -687,8 +698,25 @@ Future<DateTime?> showGlassDatePicker(
       lastDate: lastDate,
       title: title,
       onClear: onClear,
+      selectableDayPredicate: selectableDayPredicate,
+      footerAction: footerAction,
     ),
   );
+}
+
+/// One more action in a picker's footer, beside OK.
+class GlassPickerAction {
+  const GlassPickerAction({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+
+  /// Runs after the picker has closed.
+  final VoidCallback onTap;
 }
 
 /// The same calendar, anchored beside the control that opened it instead of
@@ -826,6 +854,8 @@ class _GlassDatePicker extends StatefulWidget {
     required this.lastDate,
     required this.title,
     this.onClear,
+    this.selectableDayPredicate,
+    this.footerAction,
   });
 
   final DateTime initialDate;
@@ -836,12 +866,24 @@ class _GlassDatePicker extends StatefulWidget {
   /// When set, the footer offers clearing the field the picker is editing.
   final VoidCallback? onClear;
 
+  final bool Function(DateTime day)? selectableDayPredicate;
+  final GlassPickerAction? footerAction;
+
   @override
   State<_GlassDatePicker> createState() => _GlassDatePickerState();
 }
 
 class _GlassDatePickerState extends State<_GlassDatePicker> {
   late DateTime _selected = widget.initialDate;
+
+  /// The caller's predicate, with the opening day always allowed: the calendar
+  /// asserts that the day it shows as selected is one it would let you pick.
+  bool Function(DateTime)? get _selectable {
+    final predicate = widget.selectableDayPredicate;
+    if (predicate == null) return null;
+    return (day) =>
+        DateUtils.isSameDay(day, widget.initialDate) || predicate(day);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -865,6 +907,7 @@ class _GlassDatePickerState extends State<_GlassDatePicker> {
               initialDate: _selected,
               firstDate: widget.firstDate,
               lastDate: widget.lastDate,
+              selectableDayPredicate: _selectable,
               onDateChanged: (d) => setState(() => _selected = d),
             ),
           ),
@@ -872,26 +915,46 @@ class _GlassDatePickerState extends State<_GlassDatePicker> {
         GlassModalFooter(
           confirmLabel: MaterialLocalizations.of(context).okButtonLabel,
           onConfirm: () => Navigator.of(context).pop(_selected),
-          // Clearing closes without a value, so it rides the footer's left
-          // hint slot rather than competing with OK.
-          hint: widget.onClear == null
-              ? null
-              : Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: TextButton.icon(
-                    onPressed: () {
-                      widget.onClear!();
-                      Navigator.of(context).pop();
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.inkSoft,
-                    ),
-                    icon: const Icon(LucideIcons.x, size: 15),
-                    label: Text(context.t('common.clear')),
-                  ),
-                ),
+          // Clearing and the extra action both close without a value, so they
+          // ride the footer's left hint slot rather than competing with OK.
+          hint: _footerHint(context),
         ),
       ],
+    );
+  }
+
+  Widget? _footerHint(BuildContext context) {
+    final clear = widget.onClear;
+    final action = widget.footerAction;
+    if (clear == null && action == null) return null;
+    final style = TextButton.styleFrom(foregroundColor: AppColors.inkSoft);
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: Wrap(
+        spacing: 4,
+        children: [
+          if (clear != null)
+            TextButton.icon(
+              onPressed: () {
+                clear();
+                Navigator.of(context).pop();
+              },
+              style: style,
+              icon: const Icon(LucideIcons.x, size: 15),
+              label: Text(context.t('common.clear')),
+            ),
+          if (action != null)
+            TextButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                action.onTap();
+              },
+              style: style,
+              icon: Icon(action.icon, size: 15),
+              label: Text(action.label),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -1438,30 +1501,14 @@ class _GlassModalScaffold extends StatelessWidget {
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: AnimatedBuilder(
+                  // The glass materializes through its own shader, not under an
+                  // Opacity: glass painted under an opacity layer has nothing
+                  // behind it to sample, so for the whole open and close it
+                  // showed as a dark, resizing box that snapped to glass at the
+                  // end.
+                  child: GlassMaterializeTransition(
                     animation: anim,
-                    builder: (_, child) {
-                      if (reduceMotion) {
-                        return Opacity(opacity: anim.value, child: child);
-                      }
-                      final curved = const Cubic(
-                        0.34,
-                        1.56,
-                        0.64,
-                        1,
-                      ).transform(anim.value.clamp(0.0, 1.0));
-                      final fade = (anim.value / 0.6).clamp(0.0, 1.0);
-                      return Opacity(
-                        opacity: fade,
-                        child: Transform.translate(
-                          offset: Offset(0, (1 - curved) * -14),
-                          child: Transform.scale(
-                            scale: 0.965 + 0.035 * curved,
-                            child: child,
-                          ),
-                        ),
-                      );
-                    },
+                    scaleFrom: 1.04,
                     // Absorb taps so they don't fall through to the scrim.
                     child: GestureDetector(
                       onTap: () {},

@@ -113,6 +113,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                       ),
                       actions: [
                         PrimaryButton(
+                          icon: LucideIcons.plus,
                           label: context.t('projects.new'),
                           onPressed: _showCreate,
                         ),

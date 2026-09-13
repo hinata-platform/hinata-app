@@ -6,6 +6,7 @@ import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/models/time_models.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
+import 'package:hinata/core/models/time_privacy_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/repositories/issue_repository.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
@@ -322,6 +323,42 @@ void main() {
     expect(repository.updated, isEmpty);
   });
 
+  testWidgets('a frozen entry shows the answer to its owner\'s own request', (
+    tester,
+  ) async {
+    repository.requests = [
+      TimeCorrectionRequest(
+        id: 'r1',
+        entryId: 'w1',
+        date: DateTime(2026, 9, 3),
+        reason: 'LOCK_DATE',
+        note: 'Es waren 90 Minuten',
+        answer: const TimeCorrectionAnswer(
+          note: 'Ich öffne den Tag für dich.',
+          byLabel: 'Admin',
+          granted: true,
+        ),
+      ),
+    ];
+    await open(
+      tester,
+      policy: TimePolicySnapshot(lockBefore: DateTime(2026, 9, 10)),
+      entry: WorkItem(
+        id: 'w1',
+        durationMinutes: 60,
+        activityType: 'Development',
+        description: 'closed month',
+        date: DateTime(2026, 9, 3),
+      ),
+    );
+
+    // Where somebody who asked comes back to look: under the lock itself.
+    expect(find.text('time.correction.yourRequest'), findsOneWidget);
+    expect(find.text('Es waren 90 Minuten'), findsOneWidget);
+    expect(find.text('time.correction.grantedBy'), findsOneWidget);
+    expect(find.text('Ich öffne den Tag für dich.'), findsOneWidget);
+  });
+
   testWidgets('nothing is marked required while the policy demands nothing', (
     tester,
   ) async {
@@ -456,6 +493,13 @@ void main() {
 }
 
 class _FakeTimeRepository implements TimeRepository {
+  List<TimeCorrectionRequest> requests = const [];
+
+  @override
+  Future<List<TimeCorrectionRequest>> entryCorrectionRequests(
+    String entryId,
+  ) async => requests;
+
   final List<TimeEntryDraft> created = [];
   final List<(String, TimeEntryDraft)> updated = [];
   final List<String> deleted = [];

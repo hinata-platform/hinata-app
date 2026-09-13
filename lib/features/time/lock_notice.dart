@@ -11,18 +11,23 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../sprint/modals/glass_modal.dart'
-    show GlassModalHeader, GlassToastKind, showGlassModal, showGlassToast;
+    show
+        GlassModalHeader,
+        GlassToastKind,
+        showGlassDateRangePicker,
+        showGlassModal,
+        showGlassToast;
 
 /// Why an entry is frozen, who can lift it, and what to do about it — one
 /// component for every reason there is.
 ///
-/// After HIN-88 an entry can be immutable for two reasons, and HIN-96 adds a
-/// third (an issued invoice). The component exists because the alternative is
-/// what it was written to prevent: three mechanisms each inventing their own
-/// sentence, so the person on the other end gets three ways of being told "no",
-/// three vocabularies and three places to look for the way out. Here there is one
-/// shape — reason, who, and the way back — and the reason only picks which
-/// sentences fill it.
+/// An entry can be refused for three reasons today (the lock date, a submitted
+/// period, a day further back than the limit), and HIN-96 adds a fourth (an
+/// issued invoice). The component exists because the alternative is what it was
+/// written to prevent: every mechanism inventing its own sentence, so the person
+/// on the other end gets as many ways of being told "no", as many vocabularies
+/// and as many places to look for the way out. Here there is one shape — reason,
+/// who, and the way back — and the reason only picks which sentences fill it.
 ///
 /// Three sentences rather than one, and none of them is decoration. "Why" without
 /// "who" leaves somebody guessing which colleague to ask, and both without a
@@ -35,26 +40,45 @@ class LockNotice extends StatelessWidget {
     required this.lock,
     this.compact = false,
     this.onRequested,
+    this.day,
   });
 
   final TimeLockInfo lock;
+
+  /// The day somebody is about to record, when there is no entry yet. A day
+  /// beyond the limit or before the lock date has no entry to ask a correction
+  /// about, so the action asks the administrators to open the day instead.
+  final DateTime? day;
 
   /// Drops the "who" line. For a bottom sheet where vertical space is the
   /// scarcest thing on screen and the remedy already names the person.
   final bool compact;
 
-  /// Called after a correction request has been accepted, so the caller can
-  /// close or refresh. Absent when there is no entry to ask about.
+  /// Called after a correction request about the entry has been accepted, so the
+  /// caller can close or refresh. Not called for asking to open a day: the form
+  /// behind it still holds what somebody typed, and they may pick another day.
   final VoidCallback? onRequested;
+
+  /// Whether the way out is asking for the day rather than for a correction.
+  bool get _asksForDay =>
+      day != null &&
+      lock.entryId == null &&
+      (lock.isBeyondLimit || lock.isLockDate);
 
   @override
   Widget build(BuildContext context) {
-    final action = lock.entryId == null
+    final action = _asksForDay
+        ? GhostButton(
+            icon: LucideIcons.calendarPlus,
+            label: context.t('time.lock.requestDays'),
+            onPressed: () => _askForDay(context, day!),
+          )
+        : lock.entryId == null
         ? null
         : GhostButton(
             icon: LucideIcons.messageSquareWarning,
             label: context.t('time.lock.request'),
-            onPressed: () => _ask(context),
+            onPressed: () => _askForCorrection(context),
           );
     return Container(
       padding: const EdgeInsets.all(14),
@@ -125,7 +149,7 @@ class LockNotice extends StatelessWidget {
   /// model that cannot be unit-tested.
   static String reasonOf(BuildContext context, TimeLockInfo lock) {
     final localizations = MaterialLocalizations.of(context);
-    if (lock.isLockDate && lock.lockDate != null) {
+    if ((lock.isLockDate || lock.isBeyondLimit) && lock.lockDate != null) {
       return context.t(
         lock.reasonKey,
         variables: {'date': localizations.formatMediumDate(lock.lockDate!)},
@@ -146,41 +170,105 @@ class LockNotice extends StatelessWidget {
     return context.t(lock.reasonKey);
   }
 
-  Future<void> _ask(BuildContext context) async {
+  Future<void> _askForCorrection(BuildContext context) async {
     // Read before the await: the repository comes from the tree, the way every
-    // other caller in the module gets it. It used to be built from
-    // `ApiClient.instance`, which made this widget depend on a global the app
-    // happens to set in `main` — untestable, and wrong the moment somebody
-    // renders it under a second server.
+    // other caller in the module gets it.
     final repository = context.read<TimeRepository>();
-    final note = await showGlassNoteDialog(
+    final sent = await sendReasonedRequest(
       context,
       titleKey: 'time.lock.requestTitle',
       hintKey: 'time.lock.requestHint',
-      confirmKey: 'time.lock.requestSend',
-      required: true,
+      sentKey: 'time.lock.requestSent',
+      send: (note) => repository.requestCorrection(lock.entryId!, note),
     );
-    if (note == null || !context.mounted) return;
-    try {
-      await repository.requestCorrection(lock.entryId!, note);
-      if (!context.mounted) return;
-      showGlassToast(
-        context,
-        context.t('time.lock.requestSent'),
-        kind: GlassToastKind.success,
-      );
-      onRequested?.call();
-    } on ApiFailure catch (failure) {
-      if (!context.mounted) return;
-      // Through context.t, because an ApiFailure carries the server's i18n
-      // *key* and printing it raw leaks "error.time.entryNotLocked" at somebody.
+    if (sent) onRequested?.call();
+  }
+
+  /// Asks the administrators to open [day] for the reader (R9).
+  ///
+  /// A request, not a way past the limit: the day opens when an administrator
+  /// opens it for this person, which is recorded with its reason.
+  Future<void> _askForDay(BuildContext context, DateTime day) async {
+    final repository = context.read<TimeRepository>();
+    await sendReasonedRequest(
+      context,
+      titleKey: 'time.lock.requestDaysTitle',
+      hintKey: 'time.lock.requestDaysHint',
+      sentKey: 'time.lock.requestDaysSent',
+      send: (note) =>
+          repository.requestBackfill(from: day, to: day, note: note),
+    );
+  }
+}
+
+/// Asks for a reason, sends it, and says how it went. True when the server
+/// took the request.
+///
+/// The one shape for every request a person makes about their own time, so the
+/// dialog, the success line and the refusal read the same wherever they ask.
+Future<bool> sendReasonedRequest(
+  BuildContext context, {
+  required String titleKey,
+  required String hintKey,
+  required String sentKey,
+  required Future<void> Function(String note) send,
+}) async {
+  final note = await showGlassNoteDialog(
+    context,
+    titleKey: titleKey,
+    hintKey: hintKey,
+    confirmKey: 'time.lock.requestSend',
+    required: true,
+  );
+  if (note == null || !context.mounted) return false;
+  try {
+    await send(note);
+    if (context.mounted) {
+      showGlassToast(context, context.t(sentKey), kind: GlassToastKind.success);
+    }
+    return true;
+  } on ApiFailure catch (failure) {
+    // Through context.t, because an ApiFailure carries the server's i18n *key*
+    // and printing it raw leaks "error.time.entryNotLocked" at somebody.
+    if (context.mounted) {
       showGlassToast(
         context,
         context.t(failure.message),
         kind: GlassToastKind.error,
       );
     }
+    return false;
   }
+}
+
+/// Asks the administrators to open older days for the reader: first which days,
+/// then why.
+///
+/// The way out for a day the pickers do not offer, because it lies beyond the
+/// limit and nothing opened it yet. Reached from the date picker's footer and
+/// from Settings → Time tracking.
+Future<void> requestOlderDays(BuildContext context) async {
+  final repository = context.read<TimeRepository>();
+  final today = DateUtils.dateOnly(DateTime.now());
+  final range = await showGlassDateRangePicker(
+    context,
+    // Ten years, the furthest back any instance lets a limit reach.
+    firstDate: DateTime(today.year - 10, today.month, today.day),
+    lastDate: today,
+    title: context.t('time.lock.pickDaysTitle'),
+  );
+  if (range == null || !context.mounted) return;
+  await sendReasonedRequest(
+    context,
+    titleKey: 'time.lock.requestDaysTitle',
+    hintKey: 'time.lock.requestDaysHint',
+    sentKey: 'time.lock.requestDaysSent',
+    send: (note) => repository.requestBackfill(
+      from: range.start,
+      to: range.end,
+      note: note,
+    ),
+  );
 }
 
 /// The lock as one chip, for a row in a list or a cell in a grid.
@@ -323,8 +411,6 @@ class _NoteDialogState extends State<_NoteDialog> {
               textInputAction: TextInputAction.newline,
               // Only the empty/non-empty flip matters to the button, so the
               // dialog is rebuilt when that changes and not once per keystroke.
-              // Only the empty/non-empty flip matters to the button, so the
-              // dialog is rebuilt when that changes and not once per keystroke.
               onChanged: widget.required
                   ? (text) {
                       final canSend = text.trim().isNotEmpty;
@@ -333,10 +419,9 @@ class _NoteDialogState extends State<_NoteDialog> {
                       }
                     }
                   : null,
-              decoration: InputDecoration(
-                hintText: context.t(widget.hintKey),
-                counterText: '',
-              ),
+              // No hint text: the header right above already says what to
+              // write, and repeating it in the field printed it twice.
+              decoration: const InputDecoration(counterText: ''),
             ),
             const SizedBox(height: 14),
             // Wrap, not Row: two buttons whose labels come from a bundle can be

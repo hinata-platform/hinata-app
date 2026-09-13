@@ -28,6 +28,7 @@ import '../../core/widgets/time_grid/time_month_layout.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
 import 'time_entry_sheet.dart';
+import 'time_privacy_sheet.dart';
 import 'time_views.dart';
 import 'timer_bar.dart';
 
@@ -215,6 +216,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     // still `TimePolicySnapshot.none`. It looked right only after the list or
     // the timesheet had been visited first in the same session.
     unawaited(context.read<TimePolicyCubit>().ensureLoaded());
+    offerTimePrivacyNotice(context);
     unawaited(_ensureAround(_focused));
   }
 

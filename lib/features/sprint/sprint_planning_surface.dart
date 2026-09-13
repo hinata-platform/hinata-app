@@ -188,6 +188,7 @@ class SprintPlanningSurface extends StatelessWidget {
 
   Widget _toolbar(BuildContext context) {
     final createButton = PrimaryButton(
+      icon: LucideIcons.plus,
       label: context.t('sprint.createSprint'),
       onPressed: onCreateSprint,
     );

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/api/api_client.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/blocs/timer_cubit.dart';
@@ -11,6 +12,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
 import '../../core/models/time_approval_models.dart';
 import '../../core/models/time_policy_models.dart';
+import '../../core/models/time_privacy_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/time_repository.dart';
@@ -22,7 +24,6 @@ import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
-import '../issues/work_item_labels.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart'
     show
@@ -34,6 +35,8 @@ import 'lock_notice.dart';
 import 'placement_picker.dart';
 import 'time_entry_history_sheet.dart';
 import 'time_entry_sheet.dart';
+import 'time_hints.dart';
+import 'time_privacy_sheet.dart';
 import 'time_views.dart';
 import 'timer_bar.dart';
 
@@ -70,6 +73,25 @@ class _TimeScreenState extends State<TimeScreen> {
   /// handful.
   Map<String, Project> _projects = const {};
 
+  /// The reader's own self-hints, fetched a 31-day window at a time as the list
+  /// pages in: late-entry hints by entry, the rest by day. Only while the policy
+  /// has hints at all; the server answers 404 otherwise.
+  Map<String, TimeHint> _lateHints = const {};
+  Map<DateTime, List<TimeHint>> _dayHints = const {};
+  final Set<DateTime> _hintWindows = {};
+
+  /// Counts fresh hint loads. An answer that arrives for an older one belongs to
+  /// a list that has been reloaded since, and is dropped.
+  int _hintGeneration = 0;
+
+  /// How many entries the hints were last worked out for. The scroll handler
+  /// asks on every tick near the end, and only a list that grew has windows
+  /// nobody asked about yet.
+  int _hintedCount = -1;
+
+  /// The reload a stopped timer started, while it runs. See [_reloadAfterStop].
+  Future<void>? _stopReload;
+
   @override
   void initState() {
     super.initState();
@@ -87,7 +109,13 @@ class _TimeScreenState extends State<TimeScreen> {
     // TimePolicySnapshot.none for the whole session: nothing is ever marked
     // frozen, and the lock a person would run into on save is invisible until
     // they hit it.
-    unawaited(context.read<TimePolicyCubit>().ensureLoaded());
+    // The hints depend on the rules, so they wait for them; the entries do not.
+    unawaited(
+      context.read<TimePolicyCubit>().ensureLoaded().then((_) {
+        if (mounted) unawaited(_loadHints());
+      }),
+    );
+    offerTimePrivacyNotice(context);
     unawaited(_reload());
   }
 
@@ -103,13 +131,114 @@ class _TimeScreenState extends State<TimeScreen> {
   void _onScroll() {
     if (!_scroll.hasClients) return;
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 400) {
-      unawaited(_entries.loadMore());
+      unawaited(
+        _entries.loadMore().then((_) {
+          if (mounted) unawaited(_loadHints());
+        }),
+      );
     }
   }
 
   Future<void> _reload() async {
     await _entries.load();
-    if (mounted) unawaited(_resolveProjects());
+    if (!mounted) return;
+    unawaited(_resolveProjects());
+    // An edit can make a day long or an entry late, so a reload asks again.
+    _hintWindows.clear();
+    unawaited(_loadHints(fresh: true));
+  }
+
+  /// One reload for one stop.
+  ///
+  /// A stop is heard twice on a wide window, by the bar's own callback and by the
+  /// timer listener below, and both want the new entry on the list. The second
+  /// joins the reload the first started instead of fetching everything again.
+  Future<void> _reloadAfterStop() =>
+      _stopReload ??= _reload().whenComplete(() => _stopReload = null);
+
+  /// A window of this many days is what `GET /time/hints` answers for.
+  static const _hintWindowDays = 31;
+
+  /// The fixed window a day falls into, counted from one epoch so the same day
+  /// always lands in the same window and a window is fetched once.
+  static DateTime _hintWindowOf(DateTime day) {
+    final epoch = DateTime.utc(2000);
+    final offset = DateTime.utc(day.year, day.month, day.day).difference(epoch);
+    final index = (offset.inDays / _hintWindowDays).floor();
+    return epoch.add(Duration(days: index * _hintWindowDays));
+  }
+
+  /// Fetches the hints for the windows of the loaded entries not asked yet.
+  ///
+  /// The windows are asked side by side, and what comes back is merged into the
+  /// hints as they stand when it arrives, not as they stood when it was asked: a
+  /// page that loads while an earlier page's hints are still on their way must
+  /// not overwrite them.
+  Future<void> _loadHints({bool fresh = false}) async {
+    if (!context.read<TimePolicyCubit>().state.hintsEnabled) return;
+    final count = _entries.state.items.length;
+    if (!fresh && count == _hintedCount) return;
+    _hintedCount = count;
+    final repository = context.read<TimeRepository>();
+    final generation = fresh ? ++_hintGeneration : _hintGeneration;
+    final windows = <DateTime>{
+      for (final entry in _entries.state.items)
+        if (entry.date != null) _hintWindowOf(entry.date!),
+    }..removeAll(_hintWindows);
+    if (windows.isEmpty) {
+      if (fresh && mounted) {
+        setState(() {
+          _lateHints = const {};
+          _dayHints = const {};
+        });
+      }
+      return;
+    }
+    _hintWindows.addAll(windows);
+    final answers = await Future.wait([
+      for (final start in windows) _hintsOf(repository, start, generation),
+    ]);
+    if (!mounted || generation != _hintGeneration) return;
+    final late = fresh ? <String, TimeHint>{} : {..._lateHints};
+    final byDay = fresh
+        ? <DateTime, List<TimeHint>>{}
+        : {
+            for (final e in _dayHints.entries) e.key: [...e.value],
+          };
+    for (final hint in answers.expand((hints) => hints)) {
+      if (hint.isLateEntry) {
+        if (hint.entryId != null) late[hint.entryId!] = hint;
+      } else {
+        final sameDay = byDay[hint.date] ??= [];
+        if (!sameDay.contains(hint)) sameDay.add(hint);
+      }
+    }
+    setState(() {
+      _lateHints = late;
+      _dayHints = byDay;
+    });
+  }
+
+  /// One window's hints, or none when it could not be read.
+  Future<List<TimeHint>> _hintsOf(
+    TimeRepository repository,
+    DateTime start,
+    int generation,
+  ) async {
+    final end = start.add(const Duration(days: _hintWindowDays - 1));
+    try {
+      return await repository.hints(
+        DateTime(start.year, start.month, start.day),
+        DateTime(end.year, end.month, end.day),
+      );
+    } on ApiFailure {
+      // A hint is a courtesy. A window that could not be read is asked again on
+      // the next reload and costs the list nothing now — unless a reload already
+      // happened, whose own ask for this window must not be forgotten. Only a
+      // refusal or the connection: a programming error still surfaces.
+      if (generation == _hintGeneration) _hintWindows.remove(start);
+      return const [];
+    }
   }
 
   /// Labels for the project ids on screen. A failure keeps whatever labels are
@@ -177,7 +306,7 @@ class _TimeScreenState extends State<TimeScreen> {
                     context,
                     anchor: anchor,
                     onNewEntry: _newEntry,
-                    onTimerStopped: _reload,
+                    onTimerStopped: _reloadAfterStop,
                   ),
                 ),
               ),
@@ -197,7 +326,7 @@ class _TimeScreenState extends State<TimeScreen> {
         child: BlocListener<TimerCubit, TimerState>(
           listenWhen: (previous, current) =>
               previous.isRunning && !current.isRunning,
-          listener: (context, state) => unawaited(_reload()),
+          listener: (context, state) => unawaited(_reloadAfterStop()),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -236,7 +365,7 @@ class _TimeScreenState extends State<TimeScreen> {
                       borderRadius: BorderRadius.circular(AppTheme.radiusCard),
                       border: Border.all(color: AppColors.hairline),
                     ),
-                    child: TimerBar(onStopped: _reload),
+                    child: TimerBar(onStopped: _reloadAfterStop),
                   ),
                 ),
                 Padding(
@@ -561,6 +690,8 @@ class _TimeScreenState extends State<TimeScreen> {
                 onContinue: _continueEntry,
                 onHistory: _showHistory,
                 policy: policy,
+                hints: _dayHints[group.day] ?? const [],
+                lateHints: _lateHints,
               );
             },
           ),
@@ -737,9 +868,17 @@ class _DayGroup extends StatelessWidget {
     required this.onContinue,
     required this.onHistory,
     required this.policy,
+    this.hints = const [],
+    this.lateHints = const {},
   });
 
   final DateTime day;
+
+  /// The reader's own hints about this day: a long day, a short rest, a Sunday.
+  final List<TimeHint> hints;
+
+  /// Late-entry hints by entry id, for the rows below.
+  final Map<String, TimeHint> lateHints;
   final List<WorkItem> entries;
   final Map<String, Project> projects;
 
@@ -766,17 +905,33 @@ class _DayGroup extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 18, 4, 8),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                _dayLabel(context, day),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.ink,
+              // Beside the day it is about, small and in the list's own grey:
+              // a hint for the person, not an error to fix. A wrap rather than
+              // a row, because a long date and two hints do not fit a phone on
+              // one line: the chips move under the date instead of pushing the
+              // total off the edge.
+              Expanded(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      _dayLabel(context, day),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    for (final hint in hints) TimeHintChip(hint: hint),
+                  ],
                 ),
               ),
-              const Spacer(),
-              if (showTotal)
+              if (showTotal) ...[
+                const SizedBox(width: 8),
                 Text(
                   fmtDuration(context, total),
                   style: TextStyle(
@@ -786,6 +941,7 @@ class _DayGroup extends StatelessWidget {
                     color: AppColors.inkSoft,
                   ),
                 ),
+              ],
             ],
           ),
         ),
@@ -804,6 +960,7 @@ class _DayGroup extends StatelessWidget {
               projectId: entry.projectId,
               entryId: entry.id,
             ),
+            lateHint: lateHints[entry.id],
           ),
       ],
     );
@@ -828,7 +985,13 @@ class _EntryRow extends StatelessWidget {
     required this.onContinue,
     required this.onHistory,
     this.lock,
+    this.lateHint,
   });
+
+  /// Set when the entry was recorded later than the operator's hint allows.
+  /// Shown on the entry, not the day, and never as a warning: recording late is
+  /// allowed and better than not recording.
+  final TimeHint? lateHint;
 
   final WorkItem entry;
   final Project? project;
@@ -896,14 +1059,6 @@ class _EntryRow extends StatelessWidget {
                                 : project?.name ??
                                       context.t('time.placement.assigned'),
                           ),
-                          _MetaChip(
-                            icon: LucideIcons.tag,
-                            // The shared helper, which falls back to the raw
-                            // value: an MCP client may send an activity the
-                            // bundle has never heard of, and printing the
-                            // untranslated key at it is worse than printing it.
-                            label: activityLabel(context, entry.activityType),
-                          ),
                           if (interval)
                             _MetaChip(
                               icon: LucideIcons.clock,
@@ -920,6 +1075,7 @@ class _EntryRow extends StatelessWidget {
                           // its word: "Locked" on its own left somebody with
                           // nothing to do about it.
                           if (lock != null) LockChip(lock: lock!),
+                          if (lateHint != null) TimeHintChip(hint: lateHint!),
                           for (final tag in entry.tags)
                             _MetaChip(icon: LucideIcons.hash, label: tag),
                         ],
@@ -966,7 +1122,16 @@ class _MetaChip extends StatelessWidget {
     children: [
       Icon(icon, size: 11, color: AppColors.inkFaint),
       const SizedBox(width: 4),
-      Text(label, style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint)),
+      // A project name or a tag is somebody's own text and can be longer than
+      // a phone's row: it ends in an ellipsis rather than a striped band.
+      Flexible(
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+        ),
+      ),
     ],
   );
 }

@@ -818,15 +818,6 @@
   "time": {
     "hours": "Stunden",
     "minutes": "Minuten",
-    "activityType": "Tätigkeitsart",
-    "activity": {
-      "development": "Entwicklung",
-      "testing": "Testen",
-      "documentation": "Dokumentation",
-      "design": "Design",
-      "meeting": "Meeting",
-      "support": "Support"
-    },
     "date": "Datum",
     "note": "Notiz (optional)",
     "fmt": {
@@ -841,6 +832,7 @@
     "loggedTotal": "{{spent}} insgesamt erfasst",
     "deletedUser": "Gelöschter Nutzer",
     "legacySource": "Smart Commits (vor 2.0)",
+    "otherMember": "Anderes Mitglied",
     "deleteTitle": "Eintrag löschen",
     "deleteConfirm": "{{duration}} vom {{date}} entfernen? Das lässt sich nicht rückgängig machen.",
     "deleted": "Eintrag gelöscht",
@@ -902,7 +894,6 @@
       "pickDuration": "Dauer auswählen",
       "start": "Beginn",
       "end": "Ende",
-      "activity": "Tätigkeit",
       "modeDuration": "Dauer",
       "modeInterval": "Beginn und Ende",
       "noDescription": "Ohne Beschreibung",
@@ -951,7 +942,7 @@
     },
     "signal": {
       "countdown": "Dein Countdown ist abgelaufen.",
-      "breakOver": "Pause vorbei — weiter, wenn du soweit bist.",
+      "breakOver": "Pause vorbei. Weiter, wenn du so weit bist.",
       "workOver": "Ein Intervall geschafft. Zeit für eine Pause.",
       "workOver_plural": "{{count}} Intervalle geschafft. Zeit für eine Pause.",
       "titleFlash": "Intervall zu Ende"
@@ -999,29 +990,39 @@
         "lockDate": "Einträge vor dem {{date}} sind abgeschlossen.",
         "approval": "Du hast {{from}} – {{to}} eingereicht, diese Einträge stehen damit fest.",
         "invoice": "Eine gestellte Rechnung verweist auf diesen Eintrag.",
-        "unknown": "Dieser Eintrag ist für Änderungen geschlossen."
+        "unknown": "Dieser Eintrag ist für Änderungen geschlossen.",
+        "maxDaysBack": "Tage vor dem {{date}} lassen sich erst erfassen, wenn ein Administrator sie öffnet."
       },
       "holder": {
-        "lockDate": "Ein Administrator kann einen Zeitraum innerhalb der Sperre wieder öffnen.",
+        "lockDate": "Ein Administrator kann den Tag für dich öffnen oder einen Zeitraum innerhalb der Sperre wieder öffnen.",
         "approval": "Die Projektleitung oder ein Administrator kann den Zeitraum wieder öffnen.",
-        "invoice": "Wer Rechnungen stellt, gleicht das über eine Gutschrift aus."
+        "invoice": "Wer Rechnungen stellt, gleicht das über eine Gutschrift aus.",
+        "maxDaysBack": "Ein Administrator kann ältere Tage für dich öffnen."
       },
       "remedy": {
-        "lockDate": "Bitte um eine Korrektur — deine Begründung wird protokolliert und erreicht einen Administrator.",
+        "lockDate": "Bitte um eine Korrektur. Deine Begründung wird festgehalten und erreicht einen Administrator.",
         "approval": "Bitte um eine Korrektur oder lass den Zeitraum wieder öffnen.",
-        "invoice": "Die Rechnung wird nie umgeschrieben; eine Gutschrift gleicht sie aus."
+        "invoice": "Die Rechnung wird nie umgeschrieben; eine Gutschrift gleicht sie aus.",
+        "maxDaysBack": "Bitte darum, den Tag für dich zu öffnen. Deine Begründung wird festgehalten und geht an die Administratoren."
       },
       "chip": {
         "lockDate": "Abgeschlossen",
         "approval": "Eingereicht",
         "invoice": "Abgerechnet",
-        "unknown": "Geschlossen"
+        "unknown": "Geschlossen",
+        "maxDaysBack": "Zu weit zurück"
       },
       "request": "Korrektur anfragen",
       "requestTitle": "Korrektur anfragen",
       "requestHint": "Was ist falsch, und was müsste dort stehen?",
       "requestSend": "Anfrage senden",
-      "requestSent": "Deine Anfrage ist gesendet und protokolliert."
+      "requestSent": "Deine Anfrage ist gesendet und protokolliert.",
+      "requestDays": "Tag öffnen lassen",
+      "requestDaysTitle": "Ältere Tage öffnen lassen",
+      "requestDaysHint": "Warum musst du diese Tage jetzt nachtragen?",
+      "requestDaysSent": "Deine Anfrage ist bei den Administratoren.",
+      "requestOlderDays": "Ältere Tage anfragen",
+      "pickDaysTitle": "Welche Tage brauchst du?"
     },
     "approval": {
       "status": {
@@ -1067,12 +1068,13 @@
       "showEntries": "Einträge anzeigen",
       "scope": {
         "mine": "Meine",
-        "inbox": "Zu entscheiden"
+        "inbox": "Zu entscheiden",
+        "corrections": "Korrekturen"
       },
       "empty": {
         "mine": {
           "title": "Noch nichts eingereicht",
-          "message": "Sobald du einen Zeitraum einreichst, steht er hier — mit dem, was daraus geworden ist."
+          "message": "Sobald du einen Zeitraum einreichst, steht er hier, zusammen mit dem, was daraus geworden ist."
         },
         "inbox": {
           "title": "Nichts zu entscheiden",
@@ -1081,6 +1083,82 @@
       },
       "gridClamped": "Das Raster zeigt die ersten Tage dieses Zeitraums; die Zahlen oben gelten für den ganzen.",
       "nothingToSubmit": "In diesem Zeitraum sind noch keine Stunden erfasst."
+    },
+    "privacy": {
+      "title": "Datenschutz in der Zeiterfassung",
+      "subtitle": "Wer deine Zeitdaten sieht und was du darüber wissen solltest",
+      "firstUseSubtitle": "Bitte lies das einmal, bevor du loslegst. An deiner Arbeit ändert es nichts.",
+      "whoSees": "Wer sieht meine Zeitdaten?",
+      "notice": "Datenschutzhinweis",
+      "understood": "Verstanden",
+      "acknowledgeFailed": "Das konnte nicht gespeichert werden. Bitte versuch es noch einmal.",
+      "row": {
+        "self": "Du siehst alle deine eigenen Einträge.",
+        "admins": "Administratoren dieser Instanz können alle Einträge sehen und ändern.",
+        "members": "Andere Mitglieder deiner Projekte sehen an einem Vorgang, wie viel Zeit gebucht wurde, aber nicht, wer sie gebucht hat und was in der Beschreibung steht.",
+        "leadsSee": "Leitungen deiner Projekte sehen deine einzelnen Einträge, ihren Verlauf und deine Zeilen im Stundenzettel und können deine Einträge ändern.",
+        "leadsTotals": "Leitungen deiner Projekte sehen nur Projektsummen, nie wer was gebucht hat.",
+        "approvals": "Du reichst Stundenzettel ein, und eine Projektleitung gibt sie frei.",
+        "workloadReports": "Berichte dürfen gebuchte Zeit für jede Person mit ihrer Kapazität vergleichen.",
+        "alerts": "Leitungen erfahren es, wenn ein Projekt eine Grenze gebuchter Zeit überschreitet.",
+        "targetReminders": "Du bekommst Erinnerungen an dein eigenes Soll. Sonst niemand.",
+        "arbzgHints": "Hinweise zum Arbeitszeitgesetz siehst nur du.",
+        "lateEntry": "Einträge, die du mehr als {{count}} Tag nach dem Arbeitstag erfasst, bekommen einen Hinweis. Nur du siehst ihn.",
+        "lateEntry_plural": "Einträge, die du mehr als {{count}} Tage nach dem Arbeitstag erfasst, bekommen einen Hinweis. Nur du siehst ihn.",
+        "foreignChanges": "Ändert jemand anderes einen deiner Einträge, wird das festgehalten. Du siehst es im Verlauf des Eintrags.",
+        "timerRecorded": "Start und Stopp deines Timers werden im Audit-Protokoll festgehalten.",
+        "timerNotRecorded": "Wann du deinen Timer startest oder stoppst, wird nicht festgehalten.",
+        "entryCreation": "Das Anlegen eines Eintrags wird im Audit-Protokoll festgehalten.",
+        "entryRetention": "Einträge werden nach {{count}} Monat gelöscht, außer sie gehören zu einem eingereichten oder freigegebenen Zeitraum.",
+        "entryRetention_plural": "Einträge werden nach {{count}} Monaten gelöscht, außer sie gehören zu einem eingereichten oder freigegebenen Zeitraum.",
+        "entryKept": "Einträge werden nicht automatisch gelöscht.",
+        "descriptionRetention": "Wird ein Konto gelöscht, werden die Beschreibungen seiner Einträge und die Notizen an seinen Stundenzetteln nach {{count}} Monat geleert.",
+        "descriptionRetention_plural": "Wird ein Konto gelöscht, werden die Beschreibungen seiner Einträge und die Notizen an seinen Stundenzetteln nach {{count}} Monaten geleert.",
+        "maxDaysBack": "Du kannst bis zu {{count}} Tag zurück erfassen. Ältere Tage öffnet ein Administrator auf Anfrage.",
+        "maxDaysBack_plural": "Du kannst bis zu {{count}} Tage zurück erfassen. Ältere Tage öffnet ein Administrator auf Anfrage."
+      },
+      "loadFailed": "Der Hinweis konnte nicht geladen werden. Prüfe deine Verbindung und versuch es noch einmal."
+    },
+    "hint": {
+      "chip": {
+        "DAILY_MAXIMUM": "Über 10 Stunden",
+        "SHORT_REST": "Kurze Ruhezeit",
+        "SUNDAY_WORK": "Sonntag",
+        "LATE_ENTRY": "{{count}} Tag später erfasst",
+        "LATE_ENTRY_plural": "{{count}} Tage später erfasst"
+      },
+      "sentence": {
+        "DAILY_MAXIMUM": "An diesem Tag sind {{duration}} erfasst. Das Arbeitszeitgesetz erlaubt höchstens 10 Stunden.",
+        "SHORT_REST": "Zwischen dem Ende des Vortags und dem Beginn dieses Tages liegen nur {{duration}}. Vorgesehen sind 11 Stunden.",
+        "SUNDAY_WORK": "An diesem Sonntag ist Arbeitszeit erfasst. Sonntagsarbeit ist nur in Ausnahmen erlaubt.",
+        "LATE_ENTRY": "Dieser Eintrag wurde {{count}} Tag nach dem Arbeitstag erfasst. Das ist nur ein Hinweis für dich und blockiert nichts.",
+        "LATE_ENTRY_plural": "Dieser Eintrag wurde {{count}} Tage nach dem Arbeitstag erfasst. Das ist nur ein Hinweis für dich und blockiert nichts."
+      }
+    },
+    "correction": {
+      "emptyTitle": "Keine Korrekturanfragen",
+      "emptyMessage": "Wenn jemand um die Korrektur eines gesperrten Eintrags oder um ältere Tage bittet und du antworten kannst, erscheint die Anfrage hier.",
+      "empty": "Keine Anfragen.",
+      "answer": "Antworten",
+      "answerTitle": "Anfrage beantworten",
+      "answerHint": "Wie geht es weiter? Die Person, die gefragt hat, liest das.",
+      "answerSend": "Antwort senden",
+      "answered": "Deine Antwort ist verschickt.",
+      "answeredBy": "Antwort von {{name}}",
+      "reason": {
+        "LOCK_DATE": "Sperrdatum",
+        "APPROVAL": "Eingereichter Zeitraum",
+        "MAX_DAYS_BACK": "Zu weit zurück"
+      },
+      "more": "Mehr laden",
+      "grant": "Tage öffnen",
+      "grantTitle": "Tage für diese Person öffnen",
+      "grantHint": "Die Tage bleiben zwei Wochen lang für diese Person offen. Eine Nachricht ist freiwillig und erscheint als Antwort.",
+      "grantSend": "Tage öffnen",
+      "granted": "Die Tage sind jetzt für diese Person offen.",
+      "grantedBy": "{{name}} hat die Tage geöffnet",
+      "yourRequest": "Deine Anfrage",
+      "waiting": "Noch keine Antwort."
     }
   },
   "projects": {
@@ -1627,10 +1705,10 @@
     "security": "Sicherheit",
     "timeTracking": {
       "title": "Zeiterfassung",
-      "hint": "Das erweiterte Time-Tracking ist standardmäßig aus. Jede Richtlinie darf leer bleiben — dann gilt der Wert aus der Umgebung dieses Servers. Schalter, die die Zeiten einer Person für andere lesbar machen, sind standardmäßig aus und tragen einen Mitbestimmungshinweis.",
-      "codetermination": "Mitbestimmungspflichtig: § 87 Abs. 1 Nr. 6 BetrVG (im öffentlichen Dienst das LPVG). Vor dem Einschalten mit Betriebs- bzw. Personalrat vereinbaren — die objektive Eignung zur Überwachung genügt.",
+      "hint": "Die erweiterte Zeiterfassung ist standardmäßig aus. Jede Richtlinie darf leer bleiben, dann gilt der Wert aus der Umgebung dieses Servers. Schalter, die die Zeiten einer Person für andere sichtbar machen, sind standardmäßig aus und tragen einen Hinweis zur Mitbestimmung.",
+      "codetermination": "Mitbestimmungspflichtig: § 87 Abs. 1 Nr. 6 BetrVG (im öffentlichen Dienst das LPVG). Vor dem Einschalten mit dem Betriebsrat oder Personalrat vereinbaren. Es reicht, dass sich die Funktion zur Überwachung eignet.",
       "envDefault": "Env-Default",
-      "envDefaultHint": "Kein Wert gespeichert — es entscheidet die Umgebung dieses Servers. Tippen, um einen festen Wert zu setzen.",
+      "envDefaultHint": "Kein Wert gespeichert, also entscheidet die Umgebung dieses Servers. Tippen, um einen eigenen Wert zu setzen.",
       "useEnvDefault": "Env-Default übernehmen",
       "moduleTitle": "Modul",
       "moduleHint": "Der Hauptschalter für das erweiterte Time-Tracking.",
@@ -1648,7 +1726,7 @@
       "requiredTagTitle": "Tag erforderlich",
       "requiredTagHint": "Ein Eintrag muss mindestens ein Tag tragen.",
       "lockBeforeLabel": "Gesperrt vor",
-      "lockBeforeHint": "Einträge vor diesem Tag lassen sich nicht mehr anlegen, ändern oder löschen — von niemandem, auch nicht über die API. Der genannte Tag selbst bleibt offen. Das Datum darf nie in der Zukunft liegen: laufende Arbeitszeit muss immer erfassbar bleiben.",
+      "lockBeforeHint": "Einträge vor diesem Tag kann niemand mehr anlegen, ändern oder löschen, auch nicht über die API. Der Tag selbst bleibt offen. Das Datum darf nie in der Zukunft liegen, weil laufende Arbeitszeit immer erfassbar bleiben muss.",
       "roundingModeLabel": "Rundung",
       "roundingModeHint": "Gilt nur für Berichte; die gespeicherten Minuten bleiben unverändert.",
       "roundingMode": {
@@ -1674,10 +1752,10 @@
       "icsImportHint": "Personen dürfen ihren eigenen Kalender abonnieren und Termine in Einträge übernehmen.",
       "visibilityTitle": "Sichtbarkeit und Freigaben",
       "visibilityHint": "Wer wessen Zeiten sehen darf und in welchem Rhythmus Stundenzettel eingereicht werden.",
-      "leadsSeeMemberEntriesTitle": "Leads sehen Einträge der Mitglieder",
-      "leadsSeeMemberEntriesHint": "Aus → Leads sehen nur Projektsummen, nie wer was gebucht hat. Ein → die einzelnen Einträge der Projektmitglieder werden für sie sichtbar.",
+      "leadsSeeMemberEntriesTitle": "Leitungen sehen Einträge der Mitglieder",
+      "leadsSeeMemberEntriesHint": "Aus: Leitungen sehen nur Projektsummen. An Vorgängen sehen sie weder Namen noch Beschreibungen und ändern keine fremden Einträge. Ein: Leitungen sehen die einzelnen Einträge ihrer Projektmitglieder, deren Verlauf und die Zeilen im Stundenzettel und dürfen diese Einträge ändern.",
       "approvalsTitle": "Stundenzettel-Freigaben",
-      "approvalsHint": "Personen reichen ihren Stundenzettel für einen Zeitraum ein; ein Lead oder Admin gibt ihn frei oder lehnt ihn ab. Setzt „Leads sehen Einträge der Mitglieder“ voraus.",
+      "approvalsHint": "Personen reichen ihren Stundenzettel für einen Zeitraum ein; eine Leitung oder ein Admin gibt ihn frei oder lehnt ihn ab. Setzt „Leitungen sehen Einträge der Mitglieder“ voraus.",
       "approvalPeriodLabel": "Freigabe-Zeitraum",
       "approvalPeriodHint": "In welchem Rhythmus Stundenzettel eingereicht werden. „Frei wählbar“ überlässt den Zeitraum der Person selbst.",
       "period": {
@@ -1710,7 +1788,7 @@
       "workloadReportsTitle": "Auslastungsberichte",
       "workloadReportsHint": "Gebuchte Zeit gegen die Kapazität, je Person.",
       "alertsTitle": "Budget-Warnungen",
-      "alertsHint": "Leads benachrichtigen, wenn ein Projekt eine Schwelle gebuchter Zeit überschreitet.",
+      "alertsHint": "Leitungen benachrichtigen, wenn ein Projekt eine Schwelle gebuchter Zeit überschreitet.",
       "targetRemindersTitle": "Ziel-Erinnerungen",
       "targetRemindersHint": "Erinnert Personen, wenn ihre eigene gebuchte Zeit hinter dem Soll liegt. Geht ausschließlich an die Person selbst.",
       "arbzgHintsTitle": "Arbeitszeit-Hinweise",
@@ -1718,20 +1796,19 @@
       "billingTitle": "Abrechnung",
       "billingHint": "Sätze, Kosten und Rechnungen aus gebuchter Zeit.",
       "billingEnabledTitle": "Abrechnung",
-      "billingEnabledHint": "Sätze, Personalkosten, Abrechnungs- und Profitabilitätsberichte, Rechnungen. Sichtbar für Leads und Admins.",
+      "billingEnabledHint": "Sätze, Personalkosten, Abrechnungs- und Profitabilitätsberichte, Rechnungen. Sichtbar für Leitungen und Admins.",
       "currencyLabel": "Währung",
       "currencyHint": "Dreistelliger ISO-Code, z. B. EUR.",
       "privacyTitle": "Datenschutz und Aufbewahrung",
       "privacyHint": "Wie lange Zeitdaten aufbewahrt werden und was den Betroffenen dazu gesagt wird.",
       "descriptionPurgeLabel": "Beschreibungen leeren nach",
-      "descriptionPurgeHint": "Leert die Beschreibungen der Einträge gelöschter Nutzer nach so vielen Monaten. Leer → Env-Default.",
+      "descriptionPurgeHint": "Leert nach so vielen Monaten die Beschreibungen an Einträgen gelöschter Konten und die Notizen an ihren Stundenzetteln. Die Stunden bleiben. 0 heißt nie.",
       "entryPurgeLabel": "Einträge löschen nach",
-      "entryPurgeHint": "Entfernt ältere Einträge — für alle. 24 Monate decken ArbZG und MiLoG ab.",
+      "entryPurgeHint": "Löscht ältere Einträge für alle, außer sie gehören zu einem eingereichten oder freigegebenen Zeitraum. 0 heißt nie, sonst mindestens 24 Monate.",
       "monthsSuffix": "Monate",
       "privacyNoticeLabel": "Datenschutzhinweis",
-      "privacyNoticeHint": "Wird in der App bei den Zeitdaten des Moduls angezeigt. Leer → der eingebaute Text.",
-      "notYetEnforced": "Wird gespeichert, aber noch nicht angewendet — die Funktion hinter dieser Richtlinie kommt in einer späteren Stufe der Zeiterfassung.",
-      "leadsSeeMemberEntriesPending": "Teilweise angewendet: der Verlauf eines Eintrags und die Einträge hinter einer Einreichung folgen dieser Richtlinie bereits. Die Stundenzettel-Matrix zeigt weiterhin die Summen jeder Person — das folgt in einer späteren Stufe.",
+      "privacyNoticeHint": "Markdown. Alle sehen den Text bei der ersten Nutzung der Zeiterfassung und unter Einstellungen → Zeiterfassung. Leer heißt: der eingebaute Text in der Sprache der Person.",
+      "notYetEnforced": "Wird gespeichert, aber noch nicht angewendet. Die Funktion dahinter kommt in einer späteren Stufe der Zeiterfassung.",
       "tagsTitle": "Tags",
       "tagsHint": "Das Vokabular, mit dem Einträge beschriftet werden. Ein Umbenennen zieht alle Einträge mit.",
       "tagsEmpty": "Noch keine Tags.",
@@ -1744,12 +1821,12 @@
       "tagDeleteMessage": "\"{{name}}\" wird von {{count}} Eintrag entfernt. Der Eintrag selbst bleibt.",
       "tagDeleteMessage_plural": "\"{{name}}\" wird von {{count}} Einträgen entfernt. Die Einträge selbst bleiben.",
       "lockBeforeEveryone": "Die Sperre gilt für alle, auch für Administratoren. Sie aufzuheben ist der dokumentierte Weg, einen abgeschlossenen Zeitraum zu ändern.",
-      "approvalsNeedVisibility": "Freigeben heißt, Einträge einer Person zu lesen — schalte deshalb auch „Projektleitung sieht Einträge der Mitglieder“ ein, sonst sieht die freigebende Person eine Summe ohne Inhalt.",
+      "approvalsNeedVisibility": "Freigeben heißt, die Einträge einer Person zu lesen. Schalte deshalb auch „Leitungen sehen Einträge der Mitglieder“ ein, sonst sieht die freigebende Person nur eine Summe ohne Inhalt.",
       "periodPreviewTitle": "Die nächsten Zeiträume",
       "periodPreviewHint": "Eine Änderung des Rhythmus betrifft nur künftige Einreichungen. Bereits eingereichte Zeiträume behalten die Tage, die sie benannt haben.",
-      "periodPreviewFree": "Ohne festen Rhythmus wählt die einreichende Person den Zeitraum selbst — höchstens 92 Tage, und ohne Überschneidung mit einem schon eingereichten.",
+      "periodPreviewFree": "Ohne festen Rhythmus wählt die einreichende Person den Zeitraum selbst: höchstens 92 Tage und ohne Überschneidung mit einem schon eingereichten.",
       "lockExceptionsTitle": "Wieder geöffnete Zeiträume",
-      "lockExceptionsHint": "Öffne einen einzelnen Zeitraum innerhalb der Sperre, statt das Sperrdatum ganz aufzuheben.",
+      "lockExceptionsHint": "Öffne einen einzelnen Zeitraum innerhalb der Sperre, statt das Sperrdatum ganz aufzuheben. Zeitraum und Begründung sehen alle, also nenne darin keine Person. Tage für eine einzelne Person öffnest du über ihre Anfrage.",
       "lockExceptionsLegal": "Arbeitszeit ist ein personenbezogenes Datum, und unrichtige personenbezogene Daten sind unverzüglich zu berichtigen (Art. 16 DSGVO). Eine Ausnahme ist dieser Rückweg: sie öffnet genau ihre Tage, trägt deine Begründung und steht im Audit-Protokoll.",
       "lockExceptionsEmpty": "Derzeit ist kein Zeitraum innerhalb der Sperre geöffnet.",
       "lockExceptionAdd": "Zeitraum öffnen",
@@ -1757,7 +1834,23 @@
       "lockExceptionReason": "Warum wird dieser Zeitraum geöffnet?",
       "lockExceptionReasonHint": "Steht im Audit-Protokoll und ist für alle sichtbar.",
       "lockExceptionRemove": "Wieder schließen",
-      "lockExceptionRemoveConfirm": "{{period}} wieder schließen? Die Einträge sind danach nur noch lesbar."
+      "lockExceptionRemoveConfirm": "{{period}} wieder schließen? Die Einträge sind danach nur noch lesbar.",
+      "retentionLegal": "Solange hier keine Frist steht, wird nichts automatisch gelöscht. § 16 Abs. 2 ArbZG und § 17 MiLoG verlangen, Arbeitszeitaufzeichnungen zwei Jahre aufzubewahren. 24 Monate sind deshalb eine übliche Wahl. Danach gilt die Speicherbegrenzung (Art. 5 DSGVO). Ein nächtlicher Job löscht und hält jeden Lauf im Audit-Protokoll fest.",
+      "privacyNoticePreview": "Vorschau",
+      "maxDaysBackLabel": "Erfassen bis",
+      "maxDaysBackHint": "Wie viele Tage zurück Zeit erfasst werden kann. Ein älterer Tag wird abgelehnt, und die Person kann einen Administrator bitten, ihn für sie zu öffnen. Leer heißt 365.",
+      "lateEntryHintDaysLabel": "Hinweis auf späte Erfassung nach",
+      "lateEntryHintDaysHint": "Markiert einen Eintrag, der mehr als so viele Tage nach dem Arbeitstag erfasst wurde, nur für die Person selbst. Er blockiert nie etwas und meldet nichts. 0 schaltet ihn aus, leer übernimmt die Voreinstellung des Servers.",
+      "correctionsTitle": "Korrekturanfragen",
+      "correctionsHint": "Anfragen, gesperrte Einträge zu korrigieren oder ältere Tage zu öffnen. Beantworte sie hier oder öffne die Tage für die Person, die gefragt hat.",
+      "grantsTitle": "Für Personen geöffnete Tage",
+      "grantsHint": "Jede Öffnung schließt sich nach zwei Wochen von selbst. Hier schließt du eine früher.",
+      "grantsEmpty": "Gerade sind für niemanden Tage geöffnet.",
+      "grantOpenUntil": "Offen bis {{date}}",
+      "grantRevoke": "Jetzt schließen",
+      "grantRevokeTitle": "Diese Tage schließen?",
+      "grantRevokeMessage": "{{name}} kann {{period}} dann nicht mehr erfassen. Das wird festgehalten.",
+      "grantRevoked": "Die Tage sind wieder geschlossen."
     },
     "passwordPolicy": "Passwortrichtlinie",
     "passwordPolicyHint": "Mindestanforderungen für Benutzerpasswörter.",
@@ -2206,7 +2299,12 @@
       "TIMESHEET_REOPENED": "Stundenzettel wieder geöffnet",
       "TIME_CORRECTION_REQUESTED": "Korrektur angefragt",
       "TIME_LOCK_EXCEPTION_ADDED": "Zeitraum geöffnet",
-      "TIME_LOCK_EXCEPTION_REMOVED": "Geöffneter Zeitraum geschlossen"
+      "TIME_LOCK_EXCEPTION_REMOVED": "Geöffneter Zeitraum geschlossen",
+      "TIME_CORRECTION_ANSWERED": "Korrektur beantwortet",
+      "TIME_BACKFILL_REQUESTED": "Ältere Tage angefragt",
+      "TIME_BACKFILL_GRANTED": "Tage für eine Person geöffnet",
+      "TIME_BACKFILL_REVOKED": "Geöffnete Tage wieder geschlossen",
+      "TIME_RETENTION_RUN": "Aufbewahrungslauf"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",
@@ -2738,7 +2836,7 @@
     },
     "timeTracking": {
       "title": "Zeiterfassung",
-      "subtitle": "Dein eigener Rhythmus — Längen, Countdown und der Ton am Intervallende.",
+      "subtitle": "Dein eigener Rhythmus: Längen, Countdown und der Ton am Ende eines Intervalls.",
       "pomodoro": "Pomodoro",
       "work": "Arbeitsintervall",
       "shortBreak": "Kurze Pause",
@@ -2751,7 +2849,20 @@
       "minutes": "{{count}} Min.",
       "intervals": "{{count}} Intervall",
       "intervals_plural": "{{count}} Intervalle",
-      "saveFailed": "Einstellungen konnten nicht gespeichert werden."
+      "saveFailed": "Einstellungen konnten nicht gespeichert werden.",
+      "privacy": "Datenschutz",
+      "privacyPanel": "Wer sieht meine Zeitdaten?",
+      "privacyPanelHint": "Aus den Regeln berechnet, die gerade eingeschaltet sind, zusammen mit dem Datenschutzhinweis.",
+      "privacyOpen": "Anzeigen",
+      "exportCsv": "Meine Zeiteinträge exportieren",
+      "exportCsvHint": "Alle deine Einträge als CSV-Datei. Den vollständigen Export deines Kontos, auch mit deinen Zeitdaten, findest du unter Daten & Datenschutz.",
+      "exportCsvButton": "CSV exportieren",
+      "exportDone": "Deine Zeiteinträge sind exportiert.",
+      "exportTruncated": "Die Datei enthält nur deine neuesten Einträge, weil eine Datei höchstens 100 000 Zeilen hat.",
+      "exportFailed": "Der Export konnte nicht gespeichert werden.",
+      "correction": "Korrekturen und ältere Tage",
+      "correctionHint": "Deine eigenen Einträge bearbeitest du selbst. Ist ein Tag gesperrt, öffne den Eintrag und bitte um eine Korrektur. Liegt ein Tag zu weit zurück, bitte darum, ihn zu öffnen. Deine Begründung geht an die Person, die ihn öffnen kann, und ihre Antwort bekommst du als Benachrichtigung.",
+      "requestDays": "Ältere Tage anfragen"
     }
   },
   "twofa": {

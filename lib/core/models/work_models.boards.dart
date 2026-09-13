@@ -223,6 +223,7 @@ class WorkItem extends Equatable {
     this.updatedAt,
     this.updatedBy,
     this.sharedFromId,
+    this.hidden = false,
   });
 
   /// Logged by hand in the app — the default when a server sends no source.
@@ -256,6 +257,11 @@ class WorkItem extends Equatable {
   final String? updatedBy;
   final String? sharedFromId;
 
+  /// Somebody else's entry whose details this reader may not see. The server
+  /// sends the day, the duration and the activity and leaves out who worked
+  /// and what they wrote, so a missing [userId] here is never a deleted account.
+  final bool hidden;
+
   /// Whether this is the pre-2.0 remainder the migration credited to nobody.
   /// Rendered under its own label rather than a person, and never editable.
   bool get isLegacy => source == sourceLegacy;
@@ -280,6 +286,7 @@ class WorkItem extends Equatable {
     updatedAt: _instant(json['updatedAt']),
     updatedBy: _optionalId(json['updatedBy']),
     sharedFromId: _optionalId(json['sharedFromId']),
+    hidden: json['hidden'] as bool? ?? false,
   );
 
   @override
@@ -301,6 +308,7 @@ class WorkItem extends Equatable {
     updatedAt,
     updatedBy,
     sharedFromId,
+    hidden,
   ];
 }
 

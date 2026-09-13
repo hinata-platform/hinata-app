@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:hinata/core/blocs/auth_bloc.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
+import 'package:hinata/core/blocs/time_privacy_cubit.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/time_approval_models.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
@@ -20,6 +21,7 @@ import 'package:hinata/core/widgets/hive_empty_state.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:hinata/features/timesheet/timesheet_screen.dart';
 import '../time/fake_time_policy_cubit.dart';
+import '../time/fake_time_privacy_cubit.dart';
 
 /// The week grid has to answer for rows nobody owns any more and for time that
 /// belongs to no project — both are ordinary states of the data, not errors —
@@ -124,6 +126,11 @@ void main() {
                           BlocProvider<TimePolicyCubit>.value(
                             value: FakeTimePolicyCubit(
                               policy,
+                              time ?? _FakeTimeRepository(rows),
+                            ),
+                          ),
+                          BlocProvider<TimePrivacyCubit>.value(
+                            value: FakeTimePrivacyCubit(
                               time ?? _FakeTimeRepository(rows),
                             ),
                           ),

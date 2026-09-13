@@ -818,15 +818,6 @@
   "time": {
     "hours": "時間",
     "minutes": "分",
-    "activityType": "作業の種類",
-    "activity": {
-      "development": "開発",
-      "testing": "テスト",
-      "documentation": "ドキュメント",
-      "design": "デザイン",
-      "meeting": "ミーティング",
-      "support": "サポート"
-    },
     "date": "日付",
     "note": "メモ（任意）",
     "fmt": {
@@ -841,6 +832,7 @@
     "loggedTotal": "合計 {{spent}} を記録",
     "deletedUser": "削除されたユーザー",
     "legacySource": "スマートコミット（2.0 以前）",
+    "otherMember": "ほかのメンバー",
     "deleteTitle": "記録を削除",
     "deleteConfirm": "{{date}} に記録した {{duration}} を削除しますか？この操作は取り消せません。",
     "deleted": "記録を削除しました",
@@ -902,7 +894,6 @@
       "pickDuration": "長さを選択",
       "start": "開始",
       "end": "終了",
-      "activity": "作業種別",
       "modeDuration": "長さ",
       "modeInterval": "開始と終了",
       "noDescription": "説明なし",
@@ -999,29 +990,39 @@
         "lockDate": "{{date}} より前の記録は締め切られています。",
         "approval": "{{from}} – {{to}} を提出済みのため、これらの記録は確定しています。",
         "invoice": "発行済みの請求書がこの記録を参照しています。",
-        "unknown": "この記録は編集できません。"
+        "unknown": "この記録は編集できません。",
+        "maxDaysBack": "{{date}} より前の日は、管理者が開くまで記録できません。"
       },
       "holder": {
-        "lockDate": "管理者は締め切られた期間の中の一部を再オープンできます。",
+        "lockDate": "管理者は、この日をあなたのために開くことも、締め切られた期間の中の一部を再オープンすることもできます。",
         "approval": "プロジェクトのリードまたは管理者が期間を再オープンできます。",
-        "invoice": "請求を担当する人が貸方票で調整します。"
+        "invoice": "請求を担当する人が貸方票で調整します。",
+        "maxDaysBack": "それより前の日は、管理者に開いてもらえます。"
       },
       "remedy": {
         "lockDate": "修正を依頼してください。理由は記録され、管理者に届きます。",
         "approval": "修正を依頼するか、期間の再オープンを依頼してください。",
-        "invoice": "請求書は書き換えません。貸方票で調整します。"
+        "invoice": "請求書は書き換えません。貸方票で調整します。",
+        "maxDaysBack": "この日を開くよう依頼してください。理由は記録され、管理者に届きます。"
       },
       "chip": {
         "lockDate": "締め切り済み",
         "approval": "提出済み",
         "invoice": "請求済み",
-        "unknown": "締め切り済み"
+        "unknown": "締め切り済み",
+        "maxDaysBack": "記録可能期間外"
       },
       "request": "修正を依頼",
       "requestTitle": "修正を依頼",
       "requestHint": "どこが誤りで、どうあるべきですか？",
       "requestSend": "依頼を送信",
-      "requestSent": "依頼を送信し、記録しました。"
+      "requestSent": "依頼を送信し、記録しました。",
+      "requestDays": "この日を開くよう依頼",
+      "requestDaysTitle": "過去の日を開くよう依頼",
+      "requestDaysHint": "なぜ今これらの日を記録する必要がありますか？",
+      "requestDaysSent": "依頼を管理者に送信しました。",
+      "requestOlderDays": "過去の日を開くよう依頼",
+      "pickDaysTitle": "どの日が必要ですか？"
     },
     "approval": {
       "status": {
@@ -1067,7 +1068,8 @@
       "showEntries": "記録を表示",
       "scope": {
         "mine": "自分の",
-        "inbox": "要判断"
+        "inbox": "要判断",
+        "corrections": "修正"
       },
       "empty": {
         "mine": {
@@ -1081,6 +1083,82 @@
       },
       "gridClamped": "表はこの期間の最初の数日を表示します。上の数値は期間全体のものです。",
       "nothingToSubmit": "この期間にはまだ時間が記録されていません。"
+    },
+    "privacy": {
+      "title": "時間の記録とプライバシー",
+      "subtitle": "あなたの時間データを誰が見られるか、知っておいてほしいこと",
+      "firstUseSubtitle": "始める前に一度お読みください。作業のしかたは何も変わりません。",
+      "whoSees": "自分の時間データは誰が見られますか？",
+      "notice": "プライバシー通知",
+      "understood": "確認しました",
+      "acknowledgeFailed": "保存できませんでした。もう一度お試しください。",
+      "row": {
+        "self": "自分の記録はすべて見られます。",
+        "admins": "このインスタンスの管理者は、すべての記録を見て変更できます。",
+        "members": "プロジェクトのほかのメンバーには、課題に記録された時間の合計が見えますが、誰が記録したかや説明の内容は見えません。",
+        "leadsSee": "プロジェクトのリードは、あなたの個々の記録、その履歴、タイムシートのあなたの行を見ることができ、あなたの記録を変更することもできます。",
+        "leadsTotals": "プロジェクトのリードが見られるのはプロジェクトの合計だけで、誰が何を記録したかは見えません。",
+        "approvals": "あなたがタイムシートを提出し、プロジェクトのリードが承認します。",
+        "workloadReports": "レポートで、個人ごとに記録時間と稼働可能時間を比べることがあります。",
+        "alerts": "プロジェクトの記録時間が上限を超えると、リードに通知されます。",
+        "targetReminders": "自分の目標についてのリマインダーが届きます。ほかの人には届きません。",
+        "arbzgHints": "ドイツ労働時間法に関する注意は、あなただけに表示されます。",
+        "lateEntry": "勤務日から {{count}} 日を超えて入力した記録には注意が付きます。表示されるのはあなただけです。",
+        "lateEntry_plural": "勤務日から {{count}} 日を超えて入力した記録には注意が付きます。表示されるのはあなただけです。",
+        "foreignChanges": "ほかの人があなたの記録を変更すると、そのことが残ります。記録の履歴で確認できます。",
+        "timerRecorded": "タイマーの開始と停止は監査ログに残ります。",
+        "timerNotRecorded": "タイマーをいつ開始・停止したかは残りません。",
+        "entryCreation": "記録の作成は監査ログに残ります。",
+        "entryRetention": "記録は {{count}} か月後に削除されます。ただし、提出済みまたは承認済みの期間の記録は除きます。",
+        "entryRetention_plural": "記録は {{count}} か月後に削除されます。ただし、提出済みまたは承認済みの期間の記録は除きます。",
+        "entryKept": "記録が自動で削除されることはありません。",
+        "descriptionRetention": "アカウントが削除されると、その記録の説明とタイムシートのメモは {{count}} か月後に消去されます。",
+        "descriptionRetention_plural": "アカウントが削除されると、その記録の説明とタイムシートのメモは {{count}} か月後に消去されます。",
+        "maxDaysBack": "記録できるのは {{count}} 日前までです。それより前の日は、依頼すると管理者が開きます。",
+        "maxDaysBack_plural": "記録できるのは {{count}} 日前までです。それより前の日は、依頼すると管理者が開きます。"
+      },
+      "loadFailed": "通知を読み込めませんでした。接続を確認して、もう一度お試しください。"
+    },
+    "hint": {
+      "chip": {
+        "DAILY_MAXIMUM": "10 時間超",
+        "SHORT_REST": "休息が短い",
+        "SUNDAY_WORK": "日曜日",
+        "LATE_ENTRY": "{{count}} 日後に入力",
+        "LATE_ENTRY_plural": "{{count}} 日後に入力"
+      },
+      "sentence": {
+        "DAILY_MAXIMUM": "この日は {{duration}} が記録されています。ドイツ労働時間法で認められるのは最大 10 時間です。",
+        "SHORT_REST": "前日の終了からこの日の開始までが {{duration}} しかありません。法律では 11 時間の休息が求められます。",
+        "SUNDAY_WORK": "この日曜日に労働時間が記録されています。日曜日の労働は例外的な場合にのみ認められます。",
+        "LATE_ENTRY": "この記録は勤務日の {{count}} 日後に入力されました。あなた向けの注意にすぎず、何も妨げません。",
+        "LATE_ENTRY_plural": "この記録は勤務日の {{count}} 日後に入力されました。あなた向けの注意にすぎず、何も妨げません。"
+      }
+    },
+    "correction": {
+      "emptyTitle": "修正の依頼はありません",
+      "emptyMessage": "ロックされた記録の修正や過去の日を開くことを誰かが依頼し、あなたが回答できる場合は、ここにその依頼が表示されます。",
+      "empty": "依頼はありません。",
+      "answer": "回答",
+      "answerTitle": "依頼に回答",
+      "answerHint": "この後どうなりますか？依頼した人がこの回答を読みます。",
+      "answerSend": "回答を送信",
+      "answered": "回答を送信しました。",
+      "answeredBy": "{{name}} さんの回答",
+      "reason": {
+        "LOCK_DATE": "ロック日",
+        "APPROVAL": "提出済みの期間",
+        "MAX_DAYS_BACK": "記録可能期間外"
+      },
+      "more": "さらに読み込む",
+      "grant": "日を開く",
+      "grantTitle": "この人のために日を開く",
+      "grantHint": "開いた日は、この人に対して 2 週間開いたままになります。メッセージは任意で、書いた場合は回答として表示されます。",
+      "grantSend": "日を開く",
+      "granted": "この人のために日を開きました。",
+      "grantedBy": "{{name}} さんが日を開きました",
+      "yourRequest": "あなたの依頼",
+      "waiting": "まだ回答はありません。"
     }
   },
   "projects": {
@@ -1627,10 +1705,10 @@
     "security": "セキュリティ",
     "timeTracking": {
       "title": "時間管理",
-      "hint": "拡張時間管理は既定でオフです。各ポリシーは未設定のままにできます — その場合はこのサーバーの環境の値が使われます。ある人の時間を別の人に読み取れるようにするスイッチは既定でオフで、共同決定の注記が付いています。",
-      "codetermination": "共同決定の対象: ドイツ事業所組織法 § 87 第1項第6号（公共部門では州の職員代表法）。オンにする前に事業所委員会・職員代表と合意してください — 監視に客観的に適していれば足ります。",
+      "hint": "拡張時間管理は既定でオフです。以下の各ポリシーは未設定のままにでき、その場合はこのサーバーの環境の値が使われます。ある人の時間を別の人に見えるようにするスイッチは既定でオフで、共同決定の注記が付いています。",
+      "codetermination": "共同決定の対象: § 87 第 1 項第 6 号 BetrVG（公共部門では LPVG）。オンにする前に事業所委員会または職員代表と合意してください。監視に使える機能であれば、それだけで対象になります。",
       "envDefault": "環境の既定値",
-      "envDefaultHint": "値は保存されていません — このサーバーの環境が決めます。タップすると明示的な値を設定できます。",
+      "envDefaultHint": "値が保存されていないため、このサーバーの環境が決めます。タップすると独自の値を設定できます。",
       "useEnvDefault": "環境の既定値に戻す",
       "moduleTitle": "モジュール",
       "moduleHint": "拡張時間管理モジュールのメインスイッチ。",
@@ -1648,7 +1726,7 @@
       "requiredTagTitle": "タグ必須",
       "requiredTagHint": "記録には少なくとも1つのタグが必要です。",
       "lockBeforeLabel": "この日より前を施錠",
-      "lockBeforeHint": "この日より前の記録は、誰も — API からも — 作成・変更・削除できません。指定した当日は開いたままです。 日付を未来にすることはできません。進行中の労働時間は常に記録できる状態でなければなりません。",
+      "lockBeforeHint": "この日より前の記録は、API を含め、誰も作成・変更・削除できなくなります。この日自体は開いたままです。進行中の労働時間は常に記録できなければならないため、日付を未来にすることはできません。",
       "roundingModeLabel": "丸め",
       "roundingModeHint": "レポートにのみ適用されます。保存された分は変わりません。",
       "roundingMode": {
@@ -1675,7 +1753,7 @@
       "visibilityTitle": "可視性と承認",
       "visibilityHint": "誰が誰の時間を見られるか、そしてタイムシートをどの周期で提出するか。",
       "leadsSeeMemberEntriesTitle": "リードがメンバーの記録を見る",
-      "leadsSeeMemberEntriesHint": "オフ → リードはプロジェクトの合計だけを見て、誰が何を付けたかは見えません。オンにすると、プロジェクトメンバーの個々の記録が見えるようになります。",
+      "leadsSeeMemberEntriesHint": "オフ: リードに見えるのはプロジェクトの合計だけです。課題では名前も説明も見えず、ほかの人の記録を変更することもありません。オン: リードはプロジェクトメンバーの個々の記録、その履歴、タイムシートの行を見ることができ、それらの記録を変更できます。",
       "approvalsTitle": "タイムシート承認",
       "approvalsHint": "各自が期間ごとのタイムシートを提出し、リードまたは管理者が承認または却下します。「リードがメンバーの記録を見る」が必要です。",
       "approvalPeriodLabel": "承認期間",
@@ -1724,14 +1802,13 @@
       "privacyTitle": "プライバシーと保存期間",
       "privacyHint": "時間データをどれだけ保存するか、そして対象となる人に何を伝えるか。",
       "descriptionPurgeLabel": "説明を消去するまで",
-      "descriptionPurgeHint": "削除されたユーザーの記録の説明を、この月数の後に空にします。空欄 → 環境の既定値。",
+      "descriptionPurgeHint": "削除されたアカウントの記録の説明とタイムシートのメモを、この月数の後に消去します。時間はそのまま残ります。0 は消去しないことを意味します。",
       "entryPurgeLabel": "記録を削除するまで",
-      "entryPurgeHint": "これより古い記録を全員分削除します。24 か月で ArbZG と MiLoG を満たします。",
+      "entryPurgeHint": "古い記録を全員分削除します。ただし、提出済みまたは承認済みの期間の記録は除きます。0 は削除しないことを意味し、それ以外は 24 か月以上にします。",
       "monthsSuffix": "か月",
       "privacyNoticeLabel": "プライバシー通知",
-      "privacyNoticeHint": "モジュールの時間データと一緒にアプリに表示されます。空欄 → 組み込みの文面。",
+      "privacyNoticeHint": "Markdown 形式です。時間の記録を初めて使うときと、設定 → 時間の記録 で全員に表示されます。空欄の場合は、読む人の言語の組み込みの文面が使われます。",
       "notYetEnforced": "保存はされますが、まだ適用されません。このポリシーの機能は時間記録の後の段階で追加されます。",
-      "leadsSeeMemberEntriesPending": "一部適用済み: 入力の履歴と、提出内容に含まれる入力はすでにこのポリシーに従います。タイムシートの一覧は引き続き各人の合計を表示します — こちらは後の段階で対応します。",
       "tagsTitle": "タグ",
       "tagsHint": "記録に付ける語彙です。名前を変更すると、すべての記録がそれに従います。",
       "tagsEmpty": "タグはまだありません。",
@@ -1744,12 +1821,12 @@
       "tagDeleteMessage": "「{{name}}」を {{count}} 件の記録から削除します。記録そのものは残ります。",
       "tagDeleteMessage_plural": "「{{name}}」を {{count}} 件の記録から削除します。記録そのものは残ります。",
       "lockBeforeEveryone": "ロックは管理者を含む全員に適用されます。締めた期間を直すには、記録に残る形でロックを解除します。",
-      "approvalsNeedVisibility": "承認とは誰かの記録を読むことです。「リードがメンバーの記録を閲覧」も有効にしてください。そうでないと承認者には中身のない合計だけが見えます。",
+      "approvalsNeedVisibility": "承認するには、その人の記録を読む必要があります。「リードがメンバーの記録を見る」もオンにしてください。そうしないと、承認者には中身のない合計しか見えません。",
       "periodPreviewTitle": "次の期間",
       "periodPreviewHint": "リズムの変更は今後の提出にのみ影響します。すでに提出された期間はその日付を保ちます。",
       "periodPreviewFree": "固定のリズムがない場合、提出する人が期間を自分で選びます（最大92日、既に提出した期間と重ならないこと）。",
       "lockExceptionsTitle": "再オープンした期間",
-      "lockExceptionsHint": "ロック日そのものを解除する代わりに、締め切られた期間の中の一部だけを開きます。",
+      "lockExceptionsHint": "ロック日そのものを解除する代わりに、締め切られた期間の中の一部だけを開きます。期間と理由は全員に表示されるため、個人の名前は書かないでください。特定の人のための日は、その人の依頼から開きます。",
       "lockExceptionsLegal": "労働時間は個人データであり、不正確な個人データは不当な遅滞なく訂正できなければなりません（GDPR第16条）。例外はその戻り道です。対象の日だけを開き、理由を伴い、監査ログに残ります。",
       "lockExceptionsEmpty": "現在、締め切られた期間の中に開いている期間はありません。",
       "lockExceptionAdd": "期間を再オープン",
@@ -1757,7 +1834,23 @@
       "lockExceptionReason": "この期間を再オープンする理由は何ですか？",
       "lockExceptionReasonHint": "監査ログに残り、全員に表示されます。",
       "lockExceptionRemove": "再び閉じる",
-      "lockExceptionRemoveConfirm": "{{period}} を再び閉じますか？記録は読み取り専用になります。"
+      "lockExceptionRemoveConfirm": "{{period}} を再び閉じますか？記録は読み取り専用になります。",
+      "retentionLegal": "ここで期間を設定するまで、自動で削除されるものはありません。§ 16 (2) ArbZG と § 17 MiLoG は労働時間の記録を 2 年間保存するよう求めているため、24 か月がよく選ばれます。その後は保存制限の原則が適用されます（GDPR第5条）。削除は毎晩のジョブが行い、実行のたびに監査ログに記録します。",
+      "privacyNoticePreview": "プレビュー",
+      "maxDaysBackLabel": "記録できる日数",
+      "maxDaysBackHint": "何日前まで時間を記録できるか。それより前の日は受け付けられず、本人は管理者に開いてもらうよう依頼できます。空欄は 365 です。",
+      "lateEntryHintDaysLabel": "遅い入力の注意（経過日数）",
+      "lateEntryHintDaysHint": "勤務日からこの日数を超えて入力された記録に、本人にだけ見える印を付けます。何も妨げず、誰にも報告しません。0 でオフ、空欄ならサーバーの既定値を使います。",
+      "correctionsTitle": "修正の依頼",
+      "correctionsHint": "ロックされた記録の修正や、過去の日を開くことの依頼です。ここで回答するか、依頼した人のために日を開いてください。",
+      "grantsTitle": "個人向けに開いた日",
+      "grantsHint": "開いた日は 2 週間後に自動で閉じます。ここで早めに閉じることもできます。",
+      "grantsEmpty": "現在、誰に対しても開いている日はありません。",
+      "grantOpenUntil": "{{date}} まで開いています",
+      "grantRevoke": "今すぐ閉じる",
+      "grantRevokeTitle": "これらの日を閉じますか？",
+      "grantRevokeMessage": "{{name}} さんは {{period}} を記録できなくなります。この操作は記録に残ります。",
+      "grantRevoked": "日を再び閉じました。"
     },
     "passwordPolicy": "パスワードポリシー",
     "passwordPolicyHint": "ユーザーのパスワードに求める最低条件。",
@@ -2206,7 +2299,12 @@
       "TIMESHEET_REOPENED": "タイムシート再オープン",
       "TIME_CORRECTION_REQUESTED": "修正依頼",
       "TIME_LOCK_EXCEPTION_ADDED": "期間を再オープン",
-      "TIME_LOCK_EXCEPTION_REMOVED": "再オープンした期間を閉じた"
+      "TIME_LOCK_EXCEPTION_REMOVED": "再オープンした期間を閉じた",
+      "TIME_CORRECTION_ANSWERED": "修正依頼に回答",
+      "TIME_BACKFILL_REQUESTED": "過去の日の開放を依頼",
+      "TIME_BACKFILL_GRANTED": "個人向けに日を開放",
+      "TIME_BACKFILL_REVOKED": "開放した日を再び閉じた",
+      "TIME_RETENTION_RUN": "保存期間による削除を実行"
     },
     "meta": {
       "oldRole": "変更前のロール",
@@ -2738,7 +2836,7 @@
     },
     "timeTracking": {
       "title": "時間の記録",
-      "subtitle": "あなた自身のリズム — 長さ、カウントダウン、区間終了の音。",
+      "subtitle": "あなた自身のリズム: 長さ、カウントダウン、区間終了時の音。",
       "pomodoro": "ポモドーロ",
       "work": "作業区間",
       "shortBreak": "小休憩",
@@ -2751,7 +2849,20 @@
       "minutes": "{{count}} 分",
       "intervals": "{{count}} 区間",
       "intervals_plural": "{{count}} 区間",
-      "saveFailed": "設定を保存できませんでした。"
+      "saveFailed": "設定を保存できませんでした。",
+      "privacy": "プライバシー",
+      "privacyPanel": "自分の時間データは誰が見られますか？",
+      "privacyPanelHint": "現在オンになっているルールから作成し、プライバシー通知と一緒に表示します。",
+      "privacyOpen": "表示",
+      "exportCsv": "自分の時間記録をエクスポート",
+      "exportCsvHint": "すべての記録を CSV ファイルで出力します。時間データを含むアカウント全体のエクスポートは「データとプライバシー」にあります。",
+      "exportCsvButton": "CSV をエクスポート",
+      "exportDone": "時間記録をエクスポートしました。",
+      "exportTruncated": "1 つのファイルに入るのは最大 10 万行のため、ファイルには最新の記録だけが含まれています。",
+      "exportFailed": "エクスポートを保存できませんでした。",
+      "correction": "修正と過去の日",
+      "correctionHint": "自分の記録は自分で編集します。日がロックされている場合は、記録を開いて修正を依頼してください。日がさかのぼりすぎている場合は、その日を開くよう依頼してください。理由はその日を開ける人に届き、回答は通知で届きます。",
+      "requestDays": "過去の日を開くよう依頼"
     }
   },
   "twofa": {
