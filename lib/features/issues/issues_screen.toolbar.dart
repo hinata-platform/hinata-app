@@ -14,8 +14,13 @@ class _Section {
 
 // ─────────────────────────── toolbar ────────────────────────────────────
 
-/// The Issues controls row: Group-by + Filter + Time-range on the left (scrolls
-/// horizontally when space is tight so it never overflows), Export pinned right.
+/// The Issues controls: group-by, sort, filter and time range, with the export
+/// on the trailing edge.
+///
+/// On a phone they are one glass housing docked into the app bar, scrolling
+/// sideways when the phone is narrow. On a wide window each is a glass pill of
+/// its own, the shape the boards' pills wear, and they wrap to the room the
+/// window leaves them instead of scrolling out of sight.
 class _Toolbar extends StatelessWidget {
   const _Toolbar({
     required this.grouping,
@@ -48,42 +53,39 @@ class _Toolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!context.isCompact) {
+      return WideToolbar(
+        leading: [
+          _GroupByButton(value: grouping, onChanged: onGrouping),
+          _SortButton(value: sort, onChanged: onSort),
+          _FilterButton(key: filterKey, count: filterCount, onTap: onFilter),
+          _TimeRangeButton(value: timeRange, onChanged: onTimeRange),
+        ],
+        trailing: [
+          if (onExport != null)
+            _ExportButton(onSelected: onExport!, exporting: exporting),
+        ],
+      );
+    }
     // Compact (mobile): the four view controls collapse into a single
     // connected glass housing (iOS-style segmented bar) so they read as one
-    // cluster instead of four detached boxes. Wide: separate labelled pills.
-    final Widget controls = context.isCompact
-        ? _SegmentedControls(
-            grouping: grouping,
-            onGrouping: onGrouping,
-            sort: sort,
-            onSort: onSort,
-            filterCount: filterCount,
-            filterKey: filterKey,
-            onFilter: onFilter,
-            timeRange: timeRange,
-            onTimeRange: onTimeRange,
-          )
-        : Row(
-            children: [
-              _GroupByButton(value: grouping, onChanged: onGrouping),
-              const SizedBox(width: 10),
-              _SortButton(value: sort, onChanged: onSort),
-              const SizedBox(width: 10),
-              _FilterButton(
-                key: filterKey,
-                count: filterCount,
-                onTap: onFilter,
-              ),
-              const SizedBox(width: 10),
-              _TimeRangeButton(value: timeRange, onChanged: onTimeRange),
-            ],
-          );
+    // cluster instead of four detached boxes.
     return Row(
       children: [
         Expanded(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: controls,
+            child: _SegmentedControls(
+              grouping: grouping,
+              onGrouping: onGrouping,
+              sort: sort,
+              onSort: onSort,
+              filterCount: filterCount,
+              filterKey: filterKey,
+              onFilter: onFilter,
+              timeRange: timeRange,
+              onTimeRange: onTimeRange,
+            ),
           ),
         ),
         const SizedBox(width: 10),
@@ -91,7 +93,7 @@ class _Toolbar extends StatelessWidget {
           _ExportButton(
             onSelected: onExport!,
             exporting: exporting,
-            glass: context.isCompact,
+            docked: true,
           ),
       ],
     );
@@ -292,12 +294,12 @@ class _GroupByButton extends StatelessWidget {
   final ValueChanged<IssueGrouping> onChanged;
 
   /// When true the button renders as a bare cell for the compact segmented
-  /// housing (no individual border); otherwise as a standalone labelled pill.
+  /// housing (no individual border); otherwise as a glass pill of the wide
+  /// toolbar.
   final bool segmented;
 
   @override
   Widget build(BuildContext context) {
-    final compact = context.isCompact;
     final active = value != IssueGrouping.none;
     return GlassPopupMenu<IssueGrouping>(
       value: value,
@@ -313,43 +315,12 @@ class _GroupByButton extends StatelessWidget {
       ],
       child: segmented
           ? _SegmentCell(icon: _groupingIcon(value), active: active)
-          : Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                border: Border.all(
-                  color: active ? AppColors.accentLine : AppColors.hairline,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _groupingIcon(value),
-                    size: 16,
-                    color: active ? AppColors.accentStrong : AppColors.inkSoft,
-                  ),
-                  if (!compact) ...[
-                    const SizedBox(width: 7),
-                    Text(
-                      active
-                          ? _groupingLabel(context, value)
-                          : context.t('board.groupBy'),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      LucideIcons.chevronDown,
-                      size: 15,
-                      color: AppColors.inkFaint,
-                    ),
-                  ],
-                ],
-              ),
+          : _ToolPill(
+              icon: _groupingIcon(value),
+              label: active
+                  ? _groupingLabel(context, value)
+                  : context.t('board.groupBy'),
+              active: active,
             ),
     );
   }
@@ -391,7 +362,6 @@ class _SortButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final compact = context.isCompact;
     final active = !value.isDefault;
     return GlassPopupMenu<IssueSort>(
       value: value,
@@ -408,49 +378,17 @@ class _SortButton extends StatelessWidget {
       ],
       child: segmented
           ? _SegmentCell(icon: LucideIcons.arrowUpDown, active: active)
-          : Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                border: Border.all(
-                  color: active ? AppColors.accentLine : AppColors.hairline,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    LucideIcons.arrowUpDown,
-                    size: 16,
-                    color: active ? AppColors.accentStrong : AppColors.inkSoft,
-                  ),
-                  if (!compact) ...[
-                    const SizedBox(width: 7),
-                    Text(
-                      context.t('issues.sort.label'),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: active ? AppColors.accentStrong : AppColors.ink,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      LucideIcons.chevronDown,
-                      size: 15,
-                      color: AppColors.inkFaint,
-                    ),
-                  ],
-                ],
-              ),
+          : _ToolPill(
+              icon: LucideIcons.arrowUpDown,
+              label: context.t('issues.sort.label'),
+              active: active,
             ),
     );
   }
 }
 
-/// White pill that opens the glass filter popup; shows an amber badge with the
-/// active-criteria count. Its [key] anchors the popup's position.
+/// The pill that opens the glass filter popup, with an amber badge counting the
+/// criteria in force. Its [key] anchors the popup's position.
 class _FilterButton extends StatelessWidget {
   const _FilterButton({
     super.key,
@@ -481,46 +419,13 @@ class _FilterButton extends StatelessWidget {
         ),
       );
     }
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(
-              color: active ? AppColors.accentLine : AppColors.hairline,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                LucideIcons.slidersHorizontal,
-                size: 16,
-                color: active ? AppColors.accentStrong : AppColors.inkSoft,
-              ),
-              if (!context.isCompact) ...[
-                const SizedBox(width: 7),
-                Text(
-                  context.t('board.filterButton'),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-              if (active) ...[
-                const SizedBox(width: 7),
-                _CountBadge(count: count),
-              ],
-            ],
-          ),
-        ),
-      ),
+    return _ToolPill(
+      icon: LucideIcons.slidersHorizontal,
+      label: context.t('board.filterButton'),
+      active: active,
+      chevron: false,
+      badge: active ? _CountBadge(count: count) : null,
+      onTap: onTap,
     );
   }
 }
@@ -677,42 +582,10 @@ class _TimeRangeButton extends StatelessWidget {
       ],
       child: segmented
           ? _SegmentCell(icon: LucideIcons.calendar, active: active)
-          : Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                border: Border.all(
-                  color: active ? AppColors.accentLine : AppColors.hairline,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    LucideIcons.calendar,
-                    size: 16,
-                    color: active ? AppColors.accentStrong : AppColors.inkSoft,
-                  ),
-                  if (!context.isCompact) ...[
-                    const SizedBox(width: 7),
-                    Text(
-                      _timeLabel(context, value),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: active ? AppColors.accentStrong : AppColors.ink,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      LucideIcons.chevronDown,
-                      size: 15,
-                      color: AppColors.inkFaint,
-                    ),
-                  ],
-                ],
-              ),
+          : _ToolPill(
+              icon: LucideIcons.calendar,
+              label: _timeLabel(context, value),
+              active: active,
             ),
     );
   }
@@ -722,36 +595,17 @@ class _ExportButton extends StatelessWidget {
   const _ExportButton({
     required this.onSelected,
     this.exporting = false,
-    this.glass = false,
+    this.docked = false,
   });
   final ValueChanged<String> onSelected;
   final bool exporting;
 
   /// When true the button renders on the same liquid glass as the docked
-  /// toolbar (compact app bar); otherwise the plain in-scroll pill (wide).
-  final bool glass;
+  /// toolbar (compact app bar); otherwise as a glass pill of the wide toolbar.
+  final bool docked;
 
   @override
   Widget build(BuildContext context) {
-    final content = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        exporting
-            ? const HiveLoader(size: 16)
-            : Icon(LucideIcons.download, size: 16, color: AppColors.ink),
-        if (!context.isCompact) ...[
-          const SizedBox(width: 8),
-          Text(
-            context.t('reports.export'),
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.ink,
-            ),
-          ),
-        ],
-      ],
-    );
     return GlassPopupMenu<String>(
       value: '',
       // The handler self-guards re-entry while a previous export is paging, so
@@ -774,7 +628,7 @@ class _ExportButton extends StatelessWidget {
           leading: const Icon(LucideIcons.braces, size: 18),
         ),
       ],
-      child: glass
+      child: docked
           ? _GlassControlSurface(
               radius: _kSegmentedRadius,
               child: Padding(
@@ -782,18 +636,97 @@ class _ExportButton extends StatelessWidget {
                   horizontal: 14,
                   vertical: 12,
                 ),
-                child: content,
+                child: exporting
+                    ? const HiveLoader(size: 16)
+                    : Icon(
+                        LucideIcons.download,
+                        size: 16,
+                        color: AppColors.ink,
+                      ),
               ),
             )
-          : Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                border: Border.all(color: AppColors.hairline),
-              ),
-              child: content,
+          : _ToolPill(
+              icon: LucideIcons.download,
+              label: context.t('reports.export'),
+              busy: exporting,
+              chevron: false,
             ),
+    );
+  }
+}
+
+/// One glass pill of the wide toolbar: a glyph, a word and, on the pills that
+/// pick a value, a chevron. The shape the boards' group-by and filter pills
+/// wear, so the Issues page and the boards put the same control in the same
+/// material.
+class _ToolPill extends StatelessWidget {
+  const _ToolPill({
+    required this.icon,
+    required this.label,
+    this.active = false,
+    this.chevron = true,
+    this.busy = false,
+    this.badge,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+
+  /// Washes the pill amber while its setting is not the default: a list quietly
+  /// narrowed must not look like a list with nothing else in it.
+  final bool active;
+
+  /// Whether a chevron trails the word: on the pills that pick a value (a
+  /// grouping, an order, a range), not on the ones that act.
+  final bool chevron;
+
+  /// Shows the loader in place of the glyph while an export is under way.
+  final bool busy;
+
+  /// Trails the word, like the filter's count.
+  final Widget? badge;
+
+  /// Null inside a [GlassPopupMenu], which takes the tap itself.
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ink = active ? AppColors.accentStrong : AppColors.inkSoft;
+    return GlassPill(
+      height: kGlassControlHeight,
+      active: active,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (busy)
+              const HiveLoader(size: 16)
+            else
+              Icon(icon, size: 16, color: ink),
+            const SizedBox(width: 7),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: ink,
+              ),
+            ),
+            if (badge != null) ...[const SizedBox(width: 6), badge!],
+            if (chevron) ...[
+              const SizedBox(width: 5),
+              Icon(
+                LucideIcons.chevronDown,
+                size: 14,
+                color: AppColors.inkFaint,
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
