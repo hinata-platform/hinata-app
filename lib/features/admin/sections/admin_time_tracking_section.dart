@@ -5,7 +5,10 @@ import '../../../core/i18n/i18n.dart';
 import '../admin_form_helpers.dart';
 import '../policy_controls.dart';
 import 'admin_approval_period_preview.dart';
+import 'admin_backfill_grants_card.dart';
+import 'admin_correction_requests_card.dart';
 import 'admin_lock_exceptions_card.dart';
+import 'admin_privacy_notice_field.dart';
 import 'admin_time_tags_card.dart';
 
 /// Admin → Zeiterfassung.
@@ -38,6 +41,12 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
   /// the field so an operator is not told about it by a rejected save of five
   /// unrelated sections. Mirrors TimePolicy.RETENTION_MAX_MONTHS.
   static const int _retentionMaxMonths = 1200;
+
+  /// Ten years. Mirrors TimePolicy.MAX_DAYS_BACK_CEILING.
+  static const int _maxDaysBackCeiling = 3660;
+
+  /// A year. Mirrors TimePolicy.LATE_ENTRY_HINT_MAX_DAYS.
+  static const int _lateEntryHintMaxDays = 365;
 
   Map<String, dynamic> get _tt =>
       (widget.settings['timeTracking'] ??= <String, dynamic>{})
@@ -114,6 +123,12 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
           // immediately rather than with the form.
           const SizedBox(height: 16),
           const AdminLockExceptionsCard(),
+          const SizedBox(height: 16),
+          const AdminCorrectionRequestsCard(),
+          // Under the requests they answer: the days opened for single people,
+          // which close by themselves and can be closed sooner here.
+          const SizedBox(height: 16),
+          const AdminBackfillGrantsCard(),
         ],
         const SizedBox(height: 16),
         _visibility(context),
@@ -195,6 +210,17 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         // Inside the branch, so a screen without the note keeps its spacing.
         const SizedBox(height: 8),
       ],
+      // How far back a day can be recorded. A typo guard with a way out, never a
+      // deadline: § 16 Abs. 2 ArbZG knows none, and the refusal names the
+      // administrator who can open an older day.
+      PolicyNumber(
+        label: context.t('admin.timeTracking.maxDaysBackLabel'),
+        helper: context.t('admin.timeTracking.maxDaysBackHint'),
+        suffix: context.t('admin.timeTracking.daysSuffix'),
+        value: _value<num>('maxDaysBack')?.toInt(),
+        onChanged: (v) => _setQuietly('maxDaysBack', v),
+        maxValue: _maxDaysBackCeiling,
+      ),
       PolicyChoice(
         label: context.t('admin.timeTracking.roundingModeLabel'),
         helper: context.t('admin.timeTracking.roundingModeHint'),
@@ -276,11 +302,6 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         effective: _effectiveValue<bool>('leadsSeeMemberEntries'),
         onChanged: (v) => _set('leadsSeeMemberEntries', v),
         monitoring: true,
-        pending: true,
-        // Not the blanket "nothing behind this yet": two reads already obey it,
-        // and a switch that opens somebody's entries to a colleague is the last
-        // one an operator should be told is inert.
-        pendingKey: 'admin.timeTracking.leadsSeeMemberEntriesPending',
       ),
       PolicySwitch(
         title: context.t('admin.timeTracking.approvalsTitle'),
@@ -410,7 +431,18 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         effective: _effectiveValue<bool>('arbzgHintsEnabled'),
         onChanged: (v) => _set('arbzgHintsEnabled', v),
         monitoring: true,
-        pending: true,
+      ),
+      const SizedBox(height: 8),
+      // A hint to the person, never a report about them. Empty takes the
+      // server's default and 0 switches it off, because a stored empty value
+      // could not say "off" over an environment that set one.
+      PolicyNumber(
+        label: context.t('admin.timeTracking.lateEntryHintDaysLabel'),
+        helper: context.t('admin.timeTracking.lateEntryHintDaysHint'),
+        suffix: context.t('admin.timeTracking.daysSuffix'),
+        value: _value<num>('lateEntryHintDays')?.toInt(),
+        onChanged: (v) => _setQuietly('lateEntryHintDays', v),
+        maxValue: _lateEntryHintMaxDays,
       ),
     ],
   );
@@ -451,6 +483,14 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
     title: context.t('admin.timeTracking.privacyTitle'),
     subtitle: context.t('admin.timeTracking.privacyHint'),
     children: [
+      // Before the fields, because it is what somebody reaching for them needs
+      // to know: nothing is deleted until a period is set here, and why 24
+      // months is the number people usually pick.
+      AdminNote(
+        icon: LucideIcons.scale,
+        text: context.t('admin.timeTracking.retentionLegal'),
+      ),
+      const SizedBox(height: 12),
       PolicyNumber(
         label: context.t('admin.timeTracking.descriptionPurgeLabel'),
         helper: context.t('admin.timeTracking.descriptionPurgeHint'),
@@ -459,7 +499,6 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         onChanged: (v) =>
             _setNestedQuietly('retention', 'descriptionPurgeMonths', v),
         maxValue: _retentionMaxMonths,
-        pending: true,
       ),
       PolicyNumber(
         label: context.t('admin.timeTracking.entryPurgeLabel'),
@@ -468,15 +507,11 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         value: _nested<num>('retention', 'entryPurgeMonths')?.toInt(),
         onChanged: (v) => _setNestedQuietly('retention', 'entryPurgeMonths', v),
         maxValue: _retentionMaxMonths,
-        pending: true,
       ),
-      PolicyText(
-        label: context.t('admin.timeTracking.privacyNoticeLabel'),
-        helper: context.t('admin.timeTracking.privacyNoticeHint'),
-        maxLines: 5,
+      const SizedBox(height: 8),
+      AdminPrivacyNoticeField(
         value: _value<String>('privacyNotice'),
         onChanged: (v) => _setQuietly('privacyNotice', v),
-        pending: true,
       ),
     ],
   );

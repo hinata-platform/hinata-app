@@ -818,15 +818,6 @@
   "time": {
     "hours": "Hours",
     "minutes": "Minutes",
-    "activityType": "Activity type",
-    "activity": {
-      "development": "Development",
-      "testing": "Testing",
-      "documentation": "Documentation",
-      "design": "Design",
-      "meeting": "Meeting",
-      "support": "Support"
-    },
     "date": "Date",
     "note": "Note (optional)",
     "fmt": {
@@ -841,6 +832,7 @@
     "loggedTotal": "{{spent}} logged in total",
     "deletedUser": "Deleted user",
     "legacySource": "Smart commits (before 2.0)",
+    "otherMember": "Another member",
     "deleteTitle": "Delete entry",
     "deleteConfirm": "Remove {{duration}} logged on {{date}}? This cannot be undone.",
     "deleted": "Entry deleted",
@@ -902,7 +894,6 @@
       "pickDuration": "Pick a duration",
       "start": "Start",
       "end": "End",
-      "activity": "Activity",
       "modeDuration": "Duration",
       "modeInterval": "Start and end",
       "noDescription": "No description",
@@ -951,7 +942,7 @@
     },
     "signal": {
       "countdown": "Your countdown is up.",
-      "breakOver": "Break over — back to it when you are ready.",
+      "breakOver": "Break over. Back to it when you are ready.",
       "workOver": "One interval done. Time for a break.",
       "workOver_plural": "{{count}} intervals done. Time for a break.",
       "titleFlash": "Interval over"
@@ -999,29 +990,39 @@
         "lockDate": "Entries before {{date}} are closed.",
         "approval": "You handed in {{from}} – {{to}}, so these entries are fixed.",
         "invoice": "An issued invoice references this entry.",
-        "unknown": "This entry is closed for editing."
+        "unknown": "This entry is closed for editing.",
+        "maxDaysBack": "Days before {{date}} can only be recorded once an administrator opens them."
       },
       "holder": {
-        "lockDate": "An administrator can reopen a span inside the closed period.",
+        "lockDate": "An administrator can open the day for you or reopen a span inside the closed period.",
         "approval": "A lead of the project, or an administrator, can reopen the period.",
-        "invoice": "Whoever issues invoices can settle it with a credit note."
+        "invoice": "Whoever issues invoices can settle it with a credit note.",
+        "maxDaysBack": "An administrator can open older days for you."
       },
       "remedy": {
-        "lockDate": "Ask for a correction — your reason is recorded and reaches an administrator.",
+        "lockDate": "Ask for a correction. Your reason is recorded and reaches an administrator.",
         "approval": "Ask for a correction, or have the period reopened.",
-        "invoice": "The invoice is never rewritten; a credit note settles it."
+        "invoice": "The invoice is never rewritten; a credit note settles it.",
+        "maxDaysBack": "Ask for the day to be opened for you. Your reason is recorded and goes to the administrators."
       },
       "chip": {
         "lockDate": "Closed",
         "approval": "Handed in",
         "invoice": "Invoiced",
-        "unknown": "Closed"
+        "unknown": "Closed",
+        "maxDaysBack": "Too far back"
       },
       "request": "Request a correction",
       "requestTitle": "Request a correction",
       "requestHint": "What is wrong, and what should it say?",
       "requestSend": "Send request",
-      "requestSent": "Your request has been sent and recorded."
+      "requestSent": "Your request has been sent and recorded.",
+      "requestDays": "Ask to open this day",
+      "requestDaysTitle": "Ask to open older days",
+      "requestDaysHint": "Why do you need to record these days now?",
+      "requestDaysSent": "Your request has been sent to the administrators.",
+      "requestOlderDays": "Ask for older days",
+      "pickDaysTitle": "Which days do you need?"
     },
     "approval": {
       "status": {
@@ -1067,7 +1068,8 @@
       "showEntries": "Show entries",
       "scope": {
         "mine": "Mine",
-        "inbox": "To decide"
+        "inbox": "To decide",
+        "corrections": "Corrections"
       },
       "empty": {
         "mine": {
@@ -1081,6 +1083,82 @@
       },
       "gridClamped": "The grid shows the first days of this period; the figures above cover all of it.",
       "nothingToSubmit": "No hours in this period yet."
+    },
+    "privacy": {
+      "title": "Privacy in time tracking",
+      "subtitle": "Who sees your time data, and what you should know about it",
+      "firstUseSubtitle": "Please read this once before you start. It changes nothing about how you work.",
+      "whoSees": "Who sees my time data?",
+      "notice": "Privacy notice",
+      "understood": "Understood",
+      "acknowledgeFailed": "That could not be saved. Please try again.",
+      "row": {
+        "self": "You see all of your own entries.",
+        "admins": "Administrators of this instance can see and change every entry.",
+        "members": "Other members of your projects see how much time was booked on an issue, but not who booked it or what the description says.",
+        "leadsSee": "Leads of your projects see your individual entries, their history and your rows in the timesheet, and can change your entries.",
+        "leadsTotals": "Leads of your projects see project totals only, never who booked what.",
+        "approvals": "You hand in timesheets, and a project lead approves them.",
+        "workloadReports": "Reports may compare booked time with capacity for each person.",
+        "alerts": "Leads are told when a project passes a limit of booked time.",
+        "targetReminders": "You get reminders about your own target. Nobody else does.",
+        "arbzgHints": "Hints about the Working Hours Act are shown to you and nobody else.",
+        "lateEntry": "An entry you record more than {{count}} day after the working day gets a hint. Only you see it.",
+        "lateEntry_plural": "An entry you record more than {{count}} days after the working day gets a hint. Only you see it.",
+        "foreignChanges": "If someone else changes one of your entries, that is recorded. You see it in the history of the entry.",
+        "timerRecorded": "Starting and stopping your timer is recorded in the audit log.",
+        "timerNotRecorded": "Starting and stopping your timer is not recorded.",
+        "entryCreation": "Creating an entry is recorded in the audit log.",
+        "entryRetention": "Entries are deleted after {{count}} month, except those inside a submitted or approved period.",
+        "entryRetention_plural": "Entries are deleted after {{count}} months, except those inside a submitted or approved period.",
+        "entryKept": "Entries are not deleted automatically.",
+        "descriptionRetention": "If an account is deleted, the descriptions of its entries and the notes on its timesheets are cleared after {{count}} month.",
+        "descriptionRetention_plural": "If an account is deleted, the descriptions of its entries and the notes on its timesheets are cleared after {{count}} months.",
+        "maxDaysBack": "You can record up to {{count}} day back. An administrator opens older days on request.",
+        "maxDaysBack_plural": "You can record up to {{count}} days back. An administrator opens older days on request."
+      },
+      "loadFailed": "The notice could not be loaded. Check your connection and try again."
+    },
+    "hint": {
+      "chip": {
+        "DAILY_MAXIMUM": "Over 10 hours",
+        "SHORT_REST": "Short rest",
+        "SUNDAY_WORK": "Sunday",
+        "LATE_ENTRY": "Recorded {{count}} day later",
+        "LATE_ENTRY_plural": "Recorded {{count}} days later"
+      },
+      "sentence": {
+        "DAILY_MAXIMUM": "You recorded {{duration}} on this day. The Working Hours Act allows at most 10 hours.",
+        "SHORT_REST": "Only {{duration}} lie between the end of the day before and the start of this one. The law asks for 11 hours.",
+        "SUNDAY_WORK": "Working time is recorded on this Sunday. Work on Sundays is only allowed in exceptions.",
+        "LATE_ENTRY": "This entry was recorded {{count}} day after the working day. This is only a hint for you and blocks nothing.",
+        "LATE_ENTRY_plural": "This entry was recorded {{count}} days after the working day. This is only a hint for you and blocks nothing."
+      }
+    },
+    "correction": {
+      "emptyTitle": "No correction requests",
+      "emptyMessage": "When someone asks for a locked entry to be corrected or for older days to be opened, and you can answer, the request appears here.",
+      "empty": "No requests.",
+      "answer": "Answer",
+      "answerTitle": "Answer the request",
+      "answerHint": "What happens now? The person who asked will read this.",
+      "answerSend": "Send answer",
+      "answered": "Your answer has been sent.",
+      "answeredBy": "Answer from {{name}}",
+      "reason": {
+        "LOCK_DATE": "Lock date",
+        "APPROVAL": "Submitted period",
+        "MAX_DAYS_BACK": "Too far back"
+      },
+      "more": "Load more",
+      "grant": "Open the days",
+      "grantTitle": "Open the days for this person",
+      "grantHint": "The days stay open for this person for two weeks. A message is optional and shows as the answer.",
+      "grantSend": "Open days",
+      "granted": "The days are open for this person now.",
+      "grantedBy": "{{name}} opened the days",
+      "yourRequest": "Your request",
+      "waiting": "No answer yet."
     }
   },
   "projects": {
@@ -1627,10 +1705,10 @@
     "security": "Security",
     "timeTracking": {
       "title": "Time tracking",
-      "hint": "Extended time tracking is off by default. Every policy below may stay unset — then the value from this server's environment applies. Switches that make one person's hours legible to another are off by default and carry a co-determination note.",
-      "codetermination": "Subject to co-determination: § 87 (1) no. 6 BetrVG (LPVG in the public sector). Agree this with the works or staff council before switching it on — objective suitability for monitoring is enough.",
+      "hint": "Extended time tracking is off by default. Every policy below may stay unset, and then the value from this server's environment applies. Switches that make one person's hours visible to another are off by default and carry a co-determination note.",
+      "codetermination": "Subject to co-determination: § 87 (1) no. 6 BetrVG (LPVG in the public sector). Agree this with the works or staff council before switching it on. It is enough that the function could be used for monitoring.",
       "envDefault": "Env default",
-      "envDefaultHint": "No value stored — this server's environment decides. Tap to set an explicit value.",
+      "envDefaultHint": "No value stored, so this server's environment decides. Tap to set a value of your own.",
       "useEnvDefault": "Use env default",
       "moduleTitle": "Module",
       "moduleHint": "The master switch for the extended time-tracking module.",
@@ -1648,7 +1726,7 @@
       "requiredTagTitle": "Tag required",
       "requiredTagHint": "An entry has to carry at least one tag.",
       "lockBeforeLabel": "Locked before",
-      "lockBeforeHint": "Entries before this day can no longer be created, changed or deleted — by anyone, the API included. The named day itself stays open. The date can never lie in the future: working time that is happening now always has to be recordable.",
+      "lockBeforeHint": "Entries before this day can no longer be created, changed or deleted by anyone, the API included. The day itself stays open. The date can never lie in the future, because working time that is happening now always has to be recordable.",
       "roundingModeLabel": "Rounding",
       "roundingModeHint": "Applies to reports only; the stored minutes are never changed.",
       "roundingMode": {
@@ -1675,7 +1753,7 @@
       "visibilityTitle": "Visibility and approvals",
       "visibilityHint": "Who may see whose hours, and in what rhythm timesheets are handed in.",
       "leadsSeeMemberEntriesTitle": "Leads see members' entries",
-      "leadsSeeMemberEntriesHint": "Off → leads see project totals only, never who booked what. On, the individual entries of project members become visible to them.",
+      "leadsSeeMemberEntriesHint": "Off: leads see project totals only. They see neither names nor descriptions on issues, and they do not change other people's entries. On: leads see the individual entries of their project members, their history and their timesheet rows, and may change those entries.",
       "approvalsTitle": "Timesheet approvals",
       "approvalsHint": "People submit their timesheet for a period; a lead or admin approves or rejects it. Requires “Leads see members' entries”.",
       "approvalPeriodLabel": "Approval period",
@@ -1724,14 +1802,13 @@
       "privacyTitle": "Privacy and retention",
       "privacyHint": "How long time data is kept, and what the people it describes are told about it.",
       "descriptionPurgeLabel": "Clear descriptions after",
-      "descriptionPurgeHint": "Empties the descriptions on deleted users' entries after this many months. Empty → the env default.",
+      "descriptionPurgeHint": "Clears the descriptions on the entries of deleted accounts, and the notes on their timesheets, after this many months. The hours stay. 0 means never.",
       "entryPurgeLabel": "Delete entries after",
-      "entryPurgeHint": "Removes entries older than this, for everyone. 24 months covers ArbZG and MiLoG.",
+      "entryPurgeHint": "Deletes older entries for everyone, except those inside a submitted or approved period. 0 means never, otherwise at least 24 months.",
       "monthsSuffix": "months",
       "privacyNoticeLabel": "Privacy notice",
-      "privacyNoticeHint": "Shown in the app alongside the module's time data. Empty → the built-in text.",
-      "notYetEnforced": "Recorded, but not yet acted on — the function behind this policy arrives in a later stage of the time-tracking work.",
-      "leadsSeeMemberEntriesPending": "Partly applied: an entry's history and the entries behind a submission already follow this policy. The timesheet matrix still shows every person's sums — that follows in a later stage.",
+      "privacyNoticeHint": "Markdown. Everyone sees it the first time they use time tracking and under Settings → Time tracking. Empty means the built-in text in the reader's language.",
+      "notYetEnforced": "Saved, but not applied yet. The function behind this policy comes in a later stage of time tracking.",
       "tagsTitle": "Tags",
       "tagsHint": "The vocabulary entries are labelled with. Renaming one carries every entry with it.",
       "tagsEmpty": "No tags yet.",
@@ -1744,12 +1821,12 @@
       "tagDeleteMessage": "\"{{name}}\" is removed from {{count}} entry. The entry itself stays.",
       "tagDeleteMessage_plural": "\"{{name}}\" is removed from {{count}} entries. The entries themselves stay.",
       "lockBeforeEveryone": "The lock applies to everyone, administrators included. Lifting it is the recorded way to edit a frozen period.",
-      "approvalsNeedVisibility": "Approving means reading somebody's entries, so switch on \"Leads see member entries\" as well — otherwise an approver sees a total with nothing behind it.",
+      "approvalsNeedVisibility": "Approving means reading a person's entries. Switch on “Leads see members' entries” as well, otherwise the approver only sees a total without content.",
       "periodPreviewTitle": "The next periods",
       "periodPreviewHint": "Changing the rhythm affects future submissions only. Periods already handed in keep the days they named.",
-      "periodPreviewFree": "Without a fixed rhythm, the person submitting chooses the span themselves — at most 92 days, and not overlapping one they have already handed in.",
+      "periodPreviewFree": "Without a fixed rhythm, the person submitting chooses the span themselves: at most 92 days, and not overlapping one they have already handed in.",
       "lockExceptionsTitle": "Reopened spans",
-      "lockExceptionsHint": "Open a single span inside the closed period instead of lifting the lock date altogether.",
+      "lockExceptionsHint": "Open a single span inside the closed period instead of lifting the lock date altogether. Everyone sees the span and its reason, so do not name a person in it. Days for one person are opened from their request.",
       "lockExceptionsLegal": "Working time is personal data, and inaccurate personal data has to be correctable without undue delay (Art. 16 GDPR). An exception is that way back: it opens exactly its own days, carries your reason, and is recorded in the audit log.",
       "lockExceptionsEmpty": "No span is currently open inside the closed period.",
       "lockExceptionAdd": "Reopen a span",
@@ -1757,7 +1834,23 @@
       "lockExceptionReason": "Why is this span being reopened?",
       "lockExceptionReasonHint": "Recorded in the audit log and visible to everyone.",
       "lockExceptionRemove": "Close again",
-      "lockExceptionRemoveConfirm": "Close {{period}} again? Its entries become read-only."
+      "lockExceptionRemoveConfirm": "Close {{period}} again? Its entries become read-only.",
+      "retentionLegal": "Nothing is deleted automatically until you set a period here. § 16 (2) ArbZG and § 17 MiLoG ask for working time records to be kept for two years, so 24 months is a common choice. After that, storage limitation applies (Art. 5 GDPR). A nightly job does the deleting and records every run in the audit log.",
+      "privacyNoticePreview": "Preview",
+      "maxDaysBackLabel": "Record up to",
+      "maxDaysBackHint": "How many days back time can be recorded. An older day is refused, and the person can ask an administrator to open it for them. Empty means 365.",
+      "lateEntryHintDaysLabel": "Hint for late entries after",
+      "lateEntryHintDaysHint": "Marks an entry recorded more than this many days after its working day, for that person only. It never blocks anything and reports nothing. 0 switches it off, empty uses the server default.",
+      "correctionsTitle": "Correction requests",
+      "correctionsHint": "Requests to correct locked entries or to open older days. Answer them here, or open the days for the person who asked.",
+      "grantsTitle": "Days opened for people",
+      "grantsHint": "Each opening closes by itself after two weeks. Close one sooner here.",
+      "grantsEmpty": "No days are open for anyone right now.",
+      "grantOpenUntil": "Open until {{date}}",
+      "grantRevoke": "Close now",
+      "grantRevokeTitle": "Close these days?",
+      "grantRevokeMessage": "{{name}} can then no longer record {{period}}. This goes into the audit log.",
+      "grantRevoked": "The days are closed again."
     },
     "passwordPolicy": "Password policy",
     "passwordPolicyHint": "Minimum requirements for user passwords.",
@@ -2206,7 +2299,12 @@
       "TIMESHEET_REOPENED": "Timesheet reopened",
       "TIME_CORRECTION_REQUESTED": "Correction requested",
       "TIME_LOCK_EXCEPTION_ADDED": "Span reopened",
-      "TIME_LOCK_EXCEPTION_REMOVED": "Reopened span closed"
+      "TIME_LOCK_EXCEPTION_REMOVED": "Reopened span closed",
+      "TIME_CORRECTION_ANSWERED": "Correction answered",
+      "TIME_BACKFILL_REQUESTED": "Older days requested",
+      "TIME_BACKFILL_GRANTED": "Days opened for a person",
+      "TIME_BACKFILL_REVOKED": "Opened days closed again",
+      "TIME_RETENTION_RUN": "Retention run"
     },
     "meta": {
       "oldRole": "Previous role",
@@ -2738,7 +2836,7 @@
     },
     "timeTracking": {
       "title": "Time tracking",
-      "subtitle": "Your own rhythm — lengths, countdown and the end-of-interval sound.",
+      "subtitle": "Your own rhythm: lengths, countdown and the sound at the end of an interval.",
       "pomodoro": "Pomodoro",
       "work": "Focus interval",
       "shortBreak": "Short break",
@@ -2751,7 +2849,20 @@
       "minutes": "{{count}} min",
       "intervals": "{{count}} interval",
       "intervals_plural": "{{count}} intervals",
-      "saveFailed": "Could not save your preferences."
+      "saveFailed": "Could not save your preferences.",
+      "privacy": "Privacy",
+      "privacyPanel": "Who sees my time data?",
+      "privacyPanelHint": "Worked out from the rules that are switched on right now, together with the privacy notice.",
+      "privacyOpen": "Show",
+      "exportCsv": "Export my time entries",
+      "exportCsvHint": "All your entries as a CSV file. The complete export of your account, time data included, is under Data & privacy.",
+      "exportCsvButton": "Export CSV",
+      "exportDone": "Your time entries have been exported.",
+      "exportTruncated": "The file holds only your most recent entries, because one file has at most 100,000 rows.",
+      "exportFailed": "The export could not be saved.",
+      "correction": "Corrections and older days",
+      "correctionHint": "You edit your own entries yourself. If a day is locked, open the entry and ask for a correction. If a day lies too far back, ask for it to be opened. Your reason goes to the person who can open it, and their answer reaches you as a notification.",
+      "requestDays": "Ask for older days"
     }
   },
   "twofa": {

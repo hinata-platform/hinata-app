@@ -30,7 +30,16 @@ class TimePolicySnapshot extends Equatable {
     this.approvalsEnabled = false,
     this.approvalRhythm = const ApprovalRhythm(),
     this.myFrozenPeriods = const [],
+    this.leadsSeeMemberEntries = false,
+    this.maxDaysBack = defaultMaxDaysBack,
+    this.arbzgHintsEnabled = false,
+    this.lateEntryHintDays,
+    this.myBackfillGrants = const [],
   });
+
+  /// What the server enforces when it says nothing: a year, as the 1.x routes
+  /// always have.
+  static const defaultMaxDaysBack = 365;
 
   /// What a fresh instance demands: nothing. Also what the app assumes while the
   /// policy is still loading, or when the server is too old to publish it — the
@@ -88,6 +97,63 @@ class TimePolicySnapshot extends Equatable {
   /// the lock date anyway.
   final List<TimesheetApproval> myFrozenPeriods;
 
+  /// Whether a lead sees the entries of the members of projects they lead —
+  /// including their rows in the timesheet. Off means leads see project totals,
+  /// never who booked what.
+  final bool leadsSeeMemberEntries;
+
+  /// How many days back a day can be recorded without an administrator opening
+  /// it first. A typo guard, never a deadline.
+  final int maxDaysBack;
+
+  /// Whether the Working Hours Act hints exist for the reader's own entries.
+  final bool arbzgHintsEnabled;
+
+  /// After how many days an entry is marked as recorded late, or null for no
+  /// such hint.
+  final int? lateEntryHintDays;
+
+  /// Days an administrator opened for the reader, beyond the limit or before the
+  /// lock date, each until it runs out. Only the reader's own: nobody else's
+  /// would change what this reader may record, and the server sends none.
+  final List<TimeOpenedDays> myBackfillGrants;
+
+  /// Whether `GET /time/hints` answers at all. Asked before calling it, so a
+  /// screen never pays for a 404.
+  bool get hintsEnabled => arbzgHintsEnabled || lateEntryHintDays != null;
+
+  /// The first day the date pickers offer.
+  ///
+  /// The oldest day the limit allows, or the start of an older span an
+  /// administrator has opened, for everyone or for the reader — a picker that
+  /// stopped at the limit would hide exactly the days an opening exists for.
+  /// Which of the days in between can be picked is [withinReach].
+  DateTime firstRecordableDay(DateTime today) {
+    var first = DateTime(today.year, today.month, today.day - maxDaysBack);
+    for (final exception in lockExceptions) {
+      if (exception.from.isBefore(first)) first = exception.from;
+    }
+    for (final grant in myBackfillGrants) {
+      if (grant.from.isBefore(first)) first = grant.from;
+    }
+    return first;
+  }
+
+  /// Whether [day] can be recorded as far as the limit goes: inside
+  /// [maxDaysBack] of [today], or opened by an exception or for the reader.
+  ///
+  /// The lock date is not asked here. A locked day can still be picked, and the
+  /// editor then says why it cannot be saved and how to ask for it; a day beyond
+  /// the limit that nothing opened is greyed out in the picker, whose footer
+  /// offers asking for it instead.
+  bool withinReach(DateTime day, DateTime today) {
+    final date = DateTime(day.year, day.month, day.day);
+    final oldest = DateTime(today.year, today.month, today.day - maxDaysBack);
+    if (!date.isBefore(oldest)) return true;
+    return lockExceptions.any((exception) => exception.covers(date)) ||
+        myBackfillGrants.any((grant) => grant.covers(date));
+  }
+
   /// An issue always brings its project, so requiring one requires the other.
   bool get requiresPlacement => requiredProject || requiredIssue;
 
@@ -132,7 +198,7 @@ class TimePolicySnapshot extends Equatable {
   /// A date-only comparison: the lock is a calendar day on both sides, and an
   /// instant would make it depend on the hour somebody happened to open the
   /// editor. An exception that reopens the day makes this false, which is what
-  /// an exception is for.
+  /// an exception is for, and so do days an administrator opened for the reader.
   ///
   /// This is only the *lock date*. A period somebody has handed in freezes its
   /// entries too, and that answer needs the approvals of the window on screen —
@@ -142,7 +208,8 @@ class TimePolicySnapshot extends Equatable {
     if (lock == null || date == null) return false;
     final day = DateTime(date.year, date.month, date.day);
     if (!day.isBefore(DateTime(lock.year, lock.month, lock.day))) return false;
-    return !lockExceptions.any((exception) => exception.covers(day));
+    return !lockExceptions.any((exception) => exception.covers(day)) &&
+        !myBackfillGrants.any((grant) => grant.covers(day));
   }
 
   /// Why [date] of [projectId] cannot be written, or null when it can.
@@ -211,6 +278,11 @@ class TimePolicySnapshot extends Equatable {
         approvalsEnabled: approvalsEnabled,
         approvalRhythm: approvalRhythm,
         myFrozenPeriods: periods,
+        leadsSeeMemberEntries: leadsSeeMemberEntries,
+        maxDaysBack: maxDaysBack,
+        arbzgHintsEnabled: arbzgHintsEnabled,
+        lateEntryHintDays: lateEntryHintDays,
+        myBackfillGrants: myBackfillGrants,
       );
 
   factory TimePolicySnapshot.fromJson(Map<String, dynamic> json) {
@@ -233,6 +305,15 @@ class TimePolicySnapshot extends Equatable {
       approvalRhythm: ApprovalRhythm.fromJson(
         (json['approvalPeriod'] as Map<String, dynamic>?) ?? const {},
       ),
+      leadsSeeMemberEntries: json['leadsSeeMemberEntries'] as bool? ?? false,
+      maxDaysBack:
+          (json['maxDaysBack'] as num?)?.toInt() ?? defaultMaxDaysBack,
+      arbzgHintsEnabled: json['arbzgHintsEnabled'] as bool? ?? false,
+      lateEntryHintDays: (json['lateEntryHintDays'] as num?)?.toInt(),
+      myBackfillGrants: [
+        for (final raw in (json['myBackfillGrants'] as List<dynamic>?) ?? [])
+          ?TimeOpenedDays.fromJson(raw as Map<String, dynamic>),
+      ],
     );
   }
 
@@ -251,7 +332,48 @@ class TimePolicySnapshot extends Equatable {
     approvalsEnabled,
     approvalRhythm,
     myFrozenPeriods,
+    leadsSeeMemberEntries,
+    maxDaysBack,
+    arbzgHintsEnabled,
+    lateEntryHintDays,
+    myBackfillGrants,
   ];
+}
+
+/// Days an administrator opened for the reader, until [expiresAt].
+///
+/// Not a lock exception: an exception opens days for everyone and publishes its
+/// reason, and these are opened for one person, whose reason stays between them
+/// and the administrators.
+class TimeOpenedDays extends Equatable {
+  const TimeOpenedDays({required this.from, required this.to, this.expiresAt});
+
+  final DateTime from;
+  final DateTime to;
+
+  /// When the days close again.
+  final DateTime? expiresAt;
+
+  /// Whether [date] falls inside, both bounds included.
+  bool covers(DateTime date) {
+    final day = DateTime(date.year, date.month, date.day);
+    return !day.isBefore(DateTime(from.year, from.month, from.day)) &&
+        !day.isAfter(DateTime(to.year, to.month, to.day));
+  }
+
+  static TimeOpenedDays? fromJson(Map<String, dynamic> json) {
+    final from = parseDate(json['from']);
+    final to = parseDate(json['to']);
+    if (from == null || to == null) return null;
+    return TimeOpenedDays(
+      from: from,
+      to: to,
+      expiresAt: parseInstant(json['expiresAt']),
+    );
+  }
+
+  @override
+  List<Object?> get props => [from, to, expiresAt];
 }
 
 /// One word from the tag catalogue.

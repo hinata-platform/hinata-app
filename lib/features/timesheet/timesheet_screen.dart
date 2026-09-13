@@ -34,6 +34,7 @@ import '../time/approval_actions.dart';
 import '../time/lock_notice.dart';
 import '../time/time_views.dart';
 import '../time/time_entry_sheet.dart';
+import '../time/time_privacy_sheet.dart';
 import '../time/timesheet_cell_sheet.dart';
 import '../sprint/modals/glass_modal.dart'
     show
@@ -165,6 +166,9 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
         if (mounted) unawaited(_load());
       }),
     );
+    // Only as the module's view: the base route is the 1.x timesheet, which
+    // exists on instances without the module and has no notice to show.
+    if (widget.moduleView) offerTimePrivacyNotice(context);
   }
 
   bool get _isCurrentWeek => weekStartFor(context, DateTime.now()) == _from;
@@ -182,6 +186,18 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// whatever this instance has configured.
   bool _usesPeriods(TimePolicySnapshot policy) =>
       widget.moduleView && policy.approvalsEnabled;
+
+  /// Whether the project filter is offered to somebody who is not an
+  /// administrator.
+  ///
+  /// With `leadsSeeMemberEntries` on, a lead who narrows the module's grid to a
+  /// project they lead gets its members' rows — the last place that policy
+  /// reaches. For a project they do not lead the server answers with their own
+  /// rows, as before, so offering the filter to every member is harmless and
+  /// saves the app from guessing who leads what. Never on the base route: its
+  /// published client has no member rows to show.
+  bool _leadsSeeMembers(TimePolicySnapshot policy) =>
+      widget.moduleView && policy.leadsSeeMemberEntries;
 
   /// The period the grid is showing, clamped to what the grid route accepts.
   ///
@@ -227,8 +243,12 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     if (!(context.read<AuthBloc>().state.user?.isAdmin ?? false)) {
       _userFilter = null;
       _userFilterLabel = null;
-      _projectFilter = null;
-      _projectFilterLabel = null;
+      // A lead keeps the project they picked while the policy lets them see its
+      // members; the server decides whether they lead it.
+      if (!_leadsSeeMembers(context.read<TimePolicyCubit>().state)) {
+        _projectFilter = null;
+        _projectFilterLabel = null;
+      }
     }
     final seq = ++_loadSeq;
     setState(() {
@@ -822,6 +842,8 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                 active: _userFilter != null,
                 onTap: _pickUser,
               ),
+            ],
+            if (admin || _leadsSeeMembers(_policy)) ...[
               const SizedBox(width: 8),
               _DockedFilterPill(
                 icon: LucideIcons.folderKanban,
@@ -839,6 +861,9 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
 
   Widget _toolbar(bool admin) {
     final localizations = MaterialLocalizations.of(context);
+    // Read here, in build, rather than inside the LayoutBuilder below: its
+    // builder runs during layout, where watching a cubit is not allowed.
+    final projectFilter = admin || _leadsSeeMembers(_policy);
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = math.min(_filterWidth, constraints.maxWidth);
@@ -859,6 +884,8 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                   onTap: _pickUser,
                 ),
               ),
+            ],
+            if (projectFilter) ...[
               SizedBox(
                 width: width,
                 child: _FilterField(

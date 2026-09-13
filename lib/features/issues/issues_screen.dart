@@ -898,6 +898,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
                               // as secondary. `collapseToIcon` keeps the phone
                               // form — a bare "+" — so only the paint changed.
                               PrimaryButton(
+                                icon: LucideIcons.plus,
                                 label: context.t('issues.new'),
                                 collapseToIcon: true,
                                 onPressed: () async {
