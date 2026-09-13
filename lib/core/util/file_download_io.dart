@@ -67,6 +67,92 @@ Future<DownloadResult> downloadBytes(
   }
 }
 
+/// Native: fetches the file through [fetch] into a temporary path, then hands it
+/// over the way [downloadBytes] does, without the bytes ever being held in
+/// memory whole.
+///
+/// A failure inside [fetch] travels up exactly as it was thrown: it carries the
+/// server's own explanation, which [DownloadOutcome.failed] would lose. Only
+/// handing the finished file over becomes [DownloadResult.failed].
+Future<DownloadResult> downloadFile(
+  String filename,
+  String mimeType,
+  Future<void> Function(String path) fetch, {
+  Rect? sharePositionOrigin,
+}) async {
+  final name = _safeName(filename);
+  final directory = await getTemporaryDirectory();
+  await directory.create(recursive: true);
+  final file = File('${directory.path}/$name');
+  await fetch(file.path);
+  try {
+    if (Platform.isLinux) return await _moveToDownloads(name, file);
+    final result = await SharePlus.instance.share(
+      ShareParams(
+        files: [
+          XFile(
+            file.path,
+            mimeType: mimeType.isEmpty ? null : mimeType,
+            name: name,
+          ),
+        ],
+        sharePositionOrigin: sharePositionOrigin,
+      ),
+    );
+    return result.status == ShareResultStatus.dismissed
+        ? DownloadResult.dismissed
+        : DownloadResult.shared;
+  } catch (error, stack) {
+    if (kDebugMode) {
+      debugPrint('[download] $name failed: $error\n$stack');
+    }
+    return DownloadResult.failed;
+  }
+}
+
+/// [_saveToDownloads] for a file that is already on disk, with the same
+/// fallbacks, so a large file is copied rather than read into memory.
+Future<DownloadResult> _moveToDownloads(String name, File source) async {
+  final targets = await _downloadTargets();
+  for (final directory in targets.take(targets.length - 1)) {
+    try {
+      return await _copyInto(directory, name, source);
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('[download] ${directory.path} refused $name: $error');
+      }
+    }
+  }
+  return _copyInto(targets.last, name, source);
+}
+
+/// [_saveInto] for a file on disk: staged under a private name and moved into
+/// place, for the same reason.
+Future<DownloadResult> _copyInto(
+  Directory directory,
+  String name,
+  File source,
+) async {
+  await directory.create(recursive: true);
+  final target = '${directory.path}/${_freeName(directory, name)}';
+  final staging = File('${directory.path}/.hinata-download-${_stagingToken()}');
+  try {
+    await source.copy(staging.path);
+    final saved = await staging.rename(target);
+    return DownloadResult(
+      DownloadOutcome.saved,
+      fileName: saved.uri.pathSegments.last,
+    );
+  } catch (_) {
+    try {
+      if (staging.existsSync()) staging.deleteSync();
+    } catch (_) {
+      // Nothing more to do; the caller already reports the failure.
+    }
+    rethrow;
+  }
+}
+
 /// Writes the file into the user's Downloads folder and reports what it is
 /// called.
 ///

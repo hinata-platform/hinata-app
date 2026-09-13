@@ -2704,7 +2704,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   /// Who may correct which entry: me for my own, plus everyone's for a lead
   /// of this project or an admin — the rule the server enforces, read from
-  /// the session and the project rather than guessed per row.
+  /// the session and the project rather than guessed per row. An entry the
+  /// server sent without its details is never offered for removal; see
+  /// [WorkItemAccess.canDelete].
   WorkItemAccess get _workItemAccess {
     final me = context.read<AuthBloc>().state.user;
     if (me == null) return WorkItemAccess.none;

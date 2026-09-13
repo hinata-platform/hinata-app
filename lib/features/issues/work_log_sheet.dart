@@ -10,11 +10,10 @@ import '../../core/models/work_models.dart';
 import '../../core/repositories/issue_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
-import 'work_item_labels.dart';
 import '../sprint/modals/glass_modal.dart'
     show glassWoltSurface, showGlassDatePicker;
 
-/// Log work on an issue (YouTrack work item): duration, activity, note.
+/// Log work on an issue: duration, date and a note.
 ///
 /// With [existing] the same sheet corrects that entry instead: every field is
 /// prefilled, the title says so, and saving patches only what changed.
@@ -68,13 +67,7 @@ class _WorkLogFormState extends State<WorkLogForm> {
   late final TextEditingController _hours;
   late final TextEditingController _minutes;
   late final TextEditingController _note;
-  late String _activity;
   late DateTime _date;
-
-  /// The canonical activities plus, when correcting, whatever the entry has —
-  /// an MCP client may have logged one the app does not list, and a dropdown
-  /// whose value is not among its items asserts.
-  late final List<String> _activities;
   bool _saving = false;
   String? _error;
 
@@ -90,9 +83,7 @@ class _WorkLogFormState extends State<WorkLogForm> {
     _hours = TextEditingController(text: '${minutes ~/ 60}');
     _minutes = TextEditingController(text: '${minutes % 60}');
     _note = TextEditingController(text: existing?.description ?? '');
-    _activity = existing?.activityType ?? workItemActivities.first;
     _date = existing?.date ?? DateTime.now();
-    _activities = workItemActivityChoices(_activity);
   }
 
   @override
@@ -146,24 +137,6 @@ class _WorkLogFormState extends State<WorkLogForm> {
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 14),
-            DropdownButtonFormField<String>(
-              initialValue: _activity,
-              decoration: InputDecoration(
-                labelText: context.t('time.activityType'),
-              ),
-              items: [
-                for (final activity in _activities)
-                  DropdownMenuItem(
-                    value: activity,
-                    // The value stays the canonical English key sent to the API;
-                    // only the visible label is localized.
-                    child: Text(activityLabel(context, activity)),
-                  ),
-              ],
-              onChanged: (value) =>
-                  setState(() => _activity = value ?? workItemActivities.first),
             ),
             const SizedBox(height: 14),
             OutlinedButton.icon(
@@ -252,7 +225,6 @@ class _WorkLogFormState extends State<WorkLogForm> {
         await repository.addWorkItem(
           widget.issueId,
           minutes: total,
-          activityType: _activity,
           description: note.isEmpty ? null : note,
           date: _date,
         );
@@ -262,17 +234,13 @@ class _WorkLogFormState extends State<WorkLogForm> {
         final sameDate =
             existing.date != null && DateUtils.isSameDay(existing.date, _date);
         final sameNote = note == (existing.description ?? '').trim();
-        if (total == existing.durationMinutes &&
-            _activity == existing.activityType &&
-            sameNote &&
-            sameDate) {
+        if (total == existing.durationMinutes && sameNote && sameDate) {
           if (mounted) Navigator.of(context).pop(false);
           return;
         }
         final patched = await repository.updateWorkItem(
           existing.id,
           minutes: total == existing.durationMinutes ? null : total,
-          activityType: _activity == existing.activityType ? null : _activity,
           description: sameNote ? null : note,
           date: sameDate ? null : _date,
         );

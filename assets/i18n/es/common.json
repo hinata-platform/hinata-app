@@ -818,15 +818,6 @@
   "time": {
     "hours": "Horas",
     "minutes": "Minutos",
-    "activityType": "Tipo de actividad",
-    "activity": {
-      "development": "Desarrollo",
-      "testing": "Pruebas",
-      "documentation": "Documentación",
-      "design": "Diseño",
-      "meeting": "Reunión",
-      "support": "Soporte"
-    },
     "date": "Fecha",
     "note": "Nota (opcional)",
     "fmt": {
@@ -841,6 +832,7 @@
     "loggedTotal": "{{spent}} registrado en total",
     "deletedUser": "Usuario eliminado",
     "legacySource": "Smart commits (antes de 2.0)",
+    "otherMember": "Otro miembro",
     "deleteTitle": "Eliminar registro",
     "deleteConfirm": "¿Eliminar {{duration}} registrado el {{date}}? Esta acción no se puede deshacer.",
     "deleted": "Registro eliminado",
@@ -902,7 +894,6 @@
       "pickDuration": "Elegir duración",
       "start": "Inicio",
       "end": "Fin",
-      "activity": "Actividad",
       "modeDuration": "Duración",
       "modeInterval": "Inicio y fin",
       "noDescription": "Sin descripción",
@@ -999,29 +990,39 @@
         "lockDate": "Los registros anteriores al {{date}} están cerrados.",
         "approval": "Has enviado {{from}} – {{to}}, así que estos registros quedan fijos.",
         "invoice": "Una factura emitida hace referencia a este registro.",
-        "unknown": "Este registro está cerrado a cambios."
+        "unknown": "Este registro está cerrado a cambios.",
+        "maxDaysBack": "Los días anteriores al {{date}} solo se pueden registrar cuando un administrador los abre."
       },
       "holder": {
-        "lockDate": "Un administrador puede reabrir un intervalo dentro del periodo cerrado.",
+        "lockDate": "Un administrador puede abrirte el día o reabrir un intervalo dentro del periodo cerrado.",
         "approval": "Quien dirige el proyecto, o un administrador, puede reabrir el periodo.",
-        "invoice": "Quien emite facturas lo compensa con un abono."
+        "invoice": "Quien emite facturas lo compensa con un abono.",
+        "maxDaysBack": "Un administrador puede abrirte días más antiguos."
       },
       "remedy": {
         "lockDate": "Pide una corrección: tu motivo se registra y llega a un administrador.",
         "approval": "Pide una corrección o que se reabra el periodo.",
-        "invoice": "La factura nunca se reescribe; un abono la compensa."
+        "invoice": "La factura nunca se reescribe; un abono la compensa.",
+        "maxDaysBack": "Pide que te abran el día. Tu motivo queda registrado y llega a los administradores."
       },
       "chip": {
         "lockDate": "Cerrado",
         "approval": "Enviado",
         "invoice": "Facturado",
-        "unknown": "Cerrado"
+        "unknown": "Cerrado",
+        "maxDaysBack": "Demasiado antiguo"
       },
       "request": "Pedir una corrección",
       "requestTitle": "Pedir una corrección",
       "requestHint": "¿Qué está mal y qué debería decir?",
       "requestSend": "Enviar petición",
-      "requestSent": "Tu petición se ha enviado y registrado."
+      "requestSent": "Tu petición se ha enviado y registrado.",
+      "requestDays": "Pedir que se abra este día",
+      "requestDaysTitle": "Pedir que se abran días anteriores",
+      "requestDaysHint": "¿Por qué necesitas registrar estos días ahora?",
+      "requestDaysSent": "Tu petición se ha enviado a los administradores.",
+      "requestOlderDays": "Pedir días anteriores",
+      "pickDaysTitle": "¿Qué días necesitas?"
     },
     "approval": {
       "status": {
@@ -1067,7 +1068,8 @@
       "showEntries": "Ver registros",
       "scope": {
         "mine": "Míos",
-        "inbox": "Por decidir"
+        "inbox": "Por decidir",
+        "corrections": "Correcciones"
       },
       "empty": {
         "mine": {
@@ -1081,6 +1083,82 @@
       },
       "gridClamped": "La cuadrícula muestra los primeros días de este periodo; las cifras de arriba abarcan todo.",
       "nothingToSubmit": "Todavía no hay horas en este periodo."
+    },
+    "privacy": {
+      "title": "Privacidad en el registro de tiempo",
+      "subtitle": "Quién ve tus datos de tiempo y qué debes saber al respecto",
+      "firstUseSubtitle": "Léelo una vez antes de empezar. No cambia nada en tu forma de trabajar.",
+      "whoSees": "¿Quién ve mis datos de tiempo?",
+      "notice": "Aviso de privacidad",
+      "understood": "Entendido",
+      "acknowledgeFailed": "No se ha podido guardar. Inténtalo de nuevo.",
+      "row": {
+        "self": "Ves todos tus propios registros.",
+        "admins": "Los administradores de esta instancia pueden ver y cambiar todos los registros.",
+        "members": "Los demás miembros de tus proyectos ven cuánto tiempo se registró en una incidencia, pero no quién lo registró ni qué dice la descripción.",
+        "leadsSee": "Los responsables de tus proyectos ven tus registros individuales, su historial y tus filas en la hoja de horas, y pueden cambiar tus registros.",
+        "leadsTotals": "Los responsables de tus proyectos solo ven los totales del proyecto, nunca quién registró qué.",
+        "approvals": "Envías hojas de horas y un responsable del proyecto las aprueba.",
+        "workloadReports": "Los informes pueden comparar el tiempo registrado con la capacidad de cada persona.",
+        "alerts": "Los responsables reciben un aviso cuando un proyecto supera un límite de tiempo registrado.",
+        "targetReminders": "Recibes recordatorios sobre tu propio objetivo. Nadie más los recibe.",
+        "arbzgHints": "Los avisos sobre la ley alemana de jornada laboral solo los ves tú.",
+        "lateEntry": "Un registro que creas más de {{count}} día después del día trabajado recibe un aviso. Solo tú lo ves.",
+        "lateEntry_plural": "Un registro que creas más de {{count}} días después del día trabajado recibe un aviso. Solo tú lo ves.",
+        "foreignChanges": "Si otra persona cambia uno de tus registros, queda constancia. Lo ves en el historial de ese registro.",
+        "timerRecorded": "El inicio y la parada de tu temporizador quedan en el registro de auditoría.",
+        "timerNotRecorded": "No se guarda cuándo inicias o detienes tu temporizador.",
+        "entryCreation": "La creación de un registro queda en el registro de auditoría.",
+        "entryRetention": "Los registros se eliminan pasado {{count}} mes, salvo los de un periodo enviado o aprobado.",
+        "entryRetention_plural": "Los registros se eliminan pasados {{count}} meses, salvo los de un periodo enviado o aprobado.",
+        "entryKept": "Los registros no se eliminan automáticamente.",
+        "descriptionRetention": "Si se elimina una cuenta, las descripciones de sus registros y las notas de sus hojas de horas se vacían pasado {{count}} mes.",
+        "descriptionRetention_plural": "Si se elimina una cuenta, las descripciones de sus registros y las notas de sus hojas de horas se vacían pasados {{count}} meses.",
+        "maxDaysBack": "Puedes registrar hasta {{count}} día atrás. Un administrador abre los días anteriores si se lo pides.",
+        "maxDaysBack_plural": "Puedes registrar hasta {{count}} días atrás. Un administrador abre los días anteriores si se lo pides."
+      },
+      "loadFailed": "No se ha podido cargar el aviso. Comprueba tu conexión e inténtalo de nuevo."
+    },
+    "hint": {
+      "chip": {
+        "DAILY_MAXIMUM": "Más de 10 horas",
+        "SHORT_REST": "Descanso corto",
+        "SUNDAY_WORK": "Domingo",
+        "LATE_ENTRY": "Registrado {{count}} día después",
+        "LATE_ENTRY_plural": "Registrado {{count}} días después"
+      },
+      "sentence": {
+        "DAILY_MAXIMUM": "En este día hay {{duration}} de tiempo registrado. La ley alemana de jornada laboral permite 10 horas como máximo.",
+        "SHORT_REST": "Entre el final del día anterior y el inicio de este solo hay {{duration}}. La ley pide 11 horas.",
+        "SUNDAY_WORK": "Este domingo tiene tiempo de trabajo registrado. Trabajar en domingo solo está permitido de forma excepcional.",
+        "LATE_ENTRY": "Este registro se creó {{count}} día después del día trabajado. Es solo un aviso para ti y no bloquea nada.",
+        "LATE_ENTRY_plural": "Este registro se creó {{count}} días después del día trabajado. Es solo un aviso para ti y no bloquea nada."
+      }
+    },
+    "correction": {
+      "emptyTitle": "No hay peticiones de corrección",
+      "emptyMessage": "Cuando alguien pida corregir un registro bloqueado o abrir días anteriores y tú puedas responder, la petición aparecerá aquí.",
+      "empty": "No hay peticiones.",
+      "answer": "Responder",
+      "answerTitle": "Responder a la petición",
+      "answerHint": "¿Qué pasa ahora? La persona que lo pidió leerá esto.",
+      "answerSend": "Enviar respuesta",
+      "answered": "Tu respuesta se ha enviado.",
+      "answeredBy": "Respuesta de {{name}}",
+      "reason": {
+        "LOCK_DATE": "Fecha de bloqueo",
+        "APPROVAL": "Periodo enviado",
+        "MAX_DAYS_BACK": "Demasiado antiguo"
+      },
+      "more": "Cargar más",
+      "grant": "Abrir los días",
+      "grantTitle": "Abrir los días para esta persona",
+      "grantHint": "Los días quedan abiertos para esta persona durante dos semanas. El mensaje es opcional y aparece como respuesta.",
+      "grantSend": "Abrir días",
+      "granted": "Los días ya están abiertos para esta persona.",
+      "grantedBy": "{{name}} abrió los días",
+      "yourRequest": "Tu petición",
+      "waiting": "Todavía no hay respuesta."
     }
   },
   "projects": {
@@ -1627,10 +1705,10 @@
     "security": "Seguridad",
     "timeTracking": {
       "title": "Registro de tiempo",
-      "hint": "El registro de tiempo ampliado está desactivado por defecto. Cada política puede quedar sin valor: entonces se aplica el valor del entorno de este servidor. Los interruptores que hacen legibles las horas de una persona para otra están desactivados por defecto y llevan una nota de cogestión.",
-      "codetermination": "Sujeto a cogestión: § 87 (1) n.º 6 BetrVG (LPVG en el sector público). Acuérdalo con el comité de empresa o de personal antes de activarlo: basta con la aptitud objetiva para la vigilancia.",
+      "hint": "El registro de tiempo ampliado está desactivado por defecto. Cada política de abajo puede quedar sin valor, y entonces se aplica el valor del entorno de este servidor. Los interruptores que hacen visibles las horas de una persona para otra están desactivados por defecto y llevan una nota de cogestión.",
+      "codetermination": "Sujeto a cogestión: § 87 (1) n.º 6 BetrVG (LPVG en el sector público). Acuérdalo con el comité de empresa o de personal antes de activarlo. Basta con que la función pueda usarse para vigilar.",
       "envDefault": "Valor del entorno",
-      "envDefaultHint": "No hay valor guardado: decide el entorno de este servidor. Toca para fijar un valor explícito.",
+      "envDefaultHint": "No hay valor guardado, así que decide el entorno de este servidor. Toca para fijar un valor propio.",
       "useEnvDefault": "Usar el valor del entorno",
       "moduleTitle": "Módulo",
       "moduleHint": "El interruptor principal del módulo de registro de tiempo ampliado.",
@@ -1648,7 +1726,7 @@
       "requiredTagTitle": "Etiqueta obligatoria",
       "requiredTagHint": "Una entrada debe llevar al menos una etiqueta.",
       "lockBeforeLabel": "Bloqueado antes de",
-      "lockBeforeHint": "Las entradas anteriores a ese día ya no se pueden crear, cambiar ni borrar, por nadie, tampoco vía API. El día indicado sigue abierto. La fecha nunca puede estar en el futuro: el tiempo de trabajo actual siempre tiene que poder registrarse.",
+      "lockBeforeHint": "Nadie puede ya crear, cambiar ni borrar entradas anteriores a este día, tampoco a través de la API. El día en sí sigue abierto. La fecha nunca puede estar en el futuro, porque el tiempo de trabajo actual siempre tiene que poder registrarse.",
       "roundingModeLabel": "Redondeo",
       "roundingModeHint": "Solo se aplica a los informes; los minutos guardados nunca cambian.",
       "roundingMode": {
@@ -1675,7 +1753,7 @@
       "visibilityTitle": "Visibilidad y aprobaciones",
       "visibilityHint": "Quién puede ver las horas de quién y con qué ritmo se entregan las hojas de horas.",
       "leadsSeeMemberEntriesTitle": "Los responsables ven las entradas de los miembros",
-      "leadsSeeMemberEntriesHint": "Desactivado → los responsables solo ven totales del proyecto, nunca quién registró qué. Activado, las entradas individuales de los miembros del proyecto se vuelven visibles para ellos.",
+      "leadsSeeMemberEntriesHint": "Desactivado: los responsables solo ven los totales del proyecto. En las incidencias no ven nombres ni descripciones, y no cambian entradas ajenas. Activado: los responsables ven las entradas individuales de los miembros de sus proyectos, su historial y sus filas en la hoja de horas, y pueden cambiar esas entradas.",
       "approvalsTitle": "Aprobación de hojas de horas",
       "approvalsHint": "Las personas envían su hoja de horas de un periodo; un responsable o administrador la aprueba o la rechaza. Requiere «Los responsables ven las entradas de los miembros».",
       "approvalPeriodLabel": "Periodo de aprobación",
@@ -1724,14 +1802,13 @@
       "privacyTitle": "Privacidad y conservación",
       "privacyHint": "Cuánto tiempo se conservan los datos de tiempo y qué se les dice a las personas a las que describen.",
       "descriptionPurgeLabel": "Vaciar descripciones tras",
-      "descriptionPurgeHint": "Vacía las descripciones de las entradas de usuarios borrados tras estos meses. Vacío → valor del entorno.",
+      "descriptionPurgeHint": "Vacía las descripciones de las entradas de cuentas eliminadas, y las notas de sus hojas de horas, tras estos meses. Las horas se mantienen. 0 significa nunca.",
       "entryPurgeLabel": "Borrar entradas tras",
-      "entryPurgeHint": "Elimina las entradas más antiguas, para todos. 24 meses cubren ArbZG y MiLoG.",
+      "entryPurgeHint": "Borra las entradas más antiguas de todos, salvo las de un periodo enviado o aprobado. 0 significa nunca. Si no, al menos 24 meses.",
       "monthsSuffix": "meses",
       "privacyNoticeLabel": "Aviso de privacidad",
-      "privacyNoticeHint": "Se muestra en la app junto a los datos de tiempo del módulo. Vacío → el texto integrado.",
+      "privacyNoticeHint": "Markdown. Todos lo ven la primera vez que usan el registro de tiempo y en Ajustes → Control de tiempo. Vacío significa el texto integrado en el idioma de quien lo lee.",
       "notYetEnforced": "Se guarda, pero aún no se aplica: la función detrás de esta política llegará en una fase posterior del registro de tiempo.",
-      "leadsSeeMemberEntriesPending": "Aplicada en parte: el historial de una entrada y las entradas que hay tras un envío ya siguen esta política. La matriz del parte de horas sigue mostrando las sumas de cada persona; eso llegará en una etapa posterior.",
       "tagsTitle": "Etiquetas",
       "tagsHint": "El vocabulario con el que se etiquetan las entradas. Renombrar una arrastra todas las entradas.",
       "tagsEmpty": "Todavía no hay etiquetas.",
@@ -1744,12 +1821,12 @@
       "tagDeleteMessage": "\"{{name}}\" se quitará de {{count}} entrada. La entrada se conserva.",
       "tagDeleteMessage_plural": "\"{{name}}\" se quitará de {{count}} entradas. Las entradas se conservan.",
       "lockBeforeEveryone": "El bloqueo rige para todos, también para los administradores. Levantarlo es la vía documentada para modificar un periodo cerrado.",
-      "approvalsNeedVisibility": "Aprobar significa leer los registros de una persona, así que activa también «Los responsables ven los registros de los miembros»: de lo contrario verán un total sin nada detrás.",
+      "approvalsNeedVisibility": "Aprobar significa leer las entradas de una persona. Activa también «Los responsables ven las entradas de los miembros»; si no, quien aprueba solo ve un total sin contenido.",
       "periodPreviewTitle": "Los próximos periodos",
       "periodPreviewHint": "Cambiar el ritmo solo afecta a los envíos futuros. Los periodos ya enviados conservan los días que nombraron.",
       "periodPreviewFree": "Sin un ritmo fijo, quien envía elige el intervalo: como máximo 92 días y sin solaparse con uno ya enviado.",
       "lockExceptionsTitle": "Intervalos reabiertos",
-      "lockExceptionsHint": "Abre un único intervalo dentro del periodo cerrado en lugar de levantar toda la fecha de bloqueo.",
+      "lockExceptionsHint": "Abre un único intervalo dentro del periodo cerrado en lugar de levantar toda la fecha de bloqueo. Todos ven el intervalo y su motivo, así que no nombres a ninguna persona en él. Los días para una sola persona se abren desde su petición.",
       "lockExceptionsLegal": "El tiempo de trabajo es un dato personal, y los datos personales inexactos deben poder corregirse sin dilación indebida (art. 16 RGPD). Una excepción es ese camino de vuelta: abre exactamente sus días, lleva tu motivo y queda en el registro de auditoría.",
       "lockExceptionsEmpty": "Ahora mismo no hay ningún intervalo abierto dentro del periodo cerrado.",
       "lockExceptionAdd": "Reabrir un intervalo",
@@ -1757,7 +1834,23 @@
       "lockExceptionReason": "¿Por qué se reabre este intervalo?",
       "lockExceptionReasonHint": "Queda en el registro de auditoría y es visible para todos.",
       "lockExceptionRemove": "Cerrar de nuevo",
-      "lockExceptionRemoveConfirm": "¿Cerrar {{period}} de nuevo? Sus registros pasarán a ser de solo lectura."
+      "lockExceptionRemoveConfirm": "¿Cerrar {{period}} de nuevo? Sus registros pasarán a ser de solo lectura.",
+      "retentionLegal": "No se borra nada automáticamente mientras no fijes aquí un plazo. El § 16 (2) ArbZG y el § 17 MiLoG exigen conservar los registros de jornada durante dos años, por eso 24 meses es una elección habitual. Después se aplica la limitación del plazo de conservación (art. 5 RGPD). Un proceso nocturno se encarga del borrado y deja constancia de cada ejecución en el registro de auditoría.",
+      "privacyNoticePreview": "Vista previa",
+      "maxDaysBackLabel": "Registrar hasta",
+      "maxDaysBackHint": "Cuántos días hacia atrás se puede registrar tiempo. Un día anterior se rechaza, y la persona puede pedir a un administrador que se lo abra. Vacío significa 365.",
+      "lateEntryHintDaysLabel": "Aviso de registro tardío tras",
+      "lateEntryHintDaysHint": "Marca un registro creado más de estos días después de su día trabajado, solo para esa persona. Nunca bloquea nada ni informa a nadie. 0 lo desactiva y vacío usa el valor predeterminado del servidor.",
+      "correctionsTitle": "Peticiones de corrección",
+      "correctionsHint": "Peticiones para corregir entradas bloqueadas o abrir días anteriores. Respóndelas aquí o abre los días para la persona que las pidió.",
+      "grantsTitle": "Días abiertos para personas",
+      "grantsHint": "Cada apertura se cierra sola a las dos semanas. Aquí puedes cerrar una antes.",
+      "grantsEmpty": "Ahora mismo no hay días abiertos para nadie.",
+      "grantOpenUntil": "Abierto hasta {{date}}",
+      "grantRevoke": "Cerrar ahora",
+      "grantRevokeTitle": "¿Cerrar estos días?",
+      "grantRevokeMessage": "{{name}} ya no podrá registrar {{period}}. Queda constancia de ello.",
+      "grantRevoked": "Los días vuelven a estar cerrados."
     },
     "passwordPolicy": "Política de contraseñas",
     "passwordPolicyHint": "Requisitos mínimos de las contraseñas de los usuarios.",
@@ -2206,7 +2299,12 @@
       "TIMESHEET_REOPENED": "Hoja de horas reabierta",
       "TIME_CORRECTION_REQUESTED": "Corrección solicitada",
       "TIME_LOCK_EXCEPTION_ADDED": "Intervalo reabierto",
-      "TIME_LOCK_EXCEPTION_REMOVED": "Intervalo reabierto cerrado"
+      "TIME_LOCK_EXCEPTION_REMOVED": "Intervalo reabierto cerrado",
+      "TIME_CORRECTION_ANSWERED": "Corrección respondida",
+      "TIME_BACKFILL_REQUESTED": "Días anteriores solicitados",
+      "TIME_BACKFILL_GRANTED": "Días abiertos para una persona",
+      "TIME_BACKFILL_REVOKED": "Días abiertos cerrados de nuevo",
+      "TIME_RETENTION_RUN": "Limpieza por plazo de conservación"
     },
     "meta": {
       "oldRole": "Rol anterior",
@@ -2738,7 +2836,7 @@
     },
     "timeTracking": {
       "title": "Control de tiempo",
-      "subtitle": "Tu propio ritmo: duraciones, cuenta atrás y el sonido al terminar.",
+      "subtitle": "Tu propio ritmo: duraciones, cuenta atrás y el sonido al final de cada intervalo.",
       "pomodoro": "Pomodoro",
       "work": "Intervalo de trabajo",
       "shortBreak": "Pausa corta",
@@ -2751,7 +2849,20 @@
       "minutes": "{{count}} min",
       "intervals": "{{count}} intervalo",
       "intervals_plural": "{{count}} intervalos",
-      "saveFailed": "No se han podido guardar tus preferencias."
+      "saveFailed": "No se han podido guardar tus preferencias.",
+      "privacy": "Privacidad",
+      "privacyPanel": "¿Quién ve mis datos de tiempo?",
+      "privacyPanelHint": "Calculado a partir de las reglas activas ahora mismo, junto con el aviso de privacidad.",
+      "privacyOpen": "Ver",
+      "exportCsv": "Exportar mis registros de tiempo",
+      "exportCsvHint": "Todos tus registros en un archivo CSV. La exportación completa de tu cuenta, con los datos de tiempo incluidos, está en Datos y privacidad.",
+      "exportCsvButton": "Exportar CSV",
+      "exportDone": "Tus registros de tiempo se han exportado.",
+      "exportTruncated": "El archivo solo contiene tus registros más recientes, porque un archivo tiene como máximo 100.000 filas.",
+      "exportFailed": "No se ha podido guardar la exportación.",
+      "correction": "Correcciones y días anteriores",
+      "correctionHint": "Tus propios registros los editas tú. Si un día está bloqueado, abre el registro y pide una corrección. Si un día queda demasiado atrás, pide que te lo abran. Tu motivo llega a la persona que puede abrirlo, y su respuesta te llega como notificación.",
+      "requestDays": "Pedir días anteriores"
     }
   },
   "twofa": {

@@ -6,6 +6,7 @@ import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/blocs/auth_bloc.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
+import 'package:hinata/core/blocs/time_privacy_cubit.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/time_approval_models.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
@@ -19,6 +20,7 @@ import 'package:hinata/features/time/lock_notice.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
 
 import 'fake_time_policy_cubit.dart';
+import 'fake_time_privacy_cubit.dart';
 
 /// The surfaces stage 7 adds: the lock notice every freeze shares, the status
 /// chips, and the inbox.
@@ -177,6 +179,97 @@ void main() {
       // The success toast dismisses itself on a timer; letting it finish here
       // keeps that timer out of whichever test runs next.
       await tester.pumpAndSettle(const Duration(seconds: 6));
+    });
+
+    testWidgets('a day beyond the limit is asked for, and the form stays open', (
+      tester,
+    ) async {
+      final repository = _FakeTimeRepository();
+      var requested = 0;
+      await tester.pumpWidget(
+        RepositoryProvider<TimeRepository>.value(
+          value: repository,
+          child: MaterialApp(
+            home: Scaffold(
+              body: LockNotice(
+                lock: TimeLockInfo(
+                  reason: 'maxDaysBack',
+                  lockDate: DateTime(2025, 9, 13),
+                ),
+                day: DateTime(2025, 6, 2),
+                onRequested: () => requested++,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // There is no entry yet, so there is nothing to correct: the way out is
+      // asking for the day.
+      expect(find.text('time.lock.request'), findsNothing);
+      await tester.tap(find.text('time.lock.requestDays'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Nachtrag nach dem Urlaub');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('time.lock.requestSend'));
+      await tester.pumpAndSettle();
+
+      expect(repository.backfills, [
+        (DateTime(2025, 6, 2), DateTime(2025, 6, 2), 'Nachtrag nach dem Urlaub'),
+      ]);
+      // Nothing is closed behind it: what was typed into the form is still
+      // wanted once the day opens, or for another day.
+      expect(requested, 0);
+      await tester.pumpAndSettle(const Duration(seconds: 6));
+    });
+
+    testWidgets('a new entry before the lock date asks for the day as well', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        RepositoryProvider<TimeRepository>.value(
+          value: _FakeTimeRepository(),
+          child: MaterialApp(
+            home: Scaffold(
+              body: LockNotice(
+                lock: TimeLockInfo(
+                  reason: 'lockDate',
+                  lockDate: DateTime(2026, 9, 1),
+                ),
+                day: DateTime(2026, 8, 20),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('time.lock.requestDays'), findsOneWidget);
+      expect(find.text('time.lock.request'), findsNothing);
+    });
+
+    testWidgets('a submitted period is never asked open a day at a time', (
+      tester,
+    ) async {
+      // Hours somebody signed off are reopened by whoever approved them, not
+      // opened around by an administrator.
+      await tester.pumpWidget(
+        RepositoryProvider<TimeRepository>.value(
+          value: _FakeTimeRepository(),
+          child: MaterialApp(
+            home: Scaffold(
+              body: LockNotice(
+                lock: const TimeLockInfo(reason: 'approval'),
+                day: DateTime(2026, 8, 20),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('time.lock.requestDays'), findsNothing);
     });
   });
 
@@ -484,6 +577,9 @@ void main() {
                   repository,
                 ),
               ),
+              BlocProvider<TimePrivacyCubit>.value(
+                value: FakeTimePrivacyCubit(repository),
+              ),
             ],
             // A router above it, because PageChrome publishes into the shell by
             // asking GoRouterState where it is — the page is a destination, not a
@@ -678,6 +774,15 @@ class _FakeTimeRepository implements TimeRepository {
   @override
   Future<void> requestCorrection(String entryId, String note) async =>
       corrections.add((entryId, note));
+
+  final List<(DateTime, DateTime, String)> backfills = [];
+
+  @override
+  Future<void> requestBackfill({
+    required DateTime from,
+    required DateTime to,
+    required String note,
+  }) async => backfills.add((from, to, note));
 
   @override
   Future<TimesheetApproval> reject(String id, {required String note}) async {

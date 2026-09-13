@@ -1,17 +1,23 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/api/api_client.dart';
 import '../../core/blocs/time_preferences_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/account_models.dart';
+import '../../core/repositories/time_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/util/file_download.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveSwitch;
 import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
+import '../time/lock_notice.dart' show requestOlderDays;
+import '../time/time_privacy_sheet.dart';
 import 'account_widgets.dart';
 
 /// Settings → Time tracking: the person's own rhythm.
@@ -23,6 +29,11 @@ import 'account_widgets.dart';
 ///
 /// Shown only where the module is switched on. There is no point offering to
 /// configure a pomodoro on a server that has no pomodoro.
+///
+/// It also carries the person's data rights for the module (HIN-89): who sees
+/// their time, a copy of their own entries, and how a correction is asked for.
+/// Here rather than in the account's data section because they are about this
+/// module's data, and somebody looking for them looks where the module is.
 class TimePreferencesSection extends StatelessWidget {
   const TimePreferencesSection({super.key});
 
@@ -108,8 +119,95 @@ class TimePreferencesSection extends StatelessWidget {
             onChanged: (value) => unawaited(save(prefs.copyWith(sound: value))),
           ),
         ),
+        Divider(height: 1, color: AppColors.hairline2),
+        _GroupLabel(text: context.t('account.timeTracking.privacy')),
+        SettingRow(
+          label: context.t('account.timeTracking.privacyPanel'),
+          description: context.t('account.timeTracking.privacyPanelHint'),
+          icon: LucideIcons.shieldCheck,
+          stack: stack,
+          trailing: AccountActionButton(
+            label: context.t('account.timeTracking.privacyOpen'),
+            icon: LucideIcons.eye,
+            onPressed: () => unawaited(showTimePrivacySheet(context)),
+          ),
+        ),
+        Divider(height: 1, color: AppColors.hairline2),
+        SettingRow(
+          label: context.t('account.timeTracking.exportCsv'),
+          description: context.t('account.timeTracking.exportCsvHint'),
+          icon: LucideIcons.fileDown,
+          stack: stack,
+          trailing: AccountActionButton(
+            label: context.t('account.timeTracking.exportCsvButton'),
+            icon: LucideIcons.download,
+            onPressed: () => unawaited(_exportCsv(context)),
+          ),
+        ),
+        Divider(height: 1, color: AppColors.hairline2),
+        SettingRow(
+          label: context.t('account.timeTracking.correction'),
+          description: context.t('account.timeTracking.correctionHint'),
+          icon: LucideIcons.messageSquareWarning,
+          stack: stack,
+          // The one request that has no entry to start from: days the pickers do
+          // not offer yet. A correction starts from the entry itself.
+          trailing: AccountActionButton(
+            label: context.t('account.timeTracking.requestDays'),
+            icon: LucideIcons.calendarPlus,
+            onPressed: () => unawaited(requestOlderDays(context)),
+          ),
+        ),
       ],
     );
+  }
+
+  /// Downloads the person's own entries as CSV.
+  ///
+  /// Every entry, not a window: the file is the copy Art. 20 DSGVO speaks of, and
+  /// a copy that silently stopped at some date would not be one. The server caps
+  /// it far beyond any real career of entries.
+  static Future<void> _exportCsv(BuildContext context) async {
+    final repository = context.read<TimeRepository>();
+    try {
+      final DownloadResult result;
+      var truncated = false;
+      if (kIsWeb) {
+        final file = await repository.exportCsv();
+        truncated = file.truncated;
+        result = await downloadBytes('time-entries.csv', file.bytes, 'text/csv');
+      } else {
+        // Straight to disk: a long record of entries runs to tens of megabytes,
+        // which a phone should not have to hold in memory to save.
+        result = await downloadFile('time-entries.csv', 'text/csv', (
+          path,
+        ) async {
+          truncated = await repository.exportCsvTo(path);
+        });
+      }
+      if (!context.mounted || result.outcome == DownloadOutcome.dismissed) {
+        return;
+      }
+      final failed = result.outcome == DownloadOutcome.failed;
+      showGlassToast(
+        context,
+        context.t(
+          failed
+              ? 'account.timeTracking.exportFailed'
+              : truncated
+              ? 'account.timeTracking.exportTruncated'
+              : 'account.timeTracking.exportDone',
+        ),
+        kind: failed ? GlassToastKind.error : GlassToastKind.success,
+      );
+    } on ApiFailure catch (failure) {
+      if (!context.mounted) return;
+      showGlassToast(
+        context,
+        context.t(failure.message),
+        kind: GlassToastKind.error,
+      );
+    }
   }
 }
 

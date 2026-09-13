@@ -818,15 +818,6 @@
   "time": {
     "hours": "Heures",
     "minutes": "Minutes",
-    "activityType": "Type d'activité",
-    "activity": {
-      "development": "Développement",
-      "testing": "Tests",
-      "documentation": "Documentation",
-      "design": "Design",
-      "meeting": "Réunion",
-      "support": "Assistance"
-    },
     "date": "Date",
     "note": "Note (facultative)",
     "fmt": {
@@ -841,6 +832,7 @@
     "loggedTotal": "{{spent}} saisi au total",
     "deletedUser": "Utilisateur supprimé",
     "legacySource": "Smart commits (avant 2.0)",
+    "otherMember": "Autre membre",
     "deleteTitle": "Supprimer la saisie",
     "deleteConfirm": "Supprimer {{duration}} saisi le {{date}} ? Cette action est irréversible.",
     "deleted": "Saisie supprimée",
@@ -902,7 +894,6 @@
       "pickDuration": "Choisir une durée",
       "start": "Début",
       "end": "Fin",
-      "activity": "Activité",
       "modeDuration": "Durée",
       "modeInterval": "Début et fin",
       "noDescription": "Sans description",
@@ -951,7 +942,7 @@
     },
     "signal": {
       "countdown": "Votre compte à rebours est terminé.",
-      "breakOver": "Pause terminée — reprenez quand vous voulez.",
+      "breakOver": "Pause terminée. Reprenez quand vous voulez.",
       "workOver": "Un intervalle terminé. C'est l'heure d'une pause.",
       "workOver_plural": "{{count}} intervalles terminés. C'est l'heure d'une pause.",
       "titleFlash": "Intervalle terminé"
@@ -999,29 +990,39 @@
         "lockDate": "Les saisies antérieures au {{date}} sont clôturées.",
         "approval": "Vous avez soumis {{from}} – {{to}} ; ces saisies sont donc figées.",
         "invoice": "Une facture émise fait référence à cette saisie.",
-        "unknown": "Cette saisie est fermée aux modifications."
+        "unknown": "Cette saisie est fermée aux modifications.",
+        "maxDaysBack": "Les jours antérieurs au {{date}} ne peuvent être saisis qu’une fois ouverts par un administrateur."
       },
       "holder": {
-        "lockDate": "Un administrateur peut réouvrir un intervalle dans la période clôturée.",
+        "lockDate": "Un administrateur peut ouvrir ce jour pour vous ou réouvrir un intervalle dans la période clôturée.",
         "approval": "Un responsable du projet, ou un administrateur, peut réouvrir la période.",
-        "invoice": "Celui qui émet les factures régularise par un avoir."
+        "invoice": "Celui qui émet les factures régularise par un avoir.",
+        "maxDaysBack": "Un administrateur peut ouvrir pour vous des jours plus anciens."
       },
       "remedy": {
-        "lockDate": "Demandez une correction — votre motif est consigné et parvient à un administrateur.",
+        "lockDate": "Demandez une correction. Votre motif est consigné et parvient à un administrateur.",
         "approval": "Demandez une correction, ou la réouverture de la période.",
-        "invoice": "La facture n’est jamais réécrite ; un avoir la régularise."
+        "invoice": "La facture n’est jamais réécrite ; un avoir la régularise.",
+        "maxDaysBack": "Demandez que ce jour soit ouvert pour vous. Votre motif est consigné et transmis aux administrateurs."
       },
       "chip": {
         "lockDate": "Clôturé",
         "approval": "Soumis",
         "invoice": "Facturé",
-        "unknown": "Fermé"
+        "unknown": "Fermé",
+        "maxDaysBack": "Trop ancien"
       },
       "request": "Demander une correction",
       "requestTitle": "Demander une correction",
       "requestHint": "Qu’est-ce qui est faux, et que faudrait-il ?",
       "requestSend": "Envoyer la demande",
-      "requestSent": "Votre demande a été envoyée et consignée."
+      "requestSent": "Votre demande a été envoyée et consignée.",
+      "requestDays": "Demander l’ouverture de ce jour",
+      "requestDaysTitle": "Demander l’ouverture de jours plus anciens",
+      "requestDaysHint": "Pourquoi devez-vous saisir ces jours maintenant ?",
+      "requestDaysSent": "Votre demande a été envoyée aux administrateurs.",
+      "requestOlderDays": "Demander des jours plus anciens",
+      "pickDaysTitle": "De quels jours avez-vous besoin ?"
     },
     "approval": {
       "status": {
@@ -1067,7 +1068,8 @@
       "showEntries": "Voir les saisies",
       "scope": {
         "mine": "Les miennes",
-        "inbox": "À décider"
+        "inbox": "À décider",
+        "corrections": "Corrections"
       },
       "empty": {
         "mine": {
@@ -1081,6 +1083,82 @@
       },
       "gridClamped": "La grille montre les premiers jours de cette période ; les chiffres ci-dessus couvrent l’ensemble.",
       "nothingToSubmit": "Aucune heure dans cette période pour l’instant."
+    },
+    "privacy": {
+      "title": "Confidentialité dans le suivi du temps",
+      "subtitle": "Qui voit vos données de temps, et ce que vous devez en savoir",
+      "firstUseSubtitle": "Merci de lire ceci une fois avant de commencer. Cela ne change rien à votre façon de travailler.",
+      "whoSees": "Qui voit mes données de temps ?",
+      "notice": "Note de confidentialité",
+      "understood": "J’ai compris",
+      "acknowledgeFailed": "L’enregistrement n’a pas abouti. Veuillez réessayer.",
+      "row": {
+        "self": "Vous voyez toutes vos propres saisies.",
+        "admins": "Les administrateurs de cette instance peuvent voir et modifier toutes les saisies.",
+        "members": "Les autres membres de vos projets voient combien de temps a été saisi sur un ticket, mais pas qui l’a saisi ni ce que dit la description.",
+        "leadsSee": "Les responsables de vos projets voient vos saisies individuelles, leur historique et vos lignes dans la feuille de temps, et peuvent modifier vos saisies.",
+        "leadsTotals": "Les responsables de vos projets ne voient que les totaux des projets, jamais qui a saisi quoi.",
+        "approvals": "Vous soumettez des feuilles de temps, et un responsable de projet les approuve.",
+        "workloadReports": "Des rapports peuvent comparer le temps saisi de chaque personne à sa capacité.",
+        "alerts": "Les responsables sont prévenus lorsqu’un projet dépasse un seuil de temps saisi.",
+        "targetReminders": "Vous recevez des rappels sur votre propre objectif. Personne d’autre ne les reçoit.",
+        "arbzgHints": "Les avis liés à la loi allemande sur le temps de travail ne s’affichent que pour vous.",
+        "lateEntry": "Une saisie que vous enregistrez plus de {{count}} jour après le jour travaillé reçoit un avis. Il n’est visible que pour vous.",
+        "lateEntry_plural": "Une saisie que vous enregistrez plus de {{count}} jours après le jour travaillé reçoit un avis. Il n’est visible que pour vous.",
+        "foreignChanges": "Si quelqu’un d’autre modifie l’une de vos saisies, c’est consigné. Vous le voyez dans l’historique de la saisie.",
+        "timerRecorded": "Le démarrage et l’arrêt de votre minuteur sont consignés dans le journal d’audit.",
+        "timerNotRecorded": "Le moment où vous démarrez ou arrêtez votre minuteur n’est pas consigné.",
+        "entryCreation": "La création d’une saisie est consignée dans le journal d’audit.",
+        "entryRetention": "Les saisies sont supprimées après {{count}} mois, sauf celles d’une période soumise ou approuvée.",
+        "entryRetention_plural": "Les saisies sont supprimées après {{count}} mois, sauf celles d’une période soumise ou approuvée.",
+        "entryKept": "Les saisies ne sont pas supprimées automatiquement.",
+        "descriptionRetention": "Si un compte est supprimé, les descriptions de ses saisies et les notes de ses feuilles de temps sont vidées après {{count}} mois.",
+        "descriptionRetention_plural": "Si un compte est supprimé, les descriptions de ses saisies et les notes de ses feuilles de temps sont vidées après {{count}} mois.",
+        "maxDaysBack": "Vous pouvez saisir jusqu’à {{count}} jour en arrière. Un administrateur ouvre les jours plus anciens sur demande.",
+        "maxDaysBack_plural": "Vous pouvez saisir jusqu’à {{count}} jours en arrière. Un administrateur ouvre les jours plus anciens sur demande."
+      },
+      "loadFailed": "La note n’a pas pu être chargée. Vérifiez votre connexion et réessayez."
+    },
+    "hint": {
+      "chip": {
+        "DAILY_MAXIMUM": "Plus de 10 heures",
+        "SHORT_REST": "Repos court",
+        "SUNDAY_WORK": "Dimanche",
+        "LATE_ENTRY": "Saisie {{count}} jour plus tard",
+        "LATE_ENTRY_plural": "Saisie {{count}} jours plus tard"
+      },
+      "sentence": {
+        "DAILY_MAXIMUM": "Ce jour-là, le temps saisi atteint {{duration}}. La loi allemande sur le temps de travail autorise 10 heures au maximum.",
+        "SHORT_REST": "Entre la fin de la veille et le début de ce jour, il n’y a que {{duration}}. La loi prévoit 11 heures.",
+        "SUNDAY_WORK": "Du temps de travail est saisi ce dimanche. Le travail le dimanche n’est autorisé qu’à titre exceptionnel.",
+        "LATE_ENTRY": "Cette saisie a été enregistrée {{count}} jour après le jour travaillé. Ce n’est qu’un avis pour vous. Il ne bloque rien.",
+        "LATE_ENTRY_plural": "Cette saisie a été enregistrée {{count}} jours après le jour travaillé. Ce n’est qu’un avis pour vous. Il ne bloque rien."
+      }
+    },
+    "correction": {
+      "emptyTitle": "Aucune demande de correction",
+      "emptyMessage": "Quand quelqu’un demande la correction d’une saisie verrouillée ou l’ouverture de jours plus anciens et que vous pouvez répondre, la demande apparaît ici.",
+      "empty": "Aucune demande.",
+      "answer": "Répondre",
+      "answerTitle": "Répondre à la demande",
+      "answerHint": "Que se passe-t-il maintenant ? La personne qui a fait la demande lira ceci.",
+      "answerSend": "Envoyer la réponse",
+      "answered": "Votre réponse a été envoyée.",
+      "answeredBy": "Réponse de {{name}}",
+      "reason": {
+        "LOCK_DATE": "Date de verrouillage",
+        "APPROVAL": "Période soumise",
+        "MAX_DAYS_BACK": "Trop ancien"
+      },
+      "more": "Charger plus",
+      "grant": "Ouvrir les jours",
+      "grantTitle": "Ouvrir les jours pour cette personne",
+      "grantHint": "Les jours restent ouverts pour cette personne pendant deux semaines. Le message est facultatif et s'affiche comme réponse.",
+      "grantSend": "Ouvrir les jours",
+      "granted": "Les jours sont maintenant ouverts pour cette personne.",
+      "grantedBy": "{{name}} a ouvert les jours",
+      "yourRequest": "Votre demande",
+      "waiting": "Pas encore de réponse."
     }
   },
   "projects": {
@@ -1627,10 +1705,10 @@
     "security": "Sécurité",
     "timeTracking": {
       "title": "Suivi du temps",
-      "hint": "Le suivi du temps étendu est désactivé par défaut. Chaque règle peut rester sans valeur : c'est alors l'environnement de ce serveur qui décide. Les interrupteurs qui rendent les heures d'une personne lisibles par une autre sont désactivés par défaut et portent une note de cogestion.",
-      "codetermination": "Soumis à la cogestion : § 87 al. 1 n° 6 BetrVG (LPVG dans le secteur public). À convenir avec le comité social ou le conseil du personnel avant activation — l'aptitude objective à la surveillance suffit.",
+      "hint": "Le suivi du temps étendu est désactivé par défaut. Chaque règle ci-dessous peut rester sans valeur, et c’est alors la valeur de l’environnement de ce serveur qui s’applique. Les interrupteurs qui rendent les heures d’une personne visibles pour une autre sont désactivés par défaut et portent une note de cogestion.",
+      "codetermination": "Soumis à la cogestion : § 87 al. 1 n° 6 BetrVG (LPVG dans le secteur public). À convenir avec le comité social ou le conseil du personnel avant activation. Il suffit que la fonction puisse servir à la surveillance.",
       "envDefault": "Valeur d'environnement",
-      "envDefaultHint": "Aucune valeur enregistrée : c'est l'environnement de ce serveur qui décide. Touchez pour fixer une valeur explicite.",
+      "envDefaultHint": "Aucune valeur enregistrée, c’est donc l’environnement de ce serveur qui décide. Touchez pour définir votre propre valeur.",
       "useEnvDefault": "Utiliser la valeur d'environnement",
       "moduleTitle": "Module",
       "moduleHint": "L'interrupteur principal du module de suivi du temps étendu.",
@@ -1648,7 +1726,7 @@
       "requiredTagTitle": "Étiquette obligatoire",
       "requiredTagHint": "Une entrée doit porter au moins une étiquette.",
       "lockBeforeLabel": "Verrouillé avant",
-      "lockBeforeHint": "Les entrées antérieures à ce jour ne peuvent plus être créées, modifiées ni supprimées — par personne, API comprise. Le jour indiqué reste ouvert. La date ne peut jamais être dans le futur : le temps de travail en cours doit toujours rester enregistrable.",
+      "lockBeforeHint": "Personne ne peut plus créer, modifier ni supprimer les entrées antérieures à ce jour, pas même via l’API. Le jour lui-même reste ouvert. La date ne peut jamais être dans le futur, car le temps de travail en cours doit toujours pouvoir être saisi.",
       "roundingModeLabel": "Arrondi",
       "roundingModeHint": "Ne s'applique qu'aux rapports ; les minutes enregistrées ne changent jamais.",
       "roundingMode": {
@@ -1675,7 +1753,7 @@
       "visibilityTitle": "Visibilité et validations",
       "visibilityHint": "Qui peut voir les heures de qui, et à quel rythme les feuilles de temps sont remises.",
       "leadsSeeMemberEntriesTitle": "Les responsables voient les entrées des membres",
-      "leadsSeeMemberEntriesHint": "Désactivé → les responsables ne voient que les totaux du projet, jamais qui a saisi quoi. Activé, les entrées individuelles des membres du projet leur deviennent visibles.",
+      "leadsSeeMemberEntriesHint": "Désactivé : les responsables ne voient que les totaux des projets. Sur les tickets, ils ne voient ni noms ni descriptions, et ne modifient pas les entrées des autres. Activé : les responsables voient les entrées individuelles des membres de leurs projets, leur historique et leurs lignes de feuille de temps, et peuvent modifier ces entrées.",
       "approvalsTitle": "Validation des feuilles de temps",
       "approvalsHint": "Chacun soumet sa feuille de temps pour une période ; un responsable ou un administrateur la valide ou la refuse. Nécessite « Les responsables voient les entrées des membres ».",
       "approvalPeriodLabel": "Période de validation",
@@ -1724,14 +1802,13 @@
       "privacyTitle": "Confidentialité et conservation",
       "privacyHint": "Combien de temps les données de temps sont conservées, et ce qu'on en dit aux personnes concernées.",
       "descriptionPurgeLabel": "Vider les descriptions après",
-      "descriptionPurgeHint": "Vide les descriptions des entrées des utilisateurs supprimés après ce nombre de mois. Vide → valeur d'environnement.",
+      "descriptionPurgeHint": "Vide les descriptions des entrées des comptes supprimés, ainsi que les notes de leurs feuilles de temps, après ce nombre de mois. Les heures restent. 0 signifie jamais.",
       "entryPurgeLabel": "Supprimer les entrées après",
-      "entryPurgeHint": "Supprime les entrées plus anciennes, pour tout le monde. 24 mois couvrent ArbZG et MiLoG.",
+      "entryPurgeHint": "Supprime pour tout le monde les entrées plus anciennes, sauf celles d’une période soumise ou approuvée. 0 signifie jamais, sinon 24 mois au minimum.",
       "monthsSuffix": "mois",
       "privacyNoticeLabel": "Note de confidentialité",
-      "privacyNoticeHint": "Affichée dans l'app à côté des données de temps du module. Vide → le texte intégré.",
-      "notYetEnforced": "Enregistré, mais pas encore appliqué — la fonction correspondante arrivera à une étape ultérieure du suivi du temps.",
-      "leadsSeeMemberEntriesPending": "Appliquée en partie : l'historique d'une saisie et les saisies derrière un envoi suivent déjà cette règle. La matrice de la feuille de temps affiche encore les totaux de chaque personne — cela viendra dans une étape ultérieure.",
+      "privacyNoticeHint": "Markdown. Chacun la voit lors de sa première utilisation du suivi du temps et sous Paramètres → Suivi du temps. Vide signifie le texte intégré, dans la langue de la personne qui lit.",
+      "notYetEnforced": "Enregistré, mais pas encore appliqué. La fonction liée à cette règle arrivera à une étape ultérieure du suivi du temps.",
       "tagsTitle": "Étiquettes",
       "tagsHint": "Le vocabulaire qui sert à étiqueter les saisies. Renommer une étiquette entraîne toutes les saisies.",
       "tagsEmpty": "Pas encore d'étiquettes.",
@@ -1744,12 +1821,12 @@
       "tagDeleteMessage": "\"{{name}}\" sera retirée de {{count}} saisie. La saisie elle-même reste.",
       "tagDeleteMessage_plural": "\"{{name}}\" sera retirée de {{count}} saisies. Les saisies elles-mêmes restent.",
       "lockBeforeEveryone": "Le verrou vaut pour tout le monde, administrateurs compris. Le lever est la manière documentée de modifier une période close.",
-      "approvalsNeedVisibility": "Approuver, c’est lire les saisies de quelqu’un : activez aussi « Les responsables voient les saisies des membres », sinon l’approbateur ne voit qu’un total sans rien derrière.",
+      "approvalsNeedVisibility": "Approuver, c’est lire les entrées d’une personne. Activez aussi « Les responsables voient les entrées des membres », sinon la personne qui approuve ne voit qu’un total sans contenu.",
       "periodPreviewTitle": "Les prochaines périodes",
       "periodPreviewHint": "Changer le rythme ne concerne que les soumissions futures. Les périodes déjà soumises gardent les jours qu’elles nommaient.",
-      "periodPreviewFree": "Sans rythme fixe, la personne qui soumet choisit l’intervalle elle-même — 92 jours au plus, et sans recouvrir un intervalle déjà soumis.",
+      "periodPreviewFree": "Sans rythme fixe, la personne qui soumet choisit l’intervalle elle-même : 92 jours au plus, et sans recouvrir un intervalle déjà soumis.",
       "lockExceptionsTitle": "Intervalles réouverts",
-      "lockExceptionsHint": "Ouvrez un seul intervalle dans la période clôturée au lieu de lever toute la date de verrouillage.",
+      "lockExceptionsHint": "Ouvrez un seul intervalle dans la période clôturée au lieu de lever toute la date de verrouillage. Tout le monde voit l’intervalle et son motif, alors n’y nommez personne. Les jours d’une seule personne s’ouvrent depuis sa demande.",
       "lockExceptionsLegal": "Le temps de travail est une donnée personnelle, et des données personnelles inexactes doivent pouvoir être rectifiées sans délai injustifié (art. 16 RGPD). Une exception est ce chemin de retour : elle ouvre exactement ses jours, porte votre motif et figure dans le journal d’audit.",
       "lockExceptionsEmpty": "Aucun intervalle n’est actuellement ouvert dans la période clôturée.",
       "lockExceptionAdd": "Réouvrir un intervalle",
@@ -1757,7 +1834,23 @@
       "lockExceptionReason": "Pourquoi cet intervalle est-il réouvert ?",
       "lockExceptionReasonHint": "Consigné dans le journal d’audit et visible de tous.",
       "lockExceptionRemove": "Refermer",
-      "lockExceptionRemoveConfirm": "Refermer {{period}} ? Ses saisies deviendront en lecture seule."
+      "lockExceptionRemoveConfirm": "Refermer {{period}} ? Ses saisies deviendront en lecture seule.",
+      "retentionLegal": "Rien n’est supprimé automatiquement tant que vous ne fixez pas de durée ici. Le § 16 (2) ArbZG et le § 17 MiLoG demandent de conserver les relevés du temps de travail pendant deux ans. 24 mois sont donc un choix courant. Ensuite, la limitation de la conservation s’applique (art. 5 RGPD). Une tâche nocturne se charge de la suppression et consigne chaque exécution dans le journal d’audit.",
+      "privacyNoticePreview": "Aperçu",
+      "maxDaysBackLabel": "Saisie possible jusqu’à",
+      "maxDaysBackHint": "Nombre de jours en arrière pour lesquels du temps peut être saisi. Un jour plus ancien est refusé, et la personne peut demander à un administrateur de l’ouvrir pour elle. Vide signifie 365.",
+      "lateEntryHintDaysLabel": "Avis de saisie tardive après",
+      "lateEntryHintDaysHint": "Signale une saisie enregistrée plus de ce nombre de jours après son jour travaillé, et seulement pour la personne concernée. Cet avis ne bloque jamais rien et ne transmet rien à personne. 0 le désactive, vide reprend la valeur par défaut du serveur.",
+      "correctionsTitle": "Demandes de correction",
+      "correctionsHint": "Les demandes de correction de saisies verrouillées ou d’ouverture de jours plus anciens. Répondez-y ici, ou ouvrez les jours pour la personne qui a fait la demande.",
+      "grantsTitle": "Jours ouverts pour des personnes",
+      "grantsHint": "Chaque ouverture se referme d’elle-même après deux semaines. Vous pouvez en refermer une plus tôt ici.",
+      "grantsEmpty": "Pour l’instant, aucun jour n’est ouvert pour qui que ce soit.",
+      "grantOpenUntil": "Ouvert jusqu’au {{date}}",
+      "grantRevoke": "Refermer maintenant",
+      "grantRevokeTitle": "Refermer ces jours ?",
+      "grantRevokeMessage": "{{name}} ne pourra plus saisir {{period}}. Cette action est consignée.",
+      "grantRevoked": "Les jours sont de nouveau fermés."
     },
     "passwordPolicy": "Politique de mots de passe",
     "passwordPolicyHint": "Exigences minimales pour les mots de passe des utilisateurs.",
@@ -2206,7 +2299,12 @@
       "TIMESHEET_REOPENED": "Feuille de temps réouverte",
       "TIME_CORRECTION_REQUESTED": "Correction demandée",
       "TIME_LOCK_EXCEPTION_ADDED": "Intervalle réouvert",
-      "TIME_LOCK_EXCEPTION_REMOVED": "Intervalle réouvert refermé"
+      "TIME_LOCK_EXCEPTION_REMOVED": "Intervalle réouvert refermé",
+      "TIME_CORRECTION_ANSWERED": "Réponse à une demande de correction",
+      "TIME_BACKFILL_REQUESTED": "Jours plus anciens demandés",
+      "TIME_BACKFILL_GRANTED": "Jours ouverts pour une personne",
+      "TIME_BACKFILL_REVOKED": "Jours ouverts refermés",
+      "TIME_RETENTION_RUN": "Purge de conservation exécutée"
     },
     "meta": {
       "oldRole": "Rôle précédent",
@@ -2751,7 +2849,20 @@
       "minutes": "{{count}} min",
       "intervals": "{{count}} intervalle",
       "intervals_plural": "{{count}} intervalles",
-      "saveFailed": "Impossible d'enregistrer vos préférences."
+      "saveFailed": "Impossible d'enregistrer vos préférences.",
+      "privacy": "Confidentialité",
+      "privacyPanel": "Qui voit mes données de temps ?",
+      "privacyPanelHint": "Établi à partir des règles activées en ce moment, avec la note de confidentialité.",
+      "privacyOpen": "Afficher",
+      "exportCsv": "Exporter mes saisies de temps",
+      "exportCsvHint": "Toutes vos saisies dans un fichier CSV. L’export complet de votre compte, données de temps comprises, se trouve sous Données et confidentialité.",
+      "exportCsvButton": "Exporter en CSV",
+      "exportDone": "Vos saisies de temps ont été exportées.",
+      "exportTruncated": "Le fichier ne contient que vos saisies les plus récentes, car un fichier compte au maximum 100 000 lignes.",
+      "exportFailed": "L’export n’a pas pu être enregistré.",
+      "correction": "Corrections et jours plus anciens",
+      "correctionHint": "Vous modifiez vous-même vos propres saisies. Si un jour est verrouillé, ouvrez la saisie et demandez une correction. Si un jour est trop ancien, demandez son ouverture. Votre motif est transmis à la personne qui peut l’ouvrir, et sa réponse vous parvient sous forme de notification.",
+      "requestDays": "Demander des jours plus anciens"
     }
   },
   "twofa": {

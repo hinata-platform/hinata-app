@@ -818,15 +818,6 @@
   "time": {
     "hours": "小时",
     "minutes": "分钟",
-    "activityType": "活动类型",
-    "activity": {
-      "development": "开发",
-      "testing": "测试",
-      "documentation": "文档",
-      "design": "设计",
-      "meeting": "会议",
-      "support": "支持"
-    },
     "date": "日期",
     "note": "备注（可选）",
     "fmt": {
@@ -841,6 +832,7 @@
     "loggedTotal": "共记录 {{spent}}",
     "deletedUser": "已删除的用户",
     "legacySource": "智能提交（2.0 之前）",
+    "otherMember": "其他成员",
     "deleteTitle": "删除条目",
     "deleteConfirm": "要删除 {{date}} 记录的 {{duration}} 吗？此操作无法撤销。",
     "deleted": "条目已删除",
@@ -902,7 +894,6 @@
       "pickDuration": "选择时长",
       "start": "开始",
       "end": "结束",
-      "activity": "活动类型",
       "modeDuration": "时长",
       "modeInterval": "开始和结束",
       "noDescription": "无描述",
@@ -951,7 +942,7 @@
     },
     "signal": {
       "countdown": "倒计时结束了。",
-      "breakOver": "休息结束——准备好就继续。",
+      "breakOver": "休息结束。准备好就继续吧。",
       "workOver": "完成 1 个专注区间，休息一下吧。",
       "workOver_plural": "完成 {{count}} 个专注区间，休息一下吧。",
       "titleFlash": "区间结束"
@@ -999,29 +990,39 @@
         "lockDate": "{{date}} 之前的记录已结账。",
         "approval": "你已提交 {{from}} – {{to}}，因此这些记录已固定。",
         "invoice": "一张已开出的发票引用了这条记录。",
-        "unknown": "这条记录已关闭，无法修改。"
+        "unknown": "这条记录已关闭，无法修改。",
+        "maxDaysBack": "{{date}} 之前的日期需要管理员开启后才能记录。"
       },
       "holder": {
-        "lockDate": "管理员可以重新开启已结账期间中的某段时间。",
+        "lockDate": "管理员可以为你开启这一天，或重新开启已结账期间中的某段时间。",
         "approval": "项目负责人或管理员可以重新开启该周期。",
-        "invoice": "开票的人用贷记通知单来冲抵。"
+        "invoice": "开票的人用贷记通知单来冲抵。",
+        "maxDaysBack": "管理员可以为你开启更早的日期。"
       },
       "remedy": {
-        "lockDate": "申请更正——你的原因会被记录并送达管理员。",
+        "lockDate": "申请更正。你的原因会被记录并送达管理员。",
         "approval": "申请更正，或请人重新开启该周期。",
-        "invoice": "发票永不改写；由贷记通知单冲抵。"
+        "invoice": "发票永不改写；由贷记通知单冲抵。",
+        "maxDaysBack": "申请为你开启这一天。你的原因会被记录并发送给管理员。"
       },
       "chip": {
         "lockDate": "已结账",
         "approval": "已提交",
         "invoice": "已开票",
-        "unknown": "已关闭"
+        "unknown": "已关闭",
+        "maxDaysBack": "超出可追溯范围"
       },
       "request": "申请更正",
       "requestTitle": "申请更正",
       "requestHint": "哪里不对，应该是什么？",
       "requestSend": "发送申请",
-      "requestSent": "你的申请已发送并记录。"
+      "requestSent": "你的申请已发送并记录。",
+      "requestDays": "申请开启这一天",
+      "requestDaysTitle": "申请开启更早的日期",
+      "requestDaysHint": "为什么现在需要记录这些日期？",
+      "requestDaysSent": "你的申请已发送给管理员。",
+      "requestOlderDays": "申请更早的日期",
+      "pickDaysTitle": "你需要哪些日期？"
     },
     "approval": {
       "status": {
@@ -1067,7 +1068,8 @@
       "showEntries": "查看记录",
       "scope": {
         "mine": "我的",
-        "inbox": "待决定"
+        "inbox": "待决定",
+        "corrections": "更正"
       },
       "empty": {
         "mine": {
@@ -1081,6 +1083,82 @@
       },
       "gridClamped": "表格显示这个周期的前几天；上面的数字覆盖整个周期。",
       "nothingToSubmit": "这个周期还没有工时。"
+    },
+    "privacy": {
+      "title": "工时记录中的隐私",
+      "subtitle": "谁能看到你的工时数据，以及你应该了解的事项",
+      "firstUseSubtitle": "开始之前请阅读一次。它不会改变你的工作方式。",
+      "whoSees": "谁能看到我的工时数据？",
+      "notice": "隐私说明",
+      "understood": "知道了",
+      "acknowledgeFailed": "无法保存，请重试。",
+      "row": {
+        "self": "你可以看到自己的全部记录。",
+        "admins": "此实例的管理员可以查看和修改所有记录。",
+        "members": "你所在项目的其他成员能看到某个事项上记录了多少工时，但看不到是谁记录的，也看不到说明内容。",
+        "leadsSee": "你所在项目的负责人可以看到你的单条记录、记录历史，以及你在工时表中的行，并且可以修改你的记录。",
+        "leadsTotals": "你所在项目的负责人只能看到项目合计，看不到谁记录了什么。",
+        "approvals": "你提交工时表，由项目负责人批准。",
+        "workloadReports": "报表可能会按人对比记录工时与可用工时。",
+        "alerts": "项目记录的工时超过上限时，会通知负责人。",
+        "targetReminders": "你会收到关于自己目标的提醒，其他人不会收到。",
+        "arbzgHints": "有关德国《工作时间法》的提示只对你显示。",
+        "lateEntry": "工作日过后超过 {{count}} 天才录入的记录会显示提示，只有你能看到。",
+        "lateEntry_plural": "工作日过后超过 {{count}} 天才录入的记录会显示提示，只有你能看到。",
+        "foreignChanges": "如果其他人修改了你的记录，这会被记下来。你可以在该记录的历史中看到。",
+        "timerRecorded": "启动和停止计时器会记入审计日志。",
+        "timerNotRecorded": "你何时启动或停止计时器不会被记录。",
+        "entryCreation": "创建记录会记入审计日志。",
+        "entryRetention": "记录会在 {{count}} 个月后删除，已提交或已批准周期内的记录除外。",
+        "entryRetention_plural": "记录会在 {{count}} 个月后删除，已提交或已批准周期内的记录除外。",
+        "entryKept": "记录不会被自动删除。",
+        "descriptionRetention": "账户被删除后，其记录的说明和工时表上的备注会在 {{count}} 个月后清空。",
+        "descriptionRetention_plural": "账户被删除后，其记录的说明和工时表上的备注会在 {{count}} 个月后清空。",
+        "maxDaysBack": "最多可以追溯记录 {{count}} 天。更早的日期可申请由管理员开启。",
+        "maxDaysBack_plural": "最多可以追溯记录 {{count}} 天。更早的日期可申请由管理员开启。"
+      },
+      "loadFailed": "无法加载说明。请检查网络连接后重试。"
+    },
+    "hint": {
+      "chip": {
+        "DAILY_MAXIMUM": "超过 10 小时",
+        "SHORT_REST": "休息过短",
+        "SUNDAY_WORK": "星期日",
+        "LATE_ENTRY": "{{count}} 天后录入",
+        "LATE_ENTRY_plural": "{{count}} 天后录入"
+      },
+      "sentence": {
+        "DAILY_MAXIMUM": "这一天记录了 {{duration}}。德国《工作时间法》规定每天最多 10 小时。",
+        "SHORT_REST": "前一天结束到这一天开始之间只有 {{duration}}。法律要求 11 小时。",
+        "SUNDAY_WORK": "这个星期日记录了工作时间。星期日工作只在例外情况下才被允许。",
+        "LATE_ENTRY": "这条记录是在工作日之后 {{count}} 天才录入的。这只是给你的提示，不会阻止任何操作。",
+        "LATE_ENTRY_plural": "这条记录是在工作日之后 {{count}} 天才录入的。这只是给你的提示，不会阻止任何操作。"
+      }
+    },
+    "correction": {
+      "emptyTitle": "没有更正申请",
+      "emptyMessage": "有人申请更正被锁定的记录或开启更早的日期，而且你可以答复时，申请会显示在这里。",
+      "empty": "没有申请。",
+      "answer": "答复",
+      "answerTitle": "答复申请",
+      "answerHint": "接下来会怎样？提出申请的人会看到这段答复。",
+      "answerSend": "发送答复",
+      "answered": "答复已发送。",
+      "answeredBy": "{{name}} 的答复",
+      "reason": {
+        "LOCK_DATE": "锁定日期",
+        "APPROVAL": "已提交的周期",
+        "MAX_DAYS_BACK": "超出可追溯范围"
+      },
+      "more": "加载更多",
+      "grant": "开启这些日期",
+      "grantTitle": "为此人开启这些日期",
+      "grantHint": "这些日期会为此人保持开启两周。留言可写可不写，写了会作为答复显示。",
+      "grantSend": "开启日期",
+      "granted": "已为此人开启这些日期。",
+      "grantedBy": "{{name}} 开启了这些日期",
+      "yourRequest": "你的申请",
+      "waiting": "尚未答复。"
     }
   },
   "projects": {
@@ -1627,10 +1705,10 @@
     "security": "安全",
     "timeTracking": {
       "title": "工时",
-      "hint": "扩展工时功能默认关闭。每项策略都可以不设值——那样就采用本服务器环境中的值。凡是让一个人的工时对他人可见的开关，默认都是关闭的，并附有共同决定权提示。",
-      "codetermination": "受共同决定权约束：德国《企业组织法》第 87 条第 1 款第 6 项（公共部门适用各州人事代表法）。启用前请与职工委员会或人事代表委员会达成一致——只要客观上适合用于监控即已足够。",
+      "hint": "扩展工时功能默认关闭。下面每项策略都可以不设值，这时采用本服务器环境中的值。凡是让一个人的工时对他人可见的开关，默认都是关闭的，并附有共同决定权提示。",
+      "codetermination": "受共同决定权约束：§ 87 第 1 款第 6 项 BetrVG（公共部门适用 LPVG）。启用前请与职工委员会或人事代表委员会达成一致。只要该功能可以用于监控，就已属于这种情况。",
       "envDefault": "环境默认值",
-      "envDefaultHint": "未保存任何值——由本服务器的环境决定。点按可设置明确的值。",
+      "envDefaultHint": "未保存任何值，因此由本服务器的环境决定。点按可设置你自己的值。",
       "useEnvDefault": "改用环境默认值",
       "moduleTitle": "模块",
       "moduleHint": "扩展工时模块的总开关。",
@@ -1648,7 +1726,7 @@
       "requiredTagTitle": "必须填写标签",
       "requiredTagHint": "记录必须至少带一个标签。",
       "lockBeforeLabel": "锁定此日之前",
-      "lockBeforeHint": "此日之前的记录无法再新增、修改或删除——任何人都不行，通过 API 也不行。所填当日本身仍然开放。 日期永远不能设在未来：正在发生的工作时间必须始终可以记录。",
+      "lockBeforeHint": "此日之前的记录任何人都无法再新增、修改或删除，通过 API 也不行。这一天本身仍然开放。日期永远不能设在未来，因为正在发生的工作时间必须始终可以记录。",
       "roundingModeLabel": "取整",
       "roundingModeHint": "仅用于报表；已保存的分钟数不会改变。",
       "roundingMode": {
@@ -1675,7 +1753,7 @@
       "visibilityTitle": "可见性与审批",
       "visibilityHint": "谁可以看到谁的工时，以及工时表按什么周期提交。",
       "leadsSeeMemberEntriesTitle": "负责人查看成员记录",
-      "leadsSeeMemberEntriesHint": "关闭 → 负责人只看到项目合计，看不到谁记了什么。开启后，项目成员的单条记录对他们可见。",
+      "leadsSeeMemberEntriesHint": "关闭：负责人只能看到项目合计。在事项上，他们既看不到姓名也看不到说明，也不会修改他人的记录。开启：负责人可以看到其项目成员的单条记录、记录历史和工时表中的行，并可以修改这些记录。",
       "approvalsTitle": "工时表审批",
       "approvalsHint": "各人提交某一周期的工时表；负责人或管理员批准或退回。需要先开启“负责人查看成员记录”。",
       "approvalPeriodLabel": "审批周期",
@@ -1724,14 +1802,13 @@
       "privacyTitle": "隐私与保留",
       "privacyHint": "工时数据保留多久，以及如何告知被记录的人。",
       "descriptionPurgeLabel": "多久后清空说明",
-      "descriptionPurgeHint": "在这么多个月后清空已删除用户记录中的说明。留空 → 环境默认值。",
+      "descriptionPurgeHint": "在这么多个月后清空已删除账户记录中的说明及其工时表上的备注。工时保留。0 表示永不清空。",
       "entryPurgeLabel": "多久后删除记录",
-      "entryPurgeHint": "删除早于此时长的记录，对所有人生效。24 个月可满足 ArbZG 与 MiLoG。",
+      "entryPurgeHint": "删除所有人较早的记录，已提交或已批准周期内的记录除外。0 表示永不删除，否则至少为 24 个月。",
       "monthsSuffix": "个月",
       "privacyNoticeLabel": "隐私说明",
-      "privacyNoticeHint": "在应用中与本模块的工时数据一同显示。留空 → 使用内置文本。",
-      "notYetEnforced": "会保存，但尚未生效——该策略背后的功能将在工时记录的后续阶段推出。",
-      "leadsSeeMemberEntriesPending": "部分生效：记录的修改历史，以及提交背后的各条记录，已经遵循此策略。工时表矩阵仍会显示每个人的合计 — 这一部分将在后续阶段跟进。",
+      "privacyNoticeHint": "支持 Markdown。每个人第一次使用工时记录时，以及在“设置 → 工时记录”中，都会看到它。留空表示使用读者所用语言的内置文本。",
+      "notYetEnforced": "会保存，但尚未生效。该策略背后的功能将在工时记录的后续阶段推出。",
       "tagsTitle": "标签",
       "tagsHint": "用来标注记录的词汇。重命名会带动所有记录。",
       "tagsEmpty": "还没有标签。",
@@ -1744,12 +1821,12 @@
       "tagDeleteMessage": "将从 {{count}} 条记录中移除“{{name}}”。记录本身保留。",
       "tagDeleteMessage_plural": "将从 {{count}} 条记录中移除“{{name}}”。记录本身保留。",
       "lockBeforeEveryone": "锁定对所有人生效，管理员也不例外。解除锁定是修改已结算期间的留痕方式。",
-      "approvalsNeedVisibility": "批准就意味着读取某个人的记录，因此也请打开“负责人可查看成员记录”——否则审批人只看到一个没有内容的合计。",
+      "approvalsNeedVisibility": "批准就意味着读取某个人的记录。请同时开启“负责人查看成员记录”，否则审批人只能看到一个没有内容的合计。",
       "periodPreviewTitle": "接下来的周期",
       "periodPreviewHint": "更改节奏只影响将来的提交。已提交的周期保留它们当时的日期。",
-      "periodPreviewFree": "没有固定节奏时，提交者自行选择区间——最多 92 天，且不与已提交的区间重叠。",
+      "periodPreviewFree": "没有固定节奏时，提交者自行选择区间：最多 92 天，且不与已提交的区间重叠。",
       "lockExceptionsTitle": "重新开启的区间",
-      "lockExceptionsHint": "在已结账期间内开启单个区间，而不是整体取消锁定日期。",
+      "lockExceptionsHint": "在已结账期间内开启单个区间，而不是整体取消锁定日期。所有人都能看到区间及其原因，因此请不要在其中提及任何人。为某一个人开启日期，请通过其申请进行。",
       "lockExceptionsLegal": "工作时间属于个人数据，不准确的个人数据必须能够及时更正（GDPR 第 16 条）。例外就是这条退路：它只开启自己的那些天，带着你的原因，并记入审计日志。",
       "lockExceptionsEmpty": "目前已结账期间内没有开启的区间。",
       "lockExceptionAdd": "开启一个区间",
@@ -1757,7 +1834,23 @@
       "lockExceptionReason": "为什么要开启这个区间？",
       "lockExceptionReasonHint": "记入审计日志，所有人可见。",
       "lockExceptionRemove": "再次关闭",
-      "lockExceptionRemoveConfirm": "再次关闭 {{period}}？其记录将变为只读。"
+      "lockExceptionRemoveConfirm": "再次关闭 {{period}}？其记录将变为只读。",
+      "retentionLegal": "在这里设置期限之前，不会自动删除任何内容。§ 16 (2) ArbZG 和 § 17 MiLoG 要求工作时间记录保存两年，因此 24 个月是常见的选择。此后适用存储限制原则（GDPR 第 5 条）。删除由每晚运行的任务完成，每次运行都会记入审计日志。",
+      "privacyNoticePreview": "预览",
+      "maxDaysBackLabel": "最多追溯记录",
+      "maxDaysBackHint": "最多可以往前记录多少天的工时。更早的日期会被拒绝，本人可以请管理员为其开启。留空表示 365。",
+      "lateEntryHintDaysLabel": "延迟录入提示：超过",
+      "lateEntryHintDaysHint": "为工作日之后超过这么多天才录入的记录加上标记，只有本人能看到。它从不阻止任何操作，也不会上报。填 0 表示关闭，留空则使用服务器默认值。",
+      "correctionsTitle": "更正申请",
+      "correctionsHint": "更正被锁定记录或开启更早日期的申请。请在这里答复，或为提出申请的人开启这些日期。",
+      "grantsTitle": "为个人开启的日期",
+      "grantsHint": "每次开启都会在两周后自动关闭。你可以在这里提前关闭。",
+      "grantsEmpty": "目前没有为任何人开启的日期。",
+      "grantOpenUntil": "开放至 {{date}}",
+      "grantRevoke": "立即关闭",
+      "grantRevokeTitle": "关闭这些日期？",
+      "grantRevokeMessage": "之后 {{name}} 将无法再记录 {{period}} 的工时。此操作会被记录。",
+      "grantRevoked": "这些日期已重新关闭。"
     },
     "passwordPolicy": "密码策略",
     "passwordPolicyHint": "用户密码的最低要求。",
@@ -2206,7 +2299,12 @@
       "TIMESHEET_REOPENED": "工时表已重新开启",
       "TIME_CORRECTION_REQUESTED": "已申请更正",
       "TIME_LOCK_EXCEPTION_ADDED": "区间已开启",
-      "TIME_LOCK_EXCEPTION_REMOVED": "已开启的区间被关闭"
+      "TIME_LOCK_EXCEPTION_REMOVED": "已开启的区间被关闭",
+      "TIME_CORRECTION_ANSWERED": "已答复更正申请",
+      "TIME_BACKFILL_REQUESTED": "已申请更早的日期",
+      "TIME_BACKFILL_GRANTED": "已为个人开启日期",
+      "TIME_BACKFILL_REVOKED": "已开启的日期被重新关闭",
+      "TIME_RETENTION_RUN": "已执行保留期清理"
     },
     "meta": {
       "oldRole": "原角色",
@@ -2738,7 +2836,7 @@
     },
     "timeTracking": {
       "title": "工时记录",
-      "subtitle": "你自己的节奏——时长、倒计时，以及区间结束时的提示音。",
+      "subtitle": "你自己的节奏：时长、倒计时，以及每个区间结束时的提示音。",
       "pomodoro": "番茄钟",
       "work": "专注区间",
       "shortBreak": "短休息",
@@ -2751,7 +2849,20 @@
       "minutes": "{{count}} 分钟",
       "intervals": "{{count}} 个区间",
       "intervals_plural": "{{count}} 个区间",
-      "saveFailed": "无法保存你的偏好设置。"
+      "saveFailed": "无法保存你的偏好设置。",
+      "privacy": "隐私",
+      "privacyPanel": "谁能看到我的工时数据？",
+      "privacyPanelHint": "根据当前开启的规则得出，并附有隐私说明。",
+      "privacyOpen": "查看",
+      "exportCsv": "导出我的工时记录",
+      "exportCsvHint": "以 CSV 文件导出你的全部记录。包含工时数据在内的完整账户导出位于“数据与隐私”。",
+      "exportCsvButton": "导出 CSV",
+      "exportDone": "你的工时记录已导出。",
+      "exportTruncated": "文件中只包含你最近的记录，因为一个文件最多只能有 10 万行。",
+      "exportFailed": "无法保存导出文件。",
+      "correction": "更正与更早的日期",
+      "correctionHint": "你自己的记录由你自己编辑。如果某一天已锁定，请打开该记录并申请更正。如果某一天太久远，请申请开启它。你的原因会发送给能开启它的人，对方的答复会以通知的形式发给你。",
+      "requestDays": "申请更早的日期"
     }
   },
   "twofa": {

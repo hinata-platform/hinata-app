@@ -1,8 +1,11 @@
+import 'dart:typed_data';
+
 import '../api/api_client.dart';
 import '../blocs/paged_cubit.dart';
 import '../models/time_approval_models.dart';
 import '../models/time_models.dart';
 import '../models/time_policy_models.dart';
+import '../models/time_privacy_models.dart';
 import '../models/work_models.dart';
 import '../util/dates.dart';
 
@@ -428,6 +431,174 @@ class TimeRepository {
     '/api/v1/time/entries/$entryId/correction-request',
     body: {'note': note},
   );
+
+  /// The correction requests the reader can answer, newest first: every one for
+  /// an administrator, the ones about submitted periods of their projects for a
+  /// lead, none for anybody else.
+  Future<PageResult<TimeCorrectionRequest>> correctionRequests({
+    int page = 0,
+    int size = 25,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/time/correction-requests',
+              query: {'page': page, 'size': size},
+            )
+            as Map<String, dynamic>;
+    return (
+      items: ((data['content'] as List<dynamic>?) ?? const [])
+          .map((e) => TimeCorrectionRequest.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      total: (data['totalElements'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  /// Answers one request with a sentence the person who asked will read. Once.
+  Future<TimeCorrectionRequest> answerCorrection(String id, String note) async =>
+      TimeCorrectionRequest.fromJson(
+        await _api.post(
+              '/api/v1/time/correction-requests/$id/answer',
+              body: {'note': note},
+            )
+            as Map<String, dynamic>,
+      );
+
+  /// Answers a request by opening the days for the person who asked, with a
+  /// reason they will read. Administrators only; the days close again by
+  /// themselves after two weeks.
+  Future<TimeCorrectionRequest> grantCorrection(String id, String note) async =>
+      TimeCorrectionRequest.fromJson(
+        await _api.post(
+              '/api/v1/time/correction-requests/$id/grant',
+              body: {'note': note},
+            )
+            as Map<String, dynamic>,
+      );
+
+  /// The reader's own requests about one of their entries, newest first, with
+  /// the answers — so they can read them where they look for them.
+  Future<List<TimeCorrectionRequest>> entryCorrectionRequests(
+    String entryId,
+  ) async {
+    final data =
+        await _api.get('/api/v1/time/entries/$entryId/correction-requests')
+            as List<dynamic>;
+    return data
+        .map((e) => TimeCorrectionRequest.fromJson(e as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
+  /// Asks the administrators to open days that cannot be recorded yet: beyond
+  /// `maxDaysBack`, or before the lock date.
+  ///
+  /// There is no entry to ask a correction about, so the request names the span.
+  /// Opening it stays the administrator's audited act.
+  Future<void> requestBackfill({
+    required DateTime from,
+    required DateTime to,
+    required String note,
+  }) => _api.post(
+    '/api/v1/time/backfill-requests',
+    body: {
+      'from': formatDateOnly(from),
+      'to': formatDateOnly(to),
+      'note': note,
+    },
+  );
+
+  /// The days opened for people that are still open, newest first.
+  /// Administrators only.
+  Future<PageResult<TimeBackfillGrant>> backfillGrants({
+    int page = 0,
+    int size = 25,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/time/backfill-grants',
+              query: {'page': page, 'size': size},
+            )
+            as Map<String, dynamic>;
+    return (
+      items: [
+        for (final raw in (data['content'] as List<dynamic>?) ?? const [])
+          ?TimeBackfillGrant.fromJson(raw as Map<String, dynamic>),
+      ],
+      total: (data['totalElements'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  /// Closes days opened for a person before they run out. Recorded.
+  Future<void> revokeBackfillGrant(String id) =>
+      _api.delete('/api/v1/time/backfill-grants/$id');
+
+  // --- being told, and taking a copy -----------------------------------------------
+
+  /// The privacy notice and who can see the reader's time, computed on the server.
+  Future<TimePrivacy> privacy() async => TimePrivacy.fromJson(
+    await _api.get('/api/v1/time/privacy') as Map<String, dynamic>,
+  );
+
+  /// Records that the reader has seen the notice. The first moment is kept.
+  Future<TimePrivacy> acknowledgePrivacy() async => TimePrivacy.fromJson(
+    await _api.post('/api/v1/time/privacy/acknowledge') as Map<String, dynamic>,
+  );
+
+  /// The reader's own self-hints for a window of at most 31 days.
+  ///
+  /// Hints of a kind this build has no words for are dropped here, so no screen
+  /// has to guard against a raw key.
+  Future<List<TimeHint>> hints(DateTime from, DateTime to) async {
+    final data =
+        await _api.get(
+              '/api/v1/time/hints',
+              query: {'from': formatDateOnly(from), 'to': formatDateOnly(to)},
+            )
+            as Map<String, dynamic>;
+    return [
+      for (final raw in (data['hints'] as List<dynamic>?) ?? const [])
+        if (TimeHint.fromJson(raw as Map<String, dynamic>) case final hint?)
+          if (hint.isKnown) hint,
+    ];
+  }
+
+  /// The reader's own entries as a CSV file (UTF-8 with BOM), held in memory.
+  ///
+  /// For the web, which has no path to stream a file to; everywhere else
+  /// [exportCsvTo] writes it straight to disk. [truncated] says the server
+  /// stopped at its row limit.
+  Future<({Uint8List bytes, bool truncated})> exportCsv({
+    DateTime? from,
+    DateTime? to,
+  }) async {
+    final file = await _api.getFile(
+      _csvPath(from, to),
+      receiveTimeout: const Duration(minutes: 2),
+    );
+    return (bytes: file.bytes, truncated: _truncated(file.header));
+  }
+
+  /// The same file written straight to [path], so tens of megabytes never sit in
+  /// memory. Answers whether the server stopped at its row limit.
+  Future<bool> exportCsvTo(String path, {DateTime? from, DateTime? to}) async {
+    final header = await _api.downloadTo(
+      _csvPath(from, to),
+      path,
+      receiveTimeout: const Duration(minutes: 5),
+    );
+    return _truncated(header);
+  }
+
+  static String _csvPath(DateTime? from, DateTime? to) {
+    final query = [
+      if (from != null) 'from=${formatDateOnly(from)}',
+      if (to != null) 'to=${formatDateOnly(to)}',
+    ].join('&');
+    return '/api/v1/time/export.csv${query.isEmpty ? '' : '?$query'}';
+  }
+
+  /// Whether the server says the file stops at its row limit.
+  static bool _truncated(String? Function(String name) header) =>
+      header('x-export-truncated') == 'true';
 
   TimesheetApproval _approval(Object? data) =>
       TimesheetApproval.fromJson(data as Map<String, dynamic>);

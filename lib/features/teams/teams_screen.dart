@@ -113,6 +113,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
                       ),
                       actions: [
                         PrimaryButton(
+                          icon: LucideIcons.plus,
                           label: context.t('teams.new'),
                           onPressed: _create,
                         ),

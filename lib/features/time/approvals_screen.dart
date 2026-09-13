@@ -23,22 +23,26 @@ import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
-import '../issues/work_item_labels.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart'
     show GlassModalHeader, showGlassModal;
 import 'approval_actions.dart';
+import 'correction_requests.dart';
 import 'lock_notice.dart';
+import 'time_privacy_sheet.dart';
 import 'time_views.dart';
 
-/// Handed-in periods: one's own, and the ones waiting for a decision.
+/// Handed-in periods, one's own and the ones waiting for a decision, and the
+/// requests the reader can answer.
 ///
-/// Two lists on one page rather than two pages, because they are the same row
-/// read from two sides and the difference is one rule on the server. Everyone has
-/// the first — the history of what they handed in and what became of it, which
-/// the timesheet's chips only show for the period on screen. The second appears
-/// for whoever can decide something; a member who leads nothing sees an empty
-/// inbox, and an empty inbox is an honest answer rather than a hidden feature.
+/// The two lists of periods share one page rather than two, because they are the
+/// same row read from two sides and the difference is one rule on the server.
+/// Everyone has the first — the history of what they handed in and what became of
+/// it, which the timesheet's chips only show for the period on screen. The second
+/// appears for whoever can decide something; a member who leads nothing sees an
+/// empty inbox, and an empty inbox is an honest answer rather than a hidden
+/// feature. The third lists the correction requests and the requests for older
+/// days that reach this reader.
 class ApprovalsScreen extends StatefulWidget {
   const ApprovalsScreen({super.key});
 
@@ -50,9 +54,18 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
   final _scroll = ScrollController();
   late final PagedCubit<TimesheetApproval> _approvals;
 
-  /// `mine` or `inbox`. A field rather than two cubits: the rows are the same
-  /// shape, and two cubits would be two scroll positions to keep in step.
-  String _scope = 'mine';
+  /// Which of the three lists the switch shows.
+  String _scope = _mine;
+
+  /// `mine` or `inbox`: the submissions the cubit reads. A field rather than two
+  /// cubits, because the rows are the same shape and two cubits would be two
+  /// scroll positions to keep in step. It stays put while the corrections show,
+  /// so coming back to the submissions needs no reload.
+  String _approvalScope = _mine;
+
+  /// Whether the corrections were opened once. From then on they stay built
+  /// behind the switch, so their list and its scroll position survive it.
+  bool _correctionsOpened = false;
 
   /// Names for exactly the people and projects the loaded rows mention. Never the
   /// whole directory or catalogue — an instance can hold hundreds of each.
@@ -69,7 +82,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
     super.initState();
     _approvals = PagedCubit<TimesheetApproval>(
       (page, size) => context.read<TimeRepository>().approvals(
-        scope: _scope,
+        scope: _approvalScope,
         page: page,
         size: size,
       ),
@@ -80,6 +93,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
     // The rules, once: whether approvals exist at all decides whether this page
     // has anything to say, and the lock vocabulary below reads from them.
     unawaited(context.read<TimePolicyCubit>().ensureLoaded());
+    offerTimePrivacyNotice(context);
     unawaited(_reload());
   }
 
@@ -112,9 +126,28 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
 
   void _switchScope(String scope) {
     if (_scope == scope) return;
-    setState(() => _scope = scope);
-    unawaited(_reload());
+    final reload = scope != _corrections && scope != _approvalScope;
+    setState(() {
+      _scope = scope;
+      if (scope == _corrections) {
+        _correctionsOpened = true;
+      } else {
+        _approvalScope = scope;
+      }
+    });
+    // The corrections list pages itself, and the submissions are read again only
+    // for a scope they were not already showing.
+    if (reload) unawaited(_reload());
   }
+
+  /// The submissions the reader handed in.
+  static const _mine = 'mine';
+
+  /// The submissions the reader can decide.
+  static const _inbox = 'inbox';
+
+  /// The third tab: requests the reader can answer.
+  static const _corrections = 'corrections';
 
   /// Names for the ids on screen. A failure keeps whatever is already held: a
   /// name that could not be fetched is still better shown as the last one known
@@ -216,23 +249,30 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
     );
   }
 
-  /// The two lists, as one switch. Same control the module's views wear, so a
+  /// The three lists, as one switch. Same control the module's views wear, so a
   /// reader meets one idiom rather than two.
   Widget _scopeSwitch() => GlassSwitchBar(
-    maxWidth: 280,
+    maxWidth: 440,
     chips: [
       GlassSwitchChip(
         label: context.t('time.approval.scope.mine'),
         icon: LucideIcons.user,
-        active: _scope == 'mine',
-        onTap: _scope == 'mine' ? null : () => _switchScope('mine'),
+        active: _scope == _mine,
+        onTap: _scope == _mine ? null : () => _switchScope(_mine),
       ),
       const SizedBox(width: 2),
       GlassSwitchChip(
         label: context.t('time.approval.scope.inbox'),
         icon: LucideIcons.inbox,
-        active: _scope == 'inbox',
-        onTap: _scope == 'inbox' ? null : () => _switchScope('inbox'),
+        active: _scope == _inbox,
+        onTap: _scope == _inbox ? null : () => _switchScope(_inbox),
+      ),
+      const SizedBox(width: 2),
+      GlassSwitchChip(
+        label: context.t('time.approval.scope.corrections'),
+        icon: LucideIcons.messageSquareWarning,
+        active: _scope == _corrections,
+        onTap: _scope == _corrections ? null : () => _switchScope(_corrections),
       ),
     ],
   );
@@ -249,7 +289,28 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
     ),
   );
 
-  Widget _body() {
+  /// The submissions, and the corrections once they were opened: kept built side
+  /// by side, so switching back and forth keeps each list where it was.
+  Widget _body() => IndexedStack(
+    index: _scope == _corrections ? 1 : 0,
+    sizing: StackFit.expand,
+    children: [
+      _submissions(),
+      if (_correctionsOpened)
+        CorrectionRequestsList(
+          padding: EdgeInsets.fromLTRB(
+            context.pageGutter,
+            context.isCompact ? context.topGutter + context.pageGutter : 0,
+            context.pageGutter,
+            context.pageGutter + context.bottomGutter,
+          ),
+        )
+      else
+        const SizedBox.shrink(),
+    ],
+  );
+
+  Widget _submissions() {
     return BlocBuilder<
       PagedCubit<TimesheetApproval>,
       PagedState<TimesheetApproval>
@@ -295,8 +356,10 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 520),
                 child: HiveEmptyState(
-                  title: context.t('time.approval.empty.$_scope.title'),
-                  message: context.t('time.approval.empty.$_scope.message'),
+                  title: context.t('time.approval.empty.$_approvalScope.title'),
+                  message: context.t(
+                    'time.approval.empty.$_approvalScope.message',
+                  ),
                 ),
               ),
             ),
@@ -328,7 +391,8 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
               // exactly those in it. Nobody signs off their own period, and a
               // button that always answered 403 would be a worse way to say so.
               decidable:
-                  _scope == 'inbox' && state.items[index].userId != _myUserId,
+                  _approvalScope == _inbox &&
+                  state.items[index].userId != _myUserId,
               onChanged: _reload,
             );
           },
@@ -573,6 +637,9 @@ class _History extends StatelessWidget {
   }
 }
 
+/// Rows per page in [_showEntries].
+const _entriesPage = 25;
+
 /// The entries a submission covers, paged — what an approver actually reads.
 ///
 /// Paged rather than all at once, and for a reason that is not only size: a month
@@ -593,7 +660,7 @@ Future<void> _showEntries(
         page: page,
         size: size,
       ),
-      pageSize: 25,
+      pageSize: _entriesPage,
       keyOf: (entry) => entry.id,
     )..load(),
     child: Column(
@@ -658,11 +725,14 @@ Future<void> _showEntries(
                   }
                   return false;
                 },
-                // No shrinkWrap: it lays out every child to measure itself, which
-                // defeats the lazy building the paging exists for — a quarter's
-                // entries would all be built on every layout pass. The modal's own
-                // Flexible bounds the height instead.
+                // Lazy and bounded by the modal's Flexible once there is more
+                // than a page: shrinkWrap lays out every child to measure itself,
+                // which a quarter's entries would pay on every layout pass. A
+                // period that fits on one page shrinks to its rows instead, so
+                // two entries do not sit in a dialog as tall as the screen.
                 child: ListView.separated(
+                  shrinkWrap:
+                      !state.hasMore && state.items.length <= _entriesPage,
                   padding: const EdgeInsets.fromLTRB(22, 4, 22, 20),
                   itemCount: state.items.length + (state.hasMore ? 1 : 0),
                   separatorBuilder: (_, _) =>
@@ -694,7 +764,7 @@ Future<void> _showEntries(
                         Expanded(
                           child: Text(
                             (entry.description ?? '').trim().isEmpty
-                                ? activityLabel(rowContext, entry.activityType)
+                                ? rowContext.t('time.entry.noDescription')
                                 : entry.description!,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,

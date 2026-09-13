@@ -4,9 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
+import 'package:hinata/core/blocs/time_privacy_cubit.dart';
 import 'package:hinata/core/blocs/timer_cubit.dart';
 import 'package:hinata/core/models/time_models.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
+import 'package:hinata/core/models/time_privacy_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/widgets/glass_popup_menu.dart';
 import 'package:hinata/core/repositories/issue_repository.dart';
@@ -18,6 +20,7 @@ import 'package:hinata/features/time/time_screen.dart';
 import 'package:hinata/features/time/timer_bar.dart';
 
 import 'fake_time_policy_cubit.dart';
+import 'fake_time_privacy_cubit.dart';
 
 /// The `time.fmt.*` key the day header beside [dayKey] renders — the header's
 /// own total, not one of the row durations further down the page.
@@ -110,6 +113,9 @@ void main() {
                     BlocProvider<TimePolicyCubit>(
                       create: (_) =>
                           policyCubit ?? FakeTimePolicyCubit(policy, time),
+                    ),
+                    BlocProvider<TimePrivacyCubit>(
+                      create: (_) => FakeTimePrivacyCubit(time),
                     ),
                   ],
                   child: const TimeScreen(),
@@ -364,6 +370,113 @@ void main() {
       expect(repository.filtersAsked, hasLength(1));
       expect(repository.filtersAsked.single.projectId, isNull);
       expect(repository.filtersAsked.single.query, isNull);
+    });
+  });
+
+  group('the self-hints', () {
+    TimeHint late(String entryId, int days) => TimeHint(
+      kind: 'LATE_ENTRY',
+      date: DateTime(today.year, today.month, today.day),
+      entryId: entryId,
+      daysLate: days,
+    );
+
+    testWidgets('a late entry carries its hint while the policy has one', (
+      tester,
+    ) async {
+      final time = _FakeTimeRepository([entry(id: 'w1', description: 'late')])
+        ..hintsToAnswer = [late('w1', 12)];
+      await tester.pumpWidget(
+        host(
+          time: time,
+          policy: const TimePolicySnapshot(lateEntryHintDays: 7),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(time.hintsAsked, isNotEmpty);
+      expect(find.textContaining('time.hint.chip.LATE_ENTRY'), findsOneWidget);
+    });
+
+    testWidgets('without the policy nothing is asked and nothing is shown', (
+      tester,
+    ) async {
+      final time = _FakeTimeRepository([entry(id: 'w1', description: 'late')])
+        ..hintsToAnswer = [late('w1', 12)];
+      await tester.pumpWidget(host(time: time));
+      await tester.pumpAndSettle();
+
+      expect(time.hintsAsked, isEmpty);
+      expect(find.textContaining('time.hint.chip'), findsNothing);
+    });
+
+    testWidgets('a long day is marked beside the day, not on an entry', (
+      tester,
+    ) async {
+      final time = _FakeTimeRepository([entry(id: 'w1', minutes: 660)])
+        ..hintsToAnswer = [
+          TimeHint(
+            kind: 'DAILY_MAXIMUM',
+            date: DateTime(today.year, today.month, today.day),
+            minutes: 660,
+          ),
+        ];
+      await tester.pumpWidget(
+        host(
+          time: time,
+          policy: const TimePolicySnapshot(arbzgHintsEnabled: true),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final chip = find.text('time.hint.chip.DAILY_MAXIMUM');
+      expect(chip, findsOneWidget);
+      expect(
+        find.ancestor(of: chip, matching: find.byType(InkWell)),
+        findsNothing,
+        reason: 'the day header, not the tappable entry row',
+      );
+    });
+
+    testWidgets('a day with several hints still fits a phone', (tester) async {
+      // A long date and three chips are wider than a phone: the chips have to
+      // move under the date rather than push the day's total off the edge. The
+      // test font draws every glyph a full em wide and a widget test prints raw
+      // keys, so 480 points here are tighter than a phone with real text.
+      tester.view.physicalSize = const Size(480, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final day = DateTime(today.year, today.month, today.day);
+      final time = _FakeTimeRepository([entry(id: 'w1', minutes: 660)])
+        ..hintsToAnswer = [
+          TimeHint(kind: 'DAILY_MAXIMUM', date: day, minutes: 660),
+          TimeHint(kind: 'SHORT_REST', date: day, restMinutes: 420),
+          TimeHint(kind: 'SUNDAY_WORK', date: day),
+        ];
+      // Every layout error of the pump, not just the first: at this width the
+      // raw i18n keys a widget test renders overflow other bars too, and those
+      // say nothing about the day header.
+      final reports = <String>[];
+      final previous = FlutterError.onError;
+      FlutterError.onError = (details) => reports.add(details.toString());
+      await tester.pumpWidget(
+        host(
+          time: time,
+          policy: const TimePolicySnapshot(arbzgHintsEnabled: true),
+        ),
+      );
+      await tester.pumpAndSettle();
+      FlutterError.onError = previous;
+
+      expect(find.textContaining('time.hint.chip.'), findsNWidgets(3));
+      expect(
+        reports.where(
+          (report) =>
+              report.contains('time_screen.dart') ||
+              report.contains('time_hints.dart'),
+        ),
+        isEmpty,
+      );
     });
   });
 
@@ -758,6 +871,21 @@ class _FakeTimeRepository implements TimeRepository {
   /// Every filter the screen asked with, so the test can state what it does
   /// *not* send as much as what it does.
   final List<TimeEntryFilter> filtersAsked = [];
+
+  /// What `GET /time/hints` answers, filtered to the window asked for.
+  List<TimeHint> hintsToAnswer = const [];
+
+  /// Every window the screen asked hints for.
+  final List<(DateTime, DateTime)> hintsAsked = [];
+
+  @override
+  Future<List<TimeHint>> hints(DateTime from, DateTime to) async {
+    hintsAsked.add((from, to));
+    return [
+      for (final hint in hintsToAnswer)
+        if (!hint.date.isBefore(from) && !hint.date.isAfter(to)) hint,
+    ];
+  }
 
   @override
   Future<PageResult<WorkItem>> entries({
