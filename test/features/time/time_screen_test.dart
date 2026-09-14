@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
+import 'package:hinata/core/blocs/time_preferences_cubit.dart';
 import 'package:hinata/core/blocs/time_privacy_cubit.dart';
 import 'package:hinata/core/blocs/timer_cubit.dart';
 import 'package:hinata/core/models/time_models.dart';
@@ -11,6 +12,7 @@ import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/models/time_privacy_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/widgets/glass_popup_menu.dart';
+import 'package:hinata/core/repositories/account_repository.dart';
 import 'package:hinata/core/repositories/issue_repository.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
@@ -18,6 +20,7 @@ import 'package:hinata/core/widgets/hive_empty_state.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:hinata/features/time/time_screen.dart';
 import 'package:hinata/features/time/timer_bar.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'fake_time_policy_cubit.dart';
 import 'fake_time_privacy_cubit.dart';
@@ -116,6 +119,12 @@ void main() {
                     ),
                     BlocProvider<TimePrivacyCubit>(
                       create: (_) => FakeTimePrivacyCubit(time),
+                    ),
+                    // The defaults the mode menu starts a countdown or a
+                    // pomodoro with.
+                    BlocProvider<TimePreferencesCubit>(
+                      create: (_) =>
+                          TimePreferencesCubit(_FakeAccountRepository()),
                     ),
                   ],
                   child: const TimeScreen(),
@@ -488,6 +497,40 @@ void main() {
       expect(find.text('time.timer.start'), findsOneWidget);
       expect(find.text('time.timer.stop'), findsNothing);
       expect(find.text('time.timer.idle'), findsOneWidget);
+    });
+
+    testWidgets('the mode menu opens under its own button', (tester) async {
+      // The rect it hangs off used to be the whole bar's, so it opened under
+      // the bar's left edge, the far end from the button that opened it.
+      await tester.pumpWidget(host(time: _FakeTimeRepository(const [])));
+      await tester.pumpAndSettle();
+
+      final button = find.byTooltip('time.timer.chooseMode');
+      // Pointing down, the way the menu opens.
+      expect(
+        find.descendant(
+          of: button,
+          matching: find.byIcon(LucideIcons.chevronDown),
+        ),
+        findsOneWidget,
+      );
+
+      final anchor = tester.getRect(button);
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+
+      final menu = tester.getRect(
+        find.ancestor(
+          of: find.text('time.mode.countdown'),
+          matching: find.byType(ListView),
+        ),
+      );
+      // Beneath the button and across it. Clamped to the window like every
+      // menu, so not necessarily flush with the button's left edge.
+      expect(menu.left, lessThanOrEqualTo(anchor.left));
+      expect(menu.right, greaterThanOrEqualTo(anchor.right));
+      expect(menu.top, greaterThan(anchor.bottom));
+      expect(menu.top, lessThan(anchor.bottom + 16));
     });
 
     testWidgets('past an hour the readout carries the hour', (tester) async {
@@ -921,6 +964,14 @@ class _FakeProjectRepository implements ProjectRepository {
 }
 
 class _FakeIssueRepository implements IssueRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not faked');
+}
+
+/// Behind the preferences the mode menu reads. Only their defaults are read
+/// here, so nothing is ever asked of it.
+class _FakeAccountRepository implements AccountRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} is not faked');
