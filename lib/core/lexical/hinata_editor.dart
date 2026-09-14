@@ -520,11 +520,16 @@ class HinataEditorState extends State<HinataEditor> {
   @override
   Widget build(BuildContext context) {
     _refreshStyling(_api);
-    final field = ConstrainedBox(
-      constraints: BoxConstraints(minHeight: widget.minHeight),
-      child: Stack(
-        children: [
-          LexicalEditorField(
+    final field = Stack(
+      children: [
+        // The minimum height belongs to the editor itself, not to a box
+        // around it. Around it, the empty space below the last line was not
+        // part of the editor at all: a click there placed no caret, and on the
+        // web it landed beside the editor's hidden input element and took
+        // focus away from it — which Safari never gives back.
+        ConstrainedBox(
+          constraints: BoxConstraints(minHeight: widget.minHeight),
+          child: LexicalEditorField(
             editor: _editor,
             editableKey: _editableKey,
             baseTextStyle: TextStyle(fontSize: widget.fontSize),
@@ -547,19 +552,19 @@ class HinataEditorState extends State<HinataEditor> {
             // nowhere to offer paste from.
             onContextMenu: () => _quickKey.currentState?.showContextActions(),
           ),
-          Positioned(
-            left: 0,
-            top: 0,
-            right: 0,
-            child: HinataEditorPlaceholder(
-              text: context.t(widget.placeholderKey),
-              visible: _looksEmpty,
-              padding: widget.padding,
-              fontSize: widget.fontSize,
-            ),
+        ),
+        Positioned(
+          left: 0,
+          top: 0,
+          right: 0,
+          child: HinataEditorPlaceholder(
+            text: context.t(widget.placeholderKey),
+            visible: _looksEmpty,
+            padding: widget.padding,
+            fontSize: widget.fontSize,
           ),
-        ],
-      ),
+        ),
+      ],
     );
 
     final body = widget.framed
