@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
@@ -20,6 +21,8 @@ import '../sprint/modals/glass_modal.dart'
         showGlassErrorToast,
         showGlassModal,
         showGlassToast;
+import '../time/placement_picker.dart' show TimePlacement;
+import '../time/time_entry_sheet.dart' show showTimeEntrySheet;
 import 'work_item_labels.dart';
 import 'work_log_sheet.dart';
 
@@ -80,15 +83,50 @@ class WorkItemAccess {
       !item.hidden && (isOwn(item) || managesProject);
 }
 
-/// Opens the entry in the work-log sheet's edit mode. Answers the patched
-/// entry once it was saved, and null when nothing changed.
+/// Whether this server runs the time module, whose own editor then takes the
+/// work log's place. With the module off its routes do not exist, and the work
+/// log on the issue's own routes is the only way to record time.
+bool _timeModuleOn(BuildContext context) =>
+    context.read<AppConfigBloc>().state.meta?.advancedTimeTracking ?? false;
+
+/// Logs time on [issue]: the time module's editor, filed on this issue, where
+/// the module is on, and the work-log sheet where it is not. Answers whether
+/// an entry was written.
+Future<bool> showLogWork(BuildContext context, Issue issue) async {
+  if (!_timeModuleOn(context)) {
+    return await showWorkLogSheet(context, issue.id) == true;
+  }
+  final saved = await showTimeEntrySheet(
+    context,
+    placement: TimePlacement(
+      projectId: issue.projectId,
+      issueId: issue.id,
+      label: '${issue.readableId} · ${issue.title}',
+    ),
+  );
+  return saved != null;
+}
+
+/// Opens the entry for correction, in the same editor [showLogWork] uses.
+/// Answers the patched entry once it was saved, and null when nothing changed.
+/// [onDeleted] hears about an entry removed from inside the editor, which
+/// closes the way a dismissal does.
 Future<WorkItem?> showEditWorkItem(
   BuildContext context,
   String issueId,
-  WorkItem item,
-) async {
-  final saved = await showWorkLogSheet(context, issueId, existing: item);
-  return saved is WorkItem ? saved : null;
+  WorkItem item, {
+  VoidCallback? onDeleted,
+}) async {
+  if (!_timeModuleOn(context)) {
+    final saved = await showWorkLogSheet(context, issueId, existing: item);
+    return saved is WorkItem ? saved : null;
+  }
+  final saved = await showTimeEntrySheet(
+    context,
+    entry: item,
+    onDeleted: onDeleted,
+  );
+  return saved?.entry;
 }
 
 /// Asks, then deletes. True when the entry is gone; a refused or failed
@@ -515,9 +553,23 @@ class _AllWorkItemsSheetState extends State<AllWorkItemsSheet> {
   /// scrolled through, drops them back to the top and immediately fetches the
   /// next page — all to change one line they are looking at.
   Future<void> _edit(WorkItem item) async {
-    final patched = await showEditWorkItem(context, widget.issue.id, item);
-    if (patched == null) return;
-    _cubit.replaceItem(patched);
+    var deleted = false;
+    final patched = await showEditWorkItem(
+      context,
+      widget.issue.id,
+      item,
+      onDeleted: () => deleted = true,
+    );
+    if (!mounted) return;
+    // Removed from inside the editor, which closes like a dismissal: the row
+    // goes the way a delete from its own menu takes it.
+    if (deleted) {
+      _cubit.removeItem(item.id);
+    } else if (patched != null) {
+      _cubit.replaceItem(patched);
+    } else {
+      return;
+    }
     widget.onChanged();
   }
 

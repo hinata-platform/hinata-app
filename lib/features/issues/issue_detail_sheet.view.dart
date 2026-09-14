@@ -2646,8 +2646,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
               ),
               GestureDetector(
                 onTap: () async {
-                  final logged = await showWorkLogSheet(context, issue.id);
-                  if (logged == true && mounted) {
+                  final logged = await showLogWork(context, issue);
+                  if (logged && mounted) {
                     _notifyChanged();
                     await _reloadWorkItems();
                   }
@@ -2718,9 +2718,17 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   }
 
   Future<void> _editWorkItem(Issue issue, WorkItem item) async {
-    if (await showEditWorkItem(context, issue.id, item) == null || !mounted) {
-      return;
-    }
+    // The editor offers removing the entry too, and closes on it the way a
+    // dismissal does: without the flag the card would go on listing an entry
+    // that is gone.
+    var deleted = false;
+    final patched = await showEditWorkItem(
+      context,
+      issue.id,
+      item,
+      onDeleted: () => deleted = true,
+    );
+    if ((patched == null && !deleted) || !mounted) return;
     _notifyChanged();
     await _reloadWorkItems();
   }

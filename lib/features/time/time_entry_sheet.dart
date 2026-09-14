@@ -80,11 +80,16 @@ Future<bool> confirmAndDeleteTimeEntry(
 }
 
 /// Resolves to the saved entry, or null if dismissed.
+///
+/// [placement] files a new entry where the sheet was opened from, an issue's
+/// time card for instance, so the field starts on that issue instead of asking
+/// for it again. An [entry] or a [timer] brings its own.
 Future<SavedTimeEntry?> showTimeEntrySheet(
   BuildContext context, {
   WorkItem? entry,
   ({DateTime start, DateTime end})? span,
   RunningTimer? timer,
+  TimePlacement? placement,
   VoidCallback? onDeleted,
 }) {
   // The sheet rides the root navigator, outside the app's provider scope, so
@@ -122,6 +127,7 @@ Future<SavedTimeEntry?> showTimeEntrySheet(
         entry: entry,
         span: span,
         timer: timer,
+        placement: placement,
         onDeleted: onDeleted,
       );
       return MultiRepositoryProvider(
@@ -141,9 +147,18 @@ Future<SavedTimeEntry?> showTimeEntrySheet(
 enum _EntryMode { interval, duration }
 
 class _TimeEntryForm extends StatefulWidget {
-  const _TimeEntryForm({this.entry, this.span, this.timer, this.onDeleted});
+  const _TimeEntryForm({
+    this.entry,
+    this.span,
+    this.timer,
+    this.placement,
+    this.onDeleted,
+  });
 
   final WorkItem? entry;
+
+  /// Where a new entry starts out filed. See [showTimeEntrySheet].
+  final TimePlacement? placement;
 
   /// Hours swept out on the calendar, for a new entry. Opens the form on its
   /// interval side with those hours already in it — the drag was the answer to
@@ -197,10 +212,14 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       widget.entry?.endedAt ??
       _defaultStart().add(const Duration(hours: 1));
 
-  late TimePlacement _placement = TimePlacement(
-    projectId: widget.entry?.projectId ?? widget.timer?.projectId,
-    issueId: widget.entry?.issueId ?? widget.timer?.issueId,
-  );
+  /// An entry or a timer brings its own; a new entry starts wherever the sheet
+  /// was opened from, and unfiled when that was nowhere in particular.
+  late TimePlacement _placement = widget.entry != null || widget.timer != null
+      ? TimePlacement(
+          projectId: widget.entry?.projectId ?? widget.timer?.projectId,
+          issueId: widget.entry?.issueId ?? widget.timer?.issueId,
+        )
+      : widget.placement ?? TimePlacement.unfiled;
 
   late List<String> _tags = List.of(
     widget.entry?.tags ?? widget.timer?.tags ?? const <String>[],
