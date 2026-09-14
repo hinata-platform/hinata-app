@@ -189,10 +189,16 @@ class _TimerBarBody extends StatelessWidget {
           ] else ...[
             // How the next one counts, chosen before it starts — a running
             // timer's mode is the server's and cannot be changed under it.
-            _RoundAction(
-              icon: LucideIcons.chevronUp,
-              tooltip: context.t('time.timer.chooseMode'),
-              onTap: state.isBusy ? null : () => _chooseMode(context),
+            //
+            // Measured through its own context: the menu hangs off the rect it
+            // is handed, and the bar's context is the whole bar, so the menu
+            // opened under the bar's far end instead of under this button.
+            Builder(
+              builder: (button) => _RoundAction(
+                icon: LucideIcons.chevronDown,
+                tooltip: context.t('time.timer.chooseMode'),
+                onTap: state.isBusy ? null : () => _chooseMode(button),
+              ),
             ),
             const SizedBox(width: 8),
             _PrimaryAction(
