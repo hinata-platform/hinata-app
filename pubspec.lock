@@ -999,18 +999,18 @@ packages:
     dependency: transitive
     description:
       name: lexical_core
-      sha256: de0c1e2b6a3a6d2c210a9d836d041b4fcc1080411fb942554a542eb4b0f7b835
+      sha256: ce3fc069010d55f828e71c0d6ea9b962c08e2efa489468e444c053805a05b00b
       url: "https://pub.dev"
     source: hosted
-    version: "1.7.4"
+    version: "1.9.2"
   lexical_editor_flutter:
     dependency: "direct main"
     description:
       name: lexical_editor_flutter
-      sha256: ec0c22269ca5c2d81f4836d4a2c91db74515aef2bdc0ad1fb04af8d4de2edbdf
+      sha256: "55091272cd3f7f4da9ab769aeffc61d28d872152a74a5db968cb35d9cba9177c"
       url: "https://pub.dev"
     source: hosted
-    version: "1.9.1"
+    version: "1.9.2"
   lexical_embed:
     dependency: transitive
     description:
@@ -1023,10 +1023,10 @@ packages:
     dependency: transitive
     description:
       name: lexical_flutter
-      sha256: eaf8f686274de5894af1b912c354f294deaa0051fc01370b9fba93f45f86c0e5
+      sha256: "8ebf6f35a2ec3267e64209b8ba4084567283faf4977c2b7f22a96b1d57558267"
       url: "https://pub.dev"
     source: hosted
-    version: "1.9.0"
+    version: "1.9.2"
   lexical_hashtag:
     dependency: transitive
     description:
