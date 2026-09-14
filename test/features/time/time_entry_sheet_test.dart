@@ -11,6 +11,7 @@ import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/repositories/issue_repository.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
+import 'package:hinata/features/time/placement_picker.dart' show TimePlacement;
 import 'package:hinata/features/time/time_entry_sheet.dart';
 
 import 'fake_time_policy_cubit.dart';
@@ -30,6 +31,7 @@ void main() {
   Future<void> open(
     WidgetTester tester, {
     WorkItem? entry,
+    TimePlacement? placement,
     Size size = const Size(900, 1200),
     TimePolicySnapshot policy = TimePolicySnapshot.none,
   }) async {
@@ -60,6 +62,7 @@ void main() {
                     onPressed: () => showTimeEntrySheet(
                       context,
                       entry: entry,
+                      placement: placement,
                       onDeleted: () => deletions++,
                     ),
                     child: const Text('open'),
@@ -398,6 +401,33 @@ void main() {
     await open(tester);
 
     expect(find.text('time.entry.placement'), findsOneWidget);
+  });
+
+  testWidgets('a new entry opened from an issue is filed on it', (
+    tester,
+  ) async {
+    // Opened from an issue's time card the sheet already knows where the time
+    // goes, and asking for the issue again would be asking twice.
+    await open(
+      tester,
+      placement: const TimePlacement(
+        projectId: 'p1',
+        issueId: 'i1',
+        label: 'MOB-1 · Fix the login screen',
+      ),
+    );
+
+    expect(find.text('MOB-1 · Fix the login screen'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextField, '1h 30m · 90m · 1:30'),
+      '45m',
+    );
+    await save(tester);
+
+    final draft = repository.created.single;
+    expect(draft.projectId, 'p1');
+    expect(draft.issueId, 'i1');
+    expect(draft.durationMinutes, 45);
   });
 
   testWidgets('an existing duration entry opens in duration mode and updates', (
