@@ -9,6 +9,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
 import '../../core/models/team_models.dart';
 import '../../core/models/work_models.dart';
+import '../../core/responsive/golden_columns.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/entity_avatar_editor.dart';
 import '../../core/widgets/hive_loader.dart';
@@ -197,42 +198,28 @@ class TeamOverviewTab extends StatelessWidget {
           },
         ),
         const SizedBox(height: 16),
-        LayoutBuilder(
-          builder: (context, c) {
-            final stacked = c.maxWidth < 720;
-            final projectsCard = _ProjectsMiniCard(
-              data: data,
-              projects: projects,
-              manage: manage,
-              onReload: onReload,
-              onViewAll: onGotoProjects,
-            );
-            final activityCard = _ActivityCard(
-              data: data,
-              activity: activity,
-              hasMore: activityHasMore,
-              loadingMore: activityLoadingMore,
-              onLoadMore: onLoadMoreActivity,
-            );
-            if (stacked) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  projectsCard,
-                  const SizedBox(height: 16),
-                  activityCard,
-                ],
-              );
-            }
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(flex: 3, child: projectsCard),
-                const SizedBox(width: 16),
-                Expanded(flex: 2, child: activityCard),
-              ],
-            );
-          },
+        // The projects lead, the activity runs beside them, and below the
+        // medium width they stack — the same two golden columns as everywhere.
+        GoldenColumns<String>(
+          groups: const [
+            GoldenGroup(['projects'], weight: 3, lead: true, wide: true),
+            GoldenGroup(['activity'], weight: 2),
+          ],
+          card: (card) => card == 'projects'
+              ? _ProjectsMiniCard(
+                  data: data,
+                  projects: projects,
+                  manage: manage,
+                  onReload: onReload,
+                  onViewAll: onGotoProjects,
+                )
+              : _ActivityCard(
+                  data: data,
+                  activity: activity,
+                  hasMore: activityHasMore,
+                  loadingMore: activityLoadingMore,
+                  onLoadMore: onLoadMoreActivity,
+                ),
         ),
       ],
     );
