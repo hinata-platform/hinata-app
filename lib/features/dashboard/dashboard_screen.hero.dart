@@ -498,7 +498,7 @@ class _SprintEmpty extends StatelessWidget {
               backgroundColor: AppColors.accent,
               foregroundColor: const Color(0xFF2A2410),
             ),
-            onPressed: () => context.go('/board'),
+            onPressed: () => context.go(boardsLocation),
             child: Text(context.t('dashboard.planSprint')),
           ),
         ],

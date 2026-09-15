@@ -431,7 +431,7 @@ class ApiClient {
   Future<Stream<List<int>>> openEventStream(
     String path, {
     CancelToken? cancelToken,
-  }) {
+  }) async {
     final token = _storage.accessToken;
     return sse_transport.openEventStream(
       dio: _dio,
