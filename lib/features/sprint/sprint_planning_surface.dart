@@ -9,8 +9,9 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_bulk_bar.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../search/search_tokens.dart';
-import '../board/board_filter.dart';
+import '../board/board_swimlanes.dart' show BoardLoadMore;
 import '../board/issue_quick_create.dart';
+import 'planning/sprint_planning_cubit.dart';
 import 'sprint_format.dart';
 import 'widgets/plan_row.dart';
 import 'widgets/sprint_widgets.dart';
@@ -18,24 +19,24 @@ import 'widgets/sprint_widgets.dart';
 /// Planning (backlog) surface: stacked sprint containers above the paginated
 /// product backlog. Drag issues between any container; multi-select + bulk
 /// move; per-row story-point estimate; start / complete a sprint.
+///
+/// Everything here comes from the server already searched and filtered. A
+/// sprint shows its cards a page at a time and counts its head over all of
+/// them, loaded or not.
 class SprintPlanningSurface extends StatelessWidget {
   const SprintPlanningSurface({
     super.key,
+    required this.planning,
     required this.sprints,
     required this.activeSprintId,
-    required this.issuesBySprint,
+    required this.backlogPageSize,
     required this.names,
     this.pronouns = const {},
     required this.avatars,
-    required this.filter,
-    required this.backlog,
-    required this.backlogTotal,
-    required this.backlogPage,
-    required this.backlogPages,
-    required this.pageSize,
     required this.selected,
     required this.query,
     required this.onPage,
+    required this.onLoadMore,
     required this.onToggleSelect,
     required this.onClearSelection,
     required this.onOpenIssue,
@@ -49,9 +50,13 @@ class SprintPlanningSurface extends StatelessWidget {
     this.topInset = 0,
   });
 
+  /// The sprints' cards and heads, and the backlog page on screen.
+  final SprintPlanningState planning;
+
+  /// The sprints in the order they stack: the one the board runs first.
   final List<Sprint> sprints;
   final String? activeSprintId;
-  final Map<String, List<Issue>> issuesBySprint;
+  final int backlogPageSize;
 
   /// Display name / avatar URL per user id, so a row can show *who* an issue is
   /// assigned to. Without them a row only has the raw assignee id, which is not
@@ -59,15 +64,14 @@ class SprintPlanningSurface extends StatelessWidget {
   final Map<String, String> names;
   final Map<String, String> avatars;
   final Map<String, String> pronouns;
-  final BoardFilter filter;
-  final List<Issue> backlog;
-  final int backlogTotal;
-  final int backlogPage;
-  final int backlogPages;
-  final int pageSize;
   final Set<String> selected;
+
+  /// The search typed into the head, named when the backlog finds nothing.
   final String query;
   final ValueChanged<int> onPage;
+
+  /// Reads the next page of the sprint with the given id.
+  final ValueChanged<String> onLoadMore;
   final ValueChanged<String> onToggleSelect;
   final VoidCallback onClearSelection;
   final void Function(Issue) onOpenIssue;
@@ -88,6 +92,10 @@ class SprintPlanningSurface extends StatelessWidget {
   /// docked row float over the top of the list, which scrolls up under them.
   final double topInset;
 
+  int get _backlogPages => planning.backlogTotal == 0
+      ? 1
+      : (planning.backlogTotal + backlogPageSize - 1) ~/ backlogPageSize;
+
   @override
   Widget build(BuildContext context) {
     final gutter = context.pageGutter;
@@ -105,18 +113,16 @@ class SprintPlanningSurface extends StatelessWidget {
               _SprintGroup(
                 sprint: s,
                 isActive: s.id == activeSprintId,
+                container: planning.containerOf(s.id),
                 names: names,
                 avatars: avatars,
                 pronouns: pronouns,
-                issues: (issuesBySprint[s.id] ?? const [])
-                    .where(filter.matches)
-                    .where(_matchesQuery)
-                    .toList(),
                 selected: selected,
                 onToggleSelect: onToggleSelect,
                 onOpenIssue: onOpenIssue,
                 onEstimate: onEstimate,
                 onAccept: (issue) => onMoveToSprint(issue, s.id),
+                onLoadMore: () => onLoadMore(s.id),
                 quickCreate: quickCreateSeed(s.id),
                 onCreated: onCreated,
                 action: s.id == activeSprintId
@@ -128,7 +134,12 @@ class SprintPlanningSurface extends StatelessWidget {
                     : PrimaryButton(
                         label: context.t('sprint.startSprint'),
                         icon: LucideIcons.play,
-                        onPressed: (issuesBySprint[s.id] ?? const []).isEmpty
+                        // An empty sprint has nothing to start. A narrowed
+                        // planning may not show all a sprint holds, so there
+                        // the dialog tells how much it is.
+                        onPressed:
+                            planning.containerOf(s.id).total == 0 &&
+                                !planning.narrowed
                             ? null
                             : () => onStartSprint(s),
                       ),
@@ -136,14 +147,14 @@ class SprintPlanningSurface extends StatelessWidget {
               const SizedBox(height: 16),
             ],
             _BacklogGroup(
-              issues: backlog.where(filter.matches).toList(),
+              issues: planning.backlog,
               names: names,
               avatars: avatars,
               pronouns: pronouns,
-              total: backlogTotal,
-              page: backlogPage,
-              pages: backlogPages,
-              pageSize: pageSize,
+              total: planning.backlogTotal,
+              page: planning.backlogPage,
+              pages: _backlogPages,
+              pageSize: backlogPageSize,
               query: query,
               selected: selected,
               onToggleSelect: onToggleSelect,
@@ -173,10 +184,6 @@ class SprintPlanningSurface extends StatelessWidget {
       ],
     );
   }
-
-  /// Narrows the sprint containers to the search. The backlog below comes back
-  /// from the server already searched, by the same rule.
-  bool _matchesQuery(Issue issue) => issueMatchesQuery(issue, query);
 }
 
 /// A collapsible sprint container that is a drop target for issues.
@@ -184,7 +191,7 @@ class _SprintGroup extends StatefulWidget {
   const _SprintGroup({
     required this.sprint,
     required this.isActive,
-    required this.issues,
+    required this.container,
     required this.names,
     required this.avatars,
     this.pronouns = const {},
@@ -193,6 +200,7 @@ class _SprintGroup extends StatefulWidget {
     required this.onOpenIssue,
     required this.onEstimate,
     required this.onAccept,
+    required this.onLoadMore,
     required this.quickCreate,
     required this.onCreated,
     required this.action,
@@ -200,7 +208,9 @@ class _SprintGroup extends StatefulWidget {
 
   final Sprint sprint;
   final bool isActive;
-  final List<Issue> issues;
+
+  /// The sprint's cards loaded so far, and its head over all of them.
+  final SprintContainer container;
   final Map<String, String> names;
   final Map<String, String> avatars;
   final Map<String, String> pronouns;
@@ -209,6 +219,7 @@ class _SprintGroup extends StatefulWidget {
   final void Function(Issue) onOpenIssue;
   final void Function(Issue) onEstimate;
   final void Function(Issue) onAccept;
+  final VoidCallback onLoadMore;
   final IssueQuickCreateSeed quickCreate;
   final ValueChanged<Issue> onCreated;
   final Widget action;
@@ -223,6 +234,7 @@ class _SprintGroupState extends State<_SprintGroup> {
   @override
   Widget build(BuildContext context) {
     final s = widget.sprint;
+    final container = widget.container;
     return DragTarget<Issue>(
       onWillAcceptWithDetails: (d) => d.data.sprintId != s.id,
       onAcceptWithDetails: (d) => widget.onAccept(d.data),
@@ -248,7 +260,7 @@ class _SprintGroupState extends State<_SprintGroup> {
               _SprintGroupHeader(
                 sprint: s,
                 isActive: widget.isActive,
-                issues: widget.issues,
+                container: container,
                 collapsed: _collapsed,
                 onToggleCollapse: () =>
                     setState(() => _collapsed = !_collapsed),
@@ -259,10 +271,10 @@ class _SprintGroupState extends State<_SprintGroup> {
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
                   child: Column(
                     children: [
-                      if (widget.issues.isEmpty)
+                      if (container.items.isEmpty)
                         _EmptyDropHint(text: context.t('sprint.dragHere'))
                       else
-                        for (final issue in widget.issues)
+                        for (final issue in container.items)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 7),
                             child: _DraggableRow(
@@ -278,6 +290,15 @@ class _SprintGroupState extends State<_SprintGroup> {
                               onEstimate: () => widget.onEstimate(issue),
                             ),
                           ),
+                      if (container.hasMore)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 7),
+                          child: BoardLoadMore(
+                            remaining: container.total - container.items.length,
+                            loading: container.loadingMore,
+                            onPressed: widget.onLoadMore,
+                          ),
+                        ),
                       IssueQuickCreate(
                         label: context.t('sprint.addIssue'),
                         seed: widget.quickCreate,
@@ -298,7 +319,7 @@ class _SprintGroupHeader extends StatelessWidget {
   const _SprintGroupHeader({
     required this.sprint,
     required this.isActive,
-    required this.issues,
+    required this.container,
     required this.collapsed,
     required this.onToggleCollapse,
     required this.action,
@@ -306,7 +327,7 @@ class _SprintGroupHeader extends StatelessWidget {
 
   final Sprint sprint;
   final bool isActive;
-  final List<Issue> issues;
+  final SprintContainer container;
   final bool collapsed;
   final VoidCallback onToggleCollapse;
   final Widget action;
@@ -363,14 +384,16 @@ class _SprintGroupHeader extends StatelessWidget {
     );
 
     final issuesLabel = Text(
-      issues.length == 1
+      container.total == 1
           ? context.t('sprint.issueOne', variables: {'count': '1'})
           : context.t(
               'sprint.issuesMany',
-              variables: {'count': '${issues.length}'},
+              variables: {'count': '${container.total}'},
             ),
       style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
     );
+    // Over every card of the sprint, not only the ones loaded.
+    final points = bucketSummary(container.summary);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
@@ -387,12 +410,12 @@ class _SprintGroupHeader extends StatelessWidget {
                   children: [
                     issuesLabel,
                     const SizedBox(width: 12),
-                    PointBuckets(issues: issues),
+                    PointBuckets(points: points),
                   ],
                 ),
                 const SizedBox(height: 10),
                 CapacityBar(
-                  issues: issues,
+                  points: points,
                   capacity: sprint.capacityPoints,
                   width: double.infinity,
                 ),
@@ -417,10 +440,10 @@ class _SprintGroupHeader extends StatelessWidget {
                 const SizedBox(width: 16),
                 issuesLabel,
                 const SizedBox(width: 14),
-                PointBuckets(issues: issues),
+                PointBuckets(points: points),
                 const SizedBox(width: 14),
                 CapacityBar(
-                  issues: issues,
+                  points: points,
                   capacity: sprint.capacityPoints,
                   width: context.isExpanded ? 188 : 150,
                 ),

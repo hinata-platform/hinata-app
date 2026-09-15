@@ -116,7 +116,9 @@ void main() {
 
   setUp(() {
     server = _Server({
-      'Open': [for (var i = 1; i <= 45; i++) _card('o$i', 'Open', i.toDouble())],
+      'Open': [
+        for (var i = 1; i <= 45; i++) _card('o$i', 'Open', i.toDouble()),
+      ],
       'Done': [_card('d1', 'Done', 1), _card('d2', 'Done', 2)],
     });
     issues = _Issues();
@@ -137,18 +139,21 @@ void main() {
   BoardColumnView column(BoardWallCubit wall, String name) =>
       wall.state.columns.firstWhere((column) => column.name == name);
 
-  test('the first read shows each column with its total and first page', () async {
-    final wall = wallOver();
-    expect(wall.state.status, BoardWallStatus.loading);
+  test(
+    'the first read shows each column with its total and first page',
+    () async {
+      final wall = wallOver();
+      expect(wall.state.status, BoardWallStatus.loading);
 
-    await wall.load();
+      await wall.load();
 
-    expect(wall.state.status, BoardWallStatus.ready);
-    expect(column(wall, 'Open').count, 45);
-    expect(column(wall, 'Open').issues, hasLength(kBoardPageSize));
-    expect(column(wall, 'Open').hasMore, isTrue);
-    expect(column(wall, 'Done').issues, hasLength(2));
-  });
+      expect(wall.state.status, BoardWallStatus.ready);
+      expect(column(wall, 'Open').count, 45);
+      expect(column(wall, 'Open').issues, hasLength(kBoardPageSize));
+      expect(column(wall, 'Open').hasMore, isTrue);
+      expect(column(wall, 'Done').issues, hasLength(2));
+    },
+  );
 
   test(
     'a column reads its next page once, however often it is scrolled to its end',
@@ -232,42 +237,55 @@ void main() {
     expect(wall.state.refreshing, isFalse);
   });
 
-  test('a moved card moves at once and stays when the server takes it', () async {
-    final wall = wallOver();
-    await wall.load();
-    final card = column(wall, 'Open').issues.first;
+  test(
+    'a moved card moves at once and stays when the server takes it',
+    () async {
+      final wall = wallOver();
+      await wall.load();
+      final card = column(wall, 'Open').issues.first;
 
-    final moving = wall.move(card, 'Done', 'Done');
+      final moving = wall.move(card, 'Done', 'Done');
 
-    expect(column(wall, 'Open').count, 44);
-    expect(column(wall, 'Done').count, 3);
-    final landed = column(wall, 'Done').issues.firstWhere((i) => i.id == card.id);
-    expect(landed.state, 'Done');
-    expect(await moving, isNull);
-    expect(issues.patches.single.id, card.id);
-    expect(issues.patches.single.patch, {'state': 'Done'});
-    expect(server.walls, hasLength(1), reason: 'no search or filter to ask again');
-  });
+      expect(column(wall, 'Open').count, 44);
+      expect(column(wall, 'Done').count, 3);
+      final landed = column(
+        wall,
+        'Done',
+      ).issues.firstWhere((i) => i.id == card.id);
+      expect(landed.state, 'Done');
+      expect(await moving, isNull);
+      expect(issues.patches.single.id, card.id);
+      expect(issues.patches.single.patch, {'state': 'Done'});
+      expect(
+        server.walls,
+        hasLength(1),
+        reason: 'no search or filter to ask again',
+      );
+    },
+  );
 
-  test('a card the server refuses to move goes back, with the reason', () async {
-    issues.refusal = ApiFailure('error.issue.unknownState');
-    final wall = wallOver();
-    await wall.load();
-    final card = column(wall, 'Open').issues.first;
-    final errors = <String>[];
-    final listening = wall.stream.listen((state) {
-      if (state.errorKey != null) errors.add(state.errorKey!);
-    });
+  test(
+    'a card the server refuses to move goes back, with the reason',
+    () async {
+      issues.refusal = ApiFailure('error.issue.unknownState');
+      final wall = wallOver();
+      await wall.load();
+      final card = column(wall, 'Open').issues.first;
+      final errors = <String>[];
+      final listening = wall.stream.listen((state) {
+        if (state.errorKey != null) errors.add(state.errorKey!);
+      });
 
-    expect(await wall.move(card, 'Done', 'Done'), 'error.issue.unknownState');
-    await Future<void>.delayed(Duration.zero);
-    await listening.cancel();
+      expect(await wall.move(card, 'Done', 'Done'), 'error.issue.unknownState');
+      await Future<void>.delayed(Duration.zero);
+      await listening.cancel();
 
-    expect(column(wall, 'Open').count, 45);
-    expect(column(wall, 'Open').issues.first.id, card.id);
-    expect(column(wall, 'Done').count, 2);
-    expect(errors, ['error.issue.unknownState']);
-  });
+      expect(column(wall, 'Open').count, 45);
+      expect(column(wall, 'Open').issues.first.id, card.id);
+      expect(column(wall, 'Done').count, 2);
+      expect(errors, ['error.issue.unknownState']);
+    },
+  );
 
   test('a move under a search or a filter reads the wall again', () async {
     final wall = wallOver();
@@ -305,20 +323,23 @@ void main() {
     expect(server.walls, hasLength(2));
   });
 
-  test('a failed first read fails the wall, a failed later one keeps it', () async {
-    server.wallFailure = ApiFailure('errors.network');
-    final wall = wallOver();
-    await wall.load();
-    expect(wall.state.status, BoardWallStatus.failure);
-    expect(wall.state.errorKey, 'errors.network');
+  test(
+    'a failed first read fails the wall, a failed later one keeps it',
+    () async {
+      server.wallFailure = ApiFailure('errors.network');
+      final wall = wallOver();
+      await wall.load();
+      expect(wall.state.status, BoardWallStatus.failure);
+      expect(wall.state.errorKey, 'errors.network');
 
-    server.wallFailure = null;
-    await wall.load();
-    server.wallFailure = ApiFailure('errors.network');
-    await wall.refresh();
+      server.wallFailure = null;
+      await wall.load();
+      server.wallFailure = ApiFailure('errors.network');
+      await wall.refresh();
 
-    expect(wall.state.status, BoardWallStatus.ready);
-    expect(wall.state.refreshing, isFalse);
-    expect(column(wall, 'Open').issues, hasLength(kBoardPageSize));
-  });
+      expect(wall.state.status, BoardWallStatus.ready);
+      expect(wall.state.refreshing, isFalse);
+      expect(column(wall, 'Open').issues, hasLength(kBoardPageSize));
+    },
+  );
 }

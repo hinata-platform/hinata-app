@@ -1,8 +1,27 @@
 import 'package:flutter/material.dart';
 
+import '../../core/models/core_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/user_pronouns.dart';
+
+/// The people a board can name, keyed by user id: what its cards, its row of
+/// faces and its filter show for an id.
+typedef BoardPeople = ({
+  Map<String, String> names,
+  Map<String, String> avatars,
+  Map<String, String> pronouns,
+});
+
+/// [users] as a board names them. A later entry for the same id wins.
+BoardPeople boardPeople(List<DirectoryUser> users) => (
+  names: {for (final u in users) u.id: u.displayName},
+  avatars: {
+    for (final u in users)
+      if (u.avatarUrl != null && u.avatarUrl!.isNotEmpty) u.id: u.avatarUrl!,
+  },
+  pronouns: pronounsById(users),
+);
 
 /// Overlapping, selectable avatar stack of the people active on a board.
 ///
