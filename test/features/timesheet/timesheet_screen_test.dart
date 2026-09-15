@@ -6,10 +6,12 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:hinata/core/blocs/auth_bloc.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/blocs/time_privacy_cubit.dart';
+import 'package:hinata/core/models/availability_models.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/time_approval_models.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/models/work_models.dart';
+import 'package:hinata/core/repositories/availability_repository.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
@@ -112,6 +114,9 @@ void main() {
                         ),
                         RepositoryProvider<TimeRepository>.value(
                           value: time ?? _FakeTimeRepository(rows),
+                        ),
+                        RepositoryProvider<AvailabilityRepository>.value(
+                          value: _NoCapacity(),
                         ),
                       ],
                       child: MultiBlocProvider(
@@ -1024,6 +1029,17 @@ class _FakeAuthBloc extends Bloc<AuthEvent, AuthState> implements AuthBloc {
           ),
         ),
       );
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not faked');
+}
+
+/// No planned hours: the capacity line has nothing to compare against (HIN-91).
+class _NoCapacity implements AvailabilityRepository {
+  @override
+  Future<Capacity> capacity(DateTime from, DateTime to) async =>
+      Capacity(from: from, to: to);
 
   @override
   dynamic noSuchMethod(Invocation invocation) =>

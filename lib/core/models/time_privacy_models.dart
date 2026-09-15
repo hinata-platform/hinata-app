@@ -137,9 +137,9 @@ class TimeHint extends Equatable {
     this.daysLate,
   });
 
-  /// `DAILY_MAXIMUM`, `SHORT_REST`, `SUNDAY_WORK` or `LATE_ENTRY`. A kind this
-  /// build does not know is dropped by [fromJson]'s caller rather than shown as
-  /// a raw key.
+  /// `DAILY_MAXIMUM`, `SHORT_REST`, `SUNDAY_WORK`, `HOLIDAY_WORK` (stage 10) or
+  /// `LATE_ENTRY`. A kind this build does not know is dropped by [fromJson]'s
+  /// caller rather than shown as a raw key.
   final String kind;
   final DateTime date;
   final String? entryId;
@@ -151,6 +151,7 @@ class TimeHint extends Equatable {
     'DAILY_MAXIMUM',
     'SHORT_REST',
     'SUNDAY_WORK',
+    'HOLIDAY_WORK',
     'LATE_ENTRY',
   };
 
@@ -171,7 +172,14 @@ class TimeHint extends Equatable {
   }
 
   @override
-  List<Object?> get props => [kind, date, entryId, minutes, restMinutes, daysLate];
+  List<Object?> get props => [
+    kind,
+    date,
+    entryId,
+    minutes,
+    restMinutes,
+    daysLate,
+  ];
 }
 
 /// A request somebody made about their own time, as the people who can answer

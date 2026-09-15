@@ -50,6 +50,9 @@ List<RepositoryProvider> domainRepositoryProviders(BuildContext source) => [
   RepositoryProvider<TimeRepository>.value(
     value: source.read<TimeRepository>(),
   ),
+  RepositoryProvider<AvailabilityRepository>.value(
+    value: source.read<AvailabilityRepository>(),
+  ),
   RepositoryProvider<SearchRepository>.value(
     value: source.read<SearchRepository>(),
   ),

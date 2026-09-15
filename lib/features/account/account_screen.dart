@@ -35,6 +35,7 @@ import '../sprint/modals/glass_modal.dart' show showGlassToast, GlassToastKind;
 import '../shell/page_chrome.dart';
 import 'account_modals.dart';
 import 'account_widgets.dart';
+import 'availability_section.dart';
 import 'time_preferences_section.dart';
 import 'pat_section.dart';
 import 'twofa_modals.dart';
@@ -474,6 +475,8 @@ class _AccountScreenState extends State<AccountScreen> {
       if (_advancedTime) ...[
         const SizedBox(height: 16),
         const TimePreferencesSection(),
+        const SizedBox(height: 16),
+        const AvailabilitySection(),
       ],
     ];
     final right = <Widget>[
@@ -705,7 +708,14 @@ class _AccountScreenState extends State<AccountScreen> {
     _SettingsSection.security => _securitySection(),
     _SettingsSection.sessions => _sessionsSection(),
     _SettingsSection.notifications => _notificationsSection(),
-    _SettingsSection.time => const TimePreferencesSection(),
+    _SettingsSection.time => const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TimePreferencesSection(),
+        SizedBox(height: 16),
+        AvailabilitySection(),
+      ],
+    ),
     _SettingsSection.access => _accessSection(),
     _SettingsSection.tokens => const PatSection(),
     _SettingsSection.appearance => _appearanceSection(),

@@ -904,8 +904,7 @@
     },
     "add": {
       "title": "Añadir",
-      "timerStart": "Iniciar temporizador",
-      "timerStop": "Detener temporizador"
+      "timerStart": "Iniciar temporizador"
     },
     "view": {
       "list": "Lista",
@@ -1125,6 +1124,7 @@
         "DAILY_MAXIMUM": "Más de 10 horas",
         "SHORT_REST": "Descanso corto",
         "SUNDAY_WORK": "Domingo",
+        "HOLIDAY_WORK": "Festivo",
         "LATE_ENTRY": "Registrado {{count}} día después",
         "LATE_ENTRY_plural": "Registrado {{count}} días después"
       },
@@ -1132,6 +1132,7 @@
         "DAILY_MAXIMUM": "En este día hay {{duration}} de tiempo registrado. La ley alemana de jornada laboral permite 10 horas como máximo.",
         "SHORT_REST": "Entre el final del día anterior y el inicio de este solo hay {{duration}}. La ley pide 11 horas.",
         "SUNDAY_WORK": "Este domingo tiene tiempo de trabajo registrado. Trabajar en domingo solo está permitido de forma excepcional.",
+        "HOLIDAY_WORK": "Este festivo tiene tiempo de trabajo registrado. Trabajar en festivo solo está permitido de forma excepcional, y aun así hay que registrarlo.",
         "LATE_ENTRY": "Este registro se creó {{count}} día después del día trabajado. Es solo un aviso para ti y no bloquea nada.",
         "LATE_ENTRY_plural": "Este registro se creó {{count}} días después del día trabajado. Es solo un aviso para ti y no bloquea nada."
       }
@@ -1160,6 +1161,110 @@
       "grantedBy": "{{name}} abrió los días",
       "yourRequest": "Tu petición",
       "waiting": "Todavía no hay respuesta."
+    }
+  },
+  "availability": {
+    "type": {
+      "vacation": "Vacaciones",
+      "sick": "Enfermedad",
+      "other": "Otro"
+    },
+    "mark": {
+      "holiday": "Festivo: {{name}}",
+      "holidayHalf": "Medio festivo: {{name}}",
+      "absent": "Ausente: {{type}}",
+      "absentHalf": "Ausente medio día: {{type}}",
+      "nonRegular": "No es un día laborable habitual"
+    },
+    "calendar": {
+      "holidays": "Festivos",
+      "absences": "Ausencias"
+    },
+    "capacity": {
+      "title": "Tu capacidad",
+      "ofTotal": "{{booked}} de {{capacity}}",
+      "hint": "Tus horas previstas en este periodo, sin contar festivos ni ausencias, junto a lo que has registrado. Solo lo ves tú y no cambia nada de lo que puedes registrar."
+    },
+    "section": {
+      "title": "Horario laboral y ausencias",
+      "subtitle": "Tus horas previstas, los festivos que sigues y los días que no estás. Solo sirve para planificar. Puedes registrar tiempo cualquier día."
+    },
+    "pattern": {
+      "title": "Horas previstas",
+      "weekTotal": "{{duration}} a la semana",
+      "usingDefault": "Aún no has fijado tus propias horas, así que se aplica el valor predeterminado de este servidor.",
+      "free": "Libre",
+      "validFrom": "Válido desde",
+      "today": "Hoy",
+      "validFromHint": "Las horas nuevas se aplican desde este día. Las semanas anteriores conservan las horas que tenían.",
+      "calendar": "Calendario de festivos",
+      "calendarDefault": "Predeterminado ({{name}})",
+      "calendarNone": "Sin festivos",
+      "save": "Guardar",
+      "saved": "Tu horario laboral se ha guardado."
+    },
+    "timeOff": {
+      "title": "Ausencias",
+      "add": "Añadir ausencia",
+      "edit": "Editar ausencia",
+      "hint": "Solo el tipo y los días. No hace falta dar un motivo.",
+      "empty": "Sin ausencias",
+      "emptyMessage": "Cuando no estés, añádelo aquí para que tu capacidad sea correcta.",
+      "type": "Tipo",
+      "days": "Días",
+      "halfDay": "Medio día",
+      "halfDayHint": "Solo para un único día.",
+      "note": "Nota",
+      "noteHint": "Opcional y solo para ti. Como máximo 200 caracteres.",
+      "delete": "Eliminar ausencia",
+      "deleteConfirm": "¿Quieres eliminar esta ausencia?",
+      "saved": "Ausencia guardada.",
+      "deleted": "Ausencia eliminada.",
+      "halfDaySpan": "{{days}}, medio día"
+    },
+    "admin": {
+      "cardTitle": "Festivos",
+      "cardHint": "Calendarios de festivos para regiones o para toda la organización. Cada persona elige el suyo en sus ajustes.",
+      "open": "Gestionar festivos",
+      "pageTitle": "Festivos",
+      "intro": "Cada calendario contiene los festivos de una región. Añádelos a mano o impórtalos desde una dirección de calendario. Quien no elige otro sigue el calendario predeterminado.",
+      "newCalendar": "Nuevo calendario",
+      "editCalendar": "Editar calendario",
+      "deleteCalendar": "Eliminar calendario",
+      "deleteCalendarConfirm": "¿Eliminar {{name}} con todos sus festivos? Quienes lo siguen pasarán a seguir el calendario predeterminado.",
+      "noCalendars": "Aún no hay calendarios de festivos",
+      "noCalendarsMessage": "Crea uno y añade festivos a mano o impórtalos desde una dirección de calendario.",
+      "holidaysOf": "Festivos de {{name}}",
+      "previousYear": "Año anterior",
+      "nextYear": "Año siguiente",
+      "addHoliday": "Añadir festivo",
+      "editHoliday": "Editar festivo",
+      "deleteHoliday": "Eliminar festivo",
+      "noHolidays": "No hay festivos en {{year}}",
+      "noHolidaysMessage": "Añádelos a mano o impórtalos desde la dirección del calendario.",
+      "defaultBadge": "Predeterminado",
+      "byHand": "Mantenido a mano",
+      "feedFrom": "Importado desde {{host}}",
+      "importYear": "Importar {{year}}",
+      "importing": "Importando ahora.",
+      "importFailed": "La última importación no funcionó: {{error}}",
+      "importDone": "{{year}} importado el {{date}}: {{added}} añadidos, {{updated}} renombrados, {{unchanged}} sin cambios.",
+      "importCapped": "Se ha dejado fuera {{count}} día más, porque un año admite como máximo 100 festivos.",
+      "importCapped_plural": "Se han dejado fuera {{count}} días más, porque un año admite como máximo 100 festivos.",
+      "halfDay": "Medio día",
+      "imported": "Desde la dirección del calendario",
+      "nameRequired": "Introduce un nombre.",
+      "saved": "Guardado.",
+      "name": "Nombre",
+      "region": "Región",
+      "feedUrl": "Dirección del calendario",
+      "feedUrlHint": "Una dirección https o webcal de un calendario de festivos. Se guarda cifrada y solo se muestra su host.",
+      "feedUrlKeep": "Se mantiene la dirección del calendario de {{host}}. Introduce una nueva para sustituirla.",
+      "removeFeed": "Quitar la dirección del calendario",
+      "default": "Predeterminado para todos",
+      "defaultHint": "Quienes no han elegido un calendario siguen este.",
+      "date": "Fecha",
+      "holidayHint": "Un día que en esta región no es un día laborable normal."
     }
   },
   "projects": {
@@ -2304,7 +2409,12 @@
       "TIME_BACKFILL_REQUESTED": "Días anteriores solicitados",
       "TIME_BACKFILL_GRANTED": "Días abiertos para una persona",
       "TIME_BACKFILL_REVOKED": "Días abiertos cerrados de nuevo",
-      "TIME_RETENTION_RUN": "Limpieza por plazo de conservación"
+      "TIME_RETENTION_RUN": "Limpieza por plazo de conservación",
+      "AVAILABILITY_SCHEDULE_CHANGED": "Horario laboral modificado para una persona",
+      "AVAILABILITY_TIME_OFF_CHANGED": "Ausencia modificada para una persona",
+      "AVAILABILITY_CALENDAR_CHANGED": "Calendario de festivos modificado",
+      "AVAILABILITY_HOLIDAYS_CHANGED": "Festivos modificados",
+      "AVAILABILITY_HOLIDAYS_IMPORTED": "Festivos importados"
     },
     "meta": {
       "oldRole": "Rol anterior",

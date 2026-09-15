@@ -149,6 +149,9 @@ bool showsTimerBar(String location, {required bool immersive}) =>
 String? subPageTitleKey(String location, {required bool advancedTime}) {
   if (location == '/admin') return 'admin.title';
   if (location.startsWith('/admin/users')) return 'admin.users';
+  if (location.startsWith('/admin/holidays')) {
+    return 'availability.admin.pageTitle';
+  }
   if (location == '/notifications') return 'nav.notifications';
   if (location == '/weekly-summary') return 'weeklySummary.title';
   if (location == '/settings') return 'nav.settings';
@@ -184,6 +187,7 @@ String? subPageTitleKey(String location, {required bool advancedTime}) {
 /// ignored.
 String subPageBackRoute(String location) {
   if (location.startsWith('/admin/users')) return '/admin';
+  if (location.startsWith('/admin/holidays')) return '/admin';
   if (location == '/admin') return '/settings';
   if (location.startsWith('/issues/')) return '/issues';
   if (location.startsWith('/knowledge/')) return '/knowledge';

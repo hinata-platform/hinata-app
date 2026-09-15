@@ -904,8 +904,7 @@
     },
     "add": {
       "title": "追加",
-      "timerStart": "タイマーを開始",
-      "timerStop": "タイマーを停止"
+      "timerStart": "タイマーを開始"
     },
     "view": {
       "list": "リスト",
@@ -1125,6 +1124,7 @@
         "DAILY_MAXIMUM": "10 時間超",
         "SHORT_REST": "休息が短い",
         "SUNDAY_WORK": "日曜日",
+        "HOLIDAY_WORK": "祝日",
         "LATE_ENTRY": "{{count}} 日後に入力",
         "LATE_ENTRY_plural": "{{count}} 日後に入力"
       },
@@ -1132,6 +1132,7 @@
         "DAILY_MAXIMUM": "この日は {{duration}} が記録されています。ドイツ労働時間法で認められるのは最大 10 時間です。",
         "SHORT_REST": "前日の終了からこの日の開始までが {{duration}} しかありません。法律では 11 時間の休息が求められます。",
         "SUNDAY_WORK": "この日曜日に労働時間が記録されています。日曜日の労働は例外的な場合にのみ認められます。",
+        "HOLIDAY_WORK": "この祝日に労働時間が記録されています。祝日の労働は例外的な場合にのみ認められますが、その場合も記録は必要です。",
         "LATE_ENTRY": "この記録は勤務日の {{count}} 日後に入力されました。あなた向けの注意にすぎず、何も妨げません。",
         "LATE_ENTRY_plural": "この記録は勤務日の {{count}} 日後に入力されました。あなた向けの注意にすぎず、何も妨げません。"
       }
@@ -1160,6 +1161,110 @@
       "grantedBy": "{{name}} さんが日を開きました",
       "yourRequest": "あなたの依頼",
       "waiting": "まだ回答はありません。"
+    }
+  },
+  "availability": {
+    "type": {
+      "vacation": "休暇",
+      "sick": "病欠",
+      "other": "その他"
+    },
+    "mark": {
+      "holiday": "祝日: {{name}}",
+      "holidayHalf": "半日の祝日: {{name}}",
+      "absent": "不在: {{type}}",
+      "absentHalf": "半日不在: {{type}}",
+      "nonRegular": "通常の勤務日ではありません"
+    },
+    "calendar": {
+      "holidays": "祝日",
+      "absences": "不在"
+    },
+    "capacity": {
+      "title": "あなたの稼働可能時間",
+      "ofTotal": "{{booked}} / {{capacity}}",
+      "hint": "この期間の予定時間から祝日と不在を引いたものを、記録した時間と並べて表示します。表示されるのはあなただけで、記録できる内容は何も変わりません。"
+    },
+    "section": {
+      "title": "勤務時間と不在",
+      "subtitle": "予定時間、あなたに適用される祝日、不在の日です。計画のためだけのもので、どの日にも時間を記録できます。"
+    },
+    "pattern": {
+      "title": "予定時間",
+      "weekTotal": "週 {{duration}}",
+      "usingDefault": "まだ自分の時間を設定していないため、このサーバーの既定値が適用されます。",
+      "free": "休み",
+      "validFrom": "適用開始日",
+      "today": "今日",
+      "validFromHint": "新しい時間はこの日から適用されます。それより前の週は元の時間のままです。",
+      "calendar": "祝日カレンダー",
+      "calendarDefault": "既定（{{name}}）",
+      "calendarNone": "祝日なし",
+      "save": "保存",
+      "saved": "勤務時間を保存しました。"
+    },
+    "timeOff": {
+      "title": "不在",
+      "add": "不在を追加",
+      "edit": "不在を編集",
+      "hint": "種類と日付だけです。理由は必要ありません。",
+      "empty": "不在の予定はありません",
+      "emptyMessage": "不在のときはここに追加すると、稼働可能時間が正しく保たれます。",
+      "type": "種類",
+      "days": "日付",
+      "halfDay": "半日",
+      "halfDayHint": "1 日だけの場合に使えます。",
+      "note": "メモ",
+      "noteHint": "任意で、あなただけに表示されます。200 文字まで。",
+      "delete": "不在を削除",
+      "deleteConfirm": "この不在を削除しますか？",
+      "saved": "不在を保存しました。",
+      "deleted": "不在を削除しました。",
+      "halfDaySpan": "{{days}}、半日"
+    },
+    "admin": {
+      "cardTitle": "祝日",
+      "cardHint": "地域ごと、または組織全体の祝日カレンダーです。各自が設定で自分のカレンダーを選びます。",
+      "open": "祝日を管理",
+      "pageTitle": "祝日",
+      "intro": "各カレンダーには 1 つの地域の祝日が入ります。手動で追加するか、カレンダーのアドレスから取り込みます。別のカレンダーを選ばない人には既定のカレンダーが適用されます。",
+      "newCalendar": "新しいカレンダー",
+      "editCalendar": "カレンダーを編集",
+      "deleteCalendar": "カレンダーを削除",
+      "deleteCalendarConfirm": "{{name}} とそのすべての祝日を削除しますか？このカレンダーを使っている人には既定のカレンダーが適用されます。",
+      "noCalendars": "祝日カレンダーはまだありません",
+      "noCalendarsMessage": "カレンダーを作成し、祝日を手動で追加するか、カレンダーのアドレスから取り込みます。",
+      "holidaysOf": "{{name}} の祝日",
+      "previousYear": "前の年",
+      "nextYear": "次の年",
+      "addHoliday": "祝日を追加",
+      "editHoliday": "祝日を編集",
+      "deleteHoliday": "祝日を削除",
+      "noHolidays": "{{year}} 年の祝日はありません",
+      "noHolidaysMessage": "手動で追加するか、カレンダーのアドレスから取り込みます。",
+      "defaultBadge": "既定",
+      "byHand": "手動で管理",
+      "feedFrom": "{{host}} から取り込み",
+      "importYear": "{{year}} 年を取り込む",
+      "importing": "取り込み中です。",
+      "importFailed": "前回の取り込みはうまくいきませんでした: {{error}}",
+      "importDone": "{{date}} に {{year}} 年を取り込みました。追加 {{added}} 件、名前の変更 {{updated}} 件、変更なし {{unchanged}} 件。",
+      "importCapped": "1 年に登録できる祝日は最大 100 件のため、さらに {{count}} 日分を取り込みませんでした。",
+      "importCapped_plural": "1 年に登録できる祝日は最大 100 件のため、さらに {{count}} 日分を取り込みませんでした。",
+      "halfDay": "半日",
+      "imported": "カレンダーのアドレスから",
+      "nameRequired": "名前を入力してください。",
+      "saved": "保存しました。",
+      "name": "名前",
+      "region": "地域",
+      "feedUrl": "カレンダーのアドレス",
+      "feedUrlHint": "祝日カレンダーの https または webcal のアドレスです。暗号化して保存され、表示されるのはホスト名だけです。",
+      "feedUrlKeep": "{{host}} のカレンダーのアドレスはそのまま残ります。置き換えるには新しいアドレスを入力します。",
+      "removeFeed": "カレンダーのアドレスを削除",
+      "default": "全員の既定",
+      "defaultHint": "カレンダーを選んでいない人にはこのカレンダーが適用されます。",
+      "date": "日付",
+      "holidayHint": "この地域で通常の勤務日ではない日です。"
     }
   },
   "projects": {
@@ -2304,7 +2409,12 @@
       "TIME_BACKFILL_REQUESTED": "過去の日の開放を依頼",
       "TIME_BACKFILL_GRANTED": "個人向けに日を開放",
       "TIME_BACKFILL_REVOKED": "開放した日を再び閉じた",
-      "TIME_RETENTION_RUN": "保存期間による削除を実行"
+      "TIME_RETENTION_RUN": "保存期間による削除を実行",
+      "AVAILABILITY_SCHEDULE_CHANGED": "個人の勤務時間を変更",
+      "AVAILABILITY_TIME_OFF_CHANGED": "個人の不在を変更",
+      "AVAILABILITY_CALENDAR_CHANGED": "祝日カレンダーを変更",
+      "AVAILABILITY_HOLIDAYS_CHANGED": "祝日を変更",
+      "AVAILABILITY_HOLIDAYS_IMPORTED": "祝日を取り込み"
     },
     "meta": {
       "oldRole": "変更前のロール",

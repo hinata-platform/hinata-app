@@ -36,6 +36,7 @@ import '../time/time_views.dart';
 import '../time/time_entry_sheet.dart';
 import '../time/time_privacy_sheet.dart';
 import '../time/timesheet_cell_sheet.dart';
+import 'timesheet_capacity.dart';
 import '../sprint/modals/glass_modal.dart'
     show
         kGlassPopoverBreakpoint,
@@ -1050,6 +1051,21 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
           // Above the grid whether or not there are rows: "this period is open
           // and holds nothing" is an answer, and a person looking for the submit
           // action must not have to book an hour to find it.
+          // The reader's own capacity beside what they booked (HIN-91): only
+          // where the rows are theirs, because against somebody else's rows or
+          // everybody's the two figures would describe two different people.
+          if (widget.moduleView &&
+              (_userFilter == _editableUserId ||
+                  (_userFilter == null && !_isAdmin))) ...[
+            TimesheetCapacityLine(
+              from: _from,
+              to: _to,
+              bookedMinutes: _rows
+                  .where((row) => row.userId == _editableUserId)
+                  .fold<int>(0, (sum, row) => sum + row.totalMinutes),
+            ),
+            const SizedBox(height: 10),
+          ],
           if (_period != null) ...[
             _periodBand(_period!),
             const SizedBox(height: 10),
