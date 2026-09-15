@@ -207,28 +207,33 @@ class _BoardScreenState extends State<BoardScreen>
             ),
           )
         else
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(
-              context.pageGutter,
-              context.pageGutter,
-              context.pageGutter,
-              context.pageGutter + context.bottomGutter,
-            ),
-            sliver: SliverGrid(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: context.gridColumns(minTileWidth: 280),
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                mainAxisExtent: 150,
+          SliverLayoutBuilder(
+            builder: (context, room) => SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                context.pageGutter,
+                context.pageGutter,
+                context.pageGutter,
+                context.pageGutter + context.bottomGutter,
               ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _BoardListCard(
-                  board: _boards[index],
-                  index: index,
-                  projects: _projects,
-                  canManage: _canManageBoard(_boards[index]),
+              sliver: SliverGrid(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: context.gridColumns(
+                    minTileWidth: 280,
+                    width: room.crossAxisExtent,
+                  ),
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  mainAxisExtent: 150,
                 ),
-                childCount: _boards.length,
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => _BoardListCard(
+                    board: _boards[index],
+                    index: index,
+                    projects: _projects,
+                    canManage: _canManageBoard(_boards[index]),
+                  ),
+                  childCount: _boards.length,
+                ),
               ),
             ),
           ),
