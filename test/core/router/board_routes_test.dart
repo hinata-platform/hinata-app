@@ -121,10 +121,12 @@ void main() {
       expect(projectBoardLocation('p 1', 'b1'), '/projects/p%201/boards/b1');
     });
 
-    test('lead to the overview without a board', () {
+    test('fall back to a list without a usable id', () {
       expect(boardLocation(''), boardsLocation);
       expect(boardLocation('..'), boardsLocation);
       expect(boardLocation('.'), boardsLocation);
+      expect(projectBoardLocation('p1', '..'), '/projects/p1/boards');
+      expect(projectBoardLocation('..', 'b1'), '/board/b1');
     });
   });
 }

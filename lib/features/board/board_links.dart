@@ -21,9 +21,14 @@ String boardLocation(String boardId) => _isSegment(boardId)
     : boardsLocation;
 
 /// A board opened from one project's boards, which stay underneath it.
-String projectBoardLocation(String projectId, String boardId) =>
-    '/projects/${Uri.encodeComponent(projectId)}'
-    '/boards/${Uri.encodeComponent(boardId)}';
+/// Without a board to name, those boards; without a project, [boardLocation].
+String projectBoardLocation(String projectId, String boardId) {
+  if (!_isSegment(projectId)) return boardLocation(boardId);
+  final boards = '/projects/${Uri.encodeComponent(projectId)}/boards';
+  return _isSegment(boardId)
+      ? '$boards/${Uri.encodeComponent(boardId)}'
+      : boards;
+}
 
 /// Whether [id] can stand as a path segment of its own. `.` and `..` stay what
 /// they are when encoded, and a path resolves them away.

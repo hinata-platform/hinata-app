@@ -12,6 +12,12 @@ void main() {
     expect(pathClimbs('/api/v1/boards/%2e./wall'), isTrue);
   });
 
+  test('a backslash counts as the slash the URL makes of it', () {
+    expect(pathClimbs(r'/api/v1/projects/..\boards\b1'), isTrue);
+    expect(pathClimbs(r'/api/v1/boards/..\..\projects'), isTrue);
+    expect(pathClimbs(r'/api/v1/boards/b1\..\wall'), isTrue);
+  });
+
   test('an ordinary path does not', () {
     expect(pathClimbs('/api/v1/boards/6a6406a34ac0/wall'), isFalse);
     // One segment: the slashes are encoded, so the server reads one id.

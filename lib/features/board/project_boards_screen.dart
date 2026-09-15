@@ -23,6 +23,7 @@ import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart' show glassWoltSurface;
 import 'board_links.dart';
 import 'board_manage_menu.dart';
+import 'load_when_shown.dart';
 import '../../core/repositories/board_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
@@ -44,20 +45,13 @@ typedef _BoardsData = ({
   bool canManageProject,
 });
 
-class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
+class _ProjectBoardsScreenState extends State<ProjectBoardsScreen>
+    with LoadWhenShown<ProjectBoardsScreen> {
   late final FetchCubit<_BoardsData> _cubit;
 
   /// Re-fetch when the set of boards changes anywhere in the app — a board
   /// created or deleted from the overview belongs in this project's list too.
   StreamSubscription<void>? _boardSub;
-
-  /// Whether the list has to be read the next time it is on screen.
-  ///
-  /// A board opened from here sits on top of this list, also after a reload of
-  /// its address (HIN-114). Reading the boards, the project and every team for
-  /// a list nobody is looking at would compete with the board's own first
-  /// requests, so the list waits until its route is the current one.
-  bool _stale = true;
 
   @override
   void initState() {
@@ -89,16 +83,7 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
         canManageProject: canManageProject,
       );
     });
-    _boardSub = BoardEvents.instance.changes.listen((_) {
-      _stale = true;
-      _loadIfShown();
-    });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _loadIfShown();
+    _boardSub = BoardEvents.instance.changes.listen((_) => markStale());
   }
 
   @override
@@ -108,16 +93,9 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
     super.dispose();
   }
 
-  /// Reads the list when it is stale and on screen.
-  void _loadIfShown() {
-    if (!mounted) return;
-    // Asked before anything else: it subscribes to the route, which is what
-    // calls this again once the board above the list is closed.
-    final shown = ModalRoute.isCurrentOf(context) ?? true;
-    if (!shown || !_stale) return;
-    _stale = false;
-    unawaited(_cubit.load());
-  }
+  /// Read once the list is on screen, see [LoadWhenShown].
+  @override
+  Future<void> loadShown() => _cubit.load();
 
   Future<void> _showCreate() async {
     final boards = context.read<BoardRepository>();
