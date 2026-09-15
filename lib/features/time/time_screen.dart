@@ -9,11 +9,13 @@ import '../../core/blocs/paged_cubit.dart';
 import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
+import '../../core/models/availability_models.dart';
 import '../../core/models/time_models.dart';
 import '../../core/models/time_approval_models.dart';
 import '../../core/models/time_policy_models.dart';
 import '../../core/models/time_privacy_models.dart';
 import '../../core/models/work_models.dart';
+import '../../core/repositories/availability_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/time_repository.dart';
 import '../../core/responsive/responsive.dart';
@@ -31,6 +33,7 @@ import '../sprint/modals/glass_modal.dart'
         anchorRectOfContext,
         showGlassDateRangePicker,
         showGlassToast;
+import 'day_marks.dart';
 import 'lock_notice.dart';
 import 'placement_picker.dart';
 import 'time_entry_history_sheet.dart';
@@ -133,7 +136,9 @@ class _TimeScreenState extends State<TimeScreen> {
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 400) {
       unawaited(
         _entries.loadMore().then((_) {
-          if (mounted) unawaited(_loadHints());
+          if (!mounted) return;
+          unawaited(_loadHints());
+          unawaited(_loadMarks());
         }),
       );
     }
@@ -146,6 +151,7 @@ class _TimeScreenState extends State<TimeScreen> {
     // An edit can make a day long or an entry late, so a reload asks again.
     _hintWindows.clear();
     unawaited(_loadHints(fresh: true));
+    unawaited(_loadMarks(fresh: true));
   }
 
   /// One reload for one stop.
@@ -238,6 +244,42 @@ class _TimeScreenState extends State<TimeScreen> {
       // refusal or the connection: a programming error still surfaces.
       if (generation == _hintGeneration) _hintWindows.remove(start);
       return const [];
+    }
+  }
+
+  /// The markings of the loaded days: holidays, absences and days without
+  /// planned hours (HIN-91). A chip beside the day, never a reason to refuse an
+  /// entry (R9).
+  DayMarks _marks = DayMarks.none;
+
+  /// How many entries the markings were last read for; only a list that grew
+  /// has days nobody asked about.
+  int _markedCount = -1;
+
+  /// Reads the markings for the span the loaded entries cover, the latest year
+  /// of it at most, which is the widest window the server answers.
+  Future<void> _loadMarks({bool fresh = false}) async {
+    final days = [
+      for (final entry in _entries.state.items)
+        if (entry.date != null) entry.date!,
+    ];
+    if (!fresh && days.length == _markedCount) return;
+    _markedCount = days.length;
+    if (days.isEmpty) return;
+    final last = days.reduce((a, b) => a.isAfter(b) ? a : b);
+    var first = days.reduce((a, b) => a.isBefore(b) ? a : b);
+    final yearBack = DateTime(last.year - 1, last.month, last.day + 1);
+    if (first.isBefore(yearBack)) first = yearBack;
+    try {
+      final capacity = await context.read<AvailabilityRepository>().capacity(
+        DateTime(first.year, first.month, first.day),
+        DateTime(last.year, last.month, last.day),
+      );
+      if (mounted) setState(() => _marks = capacity.marks);
+    } on ApiFailure {
+      // A marking is a courtesy; the list stands without it and asks again on
+      // the next reload.
+      _markedCount = -1;
     }
   }
 
@@ -692,6 +734,7 @@ class _TimeScreenState extends State<TimeScreen> {
                 policy: policy,
                 hints: _dayHints[group.day] ?? const [],
                 lateHints: _lateHints,
+                mark: _marks.on(group.day),
               );
             },
           ),
@@ -870,9 +913,14 @@ class _DayGroup extends StatelessWidget {
     required this.policy,
     this.hints = const [],
     this.lateHints = const {},
+    this.mark,
   });
 
   final DateTime day;
+
+  /// What this day is, when it is not an ordinary working day: a holiday, an
+  /// absence, or a day without planned hours (HIN-91). A chip, never a lock.
+  final DayMark? mark;
 
   /// The reader's own hints about this day: a long day, a short rest, a Sunday.
   final List<TimeHint> hints;
@@ -926,6 +974,10 @@ class _DayGroup extends StatelessWidget {
                         color: AppColors.ink,
                       ),
                     ),
+                    ?switch (mark) {
+                      final mark? => DayMarkChip(mark: mark),
+                      null => null,
+                    },
                     for (final hint in hints) TimeHintChip(hint: hint),
                   ],
                 ),

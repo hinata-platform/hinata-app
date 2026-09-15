@@ -9,6 +9,7 @@ import '../../core/api/api_client.dart';
 import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
+import '../../core/models/availability_models.dart';
 import '../../core/models/time_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/repositories/time_repository.dart';
@@ -27,6 +28,7 @@ import '../../core/widgets/time_grid/time_month_grid.dart';
 import '../../core/widgets/time_grid/time_month_layout.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
+import 'day_marks.dart';
 import 'time_entry_sheet.dart';
 import 'time_privacy_sheet.dart';
 import 'time_views.dart';
@@ -77,12 +79,19 @@ enum _MenuAction { week, month, today }
 /// One month of entries, as it came back.
 @immutable
 class _MonthWindow {
-  const _MonthWindow({required this.items, required this.truncated});
+  const _MonthWindow({
+    required this.items,
+    required this.truncated,
+    required this.marks,
+  });
 
   final List<TimeGridItem> items;
 
   /// Whether the server had to cut this month short of what it covers.
   final bool truncated;
+
+  /// The month's holidays, absences and days without planned hours (HIN-91).
+  final DayMarks marks;
 }
 
 class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
@@ -349,6 +358,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
         window: _MonthWindow(
           items: _itemsOf(window.entries),
           truncated: window.truncated,
+          marks: window.marks,
         ),
         errorKey: null,
       );
@@ -684,6 +694,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
               if (each.id == id) change(each) else each,
           ],
           truncated: window.truncated,
+          marks: window.marks,
         );
       }
       _regroup();
@@ -1057,6 +1068,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
         onCreate: _createFrom,
         onMoved: _moveEntry,
         onTap: _openEntry,
+        mark: _markOn(day),
       );
     },
   );
@@ -1118,6 +1130,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       ..._itemsForDay(dayKey(addDays(day, 1))),
     ]),
     ..._frozenWash([addDays(day, -1), day, addDays(day, 1)]),
+    ..._markLayers([addDays(day, -1), day, addDays(day, 1)]),
   ];
 
   List<TimeGridLayer> _layersForWeek(List<DateTime> days) {
@@ -1128,8 +1141,83 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     return _layerMemo[key] ??= [
       ..._split([for (final day in window) ..._itemsForDay(dayKey(day))]),
       ..._frozenWash(window),
+      ..._markLayers(window),
     ];
   }
+
+  /// The marking of [day], from the month it was loaded with (HIN-91).
+  DayMark? _markOn(DateTime day) => _months[monthKey(day)]?.marks.on(day);
+
+  /// Holidays, absences and days without planned hours, drawn as what they are:
+  /// a quiet wash behind the day with a mark beside its date, and a band under
+  /// the headings that says it in words (HIN-91).
+  ///
+  /// The wash is the weekend's tone, [AppColors.recess], and deliberately not
+  /// the freeze's: a marked day is a quiet day, never a closed one, and time on
+  /// it is recorded like on any other (R9). On a Saturday or a Sunday the grid
+  /// already washes the column, so the mark keeps its glyph and adds no second
+  /// wash. After the freeze in the list, so a frozen holiday shows the padlock.
+  List<TimeGridLayer> _markLayers(List<DateTime> window) {
+    final washes = <DayMarkKind, List<TimeGridItem>>{};
+    final bands = <DayMarkKind, List<TimeGridItem>>{};
+    for (final day in window) {
+      final mark = _markOn(day);
+      if (mark == null) continue;
+      final start = DateTime(day.year, day.month, day.day);
+      final end = DateTime(day.year, day.month, day.day, 23, 59);
+      final weekend =
+          day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
+      (washes[mark.kind] ??= []).add(
+        TimeGridItem(
+          id: 'mark-${dayKey(day)}',
+          start: start,
+          end: end,
+          title: '',
+          movable: false,
+          tint: weekend ? Colors.transparent : null,
+        ),
+      );
+      if (mark.kind == DayMarkKind.nonRegular) continue;
+      (bands[mark.kind] ??= []).add(
+        TimeGridItem(
+          id: 'mark-band-${dayKey(day)}',
+          start: start,
+          end: end,
+          title: dayMarkLabel(context, mark),
+          movable: false,
+          day: start,
+        ),
+      );
+    }
+    return [
+      for (final wash in washes.entries)
+        TimeGridLayer(
+          id: 'mark-${wash.key.name}',
+          placement: TimeGridPlacement.background,
+          items: wash.value,
+          tint: AppColors.recess,
+          glyph: _markGlyph(wash.key),
+        ),
+      for (final band in bands.entries)
+        TimeGridLayer(
+          id: 'mark-band-${band.key.name}',
+          placement: TimeGridPlacement.band,
+          items: band.value,
+          tint: AppColors.inkFaint,
+          label: context.t(
+            band.key == DayMarkKind.holiday
+                ? 'availability.calendar.holidays'
+                : 'availability.calendar.absences',
+          ),
+        ),
+    ];
+  }
+
+  static IconData _markGlyph(DayMarkKind kind) => switch (kind) {
+    DayMarkKind.holiday => LucideIcons.calendarHeart,
+    DayMarkKind.absence => LucideIcons.treePalm,
+    DayMarkKind.nonRegular => LucideIcons.calendarOff,
+  };
 
   /// The days in [window] nothing can be written to, as one background wash.
   ///
@@ -1351,14 +1439,19 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
 
   Widget _dockedNavigation() {
     final today = _today();
+    // The months held and the freeze both colour the strip, so a month that
+    // arrives or a freeze that moves has to redraw it.
     final key = Object.hash(
       _span,
       dayKey(_focused),
       dayKey(today),
       AppColors.brightness,
+      _revision,
+      _washedAgainst,
     );
     if (_dockKey == key) return _dock!;
     _dockKey = key;
+    final policy = context.read<TimePolicyCubit>().state;
     // The month's header brings its own inset — the letters have to stand over
     // the columns below them, and those are laid out to [kMonthGutter], not to
     // the page gutter the rest of the app uses.
@@ -1373,6 +1466,14 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
               days: _weekDays,
               focused: _focused,
               today: today,
+              // The freeze wins over a marking, as on the canvas below: a
+              // frozen holiday is first of all a day nothing can be written to.
+              tones: [
+                for (final day in _weekDays)
+                  policy.isLocked(day)
+                      ? AppColors.closed
+                      : (_markOn(day) == null ? null : AppColors.recess),
+              ],
               onTap: _focusDay,
             ),
           );
@@ -1397,6 +1498,7 @@ class _Day extends StatelessWidget {
     required this.onCreate,
     required this.onMoved,
     required this.onTap,
+    this.mark,
   });
 
   final DateTime day;
@@ -1409,6 +1511,11 @@ class _Day extends StatelessWidget {
   final void Function(TimeGridSpan span) onCreate;
   final void Function(TimeGridItem item, TimeGridSpan span) onMoved;
   final void Function(TimeGridItem item) onTap;
+
+  /// What the day is when it is not an ordinary working day (HIN-91), said in
+  /// words under the date: a single day has no headings for a band to hang
+  /// under.
+  final DayMark? mark;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -1428,6 +1535,11 @@ class _Day extends StatelessWidget {
           ),
         ),
       ),
+      if (mark case final mark?)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Center(child: DayMarkChip(mark: mark)),
+        ),
       Expanded(
         child: TimeGrid(
           days: days,
@@ -1459,12 +1571,18 @@ class _WeekStrip extends StatelessWidget {
     required this.days,
     required this.focused,
     required this.today,
+    required this.tones,
     required this.onTap,
   });
 
   final List<DateTime> days;
   final DateTime focused;
   final DateTime today;
+
+  /// One surface per day, in the order of [days]: the freeze's tone, the quiet
+  /// tone of a marked day (HIN-91), or none.
+  final List<Color?> tones;
+
   final void Function(DateTime day) onTap;
 
   @override
@@ -1472,13 +1590,14 @@ class _WeekStrip extends StatelessWidget {
     final narrow = MaterialLocalizations.of(context).narrowWeekdays;
     return Row(
       children: [
-        for (final day in days)
+        for (final (index, day) in days.indexed)
           Expanded(
             child: _WeekStripDay(
               day: day,
               letter: narrow[day.weekday % 7],
               focused: DateUtils.isSameDay(day, focused),
               today: DateUtils.isSameDay(day, today),
+              tone: index < tones.length ? tones[index] : null,
               onTap: () => onTap(day),
             ),
           ),
@@ -1494,6 +1613,7 @@ class _WeekStripDay extends StatelessWidget {
     required this.focused,
     required this.today,
     required this.onTap,
+    this.tone,
   });
 
   final DateTime day;
@@ -1501,6 +1621,9 @@ class _WeekStripDay extends StatelessWidget {
   final bool focused;
   final bool today;
   final VoidCallback onTap;
+
+  /// The surface behind the day, the same tone its column has on the canvas.
+  final Color? tone;
 
   @override
   Widget build(BuildContext context) {
@@ -1526,38 +1649,47 @@ class _WeekStripDay extends StatelessWidget {
     return InkResponse(
       onTap: onTap,
       radius: 24,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            letter,
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              color: AppColors.inkFaint,
-            ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: tone ?? Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
           ),
-          const SizedBox(height: 3),
-          DecoratedBox(
-            decoration: BoxDecoration(color: disc, shape: BoxShape.circle),
-            child: SizedBox(
-              width: 26,
-              height: 26,
-              child: Center(
-                child: Text(
-                  '${day.day}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: focused || today
-                        ? FontWeight.w800
-                        : FontWeight.w600,
-                    color: ink,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                letter,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.inkFaint,
+                ),
+              ),
+              const SizedBox(height: 3),
+              DecoratedBox(
+                decoration: BoxDecoration(color: disc, shape: BoxShape.circle),
+                child: SizedBox(
+                  width: 26,
+                  height: 26,
+                  child: Center(
+                    child: Text(
+                      '${day.day}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: focused || today
+                            ? FontWeight.w800
+                            : FontWeight.w600,
+                        color: ink,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

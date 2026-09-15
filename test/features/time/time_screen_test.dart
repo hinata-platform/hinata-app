@@ -7,12 +7,14 @@ import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/blocs/time_preferences_cubit.dart';
 import 'package:hinata/core/blocs/time_privacy_cubit.dart';
 import 'package:hinata/core/blocs/timer_cubit.dart';
+import 'package:hinata/core/models/availability_models.dart';
 import 'package:hinata/core/models/time_models.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/models/time_privacy_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/widgets/glass_popup_menu.dart';
 import 'package:hinata/core/repositories/account_repository.dart';
+import 'package:hinata/core/repositories/availability_repository.dart';
 import 'package:hinata/core/repositories/issue_repository.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
@@ -103,6 +105,9 @@ void main() {
                   ),
                   RepositoryProvider<IssueRepository>.value(
                     value: _FakeIssueRepository(),
+                  ),
+                  RepositoryProvider<AvailabilityRepository>.value(
+                    value: _NoMarks(),
                   ),
                 ],
                 child: MultiBlocProvider(
@@ -711,7 +716,7 @@ void main() {
       await tester.pumpAndSettle();
       await openMenu(tester);
 
-      expect(find.text('time.add.timerStop'), findsOneWidget);
+      expect(find.text('time.timer.finish'), findsOneWidget);
       expect(find.text('time.add.timerStart'), findsNothing);
       expect(cubit.started, isEmpty);
     });
@@ -743,7 +748,7 @@ void main() {
         await tester.pumpAndSettle();
         await openMenu(tester);
 
-        await tester.tap(find.text('time.add.timerStop'));
+        await tester.tap(find.text('time.timer.finish'));
         await tester.pumpAndSettle();
 
         expect(cubit.stopped, hasLength(1));
@@ -765,7 +770,7 @@ void main() {
           await tester.pumpAndSettle();
           await openMenu(tester);
 
-          await tester.tap(find.text('time.add.timerStop'));
+          await tester.tap(find.text('time.timer.finish'));
           await tester.pumpAndSettle();
 
           // The composer, and nothing filed behind it: the timer is still
@@ -799,7 +804,7 @@ void main() {
           await tester.pumpAndSettle();
           await openMenu(tester);
 
-          await tester.tap(find.text('time.add.timerStop'));
+          await tester.tap(find.text('time.timer.finish'));
           await tester.pumpAndSettle();
 
           expect(find.text('time.timer.finish'), findsNothing);
@@ -836,7 +841,7 @@ void main() {
         await tester.pumpAndSettle();
         await openMenu(tester);
 
-        await tester.tap(find.text('time.add.timerStop'));
+        await tester.tap(find.text('time.timer.finish'));
         await tester.pumpAndSettle();
 
         expect(
@@ -863,7 +868,7 @@ void main() {
         );
         await tester.pumpAndSettle();
         await openMenu(tester);
-        await tester.tap(find.text('time.add.timerStop'));
+        await tester.tap(find.text('time.timer.finish'));
         await tester.pumpAndSettle();
 
         // Real milliseconds pass while the description is typed, which is the
@@ -1033,6 +1038,18 @@ class _FakeTimerCubit extends Cubit<TimerState> implements TimerCubit {
     int? plannedMinutes,
     PomodoroConfig? pomodoro,
   }) async => started.add(mode);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not faked');
+}
+
+/// A person with no holidays, no absences and no hours of their own: the list
+/// carries no markings (HIN-91).
+class _NoMarks implements AvailabilityRepository {
+  @override
+  Future<Capacity> capacity(DateTime from, DateTime to) async =>
+      Capacity(from: from, to: to);
 
   @override
   dynamic noSuchMethod(Invocation invocation) =>

@@ -169,7 +169,7 @@ Future<void> showTimeAddMenu(
               // is not coming. The bar says the same thing.
               : timer.isBreak
               ? 'time.focus.endSession'
-              : 'time.add.timerStop',
+              : 'time.timer.finish',
         ),
         leading: Icon(
           stopping ? LucideIcons.square : LucideIcons.play,
