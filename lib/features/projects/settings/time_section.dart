@@ -239,7 +239,7 @@ class _ProjectTimeSectionState extends State<ProjectTimeSection> {
                     label: context.t('projectSettings.time.budgetAlert'),
                     helper: context.t('projectSettings.time.budgetAlertHint'),
                     value: _draft.budgetAlertPercent,
-                    fallback: 80,
+                    fallback: ProjectTimeSettings.defaultBudgetAlertPercent,
                     options: const [50, 60, 70, 75, 80, 90],
                     onChanged: (value) => setState(
                       () => _draft = _draft.copyWith(
@@ -253,7 +253,7 @@ class _ProjectTimeSectionState extends State<ProjectTimeSection> {
                     label: context.t('projectSettings.time.estimateAlert'),
                     helper: context.t('projectSettings.time.estimateAlertHint'),
                     value: _draft.estimateAlertPercent,
-                    fallback: 100,
+                    fallback: ProjectTimeSettings.defaultEstimateAlertPercent,
                     options: const [80, 90, 100, 110, 125, 150],
                     onChanged: (value) => setState(
                       () => _draft = _draft.copyWith(

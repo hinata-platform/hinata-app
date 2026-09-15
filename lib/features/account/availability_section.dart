@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
@@ -12,6 +11,7 @@ import '../../core/models/availability_models.dart';
 import '../../core/repositories/availability_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/util/dates.dart' show weekdayName;
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
@@ -249,7 +249,6 @@ class _AvailabilitySectionState extends State<AvailabilitySection> {
 
   List<Widget> _pattern(BuildContext context) {
     final minutes = _minutes;
-    final locale = Localizations.localeOf(context).toLanguageTag();
     final total = minutes.fold<int>(0, (sum, day) => sum + day);
     final usingDefault = _schedule?.current == null && _draftMinutes == null;
     return [
@@ -264,8 +263,8 @@ class _AvailabilitySectionState extends State<AvailabilitySection> {
         _Hint(text: context.t('availability.pattern.usingDefault')),
       for (var day = 0; day < 7; day++)
         _HoursRow(
-          // 1 January 2024 was a Monday; the pattern starts on Monday too.
-          label: DateFormat.EEEE(locale).format(DateTime(2024, 1, 1 + day)),
+          // The pattern starts on Monday, like the list of weekdays.
+          label: weekdayName(context, DateTime.monday + day),
           minutes: minutes[day],
           free: context.t('availability.pattern.free'),
           onChanged: (value) =>

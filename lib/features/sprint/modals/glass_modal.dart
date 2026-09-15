@@ -2256,6 +2256,13 @@ bool _isTwelveHour(TimeOfDayFormat format) =>
     format == TimeOfDayFormat.h_colon_mm_space_a ||
     format == TimeOfDayFormat.a_space_h_colon_mm;
 
+/// Whether times are written on a 24-hour clock here: the platform setting, or
+/// a locale without a twelve-hour clock. One answer for a picker's header and
+/// its wheels, so the two cannot disagree.
+bool _uses24Hour(BuildContext context) =>
+    MediaQuery.alwaysUse24HourFormatOf(context) ||
+    !_isTwelveHour(MaterialLocalizations.of(context).timeOfDayFormat());
+
 class _GlassTimePicker extends StatefulWidget {
   const _GlassTimePicker({required this.initial, required this.title});
 
@@ -2272,7 +2279,7 @@ class _GlassTimePickerState extends State<_GlassTimePicker> {
   @override
   Widget build(BuildContext context) {
     final localizations = MaterialLocalizations.of(context);
-    final use24 = MediaQuery.alwaysUse24HourFormatOf(context);
+    final use24 = _uses24Hour(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -2287,11 +2294,7 @@ class _GlassTimePickerState extends State<_GlassTimePicker> {
         const SizedBox(height: 6),
         _TimeWheels(
           value: _value,
-          use24:
-              use24 ||
-              !_isTwelveHour(
-                localizations.timeOfDayFormat(alwaysUse24HourFormat: use24),
-              ),
+          use24: use24,
           onChanged: (value) => setState(() => _value = value),
         ),
         const SizedBox(height: 6),
@@ -2478,9 +2481,7 @@ class _GlassDateTimePickerState extends State<_GlassDateTimePicker> {
   @override
   Widget build(BuildContext context) {
     final localizations = MaterialLocalizations.of(context);
-    final use24 =
-        MediaQuery.alwaysUse24HourFormatOf(context) ||
-        !_isTwelveHour(localizations.timeOfDayFormat());
+    final use24 = _uses24Hour(context);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
