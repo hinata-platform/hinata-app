@@ -1955,7 +1955,10 @@
       "grantRevoke": "Refermer maintenant",
       "grantRevokeTitle": "Refermer ces jours ?",
       "grantRevokeMessage": "{{name}} ne pourra plus saisir {{period}}. Cette action est consignée.",
-      "grantRevoked": "Les jours sont de nouveau fermés."
+      "grantRevoked": "Les jours sont de nouveau fermés.",
+      "suggestedDailyTargetLabel": "Objectif du jour proposé",
+      "suggestedWeeklyTargetLabel": "Objectif hebdomadaire proposé",
+      "suggestedTargetHint": "Proposé aux personnes dans leurs rappels. Chacun décide de l’utiliser ou non."
     },
     "passwordPolicy": "Politique de mots de passe",
     "passwordPolicyHint": "Exigences minimales pour les mots de passe des utilisateurs.",
@@ -2742,7 +2745,13 @@
       "inherit": "Valeur du serveur",
       "lockBefore": "Date de verrouillage propre",
       "lockBeforeHint": "Clôture les comptes de ce projet plus tôt que le reste de l’instance. Elle ne peut que clôturer davantage, jamais moins.",
-      "instanceDefault": "Politique de l’instance"
+      "instanceDefault": "Politique de l’instance",
+      "budgetAlert": "Alerte sur le budget",
+      "budgetAlertHint": "Les responsables sont prévenus à ce seuil et à 100 %, pour le budget et pour la somme des estimations.",
+      "estimateAlert": "Alerte sur l’estimation d’un ticket",
+      "estimateAlertHint": "La personne assignée est prévenue dès qu’un ticket atteint ce seuil de son estimation.",
+      "alertDefault": "Par défaut ({{percent}} %)",
+      "percent": "{{percent}} %"
     }
   },
   "account": {
@@ -2972,7 +2981,18 @@
       "exportFailed": "L’export n’a pas pu être enregistré.",
       "correction": "Corrections et jours plus anciens",
       "correctionHint": "Vous modifiez vous-même vos propres saisies. Si un jour est verrouillé, ouvrez la saisie et demandez une correction. Si un jour est trop ancien, demandez son ouverture. Votre motif est transmis à la personne qui peut l’ouvrir, et sa réponse vous parvient sous forme de notification.",
-      "requestDays": "Demander des jours plus anciens"
+      "requestDays": "Demander des jours plus anciens",
+      "reminders": "Rappels",
+      "remindersHint": "Vous seul recevez les rappels, pendant vos jours travaillés et selon votre propre heure. Personne d’autre ne sait si ni quand.",
+      "dailyTarget": "Objectif du jour",
+      "dailyTargetHint": "Vous rappelle un jour travaillé où vous avez saisi moins.",
+      "weeklyTarget": "Objectif hebdomadaire",
+      "weeklyTargetHint": "Vous rappelle le jour choisi s’il vous manque encore du temps cette semaine.",
+      "target": "Objectif",
+      "remindAt": "Heure du rappel",
+      "remindOn": "Jour du rappel",
+      "suggested": "Proposé par votre organisation : {{duration}}",
+      "useSuggestion": "Utiliser"
     }
   },
   "twofa": {
