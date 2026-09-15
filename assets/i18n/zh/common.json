@@ -520,6 +520,7 @@
     "noLabels": "无标签",
     "addLabel": "搜索或创建标签…",
     "createLabel": "创建“{{name}}”",
+    "labelsFull": "每个事项最多可有 {{max}} 个标签",
     "deleteLabel": "删除标签",
     "deleteLabelConfirm": "要从该项目中删除“{{name}}”吗？它将从所有使用它的事项中移除。",
     "startDate": "开始日期",
