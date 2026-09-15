@@ -30,7 +30,7 @@ import '../theme/app_colors.dart';
   'PROJECT_ADDED' => (LucideIcons.folderPlus, AppColors.accentPurple),
   'TIME_TARGET_REMINDER' => (LucideIcons.alarmClock, AppColors.accentBlue),
   'TIME_BUDGET_ALERT' => (LucideIcons.gauge, AppColors.priHigh),
-  'TIME_ESTIMATE_EXCEEDED' => (LucideIcons.hourglass, AppColors.priHigh),
+  'TIME_ESTIMATE_REACHED' => (LucideIcons.hourglass, AppColors.priHigh),
   'TIME_TIMER_AUTO_STOPPED' => (LucideIcons.timerOff, AppColors.inkSoft),
   'TIMESHEET_SUBMITTED' ||
   'TIMESHEET_APPROVED' ||

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
+import '../../../core/models/account_models.dart' show TimePreferences;
 import '../admin_form_helpers.dart';
 import '../policy_controls.dart';
 import 'admin_approval_period_preview.dart';
@@ -434,15 +435,16 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         helper: context.t('admin.timeTracking.suggestedTargetHint'),
         value: _value<num>('suggestedDailyTargetMinutes')?.toInt(),
         onChanged: (v) => _set('suggestedDailyTargetMinutes', v),
-        maxHours: 24,
+        maxHours: TimePreferences.maxDailyTarget ~/ 60,
+        initialMinutes: TimePreferences.fallbackDailyTarget,
       ),
       PolicyDuration(
         label: context.t('admin.timeTracking.suggestedWeeklyTargetLabel'),
         helper: context.t('admin.timeTracking.suggestedTargetHint'),
         value: _value<num>('suggestedWeeklyTargetMinutes')?.toInt(),
         onChanged: (v) => _set('suggestedWeeklyTargetMinutes', v),
-        maxHours: 168,
-        initialMinutes: 40 * 60,
+        maxHours: TimePreferences.maxWeeklyTarget ~/ 60,
+        initialMinutes: TimePreferences.fallbackWeeklyTarget,
       ),
       PolicySwitch(
         title: context.t('admin.timeTracking.arbzgHintsTitle'),

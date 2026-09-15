@@ -456,6 +456,14 @@ class ProjectTimeSettings extends Equatable {
     this.updatedBy,
   });
 
+  /// What the server applies while [budgetAlertPercent] is null. Mirrors
+  /// `TimeAlerts.DEFAULT_BUDGET_PERCENT`.
+  static const defaultBudgetAlertPercent = 80;
+
+  /// What the server applies while [estimateAlertPercent] is null. Mirrors
+  /// `TimeAlerts.DEFAULT_ESTIMATE_PERCENT`.
+  static const defaultEstimateAlertPercent = 100;
+
   final int? budgetMinutes;
   final bool? defaultBillable;
   final bool? approvalRequired;
@@ -471,7 +479,12 @@ class ProjectTimeSettings extends Equatable {
   /// archived.
   final DateTime? lockBefore;
 
+  /// The share of the budget, and of the sum of the estimates, at which the
+  /// leads hear about it besides 100 %; null means [defaultBudgetAlertPercent].
   final int? budgetAlertPercent;
+
+  /// The share of an issue's estimate at which its assignees hear about it;
+  /// null means [defaultEstimateAlertPercent].
   final int? estimateAlertPercent;
   final DateTime? updatedAt;
   final String? updatedBy;

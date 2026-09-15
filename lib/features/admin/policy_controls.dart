@@ -554,9 +554,9 @@ class PolicyDuration extends StatefulWidget {
     required this.label,
     required this.value,
     required this.onChanged,
+    required this.maxHours,
+    required this.initialMinutes,
     this.helper,
-    this.maxHours = 23,
-    this.initialMinutes = 8 * 60,
   });
 
   final String label;

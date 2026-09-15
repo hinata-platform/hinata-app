@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart' show DateFormat;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
@@ -15,6 +14,7 @@ import '../../core/repositories/time_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/util/dates.dart' show weekdayName;
 import '../../core/util/file_download.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveSwitch, fmtDuration;
 import '../sprint/modals/glass_modal.dart'
@@ -254,69 +254,20 @@ class _RemindersState extends State<_Reminders> {
     unawaited(context.read<TimePolicyCubit>().ensureLoaded());
   }
 
-  TimePreferences get _prefs => widget.prefs;
-
-  void _save(TimePreferences next) => unawaited(widget.onSave(next));
-
-  Future<void> _pickTarget(
-    int current,
-    int maxMinutes,
-    TimePreferences Function(int minutes) apply,
-  ) async {
-    final picked = await showGlassDurationPicker(
-      context,
-      initialMinutes: current,
-      title: context.t('account.timeTracking.target'),
-      maxHours: maxMinutes ~/ 60,
-    );
-    if (picked == null || !mounted) return;
-    _save(apply(picked.clamp(1, maxMinutes)));
-  }
-
-  Future<void> _pickTime(
-    int minuteOfDay,
-    TimePreferences Function(int minuteOfDay) apply,
-  ) async {
-    final picked = await showGlassTimePicker(
-      context,
-      initial: TimeOfDay(hour: minuteOfDay ~/ 60, minute: minuteOfDay % 60),
-      title: context.t('account.timeTracking.remindAt'),
-    );
-    if (picked == null || !mounted) return;
-    _save(apply(picked.hour * 60 + picked.minute));
-  }
-
-  Future<void> _pickDay() async {
-    final picked = await showGlassOptions<int>(
-      context,
-      title: context.t('account.timeTracking.remindOn'),
-      options: [
-        for (var day = DateTime.monday; day <= DateTime.sunday; day++)
-          (value: day, child: Text(_weekday(context, day))),
-      ],
-    );
-    if (picked == null || !mounted) return;
-    _save(_prefs.copyWith(weeklyReminderDay: picked));
-  }
-
-  static String _weekday(BuildContext context, int day) => DateFormat.EEEE(
-    Localizations.localeOf(context).toString(),
-  ).format(DateTime(2024, 1, day)); // 1 January 2024 was a Monday.
-
-  static String _clock(BuildContext context, int minuteOfDay) =>
-      MaterialLocalizations.of(context).formatTimeOfDay(
-        TimeOfDay(hour: minuteOfDay ~/ 60, minute: minuteOfDay % 60),
-        alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
-      );
-
   @override
   Widget build(BuildContext context) {
-    final policy = context.watch<TimePolicyCubit>().state;
-    if (!policy.targetRemindersEnabled) return const SizedBox.shrink();
-    final prefs = _prefs;
-    final daily = prefs.dailyTargetMinutes;
-    final weekly = prefs.weeklyTargetMinutes;
-    final divider = Divider(height: 1, color: AppColors.hairline2);
+    // Three fields of the policy: reloading the frozen periods or the opened
+    // days must not rebuild a dozen rows.
+    final (enabled, suggestedDaily, suggestedWeekly) = context.select(
+      (TimePolicyCubit cubit) => (
+        cubit.state.targetRemindersEnabled,
+        cubit.state.suggestedDailyTargetMinutes,
+        cubit.state.suggestedWeeklyTargetMinutes,
+      ),
+    );
+    if (!enabled) return const SizedBox.shrink();
+    final prefs = widget.prefs;
+    void save(TimePreferences next) => unawaited(widget.onSave(next));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -332,139 +283,190 @@ class _RemindersState extends State<_Reminders> {
             ),
           ),
         ),
-        SettingRow(
+        _TargetGroup(
           label: context.t('account.timeTracking.dailyTarget'),
-          description: context.t('account.timeTracking.dailyTargetHint'),
+          hint: context.t('account.timeTracking.dailyTargetHint'),
           icon: LucideIcons.target,
-          trailing: HiveSwitch(
-            value: daily != null,
-            onChanged: (on) => _save(
-              on
-                  ? prefs.copyWith(
-                      dailyTargetMinutes:
-                          policy.suggestedDailyTargetMinutes ??
-                          TimePreferences.fallbackDailyTarget,
-                    )
-                  : prefs.copyWith(clearDailyTarget: true),
-            ),
+          target: prefs.dailyTargetMinutes,
+          maxMinutes: TimePreferences.maxDailyTarget,
+          startsAt: suggestedDaily ?? TimePreferences.fallbackDailyTarget,
+          suggested: suggestedDaily,
+          remindAt: prefs.dailyReminderAt,
+          stack: widget.stack,
+          onTarget: (minutes) => save(
+            minutes == null
+                ? prefs.copyWith(clearDailyTarget: true)
+                : prefs.copyWith(dailyTargetMinutes: minutes),
           ),
+          onRemindAt: (minute) => save(prefs.copyWith(dailyReminderAt: minute)),
         ),
-        if (daily != null) ...[
-          divider,
-          _PickRow(
-            label: context.t('account.timeTracking.target'),
-            value: fmtDuration(context, daily),
-            icon: LucideIcons.hourglass,
-            stack: widget.stack,
-            onTap: () => _pickTarget(
-              daily,
-              TimePreferences.maxDailyTarget,
-              (minutes) => prefs.copyWith(dailyTargetMinutes: minutes),
-            ),
-          ),
-          divider,
-          _PickRow(
-            label: context.t('account.timeTracking.remindAt'),
-            value: _clock(context, prefs.dailyReminderAt),
-            icon: LucideIcons.clock,
-            stack: widget.stack,
-            onTap: () => _pickTime(
-              prefs.dailyReminderAt,
-              (minute) => prefs.copyWith(dailyReminderAt: minute),
-            ),
-          ),
-          ..._suggestion(
-            current: daily,
-            suggested: policy.suggestedDailyTargetMinutes,
-            take: (minutes) => prefs.copyWith(dailyTargetMinutes: minutes),
-            divider: divider,
-          ),
-        ],
-        divider,
-        SettingRow(
+        _TargetGroup(
           label: context.t('account.timeTracking.weeklyTarget'),
-          description: context.t('account.timeTracking.weeklyTargetHint'),
+          hint: context.t('account.timeTracking.weeklyTargetHint'),
           icon: LucideIcons.calendarRange,
+          target: prefs.weeklyTargetMinutes,
+          maxMinutes: TimePreferences.maxWeeklyTarget,
+          startsAt: suggestedWeekly ?? TimePreferences.fallbackWeeklyTarget,
+          suggested: suggestedWeekly,
+          remindAt: prefs.weeklyReminderAt,
+          stack: widget.stack,
+          onTarget: (minutes) => save(
+            minutes == null
+                ? prefs.copyWith(clearWeeklyTarget: true)
+                : prefs.copyWith(weeklyTargetMinutes: minutes),
+          ),
+          onRemindAt: (minute) =>
+              save(prefs.copyWith(weeklyReminderAt: minute)),
+          weekday: prefs.weeklyReminderDay,
+          onWeekday: (day) => save(prefs.copyWith(weeklyReminderDay: day)),
+        ),
+      ],
+    );
+  }
+}
+
+/// One target: its switch, its length, when to be reminded and the operator's
+/// suggestion. The daily and the weekly group differ only in the weekday the
+/// weekly one also asks for.
+class _TargetGroup extends StatelessWidget {
+  const _TargetGroup({
+    required this.label,
+    required this.hint,
+    required this.icon,
+    required this.target,
+    required this.maxMinutes,
+    required this.startsAt,
+    required this.suggested,
+    required this.remindAt,
+    required this.stack,
+    required this.onTarget,
+    required this.onRemindAt,
+    this.weekday,
+    this.onWeekday,
+  });
+
+  final String label;
+  final String hint;
+  final IconData icon;
+
+  /// The target in minutes, or null while it is switched off.
+  final int? target;
+  final int maxMinutes;
+
+  /// What a target switched on starts at.
+  final int startsAt;
+  final int? suggested;
+
+  /// Minute of the day, on the person's own clock.
+  final int remindAt;
+  final bool stack;
+
+  /// A new target, or null to switch it off.
+  final ValueChanged<int?> onTarget;
+  final ValueChanged<int> onRemindAt;
+  final int? weekday;
+  final ValueChanged<int>? onWeekday;
+
+  Future<void> _pickTarget(BuildContext context, int current) async {
+    final picked = await showGlassDurationPicker(
+      context,
+      initialMinutes: current,
+      title: context.t('account.timeTracking.target'),
+      maxHours: maxMinutes ~/ 60,
+    );
+    if (picked != null) onTarget(picked.clamp(1, maxMinutes));
+  }
+
+  Future<void> _pickTime(BuildContext context) async {
+    final picked = await showGlassTimePicker(
+      context,
+      initial: TimeOfDay(hour: remindAt ~/ 60, minute: remindAt % 60),
+      title: context.t('account.timeTracking.remindAt'),
+    );
+    if (picked != null) onRemindAt(picked.hour * 60 + picked.minute);
+  }
+
+  Future<void> _pickWeekday(BuildContext context) async {
+    final picked = await showGlassOptions<int>(
+      context,
+      title: context.t('account.timeTracking.remindOn'),
+      options: [
+        for (var day = DateTime.monday; day <= DateTime.sunday; day++)
+          (value: day, child: Text(weekdayName(context, day))),
+      ],
+    );
+    if (picked != null) onWeekday?.call(picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final divider = Divider(height: 1, color: AppColors.hairline2);
+    final current = target;
+    final day = weekday;
+    final offer = suggested;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SettingRow(
+          label: label,
+          description: hint,
+          icon: icon,
           trailing: HiveSwitch(
-            value: weekly != null,
-            onChanged: (on) => _save(
-              on
-                  ? prefs.copyWith(
-                      weeklyTargetMinutes:
-                          policy.suggestedWeeklyTargetMinutes ??
-                          TimePreferences.fallbackWeeklyTarget,
-                    )
-                  : prefs.copyWith(clearWeeklyTarget: true),
-            ),
+            value: current != null,
+            onChanged: (on) => onTarget(on ? startsAt : null),
           ),
         ),
-        if (weekly != null) ...[
+        if (current != null) ...[
           divider,
           _PickRow(
             label: context.t('account.timeTracking.target'),
-            value: fmtDuration(context, weekly),
+            value: fmtDuration(context, current),
             icon: LucideIcons.hourglass,
-            stack: widget.stack,
-            onTap: () => _pickTarget(
-              weekly,
-              TimePreferences.maxWeeklyTarget,
-              (minutes) => prefs.copyWith(weeklyTargetMinutes: minutes),
+            stack: stack,
+            onTap: () => unawaited(_pickTarget(context, current)),
+          ),
+          if (day != null && onWeekday != null) ...[
+            divider,
+            _PickRow(
+              label: context.t('account.timeTracking.remindOn'),
+              value: weekdayName(context, day),
+              icon: LucideIcons.calendarDays,
+              stack: stack,
+              onTap: () => unawaited(_pickWeekday(context)),
             ),
-          ),
-          divider,
-          _PickRow(
-            label: context.t('account.timeTracking.remindOn'),
-            value: _weekday(context, prefs.weeklyReminderDay),
-            icon: LucideIcons.calendarDays,
-            stack: widget.stack,
-            onTap: _pickDay,
-          ),
+          ],
           divider,
           _PickRow(
             label: context.t('account.timeTracking.remindAt'),
-            value: _clock(context, prefs.weeklyReminderAt),
-            icon: LucideIcons.clock,
-            stack: widget.stack,
-            onTap: () => _pickTime(
-              prefs.weeklyReminderAt,
-              (minute) => prefs.copyWith(weeklyReminderAt: minute),
+            value: MaterialLocalizations.of(context).formatTimeOfDay(
+              TimeOfDay(hour: remindAt ~/ 60, minute: remindAt % 60),
+              alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(
+                context,
+              ),
             ),
+            icon: LucideIcons.clock,
+            stack: stack,
+            onTap: () => unawaited(_pickTime(context)),
           ),
-          ..._suggestion(
-            current: weekly,
-            suggested: policy.suggestedWeeklyTargetMinutes,
-            take: (minutes) => prefs.copyWith(weeklyTargetMinutes: minutes),
-            divider: divider,
-          ),
+          if (offer != null && offer != current) ...[
+            divider,
+            SettingRow(
+              label: context.t(
+                'account.timeTracking.suggested',
+                variables: {'duration': fmtDuration(context, offer)},
+              ),
+              stack: stack,
+              trailing: AccountActionButton(
+                label: context.t('account.timeTracking.useSuggestion'),
+                icon: LucideIcons.check,
+                onPressed: () => onTarget(offer),
+              ),
+            ),
+          ],
         ],
         divider,
       ],
     );
-  }
-
-  /// The operator's suggestion, offered while it differs from the target.
-  List<Widget> _suggestion({
-    required int current,
-    required int? suggested,
-    required TimePreferences Function(int minutes) take,
-    required Widget divider,
-  }) {
-    if (suggested == null || suggested == current) return const [];
-    return [
-      divider,
-      SettingRow(
-        label: context.t(
-          'account.timeTracking.suggested',
-          variables: {'duration': fmtDuration(context, suggested)},
-        ),
-        stack: widget.stack,
-        trailing: AccountActionButton(
-          label: context.t('account.timeTracking.useSuggestion'),
-          icon: LucideIcons.check,
-          onPressed: () => _save(take(suggested)),
-        ),
-      ),
-    ];
   }
 }
 

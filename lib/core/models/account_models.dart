@@ -45,12 +45,13 @@ class TimePreferences extends Equatable {
     this.weeklyTargetMinutes,
     this.dailyReminderAt = defaultDailyReminderAt,
     this.weeklyReminderAt = defaultWeeklyReminderAt,
-    this.weeklyReminderDay = DateTime.friday,
+    this.weeklyReminderDay = defaultWeeklyReminderDay,
   });
 
   /// 17:00 for the day and 16:00 for the week, as minutes of the day.
   static const int defaultDailyReminderAt = 17 * 60;
   static const int defaultWeeklyReminderAt = 16 * 60;
+  static const int defaultWeeklyReminderDay = DateTime.friday;
 
   /// What a switched-on target starts at when the operator suggests none.
   static const int fallbackDailyTarget = 8 * 60;
@@ -161,7 +162,7 @@ class TimePreferences extends Equatable {
       weeklyReminderAt:
           (json['weeklyReminderAt'] as num?)?.toInt() ??
           defaultWeeklyReminderAt,
-      weeklyReminderDay: day < 0 ? DateTime.friday : day + 1,
+      weeklyReminderDay: day < 0 ? defaultWeeklyReminderDay : day + 1,
     );
   }
 
