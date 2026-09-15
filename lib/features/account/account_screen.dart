@@ -475,27 +475,33 @@ class _AccountScreenState extends State<AccountScreen> {
       tokens: _mcpEnabled,
       admin: isAdmin,
     );
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        padding: context.pagePadding,
-        children: [
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: goldenContentMax),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // No in-page title: the shell's sub-page bar already shows
-                  // back + "settings" for this route.
-                  _profileHero(),
-                  const SizedBox(height: 16),
-                  GoldenColumns<SettingsCard>(groups: groups, card: _card),
-                ],
+    // Full width, so the cards can spread over a third column on a wide screen
+    // instead of stopping at the shell's reading width; the page caps itself.
+    return PageChrome(
+      title: context.t('nav.settings'),
+      fullWidth: true,
+      child: RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(
+          padding: context.pagePadding,
+          children: [
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: goldenContentMax),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // No in-page title: the shell's sub-page bar already shows
+                    // back + "settings" for this route.
+                    _profileHero(),
+                    const SizedBox(height: 16),
+                    GoldenColumns<SettingsCard>(groups: groups, card: _card),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
