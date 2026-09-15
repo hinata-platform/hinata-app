@@ -24,6 +24,9 @@ enum BoardCardShape {
 
   /// The timeline: work items and epics, no sub-tasks.
   timeline,
+
+  /// The sprint planning: every issue type, as it has always listed them.
+  planning,
 }
 
 /// What a board narrows on the server: the search text and every facet of its
@@ -158,6 +161,15 @@ class BoardStateSummary extends Equatable {
 
   @override
   List<Object?> get props => [state, resolved, count, points];
+}
+
+/// A summary by state, added up.
+extension BoardStateSummaries on Iterable<BoardStateSummary> {
+  /// How many cards the rows count.
+  int get cardCount => fold(0, (sum, row) => sum + row.count);
+
+  /// The story points of those cards.
+  int get points => fold(0, (sum, row) => sum + row.points);
 }
 
 /// One page of a board's cards: of a column, a sprint, the backlog or the

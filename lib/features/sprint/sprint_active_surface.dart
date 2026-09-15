@@ -12,24 +12,27 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/subtask_widgets.dart';
 import '../../core/widgets/user_pronouns.dart';
 import '../board/board_drag.dart';
-import '../board/board_filter.dart';
 import '../board/board_swimlanes.dart';
 import '../board/issue_quick_create.dart';
 import 'widgets/glass_sprint_header.dart';
 
 /// Active-sprint surface: the Liquid-Glass sprint header above a sprint-scoped
 /// Kanban board (To Do → In Progress → In Review → Done, WIP limits, drag).
+///
+/// Its columns are the board's wall, searched and filtered on the server: each
+/// counts every card it holds, shows the ones loaded so far and reads on as it
+/// is scrolled.
 class SprintActiveSurface extends StatelessWidget {
   const SprintActiveSurface({
     super.key,
     required this.sprint,
     required this.columns,
-    required this.issues,
-    required this.filter,
     required this.onOpenIssue,
-    required this.onMoveState,
+    required this.onMove,
+    required this.onLoadMore,
     required this.quickCreateSeed,
     required this.onCreated,
+    this.loadingMore = const {},
     this.grouping = BoardGrouping.none,
     this.issuesById = const {},
     this.epics = const [],
@@ -42,11 +45,19 @@ class SprintActiveSurface extends StatelessWidget {
   });
 
   final Sprint sprint;
+
+  /// The wall's columns, each with the cards loaded so far and its total.
   final List<BoardColumnView> columns;
-  final List<Issue> issues;
-  final BoardFilter filter;
   final void Function(Issue) onOpenIssue;
-  final void Function(Issue, String) onMoveState;
+
+  /// Moves a card dropped on a column into that column.
+  final void Function(Issue issue, BoardColumnView column) onMove;
+
+  /// Reads the next page of the column with the given name.
+  final ValueChanged<String> onLoadMore;
+
+  /// Names of the columns reading their next page.
+  final Set<String> loadingMore;
 
   /// Seeds the inline composer at the foot of a column: the sprint is this
   /// surface's own, [stateFor] resolves the column's workflow state for the
@@ -61,6 +72,9 @@ class SprintActiveSurface extends StatelessWidget {
 
   /// Swimlane grouping for the sprint board (none = flat columns).
   final BoardGrouping grouping;
+
+  /// The loaded cards and what they refer to, by id: what a lane resolves a
+  /// card's epic or parent from.
   final Map<String, Issue> issuesById;
   final List<Issue> epics;
   final Map<String, String> names;
@@ -78,10 +92,6 @@ class SprintActiveSurface extends StatelessWidget {
   /// Room left clear above the sprint header, for a phone's app bar and its
   /// docked row.
   final double topInset;
-
-  /// Every active facet plus the epic facet (resolved per issue).
-  bool _passes(Issue i) =>
-      filter.matches(i) && filter.matchesEpic(boardEpicOf(i, issuesById));
 
   /// Seeds the composer under [column]: a ticket written there starts in this
   /// column's own workflow state. On a merged board the column carries one state
@@ -103,7 +113,8 @@ class SprintActiveSurface extends StatelessWidget {
       c.states.any((s) => s.toUpperCase() == 'BACKLOG');
 
   /// Swimlane board for the active sprint — reuses the shared [BoardSwimlanes]
-  /// with the sprint card column so it matches the Kanban board's grouping.
+  /// with the sprint card column so it matches the Kanban board's grouping. The
+  /// lanes hold the cards loaded so far; under them each column offers the rest.
   Widget _grouped(
     BuildContext context,
     List<BoardColumnView> boardColumns,
@@ -112,7 +123,7 @@ class SprintActiveSurface extends StatelessWidget {
     final lanes = computeBoardLanes(
       context: context,
       grouping: grouping,
-      issues: issues.where(_passes).toList(),
+      issues: [for (final column in boardColumns) ...column.issues],
       issuesById: issuesById,
       epics: epics,
       names: names,
@@ -142,20 +153,25 @@ class SprintActiveSurface extends StatelessWidget {
       columnBuilder: (column, colIssues, lane, width) => _SprintColumn(
         column: column,
         issues: colIssues,
+        count: colIssues.length,
         names: names,
         avatars: avatars,
         pronouns: pronouns,
         laneMode: true,
         width: width,
         projectsById: projectsById,
-        onAccept: (issue) => onMoveState(
-          issue,
-          boardDropState(issue, column.states, projectsById) ?? issue.state,
-        ),
+        onAccept: (issue) => onMove(issue, column),
         onOpenIssue: onOpenIssue,
         quickCreate: _seedFor(column),
         onCreated: onCreated,
       ),
+      footerBuilder: (column, width) => column.hasMore
+          ? BoardLoadMore(
+              remaining: column.count - column.issues.length,
+              loading: loadingMore.contains(column.name),
+              onPressed: () => onLoadMore(column.name),
+            )
+          : null,
     );
   }
 
@@ -208,31 +224,20 @@ class SprintActiveSurface extends StatelessWidget {
                             const SizedBox(width: BoardWall.columnGap),
                         itemBuilder: (context, index) {
                           final column = boardColumns[index];
-                          final colIssues = issues
-                              .where(
-                                (i) =>
-                                    column.states.contains(i.state) &&
-                                    _passes(i) &&
-                                    boardCardVisible(i, grouping),
-                              )
-                              .toList();
                           return _SprintColumn(
                             column: column,
                             width: width,
                             projectsById: projectsById,
-                            issues: colIssues,
+                            issues: column.issues,
+                            count: column.count,
+                            loadingMore: loadingMore.contains(column.name),
+                            onLoadMore: column.hasMore
+                                ? () => onLoadMore(column.name)
+                                : null,
                             names: names,
                             avatars: avatars,
                             pronouns: pronouns,
-                            onAccept: (issue) => onMoveState(
-                              issue,
-                              boardDropState(
-                                    issue,
-                                    column.states,
-                                    projectsById,
-                                  ) ??
-                                  issue.state,
-                            ),
+                            onAccept: (issue) => onMove(issue, column),
                             onOpenIssue: onOpenIssue,
                             quickCreate: _seedFor(column),
                             onCreated: onCreated,
@@ -253,6 +258,7 @@ class _SprintColumn extends StatelessWidget {
   const _SprintColumn({
     required this.column,
     required this.issues,
+    required this.count,
     required this.names,
     this.pronouns = const {},
     required this.avatars,
@@ -261,12 +267,17 @@ class _SprintColumn extends StatelessWidget {
     required this.quickCreate,
     required this.onCreated,
     this.laneMode = false,
+    this.loadingMore = false,
+    this.onLoadMore,
     this.width = BoardWall.columnWidth,
     this.projectsById = const {},
   });
 
   final BoardColumnView column;
   final List<Issue> issues;
+
+  /// Every card the column holds, loaded or not; in a lane, the lane's.
+  final int count;
 
   /// Display name / avatar URL per user id — a card carries only the assignee
   /// id, which is not something to render at a person.
@@ -297,12 +308,18 @@ class _SprintColumn extends StatelessWidget {
   /// the column itself, so [width] only follows it there.
   final bool laneMode;
 
+  /// Whether the column is reading its next page.
+  final bool loadingMore;
+
+  /// Reads the column's next page; null when it holds no more.
+  final VoidCallback? onLoadMore;
+
   /// Set by the wall from the space it has — see [boardColumnWidth].
   final double width;
 
   @override
   Widget build(BuildContext context) {
-    final overWip = column.wipLimit != null && issues.length > column.wipLimit!;
+    final overWip = column.wipLimit != null && count > column.wipLimit!;
     // Prefer the project's configured state hue; fall back to the global palette.
     final dotColor = column.hue != null
         ? hueColor(column.hue!)
@@ -310,8 +327,8 @@ class _SprintColumn extends StatelessWidget {
             column.states.isNotEmpty ? column.states.first : column.name,
           );
     final countLabel = column.wipLimit != null
-        ? '${issues.length}/${column.wipLimit}'
-        : '${issues.length}';
+        ? '$count/${column.wipLimit}'
+        : '$count';
 
     // Touch platforms get no drag — it fights the scroll gesture; state changes
     // happen in the issue detail sheet instead.
@@ -423,19 +440,16 @@ class _SprintColumn extends StatelessWidget {
                     ),
                     LaneAwareFlexible(
                       laneMode: laneMode,
-                      child: issues.isEmpty
+                      // A column whose loaded cards all moved away still reads
+                      // on, so what it holds beyond them comes into view.
+                      child: issues.isEmpty && onLoadMore == null
                           ? const SizedBox(height: 8)
-                          : ListView.separated(
-                              shrinkWrap: true,
-                              physics: laneMode
-                                  ? const NeverScrollableScrollPhysics()
-                                  : null,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 2,
-                              ),
-                              itemCount: issues.length,
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(height: 9),
+                          : BoardCardList(
+                              count: issues.length,
+                              remaining: count - issues.length,
+                              laneMode: laneMode,
+                              loadingMore: loadingMore,
+                              onLoadMore: onLoadMore,
                               itemBuilder: (context, index) {
                                 final issue = issues[index];
                                 return BoardDragCard(

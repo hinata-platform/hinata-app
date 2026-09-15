@@ -11,6 +11,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/models/board_page_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/widgets/hive_widgets.dart';
 import 'package:hinata/features/sprint/widgets/plan_row.dart';
@@ -116,6 +117,36 @@ void main() {
     });
   });
 
+  group('point buckets', () {
+    test('a sprint summary adds up by bucket, over every card it counts', () {
+      expect(
+        bucketSummary(const [
+          BoardStateSummary(
+            state: 'Open',
+            resolved: false,
+            count: 4,
+            points: 8,
+          ),
+          BoardStateSummary(
+            state: 'In Review',
+            resolved: false,
+            count: 2,
+            points: 5,
+          ),
+          BoardStateSummary(state: 'Done', resolved: true, count: 1, points: 3),
+          // Resolved decides, whatever the state is called.
+          BoardStateSummary(
+            state: 'In Progress',
+            resolved: true,
+            count: 1,
+            points: 2,
+          ),
+        ]),
+        (todo: 8, progress: 5, done: 5),
+      );
+    });
+  });
+
   group('capacity bar', () {
     /// The bar picks its own width, so it must be given loose constraints —
     /// exactly like the meta row it lives in.
@@ -149,10 +180,10 @@ void main() {
       await pumpLoose(
         tester,
         CapacityBar(
-          issues: [
+          points: bucketPoints([
             issue(id: 'a', points: 10),
             issue(id: 'b', points: 10, state: 'IN_PROGRESS'),
-          ],
+          ]),
           capacity: 40,
           width: 300,
         ),
@@ -172,7 +203,11 @@ void main() {
     ) async {
       await pumpLoose(
         tester,
-        CapacityBar(issues: [issue(points: 42)], capacity: 40, width: 300),
+        CapacityBar(
+          points: bucketPoints([issue(points: 42)]),
+          capacity: 40,
+          width: 300,
+        ),
       );
       await tester.pump(const Duration(seconds: 1));
 
@@ -186,7 +221,11 @@ void main() {
     ) async {
       await pumpLoose(
         tester,
-        const CapacityBar(issues: [], capacity: 40, width: 300),
+        const CapacityBar(
+          points: (todo: 0, progress: 0, done: 0),
+          capacity: 40,
+          width: 300,
+        ),
       );
       await tester.pump(const Duration(seconds: 1));
 
@@ -199,7 +238,11 @@ void main() {
     ) async {
       await pumpLoose(
         tester,
-        CapacityBar(issues: [issue(points: 8)], capacity: null, width: 300),
+        CapacityBar(
+          points: bucketPoints([issue(points: 8)]),
+          capacity: null,
+          width: 300,
+        ),
       );
 
       expect(bar(), findsNothing);
@@ -211,7 +254,11 @@ void main() {
       // desktop meta row hands it 150.
       await pumpLoose(
         tester,
-        CapacityBar(issues: [issue(points: 8)], capacity: 40, width: 150),
+        CapacityBar(
+          points: bucketPoints([issue(points: 8)]),
+          capacity: 40,
+          width: 150,
+        ),
       );
       await tester.pump(const Duration(seconds: 1));
 
