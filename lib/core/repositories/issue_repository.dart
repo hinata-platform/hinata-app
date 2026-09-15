@@ -79,8 +79,9 @@ class IssueRepository {
 
   /// Fetches **every** matching issue by paging through the server-clamped
   /// result set (the search endpoint caps `size` at 100), so callers that need
-  /// the complete collection — exports, board swimlane indexes, smart-link
-  /// `@`-menus — never silently miss issues beyond the first page.
+  /// the complete collection — exports, smart-link `@`-menus — never silently
+  /// miss issues beyond the first page. Boards do not come here: they read
+  /// their cards a page at a time from [BoardRepository].
   ///
   /// Pages are de-duplicated by id: a row can shift across a page boundary
   /// while we page (the backend sort is time-based), so dedup keeps the result
