@@ -21,6 +21,8 @@ enum SettingsCard {
 /// The notifications and the time cards are wide: their rows carry toggles,
 /// steppers and pickers side by side. Time tracking and working hours grew with
 /// every stage of HIN-60, which is why a fixed left column kept getting longer.
+/// They are two groups, not one: together they stood taller than any column
+/// beside them could reach.
 List<GoldenGroup<SettingsCard>> settingsGroups({
   required bool timeTracking,
   required bool tokens,
@@ -31,12 +33,10 @@ List<GoldenGroup<SettingsCard>> settingsGroups({
     SettingsCard.sessions,
   ], weight: 7.4),
   const GoldenGroup([SettingsCard.notifications], weight: 7, wide: true),
-  if (timeTracking)
-    const GoldenGroup(
-      [SettingsCard.timeTracking, SettingsCard.availability],
-      weight: 23,
-      wide: true,
-    ),
+  if (timeTracking) ...const [
+    GoldenGroup([SettingsCard.timeTracking], weight: 12, wide: true),
+    GoldenGroup([SettingsCard.availability], weight: 11, wide: true),
+  ],
   GoldenGroup([
     SettingsCard.access,
     SettingsCard.appearance,

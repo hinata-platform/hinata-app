@@ -52,19 +52,66 @@ void main() {
     expect(left(tester, 'a'), isNot(left(tester, 'b')));
   });
 
+  testWidgets('a card that grows before anyone touched the page moves', (
+    tester,
+  ) async {
+    wideSurface(tester);
+    await tester.pumpWidget(host({'a': 900, 'b': 100, 'c': 100}));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Its data landed late: now c is the tall one.
+    await tester.pumpWidget(host({'a': 100, 'b': 100, 'c': 900}));
+    await tester.pump();
+    await tester.pump();
+
+    expect(left(tester, 'a'), left(tester, 'b'));
+    expect(left(tester, 'c'), isNot(left(tester, 'b')));
+  });
+
   testWidgets('a card that grows after the page settled does not move', (
     tester,
   ) async {
     wideSurface(tester);
     await tester.pumpWidget(host({'a': 900, 'b': 100, 'c': 100}));
     await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 5));
     final before = left(tester, 'c');
 
     await tester.pumpWidget(host({'a': 100, 'b': 100, 'c': 900}));
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    await tester.pump();
 
     expect(left(tester, 'c'), before);
+  });
+
+  testWidgets('a tap holds the page still at once', (tester) async {
+    wideSurface(tester);
+    await tester.pumpWidget(host({'a': 900, 'b': 100, 'c': 100}));
+    await tester.pump();
+    await tester.tapAt(tester.getCenter(find.byKey(const ValueKey('b'))));
+    final before = left(tester, 'c');
+
+    await tester.pumpWidget(host({'a': 100, 'b': 100, 'c': 900}));
+    await tester.pump();
+    await tester.pump();
+
+    expect(left(tester, 'c'), before);
+  });
+
+  testWidgets('a card that joins after the page settled is measured too', (
+    tester,
+  ) async {
+    wideSurface(tester);
+    await tester.pumpWidget(host({'a': 900, 'b': 100}));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 5));
+
+    // By the estimates alone the newcomer would share the tall card's column.
+    await tester.pumpWidget(host({'a': 900, 'b': 100, 'c': 100}));
+    await tester.pump();
+
+    expect(left(tester, 'c'), left(tester, 'b'));
   });
 
   testWidgets('a narrow page stacks the cards in one column', (tester) async {
