@@ -1293,7 +1293,8 @@
       "unassignedHint": "Diese Status haben noch keine Spalte. Vorgänge darin würden auf dem Board fehlen.",
       "automatic": "Zurück zu automatisch"
     },
-    "searchIssues": "Vorgänge durchsuchen…"
+    "searchIssues": "Vorgänge durchsuchen…",
+    "loadMore": "{{count}} weitere anzeigen"
   },
   "gantt": {
     "title": "Zeitachse",

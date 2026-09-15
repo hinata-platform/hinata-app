@@ -1293,7 +1293,8 @@
       "unassignedHint": "These statuses have no column yet. Issues in them would not appear on the board.",
       "automatic": "Back to automatic"
     },
-    "searchIssues": "Search issues…"
+    "searchIssues": "Search issues…",
+    "loadMore": "Show {{count}} more"
   },
   "gantt": {
     "title": "Timeline",

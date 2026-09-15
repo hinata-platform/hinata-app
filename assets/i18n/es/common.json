@@ -1293,7 +1293,8 @@
       "unassignedHint": "Estos estados todavía no tienen columna. Las incidencias que estén en ellos no aparecerían en el tablero.",
       "automatic": "Volver a automático"
     },
-    "searchIssues": "Buscar incidencias…"
+    "searchIssues": "Buscar incidencias…",
+    "loadMore": "Mostrar {{count}} más"
   },
   "gantt": {
     "title": "Línea temporal",
