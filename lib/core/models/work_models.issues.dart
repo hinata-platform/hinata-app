@@ -62,6 +62,7 @@ class Issue extends Equatable {
     this.subtaskCount = 0,
     this.subtaskDoneCount = 0,
     this.formerReadableIds = const [],
+    this.epicId,
   });
 
   final String id;
@@ -142,6 +143,12 @@ class Issue extends Equatable {
   /// the indicator's done/total progress.
   final int subtaskDoneCount;
 
+  /// The epic this issue rolls up to: its parent, or for a sub-task its
+  /// grandparent. Resolved by the server on board payloads, so a board groups
+  /// and filters by epic without holding every issue of its projects; null
+  /// everywhere else.
+  final String? epicId;
+
   /// Whether this issue has at least one direct child (per the enriched count).
   bool get hasSubtasks => subtaskCount > 0;
 
@@ -202,6 +209,7 @@ class Issue extends Equatable {
     updatedAt: _instant(json['updatedAt']),
     subtaskCount: json['subtaskCount'] as int? ?? 0,
     subtaskDoneCount: json['subtaskDoneCount'] as int? ?? 0,
+    epicId: json['epicId'] as String?,
   );
 
   /// Returns a copy with the given fields replaced — used for optimistic
@@ -251,6 +259,7 @@ class Issue extends Equatable {
     updatedAt: updatedAt,
     subtaskCount: subtaskCount,
     subtaskDoneCount: subtaskDoneCount,
+    epicId: epicId,
   );
 
   @override
@@ -270,6 +279,7 @@ class Issue extends Equatable {
     updatedAt,
     subtaskCount,
     subtaskDoneCount,
+    epicId,
   ];
 }
 
