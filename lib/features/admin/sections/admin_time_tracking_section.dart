@@ -434,6 +434,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         label: context.t('admin.timeTracking.suggestedDailyTargetLabel'),
         helper: context.t('admin.timeTracking.suggestedTargetHint'),
         value: _value<num>('suggestedDailyTargetMinutes')?.toInt(),
+        effective: _effectiveValue<num>('suggestedDailyTargetMinutes')?.toInt(),
         onChanged: (v) => _set('suggestedDailyTargetMinutes', v),
         maxHours: TimePreferences.maxDailyTarget ~/ 60,
         initialMinutes: TimePreferences.fallbackDailyTarget,
@@ -442,6 +443,9 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         label: context.t('admin.timeTracking.suggestedWeeklyTargetLabel'),
         helper: context.t('admin.timeTracking.suggestedTargetHint'),
         value: _value<num>('suggestedWeeklyTargetMinutes')?.toInt(),
+        effective: _effectiveValue<num>(
+          'suggestedWeeklyTargetMinutes',
+        )?.toInt(),
         onChanged: (v) => _set('suggestedWeeklyTargetMinutes', v),
         maxHours: TimePreferences.maxWeeklyTarget ~/ 60,
         initialMinutes: TimePreferences.fallbackWeeklyTarget,
