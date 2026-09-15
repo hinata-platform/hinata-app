@@ -1469,26 +1469,13 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
 
   Widget _dockedNavigation() {
     final today = _today();
-    // The freeze wins over a marking, as on the canvas below: a frozen holiday
-    // is first of all a day nothing can be written to.
-    final policy = context.read<TimePolicyCubit>().state;
-    final tones = _span == _Span.month
-        ? const <Color?>[]
-        : [
-            for (final day in _weekDays)
-              policy.isLocked(day)
-                  ? AppColors.closed
-                  : (_markOn(day) == null ? null : AppColors.recess),
-          ];
-    // The strip's colours themselves, not the months held behind them: a month
-    // that arrives redraws the strip only when it changes one of them.
+    // Nothing about a day's freeze or marking: the strip is navigation, every day
+    // on the same clear ground. The canvas below says what a day is.
     final key = Object.hash(
       _span,
       dayKey(_focused),
       dayKey(today),
       AppColors.brightness,
-      Object.hashAll(tones),
-      _washedAgainst,
     );
     if (_dockKey == key) return _dock!;
     _dockKey = key;
@@ -1506,7 +1493,6 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
               days: _weekDays,
               focused: _focused,
               today: today,
-              tones: tones,
               onTap: _focusDay,
             ),
           );
@@ -1604,18 +1590,12 @@ class _WeekStrip extends StatelessWidget {
     required this.days,
     required this.focused,
     required this.today,
-    required this.tones,
     required this.onTap,
   });
 
   final List<DateTime> days;
   final DateTime focused;
   final DateTime today;
-
-  /// One surface per day, in the order of [days]: the freeze's tone, the quiet
-  /// tone of a marked day (HIN-91), or none.
-  final List<Color?> tones;
-
   final void Function(DateTime day) onTap;
 
   @override
@@ -1623,14 +1603,13 @@ class _WeekStrip extends StatelessWidget {
     final narrow = MaterialLocalizations.of(context).narrowWeekdays;
     return Row(
       children: [
-        for (final (index, day) in days.indexed)
+        for (final day in days)
           Expanded(
             child: _WeekStripDay(
               day: day,
               letter: narrow[day.weekday % 7],
               focused: DateUtils.isSameDay(day, focused),
               today: DateUtils.isSameDay(day, today),
-              tone: index < tones.length ? tones[index] : null,
               onTap: () => onTap(day),
             ),
           ),
@@ -1646,7 +1625,6 @@ class _WeekStripDay extends StatelessWidget {
     required this.focused,
     required this.today,
     required this.onTap,
-    this.tone,
   });
 
   final DateTime day;
@@ -1654,9 +1632,6 @@ class _WeekStripDay extends StatelessWidget {
   final bool focused;
   final bool today;
   final VoidCallback onTap;
-
-  /// The surface behind the day, the same tone its column has on the canvas.
-  final Color? tone;
 
   @override
   Widget build(BuildContext context) {
@@ -1682,55 +1657,46 @@ class _WeekStripDay extends StatelessWidget {
     return InkResponse(
       onTap: onTap,
       radius: 24,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: tone ?? Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            letter,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              color: AppColors.inkFaint,
+            ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                letter,
-                style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.inkFaint,
-                ),
-              ),
-              const SizedBox(height: 3),
-              DecoratedBox(
-                decoration: BoxDecoration(color: disc, shape: BoxShape.circle),
-                child: SizedBox(
-                  width: 26,
-                  height: 26,
-                  child: Center(
-                    child: Text(
-                      '${day.day}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: focused || today
-                            ? FontWeight.w800
-                            : FontWeight.w600,
-                        color: ink,
-                      ),
-                    ),
+          const SizedBox(height: 3),
+          DecoratedBox(
+            decoration: BoxDecoration(color: disc, shape: BoxShape.circle),
+            child: SizedBox(
+              width: 26,
+              height: 26,
+              child: Center(
+                child: Text(
+                  '${day.day}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: focused || today
+                        ? FontWeight.w800
+                        : FontWeight.w600,
+                    color: ink,
                   ),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-/// Ink on the amber disc. Fixed rather than a theme token: the disc is the same
-/// amber in both themes, so what reads on it does not change either.
-const Color _stripOnAccent = Color(0xFF2A2410);
+/// Ink on the amber disc: white, which reads on the honey in both themes. Fixed
+/// rather than a theme token, because the disc does not change with the theme.
+const Color _stripOnAccent = Colors.white;
 
 class _RoundButton extends StatelessWidget {
   const _RoundButton({
