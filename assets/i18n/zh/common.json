@@ -1955,7 +1955,10 @@
       "grantRevoke": "立即关闭",
       "grantRevokeTitle": "关闭这些日期？",
       "grantRevokeMessage": "之后 {{name}} 将无法再记录 {{period}} 的工时。此操作会被记录。",
-      "grantRevoked": "这些日期已重新关闭。"
+      "grantRevoked": "这些日期已重新关闭。",
+      "suggestedDailyTargetLabel": "建议的每日目标",
+      "suggestedWeeklyTargetLabel": "建议的每周目标",
+      "suggestedTargetHint": "会在个人的提醒设置中提供。是否采用由每个人自己决定。"
     },
     "passwordPolicy": "密码策略",
     "passwordPolicyHint": "用户密码的最低要求。",
@@ -2742,7 +2745,13 @@
       "inherit": "服务器默认",
       "lockBefore": "本项目的锁定日期",
       "lockBeforeHint": "比实例其余部分更早结账本项目。它只能关得更多，不能更少。",
-      "instanceDefault": "实例策略"
+      "instanceDefault": "实例策略",
+      "budgetAlert": "预算提醒",
+      "budgetAlertHint": "达到该比例和 100% 时通知负责人，适用于预算和预估总和。",
+      "estimateAlert": "事项预估提醒",
+      "estimateAlertHint": "事项达到其预估的该比例时，通知被指派的人。",
+      "alertDefault": "默认（{{percent}}%）",
+      "percent": "{{percent}}%"
     }
   },
   "account": {
@@ -2972,7 +2981,18 @@
       "exportFailed": "无法保存导出文件。",
       "correction": "更正与更早的日期",
       "correctionHint": "你自己的记录由你自己编辑。如果某一天已锁定，请打开该记录并申请更正。如果某一天太久远，请申请开启它。你的原因会发送给能开启它的人，对方的答复会以通知的形式发给你。",
-      "requestDays": "申请更早的日期"
+      "requestDays": "申请更早的日期",
+      "reminders": "提醒",
+      "remindersHint": "只有你会收到提醒，在你的工作日按你自己的时间发送。其他人不会知道是否或何时提醒过你。",
+      "dailyTarget": "每日目标",
+      "dailyTargetHint": "工作日记录不足时提醒你。",
+      "weeklyTarget": "每周目标",
+      "weeklyTargetHint": "如果本周时间仍不足，在你选择的那天提醒你。",
+      "target": "目标",
+      "remindAt": "提醒时间",
+      "remindOn": "提醒日",
+      "suggested": "组织建议：{{duration}}",
+      "useSuggestion": "采用"
     }
   },
   "twofa": {

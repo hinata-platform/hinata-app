@@ -1969,6 +1969,26 @@ Future<int?> showGlassDurationPicker(
   );
 }
 
+/// A time of day and nothing else — when something recurs, like a reminder.
+///
+/// Not [showGlassDateTimePicker] with the day ignored: a reminder at 17:00 is
+/// 17:00 on every day it comes, and a picker that showed one day would suggest
+/// it is tied to that one.
+///
+/// Resolves to the picked time, or null if dismissed.
+Future<TimeOfDay?> showGlassTimePicker(
+  BuildContext context, {
+  required TimeOfDay initial,
+  required String title,
+}) {
+  return showGlassModal<TimeOfDay>(
+    context,
+    adaptive: false,
+    width: 340,
+    builder: (modalContext) => _GlassTimePicker(initial: initial, title: title),
+  );
+}
+
 /// A day and a time in one modal — what a time entry's start and end actually
 /// are.
 ///
@@ -2235,6 +2255,54 @@ class _TimeWheels extends StatelessWidget {
 bool _isTwelveHour(TimeOfDayFormat format) =>
     format == TimeOfDayFormat.h_colon_mm_space_a ||
     format == TimeOfDayFormat.a_space_h_colon_mm;
+
+class _GlassTimePicker extends StatefulWidget {
+  const _GlassTimePicker({required this.initial, required this.title});
+
+  final TimeOfDay initial;
+  final String title;
+
+  @override
+  State<_GlassTimePicker> createState() => _GlassTimePickerState();
+}
+
+class _GlassTimePickerState extends State<_GlassTimePicker> {
+  late TimeOfDay _value = widget.initial;
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = MaterialLocalizations.of(context);
+    final use24 = MediaQuery.alwaysUse24HourFormatOf(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GlassModalHeader(
+          icon: LucideIcons.clock,
+          title: widget.title,
+          subtitle: localizations.formatTimeOfDay(
+            _value,
+            alwaysUse24HourFormat: use24,
+          ),
+        ),
+        const SizedBox(height: 6),
+        _TimeWheels(
+          value: _value,
+          use24:
+              use24 ||
+              !_isTwelveHour(
+                localizations.timeOfDayFormat(alwaysUse24HourFormat: use24),
+              ),
+          onChanged: (value) => setState(() => _value = value),
+        ),
+        const SizedBox(height: 6),
+        GlassModalFooter(
+          confirmLabel: localizations.okButtonLabel,
+          onConfirm: () => Navigator.of(context).pop(_value),
+        ),
+      ],
+    );
+  }
+}
 
 class _GlassDurationPicker extends StatefulWidget {
   const _GlassDurationPicker({

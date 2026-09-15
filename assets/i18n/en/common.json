@@ -1955,7 +1955,10 @@
       "grantRevoke": "Close now",
       "grantRevokeTitle": "Close these days?",
       "grantRevokeMessage": "{{name}} can then no longer record {{period}}. This goes into the audit log.",
-      "grantRevoked": "The days are closed again."
+      "grantRevoked": "The days are closed again.",
+      "suggestedDailyTargetLabel": "Suggested daily target",
+      "suggestedWeeklyTargetLabel": "Suggested weekly target",
+      "suggestedTargetHint": "Offered to people in their reminder settings. Whether to use it is up to each person."
     },
     "passwordPolicy": "Password policy",
     "passwordPolicyHint": "Minimum requirements for user passwords.",
@@ -2742,7 +2745,13 @@
       "inherit": "Server default",
       "lockBefore": "Own lock date",
       "lockBeforeHint": "Closes this project's books earlier than the rest of the instance. It can only close more, never less.",
-      "instanceDefault": "Instance policy"
+      "instanceDefault": "Instance policy",
+      "budgetAlert": "Budget warning",
+      "budgetAlertHint": "Leads are told at this share and at 100 %, for the budget and for the sum of the estimates.",
+      "estimateAlert": "Issue estimate warning",
+      "estimateAlertHint": "The assignee is told once an issue reaches this share of its estimate.",
+      "alertDefault": "Default ({{percent}} %)",
+      "percent": "{{percent}} %"
     }
   },
   "account": {
@@ -2972,7 +2981,18 @@
       "exportFailed": "The export could not be saved.",
       "correction": "Corrections and older days",
       "correctionHint": "You edit your own entries yourself. If a day is locked, open the entry and ask for a correction. If a day lies too far back, ask for it to be opened. Your reason goes to the person who can open it, and their answer reaches you as a notification.",
-      "requestDays": "Ask for older days"
+      "requestDays": "Ask for older days",
+      "reminders": "Reminders",
+      "remindersHint": "Only you are reminded, on your working days and on your own clock. Nobody else learns whether or when.",
+      "dailyTarget": "Daily target",
+      "dailyTargetHint": "Reminds you when you have recorded less on a working day.",
+      "weeklyTarget": "Weekly target",
+      "weeklyTargetHint": "Reminds you on the day you choose when time is still missing that week.",
+      "target": "Target",
+      "remindAt": "Reminder time",
+      "remindOn": "Reminder day",
+      "suggested": "Suggested by your organization: {{duration}}",
+      "useSuggestion": "Use"
     }
   },
   "twofa": {

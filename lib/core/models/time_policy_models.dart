@@ -35,6 +35,10 @@ class TimePolicySnapshot extends Equatable {
     this.arbzgHintsEnabled = false,
     this.lateEntryHintDays,
     this.myBackfillGrants = const [],
+    this.targetRemindersEnabled = false,
+    this.suggestedDailyTargetMinutes,
+    this.suggestedWeeklyTargetMinutes,
+    this.alertsEnabled = false,
   });
 
   /// What the server enforces when it says nothing: a year, as the 1.x routes
@@ -117,6 +121,18 @@ class TimePolicySnapshot extends Equatable {
   /// lock date, each until it runs out. Only the reader's own: nobody else's
   /// would change what this reader may record, and the server sends none.
   final List<TimeOpenedDays> myBackfillGrants;
+
+  /// Whether a person can set targets of their own and be reminded of them
+  /// (HIN-92). The reminders panel is shown only while this is on.
+  final bool targetRemindersEnabled;
+
+  /// Targets the operator suggests. Offered to take over, never applied.
+  final int? suggestedDailyTargetMinutes;
+  final int? suggestedWeeklyTargetMinutes;
+
+  /// Whether leads and assignees hear about budgets and estimates; the project
+  /// thresholds mean something only while this is on.
+  final bool alertsEnabled;
 
   /// Whether `GET /time/hints` answers at all. Asked before calling it, so a
   /// screen never pays for a 404.
@@ -283,11 +299,16 @@ class TimePolicySnapshot extends Equatable {
         arbzgHintsEnabled: arbzgHintsEnabled,
         lateEntryHintDays: lateEntryHintDays,
         myBackfillGrants: myBackfillGrants,
+        targetRemindersEnabled: targetRemindersEnabled,
+        suggestedDailyTargetMinutes: suggestedDailyTargetMinutes,
+        suggestedWeeklyTargetMinutes: suggestedWeeklyTargetMinutes,
+        alertsEnabled: alertsEnabled,
       );
 
   factory TimePolicySnapshot.fromJson(Map<String, dynamic> json) {
     final required = json['requiredFields'] as Map<String, dynamic>?;
     final rounding = json['rounding'] as Map<String, dynamic>?;
+    final reminders = json['targetReminders'] as Map<String, dynamic>?;
     return TimePolicySnapshot(
       requiredProject: required?['project'] as bool? ?? false,
       requiredIssue: required?['issue'] as bool? ?? false,
@@ -306,14 +327,19 @@ class TimePolicySnapshot extends Equatable {
         (json['approvalPeriod'] as Map<String, dynamic>?) ?? const {},
       ),
       leadsSeeMemberEntries: json['leadsSeeMemberEntries'] as bool? ?? false,
-      maxDaysBack:
-          (json['maxDaysBack'] as num?)?.toInt() ?? defaultMaxDaysBack,
+      maxDaysBack: (json['maxDaysBack'] as num?)?.toInt() ?? defaultMaxDaysBack,
       arbzgHintsEnabled: json['arbzgHintsEnabled'] as bool? ?? false,
       lateEntryHintDays: (json['lateEntryHintDays'] as num?)?.toInt(),
       myBackfillGrants: [
         for (final raw in (json['myBackfillGrants'] as List<dynamic>?) ?? [])
           ?TimeOpenedDays.fromJson(raw as Map<String, dynamic>),
       ],
+      targetRemindersEnabled: reminders?['enabled'] as bool? ?? false,
+      suggestedDailyTargetMinutes:
+          (reminders?['suggestedDailyTargetMinutes'] as num?)?.toInt(),
+      suggestedWeeklyTargetMinutes:
+          (reminders?['suggestedWeeklyTargetMinutes'] as num?)?.toInt(),
+      alertsEnabled: json['alertsEnabled'] as bool? ?? false,
     );
   }
 
@@ -337,6 +363,10 @@ class TimePolicySnapshot extends Equatable {
     arbzgHintsEnabled,
     lateEntryHintDays,
     myBackfillGrants,
+    targetRemindersEnabled,
+    suggestedDailyTargetMinutes,
+    suggestedWeeklyTargetMinutes,
+    alertsEnabled,
   ];
 }
 

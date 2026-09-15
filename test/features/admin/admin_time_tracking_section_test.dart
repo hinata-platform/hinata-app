@@ -346,6 +346,9 @@ void main() {
         'admin.timeTracking.arbzgHintsTitle',
         'admin.timeTracking.descriptionPurgeLabel',
         'admin.timeTracking.entryPurgeLabel',
+        // Stage 11 (HIN-92): the reminder and alert jobs read these two.
+        'admin.timeTracking.alertsTitle',
+        'admin.timeTracking.targetRemindersTitle',
       ]) {
         expect(
           find.descendant(
@@ -357,10 +360,8 @@ void main() {
         );
       }
       for (final title in const [
-        // The reports, alerts and billing of the later stages.
+        // The reports and billing of the later stages.
         'admin.timeTracking.workloadReportsTitle',
-        'admin.timeTracking.alertsTitle',
-        'admin.timeTracking.targetRemindersTitle',
         'admin.timeTracking.billingEnabledTitle',
         'admin.timeTracking.icsImportTitle',
       ]) {

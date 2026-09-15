@@ -1955,7 +1955,10 @@
       "grantRevoke": "Cerrar ahora",
       "grantRevokeTitle": "¿Cerrar estos días?",
       "grantRevokeMessage": "{{name}} ya no podrá registrar {{period}}. Queda constancia de ello.",
-      "grantRevoked": "Los días vuelven a estar cerrados."
+      "grantRevoked": "Los días vuelven a estar cerrados.",
+      "suggestedDailyTargetLabel": "Objetivo diario sugerido",
+      "suggestedWeeklyTargetLabel": "Objetivo semanal sugerido",
+      "suggestedTargetHint": "Se ofrece a las personas en sus recordatorios. Cada persona decide si lo usa."
     },
     "passwordPolicy": "Política de contraseñas",
     "passwordPolicyHint": "Requisitos mínimos de las contraseñas de los usuarios.",
@@ -2742,7 +2745,13 @@
       "inherit": "Valor del servidor",
       "lockBefore": "Fecha de bloqueo propia",
       "lockBeforeHint": "Cierra las cuentas de este proyecto antes que las del resto de la instancia. Solo puede cerrar más, nunca menos.",
-      "instanceDefault": "Política de la instancia"
+      "instanceDefault": "Política de la instancia",
+      "budgetAlert": "Aviso de presupuesto",
+      "budgetAlertHint": "Los responsables reciben un aviso en este porcentaje y al 100 %, para el presupuesto y para la suma de las estimaciones.",
+      "estimateAlert": "Aviso de estimación de una incidencia",
+      "estimateAlertHint": "La persona asignada recibe un aviso cuando una incidencia alcanza este porcentaje de su estimación.",
+      "alertDefault": "Predeterminado ({{percent}} %)",
+      "percent": "{{percent}} %"
     }
   },
   "account": {
@@ -2972,7 +2981,18 @@
       "exportFailed": "No se ha podido guardar la exportación.",
       "correction": "Correcciones y días anteriores",
       "correctionHint": "Tus propios registros los editas tú. Si un día está bloqueado, abre el registro y pide una corrección. Si un día queda demasiado atrás, pide que te lo abran. Tu motivo llega a la persona que puede abrirlo, y su respuesta te llega como notificación.",
-      "requestDays": "Pedir días anteriores"
+      "requestDays": "Pedir días anteriores",
+      "reminders": "Recordatorios",
+      "remindersHint": "Solo tú recibes los recordatorios, en tus días laborables y según tu propio reloj. Nadie más sabe si llegan ni cuándo.",
+      "dailyTarget": "Objetivo diario",
+      "dailyTargetHint": "Te lo recuerda cuando has registrado menos en un día laborable.",
+      "weeklyTarget": "Objetivo semanal",
+      "weeklyTargetHint": "Te lo recuerda el día que elijas si aún te falta tiempo esa semana.",
+      "target": "Objetivo",
+      "remindAt": "Hora del recordatorio",
+      "remindOn": "Día del recordatorio",
+      "suggested": "Sugerido por tu organización: {{duration}}",
+      "useSuggestion": "Usar"
     }
   },
   "twofa": {

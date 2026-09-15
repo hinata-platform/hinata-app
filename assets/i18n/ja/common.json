@@ -1955,7 +1955,10 @@
       "grantRevoke": "今すぐ閉じる",
       "grantRevokeTitle": "これらの日を閉じますか？",
       "grantRevokeMessage": "{{name}} さんは {{period}} を記録できなくなります。この操作は記録に残ります。",
-      "grantRevoked": "日を再び閉じました。"
+      "grantRevoked": "日を再び閉じました。",
+      "suggestedDailyTargetLabel": "提案する 1 日の目標",
+      "suggestedWeeklyTargetLabel": "提案する週の目標",
+      "suggestedTargetHint": "各自のリマインダー設定で提案されます。使うかどうかは本人が決めます。"
     },
     "passwordPolicy": "パスワードポリシー",
     "passwordPolicyHint": "ユーザーのパスワードに求める最低条件。",
@@ -2610,7 +2613,13 @@
       "inherit": "サーバー既定",
       "lockBefore": "独自のロック日",
       "lockBeforeHint": "このプロジェクトの帳簿をインスタンス全体より早く締めます。締める方向にのみ働き、緩めることはできません。",
-      "instanceDefault": "インスタンスの方針"
+      "instanceDefault": "インスタンスの方針",
+      "budgetAlert": "予算の警告",
+      "budgetAlertHint": "この割合と 100 % に達したとき、予算と見積もりの合計についてリーダーに通知します。",
+      "estimateAlert": "課題の見積もりの警告",
+      "estimateAlertHint": "課題が見積もりのこの割合に達すると担当者に通知します。",
+      "alertDefault": "既定 ({{percent}} %)",
+      "percent": "{{percent}} %"
     }
   },
   "teams": {
@@ -2972,7 +2981,18 @@
       "exportFailed": "エクスポートを保存できませんでした。",
       "correction": "修正と過去の日",
       "correctionHint": "自分の記録は自分で編集します。日がロックされている場合は、記録を開いて修正を依頼してください。日がさかのぼりすぎている場合は、その日を開くよう依頼してください。理由はその日を開ける人に届き、回答は通知で届きます。",
-      "requestDays": "過去の日を開くよう依頼"
+      "requestDays": "過去の日を開くよう依頼",
+      "reminders": "リマインダー",
+      "remindersHint": "リマインダーが届くのはあなただけです。あなたの勤務日に、あなたの時刻で届きます。届いたかどうかを他の人が知ることはありません。",
+      "dailyTarget": "1 日の目標",
+      "dailyTargetHint": "勤務日に記録が少ないときにお知らせします。",
+      "weeklyTarget": "週の目標",
+      "weeklyTargetHint": "その週にまだ時間が足りないとき、選んだ曜日にお知らせします。",
+      "target": "目標",
+      "remindAt": "通知時刻",
+      "remindOn": "通知する曜日",
+      "suggested": "組織からの提案: {{duration}}",
+      "useSuggestion": "使用する"
     }
   },
   "twofa": {

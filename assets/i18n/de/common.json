@@ -1955,7 +1955,10 @@
       "grantRevoke": "Jetzt schließen",
       "grantRevokeTitle": "Diese Tage schließen?",
       "grantRevokeMessage": "{{name}} kann {{period}} dann nicht mehr erfassen. Das wird festgehalten.",
-      "grantRevoked": "Die Tage sind wieder geschlossen."
+      "grantRevoked": "Die Tage sind wieder geschlossen.",
+      "suggestedDailyTargetLabel": "Vorgeschlagenes Tagesziel",
+      "suggestedWeeklyTargetLabel": "Vorgeschlagenes Wochenziel",
+      "suggestedTargetHint": "Wird Personen in ihren Erinnerungen angeboten. Ob sie es übernehmen, entscheidet jede Person selbst."
     },
     "passwordPolicy": "Passwortrichtlinie",
     "passwordPolicyHint": "Mindestanforderungen für Benutzerpasswörter.",
@@ -2742,7 +2745,13 @@
       "inherit": "Server-Vorgabe",
       "lockBefore": "Eigenes Sperrdatum",
       "lockBeforeHint": "Schließt die Bücher dieses Projekts früher als die der Instanz. Es kann nur mehr schließen, nie weniger.",
-      "instanceDefault": "Instanz-Richtlinie"
+      "instanceDefault": "Instanz-Richtlinie",
+      "budgetAlert": "Warnung beim Budget",
+      "budgetAlertHint": "Leitungen erfahren es bei diesem Anteil und bei 100 %, für das Budget und für die Summe der Schätzungen.",
+      "estimateAlert": "Warnung bei der Schätzung eines Vorgangs",
+      "estimateAlertHint": "Die zugewiesene Person erfährt es, sobald ein Vorgang diesen Anteil seiner Schätzung erreicht.",
+      "alertDefault": "Standard ({{percent}} %)",
+      "percent": "{{percent}} %"
     }
   },
   "account": {
@@ -2972,7 +2981,18 @@
       "exportFailed": "Der Export konnte nicht gespeichert werden.",
       "correction": "Korrekturen und ältere Tage",
       "correctionHint": "Deine eigenen Einträge bearbeitest du selbst. Ist ein Tag gesperrt, öffne den Eintrag und bitte um eine Korrektur. Liegt ein Tag zu weit zurück, bitte darum, ihn zu öffnen. Deine Begründung geht an die Person, die ihn öffnen kann, und ihre Antwort bekommst du als Benachrichtigung.",
-      "requestDays": "Ältere Tage anfragen"
+      "requestDays": "Ältere Tage anfragen",
+      "reminders": "Erinnerungen",
+      "remindersHint": "Nur du wirst erinnert, an deinen Arbeitstagen und nach deiner eigenen Uhr. Niemand sonst erfährt, ob oder wann.",
+      "dailyTarget": "Tagesziel",
+      "dailyTargetHint": "Erinnert dich, wenn du an einem Arbeitstag weniger erfasst hast.",
+      "weeklyTarget": "Wochenziel",
+      "weeklyTargetHint": "Erinnert dich am gewählten Tag, wenn dir in der Woche noch Zeit fehlt.",
+      "target": "Ziel",
+      "remindAt": "Uhrzeit",
+      "remindOn": "Wochentag",
+      "suggested": "Vorschlag deiner Organisation: {{duration}}",
+      "useSuggestion": "Übernehmen"
     }
   },
   "twofa": {
