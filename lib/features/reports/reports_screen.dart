@@ -19,6 +19,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
 import '../../core/models/core_models.dart';
 import '../../core/models/work_models.dart';
+import '../../core/responsive/golden_columns.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -420,9 +421,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
     final grid = LayoutBuilder(
       builder: (context, c) {
-        final twoCol = c.maxWidth > 720;
+        // The charts are alike, so they take equal columns rather than a golden
+        // one and a narrow one — as many as the width holds.
+        final columns = goldenColumnCount(c.maxWidth);
         const gap = 18.0;
-        final width = twoCol ? (c.maxWidth - gap) / 2 : c.maxWidth;
+        final width = (c.maxWidth - gap * (columns - 1)) / columns;
         return Wrap(
           spacing: gap,
           runSpacing: gap,
