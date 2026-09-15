@@ -256,6 +256,11 @@ class _TimeScreenState extends State<TimeScreen> {
   /// The windows whose markings are loaded or on their way.
   final Set<DateTime> _markWindows = {};
 
+  /// What each window came back with, by its first day. [_marks] is folded
+  /// from these, so answers arriving in any order, from a reload or from the
+  /// next page, add up to the same markings and none overwrites another.
+  final Map<DateTime, DayMarks> _marksByWindow = {};
+
   /// Counts fresh loads of the markings, as [_hintGeneration] counts the hints'.
   int _markGeneration = 0;
 
@@ -269,40 +274,39 @@ class _TimeScreenState extends State<TimeScreen> {
 
   /// Reads the markings for the windows of the loaded entries not asked yet.
   ///
-  /// Like the hints: the windows are asked side by side, and what comes back
-  /// joins the markings as they stand when it arrives. A fresh load forgets
-  /// every window and replaces the markings once its own answers are in, so a
-  /// reload does not blank the chips while it asks.
+  /// The windows are asked side by side, and each answer replaces its own
+  /// window as it arrives. A fresh load asks every loaded window again and
+  /// drops the ones no longer loaded; what it replaces stays drawn until the
+  /// new answer is in, so a reload does not blank the chips while it asks.
   Future<void> _loadMarks({bool fresh = false}) async {
     final count = _entries.state.items.length;
     if (!fresh && count == _markedCount) return;
     _markedCount = count;
     final generation = fresh ? ++_markGeneration : _markGeneration;
-    if (fresh) _markWindows.clear();
-    final windows = <DateTime>{
+    final loaded = <DateTime>{
       for (final entry in _entries.state.items)
         if (entry.date != null) _windowOf(entry.date!, _markWindowDays),
-    }..removeAll(_markWindows);
-    if (windows.isEmpty) {
-      if (fresh && mounted) setState(() => _marks = DayMarks.none);
-      return;
+    };
+    final windows = fresh ? loaded : loaded.difference(_markWindows);
+    if (fresh) {
+      _markWindows
+        ..clear()
+        ..addAll(loaded);
+      _marksByWindow.removeWhere((start, _) => !loaded.contains(start));
+      if (mounted) setState(() => _marks = _foldMarks());
+    } else {
+      _markWindows.addAll(windows);
     }
-    _markWindows.addAll(windows);
+    if (windows.isEmpty) return;
     final repository = context.read<AvailabilityRepository>();
-    final answers = await Future.wait([
-      for (final start in windows) _marksOf(repository, start, generation),
+    await Future.wait([
+      for (final start in windows)
+        _loadMarkWindow(repository, start, generation),
     ]);
-    if (!mounted || generation != _markGeneration) return;
-    setState(
-      () => _marks = answers.fold(
-        fresh ? DayMarks.none : _marks,
-        (marks, answer) => marks.merge(answer),
-      ),
-    );
   }
 
-  /// One window's markings, or none when it could not be read.
-  Future<DayMarks> _marksOf(
+  /// One window's markings, folded in when they arrive.
+  Future<void> _loadMarkWindow(
     AvailabilityRepository repository,
     DateTime start,
     int generation,
@@ -313,15 +317,23 @@ class _TimeScreenState extends State<TimeScreen> {
         DateTime(start.year, start.month, start.day),
         DateTime(end.year, end.month, end.day),
       );
-      return capacity.marks;
+      if (!mounted || generation != _markGeneration) return;
+      setState(() {
+        _marksByWindow[start] = capacity.marks;
+        _marks = _foldMarks();
+      });
     } on ApiFailure {
       // A marking is a courtesy. The window is free to be asked again once the
       // list grows or reloads, and not sooner: a server that refuses would
       // otherwise be asked on every scroll near the end of the list.
       if (generation == _markGeneration) _markWindows.remove(start);
-      return DayMarks.none;
     }
   }
+
+  DayMarks _foldMarks() => _marksByWindow.values.fold(
+    DayMarks.none,
+    (marks, window) => marks.merge(window),
+  );
 
   /// Labels for the project ids on screen. A failure keeps whatever labels are
   /// already held rather than blanking the chips: a name that could not be

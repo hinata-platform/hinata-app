@@ -7,6 +7,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/models/availability_models.dart';
 import '../../../core/repositories/availability_repository.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/field_button.dart';
 import '../../../core/widgets/hive_widgets.dart' show HiveSwitch;
 import '../../account/account_widgets.dart';
 import '../../sprint/modals/glass_modal.dart';
@@ -134,12 +135,11 @@ class _HolidayFormState extends State<_HolidayForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            OutlinedButton.icon(
-              onPressed: _pickDate,
-              icon: const Icon(LucideIcons.calendarDays, size: 16),
-              label: Text(
-                MaterialLocalizations.of(context).formatFullDate(_date),
-              ),
+            FieldButton(
+              icon: LucideIcons.calendarDays,
+              label: context.t('availability.admin.date'),
+              value: MaterialLocalizations.of(context).formatFullDate(_date),
+              onTap: _pickDate,
             ),
             const SizedBox(height: 12),
             TextField(

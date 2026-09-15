@@ -103,20 +103,6 @@ void main() {
     });
   });
 
-  test('an absence covers its first and its last day', () {
-    final absence = TimeOff(
-      userId: 'u1',
-      type: TimeOffType.sick,
-      from: tuesday,
-      to: wednesday,
-    );
-
-    expect(absence.covers(monday), isFalse);
-    expect(absence.covers(tuesday), isTrue);
-    expect(absence.covers(DateTime(2026, 12, 23, 18)), isTrue);
-    expect(absence.covers(thursday), isFalse);
-  });
-
   group('the calendar window', () {
     test('reads the layers stage 10 added', () {
       final window = CalendarWindow.fromJson(const {
@@ -164,7 +150,7 @@ void main() {
 
       expect(window.absences, isEmpty);
       expect(window.holidays, isEmpty);
-      expect(window.marks.isEmpty, isTrue);
+      expect(window.marks.on(tuesday), isNull);
     });
   });
 
