@@ -148,12 +148,6 @@ class TimeOff extends Equatable {
   final bool halfDay;
   final String? note;
 
-  /// Whether [day] is one of its days.
-  bool covers(DateTime day) {
-    final date = DateTime(day.year, day.month, day.day);
-    return !date.isBefore(from) && !date.isAfter(to);
-  }
-
   static TimeOff? fromJson(Map<String, dynamic> json) {
     final type = TimeOffType.fromWire(json['type']);
     final from = parseDate(json['from']);
@@ -399,9 +393,6 @@ class DayMarks {
   final Map<int, HolidayMark> _holidays;
   final Map<int, TimeOff> _absences;
   final Map<int, int> _scheduled;
-
-  bool get isEmpty =>
-      _holidays.isEmpty && _absences.isEmpty && _scheduled.isEmpty;
 
   /// The marking of [day], or null for an ordinary working day or a day this
   /// window says nothing about.
