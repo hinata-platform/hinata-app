@@ -20,6 +20,7 @@ import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/core/widgets/hive_empty_state.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
+import 'package:hinata/features/time/day_marks.dart';
 import 'package:hinata/features/time/time_screen.dart';
 import 'package:hinata/features/time/timer_bar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -89,6 +90,9 @@ void main() {
     // Likewise, for a test about the rules changing under a session that had
     // already read them.
     FakeTimePolicyCubit? policyCubit,
+    // Holidays, absences and days without hours; none unless a test is about
+    // them.
+    _FakeMarks? marks,
   }) {
     final router = GoRouter(
       routes: [
@@ -107,7 +111,7 @@ void main() {
                     value: _FakeIssueRepository(),
                   ),
                   RepositoryProvider<AvailabilityRepository>.value(
-                    value: _NoMarks(),
+                    value: marks ?? _FakeMarks(),
                   ),
                 ],
                 child: MultiBlocProvider(
@@ -304,6 +308,23 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('time.placement.none'), findsOneWidget);
+    });
+
+    testWidgets('a holiday with entries on it is marked beside the day', (
+      tester,
+    ) async {
+      final day = DateTime(today.year, today.month, today.day);
+      await tester.pumpWidget(
+        host(
+          time: _FakeTimeRepository([entry(id: 'a', description: 'on call')]),
+          marks: _FakeMarks(
+            holidayMarks: [HolidayMark(date: day, name: 'Feiertag')],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DayMarkChip), findsOneWidget);
     });
 
     testWidgets('a frozen entry is marked, and its menu offers no edit', (
@@ -1044,12 +1065,22 @@ class _FakeTimerCubit extends Cubit<TimerState> implements TimerCubit {
       throw UnimplementedError('${invocation.memberName} is not faked');
 }
 
-/// A person with no holidays, no absences and no hours of their own: the list
-/// carries no markings (HIN-91).
-class _NoMarks implements AvailabilityRepository {
+/// The markings behind the list (HIN-91): none unless a test names holidays,
+/// and of those only the ones inside the window asked for.
+class _FakeMarks implements AvailabilityRepository {
+  _FakeMarks({this.holidayMarks = const []});
+
+  final List<HolidayMark> holidayMarks;
+
   @override
-  Future<Capacity> capacity(DateTime from, DateTime to) async =>
-      Capacity(from: from, to: to);
+  Future<Capacity> capacity(DateTime from, DateTime to) async => Capacity(
+    from: from,
+    to: to,
+    holidays: [
+      for (final holiday in holidayMarks)
+        if (!holiday.date.isBefore(from) && !holiday.date.isAfter(to)) holiday,
+    ],
+  );
 
   @override
   dynamic noSuchMethod(Invocation invocation) =>

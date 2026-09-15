@@ -71,6 +71,36 @@ void main() {
       expect(both.on(DateTime(2027, 1, 1)), const DayMark.holiday('Neujahr'));
       expect(both.on(monday), const DayMark.nonRegular());
     });
+
+    test('overlapping windows keep one answer a day, the later window\'s', () {
+      final earlier = DayMarks(
+        absences: [
+          TimeOff(
+            userId: 'u1',
+            type: TimeOffType.vacation,
+            from: monday,
+            to: wednesday,
+          ),
+        ],
+      );
+      final later = DayMarks(
+        absences: [
+          TimeOff(
+            userId: 'u1',
+            type: TimeOffType.sick,
+            from: wednesday,
+            to: thursday,
+          ),
+        ],
+      );
+
+      // The same window twice, as a list that pages back over it would.
+      final both = earlier.merge(later).merge(later);
+
+      expect(both.on(monday), const DayMark.absence(TimeOffType.vacation));
+      expect(both.on(wednesday), const DayMark.absence(TimeOffType.sick));
+      expect(both.on(thursday), const DayMark.absence(TimeOffType.sick));
+    });
   });
 
   test('an absence covers its first and its last day', () {

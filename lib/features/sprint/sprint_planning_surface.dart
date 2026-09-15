@@ -11,8 +11,8 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_bulk_bar.dart';
 import '../../core/widgets/hive_widgets.dart';
+import '../../core/widgets/read_on_trigger.dart' show ReadOnTrigger;
 import '../search/search_tokens.dart';
-import '../board/board_card_list.dart' show BoardReadOn;
 import '../board/issue_quick_create.dart';
 import 'planning/sprint_planning_cubit.dart';
 import 'sprint_format.dart';
@@ -104,7 +104,9 @@ class SprintPlanningSurface extends StatelessWidget {
         CustomScrollView(
           // Rows are built this far ahead of the screen, so a sprint reads on
           // before its last row comes into view.
-          scrollCacheExtent: const ScrollCacheExtent.pixels(BoardReadOn.reach),
+          scrollCacheExtent: const ScrollCacheExtent.pixels(
+            ReadOnTrigger.reach,
+          ),
           slivers: [
             SliverPadding(
               padding: EdgeInsets.fromLTRB(
@@ -345,7 +347,7 @@ class _SprintGroupState extends State<_SprintGroup> {
                     return _part(
                       Padding(
                         padding: const EdgeInsets.fromLTRB(10, 0, 10, 7),
-                        child: BoardReadOn(
+                        child: ReadOnTrigger(
                           count: container.items.length,
                           loading: container.loadingMore,
                           onReadOn: readOn!,

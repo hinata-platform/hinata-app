@@ -165,13 +165,14 @@ class _TimeScreenState extends State<TimeScreen> {
   /// A window of this many days is what `GET /time/hints` answers for.
   static const _hintWindowDays = 31;
 
-  /// The fixed window a day falls into, counted from one epoch so the same day
-  /// always lands in the same window and a window is fetched once.
-  static DateTime _hintWindowOf(DateTime day) {
+  /// The fixed window of [length] days a day falls into, counted from one epoch
+  /// so the same day always lands in the same window and a window is fetched
+  /// once. The hints and the markings each keep windows of their own length.
+  static DateTime _windowOf(DateTime day, int length) {
     final epoch = DateTime.utc(2000);
     final offset = DateTime.utc(day.year, day.month, day.day).difference(epoch);
-    final index = (offset.inDays / _hintWindowDays).floor();
-    return epoch.add(Duration(days: index * _hintWindowDays));
+    final index = (offset.inDays / length).floor();
+    return epoch.add(Duration(days: index * length));
   }
 
   /// Fetches the hints for the windows of the loaded entries not asked yet.
@@ -189,7 +190,7 @@ class _TimeScreenState extends State<TimeScreen> {
     final generation = fresh ? ++_hintGeneration : _hintGeneration;
     final windows = <DateTime>{
       for (final entry in _entries.state.items)
-        if (entry.date != null) _hintWindowOf(entry.date!),
+        if (entry.date != null) _windowOf(entry.date!, _hintWindowDays),
     }..removeAll(_hintWindows);
     if (windows.isEmpty) {
       if (fresh && mounted) {
@@ -252,34 +253,73 @@ class _TimeScreenState extends State<TimeScreen> {
   /// entry (R9).
   DayMarks _marks = DayMarks.none;
 
-  /// How many entries the markings were last read for; only a list that grew
-  /// has days nobody asked about.
+  /// The windows whose markings are loaded or on their way.
+  final Set<DateTime> _markWindows = {};
+
+  /// Counts fresh loads of the markings, as [_hintGeneration] counts the hints'.
+  int _markGeneration = 0;
+
+  /// How many entries the markings were last worked out for; only a list that
+  /// grew has windows nobody asked about.
   int _markedCount = -1;
 
-  /// Reads the markings for the span the loaded entries cover, the latest year
-  /// of it at most, which is the widest window the server answers.
+  /// The markings are read a window of this many days at a time: a quarter,
+  /// well inside the year `GET /availability/capacity` answers at most.
+  static const _markWindowDays = 92;
+
+  /// Reads the markings for the windows of the loaded entries not asked yet.
+  ///
+  /// Like the hints: the windows are asked side by side, and what comes back
+  /// joins the markings as they stand when it arrives. A fresh load forgets
+  /// every window and replaces the markings once its own answers are in, so a
+  /// reload does not blank the chips while it asks.
   Future<void> _loadMarks({bool fresh = false}) async {
-    final days = [
+    final count = _entries.state.items.length;
+    if (!fresh && count == _markedCount) return;
+    _markedCount = count;
+    final generation = fresh ? ++_markGeneration : _markGeneration;
+    if (fresh) _markWindows.clear();
+    final windows = <DateTime>{
       for (final entry in _entries.state.items)
-        if (entry.date != null) entry.date!,
-    ];
-    if (!fresh && days.length == _markedCount) return;
-    _markedCount = days.length;
-    if (days.isEmpty) return;
-    final last = days.reduce((a, b) => a.isAfter(b) ? a : b);
-    var first = days.reduce((a, b) => a.isBefore(b) ? a : b);
-    final yearBack = DateTime(last.year - 1, last.month, last.day + 1);
-    if (first.isBefore(yearBack)) first = yearBack;
+        if (entry.date != null) _windowOf(entry.date!, _markWindowDays),
+    }..removeAll(_markWindows);
+    if (windows.isEmpty) {
+      if (fresh && mounted) setState(() => _marks = DayMarks.none);
+      return;
+    }
+    _markWindows.addAll(windows);
+    final repository = context.read<AvailabilityRepository>();
+    final answers = await Future.wait([
+      for (final start in windows) _marksOf(repository, start, generation),
+    ]);
+    if (!mounted || generation != _markGeneration) return;
+    setState(
+      () => _marks = answers.fold(
+        fresh ? DayMarks.none : _marks,
+        (marks, answer) => marks.merge(answer),
+      ),
+    );
+  }
+
+  /// One window's markings, or none when it could not be read.
+  Future<DayMarks> _marksOf(
+    AvailabilityRepository repository,
+    DateTime start,
+    int generation,
+  ) async {
+    final end = start.add(const Duration(days: _markWindowDays - 1));
     try {
-      final capacity = await context.read<AvailabilityRepository>().capacity(
-        DateTime(first.year, first.month, first.day),
-        DateTime(last.year, last.month, last.day),
+      final capacity = await repository.capacity(
+        DateTime(start.year, start.month, start.day),
+        DateTime(end.year, end.month, end.day),
       );
-      if (mounted) setState(() => _marks = capacity.marks);
+      return capacity.marks;
     } on ApiFailure {
-      // A marking is a courtesy; the list stands without it and asks again on
-      // the next reload.
-      _markedCount = -1;
+      // A marking is a courtesy. The window is free to be asked again once the
+      // list grows or reloads, and not sooner: a server that refuses would
+      // otherwise be asked on every scroll near the end of the list.
+      if (generation == _markGeneration) _markWindows.remove(start);
+      return DayMarks.none;
     }
   }
 

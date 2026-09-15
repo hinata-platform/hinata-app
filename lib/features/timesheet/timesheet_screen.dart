@@ -200,6 +200,16 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   bool _leadsSeeMembers(TimePolicySnapshot policy) =>
       widget.moduleView && policy.leadsSeeMemberEntries;
 
+  /// Whether every row on screen is sure to be the reader's own.
+  ///
+  /// Their own name picked, or no name picked by somebody who is not an
+  /// administrator, whom the server answers with their own rows. Not an
+  /// administrator without a pick, who reads everybody's, and not a project
+  /// picked while [_leadsSeeMembers] may let its members' rows in.
+  bool get _showsOwnRows => _userFilter == null
+      ? !_isAdmin && !(_projectFilter != null && _leadsSeeMembers(_policy))
+      : _userFilter == _editableUserId;
+
   /// The period the grid is showing, clamped to what the grid route accepts.
   ///
   /// The server caps a timesheet window at a month, and for good reason: every
@@ -1048,15 +1058,10 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Above the grid whether or not there are rows: "this period is open
-          // and holds nothing" is an answer, and a person looking for the submit
-          // action must not have to book an hour to find it.
           // The reader's own capacity beside what they booked (HIN-91): only
           // where the rows are theirs, because against somebody else's rows or
           // everybody's the two figures would describe two different people.
-          if (widget.moduleView &&
-              (_userFilter == _editableUserId ||
-                  (_userFilter == null && !_isAdmin))) ...[
+          if (widget.moduleView && _showsOwnRows) ...[
             TimesheetCapacityLine(
               from: _from,
               to: _to,
@@ -1066,6 +1071,9 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
             ),
             const SizedBox(height: 10),
           ],
+          // Above the grid whether or not there are rows: "this period is open
+          // and holds nothing" is an answer, and a person looking for the submit
+          // action must not have to book an hour to find it.
           if (_period != null) ...[
             _periodBand(_period!),
             const SizedBox(height: 10),
@@ -1114,7 +1122,12 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   Widget _periodBand(ApprovalPeriod period) {
     final submittable = period.submittable;
     final withdrawable = period.withdrawable;
-    final mine = _userFilter == null || _userFilter == _editableUserId;
+    // Not [_showsOwnRows]. The period is always the reader's own, whatever the
+    // grid shows, and its actions are held back only while somebody else is
+    // picked, when the page reads as that person's. An administrator looking
+    // at everybody's rows still hands in their own period from here.
+    final nobodyElsePicked =
+        _userFilter == null || _userFilter == _editableUserId;
     return SoftCard(
       padding: const EdgeInsets.all(14),
       child: Column(
@@ -1203,7 +1216,8 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
           // Only about one's own time. An administrator reading somebody else's
           // rows is reading a report; handing in on their behalf would be signing
           // a statement that is theirs to make.
-          if (mine && (submittable.isNotEmpty || withdrawable.isNotEmpty)) ...[
+          if (nobodyElsePicked &&
+              (submittable.isNotEmpty || withdrawable.isNotEmpty)) ...[
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,

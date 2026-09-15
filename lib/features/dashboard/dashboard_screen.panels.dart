@@ -175,9 +175,9 @@ class _CompletionCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          Row(
-            children: [
-              SizedBox(
+          LayoutBuilder(
+            builder: (context, box) {
+              final donut = SizedBox(
                 width: 132,
                 height: 132,
                 child: Stack(
@@ -220,57 +220,78 @@ class _CompletionCard extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 22),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (final (label, value, color) in segs)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 7),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 9,
-                              height: 9,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                              ),
+              );
+              final legend = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final (label, value, color) in segs)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 7),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 9,
+                            height: 9,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                label,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  color: AppColors.inkSoft,
-                                ),
-                              ),
-                            ),
-                            Text(
-                              '${total == 0 ? 0 : (value / total * 100).round()}%',
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              label,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.ink,
+                                fontSize: 12.5,
+                                color: AppColors.inkSoft,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          Text(
+                            '${total == 0 ? 0 : (value / total * 100).round()}%',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+                ],
+              );
+              // Beside the donut while the legend has room for a label and its
+              // share; under it once it would have to squeeze them into less.
+              if (box.maxWidth < _kLegendBesideDonut) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(child: donut),
+                    const SizedBox(height: 14),
+                    legend,
                   ],
-                ),
-              ),
-            ],
+                );
+              }
+              return Row(
+                children: [
+                  donut,
+                  const SizedBox(width: 22),
+                  Expanded(child: legend),
+                ],
+              );
+            },
           ),
         ],
       ),
     );
   }
 }
+
+/// The narrowest card the completion legend still fits beside the donut in:
+/// the donut, its gap and a legend line with a label and a share.
+const double _kLegendBesideDonut = 300;
 
 class _DonutPainter extends CustomPainter {
   _DonutPainter(this.segments, this.t);

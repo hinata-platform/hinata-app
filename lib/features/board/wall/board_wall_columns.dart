@@ -8,7 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
-import '../board_card_list.dart';
+import '../../../core/widgets/read_on_trigger.dart';
 import '../board_drag.dart';
 import '../board_feedback.dart';
 import 'board_wall_cubit.dart';
@@ -178,8 +178,8 @@ class BoardLaneFooter extends StatelessWidget {
             );
           }
           return slice.loadingMore
-              ? const BoardLoadingMore()
-              : const SizedBox(height: BoardLoadingMore.height);
+              ? const LoadingMoreIndicator()
+              : const SizedBox(height: LoadingMoreIndicator.height);
         },
       );
 }
