@@ -17,7 +17,6 @@ import '../../core/events/board_events.dart';
 import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/board_page_models.dart';
-import '../../core/models/core_models.dart';
 import '../../core/models/team_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
@@ -26,7 +25,6 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/project_palette.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
-import '../../core/widgets/user_pronouns.dart';
 import '../../core/widgets/subtask_widgets.dart';
 import '../issues/issue_detail_sheet.dart';
 import '../shell/page_chrome.dart';
@@ -345,14 +343,6 @@ class KanbanBoardScreen extends StatefulWidget {
 /// Which view the kanban screen is showing.
 enum BoardViewMode { board, timeline }
 
-/// The people a board can name, gathered from the cards on the wall and the
-/// filter's facets, keyed by user id.
-typedef _People = ({
-  Map<String, String> names,
-  Map<String, String> avatars,
-  Map<String, String> pronouns,
-});
-
 class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   /// The wall, read page by page and narrowed on the server.
   late final BoardWallCubit _wall = BoardWallCubit(
@@ -446,7 +436,10 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     if (!listEquals(board.projectIds, _projectIdsLoaded)) {
       unawaited(_loadProjects(board.projectIds));
     }
-    if (_facetsStale && !wall.refreshing) unawaited(_loadFacets(wall));
+    // A Scrum board gathers its facets over the whole board itself.
+    if (!board.isScrum && _facetsStale && !wall.refreshing) {
+      unawaited(_loadFacets(wall));
+    }
     if (_mode == BoardViewMode.timeline && !wall.refreshing) {
       _showTimeline(wall);
     }
@@ -490,17 +483,8 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
 
   // ---- derived views ----
 
-  _People _people(BoardWallState wall) {
-    final people = <DirectoryUser>[...wall.users.values, ..._facets.users];
-    return (
-      names: {for (final u in people) u.id: u.displayName},
-      avatars: {
-        for (final u in people)
-          if (u.avatarUrl != null && u.avatarUrl!.isNotEmpty) u.id: u.avatarUrl!,
-      },
-      pronouns: pronounsById(people),
-    );
-  }
+  BoardPeople _people(BoardWallState wall) =>
+      boardPeople([...wall.users.values, ..._facets.users]);
 
   Map<String, String> get _projectNames => {
     for (final p in _projectsById.values) p.id: p.name,
@@ -514,15 +498,8 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   };
 
   /// Epics across the board's projects — drive grouping headers + the filter.
-  List<Issue> _epics(BoardWallState wall) {
-    final byId = <String, Issue>{
-      for (final epic in _facets.epics) epic.id: epic,
-      for (final ref in wall.refs.values)
-        if (ref.isEpic) ref.id: ref,
-    };
-    return byId.values.toList()
-      ..sort((a, b) => a.readableId.compareTo(b.readableId));
-  }
+  List<Issue> _epics(BoardWallState wall) =>
+      boardEpics(_facets.epics, wall.refs.values);
 
   Map<String, String> _epicNames(BoardWallState wall) => {
     for (final e in _epics(wall)) e.id: '${e.readableId}  ${e.title}',
@@ -545,8 +522,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       : BoardCardShape.wall;
 
   /// Hands the filter, the search and the grouping to the server.
-  void _narrow() =>
-      _wall.narrow(_filter.toQuery(text: _query, shape: _shape));
+  void _narrow() => _wall.narrow(_filter.toQuery(text: _query, shape: _shape));
 
   /// No `onChanged` here on purpose: the detail sheet broadcasts every change on
   /// [IssueEvents], which this board already listens to. Passing both would run
@@ -596,7 +572,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   /// and workflow state, plus whatever the surrounding swimlane implies.
   IssueQuickCreateSeed _quickCreateSeed(
     BoardView view,
-    _People people,
+    BoardPeople people,
     BoardColumnView column, {
     String? parentId,
     String? forcedType,
@@ -641,7 +617,11 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     };
   }
 
-  Future<void> _openFilter(BoardWallState wall, _People people, Rect? anchor) async {
+  Future<void> _openFilter(
+    BoardWallState wall,
+    BoardPeople people,
+    Rect? anchor,
+  ) async {
     if (_facetsStale) await _loadFacets(wall);
     if (!mounted) return;
     await openBoardFilter(
@@ -804,22 +784,19 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       }
       return const Center(child: HiveLoader());
     }
-    final people = _people(wall);
     // Scrum boards swap the Kanban/Timeline surfaces for the sprint planning ·
-    // active · insights surfaces. The sprint view owns its own data (sprints,
-    // story points, report) and its own head, and reuses the loaded name maps.
+    // active · insights surfaces. The sprint view reads its own planning and
+    // report and owns its head; its active sprint is this screen's wall.
     if (view.board.isScrum) {
       return ScrumBoardView(
         view: view,
         fullWidth: _needsFullWidth(view),
-        names: people.names,
-        avatars: people.avatars,
-        pronouns: people.pronouns,
         projectNames: _projectNames,
         projectsById: _projectsById,
         onOpenIssue: _openIssue,
       );
     }
+    final people = _people(wall);
     final compact = context.isCompact;
     final sprint = _activeSprint(wall);
     // Back navigation is handled by the shell app bar (via PageChrome). On a
@@ -917,7 +894,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   }
 
   /// The phone's one docked row: the views, the search and the board's tools.
-  Widget _dock(BoardWallState wall, _People people) => BoardHeaderDock(
+  Widget _dock(BoardWallState wall, BoardPeople people) => BoardHeaderDock(
     switcher: _viewSwitch(compact: true),
     searching: _searching,
     searchController: _searchController,
@@ -934,7 +911,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   /// The same tools on a wide window: the search as a field on the leading
   /// edge, the people's faces, grouping and the filter against the trailing
   /// one, wrapping to the room the window leaves them.
-  Widget _wideControls(BoardWallState wall, _People people) => WideToolbar(
+  Widget _wideControls(BoardWallState wall, BoardPeople people) => WideToolbar(
     leading: [
       BoardSearchField(controller: _searchController, onChanged: _onSearch),
     ],
@@ -964,7 +941,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
 
   Widget _filterPill(
     BoardWallState wall,
-    _People people, {
+    BoardPeople people, {
     bool showLabel = false,
   }) => BoardFilterPill(
     count: _filter.activeCount,
@@ -972,7 +949,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     onTap: (anchor) => unawaited(_openFilter(wall, people, anchor)),
   );
 
-  Widget _peopleStrip(_People people) => BoardPeopleStrip(
+  Widget _peopleStrip(BoardPeople people) => BoardPeopleStrip(
     userIds: _facets.assigneeIds,
     names: people.names,
     avatars: people.avatars,
@@ -1012,7 +989,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
 
   // ---- body ----
 
-  Widget _body(BoardWallState wall, _People people) => switch (_mode) {
+  Widget _body(BoardWallState wall, BoardPeople people) => switch (_mode) {
     BoardViewMode.board => _kanban(wall, people),
     BoardViewMode.timeline => _timeline(wall),
   };
@@ -1079,7 +1056,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     );
   }
 
-  Widget _kanban(BoardWallState wall, _People people) {
+  Widget _kanban(BoardWallState wall, BoardPeople people) {
     final view = wall.view!;
     final columns = wall.columns;
     if (columns.isEmpty) {
@@ -1156,7 +1133,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   /// active grouping over the cards loaded so far, each lane carrying the full
   /// column set and its own collapse toggle, and under them the way to every
   /// column's cards that are not loaded yet.
-  Widget _groupedBoard(BoardWallState wall, _People people) {
+  Widget _groupedBoard(BoardWallState wall, BoardPeople people) {
     final view = wall.view!;
     final lanes = computeBoardLanes(
       context: context,

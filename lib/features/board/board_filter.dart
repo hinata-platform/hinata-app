@@ -3,20 +3,6 @@ import 'package:flutter/foundation.dart';
 import '../../core/models/board_page_models.dart';
 import '../../core/models/work_models.dart';
 
-/// Whether [issue] answers a free-text search: its key, its title or one of its
-/// labels holds [query], ignoring case. A blank query holds every issue.
-///
-/// One rule for both boards and every view on them, the same one the backlog
-/// search on the server applies, so the same words never find a card in one
-/// place and miss it in the next.
-bool issueMatchesQuery(Issue issue, String query) {
-  final q = query.trim().toLowerCase();
-  if (q.isEmpty) return true;
-  return issue.readableId.toLowerCase().contains(q) ||
-      issue.title.toLowerCase().contains(q) ||
-      issue.tags.any((t) => t.toLowerCase().contains(q));
-}
-
 /// Multi-criteria board filter. Empty sets mean "no restriction" for that
 /// facet. State / type / priority are stored as UPPER-CASE backend codes;
 /// [assignees]/[authors] hold user ids, [sprints] hold sprint ids (or
@@ -44,9 +30,8 @@ class BoardFilter {
   final Set<String> authors;
   final Set<String> labels;
 
-  /// Epic ids. An issue passes when its resolved epic (the epic it ultimately
-  /// rolls up to) is in this set — see [matchesEpic], driven by the board's
-  /// epic-resolution map since the issue alone can't resolve a grandparent.
+  /// Epic ids. A card passes when the epic it rolls up to, directly or through
+  /// its parent, is in this set.
   final Set<String> epics;
 
   /// Sentinel value used in [sprints] to match issues with no sprint.
@@ -82,44 +67,6 @@ class BoardFilter {
     BoardFilterFacet.label => labels,
     BoardFilterFacet.epic => epics,
   };
-
-  /// Whether [issue] passes every active facet (AND across facets, OR within).
-  bool matches(Issue issue) {
-    if (states.isNotEmpty && !states.contains(issue.state.toUpperCase())) {
-      return false;
-    }
-    if (types.isNotEmpty && !types.contains(issue.type.toUpperCase())) {
-      return false;
-    }
-    if (priorities.isNotEmpty &&
-        !priorities.contains(issue.priority.toUpperCase())) {
-      return false;
-    }
-    if (assignees.isNotEmpty &&
-        (issue.assigneeId == null || !assignees.contains(issue.assigneeId))) {
-      return false;
-    }
-    if (sprints.isNotEmpty) {
-      final inSprint =
-          issue.sprintId != null && sprints.contains(issue.sprintId);
-      final inNone = issue.sprintId == null && sprints.contains(noSprint);
-      if (!inSprint && !inNone) return false;
-    }
-    if (authors.isNotEmpty &&
-        (issue.reporterId == null || !authors.contains(issue.reporterId))) {
-      return false;
-    }
-    if (labels.isNotEmpty && !issue.tags.any(labels.contains)) {
-      return false;
-    }
-    return true;
-  }
-
-  /// Epic-facet check, kept separate from [matches] because resolving an issue's
-  /// epic needs the board's parent graph (a sub-task's epic is its grandparent).
-  /// [epicId] is the issue's resolved epic id (null = belongs to no epic).
-  bool matchesEpic(String? epicId) =>
-      epics.isEmpty || (epicId != null && epics.contains(epicId));
 
   /// This filter as the server narrows by it, with the search [text] and the
   /// [shape] of the cards the board wants.
@@ -193,10 +140,9 @@ enum BoardFilterFacet {
   epic,
 }
 
-/// The distinct facet values available to filter on, derived from the issues
-/// currently loaded for a board (plus the board's sprints and project labels)
-/// so custom workflow states / labels resolve without hardcoding. Preserves
-/// first-seen order.
+/// The distinct facet values available to filter on, gathered by the server
+/// over every card of a board (plus the board's sprints and project labels),
+/// so custom workflow states and labels resolve without hardcoding.
 class BoardFilterOptions {
   BoardFilterOptions({
     required this.states,
@@ -270,45 +216,6 @@ class BoardFilterOptions {
           ...projectLabels.where((l) => l.isNotEmpty),
         },
       ],
-      epics: epicIds.toList(),
-    );
-  }
-
-  factory BoardFilterOptions.from({
-    required Iterable<Issue> issues,
-    required List<Sprint> boardSprints,
-    required Iterable<String> projectLabels,
-    Iterable<String> epicIds = const [],
-  }) {
-    final states = <String>{};
-    final types = <String>{};
-    final priorities = <String>{};
-    final assignees = <String>{};
-    final authors = <String>{};
-    final labels = <String>{};
-    for (final issue in issues) {
-      if (issue.state.isNotEmpty) states.add(issue.state.toUpperCase());
-      if (issue.type.isNotEmpty) types.add(issue.type.toUpperCase());
-      if (issue.priority.isNotEmpty) {
-        priorities.add(issue.priority.toUpperCase());
-      }
-      final a = issue.assigneeId;
-      if (a != null && a.isNotEmpty) assignees.add(a);
-      final r = issue.reporterId;
-      if (r != null && r.isNotEmpty) authors.add(r);
-      for (final t in issue.tags) {
-        if (t.isNotEmpty) labels.add(t);
-      }
-    }
-    labels.addAll(projectLabels.where((l) => l.isNotEmpty));
-    return BoardFilterOptions(
-      states: states.toList(),
-      types: types.toList(),
-      priorities: priorities.toList(),
-      assignees: assignees.toList(),
-      authors: authors.toList(),
-      sprints: [for (final s in boardSprints) s.id],
-      labels: labels.toList(),
       epics: epicIds.toList(),
     );
   }

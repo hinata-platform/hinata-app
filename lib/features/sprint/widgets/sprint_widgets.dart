@@ -3,6 +3,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show GlassProgressIndicator;
 
 import '../../../core/i18n/i18n.dart';
+import '../../../core/models/board_page_models.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -15,30 +16,50 @@ int sumPoints(Iterable<Issue> issues) =>
     issues.fold(0, (sum, i) => sum + pointsOf(i));
 
 /// Workflow bucket used for the point-bucket pills and capacity bar. Done is
-/// driven by the issue's resolved flag; the rest is split heuristically by
-/// state name so it works for any project workflow.
+/// driven by the resolved flag; the rest is split heuristically by state name
+/// so it works for any project workflow.
 enum WorkBucket { todo, progress, done }
 
-WorkBucket bucketOf(Issue issue) {
-  if (issue.resolved) return WorkBucket.done;
-  final s = issue.state.toLowerCase();
+/// Story points by bucket.
+typedef PointsByBucket = ({int todo, int progress, int done});
+
+WorkBucket bucketOf(Issue issue) =>
+    bucketOfState(issue.state, resolved: issue.resolved);
+
+WorkBucket bucketOfState(String state, {required bool resolved}) {
+  if (resolved) return WorkBucket.done;
+  final s = state.toLowerCase();
   if (s.contains('progress') || s.contains('review') || s.contains('doing')) {
     return WorkBucket.progress;
   }
   return WorkBucket.todo;
 }
 
-({int todo, int progress, int done}) bucketPoints(Iterable<Issue> issues) {
+PointsByBucket bucketPoints(Iterable<Issue> issues) => _addUp([
+  for (final issue in issues)
+    (bucket: bucketOf(issue), points: pointsOf(issue)),
+]);
+
+/// The same over a sprint's summary by state, which counts every card of the
+/// sprint rather than the ones loaded.
+PointsByBucket bucketSummary(Iterable<BoardStateSummary> summary) => _addUp([
+  for (final row in summary)
+    (
+      bucket: bucketOfState(row.state, resolved: row.resolved),
+      points: row.points,
+    ),
+]);
+
+PointsByBucket _addUp(Iterable<({WorkBucket bucket, int points})> parts) {
   var todo = 0, progress = 0, done = 0;
-  for (final i in issues) {
-    final p = pointsOf(i);
-    switch (bucketOf(i)) {
+  for (final part in parts) {
+    switch (part.bucket) {
       case WorkBucket.todo:
-        todo += p;
+        todo += part.points;
       case WorkBucket.progress:
-        progress += p;
+        progress += part.points;
       case WorkBucket.done:
-        done += p;
+        done += part.points;
     }
   }
   return (todo: todo, progress: progress, done: done);
@@ -46,13 +67,13 @@ WorkBucket bucketOf(Issue issue) {
 
 /// Three mono pills: Σ points in to-do / in-progress / done.
 class PointBuckets extends StatelessWidget {
-  const PointBuckets({super.key, required this.issues});
+  const PointBuckets({super.key, required this.points});
 
-  final List<Issue> issues;
+  final PointsByBucket points;
 
   @override
   Widget build(BuildContext context) {
-    final b = bucketPoints(issues);
+    final b = points;
     Widget pill(int v, Color c) => Container(
       constraints: const BoxConstraints(minWidth: 26),
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
@@ -94,18 +115,18 @@ class PointBuckets extends StatelessWidget {
 class CapacityBar extends StatelessWidget {
   const CapacityBar({
     super.key,
-    required this.issues,
+    required this.points,
     required this.capacity,
     this.width = 188,
   });
 
-  final List<Issue> issues;
+  final PointsByBucket points;
   final int? capacity;
   final double width;
 
   @override
   Widget build(BuildContext context) {
-    final b = bucketPoints(issues);
+    final b = points;
     final committed = b.todo + b.progress + b.done;
     final cap = capacity ?? 0;
     final over = cap > 0 && committed > cap;
