@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/blocs/time_policy_cubit.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/time_policy_models.dart';
 import '../../../core/repositories/time_repository.dart';
@@ -64,6 +65,8 @@ class _ProjectTimeSectionState extends State<ProjectTimeSection> {
   void initState() {
     super.initState();
     unawaited(_load());
+    // The thresholds are shown only while alerts exist on this instance.
+    unawaited(context.read<TimePolicyCubit>().ensureLoaded());
   }
 
   @override
@@ -228,6 +231,38 @@ class _ProjectTimeSectionState extends State<ProjectTimeSection> {
                     ),
                   ),
                 ),
+                if (context.select<TimePolicyCubit, bool>(
+                  (cubit) => cubit.state.alertsEnabled,
+                )) ...[
+                  const SizedBox(height: 10),
+                  _PercentChoice(
+                    label: context.t('projectSettings.time.budgetAlert'),
+                    helper: context.t('projectSettings.time.budgetAlertHint'),
+                    value: _draft.budgetAlertPercent,
+                    fallback: 80,
+                    options: const [50, 60, 70, 75, 80, 90],
+                    onChanged: (value) => setState(
+                      () => _draft = _draft.copyWith(
+                        budgetAlertPercent: value,
+                        clearBudgetAlert: value == null,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _PercentChoice(
+                    label: context.t('projectSettings.time.estimateAlert'),
+                    helper: context.t('projectSettings.time.estimateAlertHint'),
+                    value: _draft.estimateAlertPercent,
+                    fallback: 100,
+                    options: const [80, 90, 100, 110, 125, 150],
+                    onChanged: (value) => setState(
+                      () => _draft = _draft.copyWith(
+                        estimateAlertPercent: value,
+                        clearEstimateAlert: value == null,
+                      ),
+                    ),
+                  ),
+                ],
                 if (_error != null) ...[
                   const SizedBox(height: 12),
                   Text(
@@ -380,6 +415,72 @@ class _TriChoice extends StatelessWidget {
           _ => null,
         });
       },
+    );
+  }
+}
+
+/// A threshold in percent, or the default the server applies without one.
+class _PercentChoice extends StatelessWidget {
+  const _PercentChoice({
+    required this.label,
+    required this.helper,
+    required this.value,
+    required this.fallback,
+    required this.options,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String helper;
+  final int? value;
+
+  /// What the server applies while nothing is set.
+  final int fallback;
+  final List<int> options;
+  final ValueChanged<int?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    String percent(int value) => context.t(
+      'projectSettings.time.percent',
+      variables: {'percent': value},
+    );
+    final defaultLabel = context.t(
+      'projectSettings.time.alertDefault',
+      variables: {'percent': fallback},
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _ChoiceRow(
+          label: label,
+          value: value == null ? defaultLabel : percent(value!),
+          onTap: () async {
+            final picked = await showGlassOptions<int>(
+              context,
+              title: label,
+              options: [
+                (value: 0, child: Text(defaultLabel)),
+                for (final option in options)
+                  (value: option, child: Text(percent(option))),
+              ],
+            );
+            if (picked == null) return;
+            onChanged(picked == 0 ? null : picked);
+          },
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Text(
+            helper,
+            style: TextStyle(
+              fontSize: 11.5,
+              height: 1.4,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

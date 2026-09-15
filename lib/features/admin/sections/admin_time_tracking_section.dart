@@ -418,7 +418,6 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         effective: _effectiveValue<bool>('alertsEnabled'),
         onChanged: (v) => _set('alertsEnabled', v),
         monitoring: true,
-        pending: true,
       ),
       PolicySwitch(
         title: context.t('admin.timeTracking.targetRemindersTitle'),
@@ -427,7 +426,23 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         effective: _effectiveValue<bool>('targetRemindersEnabled'),
         onChanged: (v) => _set('targetRemindersEnabled', v),
         monitoring: true,
-        pending: true,
+      ),
+      // A suggestion people may take over in their own settings, never a
+      // target set for them.
+      PolicyDuration(
+        label: context.t('admin.timeTracking.suggestedDailyTargetLabel'),
+        helper: context.t('admin.timeTracking.suggestedTargetHint'),
+        value: _value<num>('suggestedDailyTargetMinutes')?.toInt(),
+        onChanged: (v) => _set('suggestedDailyTargetMinutes', v),
+        maxHours: 24,
+      ),
+      PolicyDuration(
+        label: context.t('admin.timeTracking.suggestedWeeklyTargetLabel'),
+        helper: context.t('admin.timeTracking.suggestedTargetHint'),
+        value: _value<num>('suggestedWeeklyTargetMinutes')?.toInt(),
+        onChanged: (v) => _set('suggestedWeeklyTargetMinutes', v),
+        maxHours: 168,
+        initialMinutes: 40 * 60,
       ),
       PolicySwitch(
         title: context.t('admin.timeTracking.arbzgHintsTitle'),
