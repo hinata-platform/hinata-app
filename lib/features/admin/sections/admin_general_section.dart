@@ -18,6 +18,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/glass_popup_menu.dart';
 import '../../sprint/modals/glass_modal.dart'
     show showGlassToast, showGlassErrorToast, GlassToastKind;
+import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
 
 /// General organization settings: name, logo, timezone, default language.
@@ -341,10 +342,9 @@ class _AdminGeneralSectionState extends State<AdminGeneralSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AdminSectionCard(
+    return AdminCards(
+      cards: {
+        'organisation': AdminSectionCard(
           icon: LucideIcons.building2,
           title: context.t('admin.general'),
           subtitle: context.t('admin.generalHint'),
@@ -358,8 +358,7 @@ class _AdminGeneralSectionState extends State<AdminGeneralSection> {
             _buildLogoControls(context),
           ],
         ),
-        const SizedBox(height: 16),
-        AdminSectionCard(
+        'localisation': AdminSectionCard(
           icon: LucideIcons.globe,
           title: context.t('admin.localization'),
           subtitle: context.t('admin.localizationHint'),
@@ -381,7 +380,7 @@ class _AdminGeneralSectionState extends State<AdminGeneralSection> {
             ),
           ],
         ),
-      ],
+      },
     );
   }
 }

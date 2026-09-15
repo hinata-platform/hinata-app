@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
+import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
 
 /// Security hardening settings: password policy, session lifetime, rate limiting.
@@ -24,11 +25,9 @@ class _AdminSecuritySectionState extends State<AdminSecuritySection> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ─── Password policy ─────────────────────────────────────
-        AdminSectionCard(
+    return AdminCards(
+      cards: {
+        'password': AdminSectionCard(
           icon: LucideIcons.keyRound,
           title: context.t('admin.passwordPolicy'),
           subtitle: context.t('admin.passwordPolicyHint'),
@@ -43,10 +42,7 @@ class _AdminSecuritySectionState extends State<AdminSecuritySection> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-
-        // ─── Brute-force protection ───────────────────────────────
-        AdminSectionCard(
+        'bruteForce': AdminSectionCard(
           icon: LucideIcons.shieldX,
           title: context.t('admin.bruteForce'),
           subtitle: context.t('admin.bruteForceHint'),
@@ -76,10 +72,7 @@ class _AdminSecuritySectionState extends State<AdminSecuritySection> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-
-        // ─── Session ─────────────────────────────────────────────
-        AdminSectionCard(
+        'session': AdminSectionCard(
           icon: LucideIcons.timer,
           title: context.t('admin.sessionPolicy'),
           subtitle: context.t('admin.sessionPolicyHint'),
@@ -95,14 +88,12 @@ class _AdminSecuritySectionState extends State<AdminSecuritySection> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-
-        // ─── OWASP info box ──────────────────────────────────────
-        AdminNote(
-          text: context.t('admin.owaspNote'),
-          icon: LucideIcons.shieldCheck,
-        ),
-      ],
+      },
+      // What the numbers above follow, said once under all of them.
+      footer: AdminNote(
+        text: context.t('admin.owaspNote'),
+        icon: LucideIcons.shieldCheck,
+      ),
     );
   }
 }

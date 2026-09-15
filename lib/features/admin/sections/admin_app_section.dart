@@ -6,6 +6,7 @@ import '../../../core/models/core_models.dart' show PlatformFlags;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/hive_widgets.dart';
 import '../../sprint/modals/glass_modal.dart' show showGlassErrorToast;
+import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
 
 /// App/client settings served to the apps via /api/v1/meta: the minimum
@@ -59,10 +60,9 @@ class _AdminAppSectionState extends State<AdminAppSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AdminSectionCard(
+    return AdminCards(
+      cards: {
+        'releases': AdminSectionCard(
           icon: LucideIcons.smartphone,
           title: context.t('admin.appReleases'),
           subtitle: context.t('admin.appReleasesHint'),
@@ -118,8 +118,7 @@ class _AdminAppSectionState extends State<AdminAppSection> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        AdminSectionCard(
+        'signIn': AdminSectionCard(
           icon: LucideIcons.lockKeyhole,
           title: context.t('admin.authTitle'),
           subtitle: context.t('admin.authHint'),
@@ -147,8 +146,7 @@ class _AdminAppSectionState extends State<AdminAppSection> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        AdminSectionCard(
+        'platform': AdminSectionCard(
           icon: LucideIcons.slidersHorizontal,
           title: context.t('admin.platformTitle'),
           subtitle: context.t('admin.platformHint'),
@@ -191,8 +189,7 @@ class _AdminAppSectionState extends State<AdminAppSection> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        AdminSectionCard(
+        'flags': AdminSectionCard(
           icon: LucideIcons.flag,
           title: context.t('admin.featureFlags'),
           subtitle: context.t('admin.featureFlagsHint'),
@@ -207,7 +204,7 @@ class _AdminAppSectionState extends State<AdminAppSection> {
             ),
           ],
         ),
-      ],
+      },
     );
   }
 }

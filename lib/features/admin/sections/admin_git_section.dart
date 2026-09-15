@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/hue_colors.dart';
 import '../../git/widgets/provider_glyph.dart';
+import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
 
 /// Admin → Git integration.
@@ -32,14 +33,10 @@ class AdminGitSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final git = _git;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AdminNote(text: context.t('admin.gitHint')),
-        const SizedBox(height: 16),
-
-        // ── Provider OAuth apps ───────────────────────────────────────────
-        AdminSectionCard(
+    return AdminCards(
+      note: AdminNote(text: context.t('admin.gitHint')),
+      cards: {
+        'providers': AdminSectionCard(
           icon: LucideIcons.gitBranch,
           title: context.t('admin.gitProvidersTitle'),
           subtitle: context.t('admin.gitProvidersHint'),
@@ -73,10 +70,7 @@ class AdminGitSection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-
-        // ── Webhooks & encryption ─────────────────────────────────────────
-        AdminSectionCard(
+        'behaviour': AdminSectionCard(
           icon: LucideIcons.webhook,
           title: context.t('admin.gitWebhookTitle'),
           subtitle: context.t('admin.gitWebhookHint'),
@@ -104,7 +98,7 @@ class AdminGitSection extends StatelessWidget {
             ),
           ],
         ),
-      ],
+      },
     );
   }
 }

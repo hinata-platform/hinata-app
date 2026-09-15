@@ -13,6 +13,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../sprint/modals/glass_modal.dart';
+import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
 
 /// Admin → Connect (Hinata Connect enrolment).
@@ -283,11 +284,9 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── Status ────────────────────────────────────────────────────────
-        AdminSectionCard(
+    return AdminCards(
+      cards: {
+        'status': AdminSectionCard(
           icon: LucideIcons.radioTower,
           title: context.t('admin.connectStatusTitle'),
           subtitle: context.t('admin.connectStatusHint'),
@@ -343,11 +342,8 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-
-        // ── Automated "Jetzt verbinden" ───────────────────────────────────
-        if (!_enrolled) ...[
-          AdminSectionCard(
+        if (!_enrolled)
+          'connect': AdminSectionCard(
             icon: LucideIcons.sparkles,
             title: context.t('admin.connectAutoTitle'),
             subtitle: context.t('admin.connectAutoHint'),
@@ -409,12 +405,8 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
                 ),
             ],
           ),
-          const SizedBox(height: 16),
-        ],
-
-        // ── Manual enrolment (paste token) ────────────────────────────────
         if (!_enrolled)
-          AdminSectionCard(
+          'token': AdminSectionCard(
             icon: LucideIcons.ticket,
             title: context.t('admin.connectEnrollTitle'),
             subtitle: context.t('admin.connectEnrollHint'),
@@ -452,11 +444,8 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
               ),
             ],
           ),
-
-        // ── Domain proof details ──────────────────────────────────────────
-        if (_enrolled && !_verified) ...[
-          const SizedBox(height: 16),
-          AdminSectionCard(
+        if (_enrolled && !_verified)
+          'proof': AdminSectionCard(
             icon: LucideIcons.globe,
             title: context.t('admin.connectChallengeTitle'),
             subtitle: context.t('admin.connectChallengeHint'),
@@ -473,8 +462,7 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
               ),
             ],
           ),
-        ],
-      ],
+      },
     );
   }
 }
