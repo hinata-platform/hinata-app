@@ -595,5 +595,63 @@ void main() {
         );
       },
     );
+
+    test(
+      'two refused moves of the same card leave it where the server holds it, even when the planning cannot be read again',
+      () async {
+        final planning = planningOver();
+        await planning.load();
+        final card = planning.state.backlog.first;
+        issues.refusal = ApiFailure('error.accessDenied');
+        sprints.failure = ApiFailure('errors.network');
+
+        final first = planning.moveToSprint(card, 's2');
+        final moved = planning.state
+            .containerOf('s2')
+            .items
+            .firstWhere((c) => c.id == card.id);
+        final second = planning.moveToSprint(moved, 's1');
+
+        expect(
+          await Future.wait([first, second]),
+          everyElement('error.accessDenied'),
+        );
+
+        expect(planning.state.backlog.map((c) => c.id), contains(card.id));
+        expect(planning.state.backlogTotal, 30);
+        expect(planning.state.containerOf('s1').total, 60);
+        expect(planning.state.containerOf('s2').total, 3);
+      },
+    );
+
+    test(
+      'two refused estimates of the same card leave the points the server holds',
+      () async {
+        final planning = planningOver();
+        await planning.load();
+        final card = planning.state.containerOf('s2').items.first;
+        issues.refusal = ApiFailure('error.accessDenied');
+        sprints.failure = ApiFailure('errors.network');
+
+        final first = planning.estimate(card, 5);
+        final second = planning.estimate(
+          planning.state.containerOf('s2').items.first,
+          8,
+        );
+
+        expect(
+          await Future.wait([first, second]),
+          everyElement('error.accessDenied'),
+        );
+        expect(
+          planning.state
+              .containerOf('s2')
+              .items
+              .firstWhere((c) => c.id == card.id)
+              .storyPoints,
+          2,
+        );
+      },
+    );
   });
 }

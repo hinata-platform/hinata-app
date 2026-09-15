@@ -210,6 +210,17 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
   /// Counts the backlog pages asked for, so only the last one asked shows.
   int _backlogRead = 0;
 
+  /// What the server holds of each card while changes to it are under way:
+  /// its sprint and its story points as they were before the first of those
+  /// changes, and as every change the server took left them. A refused change
+  /// takes the card back to this rather than to what the planning showed when
+  /// the change began, which may itself be a change not taken yet.
+  final Map<String, String?> _heldSprint = {};
+  final Map<String, int?> _heldPoints = {};
+
+  /// How many changes to each card are under way.
+  final Map<String, int> _underWay = {};
+
   /// Reads the sprints, each one's cards as deep as they are loaded, and the
   /// backlog page on screen. A new search or filter starts every sprint and
   /// the backlog from their first page.
@@ -421,15 +432,20 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
   /// state. Returns the refusal's message key, or null.
   Future<String?> moveToSprint(Issue issue, String? sprintId) async {
     if (issue.sprintId == sprintId) return null;
+    _begin(issue);
     emit(_moved(state, [issue], sprintId));
     try {
       await _issues.updateIssue(issue.id, {'sprintId': sprintId ?? ''});
-      if (isClosed) return null;
-      await rereadSprints({issue.sprintId, sprintId});
-      return null;
     } catch (error) {
-      return _refused(_keyOf(error), () => _movedBack([issue], sprintId));
+      final held = {issue.id: _heldSprint[issue.id]};
+      _end(issue.id);
+      return _refused(_keyOf(error), () => _movedBack(held, sprintId));
     }
+    _heldSprint[issue.id] = sprintId;
+    _end(issue.id);
+    if (isClosed) return null;
+    await rereadSprints({issue.sprintId, sprintId});
+    return null;
   }
 
   /// Moves every card among [ids] into [sprintId], or into the backlog for
@@ -450,6 +466,7 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
     ];
     final unseen = wanted.difference(loaded.keys.toSet());
     if (moving.isEmpty && unseen.isEmpty) return null;
+    moving.forEach(_begin);
     emit(_moved(state, moving, sprintId));
     final all = [for (final card in moving) card.id, ...unseen];
     final refused = <String>{};
@@ -468,15 +485,17 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
               ),
       ]);
     }
+    final held = {
+      for (final card in moving)
+        if (refused.contains(card.id)) card.id: _heldSprint[card.id],
+    };
+    for (final card in moving) {
+      if (!refused.contains(card.id)) _heldSprint[card.id] = sprintId;
+      _end(card.id);
+    }
     if (isClosed) return null;
     if (refusal case final error?) {
-      return _refused(
-        _keyOf(error),
-        () => _movedBack([
-          for (final card in moving)
-            if (refused.contains(card.id)) card,
-        ], sprintId),
-      );
+      return _refused(_keyOf(error), () => _movedBack(held, sprintId));
     }
     if (unseen.isEmpty) {
       await rereadSprints({for (final card in moving) card.sprintId, sprintId});
@@ -489,6 +508,7 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
   /// Sets [issue]'s story points, null to clear them: in place at once, and
   /// the sprint's head read again after.
   Future<String?> estimate(Issue issue, int? points) async {
+    _begin(issue);
     emit(
       _replaced(state, issue.id, (card) => card.copyWith(storyPoints: points)),
     );
@@ -497,23 +517,27 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
         issue.id,
         points == null ? {'clearStoryPoints': true} : {'storyPoints': points},
       );
-      if (isClosed) return null;
-      if (issue.sprintId != null) await rereadSprints({issue.sprintId});
-      return null;
     } catch (error) {
-      // Back to the points the card had, unless another estimate set others
-      // since.
+      final held = _heldPoints[issue.id];
+      _end(issue.id);
+      // Back to the points the server holds, unless another estimate set
+      // others since.
       return _refused(
         _keyOf(error),
         () => _replaced(
           state,
           issue.id,
           (card) => card.storyPoints == points
-              ? card.copyWith(storyPoints: issue.storyPoints)
+              ? card.copyWith(storyPoints: held)
               : card,
         ),
       );
     }
+    _heldPoints[issue.id] = points;
+    _end(issue.id);
+    if (isClosed) return null;
+    if (issue.sprintId != null) await rereadSprints({issue.sprintId});
+    return null;
   }
 
   /// Every card of the sprint [sprintId] by state, whatever the planning is
@@ -620,6 +644,29 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
   static String _keyOf(Object error) =>
       error is ApiFailure ? error.message : 'errors.unexpected';
 
+  /// Notes a change to [card] under way. The first of the changes under way
+  /// notes what the server holds of the card.
+  void _begin(Issue card) {
+    if (!_underWay.containsKey(card.id)) {
+      _heldSprint[card.id] = card.sprintId;
+      _heldPoints[card.id] = card.storyPoints;
+    }
+    _underWay.update(card.id, (count) => count + 1, ifAbsent: () => 1);
+  }
+
+  /// Notes a change to the card [id] decided. Once none is under way, what the
+  /// server holds of the card is for the next read to show.
+  void _end(String id) {
+    final left = (_underWay[id] ?? 1) - 1;
+    if (left > 0) {
+      _underWay[id] = left;
+      return;
+    }
+    _underWay.remove(id);
+    _heldSprint.remove(id);
+    _heldPoints.remove(id);
+  }
+
   // ── the planning's arithmetic ────────────────────────────────────────────
 
   int _depthOf(SprintPlanningState held, String sprintId) => math.min(
@@ -679,20 +726,21 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
     );
   }
 
-  /// The [cards] a change moved into [movedTo] put back where each came from,
-  /// as far as they still stand there: a card moved on since stays where the
-  /// later change put it, and a card keeps whatever else changed on it.
-  SprintPlanningState _movedBack(List<Issue> cards, String? movedTo) {
+  /// The cards [backTo] names put back into the sprint it names for each, or
+  /// into the backlog for null, as far as they still stand where a change
+  /// moved them, [movedTo]: a card moved on since stays where the later change
+  /// put it, and a card keeps whatever else changed on it.
+  SprintPlanningState _movedBack(Map<String, String?> backTo, String? movedTo) {
     final shown = {for (final card in state.cards) card.id: card};
-    final byOrigin = <String?, List<Issue>>{};
-    for (final card in cards) {
-      final now = shown[card.id];
+    final bySprint = <String?, List<Issue>>{};
+    for (final MapEntry(key: id, value: sprintId) in backTo.entries) {
+      final now = shown[id];
       if (now != null && now.sprintId == movedTo) {
-        (byOrigin[card.sprintId] ??= []).add(now);
+        (bySprint[sprintId] ??= []).add(now);
       }
     }
     var back = state;
-    for (final entry in byOrigin.entries) {
+    for (final entry in bySprint.entries) {
       back = _moved(back, entry.value, entry.key);
     }
     return back;

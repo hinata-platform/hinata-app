@@ -89,6 +89,15 @@ Map<String, T> namedBy<T>(
     for (final id in idsOf(card).whereType<String>()) id: ?held[id],
 };
 
+/// Whether [a] and [b] hold the same ids in the same order.
+bool sameIds(List<String> a, List<String> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
+
 /// [fresh], or [held] where both hold the same entries: a read that brought
 /// nobody new is no change to whoever compares the map.
 Map<String, T> sameOr<T>(Map<String, T> held, Map<String, T> fresh) {
