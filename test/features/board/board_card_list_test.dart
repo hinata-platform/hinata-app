@@ -6,6 +6,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/widgets/read_on_trigger.dart';
 import 'package:hinata/features/board/board_card_list.dart';
 
 /// A column the way the wall drives one: asked for more, it reads, and a
@@ -108,7 +109,7 @@ void main() {
       expect(column.asks, 1);
       expect(column.count, 4);
       expect(find.byType(CircularProgressIndicator), findsNothing);
-      expect(find.byType(BoardReadOn), findsNothing);
+      expect(find.byType(ReadOnTrigger), findsNothing);
     },
   );
 
@@ -172,6 +173,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(column.asks, 0);
-    expect(find.byType(BoardReadOn), findsNothing);
+    expect(find.byType(ReadOnTrigger), findsNothing);
   });
 }

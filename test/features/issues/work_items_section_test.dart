@@ -388,6 +388,47 @@ void main() {
       expect(find.text('time.noEntries'), findsOneWidget);
       expect(find.byType(WorkItemRow), findsNothing);
     });
+
+    testWidgets('and does not take all the height it is allowed to say so', (
+      tester,
+    ) async {
+      // The empty state ends in a Center, and under a Flexible that Center took
+      // the whole modal: one line of "no entries" in a sheet the full height of
+      // the screen.
+      await tester.pumpWidget(
+        MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(
+            body: RepositoryProvider<IssueRepository>.value(
+              value: _FakeIssueRepository(const []),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 480,
+                    maxHeight: 560,
+                  ),
+                  child: AllWorkItemsSheet(
+                    issue: issue,
+                    access: const WorkItemAccess(meId: 'u1'),
+                    nameFor: nameFor,
+                    avatarFor: avatarFor,
+                    onChanged: () {},
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('time.noEntries'), findsOneWidget);
+      expect(
+        tester.getSize(find.byType(AllWorkItemsSheet)).height,
+        lessThan(320),
+      );
+    });
   });
 }
 

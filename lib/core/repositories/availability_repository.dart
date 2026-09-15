@@ -40,15 +40,11 @@ class AvailabilityRepository {
         as Map<String, dynamic>,
   );
 
-  Future<void> deleteSchedule(String id) =>
-      _api.delete('/api/v1/availability/schedule/${_id(id)}');
-
   // --- absences ----------------------------------------------------------------
 
-  /// One page of the reader's absences, newest first.
+  /// One page of the reader's absences from [from] on, newest first.
   Future<PageResult<TimeOff>> timeOff({
     DateTime? from,
-    DateTime? to,
     int page = 0,
     int size = 50,
   }) async {
@@ -57,7 +53,6 @@ class AvailabilityRepository {
               '/api/v1/availability/time-off',
               query: {
                 if (from != null) 'from': formatDateOnly(from),
-                if (to != null) 'to': formatDateOnly(to),
                 'page': page,
                 'size': size,
               },

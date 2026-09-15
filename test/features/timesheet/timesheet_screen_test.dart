@@ -116,7 +116,7 @@ void main() {
                           value: time ?? _FakeTimeRepository(rows),
                         ),
                         RepositoryProvider<AvailabilityRepository>.value(
-                          value: _NoCapacity(),
+                          value: _FakeCapacity(),
                         ),
                       ],
                       child: MultiBlocProvider(
@@ -212,6 +212,48 @@ void main() {
 
       expect(find.text('timesheet.truncated'), findsNothing);
     });
+
+    testWidgets('a member\'s own week sets their capacity beside it', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          rows: const [],
+          moduleView: true,
+          time: _FakeTimeRepository([row(userId: 'me')]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('availability.capacity.title'), findsOneWidget);
+    });
+
+    testWidgets(
+      'an administrator reading everybody\'s rows, or a colleague\'s, is shown '
+      'no capacity',
+      (tester) async {
+        tester.view.physicalSize = const Size(1400, 900);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+
+        await tester.pumpWidget(
+          host(
+            rows: const [],
+            moduleView: true,
+            admin: true,
+            time: _FakeTimeRepository([row(userId: 'me'), row(userId: 'u1')]),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('availability.capacity.title'), findsNothing);
+
+        await tester.tap(find.text('timesheet.allUsers').first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Ada Lovelace').last);
+        await tester.pumpAndSettle();
+        expect(find.text('availability.capacity.title'), findsNothing);
+      },
+    );
 
     testWidgets('your own cell can be typed into; a colleague\'s cannot', (
       tester,
@@ -1035,11 +1077,16 @@ class _FakeAuthBloc extends Bloc<AuthEvent, AuthState> implements AuthBloc {
       throw UnimplementedError('${invocation.memberName} is not faked');
 }
 
-/// No planned hours: the capacity line has nothing to compare against (HIN-91).
-class _NoCapacity implements AvailabilityRepository {
+/// Forty planned hours in whatever window is asked, so the capacity line has
+/// something to set beside the booked hours (HIN-91).
+class _FakeCapacity implements AvailabilityRepository {
   @override
-  Future<Capacity> capacity(DateTime from, DateTime to) async =>
-      Capacity(from: from, to: to);
+  Future<Capacity> capacity(DateTime from, DateTime to) async => Capacity(
+    from: from,
+    to: to,
+    scheduledMinutes: 2400,
+    capacityMinutes: 2400,
+  );
 
   @override
   dynamic noSuchMethod(Invocation invocation) =>

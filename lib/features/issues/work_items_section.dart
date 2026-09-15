@@ -592,82 +592,100 @@ class _AllWorkItemsSheetState extends State<AllWorkItemsSheet> {
               '${widget.issue.readableId} · '
               '${context.t('time.loggedTotal', variables: {'spent': fmtDuration(context, widget.issue.spentMinutes)})}',
         ),
-        Flexible(
-          child: BlocBuilder<PagedCubit<WorkItem>, PagedState<WorkItem>>(
-            bloc: _cubit,
-            builder: _body,
-          ),
+        // Not wrapped in a Flexible here: every branch of [_body] is its own,
+        // and parent data reaches the column through the builder.
+        BlocBuilder<PagedCubit<WorkItem>, PagedState<WorkItem>>(
+          bloc: _cubit,
+          builder: _body,
         ),
       ],
     );
   }
 
+  /// A loading, failed or empty sheet, measured by what it says.
+  ///
+  /// The loader and the empty state end in a Center, and a Center handed a
+  /// bounded height takes all of it: under a bare Flexible that was the whole
+  /// modal for one line of "no entries". Inside a scroll view the Center sees no
+  /// bound and sizes to its content, and a sheet shorter than that scrolls
+  /// instead of overflowing.
+  Widget _state(Widget child) =>
+      Flexible(child: SingleChildScrollView(child: child));
+
   Widget _body(BuildContext context, PagedState<WorkItem> state) {
     final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
     if (state.isLoading && !state.hasData) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 36),
-        child: Center(child: HiveLoader(size: 22)),
+      return _state(
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 36),
+          child: Center(child: HiveLoader(size: 22)),
+        ),
       );
     }
     final errorKey = state.errorKey;
     if (errorKey != null && !state.hasData) {
-      return Padding(
-        padding: EdgeInsets.fromLTRB(22, 8, 22, 22 + bottomInset),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              context.t(errorKey),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: AppColors.danger),
-            ),
-            const SizedBox(height: 10),
-            TextButton.icon(
-              onPressed: _cubit.load,
-              icon: const Icon(LucideIcons.rotateCcw, size: 15),
-              label: Text(context.t('common.retry')),
-            ),
-          ],
+      return _state(
+        Padding(
+          padding: EdgeInsets.fromLTRB(22, 8, 22, 22 + bottomInset),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                context.t(errorKey),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 13, color: AppColors.danger),
+              ),
+              const SizedBox(height: 10),
+              TextButton.icon(
+                onPressed: _cubit.load,
+                icon: const Icon(LucideIcons.rotateCcw, size: 15),
+                label: Text(context.t('common.retry')),
+              ),
+            ],
+          ),
         ),
       );
     }
     final items = state.items;
     if (items.isEmpty) {
-      return Padding(
-        padding: EdgeInsets.only(bottom: bottomInset),
-        child: HiveEmptyState(
-          card: false,
-          title: context.t('time.noEntries'),
-          padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+      return _state(
+        Padding(
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: HiveEmptyState(
+            card: false,
+            title: context.t('time.noEntries'),
+            padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+          ),
         ),
       );
     }
     final showLoader = state.isLoadingMore;
-    return ListView.builder(
-      controller: _scroll,
-      shrinkWrap: true,
-      padding: EdgeInsets.fromLTRB(22, 4, 22, 18 + bottomInset),
-      itemCount: items.length + (showLoader ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index >= items.length) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Center(child: HiveLoader(size: 16)),
+    return Flexible(
+      child: ListView.builder(
+        controller: _scroll,
+        shrinkWrap: true,
+        padding: EdgeInsets.fromLTRB(22, 4, 22, 18 + bottomInset),
+        itemCount: items.length + (showLoader ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index >= items.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(child: HiveLoader(size: 16)),
+            );
+          }
+          return Padding(
+            padding: EdgeInsets.only(top: index == 0 ? 4 : 12),
+            child: WorkItemRow(
+              item: items[index],
+              access: widget.access,
+              nameFor: widget.nameFor,
+              avatarFor: widget.avatarFor,
+              onEdit: _edit,
+              onDelete: _delete,
+            ),
           );
-        }
-        return Padding(
-          padding: EdgeInsets.only(top: index == 0 ? 4 : 12),
-          child: WorkItemRow(
-            item: items[index],
-            access: widget.access,
-            nameFor: widget.nameFor,
-            avatarFor: widget.avatarFor,
-            onEdit: _edit,
-            onDelete: _delete,
-          ),
-        );
-      },
+        },
+      ),
     );
   }
 }

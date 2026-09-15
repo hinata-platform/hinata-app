@@ -18,6 +18,7 @@ import '../../core/repositories/time_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/util/duration_input.dart';
+import '../../core/widgets/field_button.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'approval_actions.dart';
@@ -583,7 +584,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                   const SizedBox(height: 14),
                   KeyedSubtree(
                     key: _placementKey,
-                    child: _FieldButton(
+                    child: FieldButton(
                       icon: _placement.isUnfiled
                           ? LucideIcons.circleSlash
                           : LucideIcons.folder,
@@ -618,7 +619,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                   ),
                   const SizedBox(height: 12),
                   if (_mode == _EntryMode.duration) ...[
-                    _FieldButton(
+                    FieldButton(
                       icon: LucideIcons.calendar,
                       label: context.t('time.entry.day'),
                       value: localizations.formatFullDate(_day),
@@ -656,14 +657,14 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                       ],
                     ),
                   ] else ...[
-                    _FieldButton(
+                    FieldButton(
                       icon: LucideIcons.play,
                       label: context.t('time.entry.start'),
                       value: _formatMoment(context, _start),
                       onTap: () => _pickMoment(isStart: true),
                     ),
                     const SizedBox(height: 12),
-                    _FieldButton(
+                    FieldButton(
                       icon: LucideIcons.square,
                       label: context.t('time.entry.end'),
                       value: _formatMoment(context, _end),
@@ -674,7 +675,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                 const SizedBox(height: 12),
                 KeyedSubtree(
                   key: _tagsKey,
-                  child: _FieldButton(
+                  child: FieldButton(
                     icon: LucideIcons.tag,
                     label: _required(
                       context.t('time.entry.tags'),
@@ -1013,7 +1014,7 @@ class _Summary extends StatelessWidget {
 
 /// The interval a timer measured: shown, not offered for editing.
 ///
-/// A row rather than the two [_FieldButton]s the interval mode uses, because
+/// A row rather than the two [FieldButton]s the interval mode uses, because
 /// those are controls and this is a fact. Nothing here can be changed by the
 /// person reading it — the stop carries the timer's own start, so a picker would
 /// be a control that closes and changes nothing.
@@ -1071,69 +1072,4 @@ class _MeasuredInterval extends StatelessWidget {
       ),
     );
   }
-}
-
-/// A one-line field that opens a picker — the app's rule against inline
-/// selection lists, applied to the four fields this form has.
-class _FieldButton extends StatelessWidget {
-  const _FieldButton({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(color: AppColors.hairline),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 16, color: AppColors.inkSoft),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.inkFaint,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(LucideIcons.chevronRight, size: 15, color: AppColors.inkFaint),
-          ],
-        ),
-      ),
-    ),
-  );
 }
