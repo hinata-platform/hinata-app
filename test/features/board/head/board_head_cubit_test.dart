@@ -8,10 +8,10 @@ import 'package:hinata/features/board/board_filter.dart';
 import 'package:hinata/features/board/board_swimlanes.dart';
 import 'package:hinata/features/board/head/board_head_cubit.dart';
 
-/// Gathers facets the way the server does, naming in them what they were
-/// gathered over, so a test can tell whose facets are shown.
+/// Gathers facets the way the server does, naming in them the shape they were
+/// gathered for, so a test can tell whose facets are shown.
 class _Server implements BoardRepository {
-  final asked = <BoardFacetsScope>[];
+  final asked = <BoardCardShape>[];
 
   /// Answers held back until a test lets them go, first asked first.
   final gates = <Completer<void>>[];
@@ -20,15 +20,13 @@ class _Server implements BoardRepository {
   @override
   Future<BoardFacets> facets(
     String boardId, {
-    String? sprintId,
-    bool backlog = false,
     BoardCardShape shape = BoardCardShape.wall,
   }) async {
-    asked.add(BoardFacetsScope(sprintId: sprintId, shape: shape));
+    asked.add(shape);
     if (gates.isNotEmpty) await gates.removeAt(0).future;
     final failure = this.failure;
     if (failure != null) throw failure;
-    return BoardFacets(labels: [sprintId ?? 'board']);
+    return BoardFacets(labels: [shape.name]);
   }
 
   @override
@@ -51,31 +49,31 @@ void main() {
     return cubit;
   }
 
-  const board = BoardFacetsScope();
+  const wall = BoardCardShape.wall;
 
   group('the facets', () {
     test('are read once when the board opens', () async {
       final head = headOver();
 
-      await Future.wait([head.ensureFacets(board), head.ensureFacets(board)]);
-      await head.ensureFacets(board);
+      await Future.wait([head.ensureFacets(wall), head.ensureFacets(wall)]);
+      await head.ensureFacets(wall);
 
       expect(server.asked, hasLength(1));
-      expect(head.state.facets.labels, ['board']);
+      expect(head.state.facets.labels, ['wall']);
     });
 
     test(
       'are read again for the faces after a change only once a minute old',
       () async {
         final head = headOver();
-        await head.ensureFacets(board);
+        await head.ensureFacets(wall);
         head.facetsChanged();
 
-        await head.ensureFacets(board);
+        await head.ensureFacets(wall);
         expect(server.asked, hasLength(1));
 
         now = now.add(kBoardFacetsFresh);
-        await head.ensureFacets(board);
+        await head.ensureFacets(wall);
         expect(server.asked, hasLength(2));
       },
     );
@@ -84,55 +82,53 @@ void main() {
       'are read again for the filter after any change, and after a minute without one',
       () async {
         final head = headOver();
-        await head.ensureFacets(board);
+        await head.ensureFacets(wall);
 
-        await head.ensureFacets(board, forFilter: true);
+        await head.ensureFacets(wall, forFilter: true);
         expect(server.asked, hasLength(1), reason: 'nothing changed');
 
         head.facetsChanged();
-        await head.ensureFacets(board, forFilter: true);
+        await head.ensureFacets(wall, forFilter: true);
         expect(server.asked, hasLength(2));
 
         now = now.add(kBoardFacetsFresh);
-        await head.ensureFacets(board, forFilter: true);
+        await head.ensureFacets(wall, forFilter: true);
         expect(server.asked, hasLength(3));
       },
     );
 
-    test('of a sprint the board has left are never shown', () async {
+    test('of a shape the board has left are never shown', () async {
       final head = headOver();
       final slow = Completer<void>();
       server.gates.add(slow);
 
-      final first = head.ensureFacets(const BoardFacetsScope(sprintId: 's1'));
-      await head.ensureFacets(const BoardFacetsScope(sprintId: 's2'));
+      final first = head.ensureFacets(wall);
+      await head.ensureFacets(BoardCardShape.subtasks);
       slow.complete();
       await first;
 
-      expect(head.state.facets.labels, ['s2']);
+      expect(head.state.facets.labels, ['subtasks']);
     });
 
     test('that did not come are read again on the next call', () async {
       final head = headOver();
       server.failure = ApiFailure('errors.network');
-      await head.ensureFacets(board);
+      await head.ensureFacets(wall);
       expect(head.state.facets, BoardFacets.empty);
 
       server.failure = null;
-      await head.ensureFacets(board);
+      await head.ensureFacets(wall);
 
       expect(server.asked, hasLength(2));
-      expect(head.state.facets.labels, ['board']);
+      expect(head.state.facets.labels, ['wall']);
     });
 
-    test('are gathered over the shape the board lists', () async {
+    test('are gathered for the shape the board lists', () async {
       final head = headOver();
 
-      await head.ensureFacets(
-        const BoardFacetsScope(shape: BoardCardShape.planning),
-      );
+      await head.ensureFacets(BoardCardShape.planning);
 
-      expect(server.asked.single.shape, BoardCardShape.planning);
+      expect(server.asked.single, BoardCardShape.planning);
     });
   });
 

@@ -144,20 +144,27 @@ void main() {
     expect(server.reads, hasLength(3), reason: 'nothing is left to ask for');
   });
 
-  test('a refresh keeps the depth someone scrolled to', () async {
-    final timeline = timelineOver();
-    await timeline.show(sprintId: null, query: BoardQuery.all);
-    await timeline.loadMore();
-    server.reads.clear();
+  test(
+    'a refresh reads each list from its start at once and keeps the depth someone scrolled to',
+    () async {
+      final timeline = timelineOver();
+      await timeline.show(sprintId: null, query: BoardQuery.all);
+      await timeline.loadMore();
+      server.reads.clear();
 
-    await timeline.refresh();
+      await timeline.refresh();
 
-    expect(server.reads.where((read) => read.dated).map((read) => read.page), [
-      0,
-      1,
-    ]);
-    expect(timeline.state.dated, hasLength(150));
-  });
+      expect(server.reads.map((read) => (read.dated, read.page)), [
+        (true, 0),
+        (false, 0),
+      ]);
+      expect(timeline.state.dated, hasLength(150));
+      expect(
+        timeline.state.dated.map((card) => card.id).toSet(),
+        hasLength(150),
+      );
+    },
+  );
 
   test(
     'a change while the timeline is away reads it again once it shows',
@@ -183,6 +190,31 @@ void main() {
     expect(timeline.state.links.single.id, 'l120');
     expect(timeline.state.dated, hasLength(150));
   });
+
+  test(
+    'a page past the cards the links are read for reads no links again',
+    () async {
+      server = _Server(
+        dated: [
+          for (var i = 0; i < 1150; i++)
+            _card('d$i', due: day.add(Duration(days: i))),
+        ],
+        undated: const [],
+      );
+      final timeline = timelineOver();
+      await timeline.show(sprintId: null, query: BoardQuery.all);
+      for (var i = 0; i < 9; i++) {
+        await timeline.loadMore();
+      }
+      expect(timeline.state.dated, hasLength(kBoardMaxLinkCards));
+      final linked = server.linked.length;
+
+      await timeline.loadMore();
+
+      expect(timeline.state.dated, hasLength(1100));
+      expect(server.linked, hasLength(linked));
+    },
+  );
 
   test(
     'a timeline that did not come says so, and showing it again asks again',

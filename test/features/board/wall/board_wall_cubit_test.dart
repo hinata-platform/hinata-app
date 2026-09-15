@@ -395,6 +395,40 @@ void main() {
     );
   });
 
+  group('catching up', () {
+    test(
+      'a wall back on screen narrows to what changed while it was away, in one read',
+      () async {
+        final wall = wallOver();
+        await wall.load();
+        final before = server.walls.length;
+
+        wall.catchUp(const BoardQuery(text: 'card o1'), stale: true);
+        await Future<void>.delayed(_settle);
+
+        expect(server.walls, hasLength(before + 1));
+        expect(wall.state.query.text, 'card o1');
+      },
+    );
+
+    test(
+      'a stale wall back on screen reads again, and a fresh one does not',
+      () async {
+        final wall = wallOver();
+        await wall.load();
+        final before = server.walls.length;
+
+        wall.catchUp(BoardQuery.all, stale: false);
+        await Future<void>.delayed(_settle);
+        expect(server.walls, hasLength(before));
+
+        wall.catchUp(BoardQuery.all, stale: true);
+        await Future<void>.delayed(_settle);
+        expect(server.walls, hasLength(before + 1));
+      },
+    );
+  });
+
   group('refreshing', () {
     test('a burst of changes elsewhere is one read of the wall', () async {
       final wall = wallOver();

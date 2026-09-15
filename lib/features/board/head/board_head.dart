@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/models/board_page_models.dart';
 import '../../../core/models/core_models.dart';
 import '../../../core/models/work_models.dart';
 import '../board_filter.dart';
@@ -104,19 +105,19 @@ mixin BoardHeadHost<T extends StatefulWidget> on State<T> {
     );
   }
 
-  /// Opens the board's filter over the facets of [scope], read again first
-  /// when a change may have altered them. [sprints] are the ones the filter
-  /// offers, [projects] lend their labels, [refs] and [users] name the epics
-  /// and people of the cards loaded.
+  /// Opens the board's filter over the facets for cards of [shape], read again
+  /// first when a change may have altered them. [sprints] are the ones the
+  /// filter offers, [projects] lend their labels, [refs] and [users] name the
+  /// epics and people of the cards loaded.
   Future<void> openHeadFilter({
-    required BoardFacetsScope scope,
+    required BoardCardShape shape,
     required Rect? anchor,
     required List<Sprint> sprints,
     required Iterable<Project> projects,
     required Iterable<Issue> refs,
     required Iterable<DirectoryUser> users,
   }) async {
-    await head.ensureFacets(scope, forFilter: true);
+    await head.ensureFacets(shape, forFilter: true);
     if (!mounted) return;
     final facets = head.state.facets;
     final epics = boardEpics(facets.epics, refs);
