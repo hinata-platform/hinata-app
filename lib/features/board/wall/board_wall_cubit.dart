@@ -141,7 +141,7 @@ class BoardWallState extends Equatable {
 /// end. A card that is moved moves on the wall at once and goes back if the
 /// server refuses.
 class BoardWallCubit extends Cubit<BoardWallState>
-    with BoardReads<BoardWallState> {
+    with BoardReadGenerations<BoardWallState>, BoardReads<BoardWallState> {
   BoardWallCubit({
     required BoardRepository boards,
     required IssueRepository issues,
@@ -200,8 +200,16 @@ class BoardWallCubit extends Cubit<BoardWallState>
   }
 
   /// Narrows the wall to [query] once the typing or ticking has paused.
-  void narrow(BoardQuery query) =>
+  /// Returns whether a read of it is coming.
+  bool narrow(BoardQuery query) =>
       scheduleNarrow(query, () => unawaited(load()));
+
+  /// Brings the wall up to date as it comes back on screen: narrowed to
+  /// [query] when the search or filter changed while it was away, else read
+  /// again as deep as it was scrolled when it is [stale].
+  void catchUp(BoardQuery query, {required bool stale}) {
+    if (!narrow(query) && stale) unawaited(refresh());
+  }
 
   Future<void> _read({required bool keepDepth}) async {
     final generation = startRead();

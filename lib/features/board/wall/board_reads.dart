@@ -99,68 +99,39 @@ Map<String, T> sameOr<T>(Map<String, T> held, Map<String, T> fresh) {
   return held;
 }
 
-/// What the board's readers share: a narrowing that waits for the next change
-/// before it reads, a refresh that gathers a burst of changes into one read,
-/// and generations that keep the answer to an older read off the screen.
-///
-/// The query a read asks for ([requestedQuery]) is kept apart from the one the
-/// cards on screen were read with ([shownQuery]), which only a read that
-/// succeeds hands over. A failed search then leaves the cards and their query
-/// together, and the next read asks for the search again.
-mixin BoardReads<S> on Cubit<S> {
-  /// How long a change of the search text alone waits for the next letter.
-  Duration get searchDelay;
-
-  /// How long any other narrowing waits for the next change.
-  Duration get filterDelay;
-
+/// What every reader of a board shares: generations that keep the answer to an
+/// older read off the screen, a note of whether the latest read came, and a
+/// refresh that gathers a burst of changes into one read.
+mixin BoardReadGenerations<S> on Cubit<S> {
   /// How long [scheduleRefresh] gathers changes before it reads.
   Duration get refreshDelay;
 
-  /// The query the cards on screen were read with.
-  BoardQuery get shownQuery;
-
-  BoardQuery? _requested;
   bool _lastReadFailed = false;
   int _generation = 0;
-  Timer? _narrowTimer;
   Timer? _refreshTimer;
-
-  /// The query the next read asks for: the last one narrowed to, whether it
-  /// has been read yet or not.
-  BoardQuery get requestedQuery => _requested ?? shownQuery;
 
   /// The generation of the latest read of everything. A read of a part, such
   /// as a column's next page, keeps it and drops its answer once it moved on.
   int get generation => _generation;
 
-  /// Starts a read of everything. Whatever waited to be read is part of it, and
-  /// every answer to an earlier read is stale from here. Returns its generation.
+  /// Whether the latest read did not come, so asking for what it read again
+  /// reads it again rather than counting as no change.
+  bool get lastReadFailed => _lastReadFailed;
+
+  /// Starts a read of everything. A refresh waiting to be read is part of it,
+  /// and every answer to an earlier read is stale from here. Returns its
+  /// generation.
   int startRead() {
-    _narrowTimer?.cancel();
     _refreshTimer?.cancel();
     _lastReadFailed = false;
     return ++_generation;
   }
 
-  /// Notes that the latest read did not come, so asking for its query again
-  /// reads it again rather than counting as no change.
+  /// Notes that the latest read did not come.
   void readFailed() => _lastReadFailed = true;
 
   /// Whether an answer to a read of [generation] may still be shown.
   bool isCurrent(int generation) => !isClosed && generation == _generation;
-
-  /// Asks for [query] and has [read] read it once the typing or ticking has
-  /// paused: a change of the search text alone waits [searchDelay], any other
-  /// change [filterDelay]. The query asked for already changes nothing.
-  void scheduleNarrow(BoardQuery query, void Function() read) {
-    final current = requestedQuery;
-    if (query == current && !_lastReadFailed) return;
-    _requested = query;
-    _narrowTimer?.cancel();
-    final textOnly = query.copyWith(text: '') == current.copyWith(text: '');
-    _narrowTimer = Timer(textOnly ? searchDelay : filterDelay, read);
-  }
 
   /// Has [refresh] read again after [refreshDelay], once for a burst of calls.
   void scheduleRefresh(void Function() refresh) {
@@ -170,8 +141,59 @@ mixin BoardReads<S> on Cubit<S> {
 
   @override
   Future<void> close() {
-    _narrowTimer?.cancel();
     _refreshTimer?.cancel();
+    return super.close();
+  }
+}
+
+/// What the wall's and the planning's readers share besides: a narrowing that
+/// waits for the next change before it reads.
+///
+/// The query a read asks for ([requestedQuery]) is kept apart from the one the
+/// cards on screen were read with ([shownQuery]), which only a read that
+/// succeeds hands over. A failed search then leaves the cards and their query
+/// together, and the next read asks for the search again.
+mixin BoardReads<S> on BoardReadGenerations<S> {
+  /// How long a change of the search text alone waits for the next letter.
+  Duration get searchDelay;
+
+  /// How long any other narrowing waits for the next change.
+  Duration get filterDelay;
+
+  /// The query the cards on screen were read with.
+  BoardQuery get shownQuery;
+
+  BoardQuery? _requested;
+  Timer? _narrowTimer;
+
+  /// The query the next read asks for: the last one narrowed to, whether it
+  /// has been read yet or not.
+  BoardQuery get requestedQuery => _requested ?? shownQuery;
+
+  /// Starts a read of everything, whatever waited to be narrowed to included.
+  @override
+  int startRead() {
+    _narrowTimer?.cancel();
+    return super.startRead();
+  }
+
+  /// Asks for [query] and has [read] read it once the typing or ticking has
+  /// paused: a change of the search text alone waits [searchDelay], any other
+  /// change [filterDelay]. Returns whether a read is coming: the query asked
+  /// for already, and read, changes nothing.
+  bool scheduleNarrow(BoardQuery query, void Function() read) {
+    final current = requestedQuery;
+    if (query == current && !lastReadFailed) return false;
+    _requested = query;
+    _narrowTimer?.cancel();
+    final textOnly = query.copyWith(text: '') == current.copyWith(text: '');
+    _narrowTimer = Timer(textOnly ? searchDelay : filterDelay, read);
+    return true;
+  }
+
+  @override
+  Future<void> close() {
+    _narrowTimer?.cancel();
     return super.close();
   }
 }

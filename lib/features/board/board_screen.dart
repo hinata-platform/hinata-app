@@ -1,11 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../core/api/api_client.dart';
 import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/board_page_models.dart';
@@ -31,12 +29,14 @@ import 'board_drag.dart';
 import 'board_feedback.dart';
 import 'board_header.dart';
 import 'board_people_strip.dart';
+import 'board_projects_cubit.dart';
 import 'board_swimlanes.dart';
 import 'board_timeline.dart';
 import 'head/board_head.dart';
 import 'head/board_head_cubit.dart';
 import 'issue_quick_create.dart';
 import 'timeline/board_timeline_cubit.dart';
+import 'wall/board_cards_by_id.dart';
 import 'wall/board_wall_columns.dart';
 import 'wall/board_wall_cubit.dart';
 
@@ -74,13 +74,15 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     boardId: widget.boardId,
   );
 
-  /// The board's own projects by id, fetched once the wall names them. A
-  /// cross-project board needs the full project, not just its name, to answer
-  /// "which of this column's states does this card's project have?" on a drop.
-  Map<String, Project> _projectsById = const {};
-  Map<String, String> _projectNames = const {};
+  /// The board's own projects, read once the wall names them.
+  late final BoardProjectsCubit _projects = BoardProjectsCubit(
+    projects: context.read<ProjectRepository>(),
+  );
+
+  /// The colours of the projects' states and labels, worked out again only
+  /// once other projects are read.
+  BoardProjectsState? _paletteFor;
   ProjectPalette _palette = ProjectPalette.empty;
-  List<String> _projectIdsLoaded = const [];
 
   @override
   void initState() {
@@ -92,34 +94,23 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   void dispose() {
     _wall.close();
     _head.close();
+    _projects.close();
     super.dispose();
   }
 
   void _onWall(BuildContext context, BoardWallState wall) {
     final board = wall.board;
-    if (board != null && !listEquals(board.projectIds, _projectIdsLoaded)) {
-      unawaited(_loadProjects(board.projectIds));
-    }
+    if (board != null) unawaited(_projects.resolve(board.projectIds));
     final errorKey = wall.errorKey;
     if (errorKey != null) showGlassErrorToast(context, context.t(errorKey));
   }
 
-  Future<void> _loadProjects(List<String> projectIds) async {
-    _projectIdsLoaded = projectIds;
-    final repository = context.read<ProjectRepository>();
-    try {
-      final projects = await repository.resolveProjects(projectIds);
-      if (!mounted) return;
-      setState(() {
-        _projectsById = {for (final p in projects) p.id: p};
-        _projectNames = {for (final p in projects) p.id: p.name};
-        _palette = ProjectPalette.fromProjects(projects);
-      });
-    } on ApiFailure {
-      // Names and colours fall back to plain ones until the next read; the
-      // wall itself reads without them.
-      _projectIdsLoaded = const [];
+  ProjectPalette _paletteOf(BoardProjectsState projects) {
+    if (!identical(projects, _paletteFor)) {
+      _paletteFor = projects;
+      _palette = ProjectPalette.fromProjects(projects.byId.values.toList());
     }
+    return _palette;
   }
 
   /// No `onChanged` here on purpose: the detail sheet broadcasts every change
@@ -144,11 +135,19 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
           previous.status != next.status ||
           previous.board != next.board ||
           previous.columns.length != next.columns.length,
-      builder: _view,
+      builder: (context, wall) =>
+          BlocBuilder<BoardProjectsCubit, BoardProjectsState>(
+            bloc: _projects,
+            builder: (context, projects) => _view(context, wall, projects),
+          ),
     ),
   );
 
-  Widget _view(BuildContext context, BoardWallState wall) {
+  Widget _view(
+    BuildContext context,
+    BoardWallState wall,
+    BoardProjectsState projects,
+  ) {
     final board = wall.board;
     if (board == null) {
       return wall.status == BoardWallStatus.failure
@@ -169,17 +168,15 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       return ScrumBoardView(
         board: board,
         fullWidth: fullWidth,
-        projectNames: _projectNames,
-        projectsById: _projectsById,
+        projects: projects,
         onOpenIssue: _openIssue,
       );
     }
     return _KanbanView(
       board: board,
       fullWidth: fullWidth,
-      projectNames: _projectNames,
-      projectsById: _projectsById,
-      palette: _palette,
+      projects: projects,
+      palette: _paletteOf(projects),
       onOpenIssue: _openIssue,
     );
   }
@@ -191,16 +188,16 @@ class _KanbanView extends StatefulWidget {
   const _KanbanView({
     required this.board,
     required this.fullWidth,
-    required this.projectNames,
-    required this.projectsById,
+    required this.projects,
     required this.palette,
     required this.onOpenIssue,
   });
 
   final AgileBoard board;
   final bool fullWidth;
-  final Map<String, String> projectNames;
-  final Map<String, Project> projectsById;
+
+  /// The board's projects, as far as they have been read.
+  final BoardProjectsState projects;
   final ProjectPalette palette;
   final void Function(Issue) onOpenIssue;
 
@@ -227,8 +224,7 @@ class _KanbanViewState extends State<_KanbanView>
   bool _wallStale = false;
 
   final BoardPeopleMemo _people = BoardPeopleMemo();
-  Object? _issuesByIdKey;
-  Map<String, Issue> _issuesById = const {};
+  final BoardCardsByIdMemo _cardsById = BoardCardsByIdMemo();
 
   /// Reads again what is on screen when an issue is created or changed
   /// elsewhere (e.g. the global nav-rail "new issue" button, which can't reach
@@ -241,7 +237,7 @@ class _KanbanViewState extends State<_KanbanView>
     _issueSub = IssueEvents.instance.changes.listen((_) => _changedElsewhere());
     // The faces want their facets from the start, and the wall may have
     // arrived before this view did.
-    unawaited(head.ensureFacets(_facetsScope(_wall.state)));
+    unawaited(head.ensureFacets(head.state.wallShape));
   }
 
   @override
@@ -262,9 +258,6 @@ class _KanbanViewState extends State<_KanbanView>
     }
   }
 
-  BoardFacetsScope _facetsScope(BoardWallState wall) =>
-      BoardFacetsScope(sprintId: wall.sprintId, shape: head.state.wallShape);
-
   // ---- reacting to reads and to the head ----
 
   /// A read of the wall arrived.
@@ -276,7 +269,7 @@ class _KanbanViewState extends State<_KanbanView>
           previous.sprintId != next.sprintId);
 
   void _onWallRead(BuildContext context, BoardWallState wall) {
-    unawaited(head.ensureFacets(_facetsScope(wall)));
+    unawaited(head.ensureFacets(head.state.wallShape));
     // The timeline follows the sprint the wall shows.
     if (_mode == BoardViewMode.timeline) _showTimeline(wall);
   }
@@ -302,20 +295,6 @@ class _KanbanViewState extends State<_KanbanView>
 
   // ---- derived views ----
 
-  /// The loaded cards and what they refer to, by id: what lanes resolve a
-  /// sub-task's parent from.
-  Map<String, Issue> _issuesByIdOf(BoardWallState wall) {
-    final key = (wall.refs, wall.columns);
-    if (key != _issuesByIdKey) {
-      _issuesByIdKey = key;
-      _issuesById = {
-        ...wall.refs,
-        for (final card in wall.cards) card.id: card,
-      };
-    }
-    return _issuesById;
-  }
-
   Sprint? _activeSprint(BoardWallState wall) {
     final id = wall.sprintId;
     if (id == null) return null;
@@ -333,13 +312,13 @@ class _KanbanViewState extends State<_KanbanView>
   bool _canDrop(Issue issue, BoardColumnView column) =>
       column.states.isNotEmpty &&
       !column.states.contains(issue.state) &&
-      boardDropState(issue, column.states, widget.projectsById) != null;
+      boardDropState(issue, column.states, widget.projects.byId) != null;
 
   /// Moves the card on the wall at once; a refusal puts it back, and the wall
   /// raises the reason as a toast.
   Future<void> _moveIssue(Issue issue, BoardColumnView column) async {
     if (column.states.contains(issue.state) || column.states.isEmpty) return;
-    final target = boardDropState(issue, column.states, widget.projectsById);
+    final target = boardDropState(issue, column.states, widget.projects.byId);
     if (target == null) {
       showGlassErrorToast(context, context.t('board.dropNotInWorkflow'));
       return;
@@ -355,13 +334,6 @@ class _KanbanViewState extends State<_KanbanView>
     _timeline.changed();
   }
 
-  /// The board's projects in board order — what a column's inline composer may
-  /// create into. More than one only on a merged board, where the composer
-  /// shows a project control instead of silently picking the first.
-  List<Project> get _boardProjects => [
-    for (final id in widget.board.projectIds) ?widget.projectsById[id],
-  ];
-
   /// Seeds the inline composer at the foot of [column]: the column's project(s)
   /// and workflow state, plus whatever the surrounding swimlane implies.
   IssueQuickCreateSeed _quickCreateSeed(
@@ -372,7 +344,7 @@ class _KanbanViewState extends State<_KanbanView>
     String? forcedType,
     String? assigneeId,
   }) => IssueQuickCreateSeed(
-    projects: _boardProjects,
+    projects: widget.projects.inBoardOrder,
     // On a merged board the column carries one state per spanned project, so
     // resolve the one belonging to the project the ticket lands in.
     stateFor: (project) => column.states.isEmpty
@@ -414,10 +386,10 @@ class _KanbanViewState extends State<_KanbanView>
   Future<void> _openFilter(Rect? anchor) {
     final wall = _wall.state;
     return openHeadFilter(
-      scope: _facetsScope(wall),
+      shape: head.state.wallShape,
       anchor: anchor,
       sprints: wall.sprints,
-      projects: widget.projectsById.values,
+      projects: widget.projects.byId.values,
       refs: wall.refs.values,
       users: wall.users.values,
     );
@@ -439,12 +411,7 @@ class _KanbanViewState extends State<_KanbanView>
         _showTimeline(_wall.state);
       case BoardViewMode.board:
         final state = head.state;
-        final query = state.query(state.wallShape);
-        if (query != _wall.requestedQuery) {
-          _wall.narrow(query);
-        } else if (_wallStale) {
-          unawaited(_wall.refresh());
-        }
+        _wall.catchUp(state.query(state.wallShape), stale: _wallStale);
         _wallStale = false;
     }
   }
@@ -560,7 +527,7 @@ class _KanbanViewState extends State<_KanbanView>
 
   Widget _wideHead() {
     final projectLabel = widget.board.projectIds
-        .map((id) => widget.projectNames[id] ?? '')
+        .map((id) => widget.projects.names[id] ?? '')
         .where((s) => s.isNotEmpty)
         .join(', ');
     final subtitle = projectLabel.isEmpty
@@ -697,7 +664,7 @@ class _KanbanViewState extends State<_KanbanView>
           names: people.names,
           avatars: people.avatars,
           pronouns: people.pronouns,
-          projectsById: widget.projectsById,
+          projectsById: widget.projects.byId,
           onAccept: (issue) => _moveIssue(issue, column),
           canAccept: (issue) => _canDrop(issue, column),
           quickCreate: _quickCreateSeed(wall, people, column),
@@ -731,13 +698,13 @@ class _KanbanViewState extends State<_KanbanView>
             context: context,
             grouping: grouping,
             issues: wall.cards,
-            issuesById: _issuesByIdOf(wall),
+            issuesById: _cardsById.of(wall),
             epics: boardEpics(headState.facets.epics, wall.refs.values),
             names: people.names,
             avatars: people.avatars,
             pronouns: people.pronouns,
             palette: widget.palette,
-            projectNames: widget.projectNames,
+            projectNames: widget.projects.names,
             onOpenIssue: widget.onOpenIssue,
           );
           if (lanes.isEmpty) return _emptyWall();
@@ -754,7 +721,7 @@ class _KanbanViewState extends State<_KanbanView>
               names: people.names,
               avatars: people.avatars,
               pronouns: people.pronouns,
-              projectsById: widget.projectsById,
+              projectsById: widget.projects.byId,
               onAccept: (issue) => _moveIssue(issue, column),
               canAccept: (issue) => _canDrop(issue, column),
               quickCreate: _quickCreateSeed(
