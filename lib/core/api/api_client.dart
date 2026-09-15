@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 
 import '../models/core_models.dart';
 import '../storage/app_storage.dart';
+import 'api_paths.dart';
 import 'feature_gate.dart';
 // Native-only HTTP connection tuning (idle keep-alive socket handling); a no-op
 // on the web, selected by conditional import so `dart:io` never reaches the web
@@ -248,8 +249,15 @@ class ApiClient {
     }
   }
 
+  /// The server's address for [path]. A path that climbs out of where it
+  /// points is refused before anything is sent (see [pathClimbs]).
+  String _url(String path) {
+    if (pathClimbs(path)) throw ApiFailure('errors.unexpected');
+    return '$baseUrl$path';
+  }
+
   Future<dynamic> get(String path, {Map<String, dynamic>? query}) => _run(
-    () => _dio.get<dynamic>('$baseUrl$path', queryParameters: query),
+    () => _dio.get<dynamic>(_url(path), queryParameters: query),
     idempotent: true,
   );
 
@@ -260,7 +268,7 @@ class ApiClient {
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
         final response = await _dio.get<List<int>>(
-          '$baseUrl$path',
+          _url(path),
           options: Options(responseType: ResponseType.bytes),
         );
         final bytes = response.data;
@@ -309,7 +317,7 @@ class ApiClient {
   }) async {
     final data = await _run(
       () => _dio.get<List<int>>(
-        '$baseUrl$path',
+        _url(path),
         options: Options(
           responseType: ResponseType.bytes,
           receiveTimeout: receiveTimeout,
@@ -328,7 +336,7 @@ class ApiClient {
   }) async {
     final response = await _runResponse(
       () => _dio.get<List<int>>(
-        '$baseUrl$path',
+        _url(path),
         options: Options(
           responseType: ResponseType.bytes,
           receiveTimeout: receiveTimeout,
@@ -356,7 +364,7 @@ class ApiClient {
   }) async {
     try {
       final response = await _dio.download(
-        '$baseUrl$path',
+        _url(path),
         savePath,
         options: Options(receiveTimeout: receiveTimeout),
       );
@@ -382,16 +390,16 @@ class ApiClient {
   }
 
   Future<dynamic> post(String path, {Object? body}) =>
-      _run(() => _dio.post<dynamic>('$baseUrl$path', data: body));
+      _run(() => _dio.post<dynamic>(_url(path), data: body));
 
   Future<dynamic> patch(String path, {Object? body}) =>
-      _run(() => _dio.patch<dynamic>('$baseUrl$path', data: body));
+      _run(() => _dio.patch<dynamic>(_url(path), data: body));
 
   Future<dynamic> put(String path, {Object? body}) =>
-      _run(() => _dio.put<dynamic>('$baseUrl$path', data: body));
+      _run(() => _dio.put<dynamic>(_url(path), data: body));
 
   Future<dynamic> delete(String path, {Object? body}) =>
-      _run(() => _dio.delete<dynamic>('$baseUrl$path', data: body));
+      _run(() => _dio.delete<dynamic>(_url(path), data: body));
 
   Future<dynamic> upload(
     String path,
@@ -401,7 +409,7 @@ class ApiClient {
     Map<String, dynamic>? fields,
   }) => _run(
     () => _dio.post<dynamic>(
-      '$baseUrl$path',
+      _url(path),
       data: FormData.fromMap({'file': file, ...?fields}),
       onSendProgress: onSendProgress,
       cancelToken: cancelToken,
@@ -427,7 +435,7 @@ class ApiClient {
     final token = _storage.accessToken;
     return sse_transport.openEventStream(
       dio: _dio,
-      url: '$baseUrl$path',
+      url: _url(path),
       headers: {
         'Accept': 'text/event-stream',
         // Attach the bearer explicitly: the streamed request must carry auth on

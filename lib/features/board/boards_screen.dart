@@ -22,12 +22,13 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
+import 'board_links.dart';
 import 'board_manage_menu.dart';
 import 'create_board_dialog.dart';
 
 // ─────────────────────────── BoardScreen ──────────────────────────────────
 // Shown at /board — lists all boards across projects; can filter by project.
-// Tapping a board card navigates to /boards/:id.
+// Tapping a board card opens it at /board/:id, on top of this list.
 
 class BoardScreen extends StatefulWidget {
   const BoardScreen({super.key});
@@ -69,11 +70,38 @@ class _BoardScreenState extends State<BoardScreen> {
     return false;
   }
 
+  /// Whether the boards have to be read the next time this list is on screen.
+  ///
+  /// A board opened from here, or straight from a link, sits on top of this
+  /// list (HIN-114). Reading every project, board and team for a list nobody is
+  /// looking at would compete with the board's own first requests, so the list
+  /// waits until its route is the current one.
+  bool _stale = true;
+
   @override
   void initState() {
     super.initState();
-    _boardSub = BoardEvents.instance.changes.listen((_) => _load());
-    _load();
+    _boardSub = BoardEvents.instance.changes.listen((_) {
+      _stale = true;
+      _loadIfShown();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadIfShown();
+  }
+
+  /// Reads the boards when they are stale and the list is on screen.
+  void _loadIfShown() {
+    if (!mounted) return;
+    // Asked before anything else: it subscribes to the route, which is what
+    // calls this again once the board above the list is closed.
+    final shown = ModalRoute.isCurrentOf(context) ?? true;
+    if (!shown || !_stale) return;
+    _stale = false;
+    unawaited(_load());
   }
 
   @override
@@ -120,7 +148,7 @@ class _BoardScreenState extends State<BoardScreen> {
       initialProjectId: _projectFilter,
     );
     if (created != null && mounted) {
-      context.push('/boards/${created.id}');
+      context.go(boardLocation(created.id));
     }
   }
 
@@ -332,7 +360,7 @@ class _BoardListCard extends StatelessWidget {
 
     return SoftCard(
       color: AppColors.pastelFor(index),
-      onTap: () => context.push('/boards/${board.id}'),
+      onTap: () => context.go(boardLocation(board.id)),
       padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

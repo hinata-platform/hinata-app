@@ -21,6 +21,7 @@ import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart' show glassWoltSurface;
+import 'board_links.dart';
 import 'board_manage_menu.dart';
 import '../../core/repositories/board_repository.dart';
 import '../../core/repositories/project_repository.dart';
@@ -29,20 +30,19 @@ import '../../core/widgets/hive_widgets.dart' show forwardArrow;
 
 /// Lists all boards for a single project and allows creating new ones.
 class ProjectBoardsScreen extends StatefulWidget {
-  const ProjectBoardsScreen({
-    super.key,
-    required this.projectId,
-    required this.projectName,
-  });
+  const ProjectBoardsScreen({super.key, required this.projectId});
 
   final String projectId;
-  final String projectName;
 
   @override
   State<ProjectBoardsScreen> createState() => _ProjectBoardsScreenState();
 }
 
-typedef _BoardsData = ({List<AgileBoard> boards, bool canManageProject});
+typedef _BoardsData = ({
+  String projectName,
+  List<AgileBoard> boards,
+  bool canManageProject,
+});
 
 class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
   late final FetchCubit<_BoardsData> _cubit;
@@ -50,6 +50,14 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
   /// Re-fetch when the set of boards changes anywhere in the app — a board
   /// created or deleted from the overview belongs in this project's list too.
   StreamSubscription<void>? _boardSub;
+
+  /// Whether the list has to be read the next time it is on screen.
+  ///
+  /// A board opened from here sits on top of this list, also after a reload of
+  /// its address (HIN-114). Reading the boards, the project and every team for
+  /// a list nobody is looking at would compete with the board's own first
+  /// requests, so the list waits until its route is the current one.
+  bool _stale = true;
 
   @override
   void initState() {
@@ -75,9 +83,22 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
                     t.projectIds.contains(widget.projectId) &&
                     (t.membershipOf(me.id)?.isAdmin ?? false),
               ));
-      return (boards: boards, canManageProject: canManageProject);
-    })..load();
-    _boardSub = BoardEvents.instance.changes.listen((_) => _cubit.load());
+      return (
+        projectName: project.name,
+        boards: boards,
+        canManageProject: canManageProject,
+      );
+    });
+    _boardSub = BoardEvents.instance.changes.listen((_) {
+      _stale = true;
+      _loadIfShown();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadIfShown();
   }
 
   @override
@@ -87,8 +108,20 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
     super.dispose();
   }
 
+  /// Reads the list when it is stale and on screen.
+  void _loadIfShown() {
+    if (!mounted) return;
+    // Asked before anything else: it subscribes to the route, which is what
+    // calls this again once the board above the list is closed.
+    final shown = ModalRoute.isCurrentOf(context) ?? true;
+    if (!shown || !_stale) return;
+    _stale = false;
+    unawaited(_cubit.load());
+  }
+
   Future<void> _showCreate() async {
     final boards = context.read<BoardRepository>();
+    final projectName = _cubit.state.data?.projectName ?? '';
     await WoltModalSheet.show<AgileBoard?>(
       context: context,
       pageContentDecorator: glassWoltSurface,
@@ -101,7 +134,7 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
             value: boards,
             child: _CreateBoardBody(
               projectId: widget.projectId,
-              projectName: widget.projectName,
+              projectName: projectName,
             ),
           ),
         ),
@@ -119,143 +152,146 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen> {
   @override
   Widget build(BuildContext context) {
     final myId = context.read<AuthBloc>().state.user?.id;
-    return PageChrome(
-      title: widget.projectName.isNotEmpty
-          ? widget.projectName
-          : context.t('board.boards'),
-      child: BlocProvider.value(
-        value: _cubit,
-        child: BlocBuilder<FetchCubit<_BoardsData>, FetchState<_BoardsData>>(
-          builder: (context, state) {
-            final boardList = state.data?.boards ?? const <AgileBoard>[];
-            final canManageProject = state.data?.canManageProject ?? false;
-            return RefreshIndicator(
-              onRefresh: _cubit.load,
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  SliverPadding(
-                    padding: EdgeInsets.fromLTRB(
-                      context.pageGutter,
-                      16 + context.topGutter,
-                      context.pageGutter,
-                      8,
-                    ),
-                    sliver: SliverToBoxAdapter(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            // The project name already heads the shell bar via
-                            // PageChrome — only the section title lives here.
-                            child: Text(
-                              context.t('board.boards'),
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                              overflow: TextOverflow.ellipsis,
+    return BlocBuilder<FetchCubit<_BoardsData>, FetchState<_BoardsData>>(
+      bloc: _cubit,
+      builder: (context, state) {
+        final projectName = state.data?.projectName ?? '';
+        final boardList = state.data?.boards ?? const <AgileBoard>[];
+        final canManageProject = state.data?.canManageProject ?? false;
+        return PageChrome(
+          title: projectName.isNotEmpty
+              ? projectName
+              : context.t('board.boards'),
+          child: RefreshIndicator(
+            onRefresh: _cubit.load,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(
+                    context.pageGutter,
+                    16 + context.topGutter,
+                    context.pageGutter,
+                    8,
+                  ),
+                  sliver: SliverToBoxAdapter(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          // The project name already heads the shell bar via
+                          // PageChrome — only the section title lives here.
+                          child: Text(
+                            context.t('board.boards'),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        FilledButton.icon(
+                          onPressed: _showCreate,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.accent,
+                            foregroundColor: const Color(0xFF2A2410),
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
                             ),
                           ),
-                          FilledButton.icon(
-                            onPressed: _showCreate,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.accent,
-                              foregroundColor: const Color(0xFF2A2410),
-                              textStyle: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                            icon: const Icon(LucideIcons.plus, size: 18),
-                            label: Text(context.t('board.newBoard')),
+                          icon: const Icon(LucideIcons.plus, size: 18),
+                          label: Text(context.t('board.newBoard')),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Also before the first read: the list starts unread and only
+                // reads once it is on screen.
+                if (boardList.isEmpty &&
+                    state.errorKey == null &&
+                    (state.isLoading || !state.hasData))
+                  const SliverFillRemaining(child: Center(child: HiveLoader()))
+                else if (state.errorKey != null && boardList.isEmpty)
+                  SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            context.t(state.errorKey!),
+                            style: TextStyle(color: AppColors.textSecondary),
+                          ),
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: _cubit.load,
+                            child: Text(context.t('common.retry')),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  if (state.isLoading && boardList.isEmpty)
-                    const SliverFillRemaining(
-                      child: Center(child: HiveLoader()),
-                    )
-                  else if (state.errorKey != null && boardList.isEmpty)
-                    SliverFillRemaining(
+                  )
+                else if (boardList.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: context.pageGutter,
+                        vertical: 24,
+                      ),
                       child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              context.t(state.errorKey!),
-                              style: TextStyle(color: AppColors.textSecondary),
+                        child: HiveEmptyState(
+                          title: context.t('board.title'),
+                          message: context.t('board.emptyProject'),
+                          action: FilledButton.icon(
+                            onPressed: _showCreate,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.accent,
+                              foregroundColor: const Color(0xFF2A2410),
                             ),
-                            const SizedBox(height: 12),
-                            OutlinedButton(
-                              onPressed: _cubit.load,
-                              child: Text(context.t('common.retry')),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  else if (boardList.isEmpty)
-                    SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: context.pageGutter,
-                          vertical: 24,
-                        ),
-                        child: Center(
-                          child: HiveEmptyState(
-                            title: context.t('board.title'),
-                            message: context.t('board.emptyProject'),
-                            action: FilledButton.icon(
-                              onPressed: _showCreate,
-                              style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.accent,
-                                foregroundColor: const Color(0xFF2A2410),
-                              ),
-                              icon: const Icon(LucideIcons.plus, size: 18),
-                              label: Text(context.t('board.newBoard')),
-                            ),
+                            icon: const Icon(LucideIcons.plus, size: 18),
+                            label: Text(context.t('board.newBoard')),
                           ),
                         ),
-                      ),
-                    )
-                  else
-                    SliverPadding(
-                      padding: EdgeInsets.fromLTRB(
-                        context.pageGutter,
-                        context.pageGutter,
-                        context.pageGutter,
-                        context.pageGutter + context.bottomGutter,
-                      ),
-                      sliver: SliverGrid(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: context.gridColumns(
-                            minTileWidth: 280,
-                          ),
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                          mainAxisExtent: 140,
-                        ),
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          final board = boardList[index];
-                          final canManage =
-                              canManageProject ||
-                              (myId != null && board.ownerId == myId);
-                          return _BoardCard(
-                            board: board,
-                            index: index,
-                            canManage: canManage,
-                            onMenu: (anchor) => _openBoardMenu(anchor, board),
-                          );
-                        }, childCount: boardList.length),
                       ),
                     ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
+                  )
+                else
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      context.pageGutter,
+                      context.pageGutter,
+                      context.pageGutter,
+                      context.pageGutter + context.bottomGutter,
+                    ),
+                    sliver: SliverGrid(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: context.gridColumns(minTileWidth: 280),
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                        mainAxisExtent: 140,
+                      ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final board = boardList[index];
+                        final canManage =
+                            canManageProject ||
+                            (myId != null && board.ownerId == myId);
+                        return _BoardCard(
+                          board: board,
+                          index: index,
+                          canManage: canManage,
+                          // Under this project's boards, so back returns here.
+                          onOpen: () => context.go(
+                            projectBoardLocation(widget.projectId, board.id),
+                          ),
+                          onMenu: (anchor) => _openBoardMenu(anchor, board),
+                        );
+                      }, childCount: boardList.length),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -265,19 +301,21 @@ class _BoardCard extends StatelessWidget {
     required this.board,
     required this.index,
     required this.canManage,
+    required this.onOpen,
     required this.onMenu,
   });
 
   final AgileBoard board;
   final int index;
   final bool canManage;
+  final VoidCallback onOpen;
   final void Function(BuildContext anchor) onMenu;
 
   @override
   Widget build(BuildContext context) {
     return SoftCard(
       color: AppColors.pastelFor(index),
-      onTap: () => context.push('/boards/${board.id}'),
+      onTap: onOpen,
       padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,6 +406,8 @@ class _CreateBoardBody extends StatefulWidget {
   const _CreateBoardBody({required this.projectId, required this.projectName});
 
   final String projectId;
+
+  /// Empty while the project has not been read yet.
   final String projectName;
 
   @override
@@ -407,14 +447,16 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
             ),
-            const SizedBox(height: 6),
-            Text(
-              context.t(
-                'board.forProject',
-                variables: {'project': widget.projectName},
+            if (widget.projectName.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                context.t(
+                  'board.forProject',
+                  variables: {'project': widget.projectName},
+                ),
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
               ),
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-            ),
+            ],
             const SizedBox(height: 20),
             TextFormField(
               controller: _name,

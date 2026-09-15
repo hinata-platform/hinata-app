@@ -85,7 +85,7 @@ List<NavDestination> allDestinations({required bool advancedTime}) => [
 
 /// Whether the nav entry for [navRoute] should read as active at [location].
 ///
-/// `/boards/:id` → the Board entry, `/projects/:id/*` → Projects, and so on:
+/// `/board/:id` → the Board entry, `/projects/:id/*` → Projects, and so on:
 /// a detail page keeps its section lit.
 bool isNavActive(
   String location,
@@ -93,7 +93,7 @@ bool isNavActive(
   required bool advancedTime,
 }) {
   if (navRoute == '/board') {
-    return location.startsWith('/board') || location.startsWith('/boards/');
+    return location.startsWith('/board');
   }
   if (navRoute == '/projects') {
     return location.startsWith('/projects');
@@ -168,7 +168,7 @@ String? subPageTitleKey(String location, {required bool advancedTime}) {
   }
   if (location.startsWith('/issues/')) return 'nav.issues';
   if (location.startsWith('/knowledge/')) return 'nav.knowledge';
-  if (location.startsWith('/boards/')) return 'nav.board';
+  if (location.startsWith('/board/')) return 'nav.board';
   if (location.startsWith('/projects/')) return 'board.boards';
   if (location.startsWith('/teams/')) return 'nav.teams';
   return null;
@@ -187,7 +187,12 @@ String subPageBackRoute(String location) {
   if (location == '/admin') return '/settings';
   if (location.startsWith('/issues/')) return '/issues';
   if (location.startsWith('/knowledge/')) return '/knowledge';
-  if (location.startsWith('/boards/')) return '/board';
+  if (location.startsWith('/board/')) return '/board';
+  // A board opened from a project's boards leads back to that list.
+  final projectBoard = RegExp(
+    r'^(/projects/[^/]+/boards)/[^/]+',
+  ).firstMatch(location);
+  if (projectBoard != null) return projectBoard.group(1)!;
   if (location.startsWith('/projects/')) return '/projects';
   if (location.startsWith('/teams/')) return '/teams';
   return '/dashboard';
