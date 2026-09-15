@@ -290,7 +290,7 @@ class BoardTimelineCubit extends Cubit<BoardTimelineState>
     final ids = [
       for (final card in state.issues.take(kBoardMaxLinkCards)) card.id,
     ];
-    if (ids.isEmpty || unlessRead && _sameIds(ids, _linked)) return;
+    if (ids.isEmpty || unlessRead && sameIds(ids, _linked)) return;
     final read = ++_linksRead;
     try {
       final links = await _boards.links(boardId, ids);
@@ -300,13 +300,5 @@ class BoardTimelineCubit extends Cubit<BoardTimelineState>
     } catch (_) {
       // See above: the chart keeps what it draws.
     }
-  }
-
-  static bool _sameIds(List<String> ids, List<String> linked) {
-    if (ids.length != linked.length) return false;
-    for (var i = 0; i < ids.length; i++) {
-      if (ids[i] != linked[i]) return false;
-    }
-    return true;
   }
 }
