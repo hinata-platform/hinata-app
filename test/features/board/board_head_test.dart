@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hinata/core/blocs/auth_bloc.dart';
+import 'package:hinata/core/models/board_page_models.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/team_models.dart';
 import 'package:hinata/core/models/work_models.dart';
@@ -153,6 +154,8 @@ void main() {
         ),
         'login',
       );
+      // The search waits a moment for the next letter, then asks the server.
+      await tester.pump(const Duration(milliseconds: 350));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('login screen'), findsOneWidget);
@@ -234,19 +237,39 @@ class _FakeBoardRepository implements BoardRepository {
 
   final AgileBoard board;
 
+  /// Searches the way the server does: the title holds the text, any case.
   @override
-  Future<BoardView> boardView(String boardId, {String? sprintId}) async =>
-      BoardView(
-        board: board,
-        sprints: const [],
-        columns: const [
-          BoardColumnView(
-            name: 'Open',
-            states: ['OPEN'],
-            issues: [_login, _notes],
-          ),
-        ],
-      );
+  Future<BoardWallPage> wall(
+    String boardId, {
+    String? sprintId,
+    int size = kBoardPageSize,
+    BoardQuery query = BoardQuery.all,
+  }) async {
+    final text = query.text.trim().toLowerCase();
+    final cards = [
+      for (final card in const [_login, _notes])
+        if (text.isEmpty || card.title.toLowerCase().contains(text)) card,
+    ];
+    return BoardWallPage(
+      board: board,
+      sprints: const [],
+      columns: [
+        BoardColumnView(
+          name: 'Open',
+          states: const ['OPEN'],
+          issues: cards,
+          total: cards.length,
+        ),
+      ],
+    );
+  }
+
+  @override
+  Future<BoardFacets> facets(
+    String boardId, {
+    String? sprintId,
+    bool backlog = false,
+  }) async => BoardFacets.empty;
 
   @override
   dynamic noSuchMethod(Invocation invocation) =>
@@ -256,6 +279,11 @@ class _FakeBoardRepository implements BoardRepository {
 class _FakeProjectRepository implements ProjectRepository {
   @override
   Future<List<Project>> projects({bool archived = false}) async => const [
+    Project(id: 'p1', key: 'MOB', name: 'Mobile App'),
+  ];
+
+  @override
+  Future<List<Project>> resolveProjects(List<String> ids) async => const [
     Project(id: 'p1', key: 'MOB', name: 'Mobile App'),
   ];
 

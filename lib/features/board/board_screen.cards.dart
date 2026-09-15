@@ -203,6 +203,8 @@ class _BoardColumn extends StatefulWidget {
     this.laneMode = false,
     this.width = BoardWall.columnWidth,
     this.projectsById = const {},
+    this.loadingMore = false,
+    this.onLoadMore,
   });
 
   final BoardColumnView column;
@@ -242,12 +244,55 @@ class _BoardColumn extends StatefulWidget {
   /// Set by the wall from the space it has — see [boardColumnWidth].
   final double width;
 
+  /// Whether the column is reading its next page right now.
+  final bool loadingMore;
+
+  /// Reads the column's next page. Null when the column holds no more, and in
+  /// a lane, where the board offers the rest under its lanes.
+  final VoidCallback? onLoadMore;
+
   @override
   State<_BoardColumn> createState() => _BoardColumnState();
 }
 
 class _BoardColumnState extends State<_BoardColumn> {
   bool _hovered = false;
+
+  /// The column's own scroll, watched so reaching its end reads the next page.
+  final ScrollController _cards = ScrollController();
+
+  /// How close to the end of the loaded cards the next page is asked for.
+  static const double _nearEnd = 600;
+
+  @override
+  void initState() {
+    super.initState();
+    _cards.addListener(_askIfNearEnd);
+  }
+
+  @override
+  void dispose() {
+    _cards.dispose();
+    super.dispose();
+  }
+
+  void _askIfNearEnd() {
+    final ask = widget.onLoadMore;
+    if (ask == null || widget.loadingMore || !_cards.hasClients) return;
+    final position = _cards.position;
+    if (position.pixels >= position.maxScrollExtent - _nearEnd) ask();
+  }
+
+  /// A column whose loaded cards do not fill it can never be scrolled to its
+  /// end, so it asks for the next page as soon as it has been laid out.
+  void _fillIfShort() {
+    final ask = widget.onLoadMore;
+    if (!mounted || ask == null || widget.loadingMore || !_cards.hasClients) {
+      return;
+    }
+    final position = _cards.position;
+    if (position.hasContentDimensions && position.maxScrollExtent <= 0) ask();
+  }
 
   /// The key of [issue]'s project when this column refused it for a reason
   /// worth explaining — its workflow has no state here. Null when the drop is
@@ -262,7 +307,13 @@ class _BoardColumnState extends State<_BoardColumn> {
   Widget build(BuildContext context) {
     final column = widget.column;
     final issues = widget.issues;
-    final overWip = column.wipLimit != null && issues.length > column.wipLimit!;
+    // A lane counts the cards of its group; the flat wall every card the column
+    // holds on the server, loaded or not.
+    final count = widget.laneMode ? issues.length : column.count;
+    final overWip = column.wipLimit != null && count > column.wipLimit!;
+    if (!widget.laneMode && widget.onLoadMore != null && !widget.loadingMore) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fillIfShort());
+    }
     // Tint from the column's first workflow state, falling back to its display
     // name so the header dot still matches the theme when `states` is empty.
     // stateColor normalises case/separators, so either form resolves correctly.
@@ -270,8 +321,8 @@ class _BoardColumnState extends State<_BoardColumn> {
       column.states.isNotEmpty ? column.states.first : column.name,
     );
     final countLabel = column.wipLimit != null
-        ? '${issues.length}/${column.wipLimit}'
-        : '${issues.length}';
+        ? '$count/${column.wipLimit}'
+        : '$count';
 
     // On mouse-driven platforms the "add issue" button stays hidden until the
     // column is hovered; on touch platforms (no hover) it's always visible.
@@ -399,6 +450,7 @@ class _BoardColumnState extends State<_BoardColumn> {
                         child: issues.isEmpty
                             ? const SizedBox(height: 8)
                             : ListView.separated(
+                                controller: widget.laneMode ? null : _cards,
                                 shrinkWrap: true,
                                 physics: widget.laneMode
                                     ? const NeverScrollableScrollPhysics()
@@ -406,10 +458,14 @@ class _BoardColumnState extends State<_BoardColumn> {
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 2,
                                 ),
-                                itemCount: issues.length,
+                                itemCount:
+                                    issues.length + (widget.loadingMore ? 1 : 0),
                                 separatorBuilder: (_, _) =>
                                     const SizedBox(height: 9),
                                 itemBuilder: (context, index) {
+                                  if (index == issues.length) {
+                                    return const BoardLoadMore(loading: true);
+                                  }
                                   final issue = issues[index];
                                   // Plays only for the card that just completed a
                                   // drop; every other card renders untouched.

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../core/models/board_page_models.dart';
 import '../../core/models/work_models.dart';
 
 /// Whether [issue] answers a free-text search: its key, its title or one of its
@@ -120,6 +121,24 @@ class BoardFilter {
   bool matchesEpic(String? epicId) =>
       epics.isEmpty || (epicId != null && epics.contains(epicId));
 
+  /// This filter as the server narrows by it, with the search [text] and the
+  /// [shape] of the cards the board wants.
+  BoardQuery toQuery({
+    String text = '',
+    BoardCardShape shape = BoardCardShape.wall,
+  }) => BoardQuery(
+    text: text,
+    states: states,
+    types: types,
+    priorities: priorities,
+    assigneeIds: assignees,
+    reporterIds: authors,
+    labels: labels,
+    sprints: sprints,
+    epicIds: epics,
+    shape: shape,
+  );
+
   BoardFilter copyWith({
     Set<String>? states,
     Set<String>? types,
@@ -223,6 +242,37 @@ class BoardFilterOptions {
       sprints.isEmpty &&
       labels.isEmpty &&
       epics.isEmpty;
+
+  /// The options the server gathered over every card of a board, so a value
+  /// on a card nobody scrolled to is still there to filter by.
+  factory BoardFilterOptions.fromFacets(
+    BoardFacets facets, {
+    required List<Sprint> boardSprints,
+    required Iterable<String> projectLabels,
+    Iterable<String> epicIds = const [],
+  }) {
+    List<String> upper(List<String> values) => [
+      ...{
+        for (final value in values)
+          if (value.isNotEmpty) value.toUpperCase(),
+      },
+    ];
+    return BoardFilterOptions(
+      states: upper(facets.states),
+      types: upper(facets.types),
+      priorities: upper(facets.priorities),
+      assignees: facets.assigneeIds,
+      authors: facets.reporterIds,
+      sprints: [for (final s in boardSprints) s.id],
+      labels: [
+        ...{
+          ...facets.labels.where((l) => l.isNotEmpty),
+          ...projectLabels.where((l) => l.isNotEmpty),
+        },
+      ],
+      epics: epicIds.toList(),
+    );
+  }
 
   factory BoardFilterOptions.from({
     required Iterable<Issue> issues,

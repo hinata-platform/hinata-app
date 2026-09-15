@@ -41,7 +41,7 @@ class _Server implements BoardRepository {
   ];
 
   @override
-  Future<BoardWall> wall(
+  Future<BoardWallPage> wall(
     String boardId, {
     String? sprintId,
     int size = kBoardPageSize,
@@ -51,7 +51,7 @@ class _Server implements BoardRepository {
     if (wallGates.isNotEmpty) await wallGates.removeAt(0).future;
     final failure = wallFailure;
     if (failure != null) throw failure;
-    return BoardWall(
+    return BoardWallPage(
       board: const AgileBoard(id: 'b1', name: 'Board'),
       sprints: const [],
       sprintId: sprintId,

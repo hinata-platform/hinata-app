@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hinata/core/models/board_page_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/repositories/board_repository.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
@@ -173,17 +174,21 @@ class _FakeBoardRepository implements BoardRepository {
   bool didReset = false;
 
   @override
-  Future<BoardView> boardView(String boardId, {String? sprintId}) async =>
-      BoardView(
-        board: const AgileBoard(
-          id: 'b1',
-          name: 'Wall',
-          projectIds: ['A', 'B'],
-          columnsCustomized: true,
-        ),
-        sprints: const [],
-        columns: columns,
-      );
+  Future<BoardWallPage> wall(
+    String boardId, {
+    String? sprintId,
+    int size = kBoardPageSize,
+    BoardQuery query = BoardQuery.all,
+  }) async => BoardWallPage(
+    board: const AgileBoard(
+      id: 'b1',
+      name: 'Wall',
+      projectIds: ['A', 'B'],
+      columnsCustomized: true,
+    ),
+    sprints: const [],
+    columns: columns,
+  );
 
   @override
   Future<AgileBoard> updateBoardColumns(

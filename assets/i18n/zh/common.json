@@ -1293,7 +1293,8 @@
       "unassignedHint": "这些状态尚未分配到任何列。处于这些状态的事项不会显示在看板上。",
       "automatic": "恢复自动"
     },
-    "searchIssues": "搜索事项…"
+    "searchIssues": "搜索事项…",
+    "loadMore": "再显示 {{count}} 张"
   },
   "gantt": {
     "title": "时间轴",
