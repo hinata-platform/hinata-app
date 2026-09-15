@@ -23,6 +23,7 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/user_pronouns.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../admin/connect_hint.dart';
+import '../board/board_links.dart';
 import '../issues/issue_detail_sheet.dart';
 import '../sprint/modals/glass_modal.dart'
     show

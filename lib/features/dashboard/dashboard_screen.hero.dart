@@ -412,9 +412,7 @@ class _SprintHero extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => context.go(
-          sprint.boardId.isNotEmpty ? '/boards/${sprint.boardId}' : '/board',
-        ),
+        onTap: () => context.go(boardLocation(sprint.boardId)),
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),

@@ -14,9 +14,6 @@ import '../../features/auth/register_screen.dart';
 import '../../features/auth/reset_password_screen.dart';
 import '../../features/auth/sso_callback_screen.dart';
 import '../../features/auth/verify_email_screen.dart';
-import '../../features/board/board_screen.dart';
-import '../../features/board/boards_screen.dart';
-import '../../features/board/project_boards_screen.dart';
 import '../../features/connect/connect_screen.dart';
 import '../../features/connect/connecting_screen.dart';
 import '../../features/connect/update_required_screen.dart';
@@ -51,6 +48,7 @@ import '../../features/weekly_summary/weekly_summary_screen.dart';
 import '../blocs/app_config_bloc.dart';
 import '../blocs/auth_bloc.dart';
 import '../storage/app_storage.dart';
+import 'board_routes.dart';
 
 /// The root navigator, exposed so code that has no [BuildContext] can still
 /// push a route — currently the desktop camera delegate, which image_picker
@@ -429,27 +427,7 @@ GoRouter buildRouter({
               );
             },
           ),
-          GoRoute(
-            path: '/board',
-            pageBuilder: (_, state) => _transition(state, const BoardScreen()),
-          ),
-          GoRoute(
-            path: '/boards/:id',
-            pageBuilder: (_, state) => _transition(
-              state,
-              KanbanBoardScreen(boardId: state.pathParameters['id']!),
-            ),
-          ),
-          GoRoute(
-            path: '/projects/:id/boards',
-            pageBuilder: (_, state) => _transition(
-              state,
-              ProjectBoardsScreen(
-                projectId: state.pathParameters['id']!,
-                projectName: (state.extra as String?) ?? '',
-              ),
-            ),
-          ),
+          ...boardRoutes(_transition),
           GoRoute(
             path: '/gantt',
             pageBuilder: (_, state) => _transition(state, const GanttScreen()),

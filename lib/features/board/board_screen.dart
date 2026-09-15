@@ -44,8 +44,9 @@ part 'board_screen.header.dart';
 part 'board_screen.cards.dart';
 
 // ─────────────────────────── KanbanBoardScreen ────────────────────────────
-// Shown at /boards/:id — one board: a Kanban wall and its timeline, or the
-// Scrum planning, active sprint and insights.
+// Shown at /board/:id, or at /projects/:id/boards/:boardId when opened from a
+// project's boards. One board: a Kanban wall and its timeline, or the Scrum
+// planning, active sprint and insights.
 
 class KanbanBoardScreen extends StatefulWidget {
   const KanbanBoardScreen({super.key, required this.boardId});

@@ -19,6 +19,7 @@ import '../../core/widgets/hex_mark.dart' show HexMark;
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/status_widgets.dart';
+import '../board/board_links.dart';
 import '../issues/issue_detail_sheet.dart';
 import '../shell/page_chrome.dart';
 
@@ -667,9 +668,7 @@ class _SprintCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final pct = sprint.progressPercent;
     return _GlassCard(
-      onTap: () => context.go(
-        sprint.boardId.isNotEmpty ? '/boards/${sprint.boardId}' : '/board',
-      ),
+      onTap: () => context.go(boardLocation(sprint.boardId)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
