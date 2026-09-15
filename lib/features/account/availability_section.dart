@@ -161,7 +161,11 @@ class _AvailabilitySectionState extends State<AvailabilitySection> {
     setState(() => _validFrom = DateUtils.dateOnly(picked));
   }
 
-  Future<void> _pickCalendar(Rect? anchor) async {
+  /// The calendar row, which the menu of calendars hangs from.
+  final _calendarKey = GlobalKey();
+
+  Future<void> _pickCalendar() async {
+    final anchor = anchorRectOf(_calendarKey);
     if (anchor == null) return;
     final chosen = await showGlassMenu<String>(
       context: context,
@@ -269,19 +273,24 @@ class _AvailabilitySectionState extends State<AvailabilitySection> {
           step: _step,
         ),
       Divider(height: 1, color: AppColors.hairline2),
-      _PickerRow(
+      SettingRow(
         icon: LucideIcons.calendarCheck2,
         label: context.t('availability.pattern.validFrom'),
-        value: _validFrom == null
-            ? context.t('availability.pattern.today')
-            : MaterialLocalizations.of(context).formatMediumDate(_validFrom!),
-        onTap: (_) => _pickValidFrom(),
+        trailing: _PickedValue(
+          _validFrom == null
+              ? context.t('availability.pattern.today')
+              : MaterialLocalizations.of(context).formatMediumDate(_validFrom!),
+        ),
+        onTap: _pickValidFrom,
       ),
-      _PickerRow(
-        icon: LucideIcons.calendarHeart,
-        label: context.t('availability.pattern.calendar'),
-        value: _calendarLabel(context),
-        onTap: _pickCalendar,
+      KeyedSubtree(
+        key: _calendarKey,
+        child: SettingRow(
+          icon: LucideIcons.calendarHeart,
+          label: context.t('availability.pattern.calendar'),
+          trailing: _PickedValue(_calendarLabel(context)),
+          onTap: _pickCalendar,
+        ),
       ),
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
@@ -520,53 +529,34 @@ class _Arrow extends StatelessWidget {
   );
 }
 
-/// A row that opens a picker, handing it its own rectangle to hang from.
-class _PickerRow extends StatelessWidget {
-  const _PickerRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
+/// What a picker row currently holds, beside the chevron that says it opens.
+class _PickedValue extends StatelessWidget {
+  const _PickedValue(this.value);
 
-  final IconData icon;
-  final String label;
   final String value;
-  final ValueChanged<Rect?> onTap;
 
   @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: () => onTap(anchorRectOfContext(context)),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: AppColors.inkSoft),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(fontSize: 13.5, color: AppColors.ink),
+  Widget build(BuildContext context) => ConstrainedBox(
+    constraints: const BoxConstraints(maxWidth: 220),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.inkSoft,
             ),
           ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.end,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.inkSoft,
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Icon(LucideIcons.chevronDown, size: 14, color: AppColors.inkFaint),
-        ],
-      ),
+        ),
+        const SizedBox(width: 4),
+        Icon(LucideIcons.chevronDown, size: 14, color: AppColors.inkFaint),
+      ],
     ),
   );
 }
