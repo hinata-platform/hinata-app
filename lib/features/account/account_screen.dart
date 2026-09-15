@@ -19,6 +19,7 @@ import '../../core/models/account_models.dart';
 import '../../core/models/core_models.dart' show PlatformFlags;
 import '../../core/notifications/fcm_service.dart'
     show pushSupportedOnThisPlatform;
+import '../../core/responsive/golden_columns.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -38,6 +39,7 @@ import 'account_widgets.dart';
 import 'availability_section.dart';
 import 'time_preferences_section.dart';
 import 'pat_section.dart';
+import 'settings_layout.dart';
 import 'twofa_modals.dart';
 import 'package:hinata/core/widgets/user_pronouns.dart';
 
@@ -459,63 +461,59 @@ class _AccountScreenState extends State<AccountScreen> {
     // Phone: an index list whose rows open one section at a time, so the
     // surface never overloads. Desktop / tablet keep the single rich scroll.
     if (context.isCompact) return _compactView();
-    return _wideView(expanded: context.isExpanded);
+    return _wideView();
   }
 
-  /// Desktop (two-column) / tablet (single-column) layout — unchanged: every
-  /// section renders together on one scroll behind the account hero.
-  Widget _wideView({required bool expanded}) {
+  /// Desktop and tablet: every section on one scroll behind the account hero,
+  /// in as many golden columns as the width holds ([GoldenColumns]).
+  Widget _wideView() {
     final isAdmin = context.read<AuthBloc>().state.user?.isAdmin ?? false;
-    final left = <Widget>[
-      _securitySection(),
-      const SizedBox(height: 16),
-      _sessionsSection(),
-      const SizedBox(height: 16),
-      _notificationsSection(),
-      if (_advancedTime) ...[
-        const SizedBox(height: 16),
-        const TimePreferencesSection(),
-        const SizedBox(height: 16),
-        const AvailabilitySection(),
-      ],
-    ];
-    final right = <Widget>[
-      _accessSection(),
-      const SizedBox(height: 16),
-      _appearanceSection(),
-      if (_mcpEnabled) ...[const SizedBox(height: 16), const PatSection()],
-      // Admin area is its own top-level entry here, not buried in Appearance.
-      if (isAdmin) ...[const SizedBox(height: 16), _adminSection()],
-      const SizedBox(height: 16),
-      _dataSection(),
-      const SizedBox(height: 16),
-      _dangerSection(),
-    ];
-
+    // Resolved here, in build: the flag is watched, and a LayoutBuilder's
+    // builder runs during layout, where watching is not allowed.
+    final groups = settingsGroups(
+      timeTracking: _advancedTime,
+      tokens: _mcpEnabled,
+      admin: isAdmin,
+    );
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
         padding: context.pagePadding,
         children: [
-          // No in-page title: the shell's sub-page bar already shows back +
-          // "settings" for this route.
-          _profileHero(),
-          const SizedBox(height: 16),
-          if (expanded)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(flex: 1618, child: Column(children: left)),
-                const SizedBox(width: 16),
-                Expanded(flex: 1000, child: Column(children: right)),
-              ],
-            )
-          else
-            Column(children: [...left, const SizedBox(height: 16), ...right]),
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: goldenContentMax),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // No in-page title: the shell's sub-page bar already shows
+                  // back + "settings" for this route.
+                  _profileHero(),
+                  const SizedBox(height: 16),
+                  GoldenColumns<SettingsCard>(groups: groups, card: _card),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
+
+  Widget _card(SettingsCard card) => switch (card) {
+    SettingsCard.security => _securitySection(),
+    SettingsCard.sessions => _sessionsSection(),
+    SettingsCard.notifications => _notificationsSection(),
+    SettingsCard.timeTracking => const TimePreferencesSection(),
+    SettingsCard.availability => const AvailabilitySection(),
+    SettingsCard.access => _accessSection(),
+    SettingsCard.appearance => _appearanceSection(),
+    SettingsCard.tokens => const PatSection(),
+    // The admin area is its own entry here, not buried in Appearance.
+    SettingsCard.admin => _adminSection(),
+    SettingsCard.data => _dataSection(),
+    SettingsCard.danger => _dangerSection(),
+  };
 
   // --- compact (phone) master → detail --------------------------------------
 
