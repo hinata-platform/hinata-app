@@ -12,6 +12,7 @@ import '../../../core/repositories/board_repository.dart';
 import '../../../core/repositories/issue_repository.dart';
 import '../../../core/repositories/sprint_repository.dart';
 import '../../board/wall/board_reads.dart';
+import 'held_cards.dart';
 
 /// How many changes a move of many cards sends to the server at once: a
 /// sprint's worth moves quickly, and the reads that follow are not crowded
@@ -210,16 +211,8 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
   /// Counts the backlog pages asked for, so only the last one asked shows.
   int _backlogRead = 0;
 
-  /// What the server holds of each card while changes to it are under way:
-  /// its sprint and its story points as they were before the first of those
-  /// changes, and as every change the server took left them. A refused change
-  /// takes the card back to this rather than to what the planning showed when
-  /// the change began, which may itself be a change not taken yet.
-  final Map<String, String?> _heldSprint = {};
-  final Map<String, int?> _heldPoints = {};
-
-  /// How many changes to each card are under way.
-  final Map<String, int> _underWay = {};
+  /// What the server holds of the cards that changes are under way on.
+  final _held = HeldCards();
 
   /// Reads the sprints, each one's cards as deep as they are loaded, and the
   /// backlog page on screen. A new search or filter starts every sprint and
@@ -227,12 +220,12 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
   Future<void> load() async {
     final generation = startRead();
     final query = requestedQuery;
-    final held = state;
-    final first = held.status != SprintPlanningStatus.ready;
-    final same = query == held.query;
-    final backlogPage = same ? held.backlogPage : 0;
+    final before = state;
+    final first = before.status != SprintPlanningStatus.ready;
+    final same = query == before.query;
+    final backlogPage = same ? before.backlogPage : 0;
     emit(
-      held.copyWith(
+      before.copyWith(
         status: first ? SprintPlanningStatus.loading : null,
         refreshing: !first,
       ),
@@ -241,7 +234,7 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
       final sprints = await _sprints.sprints(boardId);
       final sizes = [
         for (final sprint in sprints)
-          same ? _depthOf(held, sprint.id) : sprintPageSize,
+          same ? _depthOf(before, sprint.id) : sprintPageSize,
       ];
       final reads = await Future.wait([
         for (var i = 0; i < sprints.length; i++)
@@ -269,7 +262,7 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
         for (var i = 0; i < sprints.length; i++)
           sprints[i].id: SprintContainer(
             items: deepened(
-              same ? held.containerOf(sprints[i].id).items : const [],
+              same ? before.containerOf(sprints[i].id).items : const [],
               reads[i],
               sizes[i],
               fresh,
@@ -293,10 +286,10 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
           backlogTotal: backlog.total,
           backlogPage: backlogPage,
           query: query,
-          users: sameOr(held.users, {
+          users: sameOr(before.users, {
             ...namedBy(
               kept,
-              held.users,
+              before.users,
               (card) => [card.assigneeId, ...card.assigneeIds],
             ),
             for (final read in reads)
@@ -432,17 +425,16 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
   /// state. Returns the refusal's message key, or null.
   Future<String?> moveToSprint(Issue issue, String? sprintId) async {
     if (issue.sprintId == sprintId) return null;
-    _begin(issue);
+    _held.begin(issue);
     emit(_moved(state, [issue], sprintId));
     try {
       await _issues.updateIssue(issue.id, {'sprintId': sprintId ?? ''});
     } catch (error) {
-      final held = {issue.id: _heldSprint[issue.id]};
-      _end(issue.id);
-      return _refused(_keyOf(error), () => _movedBack(held, sprintId));
+      final backTo = {issue.id: _held.sprintOf(issue.id)};
+      _held.end(issue.id);
+      return _refused(_keyOf(error), () => _movedBack(backTo, sprintId));
     }
-    _heldSprint[issue.id] = sprintId;
-    _end(issue.id);
+    _held.moved(issue.id, sprintId);
     if (isClosed) return null;
     await rereadSprints({issue.sprintId, sprintId});
     return null;
@@ -466,7 +458,7 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
     ];
     final unseen = wanted.difference(loaded.keys.toSet());
     if (moving.isEmpty && unseen.isEmpty) return null;
-    moving.forEach(_begin);
+    moving.forEach(_held.begin);
     emit(_moved(state, moving, sprintId));
     final all = [for (final card in moving) card.id, ...unseen];
     final refused = <String>{};
@@ -485,17 +477,20 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
               ),
       ]);
     }
-    final held = {
+    final backTo = {
       for (final card in moving)
-        if (refused.contains(card.id)) card.id: _heldSprint[card.id],
+        if (refused.contains(card.id)) card.id: _held.sprintOf(card.id),
     };
     for (final card in moving) {
-      if (!refused.contains(card.id)) _heldSprint[card.id] = sprintId;
-      _end(card.id);
+      if (refused.contains(card.id)) {
+        _held.end(card.id);
+      } else {
+        _held.moved(card.id, sprintId);
+      }
     }
     if (isClosed) return null;
     if (refusal case final error?) {
-      return _refused(_keyOf(error), () => _movedBack(held, sprintId));
+      return _refused(_keyOf(error), () => _movedBack(backTo, sprintId));
     }
     if (unseen.isEmpty) {
       await rereadSprints({for (final card in moving) card.sprintId, sprintId});
@@ -508,7 +503,7 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
   /// Sets [issue]'s story points, null to clear them: in place at once, and
   /// the sprint's head read again after.
   Future<String?> estimate(Issue issue, int? points) async {
-    _begin(issue);
+    _held.begin(issue);
     emit(
       _replaced(state, issue.id, (card) => card.copyWith(storyPoints: points)),
     );
@@ -518,8 +513,8 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
         points == null ? {'clearStoryPoints': true} : {'storyPoints': points},
       );
     } catch (error) {
-      final held = _heldPoints[issue.id];
-      _end(issue.id);
+      final heldPoints = _held.pointsOf(issue.id);
+      _held.end(issue.id);
       // Back to the points the server holds, unless another estimate set
       // others since.
       return _refused(
@@ -528,13 +523,12 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
           state,
           issue.id,
           (card) => card.storyPoints == points
-              ? card.copyWith(storyPoints: held)
+              ? card.copyWith(storyPoints: heldPoints)
               : card,
         ),
       );
     }
-    _heldPoints[issue.id] = points;
-    _end(issue.id);
+    _held.estimated(issue.id, points);
     if (isClosed) return null;
     if (issue.sprintId != null) await rereadSprints({issue.sprintId});
     return null;
@@ -562,14 +556,14 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
   /// would be spent on sprints that did not change.
   Future<void> rereadSprints(Set<String?> places) async {
     final generation = this.generation;
-    final held = state;
+    final before = state;
     final sprintIds = [
       for (final id in places)
-        if (id != null && held.containers.containsKey(id)) id,
+        if (id != null && before.containers.containsKey(id)) id,
     ];
     final withBacklog = places.contains(null);
     if (sprintIds.isEmpty && !withBacklog) return;
-    final sizes = [for (final id in sprintIds) _depthOf(held, id)];
+    final sizes = [for (final id in sprintIds) _depthOf(before, id)];
     try {
       final reads = await Future.wait([
         for (var i = 0; i < sprintIds.length; i++)
@@ -578,15 +572,15 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
             sprintId: sprintIds[i],
             size: sizes[i],
             summary: true,
-            query: held.query,
+            query: before.query,
           ),
         if (withBacklog)
           _boards.cards(
             boardId,
             backlog: true,
-            page: held.backlogPage,
+            page: before.backlogPage,
             size: backlogPageSize,
-            query: held.query,
+            query: before.query,
           ),
       ]);
       if (!isCurrent(generation)) return;
@@ -608,7 +602,7 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
         );
       }
       // Another backlog page may have been shown meanwhile.
-      final backlog = withBacklog && state.backlogPage == held.backlogPage
+      final backlog = withBacklog && state.backlogPage == before.backlogPage
           ? reads.last
           : null;
       emit(
@@ -644,33 +638,10 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
   static String _keyOf(Object error) =>
       error is ApiFailure ? error.message : 'errors.unexpected';
 
-  /// Notes a change to [card] under way. The first of the changes under way
-  /// notes what the server holds of the card.
-  void _begin(Issue card) {
-    if (!_underWay.containsKey(card.id)) {
-      _heldSprint[card.id] = card.sprintId;
-      _heldPoints[card.id] = card.storyPoints;
-    }
-    _underWay.update(card.id, (count) => count + 1, ifAbsent: () => 1);
-  }
-
-  /// Notes a change to the card [id] decided. Once none is under way, what the
-  /// server holds of the card is for the next read to show.
-  void _end(String id) {
-    final left = (_underWay[id] ?? 1) - 1;
-    if (left > 0) {
-      _underWay[id] = left;
-      return;
-    }
-    _underWay.remove(id);
-    _heldSprint.remove(id);
-    _heldPoints.remove(id);
-  }
-
   // ── the planning's arithmetic ────────────────────────────────────────────
 
-  int _depthOf(SprintPlanningState held, String sprintId) => math.min(
-    math.max(held.containerOf(sprintId).items.length, sprintPageSize),
+  int _depthOf(SprintPlanningState planning, String sprintId) => math.min(
+    math.max(planning.containerOf(sprintId).items.length, sprintPageSize),
     kBoardMaxPageSize,
   );
 
