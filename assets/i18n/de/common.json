@@ -520,6 +520,7 @@
     "noLabels": "Keine Stichwörter",
     "addLabel": "Stichwort suchen oder erstellen…",
     "createLabel": "\"{{name}}\" erstellen",
+    "labelsFull": "Ein Vorgang trägt höchstens {{max}} Stichwörter",
     "deleteLabel": "Stichwort löschen",
     "deleteLabelConfirm": "\"{{name}}\" aus diesem Projekt löschen? Es wird von allen Vorgängen entfernt, die es verwenden.",
     "startDate": "Startdatum",

@@ -520,6 +520,7 @@
     "noLabels": "No labels",
     "addLabel": "Search or create a label…",
     "createLabel": "Create \"{{name}}\"",
+    "labelsFull": "An issue carries up to {{max}} labels",
     "deleteLabel": "Delete label",
     "deleteLabelConfirm": "Delete \"{{name}}\" from this project? It will be removed from every issue that uses it.",
     "startDate": "Start date",

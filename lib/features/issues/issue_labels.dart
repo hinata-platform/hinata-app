@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
+import '../../core/models/work_models.dart'
+    show kIssueLabelMaxLength, kIssueMaxLabels;
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../sprint/modals/glass_modal.dart'
@@ -16,8 +19,9 @@ import '../sprint/modals/glass_modal.dart'
 /// anchored popover beside the field (like the other detail pickers); on phone
 /// it falls back to a bottom sheet. Lets the user toggle existing project
 /// labels, filter by typing, create a new label on the fly, and remove assigned
-/// ones. Returns the new selection (in vocabulary order), or null if dismissed
-/// without confirming.
+/// ones. An issue takes up to [kIssueMaxLabels] labels of up to
+/// [kIssueLabelMaxLength] characters, as the server does. Returns the new
+/// selection (in vocabulary order), or null if dismissed without confirming.
 Future<List<String>?> showLabelPicker(
   BuildContext context, {
   required List<String> available,
@@ -67,6 +71,10 @@ class _LabelPickerSheetState extends State<_LabelPickerSheet> {
   late final Set<String> _selected;
   String _query = '';
 
+  /// The issue carries as many labels as it may: more cannot be added, only
+  /// taken off.
+  bool get _full => _selected.length >= kIssueMaxLabels;
+
   @override
   void initState() {
     super.initState();
@@ -87,13 +95,14 @@ class _LabelPickerSheetState extends State<_LabelPickerSheet> {
 
   void _toggle(String label) {
     setState(() {
-      if (!_selected.remove(label)) _selected.add(label);
+      if (_selected.remove(label) || _full) return;
+      _selected.add(label);
     });
   }
 
   void _create(String raw) {
     final label = raw.trim();
-    if (label.isEmpty) return;
+    if (label.isEmpty || _full) return;
     setState(() {
       if (!_all.contains(label)) _all.add(label);
       _selected.add(label);
@@ -147,7 +156,7 @@ class _LabelPickerSheetState extends State<_LabelPickerSheet> {
         ? _all
         : _all.where((l) => l.toLowerCase().contains(q)).toList();
     final exists = _all.any((l) => l.toLowerCase() == q);
-    final canCreate = q.isNotEmpty && !exists;
+    final canCreate = q.isNotEmpty && !exists && !_full;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -186,6 +195,9 @@ class _LabelPickerSheetState extends State<_LabelPickerSheet> {
             onChanged: (v) => setState(() => _query = v),
             onSubmitted: canCreate ? _create : null,
             textInputAction: TextInputAction.done,
+            inputFormatters: [
+              LengthLimitingTextInputFormatter(kIssueLabelMaxLength),
+            ],
             decoration: InputDecoration(
               isDense: true,
               prefixIcon: Icon(
@@ -213,6 +225,17 @@ class _LabelPickerSheetState extends State<_LabelPickerSheet> {
             ),
           ),
         ),
+        if (_full)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+            child: Text(
+              context.t(
+                'issues.labelsFull',
+                variables: {'max': '$kIssueMaxLabels'},
+              ),
+              style: TextStyle(color: AppColors.inkFaint, fontSize: 12.5),
+            ),
+          ),
         Flexible(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),

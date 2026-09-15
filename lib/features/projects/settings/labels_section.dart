@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
@@ -8,7 +9,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/hue_colors.dart';
 import 'settings_common.dart';
 
-/// Labels card: colored, renamable chips with a recolor picker, plus add.
+/// Labels card: colored, renamable chips with a recolor picker, plus add. A
+/// label's name stops at [kIssueLabelMaxLength] characters, the longest label
+/// an issue takes.
 class LabelsSection extends StatefulWidget {
   const LabelsSection({
     super.key,
@@ -155,6 +158,9 @@ class _LabelChip extends StatelessWidget {
                 controller: controller,
                 onChanged: onRename,
                 textCapitalization: TextCapitalization.sentences,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(kIssueLabelMaxLength),
+                ],
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
@@ -215,6 +221,9 @@ class _AddLabelRow extends StatelessWidget {
             onSubmitted: (_) => onAdd(),
             textInputAction: TextInputAction.done,
             textCapitalization: TextCapitalization.sentences,
+            inputFormatters: [
+              LengthLimitingTextInputFormatter(kIssueLabelMaxLength),
+            ],
             decoration: settingsInput(
               context,
               hint: context.t('projectSettings.addLabelHint'),
