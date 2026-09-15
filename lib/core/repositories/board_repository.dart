@@ -113,12 +113,12 @@ class BoardRepository {
   /// parents those cards name. The server searches and filters by [query].
   /// Without [sprintId] the board's active sprint applies, as in [boardView];
   /// a [size] of 0 returns the columns alone.
-  Future<BoardWall> wall(
+  Future<BoardWallPage> wall(
     String boardId, {
     String? sprintId,
     int size = kBoardPageSize,
     BoardQuery query = BoardQuery.all,
-  }) async => BoardWall.fromJson(
+  }) async => BoardWallPage.fromJson(
     await _api.get(
           '/api/v1/boards/$boardId/wall',
           query: {'sprintId': ?sprintId, 'size': size, ...query.toQuery()},

@@ -92,14 +92,15 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
     super.dispose();
   }
 
-  /// Loads the board's current layout and the projects behind it. The view is
+  /// Loads the board's current layout and the projects behind it. The wall is
   /// the honest source: it already reflects renames and states added since a
-  /// hand-made layout was stored.
+  /// hand-made layout was stored. Asked for without cards, since the editor
+  /// arranges columns and never shows what is in them.
   Future<void> _load() async {
     final boardRepo = context.read<BoardRepository>();
     final projectRepo = context.read<ProjectRepository>();
     try {
-      final view = await boardRepo.boardView(widget.board.id);
+      final view = await boardRepo.wall(widget.board.id, size: 0);
       final projects = await projectRepo.resolveProjects(
         widget.board.projectIds,
       );

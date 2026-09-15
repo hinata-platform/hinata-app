@@ -39,9 +39,14 @@ class BoardTimeline extends StatefulWidget {
     required this.onOpen,
     this.links = const [],
     this.padding = EdgeInsets.zero,
+    this.onNearEnd,
   });
 
   final List<Issue> issues;
+
+  /// Called when the chart or the list of issues without a date is scrolled
+  /// close to its end, so the next page can be read. Null when all are loaded.
+  final VoidCallback? onNearEnd;
 
   /// The board's issue-link graph. Empty until it has loaded — the chart simply
   /// draws no connectors until then.
@@ -59,8 +64,12 @@ class _BoardTimelineState extends State<BoardTimeline> {
   final _hHeader = ScrollController();
   final _vBody = ScrollController();
   final _vLabels = ScrollController();
+  final _vUndated = ScrollController();
 
   bool _didInitialScroll = false;
+
+  /// How close to the end of a scroll the next page is asked for.
+  static const _nearEnd = 400.0;
 
   static const _pxPerDay = 30.0;
   static const _rowHeight = 44.0;
@@ -70,7 +79,11 @@ class _BoardTimelineState extends State<BoardTimeline> {
   void initState() {
     super.initState();
     _hBody.addListener(() => _follow(_hHeader, _hBody.offset));
-    _vBody.addListener(() => _follow(_vLabels, _vBody.offset));
+    _vBody.addListener(() {
+      _follow(_vLabels, _vBody.offset);
+      _askIfNearEnd(_vBody);
+    });
+    _vUndated.addListener(() => _askIfNearEnd(_vUndated));
   }
 
   @override
@@ -79,7 +92,15 @@ class _BoardTimelineState extends State<BoardTimeline> {
     _hHeader.dispose();
     _vBody.dispose();
     _vLabels.dispose();
+    _vUndated.dispose();
     super.dispose();
+  }
+
+  void _askIfNearEnd(ScrollController controller) {
+    final ask = widget.onNearEnd;
+    if (ask == null || !controller.hasClients) return;
+    final position = controller.position;
+    if (position.pixels >= position.maxScrollExtent - _nearEnd) ask();
   }
 
   void _follow(ScrollController follower, double offset) {
@@ -160,6 +181,7 @@ class _BoardTimelineState extends State<BoardTimeline> {
                   ConstrainedBox(
                     constraints: BoxConstraints(maxHeight: undatedCap),
                     child: SingleChildScrollView(
+                      controller: _vUndated,
                       child: _undatedSection(context, undated),
                     ),
                   ),
@@ -168,6 +190,7 @@ class _BoardTimelineState extends State<BoardTimeline> {
                 // it take the whole viewport and scroll instead of overflowing.
                 Expanded(
                   child: SingleChildScrollView(
+                    controller: _vUndated,
                     child: _undatedSection(context, undated),
                   ),
                 ),

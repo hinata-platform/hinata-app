@@ -1293,7 +1293,8 @@
       "unassignedHint": "これらのステータスにはまだ列がありません。該当する課題はボードに表示されません。",
       "automatic": "自動に戻す"
     },
-    "searchIssues": "課題を検索…"
+    "searchIssues": "課題を検索…",
+    "loadMore": "さらに {{count}} 件を表示"
   },
   "gantt": {
     "title": "タイムライン",

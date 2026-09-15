@@ -266,9 +266,11 @@ class BoardLane {
 }
 
 /// The epic an issue ultimately rolls up to (null = none): a standard issue's
-/// epic is its parent, a sub-task's epic is its grandparent. [byId] must index
-/// every project issue so a sub-task can reach its grandparent.
+/// epic is its parent, a sub-task's epic is its grandparent. A card of a board
+/// carries it from the server ([Issue.epicId]); for any other issue [byId] has
+/// to hold the parent, and for a sub-task the grandparent too.
 String? boardEpicOf(Issue i, Map<String, Issue> byId) {
+  if (i.epicId != null) return i.epicId;
   final pid = i.parentId;
   if (pid == null) return null;
   final parent = byId[pid];
@@ -573,6 +575,50 @@ Widget _laneCount(int count) => Container(
   ),
 );
 
+/// The way to a column's cards that are not loaded yet: how many are left,
+/// behind a quiet button, or a small spinner while they are being read.
+class BoardLoadMore extends StatelessWidget {
+  const BoardLoadMore({
+    super.key,
+    this.remaining = 0,
+    this.loading = false,
+    this.onPressed,
+  });
+
+  final int remaining;
+  final bool loading;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(
+          child: SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Center(
+        child: GhostButton(
+          label: context.t(
+            'board.loadMore',
+            variables: {'count': '$remaining'},
+          ),
+          icon: LucideIcons.chevronDown,
+          onPressed: onPressed,
+        ),
+      ),
+    );
+  }
+}
+
 /// Wraps a column's card list in a [Flexible] on the flat board (bounded
 /// viewport height) but renders it bare inside a swimlane, where the whole
 /// board scrolls as one unit and a [Flexible] would have no bounded height.
@@ -601,11 +647,17 @@ class BoardSwimlanes extends StatefulWidget {
     required this.columns,
     required this.lanes,
     required this.columnBuilder,
+    this.footerBuilder,
     this.padding = EdgeInsets.zero,
   });
 
   final List<BoardColumnView> columns;
   final List<BoardLane> lanes;
+
+  /// What goes under a column once all lanes are drawn, such as the way to its
+  /// cards that are not loaded yet. Null, or null for a column, draws nothing.
+  final Widget? Function(BoardColumnView column, double columnWidth)?
+  footerBuilder;
 
   /// Renders one column of a lane from the issues that fall in it. The [lane]
   /// carries the group context (e.g. the epic id as its key) so builders can
@@ -711,6 +763,21 @@ class _BoardSwimlanesState extends State<BoardSwimlanes> {
                     ),
                   SizedBox(height: _collapsed.contains(lane.key) ? 6 : 20),
                 ],
+                if (widget.footerBuilder != null)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (var i = 0; i < columns.length; i++) ...[
+                        if (i > 0) const SizedBox(width: gap),
+                        SizedBox(
+                          width: columnWidth,
+                          child:
+                              widget.footerBuilder!(columns[i], columnWidth) ??
+                              const SizedBox.shrink(),
+                        ),
+                      ],
+                    ],
+                  ),
               ],
             ),
           ),
