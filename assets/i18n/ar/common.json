@@ -520,6 +520,7 @@
     "noLabels": "لا توجد وسوم",
     "addLabel": "ابحث عن وسم أو أنشئ واحدًا…",
     "createLabel": "إنشاء «{{name}}»",
+    "labelsFull": "الحد الأقصى للوسوم في المهمة {{max}}",
     "deleteLabel": "حذف الوسم",
     "deleteLabelConfirm": "حذف «{{name}}» من هذا المشروع؟ سيُزال من كل مهمة تستخدمه.",
     "startDate": "تاريخ البدء",

@@ -520,6 +520,7 @@
     "noLabels": "ラベルなし",
     "addLabel": "ラベルを検索または作成…",
     "createLabel": "「{{name}}」を作成",
+    "labelsFull": "1つの課題に付けられるラベルは最大{{max}}個です",
     "deleteLabel": "ラベルを削除",
     "deleteLabelConfirm": "このプロジェクトから「{{name}}」を削除しますか? 使用しているすべての課題から外れます。",
     "startDate": "開始日",
