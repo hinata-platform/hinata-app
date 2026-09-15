@@ -172,9 +172,21 @@ void main() {
     for (final advancedTime in const [false, true]) {
       test('with the flag ${advancedTime ? 'on' : 'off'}', () {
         expect(
-          isNavActive('/boards/abc', '/board', advancedTime: advancedTime),
+          isNavActive('/board/abc', '/board', advancedTime: advancedTime),
           isTrue,
         );
+        // A board is a sub-page of the overview, and the overview is not one.
+        expect(
+          subPageTitleKey('/board/abc', advancedTime: advancedTime),
+          'nav.board',
+        );
+        expect(subPageTitleKey('/board', advancedTime: advancedTime), isNull);
+        expect(subPageBackRoute('/board/abc'), '/board');
+        expect(
+          subPageBackRoute('/projects/p1/boards/b1'),
+          '/projects/p1/boards',
+        );
+        expect(subPageBackRoute('/projects/p1/boards'), '/projects');
         expect(
           isNavActive(
             '/projects/p1/boards',

@@ -13,10 +13,17 @@ import '../models/work_models.dart';
 /// on [BoardEvents], so every screen that renders boards re-fetches without the
 /// screen that made the change having to know who else is on screen. See
 /// [BoardEvents] for why that lives here rather than at each call site.
+///
+/// A board id goes into a path encoded: it can come from an address anybody
+/// can write (HIN-114), and `a/b` has to stay one segment.
 class BoardRepository {
   BoardRepository(this._api);
 
   final ApiClient _api;
+
+  /// The path of one board, its id encoded.
+  static String _boardPath(String boardId) =>
+      '/api/v1/boards/${Uri.encodeComponent(boardId)}';
 
   Future<List<AgileBoard>> boards({String? projectId}) async =>
       ((await _api.get('/api/v1/boards', query: {'projectId': ?projectId}))
@@ -47,7 +54,7 @@ class BoardRepository {
   /// Renames a board (management action — server enforces owner/lead/admin).
   Future<AgileBoard> renameBoard(String boardId, String name) async {
     final board = AgileBoard.fromJson(
-      await _api.patch('/api/v1/boards/$boardId', body: {'name': name})
+      await _api.patch(_boardPath(boardId), body: {'name': name})
           as Map<String, dynamic>,
     );
     BoardEvents.instance.notifyChanged();
@@ -63,7 +70,7 @@ class BoardRepository {
   ) async {
     final board = AgileBoard.fromJson(
       await _api.patch(
-            '/api/v1/boards/$boardId',
+            _boardPath(boardId),
             body: {'projectIds': projectIds},
           )
           as Map<String, dynamic>,
@@ -80,7 +87,7 @@ class BoardRepository {
     List<BoardColumnLayout> columns,
   ) async => AgileBoard.fromJson(
     await _api.patch(
-          '/api/v1/boards/$boardId',
+          _boardPath(boardId),
           body: {
             'columns': [for (final c in columns) c.toJson()],
           },
@@ -93,7 +100,7 @@ class BoardRepository {
   Future<AgileBoard> resetBoardColumns(String boardId) async =>
       AgileBoard.fromJson(
         await _api.patch(
-              '/api/v1/boards/$boardId',
+              _boardPath(boardId),
               body: {'resetColumns': true},
             )
             as Map<String, dynamic>,
@@ -111,7 +118,7 @@ class BoardRepository {
     BoardQuery query = BoardQuery.all,
   }) async => BoardWallPage.fromJson(
     await _api.get(
-          '/api/v1/boards/$boardId/wall',
+          '${_boardPath(boardId)}/wall',
           query: {'sprintId': ?sprintId, 'size': size, ...query.toQuery()},
         )
         as Map<String, dynamic>,
@@ -134,7 +141,7 @@ class BoardRepository {
     BoardQuery query = BoardQuery.all,
   }) async => BoardCardPage.fromJson(
     await _api.get(
-          '/api/v1/boards/$boardId/cards',
+          '${_boardPath(boardId)}/cards',
           query: {
             'column': ?column,
             'sprintId': ?sprintId,
@@ -157,7 +164,7 @@ class BoardRepository {
     BoardCardShape shape = BoardCardShape.wall,
   }) async => BoardFacets.fromJson(
     await _api.get(
-          '/api/v1/boards/$boardId/facets',
+          '${_boardPath(boardId)}/facets',
           query: {if (shape != BoardCardShape.wall) 'shape': shape.name},
         )
         as Map<String, dynamic>,
@@ -167,7 +174,7 @@ class BoardRepository {
   /// of them: the connectors the timeline draws between the cards it has
   /// loaded, without reading every issue of the board's projects for them.
   Future<List<GanttLink>> links(String boardId, List<String> ids) async =>
-      ((await _api.post('/api/v1/boards/$boardId/links', body: {'ids': ids}))
+      ((await _api.post('${_boardPath(boardId)}/links', body: {'ids': ids}))
               as List<dynamic>)
           .map((l) => GanttLink.fromJson(l as Map<String, dynamic>))
           .toList();
@@ -175,7 +182,7 @@ class BoardRepository {
   /// Counts driving the board delete confirmation (sprints, issues to detach).
   Future<BoardDeletionImpact> boardDeletionImpact(String boardId) async =>
       BoardDeletionImpact.fromJson(
-        await _api.get('/api/v1/boards/$boardId/deletion-impact')
+        await _api.get('${_boardPath(boardId)}/deletion-impact')
             as Map<String, dynamic>,
       );
 
@@ -185,7 +192,7 @@ class BoardRepository {
     String boardId, {
     CancelToken? cancelToken,
   }) => _api.openEventStream(
-    '/api/v1/boards/$boardId/delete-stream',
+    '${_boardPath(boardId)}/delete-stream',
     cancelToken: cancelToken,
   );
 }

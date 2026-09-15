@@ -5,6 +5,8 @@
 /// page was left and entered again. The list was never told.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -81,7 +83,9 @@ void main() {
   group('the board overview', () {
     late _CountingBoardRepository boards;
 
-    Widget host() => MaterialApp(
+    /// With [navigator], the overview starts beneath a board, the way a board
+    /// opened from it or reloaded at its own address stands (HIN-114).
+    Widget host({GlobalKey<NavigatorState>? navigator}) => MaterialApp(
       debugShowCheckedModeBanner: false,
       home: MultiRepositoryProvider(
         providers: [
@@ -95,12 +99,61 @@ void main() {
         ],
         child: BlocProvider<AuthBloc>(
           create: (_) => _FakeAuthBloc(),
-          child: const Scaffold(body: BoardScreen()),
+          child: navigator == null
+              ? const Scaffold(body: BoardScreen())
+              : Navigator(
+                  key: navigator,
+                  onGenerateInitialRoutes: (_, _) => [
+                    MaterialPageRoute<void>(
+                      builder: (_) => const Scaffold(body: BoardScreen()),
+                    ),
+                    MaterialPageRoute<void>(builder: (_) => const _Board()),
+                  ],
+                ),
         ),
       ),
     );
 
     setUp(() => boards = _CountingBoardRepository());
+
+    testWidgets('reads nothing beneath a board until it is shown', (
+      tester,
+    ) async {
+      tester.view
+        ..physicalSize = const Size(1200, 900)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final navigator = GlobalKey<NavigatorState>();
+
+      await tester.pumpWidget(host(navigator: navigator));
+      await tester.pumpAndSettle();
+      // Three whole collections for a list nobody sees would compete with the
+      // board's own first requests.
+      expect(boards.loads, 0);
+
+      navigator.currentState!.pop();
+      await tester.pumpAndSettle();
+      expect(boards.loads, 1);
+      expect(find.text('Stupa Website'), findsOneWidget);
+
+      // A board made while the list is covered again is read once it is back.
+      unawaited(navigator.currentState!.push(
+        MaterialPageRoute<void>(builder: (_) => const _Board()),
+      ));
+      await tester.pumpAndSettle();
+      boards.catalogue = const [
+        AgileBoard(id: 'b1', name: 'Stupa Website', projectIds: ['p1']),
+        AgileBoard(id: 'b2', name: 'Ersti Woche', projectIds: ['p1']),
+      ];
+      BoardEvents.instance.notifyChanged();
+      await tester.pumpAndSettle();
+      expect(boards.loads, 1);
+
+      navigator.currentState!.pop();
+      await tester.pumpAndSettle();
+      expect(boards.loads, 2);
+      expect(find.text('Ersti Woche'), findsOneWidget);
+    });
 
     testWidgets('picks up a board created while it is still on the stack', (
       tester,
@@ -209,6 +262,14 @@ class _FakeTeamRepository implements TeamRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} is not faked');
+}
+
+/// Stands in for a board opened on top of the overview.
+class _Board extends StatelessWidget {
+  const _Board();
+
+  @override
+  Widget build(BuildContext context) => const Scaffold(body: Text('board'));
 }
 
 /// The overview only reads the signed-in user to decide who may manage a
