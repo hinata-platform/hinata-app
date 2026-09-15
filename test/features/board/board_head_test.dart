@@ -295,8 +295,6 @@ class _FakeBoardRepository implements BoardRepository {
   @override
   Future<BoardFacets> facets(
     String boardId, {
-    String? sprintId,
-    bool backlog = false,
     BoardCardShape shape = BoardCardShape.wall,
   }) async => BoardFacets.empty;
 

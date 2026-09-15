@@ -129,6 +129,9 @@ class _Issues implements IssueRepository {
 
   final _Server server;
   Object? refusal;
+
+  /// Cards the server refuses to change, whatever the change.
+  final refusing = <String>{};
   int _running = 0;
   int mostAtOnce = 0;
 
@@ -138,7 +141,9 @@ class _Issues implements IssueRepository {
     mostAtOnce = math.max(mostAtOnce, _running);
     try {
       await Future<void>.delayed(Duration.zero);
-      final failure = refusal;
+      final failure =
+          refusal ??
+          (refusing.contains(id) ? ApiFailure('error.accessDenied') : null);
       if (failure != null) throw failure;
       final at = server.issues.indexWhere((card) => card.id == id);
       final card = server.issues[at];
@@ -353,6 +358,26 @@ void main() {
         expect(server.reads.last.query, SprintPlanningState.everything);
       },
     );
+
+    test(
+      'a planning back on screen reads again only the sprints that changed while it was away',
+      () async {
+        final planning = planningOver();
+        await planning.load();
+        final listed = sprints.calls;
+        final before = server.reads.length;
+
+        planning.catchUp(
+          SprintPlanningState.everything,
+          stale: false,
+          staleSprints: {'s2'},
+        );
+        await Future<void>.delayed(_settle);
+
+        expect(sprints.calls, listed, reason: 'no read of the whole planning');
+        expect(server.reads.skip(before).map((read) => read.sprintId), ['s2']);
+      },
+    );
   });
 
   group('changing', () {
@@ -499,6 +524,75 @@ void main() {
 
         expect(planning.state.containerOf('s2').total, 3);
         expect(planning.state.backlogTotal, 30);
+      },
+    );
+
+    test(
+      'a picked card the server refuses goes back, and the others move',
+      () async {
+        final planning = planningOver();
+        await planning.load();
+        final picked = [
+          for (final card in planning.state.backlog.take(3)) card.id,
+        ];
+        issues.refusing.add(picked[1]);
+
+        expect(await planning.moveAll(picked, 's2'), 'error.accessDenied');
+
+        expect(
+          [
+            for (final card in server.issues)
+              if (picked.contains(card.id)) card.sprintId,
+          ],
+          ['s2', null, 's2'],
+        );
+        expect(planning.state.containerOf('s2').total, 5);
+        expect(planning.state.backlogTotal, 28);
+      },
+    );
+
+    test(
+      'changes refused while others are under way are each taken back alone, even when the planning cannot be read again',
+      () async {
+        final planning = planningOver();
+        await planning.load();
+        final first = planning.state.backlog[0];
+        final second = planning.state.backlog[1];
+        final estimated = planning.state.containerOf('s2').items.first;
+        issues.refusal = ApiFailure('error.accessDenied');
+        sprints.failure = ApiFailure('errors.network');
+
+        final changes = [
+          planning.moveToSprint(first, 's2'),
+          planning.moveToSprint(second, 's1'),
+          planning.estimate(estimated, 8),
+        ];
+        expect(
+          planning.state.containerOf('s2').items.map((card) => card.id),
+          contains(first.id),
+        );
+
+        expect(await Future.wait(changes), everyElement('error.accessDenied'));
+
+        expect(
+          planning.state.backlog.map((card) => card.id),
+          containsAll([first.id, second.id]),
+        );
+        expect(planning.state.backlogTotal, 30);
+        expect(planning.state.containerOf('s1').total, 60);
+        expect(planning.state.containerOf('s2').total, 3);
+        expect(
+          planning.state.containerOf('s2').items.map((card) => card.id),
+          isNot(contains(first.id)),
+        );
+        expect(
+          planning.state
+              .containerOf('s2')
+              .items
+              .firstWhere((card) => card.id == estimated.id)
+              .storyPoints,
+          2,
+        );
       },
     );
   });

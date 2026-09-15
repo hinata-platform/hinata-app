@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -104,10 +103,12 @@ typedef _TimelineRequest = ({String? sprintId, BoardQuery query});
 /// between the cards it has loaded.
 ///
 /// It reads only while the timeline is on screen, and a change elsewhere reads
-/// it again as deep as it was scrolled rather than from its first page. The
-/// links are those between the loaded cards alone, never every issue of the
-/// board's projects.
-class BoardTimelineCubit extends Cubit<BoardTimelineState> {
+/// it again as deep as it was scrolled: each list from its start, up to the
+/// most a page holds, keeping the cards beyond. The links are those between
+/// the loaded cards alone, never every issue of the board's projects, and are
+/// read again only for other cards or after a read of the whole timeline.
+class BoardTimelineCubit extends Cubit<BoardTimelineState>
+    with BoardReadGenerations<BoardTimelineState> {
   BoardTimelineCubit({
     required BoardRepository boards,
     required this.boardId,
@@ -119,14 +120,18 @@ class BoardTimelineCubit extends Cubit<BoardTimelineState> {
   final BoardRepository _boards;
   final String boardId;
   final int pageSize;
+
+  @override
   final Duration refreshDelay;
 
   _TimelineRequest? _requested;
-  bool _requestFailed = false;
   bool _outdated = false;
-  int _generation = 0;
+
+  /// Counts the reads of links, so only the last one asked for shows.
   int _linksRead = 0;
-  Timer? _refreshTimer;
+
+  /// The cards the links on the chart were read for.
+  List<String> _linked = const [];
 
   /// Shows the timeline of the sprint [sprintId], or of the whole board for
   /// null, narrowed to [query]: read from its first pages, unless it is the
@@ -136,7 +141,7 @@ class BoardTimelineCubit extends Cubit<BoardTimelineState> {
       sprintId: sprintId,
       query: query.copyWith(shape: BoardCardShape.timeline),
     );
-    if (requested == _requested && !_requestFailed) {
+    if (requested == _requested && !lastReadFailed) {
       return _outdated ? _read(keepDepth: true) : Future.value();
     }
     _requested = requested;
@@ -155,8 +160,7 @@ class BoardTimelineCubit extends Cubit<BoardTimelineState> {
   /// Like [refresh], a moment later, so a burst of changes is one read.
   void refreshSoon() {
     if (_requested == null) return;
-    _refreshTimer?.cancel();
-    _refreshTimer = Timer(refreshDelay, () => unawaited(refresh()));
+    scheduleRefresh(() => unawaited(refresh()));
   }
 
   /// Reads the next page: of the cards with a date while there are more of
@@ -168,7 +172,7 @@ class BoardTimelineCubit extends Cubit<BoardTimelineState> {
         !state.hasMore) {
       return;
     }
-    final generation = _generation;
+    final generation = this.generation;
     final dated = state.dated.length < state.datedTotal;
     final held = dated ? state.dated : state.undated;
     emit(state.copyWith(loadingMore: true));
@@ -181,7 +185,7 @@ class BoardTimelineCubit extends Cubit<BoardTimelineState> {
         size: pageSize,
         query: state.query,
       );
-      if (!_isCurrent(generation)) return;
+      if (!isCurrent(generation)) return;
       final appended = appendPage(dated ? state.dated : state.undated, page);
       emit(
         dated
@@ -196,23 +200,16 @@ class BoardTimelineCubit extends Cubit<BoardTimelineState> {
                 loadingMore: false,
               ),
       );
-      await _readLinks(generation);
+      await _readLinks(generation, unlessRead: true);
     } catch (_) {
-      if (!_isCurrent(generation)) return;
+      if (!isCurrent(generation)) return;
       emit(state.copyWith(loadingMore: false));
     }
   }
 
-  @override
-  Future<void> close() {
-    _refreshTimer?.cancel();
-    return super.close();
-  }
-
   Future<void> _read({required bool keepDepth}) async {
-    _refreshTimer?.cancel();
     _outdated = false;
-    final generation = ++_generation;
+    final generation = startRead();
     final requested = _requested!;
     final held = state;
     final ready = held.status == BoardTimelineStatus.ready;
@@ -230,17 +227,30 @@ class BoardTimelineCubit extends Cubit<BoardTimelineState> {
     );
     try {
       final reads = await Future.wait([
-        _pages(requested, dated: true, depth: same ? held.dated.length : 0),
-        _pages(requested, dated: false, depth: same ? held.undated.length : 0),
+        for (final dated in const [true, false])
+          _boards.cards(
+            boardId,
+            sprintId: requested.sprintId,
+            dated: dated,
+            size: pageSize,
+            query: requested.query,
+          ),
       ]);
-      if (!_isCurrent(generation)) return;
-      _requestFailed = false;
+      if (!isCurrent(generation)) return;
+      final fresh = {
+        for (final read in reads)
+          for (final card in read.items) card.id,
+      };
       emit(
         BoardTimelineState(
           status: BoardTimelineStatus.ready,
-          dated: reads[0].items,
+          dated: same
+              ? deepened(held.dated, reads[0], pageSize, fresh)
+              : reads[0].items,
           datedTotal: reads[0].total,
-          undated: reads[1].items,
+          undated: same
+              ? deepened(held.undated, reads[1], pageSize, fresh)
+              : reads[1].items,
           undatedTotal: reads[1].total,
           // The connectors drawn so far stay until the new ones are there.
           links: same ? held.links : const [],
@@ -257,8 +267,8 @@ class BoardTimelineCubit extends Cubit<BoardTimelineState> {
   }
 
   void _failed(int generation, String errorKey) {
-    if (!_isCurrent(generation)) return;
-    _requestFailed = true;
+    if (!isCurrent(generation)) return;
+    readFailed();
     emit(
       state.copyWith(
         status: state.status == BoardTimelineStatus.ready
@@ -270,53 +280,33 @@ class BoardTimelineCubit extends Cubit<BoardTimelineState> {
     );
   }
 
-  /// One half of the timeline as deep as [depth] went: as many pages as that
-  /// took, read side by side, each card once.
-  Future<({List<Issue> items, int total})> _pages(
-    _TimelineRequest requested, {
-    required bool dated,
-    required int depth,
-  }) async {
-    final pages = math.max(1, (depth + pageSize - 1) ~/ pageSize);
-    final reads = await Future.wait([
-      for (var page = 0; page < pages; page++)
-        _boards.cards(
-          boardId,
-          sprintId: requested.sprintId,
-          dated: dated,
-          page: page,
-          size: pageSize,
-          query: requested.query,
-        ),
-    ]);
-    final seen = <String>{};
-    return (
-      items: [
-        for (final read in reads)
-          for (final card in read.items)
-            if (seen.add(card.id)) card,
-      ],
-      total: reads.first.total,
-    );
-  }
-
   /// Reads the links between the cards on screen, the first
   /// [kBoardMaxLinkCards] of them. The connectors are an overlay on a chart
   /// that renders without them, so links that do not come leave those drawn.
-  Future<void> _readLinks(int generation) async {
-    final read = ++_linksRead;
+  /// With [unlessRead] the links are not read again for the cards they were
+  /// read for: a page that brought no card, or only cards past the first
+  /// [kBoardMaxLinkCards], joins nothing new.
+  Future<void> _readLinks(int generation, {bool unlessRead = false}) async {
     final ids = [
       for (final card in state.issues.take(kBoardMaxLinkCards)) card.id,
     ];
-    if (ids.isEmpty) return;
+    if (ids.isEmpty || unlessRead && _sameIds(ids, _linked)) return;
+    final read = ++_linksRead;
     try {
       final links = await _boards.links(boardId, ids);
-      if (!_isCurrent(generation) || read != _linksRead) return;
+      if (!isCurrent(generation) || read != _linksRead) return;
+      _linked = ids;
       emit(state.copyWith(links: links));
     } catch (_) {
       // See above: the chart keeps what it draws.
     }
   }
 
-  bool _isCurrent(int generation) => !isClosed && generation == _generation;
+  static bool _sameIds(List<String> ids, List<String> linked) {
+    if (ids.length != linked.length) return false;
+    for (var i = 0; i < ids.length; i++) {
+      if (ids[i] != linked[i]) return false;
+    }
+    return true;
+  }
 }
