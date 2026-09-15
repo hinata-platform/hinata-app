@@ -441,10 +441,10 @@ const double _kDayLine = 22;
 /// What a cell keeps between its own edge and what it draws.
 const double _kCellPad = 3;
 
-/// Ink on the amber disc today's number sits in. A fixed near-black rather than
-/// a theme token: the disc is [AppColors.accentStrong] in both themes, so what
-/// reads on it does not change with the theme either.
-const Color _onAccent = Color(0xFF2A2410);
+/// Ink on the amber disc today's number sits in: white, which reads on the
+/// honey in both themes. Fixed rather than a theme token, because the disc is
+/// [AppColors.accentStrong] in both themes.
+const Color _onAccent = Colors.white;
 
 /// The gap above each chip.
 const double _kChipGap = 2;
