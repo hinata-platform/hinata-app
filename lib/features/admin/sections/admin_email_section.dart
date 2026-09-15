@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/branding/org_logo.dart';
 import '../../../core/i18n/i18n.dart';
+import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
 import 'ingest_connections_card.dart';
 
@@ -22,11 +23,9 @@ class _AdminEmailSectionState extends State<AdminEmailSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ─── Outbound SMTP ───────────────────────────────────────
-        AdminSectionCard(
+    return AdminCards(
+      cards: {
+        'smtp': AdminSectionCard(
           icon: LucideIcons.send,
           title: context.t('admin.smtpTitle'),
           subtitle: context.t('admin.smtpHint'),
@@ -98,14 +97,10 @@ class _AdminEmailSectionState extends State<AdminEmailSection> {
             ],
           ],
         ),
-
-        const SizedBox(height: 16),
-
-        // ─── Email-to-Ticket (IMAP ingest) ───────────────────────
         // Self-contained connection management: own endpoints, saves
-        // immediately — independent of the section-level settings save.
-        const IngestConnectionsCard(),
-      ],
+        // immediately, independent of the section-level settings save.
+        'ingest': const IngestConnectionsCard(),
+      },
     );
   }
 }

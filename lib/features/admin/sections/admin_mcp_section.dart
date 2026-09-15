@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
 
 /// Admin → MCP (Model Context Protocol) server.
@@ -52,14 +53,10 @@ class _AdminMcpSectionState extends State<AdminMcpSection> {
   @override
   Widget build(BuildContext context) {
     final serverName = (_mcp['serverName'] as String?)?.trim();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AdminNote(text: context.t('admin.mcpHint')),
-        const SizedBox(height: 16),
-
-        // ── Server info (read-only) ───────────────────────────────────────
-        AdminSectionCard(
+    return AdminCards(
+      note: AdminNote(text: context.t('admin.mcpHint')),
+      cards: {
+        'server': AdminSectionCard(
           icon: LucideIcons.plug,
           title: context.t('admin.mcpServerTitle'),
           subtitle: context.t('admin.mcpServerHint'),
@@ -72,10 +69,7 @@ class _AdminMcpSectionState extends State<AdminMcpSection> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-
-        // ── Access & limits ───────────────────────────────────────────────
-        AdminSectionCard(
+        'access': AdminSectionCard(
           icon: LucideIcons.keyRound,
           title: context.t('admin.mcpAccessTitle'),
           subtitle: context.t('admin.mcpAccessHint'),
@@ -102,7 +96,7 @@ class _AdminMcpSectionState extends State<AdminMcpSection> {
             ),
           ],
         ),
-      ],
+      },
     );
   }
 }

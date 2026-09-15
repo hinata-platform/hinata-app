@@ -395,7 +395,17 @@ class _GoldenColumnsState<T> extends State<GoldenColumns<T>> {
     );
     final columns = arrangement.columns;
     if (columns.isEmpty) return const SizedBox.shrink();
-    if (columns.length == 1) return column(columns.single);
+    if (columns.length == 1) {
+      // A page of one card would otherwise run the whole width of a wide
+      // screen, and a form that wide is no longer a column.
+      return Align(
+        alignment: AlignmentDirectional.topStart,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: Breakpoints.readingWidth),
+          child: column(columns.single),
+        ),
+      );
+    }
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
