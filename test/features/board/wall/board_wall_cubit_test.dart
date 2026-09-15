@@ -7,6 +7,7 @@ import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/repositories/board_repository.dart';
 import 'package:hinata/core/repositories/issue_repository.dart';
+import 'package:hinata/features/board/wall/board_wall_columns.dart';
 import 'package:hinata/features/board/wall/board_wall_cubit.dart';
 
 Issue _card(String id, String state, double rank, {String? title}) => Issue(
@@ -300,6 +301,66 @@ void main() {
 
         expect(wall.state.failedColumns, isEmpty);
         expect(column(wall, 'Open').issues, hasLength(45));
+      },
+    );
+  });
+
+  group('reading on under lanes', () {
+    test('reads the next page of each column named that holds more', () async {
+      server.columns['Review'] = [
+        for (var i = 1; i <= 45; i++) _card('r$i', 'Review', i.toDouble()),
+      ];
+      final wall = wallOver();
+      await wall.load();
+
+      readOnUnderLanes(wall, ['Open', 'Done'], retry: false);
+      await pumpEventQueue();
+
+      expect([for (final page in server.pages) page.column], ['Open']);
+      expect(column(wall, 'Open').issues, hasLength(45));
+      expect(column(wall, 'Review').issues, hasLength(kBoardPageSize));
+    });
+
+    test(
+      'a column whose last page did not come reads again only on a retry',
+      () async {
+        final wall = wallOver();
+        await wall.load();
+        server.pageFailure = ApiFailure('errors.network');
+        await wall.loadMore('Open');
+        expect(wall.state.failedColumns, {'Open'});
+        server.pageFailure = null;
+
+        readOnUnderLanes(wall, ['Open'], retry: false);
+        await pumpEventQueue();
+        expect(wall.state.failedColumns, {'Open'});
+        expect(column(wall, 'Open').issues, hasLength(kBoardPageSize));
+
+        readOnUnderLanes(wall, ['Open'], retry: true);
+        await pumpEventQueue();
+        expect(wall.state.failedColumns, isEmpty);
+        expect(column(wall, 'Open').issues, hasLength(45));
+      },
+    );
+
+    test(
+      'a column holding as many cards as lanes draw reads no further',
+      () async {
+        server.columns['Open'] = [
+          for (var i = 1; i <= kBoardLaneMaxCards + 20; i++)
+            _card('o$i', 'Open', i.toDouble()),
+        ];
+        final wall = wallOver();
+        await wall.load();
+        while (column(wall, 'Open').issues.length < kBoardLaneMaxCards) {
+          await wall.loadMore('Open');
+        }
+        server.pages.clear();
+
+        readOnUnderLanes(wall, ['Open'], retry: true);
+        await pumpEventQueue();
+
+        expect(server.pages, isEmpty);
       },
     );
   });

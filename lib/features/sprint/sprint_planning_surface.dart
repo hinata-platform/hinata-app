@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
@@ -11,7 +12,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_bulk_bar.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../search/search_tokens.dart';
-import '../board/board_card_list.dart' show BoardLoadMore;
+import '../board/board_card_list.dart' show BoardReadOn;
 import '../board/issue_quick_create.dart';
 import 'planning/sprint_planning_cubit.dart';
 import 'sprint_format.dart';
@@ -24,7 +25,8 @@ import 'widgets/sprint_widgets.dart';
 ///
 /// Everything here comes from the server already searched and filtered. A
 /// sprint shows its cards a page at a time and counts its head over all of
-/// them, loaded or not, and its rows are built as they scroll into view.
+/// them, loaded or not. Its rows are built as they scroll into view, and it
+/// reads its next page by itself once the end of its rows comes within reach.
 class SprintPlanningSurface extends StatelessWidget {
   const SprintPlanningSurface({
     super.key,
@@ -100,6 +102,9 @@ class SprintPlanningSurface extends StatelessWidget {
     return Stack(
       children: [
         CustomScrollView(
+          // Rows are built this far ahead of the screen, so a sprint reads on
+          // before its last row comes into view.
+          scrollCacheExtent: const ScrollCacheExtent.pixels(BoardReadOn.reach),
           slivers: [
             SliverPadding(
               padding: EdgeInsets.fromLTRB(
@@ -124,7 +129,11 @@ class SprintPlanningSurface extends StatelessWidget {
                       onOpenIssue: onOpenIssue,
                       onEstimate: onEstimate,
                       onAccept: (issue) => onMoveToSprint(issue, s.id),
-                      onLoadMore: () => onLoadMore(s.id),
+                      // A read of the whole planning answers for every sprint
+                      // anew, so none reads on meanwhile.
+                      onLoadMore: planning.refreshing
+                          ? null
+                          : () => onLoadMore(s.id),
                       quickCreate: quickCreateSeed(s.id),
                       onCreated: onCreated,
                       action: s.id == activeSprintId
@@ -216,7 +225,7 @@ class _SprintGroup extends StatefulWidget {
     required this.onOpenIssue,
     required this.onEstimate,
     required this.onAccept,
-    required this.onLoadMore,
+    this.onLoadMore,
     required this.quickCreate,
     required this.onCreated,
     required this.action,
@@ -235,7 +244,10 @@ class _SprintGroup extends StatefulWidget {
   final void Function(Issue) onOpenIssue;
   final void Function(Issue) onEstimate;
   final void Function(Issue) onAccept;
-  final VoidCallback onLoadMore;
+
+  /// Reads the sprint's next page. Null while the whole planning is read
+  /// again.
+  final VoidCallback? onLoadMore;
   final IssueQuickCreateSeed quickCreate;
   final ValueChanged<Issue> onCreated;
   final Widget action;
@@ -281,6 +293,7 @@ class _SprintGroupState extends State<_SprintGroup> {
     final s = widget.sprint;
     final container = widget.container;
     final dropping = _hovering > 0;
+    final readOn = container.hasMore ? widget.onLoadMore : null;
     return TweenAnimationBuilder<Decoration>(
       tween: DecorationTween(
         end: BoxDecoration(
@@ -313,7 +326,7 @@ class _SprintGroupState extends State<_SprintGroup> {
             ),
           ),
           if (!_collapsed) ...[
-            if (container.items.isEmpty)
+            if (container.items.isEmpty && !container.hasMore)
               SliverToBoxAdapter(
                 child: _part(
                   Padding(
@@ -324,8 +337,22 @@ class _SprintGroupState extends State<_SprintGroup> {
               )
             else
               SliverList.builder(
-                itemCount: container.items.length,
+                // After the rows stands what reads the sprint on, built once
+                // the end of the rows comes within reach.
+                itemCount: container.items.length + (readOn == null ? 0 : 1),
                 itemBuilder: (context, index) {
+                  if (index == container.items.length) {
+                    return _part(
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 0, 10, 7),
+                        child: BoardReadOn(
+                          count: container.items.length,
+                          loading: container.loadingMore,
+                          onReadOn: readOn!,
+                        ),
+                      ),
+                    );
+                  }
                   final issue = container.items[index];
                   return _part(
                     Padding(
@@ -348,23 +375,10 @@ class _SprintGroupState extends State<_SprintGroup> {
               child: _part(
                 Padding(
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                  child: Column(
-                    children: [
-                      if (container.hasMore)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 7),
-                          child: BoardLoadMore(
-                            remaining: container.total - container.items.length,
-                            loading: container.loadingMore,
-                            onPressed: widget.onLoadMore,
-                          ),
-                        ),
-                      IssueQuickCreate(
-                        label: context.t('sprint.addIssue'),
-                        seed: widget.quickCreate,
-                        onCreated: widget.onCreated,
-                      ),
-                    ],
+                  child: IssueQuickCreate(
+                    label: context.t('sprint.addIssue'),
+                    seed: widget.quickCreate,
+                    onCreated: widget.onCreated,
                   ),
                 ),
               ),

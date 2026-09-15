@@ -1292,7 +1292,6 @@
       "automatic": "Revenir à l'automatique"
     },
     "searchIssues": "Rechercher des tickets…",
-    "loadMore": "Afficher {{count}} de plus",
     "laneLimit": "{{count}} de plus. Recherchez ou filtrez pour les trouver."
   },
   "gantt": {

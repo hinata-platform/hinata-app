@@ -1292,7 +1292,6 @@
       "automatic": "恢复自动"
     },
     "searchIssues": "搜索事项…",
-    "loadMore": "再显示 {{count}} 张",
     "laneLimit": "还有 {{count}} 张。请搜索或筛选来查找。"
   },
   "gantt": {
