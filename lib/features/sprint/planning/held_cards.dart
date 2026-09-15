@@ -25,10 +25,19 @@ class HeldCards {
   }
 
   /// The sprint the server holds the card [id] in, null for the backlog.
-  String? sprintOf(String id) => _sprints[id];
+  /// Known only while a change to the card is under way, from its [begin] to
+  /// the last [end].
+  String? sprintOf(String id) {
+    assert(_underWay.containsKey(id), 'No change to $id is under way.');
+    return _sprints[id];
+  }
 
-  /// The story points the server holds for the card [id].
-  int? pointsOf(String id) => _points[id];
+  /// The story points the server holds for the card [id], null for none.
+  /// Known only while a change to the card is under way.
+  int? pointsOf(String id) {
+    assert(_underWay.containsKey(id), 'No change to $id is under way.');
+    return _points[id];
+  }
 
   /// Notes that the server took the card [id] into [sprintId], which decides
   /// that change.

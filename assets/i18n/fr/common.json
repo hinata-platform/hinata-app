@@ -520,6 +520,7 @@
     "noLabels": "Aucune étiquette",
     "addLabel": "Rechercher ou créer une étiquette…",
     "createLabel": "Créer « {{name}} »",
+    "labelsFull": "Un ticket porte au plus {{max}} étiquettes",
     "deleteLabel": "Supprimer l'étiquette",
     "deleteLabelConfirm": "Supprimer « {{name}} » de ce projet ? Elle sera retirée de tous les tickets qui l'utilisent.",
     "startDate": "Date de début",

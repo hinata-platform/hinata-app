@@ -1,5 +1,11 @@
 part of 'work_models.dart';
 
+/// The most labels an issue carries: the server refuses more.
+const int kIssueMaxLabels = 20;
+
+/// The longest label a person may write: the server refuses longer ones.
+const int kIssueLabelMaxLength = 50;
+
 /// Minimal issue summary returned by the mention-search endpoint — just enough
 /// to render an @-mention menu row (readable id, title) and pick its type glyph,
 /// without paging the full issue objects into memory.

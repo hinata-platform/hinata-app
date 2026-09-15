@@ -520,6 +520,7 @@
     "noLabels": "Sin etiquetas",
     "addLabel": "Busca o crea una etiqueta…",
     "createLabel": "Crear «{{name}}»",
+    "labelsFull": "Una incidencia lleva como máximo {{max}} etiquetas",
     "deleteLabel": "Eliminar etiqueta",
     "deleteLabelConfirm": "¿Eliminar «{{name}}» de este proyecto? Se quitará de todas las incidencias que la usan.",
     "startDate": "Fecha de inicio",
