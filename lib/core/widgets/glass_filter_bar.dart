@@ -9,6 +9,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
@@ -113,11 +114,16 @@ class GlassSearchField extends StatelessWidget {
     required this.onChanged,
     this.controller,
     this.autofocus = false,
+    this.maxLength,
   });
 
   final String hint;
   final ValueChanged<String> onChanged;
   final TextEditingController? controller;
+
+  /// The most characters the field takes, where what it searches has a limit.
+  /// Null takes any length.
+  final int? maxLength;
 
   /// Whether the field takes the keyboard as it appears. True where the field
   /// *is* the act — a search mode the reader asked for by pressing a button
@@ -138,6 +144,7 @@ class GlassSearchField extends StatelessWidget {
                 controller: controller,
                 onChanged: onChanged,
                 autofocus: autofocus,
+                inputFormatters: [LengthLimitingTextInputFormatter(maxLength)],
                 textInputAction: TextInputAction.search,
                 style: TextStyle(fontSize: 14, color: AppColors.ink),
                 cursorColor: AppColors.accentStrong,
@@ -227,6 +234,7 @@ class GlassSearchDock extends StatelessWidget {
     required this.onChanged,
     required this.onClose,
     required this.controls,
+    this.maxLength,
   });
 
   final bool searching;
@@ -244,6 +252,9 @@ class GlassSearchDock extends StatelessWidget {
 
   /// What the row shows when nothing is being searched for.
   final Widget controls;
+
+  /// See [GlassSearchField.maxLength].
+  final int? maxLength;
 
   /// Leaves the search, and clears it.
   ///
@@ -286,6 +297,7 @@ class GlassSearchDock extends StatelessWidget {
                   controller: controller,
                   onChanged: onChanged,
                   autofocus: true,
+                  maxLength: maxLength,
                 ),
               ),
               const SizedBox(width: 8),

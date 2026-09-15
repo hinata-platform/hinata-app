@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:equatable/equatable.dart';
 
 import '../../core/models/board_page_models.dart';
 import '../../core/models/work_models.dart';
@@ -9,8 +9,7 @@ import '../../core/models/work_models.dart';
 /// [noSprint] for "Kein Sprint"), [labels] hold tag names. The same instance
 /// backs both the people strip (which toggles [assignees]) and the glass filter
 /// popup, so selection stays in lockstep across the board.
-@immutable
-class BoardFilter {
+class BoardFilter extends Equatable {
   const BoardFilter({
     this.states = const {},
     this.types = const {},
@@ -127,6 +126,18 @@ class BoardFilter {
   }
 
   static const empty = BoardFilter();
+
+  @override
+  List<Object?> get props => [
+    states,
+    types,
+    priorities,
+    assignees,
+    sprints,
+    authors,
+    labels,
+    epics,
+  ];
 }
 
 enum BoardFilterFacet {

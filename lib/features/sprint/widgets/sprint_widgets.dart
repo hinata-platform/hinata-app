@@ -4,16 +4,9 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/board_page_models.dart';
-import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../sprint_tokens.dart';
-
-/// Story points of an issue (0 when unestimated).
-int pointsOf(Issue issue) => issue.storyPoints ?? 0;
-
-int sumPoints(Iterable<Issue> issues) =>
-    issues.fold(0, (sum, i) => sum + pointsOf(i));
 
 /// Workflow bucket used for the point-bucket pills and capacity bar. Done is
 /// driven by the resolved flag; the rest is split heuristically by state name
@@ -22,9 +15,6 @@ enum WorkBucket { todo, progress, done }
 
 /// Story points by bucket.
 typedef PointsByBucket = ({int todo, int progress, int done});
-
-WorkBucket bucketOf(Issue issue) =>
-    bucketOfState(issue.state, resolved: issue.resolved);
 
 WorkBucket bucketOfState(String state, {required bool resolved}) {
   if (resolved) return WorkBucket.done;
@@ -35,13 +25,8 @@ WorkBucket bucketOfState(String state, {required bool resolved}) {
   return WorkBucket.todo;
 }
 
-PointsByBucket bucketPoints(Iterable<Issue> issues) => _addUp([
-  for (final issue in issues)
-    (bucket: bucketOf(issue), points: pointsOf(issue)),
-]);
-
-/// The same over a sprint's summary by state, which counts every card of the
-/// sprint rather than the ones loaded.
+/// Story points by bucket over a sprint's summary by state, which counts every
+/// card of the sprint rather than the ones loaded.
 PointsByBucket bucketSummary(Iterable<BoardStateSummary> summary) => _addUp([
   for (final row in summary)
     (

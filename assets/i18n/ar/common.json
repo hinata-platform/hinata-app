@@ -1218,7 +1218,6 @@
     "defaultName": "لوحة الفريق",
     "view": {
       "board": "اللوحة",
-      "backlog": "قائمة الأعمال المتراكمة",
       "timeline": "الخط الزمني"
     },
     "active": "نشط",
@@ -1252,8 +1251,6 @@
     "clearFilters": "مسح الكل",
     "activeFilters": "{{count}} نشط",
     "noAssignee": "غير مسندة",
-    "backlogEmpty": "لا توجد عناصر في قائمة الأعمال المتراكمة.",
-    "backlogSubtitle": "{{count}} عنصر بلا سبرنت",
     "timelineEmpty": "لا شيء لعرضه على الخط الزمني.",
     "timelineNoDates": "بلا تاريخ بدء أو استحقاق",
     "createSub": "جهّزها الآن، واملأها من قائمة الأعمال المتراكمة لاحقًا.",
@@ -1294,7 +1291,8 @@
       "automatic": "العودة إلى التلقائي"
     },
     "searchIssues": "ابحث في المهام…",
-    "loadMore": "عرض {{count}} أخرى"
+    "loadMore": "عرض {{count}} أخرى",
+    "laneLimit": "{{count}} أخرى. ابحث أو استخدم التصفية للعثور عليها."
   },
   "gantt": {
     "title": "الخط الزمني",
@@ -2370,6 +2368,7 @@
     "returnBacklog": "الإعادة إلى قائمة أعمال المنتج",
     "createSprint": "إنشاء سبرنت",
     "startSprint": "بدء السبرنت",
+    "nothingToStart": "لا يحتوي {{name}} على أي مهام بعد. خطّط لبعضها أولًا.",
     "completeSprint": "إكمال السبرنت",
     "planned": "مخطط",
     "filterBacklog": "تصفية قائمة الأعمال…",

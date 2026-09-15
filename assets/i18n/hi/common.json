@@ -1218,7 +1218,6 @@
     "defaultName": "टीम बोर्ड",
     "view": {
       "board": "बोर्ड",
-      "backlog": "बैकलॉग",
       "timeline": "टाइमलाइन"
     },
     "active": "सक्रिय",
@@ -1252,8 +1251,6 @@
     "clearFilters": "सभी साफ़ करें",
     "activeFilters": "{{count}} सक्रिय",
     "noAssignee": "असाइन नहीं किया गया",
-    "backlogEmpty": "बैकलॉग में कोई आइटम नहीं है।",
-    "backlogSubtitle": "{{count}} आइटम बिना स्प्रिंट के",
     "timelineEmpty": "टाइमलाइन पर दिखाने के लिए कुछ नहीं है।",
     "timelineNoDates": "कोई प्रारंभ तिथि या नियत तिथि नहीं",
     "createSub": "अभी बनाएँ, बाद में बैकलॉग से भरें।",
@@ -1294,7 +1291,8 @@
       "automatic": "वापस स्वचालित पर"
     },
     "searchIssues": "इश्यू खोजें…",
-    "loadMore": "{{count}} और दिखाएँ"
+    "loadMore": "{{count}} और दिखाएँ",
+    "laneLimit": "{{count}} और। उन्हें ढूँढने के लिए खोजें या फ़िल्टर करें।"
   },
   "gantt": {
     "title": "टाइमलाइन",
@@ -2370,6 +2368,7 @@
     "returnBacklog": "प्रोडक्ट बैकलॉग में वापस भेजें",
     "createSprint": "स्प्रिंट बनाएँ",
     "startSprint": "स्प्रिंट शुरू करें",
+    "nothingToStart": "{{name}} में अभी कोई इश्यू नहीं है। पहले कुछ इश्यू की योजना बनाएँ।",
     "completeSprint": "स्प्रिंट पूरा करें",
     "planned": "नियोजित",
     "filterBacklog": "बैकलॉग फ़िल्टर करें…",

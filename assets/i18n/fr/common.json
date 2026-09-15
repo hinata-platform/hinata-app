@@ -1218,7 +1218,6 @@
     "defaultName": "Tableau d'équipe",
     "view": {
       "board": "Tableau",
-      "backlog": "Backlog",
       "timeline": "Chronologie"
     },
     "active": "Actif",
@@ -1252,8 +1251,6 @@
     "clearFilters": "Tout effacer",
     "activeFilters": "{{count}} actifs",
     "noAssignee": "Non attribué",
-    "backlogEmpty": "Aucun élément dans le backlog.",
-    "backlogSubtitle": "{{count}} élément(s) sans sprint",
     "timelineEmpty": "Rien à afficher sur la chronologie.",
     "timelineNoDates": "Pas de date de début ni d'échéance",
     "createSub": "Créez-le maintenant, remplissez-le ensuite depuis le backlog.",
@@ -1294,7 +1291,8 @@
       "automatic": "Revenir à l'automatique"
     },
     "searchIssues": "Rechercher des tickets…",
-    "loadMore": "Afficher {{count}} de plus"
+    "loadMore": "Afficher {{count}} de plus",
+    "laneLimit": "{{count}} de plus. Recherchez ou filtrez pour les trouver."
   },
   "gantt": {
     "title": "Chronologie",
@@ -2370,6 +2368,7 @@
     "returnBacklog": "Renvoyer au backlog produit",
     "createSprint": "Créer un sprint",
     "startSprint": "Démarrer le sprint",
+    "nothingToStart": "{{name}} ne contient encore aucun ticket. Planifiez-en quelques-uns d'abord.",
     "completeSprint": "Terminer le sprint",
     "planned": "Planifié",
     "filterBacklog": "Filtrer le backlog…",

@@ -1218,7 +1218,6 @@
     "defaultName": "チームボード",
     "view": {
       "board": "ボード",
-      "backlog": "バックログ",
       "timeline": "タイムライン"
     },
     "active": "進行中",
@@ -1252,8 +1251,6 @@
     "clearFilters": "すべて解除",
     "activeFilters": "{{count}} 件適用中",
     "noAssignee": "未割り当て",
-    "backlogEmpty": "バックログに項目はありません。",
-    "backlogSubtitle": "スプリント未設定の項目が {{count}} 件",
     "timelineEmpty": "タイムラインに表示できるものがありません。",
     "timelineNoDates": "開始日と期限が未設定",
     "createSub": "まずは作成しましょう。中身は後からバックログで埋められます。",
@@ -1294,7 +1291,8 @@
       "automatic": "自動に戻す"
     },
     "searchIssues": "課題を検索…",
-    "loadMore": "さらに {{count}} 件を表示"
+    "loadMore": "さらに {{count}} 件を表示",
+    "laneLimit": "ほかに {{count}} 件あります。検索や絞り込みで見つけてください。"
   },
   "gantt": {
     "title": "タイムライン",
@@ -2370,6 +2368,7 @@
     "returnBacklog": "プロダクトバックログに戻す",
     "createSprint": "スプリントを作成",
     "startSprint": "スプリントを開始",
+    "nothingToStart": "{{name}} にはまだ課題がありません。先に課題を計画してください。",
     "completeSprint": "スプリントを完了",
     "planned": "計画済み",
     "filterBacklog": "バックログを絞り込む…",

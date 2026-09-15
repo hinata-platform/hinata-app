@@ -20,19 +20,12 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show GlassProgressIndicator;
 
 void main() {
-  Issue issue({
-    String id = 'i1',
-    String state = 'TODO',
-    DateTime? resolvedAt,
-    int? points,
-    String? assigneeId,
-  }) => Issue(
-    id: id,
+  Issue issue({String? assigneeId, int? points}) => Issue(
+    id: 'i1',
     projectId: 'p1',
     readableId: 'HIN-1',
     title: 'Restore drag handles',
-    state: state,
-    resolvedAt: resolvedAt,
+    state: 'TODO',
     storyPoints: points,
     assigneeId: assigneeId,
   );
@@ -179,11 +172,8 @@ void main() {
     testWidgets('fills in proportion to the committed points', (tester) async {
       await pumpLoose(
         tester,
-        CapacityBar(
-          points: bucketPoints([
-            issue(id: 'a', points: 10),
-            issue(id: 'b', points: 10, state: 'IN_PROGRESS'),
-          ]),
+        const CapacityBar(
+          points: (todo: 10, progress: 10, done: 0),
           capacity: 40,
           width: 300,
         ),
@@ -203,8 +193,8 @@ void main() {
     ) async {
       await pumpLoose(
         tester,
-        CapacityBar(
-          points: bucketPoints([issue(points: 42)]),
+        const CapacityBar(
+          points: (todo: 42, progress: 0, done: 0),
           capacity: 40,
           width: 300,
         ),
@@ -238,8 +228,8 @@ void main() {
     ) async {
       await pumpLoose(
         tester,
-        CapacityBar(
-          points: bucketPoints([issue(points: 8)]),
+        const CapacityBar(
+          points: (todo: 8, progress: 0, done: 0),
           capacity: null,
           width: 300,
         ),
@@ -254,8 +244,8 @@ void main() {
       // desktop meta row hands it 150.
       await pumpLoose(
         tester,
-        CapacityBar(
-          points: bucketPoints([issue(points: 8)]),
+        const CapacityBar(
+          points: (todo: 8, progress: 0, done: 0),
           capacity: 40,
           width: 150,
         ),
