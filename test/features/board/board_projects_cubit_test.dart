@@ -75,4 +75,16 @@ void main() {
     expect(server.asked, hasLength(2));
     expect(projects.state.names, {'p1': 'Project p1'});
   });
+
+  test('projects kept away by any other failure are asked for again', () async {
+    final projects = projectsOver();
+    server.failure = StateError('the answer could not be read');
+    await projects.resolve(const ['p1']);
+
+    server.failure = null;
+    await projects.resolve(const ['p1']);
+
+    expect(server.asked, hasLength(2));
+    expect(projects.state.names, {'p1': 'Project p1'});
+  });
 }

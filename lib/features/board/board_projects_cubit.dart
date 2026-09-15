@@ -1,9 +1,9 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 
-import '../../core/api/api_client.dart';
 import '../../core/models/work_models.dart';
 import '../../core/repositories/project_repository.dart';
+import 'wall/board_reads.dart';
 
 /// The projects a board spans, as far as they could be read.
 class BoardProjectsState extends Equatable {
@@ -55,7 +55,7 @@ class BoardProjectsCubit extends Cubit<BoardProjectsState> {
   /// read already.
   Future<void> resolve(List<String> projectIds) async {
     final asked = _asked;
-    if (asked != null && _sameIds(asked, projectIds)) return;
+    if (asked != null && sameIds(asked, projectIds)) return;
     _asked = projectIds;
     try {
       final projects = await _projects.resolveProjects(projectIds);
@@ -67,17 +67,10 @@ class BoardProjectsCubit extends Cubit<BoardProjectsState> {
           names: {for (final project in projects) project.id: project.name},
         ),
       );
-    } on ApiFailure {
-      // Asked for again the next time the board names them.
+    } catch (_) {
+      // Whatever kept them away, they are asked for again the next time the
+      // board names them.
       if (identical(_asked, projectIds)) _asked = null;
     }
-  }
-
-  static bool _sameIds(List<String> asked, List<String> named) {
-    if (asked.length != named.length) return false;
-    for (var i = 0; i < asked.length; i++) {
-      if (asked[i] != named[i]) return false;
-    }
-    return true;
   }
 }
