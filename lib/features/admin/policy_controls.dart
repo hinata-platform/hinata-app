@@ -557,12 +557,17 @@ class PolicyDuration extends StatefulWidget {
     required this.maxHours,
     required this.initialMinutes,
     this.helper,
+    this.effective,
   });
 
   final String label;
   final int? value;
   final ValueChanged<int?> onChanged;
   final String? helper;
+
+  /// What the environment resolves to while nothing is stored, so the field can
+  /// name it instead of saying only "Env default".
+  final int? effective;
 
   /// The largest number of hours the picker offers; the server's ceiling.
   final int maxHours;
@@ -601,9 +606,12 @@ class _PolicyDurationState extends State<PolicyDuration> {
             label: widget.label,
             helper: widget.helper,
             onTap: _pick,
-            value: value == null
+            value: value != null
+                ? fmtDuration(context, value)
+                : widget.effective == null
                 ? context.t('admin.timeTracking.envDefault')
-                : fmtDuration(context, value),
+                : '${context.t('admin.timeTracking.envDefault')}: '
+                      '${fmtDuration(context, widget.effective)}',
             muted: value == null,
             icon: LucideIcons.hourglass,
           ),

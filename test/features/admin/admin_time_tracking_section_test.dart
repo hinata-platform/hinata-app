@@ -78,6 +78,28 @@ void main() {
     matching: find.byType(PolicySwitch),
   );
 
+  testWidgets(
+    'a suggested target with nothing stored names what the environment suggests',
+    (tester) async {
+      // Found in the live check of HIN-92: the field said only "Env default"
+      // while the server suggested seven and a half hours, and every policy
+      // beside it names the value in force.
+      await tester.pumpWidget(
+        host(<String, dynamic>{
+          'timeTracking': <String, dynamic>{
+            'effective': <String, dynamic>{'suggestedDailyTargetMinutes': 450},
+          },
+        }),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining('admin.timeTracking.envDefault: '),
+        findsOneWidget,
+      );
+    },
+  );
+
   group('co-determination', () {
     testWidgets('the note sits at every monitoring-capable policy', (
       tester,
