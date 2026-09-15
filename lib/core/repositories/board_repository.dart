@@ -149,22 +149,16 @@ class BoardRepository {
         as Map<String, dynamic>,
   );
 
-  /// What the filter and the row of faces can offer, over every card of the
-  /// [shape] the board lists: of the whole board, of the sprint [sprintId] or
-  /// of the [backlog].
+  /// What the filter and the row of faces can offer over every card of the
+  /// board: the people, reporters, labels and epics on its cards, the states
+  /// of its projects, and the types and priorities a card of [shape] can have.
   Future<BoardFacets> facets(
     String boardId, {
-    String? sprintId,
-    bool backlog = false,
     BoardCardShape shape = BoardCardShape.wall,
   }) async => BoardFacets.fromJson(
     await _api.get(
           '/api/v1/boards/$boardId/facets',
-          query: {
-            'sprintId': ?sprintId,
-            if (backlog) 'backlog': true,
-            if (shape != BoardCardShape.wall) 'shape': shape.name,
-          },
+          query: {if (shape != BoardCardShape.wall) 'shape': shape.name},
         )
         as Map<String, dynamic>,
   );

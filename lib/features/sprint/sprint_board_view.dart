@@ -22,10 +22,12 @@ import '../board/board_drag.dart';
 import '../board/board_feedback.dart';
 import '../board/board_header.dart';
 import '../board/board_people_strip.dart';
+import '../board/board_projects_cubit.dart';
 import '../board/board_swimlanes.dart';
 import '../board/head/board_head.dart';
 import '../board/head/board_head_cubit.dart';
 import '../board/issue_quick_create.dart';
+import '../board/wall/board_cards_by_id.dart';
 import '../board/wall/board_wall_columns.dart';
 import '../board/wall/board_wall_cubit.dart';
 import '../shell/page_chrome.dart';
@@ -52,18 +54,17 @@ class ScrumBoardView extends StatefulWidget {
   const ScrumBoardView({
     super.key,
     required this.board,
-    required this.projectNames,
-    this.projectsById = const {},
+    this.projects = BoardProjectsState.none,
     required this.onOpenIssue,
     this.fullWidth = false,
   });
 
   final AgileBoard board;
-  final Map<String, String> projectNames;
 
-  /// The board's spanned projects — needed to resolve which state of a merged
-  /// column belongs to a dropped card's own project on a cross-project board.
-  final Map<String, Project> projectsById;
+  /// The board's spanned projects, as far as they have been read: their names,
+  /// and on a cross-project board which state of a merged column belongs to a
+  /// dropped card's own project.
+  final BoardProjectsState projects;
   final void Function(Issue) onOpenIssue;
 
   /// Whether the board breaks out of the reading width. The board screen
@@ -95,7 +96,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
 
   /// The planning lists every issue type over the whole board, and its filter
   /// offers what those hold.
-  static const _facetsScope = BoardFacetsScope(shape: BoardCardShape.planning);
+  static const _facetsShape = BoardCardShape.planning;
 
   // Store-screenshot builds open straight on the Active-sprint board (the kanban
   // columns) rather than Planning, so the marketing shot shows the live board.
@@ -119,8 +120,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
 
   final BoardPeopleMemo _planningPeople = BoardPeopleMemo();
   final BoardPeopleMemo _wallPeople = BoardPeopleMemo();
-  Object? _issuesByIdKey;
-  Map<String, Issue> _issuesById = const {};
+  final BoardCardsByIdMemo _cardsById = BoardCardsByIdMemo();
 
   /// Reads the tab on screen again when an issue changes anywhere: an edit made
   /// in the issue detail (a new sub-task, a sub-task ticked off, a title change)
@@ -133,7 +133,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
     _issueSub = IssueEvents.instance.changes.listen((_) => _changedElsewhere());
     unawaited(_planning.load());
     // The faces want their facets from the start.
-    unawaited(head.ensureFacets(_facetsScope));
+    unawaited(head.ensureFacets(_facetsShape));
   }
 
   @override
@@ -179,20 +179,6 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
       if (sprint.id != activeSprintId) sprint,
   ];
 
-  /// The wall's cards and what they refer to, by id: what lanes resolve a
-  /// card's epic or parent from.
-  Map<String, Issue> _issuesByIdOf(BoardWallState wall) {
-    final key = (wall.refs, wall.columns);
-    if (key != _issuesByIdKey) {
-      _issuesByIdKey = key;
-      _issuesById = {
-        ...wall.refs,
-        for (final card in wall.cards) card.id: card,
-      };
-    }
-    return _issuesById;
-  }
-
   bool get _crossProject => widget.board.projectIds.length > 1;
 
   // ── loading ─────────────────────────────────────────────────────────────
@@ -205,7 +191,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
   void _onPlanning(BuildContext context, SprintPlanningState planning) {
     final ready = planning.status == SprintPlanningStatus.ready;
     if (ready && !planning.refreshing) {
-      unawaited(head.ensureFacets(_facetsScope));
+      unawaited(head.ensureFacets(_facetsShape));
     }
     // A planning that never arrived says so in its place instead.
     final errorKey = planning.errorKey;
@@ -311,7 +297,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
   /// back again when the server refuses, which the board screen then says.
   Future<void> _moveIssueState(Issue issue, BoardColumnView column) async {
     if (column.states.isEmpty || column.states.contains(issue.state)) return;
-    final target = boardDropState(issue, column.states, widget.projectsById);
+    final target = boardDropState(issue, column.states, widget.projects.byId);
     if (target == null || target == issue.state) return;
     // Let the card settle in visibly at its new home — the tail end of the
     // drag, not a separate effect.
@@ -331,13 +317,6 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
     if (!_selected.remove(id)) _selected.add(id);
   });
 
-  /// The board's projects in board order — what an inline composer on this
-  /// surface may create into. More than one only on a merged board, where the
-  /// composer shows a project control rather than picking the first silently.
-  List<Project> get _boardProjects => [
-    for (final id in widget.board.projectIds) ?widget.projectsById[id],
-  ];
-
   /// Seeds a section's inline composer. [sprintId] targets the sprint the
   /// ticket is written into (null = the backlog); [stateFor] carries the column
   /// state on the active board, where a composer sits under a column.
@@ -345,7 +324,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
     String? sprintId, {
     String? Function(Project project)? stateFor,
   }) => IssueQuickCreateSeed(
-    projects: _boardProjects,
+    projects: widget.projects.inBoardOrder,
     stateFor: stateFor,
     sprintId: sprintId,
   );
@@ -509,23 +488,15 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
     final state = head.state;
     switch (tab) {
       case _Tab.planning:
-        final query = state.query(BoardCardShape.planning);
-        if (query != _planning.requestedQuery) {
-          _planning.narrow(query);
-        } else if (_planningStale) {
-          unawaited(_planning.load());
-        } else if (_staleSprints.isNotEmpty) {
-          unawaited(_planning.rereadSprints({..._staleSprints}));
-        }
+        _planning.catchUp(
+          state.query(BoardCardShape.planning),
+          stale: _planningStale,
+          staleSprints: _staleSprints,
+        );
         _planningStale = false;
         _staleSprints.clear();
       case _Tab.active:
-        final query = state.query(state.wallShape);
-        if (query != _wall.requestedQuery) {
-          _wall.narrow(query);
-        } else if (_wallStale) {
-          unawaited(_wall.refresh());
-        }
+        _wall.catchUp(state.query(state.wallShape), stale: _wallStale);
         _wallStale = false;
       case _Tab.insights:
         if (_report == null) unawaited(_loadReport());
@@ -564,10 +535,10 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
     final wall = _wall.state;
     final planning = _planning.state;
     return openHeadFilter(
-      scope: _facetsScope,
+      shape: _facetsShape,
       anchor: anchor,
       sprints: planning.sprints,
-      projects: widget.projectsById.values,
+      projects: widget.projects.byId.values,
       refs: wall.refs.values,
       users: [...planning.users.values, ...wall.users.values],
     );
@@ -741,13 +712,13 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
           onLoadMore: _wall.loadMore,
           grouping: headState.grouping,
           // Only lanes look cards' parents up.
-          issuesById: grouped ? _issuesByIdOf(wall) : const {},
+          issuesById: grouped ? _cardsById.of(wall) : const {},
           epics: boardEpics(headState.facets.epics, wall.refs.values),
           names: people.names,
           avatars: people.avatars,
           pronouns: people.pronouns,
-          projectNames: widget.projectNames,
-          projectsById: widget.projectsById,
+          projectNames: widget.projects.names,
+          projectsById: widget.projects.byId,
           onOpenIssue: widget.onOpenIssue,
           onMove: _moveIssueState,
           quickCreateSeed: (stateFor) =>

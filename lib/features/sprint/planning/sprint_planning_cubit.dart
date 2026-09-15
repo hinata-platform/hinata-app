@@ -13,6 +13,11 @@ import '../../../core/repositories/issue_repository.dart';
 import '../../../core/repositories/sprint_repository.dart';
 import '../../board/wall/board_reads.dart';
 
+/// How many changes a move of many cards sends to the server at once: a
+/// sprint's worth moves quickly, and the reads that follow are not crowded
+/// out.
+const int kSprintParallelWrites = 4;
+
 /// Where a Scrum board's planning stands.
 enum SprintPlanningStatus { loading, ready, failure }
 
@@ -161,7 +166,9 @@ class SprintPlanningState extends Equatable {
 /// changes in place at once; only the sprints it touched are read again. A
 /// change the server refuses is taken back in place before anything is read.
 class SprintPlanningCubit extends Cubit<SprintPlanningState>
-    with BoardReads<SprintPlanningState> {
+    with
+        BoardReadGenerations<SprintPlanningState>,
+        BoardReads<SprintPlanningState> {
   SprintPlanningCubit({
     required BoardRepository boards,
     required IssueRepository issues,
@@ -172,7 +179,7 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
     this.searchDelay = kBoardSearchDelay,
     this.filterDelay = kBoardFilterDelay,
     this.refreshDelay = kBoardRefreshDelay,
-    this.parallelWrites = 4,
+    this.parallelWrites = kSprintParallelWrites,
   }) : _boards = boards,
        _issues = issues,
        _sprints = sprints,
@@ -313,11 +320,27 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
 
   /// Narrows the planning to [query] once the typing or ticking has paused,
   /// from the backlog's first page. The planning lists every issue type,
-  /// whatever shape [query] was given.
-  void narrow(BoardQuery query) => scheduleNarrow(
+  /// whatever shape [query] was given. Returns whether a read of it is coming.
+  bool narrow(BoardQuery query) => scheduleNarrow(
     query.copyWith(shape: BoardCardShape.planning),
     () => unawaited(load()),
   );
+
+  /// Brings the planning up to date as it comes back on screen: narrowed to
+  /// [query] when the search or filter changed while it was away, else read
+  /// again whole when it is [stale], or only the sprints among [staleSprints].
+  void catchUp(
+    BoardQuery query, {
+    required bool stale,
+    Set<String> staleSprints = const {},
+  }) {
+    if (narrow(query)) return;
+    if (stale) {
+      unawaited(load());
+    } else if (staleSprints.isNotEmpty) {
+      unawaited(rereadSprints({...staleSprints}));
+    }
+  }
 
   /// Reads the next page of the sprint [sprintId].
   Future<void> loadMore(String sprintId) async {
@@ -398,23 +421,23 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
   /// state. Returns the refusal's message key, or null.
   Future<String?> moveToSprint(Issue issue, String? sprintId) async {
     if (issue.sprintId == sprintId) return null;
-    final before = state;
-    emit(_moved([issue], sprintId));
+    emit(_moved(state, [issue], sprintId));
     try {
       await _issues.updateIssue(issue.id, {'sprintId': sprintId ?? ''});
       if (isClosed) return null;
       await rereadSprints({issue.sprintId, sprintId});
       return null;
     } catch (error) {
-      return _refused(before, _keyOf(error));
+      return _refused(_keyOf(error), () => _movedBack([issue], sprintId));
     }
   }
 
   /// Moves every card among [ids] into [sprintId], or into the backlog for
-  /// null, the loaded ones in place at once, a few at a time on the server. A
-  /// card picked on a backlog page no longer on screen moves as well; where it
-  /// came from is not known here, so the planning is then read again as a
-  /// whole.
+  /// null, the loaded ones in place at once, [parallelWrites] at a time on the
+  /// server. A card picked on a backlog page no longer on screen moves as
+  /// well; where it came from is not known here, so the planning is then read
+  /// again as a whole. A card the server refuses goes back while the others
+  /// move, and the first refusal's message key is returned.
   Future<String?> moveAll(Iterable<String> ids, String? sprintId) async {
     final wanted = ids.toSet();
     final loaded = {
@@ -427,36 +450,48 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
     ];
     final unseen = wanted.difference(loaded.keys.toSet());
     if (moving.isEmpty && unseen.isEmpty) return null;
-    final before = state;
-    emit(_moved(moving, sprintId));
-    try {
-      final all = [for (final card in moving) card.id, ...unseen];
-      for (var start = 0; start < all.length; start += parallelWrites) {
-        await Future.wait([
-          for (final id in all.skip(start).take(parallelWrites))
-            _issues.updateIssue(id, {'sprintId': sprintId ?? ''}),
-        ]);
-      }
-      if (isClosed) return null;
-      if (unseen.isEmpty) {
-        await rereadSprints({
-          for (final card in moving) card.sprintId,
-          sprintId,
-        });
-      } else {
-        await load();
-      }
-      return null;
-    } catch (error) {
-      return _refused(before, _keyOf(error));
+    emit(_moved(state, moving, sprintId));
+    final all = [for (final card in moving) card.id, ...unseen];
+    final refused = <String>{};
+    Object? refusal;
+    for (var start = 0; start < all.length; start += parallelWrites) {
+      await Future.wait([
+        for (final id in all.skip(start).take(parallelWrites))
+          _issues
+              .updateIssue(id, {'sprintId': sprintId ?? ''})
+              .then<void>(
+                (_) {},
+                onError: (Object error) {
+                  refused.add(id);
+                  refusal ??= error;
+                },
+              ),
+      ]);
     }
+    if (isClosed) return null;
+    if (refusal case final error?) {
+      return _refused(
+        _keyOf(error),
+        () => _movedBack([
+          for (final card in moving)
+            if (refused.contains(card.id)) card,
+        ], sprintId),
+      );
+    }
+    if (unseen.isEmpty) {
+      await rereadSprints({for (final card in moving) card.sprintId, sprintId});
+    } else {
+      await load();
+    }
+    return null;
   }
 
   /// Sets [issue]'s story points, null to clear them: in place at once, and
   /// the sprint's head read again after.
   Future<String?> estimate(Issue issue, int? points) async {
-    final before = state;
-    emit(_replaced(issue.copyWith(storyPoints: points)));
+    emit(
+      _replaced(state, issue.id, (card) => card.copyWith(storyPoints: points)),
+    );
     try {
       await _issues.updateIssue(
         issue.id,
@@ -466,7 +501,18 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
       if (issue.sprintId != null) await rereadSprints({issue.sprintId});
       return null;
     } catch (error) {
-      return _refused(before, _keyOf(error));
+      // Back to the points the card had, unless another estimate set others
+      // since.
+      return _refused(
+        _keyOf(error),
+        () => _replaced(
+          state,
+          issue.id,
+          (card) => card.storyPoints == points
+              ? card.copyWith(storyPoints: issue.storyPoints)
+              : card,
+        ),
+      );
     }
   }
 
@@ -556,13 +602,17 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
     }
   }
 
-  /// Takes back a change the server refused. What was on screen before it
-  /// comes back at once, with the reason, so the planning never shows a change
-  /// that was not made, not even when it cannot be read again right now. What
-  /// the server holds is read after.
-  Future<String> _refused(SprintPlanningState before, String errorKey) async {
+  /// Takes back a change the server refused, in place on the planning on
+  /// screen, with the reason: [takenBack] undoes that change alone, so a change
+  /// made meanwhile stays. The planning never shows a change that was not
+  /// made, not even when it cannot be read again right now, and what the
+  /// server holds is read after.
+  Future<String> _refused(
+    String errorKey,
+    SprintPlanningState Function() takenBack,
+  ) async {
     if (isClosed) return errorKey;
-    emit(before.copyWith(refreshing: state.refreshing, errorKey: errorKey));
+    emit(takenBack().copyWith(errorKey: errorKey));
     await load();
     return errorKey;
   }
@@ -582,12 +632,16 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
     SprintContainer container,
   ) => state.copyWith(containers: {...state.containers, sprintId: container});
 
-  /// [cards] taken out of wherever they are and put on top of [sprintId], or
-  /// of the backlog for null, with every total following along.
-  SprintPlanningState _moved(List<Issue> cards, String? sprintId) {
+  /// [from] with [cards] taken out of wherever they are and put on top of
+  /// [sprintId], or of the backlog for null, with every total following along.
+  static SprintPlanningState _moved(
+    SprintPlanningState from,
+    List<Issue> cards,
+    String? sprintId,
+  ) {
     final ids = {for (final card in cards) card.id};
     final containers = <String, SprintContainer>{};
-    for (final entry in state.containers.entries) {
+    for (final entry in from.containers.entries) {
       final kept = [
         for (final card in entry.value.items)
           if (!ids.contains(card.id)) card,
@@ -599,11 +653,11 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
       );
     }
     var backlog = [
-      for (final card in state.backlog)
+      for (final card in from.backlog)
         if (!ids.contains(card.id)) card,
     ];
     var backlogTotal = math.max(
-      state.backlogTotal - (state.backlog.length - backlog.length),
+      from.backlogTotal - (from.backlog.length - backlog.length),
       0,
     );
     final arriving = [
@@ -618,25 +672,49 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
         total: target.total + arriving.length,
       );
     }
-    return state.copyWith(
+    return from.copyWith(
       containers: containers,
       backlog: backlog,
       backlogTotal: backlogTotal,
     );
   }
 
-  SprintPlanningState _replaced(Issue updated) => state.copyWith(
+  /// The [cards] a change moved into [movedTo] put back where each came from,
+  /// as far as they still stand there: a card moved on since stays where the
+  /// later change put it, and a card keeps whatever else changed on it.
+  SprintPlanningState _movedBack(List<Issue> cards, String? movedTo) {
+    final shown = {for (final card in state.cards) card.id: card};
+    final byOrigin = <String?, List<Issue>>{};
+    for (final card in cards) {
+      final now = shown[card.id];
+      if (now != null && now.sprintId == movedTo) {
+        (byOrigin[card.sprintId] ??= []).add(now);
+      }
+    }
+    var back = state;
+    for (final entry in byOrigin.entries) {
+      back = _moved(back, entry.value, entry.key);
+    }
+    return back;
+  }
+
+  /// [from] with the card [id] changed by [change] wherever it is loaded.
+  static SprintPlanningState _replaced(
+    SprintPlanningState from,
+    String id,
+    Issue Function(Issue card) change,
+  ) => from.copyWith(
     containers: {
-      for (final entry in state.containers.entries)
+      for (final entry in from.containers.entries)
         entry.key: entry.value.copyWith(
           items: [
             for (final card in entry.value.items)
-              card.id == updated.id ? updated : card,
+              card.id == id ? change(card) : card,
           ],
         ),
     },
     backlog: [
-      for (final card in state.backlog) card.id == updated.id ? updated : card,
+      for (final card in from.backlog) card.id == id ? change(card) : card,
     ],
   );
 }
