@@ -12,7 +12,7 @@ import '../../core/widgets/glass_filter_bar.dart'
     show GlassPill, kGlassControlHeight;
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_widgets.dart';
-import 'board_card_list.dart' show BoardReadOn;
+import '../../core/widgets/read_on_trigger.dart' show ReadOnTrigger;
 import 'board_drag.dart';
 
 /// Swimlane grouping for a board, Jira-style: each group becomes a horizontal
@@ -630,7 +630,7 @@ class BoardSwimlanes extends StatefulWidget {
   /// nothing.
   final Widget? Function(BoardColumnView column)? footerBuilder;
 
-  /// Called while the lanes are within [BoardReadOn.reach] of their end: once
+  /// Called while the lanes are within [ReadOnTrigger.reach] of their end: once
   /// they were laid out, when they do not fill the room, and at every step
   /// they are scrolled. [retry] is set once someone starts scrolling them, and
   /// only then may a page that did not come be asked for again.
@@ -688,7 +688,7 @@ class _BoardSwimlanesState extends State<BoardSwimlanes> {
 
   void _askIfNearEnd(ScrollMetrics metrics, {bool retry = false}) {
     final ask = widget.onNearEnd;
-    if (ask != null && metrics.extentAfter < BoardReadOn.reach) {
+    if (ask != null && metrics.extentAfter < ReadOnTrigger.reach) {
       ask(retry: retry);
     }
   }

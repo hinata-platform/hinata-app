@@ -123,7 +123,6 @@ class _FakeAvailability implements AvailabilityRepository {
   @override
   Future<PageResult<TimeOff>> timeOff({
     DateTime? from,
-    DateTime? to,
     int page = 0,
     int size = 50,
   }) async => (items: absences, total: absences.length);

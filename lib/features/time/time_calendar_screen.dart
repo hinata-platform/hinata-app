@@ -187,6 +187,12 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   /// from any other dependency.
   int? _firstDayOfWeekIndex;
 
+  /// The language the memoised layers, the docked strip and the held months
+  /// were built in. A marked day's sentence, the bands' headings, the strip's
+  /// weekday letters and the title of an entry without a description are words
+  /// held inside them, so another language has to build them again.
+  Locale? _language;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -215,6 +221,21 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       // was built; the docked strip is a held widget.
       _layerMemo.clear();
       _dockKey = null;
+    }
+    final language = Localizations.localeOf(context);
+    if (language != _language) {
+      final switched = _language != null;
+      _language = language;
+      _layerMemo.clear();
+      _dockKey = null;
+      // The held months title an entry without a description in the language
+      // they were read in, so a switch reads them again. After the frame: a
+      // reload sets state, which a dependency change may not do mid-build.
+      if (switched) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) unawaited(_reload());
+        });
+      }
     }
     if (_started) return;
     _started = true;
@@ -1149,8 +1170,9 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   DayMark? _markOn(DateTime day) => _months[monthKey(day)]?.marks.on(day);
 
   /// Holidays, absences and days without planned hours, drawn as what they are:
-  /// a quiet wash behind the day with a mark beside its date, and a band under
-  /// the headings that says it in words (HIN-91).
+  /// a quiet wash behind the day with the mark its chip wears ([dayMarkIcon])
+  /// beside its date, and a band under the headings that says it in words
+  /// (HIN-91).
   ///
   /// The wash is the weekend's tone, [AppColors.recess], and deliberately not
   /// the freeze's: a marked day is a quiet day, never a closed one, and time on
@@ -1158,7 +1180,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   /// already washes the column, so the mark keeps its glyph and adds no second
   /// wash. After the freeze in the list, so a frozen holiday shows the padlock.
   List<TimeGridLayer> _markLayers(List<DateTime> window) {
-    final washes = <DayMarkKind, List<TimeGridItem>>{};
+    final washes = <String, ({IconData glyph, List<TimeGridItem> items})>{};
     final bands = <DayMarkKind, List<TimeGridItem>>{};
     for (final day in window) {
       final mark = _markOn(day);
@@ -1167,7 +1189,11 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       final end = DateTime(day.year, day.month, day.day, 23, 59);
       final weekend =
           day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
-      (washes[mark.kind] ??= []).add(
+      final wash = washes[_washId(mark)] ??= (
+        glyph: dayMarkIcon(mark),
+        items: <TimeGridItem>[],
+      );
+      wash.items.add(
         TimeGridItem(
           id: 'mark-${dayKey(day)}',
           start: start,
@@ -1190,13 +1216,13 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       );
     }
     return [
-      for (final wash in washes.entries)
+      for (final MapEntry(key: id, value: wash) in washes.entries)
         TimeGridLayer(
-          id: 'mark-${wash.key.name}',
+          id: id,
           placement: TimeGridPlacement.background,
-          items: wash.value,
+          items: wash.items,
           tint: AppColors.recess,
-          glyph: _markGlyph(wash.key),
+          glyph: wash.glyph,
         ),
       for (final band in bands.entries)
         TimeGridLayer(
@@ -1213,10 +1239,14 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     ];
   }
 
-  static IconData _markGlyph(DayMarkKind kind) => switch (kind) {
-    DayMarkKind.holiday => LucideIcons.calendarHeart,
-    DayMarkKind.absence => LucideIcons.treePalm,
-    DayMarkKind.nonRegular => LucideIcons.calendarOff,
+  /// The wash a marking is drawn in: one for the holidays, one per type of
+  /// absence and one for the days without planned hours, each with the glyph
+  /// its chip wears. Named after what it holds rather than keyed by the glyph,
+  /// which an absence of the other type and a day without hours share.
+  static String _washId(DayMark mark) => switch (mark.kind) {
+    DayMarkKind.absence =>
+      'mark-absence-${(mark.absenceType ?? TimeOffType.other).name}',
+    DayMarkKind.holiday || DayMarkKind.nonRegular => 'mark-${mark.kind.name}',
   };
 
   /// The days in [window] nothing can be written to, as one background wash.
@@ -1439,19 +1469,29 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
 
   Widget _dockedNavigation() {
     final today = _today();
-    // The months held and the freeze both colour the strip, so a month that
-    // arrives or a freeze that moves has to redraw it.
+    // The freeze wins over a marking, as on the canvas below: a frozen holiday
+    // is first of all a day nothing can be written to.
+    final policy = context.read<TimePolicyCubit>().state;
+    final tones = _span == _Span.month
+        ? const <Color?>[]
+        : [
+            for (final day in _weekDays)
+              policy.isLocked(day)
+                  ? AppColors.closed
+                  : (_markOn(day) == null ? null : AppColors.recess),
+          ];
+    // The strip's colours themselves, not the months held behind them: a month
+    // that arrives redraws the strip only when it changes one of them.
     final key = Object.hash(
       _span,
       dayKey(_focused),
       dayKey(today),
       AppColors.brightness,
-      _revision,
+      Object.hashAll(tones),
       _washedAgainst,
     );
     if (_dockKey == key) return _dock!;
     _dockKey = key;
-    final policy = context.read<TimePolicyCubit>().state;
     // The month's header brings its own inset — the letters have to stand over
     // the columns below them, and those are laid out to [kMonthGutter], not to
     // the page gutter the rest of the app uses.
@@ -1466,14 +1506,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
               days: _weekDays,
               focused: _focused,
               today: today,
-              // The freeze wins over a marking, as on the canvas below: a
-              // frozen holiday is first of all a day nothing can be written to.
-              tones: [
-                for (final day in _weekDays)
-                  policy.isLocked(day)
-                      ? AppColors.closed
-                      : (_markOn(day) == null ? null : AppColors.recess),
-              ],
+              tones: tones,
               onTap: _focusDay,
             ),
           );

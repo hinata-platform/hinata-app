@@ -99,9 +99,6 @@ class WorkingSchedule extends Equatable {
   List<int> get effectiveMinutes =>
       current?.minutesPerWeekday ?? defaultMinutesPerWeekday;
 
-  String? get effectiveCalendarId =>
-      current?.holidayCalendarId ?? defaultHolidayCalendarId;
-
   factory WorkingSchedule.fromJson(Map<String, dynamic> json) =>
       WorkingSchedule(
         userId: json['userId'] as String? ?? '',
@@ -139,6 +136,9 @@ class TimeOff extends Equatable {
     this.halfDay = false,
     this.note,
   });
+
+  /// Longest note the server keeps (`TimeOff.NOTE_MAX`).
+  static const int noteMax = 200;
 
   final String? id;
   final String userId;
@@ -366,25 +366,38 @@ class DayMark extends Equatable {
 
 /// The markings of a window of days, asked for one day at a time.
 ///
-/// One answer for every surface that marks days (the calendar, its week strip,
-/// the list and the timesheet), so a day cannot be a holiday in one of them
-/// and an ordinary day in another.
+/// One answer for every surface that marks days (the calendar, its week strip
+/// and the list), so a day cannot be a holiday in one of them and an ordinary
+/// day in another.
+///
+/// Every answer is a lookup, never a search: the list and the calendar ask once
+/// for every day they draw, so each holiday, each day of each absence and each
+/// day's planned minutes are filed under their day when the set is made.
 class DayMarks {
   DayMarks({
     List<HolidayMark> holidays = const [],
     List<TimeOff> absences = const [],
     Map<DateTime, int> scheduledMinutes = const {},
-  }) : _holidays = {for (final mark in holidays) _key(mark.date): mark},
-       _absences = absences,
-       _scheduled = {
-         for (final entry in scheduledMinutes.entries)
-           _key(entry.key): entry.value,
-       };
+  }) : this._(
+         {for (final mark in holidays) _key(mark.date): mark},
+         _absencesByDay(absences),
+         {
+           for (final entry in scheduledMinutes.entries)
+             _key(entry.key): entry.value,
+         },
+       );
+
+  DayMarks._(this._holidays, this._absences, this._scheduled);
 
   static final DayMarks none = DayMarks();
 
+  /// Most days one absence is filed under: a year, the widest window the
+  /// server answers, so a span that arrived wrong cannot grow the set without
+  /// end.
+  static const int _absenceDaysMax = 366;
+
   final Map<int, HolidayMark> _holidays;
-  final List<TimeOff> _absences;
+  final Map<int, TimeOff> _absences;
   final Map<int, int> _scheduled;
 
   bool get isEmpty =>
@@ -393,27 +406,48 @@ class DayMarks {
   /// The marking of [day], or null for an ordinary working day or a day this
   /// window says nothing about.
   DayMark? on(DateTime day) {
-    final holiday = _holidays[_key(day)];
+    final key = _key(day);
+    final holiday = _holidays[key];
     if (holiday != null) {
       return DayMark.holiday(holiday.name, halfDay: holiday.halfDay);
     }
-    for (final absence in _absences) {
-      if (absence.covers(day)) {
-        return DayMark.absence(absence.type, halfDay: absence.halfDay);
-      }
+    final absence = _absences[key];
+    if (absence != null) {
+      return DayMark.absence(absence.type, halfDay: absence.halfDay);
     }
-    if (_scheduled[_key(day)] == 0) return const DayMark.nonRegular();
+    if (_scheduled[key] == 0) return const DayMark.nonRegular();
     return null;
   }
 
-  /// A new set with [other]'s days added, for windows loaded one at a time.
+  /// One set of both windows' days, for windows loaded one at a time. A day
+  /// both of them know is answered by [other], the window read later.
   DayMarks merge(DayMarks other) => DayMarks._(
     {..._holidays, ...other._holidays},
-    [..._absences, ...other._absences],
+    {..._absences, ...other._absences},
     {..._scheduled, ...other._scheduled},
   );
 
-  DayMarks._(this._holidays, this._absences, this._scheduled);
+  /// Every absence under each of its days. Where two overlap, the one listed
+  /// first keeps the day.
+  static Map<int, TimeOff> _absencesByDay(List<TimeOff> absences) {
+    final byDay = <int, TimeOff>{};
+    for (final absence in absences) {
+      var day = DateTime(
+        absence.from.year,
+        absence.from.month,
+        absence.from.day,
+      );
+      for (
+        var filed = 0;
+        filed < _absenceDaysMax && !day.isAfter(absence.to);
+        filed++
+      ) {
+        byDay.putIfAbsent(_key(day), () => absence);
+        day = DateTime(day.year, day.month, day.day + 1);
+      }
+    }
+    return byDay;
+  }
 
   static int _key(DateTime day) => day.year * 10000 + day.month * 100 + day.day;
 }
@@ -433,6 +467,11 @@ class HolidayCalendar extends Equatable {
     this.lastImportError,
     this.lastImport,
   });
+
+  /// Longest name and region the server keeps (`HolidayCalendar.NAME_MAX`,
+  /// `REGION_MAX`).
+  static const int nameMax = 80;
+  static const int regionMax = 80;
 
   final String id;
   final String name;
@@ -536,6 +575,12 @@ class Holiday extends Equatable {
     this.halfDay = false,
     this.imported = false,
   });
+
+  /// Longest name the server keeps (`Holiday.NAME_MAX`).
+  static const int nameMax = 120;
+
+  /// Most holidays one calendar holds in a year (`Holiday.PER_YEAR_MAX`).
+  static const int perYearMax = 100;
 
   final String id;
   final String calendarId;
