@@ -1218,7 +1218,6 @@
     "defaultName": "Team Board",
     "view": {
       "board": "Board",
-      "backlog": "Backlog",
       "timeline": "Timeline"
     },
     "active": "Active",
@@ -1252,8 +1251,6 @@
     "clearFilters": "Clear all",
     "activeFilters": "{{count}} active",
     "noAssignee": "Unassigned",
-    "backlogEmpty": "No backlog items.",
-    "backlogSubtitle": "{{count}} item(s) without a sprint",
     "timelineEmpty": "Nothing to show on the timeline.",
     "timelineNoDates": "No start or due date",
     "createSub": "Set it up now, fill it from the backlog after.",
@@ -1294,7 +1291,8 @@
       "automatic": "Back to automatic"
     },
     "searchIssues": "Search issues…",
-    "loadMore": "Show {{count}} more"
+    "loadMore": "Show {{count}} more",
+    "laneLimit": "{{count}} more. Search or filter to find them."
   },
   "gantt": {
     "title": "Timeline",
@@ -2370,6 +2368,7 @@
     "returnBacklog": "Return to the product backlog",
     "createSprint": "Create sprint",
     "startSprint": "Start sprint",
+    "nothingToStart": "{{name}} has no issues yet. Plan some into it first.",
     "completeSprint": "Complete sprint",
     "planned": "Planned",
     "filterBacklog": "Filter backlog…",

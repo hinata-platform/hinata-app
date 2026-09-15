@@ -11,9 +11,11 @@ import '../../core/theme/project_palette.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/subtask_widgets.dart';
 import '../../core/widgets/user_pronouns.dart';
+import '../board/board_card_list.dart';
 import '../board/board_drag.dart';
 import '../board/board_swimlanes.dart';
 import '../board/issue_quick_create.dart';
+import '../board/wall/board_wall_columns.dart';
 import 'widgets/glass_sprint_header.dart';
 
 /// Active-sprint surface: the Liquid-Glass sprint header above a sprint-scoped
@@ -21,7 +23,9 @@ import 'widgets/glass_sprint_header.dart';
 ///
 /// Its columns are the board's wall, searched and filtered on the server: each
 /// counts every card it holds, shows the ones loaded so far and reads on as it
-/// is scrolled.
+/// is scrolled. Side by side, every column follows the wall on its own; in
+/// lanes the board is laid out from all loaded cards, with the rest offered
+/// under them.
 class SprintActiveSurface extends StatelessWidget {
   const SprintActiveSurface({
     super.key,
@@ -32,7 +36,6 @@ class SprintActiveSurface extends StatelessWidget {
     required this.onLoadMore,
     required this.quickCreateSeed,
     required this.onCreated,
-    this.loadingMore = const {},
     this.grouping = BoardGrouping.none,
     this.issuesById = const {},
     this.epics = const [],
@@ -55,9 +58,6 @@ class SprintActiveSurface extends StatelessWidget {
 
   /// Reads the next page of the column with the given name.
   final ValueChanged<String> onLoadMore;
-
-  /// Names of the columns reading their next page.
-  final Set<String> loadingMore;
 
   /// Seeds the inline composer at the foot of a column: the sprint is this
   /// surface's own, [stateFor] resolves the column's workflow state for the
@@ -165,13 +165,7 @@ class SprintActiveSurface extends StatelessWidget {
         quickCreate: _seedFor(column),
         onCreated: onCreated,
       ),
-      footerBuilder: (column, width) => column.hasMore
-          ? BoardLoadMore(
-              remaining: column.count - column.issues.length,
-              loading: loadingMore.contains(column.name),
-              onPressed: () => onLoadMore(column.name),
-            )
-          : null,
+      footerBuilder: (column) => BoardLaneFooter(name: column.name),
     );
   }
 
@@ -198,52 +192,34 @@ class SprintActiveSurface extends StatelessWidget {
                   ),
                 )
               : grouping == BoardGrouping.none
-              ? LayoutBuilder(
-                  // Columns share the room the wall actually got, so a sprint
-                  // with many states still shows them all where there is space.
-                  builder: (context, constraints) {
-                    final width = boardColumnWidth(
-                      constraints.maxWidth - gutter * 2,
-                      boardColumns.length,
-                    );
-                    final snap = boardSnapStride(context, columnWidth: width);
-                    return BoardDragScroller(
-                      snapStride: snap,
-                      builder: (context, _, horizontal) => ListView.separated(
-                        controller: horizontal,
-                        scrollDirection: Axis.horizontal,
-                        physics: BoardColumnSnapPhysics.maybe(snap),
-                        padding: EdgeInsets.fromLTRB(
-                          gutter,
-                          0,
-                          gutter,
-                          gutter + context.bottomGutter,
-                        ),
-                        itemCount: boardColumns.length,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(width: BoardWall.columnGap),
-                        itemBuilder: (context, index) {
-                          final column = boardColumns[index];
-                          return _SprintColumn(
-                            column: column,
-                            width: width,
-                            projectsById: projectsById,
-                            issues: column.issues,
-                            count: column.count,
-                            loadingMore: loadingMore.contains(column.name),
-                            onLoadMore: column.hasMore
-                                ? () => onLoadMore(column.name)
-                                : null,
-                            names: names,
-                            avatars: avatars,
-                            pronouns: pronouns,
-                            onAccept: (issue) => onMove(issue, column),
-                            onOpenIssue: onOpenIssue,
-                            quickCreate: _seedFor(column),
-                            onCreated: onCreated,
-                          );
-                        },
-                      ),
+              ? BoardWallColumns(
+                  names: [for (final column in boardColumns) column.name],
+                  padding: EdgeInsets.fromLTRB(
+                    gutter,
+                    0,
+                    gutter,
+                    gutter + context.bottomGutter,
+                  ),
+                  columnBuilder: (context, slice, width) {
+                    final column = slice.column;
+                    return _SprintColumn(
+                      column: column,
+                      width: width,
+                      projectsById: projectsById,
+                      issues: column.issues,
+                      count: column.count,
+                      loadingMore: slice.loadingMore,
+                      failed: slice.failed,
+                      onLoadMore: slice.canLoadMore
+                          ? () => onLoadMore(column.name)
+                          : null,
+                      names: names,
+                      avatars: avatars,
+                      pronouns: pronouns,
+                      onAccept: (issue) => onMove(issue, column),
+                      onOpenIssue: onOpenIssue,
+                      quickCreate: _seedFor(column),
+                      onCreated: onCreated,
                     );
                   },
                 )
@@ -268,6 +244,7 @@ class _SprintColumn extends StatelessWidget {
     required this.onCreated,
     this.laneMode = false,
     this.loadingMore = false,
+    this.failed = false,
     this.onLoadMore,
     this.width = BoardWall.columnWidth,
     this.projectsById = const {},
@@ -310,6 +287,9 @@ class _SprintColumn extends StatelessWidget {
 
   /// Whether the column is reading its next page.
   final bool loadingMore;
+
+  /// Whether the column's last page did not come.
+  final bool failed;
 
   /// Reads the column's next page; null when it holds no more.
   final VoidCallback? onLoadMore;
@@ -442,13 +422,14 @@ class _SprintColumn extends StatelessWidget {
                       laneMode: laneMode,
                       // A column whose loaded cards all moved away still reads
                       // on, so what it holds beyond them comes into view.
-                      child: issues.isEmpty && onLoadMore == null
+                      child: issues.isEmpty && count <= issues.length
                           ? const SizedBox(height: 8)
                           : BoardCardList(
                               count: issues.length,
                               remaining: count - issues.length,
                               laneMode: laneMode,
                               loadingMore: loadingMore,
+                              failed: failed,
                               onLoadMore: onLoadMore,
                               itemBuilder: (context, index) {
                                 final issue = issues[index];

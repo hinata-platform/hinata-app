@@ -1218,7 +1218,6 @@
     "defaultName": "Team-Board",
     "view": {
       "board": "Board",
-      "backlog": "Backlog",
       "timeline": "Timeline"
     },
     "active": "Aktiv",
@@ -1252,8 +1251,6 @@
     "clearFilters": "Zurücksetzen",
     "activeFilters": "{{count}} aktiv",
     "noAssignee": "Nicht zugewiesen",
-    "backlogEmpty": "Keine Backlog-Einträge.",
-    "backlogSubtitle": "{{count}} Eintrag/Einträge ohne Sprint",
     "timelineEmpty": "Nichts auf der Zeitachse anzuzeigen.",
     "timelineNoDates": "Kein Start- oder Fälligkeitsdatum",
     "createSub": "Jetzt anlegen, später aus dem Backlog füllen.",
@@ -1294,7 +1291,8 @@
       "automatic": "Zurück zu automatisch"
     },
     "searchIssues": "Vorgänge durchsuchen…",
-    "loadMore": "{{count}} weitere anzeigen"
+    "loadMore": "{{count}} weitere anzeigen",
+    "laneLimit": "{{count}} weitere. Suche oder filtere, um sie zu finden."
   },
   "gantt": {
     "title": "Zeitachse",
@@ -2370,6 +2368,7 @@
     "returnBacklog": "Zurück ins Produkt-Backlog",
     "createSprint": "Sprint erstellen",
     "startSprint": "Sprint starten",
+    "nothingToStart": "{{name}} hat noch keine Vorgänge. Plane zuerst welche ein.",
     "completeSprint": "Sprint abschließen",
     "planned": "Geplant",
     "filterBacklog": "Backlog filtern…",

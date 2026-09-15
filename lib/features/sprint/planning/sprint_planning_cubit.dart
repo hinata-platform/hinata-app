@@ -11,6 +11,7 @@ import '../../../core/models/work_models.dart';
 import '../../../core/repositories/board_repository.dart';
 import '../../../core/repositories/issue_repository.dart';
 import '../../../core/repositories/sprint_repository.dart';
+import '../../board/wall/board_reads.dart';
 
 /// Where a Scrum board's planning stands.
 enum SprintPlanningStatus { loading, ready, failure }
@@ -52,6 +53,10 @@ class SprintContainer extends Equatable {
   List<Object?> get props => [items, total, summary, loadingMore];
 }
 
+/// A Scrum board's planning as its surface draws it.
+///
+/// The sprints and the query only ever change together with the cards of a
+/// read that arrived, so they always describe the cards on screen.
 class SprintPlanningState extends Equatable {
   const SprintPlanningState({
     this.status = SprintPlanningStatus.loading,
@@ -79,7 +84,7 @@ class SprintPlanningState extends Equatable {
   final int backlogTotal;
   final int backlogPage;
 
-  /// The search and filter the planning was read with.
+  /// The search and filter the planning on screen was read with.
   final BoardQuery query;
 
   /// A new read is under way while the last cards stay in place.
@@ -109,23 +114,21 @@ class SprintPlanningState extends Equatable {
 
   SprintPlanningState copyWith({
     SprintPlanningStatus? status,
-    List<Sprint>? sprints,
     Map<String, SprintContainer>? containers,
     List<Issue>? backlog,
     int? backlogTotal,
     int? backlogPage,
-    BoardQuery? query,
     bool? refreshing,
     Map<String, DirectoryUser>? users,
     String? errorKey,
   }) => SprintPlanningState(
     status: status ?? this.status,
-    sprints: sprints ?? this.sprints,
+    sprints: sprints,
     containers: containers ?? this.containers,
     backlog: backlog ?? this.backlog,
     backlogTotal: backlogTotal ?? this.backlogTotal,
     backlogPage: backlogPage ?? this.backlogPage,
-    query: query ?? this.query,
+    query: query,
     refreshing: refreshing ?? this.refreshing,
     users: users ?? this.users,
     // Always replaced: an error belongs to the one state that reports it.
@@ -155,17 +158,21 @@ class SprintPlanningState extends Equatable {
 /// backlog, then every issue of the board's projects once more. The server
 /// searches and filters here as on the wall, a sprint reads more when it is
 /// asked to, and a card that is moved, pulled into a sprint or estimated
-/// changes in place at once; only the sprints it touched are read again.
-class SprintPlanningCubit extends Cubit<SprintPlanningState> {
+/// changes in place at once; only the sprints it touched are read again. A
+/// change the server refuses is taken back in place before anything is read.
+class SprintPlanningCubit extends Cubit<SprintPlanningState>
+    with BoardReads<SprintPlanningState> {
   SprintPlanningCubit({
     required BoardRepository boards,
     required IssueRepository issues,
     required SprintRepository sprints,
     required this.boardId,
-    this.sprintPageSize = 50,
-    this.backlogPageSize = 12,
-    this.searchDelay = const Duration(milliseconds: 300),
-    this.refreshDelay = const Duration(milliseconds: 250),
+    this.sprintPageSize = kSprintPageSize,
+    this.backlogPageSize = kBacklogPageSize,
+    this.searchDelay = kBoardSearchDelay,
+    this.filterDelay = kBoardFilterDelay,
+    this.refreshDelay = kBoardRefreshDelay,
+    this.parallelWrites = 4,
   }) : _boards = boards,
        _issues = issues,
        _sprints = sprints,
@@ -177,40 +184,53 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState> {
   final String boardId;
   final int sprintPageSize;
   final int backlogPageSize;
+
+  /// How many changes a move of many cards sends at once.
+  final int parallelWrites;
+
+  @override
   final Duration searchDelay;
+
+  @override
+  final Duration filterDelay;
+
+  @override
   final Duration refreshDelay;
 
-  int _generation = 0;
-  BoardQuery? _pendingQuery;
-  Timer? _searchTimer;
-  Timer? _refreshTimer;
+  @override
+  BoardQuery get shownQuery => state.query;
+
+  /// Counts the backlog pages asked for, so only the last one asked shows.
+  int _backlogRead = 0;
 
   /// Reads the sprints, each one's cards as deep as they are loaded, and the
-  /// backlog page on screen.
+  /// backlog page on screen. A new search or filter starts every sprint and
+  /// the backlog from their first page.
   Future<void> load() async {
-    _searchTimer?.cancel();
-    _refreshTimer?.cancel();
-    final query = _pendingQuery ?? state.query;
-    final newQuery = _pendingQuery != null;
-    _pendingQuery = null;
-    final generation = ++_generation;
-    final first = state.status != SprintPlanningStatus.ready;
+    final generation = startRead();
+    final query = requestedQuery;
+    final held = state;
+    final first = held.status != SprintPlanningStatus.ready;
+    final same = query == held.query;
+    final backlogPage = same ? held.backlogPage : 0;
     emit(
-      state.copyWith(
+      held.copyWith(
         status: first ? SprintPlanningStatus.loading : null,
         refreshing: !first,
-        query: query,
       ),
     );
     try {
       final sprints = await _sprints.sprints(boardId);
-      final backlogPage = newQuery ? 0 : state.backlogPage;
-      final reads = await Future.wait([
+      final sizes = [
         for (final sprint in sprints)
+          same ? _depthOf(held, sprint.id) : sprintPageSize,
+      ];
+      final reads = await Future.wait([
+        for (var i = 0; i < sprints.length; i++)
           _boards.cards(
             boardId,
-            sprintId: sprint.id,
-            size: _depthOf(sprint.id),
+            sprintId: sprints[i].id,
+            size: sizes[i],
             summary: true,
             query: query,
           ),
@@ -222,25 +242,48 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState> {
           query: query,
         ),
       ]);
-      if (isClosed || generation != _generation) return;
+      if (!isCurrent(generation)) return;
+      final fresh = {
+        for (final read in reads)
+          for (final card in read.items) card.id,
+      };
+      final containers = {
+        for (var i = 0; i < sprints.length; i++)
+          sprints[i].id: SprintContainer(
+            items: deepened(
+              same ? held.containerOf(sprints[i].id).items : const [],
+              reads[i],
+              sizes[i],
+              fresh,
+            ),
+            total: reads[i].total,
+            summary: reads[i].summary ?? const [],
+          ),
+      };
+      final kept = [
+        for (final container in containers.values)
+          for (final card in container.items)
+            if (!fresh.contains(card.id)) card,
+      ];
       final backlog = reads.last;
       emit(
         SprintPlanningState(
           status: SprintPlanningStatus.ready,
           sprints: sprints,
-          containers: {
-            for (var i = 0; i < sprints.length; i++)
-              sprints[i].id: SprintContainer(
-                items: reads[i].items,
-                total: reads[i].total,
-                summary: reads[i].summary ?? const [],
-              ),
-          },
+          containers: containers,
           backlog: backlog.items,
           backlogTotal: backlog.total,
           backlogPage: backlogPage,
           query: query,
-          users: _people(state.users, reads),
+          users: sameOr(held.users, {
+            ...namedBy(
+              kept,
+              held.users,
+              (card) => [card.assigneeId, ...card.assigneeIds],
+            ),
+            for (final read in reads)
+              for (final user in read.users) user.id: user,
+          }),
         ),
       );
     } on ApiFailure catch (failure) {
@@ -251,7 +294,8 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState> {
   }
 
   void _failed(int generation, bool first, String errorKey) {
-    if (isClosed || generation != _generation) return;
+    if (!isCurrent(generation)) return;
+    readFailed();
     emit(
       state.copyWith(
         status: first
@@ -265,26 +309,15 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState> {
 
   /// Reads everything again a moment later, so a burst of changes elsewhere is
   /// one read.
-  void refreshSoon() {
-    _refreshTimer?.cancel();
-    _refreshTimer = Timer(refreshDelay, () => unawaited(load()));
-  }
+  void refreshSoon() => scheduleRefresh(() => unawaited(load()));
 
-  /// Narrows the planning to [query], from the backlog's first page. A change
-  /// of the search text alone waits [searchDelay] for the next letter. The
-  /// planning lists every issue type, whatever shape [query] was given.
-  void narrow(BoardQuery query) {
-    query = query.withShape(BoardCardShape.planning);
-    final current = _pendingQuery ?? state.query;
-    if (query == current) return;
-    _pendingQuery = query;
-    _searchTimer?.cancel();
-    if (query.withText('') == current.withText('')) {
-      _searchTimer = Timer(searchDelay, () => unawaited(load()));
-    } else {
-      unawaited(load());
-    }
-  }
+  /// Narrows the planning to [query] once the typing or ticking has paused,
+  /// from the backlog's first page. The planning lists every issue type,
+  /// whatever shape [query] was given.
+  void narrow(BoardQuery query) => scheduleNarrow(
+    query.copyWith(shape: BoardCardShape.planning),
+    () => unawaited(load()),
+  );
 
   /// Reads the next page of the sprint [sprintId].
   Future<void> loadMore(String sprintId) async {
@@ -295,7 +328,7 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState> {
         state.refreshing) {
       return;
     }
-    final generation = _generation;
+    final generation = this.generation;
     emit(_withContainer(sprintId, container.copyWith(loadingMore: true)));
     try {
       final page = await _boards.cards(
@@ -305,36 +338,37 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState> {
         size: sprintPageSize,
         query: state.query,
       );
-      if (isClosed || generation != _generation) return;
+      if (!isCurrent(generation)) return;
       final current = state.containerOf(sprintId);
-      final merged = _append(current.items, page.items);
-      final stuck =
-          page.items.isNotEmpty && merged.length == current.items.length;
+      final appended = appendPage(current.items, page);
       emit(
         _withContainer(
           sprintId,
           current.copyWith(
-            items: merged,
-            total: stuck ? merged.length : page.total,
+            items: appended.items,
+            total: appended.total,
             loadingMore: false,
           ),
-        ).copyWith(users: _people(state.users, [page])),
+        ).copyWith(
+          users: mergeById(state.users, page.users, (user) => user.id),
+        ),
       );
-    } catch (_) {
-      if (isClosed || generation != _generation) return;
+    } catch (error) {
+      if (!isCurrent(generation)) return;
       emit(
         _withContainer(
           sprintId,
           state.containerOf(sprintId).copyWith(loadingMore: false),
-        ),
+        ).copyWith(errorKey: _keyOf(error)),
       );
     }
   }
 
-  /// Shows the backlog's page [page].
+  /// Shows the backlog's page [page] once it has arrived. The page on screen
+  /// stays until then, and stays when the other does not come.
   Future<void> showBacklogPage(int page) async {
-    final generation = _generation;
-    emit(state.copyWith(backlogPage: page));
+    final generation = this.generation;
+    final read = ++_backlogRead;
     try {
       final result = await _boards.cards(
         boardId,
@@ -343,19 +377,18 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState> {
         size: backlogPageSize,
         query: state.query,
       );
-      if (isClosed || generation != _generation || state.backlogPage != page) {
-        return;
-      }
+      if (!isCurrent(generation) || read != _backlogRead) return;
       emit(
         state.copyWith(
           backlog: result.items,
           backlogTotal: result.total,
-          users: _people(state.users, [result]),
+          backlogPage: page,
+          users: mergeById(state.users, result.users, (user) => user.id),
         ),
       );
-    } on ApiFailure catch (failure) {
-      if (isClosed) return;
-      emit(state.copyWith(errorKey: failure.message));
+    } catch (error) {
+      if (!isCurrent(generation) || read != _backlogRead) return;
+      emit(state.copyWith(errorKey: _keyOf(error)));
     }
   }
 
@@ -365,22 +398,23 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState> {
   /// state. Returns the refusal's message key, or null.
   Future<String?> moveToSprint(Issue issue, String? sprintId) async {
     if (issue.sprintId == sprintId) return null;
-    final from = issue.sprintId;
+    final before = state;
     emit(_moved([issue], sprintId));
     try {
       await _issues.updateIssue(issue.id, {'sprintId': sprintId ?? ''});
       if (isClosed) return null;
-      await _reread({from, sprintId});
+      await rereadSprints({issue.sprintId, sprintId});
       return null;
-    } on ApiFailure catch (failure) {
-      return _refused(failure.message);
+    } catch (error) {
+      return _refused(before, _keyOf(error));
     }
   }
 
   /// Moves every card among [ids] into [sprintId], or into the backlog for
-  /// null, the loaded ones in place at once. A card picked on a backlog page
-  /// no longer on screen moves as well; where it came from is not known here,
-  /// so the planning is then read again as a whole.
+  /// null, the loaded ones in place at once, a few at a time on the server. A
+  /// card picked on a backlog page no longer on screen moves as well; where it
+  /// came from is not known here, so the planning is then read again as a
+  /// whole.
   Future<String?> moveAll(Iterable<String> ids, String? sprintId) async {
     final wanted = ids.toSet();
     final loaded = {
@@ -393,27 +427,35 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState> {
     ];
     final unseen = wanted.difference(loaded.keys.toSet());
     if (moving.isEmpty && unseen.isEmpty) return null;
+    final before = state;
     emit(_moved(moving, sprintId));
     try {
-      await Future.wait([
-        for (final id in [for (final card in moving) card.id, ...unseen])
-          _issues.updateIssue(id, {'sprintId': sprintId ?? ''}),
-      ]);
+      final all = [for (final card in moving) card.id, ...unseen];
+      for (var start = 0; start < all.length; start += parallelWrites) {
+        await Future.wait([
+          for (final id in all.skip(start).take(parallelWrites))
+            _issues.updateIssue(id, {'sprintId': sprintId ?? ''}),
+        ]);
+      }
       if (isClosed) return null;
       if (unseen.isEmpty) {
-        await _reread({for (final card in moving) card.sprintId, sprintId});
+        await rereadSprints({
+          for (final card in moving) card.sprintId,
+          sprintId,
+        });
       } else {
         await load();
       }
       return null;
-    } on ApiFailure catch (failure) {
-      return _refused(failure.message);
+    } catch (error) {
+      return _refused(before, _keyOf(error));
     }
   }
 
   /// Sets [issue]'s story points, null to clear them: in place at once, and
   /// the sprint's head read again after.
   Future<String?> estimate(Issue issue, int? points) async {
+    final before = state;
     emit(_replaced(issue.copyWith(storyPoints: points)));
     try {
       await _issues.updateIssue(
@@ -421,10 +463,10 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState> {
         points == null ? {'clearStoryPoints': true} : {'storyPoints': points},
       );
       if (isClosed) return null;
-      if (issue.sprintId != null) await _reread({issue.sprintId});
+      if (issue.sprintId != null) await rereadSprints({issue.sprintId});
       return null;
-    } on ApiFailure catch (failure) {
-      return _refused(failure.message);
+    } catch (error) {
+      return _refused(before, _keyOf(error));
     }
   }
 
@@ -444,78 +486,96 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState> {
     return whole.summary ?? const [];
   }
 
-  Future<String?> _refused(String errorKey) async {
-    if (isClosed) return errorKey;
-    emit(state.copyWith(errorKey: errorKey));
-    // What the server holds decides; reading it again undoes the change made
-    // up front.
-    await load();
-    return errorKey;
-  }
-
-  @override
-  Future<void> close() {
-    _searchTimer?.cancel();
-    _refreshTimer?.cancel();
-    return super.close();
-  }
-
-  // ── the planning's arithmetic ────────────────────────────────────────────
-
-  int _depthOf(String sprintId) => math.min(
-    math.max(state.containerOf(sprintId).items.length, sprintPageSize),
-    kBoardMaxPageSize,
-  );
-
-  /// Reads again the sprints among [places] as deep as they are loaded, and
-  /// the backlog page when null is among them.
-  Future<void> _reread(Set<String?> places) async {
-    final generation = _generation;
+  /// Reads again the sprints among [places] as deep as they are loaded, with
+  /// their heads, and the backlog page on screen when null is among them: for
+  /// a change that touched only those, where a read of the whole planning
+  /// would be spent on sprints that did not change.
+  Future<void> rereadSprints(Set<String?> places) async {
+    final generation = this.generation;
+    final held = state;
     final sprintIds = [
       for (final id in places)
-        if (id != null && state.containers.containsKey(id)) id,
+        if (id != null && held.containers.containsKey(id)) id,
     ];
     final withBacklog = places.contains(null);
+    if (sprintIds.isEmpty && !withBacklog) return;
+    final sizes = [for (final id in sprintIds) _depthOf(held, id)];
     try {
       final reads = await Future.wait([
-        for (final id in sprintIds)
+        for (var i = 0; i < sprintIds.length; i++)
           _boards.cards(
             boardId,
-            sprintId: id,
-            size: _depthOf(id),
+            sprintId: sprintIds[i],
+            size: sizes[i],
             summary: true,
-            query: state.query,
+            query: held.query,
           ),
         if (withBacklog)
           _boards.cards(
             boardId,
             backlog: true,
-            page: state.backlogPage,
+            page: held.backlogPage,
             size: backlogPageSize,
-            query: state.query,
+            query: held.query,
           ),
       ]);
-      if (isClosed || generation != _generation) return;
+      if (!isCurrent(generation)) return;
+      final fresh = {
+        for (final read in reads)
+          for (final card in read.items) card.id,
+      };
       final containers = {...state.containers};
       for (var i = 0; i < sprintIds.length; i++) {
         containers[sprintIds[i]] = SprintContainer(
-          items: reads[i].items,
+          items: deepened(
+            state.containerOf(sprintIds[i]).items,
+            reads[i],
+            sizes[i],
+            fresh,
+          ),
           total: reads[i].total,
           summary: reads[i].summary ?? const [],
         );
       }
+      // Another backlog page may have been shown meanwhile.
+      final backlog = withBacklog && state.backlogPage == held.backlogPage
+          ? reads.last
+          : null;
       emit(
         state.copyWith(
           containers: containers,
-          backlog: withBacklog ? reads.last.items : null,
-          backlogTotal: withBacklog ? reads.last.total : null,
-          users: _people(state.users, reads),
+          backlog: backlog?.items,
+          backlogTotal: backlog?.total,
+          users: mergeById(state.users, [
+            for (final read in reads) ...read.users,
+          ], (user) => user.id),
         ),
       );
     } catch (_) {
       // The change is made; the next read of the planning shows its effects.
     }
   }
+
+  /// Takes back a change the server refused. What was on screen before it
+  /// comes back at once, with the reason, so the planning never shows a change
+  /// that was not made, not even when it cannot be read again right now. What
+  /// the server holds is read after.
+  Future<String> _refused(SprintPlanningState before, String errorKey) async {
+    if (isClosed) return errorKey;
+    emit(before.copyWith(refreshing: state.refreshing, errorKey: errorKey));
+    await load();
+    return errorKey;
+  }
+
+  static String _keyOf(Object error) =>
+      error is ApiFailure ? error.message : 'errors.unexpected';
+
+  // ── the planning's arithmetic ────────────────────────────────────────────
+
+  int _depthOf(SprintPlanningState held, String sprintId) => math.min(
+    math.max(held.containerOf(sprintId).items.length, sprintPageSize),
+    kBoardMaxPageSize,
+  );
 
   SprintPlanningState _withContainer(
     String sprintId,
@@ -579,22 +639,4 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState> {
       for (final card in state.backlog) card.id == updated.id ? updated : card,
     ],
   );
-
-  static List<Issue> _append(List<Issue> held, List<Issue> incoming) {
-    final seen = {for (final issue in held) issue.id};
-    return [
-      ...held,
-      for (final issue in incoming)
-        if (seen.add(issue.id)) issue,
-    ];
-  }
-
-  static Map<String, DirectoryUser> _people(
-    Map<String, DirectoryUser> held,
-    List<BoardCardPage> pages,
-  ) => {
-    ...held,
-    for (final page in pages)
-      for (final user in page.users) user.id: user,
-  };
 }

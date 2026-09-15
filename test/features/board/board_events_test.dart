@@ -16,7 +16,7 @@ import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/repositories/board_repository.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/repositories/team_repository.dart';
-import 'package:hinata/features/board/board_screen.dart';
+import 'package:hinata/features/board/boards_screen.dart';
 
 void main() {
   group('the repository', () {

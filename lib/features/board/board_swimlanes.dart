@@ -587,157 +587,6 @@ Widget _laneCount(int count) => Container(
   ),
 );
 
-/// The way to a column's cards that are not loaded yet: how many are left,
-/// behind a quiet button, or a small spinner while they are being read.
-class BoardLoadMore extends StatelessWidget {
-  const BoardLoadMore({
-    super.key,
-    this.remaining = 0,
-    this.loading = false,
-    this.onPressed,
-  });
-
-  final int remaining;
-  final bool loading;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    if (loading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: Center(
-          child: SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-      );
-    }
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Center(
-        child: GhostButton(
-          label: context.t(
-            'board.loadMore',
-            variables: {'count': '$remaining'},
-          ),
-          icon: LucideIcons.chevronDown,
-          onPressed: onPressed,
-        ),
-      ),
-    );
-  }
-}
-
-/// A column's cards, read on as they are scrolled: the next page is asked for
-/// close to the end of the loaded cards, or right after layout when those do
-/// not fill the column, and a spinner stands at the end while it is read. A
-/// page asked for on layout that does not come is not asked for again on its
-/// own; the list offers a button for it instead. In a lane the list neither
-/// scrolls nor pages; the board offers the rest under its lanes.
-class BoardCardList extends StatefulWidget {
-  const BoardCardList({
-    super.key,
-    required this.count,
-    required this.itemBuilder,
-    this.remaining = 0,
-    this.laneMode = false,
-    this.loadingMore = false,
-    this.onLoadMore,
-  });
-
-  final int count;
-  final IndexedWidgetBuilder itemBuilder;
-
-  /// The column's cards beyond the loaded ones.
-  final int remaining;
-  final bool laneMode;
-  final bool loadingMore;
-
-  /// Reads the next page; null when the column holds no more.
-  final VoidCallback? onLoadMore;
-
-  @override
-  State<BoardCardList> createState() => _BoardCardListState();
-}
-
-class _BoardCardListState extends State<BoardCardList> {
-  final ScrollController _controller = ScrollController();
-
-  /// How close to the end of the loaded cards the next page is asked for.
-  static const double _nearEnd = 600;
-
-  /// How many cards the list held when it last asked for more on its own, so
-  /// a page that failed is not asked for again on every frame.
-  int? _filledAt;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller.addListener(_askIfNearEnd);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  VoidCallback? get _ask =>
-      widget.laneMode || widget.loadingMore ? null : widget.onLoadMore;
-
-  void _askIfNearEnd() {
-    final ask = _ask;
-    if (ask == null || !_controller.hasClients) return;
-    final position = _controller.position;
-    if (position.pixels >= position.maxScrollExtent - _nearEnd) ask();
-  }
-
-  /// Loaded cards that do not fill the column can never be scrolled to their
-  /// end, so such a column asks as soon as it has been laid out.
-  void _fillIfShort() {
-    final ask = _ask;
-    if (!mounted ||
-        ask == null ||
-        _filledAt == widget.count ||
-        !_controller.hasClients) {
-      return;
-    }
-    final position = _controller.position;
-    if (position.hasContentDimensions && position.maxScrollExtent <= 0) {
-      _filledAt = widget.count;
-      ask();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final ask = _ask;
-    if (ask != null && _filledAt != widget.count) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _fillIfShort());
-    }
-    // Asked on its own for these very cards already, and still more to read:
-    // that page did not come, so reading on is the reader's call.
-    final retry = ask != null && _filledAt == widget.count;
-    final footer = widget.loadingMore || retry;
-    return ListView.separated(
-      controller: widget.laneMode ? null : _controller,
-      shrinkWrap: true,
-      physics: widget.laneMode ? const NeverScrollableScrollPhysics() : null,
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      itemCount: widget.count + (footer ? 1 : 0),
-      separatorBuilder: (_, _) => const SizedBox(height: 9),
-      itemBuilder: (context, index) => index < widget.count
-          ? widget.itemBuilder(context, index)
-          : widget.loadingMore
-          ? const BoardLoadMore(loading: true)
-          : BoardLoadMore(remaining: widget.remaining, onPressed: ask),
-    );
-  }
-}
-
 /// Wraps a column's card list in a [Flexible] on the flat board (bounded
 /// viewport height) but renders it bare inside a swimlane, where the whole
 /// board scrolls as one unit and a [Flexible] would have no bounded height.
@@ -775,8 +624,7 @@ class BoardSwimlanes extends StatefulWidget {
 
   /// What goes under a column once all lanes are drawn, such as the way to its
   /// cards that are not loaded yet. Null, or null for a column, draws nothing.
-  final Widget? Function(BoardColumnView column, double columnWidth)?
-  footerBuilder;
+  final Widget? Function(BoardColumnView column)? footerBuilder;
 
   /// Renders one column of a lane from the issues that fall in it. The [lane]
   /// carries the group context (e.g. the epic id as its key) so builders can
@@ -891,7 +739,7 @@ class _BoardSwimlanesState extends State<BoardSwimlanes> {
                         SizedBox(
                           width: columnWidth,
                           child:
-                              widget.footerBuilder!(columns[i], columnWidth) ??
+                              widget.footerBuilder!(columns[i]) ??
                               const SizedBox.shrink(),
                         ),
                       ],

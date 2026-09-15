@@ -1,186 +1,5 @@
 part of 'board_screen.dart';
 
-// ─────────────────────────── Board list card ──────────────────────────────
-
-class _BoardListCard extends StatelessWidget {
-  const _BoardListCard({
-    required this.board,
-    required this.index,
-    required this.projects,
-    required this.canManage,
-  });
-
-  final AgileBoard board;
-  final int index;
-  final List<Project> projects;
-  final bool canManage;
-
-  @override
-  Widget build(BuildContext context) {
-    final projectNames = board.projectIds
-        .map(
-          (id) => projects.firstWhere(
-            (p) => p.id == id,
-            orElse: () => Project(id: id, key: id, name: id),
-          ),
-        )
-        .map((p) => p.name)
-        .join(', ');
-
-    return SoftCard(
-      color: AppColors.pastelFor(index),
-      onTap: () => context.push('/boards/${board.id}'),
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      board.isScrum ? LucideIcons.zap : LucideIcons.columns3,
-                      size: 13,
-                      color: AppColors.navy,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      context.t(
-                        board.isScrum ? 'board.typeScrum' : 'board.typeKanban',
-                      ),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 11,
-                        color: AppColors.navy,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              if (canManage)
-                Builder(
-                  builder: (btnContext) => IconButton(
-                    tooltip: context.t('board.manageBoard'),
-                    padding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints(
-                      minWidth: 28,
-                      minHeight: 28,
-                    ),
-                    // No onChanged: renaming, re-scoping and deleting all
-                    // broadcast on BoardEvents, which the list this card sits
-                    // in listens to.
-                    onPressed: () =>
-                        openBoardManageMenu(btnContext, board: board),
-                    icon: Icon(
-                      LucideIcons.ellipsisVertical,
-                      size: 16,
-                      color: AppColors.inkSoft,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Expanded(
-            child: Text(
-              board.name,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-            ),
-          ),
-          if (projectNames.isNotEmpty)
-            Text(
-              projectNames,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-            ),
-          const SizedBox(height: 4),
-          Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: Icon(
-              forwardArrow(context),
-              size: 14,
-              color: AppColors.inkSoft,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────── Project filter chip ──────────────────────────
-
-class _ProjectFilterChip extends StatelessWidget {
-  const _ProjectFilterChip({
-    required this.projects,
-    required this.selected,
-    required this.onChanged,
-  });
-
-  final List<Project> projects;
-  final String? selected;
-  final void Function(String?) onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final label = selected != null
-        ? projects
-              .firstWhere((p) => p.id == selected, orElse: () => projects.first)
-              .name
-        : context.t('board.allProjects');
-
-    return GlassPopupMenu<String?>(
-      value: selected,
-      onSelected: onChanged,
-      items: [
-        GlassMenuItem(value: null, label: context.t('board.allProjects')),
-        ...projects.map((p) => GlassMenuItem(value: p.id, label: p.name)),
-      ],
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceMuted,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.hairline),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(LucideIcons.chevronDown, size: 16, color: AppColors.inkSoft),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // ─────────────────────────── Kanban column ────────────────────────────────
 
 /// Where the "no status here" note floats: clear of the column's header row
@@ -204,6 +23,7 @@ class _BoardColumn extends StatefulWidget {
     this.width = BoardWall.columnWidth,
     this.projectsById = const {},
     this.loadingMore = false,
+    this.failed = false,
     this.onLoadMore,
   });
 
@@ -247,8 +67,12 @@ class _BoardColumn extends StatefulWidget {
   /// Whether the column is reading its next page right now.
   final bool loadingMore;
 
-  /// Reads the column's next page. Null when the column holds no more, and in
-  /// a lane, where the board offers the rest under its lanes.
+  /// Whether the column's last page did not come.
+  final bool failed;
+
+  /// Reads the column's next page. Null when the column holds no more, while
+  /// the whole wall is read again, and in a lane, where the board offers the
+  /// rest under its lanes.
   final VoidCallback? onLoadMore;
 
   @override
@@ -410,13 +234,14 @@ class _BoardColumnState extends State<_BoardColumn> {
                         laneMode: widget.laneMode,
                         // A column whose loaded cards all moved away still
                         // reads on, so what it holds beyond them comes in.
-                        child: issues.isEmpty && widget.onLoadMore == null
+                        child: issues.isEmpty && count <= issues.length
                             ? const SizedBox(height: 8)
                             : BoardCardList(
                                 count: issues.length,
                                 remaining: count - issues.length,
                                 laneMode: widget.laneMode,
                                 loadingMore: widget.loadingMore,
+                                failed: widget.failed,
                                 onLoadMore: widget.onLoadMore,
                                 itemBuilder: (context, index) {
                                   final issue = issues[index];

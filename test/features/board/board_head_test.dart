@@ -21,6 +21,7 @@ import 'package:hinata/core/widgets/glass_filter_bar.dart';
 import 'package:hinata/core/widgets/hive_widgets.dart' show PageHead;
 import 'package:hinata/features/board/board_header.dart';
 import 'package:hinata/features/board/board_screen.dart';
+import 'package:hinata/features/board/wall/board_reads.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:hinata/features/sprint/sprint_planning_surface.dart';
 
@@ -155,7 +156,7 @@ void main() {
         'login',
       );
       // The search waits a moment for the next letter, then asks the server.
-      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pump(kBoardSearchDelay + const Duration(milliseconds: 50));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('login screen'), findsOneWidget);
@@ -209,7 +210,7 @@ void main() {
         'login',
       );
       // The search waits a moment for the next letter, then asks the server.
-      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pump(kBoardSearchDelay + const Duration(milliseconds: 50));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('login screen'), findsOneWidget);
@@ -296,6 +297,7 @@ class _FakeBoardRepository implements BoardRepository {
     String boardId, {
     String? sprintId,
     bool backlog = false,
+    BoardCardShape shape = BoardCardShape.wall,
   }) async => BoardFacets.empty;
 
   /// A Scrum board's backlog holds the same cards; it has no sprints.
