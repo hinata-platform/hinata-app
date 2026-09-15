@@ -6,7 +6,7 @@ import '../models/board_page_models.dart';
 import '../models/deletion_models.dart';
 import '../models/work_models.dart';
 
-/// Agile boards: listing, creation, the column view aggregate, and cascading
+/// Agile boards: listing, creation, the wall read page by page, and cascading
 /// deletion.
 ///
 /// The mutations that change what a *list* of boards shows announce themselves
@@ -99,20 +99,11 @@ class BoardRepository {
             as Map<String, dynamic>,
       );
 
-  Future<BoardView> boardView(String boardId, {String? sprintId}) async =>
-      BoardView.fromJson(
-        await _api.get(
-              '/api/v1/boards/$boardId',
-              query: {'sprintId': ?sprintId},
-            )
-            as Map<String, dynamic>,
-      );
-
   /// The wall in one request: the columns, each with its number of cards and
   /// the first [size] of them in board order, plus the people, epics and
   /// parents those cards name. The server searches and filters by [query].
-  /// Without [sprintId] the board's active sprint applies, as in [boardView];
-  /// a [size] of 0 returns the columns alone.
+  /// Without [sprintId] the board's active sprint applies; a [size] of 0
+  /// returns the columns alone.
   Future<BoardWallPage> wall(
     String boardId, {
     String? sprintId,
@@ -159,18 +150,33 @@ class BoardRepository {
   );
 
   /// What the filter and the row of faces can offer, over every card of the
-  /// board, of the sprint [sprintId] or of the [backlog].
+  /// [shape] the board lists: of the whole board, of the sprint [sprintId] or
+  /// of the [backlog].
   Future<BoardFacets> facets(
     String boardId, {
     String? sprintId,
     bool backlog = false,
+    BoardCardShape shape = BoardCardShape.wall,
   }) async => BoardFacets.fromJson(
     await _api.get(
           '/api/v1/boards/$boardId/facets',
-          query: {'sprintId': ?sprintId, if (backlog) 'backlog': true},
+          query: {
+            'sprintId': ?sprintId,
+            if (backlog) 'backlog': true,
+            if (shape != BoardCardShape.wall) 'shape': shape.name,
+          },
         )
         as Map<String, dynamic>,
   );
+
+  /// The links between the board's cards [ids], at most [kBoardMaxLinkCards]
+  /// of them: the connectors the timeline draws between the cards it has
+  /// loaded, without reading every issue of the board's projects for them.
+  Future<List<GanttLink>> links(String boardId, List<String> ids) async =>
+      ((await _api.post('/api/v1/boards/$boardId/links', body: {'ids': ids}))
+              as List<dynamic>)
+          .map((l) => GanttLink.fromJson(l as Map<String, dynamic>))
+          .toList();
 
   /// Counts driving the board delete confirmation (sprints, issues to detach).
   Future<BoardDeletionImpact> boardDeletionImpact(String boardId) async =>

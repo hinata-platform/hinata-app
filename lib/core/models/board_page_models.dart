@@ -11,6 +11,18 @@ const int kBoardPageSize = 30;
 /// The most cards the server hands over in one request.
 const int kBoardMaxPageSize = 100;
 
+/// How many cards a sprint of the planning shows until it is asked for more.
+const int kSprintPageSize = 50;
+
+/// How many cards a page of the planning's backlog holds.
+const int kBacklogPageSize = 12;
+
+/// The longest search text the server takes; the search field stops there.
+const int kBoardSearchMaxLength = 100;
+
+/// The most cards the server looks up the links between in one request.
+const int kBoardMaxLinkCards = 1000;
+
 /// Which cards a board query is about.
 enum BoardCardShape {
   /// The wall: work items only. Epics head lanes and sub-tasks live inside
@@ -74,30 +86,31 @@ class BoardQuery extends Equatable {
 
   bool get hasText => text.trim().isNotEmpty;
 
-  BoardQuery withText(String text) => BoardQuery(
-    text: text,
-    states: states,
-    types: types,
-    priorities: priorities,
-    assigneeIds: assigneeIds,
-    reporterIds: reporterIds,
-    labels: labels,
-    sprints: sprints,
-    epicIds: epicIds,
-    shape: shape,
-  );
+  /// Whether anything but the shape narrows the cards: a search or a facet.
+  bool get narrows => copyWith(shape: BoardCardShape.wall) != all;
 
-  BoardQuery withShape(BoardCardShape shape) => BoardQuery(
-    text: text,
-    states: states,
-    types: types,
-    priorities: priorities,
-    assigneeIds: assigneeIds,
-    reporterIds: reporterIds,
-    labels: labels,
-    sprints: sprints,
-    epicIds: epicIds,
-    shape: shape,
+  BoardQuery copyWith({
+    String? text,
+    Set<String>? states,
+    Set<String>? types,
+    Set<String>? priorities,
+    Set<String>? assigneeIds,
+    Set<String>? reporterIds,
+    Set<String>? labels,
+    Set<String>? sprints,
+    Set<String>? epicIds,
+    BoardCardShape? shape,
+  }) => BoardQuery(
+    text: text ?? this.text,
+    states: states ?? this.states,
+    types: types ?? this.types,
+    priorities: priorities ?? this.priorities,
+    assigneeIds: assigneeIds ?? this.assigneeIds,
+    reporterIds: reporterIds ?? this.reporterIds,
+    labels: labels ?? this.labels,
+    sprints: sprints ?? this.sprints,
+    epicIds: epicIds ?? this.epicIds,
+    shape: shape ?? this.shape,
   );
 
   /// The query parameters. Empty facets stay out and every list is sorted, so
@@ -285,10 +298,6 @@ class BoardWallPage extends Equatable {
   final List<BoardColumnView> columns;
   final List<DirectoryUser> users;
   final List<Issue> refs;
-
-  /// The same wall in the shape that screens and editors take.
-  BoardView get view =>
-      BoardView(board: board, sprints: sprints, columns: columns);
 
   factory BoardWallPage.fromJson(Map<String, dynamic> json) => BoardWallPage(
     board: AgileBoard.fromJson(json['board'] as Map<String, dynamic>),

@@ -10,22 +10,29 @@ import '../../../core/models/core_models.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/repositories/board_repository.dart';
 import '../../../core/repositories/issue_repository.dart';
+import 'board_reads.dart';
 
 /// Where a board's wall stands.
 enum BoardWallStatus { loading, ready, failure }
 
 /// A board's wall as a screen draws it: the columns with the cards loaded so
 /// far and the number each column holds, and what those cards refer to.
+///
+/// The board, its sprints, the sprint picked and the query only ever change
+/// together with the cards of a read that arrived, so they always describe the
+/// cards on screen.
 class BoardWallState extends Equatable {
   const BoardWallState({
     this.status = BoardWallStatus.loading,
     this.board,
     this.sprints = const [],
     this.sprintId,
+    this.pickedSprintId,
     this.columns = const [],
     this.query = BoardQuery.all,
     this.refreshing = false,
     this.loadingMore = const {},
+    this.failedColumns = const {},
     this.users = const {},
     this.refs = const {},
     this.errorKey,
@@ -39,6 +46,10 @@ class BoardWallState extends Equatable {
 
   /// The sprint the wall shows: the one picked, else the board's active one.
   final String? sprintId;
+
+  /// The sprint picked for the wall on screen; null leaves it to the board's
+  /// active one. A ticket written on a picked sprint's wall joins that sprint.
+  final String? pickedSprintId;
   final List<BoardColumnView> columns;
 
   /// The search and filter the cards on the wall were read with.
@@ -51,6 +62,10 @@ class BoardWallState extends Equatable {
   /// Names of the columns reading their next page.
   final Set<String> loadingMore;
 
+  /// Names of the columns whose last page did not come. They read on only when
+  /// asked to again.
+  final Set<String> failedColumns;
+
   /// The people the loaded cards name, by id.
   final Map<String, DirectoryUser> users;
 
@@ -61,35 +76,37 @@ class BoardWallState extends Equatable {
   /// raise a toast; the next state clears it.
   final String? errorKey;
 
-  /// The wall in the shape the board's surfaces take.
-  BoardView? get view => board == null
-      ? null
-      : BoardView(board: board!, sprints: sprints, columns: columns);
-
   /// Every loaded card, column after column.
   List<Issue> get cards => [for (final column in columns) ...column.issues];
 
+  /// The column called [name], if the wall has one.
+  BoardColumnView? column(String name) {
+    for (final column in columns) {
+      if (column.name == name) return column;
+    }
+    return null;
+  }
+
   BoardWallState copyWith({
     BoardWallStatus? status,
-    AgileBoard? board,
-    List<Sprint>? sprints,
-    String? sprintId,
     List<BoardColumnView>? columns,
-    BoardQuery? query,
     bool? refreshing,
     Set<String>? loadingMore,
+    Set<String>? failedColumns,
     Map<String, DirectoryUser>? users,
     Map<String, Issue>? refs,
     String? errorKey,
   }) => BoardWallState(
     status: status ?? this.status,
-    board: board ?? this.board,
-    sprints: sprints ?? this.sprints,
-    sprintId: sprintId ?? this.sprintId,
+    board: board,
+    sprints: sprints,
+    sprintId: sprintId,
+    pickedSprintId: pickedSprintId,
     columns: columns ?? this.columns,
-    query: query ?? this.query,
+    query: query,
     refreshing: refreshing ?? this.refreshing,
     loadingMore: loadingMore ?? this.loadingMore,
+    failedColumns: failedColumns ?? this.failedColumns,
     users: users ?? this.users,
     refs: refs ?? this.refs,
     // Always replaced: an error belongs to the one state that reports it.
@@ -102,10 +119,12 @@ class BoardWallState extends Equatable {
     board,
     sprints,
     sprintId,
+    pickedSprintId,
     columns,
     query,
     refreshing,
     loadingMore,
+    failedColumns,
     users,
     refs,
     errorKey,
@@ -121,18 +140,20 @@ class BoardWallState extends Equatable {
 /// page, and [loadMore] reads a column's next page when someone scrolls to its
 /// end. A card that is moved moves on the wall at once and goes back if the
 /// server refuses.
-class BoardWallCubit extends Cubit<BoardWallState> {
+class BoardWallCubit extends Cubit<BoardWallState>
+    with BoardReads<BoardWallState> {
   BoardWallCubit({
     required BoardRepository boards,
     required IssueRepository issues,
     required this.boardId,
     String? sprintId,
     this.pageSize = kBoardPageSize,
-    this.searchDelay = const Duration(milliseconds: 300),
-    this.refreshDelay = const Duration(milliseconds: 250),
+    this.searchDelay = kBoardSearchDelay,
+    this.filterDelay = kBoardFilterDelay,
+    this.refreshDelay = kBoardRefreshDelay,
   }) : _boards = boards,
        _issues = issues,
-       _requestedSprintId = sprintId,
+       _pickedSprintId = sprintId,
        super(const BoardWallState());
 
   final BoardRepository _boards;
@@ -140,63 +161,102 @@ class BoardWallCubit extends Cubit<BoardWallState> {
   final String boardId;
   final int pageSize;
 
-  /// How long a search waits for the next letter before it asks the server.
+  @override
   final Duration searchDelay;
 
-  /// How long [refreshSoon] gathers changes before it reads the wall again.
+  @override
+  final Duration filterDelay;
+
+  @override
   final Duration refreshDelay;
 
-  /// The sprint picked on the wall; null leaves it to the board's active one.
-  String? _requestedSprintId;
+  @override
+  BoardQuery get shownQuery => state.query;
 
-  /// Bumped by every read of the whole wall, so an answer that arrives after a
-  /// newer read started is dropped rather than shown.
-  int _generation = 0;
+  /// The sprint asked for; null leaves it to the board's active one.
+  String? _pickedSprintId;
 
-  /// A narrowing that has not been read yet, while a search waits for letters.
-  BoardQuery? _pendingQuery;
-  Timer? _searchTimer;
-  Timer? _refreshTimer;
+  /// Reads the wall, every column from its first page. The first read shows
+  /// the loader; later ones keep the cards on the wall until the new ones are
+  /// there.
+  Future<void> load() => _read(keepDepth: false);
 
-  /// Reads the wall. The first read shows the loader; later ones keep the
-  /// cards on the wall until the new ones are there. [depth] reads that many
-  /// cards per column instead of one page, so a refresh keeps what someone
-  /// already scrolled through.
-  Future<void> load({int? depth}) async {
-    _searchTimer?.cancel();
-    _refreshTimer?.cancel();
-    final query = _pendingQuery ?? state.query;
-    _pendingQuery = null;
-    final generation = ++_generation;
-    final first = state.board == null;
+  /// Reads the wall again and keeps every column as deep as it was scrolled.
+  ///
+  /// A column read past its first page reads again from its start in a request
+  /// of its own, up to the most a page holds, and keeps its cards beyond that;
+  /// every other column costs nothing more than the wall. A new search, filter
+  /// or sprint starts every column over.
+  Future<void> refresh() => _read(keepDepth: true);
+
+  /// Like [refresh], a moment later, so a burst of changes elsewhere in the app
+  /// is one read of the wall rather than one per change.
+  void refreshSoon() => scheduleRefresh(() => unawaited(refresh()));
+
+  /// Shows the sprint [sprintId], or the board's active sprint for null.
+  Future<void> showSprint(String? sprintId) {
+    _pickedSprintId = sprintId;
+    return load();
+  }
+
+  /// Narrows the wall to [query] once the typing or ticking has paused.
+  void narrow(BoardQuery query) =>
+      scheduleNarrow(query, () => unawaited(load()));
+
+  Future<void> _read({required bool keepDepth}) async {
+    final generation = startRead();
+    final query = requestedQuery;
+    final picked = _pickedSprintId;
+    final held = state;
+    final first = held.board == null;
+    final sameWall = query == held.query && picked == held.pickedSprintId;
+    final depths = <String, int>{
+      if (keepDepth && sameWall)
+        for (final column in held.columns)
+          if (column.issues.length > pageSize)
+            column.name: math.min(column.issues.length, kBoardMaxPageSize),
+    };
     emit(
-      state.copyWith(
-        status: first ? BoardWallStatus.loading : state.status,
+      held.copyWith(
+        status: first ? BoardWallStatus.loading : null,
         refreshing: !first,
-        query: query,
+        // Pages under way belong to the wall this read replaces.
+        loadingMore: const {},
       ),
     );
+    // Asked for beside the wall, against the sprint on screen. Should the wall
+    // come back as another sprint's, they are set aside.
+    final deeper = {
+      for (final entry in depths.entries)
+        entry.key: _boards
+            .cards(
+              boardId,
+              column: entry.key,
+              sprintId: held.sprintId,
+              size: entry.value,
+              query: query,
+            )
+            .then<BoardCardPage?>((page) => page, onError: (Object _) => null),
+    };
     try {
       final wall = await _boards.wall(
         boardId,
-        sprintId: _requestedSprintId,
-        size: math.min(
-          math.max(depth ?? pageSize, pageSize),
-          kBoardMaxPageSize,
-        ),
+        sprintId: picked,
+        size: pageSize,
         query: query,
       );
-      if (isClosed || generation != _generation) return;
+      final pages = <String, BoardCardPage>{
+        for (final entry in deeper.entries) entry.key: ?await entry.value,
+      };
+      if (!isCurrent(generation)) return;
       emit(
-        BoardWallState(
-          status: BoardWallStatus.ready,
-          board: wall.board,
-          sprints: wall.sprints,
-          sprintId: wall.sprintId,
-          columns: wall.columns,
+        _arrived(
+          held,
+          wall,
           query: query,
-          users: _byId(state.users, wall.users, (user) => user.id),
-          refs: _byId(state.refs, wall.refs, (ref) => ref.id),
+          picked: picked,
+          deeper: wall.sprintId == held.sprintId ? pages : const {},
+          depths: depths,
         ),
       );
     } on ApiFailure catch (failure) {
@@ -206,8 +266,73 @@ class BoardWallCubit extends Cubit<BoardWallState> {
     }
   }
 
+  /// The wall that arrived, each column read deeper put in place of its first
+  /// page. The people and references come from this read alone, apart from
+  /// those the cards kept beyond a fresh page still name.
+  BoardWallState _arrived(
+    BoardWallState held,
+    BoardWallPage wall, {
+    required BoardQuery query,
+    required String? picked,
+    required Map<String, BoardCardPage> deeper,
+    required Map<String, int> depths,
+  }) {
+    final fresh = {
+      for (final column in wall.columns)
+        for (final card in column.issues) card.id,
+      for (final page in deeper.values)
+        for (final card in page.items) card.id,
+    };
+    final columns = [
+      for (final column in wall.columns)
+        if (deeper[column.name] case final page?)
+          column.copyWith(
+            issues: deepened(
+              held.column(column.name)?.issues ?? const [],
+              page,
+              depths[column.name]!,
+              fresh,
+            ),
+            total: page.total,
+          )
+        else
+          column,
+    ];
+    final kept = [
+      for (final column in columns)
+        for (final card in column.issues)
+          if (!fresh.contains(card.id)) card,
+    ];
+    return BoardWallState(
+      status: BoardWallStatus.ready,
+      board: wall.board,
+      sprints: wall.sprints,
+      sprintId: wall.sprintId,
+      pickedSprintId: picked,
+      columns: columns,
+      query: query,
+      users: sameOr(held.users, {
+        ...namedBy(
+          kept,
+          held.users,
+          (card) => [card.assigneeId, ...card.assigneeIds],
+        ),
+        for (final user in wall.users) user.id: user,
+        for (final page in deeper.values)
+          for (final user in page.users) user.id: user,
+      }),
+      refs: sameOr(held.refs, {
+        ...namedBy(kept, held.refs, (card) => [card.epicId, card.parentId]),
+        for (final ref in wall.refs) ref.id: ref,
+        for (final page in deeper.values)
+          for (final ref in page.refs) ref.id: ref,
+      }),
+    );
+  }
+
   void _failed(int generation, bool first, String errorKey) {
-    if (isClosed || generation != _generation) return;
+    if (!isCurrent(generation)) return;
+    readFailed();
     emit(
       state.copyWith(
         status: first ? BoardWallStatus.failure : BoardWallStatus.ready,
@@ -217,41 +342,11 @@ class BoardWallCubit extends Cubit<BoardWallState> {
     );
   }
 
-  /// Reads the wall again, as deep as its columns are loaded.
-  Future<void> refresh() => load(depth: _loadedDepth);
-
-  /// Like [refresh], a moment later, so a burst of changes elsewhere in the app
-  /// is one read of the wall rather than one per change.
-  void refreshSoon() {
-    _refreshTimer?.cancel();
-    _refreshTimer = Timer(refreshDelay, () => unawaited(refresh()));
-  }
-
-  /// Shows the sprint [sprintId], or the board's active sprint for null.
-  Future<void> showSprint(String? sprintId) {
-    _requestedSprintId = sprintId;
-    return load();
-  }
-
-  /// Narrows the wall to [query]. A change of the search text alone waits
-  /// [searchDelay] for the next letter, so a word typed out is one request;
-  /// any other change reads at once.
-  void narrow(BoardQuery query) {
-    final current = _pendingQuery ?? state.query;
-    if (query == current) return;
-    _pendingQuery = query;
-    _searchTimer?.cancel();
-    if (query.withText('') == current.withText('')) {
-      _searchTimer = Timer(searchDelay, () => unawaited(load()));
-    } else {
-      unawaited(load());
-    }
-  }
-
   /// Reads the next page of the column called [name], if it has one and is not
-  /// reading already.
+  /// reading already. A page that does not come marks the column failed, and
+  /// it reads on when asked to again.
   Future<void> loadMore(String name) async {
-    final column = _column(name);
+    final column = state.column(name);
     if (column == null ||
         !column.hasMore ||
         state.status != BoardWallStatus.ready ||
@@ -259,8 +354,13 @@ class BoardWallCubit extends Cubit<BoardWallState> {
         state.loadingMore.contains(name)) {
       return;
     }
-    final generation = _generation;
-    emit(state.copyWith(loadingMore: {...state.loadingMore, name}));
+    final generation = this.generation;
+    emit(
+      state.copyWith(
+        loadingMore: {...state.loadingMore, name},
+        failedColumns: {...state.failedColumns}..remove(name),
+      ),
+    );
     try {
       final page = await _boards.cards(
         boardId,
@@ -272,32 +372,28 @@ class BoardWallCubit extends Cubit<BoardWallState> {
         size: pageSize,
         query: state.query,
       );
-      if (isClosed || generation != _generation) return;
-      final current = _column(name);
+      if (!isCurrent(generation)) return;
+      final current = state.column(name);
       if (current == null) return;
-      final merged = _append(current.issues, page.items);
-      // A whole page the column holds already means the order moved under the
-      // reader. The count held is then the truth, or the column would ask for
-      // the same page every time it is scrolled to its end.
-      final stuck =
-          page.items.isNotEmpty && merged.length == current.issues.length;
+      final appended = appendPage(current.issues, page);
       emit(
         state.copyWith(
           columns: _withColumn(
-            current.copyWith(
-              issues: merged,
-              total: stuck ? merged.length : page.total,
-            ),
+            current.copyWith(issues: appended.items, total: appended.total),
           ),
           loadingMore: {...state.loadingMore}..remove(name),
-          users: _byId(state.users, page.users, (user) => user.id),
-          refs: _byId(state.refs, page.refs, (ref) => ref.id),
+          users: mergeById(state.users, page.users, (user) => user.id),
+          refs: mergeById(state.refs, page.refs, (ref) => ref.id),
         ),
       );
     } catch (_) {
-      if (isClosed || generation != _generation) return;
-      // The pages already loaded stay; scrolling to the end again retries.
-      emit(state.copyWith(loadingMore: {...state.loadingMore}..remove(name)));
+      if (!isCurrent(generation)) return;
+      emit(
+        state.copyWith(
+          loadingMore: {...state.loadingMore}..remove(name),
+          failedColumns: {...state.failedColumns, name},
+        ),
+      );
     }
   }
 
@@ -307,7 +403,9 @@ class BoardWallCubit extends Cubit<BoardWallState> {
   /// returned; null otherwise.
   Future<String?> move(Issue card, String to, String targetState) async {
     final from = _columnOf(card.id);
-    if (from == null || from.name == to || _column(to) == null) return null;
+    if (from == null || from.name == to || state.column(to) == null) {
+      return null;
+    }
     emit(
       state.copyWith(
         columns: _moved(
@@ -321,8 +419,10 @@ class BoardWallCubit extends Cubit<BoardWallState> {
     try {
       await _issues.updateIssue(card.id, {'state': targetState});
       if (isClosed) return null;
-      // A search or a filter may no longer keep the card where it landed.
-      if (state.query != BoardQuery.all) unawaited(refresh());
+      // A search or a filter may no longer hold the card where it landed, and
+      // a read under way may answer from before the move. Grouping alone
+      // narrows nothing.
+      if (state.query.narrows || state.refreshing) refreshSoon();
       return null;
     } on ApiFailure catch (failure) {
       _moveBack(card, from.name, to, failure.message);
@@ -343,26 +443,7 @@ class BoardWallCubit extends Cubit<BoardWallState> {
     );
   }
 
-  @override
-  Future<void> close() {
-    _searchTimer?.cancel();
-    _refreshTimer?.cancel();
-    return super.close();
-  }
-
   // ── the wall's arithmetic ────────────────────────────────────────────────
-
-  int get _loadedDepth => state.columns.fold(
-    pageSize,
-    (depth, column) => math.max(depth, column.issues.length),
-  );
-
-  BoardColumnView? _column(String name) {
-    for (final column in state.columns) {
-      if (column.name == name) return column;
-    }
-    return null;
-  }
 
   BoardColumnView? _columnOf(String cardId) {
     for (final column in state.columns) {
@@ -413,19 +494,4 @@ class BoardWallCubit extends Cubit<BoardWallState> {
     );
     return at < 0 ? [...issues, card] : ([...issues]..insert(at, card));
   }
-
-  static List<Issue> _append(List<Issue> held, List<Issue> incoming) {
-    final seen = {for (final issue in held) issue.id};
-    return [
-      ...held,
-      for (final issue in incoming)
-        if (seen.add(issue.id)) issue,
-    ];
-  }
-
-  static Map<String, T> _byId<T>(
-    Map<String, T> held,
-    List<T> incoming,
-    String Function(T) idOf,
-  ) => {...held, for (final item in incoming) idOf(item): item};
 }

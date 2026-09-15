@@ -170,6 +170,9 @@ class BoardColumnView extends Equatable {
   /// Whether the server holds cards the column has not loaded yet.
   bool get hasMore => issues.length < count;
 
+  /// How many of the column's cards are not loaded yet.
+  int get remaining => hasMore ? count - issues.length : 0;
+
   BoardColumnView copyWith({List<Issue>? issues, int? total}) =>
       BoardColumnView(
         name: name,
@@ -193,32 +196,7 @@ class BoardColumnView extends Equatable {
       );
 
   @override
-  List<Object?> get props => [name, states, issues, hue, total];
-}
-
-class BoardView extends Equatable {
-  const BoardView({
-    required this.board,
-    required this.sprints,
-    required this.columns,
-  });
-
-  final AgileBoard board;
-  final List<Sprint> sprints;
-  final List<BoardColumnView> columns;
-
-  factory BoardView.fromJson(Map<String, dynamic> json) => BoardView(
-    board: AgileBoard.fromJson(json['board'] as Map<String, dynamic>),
-    sprints: ((json['sprints'] as List<dynamic>?) ?? [])
-        .map((s) => Sprint.fromJson(s as Map<String, dynamic>))
-        .toList(),
-    columns: ((json['columns'] as List<dynamic>?) ?? [])
-        .map((c) => BoardColumnView.fromJson(c as Map<String, dynamic>))
-        .toList(),
-  );
-
-  @override
-  List<Object?> get props => [board, sprints, columns];
+  List<Object?> get props => [name, states, issues, wipLimit, hue, total];
 }
 
 /// One logged unit of work (`work_items`).

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -9,7 +11,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_bulk_bar.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../search/search_tokens.dart';
-import '../board/board_swimlanes.dart' show BoardLoadMore;
+import '../board/board_card_list.dart' show BoardLoadMore;
 import '../board/issue_quick_create.dart';
 import 'planning/sprint_planning_cubit.dart';
 import 'sprint_format.dart';
@@ -22,7 +24,7 @@ import 'widgets/sprint_widgets.dart';
 ///
 /// Everything here comes from the server already searched and filtered. A
 /// sprint shows its cards a page at a time and counts its head over all of
-/// them, loaded or not.
+/// them, loaded or not, and its rows are built as they scroll into view.
 class SprintPlanningSurface extends StatelessWidget {
   const SprintPlanningSurface({
     super.key,
@@ -34,7 +36,6 @@ class SprintPlanningSurface extends StatelessWidget {
     this.pronouns = const {},
     required this.avatars,
     required this.selected,
-    required this.query,
     required this.onPage,
     required this.onLoadMore,
     required this.onToggleSelect,
@@ -65,9 +66,6 @@ class SprintPlanningSurface extends StatelessWidget {
   final Map<String, String> avatars;
   final Map<String, String> pronouns;
   final Set<String> selected;
-
-  /// The search typed into the head, named when the backlog finds nothing.
-  final String query;
   final ValueChanged<int> onPage;
 
   /// Reads the next page of the sprint with the given id.
@@ -101,69 +99,81 @@ class SprintPlanningSurface extends StatelessWidget {
     final gutter = context.pageGutter;
     return Stack(
       children: [
-        ListView(
-          padding: EdgeInsets.fromLTRB(
-            gutter,
-            topInset,
-            gutter,
-            gutter + context.bottomGutter + (selected.isNotEmpty ? 72 : 0),
-          ),
-          children: [
-            for (final s in sprints) ...[
-              _SprintGroup(
-                sprint: s,
-                isActive: s.id == activeSprintId,
-                container: planning.containerOf(s.id),
-                names: names,
-                avatars: avatars,
-                pronouns: pronouns,
-                selected: selected,
-                onToggleSelect: onToggleSelect,
-                onOpenIssue: onOpenIssue,
-                onEstimate: onEstimate,
-                onAccept: (issue) => onMoveToSprint(issue, s.id),
-                onLoadMore: () => onLoadMore(s.id),
-                quickCreate: quickCreateSeed(s.id),
-                onCreated: onCreated,
-                action: s.id == activeSprintId
-                    ? GhostButton(
-                        label: context.t('sprint.completeSprint'),
-                        icon: LucideIcons.flag,
-                        onPressed: () => onCompleteSprint(s),
-                      )
-                    : PrimaryButton(
-                        label: context.t('sprint.startSprint'),
-                        icon: LucideIcons.play,
-                        // An empty sprint has nothing to start. A narrowed
-                        // planning may not show all a sprint holds, so there
-                        // the dialog tells how much it is.
-                        onPressed:
-                            planning.containerOf(s.id).total == 0 &&
-                                !planning.narrowed
-                            ? null
-                            : () => onStartSprint(s),
-                      ),
+        CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                gutter,
+                topInset,
+                gutter,
+                gutter + context.bottomGutter + (selected.isNotEmpty ? 72 : 0),
               ),
-              const SizedBox(height: 16),
-            ],
-            _BacklogGroup(
-              issues: planning.backlog,
-              names: names,
-              avatars: avatars,
-              pronouns: pronouns,
-              total: planning.backlogTotal,
-              page: planning.backlogPage,
-              pages: _backlogPages,
-              pageSize: backlogPageSize,
-              query: query,
-              selected: selected,
-              onToggleSelect: onToggleSelect,
-              onOpenIssue: onOpenIssue,
-              onEstimate: onEstimate,
-              onAccept: (issue) => onMoveToSprint(issue, null),
-              quickCreate: quickCreateSeed(null),
-              onCreated: onCreated,
-              onPage: onPage,
+              sliver: SliverMainAxisGroup(
+                slivers: [
+                  for (final s in sprints) ...[
+                    _SprintGroup(
+                      key: ValueKey(s.id),
+                      sprint: s,
+                      isActive: s.id == activeSprintId,
+                      container: planning.containerOf(s.id),
+                      names: names,
+                      avatars: avatars,
+                      pronouns: pronouns,
+                      selected: selected,
+                      onToggleSelect: onToggleSelect,
+                      onOpenIssue: onOpenIssue,
+                      onEstimate: onEstimate,
+                      onAccept: (issue) => onMoveToSprint(issue, s.id),
+                      onLoadMore: () => onLoadMore(s.id),
+                      quickCreate: quickCreateSeed(s.id),
+                      onCreated: onCreated,
+                      action: s.id == activeSprintId
+                          ? GhostButton(
+                              label: context.t('sprint.completeSprint'),
+                              icon: LucideIcons.flag,
+                              onPressed: () => onCompleteSprint(s),
+                            )
+                          : PrimaryButton(
+                              label: context.t('sprint.startSprint'),
+                              icon: LucideIcons.play,
+                              // An empty sprint has nothing to start. A
+                              // narrowed planning may not show all a sprint
+                              // holds, so there the board counts the whole
+                              // sprint before it starts it.
+                              onPressed:
+                                  planning.containerOf(s.id).total == 0 &&
+                                      !planning.narrowed
+                                  ? null
+                                  : () => onStartSprint(s),
+                            ),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                  ],
+                  SliverToBoxAdapter(
+                    child: _BacklogGroup(
+                      issues: planning.backlog,
+                      names: names,
+                      avatars: avatars,
+                      pronouns: pronouns,
+                      total: planning.backlogTotal,
+                      page: planning.backlogPage,
+                      pages: _backlogPages,
+                      pageSize: backlogPageSize,
+                      // The search the backlog on screen was read with, not
+                      // the letters typed since.
+                      query: planning.query.text.trim(),
+                      selected: selected,
+                      onToggleSelect: onToggleSelect,
+                      onOpenIssue: onOpenIssue,
+                      onEstimate: onEstimate,
+                      onAccept: (issue) => onMoveToSprint(issue, null),
+                      quickCreate: quickCreateSeed(null),
+                      onCreated: onCreated,
+                      onPage: onPage,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -186,9 +196,15 @@ class SprintPlanningSurface extends StatelessWidget {
   }
 }
 
-/// A collapsible sprint container that is a drop target for issues.
+/// A collapsible sprint container that takes the issues dropped on it.
+///
+/// Laid out as slivers, so a sprint's rows are built as they scroll into view
+/// rather than all at once. It stays one drop target however many rows it has:
+/// every part of it takes a card, and the whole group lights up while a card is
+/// held over any part of it.
 class _SprintGroup extends StatefulWidget {
   const _SprintGroup({
+    super.key,
     required this.sprint,
     required this.isActive,
     required this.container,
@@ -231,32 +247,60 @@ class _SprintGroup extends StatefulWidget {
 class _SprintGroupState extends State<_SprintGroup> {
   bool _collapsed = false;
 
+  /// How many parts of the group a card is held over right now.
+  int _hovering = 0;
+
+  bool _takes(Issue issue) => issue.sprintId != widget.sprint.id;
+
+  bool _willAccept(DragTargetDetails<Issue> details) {
+    final taken = _takes(details.data);
+    if (taken) setState(() => _hovering++);
+    return taken;
+  }
+
+  void _left(Issue? issue) {
+    if (issue == null || !_takes(issue)) return;
+    setState(() => _hovering = math.max(0, _hovering - 1));
+  }
+
+  void _accept(DragTargetDetails<Issue> details) {
+    setState(() => _hovering = 0);
+    widget.onAccept(details.data);
+  }
+
+  /// [child] as a part of the group that takes a card.
+  Widget _part(Widget child) => DragTarget<Issue>(
+    onWillAcceptWithDetails: _willAccept,
+    onLeave: _left,
+    onAcceptWithDetails: _accept,
+    builder: (context, _, _) => child,
+  );
+
   @override
   Widget build(BuildContext context) {
     final s = widget.sprint;
     final container = widget.container;
-    return DragTarget<Issue>(
-      onWillAcceptWithDetails: (d) => d.data.sprintId != s.id,
-      onAcceptWithDetails: (d) => widget.onAccept(d.data),
-      builder: (context, candidate, rejected) {
-        final dropping = candidate.isNotEmpty;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          decoration: BoxDecoration(
-            color: dropping ? AppColors.accentSoft : AppColors.canvas2,
-            borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-            border: Border.all(
-              color: dropping
-                  ? AppColors.accentLine
-                  : (widget.isActive
-                        ? AppColors.accentLine
-                        : AppColors.hairline),
-              width: dropping ? 2 : 1,
-            ),
+    final dropping = _hovering > 0;
+    return TweenAnimationBuilder<Decoration>(
+      tween: DecorationTween(
+        end: BoxDecoration(
+          color: dropping ? AppColors.accentSoft : AppColors.canvas2,
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          border: Border.all(
+            color: dropping || widget.isActive
+                ? AppColors.accentLine
+                : AppColors.hairline,
+            width: dropping ? 2 : 1,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        ),
+      ),
+      duration: const Duration(milliseconds: 160),
+      builder: (context, decoration, group) =>
+          DecoratedSliver(decoration: decoration, sliver: group!),
+      child: SliverMainAxisGroup(
+        slivers: [
+          SliverToBoxAdapter(
+            child: _part(
               _SprintGroupHeader(
                 sprint: s,
                 isActive: widget.isActive,
@@ -266,30 +310,46 @@ class _SprintGroupState extends State<_SprintGroup> {
                     setState(() => _collapsed = !_collapsed),
                 action: widget.action,
               ),
-              if (!_collapsed)
+            ),
+          ),
+          if (!_collapsed) ...[
+            if (container.items.isEmpty)
+              SliverToBoxAdapter(
+                child: _part(
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: _EmptyDropHint(text: context.t('sprint.dragHere')),
+                  ),
+                ),
+              )
+            else
+              SliverList.builder(
+                itemCount: container.items.length,
+                itemBuilder: (context, index) {
+                  final issue = container.items[index];
+                  return _part(
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 0, 10, 7),
+                      child: _DraggableRow(
+                        issue: issue,
+                        assigneeName: widget.names[issue.assigneeId],
+                        assigneeAvatar: widget.avatars[issue.assigneeId],
+                        assigneePronouns: widget.pronouns[issue.assigneeId],
+                        selected: widget.selected.contains(issue.id),
+                        onToggleSelect: () => widget.onToggleSelect(issue.id),
+                        onOpen: () => widget.onOpenIssue(issue),
+                        onEstimate: () => widget.onEstimate(issue),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            SliverToBoxAdapter(
+              child: _part(
                 Padding(
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
                   child: Column(
                     children: [
-                      if (container.items.isEmpty)
-                        _EmptyDropHint(text: context.t('sprint.dragHere'))
-                      else
-                        for (final issue in container.items)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 7),
-                            child: _DraggableRow(
-                              issue: issue,
-                              assigneeName: widget.names[issue.assigneeId],
-                              assigneeAvatar: widget.avatars[issue.assigneeId],
-                              assigneePronouns:
-                                  widget.pronouns[issue.assigneeId],
-                              selected: widget.selected.contains(issue.id),
-                              onToggleSelect: () =>
-                                  widget.onToggleSelect(issue.id),
-                              onOpen: () => widget.onOpenIssue(issue),
-                              onEstimate: () => widget.onEstimate(issue),
-                            ),
-                          ),
                       if (container.hasMore)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 7),
@@ -307,10 +367,11 @@ class _SprintGroupState extends State<_SprintGroup> {
                     ],
                   ),
                 ),
-            ],
-          ),
-        );
-      },
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

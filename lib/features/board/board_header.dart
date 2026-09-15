@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
+import '../../core/models/board_page_models.dart' show kBoardSearchMaxLength;
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -166,6 +167,7 @@ class BoardSearchField extends StatelessWidget {
       hint: context.t('board.searchIssues'),
       controller: controller,
       onChanged: onChanged,
+      maxLength: kBoardSearchMaxLength,
     ),
   );
 }
@@ -232,6 +234,7 @@ class BoardHeaderDock extends StatelessWidget {
         child: GlassSearchDock(
           searching: searching && canSearch,
           hint: hint,
+          maxLength: kBoardSearchMaxLength,
           controller: searchController,
           onChanged: onSearchChanged,
           onClose: onSearchClose,

@@ -58,23 +58,38 @@ void main() {
       expect(wall.columns.single.count, 42);
       expect(wall.columns.single.issues, hasLength(2));
       expect(wall.columns.single.hasMore, isTrue);
+      expect(wall.columns.single.remaining, 40);
       expect(wall.columns.single.issues.first.epicId, 'e1');
       expect(wall.users.single.displayName, 'Ada');
       expect(wall.refs.single.isEpic, isTrue);
-      expect(wall.view.columns, wall.columns);
     });
   });
 
-  test('a column of the old board view counts the cards it carries', () {
-    final column = BoardColumnView.fromJson({
-      'name': 'Open',
-      'states': const ['Open'],
-      'issues': [_card('1')],
+  group('BoardColumnView', () {
+    test('a column read without a total counts the cards it carries', () {
+      final column = BoardColumnView.fromJson({
+        'name': 'Open',
+        'states': const ['Open'],
+        'issues': [_card('1')],
+      });
+
+      expect(column.total, isNull);
+      expect(column.count, 1);
+      expect(column.hasMore, isFalse);
+      expect(column.remaining, 0);
     });
 
-    expect(column.total, isNull);
-    expect(column.count, 1);
-    expect(column.hasMore, isFalse);
+    test('columns that differ only in their limit are not the same', () {
+      const open = BoardColumnView(name: 'Open', states: ['Open'], issues: []);
+      const limited = BoardColumnView(
+        name: 'Open',
+        states: ['Open'],
+        issues: [],
+        wipLimit: 3,
+      );
+
+      expect(limited, isNot(open));
+    });
   });
 
   test('a card page carries its summary only when it was asked for', () {
@@ -132,10 +147,44 @@ void main() {
 
     test('is the same query whatever surrounds its text', () {
       expect(const BoardQuery(text: 'login '), const BoardQuery(text: 'login'));
-      expect(
-        const BoardQuery(text: 'a').withShape(BoardCardShape.timeline).shape,
-        BoardCardShape.timeline,
+    });
+
+    test('a copy keeps every facet it is not handed', () {
+      const query = BoardQuery(
+        text: 'login',
+        states: {'OPEN'},
+        types: {'BUG'},
+        priorities: {'HIGH'},
+        assigneeIds: {'u1'},
+        reporterIds: {'u2'},
+        labels: {'ui'},
+        sprints: {'s1'},
+        epicIds: {'e1'},
       );
+
+      expect(
+        query.copyWith(shape: BoardCardShape.timeline),
+        const BoardQuery(
+          text: 'login',
+          states: {'OPEN'},
+          types: {'BUG'},
+          priorities: {'HIGH'},
+          assigneeIds: {'u1'},
+          reporterIds: {'u2'},
+          labels: {'ui'},
+          sprints: {'s1'},
+          epicIds: {'e1'},
+          shape: BoardCardShape.timeline,
+        ),
+      );
+      expect(query.copyWith(text: '').hasText, isFalse);
+    });
+
+    test('narrows the cards for a search or a facet, never for a shape', () {
+      expect(BoardQuery.all.narrows, isFalse);
+      expect(const BoardQuery(shape: BoardCardShape.subtasks).narrows, isFalse);
+      expect(const BoardQuery(text: 'login').narrows, isTrue);
+      expect(const BoardQuery(labels: {'ui'}).narrows, isTrue);
     });
   });
 }

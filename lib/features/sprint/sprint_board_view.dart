@@ -1,14 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/board_page_models.dart';
 import '../../core/models/work_models.dart';
+import '../../core/repositories/board_repository.dart';
+import '../../core/repositories/issue_repository.dart';
+import '../../core/repositories/sprint_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -16,26 +19,25 @@ import '../../core/widgets/glass_filter_bar.dart' show WideToolbar;
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show SegmentItem;
 import '../board/board_drag.dart';
-import '../board/board_filter.dart';
-import '../board/board_filter_popup.dart';
+import '../board/board_feedback.dart';
 import '../board/board_header.dart';
 import '../board/board_people_strip.dart';
 import '../board/board_swimlanes.dart';
+import '../board/head/board_head.dart';
+import '../board/head/board_head_cubit.dart';
 import '../board/issue_quick_create.dart';
+import '../board/wall/board_wall_columns.dart';
 import '../board/wall/board_wall_cubit.dart';
 import '../shell/page_chrome.dart';
 import 'modals/complete_sprint_dialog.dart';
-import 'modals/glass_modal.dart' show GlassToastKind, showGlassToast;
 import 'modals/create_sprint_dialog.dart';
 import 'modals/estimate_dialog.dart';
+import 'modals/glass_modal.dart' show GlassToastKind, showGlassToast;
 import 'modals/start_sprint_dialog.dart';
 import 'planning/sprint_planning_cubit.dart';
 import 'sprint_active_surface.dart';
 import 'sprint_insights_surface.dart';
 import 'sprint_planning_surface.dart';
-import '../../core/repositories/board_repository.dart';
-import '../../core/repositories/issue_repository.dart';
-import '../../core/repositories/sprint_repository.dart';
 
 /// The Scrum board: Planning · Active sprint · Insights, switched by a
 /// segmented control.
@@ -43,19 +45,20 @@ import '../../core/repositories/sprint_repository.dart';
 /// The planning is read by its own [SprintPlanningCubit]: the open sprints a
 /// page at a time with their heads counted on the server, and the backlog a
 /// page at a time. The active sprint is the board screen's wall, which shows
-/// the sprint the board runs. The search and the filter in the head narrow
-/// both on the server, and a change shows at once where it was made.
+/// the sprint the board runs. The search and the filter in the head narrow the
+/// tab on screen on the server, and only that tab reads when something changes;
+/// the other one catches up once it is shown.
 class ScrumBoardView extends StatefulWidget {
   const ScrumBoardView({
     super.key,
-    required this.view,
+    required this.board,
     required this.projectNames,
     this.projectsById = const {},
     required this.onOpenIssue,
     this.fullWidth = false,
   });
 
-  final BoardView view;
+  final AgileBoard board;
   final Map<String, String> projectNames;
 
   /// The board's spanned projects — needed to resolve which state of a merged
@@ -73,38 +76,32 @@ class ScrumBoardView extends StatefulWidget {
 
 enum _Tab { planning, active, insights }
 
-class _ScrumBoardViewState extends State<ScrumBoardView> {
-  AgileBoard get _board => widget.view.board;
-
+class _ScrumBoardViewState extends State<ScrumBoardView>
+    with BoardHeadHost<ScrumBoardView> {
   /// The board screen's wall, which shows the sprint the board runs.
-  late final BoardWallCubit _wall;
-  late final SprintPlanningCubit _planning;
-  late final BoardRepository _boardApi;
-  late final SprintRepository _sprintApi;
+  late final BoardWallCubit _wall = context.read<BoardWallCubit>();
+
+  @override
+  late final BoardHeadCubit head = context.read<BoardHeadCubit>();
+
+  late final BoardRepository _boardApi = context.read<BoardRepository>();
+  late final SprintRepository _sprintApi = context.read<SprintRepository>();
+  late final SprintPlanningCubit _planning = SprintPlanningCubit(
+    boards: _boardApi,
+    issues: context.read<IssueRepository>(),
+    sprints: _sprintApi,
+    boardId: widget.board.id,
+  );
+
+  /// The planning lists every issue type over the whole board, and its filter
+  /// offers what those hold.
+  static const _facetsScope = BoardFacetsScope(shape: BoardCardShape.planning);
 
   // Store-screenshot builds open straight on the Active-sprint board (the kanban
   // columns) rather than Planning, so the marketing shot shows the live board.
   _Tab _tab = const bool.fromEnvironment('SCREENSHOT_MODE')
       ? _Tab.active
       : _Tab.planning;
-
-  // Shared people/criteria filter for the Planning + Active surfaces.
-  BoardFilter _filter = BoardFilter.empty;
-
-  // The search over the planning and the active sprint, typed into the head.
-  final TextEditingController _searchController = TextEditingController();
-  String _query = '';
-
-  /// Whether a phone's docked row shows the search field instead of the tools.
-  bool _searching = false;
-
-  // Swimlane grouping for the active-sprint board.
-  BoardGrouping _grouping = BoardGrouping.none;
-
-  /// What the filter and the row of faces can offer, over every card of the
-  /// board rather than the loaded ones.
-  BoardFacets _facets = BoardFacets.empty;
-  bool _facetsStale = true;
 
   // Planning selection / drag.
   final Set<String> _selected = {};
@@ -114,46 +111,60 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
   bool _reportLoading = false;
   String? _reportError;
 
-  /// Reads the planning again when an issue changes anywhere: an edit made in
-  /// the issue detail (a new sub-task, a sub-task ticked off, a title change)
-  /// would otherwise leave the sprint cards stale. The board screen does the
-  /// same for its wall.
+  /// What changed while another tab was on screen, read again once its tab
+  /// shows: the whole planning or only the sprints named, and the wall.
+  bool _planningStale = false;
+  final Set<String> _staleSprints = {};
+  bool _wallStale = false;
+
+  final BoardPeopleMemo _planningPeople = BoardPeopleMemo();
+  final BoardPeopleMemo _wallPeople = BoardPeopleMemo();
+  Object? _issuesByIdKey;
+  Map<String, Issue> _issuesById = const {};
+
+  /// Reads the tab on screen again when an issue changes anywhere: an edit made
+  /// in the issue detail (a new sub-task, a sub-task ticked off, a title change)
+  /// would otherwise leave its cards stale.
   StreamSubscription<void>? _issueSub;
 
   @override
   void initState() {
     super.initState();
-    _wall = context.read<BoardWallCubit>();
-    _boardApi = context.read<BoardRepository>();
-    _sprintApi = context.read<SprintRepository>();
-    _planning = SprintPlanningCubit(
-      boards: _boardApi,
-      issues: context.read<IssueRepository>(),
-      sprints: _sprintApi,
-      boardId: _board.id,
-    );
     _issueSub = IssueEvents.instance.changes.listen((_) => _changedElsewhere());
     unawaited(_planning.load());
+    // The faces want their facets from the start.
+    unawaited(head.ensureFacets(_facetsScope));
   }
 
   @override
   void dispose() {
     _issueSub?.cancel();
-    _searchController.dispose();
     _planning.close();
     super.dispose();
   }
 
   void _changedElsewhere() {
-    _planning.refreshSoon();
-    _facetsStale = true;
-    _invalidateReport();
+    head.facetsChanged();
+    switch (_tab) {
+      case _Tab.planning:
+        _planning.refreshSoon();
+        _wallStale = true;
+        _report = null;
+      case _Tab.active:
+        _wall.refreshSoon();
+        _planningStale = true;
+        _report = null;
+      case _Tab.insights:
+        unawaited(_loadReport());
+        _planningStale = true;
+        _wallStale = true;
+    }
   }
 
   // ── derived ─────────────────────────────────────────────────────────────
 
   /// The sprint the board runs, as its wall shows it.
-  Sprint? _activeSprint(BoardWallState wall) {
+  static Sprint? _activeSprint(BoardWallState wall) {
     final id = wall.sprintId;
     if (id == null) return null;
     return wall.sprints.where((s) => s.id == id && !s.archived).firstOrNull;
@@ -168,31 +179,33 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
       if (sprint.id != activeSprintId) sprint,
   ];
 
-  BoardPeople _people(BoardWallState wall, SprintPlanningState planning) =>
-      boardPeople([
-        ..._facets.users,
-        ...planning.users.values,
-        ...wall.users.values,
-      ]);
+  /// The wall's cards and what they refer to, by id: what lanes resolve a
+  /// card's epic or parent from.
+  Map<String, Issue> _issuesByIdOf(BoardWallState wall) {
+    final key = (wall.refs, wall.columns);
+    if (key != _issuesByIdKey) {
+      _issuesByIdKey = key;
+      _issuesById = {
+        ...wall.refs,
+        for (final card in wall.cards) card.id: card,
+      };
+    }
+    return _issuesById;
+  }
 
-  /// Epics across the board's projects — drive grouping headers + the filter.
-  List<Issue> _epics(BoardWallState wall) =>
-      boardEpics(_facets.epics, wall.refs.values);
+  bool get _crossProject => widget.board.projectIds.length > 1;
 
   // ── loading ─────────────────────────────────────────────────────────────
 
-  bool _planningChanged(
-    SprintPlanningState previous,
-    SprintPlanningState next,
-  ) =>
+  bool _planningRead(SprintPlanningState previous, SprintPlanningState next) =>
       previous.status != next.status ||
       previous.refreshing != next.refreshing ||
       previous.errorKey != next.errorKey;
 
   void _onPlanning(BuildContext context, SprintPlanningState planning) {
     final ready = planning.status == SprintPlanningStatus.ready;
-    if (ready && !planning.refreshing && _facetsStale) {
-      unawaited(_loadFacets());
+    if (ready && !planning.refreshing) {
+      unawaited(head.ensureFacets(_facetsScope));
     }
     // A planning that never arrived says so in its place instead.
     final errorKey = planning.errorKey;
@@ -201,15 +214,16 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
     }
   }
 
-  Future<void> _loadFacets() async {
-    _facetsStale = false;
-    try {
-      final facets = await _boardApi.facets(_board.id);
-      if (!mounted) return;
-      setState(() => _facets = facets);
-    } on ApiFailure {
-      // The filter keeps the options it had; the next read tries again.
-      _facetsStale = true;
+  /// The search, the filter or the grouping changed: the tab on screen reads
+  /// the cards they narrow to, the other one once it is shown.
+  void _onNarrowed(BuildContext context, BoardHeadState state) {
+    switch (_tab) {
+      case _Tab.planning:
+        _planning.narrow(state.query(BoardCardShape.planning));
+      case _Tab.active:
+        _wall.narrow(state.query(state.wallShape));
+      case _Tab.insights:
+        break;
     }
   }
 
@@ -236,16 +250,6 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
     }
   }
 
-  /// Drops the cached insights report (refreshing it if it's currently shown)
-  /// so it never lags behind a change that affects the numbers.
-  void _invalidateReport() {
-    if (_tab == _Tab.insights) {
-      unawaited(_loadReport());
-    } else {
-      _report = null;
-    }
-  }
-
   // ── mutations ───────────────────────────────────────────────────────────
 
   /// Resolves [key] against i18n only after confirming the widget is still
@@ -260,18 +264,19 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
   }
 
   /// What follows a change the planning made to the cards of [sprintIds], or
-  /// of any sprint when [anySprint]: the wall reads again when the board runs
-  /// one of them, and the insights count again. A refusal needs neither; the
-  /// planning has read the server again and says why.
+  /// of any sprint when [anySprint]: the wall reads again once it is shown
+  /// when the board runs one of them, and the insights count again. A refusal
+  /// needs neither; the planning has put its cards back and says why.
   void _afterPlanningChange({
     Iterable<String?> sprintIds = const [],
     bool anySprint = false,
   }) {
+    head.facetsChanged();
     final active = _activeSprint(_wall.state)?.id;
     if (active != null && (anySprint || sprintIds.contains(active))) {
-      _wall.refreshSoon();
+      _wallStale = true;
     }
-    _invalidateReport();
+    _report = null;
   }
 
   Future<void> _moveIssueToSprint(Issue issue, String? sprintId) async {
@@ -314,10 +319,12 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
     if (await _wall.move(issue, column.name, target) != null || !mounted) {
       return;
     }
-    // The sprint's head counts by state, and the filter may offer a new one.
-    _facetsStale = true;
-    _planning.refreshSoon();
-    _invalidateReport();
+    // The sprint's head in the planning counts by state, and the filter may
+    // offer a new one. Only that sprint is read again, once the planning shows.
+    head.facetsChanged();
+    final active = _wall.state.sprintId;
+    if (active != null) _staleSprints.add(active);
+    _report = null;
   }
 
   void _toggleSelected(String id) => setState(() {
@@ -328,8 +335,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
   /// surface may create into. More than one only on a merged board, where the
   /// composer shows a project control rather than picking the first silently.
   List<Project> get _boardProjects => [
-    for (final id in _board.projectIds)
-      if (widget.projectsById[id] != null) widget.projectsById[id]!,
+    for (final id in widget.board.projectIds) ?widget.projectsById[id],
   ];
 
   /// Seeds a section's inline composer. [sprintId] targets the sprint the
@@ -344,19 +350,20 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
     sprintId: sprintId,
   );
 
-  /// A ticket written into a sprint or the backlog of the planning.
+  /// A ticket written into a sprint or the backlog of the planning: only where
+  /// it landed is read again.
   void _onPlannedCreated(Issue created) {
-    _facetsStale = true;
-    unawaited(_planning.load());
+    unawaited(_planning.rereadSprints({created.sprintId}));
     _afterPlanningChange(sprintIds: [created.sprintId]);
   }
 
   /// A ticket written under a column of the active sprint.
   void _onActiveCreated(Issue created) {
-    _facetsStale = true;
+    head.facetsChanged();
     unawaited(_wall.refresh());
-    _planning.refreshSoon();
-    _invalidateReport();
+    final active = _wall.state.sprintId;
+    if (active != null) _staleSprints.add(active);
+    _report = null;
   }
 
   int _nextSprintNumber(List<Sprint> sprints) {
@@ -384,7 +391,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
     if (data == null) return;
     try {
       await _sprintApi.createSprint(
-        boardId: _board.id,
+        boardId: widget.board.id,
         name: data.name,
         goal: data.goal,
         startDate: data.start,
@@ -406,8 +413,11 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
   Future<List<BoardStateSummary>?> _wholeSprint(Sprint sprint) async {
     try {
       return await _planning.summaryOf(sprint.id);
-    } on ApiFailure catch (failure) {
-      _toastKey(failure.message, kind: GlassToastKind.error);
+    } catch (error) {
+      _toastKey(
+        error is ApiFailure ? error.message : 'errors.unexpected',
+        kind: GlassToastKind.error,
+      );
       return null;
     }
   }
@@ -415,6 +425,16 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
   Future<void> _startSprint(Sprint sprint) async {
     final summary = await _wholeSprint(sprint);
     if (summary == null || !mounted) return;
+    // A narrowed planning keeps the button open, since it may not show what a
+    // sprint holds; the whole sprint counted says whether there is anything.
+    if (summary.cardCount == 0) {
+      _toastKey(
+        'sprint.nothingToStart',
+        vars: {'name': sprint.name},
+        kind: GlassToastKind.warning,
+      );
+      return;
+    }
     final data = await showStartSprintDialog(
       context,
       sprintName: sprint.name,
@@ -437,9 +457,13 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
         vars: {'name': sprint.name},
         kind: GlassToastKind.success,
       );
-      // The wall shows the started sprint once it has read the board again.
-      await Future.wait([_wall.refresh(), _planning.load()]);
-      if (mounted) setState(() => _tab = _Tab.active);
+      // The wall shows the started sprint once it has read the board again,
+      // narrowed the way the active tab it opens on is.
+      final state = head.state;
+      _wall.narrow(state.query(state.wallShape));
+      await Future.wait([_wall.load(), _planning.load()]);
+      _wallStale = false;
+      if (mounted) _switchTab(_Tab.active);
     } on ApiFailure catch (failure) {
       _toastKey(failure.message, kind: GlassToastKind.error);
     }
@@ -468,8 +492,8 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
         vars: {'name': sprint.name},
         kind: GlassToastKind.success,
       );
-      await Future.wait([_wall.refresh(), _planning.load()]);
-      if (mounted) setState(() => _tab = _Tab.planning);
+      // The board runs no sprint any more, which only a read of the wall says.
+      await Future.wait([_wall.load(), _planning.load()]);
     } on ApiFailure catch (failure) {
       _toastKey(failure.message, kind: GlassToastKind.error);
     }
@@ -477,69 +501,35 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
 
   // ── head ────────────────────────────────────────────────────────────────
 
-  /// The cards the wall wants: sub-tasks become cards of their own only when
-  /// the wall is grouped by them.
-  BoardCardShape get _wallShape => _grouping == BoardGrouping.subtask
-      ? BoardCardShape.subtasks
-      : BoardCardShape.wall;
-
-  /// Hands the search and the filter to the server, for the planning and for
-  /// the wall of the active sprint alike.
-  void _narrow() {
-    final query = _filter.toQuery(text: _query);
-    _planning.narrow(query);
-    _wall.narrow(query.withShape(_wallShape));
-  }
-
-  /// The server searches; the cards on screen stay until the answer is there.
-  void _onQuery(String value) {
-    setState(() => _query = value);
-    _narrow();
-  }
-
-  void _onGrouping(BoardGrouping grouping) {
-    final shapeChanges =
-        (grouping == BoardGrouping.subtask) !=
-        (_grouping == BoardGrouping.subtask);
-    setState(() => _grouping = grouping);
-    if (shapeChanges) _narrow();
-  }
-
-  Future<void> _openFilter(Rect? anchor) async {
-    if (_facetsStale) await _loadFacets();
-    if (!mounted) return;
-    final wall = _wall.state;
-    final planning = _planning.state;
-    final people = _people(wall, planning);
-    final epics = _epics(wall);
-    await openBoardFilter(
-      context,
-      anchor: anchor,
-      filter: _filter,
-      options: BoardFilterOptions.fromFacets(
-        _facets,
-        boardSprints: planning.sprints,
-        projectLabels: [
-          for (final project in widget.projectsById.values)
-            ...project.labelNames,
-        ],
-        epicIds: epics.map((e) => e.id),
-      ),
-      names: people.names,
-      avatars: people.avatars,
-      pronouns: people.pronouns,
-      sprintNames: {for (final s in planning.sprints) s.id: s.name},
-      epicNames: {for (final e in epics) e.id: '${e.readableId}  ${e.title}'},
-      onChanged: (f) {
-        setState(() => _filter = f);
-        _narrow();
-      },
-    );
-  }
-
+  /// Shows [tab]. The tab coming back reads what changed while it was away:
+  /// the search or filter set meanwhile, or a change made elsewhere.
   void _switchTab(_Tab tab) {
+    if (tab == _tab) return;
     setState(() => _tab = tab);
-    if (tab == _Tab.insights && _report == null) unawaited(_loadReport());
+    final state = head.state;
+    switch (tab) {
+      case _Tab.planning:
+        final query = state.query(BoardCardShape.planning);
+        if (query != _planning.requestedQuery) {
+          _planning.narrow(query);
+        } else if (_planningStale) {
+          unawaited(_planning.load());
+        } else if (_staleSprints.isNotEmpty) {
+          unawaited(_planning.rereadSprints({..._staleSprints}));
+        }
+        _planningStale = false;
+        _staleSprints.clear();
+      case _Tab.active:
+        final query = state.query(state.wallShape);
+        if (query != _wall.requestedQuery) {
+          _wall.narrow(query);
+        } else if (_wallStale) {
+          unawaited(_wall.refresh());
+        }
+        _wallStale = false;
+      case _Tab.insights:
+        if (_report == null) unawaited(_loadReport());
+    }
   }
 
   /// The bar's button for a new sprint. A method rather than a closure, so the
@@ -570,63 +560,50 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
     onChanged: (i) => _switchTab(_Tab.values[i]),
   );
 
-  /// Grouping applies to the active sprint's board only.
-  Widget _groupBy({required bool compact}) => BoardGroupByButton(
-    value: _grouping,
-    compact: compact,
-    options: boardGroupingsFor(crossProject: _board.projectIds.length > 1),
-    onChanged: _onGrouping,
-  );
+  Future<void> _openFilter(Rect? anchor) {
+    final wall = _wall.state;
+    final planning = _planning.state;
+    return openHeadFilter(
+      scope: _facetsScope,
+      anchor: anchor,
+      sprints: planning.sprints,
+      projects: widget.projectsById.values,
+      refs: wall.refs.values,
+      users: [...planning.users.values, ...wall.users.values],
+    );
+  }
 
-  Widget _filterPill({bool showLabel = false}) => BoardFilterPill(
-    count: _filter.activeCount,
-    showLabel: showLabel,
-    onTap: (anchor) => unawaited(_openFilter(anchor)),
-  );
-
-  Widget _peopleStrip(BoardPeople people) => BoardPeopleStrip(
-    userIds: _facets.assigneeIds,
-    names: people.names,
-    avatars: people.avatars,
-    pronouns: people.pronouns,
-    selected: _filter.assignees,
-    onToggle: (id) {
-      setState(() => _filter = _filter.toggle(BoardFilterFacet.assignee, id));
-      _narrow();
-    },
-  );
+  void _openFilterAt(Rect? anchor) => unawaited(_openFilter(anchor));
 
   /// The phone's one docked row: the three views, the search and the tools.
-  Widget _dock(BoardPeople people) => BoardHeaderDock(
+  Widget _dock(BoardHeadState headState) => headDock(
     switcher: _tabSwitch(compact: true),
     canSearch: _filterable,
-    searching: _searching,
-    searchController: _searchController,
-    onSearchChanged: _onQuery,
-    onSearchOpen: () => setState(() => _searching = true),
-    onSearchClose: () => setState(() => _searching = false),
     tools: [
-      if (_tab == _Tab.active) _groupBy(compact: true),
-      if (_filterable) _filterPill(),
-      if (_filterable && _facets.assigneeIds.isNotEmpty) _peopleStrip(people),
+      if (_tab == _Tab.active)
+        headGroupBy(headState, crossProject: _crossProject, compact: true),
+      if (_filterable) headFilterPill(headState, onOpen: _openFilterAt),
+      if (_filterable) ?headPeople(headState),
     ],
   );
 
   /// The same tools on a wide window: the views on the leading edge, the rest
   /// against the trailing one, wrapping to the room the window leaves them.
-  Widget _wideToolbar(BoardPeople people) {
+  Widget _wideToolbar(BoardHeadState headState) {
     // Faces only where there is plenty of room; a narrower window has the
     // filter's assignee section for them.
-    final showPeople =
-        context.isExpanded && _filterable && _facets.assigneeIds.isNotEmpty;
+    final people = context.isExpanded && _filterable
+        ? headPeople(headState)
+        : null;
     return WideToolbar(
       leading: [_tabSwitch(compact: false)],
       trailing: [
+        if (_filterable) headSearchField(),
+        if (people != null) BoardPeopleSlot(child: people),
+        if (_tab == _Tab.active)
+          headGroupBy(headState, crossProject: _crossProject),
         if (_filterable)
-          BoardSearchField(controller: _searchController, onChanged: _onQuery),
-        if (showPeople) BoardPeopleSlot(child: _peopleStrip(people)),
-        if (_tab == _Tab.active) _groupBy(compact: false),
-        if (_filterable) _filterPill(showLabel: true),
+          headFilterPill(headState, onOpen: _openFilterAt, showLabel: true),
       ],
     );
   }
@@ -634,21 +611,34 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
   // ── build ──────────────────────────────────────────────────────────────
 
   @override
-  Widget build(BuildContext context) {
-    final wall = context.watch<BoardWallCubit>().state;
-    return BlocConsumer<SprintPlanningCubit, SprintPlanningState>(
-      bloc: _planning,
-      listenWhen: _planningChanged,
-      listener: _onPlanning,
-      builder: (context, planning) => _page(wall, planning),
-    );
-  }
+  Widget build(BuildContext context) => MultiBlocListener(
+    listeners: [
+      BlocListener<SprintPlanningCubit, SprintPlanningState>(
+        bloc: _planning,
+        listenWhen: _planningRead,
+        listener: _onPlanning,
+      ),
+      BlocListener<BoardHeadCubit, BoardHeadState>(
+        listenWhen: (previous, next) => next.narrowsOtherThan(previous),
+        listener: _onNarrowed,
+      ),
+    ],
+    child: BlocBuilder<BoardHeadCubit, BoardHeadState>(
+      buildWhen: (previous, next) => next.drawsOtherThan(previous),
+      // The page needs no more of the wall than the sprint the board runs; the
+      // active tab follows the rest of it on its own.
+      builder: (context, headState) =>
+          BlocSelector<BoardWallCubit, BoardWallState, Sprint?>(
+            selector: _activeSprint,
+            builder: (context, active) => _page(headState, active),
+          ),
+    ),
+  );
 
-  Widget _page(BoardWallState wall, SprintPlanningState planning) {
+  Widget _page(BoardHeadState headState, Sprint? active) {
     final compact = context.isCompact;
-    final people = _people(wall, planning);
     return PageChrome(
-      title: _board.name,
+      title: widget.board.name,
       titleLeading: true,
       fullWidth: widget.fullWidth,
       // Sprints are made while planning. On a phone this is the bar's one page
@@ -665,12 +655,12 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
           : const [],
       // Docked from the first frame, so the bar does not grow a row once the
       // sprints arrive and push the page down.
-      bottom: compact ? _dock(people) : null,
+      bottom: compact ? _dock(headState) : null,
       bottomHeight: compact ? kBoardDockHeight : 0,
       child: compact
           // On a phone the tools are in the bar, and the surface leaves the
           // bar's height clear itself so its content scrolls up under the blur.
-          ? _surface(wall, planning, people, top: context.topGutter + 8)
+          ? _surface(headState, active, top: context.topGutter + 8)
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -681,24 +671,26 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
                     context.pageGutter,
                     12,
                   ),
-                  child: _wideToolbar(people),
+                  child: _wideToolbar(headState),
                 ),
-                Expanded(child: _surface(wall, planning, people, top: 0)),
+                Expanded(child: _surface(headState, active, top: 0)),
               ],
             ),
     );
   }
 
   Widget _surface(
-    BoardWallState wall,
-    SprintPlanningState planning,
-    BoardPeople people, {
+    BoardHeadState headState,
+    Sprint? active, {
     required double top,
   }) {
-    final active = _activeSprint(wall);
     switch (_tab) {
       case _Tab.planning:
-        return _planningSurface(planning, active?.id, people, top: top);
+        return BlocBuilder<SprintPlanningCubit, SprintPlanningState>(
+          bloc: _planning,
+          builder: (context, planning) =>
+              _planningSurface(planning, headState, active?.id, top: top),
+        );
       case _Tab.active:
         if (active == null) {
           return _EmptyState(
@@ -707,32 +699,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
             subtitle: context.t('sprint.noActiveSub'),
           );
         }
-        return _dimmedWhile(
-          wall.refreshing,
-          SprintActiveSurface(
-            topInset: top,
-            sprint: active,
-            columns: wall.columns,
-            loadingMore: wall.loadingMore,
-            onLoadMore: _wall.loadMore,
-            grouping: _grouping,
-            // Only lanes look cards' parents up.
-            issuesById: _grouping == BoardGrouping.none
-                ? const {}
-                : {...wall.refs, for (final card in wall.cards) card.id: card},
-            epics: _epics(wall),
-            names: people.names,
-            avatars: people.avatars,
-            pronouns: people.pronouns,
-            projectNames: widget.projectNames,
-            projectsById: widget.projectsById,
-            onOpenIssue: widget.onOpenIssue,
-            onMove: _moveIssueState,
-            quickCreateSeed: (stateFor) =>
-                _quickCreateSeed(active.id, stateFor: stateFor),
-            onCreated: _onActiveCreated,
-          ),
-        );
+        return _activeSurface(headState, active, top: top);
       case _Tab.insights:
         if (active == null) {
           return _EmptyState(
@@ -746,30 +713,73 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
           report: _report,
           loading: _reportLoading,
           error: _reportError == null ? null : context.t(_reportError!),
-          names: people.names,
+          names: boardPeople(headState.facets.users).names,
           onRetry: _loadReport,
         );
     }
   }
 
+  /// The active sprint's wall, watched only while its tab is on screen. Flat,
+  /// every column follows its own cards; lanes are laid out from all of them.
+  Widget _activeSurface(
+    BoardHeadState headState,
+    Sprint active, {
+    required double top,
+  }) => BlocBuilder<BoardWallCubit, BoardWallState>(
+    buildWhen: (previous, next) =>
+        boardWallReshaped(previous, next) ||
+        (headState.grouping != BoardGrouping.none &&
+            !identical(previous.columns, next.columns)),
+    builder: (context, wall) {
+      final people = _wallPeople.of(wall.users, headState.facets.users);
+      final grouped = headState.grouping != BoardGrouping.none;
+      return BoardWallDimmed(
+        child: SprintActiveSurface(
+          topInset: top,
+          sprint: active,
+          columns: wall.columns,
+          onLoadMore: _wall.loadMore,
+          grouping: headState.grouping,
+          // Only lanes look cards' parents up.
+          issuesById: grouped ? _issuesByIdOf(wall) : const {},
+          epics: boardEpics(headState.facets.epics, wall.refs.values),
+          names: people.names,
+          avatars: people.avatars,
+          pronouns: people.pronouns,
+          projectNames: widget.projectNames,
+          projectsById: widget.projectsById,
+          onOpenIssue: widget.onOpenIssue,
+          onMove: _moveIssueState,
+          quickCreateSeed: (stateFor) =>
+              _quickCreateSeed(active.id, stateFor: stateFor),
+          onCreated: _onActiveCreated,
+        ),
+      );
+    },
+  );
+
   Widget _planningSurface(
     SprintPlanningState planning,
-    String? activeSprintId,
-    BoardPeople people, {
+    BoardHeadState headState,
+    String? activeSprintId, {
     required double top,
   }) {
     switch (planning.status) {
       case SprintPlanningStatus.loading:
         return const Center(child: HiveLoader());
       case SprintPlanningStatus.failure:
-        return _ErrorRetry(
+        return BoardErrorRetry(
           message: context.t(planning.errorKey ?? 'errors.unexpected'),
           onRetry: _planning.load,
         );
       case SprintPlanningStatus.ready:
-        return _dimmedWhile(
-          planning.refreshing,
-          SprintPlanningSurface(
+        final people = _planningPeople.of(
+          planning.users,
+          headState.facets.users,
+        );
+        return BoardDimmed(
+          dimmed: planning.refreshing,
+          child: SprintPlanningSurface(
             topInset: top,
             planning: planning,
             // The sprint the board runs first, then the planned ones.
@@ -783,7 +793,6 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
             avatars: people.avatars,
             pronouns: people.pronouns,
             selected: _selected,
-            query: _query,
             onPage: _planning.showBacklogPage,
             onLoadMore: _planning.loadMore,
             onToggleSelect: _toggleSelected,
@@ -800,14 +809,6 @@ class _ScrumBoardViewState extends State<ScrumBoardView> {
         );
     }
   }
-
-  /// A search or a filter being read dims the cards it may replace, rather
-  /// than blanking them.
-  Widget _dimmedWhile(bool refreshing, Widget child) => AnimatedOpacity(
-    opacity: refreshing ? 0.6 : 1,
-    duration: const Duration(milliseconds: 160),
-    child: child,
-  );
 }
 
 class _EmptyState extends StatelessWidget {
@@ -847,30 +848,6 @@ class _EmptyState extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ErrorRetry extends StatelessWidget {
-  const _ErrorRetry({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(message, style: TextStyle(color: AppColors.textSecondary)),
-          const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: onRetry,
-            child: Text(context.t('common.retry')),
-          ),
-        ],
       ),
     );
   }
