@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../api/api_client.dart';
 import '../events/board_events.dart';
+import '../models/board_page_models.dart';
 import '../models/deletion_models.dart';
 import '../models/work_models.dart';
 
@@ -106,6 +107,70 @@ class BoardRepository {
             )
             as Map<String, dynamic>,
       );
+
+  /// The wall in one request: the columns, each with its number of cards and
+  /// the first [size] of them in board order, plus the people, epics and
+  /// parents those cards name. The server searches and filters by [query].
+  /// Without [sprintId] the board's active sprint applies, as in [boardView];
+  /// a [size] of 0 returns the columns alone.
+  Future<BoardWall> wall(
+    String boardId, {
+    String? sprintId,
+    int size = kBoardPageSize,
+    BoardQuery query = BoardQuery.all,
+  }) async => BoardWall.fromJson(
+    await _api.get(
+          '/api/v1/boards/$boardId/wall',
+          query: {'sprintId': ?sprintId, 'size': size, ...query.toQuery()},
+        )
+        as Map<String, dynamic>,
+  );
+
+  /// One page of cards, in board order unless it is the timeline's: of the
+  /// [column] of that name, of the sprint [sprintId], or of the [backlog]. With
+  /// none of the three it is every card of the board. [dated] splits the
+  /// timeline into the cards with a date and those without; [summary] adds
+  /// the whole query's cards by state.
+  Future<BoardCardPage> cards(
+    String boardId, {
+    String? column,
+    String? sprintId,
+    bool backlog = false,
+    bool? dated,
+    int page = 0,
+    int size = kBoardPageSize,
+    bool summary = false,
+    BoardQuery query = BoardQuery.all,
+  }) async => BoardCardPage.fromJson(
+    await _api.get(
+          '/api/v1/boards/$boardId/cards',
+          query: {
+            'column': ?column,
+            'sprintId': ?sprintId,
+            if (backlog) 'backlog': true,
+            'dated': ?dated,
+            'page': page,
+            'size': size,
+            if (summary) 'summary': true,
+            ...query.toQuery(),
+          },
+        )
+        as Map<String, dynamic>,
+  );
+
+  /// What the filter and the row of faces can offer, over every card of the
+  /// board, of the sprint [sprintId] or of the [backlog].
+  Future<BoardFacets> facets(
+    String boardId, {
+    String? sprintId,
+    bool backlog = false,
+  }) async => BoardFacets.fromJson(
+    await _api.get(
+          '/api/v1/boards/$boardId/facets',
+          query: {'sprintId': ?sprintId, if (backlog) 'backlog': true},
+        )
+        as Map<String, dynamic>,
+  );
 
   /// Counts driving the board delete confirmation (sprints, issues to detach).
   Future<BoardDeletionImpact> boardDeletionImpact(String boardId) async =>
