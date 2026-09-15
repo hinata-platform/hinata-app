@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
@@ -33,12 +35,11 @@ class BoardWallDimmed extends StatelessWidget {
 const int kBoardLaneMaxCards = 300;
 
 /// One column of a wall as the column draws it: its cards and count, and
-/// whether it is reading on, failed to, or may.
+/// whether it is reading on or may.
 class BoardColumnSlice extends Equatable {
   const BoardColumnSlice({
     required this.column,
     this.loadingMore = false,
-    this.failed = false,
     this.canLoadMore = false,
   });
 
@@ -49,7 +50,6 @@ class BoardColumnSlice extends Equatable {
     return BoardColumnSlice(
       column: column,
       loadingMore: wall.loadingMore.contains(name),
-      failed: wall.failedColumns.contains(name),
       canLoadMore:
           column.hasMore &&
           wall.status == BoardWallStatus.ready &&
@@ -59,14 +59,13 @@ class BoardColumnSlice extends Equatable {
 
   final BoardColumnView column;
   final bool loadingMore;
-  final bool failed;
 
   /// Whether the column may read its next page now: it holds more, and no read
   /// of the whole wall is under way that would answer for it anew.
   final bool canLoadMore;
 
   @override
-  List<Object?> get props => [column, loadingMore, failed, canLoadMore];
+  List<Object?> get props => [column, loadingMore, canLoadMore];
 }
 
 /// Whether [next] draws another wall than [previous] beyond what each column
@@ -145,8 +144,11 @@ class BoardWallColumns extends StatelessWidget {
   );
 }
 
-/// What a grouped wall offers under a column's lanes: the way to its cards
-/// that are not loaded yet, until the column holds [kBoardLaneMaxCards].
+/// What a grouped wall shows under a column's lanes while the column holds
+/// more: a spinner while its next page is on its way, whose room it keeps in
+/// between, and once the column holds [kBoardLaneMaxCards] how many more there
+/// are to search or filter for. The lanes read on by themselves as they are
+/// scrolled, see [readOnUnderLanes].
 class BoardLaneFooter extends StatelessWidget {
   const BoardLaneFooter({super.key, required this.name});
 
@@ -175,13 +177,32 @@ class BoardLaneFooter extends StatelessWidget {
               ),
             );
           }
-          return BoardLoadMore(
-            remaining: column.remaining,
-            loading: slice.loadingMore,
-            onPressed: slice.canLoadMore
-                ? () => context.read<BoardWallCubit>().loadMore(name)
-                : null,
-          );
+          return slice.loadingMore
+              ? const BoardLoadingMore()
+              : const SizedBox(height: BoardLoadingMore.height);
         },
       );
+}
+
+/// Reads on under a grouped wall's lanes, which draw every card they hold at
+/// once and scroll as one: the next page of each column among [names] that
+/// holds more and fewer than [kBoardLaneMaxCards].
+///
+/// A column whose last page did not come reads again only on [retry], which
+/// the lanes pass once someone scrolls them, so a failing page is not asked
+/// for over and over while nobody moves.
+void readOnUnderLanes(
+  BoardWallCubit wall,
+  Iterable<String> names, {
+  required bool retry,
+}) {
+  for (final name in names) {
+    final column = wall.state.column(name);
+    if (column == null ||
+        column.issues.length >= kBoardLaneMaxCards ||
+        (!retry && wall.state.failedColumns.contains(name))) {
+      continue;
+    }
+    unawaited(wall.loadMore(name));
+  }
 }

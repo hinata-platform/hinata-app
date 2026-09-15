@@ -671,7 +671,6 @@ class _KanbanViewState extends State<_KanbanView>
           onCreated: _onQuickCreated,
           onOpenIssue: widget.onOpenIssue,
           loadingMore: slice.loadingMore,
-          failed: slice.failed,
           onLoadMore: slice.canLoadMore
               ? () => _wall.loadMore(column.name)
               : null,
@@ -684,9 +683,9 @@ class _KanbanViewState extends State<_KanbanView>
 
   /// Renders the grouped board via the shared [BoardSwimlanes]: lanes per the
   /// active grouping over the cards loaded so far, each lane carrying the full
-  /// column set and its own collapse toggle, and under them the way to every
-  /// column's cards that are not loaded yet. Laid out from every loaded card,
-  /// so it follows every change to them.
+  /// column set and its own collapse toggle. Scrolled close to their end, the
+  /// lanes read every column on. Laid out from every loaded card, so it follows
+  /// every change to them.
   Widget _lanes(BoardHeadState headState, BoardPeople people) =>
       BlocBuilder<BoardWallCubit, BoardWallState>(
         buildWhen: (previous, next) =>
@@ -748,6 +747,9 @@ class _KanbanViewState extends State<_KanbanView>
               onOpenIssue: widget.onOpenIssue,
             ),
             footerBuilder: (column) => BoardLaneFooter(name: column.name),
+            onNearEnd: ({required retry}) => readOnUnderLanes(_wall, [
+              for (final column in wall.columns) column.name,
+            ], retry: retry),
           );
         },
       );

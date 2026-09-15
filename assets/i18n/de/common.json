@@ -1292,7 +1292,6 @@
       "automatic": "Zurück zu automatisch"
     },
     "searchIssues": "Vorgänge durchsuchen…",
-    "loadMore": "{{count}} weitere anzeigen",
     "laneLimit": "{{count}} weitere. Suche oder filtere, um sie zu finden."
   },
   "gantt": {

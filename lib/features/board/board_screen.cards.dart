@@ -23,7 +23,6 @@ class _BoardColumn extends StatefulWidget {
     this.width = BoardWall.columnWidth,
     this.projectsById = const {},
     this.loadingMore = false,
-    this.failed = false,
     this.onLoadMore,
   });
 
@@ -67,12 +66,9 @@ class _BoardColumn extends StatefulWidget {
   /// Whether the column is reading its next page right now.
   final bool loadingMore;
 
-  /// Whether the column's last page did not come.
-  final bool failed;
-
   /// Reads the column's next page. Null when the column holds no more, while
-  /// the whole wall is read again, and in a lane, where the board offers the
-  /// rest under its lanes.
+  /// the whole wall is read again, and in a lane, where the board reads on
+  /// under its lanes.
   final VoidCallback? onLoadMore;
 
   @override
@@ -238,10 +234,8 @@ class _BoardColumnState extends State<_BoardColumn> {
                             ? const SizedBox(height: 8)
                             : BoardCardList(
                                 count: issues.length,
-                                remaining: count - issues.length,
                                 laneMode: widget.laneMode,
                                 loadingMore: widget.loadingMore,
-                                failed: widget.failed,
                                 onLoadMore: widget.onLoadMore,
                                 itemBuilder: (context, index) {
                                   final issue = issues[index];

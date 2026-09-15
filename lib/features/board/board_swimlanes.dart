@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:hinata/core/responsive/responsive.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -11,6 +12,7 @@ import '../../core/widgets/glass_filter_bar.dart'
     show GlassPill, kGlassControlHeight;
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_widgets.dart';
+import 'board_card_list.dart' show BoardReadOn;
 import 'board_drag.dart';
 
 /// Swimlane grouping for a board, Jira-style: each group becomes a horizontal
@@ -616,15 +618,23 @@ class BoardSwimlanes extends StatefulWidget {
     required this.lanes,
     required this.columnBuilder,
     this.footerBuilder,
+    this.onNearEnd,
     this.padding = EdgeInsets.zero,
   });
 
   final List<BoardColumnView> columns;
   final List<BoardLane> lanes;
 
-  /// What goes under a column once all lanes are drawn, such as the way to its
-  /// cards that are not loaded yet. Null, or null for a column, draws nothing.
+  /// What goes under a column once all lanes are drawn, such as the spinner
+  /// while its next page is on its way. Null, or null for a column, draws
+  /// nothing.
   final Widget? Function(BoardColumnView column)? footerBuilder;
+
+  /// Called while the lanes are within [BoardReadOn.reach] of their end: once
+  /// they were laid out, when they do not fill the room, and at every step
+  /// they are scrolled. [retry] is set once someone starts scrolling them, and
+  /// only then may a page that did not come be asked for again.
+  final void Function({required bool retry})? onNearEnd;
 
   /// Renders one column of a lane from the issues that fall in it. The [lane]
   /// carries the group context (e.g. the epic id as its key) so builders can
@@ -657,6 +667,32 @@ class _BoardSwimlanesState extends State<BoardSwimlanes> {
     _collapsed.removeWhere((k) => !keys.contains(k));
   }
 
+  /// Laid out anew: on the first frame, after a page arrived, or once the room
+  /// changed.
+  bool _onMetrics(ScrollMetricsNotification notification) {
+    if (notification.depth == 0) _askIfNearEnd(notification.metrics);
+    return false;
+  }
+
+  /// Scrolled a step, or started to be scrolled by someone.
+  bool _onScroll(ScrollNotification notification) {
+    if (notification.depth != 0) return false;
+    if (notification is ScrollUpdateNotification) {
+      _askIfNearEnd(notification.metrics);
+    } else if (notification is UserScrollNotification &&
+        notification.direction != ScrollDirection.idle) {
+      _askIfNearEnd(notification.metrics, retry: true);
+    }
+    return false;
+  }
+
+  void _askIfNearEnd(ScrollMetrics metrics, {bool retry = false}) {
+    final ask = widget.onNearEnd;
+    if (ask != null && metrics.extentAfter < BoardReadOn.reach) {
+      ask(retry: retry);
+    }
+  }
+
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     // Columns share the room the lanes actually got, so a grouped board with
@@ -685,71 +721,84 @@ class _BoardSwimlanesState extends State<BoardSwimlanes> {
     final snap = boardSnapStride(context, columnWidth: columnWidth);
     return BoardDragScroller(
       snapStride: snap,
-      builder: (context, vertical, horizontal) => SingleChildScrollView(
-        controller: vertical,
-        padding: EdgeInsets.only(
-          top: widget.padding.top,
-          bottom: widget.padding.bottom,
-        ),
-        child: SingleChildScrollView(
-          controller: horizontal,
-          scrollDirection: Axis.horizontal,
-          physics: BoardColumnSnapPhysics.maybe(snap),
-          padding: EdgeInsetsDirectional.only(
-            start: widget.padding.left,
-            end: widget.padding.right,
-          ),
-          child: SizedBox(
-            width: boardWidth,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final lane in widget.lanes) ...[
-                  _laneHeaderBar(lane),
-                  if (!_collapsed.contains(lane.key))
-                    Row(
+      // The lanes draw every card they hold at once, so how far off their end
+      // is is known for certain, and they read on as it comes close.
+      builder: (context, vertical, horizontal) =>
+          NotificationListener<ScrollMetricsNotification>(
+            onNotification: _onMetrics,
+            child: NotificationListener<ScrollNotification>(
+              onNotification: _onScroll,
+              child: SingleChildScrollView(
+                controller: vertical,
+                padding: EdgeInsets.only(
+                  top: widget.padding.top,
+                  bottom: widget.padding.bottom,
+                ),
+                child: SingleChildScrollView(
+                  controller: horizontal,
+                  scrollDirection: Axis.horizontal,
+                  physics: BoardColumnSnapPhysics.maybe(snap),
+                  padding: EdgeInsetsDirectional.only(
+                    start: widget.padding.left,
+                    end: widget.padding.right,
+                  ),
+                  child: SizedBox(
+                    width: boardWidth,
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        for (var i = 0; i < columns.length; i++) ...[
-                          if (i > 0) const SizedBox(width: gap),
-                          SizedBox(
-                            width: columnWidth,
-                            child: widget.columnBuilder(
-                              columns[i],
-                              lane.issues
-                                  .where(
-                                    (x) => columns[i].states.contains(x.state),
-                                  )
-                                  .toList(),
-                              lane,
-                              columnWidth,
+                        for (final lane in widget.lanes) ...[
+                          _laneHeaderBar(lane),
+                          if (!_collapsed.contains(lane.key))
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                for (var i = 0; i < columns.length; i++) ...[
+                                  if (i > 0) const SizedBox(width: gap),
+                                  SizedBox(
+                                    width: columnWidth,
+                                    child: widget.columnBuilder(
+                                      columns[i],
+                                      lane.issues
+                                          .where(
+                                            (x) => columns[i].states.contains(
+                                              x.state,
+                                            ),
+                                          )
+                                          .toList(),
+                                      lane,
+                                      columnWidth,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
+                          SizedBox(
+                            height: _collapsed.contains(lane.key) ? 6 : 20,
                           ),
                         ],
+                        if (widget.footerBuilder != null)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (var i = 0; i < columns.length; i++) ...[
+                                if (i > 0) const SizedBox(width: gap),
+                                SizedBox(
+                                  width: columnWidth,
+                                  child:
+                                      widget.footerBuilder!(columns[i]) ??
+                                      const SizedBox.shrink(),
+                                ),
+                              ],
+                            ],
+                          ),
                       ],
                     ),
-                  SizedBox(height: _collapsed.contains(lane.key) ? 6 : 20),
-                ],
-                if (widget.footerBuilder != null)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (var i = 0; i < columns.length; i++) ...[
-                        if (i > 0) const SizedBox(width: gap),
-                        SizedBox(
-                          width: columnWidth,
-                          child:
-                              widget.footerBuilder!(columns[i]) ??
-                              const SizedBox.shrink(),
-                        ),
-                      ],
-                    ],
                   ),
-              ],
+                ),
+              ),
             ),
           ),
-        ),
-      ),
     );
   }
 

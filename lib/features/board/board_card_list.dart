@@ -1,179 +1,162 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../core/i18n/i18n.dart';
-import '../../core/widgets/hive_widgets.dart' show GhostButton;
+/// The small spinner at the end of cards while their next page is on its way.
+class BoardLoadingMore extends StatelessWidget {
+  const BoardLoadingMore({super.key});
 
-/// The way to a column's cards that are not loaded yet: how many are left,
-/// behind a quiet button, or a small spinner while they are being read.
-class BoardLoadMore extends StatelessWidget {
-  const BoardLoadMore({
-    super.key,
-    this.remaining = 0,
-    this.loading = false,
-    this.onPressed,
-  });
-
-  final int remaining;
-  final bool loading;
-  final VoidCallback? onPressed;
+  /// The room it takes. Cards that may read on keep it free in between, so
+  /// nothing moves when a page starts or stops being read.
+  static const double height = 42;
 
   @override
-  Widget build(BuildContext context) {
-    if (loading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: Center(
-          child: SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-      );
-    }
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Center(
-        child: GhostButton(
-          label: context.t(
-            'board.loadMore',
-            variables: {'count': '$remaining'},
-          ),
-          icon: LucideIcons.chevronDown,
-          onPressed: onPressed,
-        ),
+  Widget build(BuildContext context) => const SizedBox(
+    height: height,
+    child: Center(
+      child: SizedBox(
+        width: 18,
+        height: 18,
+        child: CircularProgressIndicator(strokeWidth: 2),
       ),
-    );
+    ),
+  );
+}
+
+/// Stands after the loaded cards of a lazily built list that holds more, and
+/// reads the next page from there.
+///
+/// A lazy list builds it only once the end of its cards is within reach of the
+/// screen, so being built is what tells it to read on. It asks after the frame
+/// it came in and after every page that arrived while it stayed, never from
+/// its build. A page that did not come is asked for again once someone scrolls
+/// the cards, the way the issue list reads on. While a page is on its way it
+/// shows [BoardLoadingMore], whose room it keeps in between.
+class BoardReadOn extends StatefulWidget {
+  const BoardReadOn({
+    super.key,
+    required this.count,
+    required this.loading,
+    required this.onReadOn,
+  });
+
+  /// How far ahead of the screen a list that reads on builds its cards, and so
+  /// how close to their end the next page is asked for.
+  static const double reach = 600;
+
+  /// The cards loaded so far. Another count means a page arrived.
+  final int count;
+
+  /// Whether the next page is on its way.
+  final bool loading;
+
+  /// Reads the next page.
+  final VoidCallback onReadOn;
+
+  @override
+  State<BoardReadOn> createState() => _BoardReadOnState();
+}
+
+class _BoardReadOnState extends State<BoardReadOn> {
+  /// The scroll of the cards it stands after.
+  ScrollPosition? _position;
+
+  /// Whether an ask waits for the frame to end, so that coming in and the list
+  /// settling within the same frame ask once.
+  bool _asking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _askAfterFrame();
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final position = Scrollable.maybeOf(context)?.position;
+    if (position == _position) return;
+    _position?.isScrollingNotifier.removeListener(_scrolled);
+    _position = position?..isScrollingNotifier.addListener(_scrolled);
+  }
+
+  @override
+  void didUpdateWidget(BoardReadOn old) {
+    super.didUpdateWidget(old);
+    if (old.count != widget.count) _askAfterFrame();
+  }
+
+  @override
+  void dispose() {
+    _position?.isScrollingNotifier.removeListener(_scrolled);
+    super.dispose();
+  }
+
+  void _scrolled() {
+    if (_position?.isScrollingNotifier.value ?? false) _askAfterFrame();
+  }
+
+  void _askAfterFrame() {
+    if (_asking) return;
+    _asking = true;
+    WidgetsBinding.instance
+      ..addPostFrameCallback((_) {
+        _asking = false;
+        _ask();
+      })
+      ..ensureVisualUpdate();
+  }
+
+  void _ask() {
+    if (mounted && !widget.loading) widget.onReadOn();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.loading
+      ? const BoardLoadingMore()
+      : const SizedBox(height: BoardLoadingMore.height);
 }
 
 /// A column's cards, read on as they are scrolled.
 ///
-/// The next page is asked for once the last loaded card has been built, which
-/// the list does a little ahead of what is on screen: while the cards are
-/// scrolled towards their end, and right after layout when they do not fill
-/// the column, since those can never be scrolled to their end. What was built
-/// is known for certain, where the length of a lazily laid out list is only an
-/// estimate, and one that falls short right after a page arrived. The list
-/// checks once it was laid out anew or scrolled, and once after a change that
-/// lets it read on again, never from its build. While a page is on its way a
-/// spinner stands at the end. A page that did not come ([failed]) is not asked
-/// for again on its own; the list offers a button for it instead. In a lane
-/// the list neither scrolls nor reads on; the board offers the rest under its
-/// lanes.
-class BoardCardList extends StatefulWidget {
+/// While the column may read on, a [BoardReadOn] stands after its cards, and
+/// the list builds [BoardReadOn.reach] ahead of what is on screen: the next
+/// page is asked for once the cards are scrolled close to their end, and right
+/// after layout when they do not fill the column. In a lane the list neither
+/// scrolls nor reads on; the board reads on under its lanes.
+class BoardCardList extends StatelessWidget {
   const BoardCardList({
     super.key,
     required this.count,
     required this.itemBuilder,
-    this.remaining = 0,
     this.laneMode = false,
     this.loadingMore = false,
-    this.failed = false,
     this.onLoadMore,
   });
 
   final int count;
   final IndexedWidgetBuilder itemBuilder;
-
-  /// The column's cards beyond the loaded ones.
-  final int remaining;
   final bool laneMode;
   final bool loadingMore;
-
-  /// Whether the last page asked for did not come.
-  final bool failed;
 
   /// Reads the next page. Null while the column cannot read on: it holds no
   /// more, or the whole wall is being read again.
   final VoidCallback? onLoadMore;
 
   @override
-  State<BoardCardList> createState() => _BoardCardListState();
-}
-
-class _BoardCardListState extends State<BoardCardList> {
-  /// How far beyond what is on screen cards are built, and so how close to the
-  /// end of the loaded cards the next page is asked for.
-  static const double _reach = 600;
-
-  /// The highest index of a card built since the list last got other cards.
-  int _lastBuilt = -1;
-
-  /// Whether the list asked for more since it was last handed other cards or
-  /// another reading state, so one layout or one gesture never asks twice.
-  bool _asked = false;
-
-  @override
-  void didUpdateWidget(BoardCardList old) {
-    super.didUpdateWidget(old);
-    if (old.count != widget.count) _lastBuilt = -1;
-    // A list that may read on again without being laid out anew, its failed
-    // page taken back or its total grown, checks once the frame is done.
-    if (old.count != widget.count ||
-        old.loadingMore != widget.loadingMore ||
-        old.failed != widget.failed ||
-        (old.onLoadMore == null) != (widget.onLoadMore == null)) {
-      _asked = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _askIfAtEnd());
-    }
-  }
-
-  bool get _mayAsk =>
-      !widget.laneMode &&
-      !widget.loadingMore &&
-      !widget.failed &&
-      widget.onLoadMore != null;
-
-  void _askIfAtEnd() {
-    if (!mounted || !_mayAsk || _asked || _lastBuilt < widget.count - 1) {
-      return;
-    }
-    _asked = true;
-    widget.onLoadMore!();
-  }
-
-  /// Laid out anew: on the first frame, once scrolled, after a page arrived,
-  /// or once the column's room changed.
-  bool _onMetrics(ScrollMetricsNotification notification) {
-    if (notification.depth == 0) _askIfAtEnd();
-    return false;
-  }
-
-  Widget _card(BuildContext context, int index) {
-    if (index > _lastBuilt) _lastBuilt = index;
-    return widget.itemBuilder(context, index);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final retry =
-        widget.failed && !widget.laneMode && widget.onLoadMore != null;
-    final footer = widget.loadingMore || retry;
-    final list = ListView.separated(
+    final readOn = laneMode ? null : onLoadMore;
+    return ListView.separated(
       shrinkWrap: true,
-      physics: widget.laneMode ? const NeverScrollableScrollPhysics() : null,
-      scrollCacheExtent: widget.laneMode
+      physics: laneMode ? const NeverScrollableScrollPhysics() : null,
+      scrollCacheExtent: laneMode
           ? null
-          : const ScrollCacheExtent.pixels(_reach),
+          : const ScrollCacheExtent.pixels(BoardReadOn.reach),
       padding: const EdgeInsets.symmetric(horizontal: 2),
-      itemCount: widget.count + (footer ? 1 : 0),
+      itemCount: count + (readOn == null ? 0 : 1),
       separatorBuilder: (_, _) => const SizedBox(height: 9),
-      itemBuilder: (context, index) => index < widget.count
-          ? _card(context, index)
-          : widget.loadingMore
-          ? const BoardLoadMore(loading: true)
-          : BoardLoadMore(
-              remaining: widget.remaining,
-              onPressed: widget.onLoadMore,
-            ),
-    );
-    if (widget.laneMode) return list;
-    return NotificationListener<ScrollMetricsNotification>(
-      onNotification: _onMetrics,
-      child: list,
+      itemBuilder: (context, index) => index < count
+          ? itemBuilder(context, index)
+          : BoardReadOn(count: count, loading: loadingMore, onReadOn: readOn!),
     );
   }
 }
