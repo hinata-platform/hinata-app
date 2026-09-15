@@ -17,6 +17,18 @@ void main() {
     },
   );
 
+  test('a lead group opens the golden column however light it is', () {
+    final groups = [
+      const GoldenGroup(['tall'], weight: 20),
+      const GoldenGroup(['other'], weight: 6),
+      const GoldenGroup(['hero'], weight: 1, lead: true),
+    ];
+
+    for (final columns in [2, 3]) {
+      expect(arrangeGolden(groups, columns).columns.first.first, 'hero');
+    }
+  });
+
   test('one column keeps the order the page declares', () {
     final groups = projectSettingsGroups(timeTracking: true);
 
@@ -77,57 +89,26 @@ void main() {
     },
   );
 
-  test('two account columns put the time cards in the golden one', () {
-    final columns = arrangeGolden(
-      settingsGroups(timeTracking: true, tokens: true, admin: true),
-      2,
-    ).columns;
+  test('the two time cards share the load instead of one column', () {
+    final groups = settingsGroups(
+      timeTracking: true,
+      tokens: true,
+      admin: true,
+    );
+    for (final count in [2, 3]) {
+      final columns = arrangeGolden(groups, count).columns;
+      int columnOf(SettingsCard card) =>
+          columns.indexWhere((column) => column.contains(card));
 
-    expect(columns.first, [
-      SettingsCard.notifications,
-      SettingsCard.timeTracking,
-      SettingsCard.availability,
-    ]);
-    expect(columns.last, [
-      SettingsCard.security,
-      SettingsCard.sessions,
-      SettingsCard.access,
-      SettingsCard.appearance,
-      SettingsCard.tokens,
-      SettingsCard.admin,
-      SettingsCard.data,
-      SettingsCard.danger,
-    ]);
+      expect(
+        columnOf(SettingsCard.timeTracking),
+        isNot(columnOf(SettingsCard.availability)),
+        reason: '$count columns',
+      );
+    }
   });
 
-  test(
-    'three account columns: time, then sign-in and notifications, then the account',
-    () {
-      final columns = arrangeGolden(
-        settingsGroups(timeTracking: true, tokens: true, admin: true),
-        3,
-      ).columns;
-
-      expect(columns, [
-        [SettingsCard.timeTracking, SettingsCard.availability],
-        [
-          SettingsCard.security,
-          SettingsCard.sessions,
-          SettingsCard.notifications,
-        ],
-        [
-          SettingsCard.access,
-          SettingsCard.appearance,
-          SettingsCard.tokens,
-          SettingsCard.admin,
-          SettingsCard.data,
-          SettingsCard.danger,
-        ],
-      ]);
-    },
-  );
-
-  test('two project columns keep the wide cards in the golden one', () {
+  test('two project columns: the longest card opens the golden one', () {
     final columns = arrangeGolden(
       projectSettingsGroups(timeTracking: true),
       2,
@@ -135,12 +116,12 @@ void main() {
 
     expect(columns.first, [
       ProjectSettingsCard.general,
-      ProjectSettingsCard.workflow,
+      ProjectSettingsCard.members,
+      ProjectSettingsCard.labels,
       ProjectSettingsCard.git,
     ]);
     expect(columns.last, [
-      ProjectSettingsCard.members,
-      ProjectSettingsCard.labels,
+      ProjectSettingsCard.workflow,
       ProjectSettingsCard.timeTracking,
       ProjectSettingsCard.archive,
       ProjectSettingsCard.danger,

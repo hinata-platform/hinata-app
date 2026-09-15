@@ -15,6 +15,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
 import '../../core/models/team_models.dart' show Team;
 import '../../core/models/work_models.dart';
+import '../../core/responsive/golden_columns.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -25,6 +26,7 @@ import '../../core/widgets/status_widgets.dart';
 import '../admin/connect_hint.dart';
 import '../board/board_links.dart';
 import '../issues/issue_detail_sheet.dart';
+import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart'
     show
         showGlassAnchoredPopover,
@@ -221,34 +223,41 @@ class _DashboardViewState extends State<_DashboardView> {
     // Effective personalisation: the live draft while editing, else the saved
     // snapshot from the server.
     final prefs = _editing ? _draft : data.prefs;
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(
-        context.pageGutter,
-        20 + context.topGutter,
-        context.pageGutter,
-        context.pageGutter + context.bottomGutter,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _header(context, data),
-          if (_editing) ...[
-            const SizedBox(height: 16),
-            _EditToolbar(
-              boards: data.boards,
-              draft: _draft,
-              projects: _projects,
-              teams: _teams,
-              onChanged: _applyScope,
+    // The whole content area, like the other card pages: the columns decide
+    // how much of it they fill, up to [goldenContentMax].
+    return PageChrome(
+      fullWidth: true,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(
+          context.pageGutter,
+          20 + context.topGutter,
+          context.pageGutter,
+          context.pageGutter + context.bottomGutter,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: goldenContentMax),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _header(context, data),
+                if (_editing) ...[
+                  const SizedBox(height: 16),
+                  _EditToolbar(
+                    boards: data.boards,
+                    draft: _draft,
+                    projects: _projects,
+                    teams: _teams,
+                    onChanged: _applyScope,
+                  ),
+                ],
+                const SizedBox(height: 22),
+                if (wide) _wideGrid(data, prefs) else _stack(data, prefs),
+              ],
             ),
-          ],
-          const SizedBox(height: 22),
-          if (wide)
-            _wideGrid(context, data, prefs)
-          else
-            _stack(context, data, prefs),
-        ],
+          ),
+        ),
       ),
     );
   }
@@ -273,71 +282,77 @@ class _DashboardViewState extends State<_DashboardView> {
     );
   }
 
-  // Desktop / tablet: golden-ratio two columns (1.618 : 1).
-  Widget _wideGrid(
-    BuildContext context,
-    DashboardData data,
-    DashboardPrefs prefs,
-  ) {
-    final left = <(String, Widget)>[
-      (_Card.hero, _sprintCard(data.activeBoard)),
-      (_Card.focus, _FocusCard(issues: data.todayTasks)),
-      if (data.gitActivity.isNotEmpty)
-        (_Card.git, _GitCard(events: data.gitActivity)),
-    ];
-    final right = <(String, Widget)>[
-      (
-        _Card.kpis,
-        _Kpis(
-          today: data.todayCount,
-          completion: data.completion,
-          projectIds: prefs.projectIds,
-        ),
-      ),
-      (_Card.completion, _CompletionCard(completion: data.completion)),
-      (
-        _Card.tracker,
-        _TrackerCard(week: data.tracker, month: data.trackerMonth),
-      ),
-      (_Card.ranking, _LeaderboardCard(ranking: data.ranking)),
-    ];
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(flex: 1618, child: _column(left, prefs)),
-        const SizedBox(width: _gap + 3),
-        Expanded(flex: 1000, child: _column(right, prefs)),
-      ],
+  /// Every card the data has, by key.
+  Map<String, Widget> _cards(DashboardData data, DashboardPrefs prefs) => {
+    _Card.hero: _sprintCard(data.activeBoard),
+    _Card.kpis: _Kpis(
+      today: data.todayCount,
+      completion: data.completion,
+      projectIds: prefs.projectIds,
+    ),
+    _Card.focus: _FocusCard(issues: data.todayTasks),
+    _Card.completion: _CompletionCard(completion: data.completion),
+    _Card.tracker: _TrackerCard(week: data.tracker, month: data.trackerMonth),
+    if (data.gitActivity.isNotEmpty)
+      _Card.git: _GitCard(events: data.gitActivity),
+    _Card.ranking: _LeaderboardCard(ranking: data.ranking),
+  };
+
+  // Desktop / tablet: the cards spread over golden columns by how tall they
+  // stand ([GoldenColumns]), one column while the content is narrower than φ².
+  //
+  // Not two fixed lists: without git activity, or with a card hidden, one side
+  // of a fixed split ended several hundred pixels above the other.
+  Widget _wideGrid(DashboardData data, DashboardPrefs prefs) {
+    final cards = _cards(data, prefs);
+    // In view mode a hidden card is simply not there; in edit mode every card
+    // renders, dimmed with its toggle, so it can be switched back on.
+    bool shown(String key) =>
+        cards.containsKey(key) && (_editing || !prefs.isHidden(key));
+    GoldenGroup<String>? group(
+      List<String> keys, {
+      required double weight,
+      bool wide = false,
+      bool lead = false,
+    }) {
+      final visible = keys.where(shown).toList();
+      return visible.isEmpty
+          ? null
+          : GoldenGroup(visible, weight: weight, wide: wide, lead: lead);
+    }
+
+    final groups = [
+      // The hero leads: it holds the board picker the page is personalised by.
+      group([_Card.hero], weight: 7, wide: true, lead: true),
+      group([_Card.kpis, _Card.completion], weight: 6),
+      group([_Card.focus], weight: 6),
+      group([_Card.tracker], weight: 5, wide: true),
+      group([_Card.git], weight: 6),
+      group([_Card.ranking], weight: 5.5),
+    ].nonNulls.toList();
+    return GoldenColumns<String>(
+      groups: groups,
+      gap: _gap,
+      card: (key) => _editableCard(key, cards[key]!, prefs.isHidden(key)),
     );
   }
 
   // Phone: one column.
-  Widget _stack(
-    BuildContext context,
-    DashboardData data,
-    DashboardPrefs prefs,
-  ) {
-    final items = <(String, Widget)>[
-      (_Card.hero, _sprintCard(data.activeBoard)),
-      (
-        _Card.kpis,
-        _Kpis(
-          today: data.todayCount,
-          completion: data.completion,
-          projectIds: prefs.projectIds,
-        ),
-      ),
-      (_Card.focus, _FocusCard(issues: data.todayTasks)),
-      (_Card.completion, _CompletionCard(completion: data.completion)),
-      (
-        _Card.tracker,
-        _TrackerCard(week: data.tracker, month: data.trackerMonth),
-      ),
-      if (data.gitActivity.isNotEmpty)
-        (_Card.git, _GitCard(events: data.gitActivity)),
-      (_Card.ranking, _LeaderboardCard(ranking: data.ranking)),
+  Widget _stack(DashboardData data, DashboardPrefs prefs) {
+    final cards = _cards(data, prefs);
+    const order = [
+      _Card.hero,
+      _Card.kpis,
+      _Card.focus,
+      _Card.completion,
+      _Card.tracker,
+      _Card.git,
+      _Card.ranking,
     ];
-    return _column(items, prefs);
+    return _column([
+      for (final key in order)
+        if (cards[key] case final card?) (key, card),
+    ], prefs);
   }
 
   /// Builds a column from `(cardKey, widget)` pairs: in view mode hidden cards
