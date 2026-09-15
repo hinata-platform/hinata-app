@@ -25,6 +25,7 @@ import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
 import 'board_links.dart';
 import 'board_manage_menu.dart';
 import 'create_board_dialog.dart';
+import 'load_when_shown.dart';
 
 // ─────────────────────────── BoardScreen ──────────────────────────────────
 // Shown at /board — lists all boards across projects; can filter by project.
@@ -37,7 +38,8 @@ class BoardScreen extends StatefulWidget {
   State<BoardScreen> createState() => _BoardScreenState();
 }
 
-class _BoardScreenState extends State<BoardScreen> {
+class _BoardScreenState extends State<BoardScreen>
+    with LoadWhenShown<BoardScreen> {
   List<AgileBoard> _boards = const [];
   List<Project> _projects = const [];
   List<Team> _teams = const [];
@@ -70,39 +72,15 @@ class _BoardScreenState extends State<BoardScreen> {
     return false;
   }
 
-  /// Whether the boards have to be read the next time this list is on screen.
-  ///
-  /// A board opened from here, or straight from a link, sits on top of this
-  /// list (HIN-114). Reading every project, board and team for a list nobody is
-  /// looking at would compete with the board's own first requests, so the list
-  /// waits until its route is the current one.
-  bool _stale = true;
-
   @override
   void initState() {
     super.initState();
-    _boardSub = BoardEvents.instance.changes.listen((_) {
-      _stale = true;
-      _loadIfShown();
-    });
+    _boardSub = BoardEvents.instance.changes.listen((_) => markStale());
   }
 
+  /// Read once the list is on screen, see [LoadWhenShown].
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _loadIfShown();
-  }
-
-  /// Reads the boards when they are stale and the list is on screen.
-  void _loadIfShown() {
-    if (!mounted) return;
-    // Asked before anything else: it subscribes to the route, which is what
-    // calls this again once the board above the list is closed.
-    final shown = ModalRoute.isCurrentOf(context) ?? true;
-    if (!shown || !_stale) return;
-    _stale = false;
-    unawaited(_load());
-  }
+  Future<void> loadShown() => _load();
 
   @override
   void dispose() {

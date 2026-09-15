@@ -189,11 +189,12 @@ String subPageBackRoute(String location) {
   if (location.startsWith('/knowledge/')) return '/knowledge';
   if (location.startsWith('/board/')) return '/board';
   // A board opened from a project's boards leads back to that list.
-  final projectBoard = RegExp(
-    r'^(/projects/[^/]+/boards)/[^/]+',
-  ).firstMatch(location);
+  final projectBoard = _projectBoard.firstMatch(location);
   if (projectBoard != null) return projectBoard.group(1)!;
   if (location.startsWith('/projects/')) return '/projects';
   if (location.startsWith('/teams/')) return '/teams';
   return '/dashboard';
 }
+
+/// A board under a project's boards, with those boards as the first group.
+final _projectBoard = RegExp(r'^(/projects/[^/]+/boards)/[^/]+');

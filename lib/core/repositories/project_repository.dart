@@ -83,14 +83,14 @@ class ProjectRepository {
   }
 
   Future<Project> project(String id) async => Project.fromJson(
-    await _api.get('/api/v1/projects/$id') as Map<String, dynamic>,
+    await _api.get('/api/v1/projects/${Uri.encodeComponent(id)}') as Map<String, dynamic>,
   );
 
   /// Issue count per workflow-state name — used by the settings UI to warn
   /// before deleting a state that still has issues assigned.
   Future<Map<String, int>> projectStateUsage(String id) async {
     final json =
-        await _api.get('/api/v1/projects/$id/state-usage')
+        await _api.get('/api/v1/projects/${Uri.encodeComponent(id)}/state-usage')
             as Map<String, dynamic>;
     return json.map((k, v) => MapEntry(k, (v as num).toInt()));
   }
@@ -120,7 +120,7 @@ class ProjectRepository {
   /// (>=1 lead, >=2 states, >=1 resolved) and cascades workflow/label renames.
   Future<Project> updateProject(String id, Map<String, dynamic> patch) async =>
       Project.fromJson(
-        await _api.patch('/api/v1/projects/$id', body: patch)
+        await _api.patch('/api/v1/projects/${Uri.encodeComponent(id)}', body: patch)
             as Map<String, dynamic>,
       );
 
@@ -137,7 +137,7 @@ class ProjectRepository {
     void Function(double pct)? onProgress,
   }) async =>
       ((await _api.upload(
-                '/api/v1/projects/$id/avatar',
+                '/api/v1/projects/${Uri.encodeComponent(id)}/avatar',
                 file,
                 onSendProgress: onProgress == null
                     ? null
@@ -148,26 +148,26 @@ class ProjectRepository {
 
   /// Removes the project picture; the project falls back to its key glyph.
   Future<void> deleteProjectAvatar(String id) =>
-      _api.delete('/api/v1/projects/$id/avatar');
+      _api.delete('/api/v1/projects/${Uri.encodeComponent(id)}/avatar');
 
   /// Permanently removes a label from the project and every issue using it.
   Future<void> deleteProjectLabel(
     String projectId,
     String label,
   ) => _api.delete(
-    '/api/v1/projects/$projectId/labels?label=${Uri.encodeQueryComponent(label)}',
+    '/api/v1/projects/${Uri.encodeComponent(projectId)}/labels?label=${Uri.encodeQueryComponent(label)}',
   );
 
   /// Scheduled issues of a project plus the link graph between them — the whole
   /// timeline in one round trip.
   Future<GanttView> gantt(String projectId) async => GanttView.fromJson(
-    await _api.get('/api/v1/projects/$projectId/gantt') as Map<String, dynamic>,
+    await _api.get('/api/v1/projects/${Uri.encodeComponent(projectId)}/gantt') as Map<String, dynamic>,
   );
 
   /// Just the connectors of a project, for views that already hold their issues
   /// (the board timeline).
   Future<List<GanttLink>> ganttLinks(String projectId) async =>
-      ((await _api.get('/api/v1/projects/$projectId/gantt/links'))
+      ((await _api.get('/api/v1/projects/${Uri.encodeComponent(projectId)}/gantt/links'))
               as List<dynamic>)
           .map((l) => GanttLink.fromJson(l as Map<String, dynamic>))
           .toList();
@@ -175,7 +175,7 @@ class ProjectRepository {
   /// Affected boards/issues/etc. + the projects issues could migrate into.
   Future<ProjectDeletionImpact> projectDeletionImpact(String projectId) async =>
       ProjectDeletionImpact.fromJson(
-        await _api.get('/api/v1/projects/$projectId/deletion-impact')
+        await _api.get('/api/v1/projects/${Uri.encodeComponent(projectId)}/deletion-impact')
             as Map<String, dynamic>,
       );
 
@@ -195,7 +195,7 @@ class ProjectRepository {
         ? ''
         : '?${query.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&')}';
     return _api.openEventStream(
-      '/api/v1/projects/$projectId/delete-stream$suffix',
+      '/api/v1/projects/${Uri.encodeComponent(projectId)}/delete-stream$suffix',
       cancelToken: cancelToken,
     );
   }
