@@ -147,15 +147,38 @@ class BoardColumnView extends Equatable {
     required this.issues,
     this.wipLimit,
     this.hue,
+    this.total,
   });
 
   final String name;
   final List<String> states;
+
+  /// The cards loaded so far: all of them from the old board view, the first
+  /// page from the paged wall.
   final List<Issue> issues;
   final int? wipLimit;
 
   /// Configured oklch hue of this column's workflow state (server-derived).
   final int? hue;
+
+  /// Every card the column holds on the server; absent from the old board view.
+  final int? total;
+
+  /// How many cards the column holds, loaded or not.
+  int get count => total ?? issues.length;
+
+  /// Whether the server holds cards the column has not loaded yet.
+  bool get hasMore => issues.length < count;
+
+  BoardColumnView copyWith({List<Issue>? issues, int? total}) =>
+      BoardColumnView(
+        name: name,
+        states: states,
+        issues: issues ?? this.issues,
+        wipLimit: wipLimit,
+        hue: hue,
+        total: total ?? this.total,
+      );
 
   factory BoardColumnView.fromJson(Map<String, dynamic> json) =>
       BoardColumnView(
@@ -163,13 +186,14 @@ class BoardColumnView extends Equatable {
         states: _stringList(json['states']),
         wipLimit: json['wipLimit'] as int?,
         hue: (json['hue'] as num?)?.toInt(),
+        total: (json['total'] as num?)?.toInt(),
         issues: ((json['issues'] as List<dynamic>?) ?? [])
             .map((i) => Issue.fromJson(i as Map<String, dynamic>))
             .toList(),
       );
 
   @override
-  List<Object?> get props => [name, states, issues, hue];
+  List<Object?> get props => [name, states, issues, hue, total];
 }
 
 class BoardView extends Equatable {
