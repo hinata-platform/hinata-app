@@ -93,7 +93,7 @@ void main() {
               initialLocation: _Bar.location,
               routes: [
                 GoRoute(
-                  path: '/boards/:id',
+                  path: '/board/:id',
                   builder: (_, state) => PageChromeScope(
                     controller: chrome,
                     child: Scaffold(
@@ -237,7 +237,7 @@ void main() {
 class _Bar extends StatelessWidget {
   const _Bar();
 
-  static const location = '/boards/b1';
+  static const location = '/board/b1';
 
   @override
   Widget build(BuildContext context) {
