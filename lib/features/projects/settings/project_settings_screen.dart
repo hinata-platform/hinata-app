@@ -466,6 +466,9 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
     // lives only in the in-page _Header (avoids a doubled header).
     return PageChrome(
       title: context.t('projectSettings.title'),
+      // The page caps itself (goldenContentMax), so a wide screen gets a third
+      // column rather than the shell's reading width with empty margins.
+      fullWidth: true,
       child: _loading
           ? const Center(child: HiveLoader())
           : _loadError != null
