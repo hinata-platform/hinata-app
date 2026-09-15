@@ -258,42 +258,6 @@ class _BoardColumn extends StatefulWidget {
 class _BoardColumnState extends State<_BoardColumn> {
   bool _hovered = false;
 
-  /// The column's own scroll, watched so reaching its end reads the next page.
-  final ScrollController _cards = ScrollController();
-
-  /// How close to the end of the loaded cards the next page is asked for.
-  static const double _nearEnd = 600;
-
-  @override
-  void initState() {
-    super.initState();
-    _cards.addListener(_askIfNearEnd);
-  }
-
-  @override
-  void dispose() {
-    _cards.dispose();
-    super.dispose();
-  }
-
-  void _askIfNearEnd() {
-    final ask = widget.onLoadMore;
-    if (ask == null || widget.loadingMore || !_cards.hasClients) return;
-    final position = _cards.position;
-    if (position.pixels >= position.maxScrollExtent - _nearEnd) ask();
-  }
-
-  /// A column whose loaded cards do not fill it can never be scrolled to its
-  /// end, so it asks for the next page as soon as it has been laid out.
-  void _fillIfShort() {
-    final ask = widget.onLoadMore;
-    if (!mounted || ask == null || widget.loadingMore || !_cards.hasClients) {
-      return;
-    }
-    final position = _cards.position;
-    if (position.hasContentDimensions && position.maxScrollExtent <= 0) ask();
-  }
-
   /// The key of [issue]'s project when this column refused it for a reason
   /// worth explaining — its workflow has no state here. Null when the drop is
   /// legal, when the card already sits in this column (nothing to explain), and
@@ -311,9 +275,6 @@ class _BoardColumnState extends State<_BoardColumn> {
     // holds on the server, loaded or not.
     final count = widget.laneMode ? issues.length : column.count;
     final overWip = column.wipLimit != null && count > column.wipLimit!;
-    if (!widget.laneMode && widget.onLoadMore != null && !widget.loadingMore) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _fillIfShort());
-    }
     // Tint from the column's first workflow state, falling back to its display
     // name so the header dot still matches the theme when `states` is empty.
     // stateColor normalises case/separators, so either form resolves correctly.
@@ -447,25 +408,17 @@ class _BoardColumnState extends State<_BoardColumn> {
                       ),
                       LaneAwareFlexible(
                         laneMode: widget.laneMode,
-                        child: issues.isEmpty
+                        // A column whose loaded cards all moved away still
+                        // reads on, so what it holds beyond them comes in.
+                        child: issues.isEmpty && widget.onLoadMore == null
                             ? const SizedBox(height: 8)
-                            : ListView.separated(
-                                controller: widget.laneMode ? null : _cards,
-                                shrinkWrap: true,
-                                physics: widget.laneMode
-                                    ? const NeverScrollableScrollPhysics()
-                                    : null,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 2,
-                                ),
-                                itemCount:
-                                    issues.length + (widget.loadingMore ? 1 : 0),
-                                separatorBuilder: (_, _) =>
-                                    const SizedBox(height: 9),
+                            : BoardCardList(
+                                count: issues.length,
+                                remaining: count - issues.length,
+                                laneMode: widget.laneMode,
+                                loadingMore: widget.loadingMore,
+                                onLoadMore: widget.onLoadMore,
                                 itemBuilder: (context, index) {
-                                  if (index == issues.length) {
-                                    return const BoardLoadMore(loading: true);
-                                  }
                                   final issue = issues[index];
                                   // Plays only for the card that just completed a
                                   // drop; every other card renders untouched.

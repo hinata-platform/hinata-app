@@ -193,6 +193,29 @@ void main() {
       },
     );
 
+    testWidgets('narrows the planning to the cards a search finds', (
+      tester,
+    ) async {
+      await open(tester, type: BoardType.scrum, size: _phone);
+      expect(find.textContaining('release notes'), findsOneWidget);
+
+      await tester.tap(inBar(find.byType(GlassSearchButton)));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(GlassSearchField),
+          matching: find.byType(TextField),
+        ),
+        'login',
+      );
+      // The search waits a moment for the next letter, then asks the server.
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('login screen'), findsOneWidget);
+      expect(find.textContaining('release notes'), findsNothing);
+    });
+
     testWidgets('has nothing to search, filter or create on the insights', (
       tester,
     ) async {
@@ -238,6 +261,14 @@ class _FakeBoardRepository implements BoardRepository {
   final AgileBoard board;
 
   /// Searches the way the server does: the title holds the text, any case.
+  List<Issue> _found(BoardQuery query) {
+    final text = query.text.trim().toLowerCase();
+    return [
+      for (final card in const [_login, _notes])
+        if (text.isEmpty || card.title.toLowerCase().contains(text)) card,
+    ];
+  }
+
   @override
   Future<BoardWallPage> wall(
     String boardId, {
@@ -245,11 +276,7 @@ class _FakeBoardRepository implements BoardRepository {
     int size = kBoardPageSize,
     BoardQuery query = BoardQuery.all,
   }) async {
-    final text = query.text.trim().toLowerCase();
-    final cards = [
-      for (final card in const [_login, _notes])
-        if (text.isEmpty || card.title.toLowerCase().contains(text)) card,
-    ];
+    final cards = _found(query);
     return BoardWallPage(
       board: board,
       sprints: const [],
@@ -270,6 +297,27 @@ class _FakeBoardRepository implements BoardRepository {
     String? sprintId,
     bool backlog = false,
   }) async => BoardFacets.empty;
+
+  /// A Scrum board's backlog holds the same cards; it has no sprints.
+  @override
+  Future<BoardCardPage> cards(
+    String boardId, {
+    String? column,
+    String? sprintId,
+    bool backlog = false,
+    bool? dated,
+    int page = 0,
+    int size = kBoardPageSize,
+    bool summary = false,
+    BoardQuery query = BoardQuery.all,
+  }) async {
+    final cards = backlog ? _found(query) : const <Issue>[];
+    return BoardCardPage(
+      items: cards,
+      total: cards.length,
+      summary: summary ? const [] : null,
+    );
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) =>
@@ -301,18 +349,12 @@ class _FakeTeamRepository implements TeamRepository {
       throw UnimplementedError('${invocation.memberName} is not faked');
 }
 
-/// Nothing outside the board's own columns: no backlog, no sprints.
+/// Both boards read their cards from the board's own endpoints; these tests
+/// change none.
 class _FakeIssueRepository implements IssueRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) =>
-      switch (invocation.memberName) {
-        #allIssues => Future<List<Issue>>.value(const []),
-        #issues => Future<({List<Issue> issues, int total})>.value((
-          issues: const <Issue>[],
-          total: 0,
-        )),
-        _ => throw UnimplementedError('${invocation.memberName} is not faked'),
-      };
+      throw UnimplementedError('${invocation.memberName} is not faked');
 }
 
 class _FakeUserRepository implements UserRepository {

@@ -180,7 +180,10 @@ class BoardWallCubit extends Cubit<BoardWallState> {
       final wall = await _boards.wall(
         boardId,
         sprintId: _requestedSprintId,
-        size: math.min(math.max(depth ?? pageSize, pageSize), kBoardMaxPageSize),
+        size: math.min(
+          math.max(depth ?? pageSize, pageSize),
+          kBoardMaxPageSize,
+        ),
         query: query,
       );
       if (isClosed || generation != _generation) return;
@@ -307,7 +310,12 @@ class BoardWallCubit extends Cubit<BoardWallState> {
     if (from == null || from.name == to || _column(to) == null) return null;
     emit(
       state.copyWith(
-        columns: _moved(card.id, card.copyWith(state: targetState), from.name, to),
+        columns: _moved(
+          card.id,
+          card.copyWith(state: targetState),
+          from.name,
+          to,
+        ),
       ),
     );
     try {
@@ -328,7 +336,10 @@ class BoardWallCubit extends Cubit<BoardWallState> {
   void _moveBack(Issue card, String from, String to, String errorKey) {
     if (isClosed || _columnOf(card.id)?.name != to) return;
     emit(
-      state.copyWith(columns: _moved(card.id, card, to, from), errorKey: errorKey),
+      state.copyWith(
+        columns: _moved(card.id, card, to, from),
+        errorKey: errorKey,
+      ),
     );
   }
 
