@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
@@ -16,6 +17,7 @@ import '../board/board_drag.dart';
 import '../board/board_swimlanes.dart';
 import '../board/issue_quick_create.dart';
 import '../board/wall/board_wall_columns.dart';
+import '../board/wall/board_wall_cubit.dart';
 import 'widgets/glass_sprint_header.dart';
 
 /// Active-sprint surface: the Liquid-Glass sprint header above a sprint-scoped
@@ -24,8 +26,8 @@ import 'widgets/glass_sprint_header.dart';
 /// Its columns are the board's wall, searched and filtered on the server: each
 /// counts every card it holds, shows the ones loaded so far and reads on as it
 /// is scrolled. Side by side, every column follows the wall on its own; in
-/// lanes the board is laid out from all loaded cards, with the rest offered
-/// under them.
+/// lanes the board is laid out from all loaded cards, and every column reads
+/// on once the lanes are scrolled close to their end.
 class SprintActiveSurface extends StatelessWidget {
   const SprintActiveSurface({
     super.key,
@@ -114,7 +116,7 @@ class SprintActiveSurface extends StatelessWidget {
 
   /// Swimlane board for the active sprint — reuses the shared [BoardSwimlanes]
   /// with the sprint card column so it matches the Kanban board's grouping. The
-  /// lanes hold the cards loaded so far; under them each column offers the rest.
+  /// lanes hold the cards loaded so far and read on as they are scrolled.
   Widget _grouped(
     BuildContext context,
     List<BoardColumnView> boardColumns,
@@ -166,6 +168,11 @@ class SprintActiveSurface extends StatelessWidget {
         onCreated: onCreated,
       ),
       footerBuilder: (column) => BoardLaneFooter(name: column.name),
+      onNearEnd: ({required retry}) => readOnUnderLanes(
+        context.read<BoardWallCubit>(),
+        [for (final column in boardColumns) column.name],
+        retry: retry,
+      ),
     );
   }
 
@@ -209,7 +216,6 @@ class SprintActiveSurface extends StatelessWidget {
                       issues: column.issues,
                       count: column.count,
                       loadingMore: slice.loadingMore,
-                      failed: slice.failed,
                       onLoadMore: slice.canLoadMore
                           ? () => onLoadMore(column.name)
                           : null,
@@ -244,7 +250,6 @@ class _SprintColumn extends StatelessWidget {
     required this.onCreated,
     this.laneMode = false,
     this.loadingMore = false,
-    this.failed = false,
     this.onLoadMore,
     this.width = BoardWall.columnWidth,
     this.projectsById = const {},
@@ -287,9 +292,6 @@ class _SprintColumn extends StatelessWidget {
 
   /// Whether the column is reading its next page.
   final bool loadingMore;
-
-  /// Whether the column's last page did not come.
-  final bool failed;
 
   /// Reads the column's next page; null when it holds no more.
   final VoidCallback? onLoadMore;
@@ -426,10 +428,8 @@ class _SprintColumn extends StatelessWidget {
                           ? const SizedBox(height: 8)
                           : BoardCardList(
                               count: issues.length,
-                              remaining: count - issues.length,
                               laneMode: laneMode,
                               loadingMore: loadingMore,
-                              failed: failed,
                               onLoadMore: onLoadMore,
                               itemBuilder: (context, index) {
                                 final issue = issues[index];

@@ -1292,7 +1292,6 @@
       "automatic": "自動に戻す"
     },
     "searchIssues": "課題を検索…",
-    "loadMore": "さらに {{count}} 件を表示",
     "laneLimit": "ほかに {{count}} 件あります。検索や絞り込みで見つけてください。"
   },
   "gantt": {

@@ -1,12 +1,11 @@
-/// A column's cards read on as they are scrolled, and stop asking once a page
-/// did not come.
+/// A column's cards read on as they are scrolled, and a page that did not come
+/// is asked for again once someone scrolls them.
 library;
 
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hinata/core/widgets/hive_widgets.dart' show GhostButton;
 import 'package:hinata/features/board/board_card_list.dart';
 
 /// A column the way the wall drives one: asked for more, it reads, and a
@@ -57,10 +56,8 @@ class _ColumnState extends State<_Column> {
   @override
   Widget build(BuildContext context) => BoardCardList(
     count: count,
-    remaining: widget.total - count,
     laneMode: widget.laneMode,
     loadingMore: loading,
-    failed: failed,
     onLoadMore: count < widget.total ? _loadMore : null,
     itemBuilder: (context, index) =>
         SizedBox(height: 100, child: Text('card $index')),
@@ -94,6 +91,9 @@ void main() {
     await tester.pump();
   }
 
+  ScrollPosition positionOf(WidgetTester tester) =>
+      tester.state<ScrollableState>(find.byType(Scrollable)).position;
+
   testWidgets(
     'a column its cards do not fill asks for more once, as soon as it is laid out',
     (tester) async {
@@ -108,7 +108,7 @@ void main() {
       expect(column.asks, 1);
       expect(column.count, 4);
       expect(find.byType(CircularProgressIndicator), findsNothing);
-      expect(find.byType(GhostButton), findsNothing);
+      expect(find.byType(BoardReadOn), findsNothing);
     },
   );
 
@@ -121,9 +121,7 @@ void main() {
       );
       expect(column.asks, 0);
 
-      final position = tester
-          .state<ScrollableState>(find.byType(Scrollable))
-          .position;
+      final position = positionOf(tester);
       position.jumpTo(1500);
       await tester.pump();
       expect(column.asks, 0, reason: 'still far from the end');
@@ -139,26 +137,30 @@ void main() {
   );
 
   testWidgets(
-    'a page that did not come is offered as a button, not asked for on its own',
+    'a page that did not come is not asked for on its own, only once the column is scrolled again',
     (tester) async {
       final column = await pump(
         tester,
-        const _Column(initialCount: 2, total: 50, failing: true),
+        const _Column(initialCount: 30, total: 50, failing: true),
       );
-      await answer(tester);
+      // Close to the end of the cards, though not past what the list holds.
+      positionOf(tester).jumpTo(2600);
+      await tester.pump();
       expect(column.asks, 1);
-      expect(column.failed, isTrue);
 
+      await answer(tester);
+      expect(column.failed, isTrue);
       await tester.pump(const Duration(milliseconds: 100));
-      expect(column.asks, 1);
+      expect(column.asks, 1, reason: 'nobody scrolled');
 
       column.failing = false;
-      await tester.tap(find.byType(GhostButton));
-      await answer(tester);
-
+      await tester.drag(find.byType(ListView), const Offset(0, 60));
+      await tester.pump();
       expect(column.asks, 2);
-      expect(column.count, 12);
-      expect(find.byType(GhostButton), findsNothing);
+
+      await answer(tester);
+      expect(column.failed, isFalse);
+      expect(column.count, 40);
     },
   );
 
@@ -170,6 +172,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(column.asks, 0);
-    expect(find.byType(GhostButton), findsNothing);
+    expect(find.byType(BoardReadOn), findsNothing);
   });
 }
