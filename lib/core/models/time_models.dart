@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart' show IconData;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../util/dates.dart';
+import 'availability_models.dart';
 import 'work_models.dart';
 
 /// The extended time-tracking module's own shapes: the timer that is running
@@ -430,16 +431,20 @@ class TimeEntryFilter extends Equatable {
 /// asked for two navigations ago — a slow week that resolves after the reader
 /// has paged on must not be drawn over the week now on screen.
 ///
-/// Only entries for now. The later layers this view grows — absences and
-/// holidays, then subscribed calendar events — arrive as their own fields when
-/// the stages that produce them land; a missing layer reads as an empty one, so
-/// nothing here has to move for them.
+/// Since stage 10 three layers ride beside the entries: the reader's absences,
+/// the holidays of the calendar they follow, and the minutes they planned for
+/// each day. They mark days ([marks]) and change nothing about the entries. A
+/// missing layer reads as an empty one, and subscribed calendar events (stage
+/// 13) arrive the same way.
 class CalendarWindow extends Equatable {
   const CalendarWindow({
     required this.from,
     required this.to,
     this.entries = const [],
     this.truncated = false,
+    this.absences = const [],
+    this.holidays = const [],
+    this.scheduledMinutes = const {},
   });
 
   final DateTime from;
@@ -450,6 +455,21 @@ class CalendarWindow extends Equatable {
   /// quietly drawing a partial week.
   final bool truncated;
 
+  /// The reader's absences touching the window, as type and span.
+  final List<TimeOff> absences;
+
+  /// The holidays in the window.
+  final List<HolidayMark> holidays;
+
+  /// The planned minutes of every day of the window; 0 for a day without hours.
+  final Map<DateTime, int> scheduledMinutes;
+
+  DayMarks get marks => DayMarks(
+    holidays: holidays,
+    absences: absences,
+    scheduledMinutes: scheduledMinutes,
+  );
+
   factory CalendarWindow.fromJson(Map<String, dynamic> json) => CalendarWindow(
     from: parseDate(json['from'] as String?) ?? DateTime.now(),
     to: parseDate(json['to'] as String?) ?? DateTime.now(),
@@ -457,8 +477,30 @@ class CalendarWindow extends Equatable {
         .map((e) => WorkItem.fromJson(e as Map<String, dynamic>))
         .toList(),
     truncated: json['truncated'] as bool? ?? false,
+    absences: [
+      for (final item in (json['absences'] as List<dynamic>?) ?? const [])
+        ?TimeOff.fromJson(item as Map<String, dynamic>),
+    ],
+    holidays: [
+      for (final item in (json['holidays'] as List<dynamic>?) ?? const [])
+        ?HolidayMark.fromJson(item as Map<String, dynamic>),
+    ],
+    scheduledMinutes: {
+      for (final entry
+          in ((json['scheduledMinutes'] as Map<String, dynamic>?) ?? const {})
+              .entries)
+        ?parseDate(entry.key): (entry.value as num?)?.toInt() ?? 0,
+    },
   );
 
   @override
-  List<Object?> get props => [from, to, entries, truncated];
+  List<Object?> get props => [
+    from,
+    to,
+    entries,
+    truncated,
+    absences,
+    holidays,
+    scheduledMinutes,
+  ];
 }

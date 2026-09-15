@@ -8,6 +8,7 @@ import 'account_repository.dart';
 import 'admin_repository.dart';
 import 'article_repository.dart';
 import 'auth_repository.dart';
+import 'availability_repository.dart';
 import 'board_repository.dart';
 import 'comment_repository.dart';
 import 'dashboard_repository.dart';
@@ -29,6 +30,7 @@ export 'account_repository.dart';
 export 'admin_repository.dart';
 export 'article_repository.dart';
 export 'auth_repository.dart';
+export 'availability_repository.dart';
 export 'board_repository.dart';
 export 'comment_repository.dart';
 export 'dashboard_repository.dart';
@@ -64,6 +66,7 @@ class HinataRepositories {
       sprints: SprintRepository(api, boards: boards),
       timesheet: TimesheetRepository(api),
       time: TimeRepository(api),
+      availability: AvailabilityRepository(api),
       search: SearchRepository(api),
       articles: ArticleRepository(api),
       dashboard: DashboardRepository(api),
@@ -88,6 +91,7 @@ class HinataRepositories {
     required this.sprints,
     required this.timesheet,
     required this.time,
+    required this.availability,
     required this.search,
     required this.articles,
     required this.dashboard,
@@ -110,6 +114,7 @@ class HinataRepositories {
   final SprintRepository sprints;
   final TimesheetRepository timesheet;
   final TimeRepository time;
+  final AvailabilityRepository availability;
   final SearchRepository search;
   final ArticleRepository articles;
   final DashboardRepository dashboard;

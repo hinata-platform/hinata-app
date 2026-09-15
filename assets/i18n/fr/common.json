@@ -904,8 +904,7 @@
     },
     "add": {
       "title": "Ajouter",
-      "timerStart": "Démarrer le minuteur",
-      "timerStop": "Arrêter le minuteur"
+      "timerStart": "Démarrer le minuteur"
     },
     "view": {
       "list": "Liste",
@@ -1125,6 +1124,7 @@
         "DAILY_MAXIMUM": "Plus de 10 heures",
         "SHORT_REST": "Repos court",
         "SUNDAY_WORK": "Dimanche",
+        "HOLIDAY_WORK": "Jour férié",
         "LATE_ENTRY": "Saisie {{count}} jour plus tard",
         "LATE_ENTRY_plural": "Saisie {{count}} jours plus tard"
       },
@@ -1132,6 +1132,7 @@
         "DAILY_MAXIMUM": "Ce jour-là, le temps saisi atteint {{duration}}. La loi allemande sur le temps de travail autorise 10 heures au maximum.",
         "SHORT_REST": "Entre la fin de la veille et le début de ce jour, il n’y a que {{duration}}. La loi prévoit 11 heures.",
         "SUNDAY_WORK": "Du temps de travail est saisi ce dimanche. Le travail le dimanche n’est autorisé qu’à titre exceptionnel.",
+        "HOLIDAY_WORK": "Du temps de travail est saisi ce jour férié. Le travail les jours fériés n’est autorisé qu’à titre exceptionnel, et il doit tout de même être saisi.",
         "LATE_ENTRY": "Cette saisie a été enregistrée {{count}} jour après le jour travaillé. Ce n’est qu’un avis pour vous. Il ne bloque rien.",
         "LATE_ENTRY_plural": "Cette saisie a été enregistrée {{count}} jours après le jour travaillé. Ce n’est qu’un avis pour vous. Il ne bloque rien."
       }
@@ -1160,6 +1161,110 @@
       "grantedBy": "{{name}} a ouvert les jours",
       "yourRequest": "Votre demande",
       "waiting": "Pas encore de réponse."
+    }
+  },
+  "availability": {
+    "type": {
+      "vacation": "Congés",
+      "sick": "Maladie",
+      "other": "Autre"
+    },
+    "mark": {
+      "holiday": "Jour férié : {{name}}",
+      "holidayHalf": "Demi-journée fériée : {{name}}",
+      "absent": "Absence : {{type}}",
+      "absentHalf": "Absence d’une demi-journée : {{type}}",
+      "nonRegular": "Pas un jour de travail habituel"
+    },
+    "calendar": {
+      "holidays": "Jours fériés",
+      "absences": "Absences"
+    },
+    "capacity": {
+      "title": "Votre capacité",
+      "ofTotal": "{{booked}} sur {{capacity}}",
+      "hint": "Vos heures prévues sur cette période, hors jours fériés et absences, à côté de ce que vous avez saisi. Cela ne s’affiche que pour vous et ne change rien à ce que vous pouvez saisir."
+    },
+    "section": {
+      "title": "Horaires de travail et absences",
+      "subtitle": "Vos heures prévues, les jours fériés que vous suivez et vos jours d’absence. Cela sert uniquement à la planification. Vous pouvez saisir du temps n’importe quel jour."
+    },
+    "pattern": {
+      "title": "Heures prévues",
+      "weekTotal": "{{duration}} par semaine",
+      "usingDefault": "Vous n’avez pas encore défini vos propres heures, c’est donc la valeur par défaut de ce serveur qui s’applique.",
+      "free": "Libre",
+      "validFrom": "Valable à partir du",
+      "today": "Aujourd’hui",
+      "validFromHint": "Les nouvelles heures s’appliquent à partir de ce jour. Les semaines précédentes gardent leurs heures.",
+      "calendar": "Calendrier des jours fériés",
+      "calendarDefault": "Par défaut ({{name}})",
+      "calendarNone": "Aucun jour férié",
+      "save": "Enregistrer",
+      "saved": "Vos horaires de travail sont enregistrés."
+    },
+    "timeOff": {
+      "title": "Absences",
+      "add": "Ajouter une absence",
+      "edit": "Modifier l’absence",
+      "hint": "Seulement le type et les jours. Aucun motif n’est nécessaire.",
+      "empty": "Aucune absence",
+      "emptyMessage": "Ajoutez ici vos absences pour que votre capacité reste juste.",
+      "type": "Type",
+      "days": "Jours",
+      "halfDay": "Demi-journée",
+      "halfDayHint": "Uniquement pour une seule journée.",
+      "note": "Note",
+      "noteHint": "Facultative et visible uniquement par vous. 200 caractères au maximum.",
+      "delete": "Supprimer l’absence",
+      "deleteConfirm": "Voulez-vous supprimer cette absence ?",
+      "saved": "Absence enregistrée.",
+      "deleted": "Absence supprimée.",
+      "halfDaySpan": "{{days}}, une demi-journée"
+    },
+    "admin": {
+      "cardTitle": "Jours fériés",
+      "cardHint": "Calendriers de jours fériés pour des régions ou toute l’organisation. Chacun choisit le sien dans ses réglages.",
+      "open": "Gérer les jours fériés",
+      "pageTitle": "Jours fériés",
+      "intro": "Chaque calendrier contient les jours fériés d’une région. Ajoutez-les à la main ou importez-les depuis une adresse de calendrier. Chacun suit le calendrier par défaut, sauf s’il en choisit un autre.",
+      "newCalendar": "Nouveau calendrier",
+      "editCalendar": "Modifier le calendrier",
+      "deleteCalendar": "Supprimer le calendrier",
+      "deleteCalendarConfirm": "Supprimer {{name}} avec tous ses jours fériés ? Les personnes qui le suivent suivront le calendrier par défaut.",
+      "noCalendars": "Aucun calendrier de jours fériés pour l’instant",
+      "noCalendarsMessage": "Créez-en un, puis ajoutez des jours fériés à la main ou importez-les depuis une adresse de calendrier.",
+      "holidaysOf": "Jours fériés de {{name}}",
+      "previousYear": "Année précédente",
+      "nextYear": "Année suivante",
+      "addHoliday": "Ajouter un jour férié",
+      "editHoliday": "Modifier le jour férié",
+      "deleteHoliday": "Supprimer le jour férié",
+      "noHolidays": "Aucun jour férié en {{year}}",
+      "noHolidaysMessage": "Ajoutez-les à la main ou importez-les depuis l’adresse du calendrier.",
+      "defaultBadge": "Par défaut",
+      "byHand": "Tenu à la main",
+      "feedFrom": "Importé depuis {{host}}",
+      "importYear": "Importer {{year}}",
+      "importing": "Import en cours.",
+      "importFailed": "Le dernier import n’a pas fonctionné : {{error}}",
+      "importDone": "{{year}} importé le {{date}} : {{added}} ajoutés, {{updated}} renommés, {{unchanged}} inchangés.",
+      "importCapped": "{{count}} jour de plus a été laissé de côté, car une année compte au maximum 100 jours fériés.",
+      "importCapped_plural": "{{count}} jours de plus ont été laissés de côté, car une année compte au maximum 100 jours fériés.",
+      "halfDay": "Demi-journée",
+      "imported": "Depuis l’adresse du calendrier",
+      "nameRequired": "Veuillez saisir un nom.",
+      "saved": "Enregistré.",
+      "name": "Nom",
+      "region": "Région",
+      "feedUrl": "Adresse du calendrier",
+      "feedUrlHint": "Une adresse https ou webcal d’un calendrier de jours fériés. Elle est stockée chiffrée, et seul son hôte est affiché.",
+      "feedUrlKeep": "L’adresse du calendrier de {{host}} est conservée. Saisissez-en une nouvelle pour la remplacer.",
+      "removeFeed": "Retirer l’adresse du calendrier",
+      "default": "Par défaut pour tout le monde",
+      "defaultHint": "Les personnes qui n’ont pas choisi de calendrier suivent celui-ci.",
+      "date": "Date",
+      "holidayHint": "Un jour qui n’est pas un jour de travail ordinaire dans cette région."
     }
   },
   "projects": {
@@ -2304,7 +2409,12 @@
       "TIME_BACKFILL_REQUESTED": "Jours plus anciens demandés",
       "TIME_BACKFILL_GRANTED": "Jours ouverts pour une personne",
       "TIME_BACKFILL_REVOKED": "Jours ouverts refermés",
-      "TIME_RETENTION_RUN": "Purge de conservation exécutée"
+      "TIME_RETENTION_RUN": "Purge de conservation exécutée",
+      "AVAILABILITY_SCHEDULE_CHANGED": "Horaires de travail modifiés pour une personne",
+      "AVAILABILITY_TIME_OFF_CHANGED": "Absence modifiée pour une personne",
+      "AVAILABILITY_CALENDAR_CHANGED": "Calendrier des jours fériés modifié",
+      "AVAILABILITY_HOLIDAYS_CHANGED": "Jours fériés modifiés",
+      "AVAILABILITY_HOLIDAYS_IMPORTED": "Jours fériés importés"
     },
     "meta": {
       "oldRole": "Rôle précédent",

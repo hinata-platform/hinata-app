@@ -904,8 +904,7 @@
     },
     "add": {
       "title": "Hinzufügen",
-      "timerStart": "Timer starten",
-      "timerStop": "Timer stoppen"
+      "timerStart": "Timer starten"
     },
     "view": {
       "list": "Liste",
@@ -1125,6 +1124,7 @@
         "DAILY_MAXIMUM": "Über 10 Stunden",
         "SHORT_REST": "Kurze Ruhezeit",
         "SUNDAY_WORK": "Sonntag",
+        "HOLIDAY_WORK": "Feiertag",
         "LATE_ENTRY": "{{count}} Tag später erfasst",
         "LATE_ENTRY_plural": "{{count}} Tage später erfasst"
       },
@@ -1132,6 +1132,7 @@
         "DAILY_MAXIMUM": "An diesem Tag sind {{duration}} erfasst. Das Arbeitszeitgesetz erlaubt höchstens 10 Stunden.",
         "SHORT_REST": "Zwischen dem Ende des Vortags und dem Beginn dieses Tages liegen nur {{duration}}. Vorgesehen sind 11 Stunden.",
         "SUNDAY_WORK": "An diesem Sonntag ist Arbeitszeit erfasst. Sonntagsarbeit ist nur in Ausnahmen erlaubt.",
+        "HOLIDAY_WORK": "An diesem Feiertag ist Arbeitszeit erfasst. Arbeit an Feiertagen ist nur in Ausnahmen erlaubt, erfasst gehört sie trotzdem.",
         "LATE_ENTRY": "Dieser Eintrag wurde {{count}} Tag nach dem Arbeitstag erfasst. Das ist nur ein Hinweis für dich und blockiert nichts.",
         "LATE_ENTRY_plural": "Dieser Eintrag wurde {{count}} Tage nach dem Arbeitstag erfasst. Das ist nur ein Hinweis für dich und blockiert nichts."
       }
@@ -1160,6 +1161,110 @@
       "grantedBy": "{{name}} hat die Tage geöffnet",
       "yourRequest": "Deine Anfrage",
       "waiting": "Noch keine Antwort."
+    }
+  },
+  "availability": {
+    "type": {
+      "vacation": "Urlaub",
+      "sick": "Krank",
+      "other": "Sonstiges"
+    },
+    "mark": {
+      "holiday": "Feiertag: {{name}}",
+      "holidayHalf": "Halber Feiertag: {{name}}",
+      "absent": "Abwesend: {{type}}",
+      "absentHalf": "Halbtags abwesend: {{type}}",
+      "nonRegular": "Kein regulärer Arbeitstag"
+    },
+    "calendar": {
+      "holidays": "Feiertage",
+      "absences": "Abwesend"
+    },
+    "capacity": {
+      "title": "Deine Kapazität",
+      "ofTotal": "{{booked}} von {{capacity}}",
+      "hint": "Deine geplanten Stunden in diesem Zeitraum, abzüglich Feiertage und Abwesenheiten, neben dem, was du gebucht hast. Nur du siehst das, und es ändert nichts daran, was du erfassen kannst."
+    },
+    "section": {
+      "title": "Arbeitszeiten und Abwesenheiten",
+      "subtitle": "Deine geplanten Stunden, die Feiertage, nach denen du dich richtest, und die Tage, an denen du nicht da bist. Nur zur Planung. Du kannst an jedem Tag Zeit erfassen."
+    },
+    "pattern": {
+      "title": "Geplante Stunden",
+      "weekTotal": "{{duration}} pro Woche",
+      "usingDefault": "Du hast noch keine eigenen Stunden festgelegt, deshalb gilt die Vorgabe dieses Servers.",
+      "free": "Frei",
+      "validFrom": "Gültig ab",
+      "today": "Heute",
+      "validFromHint": "Neue Stunden gelten ab diesem Tag. Frühere Wochen behalten ihre Stunden.",
+      "calendar": "Feiertagskalender",
+      "calendarDefault": "Standard ({{name}})",
+      "calendarNone": "Keine Feiertage",
+      "save": "Speichern",
+      "saved": "Deine Arbeitszeiten sind gespeichert."
+    },
+    "timeOff": {
+      "title": "Abwesenheiten",
+      "add": "Abwesenheit eintragen",
+      "edit": "Abwesenheit bearbeiten",
+      "hint": "Nur die Art und die Tage. Einen Grund brauchst du nicht anzugeben.",
+      "empty": "Keine Abwesenheiten",
+      "emptyMessage": "Wenn du nicht da bist, trag es hier ein, damit deine Kapazität stimmt.",
+      "type": "Art",
+      "days": "Tage",
+      "halfDay": "Halber Tag",
+      "halfDayHint": "Nur für einen einzelnen Tag.",
+      "note": "Notiz",
+      "noteHint": "Freiwillig und nur für dich. Höchstens 200 Zeichen.",
+      "delete": "Abwesenheit löschen",
+      "deleteConfirm": "Möchtest du diese Abwesenheit löschen?",
+      "saved": "Abwesenheit gespeichert.",
+      "deleted": "Abwesenheit gelöscht.",
+      "halfDaySpan": "{{days}}, halber Tag"
+    },
+    "admin": {
+      "cardTitle": "Feiertage",
+      "cardHint": "Feiertagskalender für Regionen oder die ganze Organisation. Jede Person wählt ihren in den Einstellungen.",
+      "open": "Feiertage verwalten",
+      "pageTitle": "Feiertage",
+      "intro": "Jeder Kalender enthält die Feiertage einer Region. Du kannst sie von Hand eintragen oder aus einer Kalenderadresse importieren. Wer keinen Kalender wählt, richtet sich nach dem Standardkalender.",
+      "newCalendar": "Neuer Kalender",
+      "editCalendar": "Kalender bearbeiten",
+      "deleteCalendar": "Kalender löschen",
+      "deleteCalendarConfirm": "{{name}} mit allen Feiertagen löschen? Wer ihn gewählt hat, richtet sich dann nach dem Standardkalender.",
+      "noCalendars": "Noch keine Feiertagskalender",
+      "noCalendarsMessage": "Lege einen an und trag Feiertage von Hand ein oder importiere sie aus einer Kalenderadresse.",
+      "holidaysOf": "Feiertage in {{name}}",
+      "previousYear": "Vorheriges Jahr",
+      "nextYear": "Nächstes Jahr",
+      "addHoliday": "Feiertag eintragen",
+      "editHoliday": "Feiertag bearbeiten",
+      "deleteHoliday": "Feiertag löschen",
+      "noHolidays": "Keine Feiertage in {{year}}",
+      "noHolidaysMessage": "Trag sie von Hand ein oder importiere sie aus der Kalenderadresse.",
+      "defaultBadge": "Standard",
+      "byHand": "Von Hand gepflegt",
+      "feedFrom": "Importiert von {{host}}",
+      "importYear": "{{year}} importieren",
+      "importing": "Der Import läuft.",
+      "importFailed": "Der letzte Import hat nicht geklappt: {{error}}",
+      "importDone": "{{year}} am {{date}} importiert: {{added}} neu, {{updated}} umbenannt, {{unchanged}} unverändert.",
+      "importCapped": "{{count}} weiterer Tag fehlt, weil ein Jahr höchstens 100 Feiertage enthält.",
+      "importCapped_plural": "{{count}} weitere Tage fehlen, weil ein Jahr höchstens 100 Feiertage enthält.",
+      "halfDay": "Halber Tag",
+      "imported": "Aus der Kalenderadresse",
+      "nameRequired": "Bitte gib einen Namen ein.",
+      "saved": "Gespeichert.",
+      "name": "Name",
+      "region": "Region",
+      "feedUrl": "Kalenderadresse",
+      "feedUrlHint": "Eine https- oder webcal-Adresse eines Feiertagskalenders. Sie wird verschlüsselt gespeichert, angezeigt wird nur ihr Host.",
+      "feedUrlKeep": "Die Kalenderadresse von {{host}} bleibt. Gib eine neue ein, um sie zu ersetzen.",
+      "removeFeed": "Kalenderadresse entfernen",
+      "default": "Standard für alle",
+      "defaultHint": "Wer keinen Kalender gewählt hat, richtet sich nach diesem.",
+      "date": "Datum",
+      "holidayHint": "Ein Tag, der in dieser Region kein gewöhnlicher Arbeitstag ist."
     }
   },
   "projects": {
@@ -2304,7 +2409,12 @@
       "TIME_BACKFILL_REQUESTED": "Ältere Tage angefragt",
       "TIME_BACKFILL_GRANTED": "Tage für eine Person geöffnet",
       "TIME_BACKFILL_REVOKED": "Geöffnete Tage wieder geschlossen",
-      "TIME_RETENTION_RUN": "Aufbewahrungslauf"
+      "TIME_RETENTION_RUN": "Aufbewahrungslauf",
+      "AVAILABILITY_SCHEDULE_CHANGED": "Arbeitszeiten einer Person geändert",
+      "AVAILABILITY_TIME_OFF_CHANGED": "Abwesenheit einer Person geändert",
+      "AVAILABILITY_CALENDAR_CHANGED": "Feiertagskalender geändert",
+      "AVAILABILITY_HOLIDAYS_CHANGED": "Feiertage geändert",
+      "AVAILABILITY_HOLIDAYS_IMPORTED": "Feiertage importiert"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",
