@@ -233,36 +233,41 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen>
                     ),
                   )
                 else
-                  SliverPadding(
-                    padding: EdgeInsets.fromLTRB(
-                      context.pageGutter,
-                      context.pageGutter,
-                      context.pageGutter,
-                      context.pageGutter + context.bottomGutter,
-                    ),
-                    sliver: SliverGrid(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: context.gridColumns(minTileWidth: 280),
-                        mainAxisSpacing: 16,
-                        crossAxisSpacing: 16,
-                        mainAxisExtent: 140,
+                  SliverLayoutBuilder(
+                    builder: (context, room) => SliverPadding(
+                      padding: EdgeInsets.fromLTRB(
+                        context.pageGutter,
+                        context.pageGutter,
+                        context.pageGutter,
+                        context.pageGutter + context.bottomGutter,
                       ),
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final board = boardList[index];
-                        final canManage =
-                            canManageProject ||
-                            (myId != null && board.ownerId == myId);
-                        return _BoardCard(
-                          board: board,
-                          index: index,
-                          canManage: canManage,
-                          // Under this project's boards, so back returns here.
-                          onOpen: () => context.go(
-                            projectBoardLocation(widget.projectId, board.id),
+                      sliver: SliverGrid(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: context.gridColumns(
+                            minTileWidth: 280,
+                            width: room.crossAxisExtent,
                           ),
-                          onMenu: (anchor) => _openBoardMenu(anchor, board),
-                        );
-                      }, childCount: boardList.length),
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                          mainAxisExtent: 140,
+                        ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final board = boardList[index];
+                          final canManage =
+                              canManageProject ||
+                              (myId != null && board.ownerId == myId);
+                          return _BoardCard(
+                            board: board,
+                            index: index,
+                            canManage: canManage,
+                            // Under this project's boards, so back returns here.
+                            onOpen: () => context.go(
+                              projectBoardLocation(widget.projectId, board.id),
+                            ),
+                            onMenu: (anchor) => _openBoardMenu(anchor, board),
+                          );
+                        }, childCount: boardList.length),
+                      ),
                     ),
                   ),
               ],

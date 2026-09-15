@@ -172,28 +172,33 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     ),
                   )
                 else
-                  SliverPadding(
-                    padding: EdgeInsets.fromLTRB(
-                      context.pageGutter,
-                      0,
-                      context.pageGutter,
-                      context.pageGutter + context.bottomGutter,
-                    ),
-                    sliver: SliverGrid(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: context.gridColumns(minTileWidth: 300),
-                        mainAxisSpacing: 18,
-                        crossAxisSpacing: 18,
-                        mainAxisExtent: 210,
+                  SliverLayoutBuilder(
+                    builder: (context, room) => SliverPadding(
+                      padding: EdgeInsets.fromLTRB(
+                        context.pageGutter,
+                        0,
+                        context.pageGutter,
+                        context.pageGutter + context.bottomGutter,
                       ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) => _ProjectCard(
-                          project: projects[index],
-                          names: names,
-                          avatars: avatars,
-                          onSettings: () => _openSettings(projects[index]),
+                      sliver: SliverGrid(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: context.gridColumns(
+                            minTileWidth: 300,
+                            width: room.crossAxisExtent,
+                          ),
+                          mainAxisSpacing: 18,
+                          crossAxisSpacing: 18,
+                          mainAxisExtent: 210,
                         ),
-                        childCount: projects.length,
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) => _ProjectCard(
+                            project: projects[index],
+                            names: names,
+                            avatars: avatars,
+                            onSettings: () => _openSettings(projects[index]),
+                          ),
+                          childCount: projects.length,
+                        ),
                       ),
                     ),
                   ),

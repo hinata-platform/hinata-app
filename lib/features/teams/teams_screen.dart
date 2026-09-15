@@ -127,31 +127,36 @@ class _TeamsScreenState extends State<TeamsScreen> {
                     child: Center(child: HiveLoader()),
                   )
                 else
-                  SliverPadding(
-                    padding: EdgeInsets.fromLTRB(
-                      context.pageGutter,
-                      0,
-                      context.pageGutter,
-                      context.pageGutter + context.bottomGutter,
-                    ),
-                    sliver: SliverGrid(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: context.gridColumns(minTileWidth: 300),
-                        mainAxisSpacing: 18,
-                        crossAxisSpacing: 18,
-                        mainAxisExtent: 206,
+                  SliverLayoutBuilder(
+                    builder: (context, room) => SliverPadding(
+                      padding: EdgeInsets.fromLTRB(
+                        context.pageGutter,
+                        0,
+                        context.pageGutter,
+                        context.pageGutter + context.bottomGutter,
                       ),
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        if (index == teams.length) {
-                          return _NewTeamCard(onTap: _create);
-                        }
-                        return _TeamCard(
-                          team: teams[index],
-                          names: names,
-                          avatars: avatars,
-                          pronouns: pronouns,
-                        );
-                      }, childCount: teams.length + 1),
+                      sliver: SliverGrid(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: context.gridColumns(
+                            minTileWidth: 300,
+                            width: room.crossAxisExtent,
+                          ),
+                          mainAxisSpacing: 18,
+                          crossAxisSpacing: 18,
+                          mainAxisExtent: 206,
+                        ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          if (index == teams.length) {
+                            return _NewTeamCard(onTap: _create);
+                          }
+                          return _TeamCard(
+                            team: teams[index],
+                            names: names,
+                            avatars: avatars,
+                            pronouns: pronouns,
+                          );
+                        }, childCount: teams.length + 1),
+                      ),
                     ),
                   ),
               ],
