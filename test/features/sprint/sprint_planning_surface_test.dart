@@ -6,7 +6,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/work_models.dart';
-import 'package:hinata/features/board/board_card_list.dart';
+import 'package:hinata/core/widgets/read_on_trigger.dart';
 import 'package:hinata/features/board/issue_quick_create.dart';
 import 'package:hinata/features/sprint/planning/sprint_planning_cubit.dart';
 import 'package:hinata/features/sprint/sprint_planning_surface.dart';
@@ -129,7 +129,7 @@ void main() {
     final position = planningOf(tester);
     for (
       var step = 0;
-      step < 40 && find.byType(BoardReadOn).evaluate().isEmpty;
+      step < 40 && find.byType(ReadOnTrigger).evaluate().isEmpty;
       step++
     ) {
       position.jumpTo(position.pixels + 300);
@@ -137,7 +137,7 @@ void main() {
     }
     await tester.pump();
 
-    expect(find.byType(BoardReadOn), findsOneWidget);
+    expect(find.byType(ReadOnTrigger), findsOneWidget);
     expect(asked, ['s1']);
   });
 
@@ -152,7 +152,7 @@ void main() {
       );
 
       expect(asked, isEmpty);
-      expect(find.byType(BoardReadOn), findsNothing);
+      expect(find.byType(ReadOnTrigger), findsNothing);
     },
   );
 
