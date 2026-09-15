@@ -8,6 +8,9 @@ import 'work_models.dart';
 /// someone scrolls to it.
 const int kBoardPageSize = 30;
 
+/// The most cards the server hands over in one request.
+const int kBoardMaxPageSize = 100;
+
 /// Which cards a board query is about.
 enum BoardCardShape {
   /// The wall: work items only. Epics head lanes and sub-tasks live inside
@@ -67,6 +70,19 @@ class BoardQuery extends Equatable {
   final BoardCardShape shape;
 
   bool get hasText => text.trim().isNotEmpty;
+
+  BoardQuery withText(String text) => BoardQuery(
+    text: text,
+    states: states,
+    types: types,
+    priorities: priorities,
+    assigneeIds: assigneeIds,
+    reporterIds: reporterIds,
+    labels: labels,
+    sprints: sprints,
+    epicIds: epicIds,
+    shape: shape,
+  );
 
   BoardQuery withShape(BoardCardShape shape) => BoardQuery(
     text: text,
