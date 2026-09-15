@@ -133,4 +133,45 @@ void main() {
       findsNothing,
     );
   });
+
+  testWidgets(
+    'asks for the next page once the chart is scrolled near its end',
+    (tester) async {
+      tester.view
+        ..physicalSize = const Size(1200, 700)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      var asked = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(
+            body: SizedBox(
+              width: 1200,
+              height: 600,
+              child: BoardTimeline(
+                issues: [
+                  for (var i = 0; i < 40; i++)
+                    issue(
+                      '$i',
+                      start: day.add(Duration(days: i)),
+                      due: day.add(Duration(days: i + 1)),
+                    ),
+                ],
+                onOpen: (_) {},
+                onNearEnd: () => asked++,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(asked, 0);
+
+      await tester.dragFrom(const Offset(700, 300), const Offset(0, -1400));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(asked, isPositive);
+    },
+  );
 }

@@ -1218,7 +1218,6 @@
     "defaultName": "团队看板",
     "view": {
       "board": "看板",
-      "backlog": "待办列表",
       "timeline": "时间轴"
     },
     "active": "进行中",
@@ -1252,8 +1251,6 @@
     "clearFilters": "全部清除",
     "activeFilters": "{{count}} 个生效",
     "noAssignee": "未分配",
-    "backlogEmpty": "待办列表为空。",
-    "backlogSubtitle": "{{count}} 个未加入迭代的条目",
     "timelineEmpty": "时间轴上没有可显示的内容。",
     "timelineNoDates": "没有开始或截止日期",
     "createSub": "先创建看板，之后从待办列表填充。",
@@ -1294,7 +1291,8 @@
       "automatic": "恢复自动"
     },
     "searchIssues": "搜索事项…",
-    "loadMore": "再显示 {{count}} 张"
+    "loadMore": "再显示 {{count}} 张",
+    "laneLimit": "还有 {{count}} 张。请搜索或筛选来查找。"
   },
   "gantt": {
     "title": "时间轴",
@@ -2370,6 +2368,7 @@
     "returnBacklog": "退回产品待办列表",
     "createSprint": "创建迭代",
     "startSprint": "启动迭代",
+    "nothingToStart": "{{name}} 中还没有事项。请先规划一些事项。",
     "completeSprint": "结束迭代",
     "planned": "已规划",
     "filterBacklog": "筛选待办列表…",

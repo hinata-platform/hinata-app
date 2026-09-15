@@ -15,6 +15,7 @@ import '../../features/auth/reset_password_screen.dart';
 import '../../features/auth/sso_callback_screen.dart';
 import '../../features/auth/verify_email_screen.dart';
 import '../../features/board/board_screen.dart';
+import '../../features/board/boards_screen.dart';
 import '../../features/board/project_boards_screen.dart';
 import '../../features/connect/connect_screen.dart';
 import '../../features/connect/connecting_screen.dart';

@@ -1218,7 +1218,6 @@
     "defaultName": "Tablero del equipo",
     "view": {
       "board": "Tablero",
-      "backlog": "Backlog",
       "timeline": "Línea temporal"
     },
     "active": "Activo",
@@ -1252,8 +1251,6 @@
     "clearFilters": "Borrar todo",
     "activeFilters": "{{count}} activos",
     "noAssignee": "Sin asignar",
-    "backlogEmpty": "No hay elementos en el backlog.",
-    "backlogSubtitle": "{{count}} elemento(s) sin sprint",
     "timelineEmpty": "No hay nada que mostrar en la línea temporal.",
     "timelineNoDates": "Sin fecha de inicio ni de vencimiento",
     "createSub": "Créalo ahora y llénalo después desde el backlog.",
@@ -1294,7 +1291,8 @@
       "automatic": "Volver a automático"
     },
     "searchIssues": "Buscar incidencias…",
-    "loadMore": "Mostrar {{count}} más"
+    "loadMore": "Mostrar {{count}} más",
+    "laneLimit": "{{count}} más. Busca o filtra para encontrarlas."
   },
   "gantt": {
     "title": "Línea temporal",
@@ -2370,6 +2368,7 @@
     "returnBacklog": "Devolver al backlog de producto",
     "createSprint": "Crear sprint",
     "startSprint": "Iniciar sprint",
+    "nothingToStart": "{{name}} todavía no tiene incidencias. Planifica algunas primero.",
     "completeSprint": "Completar sprint",
     "planned": "Planificado",
     "filterBacklog": "Filtrar el backlog…",

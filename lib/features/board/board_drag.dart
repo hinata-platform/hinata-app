@@ -703,10 +703,9 @@ class BoardLandingCard extends StatefulWidget {
 
 class _BoardLandingCardState extends State<BoardLandingCard>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: BoardDragMotion.landing,
-  );
+  /// Made for the card that lands, when it lands. A wall of cards that are
+  /// only read, hundreds of them in lanes, holds no controller per card.
+  AnimationController? _controller;
 
   @override
   void initState() {
@@ -726,22 +725,31 @@ class _BoardLandingCardState extends State<BoardLandingCard>
     if (boardDrag.landedId != widget.issueId) return;
     boardDrag.clearLanded(widget.issueId);
     if (BoardDragMotion.reducedMotion) return;
-    _controller.forward(from: 0);
+    (_controller ??= AnimationController(
+      vsync: this,
+      duration: BoardDragMotion.landing,
+    )).forward(from: 0);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-    animation: _controller,
+  Widget build(BuildContext context) {
+    final controller = _controller;
+    if (controller == null) return widget.child;
+    return _landing(controller);
+  }
+
+  Widget _landing(AnimationController controller) => AnimatedBuilder(
+    animation: controller,
     child: widget.child,
     builder: (context, child) {
-      if (_controller.value == 0 || _controller.isCompleted) return child!;
-      final t = Curves.easeOutCubic.transform(_controller.value);
+      if (controller.value == 0 || controller.isCompleted) return child!;
+      final t = Curves.easeOutCubic.transform(controller.value);
       return Transform.scale(
         scale: 0.96 + 0.04 * t,
         child: DecoratedBox(
