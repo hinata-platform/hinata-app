@@ -904,8 +904,7 @@
     },
     "add": {
       "title": "添加",
-      "timerStart": "启动计时器",
-      "timerStop": "停止计时器"
+      "timerStart": "启动计时器"
     },
     "view": {
       "list": "列表",
@@ -1125,6 +1124,7 @@
         "DAILY_MAXIMUM": "超过 10 小时",
         "SHORT_REST": "休息过短",
         "SUNDAY_WORK": "星期日",
+        "HOLIDAY_WORK": "节假日",
         "LATE_ENTRY": "{{count}} 天后录入",
         "LATE_ENTRY_plural": "{{count}} 天后录入"
       },
@@ -1132,6 +1132,7 @@
         "DAILY_MAXIMUM": "这一天记录了 {{duration}}。德国《工作时间法》规定每天最多 10 小时。",
         "SHORT_REST": "前一天结束到这一天开始之间只有 {{duration}}。法律要求 11 小时。",
         "SUNDAY_WORK": "这个星期日记录了工作时间。星期日工作只在例外情况下才被允许。",
+        "HOLIDAY_WORK": "这个法定节假日记录了工作时间。节假日工作只在例外情况下才被允许，但仍然应该记录下来。",
         "LATE_ENTRY": "这条记录是在工作日之后 {{count}} 天才录入的。这只是给你的提示，不会阻止任何操作。",
         "LATE_ENTRY_plural": "这条记录是在工作日之后 {{count}} 天才录入的。这只是给你的提示，不会阻止任何操作。"
       }
@@ -1160,6 +1161,110 @@
       "grantedBy": "{{name}} 开启了这些日期",
       "yourRequest": "你的申请",
       "waiting": "尚未答复。"
+    }
+  },
+  "availability": {
+    "type": {
+      "vacation": "休假",
+      "sick": "病假",
+      "other": "其他"
+    },
+    "mark": {
+      "holiday": "节假日：{{name}}",
+      "holidayHalf": "半天节假日：{{name}}",
+      "absent": "请假：{{type}}",
+      "absentHalf": "请假半天：{{type}}",
+      "nonRegular": "非常规工作日"
+    },
+    "calendar": {
+      "holidays": "节假日",
+      "absences": "请假"
+    },
+    "capacity": {
+      "title": "你的可用工时",
+      "ofTotal": "{{booked}} / {{capacity}}",
+      "hint": "这段时间内你的计划工时（扣除节假日和请假），和你已记录的工时并排显示。只有你能看到，也不会影响你能记录什么。"
+    },
+    "section": {
+      "title": "工作时间和请假",
+      "subtitle": "你的计划工时、你所遵循的节假日，以及你请假的日子。仅用于计划。每一天都可以记录工时。"
+    },
+    "pattern": {
+      "title": "计划工时",
+      "weekTotal": "每周 {{duration}}",
+      "usingDefault": "你还没有设置自己的工时，因此适用此服务器的默认值。",
+      "free": "休息",
+      "validFrom": "生效日期",
+      "today": "今天",
+      "validFromHint": "新工时从这一天起生效。之前的周保留原来的工时。",
+      "calendar": "节假日日历",
+      "calendarDefault": "默认（{{name}}）",
+      "calendarNone": "无节假日",
+      "save": "保存",
+      "saved": "你的工作时间已保存。"
+    },
+    "timeOff": {
+      "title": "请假",
+      "add": "添加请假",
+      "edit": "编辑请假",
+      "hint": "只需类型和日期，不需要填写原因。",
+      "empty": "没有请假记录",
+      "emptyMessage": "如果你请假，请在这里添加，这样你的可用工时才准确。",
+      "type": "类型",
+      "days": "日期",
+      "halfDay": "半天",
+      "halfDayHint": "仅适用于单独一天。",
+      "note": "备注",
+      "noteHint": "可选，仅你自己可见。最多 200 个字符。",
+      "delete": "删除请假",
+      "deleteConfirm": "要删除这条请假记录吗？",
+      "saved": "请假已保存。",
+      "deleted": "请假已删除。",
+      "halfDaySpan": "{{days}}，半天"
+    },
+    "admin": {
+      "cardTitle": "节假日",
+      "cardHint": "适用于各地区或整个组织的节假日日历。每个人在自己的设置中选择。",
+      "open": "管理节假日",
+      "pageTitle": "节假日",
+      "intro": "每个日历包含一个地区的节假日。你可以手动添加，也可以从日历地址导入。没有另选日历的人使用默认日历。",
+      "newCalendar": "新建日历",
+      "editCalendar": "编辑日历",
+      "deleteCalendar": "删除日历",
+      "deleteCalendarConfirm": "要删除 {{name}} 及其所有节假日吗？使用它的人将改用默认日历。",
+      "noCalendars": "还没有节假日日历",
+      "noCalendarsMessage": "创建一个日历，然后手动添加节假日或从日历地址导入。",
+      "holidaysOf": "{{name}} 的节假日",
+      "previousYear": "上一年",
+      "nextYear": "下一年",
+      "addHoliday": "添加节假日",
+      "editHoliday": "编辑节假日",
+      "deleteHoliday": "删除节假日",
+      "noHolidays": "{{year}} 年没有节假日",
+      "noHolidaysMessage": "手动添加，或从日历地址导入。",
+      "defaultBadge": "默认",
+      "byHand": "手动维护",
+      "feedFrom": "从 {{host}} 导入",
+      "importYear": "导入 {{year}} 年",
+      "importing": "正在导入。",
+      "importFailed": "上次导入失败：{{error}}",
+      "importDone": "{{date}} 导入了 {{year}} 年：新增 {{added}} 个，重命名 {{updated}} 个，未变 {{unchanged}} 个。",
+      "importCapped": "另有 {{count}} 天未导入，因为一年最多只能有 100 个节假日。",
+      "importCapped_plural": "另有 {{count}} 天未导入，因为一年最多只能有 100 个节假日。",
+      "halfDay": "半天",
+      "imported": "来自日历地址",
+      "nameRequired": "请输入名称。",
+      "saved": "已保存。",
+      "name": "名称",
+      "region": "地区",
+      "feedUrl": "日历地址",
+      "feedUrlHint": "节假日日历的 https 或 webcal 地址。地址会加密保存，只显示其主机名。",
+      "feedUrlKeep": "来自 {{host}} 的日历地址将保留。输入新地址即可替换。",
+      "removeFeed": "移除日历地址",
+      "default": "所有人默认使用",
+      "defaultHint": "没有选择日历的人将使用这个日历。",
+      "date": "日期",
+      "holidayHint": "在这个地区不是普通工作日的日子。"
     }
   },
   "projects": {
@@ -2304,7 +2409,12 @@
       "TIME_BACKFILL_REQUESTED": "已申请更早的日期",
       "TIME_BACKFILL_GRANTED": "已为个人开启日期",
       "TIME_BACKFILL_REVOKED": "已开启的日期被重新关闭",
-      "TIME_RETENTION_RUN": "已执行保留期清理"
+      "TIME_RETENTION_RUN": "已执行保留期清理",
+      "AVAILABILITY_SCHEDULE_CHANGED": "某人的工作时间已更改",
+      "AVAILABILITY_TIME_OFF_CHANGED": "某人的请假已更改",
+      "AVAILABILITY_CALENDAR_CHANGED": "节假日日历已更改",
+      "AVAILABILITY_HOLIDAYS_CHANGED": "节假日已更改",
+      "AVAILABILITY_HOLIDAYS_IMPORTED": "节假日已导入"
     },
     "meta": {
       "oldRole": "原角色",

@@ -461,6 +461,11 @@ IconData _actionIcon(String action) => switch (action) {
   'USER_SESSIONS_REVOKED' => LucideIcons.monitorX,
   'SETTINGS_CHANGED' => LucideIcons.sliders,
   'DATA_EXPORT_REQUESTED' => LucideIcons.download,
+  'AVAILABILITY_SCHEDULE_CHANGED' => LucideIcons.calendarClock,
+  'AVAILABILITY_TIME_OFF_CHANGED' => LucideIcons.calendarOff,
+  'AVAILABILITY_CALENDAR_CHANGED' => LucideIcons.calendarHeart,
+  'AVAILABILITY_HOLIDAYS_CHANGED' => LucideIcons.calendarCheck2,
+  'AVAILABILITY_HOLIDAYS_IMPORTED' => LucideIcons.download,
   _ => LucideIcons.history,
 };
 

@@ -904,8 +904,7 @@
     },
     "add": {
       "title": "Add",
-      "timerStart": "Start timer",
-      "timerStop": "Stop timer"
+      "timerStart": "Start timer"
     },
     "view": {
       "list": "List",
@@ -1125,6 +1124,7 @@
         "DAILY_MAXIMUM": "Over 10 hours",
         "SHORT_REST": "Short rest",
         "SUNDAY_WORK": "Sunday",
+        "HOLIDAY_WORK": "Holiday",
         "LATE_ENTRY": "Recorded {{count}} day later",
         "LATE_ENTRY_plural": "Recorded {{count}} days later"
       },
@@ -1132,6 +1132,7 @@
         "DAILY_MAXIMUM": "You recorded {{duration}} on this day. The Working Hours Act allows at most 10 hours.",
         "SHORT_REST": "Only {{duration}} lie between the end of the day before and the start of this one. The law asks for 11 hours.",
         "SUNDAY_WORK": "Working time is recorded on this Sunday. Work on Sundays is only allowed in exceptions.",
+        "HOLIDAY_WORK": "Working time is recorded on this public holiday. Work on public holidays is only allowed in exceptions, and it still belongs on the record.",
         "LATE_ENTRY": "This entry was recorded {{count}} day after the working day. This is only a hint for you and blocks nothing.",
         "LATE_ENTRY_plural": "This entry was recorded {{count}} days after the working day. This is only a hint for you and blocks nothing."
       }
@@ -1160,6 +1161,110 @@
       "grantedBy": "{{name}} opened the days",
       "yourRequest": "Your request",
       "waiting": "No answer yet."
+    }
+  },
+  "availability": {
+    "type": {
+      "vacation": "Vacation",
+      "sick": "Sick",
+      "other": "Other"
+    },
+    "mark": {
+      "holiday": "Holiday: {{name}}",
+      "holidayHalf": "Half holiday: {{name}}",
+      "absent": "Away: {{type}}",
+      "absentHalf": "Away for half a day: {{type}}",
+      "nonRegular": "Not a regular working day"
+    },
+    "calendar": {
+      "holidays": "Holidays",
+      "absences": "Away"
+    },
+    "capacity": {
+      "title": "Your capacity",
+      "ofTotal": "{{booked}} of {{capacity}}",
+      "hint": "Your planned hours in this period, less holidays and absences, beside what you booked. Only you see this, and it changes nothing about what you can record."
+    },
+    "section": {
+      "title": "Working hours and absences",
+      "subtitle": "Your planned hours, the holidays you follow and the days you are away. For planning only. You can record time on every day."
+    },
+    "pattern": {
+      "title": "Planned hours",
+      "weekTotal": "{{duration}} a week",
+      "usingDefault": "You have not set your own hours yet, so the default of this server applies.",
+      "free": "Free",
+      "validFrom": "Valid from",
+      "today": "Today",
+      "validFromHint": "New hours apply from this day. Earlier weeks keep the hours they had.",
+      "calendar": "Holiday calendar",
+      "calendarDefault": "Default ({{name}})",
+      "calendarNone": "No holidays",
+      "save": "Save",
+      "saved": "Your working hours are saved."
+    },
+    "timeOff": {
+      "title": "Absences",
+      "add": "Add absence",
+      "edit": "Edit absence",
+      "hint": "Only the type and the days. No reason is needed.",
+      "empty": "No absences",
+      "emptyMessage": "When you are away, add it here so your capacity stays right.",
+      "type": "Type",
+      "days": "Days",
+      "halfDay": "Half day",
+      "halfDayHint": "Only for a single day.",
+      "note": "Note",
+      "noteHint": "Optional and only for you. At most 200 characters.",
+      "delete": "Delete absence",
+      "deleteConfirm": "Do you want to delete this absence?",
+      "saved": "Absence saved.",
+      "deleted": "Absence deleted.",
+      "halfDaySpan": "{{days}}, half a day"
+    },
+    "admin": {
+      "cardTitle": "Holidays",
+      "cardHint": "Holiday calendars for regions or the whole organization. People pick theirs in their settings.",
+      "open": "Manage holidays",
+      "pageTitle": "Holidays",
+      "intro": "Each calendar holds the holidays of one region. Add them by hand or import them from a calendar address. People follow the default calendar unless they pick another one.",
+      "newCalendar": "New calendar",
+      "editCalendar": "Edit calendar",
+      "deleteCalendar": "Delete calendar",
+      "deleteCalendarConfirm": "Delete {{name}} with all its holidays? People who follow it will follow the default calendar.",
+      "noCalendars": "No holiday calendars yet",
+      "noCalendarsMessage": "Create one and add holidays by hand or import them from a calendar address.",
+      "holidaysOf": "Holidays in {{name}}",
+      "previousYear": "Previous year",
+      "nextYear": "Next year",
+      "addHoliday": "Add holiday",
+      "editHoliday": "Edit holiday",
+      "deleteHoliday": "Delete holiday",
+      "noHolidays": "No holidays in {{year}}",
+      "noHolidaysMessage": "Add them by hand or import them from the calendar address.",
+      "defaultBadge": "Default",
+      "byHand": "Kept by hand",
+      "feedFrom": "Imported from {{host}}",
+      "importYear": "Import {{year}}",
+      "importing": "Importing now.",
+      "importFailed": "The last import did not work: {{error}}",
+      "importDone": "Imported {{year}} on {{date}}: {{added}} added, {{updated}} renamed, {{unchanged}} unchanged.",
+      "importCapped": "{{count}} more day was left out, because a year holds at most 100 holidays.",
+      "importCapped_plural": "{{count}} more days were left out, because a year holds at most 100 holidays.",
+      "halfDay": "Half day",
+      "imported": "From the calendar address",
+      "nameRequired": "Please enter a name.",
+      "saved": "Saved.",
+      "name": "Name",
+      "region": "Region",
+      "feedUrl": "Calendar address",
+      "feedUrlHint": "An https or webcal address of a holiday calendar. It is stored encrypted, and only its host is shown.",
+      "feedUrlKeep": "The calendar address from {{host}} stays. Enter a new one to replace it.",
+      "removeFeed": "Remove the calendar address",
+      "default": "Default for everyone",
+      "defaultHint": "People who have not picked a calendar follow this one.",
+      "date": "Date",
+      "holidayHint": "A day that is not an ordinary working day in this region."
     }
   },
   "projects": {
@@ -2304,7 +2409,12 @@
       "TIME_BACKFILL_REQUESTED": "Older days requested",
       "TIME_BACKFILL_GRANTED": "Days opened for a person",
       "TIME_BACKFILL_REVOKED": "Opened days closed again",
-      "TIME_RETENTION_RUN": "Retention run"
+      "TIME_RETENTION_RUN": "Retention run",
+      "AVAILABILITY_SCHEDULE_CHANGED": "Working hours changed for a person",
+      "AVAILABILITY_TIME_OFF_CHANGED": "Absence changed for a person",
+      "AVAILABILITY_CALENDAR_CHANGED": "Holiday calendar changed",
+      "AVAILABILITY_HOLIDAYS_CHANGED": "Holidays changed",
+      "AVAILABILITY_HOLIDAYS_IMPORTED": "Holidays imported"
     },
     "meta": {
       "oldRole": "Previous role",

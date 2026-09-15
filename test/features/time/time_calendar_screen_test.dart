@@ -10,11 +10,13 @@ import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/blocs/time_privacy_cubit.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/blocs/timer_cubit.dart';
+import 'package:hinata/core/models/availability_models.dart';
 import 'package:hinata/core/models/time_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/repositories/issue_repository.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
+import 'package:hinata/core/theme/app_colors.dart';
 import 'package:hinata/core/widgets/hive_empty_state.dart';
 import 'package:hinata/core/widgets/glass_switch_chip.dart';
 import 'package:hinata/core/widgets/time_grid/time_grid.dart';
@@ -22,6 +24,7 @@ import 'package:hinata/core/widgets/time_grid/time_grid_model.dart';
 import 'package:hinata/core/widgets/time_grid/time_month_grid.dart';
 import 'package:hinata/core/widgets/time_grid/time_month_layout.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
+import 'package:hinata/features/time/day_marks.dart';
 import 'package:hinata/features/time/time_calendar_screen.dart';
 
 import 'fake_time_policy_cubit.dart';
@@ -687,6 +690,40 @@ void main() {
     expect(wash, isNotEmpty, reason: 'yesterday is behind the lock date');
     expect(wash.first.glyph, isNotNull, reason: 'and it says why');
   });
+
+  testWidgets(
+    'a holiday is a quiet wash and a word in the band, never a lock',
+    (tester) async {
+      await pump(
+        tester,
+        _FakeTimeRepository(
+          holidays: [HolidayMark(date: day, name: 'Feiertag')],
+        ),
+      );
+
+      final grid = tester.widget<TimeGrid>(find.byType(TimeGrid).first);
+      final ids = grid.layers.map((layer) => layer.id);
+      expect(ids, containsAll(['mark-holiday', 'mark-band-holiday']));
+      expect(ids, isNot(contains('frozen')), reason: 'booking stays open (R9)');
+      expect(
+        grid.layers.firstWhere((layer) => layer.id == 'mark-holiday').tint,
+        AppColors.recess,
+      );
+    },
+  );
+
+  testWidgets('on a phone the day says what it is under its date', (
+    tester,
+  ) async {
+    await pumpPhone(
+      tester,
+      _FakeTimeRepository(
+        holidays: [HolidayMark(date: day, name: 'Feiertag')],
+      ),
+    );
+
+    expect(find.byType(DayMarkChip), findsWidgets);
+  });
 }
 
 /// The day the harness's locale starts a week on — the month grid is laid out
@@ -700,6 +737,7 @@ class _FakeTimeRepository implements TimeRepository {
     this.logged = const [],
     this.truncated = false,
     this.failing = false,
+    this.holidays = const [],
   });
 
   /// Not named `entries`: the repository already has a method by that name, and
@@ -707,6 +745,9 @@ class _FakeTimeRepository implements TimeRepository {
   final List<WorkItem> logged;
   final bool truncated;
   bool failing;
+
+  /// The holidays the calendar answers with (HIN-91).
+  final List<HolidayMark> holidays;
 
   /// Every window the page asked for, in order — what it asked is the point.
   final List<({DateTime from, DateTime to})> windows = [];
@@ -729,6 +770,11 @@ class _FakeTimeRepository implements TimeRepository {
             item,
       ],
       truncated: truncated,
+      holidays: [
+        for (final holiday in holidays)
+          if (!holiday.date.isBefore(from) && !holiday.date.isAfter(to))
+            holiday,
+      ],
     );
   }
 

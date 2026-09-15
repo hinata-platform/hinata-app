@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/account/account_screen.dart';
 import '../../features/admin/admin_screen.dart';
+import '../../features/admin/holidays/admin_holidays_screen.dart';
 import '../../features/admin/users/user_management_screen.dart';
 import '../../features/auth/accept_invite_screen.dart';
 import '../../features/auth/forgot_password_screen.dart';
@@ -557,6 +558,12 @@ GoRouter buildRouter({
                     state.uri.queryParameters['token'],
               ),
             ),
+          ),
+          // Holiday calendars (HIN-91), a page of its own under the admin area.
+          GoRoute(
+            path: '/admin/holidays',
+            pageBuilder: (_, state) =>
+                _transition(state, const AdminHolidaysScreen()),
           ),
         ],
       ),

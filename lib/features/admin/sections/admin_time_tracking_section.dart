@@ -7,6 +7,7 @@ import '../policy_controls.dart';
 import 'admin_approval_period_preview.dart';
 import 'admin_backfill_grants_card.dart';
 import 'admin_correction_requests_card.dart';
+import 'admin_holidays_card.dart';
 import 'admin_lock_exceptions_card.dart';
 import 'admin_privacy_notice_field.dart';
 import 'admin_time_tags_card.dart';
@@ -116,6 +117,10 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         if (_effectiveValue<bool>('advancedEnabled') ?? false) ...[
           const SizedBox(height: 16),
           const AdminTimeTagsCard(),
+          // The holiday calendars (HIN-91): a page of their own, because a
+          // calendar, its feed and a year of days do not fit this form.
+          const SizedBox(height: 16),
+          const AdminHolidaysCard(),
           // Beside the lock date it belongs to, and for the same reason the tag
           // card is here: the routes behind it are the module's, so with the
           // module off there is nothing to show. A span reopened inside the
