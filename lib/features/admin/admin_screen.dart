@@ -20,6 +20,7 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../search/search_tokens.dart';
+import '../../core/responsive/golden_columns.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart'
     show showGlassToast, showGlassErrorToast, GlassToastKind;
@@ -319,6 +320,8 @@ class _AdminScreenState extends State<AdminScreen> {
         return PageChrome(
           title: context.t(_sectionTitleKey(_desktopSection)),
           actions: _saveActions(context, _desktopSection),
+          // The rail plus a pane of cards: the shell sizes itself.
+          fullWidth: true,
           child: _WideAdminShell(
             section: _desktopSection,
             settings: settings,
@@ -552,10 +555,9 @@ class _MobileDetailView extends StatelessWidget {
 
 // ─────────────────────────── Wide layout (≥ medium) ──────────────────────
 
-/// Widest the settings forms are allowed to stretch — beyond this, fields read
-/// as sparse. The audit log opts out and fills the full pane (dense timeline).
-const double _kAdminContentMax = 1400;
-
+/// The nav rail beside the section that is open. A section spreads its cards
+/// over the pane it has ([AdminCards]); the audit log takes the pane whole, for
+/// its timeline.
 class _WideAdminShell extends StatelessWidget {
   const _WideAdminShell({
     required this.section,
@@ -576,7 +578,7 @@ class _WideAdminShell extends StatelessWidget {
     final gutter = context.pageGutter;
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1618),
+        constraints: const BoxConstraints(maxWidth: goldenContentMax),
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: gutter),
           child: Row(
@@ -628,13 +630,8 @@ class _WideAdminShell extends StatelessWidget {
           0,
           context.bottomGutter + 28,
         ),
-        child: Align(
-          alignment: Alignment.topLeft,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: _kAdminContentMax),
-            child: _body(),
-          ),
-        ),
+        // No cap here: a section spreads its cards over the pane it has.
+        child: _body(),
       ),
     );
   }
