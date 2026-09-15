@@ -255,8 +255,8 @@ class BoardFacets extends Equatable {
 /// A board as its wall first paints it: the columns, each with the number of
 /// cards it holds and the first page of them, and the people, epics and
 /// parents those cards name.
-class BoardWall extends Equatable {
-  const BoardWall({
+class BoardWallPage extends Equatable {
+  const BoardWallPage({
     required this.board,
     required this.sprints,
     required this.columns,
@@ -278,7 +278,7 @@ class BoardWall extends Equatable {
   BoardView get view =>
       BoardView(board: board, sprints: sprints, columns: columns);
 
-  factory BoardWall.fromJson(Map<String, dynamic> json) => BoardWall(
+  factory BoardWallPage.fromJson(Map<String, dynamic> json) => BoardWallPage(
     board: AgileBoard.fromJson(json['board'] as Map<String, dynamic>),
     sprints: ((json['sprints'] as List<dynamic>?) ?? const [])
         .map((s) => Sprint.fromJson(s as Map<String, dynamic>))

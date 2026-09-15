@@ -153,53 +153,6 @@ class _SprintProgress extends StatelessWidget {
   }
 }
 
-// ─────────────────────────── Backlog table header ─────────────────────────
-
-/// Column header for the Backlog list, mirroring the Issues page columns.
-class _BacklogTableHeader extends StatelessWidget {
-  const _BacklogTableHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    final style = TextStyle(
-      fontSize: 11,
-      fontWeight: FontWeight.w600,
-      letterSpacing: 0.6,
-      color: AppColors.inkFaint,
-    );
-    Widget cell(String key, {int? flex, double? width}) {
-      final text = Text(
-        context.t(key).toUpperCase(),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: style,
-      );
-      if (width != null) return SizedBox(width: width, child: text);
-      return Expanded(flex: flex!, child: text);
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-      child: Row(
-        children: [
-          cell('issues.colId', width: 76),
-          const SizedBox(width: 12),
-          cell('issues.colTitle', flex: 5),
-          const SizedBox(width: 12),
-          cell('issues.colStatus', flex: 3),
-          const SizedBox(width: 8),
-          cell('issues.colPriority', flex: 3),
-          const SizedBox(width: 8),
-          cell('issues.colAssignee', flex: 3),
-          const SizedBox(width: 8),
-          cell('issues.colDue', width: 60),
-          const SizedBox(width: 18),
-        ],
-      ),
-    );
-  }
-}
-
 class _SprintSelector extends StatelessWidget {
   const _SprintSelector({
     required this.sprints,

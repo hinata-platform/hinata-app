@@ -1293,7 +1293,8 @@
       "unassignedHint": "Ces statuts n'ont pas encore de colonne. Les tickets qui s'y trouvent n'apparaîtraient pas sur le tableau.",
       "automatic": "Revenir à l'automatique"
     },
-    "searchIssues": "Rechercher des tickets…"
+    "searchIssues": "Rechercher des tickets…",
+    "loadMore": "Afficher {{count}} de plus"
   },
   "gantt": {
     "title": "Chronologie",

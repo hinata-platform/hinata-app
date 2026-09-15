@@ -18,9 +18,9 @@ Map<String, dynamic> _card(String id) => {
 };
 
 void main() {
-  group('BoardWall', () {
+  group('BoardWallPage', () {
     test('reads the columns with their totals, the people and the epics', () {
-      final wall = BoardWall.fromJson({
+      final wall = BoardWallPage.fromJson({
         'board': const {
           'id': 'b1',
           'name': 'Board',

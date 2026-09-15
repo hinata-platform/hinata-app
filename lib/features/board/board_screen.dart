@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/widgets/glass_filter_bar.dart' show WideToolbar;
@@ -11,9 +12,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/blocs/auth_bloc.dart';
+import '../../core/blocs/paged_cubit.dart';
 import '../../core/events/board_events.dart';
 import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
+import '../../core/models/board_page_models.dart';
+import '../../core/models/core_models.dart';
 import '../../core/models/team_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
@@ -25,7 +29,6 @@ import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/user_pronouns.dart';
 import '../../core/widgets/subtask_widgets.dart';
 import '../issues/issue_detail_sheet.dart';
-import '../issues/issues_screen.dart' show IssueRow;
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassErrorToast, showGlassToast;
@@ -40,11 +43,11 @@ import 'board_filter_popup.dart';
 import 'board_people_strip.dart';
 import 'board_timeline.dart';
 import 'issue_quick_create.dart';
+import 'wall/board_wall_cubit.dart';
 import '../../core/repositories/board_repository.dart';
 import '../../core/repositories/issue_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
-import '../../core/repositories/user_repository.dart';
 
 part 'board_screen.header.dart';
 part 'board_screen.cards.dart';
@@ -340,33 +343,50 @@ class KanbanBoardScreen extends StatefulWidget {
 }
 
 /// Which view the kanban screen is showing.
-enum BoardViewMode { board, backlog, timeline }
+enum BoardViewMode { board, timeline }
+
+/// The people a board can name, gathered from the cards on the wall and the
+/// filter's facets, keyed by user id.
+typedef _People = ({
+  Map<String, String> names,
+  Map<String, String> avatars,
+  Map<String, String> pronouns,
+});
 
 class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
-  String? _sprintId;
-  BoardView? _view;
-  bool _loading = true;
-  String? _error;
+  /// The wall, read page by page and narrowed on the server.
+  late final BoardWallCubit _wall = BoardWallCubit(
+    boards: context.read<BoardRepository>(),
+    issues: context.read<IssueRepository>(),
+    boardId: widget.boardId,
+  );
 
   BoardViewMode _mode = BoardViewMode.board;
-  Map<String, String> _names = const {};
-  Map<String, String> _avatars = const {};
-  Map<String, String> _pronouns = const {};
-  Map<String, String> _projectNames = const {};
-
-  /// The board's spanned projects by id. A cross-project board needs the full
-  /// project — not just its name — to answer "which of this column's states does
-  /// *this* card's project actually have?" when a card is dropped.
-  Map<String, Project> _projectsById = const {};
-  List<String> _projectLabels = const [];
-  ProjectPalette _palette = ProjectPalette.empty;
-  List<Issue> _backlog = const [];
   BoardFilter _filter = BoardFilter.empty;
   BoardGrouping _grouping = BoardGrouping.none;
 
-  /// Every project issue keyed by id — resolves an issue's epic (a sub-task's
-  /// epic is its grandparent) for swimlane grouping and the epic filter.
-  Map<String, Issue> _issuesById = const {};
+  /// The sprint picked in the selector; null leaves the wall on the board's
+  /// active sprint.
+  String? _pickedSprintId;
+
+  /// The board's own projects by id, fetched once the wall names them. A
+  /// cross-project board needs the full project, not just its name, to answer
+  /// "which of this column's states does this card's project have?" on a drop.
+  Map<String, Project> _projectsById = const {};
+  List<String> _projectLabels = const [];
+  ProjectPalette _palette = ProjectPalette.empty;
+  List<String> _projectIdsLoaded = const [];
+
+  /// What the filter, the row of faces and the epic grouping can offer, over
+  /// every card of the board rather than the loaded ones.
+  BoardFacets _facets = BoardFacets.empty;
+  bool _facetsStale = true;
+
+  /// The timeline's own pages: the cards with a date, and those without.
+  PagedCubit<Issue>? _datedPages;
+  PagedCubit<Issue>? _undatedPages;
+  BoardQuery? _timelineQuery;
+  String? _timelineSprintId;
 
   /// Issue links of the board's projects, drawn as dependency connectors on the
   /// timeline. Only that view needs them, so they load on first switch to it.
@@ -382,107 +402,359 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   /// A wide window shows both side by side and never sets it.
   bool _searching = false;
 
-  /// Re-fetch when an issue is created/changed elsewhere (e.g. the global
-  /// nav-rail "new issue" button, which can't reach this screen's state).
+  /// Re-reads the wall when an issue is created or changed elsewhere (e.g. the
+  /// global nav-rail "new issue" button, which can't reach this screen's state).
   StreamSubscription<void>? _issueSub;
 
   @override
   void initState() {
     super.initState();
-    _issueSub = IssueEvents.instance.changes.listen((_) => _load());
-    _load();
+    _issueSub = IssueEvents.instance.changes.listen((_) => _changedElsewhere());
+    unawaited(_wall.load());
   }
 
   @override
   void dispose() {
     _issueSub?.cancel();
     _searchController.dispose();
+    _closeTimeline();
+    _wall.close();
     super.dispose();
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  void _changedElsewhere() {
+    _wall.refreshSoon();
+    _facetsStale = true;
+    _linksLoaded = false;
+    // Read the timeline again with the next state of the wall.
+    _timelineQuery = null;
+  }
+
+  // ---- reacting to the wall ----
+
+  bool _wallChanged(BoardWallState previous, BoardWallState next) =>
+      previous.board != next.board ||
+      !listEquals(previous.board?.projectIds, next.board?.projectIds) ||
+      previous.sprintId != next.sprintId ||
+      previous.query != next.query ||
+      previous.refreshing != next.refreshing ||
+      previous.errorKey != next.errorKey;
+
+  void _onWall(BuildContext context, BoardWallState wall) {
+    final board = wall.board;
+    if (board == null) return;
+    if (!listEquals(board.projectIds, _projectIdsLoaded)) {
+      unawaited(_loadProjects(board.projectIds));
+    }
+    if (_facetsStale && !wall.refreshing) unawaited(_loadFacets(wall));
+    if (_mode == BoardViewMode.timeline && !wall.refreshing) {
+      _showTimeline(wall);
+    }
+    final errorKey = wall.errorKey;
+    if (errorKey != null) showGlassErrorToast(context, context.t(errorKey));
+  }
+
+  Future<void> _loadProjects(List<String> projectIds) async {
+    _projectIdsLoaded = projectIds;
+    final repository = context.read<ProjectRepository>();
     try {
-      // Captured before the awaits so the directory lookup below doesn't reach
-      // through `context` across an async gap.
-      final userRepo = context.read<UserRepository>();
-      final results = await Future.wait([
-        context.read<BoardRepository>().boardView(
-          widget.boardId,
-          sprintId: _sprintId,
-        ),
-        context.read<ProjectRepository>().projects(),
-        context.read<TeamRepository>().teams(),
-      ]);
-      final view = results[0] as BoardView;
-      final projects = results[1] as List<Project>;
-      final loaded = await _loadBacklog(view.board.projectIds);
-      final backlog = loaded.backlog;
-      // Resolve display names/avatars for only the people this board actually
-      // references (issue assignees + reporters) via the capped by-ids endpoint,
-      // rather than draining the whole org directory. The set is bounded by the
-      // board's membership; the interactive assignee/author pickers derive their
-      // own options from these same issues, so nothing here shows the directory.
-      final users = await userRepo.usersByIds(_boardPeopleIds(view, backlog));
-      if (!mounted) return;
-      final boardProjectIds = view.board.projectIds.toSet();
-      setState(() {
-        _view = view;
-        _names = {for (final u in users) u.id: u.displayName};
-        _avatars = {
-          for (final u in users)
-            if (u.avatarUrl != null && u.avatarUrl!.isNotEmpty)
-              u.id: u.avatarUrl!,
-        };
-        _pronouns = pronounsById(users);
-        _projectNames = {for (final p in projects) p.id: p.name};
-        _projectsById = {
-          for (final p in projects)
-            if (boardProjectIds.contains(p.id)) p.id: p,
-        };
-        _projectLabels = [
-          for (final p in projects)
-            if (boardProjectIds.contains(p.id)) ...p.labelNames,
-        ];
-        _palette = ProjectPalette.fromProjects(
-          projects.where((p) => boardProjectIds.contains(p.id)),
-        );
-        _backlog = backlog;
-        _issuesById = loaded.byId;
-        _loading = false;
-      });
-      // Links can change with the issues (a reload is triggered by every issue
-      // event), so re-pull them whenever the timeline is the visible view.
-      _linksLoaded = false;
-      if (_mode == BoardViewMode.timeline) await _loadLinks();
-    } on ApiFailure catch (failure) {
+      final projects = await repository.resolveProjects(projectIds);
       if (!mounted) return;
       setState(() {
-        _loading = false;
-        _error = failure.message;
+        _projectsById = {for (final p in projects) p.id: p};
+        _projectLabels = [for (final p in projects) ...p.labelNames];
+        _palette = ProjectPalette.fromProjects(projects);
       });
+    } on ApiFailure {
+      // Names and colours fall back to plain ones until the next read; the
+      // wall itself reads without them.
+      _projectIdsLoaded = const [];
     }
   }
 
-  /// Switches view, pulling the link graph in the first time the timeline is
-  /// shown — the kanban and backlog draw no connectors, so nothing else pays
-  /// for it.
+  Future<void> _loadFacets(BoardWallState wall) async {
+    final board = wall.board;
+    if (board == null) return;
+    _facetsStale = false;
+    final repository = context.read<BoardRepository>();
+    try {
+      final facets = await repository.facets(board.id, sprintId: wall.sprintId);
+      if (!mounted) return;
+      setState(() => _facets = facets);
+    } on ApiFailure {
+      // The filter keeps the options it had; the next read of the wall tries
+      // again.
+      _facetsStale = true;
+    }
+  }
+
+  // ---- derived views ----
+
+  _People _people(BoardWallState wall) {
+    final people = <DirectoryUser>[...wall.users.values, ..._facets.users];
+    return (
+      names: {for (final u in people) u.id: u.displayName},
+      avatars: {
+        for (final u in people)
+          if (u.avatarUrl != null && u.avatarUrl!.isNotEmpty) u.id: u.avatarUrl!,
+      },
+      pronouns: pronounsById(people),
+    );
+  }
+
+  Map<String, String> get _projectNames => {
+    for (final p in _projectsById.values) p.id: p.name,
+  };
+
+  /// The loaded cards and what they refer to, by id: what lanes resolve a
+  /// sub-task's parent from.
+  Map<String, Issue> _issuesById(BoardWallState wall) => {
+    ...wall.refs,
+    for (final card in wall.cards) card.id: card,
+  };
+
+  /// Epics across the board's projects — drive grouping headers + the filter.
+  List<Issue> _epics(BoardWallState wall) {
+    final byId = <String, Issue>{
+      for (final epic in _facets.epics) epic.id: epic,
+      for (final ref in wall.refs.values)
+        if (ref.isEpic) ref.id: ref,
+    };
+    return byId.values.toList()
+      ..sort((a, b) => a.readableId.compareTo(b.readableId));
+  }
+
+  Map<String, String> _epicNames(BoardWallState wall) => {
+    for (final e in _epics(wall)) e.id: '${e.readableId}  ${e.title}',
+  };
+
+  Map<String, String> _sprintNames(BoardWallState wall) => {
+    for (final s in wall.sprints) s.id: s.name,
+  };
+
+  Sprint? _activeSprint(BoardWallState wall) {
+    final id = wall.sprintId;
+    if (id == null) return null;
+    return wall.sprints.where((s) => s.id == id).firstOrNull;
+  }
+
+  /// The cards the wall wants: sub-tasks become cards of their own only when
+  /// the wall is grouped by them.
+  BoardCardShape get _shape => _grouping == BoardGrouping.subtask
+      ? BoardCardShape.subtasks
+      : BoardCardShape.wall;
+
+  /// Hands the filter, the search and the grouping to the server.
+  void _narrow() =>
+      _wall.narrow(_filter.toQuery(text: _query, shape: _shape));
+
+  /// No `onChanged` here on purpose: the detail sheet broadcasts every change on
+  /// [IssueEvents], which this board already listens to. Passing both would run
+  /// the board reload twice per edit.
+  void _openIssue(Issue issue) =>
+      showIssueDetailSheet(context, issueId: issue.id);
+
+  /// Whether this board spans more than one project — the signal that turns on
+  /// the cross-project affordances (column ownership marks, project swimlane).
+  bool _isCrossProject(BoardView view) => view.board.projectIds.length > 1;
+
+  /// Whether [column] is a legal drop for [issue] — a different column that
+  /// carries a workflow state this card's own project actually defines. Drives
+  /// the drop affordance, so an impossible move is refused while the card is
+  /// still in the air instead of ending in an error toast.
+  bool _canDrop(Issue issue, BoardColumnView column) =>
+      column.states.isNotEmpty &&
+      !column.states.contains(issue.state) &&
+      boardDropState(issue, column.states, _projectsById) != null;
+
+  /// Moves the card on the wall at once; a refusal puts it back, and the wall
+  /// raises the reason as a toast.
+  Future<void> _moveIssue(Issue issue, BoardColumnView column) async {
+    if (column.states.contains(issue.state) || column.states.isEmpty) return;
+    final target = boardDropState(issue, column.states, _projectsById);
+    if (target == null) {
+      showGlassErrorToast(context, context.t('board.dropNotInWorkflow'));
+      return;
+    }
+    if (target == issue.state) return;
+    // The card settles in visibly at its new home: the tail end of the drag,
+    // not a separate effect.
+    boardDrag.land(issue.id);
+    await _wall.move(issue, column.name, target);
+    _facetsStale = true;
+  }
+
+  /// The board's projects in board order — what a column's inline composer may
+  /// create into. More than one only on a merged board, where the composer
+  /// shows a project control instead of silently picking the first.
+  List<Project> _boardProjects(BoardView view) => [
+    for (final id in view.board.projectIds)
+      if (_projectsById[id] != null) _projectsById[id]!,
+  ];
+
+  /// Seeds the inline composer at the foot of [column]: the column's project(s)
+  /// and workflow state, plus whatever the surrounding swimlane implies.
+  IssueQuickCreateSeed _quickCreateSeed(
+    BoardView view,
+    _People people,
+    BoardColumnView column, {
+    String? parentId,
+    String? forcedType,
+    String? assigneeId,
+  }) => IssueQuickCreateSeed(
+    projects: _boardProjects(view),
+    // On a merged board the column carries one state per spanned project, so
+    // resolve the one belonging to the project the ticket lands in.
+    stateFor: (project) => column.states.isEmpty
+        ? null
+        : column.states.firstWhere(
+            (s) => project.stateNames.any(
+              (own) => own.toLowerCase() == s.toLowerCase(),
+            ),
+            orElse: () => column.states.first,
+          ),
+    // Only a sprint the user explicitly selected: the wall is then that
+    // sprint's, so a ticket written on it belongs there. With no selection the
+    // wall isn't sprint-scoped and the ticket must not silently join one.
+    sprintId: _pickedSprintId,
+    parentId: parentId,
+    forcedType: forcedType,
+    assigneeId: assigneeId,
+    assigneeName: assigneeId == null ? null : people.names[assigneeId],
+    assigneeAvatarUrl: assigneeId == null ? null : people.avatars[assigneeId],
+  );
+
+  void _onQuickCreated(Issue created) {
+    _facetsStale = true;
+    _timelineQuery = null;
+    unawaited(_wall.refresh());
+  }
+
+  /// The parent to pre-fill when creating an issue inside a swimlane: the
+  /// lane's epic under the epic grouping, the lane's parent issue under the
+  /// sub-task grouping — never the catch-all "none" lane.
+  String? _laneParentId(BoardLane lane) {
+    if (lane.key == kBoardLaneNoneKey) return null;
+    return switch (_grouping) {
+      BoardGrouping.epic || BoardGrouping.subtask => lane.key,
+      _ => null,
+    };
+  }
+
+  Future<void> _openFilter(BoardWallState wall, _People people, Rect? anchor) async {
+    if (_facetsStale) await _loadFacets(wall);
+    if (!mounted) return;
+    await openBoardFilter(
+      context,
+      anchor: anchor,
+      filter: _filter,
+      options: BoardFilterOptions.fromFacets(
+        _facets,
+        boardSprints: wall.sprints,
+        projectLabels: _projectLabels,
+        epicIds: _epics(wall).map((e) => e.id),
+      ),
+      names: people.names,
+      avatars: people.avatars,
+      pronouns: people.pronouns,
+      sprintNames: _sprintNames(wall),
+      epicNames: _epicNames(wall),
+      onChanged: (f) {
+        setState(() => _filter = f);
+        _narrow();
+      },
+    );
+  }
+
+  /// The server searches; the wall keeps its cards until the answer is there.
+  void _onSearch(String value) {
+    setState(() => _query = value);
+    _narrow();
+  }
+
+  void _onGrouping(BoardGrouping grouping) {
+    final shapeChanges =
+        (grouping == BoardGrouping.subtask) !=
+        (_grouping == BoardGrouping.subtask);
+    setState(() => _grouping = grouping);
+    if (shapeChanges) _narrow();
+  }
+
+  void _pickSprint(String? sprintId) {
+    setState(() => _pickedSprintId = sprintId);
+    _facetsStale = true;
+    unawaited(_wall.showSprint(sprintId));
+  }
+
+  // ---- timeline ----
+
+  /// Switches view, pulling the timeline's pages and the link graph in the
+  /// first time the timeline is shown — the wall draws neither.
   void _switchMode(BoardViewMode mode) {
     setState(() => _mode = mode);
-    if (mode == BoardViewMode.timeline) _loadLinks();
+    if (mode == BoardViewMode.timeline) {
+      _showTimeline(_wall.state);
+      _loadLinks();
+    }
+  }
+
+  /// Reads the timeline's first pages for the wall's sprint, search and filter,
+  /// unless they are the ones on screen already.
+  void _showTimeline(BoardWallState wall) {
+    final board = wall.board;
+    if (board == null) return;
+    final query = wall.query.withShape(BoardCardShape.timeline);
+    if (_datedPages != null &&
+        query == _timelineQuery &&
+        wall.sprintId == _timelineSprintId) {
+      return;
+    }
+    _closeTimeline();
+    _timelineQuery = query;
+    _timelineSprintId = wall.sprintId;
+    final repository = context.read<BoardRepository>();
+    PagedCubit<Issue> pages({required bool dated}) {
+      final pages = PagedCubit<Issue>(
+        (page, size) async {
+          final result = await repository.cards(
+            board.id,
+            sprintId: wall.sprintId,
+            dated: dated,
+            page: page,
+            size: size,
+            query: query,
+          );
+          return (items: result.items, total: result.total);
+        },
+        pageSize: kBoardMaxPageSize,
+        keyOf: (issue) => issue.id,
+      );
+      unawaited(pages.load());
+      return pages;
+    }
+
+    setState(() {
+      _datedPages = pages(dated: true);
+      _undatedPages = pages(dated: false);
+    });
+    if (!_linksLoaded) _loadLinks();
+  }
+
+  void _closeTimeline() {
+    _datedPages?.close();
+    _undatedPages?.close();
+    _datedPages = null;
+    _undatedPages = null;
   }
 
   Future<void> _loadLinks() async {
-    final view = _view;
-    if (_linksLoaded || _linksLoading || view == null) return;
+    final board = _wall.state.board;
+    if (_linksLoaded || _linksLoading || board == null) return;
     _linksLoading = true;
     final repository = context.read<ProjectRepository>();
     try {
       final lists = await Future.wait(
-        view.board.projectIds.map(repository.ganttLinks),
+        board.projectIds.map(repository.ganttLinks),
       );
       if (!mounted) return;
       setState(() {
@@ -497,249 +769,42 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     }
   }
 
-  /// Loads every project issue once: the backlog (no-sprint issues) plus a
-  /// by-id index used to resolve an issue's epic for grouping / filtering.
-  Future<({List<Issue> backlog, Map<String, Issue> byId})> _loadBacklog(
-    List<String> projectIds,
-  ) async {
-    if (projectIds.isEmpty) {
-      return (backlog: const <Issue>[], byId: const <String, Issue>{});
-    }
-    // allIssues pages through the whole backend result set (the search endpoint
-    // clamps size to 100), so the by-id index and backlog never silently miss
-    // issues beyond the first page.
-    final pages = await Future.wait(
-      projectIds.map(
-        (p) => context.read<IssueRepository>().allIssues(projectId: p),
-      ),
-    );
-    final seen = <String>{};
-    final out = <Issue>[];
-    final byId = <String, Issue>{};
-    for (final page in pages) {
-      for (final issue in page) {
-        byId[issue.id] = issue;
-        if (issue.sprintId == null && seen.add(issue.id)) out.add(issue);
-      }
-    }
-    return (backlog: out, byId: byId);
-  }
-
-  /// The distinct directory ids this board needs to resolve to names/avatars:
-  /// every assignee and reporter across the board columns and the backlog. Feeds
-  /// the bounded by-ids lookup that replaces the old whole-directory fetch — the
-  /// assignee/author pickers only ever offer people already present here.
-  List<String> _boardPeopleIds(BoardView view, List<Issue> backlog) {
-    final ids = <String>{};
-    void collect(Issue i) {
-      final a = i.assigneeId;
-      if (a != null && a.isNotEmpty) ids.add(a);
-      for (final id in i.assigneeIds) {
-        if (id.isNotEmpty) ids.add(id);
-      }
-      final r = i.reporterId;
-      if (r != null && r.isNotEmpty) ids.add(r);
-    }
-
-    for (final column in view.columns) {
-      column.issues.forEach(collect);
-    }
-    backlog.forEach(collect);
-    return ids.toList();
-  }
-
-  // ---- derived views ----
-
-  List<Issue> get _allBoardIssues => [
-    for (final c in _view?.columns ?? const <BoardColumnView>[]) ...c.issues,
-  ];
-
-  List<BoardColumnView> get _kanbanColumns =>
-      (_view?.columns ?? const <BoardColumnView>[]).toList();
-
-  /// Epics across the board's projects — drive grouping headers + the filter.
-  List<Issue> get _epics =>
-      _issuesById.values.where((i) => i.isEpic).toList()
-        ..sort((a, b) => a.readableId.compareTo(b.readableId));
-
-  Map<String, String> get _epicNames => {
-    for (final e in _epics) e.id: '${e.readableId}  ${e.title}',
-  };
-
-  /// Combined predicate: every facet, the epic facet (resolved per issue) and
-  /// the search.
-  bool _passes(Issue i) =>
-      _filter.matches(i) &&
-      _filter.matchesEpic(boardEpicOf(i, _issuesById)) &&
-      issueMatchesQuery(i, _query);
-
-  List<String> get _peopleIds {
-    final seen = <String>{};
-    final out = <String>[];
-    for (final issue in [..._allBoardIssues, ..._backlog]) {
-      final a = issue.assigneeId;
-      if (a != null && a.isNotEmpty && seen.add(a)) out.add(a);
-    }
-    return out;
-  }
-
-  BoardFilterOptions get _options => BoardFilterOptions.from(
-    issues: [..._allBoardIssues, ..._backlog],
-    boardSprints: _view?.sprints ?? const [],
-    projectLabels: _projectLabels,
-    epicIds: _epics.map((e) => e.id),
-  );
-
-  Map<String, String> get _sprintNames => {
-    for (final s in _view?.sprints ?? const <Sprint>[]) s.id: s.name,
-  };
-
-  Sprint? get _activeSprint {
-    final view = _view;
-    if (view == null) return null;
-    if (_sprintId != null) {
-      return view.sprints.where((s) => s.id == _sprintId).firstOrNull;
-    }
-    final active = view.board.activeSprintId;
-    if (active != null) {
-      return view.sprints.where((s) => s.id == active).firstOrNull;
-    }
-    return null;
-  }
-
-  /// No `onChanged` here on purpose: the detail sheet broadcasts every change on
-  /// [IssueEvents], which this board already listens to. Passing both would run
-  /// the board reload twice per edit.
-  void _openIssue(Issue issue) =>
-      showIssueDetailSheet(context, issueId: issue.id);
-
-  /// Whether this board spans more than one project — the signal that turns on
-  /// the cross-project affordances (column ownership marks, project swimlane).
-  bool get _isCrossProject => (_view?.board.projectIds.length ?? 0) > 1;
-
-  /// Whether [column] is a legal drop for [issue] — a different column that
-  /// carries a workflow state this card's own project actually defines. Drives
-  /// the drop affordance, so an impossible move is refused while the card is
-  /// still in the air instead of ending in an error toast.
-  bool _canDrop(Issue issue, BoardColumnView column) =>
-      column.states.isNotEmpty &&
-      !column.states.contains(issue.state) &&
-      boardDropState(issue, column.states, _projectsById) != null;
-
-  Future<void> _moveIssue(Issue issue, BoardColumnView column) async {
-    if (column.states.contains(issue.state) || column.states.isEmpty) return;
-    final target = boardDropState(issue, column.states, _projectsById);
-    if (target == null) {
-      showGlassErrorToast(context, context.t('board.dropNotInWorkflow'));
-      return;
-    }
-    if (target == issue.state) return;
-    try {
-      await context.read<IssueRepository>().updateIssue(issue.id, {
-        'state': target,
-      });
-      // Let the card settle in visibly at its new home once the reload puts it
-      // there — the tail end of the drag, not a separate effect.
-      boardDrag.land(issue.id);
-      await _load();
-    } on ApiFailure catch (failure) {
-      if (mounted) {
-        showGlassErrorToast(context, context.t(failure.message));
-      }
-    }
-  }
-
-  /// The board's projects in board order — what a column's inline composer may
-  /// create into. More than one only on a merged board, where the composer
-  /// shows a project control instead of silently picking the first.
-  List<Project> get _boardProjects => [
-    for (final id in _view?.board.projectIds ?? const <String>[])
-      if (_projectsById[id] != null) _projectsById[id]!,
-  ];
-
-  /// Seeds the inline composer at the foot of [column]: the column's project(s)
-  /// and workflow state, plus whatever the surrounding swimlane implies.
-  IssueQuickCreateSeed _quickCreateSeed(
-    BoardColumnView column, {
-    String? parentId,
-    String? forcedType,
-    String? assigneeId,
-  }) => IssueQuickCreateSeed(
-    projects: _boardProjects,
-    // On a merged board the column carries one state per spanned project, so
-    // resolve the one belonging to the project the ticket lands in.
-    stateFor: (project) => column.states.isEmpty
-        ? null
-        : column.states.firstWhere(
-            (s) => project.stateNames.any(
-              (own) => own.toLowerCase() == s.toLowerCase(),
-            ),
-            orElse: () => column.states.first,
-          ),
-    // Only a sprint the user explicitly selected: the wall is then that
-    // sprint's, so a ticket written on it belongs there. With no selection the
-    // wall isn't sprint-scoped and the ticket must not silently join one.
-    sprintId: _sprintId,
-    parentId: parentId,
-    forcedType: forcedType,
-    assigneeId: assigneeId,
-    assigneeName: assigneeId == null ? null : _names[assigneeId],
-    assigneeAvatarUrl: assigneeId == null ? null : _avatars[assigneeId],
-  );
-
-  Future<void> _onQuickCreated(Issue created) => _load();
-
-  /// The parent to pre-fill when creating an issue inside a swimlane: the
-  /// lane's epic under the epic grouping, the lane's parent issue under the
-  /// sub-task grouping — never the catch-all "none" lane.
-  String? _laneParentId(BoardLane lane) {
-    if (lane.key == kBoardLaneNoneKey) return null;
-    return switch (_grouping) {
-      BoardGrouping.epic || BoardGrouping.subtask => lane.key,
-      _ => null,
-    };
-  }
-
-  void _openFilter(Rect? anchor) => openBoardFilter(
-    context,
-    anchor: anchor,
-    filter: _filter,
-    options: _options,
-    names: _names,
-    avatars: _avatars,
-    pronouns: _pronouns,
-    sprintNames: _sprintNames,
-    epicNames: _epicNames,
-    onChanged: (f) => setState(() => _filter = f),
-  );
-
-  /// The wall filters what it already holds, so every letter narrows it at once.
-  void _onSearch(String value) => setState(() => _query = value);
+  // ---- build ----
 
   @override
-  Widget build(BuildContext context) {
-    if (_loading && _view == null) {
+  Widget build(BuildContext context) => BlocProvider<BoardWallCubit>.value(
+    value: _wall,
+    child: BlocConsumer<BoardWallCubit, BoardWallState>(
+      listenWhen: _wallChanged,
+      listener: _onWall,
+      builder: _screen,
+    ),
+  );
+
+  Widget _screen(BuildContext context, BoardWallState wall) {
+    final view = wall.view;
+    if (view == null) {
+      if (wall.status == BoardWallStatus.failure) {
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                context.t(wall.errorKey ?? 'errors.unexpected'),
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: _wall.load,
+                child: Text(context.t('common.retry')),
+              ),
+            ],
+          ),
+        );
+      }
       return const Center(child: HiveLoader());
     }
-    if (_error != null && _view == null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              context.t(_error!),
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: _load,
-              child: Text(context.t('common.retry')),
-            ),
-          ],
-        ),
-      );
-    }
-    final view = _view!;
+    final people = _people(wall);
     // Scrum boards swap the Kanban/Timeline surfaces for the sprint planning ·
     // active · insights surfaces. The sprint view owns its own data (sprints,
     // story points, report) and its own head, and reuses the loaded name maps.
@@ -747,16 +812,16 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       return ScrumBoardView(
         view: view,
         fullWidth: _needsFullWidth(view),
-        names: _names,
-        avatars: _avatars,
-        pronouns: _pronouns,
+        names: people.names,
+        avatars: people.avatars,
+        pronouns: people.pronouns,
         projectNames: _projectNames,
         projectsById: _projectsById,
         onOpenIssue: _openIssue,
       );
     }
     final compact = context.isCompact;
-    final sprint = _activeSprint;
+    final sprint = _activeSprint(wall);
     // Back navigation is handled by the shell app bar (via PageChrome). On a
     // phone the board's name is that bar's title and the tools ride in the row
     // docked under it, so the wall starts right below the bar and its lanes
@@ -766,7 +831,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       title: compact ? view.board.name : context.t('nav.board'),
       titleLeading: true,
       fullWidth: _needsFullWidth(view),
-      bottom: compact ? _dock() : null,
+      bottom: compact ? _dock(wall, people) : null,
       bottomHeight: compact ? kBoardDockHeight : 0,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -789,7 +854,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
                 context.pageGutter,
                 10,
               ),
-              child: _sprintRow(view, sprint),
+              child: _sprintRow(wall, sprint),
             ),
           if (!compact)
             Padding(
@@ -799,9 +864,17 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
                 context.pageGutter,
                 10,
               ),
-              child: _wideControls(),
+              child: _wideControls(wall, people),
             ),
-          Expanded(child: _body()),
+          Expanded(
+            // A search or a filter being read dims the cards it may replace,
+            // rather than blanking the wall.
+            child: AnimatedOpacity(
+              opacity: wall.refreshing ? 0.6 : 1,
+              duration: const Duration(milliseconds: 160),
+              child: _body(wall, people),
+            ),
+          ),
         ],
       ),
     );
@@ -821,8 +894,10 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   /// What the body leaves clear at its top. On a phone with no sprint card
   /// above it the wall spends the bar's height itself, so its lanes scroll up
   /// under the blur instead of stopping at the bar's edge.
-  double get _bodyTop =>
-      context.isCompact && _activeSprint == null ? context.topGutter + 8 : 0;
+  double _bodyTop(BoardWallState wall) =>
+      context.isCompact && _activeSprint(wall) == null
+      ? context.topGutter + 8
+      : 0;
 
   // ---- head: name, views, tools ----
 
@@ -842,7 +917,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   }
 
   /// The phone's one docked row: the views, the search and the board's tools.
-  Widget _dock() => BoardHeaderDock(
+  Widget _dock(BoardWallState wall, _People people) => BoardHeaderDock(
     switcher: _viewSwitch(compact: true),
     searching: _searching,
     searchController: _searchController,
@@ -850,90 +925,84 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     onSearchOpen: () => setState(() => _searching = true),
     onSearchClose: () => setState(() => _searching = false),
     tools: [
-      if (_mode == BoardViewMode.board) _groupBy(),
-      _filterPill(),
-      if (_peopleIds.isNotEmpty) _people(),
+      if (_mode == BoardViewMode.board) _groupBy(wall),
+      _filterPill(wall, people),
+      if (_facets.assigneeIds.isNotEmpty) _peopleStrip(people),
     ],
   );
 
   /// The same tools on a wide window: the search as a field on the leading
   /// edge, the people's faces, grouping and the filter against the trailing
   /// one, wrapping to the room the window leaves them.
-  Widget _wideControls() => WideToolbar(
+  Widget _wideControls(BoardWallState wall, _People people) => WideToolbar(
     leading: [
       BoardSearchField(controller: _searchController, onChanged: _onSearch),
     ],
     trailing: [
-      if (_peopleIds.isNotEmpty) BoardPeopleSlot(child: _people()),
-      if (_mode == BoardViewMode.board) _groupBy(),
-      _filterPill(showLabel: true),
+      if (_facets.assigneeIds.isNotEmpty)
+        BoardPeopleSlot(child: _peopleStrip(people)),
+      if (_mode == BoardViewMode.board) _groupBy(wall),
+      _filterPill(wall, people, showLabel: true),
     ],
   );
 
   Widget _viewSwitch({required bool compact}) => BoardViewSwitch(
     compact: compact,
-    items: _switcherItems(),
-    selected: _viewModes.indexOf(_mode).clamp(0, _viewModes.length - 1),
-    onChanged: (i) => _switchMode(_viewModes[i]),
+    items: [for (final mode in BoardViewMode.values) _itemFor(mode)],
+    selected: _mode.index,
+    onChanged: (i) => _switchMode(BoardViewMode.values[i]),
   );
 
   /// Grouping lays the wall out in lanes, so it is offered on the wall only.
-  Widget _groupBy() => BoardGroupByButton(
+  Widget _groupBy(BoardWallState wall) => BoardGroupByButton(
     value: _grouping,
-    options: boardGroupingsFor(crossProject: _isCrossProject),
-    onChanged: (g) => setState(() => _grouping = g),
+    options: boardGroupingsFor(
+      crossProject: wall.view != null && _isCrossProject(wall.view!),
+    ),
+    onChanged: _onGrouping,
   );
 
-  Widget _filterPill({bool showLabel = false}) => BoardFilterPill(
+  Widget _filterPill(
+    BoardWallState wall,
+    _People people, {
+    bool showLabel = false,
+  }) => BoardFilterPill(
     count: _filter.activeCount,
     showLabel: showLabel,
-    onTap: _openFilter,
+    onTap: (anchor) => unawaited(_openFilter(wall, people, anchor)),
   );
 
-  Widget _people() => BoardPeopleStrip(
-    userIds: _peopleIds,
-    names: _names,
-    avatars: _avatars,
-    pronouns: _pronouns,
+  Widget _peopleStrip(_People people) => BoardPeopleStrip(
+    userIds: _facets.assigneeIds,
+    names: people.names,
+    avatars: people.avatars,
+    pronouns: people.pronouns,
     selected: _filter.assignees,
-    onToggle: (id) =>
-        setState(() => _filter = _filter.toggle(BoardFilterFacet.assignee, id)),
+    onToggle: (id) {
+      setState(() => _filter = _filter.toggle(BoardFilterFacet.assignee, id));
+      _narrow();
+    },
   );
 
   /// The sprint the wall shows, and the way to another one.
-  Widget _sprintRow(BoardView view, Sprint sprint) => Row(
+  Widget _sprintRow(BoardWallState wall, Sprint sprint) => Row(
     children: [
       Expanded(child: _SprintHeader(sprint: sprint)),
-      if (view.sprints.length > 1) ...[
+      if (wall.sprints.length > 1) ...[
         const SizedBox(width: 12),
         _SprintSelector(
-          sprints: view.sprints,
-          selected: _sprintId,
-          onChanged: (value) {
-            _sprintId = value;
-            _load();
-          },
+          sprints: wall.sprints,
+          selected: _pickedSprintId,
+          onChanged: _pickSprint,
         ),
       ],
     ],
   );
 
-  /// Views offered for a (Kanban) board. The Backlog view is a Scrum-only
-  /// concept, so it isn't offered here — Scrum boards render the dedicated
-  /// sprint planning surface instead.
-  static const List<BoardViewMode> _viewModes = [
-    BoardViewMode.board,
-    BoardViewMode.timeline,
-  ];
-
   SegmentItem _itemFor(BoardViewMode mode) => switch (mode) {
     BoardViewMode.board => SegmentItem(
       label: context.t('board.view.board'),
       icon: LucideIcons.squareKanban,
-    ),
-    BoardViewMode.backlog => SegmentItem(
-      label: context.t('board.view.backlog'),
-      icon: LucideIcons.list,
     ),
     BoardViewMode.timeline => SegmentItem(
       label: context.t('board.view.timeline'),
@@ -941,39 +1010,78 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     ),
   };
 
-  List<SegmentItem> _switcherItems() => [
-    for (final mode in _viewModes) _itemFor(mode),
-  ];
-
   // ---- body ----
 
-  Widget _body() {
-    switch (_mode) {
-      case BoardViewMode.board:
-        return _kanban();
-      case BoardViewMode.backlog:
-        return _backlogList();
-      case BoardViewMode.timeline:
-        // The timeline is roadmap-like, so epics stay (they carry date ranges);
-        // sub-tasks are nested detail and don't belong on it.
-        return BoardTimeline(
-          issues: _allBoardIssues
-              .where((i) => _passes(i) && !i.isSubtask)
-              .toList(),
-          links: _links,
-          onOpen: _openIssue,
-          padding: EdgeInsets.fromLTRB(
-            context.pageGutter,
-            _bodyTop,
-            context.pageGutter,
-            context.pageGutter + context.bottomGutter,
-          ),
-        );
+  Widget _body(BoardWallState wall, _People people) => switch (_mode) {
+    BoardViewMode.board => _kanban(wall, people),
+    BoardViewMode.timeline => _timeline(wall),
+  };
+
+  /// The timeline is roadmap-like, so epics stay (they carry date ranges);
+  /// sub-tasks are nested detail and don't belong on it. The server leaves them
+  /// out and pages the rest: the cards with a date first, then those without.
+  Widget _timeline(BoardWallState wall) {
+    final dated = _datedPages;
+    final undated = _undatedPages;
+    if (dated == null || undated == null) {
+      return const Center(child: HiveLoader());
     }
+    return BlocBuilder<PagedCubit<Issue>, PagedState<Issue>>(
+      bloc: dated,
+      builder: (context, datedPages) =>
+          BlocBuilder<PagedCubit<Issue>, PagedState<Issue>>(
+            bloc: undated,
+            builder: (context, undatedPages) {
+              final failure = datedPages.errorKey ?? undatedPages.errorKey;
+              if (failure != null &&
+                  (!datedPages.hasData || !undatedPages.hasData)) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        context.t(failure),
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton(
+                        onPressed: () {
+                          _timelineQuery = null;
+                          _showTimeline(_wall.state);
+                        },
+                        child: Text(context.t('common.retry')),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              if (!datedPages.hasData || !undatedPages.hasData) {
+                return const Center(child: HiveLoader());
+              }
+              return BoardTimeline(
+                issues: [...datedPages.items, ...undatedPages.items],
+                links: _links,
+                onOpen: _openIssue,
+                onNearEnd: datedPages.hasMore
+                    ? dated.loadMore
+                    : undatedPages.hasMore
+                    ? undated.loadMore
+                    : null,
+                padding: EdgeInsets.fromLTRB(
+                  context.pageGutter,
+                  _bodyTop(wall),
+                  context.pageGutter,
+                  context.pageGutter + context.bottomGutter,
+                ),
+              );
+            },
+          ),
+    );
   }
 
-  Widget _kanban() {
-    final columns = _kanbanColumns;
+  Widget _kanban(BoardWallState wall, _People people) {
+    final view = wall.view!;
+    final columns = wall.columns;
     if (columns.isEmpty) {
       return Center(
         child: Text(
@@ -982,7 +1090,9 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
         ),
       );
     }
-    if (_grouping != BoardGrouping.none) return _groupedBoard(columns);
+    if (_grouping != BoardGrouping.none) {
+      return _groupedBoard(wall, people);
+    }
     // The wall sizes its columns to the space it actually got, so a board with
     // more columns than fit at the design width still shows all of them where
     // there is room. Hence LayoutBuilder rather than the screen width — the
@@ -1005,7 +1115,7 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
             physics: BoardColumnSnapPhysics.maybe(snap),
             padding: EdgeInsets.fromLTRB(
               context.pageGutter,
-              _bodyTop,
+              _bodyTop(wall),
               context.pageGutter,
               context.pageGutter + context.bottomGutter,
             ),
@@ -1014,23 +1124,24 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
                 const SizedBox(width: BoardWall.columnGap),
             itemBuilder: (context, index) {
               final column = columns[index];
-              final issues = column.issues
-                  .where((i) => _passes(i) && boardCardVisible(i, _grouping))
-                  .toList();
               return _BoardColumn(
                 column: column,
                 width: width,
-                issues: issues,
+                issues: column.issues,
                 palette: _palette,
-                names: _names,
-                avatars: _avatars,
-                pronouns: _pronouns,
+                names: people.names,
+                avatars: people.avatars,
+                pronouns: people.pronouns,
                 projectsById: _projectsById,
                 onAccept: (issue) => _moveIssue(issue, column),
                 canAccept: (issue) => _canDrop(issue, column),
-                quickCreate: _quickCreateSeed(column),
+                quickCreate: _quickCreateSeed(view, people, column),
                 onCreated: _onQuickCreated,
                 onOpenIssue: _openIssue,
+                loadingMore: wall.loadingMore.contains(column.name),
+                onLoadMore: column.hasMore
+                    ? () => _wall.loadMore(column.name)
+                    : null,
               );
             },
           ),
@@ -1042,18 +1153,20 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   // ---- swimlanes (grouped board) ----
 
   /// Renders the grouped board via the shared [BoardSwimlanes]: lanes per the
-  /// active grouping, each lane carrying the full column set and its own
-  /// collapse toggle.
-  Widget _groupedBoard(List<BoardColumnView> columns) {
+  /// active grouping over the cards loaded so far, each lane carrying the full
+  /// column set and its own collapse toggle, and under them the way to every
+  /// column's cards that are not loaded yet.
+  Widget _groupedBoard(BoardWallState wall, _People people) {
+    final view = wall.view!;
     final lanes = computeBoardLanes(
       context: context,
       grouping: _grouping,
-      issues: _allBoardIssues.where(_passes).toList(),
-      issuesById: _issuesById,
-      epics: _epics,
-      names: _names,
-      avatars: _avatars,
-      pronouns: _pronouns,
+      issues: wall.cards,
+      issuesById: _issuesById(wall),
+      epics: _epics(wall),
+      names: people.names,
+      avatars: people.avatars,
+      pronouns: people.pronouns,
       palette: _palette,
       projectNames: _projectNames,
       onOpenIssue: _openIssue,
@@ -1067,11 +1180,11 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       );
     }
     return BoardSwimlanes(
-      columns: columns,
+      columns: wall.columns,
       lanes: lanes,
       padding: EdgeInsets.fromLTRB(
         context.pageGutter,
-        _bodyTop,
+        _bodyTop(wall),
         context.pageGutter,
         context.pageGutter + context.bottomGutter,
       ),
@@ -1081,13 +1194,15 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
         width: width,
         issues: issues,
         palette: _palette,
-        names: _names,
-        avatars: _avatars,
-        pronouns: _pronouns,
+        names: people.names,
+        avatars: people.avatars,
+        pronouns: people.pronouns,
         projectsById: _projectsById,
         onAccept: (issue) => _moveIssue(issue, column),
         canAccept: (issue) => _canDrop(issue, column),
         quickCreate: _quickCreateSeed(
+          view,
+          people,
           column,
           parentId: _laneParentId(lane),
           // A sub-task lane's parent is a standard issue, so the only valid
@@ -1107,90 +1222,13 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
         onCreated: _onQuickCreated,
         onOpenIssue: _openIssue,
       ),
-    );
-  }
-
-  Widget _backlogList() {
-    const rank = {'URGENT': 4, 'HIGH': 3, 'NORMAL': 2, 'LOW': 1};
-    int prio(Issue i) => switch (i.priority.toUpperCase()) {
-      'SHOWSTOPPER' || 'CRITICAL' || 'URGENT' => 5,
-      'MAJOR' || 'HIGH' => 3,
-      'MINOR' || 'LOW' => 1,
-      'TRIVIAL' => 0,
-      _ => rank[i.priority.toUpperCase()] ?? 2,
-    };
-    // The backlog lists the standard work items only — epics are containers and
-    // sub-tasks live inside their parent (mirrors Jira's backlog).
-    final items = _backlog.where((i) => _passes(i) && i.isStandard).toList()
-      ..sort((a, b) => prio(b).compareTo(prio(a)));
-
-    final padding = EdgeInsets.fromLTRB(
-      context.pageGutter,
-      _bodyTop,
-      context.pageGutter,
-      context.pageGutter + context.bottomGutter,
-    );
-
-    if (items.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: _load,
-        color: AppColors.accent,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: padding,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 72),
-              child: Center(
-                child: Text(
-                  context.t('board.backlogEmpty'),
-                  style: TextStyle(color: AppColors.inkSoft),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Lazy builder (not a concrete children list): the backlog pages the whole
-    // cross-project set into memory, so only visible IssueRows should be built.
-    // Leading entries: the count subtitle, plus a table header on wide layouts.
-    final leading = context.isCompact ? 1 : 2;
-    return RefreshIndicator(
-      onRefresh: _load,
-      color: AppColors.accent,
-      child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: padding,
-        itemCount: items.length + leading,
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Text(
-                context.t(
-                  'board.backlogSubtitle',
-                  variables: {'count': '${items.length}'},
-                ),
-                style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
-              ),
-            );
-          }
-          if (leading == 2 && index == 1) return const _BacklogTableHeader();
-          final issue = items[index - leading];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 7),
-            child: IssueRow(
-              issue: issue,
-              assignee: _names[issue.assigneeId],
-              assigneeAvatar: _avatars[issue.assigneeId],
-              assigneePronouns: _pronouns[issue.assigneeId],
-              onTap: () => _openIssue(issue),
-            ),
-          );
-        },
-      ),
+      footerBuilder: (column, width) => column.hasMore
+          ? BoardLoadMore(
+              remaining: column.count - column.issues.length,
+              loading: wall.loadingMore.contains(column.name),
+              onPressed: () => _wall.loadMore(column.name),
+            )
+          : null,
     );
   }
 }
