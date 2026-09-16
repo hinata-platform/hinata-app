@@ -196,24 +196,32 @@ class _DashboardViewState extends State<_DashboardView> {
   Widget build(BuildContext context) {
     // The ambient backdrop is painted app-wide by the shell; the dashboard just
     // renders its (glass) content on top of it.
-    return BlocProvider.value(
-      value: _cubit,
-      child: BlocBuilder<FetchCubit<DashboardData>, FetchState<DashboardData>>(
-        builder: (context, state) {
-          return RefreshIndicator(
-            color: AppColors.accent,
-            backgroundColor: AppColors.surface,
-            edgeOffset: context.topGutter,
-            onRefresh: () => _cubit.load(),
-            child: AsyncView(
-              isLoading: state.isLoading,
-              hasData: state.hasData,
-              errorKey: state.errorKey,
-              onRetry: () => _cubit.load(),
-              builder: (context) => _content(context, state.data!),
+    // The chrome is published outside the fetch, not inside it. A page that
+    // only says how wide it is once its data has arrived spends the whole load
+    // laid out as something else and then jumps — which is exactly what the
+    // dashboard did: one column for a second, then three.
+    return PageChrome(
+      contentMax: goldenContentMax,
+      child: BlocProvider.value(
+        value: _cubit,
+        child:
+            BlocBuilder<FetchCubit<DashboardData>, FetchState<DashboardData>>(
+              builder: (context, state) {
+                return RefreshIndicator(
+                  color: AppColors.accent,
+                  backgroundColor: AppColors.surface,
+                  edgeOffset: context.topGutter,
+                  onRefresh: () => _cubit.load(),
+                  child: AsyncView(
+                    isLoading: state.isLoading,
+                    hasData: state.hasData,
+                    errorKey: state.errorKey,
+                    onRetry: () => _cubit.load(),
+                    builder: (context) => _content(context, state.data!),
+                  ),
+                );
+              },
             ),
-          );
-        },
       ),
     );
   }
@@ -223,37 +231,31 @@ class _DashboardViewState extends State<_DashboardView> {
     // Effective personalisation: the live draft while editing, else the saved
     // snapshot from the server.
     final prefs = _editing ? _draft : data.prefs;
-    // Wider than the reading width, like the other card pages: the columns
-    // decide how much of it they fill. The shell applies the cap — to the
-    // sub-page bar as well — so the page does not repeat it here.
-    return PageChrome(
-      contentMax: goldenContentMax,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
-          context.pageGutter,
-          20 + context.topGutter,
-          context.pageGutter,
-          context.pageGutter + context.bottomGutter,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _header(context, data),
-            if (_editing) ...[
-              const SizedBox(height: 16),
-              _EditToolbar(
-                boards: data.boards,
-                draft: _draft,
-                projects: _projects,
-                teams: _teams,
-                onChanged: _applyScope,
-              ),
-            ],
-            const SizedBox(height: 22),
-            if (wide) _wideGrid(data, prefs) else _stack(data, prefs),
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(
+        context.pageGutter,
+        20 + context.topGutter,
+        context.pageGutter,
+        context.pageGutter + context.bottomGutter,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _header(context, data),
+          if (_editing) ...[
+            const SizedBox(height: 16),
+            _EditToolbar(
+              boards: data.boards,
+              draft: _draft,
+              projects: _projects,
+              teams: _teams,
+              onChanged: _applyScope,
+            ),
           ],
-        ),
+          const SizedBox(height: 22),
+          if (wide) _wideGrid(data, prefs) else _stack(data, prefs),
+        ],
       ),
     );
   }
