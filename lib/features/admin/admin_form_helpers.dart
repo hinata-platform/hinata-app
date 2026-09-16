@@ -103,9 +103,12 @@ InputDecoration adminInputDecoration(
     enabledBorder: border(AppColors.hairline),
     focusedBorder: border(AppColors.accent, 1.4),
     labelStyle: TextStyle(fontSize: 13.5, color: AppColors.inkSoft),
-    floatingLabelStyle: const TextStyle(
+    // Same fill the field has, so the label that straddles its rim stands on
+    // one colour instead of being cut along the seam. See [AppTheme].
+    floatingLabelStyle: TextStyle(
       fontSize: 13.5,
       color: AppColors.accentStrong,
+      backgroundColor: AppColors.surfaceMuted,
     ),
   );
 }

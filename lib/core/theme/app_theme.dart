@@ -137,6 +137,12 @@ abstract final class AppTheme {
         enabledBorder: border(hairline),
         focusedBorder: border(AppColors.accent, 1.5),
         hintStyle: TextStyle(color: inkFaint),
+        // A floating label is centred on the rim, which Material draws for a
+        // field that is *not* filled: half the glyphs then sit on the page and
+        // half on the fill, and the seam between the two cuts the word in two.
+        // Carrying the fill up with it puts the whole label on one colour —
+        // a small tab of the field rising above its rim.
+        floatingLabelStyle: TextStyle(backgroundColor: surface),
       ),
       chipTheme: base.chipTheme.copyWith(
         backgroundColor: surfaceMuted,

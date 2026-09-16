@@ -611,7 +611,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
     return PageChrome(
       title: widget.board.name,
       titleLeading: true,
-      fullWidth: widget.fullWidth,
+      contentMax: widget.fullWidth ? double.infinity : Breakpoints.readingWidth,
       // Sprints are made while planning. On a phone this is the bar's one page
       // action, on a wide window a labelled button in the sub-page bar.
       actions: _tab == _Tab.planning

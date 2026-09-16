@@ -1297,7 +1297,8 @@
       "all": "ALLE PROJEKTE",
       "results": "ERGEBNISSE",
       "choose": "Projekte wählen …",
-      "chooseOne": "Projekt wählen …"
+      "chooseOne": "Projekt wählen …",
+      "chooseLead": "Leitung wählen …"
     },
     "keyTaken": "Dieser Schlüssel ist bereits vergeben."
   },

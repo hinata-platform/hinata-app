@@ -1282,8 +1282,30 @@ class _MonthGrid extends StatelessWidget {
   }
 }
 
+/// The colours a picked range is drawn in.
+///
+/// Both halves were fixed values, and both went nearly invisible on a dark
+/// canvas: [AppColors.navy] is a dark brand colour, so the endpoint discs sank
+/// into the background, and [AppColors.accentSoft] is only a 16 % amber wash
+/// there, so the band between them could not be seen at all. What was left was
+/// two faint circles and no range.
+///
+/// So the band is carried at a weight that reads on either canvas, and the
+/// endpoints invert the way [AppColors.brandInk] does — a dark disc with light
+/// figures on a light canvas, a light disc with dark figures on a dark one.
+({Color band, Color disc, Color onDisc}) _rangeColors(BuildContext context) {
+  final dark = Theme.of(context).brightness == Brightness.dark;
+  return (
+    band: dark
+        ? AppColors.accent.withValues(alpha: 0.30)
+        : AppColors.accentSoftLight,
+    disc: dark ? AppColors.railInk : AppColors.navy,
+    onDisc: dark ? AppColors.navyDeep : Colors.white,
+  );
+}
+
 /// One day cell: an optional range band (right/left/full depending on where the
-/// day sits in the selection) with an optional navy endpoint disc and today ring.
+/// day sits in the selection) with an optional endpoint disc and today ring.
 class _DayCell extends StatelessWidget {
   const _DayCell({
     required this.size,
@@ -1310,6 +1332,7 @@ class _DayCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isEndpoint = isStart || isEnd;
+    final colors = _rangeColors(context);
 
     Widget? band;
     if (bandLeft || bandRight) {
@@ -1317,12 +1340,12 @@ class _DayCell extends StatelessWidget {
         children: [
           Expanded(
             child: ColoredBox(
-              color: bandLeft ? AppColors.accentSoft : Colors.transparent,
+              color: bandLeft ? colors.band : Colors.transparent,
             ),
           ),
           Expanded(
             child: ColoredBox(
-              color: bandRight ? AppColors.accentSoft : Colors.transparent,
+              color: bandRight ? colors.band : Colors.transparent,
             ),
           ),
         ],
@@ -1333,9 +1356,9 @@ class _DayCell extends StatelessWidget {
     if (disabled) {
       textColor = AppColors.inkFaint.withValues(alpha: 0.5);
     } else if (isEndpoint) {
-      textColor = Colors.white;
+      textColor = colors.onDisc;
     } else if (isToday) {
-      textColor = AppColors.accentStrong;
+      textColor = AppColors.accentInk;
     } else {
       textColor = AppColors.ink;
     }
@@ -1356,7 +1379,7 @@ class _DayCell extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isEndpoint ? AppColors.navy : null,
+                color: isEndpoint ? colors.disc : null,
                 border: isToday && !isEndpoint
                     ? Border.all(color: AppColors.accent, width: 1.5)
                     : null,

@@ -1297,7 +1297,8 @@
       "all": "TOUS LES PROJETS",
       "results": "RÉSULTATS",
       "choose": "Choisir des projets…",
-      "chooseOne": "Choisir un projet…"
+      "chooseOne": "Choisir un projet…",
+      "chooseLead": "Choisir un responsable…"
     },
     "keyTaken": "Cette clé est déjà utilisée."
   },
