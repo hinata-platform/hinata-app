@@ -114,8 +114,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('body'), findsNothing);
-    // 190 ms at 16 ms a frame. Opening takes 260; a dialog you have dismissed
+    // 130 ms at 16 ms a frame. Opening takes 180; a dialog you have dismissed
     // should not keep you waiting as long as one you asked for.
-    expect(frames, lessThanOrEqualTo(13));
+    expect(frames, lessThanOrEqualTo(9));
   });
 }
