@@ -1277,6 +1277,7 @@
     "statesLabel": "स्थितियाँ",
     "members": "{{count}} सदस्य",
     "name": "प्रोजेक्ट का नाम",
+    "namePlaceholder": "जैसे Billing & Plans",
     "key": "प्रोजेक्ट कुंजी",
     "keyHelp": "इश्यू ID के लिए इस्तेमाल होने वाला छोटा कोड, जैसे ACME → ACME-42",
     "active": "सक्रिय",

@@ -351,9 +351,6 @@ Future<String?> _askForName(
             decoration: InputDecoration(
               counterText: '',
               labelText: context.t('common.name'),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-              ),
             ),
           ),
         ),

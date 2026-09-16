@@ -1277,6 +1277,7 @@
     "statesLabel": "Estados",
     "members": "{{count}} miembros",
     "name": "Nombre del proyecto",
+    "namePlaceholder": "p. ej. Facturación y planes",
     "key": "Clave del proyecto",
     "keyHelp": "Código corto que se usa en los ID de incidencia, p. ej. ACME → ACME-42",
     "active": "Activos",

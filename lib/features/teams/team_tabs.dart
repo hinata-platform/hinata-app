@@ -69,6 +69,9 @@ Future<void> openAddProject(
     available: available,
     leadCandidates: leadPool,
     currentUserId: me?.id ?? (memberIds.isNotEmpty ? memberIds.first : ''),
+    // What this screen happens to know is already taken, so the suggested key
+    // does not walk into a conflict. Best effort — the server still decides.
+    takenKeys: {for (final p in data.projectsById.values) p.key},
   );
   if (changed == true) await reload();
 }
