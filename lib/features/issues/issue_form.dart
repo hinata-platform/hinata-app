@@ -24,7 +24,7 @@ class _CreateDialogType extends WoltDialogType {
   BoxConstraints layoutModal(Size availableSize) {
     const pad = 48.0;
     final width = math.min(
-      940.0,
+      issueDialogWidth,
       math.max(360.0, availableSize.width - pad * 2),
     );
     return BoxConstraints(
