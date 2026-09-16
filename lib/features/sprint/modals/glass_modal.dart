@@ -114,17 +114,35 @@ Future<T?> showGlassModal<T>(
       ],
     );
   }
-  return showGeneralDialog<T>(
-    context: context,
-    barrierDismissible: true,
-    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-    barrierColor: Colors.transparent,
-    useRootNavigator: true,
-    transitionDuration: const Duration(milliseconds: 380),
-    pageBuilder: (_, _, _) =>
-        _GlassModalScaffold(width: width, builder: builder),
-    transitionBuilder: (_, _, _, child) => child,
+  return Navigator.of(context, rootNavigator: true).push<T>(
+    _GlassDialogRoute<T>(
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      pageBuilder: (_, _, _) =>
+          _GlassModalScaffold(width: width, builder: builder),
+    ),
   );
+}
+
+/// The dialog's route, for one reason: [reverseTransitionDuration].
+///
+/// Opening is a statement and closing is getting out of the way, so the exit is
+/// the shorter of the two — which is how it reads on iOS, and which
+/// [showGeneralDialog] cannot express: its route runs the exit at the entrance's
+/// duration. Both were 380 ms, long enough for a dialog to look like it is
+/// thinking about it, and every one of those frames is paid in a full-screen
+/// blur under a glass panel sampling the same backdrop.
+class _GlassDialogRoute<T> extends RawDialogRoute<T> {
+  _GlassDialogRoute({required super.pageBuilder, required super.barrierLabel})
+    : super(
+        barrierColor: Colors.transparent,
+        transitionDuration: const Duration(milliseconds: 260),
+        // The panel animates itself off the route's own animation (see
+        // [_GlassModalScaffold]); the route only has to hand it over.
+        transitionBuilder: (_, _, _, child) => child,
+      );
+
+  @override
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 190);
 }
 
 /// A Liquid-Glass confirmation dialog — the shared replacement for Material's
@@ -1524,28 +1542,27 @@ class _GlassModalScaffoldState extends State<_GlassModalScaffold> {
     return Stack(
       children: [
         // Scrim: dim + blur the app behind.
-        AnimatedBuilder(
-          animation: anim,
-          builder: (_, _) {
-            final t = anim.value.clamp(0.0, 1.0);
-            Widget scrim = ColoredBox(
-              color: tokens.scrim.withValues(alpha: tokens.scrim.a * t),
-              child: const SizedBox.expand(),
-            );
-            if (!reduceMotion) {
-              scrim = BackdropFilter(
-                filter: ui.ImageFilter.blur(sigmaX: 7 * t, sigmaY: 7 * t),
-                child: scrim,
-              );
-            }
-            return Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => Navigator.of(context).maybePop(),
-                child: scrim,
-              ),
-            );
-          },
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.of(context).maybePop(),
+            child: AnimatedBuilder(
+              animation: anim,
+              builder: (_, _) {
+                final t = anim.value.clamp(0.0, 1.0);
+                final tint = ColoredBox(
+                  color: tokens.scrim.withValues(alpha: tokens.scrim.a * t),
+                  child: const SizedBox.expand(),
+                );
+                final sigma = reduceMotion ? 0.0 : _scrimSigma(t);
+                if (sigma <= 0) return tint;
+                return BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+                  child: tint,
+                );
+              },
+            ),
+          ),
         ),
         Positioned.fill(
           child: SafeArea(
@@ -1579,6 +1596,26 @@ class _GlassModalScaffoldState extends State<_GlassModalScaffold> {
       ],
     );
   }
+}
+
+/// How blurred the app behind a modal stands at rest.
+const double _kScrimSigma = 7;
+
+/// How much of the transition the blur takes to get there.
+///
+/// The rest of it the sigma holds still, which is the point: a
+/// [BackdropFilter] whose sigma changes is a full-screen gaussian that cannot
+/// be reused between frames, and it was changing on every one of them for the
+/// whole transition — under a glass panel that is sampling the same backdrop.
+/// The ramp exists so the blur does not pop in; once it is there, continuing to
+/// move it buys nothing and costs every frame. It runs in whole pixels for the
+/// same reason: [ui.ImageFilter.blur] compares equal at the same sigma, so
+/// repeated values skip the repaint entirely.
+const double _kScrimRamp = 0.5;
+
+double _scrimSigma(double t) {
+  final ramp = Curves.easeOut.transform((t / _kScrimRamp).clamp(0.0, 1.0));
+  return (ramp * _kScrimSigma).roundToDouble();
 }
 
 /// Semantic flavours for [showGlassToast]. Each kind carries its default
