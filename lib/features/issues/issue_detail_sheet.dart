@@ -138,6 +138,14 @@ String issueWebLink(String apiBaseUrl, String id) {
   return '$origin/issues/$id';
 }
 
+/// How wide the issue dialogs grow on a desktop screen.
+///
+/// At the φ : 1 the body splits in, this leaves the detail column about 430
+/// (a row of chips fits beside its label) and the text column about 700, which
+/// is still a line anyone reads. Well short of [Breakpoints.readingWidth]: a
+/// dialog that wide stops reading as a dialog.
+const double issueDialogWidth = 1180;
+
 /// Centered dialog that can grow much wider than the wolt default so the
 /// two-column issue detail has room on desktop.
 class _WideDialogType extends WoltDialogType {
@@ -147,7 +155,7 @@ class _WideDialogType extends WoltDialogType {
   BoxConstraints layoutModal(Size availableSize) {
     const pad = 48.0;
     final width = math.min(
-      940.0,
+      issueDialogWidth,
       math.max(360.0, availableSize.width - pad * 2),
     );
     return BoxConstraints(
