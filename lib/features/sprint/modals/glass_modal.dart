@@ -130,19 +130,20 @@ Future<T?> showGlassModal<T>(
 /// [showGeneralDialog] cannot express: its route runs the exit at the entrance's
 /// duration. Both were 380 ms, long enough for a dialog to look like it is
 /// thinking about it, and every one of those frames is paid in a full-screen
-/// blur under a glass panel sampling the same backdrop.
+/// blur under a glass panel sampling the same backdrop. What is left is short
+/// enough that the curve does the rest of the work — see [_eased].
 class _GlassDialogRoute<T> extends RawDialogRoute<T> {
   _GlassDialogRoute({required super.pageBuilder, required super.barrierLabel})
     : super(
         barrierColor: Colors.transparent,
-        transitionDuration: const Duration(milliseconds: 260),
+        transitionDuration: const Duration(milliseconds: 180),
         // The panel animates itself off the route's own animation (see
         // [_GlassModalScaffold]); the route only has to hand it over.
         transitionBuilder: (_, _, _, child) => child,
       );
 
   @override
-  Duration get reverseTransitionDuration => const Duration(milliseconds: 190);
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 130);
 }
 
 /// A Liquid-Glass confirmation dialog — the shared replacement for Material's
@@ -1494,6 +1495,36 @@ class _GlassModalScaffoldState extends State<_GlassModalScaffold> {
   /// key the body moves to its new parent instead.
   final GlobalKey _body = GlobalKey();
 
+  /// The route's animation, eased.
+  ///
+  /// A route drives its transition off a plain controller, which is linear, and
+  /// a linear arrival is the one that feels slow however short you make it:
+  /// the panel covers the same distance in every frame, so it is still visibly
+  /// travelling at the end. Cubed, it is most of the way there in the first
+  /// third and settles from close by — the same motion, read as quick. The
+  /// exit is the mirror of it: the panel leaves on the first frame rather than
+  /// easing off the mark, which is what makes a dismissal feel obeyed.
+  CurvedAnimation? _eased;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final parent = ModalRoute.of(context)!.animation!;
+    if (_eased?.parent == parent) return;
+    _eased?.dispose();
+    _eased = CurvedAnimation(
+      parent: parent,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+  }
+
+  @override
+  void dispose() {
+    _eased?.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = widget.width;
@@ -1505,7 +1536,7 @@ class _GlassModalScaffoldState extends State<_GlassModalScaffold> {
     final mobile = size.width < _kPhoneBreakpoint;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final tokens = SearchTokens.of(Theme.of(context).brightness);
-    final anim = ModalRoute.of(context)!.animation!;
+    final anim = _eased!;
     final maxW = mobile ? size.width - 32 : width;
     // Cap the panel to the space left above the keyboard so it never hides
     // behind it; the body scrolls within whatever height remains.
