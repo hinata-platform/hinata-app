@@ -119,16 +119,47 @@ Future<void> showEmailReplySheet(
             );
           },
         ),
-        child: EmailReplyComposer(
-          key: composerKey,
-          issue: issue,
-          repo: repo,
-          initialDraft: initialDraft,
+        child: _OwnsRevision(
           revision: rev,
+          child: EmailReplyComposer(
+            key: composerKey,
+            issue: issue,
+            repo: repo,
+            initialDraft: initialDraft,
+            revision: rev,
+          ),
         ),
       ),
     ],
-  ).whenComplete(rev.dispose);
+  );
+}
+
+/// Holds [revision] for exactly as long as the sheet's body is on screen.
+///
+/// It used to be disposed on the sheet's `whenComplete`, which fires when the
+/// route is *popped* — and the route then spends its exit transition rebuilding
+/// the sticky action bar off that very notifier. The same mistake took out the
+/// tag dialogs: a disposable handed to a route must never be tied to the pop.
+/// Here the body's own `dispose` is the moment, and the bar is gone with it.
+class _OwnsRevision extends StatefulWidget {
+  const _OwnsRevision({required this.revision, required this.child});
+
+  final ValueNotifier<int> revision;
+  final Widget child;
+
+  @override
+  State<_OwnsRevision> createState() => _OwnsRevisionState();
+}
+
+class _OwnsRevisionState extends State<_OwnsRevision> {
+  @override
+  void dispose() {
+    widget.revision.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// Arguments handed to the `/issues/:id/reply-email` route via GoRouter `extra`
