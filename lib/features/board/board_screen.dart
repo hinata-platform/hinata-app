@@ -467,7 +467,7 @@ class _KanbanViewState extends State<_KanbanView>
     return PageChrome(
       title: compact ? widget.board.name : context.t('nav.board'),
       titleLeading: true,
-      fullWidth: widget.fullWidth,
+      contentMax: widget.fullWidth ? double.infinity : Breakpoints.readingWidth,
       bottom: compact ? _dock(headState) : null,
       bottomHeight: compact ? kBoardDockHeight : 0,
       child: Column(

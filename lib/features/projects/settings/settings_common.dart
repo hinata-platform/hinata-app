@@ -358,87 +358,99 @@ class _MemberPickerState extends State<_MemberPicker> {
           (u.title ?? '').toLowerCase().contains(q);
     }).toList();
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GlassModalHeader(
-          icon: LucideIcons.userPlus,
-          title: context.t('projectSettings.addMembers'),
-          subtitle: context.t(
-            'projectSettings.addMembersSub',
-            variables: {'name': widget.projectName},
+    // The same ceiling the team's member modal keeps (`ModalShell`): the glass
+    // scaffold alone would let this grow to within 96 points of the window, and
+    // a directory of any size then draws a column of faces from the top of the
+    // screen to the bottom. A picker is a panel, not a page.
+    final maxHeight = (MediaQuery.sizeOf(context).height * 0.86).clamp(
+      0.0,
+      760.0,
+    );
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GlassModalHeader(
+            icon: LucideIcons.userPlus,
+            title: context.t('projectSettings.addMembers'),
+            subtitle: context.t(
+              'projectSettings.addMembersSub',
+              variables: {'name': widget.projectName},
+            ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(22, 0, 22, 12),
-          child: TextField(
-            onChanged: (v) => setState(() => _query = v),
-            textInputAction: TextInputAction.search,
-            decoration:
-                glassInputDecoration(
-                  hint: context.t('projectSettings.searchPeople'),
-                ).copyWith(
-                  prefixIcon: Icon(
-                    LucideIcons.search,
-                    size: 18,
-                    color: AppColors.inkSoft,
-                  ),
-                ),
-          ),
-        ),
-        // Flexible is what bounds the list: the modal caps this column's height,
-        // and only a flex child is handed what is left of it. Without it the
-        // list is laid out at full height, overflows the sheet, has nothing to
-        // scroll through (a drag bounces back to the top) and pushes the footer
-        // below the fold. The switcher only cross-fades; it is not a bound.
-        Flexible(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: filtered.isEmpty
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40),
-                    // heightFactor 1: inside the Flexible a bare Center would
-                    // take every pixel it is allowed and stretch the sheet.
-                    child: Center(
-                      heightFactor: 1,
-                      child: Text(
-                        context.t('projectSettings.everyoneMember'),
-                        style: TextStyle(color: AppColors.inkSoft),
-                      ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 0, 22, 12),
+            child: TextField(
+              onChanged: (v) => setState(() => _query = v),
+              textInputAction: TextInputAction.search,
+              decoration:
+                  glassInputDecoration(
+                    hint: context.t('projectSettings.searchPeople'),
+                  ).copyWith(
+                    prefixIcon: Icon(
+                      LucideIcons.search,
+                      size: 18,
+                      color: AppColors.inkSoft,
                     ),
-                  )
-                : ListView.builder(
-                    shrinkWrap: true,
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, i) {
-                      final u = filtered[i];
-                      return _MemberRow(
-                        user: u,
-                        selected: _selected.contains(u.id),
-                        onTap: () => setState(
-                          () => _selected.contains(u.id)
-                              ? _selected.remove(u.id)
-                              : _selected.add(u.id),
-                        ),
-                      );
-                    },
                   ),
+            ),
           ),
-        ),
-        GlassModalFooter(
-          confirmLabel: _selected.isEmpty
-              ? context.t('projectSettings.add')
-              : context.t(
-                  'projectSettings.addN',
-                  variables: {'count': '${_selected.length}'},
-                ),
-          confirmIcon: LucideIcons.userPlus,
-          onConfirm: _selected.isEmpty
-              ? null
-              : () => Navigator.of(context).pop(_selected.toList()),
-        ),
-      ],
+          // Flexible is what bounds the list: the modal caps this column's height,
+          // and only a flex child is handed what is left of it. Without it the
+          // list is laid out at full height, overflows the sheet, has nothing to
+          // scroll through (a drag bounces back to the top) and pushes the footer
+          // below the fold. The switcher only cross-fades; it is not a bound.
+          Flexible(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: filtered.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      // heightFactor 1: inside the Flexible a bare Center would
+                      // take every pixel it is allowed and stretch the sheet.
+                      child: Center(
+                        heightFactor: 1,
+                        child: Text(
+                          context.t('projectSettings.everyoneMember'),
+                          style: TextStyle(color: AppColors.inkSoft),
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, i) {
+                        final u = filtered[i];
+                        return _MemberRow(
+                          user: u,
+                          selected: _selected.contains(u.id),
+                          onTap: () => setState(
+                            () => _selected.contains(u.id)
+                                ? _selected.remove(u.id)
+                                : _selected.add(u.id),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ),
+          GlassModalFooter(
+            confirmLabel: _selected.isEmpty
+                ? context.t('projectSettings.add')
+                : context.t(
+                    'projectSettings.addN',
+                    variables: {'count': '${_selected.length}'},
+                  ),
+            confirmIcon: LucideIcons.userPlus,
+            onConfirm: _selected.isEmpty
+                ? null
+                : () => Navigator.of(context).pop(_selected.toList()),
+          ),
+        ],
+      ),
     );
   }
 }

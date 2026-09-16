@@ -675,7 +675,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     // a wide window they would never appear at all — which is why a top-level
     // page wears its own head, the way Reports, Gantt and Board do.
     return PageChrome(
-      fullWidth: true,
+      contentMax: double.infinity,
       // The module's three views live under the app bar's title on a phone —
       // the docked row below is the one line this page is allowed, and it is
       // spent on the week it is showing. Off the module (the plain

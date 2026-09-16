@@ -320,8 +320,10 @@ class _AdminScreenState extends State<AdminScreen> {
         return PageChrome(
           title: context.t(_sectionTitleKey(_desktopSection)),
           actions: _saveActions(context, _desktopSection),
-          // The rail plus a pane of cards: the shell sizes itself.
-          fullWidth: true,
+          // The rail plus a pane of cards: wider than the reading width, and
+          // capped by the shell so the section title and Save in the bar line
+          // up with the rail and the pane below them.
+          contentMax: goldenContentMax,
           child: _WideAdminShell(
             section: _desktopSection,
             settings: settings,
@@ -576,35 +578,30 @@ class _WideAdminShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gutter = context.pageGutter;
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: goldenContentMax),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: gutter),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ── Floating glass nav rail ───────────────────────────
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  0,
-                  context.topGutter + 14,
-                  18,
-                  context.bottomGutter + 14,
-                ),
-                child: SizedBox(
-                  width: 250,
-                  child: _AdminNavRail(
-                    section: section,
-                    onSelect: onSectionChanged,
-                  ),
-                ),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: gutter),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ── Floating glass nav rail ───────────────────────────
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              0,
+              context.topGutter + 14,
+              18,
+              context.bottomGutter + 14,
+            ),
+            child: SizedBox(
+              width: 250,
+              child: _AdminNavRail(
+                section: section,
+                onSelect: onSectionChanged,
               ),
-              // ── Content pane (no header chrome — that's in the app bar) ──
-              Expanded(child: _content(context)),
-            ],
+            ),
           ),
-        ),
+          // ── Content pane (no header chrome — that's in the app bar) ──
+          Expanded(child: _content(context)),
+        ],
       ),
     );
   }
