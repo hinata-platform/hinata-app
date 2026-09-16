@@ -324,43 +324,81 @@ Future<String?> _askForName(
   required String title,
   String? initial,
   String? note,
-}) {
-  final controller = TextEditingController(text: initial ?? '');
-  return showGlassModal<String>(
-    context,
-    adaptive: true,
-    width: 400,
-    builder: (sheetContext) => Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GlassModalHeader(
-          icon: LucideIcons.tag,
-          title: context.t(title),
-          subtitle: note ?? context.t('admin.timeTracking.tagNameHint'),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(22, 4, 22, 12),
-          child: TextField(
-            controller: controller,
-            autofocus: true,
-            maxLength: 40,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (value) => Navigator.of(
-              sheetContext,
-            ).pop(value.trim().isEmpty ? null : value.trim()),
-            decoration: InputDecoration(
-              counterText: '',
-              labelText: context.t('common.name'),
-            ),
+}) => showGlassModal<String>(
+  context,
+  adaptive: true,
+  width: 400,
+  builder: (sheetContext) =>
+      _NameDialog(title: title, initial: initial, note: note),
+);
+
+/// The body of [_askForName], and a [StatefulWidget] for one reason: it owns
+/// the field's controller.
+///
+/// The controller used to be made beside the call and disposed on the modal's
+/// `whenComplete`. That future finishes when the route is *popped*, and the
+/// route then spends another third of a second animating out — rebuilding, with
+/// a controller that had already been disposed. "A TextEditingController was
+/// used after being disposed", a red screen, and both the rename and the add
+/// dialog taken out by it.
+///
+/// A controller belongs to the widget that uses it, whose `dispose` runs when
+/// the route is actually gone. That is the whole rule, and it holds for every
+/// disposable handed to a route: never tie its life to the pop.
+class _NameDialog extends StatefulWidget {
+  const _NameDialog({required this.title, this.initial, this.note});
+
+  final String title;
+  final String? initial;
+  final String? note;
+
+  @override
+  State<_NameDialog> createState() => _NameDialogState();
+}
+
+class _NameDialogState extends State<_NameDialog> {
+  late final _controller = TextEditingController(text: widget.initial ?? '');
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Empty is not a name, and returning null is how the caller hears "nothing
+  /// was chosen" — the same answer dismissing the dialog gives.
+  void _submit() {
+    final name = _controller.text.trim();
+    Navigator.of(context).pop(name.isEmpty ? null : name);
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      GlassModalHeader(
+        icon: LucideIcons.tag,
+        title: context.t(widget.title),
+        subtitle: widget.note ?? context.t('admin.timeTracking.tagNameHint'),
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(22, 4, 22, 12),
+        child: TextField(
+          controller: _controller,
+          autofocus: true,
+          maxLength: 40,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _submit(),
+          decoration: InputDecoration(
+            counterText: '',
+            labelText: context.t('common.name'),
           ),
         ),
-        GlassModalFooter(
-          confirmLabel: context.t('common.save'),
-          onConfirm: () => Navigator.of(
-            sheetContext,
-          ).pop(controller.text.trim().isEmpty ? null : controller.text.trim()),
-        ),
-      ],
-    ),
-  ).whenComplete(controller.dispose);
+      ),
+      GlassModalFooter(
+        confirmLabel: context.t('common.save'),
+        onConfirm: _submit,
+      ),
+    ],
+  );
 }
