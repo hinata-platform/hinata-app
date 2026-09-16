@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/responsive/responsive.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
 
 /// Pages publish their chrome to the shell after the frame, so whatever the
@@ -12,22 +13,22 @@ void main() {
 
   setUp(() => controller = PageChromeController());
 
-  test('a page that has published nothing is not full width', () {
+  test('a page that has published nothing gets the reading width', () {
     // Anything else would lay every board out wide for one frame and then snap
     // it back — a visible jump on a page that was never meant to be wide.
-    expect(controller.fullWidthFor('/boards/7'), isFalse);
+    expect(controller.contentMaxFor('/boards/7'), Breakpoints.readingWidth);
   });
 
-  test('honours full width only for the route that asked for it', () {
+  test('honours a width only for the route that asked for it', () {
     controller.publish(
       page,
-      const PageChromeData(location: '/boards/7', fullWidth: true),
+      const PageChromeData(location: '/boards/7', contentMax: double.infinity),
     );
 
-    expect(controller.fullWidthFor('/boards/7'), isTrue);
+    expect(controller.contentMaxFor('/boards/7'), double.infinity);
     // Chrome from a page being torn down must not widen the one replacing it.
-    expect(controller.fullWidthFor('/boards/8'), isFalse);
-    expect(controller.fullWidthFor('/issues'), isFalse);
+    expect(controller.contentMaxFor('/boards/8'), Breakpoints.readingWidth);
+    expect(controller.contentMaxFor('/issues'), Breakpoints.readingWidth);
   });
 
   test('notifies when only the width changed', () {
@@ -45,7 +46,7 @@ void main() {
       const PageChromeData(
         location: '/boards/7',
         title: 'Board',
-        fullWidth: true,
+        contentMax: double.infinity,
       ),
     );
     expect(notified, 2);
@@ -57,7 +58,7 @@ void main() {
       const PageChromeData(
         location: '/boards/7',
         title: 'Board',
-        fullWidth: true,
+        contentMax: double.infinity,
       ),
     );
     expect(notified, 2);

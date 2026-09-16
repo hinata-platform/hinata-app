@@ -373,7 +373,7 @@ class _TimeScreenState extends State<TimeScreen> {
     // appear. A top-level page wears its own head, as Reports, Gantt and the
     // timesheet do.
     return PageChrome(
-      fullWidth: true,
+      contentMax: double.infinity,
       // The way between the module's three pages, where the calendar keeps it
       // too: a phone's app bar has room for one trailing action, and that one
       // is "new entry".

@@ -69,10 +69,7 @@ class BoardRepository {
     List<String> projectIds,
   ) async {
     final board = AgileBoard.fromJson(
-      await _api.patch(
-            _boardPath(boardId),
-            body: {'projectIds': projectIds},
-          )
+      await _api.patch(_boardPath(boardId), body: {'projectIds': projectIds})
           as Map<String, dynamic>,
     );
     BoardEvents.instance.notifyChanged();
@@ -99,10 +96,7 @@ class BoardRepository {
   /// workflows.
   Future<AgileBoard> resetBoardColumns(String boardId) async =>
       AgileBoard.fromJson(
-        await _api.patch(
-              _boardPath(boardId),
-              body: {'resetColumns': true},
-            )
+        await _api.patch(_boardPath(boardId), body: {'resetColumns': true})
             as Map<String, dynamic>,
       );
 

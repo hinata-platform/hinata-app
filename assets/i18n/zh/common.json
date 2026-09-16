@@ -1297,7 +1297,8 @@
       "all": "全部项目",
       "results": "搜索结果",
       "choose": "选择项目…",
-      "chooseOne": "选择一个项目…"
+      "chooseOne": "选择一个项目…",
+      "chooseLead": "选择负责人…"
     },
     "keyTaken": "该项目键已被占用。"
   },

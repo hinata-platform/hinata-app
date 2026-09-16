@@ -83,14 +83,17 @@ class ProjectRepository {
   }
 
   Future<Project> project(String id) async => Project.fromJson(
-    await _api.get('/api/v1/projects/${Uri.encodeComponent(id)}') as Map<String, dynamic>,
+    await _api.get('/api/v1/projects/${Uri.encodeComponent(id)}')
+        as Map<String, dynamic>,
   );
 
   /// Issue count per workflow-state name — used by the settings UI to warn
   /// before deleting a state that still has issues assigned.
   Future<Map<String, int>> projectStateUsage(String id) async {
     final json =
-        await _api.get('/api/v1/projects/${Uri.encodeComponent(id)}/state-usage')
+        await _api.get(
+              '/api/v1/projects/${Uri.encodeComponent(id)}/state-usage',
+            )
             as Map<String, dynamic>;
     return json.map((k, v) => MapEntry(k, (v as num).toInt()));
   }
@@ -120,7 +123,10 @@ class ProjectRepository {
   /// (>=1 lead, >=2 states, >=1 resolved) and cascades workflow/label renames.
   Future<Project> updateProject(String id, Map<String, dynamic> patch) async =>
       Project.fromJson(
-        await _api.patch('/api/v1/projects/${Uri.encodeComponent(id)}', body: patch)
+        await _api.patch(
+              '/api/v1/projects/${Uri.encodeComponent(id)}',
+              body: patch,
+            )
             as Map<String, dynamic>,
       );
 
@@ -161,23 +167,29 @@ class ProjectRepository {
   /// Scheduled issues of a project plus the link graph between them — the whole
   /// timeline in one round trip.
   Future<GanttView> gantt(String projectId) async => GanttView.fromJson(
-    await _api.get('/api/v1/projects/${Uri.encodeComponent(projectId)}/gantt') as Map<String, dynamic>,
+    await _api.get('/api/v1/projects/${Uri.encodeComponent(projectId)}/gantt')
+        as Map<String, dynamic>,
   );
 
   /// Just the connectors of a project, for views that already hold their issues
   /// (the board timeline).
   Future<List<GanttLink>> ganttLinks(String projectId) async =>
-      ((await _api.get('/api/v1/projects/${Uri.encodeComponent(projectId)}/gantt/links'))
+      ((await _api.get(
+                '/api/v1/projects/${Uri.encodeComponent(projectId)}/gantt/links',
+              ))
               as List<dynamic>)
           .map((l) => GanttLink.fromJson(l as Map<String, dynamic>))
           .toList();
 
   /// Affected boards/issues/etc. + the projects issues could migrate into.
-  Future<ProjectDeletionImpact> projectDeletionImpact(String projectId) async =>
-      ProjectDeletionImpact.fromJson(
-        await _api.get('/api/v1/projects/${Uri.encodeComponent(projectId)}/deletion-impact')
-            as Map<String, dynamic>,
-      );
+  Future<ProjectDeletionImpact> projectDeletionImpact(
+    String projectId,
+  ) async => ProjectDeletionImpact.fromJson(
+    await _api.get(
+          '/api/v1/projects/${Uri.encodeComponent(projectId)}/deletion-impact',
+        )
+        as Map<String, dynamic>,
+  );
 
   /// Raw SSE byte stream of a project deletion. [strategy]/[migrateToProjectId]
   /// are required only when the project still has issues.

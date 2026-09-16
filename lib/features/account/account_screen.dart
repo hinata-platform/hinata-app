@@ -475,31 +475,21 @@ class _AccountScreenState extends State<AccountScreen> {
       tokens: _mcpEnabled,
       admin: isAdmin,
     );
-    // Full width, so the cards can spread over a third column on a wide screen
-    // instead of stopping at the shell's reading width; the page caps itself.
+    // The shell's reading width, which is what the team's settings take too:
+    // one width for every page of settings, so moving between them does not
+    // move the margins. The cards spread over as many columns as that holds.
     return PageChrome(
       title: context.t('nav.settings'),
-      fullWidth: true,
       child: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
           padding: context.pagePadding,
           children: [
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: goldenContentMax),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // No in-page title: the shell's sub-page bar already shows
-                    // back + "settings" for this route.
-                    _profileHero(),
-                    const SizedBox(height: 16),
-                    GoldenColumns<SettingsCard>(groups: groups, card: _card),
-                  ],
-                ),
-              ),
-            ),
+            // No in-page title: the shell's sub-page bar already shows
+            // back + "settings" for this route.
+            _profileHero(),
+            const SizedBox(height: 16),
+            GoldenColumns<SettingsCard>(groups: groups, card: _card),
           ],
         ),
       ),

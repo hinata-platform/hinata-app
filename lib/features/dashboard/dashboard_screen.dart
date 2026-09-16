@@ -223,10 +223,11 @@ class _DashboardViewState extends State<_DashboardView> {
     // Effective personalisation: the live draft while editing, else the saved
     // snapshot from the server.
     final prefs = _editing ? _draft : data.prefs;
-    // The whole content area, like the other card pages: the columns decide
-    // how much of it they fill, up to [goldenContentMax].
+    // Wider than the reading width, like the other card pages: the columns
+    // decide how much of it they fill. The shell applies the cap — to the
+    // sub-page bar as well — so the page does not repeat it here.
     return PageChrome(
-      fullWidth: true,
+      contentMax: goldenContentMax,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(
@@ -235,28 +236,23 @@ class _DashboardViewState extends State<_DashboardView> {
           context.pageGutter,
           context.pageGutter + context.bottomGutter,
         ),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: goldenContentMax),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _header(context, data),
-                if (_editing) ...[
-                  const SizedBox(height: 16),
-                  _EditToolbar(
-                    boards: data.boards,
-                    draft: _draft,
-                    projects: _projects,
-                    teams: _teams,
-                    onChanged: _applyScope,
-                  ),
-                ],
-                const SizedBox(height: 22),
-                if (wide) _wideGrid(data, prefs) else _stack(data, prefs),
-              ],
-            ),
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _header(context, data),
+            if (_editing) ...[
+              const SizedBox(height: 16),
+              _EditToolbar(
+                boards: data.boards,
+                draft: _draft,
+                projects: _projects,
+                teams: _teams,
+                onChanged: _applyScope,
+              ),
+            ],
+            const SizedBox(height: 22),
+            if (wide) _wideGrid(data, prefs) else _stack(data, prefs),
+          ],
         ),
       ),
     );

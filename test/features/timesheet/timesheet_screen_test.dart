@@ -431,7 +431,7 @@ void main() {
       expect(find.text('timesheet.today'), findsOneWidget);
       // The grid is a layout to scan across, not prose to read — and that
       // *is* the shell's business.
-      expect(chrome.fullWidthFor('/'), isTrue);
+      expect(chrome.contentMaxFor('/'), double.infinity);
     });
 
     testWidgets('re-asks the server for the current week', (tester) async {

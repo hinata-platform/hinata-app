@@ -748,7 +748,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       (month) => _months[monthKey(month)]?.truncated ?? false,
     );
     return PageChrome(
-      fullWidth: true,
+      contentMax: double.infinity,
       title: _title(),
       onTitleTap: compact ? _openModuleMenu : null,
       // On the leading edge, because the title is a month name that changes as

@@ -2,6 +2,9 @@ import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/responsive/golden_columns.dart' show goldenContentMax;
+import '../../core/responsive/responsive.dart';
+
 /// A single primary action a sub-page publishes into the shell's glass app bar
 /// (e.g. Save, Invite). The shell renders it in the app bar's trailing slot:
 /// an icon-only frosted circle on compact, an icon+label frosted pill on wide.
@@ -68,16 +71,23 @@ class PageChromeData {
     this.bottom,
     this.bottomHeight = 0,
     this.actions = const [],
-    this.fullWidth = false,
+    this.contentMax = Breakpoints.readingWidth,
   });
 
-  /// Whether the page takes the whole content area instead of being centred in
-  /// [Breakpoints.readingWidth]. For pages whose content is a spatial layout
-  /// rather than something to read — and only where that is actually true of
-  /// the data on screen, which is why it is published by the page rather than
-  /// derived from the route. The shell applies it to the sub-page bar as well,
-  /// so the back button never sits off the page's own left edge.
-  final bool fullWidth;
+  /// The widest the page's body may grow before the shell centres it.
+  ///
+  /// [Breakpoints.readingWidth] is the default, and what a page of prose or of
+  /// one column of controls wants. A page of cards asks for [goldenContentMax],
+  /// where a third column still has something to say; a spatial layout — a
+  /// week of a timesheet, a calendar — asks for [double.infinity] and takes
+  /// whatever the window has.
+  ///
+  /// It is published by the page rather than derived from the route because
+  /// only the page knows what is on screen. The shell lays the sub-page bar out
+  /// in the same width, so Back on the left and Save on the right sit on the
+  /// content's own edges instead of the window's — which is why a page must cap
+  /// itself *here* and not in its own body. One number, one column.
+  final double contentMax;
 
   /// The route this chrome belongs to — the key it is filed under in
   /// [PageChromeController], and the only route the shell will render it for.
@@ -179,9 +189,11 @@ class PageChromeController extends ChangeNotifier {
   List<PageAction> actionsFor(String location) =>
       _dataFor(location)?.actions ?? const [];
 
-  /// Defaults to false, so a page that publishes nothing — or has not published
-  /// yet — is laid out like every other page rather than flashing wide first.
-  bool fullWidthFor(String location) => _dataFor(location)?.fullWidth ?? false;
+  /// Defaults to the reading width, so a page that publishes nothing — or has
+  /// not published yet — is laid out like every other page rather than flashing
+  /// wide first.
+  double contentMaxFor(String location) =>
+      _dataFor(location)?.contentMax ?? Breakpoints.readingWidth;
 
   /// Records [data] as the chrome for its own [PageChromeData.location], on
   /// behalf of [owner] (the publishing [PageChrome] state).
@@ -238,7 +250,7 @@ class PageChromeController extends ChangeNotifier {
       a.onBack == b.onBack &&
       identical(a.bottom, b.bottom) &&
       a.bottomHeight == b.bottomHeight &&
-      a.fullWidth == b.fullWidth &&
+      a.contentMax == b.contentMax &&
       listEquals(a.actions, b.actions);
 }
 
@@ -276,7 +288,7 @@ class PageChrome extends StatefulWidget {
     this.bottom,
     this.bottomHeight = 0,
     this.actions = const [],
-    this.fullWidth = false,
+    this.contentMax = Breakpoints.readingWidth,
     required this.child,
   });
 
@@ -299,9 +311,8 @@ class PageChrome extends StatefulWidget {
   /// See [PageChromeData.actions].
   final List<PageAction> actions;
 
-  /// Whether this page sizes itself to the whole content area.
-  /// See [PageChromeData.fullWidth].
-  final bool fullWidth;
+  /// The widest this page's body may grow. See [PageChromeData.contentMax].
+  final double contentMax;
 
   final Widget child;
 
@@ -339,7 +350,7 @@ class _PageChromeState extends State<PageChrome> {
         oldWidget.onBack != widget.onBack ||
         !identical(oldWidget.bottom, widget.bottom) ||
         oldWidget.bottomHeight != widget.bottomHeight ||
-        oldWidget.fullWidth != widget.fullWidth ||
+        oldWidget.contentMax != widget.contentMax ||
         !listEquals(oldWidget.actions, widget.actions)) {
       _schedulePublish();
     }
@@ -363,7 +374,7 @@ class _PageChromeState extends State<PageChrome> {
           bottom: widget.bottom,
           bottomHeight: widget.bottomHeight,
           actions: widget.actions,
-          fullWidth: widget.fullWidth,
+          contentMax: widget.contentMax,
         ),
       );
     });

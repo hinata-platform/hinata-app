@@ -1297,7 +1297,8 @@
       "all": "ALL PROJECTS",
       "results": "RESULTS",
       "choose": "Choose projects…",
-      "chooseOne": "Choose a project…"
+      "chooseOne": "Choose a project…",
+      "chooseLead": "Choose a lead…"
     },
     "keyTaken": "That key is already taken."
   },

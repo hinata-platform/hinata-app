@@ -19,6 +19,7 @@ import '../../core/theme/hue_colors.dart';
 import '../../core/util/keys.dart';
 import '../../core/widgets/entity_avatar.dart';
 import '../../core/widgets/hive_widgets.dart';
+import '../../core/widgets/person_picker.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/entity_avatar_editor.dart';
 import '../sprint/modals/glass_modal.dart';
@@ -554,8 +555,10 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
   /// that for good — a key somebody typed is theirs to keep.
   bool _keyFollowsName = true;
 
-  List<DirectoryUser> _users = const [];
-  String? _leadId;
+  /// The chosen lead. Held as the person, not just an id: the field shows a
+  /// face and a name, and the picker that set it is the only thing that knows
+  /// them — there is no directory in memory here to look an id up in.
+  DirectoryUser? _lead;
   int _hue = kProjectHues.first.hue;
   bool _saving = false;
   String? _error;
@@ -568,19 +571,33 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
   @override
   void initState() {
     super.initState();
-    _leadId = widget.meId;
     _name.addListener(_onNameChanged);
     _key.addListener(_onKeyChanged);
-    _loadUsers();
+    _loadMe();
   }
 
-  Future<void> _loadUsers() async {
+  /// Whoever is creating the project leads it until they say otherwise, so the
+  /// field opens filled. One request for one person, not the whole directory:
+  /// the picker pages the rest when it is opened.
+  Future<void> _loadMe() async {
+    final meId = widget.meId;
+    if (meId == null) return;
     try {
-      final users = await context.read<UserRepository>().users();
-      if (mounted) setState(() => _users = users);
+      final found = await context.read<UserRepository>().usersByIds([meId]);
+      if (mounted && found.isNotEmpty) setState(() => _lead = found.first);
     } on ApiFailure {
-      // Lead picker simply stays limited to the current user.
+      // The field stays empty and the picker is still one tap away.
     }
+  }
+
+  Future<void> _pickLead(Rect anchor) async {
+    final picked = await showPersonPicker(
+      context,
+      anchorRect: anchor,
+      selectedId: _lead?.id,
+      meId: widget.meId,
+    );
+    if (picked != null && mounted) setState(() => _lead = picked);
   }
 
   void _refresh() => setState(() {});
@@ -793,11 +810,11 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
   Widget _leadAndColor(bool compact) {
     final lead = GlassField(
       label: context.t('projects.projectLead'),
-      child: _LeadDropdown(
-        users: _users,
-        meId: widget.meId,
-        value: _leadId,
-        onChanged: (v) => setState(() => _leadId = v),
+      child: PersonPickerField(
+        person: _lead,
+        isMe: _lead != null && _lead!.id == widget.meId,
+        placeholderKey: 'projects.picker.chooseLead',
+        onTap: _pickLead,
       ),
     );
     final color = GlassField(
@@ -837,7 +854,7 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
             ? null
             : _description.text.trim(),
         color: hexForHue(_hue),
-        leadId: _leadId,
+        leadId: _lead?.id,
       );
       if (mounted) {
         final repo = context.read<ProjectRepository>();
@@ -897,57 +914,6 @@ class _GlyphPreview extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Project-lead dropdown rendered on the glass material.
-class _LeadDropdown extends StatelessWidget {
-  const _LeadDropdown({
-    required this.users,
-    required this.meId,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final List<DirectoryUser> users;
-  final String? meId;
-  final String? value;
-  final ValueChanged<String?> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final items = users.isEmpty && value != null
-        ? [
-            DropdownMenuItem(
-              value: value,
-              child: Text(context.t('projects.you')),
-            ),
-          ]
-        : [
-            for (final u in users)
-              DropdownMenuItem(
-                value: u.id,
-                child: Text(
-                  u.id == meId
-                      ? '${u.displayName} (${context.t('projects.you')})'
-                      : u.displayName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ];
-    return DropdownButtonFormField<String>(
-      initialValue: value,
-      isExpanded: true,
-      icon: Icon(
-        LucideIcons.chevronsUpDown,
-        size: 16,
-        color: AppColors.inkSoft,
-      ),
-      decoration: glassInputDecoration(),
-      items: items,
-      onChanged: onChanged,
     );
   }
 }

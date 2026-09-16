@@ -454,14 +454,16 @@ class TimeRepository {
   }
 
   /// Answers one request with a sentence the person who asked will read. Once.
-  Future<TimeCorrectionRequest> answerCorrection(String id, String note) async =>
-      TimeCorrectionRequest.fromJson(
-        await _api.post(
-              '/api/v1/time/correction-requests/$id/answer',
-              body: {'note': note},
-            )
-            as Map<String, dynamic>,
-      );
+  Future<TimeCorrectionRequest> answerCorrection(
+    String id,
+    String note,
+  ) async => TimeCorrectionRequest.fromJson(
+    await _api.post(
+          '/api/v1/time/correction-requests/$id/answer',
+          body: {'note': note},
+        )
+        as Map<String, dynamic>,
+  );
 
   /// Answers a request by opening the days for the person who asked, with a
   /// reason they will read. Administrators only; the days close again by

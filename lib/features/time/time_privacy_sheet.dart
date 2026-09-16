@@ -218,8 +218,12 @@ class TimeVisibilityPanel extends StatelessWidget {
       if (v.approvalsEnabled)
         (LucideIcons.stamp, context.t('time.privacy.row.approvals')),
       if (v.workloadReports)
-        (LucideIcons.chartColumn, context.t('time.privacy.row.workloadReports')),
-      if (v.alerts) (LucideIcons.bellRing, context.t('time.privacy.row.alerts')),
+        (
+          LucideIcons.chartColumn,
+          context.t('time.privacy.row.workloadReports'),
+        ),
+      if (v.alerts)
+        (LucideIcons.bellRing, context.t('time.privacy.row.alerts')),
       if (v.targetReminders)
         (LucideIcons.target, context.t('time.privacy.row.targetReminders')),
       if (v.arbzgHints)
@@ -227,10 +231,7 @@ class TimeVisibilityPanel extends StatelessWidget {
       if (v.lateEntryHintDays != null)
         (
           LucideIcons.clockAlert,
-          context.t(
-            'time.privacy.row.lateEntry',
-            count: v.lateEntryHintDays,
-          ),
+          context.t('time.privacy.row.lateEntry', count: v.lateEntryHintDays),
         ),
       if (v.foreignChangesRecorded)
         (LucideIcons.history, context.t('time.privacy.row.foreignChanges')),

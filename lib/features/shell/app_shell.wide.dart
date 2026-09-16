@@ -133,8 +133,8 @@ class _WideShellState extends State<_WideShell> {
 
 /// How wide the page at [location] wants its body — the reading width unless it
 /// published otherwise. Both the sub-page bar and the page itself go through
-/// this, so a full-width page never ends up with its back button off its own
-/// left edge. Listening here rather than in the shell keeps a chrome update
+/// this, so Back and Save always land on the content's own edges rather than
+/// the window's. Listening here rather than in the shell keeps a chrome update
 /// from rebuilding the whole shell: the child instance is unchanged, so the
 /// page subtree below is reused as-is.
 class _BodyWidth extends StatelessWidget {
@@ -144,9 +144,7 @@ class _BodyWidth extends StatelessWidget {
   final Widget child;
 
   static double of(BuildContext context, String location) =>
-      PageChromeScope.of(context).fullWidthFor(location)
-      ? double.infinity
-      : Breakpoints.readingWidth;
+      PageChromeScope.of(context).contentMaxFor(location);
 
   @override
   Widget build(BuildContext context) => ConstrainedBox(
@@ -902,11 +900,22 @@ class _SubPageBar extends StatelessWidget {
     // A page may dock a toolbar (search + filters) below the title row; on wide
     // this flows as a normal row above the content (no overlay blur to share).
     final bottom = chrome.bottomFor(location);
+    // The bar is laid out in the page's own width (see [_BodyWidth]); this is
+    // the other half of standing on the same line — the page's gutter, so Back
+    // starts where the content's left edge is and an action ends where its
+    // right edge is. The back button carries [_kBackGlyphInset] of its own
+    // padding, so the gutter is measured to the glyph and not to its box.
+    final gutter = context.pageGutter;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 24, 0),
+          padding: EdgeInsets.fromLTRB(
+            (gutter - _kBackGlyphInset).clamp(0.0, gutter),
+            14,
+            gutter,
+            0,
+          ),
           child: Row(
             children: [
               IconButton(
@@ -932,13 +941,19 @@ class _SubPageBar extends StatelessWidget {
         ),
         if (bottom != null)
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 24, 0),
+            padding: EdgeInsets.fromLTRB(gutter, 12, gutter, 0),
             child: bottom,
           ),
       ],
     );
   }
 }
+
+/// How far inside its own box the back button paints its arrow: an
+/// [IconButton] at [VisualDensity.compact] is a 40-point box around a 20-point
+/// glyph. Subtracted from the gutter so the arrow, not the invisible box around
+/// it, lines up with the content below.
+const double _kBackGlyphInset = 10;
 
 /// The sub-page bar's title, made a control where the page published an
 /// [PageChromeData.onTitleTap]. See the compact bar's `_BarTitle`: this is the
