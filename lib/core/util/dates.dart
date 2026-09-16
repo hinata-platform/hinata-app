@@ -17,6 +17,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' show DateFormat;
 
 /// Parses an absolute timestamp into a **local** [DateTime]. Accepts an
 /// ISO-8601 string (UTC or with offset) or a numeric epoch in milliseconds.
@@ -81,3 +82,10 @@ DateTime weekStartFor(BuildContext context, DateTime day) {
 /// day before and a whole grid shifts by one column.
 DateTime addDays(DateTime day, int days) =>
     DateTime(day.year, day.month, day.day + days);
+
+/// The name of [weekday] ([DateTime.monday] to [DateTime.sunday]) in the reader's
+/// language, "Freitag". Through a date of that weekday, since `intl` names days of
+/// dates: 1 January 2024 was a Monday.
+String weekdayName(BuildContext context, int weekday) => DateFormat.EEEE(
+  Localizations.localeOf(context).toLanguageTag(),
+).format(DateTime(2024, 1, weekday));

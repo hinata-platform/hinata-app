@@ -78,6 +78,28 @@ void main() {
     matching: find.byType(PolicySwitch),
   );
 
+  testWidgets(
+    'a suggested target with nothing stored names what the environment suggests',
+    (tester) async {
+      // Found in the live check of HIN-92: the field said only "Env default"
+      // while the server suggested seven and a half hours, and every policy
+      // beside it names the value in force.
+      await tester.pumpWidget(
+        host(<String, dynamic>{
+          'timeTracking': <String, dynamic>{
+            'effective': <String, dynamic>{'suggestedDailyTargetMinutes': 450},
+          },
+        }),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining('admin.timeTracking.envDefault: '),
+        findsOneWidget,
+      );
+    },
+  );
+
   group('co-determination', () {
     testWidgets('the note sits at every monitoring-capable policy', (
       tester,
@@ -346,6 +368,9 @@ void main() {
         'admin.timeTracking.arbzgHintsTitle',
         'admin.timeTracking.descriptionPurgeLabel',
         'admin.timeTracking.entryPurgeLabel',
+        // Stage 11 (HIN-92): the reminder and alert jobs read these two.
+        'admin.timeTracking.alertsTitle',
+        'admin.timeTracking.targetRemindersTitle',
       ]) {
         expect(
           find.descendant(
@@ -357,10 +382,8 @@ void main() {
         );
       }
       for (final title in const [
-        // The reports, alerts and billing of the later stages.
+        // The reports and billing of the later stages.
         'admin.timeTracking.workloadReportsTitle',
-        'admin.timeTracking.alertsTitle',
-        'admin.timeTracking.targetRemindersTitle',
         'admin.timeTracking.billingEnabledTitle',
         'admin.timeTracking.icsImportTitle',
       ]) {

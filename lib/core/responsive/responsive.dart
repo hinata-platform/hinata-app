@@ -168,9 +168,12 @@ extension ResponsiveContext on BuildContext {
     pageGutter + bottomGutter,
   );
 
-  /// Number of columns for card grids derived from available width.
-  int gridColumns({double minTileWidth = 320}) {
-    final usable = screenWidth - pageGutter * 2;
+  /// Number of columns for card grids derived from the width the grid really
+  /// has. Pass [width] from a [LayoutBuilder]: the screen is wider than the page
+  /// wherever a rail or a reading width takes its share, and counting columns
+  /// from it gave tiles narrower than they were meant to be.
+  int gridColumns({double minTileWidth = 320, double? width}) {
+    final usable = width ?? screenWidth - pageGutter * 2;
     return usable <= minTileWidth
         ? 1
         : (usable / minTileWidth).floor().clamp(1, 4);

@@ -12,6 +12,7 @@ import '../sprint/modals/glass_modal.dart'
         kGlassPopoverBreakpoint,
         showGlassDatePicker,
         showGlassDatePopover,
+        showGlassDurationPicker,
         showGlassOptions;
 import 'admin_form_helpers.dart';
 
@@ -535,6 +536,85 @@ class _PolicyDateState extends State<PolicyDate> {
             icon: LucideIcons.calendar,
           ),
           if (widget.pending) const PendingNote(),
+          EnvDefaultAction(
+            isDefault: value == null,
+            onReset: () => widget.onChanged(null),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A nullable length of time on the glass duration picker, kept in minutes.
+/// Absent means the environment default, and the reset below lands there.
+class PolicyDuration extends StatefulWidget {
+  const PolicyDuration({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    required this.maxHours,
+    required this.initialMinutes,
+    this.helper,
+    this.effective,
+  });
+
+  final String label;
+  final int? value;
+  final ValueChanged<int?> onChanged;
+  final String? helper;
+
+  /// What the environment resolves to while nothing is stored, so the field can
+  /// name it instead of saying only "Env default".
+  final int? effective;
+
+  /// The largest number of hours the picker offers; the server's ceiling.
+  final int maxHours;
+
+  /// Where the picker opens while nothing is stored.
+  final int initialMinutes;
+
+  @override
+  State<PolicyDuration> createState() => _PolicyDurationState();
+}
+
+class _PolicyDurationState extends State<PolicyDuration> {
+  final _fieldKey = GlobalKey();
+
+  Future<void> _pick() async {
+    final picked = await showGlassDurationPicker(
+      context,
+      initialMinutes: widget.value ?? widget.initialMinutes,
+      title: widget.label,
+      maxHours: widget.maxHours,
+    );
+    if (picked == null || !mounted) return;
+    widget.onChanged(picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final value = widget.value;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _TapField(
+            fieldKey: _fieldKey,
+            label: widget.label,
+            helper: widget.helper,
+            onTap: _pick,
+            value: value != null
+                ? fmtDuration(context, value)
+                : widget.effective == null
+                ? context.t('admin.timeTracking.envDefault')
+                : '${context.t('admin.timeTracking.envDefault')}: '
+                      '${fmtDuration(context, widget.effective)}',
+            muted: value == null,
+            icon: LucideIcons.hourglass,
+          ),
           EnvDefaultAction(
             isDefault: value == null,
             onReset: () => widget.onChanged(null),

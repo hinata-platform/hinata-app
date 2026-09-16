@@ -60,7 +60,22 @@ class SprintInsightsSurface extends StatelessWidget {
     if (r == null) return const SizedBox.shrink();
 
     final gutter = context.pageGutter;
-    final wide = !context.isCompact;
+    return LayoutBuilder(
+      builder: (context, room) => _cards(context, r, names, gutter, room),
+    );
+  }
+
+  /// The cards, side by side once the surface itself is wide enough — the
+  /// screen is wider than this surface wherever a rail or a sheet takes its
+  /// share.
+  Widget _cards(
+    BuildContext context,
+    SprintReport r,
+    Map<String, String> names,
+    double gutter,
+    BoxConstraints room,
+  ) {
+    final wide = room.maxWidth >= Breakpoints.mediumMax;
     return ListView(
       padding: EdgeInsets.fromLTRB(
         gutter,
@@ -73,7 +88,6 @@ class SprintInsightsSurface extends StatelessWidget {
         const SizedBox(height: 14),
         _twoUp(
           wide: wide,
-          wideLeftFlex: 2,
           left: _BurndownCard(
             points: r.burndown,
             top: r.summary.committed.toDouble(),
@@ -84,7 +98,6 @@ class SprintInsightsSurface extends StatelessWidget {
         const SizedBox(height: 14),
         _twoUp(
           wide: wide,
-          wideLeftFlex: 2,
           left: _BreakdownCard(breakdown: r.breakdown, names: names),
           right: _ScopeCard(scope: r.scope),
         ),
@@ -92,11 +105,13 @@ class SprintInsightsSurface extends StatelessWidget {
     );
   }
 
+  /// Two cards beside each other in the golden ratio, stacked while the
+  /// surface is narrow. They stretch to the taller of the two, so a chart and
+  /// the figures next to it share one baseline.
   Widget _twoUp({
     required bool wide,
     required Widget left,
     required Widget right,
-    int wideLeftFlex = 1,
   }) {
     if (!wide) {
       return Column(children: [left, const SizedBox(height: 14), right]);
@@ -105,9 +120,9 @@ class SprintInsightsSurface extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(flex: wideLeftFlex, child: left),
+          Expanded(flex: 1618, child: left),
           const SizedBox(width: 14),
-          Expanded(child: right),
+          Expanded(flex: 1000, child: right),
         ],
       ),
     );

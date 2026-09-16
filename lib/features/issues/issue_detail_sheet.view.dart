@@ -1795,12 +1795,14 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                     const SizedBox(height: 14),
                     _issueMeta(issue),
                   ];
-                  if (c.maxWidth >= 680) {
+                  // Two columns once the narrow one still holds a row of
+                  // chips: at φ : 1, 800 leaves it about 300.
+                  if (c.maxWidth >= 800) {
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          flex: 3,
+                          flex: 1618,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: left,
@@ -1808,7 +1810,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                         ),
                         const SizedBox(width: 18),
                         Expanded(
-                          flex: 2,
+                          flex: 1000,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: right,
@@ -2956,13 +2958,14 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   /// Anchors a bottom-dock [child] (composer or selection toolbar) with the same
   /// width treatment: full-width on phone/narrow, constrained + left-aligned to
-  /// the comment column (flex 3 of 3+2 with an 18px gutter) on the 2-column view.
+  /// the comment column (the golden column of 1618 : 1000, 18px gutter) on the
+  /// 2-column view.
   Widget _dockAligned({required Widget child, required bool deviceSafeArea}) {
     return LayoutBuilder(
       builder: (context, c) {
         // Content width mirrors the body's inner width (20px padding / side).
         final contentW = c.maxWidth - 40;
-        if (contentW < 680) {
+        if (contentW < 800) {
           // Phone / narrow: full-width dock over the whole area.
           return _composerDock(
             deviceSafeArea: deviceSafeArea,
@@ -2971,7 +2974,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           );
         }
         // 2-column: match the left column, aligned with the body's left padding.
-        final leftW = (contentW - 18) * 3 / 5;
+        final leftW = (contentW - 18) * 1618 / 2618;
         return Padding(
           padding: const EdgeInsetsDirectional.only(start: 20),
           child: Align(

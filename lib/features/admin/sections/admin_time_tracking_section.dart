@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
+import '../../../core/models/account_models.dart' show TimePreferences;
+import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
 import '../policy_controls.dart';
 import 'admin_approval_period_preview.dart';
@@ -102,48 +104,35 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AdminNote(text: context.t('admin.timeTracking.hint')),
-        const SizedBox(height: 16),
-        _module(context),
-        const SizedBox(height: 16),
-        _capture(context),
-        // Only where there is a catalogue to manage: the routes behind it are
+    final advanced = _effectiveValue<bool>('advancedEnabled') ?? false;
+    return AdminCards(
+      note: AdminNote(text: context.t('admin.timeTracking.hint')),
+      cards: {
+        'module': _module(context),
+        'capture': _capture(context),
+        // Only where there is a catalogue to manage: the routes behind them are
         // part of the module, so with the module off they do not exist and a
-        // card that spun forever would be the only thing on the screen that
-        // did not respect the switch above it.
-        if (_effectiveValue<bool>('advancedEnabled') ?? false) ...[
-          const SizedBox(height: 16),
-          const AdminTimeTagsCard(),
+        // card that spun forever would be the only thing on the screen that did
+        // not respect the switch above it.
+        if (advanced) ...{
+          'tags': const AdminTimeTagsCard(),
           // The holiday calendars (HIN-91): a page of their own, because a
           // calendar, its feed and a year of days do not fit this form.
-          const SizedBox(height: 16),
-          const AdminHolidaysCard(),
-          // Beside the lock date it belongs to, and for the same reason the tag
-          // card is here: the routes behind it are the module's, so with the
-          // module off there is nothing to show. A span reopened inside the
+          'holidays': const AdminHolidaysCard(),
+          // Beside the lock date it belongs to: a span reopened inside the
           // freeze is an event with an author, not a setting, so it saves
           // immediately rather than with the form.
-          const SizedBox(height: 16),
-          const AdminLockExceptionsCard(),
-          const SizedBox(height: 16),
-          const AdminCorrectionRequestsCard(),
+          'lockExceptions': const AdminLockExceptionsCard(),
+          'corrections': const AdminCorrectionRequestsCard(),
           // Under the requests they answer: the days opened for single people,
           // which close by themselves and can be closed sooner here.
-          const SizedBox(height: 16),
-          const AdminBackfillGrantsCard(),
-        ],
-        const SizedBox(height: 16),
-        _visibility(context),
-        const SizedBox(height: 16),
-        _reports(context),
-        const SizedBox(height: 16),
-        _billing(context),
-        const SizedBox(height: 16),
-        _privacy(context),
-      ],
+          'backfillGrants': const AdminBackfillGrantsCard(),
+        },
+        'visibility': _visibility(context),
+        'reports': _reports(context),
+        'billing': _billing(context),
+        'privacy': _privacy(context),
+      },
     );
   }
 
@@ -418,7 +407,6 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         effective: _effectiveValue<bool>('alertsEnabled'),
         onChanged: (v) => _set('alertsEnabled', v),
         monitoring: true,
-        pending: true,
       ),
       PolicySwitch(
         title: context.t('admin.timeTracking.targetRemindersTitle'),
@@ -427,7 +415,28 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         effective: _effectiveValue<bool>('targetRemindersEnabled'),
         onChanged: (v) => _set('targetRemindersEnabled', v),
         monitoring: true,
-        pending: true,
+      ),
+      // A suggestion people may take over in their own settings, never a
+      // target set for them.
+      PolicyDuration(
+        label: context.t('admin.timeTracking.suggestedDailyTargetLabel'),
+        helper: context.t('admin.timeTracking.suggestedTargetHint'),
+        value: _value<num>('suggestedDailyTargetMinutes')?.toInt(),
+        effective: _effectiveValue<num>('suggestedDailyTargetMinutes')?.toInt(),
+        onChanged: (v) => _set('suggestedDailyTargetMinutes', v),
+        maxHours: TimePreferences.maxDailyTarget ~/ 60,
+        initialMinutes: TimePreferences.fallbackDailyTarget,
+      ),
+      PolicyDuration(
+        label: context.t('admin.timeTracking.suggestedWeeklyTargetLabel'),
+        helper: context.t('admin.timeTracking.suggestedTargetHint'),
+        value: _value<num>('suggestedWeeklyTargetMinutes')?.toInt(),
+        effective: _effectiveValue<num>(
+          'suggestedWeeklyTargetMinutes',
+        )?.toInt(),
+        onChanged: (v) => _set('suggestedWeeklyTargetMinutes', v),
+        maxHours: TimePreferences.maxWeeklyTarget ~/ 60,
+        initialMinutes: TimePreferences.fallbackWeeklyTarget,
       ),
       PolicySwitch(
         title: context.t('admin.timeTracking.arbzgHintsTitle'),

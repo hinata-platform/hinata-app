@@ -30,6 +30,8 @@ import 'general_section.dart';
 import 'labels_section.dart';
 import 'members_section.dart';
 import 'settings_common.dart';
+import '../../../core/responsive/golden_columns.dart';
+import 'project_settings_layout.dart';
 import 'time_section.dart';
 import 'workflow_section.dart';
 import '../../../core/repositories/project_repository.dart';
@@ -464,6 +466,9 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
     // lives only in the in-page _Header (avoids a doubled header).
     return PageChrome(
       title: context.t('projectSettings.title'),
+      // The page caps itself (goldenContentMax), so a wide screen gets a third
+      // column rather than the shell's reading width with empty margins.
+      fullWidth: true,
       child: _loading
           ? const Center(child: HiveLoader())
           : _loadError != null
@@ -548,23 +553,17 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
 
     return LayoutBuilder(
       builder: (context, box) {
-        // Golden-ratio layout: once the body is wider than a φ² column, split
-        // into a φ:1 two-column grid; below that, stack a single φ² column.
-        final twoColumn = box.maxWidth >= Breakpoints.mediumMax;
-        final contentMax = twoColumn
-            ? Breakpoints.baseColumnWidth *
-                  Breakpoints.phi *
-                  Breakpoints.phi *
-                  Breakpoints
-                      .phi // ≈ 1597
-            : Breakpoints.baseColumnWidth *
-                  Breakpoints.phi *
-                  Breakpoints.phi; // ≈ 987
+        // Below a φ² column the cards stack in one; above it they spread over
+        // as many golden columns as the width holds ([GoldenColumns]), and the
+        // page stops growing at 1597 · φ, where wider would only mean longer
+        // lines.
+        final contentMax = box.maxWidth >= Breakpoints.mediumMax
+            ? goldenContentMax
+            : Breakpoints.mediumMax;
         return _buildScaffold(
           context,
           draft: draft,
           contentMax: contentMax,
-          twoColumn: twoColumn,
           general: general,
           members: members,
           labels: labels,
@@ -582,7 +581,6 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
     BuildContext context, {
     required Project draft,
     required double contentMax,
-    required bool twoColumn,
     required Widget general,
     required Widget members,
     required Widget labels,
@@ -592,7 +590,6 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
     required Widget archive,
     required Widget danger,
   }) {
-    const gap = SizedBox(height: 16);
     // The multiline Description field's return key inserts a newline (never
     // resigns first responder), and this screen has no Scaffold/global unfocus —
     // so give it the same escape hatches as the admin forms: tap-outside to
@@ -622,57 +619,21 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
                     children: [
                       _Header(draft: draft),
                       const SizedBox(height: 20),
-                      if (twoColumn)
-                        // φ:1 golden split — heavy editing surfaces live in the
-                        // wide column, light toggles/meta in the narrow one.
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 1618,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  general,
-                                  gap,
-                                  members,
-                                  gap,
-                                  workflow,
-                                  gap,
-                                  git,
-                                  if (timeTracking != null) ...[
-                                    gap,
-                                    timeTracking,
-                                  ],
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                            Expanded(
-                              flex: 1000,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [labels, gap, archive, gap, danger],
-                              ),
-                            ),
-                          ],
-                        )
-                      else ...[
-                        general,
-                        gap,
-                        members,
-                        gap,
-                        labels,
-                        gap,
-                        workflow,
-                        gap,
-                        git,
-                        if (timeTracking != null) ...[gap, timeTracking],
-                        gap,
-                        archive,
-                        gap,
-                        danger,
-                      ],
+                      GoldenColumns<ProjectSettingsCard>(
+                        groups: projectSettingsGroups(
+                          timeTracking: timeTracking != null,
+                        ),
+                        card: (card) => switch (card) {
+                          ProjectSettingsCard.general => general,
+                          ProjectSettingsCard.members => members,
+                          ProjectSettingsCard.labels => labels,
+                          ProjectSettingsCard.workflow => workflow,
+                          ProjectSettingsCard.git => git,
+                          ProjectSettingsCard.timeTracking => timeTracking!,
+                          ProjectSettingsCard.archive => archive,
+                          ProjectSettingsCard.danger => danger,
+                        },
+                      ),
                     ],
                   ),
                 ),

@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/blocs/time_preferences_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/account_models.dart';
@@ -13,9 +14,16 @@ import '../../core/repositories/time_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/util/dates.dart' show weekdayName;
 import '../../core/util/file_download.dart';
-import '../../core/widgets/hive_widgets.dart' show HiveSwitch;
-import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
+import '../../core/widgets/hive_widgets.dart' show HiveSwitch, fmtDuration;
+import '../sprint/modals/glass_modal.dart'
+    show
+        GlassToastKind,
+        showGlassDurationPicker,
+        showGlassOptions,
+        showGlassTimePicker,
+        showGlassToast;
 import '../time/lock_notice.dart' show requestOlderDays;
 import '../time/time_privacy_sheet.dart';
 import 'account_widgets.dart';
@@ -120,6 +128,7 @@ class TimePreferencesSection extends StatelessWidget {
           ),
         ),
         Divider(height: 1, color: AppColors.hairline2),
+        _Reminders(prefs: prefs, stack: stack, onSave: save),
         _GroupLabel(text: context.t('account.timeTracking.privacy')),
         SettingRow(
           label: context.t('account.timeTracking.privacyPanel'),
@@ -175,7 +184,11 @@ class TimePreferencesSection extends StatelessWidget {
       if (kIsWeb) {
         final file = await repository.exportCsv();
         truncated = file.truncated;
-        result = await downloadBytes('time-entries.csv', file.bytes, 'text/csv');
+        result = await downloadBytes(
+          'time-entries.csv',
+          file.bytes,
+          'text/csv',
+        );
       } else {
         // Straight to disk: a long record of entries runs to tens of megabytes,
         // which a phone should not have to hold in memory to save.
@@ -209,6 +222,276 @@ class TimePreferencesSection extends StatelessWidget {
       );
     }
   }
+}
+
+/// Targets of the person's own, and when to be reminded of them (HIN-92).
+///
+/// Only while the operator has reminders switched on. The hint says what a
+/// person needs to know before setting a target: nobody but them is reminded,
+/// and nobody learns whether they reached it. A target starts at what the
+/// operator suggests, and the suggestion stays offered when it differs, because
+/// taking it over is the person's decision.
+class _Reminders extends StatefulWidget {
+  const _Reminders({
+    required this.prefs,
+    required this.stack,
+    required this.onSave,
+  });
+
+  final TimePreferences prefs;
+  final bool stack;
+  final Future<void> Function(TimePreferences next) onSave;
+
+  @override
+  State<_Reminders> createState() => _RemindersState();
+}
+
+class _RemindersState extends State<_Reminders> {
+  @override
+  void initState() {
+    super.initState();
+    // Opened straight from a link, nothing may have read the policy yet.
+    unawaited(context.read<TimePolicyCubit>().ensureLoaded());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Three fields of the policy: reloading the frozen periods or the opened
+    // days must not rebuild a dozen rows.
+    final (enabled, suggestedDaily, suggestedWeekly) = context.select(
+      (TimePolicyCubit cubit) => (
+        cubit.state.targetRemindersEnabled,
+        cubit.state.suggestedDailyTargetMinutes,
+        cubit.state.suggestedWeeklyTargetMinutes,
+      ),
+    );
+    if (!enabled) return const SizedBox.shrink();
+    final prefs = widget.prefs;
+    void save(TimePreferences next) => unawaited(widget.onSave(next));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _GroupLabel(text: context.t('account.timeTracking.reminders')),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(2, 0, 2, 8),
+          child: Text(
+            context.t('account.timeTracking.remindersHint'),
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.4,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+        _TargetGroup(
+          label: context.t('account.timeTracking.dailyTarget'),
+          hint: context.t('account.timeTracking.dailyTargetHint'),
+          icon: LucideIcons.target,
+          target: prefs.dailyTargetMinutes,
+          maxMinutes: TimePreferences.maxDailyTarget,
+          startsAt: suggestedDaily ?? TimePreferences.fallbackDailyTarget,
+          suggested: suggestedDaily,
+          remindAt: prefs.dailyReminderAt,
+          stack: widget.stack,
+          onTarget: (minutes) => save(
+            minutes == null
+                ? prefs.copyWith(clearDailyTarget: true)
+                : prefs.copyWith(dailyTargetMinutes: minutes),
+          ),
+          onRemindAt: (minute) => save(prefs.copyWith(dailyReminderAt: minute)),
+        ),
+        _TargetGroup(
+          label: context.t('account.timeTracking.weeklyTarget'),
+          hint: context.t('account.timeTracking.weeklyTargetHint'),
+          icon: LucideIcons.calendarRange,
+          target: prefs.weeklyTargetMinutes,
+          maxMinutes: TimePreferences.maxWeeklyTarget,
+          startsAt: suggestedWeekly ?? TimePreferences.fallbackWeeklyTarget,
+          suggested: suggestedWeekly,
+          remindAt: prefs.weeklyReminderAt,
+          stack: widget.stack,
+          onTarget: (minutes) => save(
+            minutes == null
+                ? prefs.copyWith(clearWeeklyTarget: true)
+                : prefs.copyWith(weeklyTargetMinutes: minutes),
+          ),
+          onRemindAt: (minute) =>
+              save(prefs.copyWith(weeklyReminderAt: minute)),
+          weekday: prefs.weeklyReminderDay,
+          onWeekday: (day) => save(prefs.copyWith(weeklyReminderDay: day)),
+        ),
+      ],
+    );
+  }
+}
+
+/// One target: its switch, its length, when to be reminded and the operator's
+/// suggestion. The daily and the weekly group differ only in the weekday the
+/// weekly one also asks for.
+class _TargetGroup extends StatelessWidget {
+  const _TargetGroup({
+    required this.label,
+    required this.hint,
+    required this.icon,
+    required this.target,
+    required this.maxMinutes,
+    required this.startsAt,
+    required this.suggested,
+    required this.remindAt,
+    required this.stack,
+    required this.onTarget,
+    required this.onRemindAt,
+    this.weekday,
+    this.onWeekday,
+  });
+
+  final String label;
+  final String hint;
+  final IconData icon;
+
+  /// The target in minutes, or null while it is switched off.
+  final int? target;
+  final int maxMinutes;
+
+  /// What a target switched on starts at.
+  final int startsAt;
+  final int? suggested;
+
+  /// Minute of the day, on the person's own clock.
+  final int remindAt;
+  final bool stack;
+
+  /// A new target, or null to switch it off.
+  final ValueChanged<int?> onTarget;
+  final ValueChanged<int> onRemindAt;
+  final int? weekday;
+  final ValueChanged<int>? onWeekday;
+
+  Future<void> _pickTarget(BuildContext context, int current) async {
+    final picked = await showGlassDurationPicker(
+      context,
+      initialMinutes: current,
+      title: context.t('account.timeTracking.target'),
+      maxHours: maxMinutes ~/ 60,
+    );
+    if (picked != null) onTarget(picked.clamp(1, maxMinutes));
+  }
+
+  Future<void> _pickTime(BuildContext context) async {
+    final picked = await showGlassTimePicker(
+      context,
+      initial: TimeOfDay(hour: remindAt ~/ 60, minute: remindAt % 60),
+      title: context.t('account.timeTracking.remindAt'),
+    );
+    if (picked != null) onRemindAt(picked.hour * 60 + picked.minute);
+  }
+
+  Future<void> _pickWeekday(BuildContext context) async {
+    final picked = await showGlassOptions<int>(
+      context,
+      title: context.t('account.timeTracking.remindOn'),
+      options: [
+        for (var day = DateTime.monday; day <= DateTime.sunday; day++)
+          (value: day, child: Text(weekdayName(context, day))),
+      ],
+    );
+    if (picked != null) onWeekday?.call(picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final divider = Divider(height: 1, color: AppColors.hairline2);
+    final current = target;
+    final day = weekday;
+    final offer = suggested;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SettingRow(
+          label: label,
+          description: hint,
+          icon: icon,
+          trailing: HiveSwitch(
+            value: current != null,
+            onChanged: (on) => onTarget(on ? startsAt : null),
+          ),
+        ),
+        if (current != null) ...[
+          divider,
+          _PickRow(
+            label: context.t('account.timeTracking.target'),
+            value: fmtDuration(context, current),
+            icon: LucideIcons.hourglass,
+            stack: stack,
+            onTap: () => unawaited(_pickTarget(context, current)),
+          ),
+          if (day != null && onWeekday != null) ...[
+            divider,
+            _PickRow(
+              label: context.t('account.timeTracking.remindOn'),
+              value: weekdayName(context, day),
+              icon: LucideIcons.calendarDays,
+              stack: stack,
+              onTap: () => unawaited(_pickWeekday(context)),
+            ),
+          ],
+          divider,
+          _PickRow(
+            label: context.t('account.timeTracking.remindAt'),
+            value: MaterialLocalizations.of(context).formatTimeOfDay(
+              TimeOfDay(hour: remindAt ~/ 60, minute: remindAt % 60),
+              alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(
+                context,
+              ),
+            ),
+            icon: LucideIcons.clock,
+            stack: stack,
+            onTap: () => unawaited(_pickTime(context)),
+          ),
+          if (offer != null && offer != current) ...[
+            divider,
+            SettingRow(
+              label: context.t(
+                'account.timeTracking.suggested',
+                variables: {'duration': fmtDuration(context, offer)},
+              ),
+              stack: stack,
+              trailing: AccountActionButton(
+                label: context.t('account.timeTracking.useSuggestion'),
+                icon: LucideIcons.check,
+                onPressed: () => onTarget(offer),
+              ),
+            ),
+          ],
+        ],
+        divider,
+      ],
+    );
+  }
+}
+
+/// A row whose value opens a glass picker: never an inline wheel.
+class _PickRow extends StatelessWidget {
+  const _PickRow({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.stack,
+    required this.onTap,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+  final bool stack;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => SettingRow(
+    label: label,
+    stack: stack,
+    trailing: AccountActionButton(label: value, icon: icon, onPressed: onTap),
+  );
 }
 
 class _GroupLabel extends StatelessWidget {

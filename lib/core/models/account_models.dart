@@ -41,7 +41,33 @@ class TimePreferences extends Equatable {
     this.pomodoroCycles = 4,
     this.countdownMinutes = 25,
     this.sound = true,
+    this.dailyTargetMinutes,
+    this.weeklyTargetMinutes,
+    this.dailyReminderAt = defaultDailyReminderAt,
+    this.weeklyReminderAt = defaultWeeklyReminderAt,
+    this.weeklyReminderDay = defaultWeeklyReminderDay,
   });
+
+  /// 17:00 for the day and 16:00 for the week, as minutes of the day.
+  static const int defaultDailyReminderAt = 17 * 60;
+  static const int defaultWeeklyReminderAt = 16 * 60;
+  static const int defaultWeeklyReminderDay = DateTime.friday;
+
+  /// What a switched-on target starts at when the operator suggests none.
+  static const int fallbackDailyTarget = 8 * 60;
+  static const int fallbackWeeklyTarget = 40 * 60;
+  static const int maxDailyTarget = 24 * 60;
+  static const int maxWeeklyTarget = 7 * 24 * 60;
+
+  static const _weekdays = [
+    'MONDAY',
+    'TUESDAY',
+    'WEDNESDAY',
+    'THURSDAY',
+    'FRIDAY',
+    'SATURDAY',
+    'SUNDAY',
+  ];
 
   static const int minWork = 1;
   static const int maxWork = 180;
@@ -65,6 +91,21 @@ class TimePreferences extends Equatable {
   /// Whether the end of an interval plays a sound. The toast appears either way.
   final bool sound;
 
+  /// The minutes this person wants to record on a working day; null for no
+  /// daily reminder. Their own, and only ever reminded to them (HIN-92).
+  final int? dailyTargetMinutes;
+
+  /// The minutes this person wants to record in a week; null for no weekly
+  /// reminder.
+  final int? weeklyTargetMinutes;
+
+  /// Minutes of the day, on the person's own clock, the reminders are due.
+  final int dailyReminderAt;
+  final int weeklyReminderAt;
+
+  /// [DateTime.monday] to [DateTime.sunday].
+  final int weeklyReminderDay;
+
   /// The lengths a pomodoro started now would count by.
   PomodoroConfig get pomodoro => PomodoroConfig(
     work: pomodoroWork,
@@ -80,6 +121,13 @@ class TimePreferences extends Equatable {
     int? pomodoroCycles,
     int? countdownMinutes,
     bool? sound,
+    int? dailyTargetMinutes,
+    bool clearDailyTarget = false,
+    int? weeklyTargetMinutes,
+    bool clearWeeklyTarget = false,
+    int? dailyReminderAt,
+    int? weeklyReminderAt,
+    int? weeklyReminderDay,
   }) => TimePreferences(
     pomodoroWork: pomodoroWork ?? this.pomodoroWork,
     pomodoroShortBreak: pomodoroShortBreak ?? this.pomodoroShortBreak,
@@ -87,17 +135,36 @@ class TimePreferences extends Equatable {
     pomodoroCycles: pomodoroCycles ?? this.pomodoroCycles,
     countdownMinutes: countdownMinutes ?? this.countdownMinutes,
     sound: sound ?? this.sound,
+    dailyTargetMinutes: clearDailyTarget
+        ? null
+        : dailyTargetMinutes ?? this.dailyTargetMinutes,
+    weeklyTargetMinutes: clearWeeklyTarget
+        ? null
+        : weeklyTargetMinutes ?? this.weeklyTargetMinutes,
+    dailyReminderAt: dailyReminderAt ?? this.dailyReminderAt,
+    weeklyReminderAt: weeklyReminderAt ?? this.weeklyReminderAt,
+    weeklyReminderDay: weeklyReminderDay ?? this.weeklyReminderDay,
   );
 
-  factory TimePreferences.fromJson(Map<String, dynamic> json) =>
-      TimePreferences(
-        pomodoroWork: (json['pomodoroWork'] as num?)?.toInt() ?? 25,
-        pomodoroShortBreak: (json['pomodoroShortBreak'] as num?)?.toInt() ?? 5,
-        pomodoroLongBreak: (json['pomodoroLongBreak'] as num?)?.toInt() ?? 15,
-        pomodoroCycles: (json['pomodoroCycles'] as num?)?.toInt() ?? 4,
-        countdownMinutes: (json['countdownMinutes'] as num?)?.toInt() ?? 25,
-        sound: json['sound'] as bool? ?? true,
-      );
+  factory TimePreferences.fromJson(Map<String, dynamic> json) {
+    final day = _weekdays.indexOf(json['weeklyReminderDay'] as String? ?? '');
+    return TimePreferences(
+      pomodoroWork: (json['pomodoroWork'] as num?)?.toInt() ?? 25,
+      pomodoroShortBreak: (json['pomodoroShortBreak'] as num?)?.toInt() ?? 5,
+      pomodoroLongBreak: (json['pomodoroLongBreak'] as num?)?.toInt() ?? 15,
+      pomodoroCycles: (json['pomodoroCycles'] as num?)?.toInt() ?? 4,
+      countdownMinutes: (json['countdownMinutes'] as num?)?.toInt() ?? 25,
+      sound: json['sound'] as bool? ?? true,
+      dailyTargetMinutes: (json['dailyTargetMinutes'] as num?)?.toInt(),
+      weeklyTargetMinutes: (json['weeklyTargetMinutes'] as num?)?.toInt(),
+      dailyReminderAt:
+          (json['dailyReminderAt'] as num?)?.toInt() ?? defaultDailyReminderAt,
+      weeklyReminderAt:
+          (json['weeklyReminderAt'] as num?)?.toInt() ??
+          defaultWeeklyReminderAt,
+      weeklyReminderDay: day < 0 ? defaultWeeklyReminderDay : day + 1,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'pomodoroWork': pomodoroWork,
@@ -106,6 +173,13 @@ class TimePreferences extends Equatable {
     'pomodoroCycles': pomodoroCycles,
     'countdownMinutes': countdownMinutes,
     'sound': sound,
+    // The server merges what it is sent, so an absent target would keep the
+    // stored one; 0 is how a target is removed.
+    'dailyTargetMinutes': dailyTargetMinutes ?? 0,
+    'weeklyTargetMinutes': weeklyTargetMinutes ?? 0,
+    'dailyReminderAt': dailyReminderAt,
+    'weeklyReminderAt': weeklyReminderAt,
+    'weeklyReminderDay': _weekdays[weeklyReminderDay - 1],
   };
 
   @override
@@ -116,6 +190,11 @@ class TimePreferences extends Equatable {
     pomodoroCycles,
     countdownMinutes,
     sound,
+    dailyTargetMinutes,
+    weeklyTargetMinutes,
+    dailyReminderAt,
+    weeklyReminderAt,
+    weeklyReminderDay,
   ];
 }
 
