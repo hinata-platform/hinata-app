@@ -331,11 +331,6 @@ class _CellFormState extends State<_CellForm> {
                     decoration: InputDecoration(
                       labelText: context.t('time.entry.description'),
                       counterText: '',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.radiusControl,
-                        ),
-                      ),
                     ),
                   ),
                   if (_error != null) ...[

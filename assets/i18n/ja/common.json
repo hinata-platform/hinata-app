@@ -1277,6 +1277,7 @@
     "statesLabel": "ステータス",
     "members": "{{count}} 名のメンバー",
     "name": "プロジェクト名",
+    "namePlaceholder": "例: 請求とプラン",
     "key": "プロジェクトキー",
     "keyHelp": "課題 ID に使う短いコードです。例: ACME → ACME-42",
     "active": "進行中",

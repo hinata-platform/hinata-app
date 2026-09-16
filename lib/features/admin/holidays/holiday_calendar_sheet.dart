@@ -6,7 +6,6 @@ import '../../../core/api/api_client.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/availability_models.dart';
 import '../../../core/repositories/availability_repository.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/hive_widgets.dart' show HiveSwitch;
 import '../../account/account_widgets.dart';
 import '../../sprint/modals/glass_modal.dart';
@@ -97,14 +96,7 @@ class _CalendarFormState extends State<_CalendarForm> {
   }
 
   InputDecoration _decoration(String label, {String? helper}) =>
-      InputDecoration(
-        labelText: label,
-        helperText: helper,
-        helperMaxLines: 3,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        ),
-      );
+      InputDecoration(labelText: label, helperText: helper, helperMaxLines: 3);
 
   @override
   Widget build(BuildContext context) {

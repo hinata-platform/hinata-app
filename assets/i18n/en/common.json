@@ -1277,6 +1277,7 @@
     "statesLabel": "States",
     "members": "{{count}} members",
     "name": "Project name",
+    "namePlaceholder": "e.g. Billing & Plans",
     "key": "Project key",
     "keyHelp": "Short code used for issue IDs, e.g. ACME → ACME-42",
     "active": "Active",

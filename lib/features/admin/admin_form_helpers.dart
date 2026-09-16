@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/field_border.dart';
 import '../../core/widgets/hive_widgets.dart';
 
 /// Tone of an [AdminNote] — drives its tint, rim and glyph colour.
@@ -85,11 +86,10 @@ InputDecoration adminInputDecoration(
   String? helper,
   String? suffix,
 }) {
-  OutlineInputBorder border(Color color, [double width = 1]) =>
-      OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        borderSide: BorderSide(color: color, width: width),
-      );
+  HiveFieldBorder border(Color color, [double width = 1]) => HiveFieldBorder(
+    borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+    borderSide: BorderSide(color: color, width: width),
+  );
   return InputDecoration(
     labelText: label,
     hintText: hint,
@@ -103,12 +103,13 @@ InputDecoration adminInputDecoration(
     enabledBorder: border(AppColors.hairline),
     focusedBorder: border(AppColors.accent, 1.4),
     labelStyle: TextStyle(fontSize: 13.5, color: AppColors.inkSoft),
-    // Same fill the field has, so the label that straddles its rim stands on
-    // one colour instead of being cut along the seam. See [AppTheme].
+    // The label rides inside the field once it floats (see [HiveFieldBorder]),
+    // where it is a caption over the value rather than a second value. The rim
+    // already turns amber on focus, so it does not have to say so too.
     floatingLabelStyle: TextStyle(
-      fontSize: 13.5,
-      color: AppColors.accentStrong,
-      backgroundColor: AppColors.surfaceMuted,
+      fontSize: 15,
+      fontWeight: FontWeight.w600,
+      color: AppColors.inkFaint,
     ),
   );
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
+import 'field_border.dart';
 
 /// Hinata "Hive" Material theme — redesign 2026.
 ///
@@ -73,7 +74,7 @@ abstract final class AppTheme {
           ),
         );
 
-    OutlineInputBorder border(Color c, [double w = 1]) => OutlineInputBorder(
+    HiveFieldBorder border(Color c, [double w = 1]) => HiveFieldBorder(
       borderRadius: BorderRadius.circular(radiusControl),
       borderSide: BorderSide(color: c, width: w),
     );
@@ -137,12 +138,13 @@ abstract final class AppTheme {
         enabledBorder: border(hairline),
         focusedBorder: border(AppColors.accent, 1.5),
         hintStyle: TextStyle(color: inkFaint),
-        // A floating label is centred on the rim, which Material draws for a
-        // field that is *not* filled: half the glyphs then sit on the page and
-        // half on the fill, and the seam between the two cuts the word in two.
-        // Carrying the fill up with it puts the whole label on one colour —
-        // a small tab of the field rising above its rim.
-        floatingLabelStyle: TextStyle(backgroundColor: surface),
+        // The label rides inside the field (see [HiveFieldBorder]), so it wants
+        // the size and weight of a caption rather than of a second value.
+        floatingLabelStyle: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: inkSoft,
+        ),
       ),
       chipTheme: base.chipTheme.copyWith(
         backgroundColor: surfaceMuted,

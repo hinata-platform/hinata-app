@@ -1296,9 +1296,10 @@ class _MonthGrid extends StatelessWidget {
 ({Color band, Color disc, Color onDisc}) _rangeColors(BuildContext context) {
   final dark = Theme.of(context).brightness == Brightness.dark;
   return (
-    band: dark
-        ? AppColors.accent.withValues(alpha: 0.30)
-        : AppColors.accentSoftLight,
+    // Amber over the glass rather than an opaque cream: the panel is already a
+    // warm translucent wash, and a flat fill of nearly its own colour is what
+    // made the band hard to pick out on a light canvas even where it was drawn.
+    band: AppColors.accent.withValues(alpha: dark ? 0.32 : 0.30),
     disc: dark ? AppColors.railInk : AppColors.navy,
     onDisc: dark ? AppColors.navyDeep : Colors.white,
   );
@@ -1336,19 +1337,31 @@ class _DayCell extends StatelessWidget {
 
     Widget? band;
     if (bandLeft || bandRight) {
-      band = Row(
-        children: [
-          Expanded(
-            child: ColoredBox(
-              color: bandLeft ? colors.band : Colors.transparent,
-            ),
+      // A [ColoredBox] with no child takes the smallest size its constraints
+      // allow, and a Row hands its children a *loose* height unless told to
+      // stretch — so both halves of this came out nought points tall and the
+      // band was never on screen in either theme. It is drawn as tall as the
+      // endpoint disc, so a picked span reads as one bar running through the
+      // circles rather than a block filling the row.
+      band = Center(
+        child: SizedBox(
+          height: size - 8,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: ColoredBox(
+                  color: bandLeft ? colors.band : Colors.transparent,
+                ),
+              ),
+              Expanded(
+                child: ColoredBox(
+                  color: bandRight ? colors.band : Colors.transparent,
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: ColoredBox(
-              color: bandRight ? colors.band : Colors.transparent,
-            ),
-          ),
-        ],
+        ),
       );
     }
 

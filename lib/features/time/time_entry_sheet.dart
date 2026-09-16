@@ -567,11 +567,6 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                       policy.requiredDescription,
                     ),
                     counterText: '',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppTheme.radiusControl,
-                      ),
-                    ),
                   ),
                 ),
                 // Creating only. `PATCH /time/entries/{id}` carries no project
@@ -640,11 +635,6 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                               // has to fit: these three are the notations people
                               // reach for first.
                               hintText: '1h 30m · 90m · 1:30',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppTheme.radiusControl,
-                                ),
-                              ),
                             ),
                           ),
                         ),

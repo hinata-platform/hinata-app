@@ -12,16 +12,22 @@ import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/entity_avatar_editor.dart';
+import '../projects/project_create_form.dart';
 import 'team_modal_kit.dart';
 import 'team_widgets.dart';
 
 /// Add-project modal: attach an existing project or create a new one.
+///
+/// The second tab is [ProjectCreateFields] — the same form the project list
+/// creates from, so a project made here is made the same way, with the same
+/// key suggestion, the same accents and the same lead picker.
 Future<bool?> showAddProjectModal(
   BuildContext context, {
   required Team team,
   required List<Project> available,
   required List<DirectoryUser> leadCandidates,
   required String currentUserId,
+  Set<String> takenKeys = const {},
 }) {
   final repo = context.read<TeamRepository>();
   return showTeamModal<bool>(
@@ -32,6 +38,7 @@ Future<bool?> showAddProjectModal(
       available: available,
       leadCandidates: leadCandidates,
       currentUserId: currentUserId,
+      takenKeys: takenKeys,
     ),
   );
 }
@@ -43,13 +50,17 @@ class _AddProjectBody extends StatefulWidget {
     required this.available,
     required this.leadCandidates,
     required this.currentUserId,
+    required this.takenKeys,
   });
 
   final TeamRepository repo;
   final Team team;
   final List<Project> available;
+
+  /// Only the attach tab needs these: it names each available project's lead.
   final List<DirectoryUser> leadCandidates;
   final String currentUserId;
+  final Set<String> takenKeys;
 
   @override
   State<_AddProjectBody> createState() => _AddProjectBodyState();
@@ -58,33 +69,34 @@ class _AddProjectBody extends StatefulWidget {
 class _AddProjectBodyState extends State<_AddProjectBody> {
   late bool _attachMode = widget.available.isNotEmpty;
   final _selected = <String>{};
-  final _name = TextEditingController();
-  final _key = TextEditingController();
-  final _desc = TextEditingController();
-  late int _hue = widget.team.colorHue;
-  late String _lead = widget.currentUserId;
-  bool _busy = false;
 
-  /// The picture chosen before the project exists, uploaded right after it
-  /// does.
-  PickedImage? _pendingAvatar;
+  /// The new project, kept for the life of the modal so switching back and
+  /// forth between the two tabs does not throw away what was typed. It opens on
+  /// the team's own accent, which is a better guess than the palette's first.
+  late final ProjectDraft _draft = ProjectDraft(
+    takenKeys: widget.takenKeys,
+    hue: widget.team.colorHue,
+    meId: widget.currentUserId.isEmpty ? null : widget.currentUserId,
+  );
+
+  bool _busy = false;
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    _draft.addListener(_refresh);
+  }
+
+  @override
   void dispose() {
-    _name.dispose();
-    _key.dispose();
-    _desc.dispose();
+    _draft.removeListener(_refresh);
+    _draft.dispose();
     super.dispose();
   }
 
-  String get _effectiveKey {
-    final typed = _key.text.trim().toUpperCase();
-    if (typed.isNotEmpty) return typed;
-    final from = _name.text.trim();
-    return from.isEmpty
-        ? ''
-        : from.replaceAll(RegExp(r'[^A-Za-z0-9]'), '').toUpperCase();
+  void _refresh() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _run(Future<void> Function() action) async {
@@ -110,17 +122,17 @@ class _AddProjectBodyState extends State<_AddProjectBody> {
   Future<void> _create() => _run(() async {
     final created = await widget.repo.createTeamProject(
       widget.team.id,
-      key: _effectiveKey,
-      name: _name.text.trim(),
-      description: _desc.text.trim().isEmpty ? null : _desc.text.trim(),
-      color: teamHueHex(_hue),
-      leadId: _lead,
+      key: _draft.trimmedKey,
+      name: _draft.trimmedName,
+      description: _draft.trimmedDescription,
+      color: _draft.colorHex,
+      leadId: _draft.lead?.id,
     );
     if (mounted) {
       final repo = context.read<ProjectRepository>();
       await uploadPendingAvatar(
         context,
-        _pendingAvatar,
+        _draft.pendingAvatar,
         EntityAvatarStrings.project,
         (file) => repo.uploadProjectAvatar(created.id, file),
       );
@@ -129,9 +141,7 @@ class _AddProjectBodyState extends State<_AddProjectBody> {
 
   @override
   Widget build(BuildContext context) {
-    final canSubmit = _attachMode
-        ? _selected.isNotEmpty
-        : _name.text.trim().isNotEmpty;
+    final canSubmit = _attachMode ? _selected.isNotEmpty : _draft.valid;
     return ModalShell(
       icon: LucideIcons.folderPlus,
       title: context.t('teams.addProjectTitle'),
@@ -220,101 +230,9 @@ class _AddProjectBodyState extends State<_AddProjectBody> {
     ];
   }
 
-  List<Widget> _createStep(BuildContext context) {
-    final color = teamHueColor(_hue);
-    return [
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          PendingAvatarField(
-            picked: _pendingAvatar,
-            size: 52,
-            radius: 15,
-            strings: EntityAvatarStrings.project,
-            fallback: ProjectKeyGlyph(
-              label: _effectiveKey.isEmpty ? 'P' : _effectiveKey,
-              color: color,
-              size: 52,
-              radius: 15,
-              fontSize: 14,
-            ),
-            onPicked: (image) => setState(() => _pendingAvatar = image),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FieldLabel(context.t('teams.projectName')),
-                TextField(
-                  controller: _name,
-                  autofocus: true,
-                  onChanged: (_) => setState(() {}),
-                  textCapitalization: TextCapitalization.words,
-                  textInputAction: TextInputAction.next,
-                  decoration: teamFieldDecoration(
-                    context,
-                    hint: context.t('teams.projectNamePlaceholder'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 92,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FieldLabel(context.t('teams.key')),
-                TextField(
-                  controller: _key,
-                  textCapitalization: TextCapitalization.characters,
-                  autocorrect: false,
-                  maxLength: 4,
-                  buildCounter:
-                      (
-                        _, {
-                        required currentLength,
-                        required isFocused,
-                        maxLength,
-                      }) => null,
-                  onChanged: (_) => setState(() {}),
-                  style: const TextStyle(fontFamily: AppTheme.fontMono),
-                  decoration: teamFieldDecoration(context, hint: 'BILL'),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 16),
-      FieldLabel(context.t('teams.description'), optional: true),
-      TextField(
-        controller: _desc,
-        keyboardType: TextInputType.multiline,
-        textInputAction: TextInputAction.newline,
-        textCapitalization: TextCapitalization.sentences,
-        minLines: 2,
-        maxLines: 3,
-        decoration: teamFieldDecoration(
-          context,
-          hint: context.t('teams.projectDescriptionPlaceholder'),
-        ),
-      ),
-      const SizedBox(height: 16),
-      FieldLabel(context.t('teams.projectLead')),
-      _LeadDropdown(
-        candidates: widget.leadCandidates,
-        value: _lead,
-        currentUserId: widget.currentUserId,
-        onChanged: (v) => setState(() => _lead = v),
-      ),
-      const SizedBox(height: 16),
-      FieldLabel(context.t('teams.colorLabel')),
-      ColorPicker(hue: _hue, onChanged: (h) => setState(() => _hue = h)),
-    ];
-  }
+  List<Widget> _createStep(BuildContext context) => [
+    ProjectCreateFields(draft: _draft),
+  ];
 }
 
 class _ModeToggle extends StatelessWidget {
@@ -382,62 +300,6 @@ class _ModeToggle extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LeadDropdown extends StatelessWidget {
-  const _LeadDropdown({
-    required this.candidates,
-    required this.value,
-    required this.currentUserId,
-    required this.onChanged,
-  });
-
-  final List<DirectoryUser> candidates;
-  final String value;
-  final String currentUserId;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        border: Border.all(color: AppColors.hairline),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: candidates.any((u) => u.id == value)
-              ? value
-              : (candidates.isNotEmpty ? candidates.first.id : null),
-          isExpanded: true,
-          isDense: true,
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          items: [
-            for (final u in candidates)
-              DropdownMenuItem(
-                value: u.id,
-                child: Text(
-                  u.id == currentUserId
-                      ? context.t(
-                          'teams.youName',
-                          variables: {'name': u.displayName},
-                        )
-                      : u.displayName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 13, color: AppColors.ink),
-                ),
-              ),
-          ],
-          onChanged: (v) {
-            if (v != null) onChanged(v);
-          },
         ),
       ),
     );
