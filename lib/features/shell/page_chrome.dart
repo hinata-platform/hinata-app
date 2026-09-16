@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/responsive/golden_columns.dart' show goldenContentMax;
 import '../../core/responsive/responsive.dart';
+import 'shell_nav.dart';
 
 /// A single primary action a sub-page publishes into the shell's glass app bar
 /// (e.g. Save, Invite). The shell renders it in the app bar's trailing slot:
@@ -189,11 +190,13 @@ class PageChromeController extends ChangeNotifier {
   List<PageAction> actionsFor(String location) =>
       _dataFor(location)?.actions ?? const [];
 
-  /// Defaults to the reading width, so a page that publishes nothing — or has
-  /// not published yet — is laid out like every other page rather than flashing
-  /// wide first.
+  /// Falls back to what the route itself says ([pageContentMax]) while the page
+  /// has not published — which is the whole of its first frame, and, for a page
+  /// that waits on a request, the whole of its load. Without that a dashboard
+  /// laid itself out in one column, waited a second, and then spread over
+  /// three.
   double contentMaxFor(String location) =>
-      _dataFor(location)?.contentMax ?? Breakpoints.readingWidth;
+      _dataFor(location)?.contentMax ?? pageContentMax(location);
 
   /// Records [data] as the chrome for its own [PageChromeData.location], on
   /// behalf of [owner] (the publishing [PageChrome] state).

@@ -137,9 +137,11 @@ void main() {
       expect(find.text('Stupa Website'), findsOneWidget);
 
       // A board made while the list is covered again is read once it is back.
-      unawaited(navigator.currentState!.push(
-        MaterialPageRoute<void>(builder: (_) => const _Board()),
-      ));
+      unawaited(
+        navigator.currentState!.push(
+          MaterialPageRoute<void>(builder: (_) => const _Board()),
+        ),
+      );
       await tester.pumpAndSettle();
       boards.catalogue = const [
         AgileBoard(id: 'b1', name: 'Stupa Website', projectIds: ['p1']),

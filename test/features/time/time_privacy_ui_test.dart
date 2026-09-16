@@ -29,25 +29,26 @@ void main() {
   }
 
   group('the panel follows the policies', () {
-    testWidgets('nothing switched on: totals only, nothing recorded, nothing deleted', (
-      tester,
-    ) async {
-      await showPanel(
-        tester,
-        const TimeVisibility(foreignChangesRecorded: false),
-      );
+    testWidgets(
+      'nothing switched on: totals only, nothing recorded, nothing deleted',
+      (tester) async {
+        await showPanel(
+          tester,
+          const TimeVisibility(foreignChangesRecorded: false),
+        );
 
-      // The two lines that are true on every instance.
-      expect(find.text('time.privacy.row.self'), findsOneWidget);
-      expect(find.text('time.privacy.row.admins'), findsOneWidget);
-      expect(find.text('time.privacy.row.leadsTotals'), findsOneWidget);
-      expect(find.text('time.privacy.row.leadsSee'), findsNothing);
-      expect(find.text('time.privacy.row.approvals'), findsNothing);
-      expect(find.text('time.privacy.row.arbzgHints'), findsNothing);
-      expect(find.textContaining('time.privacy.row.lateEntry'), findsNothing);
-      expect(find.text('time.privacy.row.timerNotRecorded'), findsOneWidget);
-      expect(find.text('time.privacy.row.entryKept'), findsOneWidget);
-    });
+        // The two lines that are true on every instance.
+        expect(find.text('time.privacy.row.self'), findsOneWidget);
+        expect(find.text('time.privacy.row.admins'), findsOneWidget);
+        expect(find.text('time.privacy.row.leadsTotals'), findsOneWidget);
+        expect(find.text('time.privacy.row.leadsSee'), findsNothing);
+        expect(find.text('time.privacy.row.approvals'), findsNothing);
+        expect(find.text('time.privacy.row.arbzgHints'), findsNothing);
+        expect(find.textContaining('time.privacy.row.lateEntry'), findsNothing);
+        expect(find.text('time.privacy.row.timerNotRecorded'), findsOneWidget);
+        expect(find.text('time.privacy.row.entryKept'), findsOneWidget);
+      },
+    );
 
     testWidgets('leads see entries and the Working Hours Act hints are on', (
       tester,
@@ -115,31 +116,35 @@ void main() {
   group('the first-use notice', () {
     const unconfirmed = TimePrivacy(notice: '## Deine Arbeitszeit');
 
-    Widget host(FakeTimePrivacyCubit cubit) => BlocProvider<TimePrivacyCubit>.value(
-      value: cubit,
-      child: MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => Column(
-              children: [
-                // Two views of the module opening one after the other.
-                TextButton(
-                  onPressed: () => offerTimePrivacyNotice(context),
-                  child: const Text('open list'),
+    Widget host(FakeTimePrivacyCubit cubit) =>
+        BlocProvider<TimePrivacyCubit>.value(
+          value: cubit,
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => Column(
+                  children: [
+                    // Two views of the module opening one after the other.
+                    TextButton(
+                      onPressed: () => offerTimePrivacyNotice(context),
+                      child: const Text('open list'),
+                    ),
+                    TextButton(
+                      onPressed: () => offerTimePrivacyNotice(context),
+                      child: const Text('open calendar'),
+                    ),
+                  ],
                 ),
-                TextButton(
-                  onPressed: () => offerTimePrivacyNotice(context),
-                  child: const Text('open calendar'),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
-    );
+        );
 
     testWidgets('opens once, and "Understood" records it', (tester) async {
-      final cubit = FakeTimePrivacyCubit(_NoTimeRepository(), onLoad: unconfirmed);
+      final cubit = FakeTimePrivacyCubit(
+        _NoTimeRepository(),
+        onLoad: unconfirmed,
+      );
       await tester.pumpWidget(host(cubit));
 
       await tester.tap(find.text('open list'));
@@ -160,7 +165,10 @@ void main() {
     testWidgets('closed without confirming, it does not follow the next view', (
       tester,
     ) async {
-      final cubit = FakeTimePrivacyCubit(_NoTimeRepository(), onLoad: unconfirmed);
+      final cubit = FakeTimePrivacyCubit(
+        _NoTimeRepository(),
+        onLoad: unconfirmed,
+      );
       await tester.pumpWidget(host(cubit));
 
       await tester.tap(find.text('open list'));

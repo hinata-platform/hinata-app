@@ -19,6 +19,9 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/responsive/golden_columns.dart' show goldenContentMax;
+import '../../core/responsive/responsive.dart';
+
 /// One entry in the navigation: where it goes, what it is called, what it looks
 /// like.
 class NavDestination {
@@ -139,6 +142,31 @@ bool isTimeModuleRoute(String location) =>
 /// in another, and the two disagreeing is a list whose last row sits under it.
 bool showsTimerBar(String location, {required bool immersive}) =>
     !immersive && isTimeModuleRoute(location);
+
+/// How wide the page at [location] is known to want its body, before the page
+/// itself has said so.
+///
+/// The same shape as [subPageTitleKey]: a fallback the route can answer on its
+/// own, which the page overrides through `PageChrome` once it is mounted. It
+/// exists because a page publishes its chrome after its first frame — and, for
+/// a page that waits on a request, after its data — so until then the shell had
+/// nothing to go on but the reading width. A dashboard would lay itself out in
+/// one column, spend a second loading, and then spread over three: the
+/// rearrangement the eye notices most, and the one nobody asked for.
+///
+/// Only routes whose width never depends on what they hold belong here. A
+/// board's does — it widens for a wall that would not otherwise fit — so it is
+/// absent and keeps publishing for itself.
+double pageContentMax(String location) {
+  if (location == '/' || location == '/dashboard') return goldenContentMax;
+  if (location == '/admin') return goldenContentMax;
+  // A week of a timesheet or a month of a calendar is a grid to scan across,
+  // not a column to read: it takes the window.
+  if (isTimeModuleRoute(location) || location == '/timesheet') {
+    return double.infinity;
+  }
+  return Breakpoints.readingWidth;
+}
 
 /// Fallback title key for a sub-page route, or null when [location] is a
 /// primary nav destination (dashboard, projects, issues, board, …).

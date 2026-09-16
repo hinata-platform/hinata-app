@@ -108,7 +108,7 @@ void main() {
     }
   });
 
-  test('two project columns: the longest card opens the golden one', () {
+  test('two project columns: General opens the page, whatever else moves', () {
     final columns = arrangeGolden(
       projectSettingsGroups(timeTracking: true),
       2,
@@ -116,16 +116,34 @@ void main() {
 
     expect(columns.first, [
       ProjectSettingsCard.general,
-      ProjectSettingsCard.members,
-      ProjectSettingsCard.labels,
       ProjectSettingsCard.git,
+      ProjectSettingsCard.timeTracking,
     ]);
     expect(columns.last, [
+      ProjectSettingsCard.members,
+      ProjectSettingsCard.labels,
       ProjectSettingsCard.workflow,
-      ProjectSettingsCard.timeTracking,
       ProjectSettingsCard.archive,
       ProjectSettingsCard.danger,
     ]);
+  });
+
+  test('General leads whether or not the time card is there', () {
+    // The lead is the one position on the page somebody can rely on, so it must
+    // not depend on which optional cards the instance happens to show.
+    for (final timeTracking in [true, false]) {
+      for (final columns in [2, 3]) {
+        final arrangement = arrangeGolden(
+          projectSettingsGroups(timeTracking: timeTracking),
+          columns,
+        );
+        expect(
+          arrangement.columns.first.first,
+          ProjectSettingsCard.general,
+          reason: 'timeTracking=$timeTracking, columns=$columns',
+        );
+      }
+    }
   });
 
   test('a page too short for three columns keeps two on a wide screen', () {
