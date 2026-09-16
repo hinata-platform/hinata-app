@@ -18,7 +18,9 @@ enum SettingsCard {
 /// The cards of the wide settings page in the groups that stay together, with
 /// roughly how tall each group stands. [GoldenColumns] spreads them.
 ///
-/// The notifications and the time cards are wide: their rows carry toggles,
+/// Security leads: it is where the page starts and where somebody looking for
+/// their account goes first. The notifications and the time cards are wide:
+/// their rows carry toggles,
 /// steppers and pickers side by side. Time tracking and working hours grew with
 /// every stage of HIN-60, which is why a fixed left column kept getting longer.
 /// They are two groups, not one: together they stood taller than any column
@@ -28,10 +30,11 @@ List<GoldenGroup<SettingsCard>> settingsGroups({
   required bool tokens,
   required bool admin,
 }) => [
-  const GoldenGroup([
-    SettingsCard.security,
-    SettingsCard.sessions,
-  ], weight: 7.4),
+  const GoldenGroup(
+    [SettingsCard.security, SettingsCard.sessions],
+    weight: 7.4,
+    lead: true,
+  ),
   const GoldenGroup([SettingsCard.notifications], weight: 7, wide: true),
   if (timeTracking) ...const [
     GoldenGroup([SettingsCard.timeTracking], weight: 12, wide: true),

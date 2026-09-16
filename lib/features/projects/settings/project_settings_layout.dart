@@ -15,13 +15,15 @@ enum ProjectSettingsCard {
 /// The cards of the project settings page in the groups that stay together,
 /// with roughly how tall each group stands. [GoldenColumns] spreads them.
 ///
-/// The workflow and the git integration are wide: their rows carry a handle,
-/// a name, toggles and actions side by side. Members and labels are the team's
-/// vocabulary and stay together, archive and deletion close the page.
+/// General leads: it is the card that names the project, and a settings page
+/// whose first card is somewhere else reads as a page you have opened by
+/// mistake. The workflow and the git integration are wide: their rows carry a
+/// handle, a name, toggles and actions side by side. Members and labels are the
+/// team's vocabulary and stay together, archive and deletion close the page.
 List<GoldenGroup<ProjectSettingsCard>> projectSettingsGroups({
   required bool timeTracking,
 }) => [
-  const GoldenGroup([ProjectSettingsCard.general], weight: 5.5),
+  const GoldenGroup([ProjectSettingsCard.general], weight: 5.5, lead: true),
   const GoldenGroup([
     ProjectSettingsCard.members,
     ProjectSettingsCard.labels,

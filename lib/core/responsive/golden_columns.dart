@@ -1,6 +1,3 @@
-import 'dart:async';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import 'responsive.dart';
@@ -183,15 +180,23 @@ double spreadOf(List<double> loads) {
 /// Cards in as many golden columns as the width holds ([goldenColumnCount]) and
 /// the content fills, spread by [arrangeBalanced].
 ///
-/// The weights of the groups are only where the page starts. How tall a card
-/// really stands depends on its data (how many members, repositories, sessions
-/// or labels), and some cards read that data only after they appeared. So the
-/// cards are measured after they laid out, and again whenever one changes its
-/// size, until somebody touches the page: a tap or a focus inside it, or a few
-/// seconds without either. After that the arrangement holds still. A card that
-/// grows while somebody types in it must not jump to another column and take
-/// the caret with it. Resizing the window spreads the same measured heights over
-/// the new number of columns.
+/// **Where a card sits depends on nothing but the page's own declaration and
+/// the number of columns.** That is the whole contract, and it is worth more
+/// than a perfectly level pair of columns.
+///
+/// It did measure, once. Every card was measured after it laid out and again
+/// whenever it changed size, and the page re-arranged itself around the real
+/// heights — which meant a card's position depended on how much data it had
+/// found, and how late. Cards visibly hopped between columns for a second while
+/// a page loaded, and the same page put the same card in a different place for
+/// a different project. Nobody can learn a layout like that; you end up hunting
+/// for a card you have opened a hundred times. Level columns are a thing you
+/// notice once. A card that moves is a thing you notice every time.
+///
+/// So the weights a page declares are the whole input. They are a statement
+/// about the card, not about today's data: roughly how tall it stands, whether
+/// it is [GoldenGroup.wide], and whether it [GoldenGroup.lead]s its column. A
+/// page whose columns end uneven is tuned by changing what it declares.
 class GoldenColumns<T> extends StatefulWidget {
   const GoldenColumns({
     super.key,
@@ -209,178 +214,21 @@ class GoldenColumns<T> extends StatefulWidget {
 }
 
 class _GoldenColumnsState<T> extends State<GoldenColumns<T>> {
-  /// When the page holds still whatever still arrives. Long enough for the
-  /// reads a card makes on its own, short enough that nothing moves under a
-  /// reader who is only slow to touch anything.
-  static const _latest = Duration(seconds: 12);
-
-  /// How often the same arrangement may come back before the page stops there:
-  /// a card that wraps differently in the other column would otherwise make two
-  /// arrangements point at each other for good.
-  static const _repeats = 3;
-
-  /// One key per card, so a card keeps its state when it moves to another
-  /// column.
+  /// One key per card, so a card keeps its state when the window resizes and
+  /// the columns are dealt again.
   final _keys = <T, GlobalKey>{};
 
-  /// Measured heights, per kind of column: the same card stands taller in a
-  /// narrow column than in the golden one, and by how much is nothing a factor
-  /// can say. Until a card has stood in both, the other is estimated from the
-  /// group's own proportion.
-  final _inGolden = <T, double>{};
-  final _inNarrow = <T, double>{};
-
-  /// How often the page has stood in each arrangement, see [_repeats].
-  final _seen = <String, int>{};
-
-  GoldenArrangement<T>? _shown;
-  Timer? _lastCall;
-  bool _settled = false;
-  bool _pending = false;
-  bool _force = false;
-
   @override
-  void initState() {
-    super.initState();
-    _lastCall = Timer(_latest, _holdStill);
-  }
-
-  @override
-  void didUpdateWidget(GoldenColumns<T> oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // A card came or went (a hidden one shown for editing, data that arrived):
-    // nobody is typing in a card that was not there, so measure the new set
-    // once more rather than fall back to the estimates for good.
-    final before = {for (final group in oldWidget.groups) ...group.cards};
-    final after = {for (final group in widget.groups) ...group.cards};
-    if (before.length == after.length && before.containsAll(after)) return;
-    _keys.removeWhere((card, _) => !after.contains(card));
-    _inGolden.removeWhere((card, _) => !after.contains(card));
-    _inNarrow.removeWhere((card, _) => !after.contains(card));
-    _schedule(force: true);
-  }
-
-  @override
-  void dispose() {
-    _lastCall?.cancel();
-    super.dispose();
-  }
-
-  void _holdStill() {
-    _settled = true;
-    _lastCall?.cancel();
-  }
-
-  /// Measures after the coming frame, when the cards have their new sizes.
-  void _schedule({bool force = false}) {
-    _force |= force;
-    if ((_settled && !_force) || _pending) return;
-    _pending = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _pending = false;
-      final forced = _force;
-      _force = false;
-      if (mounted) _measure(force: forced);
-    });
-  }
-
-  /// Whether every card has been measured at least once; estimates and measured
-  /// heights are not in one unit, so a page uses one or the other.
-  bool get _measured => widget.groups.every(
-    (group) => group.cards.every(
-      (card) => _inGolden.containsKey(card) || _inNarrow.containsKey(card),
-    ),
-  );
-
-  /// What [card] of [group] stands in that kind of column, measured where it has
-  /// been and carried over by the group's own proportion where it has not.
-  double _heightOf(T card, GoldenGroup<T> group, {required bool golden}) {
-    final measured = golden ? _inGolden[card] : _inNarrow[card];
-    if (measured != null) return measured;
-    final other = (golden ? _inNarrow[card] : _inGolden[card])!;
-    final ratio = group.narrow / group.golden;
-    return golden ? other / ratio : other * ratio;
-  }
-
-  List<GoldenGroup<T>> get _weighted {
-    if (!_measured) return widget.groups;
-    return [
-      for (final group in widget.groups)
-        GoldenGroup.measured(
-          group.cards,
-          narrow: group.cards.fold(
-            0,
-            (sum, card) => sum + _heightOf(card, group, golden: false),
-          ),
-          golden: group.cards.fold(
-            0,
-            (sum, card) => sum + _heightOf(card, group, golden: true),
-          ),
-          wide: group.wide,
-          lead: group.lead,
-        ),
-    ];
-  }
-
-  void _measure({bool force = false}) {
-    if (_settled && !force) return;
-    final shown = _shown;
-    if (shown == null || shown.columns.length < 2) return;
-    var changed = false;
-    for (var column = 0; column < shown.columns.length; column++) {
-      final into = column == 0 ? _inGolden : _inNarrow;
-      for (final card in shown.columns[column]) {
-        final box = _keys[card]?.currentContext?.findRenderObject();
-        if (box is! RenderBox || !box.hasSize) return;
-        final height = box.size.height + widget.gap;
-        if (((into[card] ?? -1) - height).abs() < 1) continue;
-        into[card] = height;
-        changed = true;
-      }
-    }
-    if (!changed) return;
-    setState(() {});
-  }
-
-  static bool _sameColumns<T>(List<List<T>> a, List<List<T>> b) =>
-      a.length == b.length &&
-      Iterable<int>.generate(a.length).every((i) => listEquals(a[i], b[i]));
-
-  @override
-  Widget build(BuildContext context) => Focus(
-    canRequestFocus: false,
-    skipTraversal: true,
-    onFocusChange: (focused) {
-      if (focused) _holdStill();
-    },
-    child: Listener(
-      behavior: HitTestBehavior.translucent,
-      onPointerDown: (_) => _holdStill(),
-      child: NotificationListener<SizeChangedLayoutNotification>(
-        onNotification: (_) {
-          _schedule();
-          return true;
-        },
-        child: LayoutBuilder(builder: _columns),
-      ),
-    ),
-  );
+  Widget build(BuildContext context) => LayoutBuilder(builder: _columns);
 
   Widget _columns(BuildContext context, BoxConstraints constraints) {
     final arrangement = arrangeBalanced(
-      _weighted,
+      widget.groups,
       goldenColumnCount(constraints.maxWidth),
     );
-    final previous = _shown;
-    if (previous == null) {
-      _schedule();
-    } else if (!_sameColumns(previous.columns, arrangement.columns)) {
-      final signature = arrangement.columns.toString();
-      final seen = (_seen[signature] ?? 0) + 1;
-      _seen[signature] = seen;
-      if (seen >= _repeats) _holdStill();
-    }
-    _shown = arrangement;
+    final live = {for (final group in widget.groups) ...group.cards};
+    _keys.removeWhere((card, _) => !live.contains(card));
+
     Widget column(List<T> cards) => Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -388,7 +236,7 @@ class _GoldenColumnsState<T> extends State<GoldenColumns<T>> {
           if (i > 0) SizedBox(height: widget.gap),
           KeyedSubtree(
             key: _keys.putIfAbsent(cards[i], GlobalKey.new),
-            child: SizeChangedLayoutNotifier(child: widget.card(cards[i])),
+            child: widget.card(cards[i]),
           ),
         ],
       ],
