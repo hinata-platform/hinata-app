@@ -7,7 +7,6 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/availability_models.dart';
 import '../../core/repositories/availability_repository.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/widgets/field_button.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveSwitch;
@@ -227,9 +226,6 @@ class _TimeOffFormState extends State<_TimeOffForm> {
                   helperText: context.t(
                     'availability.timeOff.noteHint',
                     variables: {'max': '${TimeOff.noteMax}'},
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppTheme.radiusControl),
                   ),
                 ),
               ),

@@ -1277,6 +1277,7 @@
     "statesLabel": "Statuts",
     "members": "{{count}} membres",
     "name": "Nom du projet",
+    "namePlaceholder": "par ex. Facturation et formules",
     "key": "Clé du projet",
     "keyHelp": "Code court utilisé dans les identifiants de tickets, par ex. ACME → ACME-42",
     "active": "Actifs",

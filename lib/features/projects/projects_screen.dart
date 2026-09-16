@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
@@ -15,14 +14,12 @@ import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/hue_colors.dart';
-import '../../core/util/keys.dart';
 import '../../core/widgets/entity_avatar.dart';
 import '../../core/widgets/hive_widgets.dart';
-import '../../core/widgets/person_picker.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/entity_avatar_editor.dart';
 import '../sprint/modals/glass_modal.dart';
+import 'project_create_form.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/user_repository.dart';
 
@@ -547,107 +544,33 @@ class _CreateProjectBody extends StatefulWidget {
 }
 
 class _CreateProjectBodyState extends State<_CreateProjectBody> {
-  final _key = TextEditingController();
-  final _name = TextEditingController();
-  final _description = TextEditingController();
+  late final ProjectDraft _draft = ProjectDraft(
+    takenKeys: widget.takenKeys,
+    meId: widget.meId,
+  );
 
-  /// While true the key follows the name. The first edit of the key field ends
-  /// that for good — a key somebody typed is theirs to keep.
-  bool _keyFollowsName = true;
-
-  /// The chosen lead. Held as the person, not just an id: the field shows a
-  /// face and a name, and the picker that set it is the only thing that knows
-  /// them — there is no directory in memory here to look an id up in.
-  DirectoryUser? _lead;
-  int _hue = kProjectHues.first.hue;
   bool _saving = false;
   String? _error;
-
-  /// The picture chosen before the project exists, uploaded right after it does.
-  PickedImage? _pendingAvatar;
-
-  static final _keyPattern = RegExp(r'^[A-Z][A-Z0-9]{1,9}$');
 
   @override
   void initState() {
     super.initState();
-    _name.addListener(_onNameChanged);
-    _key.addListener(_onKeyChanged);
-    _loadMe();
+    _draft.addListener(_refresh);
   }
-
-  /// Whoever is creating the project leads it until they say otherwise, so the
-  /// field opens filled. One request for one person, not the whole directory:
-  /// the picker pages the rest when it is opened.
-  Future<void> _loadMe() async {
-    final meId = widget.meId;
-    if (meId == null) return;
-    try {
-      final found = await context.read<UserRepository>().usersByIds([meId]);
-      if (mounted && found.isNotEmpty) setState(() => _lead = found.first);
-    } on ApiFailure {
-      // The field stays empty and the picker is still one tap away.
-    }
-  }
-
-  Future<void> _pickLead(Rect anchor) async {
-    final picked = await showPersonPicker(
-      context,
-      anchorRect: anchor,
-      selectedId: _lead?.id,
-      meId: widget.meId,
-    );
-    if (picked != null && mounted) setState(() => _lead = picked);
-  }
-
-  void _refresh() => setState(() {});
-
-  /// Types the key along with the name — the whole point being that nobody has
-  /// to invent one, while it stays a plain text field they can overrule.
-  void _onNameChanged() {
-    if (_keyFollowsName) {
-      final suggestion = suggestKey(_name.text, taken: widget.takenKeys);
-      if (suggestion != _key.text) {
-        // Set through the controller's value so the caret stays at the end.
-        _key.value = TextEditingValue(
-          text: suggestion,
-          selection: TextSelection.collapsed(offset: suggestion.length),
-        );
-        return; // the key listener refreshes
-      }
-    }
-    _refresh();
-  }
-
-  void _onKeyChanged() {
-    // Only a *typed* key breaks the link; the one we just wrote does not.
-    if (_keyFollowsName &&
-        _key.text != suggestKey(_name.text, taken: widget.takenKeys)) {
-      _keyFollowsName = false;
-    }
-    _refresh();
-  }
-
-  /// A key the client already knows is taken — surfaced before the round trip.
-  bool get _keyTaken =>
-      widget.takenKeys.contains(_key.text.trim().toUpperCase());
 
   @override
   void dispose() {
-    _key.dispose();
-    _name.dispose();
-    _description.dispose();
+    _draft.removeListener(_refresh);
+    _draft.dispose();
     super.dispose();
   }
 
-  bool get _valid =>
-      _name.text.trim().isNotEmpty &&
-      _keyPattern.hasMatch(_key.text.trim()) &&
-      !_keyTaken;
+  void _refresh() {
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
-    final compact = context.isCompact;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -662,36 +585,7 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _identityRow(compact),
-                const SizedBox(height: 16),
-                GlassField(
-                  label: context.t('projects.descriptionOptional'),
-                  child: TextField(
-                    controller: _description,
-                    keyboardType: TextInputType.multiline,
-                    textInputAction: TextInputAction.newline,
-                    textCapitalization: TextCapitalization.sentences,
-                    minLines: 2,
-                    maxLines: 4,
-                    decoration: glassInputDecoration(
-                      hint: context.t('projectSettings.descHint'),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _leadAndColor(compact),
-                const SizedBox(height: 16),
-                GlassInfoLine(
-                  icon: LucideIcons.info,
-                  child: Text(
-                    context.t('projects.defaultWorkflowInfo'),
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      height: 1.45,
-                      color: AppColors.inkSoft,
-                    ),
-                  ),
-                ),
+                ProjectCreateFields(draft: _draft),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
                   Text(
@@ -710,157 +604,31 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
           confirmLabel: context.t('common.create'),
           confirmIcon: LucideIcons.check,
           busy: _saving,
-          onConfirm: _valid ? _save : null,
+          onConfirm: _draft.valid ? _save : null,
         ),
       ],
     );
   }
 
-  Widget _identityRow(bool compact) {
-    // The key/colour tile doubles as the picture field: a project being created
-    // has no id yet and the avatar endpoints are addressed by id, so the pick is
-    // held in memory and uploaded the moment the project exists.
-    // Dropped past the field's label so the tile lines up with the input beside
-    // it rather than with the label above it. On the row, not inside the glyph:
-    // the avatar field clips its fallback to a 52×52 box, so an offset in there
-    // comes out of the tile's own height — which is exactly how it shipped as a
-    // pill. `_kFieldLabelHeight` is GlassField's label line plus its 7-pixel gap.
-    final glyph = Padding(
-      padding: const EdgeInsets.only(top: _kFieldLabelHeight),
-      child: PendingAvatarField(
-        picked: _pendingAvatar,
-        size: 52,
-        radius: 15,
-        strings: EntityAvatarStrings.project,
-        fallback: _GlyphPreview(hue: _hue, keyText: _key.text),
-        onPicked: (image) => setState(() => _pendingAvatar = image),
-      ),
-    );
-    final nameField = GlassField(
-      label: context.t('projects.name'),
-      child: TextField(
-        controller: _name,
-        autofocus: true,
-        textCapitalization: TextCapitalization.words,
-        textInputAction: TextInputAction.next,
-        decoration: glassInputDecoration(hint: 'e.g. Billing & Plans'),
-      ),
-    );
-    final keyField = GlassField(
-      label: context.t('projects.key'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _key,
-            textCapitalization: TextCapitalization.characters,
-            autocorrect: false,
-            maxLength: 10,
-            style: const TextStyle(fontFamily: AppTheme.fontMono),
-            inputFormatters: [_UpperAlphaNumFormatter()],
-            decoration: glassInputDecoration(
-              hint: 'BILL',
-            ).copyWith(counterText: ''),
-          ),
-          // Said here rather than after a round trip that fails.
-          if (_keyTaken)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                context.t('projects.keyTaken'),
-                style: const TextStyle(fontSize: 11.5, color: AppColors.danger),
-              ),
-            ),
-        ],
-      ),
-    );
-
-    if (compact) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              glyph,
-              const SizedBox(width: 12),
-              Expanded(child: nameField),
-            ],
-          ),
-          const SizedBox(height: 14),
-          keyField,
-        ],
-      );
-    }
-    return Row(
-      // start, not end: the key field grows a "key taken" line beneath it, and
-      // bottom-aligning would shove the picture tile and the name field down by
-      // that line's height every time the message appears.
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        glyph,
-        const SizedBox(width: 12),
-        Expanded(child: nameField),
-        const SizedBox(width: 12),
-        SizedBox(width: 104, child: keyField),
-      ],
-    );
-  }
-
-  Widget _leadAndColor(bool compact) {
-    final lead = GlassField(
-      label: context.t('projects.projectLead'),
-      child: PersonPickerField(
-        person: _lead,
-        isMe: _lead != null && _lead!.id == widget.meId,
-        placeholderKey: 'projects.picker.chooseLead',
-        onTap: _pickLead,
-      ),
-    );
-    final color = GlassField(
-      label: context.t('projects.color'),
-      child: _AccentSwatches(
-        selected: _hue,
-        onPick: (h) => setState(() => _hue = h),
-      ),
-    );
-    if (compact) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [lead, const SizedBox(height: 16), color],
-      );
-    }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: lead),
-        const SizedBox(width: 16),
-        Flexible(child: color),
-      ],
-    );
-  }
-
   Future<void> _save() async {
-    if (!_valid || _saving) return;
+    if (!_draft.valid || _saving) return;
     setState(() {
       _saving = true;
       _error = null;
     });
     try {
-      final project = await context.read<ProjectRepository>().createProject(
-        key: _key.text.trim().toUpperCase(),
-        name: _name.text.trim(),
-        description: _description.text.trim().isEmpty
-            ? null
-            : _description.text.trim(),
-        color: hexForHue(_hue),
-        leadId: _lead?.id,
+      final repo = context.read<ProjectRepository>();
+      final project = await repo.createProject(
+        key: _draft.trimmedKey,
+        name: _draft.trimmedName,
+        description: _draft.trimmedDescription,
+        color: _draft.colorHex,
+        leadId: _draft.lead?.id,
       );
       if (mounted) {
-        final repo = context.read<ProjectRepository>();
         await uploadPendingAvatar(
           context,
-          _pendingAvatar,
+          _draft.pendingAvatar,
           EntityAvatarStrings.project,
           (file) => repo.uploadProjectAvatar(project.id, file),
         );
@@ -872,99 +640,5 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
         _error = failure.message;
       });
     }
-  }
-}
-
-/// The project's key on its colour, standing in for a picture that has not been
-/// chosen.
-///
-/// Deliberately unsized: it fills whatever box it is given. It used to carry its
-/// own 54×54 and a 22-pixel top margin, from when it stood alone in the row and
-/// had to be pushed down past the field's label. Inside [PendingAvatarField]
-/// that margin ate 22 of the 52 available pixels and the tile came out as a
-/// 52×30 pill — the default state of every new project, and it shipped. A
-/// fallback has no business knowing how big it is; the field that frames it
-/// does.
-/// GlassField's label line (11.5 pt) plus the 7-pixel gap below it — how far a
-/// control beside a labelled field has to drop to sit level with its input.
-const double _kFieldLabelHeight = 22;
-
-class _GlyphPreview extends StatelessWidget {
-  const _GlyphPreview({required this.hue, required this.keyText});
-  final int hue;
-  final String keyText;
-
-  @override
-  Widget build(BuildContext context) {
-    final label = keyText.isEmpty
-        ? 'P'
-        : keyText.substring(0, keyText.length.clamp(0, 3));
-    return ColoredBox(
-      color: hueSoft(hue),
-      child: Center(
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.clip,
-          style: TextStyle(
-            fontFamily: AppTheme.fontMono,
-            fontWeight: FontWeight.w700,
-            fontSize: 15,
-            color: hueChipText(hue),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Static accent-color swatch row for the create modal.
-class _AccentSwatches extends StatelessWidget {
-  const _AccentSwatches({required this.selected, required this.onPick});
-  final int selected;
-  final ValueChanged<int> onPick;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final c in kProjectHues)
-          GestureDetector(
-            onTap: () => onPick(c.hue),
-            child: Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: hueSwatch(c.hue),
-                borderRadius: BorderRadius.circular(9),
-                border: Border.all(
-                  color: c.hue == selected ? AppColors.ink : Colors.transparent,
-                  width: 2,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-/// Uppercases and strips non-[A-Z0-9] as the project key is typed.
-class _UpperAlphaNumFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final text = newValue.text.toUpperCase().replaceAll(
-      RegExp('[^A-Z0-9]'),
-      '',
-    );
-    return TextEditingValue(
-      text: text,
-      selection: TextSelection.collapsed(offset: text.length),
-    );
   }
 }

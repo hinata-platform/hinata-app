@@ -6,7 +6,6 @@ import '../../../core/api/api_client.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/availability_models.dart';
 import '../../../core/repositories/availability_repository.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/field_button.dart';
 import '../../../core/widgets/hive_widgets.dart' show HiveSwitch;
 import '../../account/account_widgets.dart';
@@ -148,9 +147,6 @@ class _HolidayFormState extends State<_HolidayForm> {
               maxLength: Holiday.nameMax,
               decoration: InputDecoration(
                 labelText: context.t('availability.admin.name'),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                ),
               ),
             ),
             SettingRow(

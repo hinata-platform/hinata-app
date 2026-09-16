@@ -1277,6 +1277,7 @@
     "statesLabel": "Status",
     "members": "{{count}} Mitglieder",
     "name": "Projektname",
+    "namePlaceholder": "z. B. Abrechnung & Tarife",
     "key": "Projektkürzel",
     "keyHelp": "Kurzcode für Aufgaben-IDs, z. B. ACME → ACME-42",
     "active": "Aktiv",

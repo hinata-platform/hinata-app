@@ -1277,6 +1277,7 @@
     "statesLabel": "状态",
     "members": "{{count}} 名成员",
     "name": "项目名称",
+    "namePlaceholder": "例如：计费与套餐",
     "key": "项目键",
     "keyHelp": "用于事项 ID 的短代码，例如 ACME → ACME-42",
     "active": "进行中",
