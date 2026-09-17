@@ -51,6 +51,7 @@ class TimeMonthScroller extends StatefulWidget {
     this.onNewOnDay,
     this.onTap,
     this.onRetryMonth,
+    this.markOn,
   });
 
   /// The month the scroller centres on when [jump] changes.
@@ -112,6 +113,16 @@ class TimeMonthScroller extends StatefulWidget {
 
   /// Ask for a month that failed again.
   final void Function(DateTime month)? onRetryMonth;
+
+  /// What marks a day — a holiday, an absence, a day nobody works — as the mark
+  /// to draw and the sentence to say about it. Null for a month that has none
+  /// to show, and for every day the caller knows nothing about.
+  ///
+  /// A glyph and a string rather than the availability model itself: this grid
+  /// belongs to the core and draws hours. It has no business knowing what a
+  /// holiday calendar is, and the day it did would be the day the month view
+  /// could not be built without one.
+  final ({IconData glyph, String label})? Function(DateTime day)? markOn;
 
   @override
   State<TimeMonthScroller> createState() => _TimeMonthScrollerState();
@@ -364,6 +375,7 @@ class _TimeMonthScrollerState extends State<TimeMonthScroller> {
       onTapDay: widget.onTapDay,
       onNewOnDay: widget.onNewOnDay,
       onTap: widget.onTap,
+      markOn: widget.markOn,
     );
   }
 
@@ -534,6 +546,7 @@ class _MonthBlock extends StatelessWidget {
     this.onTapDay,
     this.onNewOnDay,
     this.onTap,
+    this.markOn,
   });
 
   final DateTime month;
@@ -541,6 +554,9 @@ class _MonthBlock extends StatelessWidget {
   final List<TimeGridItem> Function(int dayKey) itemsForDay;
   final DateTime today;
   final bool showTotals;
+
+  /// See [TimeMonthScroller.markOn].
+  final ({IconData glyph, String label})? Function(DateTime day)? markOn;
   final void Function(DateTime day)? onTapDay;
 
   /// Somebody held a day: start an entry on it. Null leaves the month
@@ -586,6 +602,7 @@ class _MonthBlock extends StatelessWidget {
                         onTapDay: onTapDay,
                         onNewOnDay: onNewOnDay,
                         onTap: onTap,
+                        markOn: markOn,
                       ),
                     ),
                 ],
@@ -672,6 +689,7 @@ class _Cell extends StatelessWidget {
     this.onTapDay,
     this.onNewOnDay,
     this.onTap,
+    this.markOn,
   });
 
   /// Null for the cells before the first of the month and after the last.
@@ -680,6 +698,9 @@ class _Cell extends StatelessWidget {
   final List<TimeGridItem> Function(int dayKey) itemsForDay;
   final bool weekend;
   final bool showTotal;
+
+  /// See [TimeMonthScroller.markOn].
+  final ({IconData glyph, String label})? Function(DateTime day)? markOn;
 
   final void Function(DateTime day)? onTapDay;
   final void Function(DateTime day)? onNewOnDay;
@@ -692,6 +713,7 @@ class _Cell extends StatelessWidget {
   Widget build(BuildContext context) {
     final at = day;
     if (at == null) return const SizedBox.shrink();
+    final mark = markOn?.call(at);
     final items = itemsForDay(dayKey(at));
     final isToday = DateUtils.isSameDay(at, today);
     final minutes = items.fold<int>(
@@ -704,7 +726,7 @@ class _Cell extends StatelessWidget {
     final shown = room < items.length && room > 0 ? room - 1 : room;
     final hidden = items.length - shown;
 
-    return InkWell(
+    final cell = InkWell(
       // Tapping a day goes to it — that is what a month is for, and the hours
       // are where an entry gets its time. Holding a day starts one on it
       // without the detour: the calendar idiom, and the only create gesture a
@@ -727,6 +749,7 @@ class _Cell extends StatelessWidget {
               today: isToday,
               weekend: weekend,
               minutes: showTotal ? minutes : 0,
+              mark: mark,
             ),
             for (final item in items.take(shown))
               _Chip(item: item, onTap: onTap),
@@ -751,6 +774,16 @@ class _Cell extends StatelessWidget {
         ),
       ),
     );
+    if (mark == null) return cell;
+    // The wash the hour canvas gives a marked day, so the month says the same
+    // thing about the same day (HIN-91, R9). Behind the cell rather than over
+    // it: a holiday is a quiet day, never a closed one, and time is recorded on
+    // it like on any other. On a weekend it is the same tone twice and shows as
+    // one, which is right — the day is not more marked for being both.
+    return DecoratedBox(
+      decoration: BoxDecoration(color: AppColors.recess),
+      child: cell,
+    );
   }
 }
 
@@ -764,12 +797,17 @@ class _DayLine extends StatelessWidget {
     required this.today,
     required this.weekend,
     required this.minutes,
+    this.mark,
   });
 
   final DateTime day;
   final bool today;
   final bool weekend;
   final int minutes;
+
+  /// The mark of the day, drawn beside its number. See
+  /// [TimeMonthScroller.markOn].
+  final ({IconData glyph, String label})? mark;
 
   @override
   Widget build(BuildContext context) {
@@ -804,6 +842,20 @@ class _DayLine extends StatelessWidget {
               width: _kDayLine,
               height: _kDayLine,
               child: Center(child: number),
+            ),
+          if (mark != null)
+            // Beside the number, where the eye already is. The sentence is the
+            // tooltip, because a month cell has no room to write "Feiertag:
+            // Tag der Deutschen Einheit" and the glyph alone does not say it.
+            Padding(
+              // Three, not one: on the current day the number sits in a filled
+              // circle that reaches its own edge, so a single point puts the
+              // glyph against the honey rather than beside it.
+              padding: const EdgeInsetsDirectional.only(start: 3),
+              child: Tooltip(
+                message: mark!.label,
+                child: Icon(mark!.glyph, size: 11, color: AppColors.inkSoft),
+              ),
             ),
           if (minutes > 0)
             Expanded(

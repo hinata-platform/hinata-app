@@ -282,7 +282,13 @@ Future<PickedImage?> pickImageBytes(BuildContext context) async {
   final file = picked.first;
   if (file.size > kMaxAvatarBytes) {
     if (context.mounted) {
-      showGlassErrorToast(context, context.t('error.avatar.tooLarge'));
+      showGlassErrorToast(
+        context,
+        context.t(
+          'error.avatar.tooLarge',
+          variables: {'max': '${kMaxAvatarBytes ~/ (1024 * 1024)}'},
+        ),
+      );
     }
     return null;
   }

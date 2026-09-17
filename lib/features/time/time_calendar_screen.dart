@@ -1025,6 +1025,10 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       onNewOnDay: _newEntryOn,
       onTap: _openEntry,
       onRetryMonth: _retryMonth,
+      // The month says what the day and the week already say: a holiday, an
+      // absence, a day nobody works. It was the one span that did not, so a
+      // month of thirty cells gave no sign that the third of October was one.
+      markOn: _monthMark,
     );
     // The width decides only whether a cell has room to write its total beside
     // its number, and on a phone the month runs edge to edge — so there the
@@ -1164,6 +1168,17 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       ..._frozenWash(window),
       ..._markLayers(window),
     ];
+  }
+
+  /// The marking of [day] as the month grid wants it: the glyph to draw and the
+  /// sentence to say about it.
+  ///
+  /// Resolved here rather than in the grid, which belongs to the core and draws
+  /// hours — it has no business knowing what a holiday calendar is.
+  ({IconData glyph, String label})? _monthMark(DateTime day) {
+    final mark = _markOn(day);
+    if (mark == null) return null;
+    return (glyph: dayMarkIcon(mark), label: dayMarkLabel(context, mark));
   }
 
   /// The marking of [day], from the month it was loaded with (HIN-91).

@@ -111,6 +111,17 @@
   "error": {
     "feature": {
       "disabled": "This feature isn't switched on for this server."
+    },
+    "timeOff": {
+      "adjustmentZero": "A correction has to move the balance by something",
+      "employmentOrder": "The leaving date cannot be before the joining date",
+      "reasonRequired": "Please say why the balance is being corrected",
+      "typeKeyInvalid": "The key may contain lower-case letters, digits, hyphens and underscores",
+      "typeNameRequired": "Please give the absence type a name",
+      "typeSystemKind": "The kind of a built-in absence type cannot be changed"
+    },
+    "avatar": {
+      "tooLarge": "The picture is too large. At most {{max}} MB."
     }
   },
   "notFound": {
@@ -282,7 +293,7 @@
     "board": "Board",
     "gantt": "Gantt",
     "timesheet": "Timesheet",
-    "time": "Time",
+    "time": "Time tracking",
     "reports": "Reports",
     "watched": "Watched",
     "knowledge": "Knowledge",

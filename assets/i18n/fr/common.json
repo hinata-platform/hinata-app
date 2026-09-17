@@ -111,6 +111,17 @@
   "error": {
     "feature": {
       "disabled": "Cette fonction n'est pas activée sur ce serveur."
+    },
+    "timeOff": {
+      "adjustmentZero": "Une correction doit déplacer le solde de quelque chose",
+      "employmentOrder": "La date de départ ne peut pas précéder la date d’entrée",
+      "reasonRequired": "Indiquez pourquoi le solde est corrigé",
+      "typeKeyInvalid": "La clé peut contenir des minuscules, des chiffres, des tirets et des traits de soulignement",
+      "typeNameRequired": "Donnez un nom au type d’absence",
+      "typeSystemKind": "La catégorie d’un type d’absence fourni d’origine ne peut pas être modifiée"
+    },
+    "avatar": {
+      "tooLarge": "L’image est trop grande. {{max}} Mo au maximum."
     }
   },
   "notFound": {
@@ -282,7 +293,7 @@
     "board": "Tableau",
     "gantt": "Gantt",
     "timesheet": "Feuille de temps",
-    "time": "Temps",
+    "time": "Suivi du temps",
     "reports": "Rapports",
     "watched": "Observés",
     "knowledge": "Connaissances",
