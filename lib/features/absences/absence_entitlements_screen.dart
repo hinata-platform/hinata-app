@@ -80,7 +80,10 @@ class _AbsenceEntitlementsScreenState extends State<AbsenceEntitlementsScreen> {
             page: page,
             size: size,
           );
-          await _readNames(result.items.map((row) => row.userId));
+          // Not awaited: the overview is the page, and the names are a
+          // decoration that fills in a moment later. Awaiting it here made
+          // every page and every "read on" two round trips end to end.
+          unawaited(_readNames(result.items.map((row) => row.userId)));
           return result;
         },
         pageSize: _pageSize,

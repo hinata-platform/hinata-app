@@ -79,8 +79,11 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
   late int _maxConsecutive = widget.existing?.maxConsecutiveDays ?? 0;
   late bool _negative = widget.existing?.negativeBalanceAllowed ?? false;
   late int _negativeLimit = widget.existing?.negativeLimitMilliDays ?? 0;
+  // The server's own default, and the model's. Anything wider is a decision
+  // about health data (Art. 9 DSGVO), and a form that quietly starts one step
+  // wider than the server does is the worst place to make it.
   late AbsenceVisibility _visibility =
-      widget.existing?.visibility ?? AbsenceVisibility.busyOnly;
+      widget.existing?.visibility ?? AbsenceVisibility.selfOnly;
   late AbsenceAccrual _accrual =
       widget.existing?.accrual ?? AbsenceAccrual.annual;
   late int _allowance = widget.existing?.allowanceMilliDays ?? 20 * kMilliDay;
@@ -189,41 +192,45 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
 
   // --- saving ---------------------------------------------------------------------
 
-  Map<String, dynamic> get _body => {
-    if (_isNew) 'key': _key.text.trim(),
-    'name': _name.text.trim(),
-    'icon': _icon,
-    'hue': ?_hue,
-    'kind': _kind.wire,
-    'paid': _paid,
-    'countsAgainstBalance': _counts,
-    'unlimited': _unlimited,
-    'approvalRequired': _approvalPossible && _approval,
-    'approverRule': _approver.wire,
-    'halfDaysAllowed': _halfDays,
-    'fractionAllowed': _fraction,
-    'minNoticeDays': _minNotice,
+  /// What the form holds, as the server's contract names it.
+  ///
+  /// The key only on a create: it is what a year of history is attached to, and
+  /// the server refuses to move it.
+  AbsenceTypeDraft get _draft => AbsenceTypeDraft(
+    key: _isNew ? _key.text.trim() : null,
+    name: _name.text.trim(),
+    icon: _icon,
+    hue: _hue,
+    kind: _kind,
+    paid: _paid,
+    countsAgainstBalance: _counts,
+    unlimited: _unlimited,
+    approvalRequired: _approvalPossible && _approval,
+    approverRule: _approver,
+    halfDaysAllowed: _halfDays,
+    fractionAllowed: _fraction,
+    minNoticeDays: _minNotice,
     // Absent rather than zero: the server reads null as "no limit", and zero as
     // a limit of zero days it then refuses.
-    'maxConsecutiveDays': _maxConsecutive > 0 ? _maxConsecutive : null,
-    'negativeBalanceAllowed': _negative,
-    'negativeLimitMilliDays': _negative ? _negativeLimit : null,
-    'visibility': _visibility.wire,
-    'accrual': _accrual.wire,
-    'allowanceMilliDays': _allowance,
-    'yearAnchorMonth': _yearStart.month,
-    'yearAnchorDay': _yearStart.day,
-    'waitingPeriodMonths': _waiting,
-    'prorateOnJoin': _prorateJoin,
-    'prorateOnLeave': _prorateLeave,
-    'carryover': _carryover.wire,
-    'carryoverCapMilliDays': _carryover == AbsenceCarryover.capped
+    maxConsecutiveDays: _maxConsecutive > 0 ? _maxConsecutive : null,
+    negativeBalanceAllowed: _negative,
+    negativeLimitMilliDays: _negative ? _negativeLimit : null,
+    visibility: _visibility,
+    accrual: _accrual,
+    allowanceMilliDays: _allowance,
+    yearAnchorMonth: _yearStart.month,
+    yearAnchorDay: _yearStart.day,
+    waitingPeriodMonths: _waiting,
+    prorateOnJoin: _prorateJoin,
+    prorateOnLeave: _prorateLeave,
+    carryover: _carryover,
+    carryoverCapMilliDays: _carryover == AbsenceCarryover.capped
         ? _carryoverCap
         : null,
-    'carryoverExpiresMonth': _carryoverExpires.month,
-    'carryoverExpiresDay': _carryoverExpires.day,
-    'active': _active,
-  };
+    carryoverExpiresMonth: _carryoverExpires.month,
+    carryoverExpiresDay: _carryoverExpires.day,
+    active: _active,
+  );
 
   Future<void> _save() async {
     final name = _name.text.trim();
@@ -242,9 +249,9 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
       final repository = context.read<AbsenceRepository>();
       final existing = widget.existing;
       if (existing == null) {
-        await repository.createType(_body);
+        await repository.createType(_draft);
       } else {
-        await repository.updateType(existing.id, _body);
+        await repository.updateType(existing.id, _draft);
       }
       if (!mounted) return;
       Navigator.of(context).pop(true);
@@ -592,7 +599,7 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
   /// quota is under the five-day floor, which is the common case, and never
   /// refuses — the server does not either.
   Widget _legalFloor(BuildContext context) {
-    const fiveDayFloor = 20 * kMilliDay;
+    final fiveDayFloor = legalMinimumMilliDays(kStandardWorkingDays);
     final short = _allowance < fiveDayFloor;
     return Padding(
       padding: const EdgeInsets.only(top: 2, bottom: 6),
@@ -600,8 +607,8 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
         context.t(
           'absence.types.legalFloor',
           variables: {
-            'five': formatDays(fiveDayFloor),
-            'six': formatDays(24 * kMilliDay),
+            'five': days(context, fiveDayFloor),
+            'six': days(context, legalMinimumMilliDays(6)),
           },
         ),
         style: TextStyle(
@@ -788,10 +795,23 @@ class _NumberRow extends StatefulWidget {
 
 class _NumberRowState extends State<_NumberRow> {
   late final _controller = TextEditingController(text: '${widget.value}');
+  final _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(() {
+      if (!_focus.hasFocus) _report(_controller.text);
+    });
+  }
+
+  void _report(String text) =>
+      widget.onChanged((int.tryParse(text) ?? 0).clamp(0, widget.max));
 
   @override
   void dispose() {
     _controller.dispose();
+    _focus.dispose();
     super.dispose();
   }
 
@@ -811,10 +831,11 @@ class _NumberRowState extends State<_NumberRow> {
           suffixText: widget.suffix,
           suffixStyle: TextStyle(fontSize: 11, color: AppColors.inkFaint),
         ),
-        onChanged: (text) {
-          final parsed = int.tryParse(text) ?? 0;
-          widget.onChanged(parsed.clamp(0, widget.max));
-        },
+        // Reported when the field is left or submitted, not per keystroke: each
+        // report is a setState on the form, which rebuilds forty rows and two
+        // icon grids. The row holds its own text in the meantime.
+        focusNode: _focus,
+        onSubmitted: (text) => _report(text),
       ),
     ),
   );
@@ -846,10 +867,23 @@ class _DaysRowState extends State<_DaysRow> {
   late final _controller = TextEditingController(
     text: formatDays(widget.milliDays),
   );
+  final _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // Same as the row above: on leaving the field, not on every character. The
+    // quota fields decide which other fields the form shows, so each keystroke
+    // would otherwise rebuild the whole sheet.
+    _focus.addListener(() {
+      if (!_focus.hasFocus) widget.onChanged(parseDays(_controller.text));
+    });
+  }
 
   @override
   void dispose() {
     _controller.dispose();
+    _focus.dispose();
     super.dispose();
   }
 
@@ -871,7 +905,8 @@ class _DaysRowState extends State<_DaysRow> {
           suffixText: context.t('absence.types.daysUnit'),
           suffixStyle: TextStyle(fontSize: 11, color: AppColors.inkFaint),
         ),
-        onChanged: (text) => widget.onChanged(parseDays(text)),
+        focusNode: _focus,
+        onSubmitted: (text) => widget.onChanged(parseDays(text)),
       ),
     ),
   );

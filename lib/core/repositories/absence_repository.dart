@@ -51,15 +51,18 @@ class AbsenceRepository {
         .toList(growable: false);
   }
 
-  Future<AbsenceType> createType(Map<String, dynamic> body) async =>
+  Future<AbsenceType> createType(AbsenceTypeDraft draft) async =>
       AbsenceType.fromJson(
-        await _api.post('/api/v1/time-off/types', body: body)
+        await _api.post('/api/v1/time-off/types', body: draft.toJson())
             as Map<String, dynamic>,
       );
 
-  Future<AbsenceType> updateType(String id, Map<String, dynamic> body) async =>
+  Future<AbsenceType> updateType(String id, AbsenceTypeDraft draft) async =>
       AbsenceType.fromJson(
-        await _api.patch('/api/v1/time-off/types/${_id(id)}', body: body)
+        await _api.patch(
+              '/api/v1/time-off/types/${_id(id)}',
+              body: draft.toJson(),
+            )
             as Map<String, dynamic>,
       );
 

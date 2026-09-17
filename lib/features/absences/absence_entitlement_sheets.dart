@@ -205,8 +205,19 @@ class _GrantFormState extends State<_GrantForm> {
                   ),
                 )
               else
-                for (final row in _preview ?? const <AbsenceGrantPreview>[])
-                  _PreviewRow(row: row, name: widget.names[row.userId]),
+                // As long as the keeper's selection, which the server caps at
+                // five hundred. Built as they scroll rather than all at once,
+                // and rebuilt on every allowance they try.
+                ListView.builder(
+                  shrinkWrap: true,
+                  primary: false,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _preview?.length ?? 0,
+                  itemBuilder: (context, index) => _PreviewRow(
+                    row: _preview![index],
+                    name: widget.names[_preview![index].userId],
+                  ),
+                ),
             ],
           ),
         ),
@@ -310,8 +321,10 @@ class _AdjustForm extends StatefulWidget {
 }
 
 class _AdjustFormState extends State<_AdjustForm> {
-  /// Mirrors `TimeOffLedgerEntry.REASON_MAX`.
-  static const int _reasonMax = 300;
+  /// Mirrors `TimeOffLedgerEntry.REASON_MAX`. Five hundred, not three: a field
+  /// that stops short of what the server accepts cuts a keeper's sentence off
+  /// for no reason anybody can see.
+  static const int _reasonMax = 500;
 
   final _reason = TextEditingController();
   final _amount = TextEditingController();
@@ -766,18 +779,23 @@ class _LedgerSheetState extends State<_LedgerSheet> {
                       padding: const EdgeInsets.fromLTRB(22, 10, 22, 26),
                     );
                   }
-                  return ListView(
+                  // Built as they scroll into view: "read on" appends fifty
+                  // rows at a time, and a concrete child list would lay out
+                  // every one of them on every frame of the sheet.
+                  return ListView.builder(
                     shrinkWrap: true,
                     padding: const EdgeInsets.fromLTRB(22, 4, 22, 12),
-                    children: [
-                      for (final entry in state.items) LedgerRow(entry: entry),
-                      if (state.hasMore)
-                        ReadOnTrigger(
+                    itemCount: state.items.length + (state.hasMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == state.items.length) {
+                        return ReadOnTrigger(
                           count: state.items.length,
                           loading: state.isLoadingMore,
                           onReadOn: () => unawaited(_entries.loadMore()),
-                        ),
-                    ],
+                        );
+                      }
+                      return LedgerRow(entry: state.items[index]);
+                    },
                   );
                 },
               ),
