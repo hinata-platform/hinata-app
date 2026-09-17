@@ -29,7 +29,8 @@
     "loadMore": "加载更多",
     "saved": "已保存",
     "yes": "是",
-    "no": "否"
+    "no": "否",
+    "remove": "移除"
   },
   "delete": {
     "cta": "删除",
@@ -1962,6 +1963,17 @@
       "suggestedWeeklyTargetLabel": "建议的每周目标",
       "suggestedTargetHint": "会在个人的提醒设置中提供。是否采用由每个人自己决定。"
     },
+    "absence": {
+      "title": "缺勤管理 2.0",
+      "hint": "具有各自规则的缺勤类型、年度额度与余额。独立开关，默认关闭，直到您开启。",
+      "enabledTitle": "缺勤管理",
+      "enabledHint": "启用缺勤类型、年度额度与余额；下一阶段还会加入申请与审批。休假总则与休假计划依《企业组织法》§ 87 Abs. 1 Nr. 5 属共同决定事项，具体评估由劳资双方决定。",
+      "needsAdvanced": "仅在扩展工时记录开启时生效：此处计算的每一天都来自工作模式、节假日日历以及由此得出的产能。开关会保持您设置的状态。",
+      "keepersTitle": "由谁管理缺勤",
+      "keepersHint": "这些人为所有人管理缺勤类型、额度与余额，并能看到病假的真实类型。管理员始终可以。",
+      "keepersEmpty": "未指定任何人：由管理员管理缺勤。",
+      "keepersAdd": "添加人员"
+    },
     "passwordPolicy": "密码策略",
     "passwordPolicyHint": "用户密码的最低要求。",
     "passwordMinLength": "密码最小长度",
@@ -2419,7 +2431,11 @@
       "AVAILABILITY_TIME_OFF_CHANGED": "某人的请假已更改",
       "AVAILABILITY_CALENDAR_CHANGED": "节假日日历已更改",
       "AVAILABILITY_HOLIDAYS_CHANGED": "节假日已更改",
-      "AVAILABILITY_HOLIDAYS_IMPORTED": "节假日已导入"
+      "AVAILABILITY_HOLIDAYS_IMPORTED": "节假日已导入",
+      "TIME_OFF_TYPE_CHANGED": "已更改缺勤类型",
+      "TIME_OFF_ENTITLEMENT_CHANGED": "已更改假期额度",
+      "TIME_OFF_LEDGER_BOOKED": "已记录假期余额",
+      "TIME_OFF_EMPLOYMENT_CHANGED": "已更改入职或离职日期"
     },
     "meta": {
       "oldRole": "原角色",

@@ -34,6 +34,10 @@ void main() {
     // fine". ICS import belongs for a narrower reason: subscribed appointment
     // titles routinely carry other people's names.
     'admin.timeTracking.advancedTitle',
+    // Absence management is co-determined in its own right and under a
+    // paragraph of its own: § 87 Abs. 1 Nr. 5 BetrVG covers general holiday
+    // principles and the holiday plan, not the technical facility of Nr. 6.
+    'admin.absence.enabledTitle',
     'admin.timeTracking.icsImportTitle',
     'admin.timeTracking.leadsSeeMemberEntriesTitle',
     'admin.timeTracking.approvalsTitle',
