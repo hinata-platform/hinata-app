@@ -91,7 +91,31 @@ String signedDaysLabel(BuildContext context, int milliDays) {
   return milliDays > 0 ? '+$label' : '−$label';
 }
 
+/// § 3 Abs. 1 BUrlG: four weeks of leave, whatever the working week looks like.
+/// Mirrors `TimeOffLegalFloor.WEEKS` on the server.
+const int kLegalLeaveWeeks = 4;
+
+/// The week to assume where there is no person to ask about — the editor where a
+/// quota is typed, not a balance. Mirrors `TimeOffLegalFloor.STANDARD_WORKING_DAYS`.
+///
+/// It is a figure to compare against, never one to decide with: whose week it
+/// really is, only that person's pattern says, and the server computes the floor
+/// per person and sends it with every balance.
+const int kStandardWorkingDays = 5;
+
+/// The statutory minimum for a week of [workingDaysPerWeek] days, in thousandths.
+int legalMinimumMilliDays(int workingDaysPerWeek) =>
+    workingDaysPerWeek.clamp(0, 7) * kLegalLeaveWeeks * kMilliDay;
+
 /// The separator the reader's locale puts between the whole days and the rest.
+/// A number of days, written the way the reader's locale writes numbers.
+///
+/// Every amount on a screen goes through this or through [daysLabel]. Calling
+/// [formatDays] directly prints a full stop wherever the reader expects a
+/// comma, which puts "8,33 Anspruch" beside "8.33 Rest" on the same card.
+String days(BuildContext context, int milliDays) =>
+    formatDays(milliDays, decimalSeparator: _decimal(context));
+
 String _decimal(BuildContext context) =>
     const {
       'de',
