@@ -643,7 +643,13 @@ class _StandingCard extends StatelessWidget {
           IconButton(
             tooltip: context.t('absence.entitlements.adjust'),
             onPressed: onAdjust,
-            icon: Icon(LucideIcons.scale, size: 17, color: AppColors.inkSoft),
+            // A pen, not the scales of justice: a correction is a keeper
+            // editing a balance, not a court weighing a case.
+            icon: Icon(
+              LucideIcons.squarePen,
+              size: 17,
+              color: AppColors.inkSoft,
+            ),
           ),
           IconButton(
             tooltip: context.t('absence.entitlements.ledger'),
