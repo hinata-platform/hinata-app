@@ -1381,6 +1381,7 @@
       "quota": "额度",
       "allowance": "每年天数",
       "allowanceHint": "新分配的默认值。个别人员可以不同。",
+      "legalFloor": "法定最低休假为四周：每周五天为 {{five}} 天，每周六天为 {{six}} 天（§ 3 BUrlG）。若这里的工作周更短则可以更少 —— hinata 会按每个人自己的一周核对。",
       "accrual": "累积",
       "yearStart": "休假年度开始于",
       "waitingPeriod": "等待期",
