@@ -609,6 +609,7 @@ class AbsenceStanding extends Equatable {
     required this.userId,
     this.entitledMilliDays = 0,
     this.accruedMilliDays = 0,
+    this.adjustedMilliDays = 0,
     this.takenMilliDays = 0,
     this.plannedMilliDays = 0,
     this.remainingMilliDays = 0,
@@ -620,6 +621,12 @@ class AbsenceStanding extends Equatable {
   final String userId;
   final int entitledMilliDays;
   final int accruedMilliDays;
+
+  /// What a keeper corrected, up or down. Shown when it is not zero, because
+  /// without it a row reading "20 entitled, 25 left" looks impossible — and the
+  /// one number that explains it would be buried in the journal.
+  final int adjustedMilliDays;
+
   final int takenMilliDays;
   final int plannedMilliDays;
   final int remainingMilliDays;
@@ -635,6 +642,7 @@ class AbsenceStanding extends Equatable {
     userId: json['userId'] as String? ?? '',
     entitledMilliDays: (json['entitledMilliDays'] as num?)?.toInt() ?? 0,
     accruedMilliDays: (json['accruedMilliDays'] as num?)?.toInt() ?? 0,
+    adjustedMilliDays: (json['adjustedMilliDays'] as num?)?.toInt() ?? 0,
     takenMilliDays: (json['takenMilliDays'] as num?)?.toInt() ?? 0,
     plannedMilliDays: (json['plannedMilliDays'] as num?)?.toInt() ?? 0,
     remainingMilliDays: (json['remainingMilliDays'] as num?)?.toInt() ?? 0,
@@ -648,6 +656,7 @@ class AbsenceStanding extends Equatable {
     userId,
     entitledMilliDays,
     accruedMilliDays,
+    adjustedMilliDays,
     takenMilliDays,
     plannedMilliDays,
     remainingMilliDays,

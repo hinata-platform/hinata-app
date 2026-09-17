@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
@@ -123,6 +124,13 @@ class _AbsenceTypesScreenState extends State<AbsenceTypesScreen> {
         label: context.t('absence.types.new'),
         primary: true,
         onTap: (_) => unawaited(_edit(null)),
+      ),
+      // The other half of the module, so the two pages reach each other rather
+      // than only being reachable from the admin card.
+      PageAction(
+        icon: LucideIcons.usersRound,
+        label: context.t('absence.entitlements.open'),
+        onTap: (_) => context.go('/absences/entitlements'),
       ),
     ],
     child: _body(context),

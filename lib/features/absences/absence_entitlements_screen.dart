@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
@@ -247,6 +248,14 @@ class _AbsenceEntitlementsScreenState extends State<AbsenceEntitlementsScreen> {
           primary: true,
           onTap: (_) => unawaited(_grant(_chosen.toList(growable: false))),
         ),
+      // The other half of the module. A keeper who is not an administrator
+      // reaches this page from their own settings and would otherwise have no
+      // way at all to the catalogue these entitlements are granted against.
+      PageAction(
+        icon: LucideIcons.listChecks,
+        label: context.t('absence.types.open'),
+        onTap: (_) => context.go('/absences/types'),
+      ),
     ],
     child: _body(context),
   );
@@ -531,11 +540,13 @@ class _StandingCard extends StatelessWidget {
                     color: AppColors.ink,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  _dates(context),
-                  style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
-                ),
+                if (_dates(context).isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    _dates(context),
+                    style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+                  ),
+                ],
                 const SizedBox(height: 8),
                 _numbers(context),
               ],
@@ -564,9 +575,10 @@ class _StandingCard extends StatelessWidget {
           variables: {'date': formats.formatMediumDate(row.leftOn!.toLocal())},
         ),
     ];
-    if (parts.isEmpty) {
-      return person?.title ?? context.t('absence.entitlements.notSet');
-    }
+    // The job title stands in while there are no dates; with neither, nothing.
+    // "Not set" under a name reads as a statement about the person rather than
+    // about two fields nobody has filled in.
+    if (parts.isEmpty) return person?.title ?? '';
     return parts.join('  ·  ');
   }
 
@@ -589,6 +601,13 @@ class _StandingCard extends StatelessWidget {
           label: context.t('absence.entitlements.entitled'),
           value: daysLabel(context, row.accruedMilliDays),
         ),
+        // Only when there is one. Without it a row reads "20 entitled, 25 left"
+        // and looks like an arithmetic error rather than a keeper's correction.
+        if (row.adjustedMilliDays != 0)
+          _Figure(
+            label: context.t('absence.entitlements.adjusted'),
+            value: signedDaysLabel(context, row.adjustedMilliDays),
+          ),
         _Figure(
           label: context.t('absence.entitlements.taken'),
           value: daysLabel(context, row.takenMilliDays),
