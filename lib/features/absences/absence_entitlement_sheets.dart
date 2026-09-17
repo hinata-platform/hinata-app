@@ -389,7 +389,7 @@ class _AdjustFormState extends State<_AdjustForm> {
     mainAxisSize: MainAxisSize.min,
     children: [
       GlassModalHeader(
-        icon: LucideIcons.scale,
+        icon: LucideIcons.squarePen,
         title: context.t(
           'absence.entitlements.adjustTitle',
           variables: {'name': widget.name},
@@ -742,47 +742,55 @@ class _LedgerSheetState extends State<_LedgerSheet> {
     super.dispose();
   }
 
+  /// **Only a list gets a [Flexible].**
+  ///
+  /// A sheet is `Column(min)` inside a box that caps it at most of the screen.
+  /// A `Flexible` child is handed that whole height as its maximum, and an
+  /// empty state is a `Center` — which has no height factor, so it takes every
+  /// point it is offered. The result is a dialog the size of the display with
+  /// two lines of text floating in the middle of it.
+  ///
+  /// So the branch decides the shape: the spinner and the empty state are
+  /// ordinary children, which a Column gives unbounded height and which
+  /// therefore size to themselves. Only the list — the one thing that really
+  /// can be longer than the screen — is flexible and scrolls.
   @override
   Widget build(BuildContext context) => BlocProvider.value(
     value: _entries,
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GlassModalHeader(
-          icon: LucideIcons.scrollText,
-          title: context.t(
-            'absence.entitlements.ledgerTitle',
-            variables: {'name': widget.name},
-          ),
-          subtitle: '${widget.year}',
-        ),
-        Flexible(
-          child:
-              BlocBuilder<
-                PagedCubit<AbsenceLedgerEntry>,
-                PagedState<AbsenceLedgerEntry>
-              >(
-                builder: (context, state) {
-                  if (state.isLoading && !state.hasData) {
-                    return const Padding(
-                      padding: EdgeInsets.all(28),
-                      child: Center(child: HiveLoader(size: 28)),
-                    );
-                  }
-                  if (state.items.isEmpty) {
-                    return HiveEmptyState(
-                      title: context.t('absence.entitlements.ledgerEmpty'),
-                      message: context.t(
-                        'absence.entitlements.ledgerEmptyMessage',
-                      ),
-                      card: false,
-                      padding: const EdgeInsets.fromLTRB(22, 10, 22, 26),
-                    );
-                  }
-                  // Built as they scroll into view: "read on" appends fifty
-                  // rows at a time, and a concrete child list would lay out
-                  // every one of them on every frame of the sheet.
-                  return ListView.builder(
+    child:
+        BlocBuilder<
+          PagedCubit<AbsenceLedgerEntry>,
+          PagedState<AbsenceLedgerEntry>
+        >(
+          builder: (context, state) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GlassModalHeader(
+                icon: LucideIcons.scrollText,
+                title: context.t(
+                  'absence.entitlements.ledgerTitle',
+                  variables: {'name': widget.name},
+                ),
+                subtitle: '${widget.year}',
+              ),
+              if (state.isLoading && !state.hasData)
+                const Padding(
+                  padding: EdgeInsets.all(28),
+                  child: HiveLoader(size: 28),
+                )
+              else if (state.items.isEmpty)
+                HiveEmptyState(
+                  title: context.t('absence.entitlements.ledgerEmpty'),
+                  message: context.t('absence.entitlements.ledgerEmptyMessage'),
+                  card: false,
+                  padding: const EdgeInsets.fromLTRB(22, 10, 22, 26),
+                )
+              else
+                // Built as they scroll into view: "read on" appends fifty rows
+                // at a time, and a concrete child list would lay out every one
+                // of them on every frame of the sheet.
+                Flexible(
+                  child: ListView.builder(
                     shrinkWrap: true,
                     padding: const EdgeInsets.fromLTRB(22, 4, 22, 12),
                     itemCount: state.items.length + (state.hasMore ? 1 : 0),
@@ -796,13 +804,12 @@ class _LedgerSheetState extends State<_LedgerSheet> {
                       }
                       return LedgerRow(entry: state.items[index]);
                     },
-                  );
-                },
-              ),
+                  ),
+                ),
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
-      ],
-    ),
   );
 }
 
