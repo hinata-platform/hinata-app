@@ -111,6 +111,17 @@
   "error": {
     "feature": {
       "disabled": "Esta función no está activada en este servidor."
+    },
+    "timeOff": {
+      "adjustmentZero": "Una corrección tiene que mover el saldo en algo",
+      "employmentOrder": "La fecha de baja no puede ser anterior a la de alta",
+      "reasonRequired": "Indique por qué se corrige el saldo",
+      "typeKeyInvalid": "La clave puede contener minúsculas, cifras, guiones y guiones bajos",
+      "typeNameRequired": "Ponga un nombre al tipo de ausencia",
+      "typeSystemKind": "La categoría de un tipo de ausencia de serie no se puede cambiar"
+    },
+    "avatar": {
+      "tooLarge": "La imagen es demasiado grande. Como máximo {{max}} MB."
     }
   },
   "notFound": {
@@ -282,7 +293,7 @@
     "board": "Tablero",
     "gantt": "Gantt",
     "timesheet": "Hoja de horas",
-    "time": "Tiempo",
+    "time": "Registro de tiempo",
     "reports": "Informes",
     "watched": "Seguidas",
     "knowledge": "Conocimiento",

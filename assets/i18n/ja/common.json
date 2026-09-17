@@ -111,6 +111,17 @@
   "error": {
     "feature": {
       "disabled": "この機能はこのサーバーでは有効になっていません。"
+    },
+    "timeOff": {
+      "adjustmentZero": "訂正は残数を何らか動かすものです",
+      "employmentOrder": "退社日は入社日より前にはできません",
+      "reasonRequired": "残数を訂正する理由を入力してください",
+      "typeKeyInvalid": "キーに使えるのは小文字・数字・ハイフン・アンダースコアです",
+      "typeNameRequired": "不在の種類に名称を付けてください",
+      "typeSystemKind": "標準の不在の種類は区分を変更できません"
+    },
+    "avatar": {
+      "tooLarge": "画像が大きすぎます。上限は {{max}} MB です。"
     }
   },
   "notFound": {
@@ -282,7 +293,7 @@
     "board": "ボード",
     "gantt": "ガント",
     "timesheet": "タイムシート",
-    "time": "時間",
+    "time": "勤怠記録",
     "reports": "レポート",
     "watched": "ウォッチ中",
     "knowledge": "ナレッジ",

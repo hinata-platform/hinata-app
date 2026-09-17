@@ -89,7 +89,36 @@ void main() {
     },
   );
 
-  test('the two time cards share the load instead of one column', () {
+  test('the two heaviest cards never stand in the same column', () {
+    // This used to name time tracking and working hours, from a page where the
+    // two stood about equally tall and together towered over anything beside
+    // them. Working hours is now more than twice time tracking — the balances,
+    // the journal and the coming absences went into it — so the pair is no
+    // longer the load, and holding them apart was what left one column running
+    // a screenful past the other. What still has to hold is the general
+    // statement the old test was reaching for.
+    final groups = settingsGroups(
+      timeTracking: true,
+      tokens: true,
+      admin: true,
+    );
+    final heaviest = [...groups.where((group) => !group.lead)]
+      ..sort((a, b) => b.narrow.compareTo(a.narrow));
+
+    for (final count in [2, 3]) {
+      final columns = arrangeGolden(groups, count).columns;
+      int columnOf(SettingsCard card) =>
+          columns.indexWhere((column) => column.contains(card));
+
+      expect(
+        columnOf(heaviest[0].cards.first),
+        isNot(columnOf(heaviest[1].cards.first)),
+        reason: '$count columns',
+      );
+    }
+  });
+
+  test('export and deletion follow the admin entry, not another column', () {
     final groups = settingsGroups(
       timeTracking: true,
       tokens: true,
@@ -97,12 +126,14 @@ void main() {
     );
     for (final count in [2, 3]) {
       final columns = arrangeGolden(groups, count).columns;
-      int columnOf(SettingsCard card) =>
-          columns.indexWhere((column) => column.contains(card));
+      final column = columns.firstWhere((c) => c.contains(SettingsCard.admin));
 
+      // Adjacent and in this order: the two cards that act on the account
+      // itself close the column somebody is already reading.
+      final at = column.indexOf(SettingsCard.admin);
       expect(
-        columnOf(SettingsCard.timeTracking),
-        isNot(columnOf(SettingsCard.availability)),
+        column.sublist(at),
+        [SettingsCard.admin, SettingsCard.data, SettingsCard.danger],
         reason: '$count columns',
       );
     }
