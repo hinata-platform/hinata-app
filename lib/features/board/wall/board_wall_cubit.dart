@@ -351,9 +351,14 @@ class BoardWallCubit extends Cubit<BoardWallState>
   }
 
   /// Reads the next page of the column called [name], if it has one and is not
-  /// reading already. A page that does not come marks the column failed, and
-  /// it reads on when asked to again.
-  Future<void> loadMore(String name) async {
+  /// reading already, in pages of [size] cards — the wall's own page size by
+  /// default. A page that does not come marks the column failed, and it reads
+  /// on when asked to again.
+  ///
+  /// A grouped wall reads in larger pages: its lanes need every card of their
+  /// group, wherever it sits in the column, so reading them a screenful at a
+  /// time would be one request after another.
+  Future<void> loadMore(String name, {int? size}) async {
     final column = state.column(name);
     if (column == null ||
         !column.hasMore ||
@@ -363,6 +368,7 @@ class BoardWallCubit extends Cubit<BoardWallState>
       return;
     }
     final generation = this.generation;
+    final step = size ?? pageSize;
     emit(
       state.copyWith(
         loadingMore: {...state.loadingMore, name},
@@ -376,8 +382,10 @@ class BoardWallCubit extends Cubit<BoardWallState>
         sprintId: state.sprintId,
         // The page the loaded cards end in rather than a counter: a card moved
         // away shifts every boundary behind it, and the ids drop the overlap.
-        page: column.issues.length ~/ pageSize,
-        size: pageSize,
+        // A page larger than the ones read so far starts again at the boundary
+        // below them, so it reaches over the cards held rather than past them.
+        page: column.issues.length ~/ step,
+        size: step,
         query: state.query,
       );
       if (!isCurrent(generation)) return;
