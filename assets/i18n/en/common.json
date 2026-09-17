@@ -1381,6 +1381,7 @@
       "quota": "Quota",
       "allowance": "Days per year",
       "allowanceHint": "The default for new grants. Individual people may differ.",
+      "legalFloor": "The statutory minimum is four weeks: {{five}} days on a five-day week, {{six}} on a six-day week (§ 3 BUrlG). Less is possible where people work a shorter week — hinata checks each person's own week against it.",
       "accrual": "Accrual",
       "yearStart": "Leave year starts on",
       "waitingPeriod": "Waiting period",

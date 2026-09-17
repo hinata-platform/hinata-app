@@ -476,6 +476,7 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
         milliDays: _allowance,
         onChanged: (value) => setState(() => _allowance = value),
       ),
+      if (_counts) _legalFloor(context),
       const SizedBox(height: 6),
       Builder(
         builder: (anchor) => FieldButton(
@@ -582,6 +583,35 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
       ],
     ],
   ];
+
+  /// § 3 Abs. 1 BUrlG: four weeks of the person's own working week.
+  ///
+  /// Said to the operator where the number is set, and as a calculation rather
+  /// than a verdict: hinata does not know each person's week here, and an
+  /// instance of four-day weeks is legitimately under twenty. It warns when the
+  /// quota is under the five-day floor, which is the common case, and never
+  /// refuses — the server does not either.
+  Widget _legalFloor(BuildContext context) {
+    const fiveDayFloor = 20 * kMilliDay;
+    final short = _allowance < fiveDayFloor;
+    return Padding(
+      padding: const EdgeInsets.only(top: 2, bottom: 6),
+      child: Text(
+        context.t(
+          'absence.types.legalFloor',
+          variables: {
+            'five': formatDays(fiveDayFloor),
+            'six': formatDays(24 * kMilliDay),
+          },
+        ),
+        style: TextStyle(
+          fontSize: 11.5,
+          height: 1.4,
+          color: short ? AppColors.danger : AppColors.textSecondary,
+        ),
+      ),
+    );
+  }
 
   Widget _iconRow(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,

@@ -1381,6 +1381,7 @@
       "quota": "残数",
       "allowance": "年間日数",
       "allowanceHint": "新しい付与の既定値です。個人ごとに変えられます。",
+      "legalFloor": "法定の最低休暇は四週間です。週五日なら {{five}} 日、週六日なら {{six}} 日（§ 3 BUrlG）。週がそれより短ければ下回ることもあり、hinata は各人の週を照らし合わせます。",
       "accrual": "付与",
       "yearStart": "休暇年度の開始",
       "waitingPeriod": "待機期間",

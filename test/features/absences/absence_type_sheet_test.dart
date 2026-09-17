@@ -116,6 +116,16 @@ void main() {
     expect(find.text('absence.types.system'), findsOneWidget);
   });
 
+  testWidgets('the statutory floor is named where the quota is set', (
+    tester,
+  ) async {
+    await open(tester, _type(kind: AbsenceKind.vacation));
+
+    // § 3 BUrlG, at the field rather than in a manual: four weeks of the
+    // person's own week, with the two common ones spelled out.
+    expect(find.text('absence.types.legalFloor'), findsOneWidget);
+  });
+
   testWidgets('a new type is asked for a key', (tester) async {
     await open(tester, null);
 

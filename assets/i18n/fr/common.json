@@ -1381,6 +1381,7 @@
       "quota": "Quota",
       "allowance": "Jours par an",
       "allowanceHint": "La valeur par défaut des nouvelles attributions. Chaque personne peut y déroger.",
+      "legalFloor": "Le congé minimum légal est de quatre semaines : {{five}} jours pour une semaine de cinq jours, {{six}} pour une semaine de six (§ 3 BUrlG). Moins est possible si la semaine est plus courte ici — hinata vérifie la semaine de chaque personne.",
       "accrual": "Acquisition",
       "yearStart": "L'année de congés commence le",
       "waitingPeriod": "Période d'attente",
