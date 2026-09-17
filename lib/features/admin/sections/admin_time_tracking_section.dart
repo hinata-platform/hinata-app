@@ -6,6 +6,7 @@ import '../../../core/models/account_models.dart' show TimePreferences;
 import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
 import '../policy_controls.dart';
+import 'admin_absence_management_card.dart';
 import 'admin_approval_period_preview.dart';
 import 'admin_backfill_grants_card.dart';
 import 'admin_correction_requests_card.dart';
@@ -65,6 +66,15 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
 
   T? _value<T>(String key) => _tt[key] as T?;
 
+  /// A stored list of ids, or the one the environment resolves to while nothing
+  /// is stored. Copied rather than handed out: the card rebuilds from what it
+  /// is given, and a list it could mutate in place would not look changed.
+  List<String> _stringList(String key) {
+    final stored = _tt[key] ?? _effective[key];
+    if (stored is! List) return const [];
+    return stored.whereType<String>().toList(growable: false);
+  }
+
   T? _effectiveValue<T>(String key) => _effective[key] as T?;
 
   T? _effectiveNested<T>(String group, String key) =>
@@ -109,6 +119,20 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
       note: AdminNote(text: context.t('admin.timeTracking.hint')),
       cards: {
         'module': _module(context),
+        // Its own card rather than a switch inside the one above: absence
+        // management brings its own routes, screens and notifications, and
+        // holiday principles are co-determined under § 87 Abs. 1 Nr. 5 BetrVG
+        // in their own right. It stays visible while the module above is off,
+        // because an operator may set it before switching the module on — the
+        // card says it cannot take effect yet.
+        'absenceManagement': AdminAbsenceManagementCard(
+          enabled: _value<bool>('absenceManagementEnabled'),
+          effective: _effectiveValue<bool>('absenceManagementEnabled'),
+          advancedOn: advanced,
+          managers: _stringList('absenceManagers'),
+          onEnabledChanged: (v) => _set('absenceManagementEnabled', v),
+          onManagersChanged: (ids) => _set('absenceManagers', ids),
+        ),
         'capture': _capture(context),
         // Only where there is a catalogue to manage: the routes behind them are
         // part of the module, so with the module off they do not exist and a

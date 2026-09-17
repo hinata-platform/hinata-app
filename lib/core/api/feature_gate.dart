@@ -30,10 +30,16 @@ const String kFeatureDisabledCode = 'error.feature.disabled';
 /// only recognised `/api/v1/time/` would miss exactly that request, and the
 /// stale-flag recovery would never fire on the one screen most likely to hit it.
 ///
-/// Adding a sixth prefix means editing this list and that one. `gated prefixes`
+/// Adding a seventh prefix means editing this list and that one. `gated prefixes`
 /// in a search finds both.
+///
+/// `/api/v1/time-off` is gated by a flag of its own, `absence_management`
+/// (`AbsenceManagementGate` in hinata-server). It belongs in the same list
+/// because the reaction is the same either way: a 404 from a gated route means
+/// our `/api/v1/meta` is stale, whichever flag went off.
 const List<String> kFlagGatedRoutePrefixes = [
   '/api/v1/time',
+  '/api/v1/time-off',
   '/api/v1/me/timer',
   '/api/v1/availability',
   '/api/v1/billing',

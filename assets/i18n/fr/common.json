@@ -29,7 +29,8 @@
     "loadMore": "Charger plus",
     "saved": "Enregistré",
     "yes": "Oui",
-    "no": "Non"
+    "no": "Non",
+    "remove": "Retirer"
   },
   "delete": {
     "cta": "Supprimer",
@@ -1962,6 +1963,17 @@
       "suggestedWeeklyTargetLabel": "Objectif hebdomadaire proposé",
       "suggestedTargetHint": "Proposé aux personnes dans leurs rappels. Chacun décide de l’utiliser ou non."
     },
+    "absence": {
+      "title": "Gestion des absences 2.0",
+      "hint": "Types d'absence avec leurs propres règles, droits annuels et soldes. Son propre interrupteur, désactivé jusqu'à ce que vous l'activiez.",
+      "enabledTitle": "Gestion des absences",
+      "enabledHint": "Apporte les types d'absence, les droits annuels et les soldes — et, dès la prochaine étape, les demandes et les approbations. Les principes généraux de congés et le plan de congés relèvent de la codétermination (§ 87 Abs. 1 Nr. 5 BetrVG) ; ce sont les parties de l'entreprise qui en décident.",
+      "needsAdvanced": "N'a d'effet que si le suivi du temps étendu est activé : chaque jour compté ici vient d'un rythme de travail, d'un calendrier de jours fériés et de la capacité qui en découle. L'interrupteur conserve la position que vous lui laissez.",
+      "keepersTitle": "Qui gère les absences",
+      "keepersHint": "Ces personnes gèrent les types d'absence, les droits et les soldes de tout le monde, et voient un arrêt maladie comme tel. Les administrateurs le peuvent toujours.",
+      "keepersEmpty": "Personne de désigné : les administrateurs gèrent les absences.",
+      "keepersAdd": "Ajouter une personne"
+    },
     "passwordPolicy": "Politique de mots de passe",
     "passwordPolicyHint": "Exigences minimales pour les mots de passe des utilisateurs.",
     "passwordMinLength": "Longueur minimale du mot de passe",
@@ -2419,7 +2431,11 @@
       "AVAILABILITY_TIME_OFF_CHANGED": "Absence modifiée pour une personne",
       "AVAILABILITY_CALENDAR_CHANGED": "Calendrier des jours fériés modifié",
       "AVAILABILITY_HOLIDAYS_CHANGED": "Jours fériés modifiés",
-      "AVAILABILITY_HOLIDAYS_IMPORTED": "Jours fériés importés"
+      "AVAILABILITY_HOLIDAYS_IMPORTED": "Jours fériés importés",
+      "TIME_OFF_TYPE_CHANGED": "Type d'absence modifié",
+      "TIME_OFF_ENTITLEMENT_CHANGED": "Droit à absence modifié",
+      "TIME_OFF_LEDGER_BOOKED": "Solde d'absence enregistré",
+      "TIME_OFF_EMPLOYMENT_CHANGED": "Dates d'emploi modifiées"
     },
     "meta": {
       "oldRole": "Rôle précédent",

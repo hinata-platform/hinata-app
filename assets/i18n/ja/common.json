@@ -29,7 +29,8 @@
     "loadMore": "さらに読み込む",
     "saved": "保存しました",
     "yes": "はい",
-    "no": "いいえ"
+    "no": "いいえ",
+    "remove": "削除"
   },
   "delete": {
     "cta": "削除",
@@ -1962,6 +1963,17 @@
       "suggestedWeeklyTargetLabel": "提案する週の目標",
       "suggestedTargetHint": "各自のリマインダー設定で提案されます。使うかどうかは本人が決めます。"
     },
+    "absence": {
+      "title": "休暇管理 2.0",
+      "hint": "独自のルールを持つ休暇種別、年間付与日数、残高。専用のスイッチで、オンにするまでは無効です。",
+      "enabledTitle": "休暇管理",
+      "enabledHint": "休暇種別、年間付与日数、残高を有効にします。次の段階では申請と承認も加わります。休暇の一般原則と休暇計画はドイツ事業所組織法 § 87 Abs. 1 Nr. 5 により共同決定の対象で、その評価は労使当事者が行います。",
+      "needsAdvanced": "拡張タイムトラッキングが有効な間だけ機能します。ここで数える日は勤務パターン、祝日カレンダー、そこから導かれるキャパシティに基づくためです。スイッチの状態はそのまま保持されます。",
+      "keepersTitle": "休暇を管理する人",
+      "keepersHint": "この人たちは全員の休暇種別・付与日数・残高を管理し、病気休暇を病気休暇として見ます。管理者は常に可能です。",
+      "keepersEmpty": "指名なし：管理者が休暇を管理します。",
+      "keepersAdd": "人を追加"
+    },
     "passwordPolicy": "パスワードポリシー",
     "passwordPolicyHint": "ユーザーのパスワードに求める最低条件。",
     "passwordMinLength": "パスワードの最小文字数",
@@ -2419,7 +2431,11 @@
       "AVAILABILITY_TIME_OFF_CHANGED": "個人の不在を変更",
       "AVAILABILITY_CALENDAR_CHANGED": "祝日カレンダーを変更",
       "AVAILABILITY_HOLIDAYS_CHANGED": "祝日を変更",
-      "AVAILABILITY_HOLIDAYS_IMPORTED": "祝日を取り込み"
+      "AVAILABILITY_HOLIDAYS_IMPORTED": "祝日を取り込み",
+      "TIME_OFF_TYPE_CHANGED": "休暇種別を変更",
+      "TIME_OFF_ENTITLEMENT_CHANGED": "休暇付与日数を変更",
+      "TIME_OFF_LEDGER_BOOKED": "休暇残高を記帳",
+      "TIME_OFF_EMPLOYMENT_CHANGED": "入社日・退職日を変更"
     },
     "meta": {
       "oldRole": "変更前のロール",

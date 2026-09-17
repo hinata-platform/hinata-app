@@ -8,6 +8,7 @@ import 'account_repository.dart';
 import 'admin_repository.dart';
 import 'article_repository.dart';
 import 'auth_repository.dart';
+import 'absence_repository.dart';
 import 'availability_repository.dart';
 import 'board_repository.dart';
 import 'comment_repository.dart';
@@ -30,6 +31,7 @@ export 'account_repository.dart';
 export 'admin_repository.dart';
 export 'article_repository.dart';
 export 'auth_repository.dart';
+export 'absence_repository.dart';
 export 'availability_repository.dart';
 export 'board_repository.dart';
 export 'comment_repository.dart';
@@ -67,6 +69,7 @@ class HinataRepositories {
       timesheet: TimesheetRepository(api),
       time: TimeRepository(api),
       availability: AvailabilityRepository(api),
+      absences: AbsenceRepository(api),
       search: SearchRepository(api),
       articles: ArticleRepository(api),
       dashboard: DashboardRepository(api),
@@ -92,6 +95,7 @@ class HinataRepositories {
     required this.timesheet,
     required this.time,
     required this.availability,
+    required this.absences,
     required this.search,
     required this.articles,
     required this.dashboard,
@@ -115,6 +119,9 @@ class HinataRepositories {
   final TimesheetRepository timesheet;
   final TimeRepository time;
   final AvailabilityRepository availability;
+
+  /// Absence types, entitlements and balances (HIN-116), behind their own flag.
+  final AbsenceRepository absences;
   final SearchRepository search;
   final ArticleRepository articles;
   final DashboardRepository dashboard;

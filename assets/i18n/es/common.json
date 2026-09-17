@@ -29,7 +29,8 @@
     "loadMore": "Cargar más",
     "saved": "Guardado",
     "yes": "Sí",
-    "no": "No"
+    "no": "No",
+    "remove": "Quitar"
   },
   "delete": {
     "cta": "Eliminar",
@@ -1962,6 +1963,17 @@
       "suggestedWeeklyTargetLabel": "Objetivo semanal sugerido",
       "suggestedTargetHint": "Se ofrece a las personas en sus recordatorios. Cada persona decide si lo usa."
     },
+    "absence": {
+      "title": "Gestión de ausencias 2.0",
+      "hint": "Tipos de ausencia con sus propias reglas, derechos anuales y saldos. Un interruptor propio, apagado hasta que lo active.",
+      "enabledTitle": "Gestión de ausencias",
+      "enabledHint": "Aporta tipos de ausencia, derechos anuales y saldos — y, desde la próxima etapa, solicitudes y aprobaciones. Los principios generales de vacaciones y el plan de vacaciones están sujetos a cogestión (§ 87 Abs. 1 Nr. 5 BetrVG); lo valoran las partes de la empresa.",
+      "needsAdvanced": "Solo surte efecto mientras el seguimiento de tiempo ampliado esté activo: cada día que cuenta aquí procede de un patrón de trabajo, un calendario de festivos y la capacidad que resulta de ellos. El interruptor conserva la posición en la que lo deje.",
+      "keepersTitle": "Quién gestiona las ausencias",
+      "keepersHint": "Estas personas gestionan tipos de ausencia, derechos y saldos de todos, y ven una baja por enfermedad como tal. Los administradores siempre pueden.",
+      "keepersEmpty": "Nadie designado: los administradores gestionan las ausencias.",
+      "keepersAdd": "Añadir persona"
+    },
     "passwordPolicy": "Política de contraseñas",
     "passwordPolicyHint": "Requisitos mínimos de las contraseñas de los usuarios.",
     "passwordMinLength": "Longitud mínima de la contraseña",
@@ -2419,7 +2431,11 @@
       "AVAILABILITY_TIME_OFF_CHANGED": "Ausencia modificada para una persona",
       "AVAILABILITY_CALENDAR_CHANGED": "Calendario de festivos modificado",
       "AVAILABILITY_HOLIDAYS_CHANGED": "Festivos modificados",
-      "AVAILABILITY_HOLIDAYS_IMPORTED": "Festivos importados"
+      "AVAILABILITY_HOLIDAYS_IMPORTED": "Festivos importados",
+      "TIME_OFF_TYPE_CHANGED": "Tipo de ausencia modificado",
+      "TIME_OFF_ENTITLEMENT_CHANGED": "Derecho de ausencia modificado",
+      "TIME_OFF_LEDGER_BOOKED": "Saldo de ausencias registrado",
+      "TIME_OFF_EMPLOYMENT_CHANGED": "Fechas de empleo modificadas"
     },
     "meta": {
       "oldRole": "Rol anterior",
