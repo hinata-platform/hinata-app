@@ -5,8 +5,11 @@ import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/models/availability_models.dart';
 import 'package:hinata/core/repositories/availability_repository.dart';
 import 'package:hinata/core/theme/app_colors.dart';
+import 'package:hinata/core/blocs/app_config_bloc.dart';
 import 'package:hinata/features/account/availability_section.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import '../absences/absence_test_support.dart';
 
 /// Settings → Working hours and absences (HIN-91): the pattern editor and the
 /// list of absences, empty and filled.
@@ -19,9 +22,17 @@ void main() {
         data: const MediaQueryData(size: Size(1200, 1400)),
         child: MaterialApp(
           home: Scaffold(
-            body: RepositoryProvider<AvailabilityRepository>.value(
-              value: repository,
-              child: const SingleChildScrollView(child: AvailabilitySection()),
+            // The section now carries the absence balances at the top, and
+            // those ask the server metadata whether the module exists. Off
+            // here, so this test keeps testing the hours and the absences.
+            body: BlocProvider<AppConfigBloc>.value(
+              value: FakeAppConfig(absenceManagement: false),
+              child: RepositoryProvider<AvailabilityRepository>.value(
+                value: repository,
+                child: const SingleChildScrollView(
+                  child: AvailabilitySection(),
+                ),
+              ),
             ),
           ),
         ),
