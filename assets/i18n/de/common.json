@@ -111,6 +111,17 @@
   "error": {
     "feature": {
       "disabled": "Diese Funktion ist auf diesem Server nicht eingeschaltet."
+    },
+    "timeOff": {
+      "adjustmentZero": "Eine Korrektur muss den Saldo um etwas verändern",
+      "employmentOrder": "Das Austrittsdatum kann nicht vor dem Eintrittsdatum liegen",
+      "reasonRequired": "Bitte gib an, warum der Saldo korrigiert wird",
+      "typeKeyInvalid": "Der Schlüssel darf Kleinbuchstaben, Ziffern, Bindestriche und Unterstriche enthalten",
+      "typeNameRequired": "Bitte gib der Abwesenheitsart einen Namen",
+      "typeSystemKind": "Die Gattung einer vorgegebenen Abwesenheitsart lässt sich nicht ändern"
+    },
+    "avatar": {
+      "tooLarge": "Das Bild ist zu groß. Höchstens {{max}} MB."
     }
   },
   "notFound": {
@@ -282,7 +293,7 @@
     "board": "Board",
     "gantt": "Gantt",
     "timesheet": "Stundenzettel",
-    "time": "Zeit",
+    "time": "Zeiterfassung",
     "reports": "Berichte",
     "watched": "Beobachtet",
     "knowledge": "Wissen",

@@ -111,6 +111,17 @@
   "error": {
     "feature": {
       "disabled": "此功能未在该服务器上启用。"
+    },
+    "timeOff": {
+      "adjustmentZero": "更正必须让余额有所变动",
+      "employmentOrder": "离职日期不能早于入职日期",
+      "reasonRequired": "请说明为何更正余额",
+      "typeKeyInvalid": "标识可包含小写字母、数字、连字符和下划线",
+      "typeNameRequired": "请给该缺勤类型起个名称",
+      "typeSystemKind": "内置缺勤类型的类别无法更改"
+    },
+    "avatar": {
+      "tooLarge": "图片太大。最多 {{max}} MB。"
     }
   },
   "notFound": {
@@ -282,7 +293,7 @@
     "board": "看板",
     "gantt": "甘特图",
     "timesheet": "工时表",
-    "time": "时间",
+    "time": "工时记录",
     "reports": "报表",
     "watched": "已关注",
     "knowledge": "知识库",
