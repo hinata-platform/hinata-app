@@ -285,7 +285,11 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
     }
     return [
       Padding(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+        // No side inset of its own. The section already insets its children by
+        // 18, and every card adds its own — three nested paddings put the text
+        // on a card further right than every other row in the section. The card
+        // is the box here, so its padding is the one that counts.
+        padding: const EdgeInsets.fromLTRB(0, 10, 0, 6),
         // The cards share the width rather than leaving a ragged edge: as many
         // per row as fit at their smallest, each stretched to fill what is left.
         // In the narrow column of a settings page that is one card, full width.
@@ -436,7 +440,9 @@ class _BalanceCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          // Sixteen, so the text inside lands where every other row's text in
+          // this section does: the section's own 18 plus this one.
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           decoration: BoxDecoration(
             color: AppColors.surfaceMuted,
             borderRadius: BorderRadius.circular(AppTheme.radiusCard),
