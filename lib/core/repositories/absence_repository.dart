@@ -20,6 +20,20 @@ class AbsenceRepository {
 
   static String _id(String id) => Uri.encodeComponent(id);
 
+  // --- who is asking ---------------------------------------------------------
+
+  /// Whether the reader keeps absences for everybody, so a screen knows
+  /// whether to offer a way into the keeper's pages.
+  ///
+  /// Asked of the server rather than derived from the admin role: an operator
+  /// names the circle that sees sick days as sick days, and a named keeper who
+  /// is not an administrator would otherwise never find the page.
+  Future<bool> isKeeper() async {
+    final data =
+        await _api.get('/api/v1/time-off/access') as Map<String, dynamic>;
+    return data['keeper'] as bool? ?? false;
+  }
+
   // --- the catalogue -------------------------------------------------------
 
   /// The types on offer. [includeInactive] is honoured for a keeper and
@@ -86,6 +100,36 @@ class AbsenceRepository {
       items: [
         for (final item in (data['content'] as List<dynamic>?) ?? const [])
           AbsenceLedgerEntry.fromJson(item as Map<String, dynamic>),
+      ],
+      total: (data['totalElements'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  /// One page of the directory beside where each person stands for [typeId] in
+  /// [year] — the list a keeper grants from. A keeper's to ask.
+  Future<PageResult<AbsenceStanding>> overview({
+    required String typeId,
+    required int year,
+    String query = '',
+    int page = 0,
+    int size = 25,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/time-off/entitlements/overview',
+              query: {
+                'typeId': typeId,
+                'year': year,
+                'q': query,
+                'page': page,
+                'size': size,
+              },
+            )
+            as Map<String, dynamic>;
+    return (
+      items: [
+        for (final item in (data['content'] as List<dynamic>?) ?? const [])
+          AbsenceStanding.fromJson(item as Map<String, dynamic>),
       ],
       total: (data['totalElements'] as num?)?.toInt() ?? 0,
     );

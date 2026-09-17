@@ -52,6 +52,10 @@ class _AdminAppSectionState extends State<AdminAppSection> {
     PlatformFlags.multiAssignee,
     PlatformFlags.emailReply,
     PlatformFlags.advancedTimeTracking,
+    // And the one nested under it: the server derives `absence_management`
+    // from the same block, so a hand-typed row of that name would look like a
+    // switch and flip nothing.
+    PlatformFlags.absenceManagement,
     // Same reason: the server derives `mcp` from the MCP module's own settings,
     // so a row of that name here would be a switch that looks authoritative,
     // flips nothing, and cannot be deleted again.

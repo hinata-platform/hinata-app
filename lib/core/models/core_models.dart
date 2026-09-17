@@ -133,6 +133,11 @@ class ServerMeta extends Equatable {
   bool get advancedTimeTracking =>
       isFlagEnabled(PlatformFlags.advancedTimeTracking);
 
+  /// Absence management 2.0 (default off). The server only reports this on
+  /// while the extended module above is on too, so a screen may read it alone
+  /// and does not have to check both.
+  bool get absenceManagement => isFlagEnabled(PlatformFlags.absenceManagement);
+
   @override
   List<Object?> get props => [
     serverVersion,

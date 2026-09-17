@@ -17,6 +17,7 @@ import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show fmtDuration;
 import '../../core/widgets/read_on_trigger.dart';
+import '../absences/absence_balances_panel.dart';
 import '../sprint/modals/glass_modal.dart';
 import '../time/day_marks.dart';
 import 'account_widgets.dart';
@@ -216,6 +217,10 @@ class _AvailabilitySectionState extends State<AvailabilitySection> {
       title: context.t('availability.section.title'),
       subtitle: context.t('availability.section.subtitle'),
       children: [
+        // Absence management 2.0, when it is switched on: what this year gives
+        // you, before the hours you plan and the days you enter. It renders
+        // nothing at all while the module is off.
+        const AbsenceBalancesPanel(),
         if (_loading && _schedule == null)
           const Padding(
             padding: EdgeInsets.all(24),

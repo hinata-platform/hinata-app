@@ -1,0 +1,525 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import '../../core/api/api_client.dart';
+import '../../core/blocs/app_config_bloc.dart';
+import '../../core/blocs/paged_cubit.dart';
+import '../../core/i18n/i18n.dart';
+import '../../core/models/absence_models.dart';
+import '../../core/repositories/absence_repository.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/widgets/glass_filter_bar.dart' show GlassStepperPill;
+import '../../core/widgets/hive_empty_state.dart';
+import '../../core/widgets/hive_loader.dart';
+import '../../core/widgets/read_on_trigger.dart';
+import 'absence_entitlement_sheets.dart' show LedgerRow;
+import 'absence_labels.dart';
+
+/// Settings → Working hours and absences → your absence balances (HIN-116).
+///
+/// What you are entitled to this year, what is behind you, what is still ahead,
+/// and the journal every one of those numbers is the sum of.
+///
+/// **Only you and the people who keep absences see this.** Not your lead: that
+/// a colleague is away is a planning fact and belongs to the calendar; how many
+/// vacation days they have left is not a question project planning has to
+/// answer (R2, R10). The server enforces it; this screen only ever asks for the
+/// reader's own.
+///
+/// **Absent when the module is off**, and silently: the routes do not exist for
+/// this client then, and a card that spun forever would be the only thing on the
+/// page that ignored the switch.
+class AbsenceBalancesPanel extends StatefulWidget {
+  const AbsenceBalancesPanel({super.key});
+
+  @override
+  State<AbsenceBalancesPanel> createState() => _AbsenceBalancesPanelState();
+}
+
+class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
+  int _year = DateTime.now().year;
+  AbsenceBalances? _balances;
+  List<AbsenceType> _types = const [];
+  bool _loading = true;
+  bool _keeper = false;
+  String? _errorKey;
+
+  /// The type whose journal is open below the cards. Null until the balances
+  /// arrive, then the first one with something in it.
+  String? _openTypeId;
+
+  PagedCubit<AbsenceLedgerEntry>? _entries;
+
+  /// Whether the first read has been asked for. Not in `initState`: while the
+  /// module is off its routes do not exist for this client, and asking anyway
+  /// would answer 404 on every visit to the settings page — which is the one
+  /// response that makes the app go and re-read `/api/v1/meta`.
+  bool _started = false;
+
+  @override
+  void dispose() {
+    unawaited(_entries?.close());
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _errorKey = null;
+    });
+    try {
+      final repository = context.read<AbsenceRepository>();
+      // Side by side: the catalogue names the rows, the balances fill them, and
+      // whether this reader keeps absences decides one link at the bottom.
+      final balances = repository.balances(year: _year);
+      final types = repository.types();
+      final keeper = repository.isKeeper();
+      await Future.wait([balances, types, keeper]);
+      final standing = await balances;
+      final catalogue = await types;
+      final keeps = await keeper;
+      if (!mounted) return;
+      setState(() {
+        _balances = standing;
+        _types = catalogue;
+        _keeper = keeps;
+        _loading = false;
+      });
+      _openJournalFor(_firstInteresting());
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _errorKey = failure.message;
+      });
+    }
+  }
+
+  /// The type the journal opens on: the first one somebody was actually granted,
+  /// because a journal of a type nobody granted is an empty state by definition.
+  String? _firstInteresting() {
+    final rows = _balances?.balances ?? const <AbsenceBalance>[];
+    for (final row in rows) {
+      if (row.granted) return row.typeId;
+    }
+    return rows.firstOrNull?.typeId;
+  }
+
+  void _openJournalFor(String? typeId) {
+    if (typeId == null) return;
+    unawaited(_entries?.close());
+    final cubit = PagedCubit<AbsenceLedgerEntry>(
+      (page, size) => context.read<AbsenceRepository>().ledger(
+        userId: _balances?.userId ?? '',
+        typeId: typeId,
+        year: _year,
+        page: page,
+        size: size,
+      ),
+      pageSize: 50,
+      keyOf: (entry) => entry.id,
+    );
+    setState(() {
+      _openTypeId = typeId;
+      _entries = cubit;
+    });
+    unawaited(cubit.load());
+  }
+
+  void _moveYear(int by) {
+    setState(() => _year += by);
+    unawaited(_load());
+  }
+
+  AbsenceType? _typeOf(String typeId) =>
+      _types.where((type) => type.id == typeId).firstOrNull;
+
+  @override
+  Widget build(BuildContext context) {
+    final on = context.select<AppConfigBloc, bool>(
+      (bloc) => bloc.state.meta?.absenceManagement ?? false,
+    );
+    if (!on) return const SizedBox.shrink();
+    if (!_started) {
+      _started = true;
+      // After this frame: an administrator can switch the module on while this
+      // page is open, and a request started inside build would be a setState
+      // during a build.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_load());
+      });
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _header(context),
+        if (_loading && _balances == null)
+          const Padding(
+            padding: EdgeInsets.all(22),
+            child: Center(child: HiveLoader(size: 30)),
+          )
+        else if (_errorKey != null && _balances == null)
+          HiveEmptyState(
+            title: context.t(_errorKey!),
+            card: false,
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 22),
+            action: OutlinedButton(
+              onPressed: () => unawaited(_load()),
+              child: Text(context.t('common.retry')),
+            ),
+          )
+        else ...[
+          ..._cards(context),
+          ..._journal(context),
+          if (_keeper) _manageLink(context),
+        ],
+        Divider(height: 1, color: AppColors.hairline2),
+      ],
+    );
+  }
+
+  Widget _header(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 14, 8, 4),
+    child: Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                context.t('absence.balances.title'),
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.inkSoft,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                context.t('absence.balances.hint'),
+                style: TextStyle(
+                  fontSize: 11.5,
+                  height: 1.4,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        GlassStepperPill(
+          label: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Text(
+              '$_year',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontFeatures: const [FontFeature.tabularFigures()],
+                color: AppColors.ink,
+              ),
+            ),
+          ),
+          onBack: () => _moveYear(-1),
+          onForward: () => _moveYear(1),
+          backTooltip: context.t('absence.entitlements.previousYear'),
+          forwardTooltip: context.t('absence.entitlements.nextYear'),
+        ),
+      ],
+    ),
+  );
+
+  List<Widget> _cards(BuildContext context) {
+    final rows = _balances?.balances ?? const <AbsenceBalance>[];
+    if (rows.isEmpty) {
+      return [
+        HiveEmptyState(
+          title: context.t('absence.balances.empty'),
+          message: context.t('absence.balances.emptyMessage'),
+          card: false,
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 22),
+        ),
+      ];
+    }
+    return [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+        child: Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            for (final row in rows)
+              _BalanceCard(
+                balance: row,
+                type: _typeOf(row.typeId),
+                workingDaysPerWeek: _balances?.workingDaysPerWeek ?? 5,
+                open: row.typeId == _openTypeId,
+                onTap: () => _openJournalFor(row.typeId),
+              ),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _journal(BuildContext context) {
+    final cubit = _entries;
+    final typeId = _openTypeId;
+    if (cubit == null || typeId == null) return const [];
+    final type = _typeOf(typeId);
+    return [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 2),
+        child: Text(
+          type == null
+              ? context.t('absence.balances.journal')
+              : '${context.t('absence.balances.journal')}  ·  '
+                    '${absenceTypeName(context, type)}',
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            color: AppColors.inkSoft,
+          ),
+        ),
+      ),
+      BlocProvider.value(
+        value: cubit,
+        child:
+            BlocBuilder<
+              PagedCubit<AbsenceLedgerEntry>,
+              PagedState<AbsenceLedgerEntry>
+            >(
+              builder: (context, state) {
+                if (state.isLoading && !state.hasData) {
+                  return const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Center(child: HiveLoader(size: 26)),
+                  );
+                }
+                if (state.items.isEmpty) {
+                  return HiveEmptyState(
+                    title: context.t('absence.balances.journalEmpty'),
+                    message: context.t('absence.balances.journalEmptyMessage'),
+                    card: false,
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                  );
+                }
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final entry in state.items) LedgerRow(entry: entry),
+                      if (state.hasMore)
+                        ReadOnTrigger(
+                          count: state.items.length,
+                          loading: state.isLoadingMore,
+                          onReadOn: () => unawaited(cubit.loadMore()),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+      ),
+    ];
+  }
+
+  /// The way into the keeper's pages, for somebody an operator named who is not
+  /// an administrator and would otherwise have no entry point at all.
+  Widget _manageLink(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+    child: Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: OutlinedButton.icon(
+        onPressed: () => context.go('/absences/entitlements'),
+        icon: const Icon(LucideIcons.usersRound, size: 16),
+        label: Text(context.t('absence.balances.manage')),
+      ),
+    ),
+  );
+}
+
+/// One type's standing for the year: what is left, out of what, and the two
+/// halves of what is gone.
+class _BalanceCard extends StatelessWidget {
+  const _BalanceCard({
+    required this.balance,
+    required this.type,
+    required this.workingDaysPerWeek,
+    required this.open,
+    required this.onTap,
+  });
+
+  final AbsenceBalance balance;
+  final AbsenceType? type;
+  final int workingDaysPerWeek;
+  final bool open;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colour = absenceColor(context, type?.hue);
+    return SizedBox(
+      width: 232,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+              border: Border.all(
+                color: open ? colour : AppColors.hairline2,
+                width: open ? 1.4 : 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(absenceIcon(type?.icon), size: 15, color: colour),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: Text(
+                        type == null
+                            ? context.t('absence.balances.title')
+                            : absenceTypeName(context, type!),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ..._figures(context),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _figures(BuildContext context) {
+    if (balance.unlimited) {
+      return [
+        Text(
+          context.t('absence.balances.unlimited'),
+          style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+        ),
+      ];
+    }
+    if (!balance.granted) {
+      return [
+        Text(
+          context.t('absence.balances.notGranted'),
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: AppColors.inkSoft,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          context.t('absence.balances.notGrantedHint'),
+          style: TextStyle(
+            fontSize: 11,
+            height: 1.35,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ];
+    }
+    return [
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Text(
+            formatDays(balance.remainingMilliDays),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              fontFeatures: const [FontFeature.tabularFigures()],
+              color: AppColors.ink,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              context.t('absence.balances.remaining'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 6),
+      Text(
+        '${context.t('absence.balances.entitled')} '
+        '${daysLabel(context, balance.accruedMilliDays)}',
+        style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+      ),
+      Text(
+        '${context.t('absence.balances.taken')} '
+        '${formatDays(balance.takenMilliDays)}  ·  '
+        '${context.t('absence.balances.planned')} '
+        '${formatDays(balance.plannedMilliDays)}',
+        style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+      ),
+      if (balance.expiresOn != null) ...[
+        const SizedBox(height: 4),
+        Text(
+          context.t(
+            'absence.balances.expiresOn',
+            variables: {
+              'date': MaterialLocalizations.of(
+                context,
+              ).formatMediumDate(balance.expiresOn!.toLocal()),
+            },
+          ),
+          style: TextStyle(
+            fontSize: 11,
+            height: 1.35,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+      // § 3 BUrlG, said to the person it is about rather than only to the
+      // operator who set it: four weeks of their own working week is the floor,
+      // and a quota under it is something to ask about, not something to accept.
+      if (balance.belowLegalMinimum) ...[
+        const SizedBox(height: 6),
+        Text(
+          context.t(
+            'absence.balances.belowMinimum',
+            variables: {
+              'days': formatDays(balance.legalMinimumMilliDays),
+              'week': '$workingDaysPerWeek',
+            },
+          ),
+          style: const TextStyle(
+            fontSize: 11,
+            height: 1.35,
+            color: AppColors.danger,
+          ),
+        ),
+      ],
+    ];
+  }
+}

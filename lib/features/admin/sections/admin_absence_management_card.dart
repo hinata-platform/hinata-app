@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
@@ -143,9 +144,39 @@ class _AdminAbsenceManagementCardState
           ),
         const SizedBox(height: 8),
         _keepers(context),
+        // Only once the module is actually running. The two pages behind these
+        // buttons live on the module's own routes, so with the switch stored
+        // but not yet saved — or saved but the module above it off — they would
+        // answer 404 and the buttons would be a way to a page that is not there.
+        if (widget.effective == true) ...[
+          const SizedBox(height: 14),
+          _links(context),
+        ],
       ],
     );
   }
+
+  /// The way into the catalogue and into everybody's entitlements.
+  ///
+  /// Pages of their own rather than more of this card: a type carries two dozen
+  /// rules and the entitlements list is the whole organisation, and neither fits
+  /// a form that saves as a whole.
+  Widget _links(BuildContext context) => Wrap(
+    spacing: 10,
+    runSpacing: 10,
+    children: [
+      FilledButton.tonalIcon(
+        onPressed: () => context.go('/absences/types'),
+        icon: const Icon(LucideIcons.listChecks, size: 16),
+        label: Text(context.t('absence.types.open')),
+      ),
+      OutlinedButton.icon(
+        onPressed: () => context.go('/absences/entitlements'),
+        icon: const Icon(LucideIcons.usersRound, size: 16),
+        label: Text(context.t('absence.entitlements.open')),
+      ),
+    ],
+  );
 
   Widget _keepers(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,

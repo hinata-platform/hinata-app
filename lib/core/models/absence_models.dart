@@ -257,7 +257,8 @@ class AbsenceType extends Equatable {
     prorateOnLeave: json['prorateOnLeave'] as bool? ?? true,
     carryover: AbsenceCarryover.fromWire(json['carryover']),
     carryoverCapMilliDays: (json['carryoverCapMilliDays'] as num?)?.toInt(),
-    carryoverExpiresMonth: (json['carryoverExpiresMonth'] as num?)?.toInt() ?? 3,
+    carryoverExpiresMonth:
+        (json['carryoverExpiresMonth'] as num?)?.toInt() ?? 3,
     carryoverExpiresDay: (json['carryoverExpiresDay'] as num?)?.toInt() ?? 31,
     active: json['active'] as bool? ?? true,
   );
@@ -484,6 +485,65 @@ class AbsenceGrantPreview extends Equatable {
   List<Object?> get props => [userId, accruedMilliDays, alreadyGranted];
 }
 
+/// Where one person stands for one type and leave year, as a keeper's list
+/// shows it.
+///
+/// The joining and leaving dates travel with the row on purpose: they are the
+/// answer to the question the numbers raise. Somebody reading eight and a third
+/// days wants July beside it, not a second screen to find out why.
+class AbsenceStanding extends Equatable {
+  const AbsenceStanding({
+    required this.userId,
+    this.entitledMilliDays = 0,
+    this.accruedMilliDays = 0,
+    this.takenMilliDays = 0,
+    this.plannedMilliDays = 0,
+    this.remainingMilliDays = 0,
+    this.granted = false,
+    this.hiredOn,
+    this.leftOn,
+  });
+
+  final String userId;
+  final int entitledMilliDays;
+  final int accruedMilliDays;
+  final int takenMilliDays;
+  final int plannedMilliDays;
+  final int remainingMilliDays;
+
+  /// Whether the year was granted at all. Not granted and nothing left are
+  /// different states, and the row says which.
+  final bool granted;
+
+  final DateTime? hiredOn;
+  final DateTime? leftOn;
+
+  static AbsenceStanding fromJson(Map<String, dynamic> json) => AbsenceStanding(
+    userId: json['userId'] as String? ?? '',
+    entitledMilliDays: (json['entitledMilliDays'] as num?)?.toInt() ?? 0,
+    accruedMilliDays: (json['accruedMilliDays'] as num?)?.toInt() ?? 0,
+    takenMilliDays: (json['takenMilliDays'] as num?)?.toInt() ?? 0,
+    plannedMilliDays: (json['plannedMilliDays'] as num?)?.toInt() ?? 0,
+    remainingMilliDays: (json['remainingMilliDays'] as num?)?.toInt() ?? 0,
+    granted: json['granted'] as bool? ?? false,
+    hiredOn: DateTime.tryParse(json['hiredOn'] as String? ?? ''),
+    leftOn: DateTime.tryParse(json['leftOn'] as String? ?? ''),
+  );
+
+  @override
+  List<Object?> get props => [
+    userId,
+    entitledMilliDays,
+    accruedMilliDays,
+    takenMilliDays,
+    plannedMilliDays,
+    remainingMilliDays,
+    granted,
+    hiredOn,
+    leftOn,
+  ];
+}
+
 /// When somebody joined and left. The only personal facts the module keeps.
 class EmploymentDates extends Equatable {
   const EmploymentDates({
@@ -509,6 +569,35 @@ class EmploymentDates extends Equatable {
 
   @override
   List<Object?> get props => [userId, hiredOn, leftOn, note];
+}
+
+/// A typed number of days back into thousandths: "2,5" and "2.5" both make
+/// 2500.
+///
+/// Both separators, because a German keyboard puts a comma on the number row
+/// and a field that rejected it would be a field that silently turned two and a
+/// half days into twenty-five.
+int parseDays(String text) {
+  final cleaned = text.trim().replaceAll(',', '.');
+  if (cleaned.isEmpty) return 0;
+  final days = double.tryParse(cleaned);
+  if (days == null || days.isNaN || days.isInfinite) return 0;
+  // Never negative: everywhere this is read, a negative number of days is a
+  // typo — a quota of minus twenty is not a quota, and a carryover cap of minus
+  // two is nothing at all. Only a correction may mean it, and that is
+  // [parseSignedDays].
+  return (days.abs() * kMilliDay).round();
+}
+
+/// [parseDays] for a field where the direction matters: "-2,5" makes -2500.
+///
+/// Its own function rather than a flag on [parseDays], because only a
+/// correction is allowed to mean a negative number of days.
+int parseSignedDays(String text) {
+  final trimmed = text.trim();
+  final negative = trimmed.startsWith('-') || trimmed.startsWith('\u2212');
+  final magnitude = parseDays(trimmed.replaceAll(RegExp(r'[-\u2212]'), ''));
+  return negative ? -magnitude : magnitude;
 }
 
 /// Thousandths of a working day as a number of days, trimmed of trailing zeros.

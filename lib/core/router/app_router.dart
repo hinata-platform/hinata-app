@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/account/account_screen.dart';
 import '../../features/admin/admin_screen.dart';
+import '../../features/absences/absence_entitlements_screen.dart';
+import '../../features/absences/absence_types_screen.dart';
 import '../../features/admin/holidays/admin_holidays_screen.dart';
 import '../../features/admin/users/user_management_screen.dart';
 import '../../features/auth/accept_invite_screen.dart';
@@ -564,6 +566,20 @@ GoRouter buildRouter({
             path: '/admin/holidays',
             pageBuilder: (_, state) =>
                 _transition(state, const AdminHolidaysScreen()),
+          ),
+          // Absence management 2.0 (HIN-116). Outside `/admin` on purpose: an
+          // operator names who keeps absences, and a named keeper need not be
+          // an administrator. The server decides what each of them may do; the
+          // pages themselves say so when it answers no.
+          GoRoute(
+            path: '/absences/types',
+            pageBuilder: (_, state) =>
+                _transition(state, const AbsenceTypesScreen()),
+          ),
+          GoRoute(
+            path: '/absences/entitlements',
+            pageBuilder: (_, state) =>
+                _transition(state, const AbsenceEntitlementsScreen()),
           ),
         ],
       ),

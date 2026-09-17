@@ -180,6 +180,10 @@ String? subPageTitleKey(String location, {required bool advancedTime}) {
   if (location.startsWith('/admin/holidays')) {
     return 'availability.admin.pageTitle';
   }
+  if (location == '/absences/types') return 'absence.types.pageTitle';
+  if (location == '/absences/entitlements') {
+    return 'absence.entitlements.pageTitle';
+  }
   if (location == '/notifications') return 'nav.notifications';
   if (location == '/weekly-summary') return 'weeklySummary.title';
   if (location == '/settings') return 'nav.settings';
@@ -217,6 +221,10 @@ String subPageBackRoute(String location) {
   if (location.startsWith('/admin/users')) return '/admin';
   if (location.startsWith('/admin/holidays')) return '/admin';
   if (location == '/admin') return '/settings';
+  // Settings rather than the admin area: the keeper's pages are reached from
+  // both, and a named keeper who is not an administrator would be sent to a
+  // page that is not theirs.
+  if (location.startsWith('/absences/')) return '/settings';
   if (location.startsWith('/issues/')) return '/issues';
   if (location.startsWith('/knowledge/')) return '/knowledge';
   if (location.startsWith('/board/')) return '/board';
