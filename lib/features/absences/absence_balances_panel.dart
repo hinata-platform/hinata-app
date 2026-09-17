@@ -123,12 +123,19 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
     }
   }
 
-  /// The type the journal opens on: the first one somebody was actually granted,
-  /// because a journal of a type nobody granted is an empty state by definition.
+  /// The type the journal opens on.
+  ///
+  /// The first one somebody was actually granted; failing that, the first one
+  /// that *could* be granted. An unlimited type — sickness, and whatever else an
+  /// operator marks that way — has no balance at all, so its journal is empty by
+  /// construction, and opening on it shows an empty state that will never fill.
   String? _firstInteresting() {
     final rows = _balances?.balances ?? const <AbsenceBalance>[];
     for (final row in rows) {
       if (row.granted) return row.typeId;
+    }
+    for (final row in rows) {
+      if (!row.unlimited) return row.typeId;
     }
     return rows.firstOrNull?.typeId;
   }
@@ -279,19 +286,36 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
     return [
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-        child: Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            for (final row in rows)
-              _BalanceCard(
-                balance: row,
-                type: _typeOf(row.typeId),
-                workingDaysPerWeek: _balances?.workingDaysPerWeek ?? 5,
-                open: row.typeId == _openTypeId,
-                onTap: () => _openJournalFor(row.typeId),
-              ),
-          ],
+        // The cards share the width rather than leaving a ragged edge: as many
+        // per row as fit at their smallest, each stretched to fill what is left.
+        // In the narrow column of a settings page that is one card, full width.
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const spacing = 10.0;
+            const min = _BalanceCard.minWidth;
+            final columns = ((constraints.maxWidth + spacing) / (min + spacing))
+                .floor()
+                .clamp(1, 4);
+            final width =
+                (constraints.maxWidth - spacing * (columns - 1)) / columns;
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: [
+                for (final row in rows)
+                  SizedBox(
+                    width: width,
+                    child: _BalanceCard(
+                      balance: row,
+                      type: _typeOf(row.typeId),
+                      workingDaysPerWeek: _balances?.workingDaysPerWeek ?? 5,
+                      open: row.typeId == _openTypeId,
+                      onTap: () => _openJournalFor(row.typeId),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       ),
     ];
@@ -399,53 +423,54 @@ class _BalanceCard extends StatelessWidget {
   final bool open;
   final VoidCallback onTap;
 
+  /// The narrowest a card stays readable: the big figure, its label and the two
+  /// lines under it.
+  static const double minWidth = 232;
+
   @override
   Widget build(BuildContext context) {
     final colour = absenceColor(context, type?.hue);
-    return SizedBox(
-      width: 232,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceMuted,
-              borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-              border: Border.all(
-                color: open ? colour : AppColors.hairline2,
-                width: open ? 1.4 : 1,
-              ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+            border: Border.all(
+              color: open ? colour : AppColors.hairline2,
+              width: open ? 1.4 : 1,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(absenceIcon(type?.icon), size: 15, color: colour),
-                    const SizedBox(width: 7),
-                    Expanded(
-                      child: Text(
-                        type == null
-                            ? context.t('absence.balances.title')
-                            : absenceTypeName(context, type!),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.ink,
-                        ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(absenceIcon(type?.icon), size: 15, color: colour),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: Text(
+                      type == null
+                          ? context.t('absence.balances.title')
+                          : absenceTypeName(context, type!),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                ..._figures(context),
-              ],
-            ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ..._figures(context),
+            ],
           ),
         ),
       ),

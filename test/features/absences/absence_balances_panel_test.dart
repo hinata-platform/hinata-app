@@ -135,6 +135,28 @@ void main() {
     expect(find.text('absence.balances.manage'), findsNothing);
   });
 
+  testWidgets('the journal opens on a type that can have one', (tester) async {
+    await pump(
+      tester,
+      _FakeAbsences(
+        balances: const [
+          // Sickness first in the catalogue, and unlimited: it has no balance at
+          // all, so its journal is empty by construction. Opening on it would
+          // show an empty state that can never fill.
+          AbsenceBalance(typeId: 't-sick', year: 2026, unlimited: true),
+          AbsenceBalance(typeId: 't-vacation', year: 2026),
+        ],
+      ),
+    );
+
+    // The header names the type the journal is of, and it is the one with a
+    // quota rather than the one first in the catalogue.
+    expect(
+      find.text('absence.balances.journal  ·  absence.type.vacation'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('no balances at all is a sentence, not a blank', (tester) async {
     await pump(tester, _FakeAbsences());
 
@@ -166,6 +188,14 @@ class _FakeAbsences implements AbsenceRepository {
   @override
   Future<List<AbsenceType>> types({bool includeInactive = false}) async =>
       const [
+        AbsenceType(
+          id: 't-sick',
+          key: 'sick',
+          kind: AbsenceKind.sick,
+          systemKey: 'sick',
+          unlimited: true,
+          icon: 'thermometer',
+        ),
         AbsenceType(
           id: 't-vacation',
           key: 'vacation',

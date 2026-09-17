@@ -130,8 +130,10 @@ class _AdminAbsenceManagementCardState
           effective: widget.effective,
           onChanged: widget.onEnabledChanged,
           // § 87 Abs. 1 Nr. 5 BetrVG rather than Nr. 6: holiday principles and
-          // the holiday plan are co-determined in their own right.
+          // the holiday plan are co-determined in their own right, and the note
+          // has to say the same paragraph the description above it argues.
           monitoring: true,
+          codeterminationKey: 'admin.absence.codetermination',
         ),
         if (!widget.advancedOn)
           Padding(

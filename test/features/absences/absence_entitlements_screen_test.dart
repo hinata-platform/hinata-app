@@ -101,6 +101,44 @@ void main() {
     expect(find.text('absence.entitlements.remaining'), findsOneWidget);
   });
 
+  testWidgets('a correction is shown, so the row adds up', (tester) async {
+    await pump(
+      tester,
+      _FakeAbsences(
+        types: [_vacation],
+        standings: const [
+          AbsenceStanding(
+            userId: 'u-1',
+            granted: true,
+            accruedMilliDays: 20 * kMilliDay,
+            adjustedMilliDays: 5 * kMilliDay,
+            remainingMilliDays: 25 * kMilliDay,
+          ),
+        ],
+      ),
+    );
+
+    // Twenty entitled and twenty-five left is not an error, but without the
+    // five in between it reads like one.
+    expect(find.text('absence.entitlements.adjusted'), findsOneWidget);
+  });
+
+  testWidgets('a row with nothing to say under the name says nothing', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      _FakeAbsences(
+        types: [_vacation],
+        standings: const [AbsenceStanding(userId: 'u-1')],
+      ),
+    );
+
+    // No title, no employment dates: an empty line beats "not set", which reads
+    // as a statement about the person rather than about two unfilled fields.
+    expect(find.text('absence.entitlements.notSet'), findsNothing);
+  });
+
   testWidgets('the bulk grant appears only once somebody is chosen', (
     tester,
   ) async {

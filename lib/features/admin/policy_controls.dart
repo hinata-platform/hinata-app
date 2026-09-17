@@ -36,7 +36,17 @@ import 'admin_form_helpers.dart';
 
 /// The note itself, rendered directly under a monitoring-capable policy.
 class CodeterminationNote extends StatelessWidget {
-  const CodeterminationNote({super.key});
+  const CodeterminationNote({super.key, this.textKey});
+
+  /// Which co-determination rule this policy falls under.
+  ///
+  /// Nr. 6 is the default and covers everything here that makes one person's
+  /// working time legible to another. It is not the only one: general holiday
+  /// principles and the holiday plan are co-determined **in their own right**
+  /// under § 87 Abs. 1 Nr. 5 BetrVG, and a switch that argued Nr. 5 in its
+  /// description while the note underneath cited Nr. 6 would be contradicting
+  /// itself on the screen where somebody is deciding.
+  final String? textKey;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -44,7 +54,7 @@ class CodeterminationNote extends StatelessWidget {
     child: AdminNote(
       icon: LucideIcons.scale,
       tone: AdminNoteTone.warning,
-      text: context.t('admin.timeTracking.codetermination'),
+      text: context.t(textKey ?? 'admin.timeTracking.codetermination'),
     ),
   );
 }
@@ -181,6 +191,7 @@ class _PolicyRow extends StatelessWidget {
     required this.isDefault,
     required this.onReset,
     required this.monitoring,
+    this.codeterminationKey,
     this.pending = false,
     this.pendingKey,
   });
@@ -191,6 +202,10 @@ class _PolicyRow extends StatelessWidget {
   final bool isDefault;
   final VoidCallback onReset;
   final bool monitoring;
+
+  /// Which rule the note names — see [CodeterminationNote.textKey].
+  final String? codeterminationKey;
+
   final bool pending;
 
   /// Overrides the pending note's wording — see [PendingNote.textKey].
@@ -244,7 +259,7 @@ class _PolicyRow extends StatelessWidget {
               ),
             ],
           ),
-          if (monitoring) const CodeterminationNote(),
+          if (monitoring) CodeterminationNote(textKey: codeterminationKey),
           if (pending) PendingNote(textKey: pendingKey),
           EnvDefaultAction(isDefault: isDefault, onReset: onReset),
         ],
@@ -262,6 +277,7 @@ class PolicySwitch extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.monitoring = false,
+    this.codeterminationKey,
     this.pending = false,
     this.pendingKey,
     this.effective,
@@ -277,6 +293,9 @@ class PolicySwitch extends StatelessWidget {
   /// Whether this policy makes one person's time legible to another, and so
   /// carries the co-determination note.
   final bool monitoring;
+
+  /// Which co-determination rule that note names — see [CodeterminationNote].
+  final String? codeterminationKey;
 
   /// Whether the policy is recorded but not yet acted on — see [PendingNote].
   final bool pending;
@@ -296,6 +315,7 @@ class PolicySwitch extends StatelessWidget {
       isDefault: current == null,
       onReset: () => onChanged(null),
       monitoring: monitoring,
+      codeterminationKey: codeterminationKey,
       pending: pending,
       pendingKey: pendingKey,
       control: current == null
