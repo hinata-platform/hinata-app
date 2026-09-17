@@ -466,6 +466,10 @@ IconData _actionIcon(String action) => switch (action) {
   'AVAILABILITY_CALENDAR_CHANGED' => LucideIcons.calendarHeart,
   'AVAILABILITY_HOLIDAYS_CHANGED' => LucideIcons.calendarCheck2,
   'AVAILABILITY_HOLIDAYS_IMPORTED' => LucideIcons.download,
+  'TIME_OFF_TYPE_CHANGED' => LucideIcons.tags,
+  'TIME_OFF_ENTITLEMENT_CHANGED' => LucideIcons.calendarPlus,
+  'TIME_OFF_LEDGER_BOOKED' => LucideIcons.bookOpenCheck,
+  'TIME_OFF_EMPLOYMENT_CHANGED' => LucideIcons.idCard,
   _ => LucideIcons.history,
 };
 

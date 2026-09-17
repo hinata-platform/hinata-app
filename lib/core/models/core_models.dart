@@ -22,6 +22,16 @@ class PlatformFlags {
   /// the server answers every extended route with 404 `error.feature.disabled`.
   /// Configured in Adminbereich → Zeiterfassung, not in the raw flag editor.
   static const advancedTimeTracking = 'advanced_time_tracking';
+
+  /// Expose absence management 2.0: absence types with their own rules, yearly
+  /// entitlements, balances and (from A2) requests. Its own switch beside the
+  /// one above, configured in Adminbereich → Zeiterfassung, and nested under
+  /// it: the server only reports this on when the extended module is on too,
+  /// because every day it counts comes from a working pattern, a holiday
+  /// calendar and the capacity built on them. Off → the routes answer 404
+  /// `error.feature.disabled` and absences stay what they were: a span
+  /// somebody enters that shapes capacity.
+  static const absenceManagement = 'absence_management';
 }
 
 /// Server metadata from GET /api/v1/meta (version gate, branding, flags).

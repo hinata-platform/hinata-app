@@ -101,10 +101,12 @@ void main() {
   });
 
   test('the prefixes are the ones the server gates, spelled its way', () {
-    // Mirrors AdvancedTimeTrackingGate.GATED_PATTERNS in hinata-server. If that
-    // list gains a prefix, this test is the one that should be failing here.
+    // Mirrors AdvancedTimeTrackingGate.GATED_PATTERNS and, since HIN-116,
+    // AbsenceManagementGate.GATED_PATTERNS in hinata-server. If either list
+    // gains a prefix, this test is the one that should be failing here.
     expect(kFlagGatedRoutePrefixes, const [
       '/api/v1/time',
+      '/api/v1/time-off',
       '/api/v1/me/timer',
       '/api/v1/availability',
       '/api/v1/billing',
@@ -136,6 +138,21 @@ void main() {
     // The same trap one level down: a path that merely starts with the letters.
     expect(
       isFeatureDisabledResponse(path: '/api/v1/timesheets/2026', status: 404),
+      isFalse,
+    );
+  });
+
+  test('absence management is gated too, and does not swallow its neighbour', () {
+    // Its own flag, the same reaction: a 404 here means our copy of /meta is stale.
+    expect(
+      isFeatureDisabledResponse(path: '/api/v1/time-off/types', status: 404),
+      isTrue,
+    );
+    expect(isFeatureDisabledResponse(path: '/api/v1/time-off', status: 404), isTrue);
+    // And the module next door keeps its own boundary: /api/v1/time gates the
+    // extended time tracking, not everything whose path starts with those letters.
+    expect(
+      isFeatureDisabledResponse(path: '/api/v1/time-offsets', status: 404),
       isFalse,
     );
   });

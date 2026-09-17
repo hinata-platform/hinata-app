@@ -29,7 +29,8 @@
     "loadMore": "Mehr laden",
     "saved": "Gespeichert",
     "yes": "Ja",
-    "no": "Nein"
+    "no": "Nein",
+    "remove": "Entfernen"
   },
   "delete": {
     "cta": "Löschen",
@@ -1962,6 +1963,17 @@
       "suggestedWeeklyTargetLabel": "Vorgeschlagenes Wochenziel",
       "suggestedTargetHint": "Wird Personen in ihren Erinnerungen angeboten. Ob sie es übernehmen, entscheidet jede Person selbst."
     },
+    "absence": {
+      "title": "Abwesenheitsmanagement 2.0",
+      "hint": "Abwesenheitsarten mit eigenen Regeln, Jahresansprüche und Salden. Ein eigener Schalter, aus, bis Sie ihn einschalten.",
+      "enabledTitle": "Abwesenheitsmanagement",
+      "enabledHint": "Bringt Abwesenheitsarten, Jahresansprüche und Salden — und ab der nächsten Stufe Anträge und Genehmigungen. Allgemeine Urlaubsgrundsätze und der Urlaubsplan sind nach § 87 Abs. 1 Nr. 5 BetrVG mitbestimmt (im öffentlichen Bereich das LPVG); wie das hier zu bewerten ist, entscheiden die Betriebsparteien.",
+      "needsAdvanced": "Wirkt nur, solange das erweiterte Time-Tracking an ist: Jeder Tag, den dieses Modul zählt, kommt aus einem Arbeitszeitmuster, einem Feiertagskalender und der Kapazität darauf. Der Schalter behält die Stellung, in der Sie ihn lassen.",
+      "keepersTitle": "Wer Abwesenheiten verwaltet",
+      "keepersHint": "Diese Personen verwalten Abwesenheitsarten, Ansprüche und Salden für alle und sehen einen Krankheitstag als Krankheitstag. Administratoren dürfen es immer.",
+      "keepersEmpty": "Niemand benannt: Administratoren verwalten die Abwesenheiten.",
+      "keepersAdd": "Person hinzufügen"
+    },
     "passwordPolicy": "Passwortrichtlinie",
     "passwordPolicyHint": "Mindestanforderungen für Benutzerpasswörter.",
     "passwordMinLength": "Minimale Passwortlänge",
@@ -2419,7 +2431,11 @@
       "AVAILABILITY_TIME_OFF_CHANGED": "Abwesenheit einer Person geändert",
       "AVAILABILITY_CALENDAR_CHANGED": "Feiertagskalender geändert",
       "AVAILABILITY_HOLIDAYS_CHANGED": "Feiertage geändert",
-      "AVAILABILITY_HOLIDAYS_IMPORTED": "Feiertage importiert"
+      "AVAILABILITY_HOLIDAYS_IMPORTED": "Feiertage importiert",
+      "TIME_OFF_TYPE_CHANGED": "Abwesenheitsart geändert",
+      "TIME_OFF_ENTITLEMENT_CHANGED": "Abwesenheitsanspruch geändert",
+      "TIME_OFF_LEDGER_BOOKED": "Abwesenheitssaldo gebucht",
+      "TIME_OFF_EMPLOYMENT_CHANGED": "Eintritts- oder Austrittsdatum geändert"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",
