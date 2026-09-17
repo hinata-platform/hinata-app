@@ -1381,6 +1381,7 @@
       "quota": "Cupo",
       "allowance": "Días por año",
       "allowanceHint": "El valor por defecto para las nuevas asignaciones. Cada persona puede tener otro.",
+      "legalFloor": "Las vacaciones mínimas legales son cuatro semanas: {{five}} días con semana de cinco días, {{six}} con semana de seis (§ 3 BUrlG). Menos es posible si aquí se trabaja una semana más corta: hinata comprueba la semana de cada persona.",
       "accrual": "Acumulación",
       "yearStart": "El año de vacaciones empieza el",
       "waitingPeriod": "Periodo de espera",

@@ -1381,6 +1381,7 @@
       "quota": "Kontingent",
       "allowance": "Tage pro Jahr",
       "allowanceHint": "Der Standard für neue Zuteilungen. Einzelne Personen können davon abweichen.",
+      "legalFloor": "Der gesetzliche Mindesturlaub beträgt vier Wochen: {{five}} Tage bei einer Fünftagewoche, {{six}} bei einer Sechstagewoche (§ 3 BUrlG). Weniger ist möglich, wenn hier kürzer gearbeitet wird — hinata rechnet die Woche jeder Person selbst nach.",
       "accrual": "Zuwachs",
       "yearStart": "Urlaubsjahr beginnt am",
       "waitingPeriod": "Wartezeit",

@@ -1,15 +1,21 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/blocs/app_config_bloc.dart';
 import '../../core/i18n/i18n.dart';
+import '../../core/models/absence_models.dart' as absences;
 import '../../core/models/availability_models.dart';
+import '../../core/repositories/absence_repository.dart';
 import '../../core/repositories/availability_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/field_button.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveSwitch;
+import '../absences/absence_labels.dart';
 import '../sprint/modals/glass_modal.dart';
 import '../time/day_marks.dart';
 import 'account_widgets.dart';
@@ -18,21 +24,34 @@ import 'account_widgets.dart';
 /// something was saved or deleted.
 Future<bool?> showTimeOffSheet(BuildContext context, {TimeOff? existing}) {
   final repository = context.read<AvailabilityRepository>();
+  final catalogue = context.read<AbsenceRepository>();
+  final absenceManagement =
+      context.read<AppConfigBloc>().state.meta?.absenceManagement ?? false;
   return showGlassModal<bool>(
     context,
     adaptive: true,
     width: 440,
-    builder: (sheetContext) => RepositoryProvider.value(
-      value: repository,
-      child: _TimeOffForm(existing: existing),
+    builder: (sheetContext) => MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<AvailabilityRepository>.value(value: repository),
+        RepositoryProvider<AbsenceRepository>.value(value: catalogue),
+      ],
+      child: _TimeOffForm(
+        existing: existing,
+        absenceManagement: absenceManagement,
+      ),
     ),
   );
 }
 
 class _TimeOffForm extends StatefulWidget {
-  const _TimeOffForm({this.existing});
+  const _TimeOffForm({this.existing, this.absenceManagement = false});
 
   final TimeOff? existing;
+
+  /// Whether the instance offers a catalogue of its own types (HIN-116). With
+  /// it off this is the three-value picker stage 10 shipped, unchanged.
+  final bool absenceManagement;
 
   @override
   State<_TimeOffForm> createState() => _TimeOffFormState();
@@ -42,6 +61,14 @@ class _TimeOffFormState extends State<_TimeOffForm> {
   /// Around the type field, so its menu hangs off the field.
   final _typeKey = GlobalKey();
   late TimeOffType _type = widget.existing?.type ?? TimeOffType.vacation;
+
+  /// The operator's own types, when the module is on. Empty until they arrive,
+  /// and the three-value picker stands in the meantime rather than a spinner in
+  /// the middle of a form.
+  List<absences.AbsenceType> _catalogue = const [];
+
+  /// Which of them is picked. Null means the plain type above is the answer.
+  late String? _typeId = widget.existing?.typeId;
   late DateTimeRange _range = _initialRange();
   late bool _halfDay = widget.existing?.halfDay ?? false;
   late final TextEditingController _note = TextEditingController(
@@ -61,14 +88,63 @@ class _TimeOffFormState extends State<_TimeOffForm> {
   bool get _singleDay => DateUtils.isSameDay(_range.start, _range.end);
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.absenceManagement) unawaited(_loadCatalogue());
+  }
+
+  @override
   void dispose() {
     _note.dispose();
     super.dispose();
   }
 
+  /// What the instance offers. A failure leaves the three-value picker, which
+  /// is a working form rather than an error over a list somebody may not need.
+  Future<void> _loadCatalogue() async {
+    try {
+      final offered = await context.read<AbsenceRepository>().types();
+      if (!mounted) return;
+      setState(() => _catalogue = offered);
+    } on ApiFailure {
+      // Left as it was.
+    }
+  }
+
+  absences.AbsenceType? get _picked => _typeId == null
+      ? null
+      : _catalogue.where((type) => type.id == _typeId).firstOrNull;
+
+  /// What the field shows: the operator's name for the picked type, or the
+  /// plain label of one of the three.
+  String _typeLabel(BuildContext context) {
+    final picked = _picked;
+    return picked == null
+        ? context.t(_type.labelKey)
+        : absenceTypeName(context, picked);
+  }
+
+  IconData _typeIcon() {
+    final picked = _picked;
+    return picked == null ? timeOffIcon(_type) : absenceIcon(picked.icon);
+  }
+
+  /// The stored kind an operator's type maps to — the same derivation the
+  /// server makes, so the icon and the calendar agree before the save returns.
+  static TimeOffType _storedKind(absences.AbsenceType type) =>
+      switch (type.kind) {
+        absences.AbsenceKind.vacation => TimeOffType.vacation,
+        absences.AbsenceKind.sick => TimeOffType.sick,
+        _ => TimeOffType.other,
+      };
+
   Future<void> _pickType() async {
     final anchor = anchorRectOf(_typeKey);
     if (anchor == null) return;
+    if (_catalogue.isNotEmpty) {
+      await _pickFromCatalogue(anchor);
+      return;
+    }
     final chosen = await showGlassMenu<TimeOffType>(
       context: context,
       anchorRect: anchor,
@@ -87,7 +163,40 @@ class _TimeOffFormState extends State<_TimeOffForm> {
           ),
       ],
     );
-    if (chosen != null && mounted) setState(() => _type = chosen);
+    if (chosen != null && mounted) {
+      setState(() {
+        _type = chosen;
+        _typeId = null;
+      });
+    }
+  }
+
+  Future<void> _pickFromCatalogue(Rect anchor) async {
+    final chosen = await showGlassMenu<String>(
+      context: context,
+      anchorRect: anchor,
+      width: 240,
+      value: _typeId ?? '',
+      items: [
+        for (final type in _catalogue)
+          GlassMenuItem(
+            value: type.id,
+            label: absenceTypeName(context, type),
+            leading: Icon(
+              absenceIcon(type.icon),
+              size: 16,
+              color: absenceColor(context, type.hue),
+            ),
+          ),
+      ],
+    );
+    if (chosen == null || !mounted) return;
+    final picked = _catalogue.where((type) => type.id == chosen).firstOrNull;
+    if (picked == null) return;
+    setState(() {
+      _typeId = picked.id;
+      _type = _storedKind(picked);
+    });
   }
 
   Future<void> _pickRange() async {
@@ -113,6 +222,7 @@ class _TimeOffFormState extends State<_TimeOffForm> {
     setState(() => _saving = true);
     final draft = TimeOffDraft(
       type: _type,
+      typeId: _typeId,
       from: _range.start,
       to: _range.end,
       halfDay: _halfDay && _singleDay,
@@ -164,7 +274,7 @@ class _TimeOffFormState extends State<_TimeOffForm> {
       mainAxisSize: MainAxisSize.min,
       children: [
         GlassModalHeader(
-          icon: timeOffIcon(_type),
+          icon: _typeIcon(),
           title: context.t(
             widget.existing == null
                 ? 'availability.timeOff.add'
@@ -192,9 +302,9 @@ class _TimeOffFormState extends State<_TimeOffForm> {
               KeyedSubtree(
                 key: _typeKey,
                 child: FieldButton(
-                  icon: timeOffIcon(_type),
+                  icon: _typeIcon(),
                   label: context.t('availability.timeOff.type'),
-                  value: context.t(_type.labelKey),
+                  value: _typeLabel(context),
                   onTap: _pickType,
                 ),
               ),

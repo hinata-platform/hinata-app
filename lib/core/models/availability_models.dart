@@ -133,6 +133,7 @@ class TimeOff extends Equatable {
     required this.type,
     required this.from,
     required this.to,
+    this.typeId,
     this.halfDay = false,
     this.note,
   });
@@ -143,6 +144,13 @@ class TimeOff extends Equatable {
   final String? id;
   final String userId;
   final TimeOffType type;
+
+  /// The operator-defined type this was entered under, when the instance offers
+  /// any (HIN-116). Null before absence management, while it is off, and for
+  /// anybody who is not shown the full picture — a lead who may only see that
+  /// somebody is away is not told which type it was.
+  final String? typeId;
+
   final DateTime from;
   final DateTime to;
   final bool halfDay;
@@ -157,6 +165,7 @@ class TimeOff extends Equatable {
       id: json['id'] as String?,
       userId: json['userId'] as String? ?? '',
       type: type,
+      typeId: json['typeId'] as String?,
       from: from,
       to: to,
       halfDay: json['halfDay'] as bool? ?? false,
@@ -165,7 +174,16 @@ class TimeOff extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, userId, type, from, to, halfDay, note];
+  List<Object?> get props => [
+    id,
+    userId,
+    type,
+    typeId,
+    from,
+    to,
+    halfDay,
+    note,
+  ];
 }
 
 /// What somebody types for a new absence or an edit.
@@ -174,11 +192,18 @@ class TimeOffDraft {
     required this.type,
     required this.from,
     required this.to,
+    this.typeId,
     this.halfDay = false,
     this.note,
   });
 
   final TimeOffType type;
+
+  /// The operator's own type, when one was picked. The server derives [type]
+  /// from it; sending both keeps a server without the module reading this
+  /// exactly as it always did.
+  final String? typeId;
+
   final DateTime from;
   final DateTime to;
   final bool halfDay;
@@ -188,6 +213,7 @@ class TimeOffDraft {
   /// "clear it" on an edit.
   Map<String, dynamic> toJson() => {
     'type': type.wire,
+    'typeId': ?typeId,
     'from': formatDateOnly(from),
     'to': formatDateOnly(to),
     'halfDay': halfDay && DateUtilsLite.sameDay(from, to),
