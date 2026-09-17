@@ -126,6 +126,15 @@ void main() {
     expect(find.text('absence.types.legalFloor'), findsOneWidget);
   });
 
+  testWidgets('a new type starts as narrow as the server does', (tester) async {
+    await open(tester, null);
+
+    // The server's own default for this field is "only the person themselves",
+    // and anything wider is a decision about health data (Art. 9 GDPR). A form
+    // that starts one step wider makes that decision for the operator.
+    expect(find.text('absence.visibility.selfOnly'), findsOneWidget);
+  });
+
   testWidgets('a new type is asked for a key', (tester) async {
     await open(tester, null);
 

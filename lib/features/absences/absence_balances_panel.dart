@@ -55,11 +55,18 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
 
   PagedCubit<AbsenceLedgerEntry>? _entries;
 
-  /// Whether the first read has been asked for. Not in `initState`: while the
-  /// module is off its routes do not exist for this client, and asking anyway
-  /// would answer 404 on every visit to the settings page — which is the one
-  /// response that makes the app go and re-read `/api/v1/meta`.
-  bool _started = false;
+  @override
+  void initState() {
+    super.initState();
+    // Only when there is something to ask for. While the module is off its
+    // routes do not exist for this client, and asking anyway answers 404 on
+    // every visit to the settings page — the one response that sends the app
+    // off to re-read `/api/v1/meta`.
+    if (_moduleOn) unawaited(_load());
+  }
+
+  bool get _moduleOn =>
+      context.read<AppConfigBloc>().state.meta?.absenceManagement ?? false;
 
   @override
   void dispose() {
@@ -67,27 +74,43 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
     super.dispose();
   }
 
+  /// The first read: the year, plus the two answers that do not depend on it.
   Future<void> _load() async {
+    final repository = context.read<AbsenceRepository>();
+    // Side by side: the catalogue names the rows, the balances fill them, and
+    // whether this reader keeps absences decides one link at the bottom.
+    final types = repository.types();
+    final keeper = repository.isKeeper();
+    await _loadBalances();
+    if (!mounted) return;
+    try {
+      final catalogue = await types;
+      final keeps = await keeper;
+      if (!mounted) return;
+      setState(() {
+        _types = catalogue;
+        _keeper = keeps;
+      });
+    } on ApiFailure {
+      // The balances already said whatever went wrong; a second sentence about
+      // the same outage helps nobody.
+    }
+  }
+
+  /// One year's balances. Neither the catalogue nor "do I keep absences" depends
+  /// on the year, so stepping it is one request rather than three.
+  Future<void> _loadBalances() async {
     setState(() {
       _loading = true;
       _errorKey = null;
     });
     try {
-      final repository = context.read<AbsenceRepository>();
-      // Side by side: the catalogue names the rows, the balances fill them, and
-      // whether this reader keeps absences decides one link at the bottom.
-      final balances = repository.balances(year: _year);
-      final types = repository.types();
-      final keeper = repository.isKeeper();
-      await Future.wait([balances, types, keeper]);
-      final standing = await balances;
-      final catalogue = await types;
-      final keeps = await keeper;
+      final standing = await context.read<AbsenceRepository>().balances(
+        year: _year,
+      );
       if (!mounted) return;
       setState(() {
         _balances = standing;
-        _types = catalogue;
-        _keeper = keeps;
         _loading = false;
       });
       _openJournalFor(_firstInteresting());
@@ -133,7 +156,7 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
 
   void _moveYear(int by) {
     setState(() => _year += by);
-    unawaited(_load());
+    unawaited(_loadBalances());
   }
 
   AbsenceType? _typeOf(String typeId) =>
@@ -145,15 +168,23 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
       (bloc) => bloc.state.meta?.absenceManagement ?? false,
     );
     if (!on) return const SizedBox.shrink();
-    if (!_started) {
-      _started = true;
-      // After this frame: an administrator can switch the module on while this
-      // page is open, and a request started inside build would be a setState
-      // during a build.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) unawaited(_load());
-      });
-    }
+    return BlocListener<AppConfigBloc, AppConfigState>(
+      // An administrator can switch the module on while somebody has this page
+      // open. The panel appears with the flag; the first read follows it here,
+      // rather than from inside build().
+      listenWhen: (before, after) =>
+          (before.meta?.absenceManagement ?? false) !=
+          (after.meta?.absenceManagement ?? false),
+      listener: (context, state) {
+        if ((state.meta?.absenceManagement ?? false) && _balances == null) {
+          unawaited(_load());
+        }
+      },
+      child: _panel(context),
+    );
+  }
+
+  Widget _panel(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -308,19 +339,26 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
                   );
                 }
+                // Built as they scroll into view. A journal grows by fifty rows
+                // with every "read on", and a Column would lay out every row
+                // anybody ever loaded on every frame of the settings page.
                 return Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final entry in state.items) LedgerRow(entry: entry),
-                      if (state.hasMore)
-                        ReadOnTrigger(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    primary: false,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: state.items.length + (state.hasMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == state.items.length) {
+                        return ReadOnTrigger(
                           count: state.items.length,
                           loading: state.isLoadingMore,
                           onReadOn: () => unawaited(cubit.loadMore()),
-                        ),
-                    ],
+                        );
+                      }
+                      return LedgerRow(entry: state.items[index]);
+                    },
                   ),
                 );
               },
@@ -450,7 +488,7 @@ class _BalanceCard extends StatelessWidget {
         textBaseline: TextBaseline.alphabetic,
         children: [
           Text(
-            formatDays(balance.remainingMilliDays),
+            days(context, balance.remainingMilliDays),
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w800,
@@ -477,9 +515,9 @@ class _BalanceCard extends StatelessWidget {
       ),
       Text(
         '${context.t('absence.balances.taken')} '
-        '${formatDays(balance.takenMilliDays)}  ·  '
+        '${days(context, balance.takenMilliDays)}  ·  '
         '${context.t('absence.balances.planned')} '
-        '${formatDays(balance.plannedMilliDays)}',
+        '${days(context, balance.plannedMilliDays)}',
         style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
       ),
       if (balance.expiresOn != null) ...[
@@ -509,7 +547,7 @@ class _BalanceCard extends StatelessWidget {
           context.t(
             'absence.balances.belowMinimum',
             variables: {
-              'days': formatDays(balance.legalMinimumMilliDays),
+              'days': days(context, balance.legalMinimumMilliDays),
               'week': '$workingDaysPerWeek',
             },
           ),

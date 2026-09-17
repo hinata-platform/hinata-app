@@ -485,6 +485,119 @@ class AbsenceGrantPreview extends Equatable {
   List<Object?> get props => [userId, accruedMilliDays, alreadyGranted];
 }
 
+/// What an operator typed into the type editor, on its way to the server.
+///
+/// A model rather than a bare map, because these twenty-nine fields *are* the
+/// wire contract: with a map the server's shape lived inside a widget, and the
+/// only thing that could tell you a field name was wrong was the server
+/// refusing the save.
+///
+/// Every field is optional on a patch, and what is absent is left alone. On a
+/// create the server's own defaults apply to whatever is missing.
+class AbsenceTypeDraft {
+  const AbsenceTypeDraft({
+    this.key,
+    this.name,
+    this.icon,
+    this.hue,
+    this.kind,
+    this.paid,
+    this.countsAgainstBalance,
+    this.unlimited,
+    this.approvalRequired,
+    this.approverRule,
+    this.halfDaysAllowed,
+    this.fractionAllowed,
+    this.minNoticeDays,
+    this.maxConsecutiveDays,
+    this.negativeBalanceAllowed,
+    this.negativeLimitMilliDays,
+    this.visibility,
+    this.accrual,
+    this.allowanceMilliDays,
+    this.yearAnchorMonth,
+    this.yearAnchorDay,
+    this.waitingPeriodMonths,
+    this.prorateOnJoin,
+    this.prorateOnLeave,
+    this.carryover,
+    this.carryoverCapMilliDays,
+    this.carryoverExpiresMonth,
+    this.carryoverExpiresDay,
+    this.active,
+  });
+
+  final String? key;
+  final String? name;
+  final String? icon;
+  final int? hue;
+  final AbsenceKind? kind;
+  final bool? paid;
+  final bool? countsAgainstBalance;
+  final bool? unlimited;
+
+  /// The stored flag, not the enforced one. A sick type is refused outright
+  /// rather than quietly corrected, so the screen can say why (R11).
+  final bool? approvalRequired;
+
+  final AbsenceApproverRule? approverRule;
+  final bool? halfDaysAllowed;
+  final bool? fractionAllowed;
+  final int? minNoticeDays;
+
+  /// Null means no limit. Zero would be a limit of zero days, which the server
+  /// refuses — so a field showing nothing sends nothing.
+  final int? maxConsecutiveDays;
+
+  final bool? negativeBalanceAllowed;
+  final int? negativeLimitMilliDays;
+  final AbsenceVisibility? visibility;
+  final AbsenceAccrual? accrual;
+  final int? allowanceMilliDays;
+  final int? yearAnchorMonth;
+  final int? yearAnchorDay;
+  final int? waitingPeriodMonths;
+  final bool? prorateOnJoin;
+  final bool? prorateOnLeave;
+  final AbsenceCarryover? carryover;
+  final int? carryoverCapMilliDays;
+  final int? carryoverExpiresMonth;
+  final int? carryoverExpiresDay;
+  final bool? active;
+
+  Map<String, dynamic> toJson() => {
+    'key': ?key,
+    'name': ?name,
+    'icon': ?icon,
+    'hue': ?hue,
+    'kind': ?kind?.wire,
+    'paid': ?paid,
+    'countsAgainstBalance': ?countsAgainstBalance,
+    'unlimited': ?unlimited,
+    'approvalRequired': ?approvalRequired,
+    'approverRule': ?approverRule?.wire,
+    'halfDaysAllowed': ?halfDaysAllowed,
+    'fractionAllowed': ?fractionAllowed,
+    'minNoticeDays': ?minNoticeDays,
+    'maxConsecutiveDays': maxConsecutiveDays,
+    'negativeBalanceAllowed': ?negativeBalanceAllowed,
+    'negativeLimitMilliDays': negativeLimitMilliDays,
+    'visibility': ?visibility?.wire,
+    'accrual': ?accrual?.wire,
+    'allowanceMilliDays': ?allowanceMilliDays,
+    'yearAnchorMonth': ?yearAnchorMonth,
+    'yearAnchorDay': ?yearAnchorDay,
+    'waitingPeriodMonths': ?waitingPeriodMonths,
+    'prorateOnJoin': ?prorateOnJoin,
+    'prorateOnLeave': ?prorateOnLeave,
+    'carryover': ?carryover?.wire,
+    'carryoverCapMilliDays': carryoverCapMilliDays,
+    'carryoverExpiresMonth': ?carryoverExpiresMonth,
+    'carryoverExpiresDay': ?carryoverExpiresDay,
+    'active': ?active,
+  };
+}
+
 /// Where one person stands for one type and leave year, as a keeper's list
 /// shows it.
 ///
