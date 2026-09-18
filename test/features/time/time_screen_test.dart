@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hinata/core/blocs/app_config_bloc.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/blocs/time_preferences_cubit.dart';
 import 'package:hinata/core/blocs/time_privacy_cubit.dart';
 import 'package:hinata/core/blocs/timer_cubit.dart';
+import 'package:hinata/core/models/absence_request_models.dart';
 import 'package:hinata/core/models/availability_models.dart';
 import 'package:hinata/core/models/time_models.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/models/time_privacy_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/widgets/glass_popup_menu.dart';
+import 'package:hinata/core/repositories/absence_repository.dart';
 import 'package:hinata/core/repositories/account_repository.dart';
 import 'package:hinata/core/repositories/availability_repository.dart';
 import 'package:hinata/core/repositories/issue_repository.dart';
@@ -23,6 +26,8 @@ import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:hinata/features/time/day_marks.dart';
 import 'package:hinata/features/time/time_screen.dart';
 import 'package:hinata/features/time/timer_bar.dart';
+
+import '../absences/absence_test_support.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'fake_time_policy_cubit.dart';
@@ -93,6 +98,10 @@ void main() {
     // Holidays, absences and days without hours; none unless a test is about
     // them.
     _FakeMarks? marks,
+    // Off unless a test is about the days somebody has asked for: with the
+    // module off the page asks absence management nothing at all.
+    bool absenceManagement = false,
+    AbsenceRepository? absences,
   }) {
     final router = GoRouter(
       routes: [
@@ -112,6 +121,9 @@ void main() {
                   ),
                   RepositoryProvider<AvailabilityRepository>.value(
                     value: marks ?? _FakeMarks(),
+                  ),
+                  RepositoryProvider<AbsenceRepository>.value(
+                    value: absences ?? _FakeAbsences(),
                   ),
                 ],
                 child: MultiBlocProvider(
@@ -134,6 +146,10 @@ void main() {
                     BlocProvider<TimePreferencesCubit>(
                       create: (_) =>
                           TimePreferencesCubit(_FakeAccountRepository()),
+                    ),
+                    BlocProvider<AppConfigBloc>(
+                      create: (_) =>
+                          FakeAppConfig(absenceManagement: absenceManagement),
                     ),
                   ],
                   child: const TimeScreen(),
@@ -325,6 +341,47 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(DayMarkChip), findsOneWidget);
+    });
+
+    testWidgets('a day somebody asked for wears its own chip, not a lock', (
+      tester,
+    ) async {
+      final day = DateTime(today.year, today.month, today.day);
+      await tester.pumpWidget(
+        host(
+          time: _FakeTimeRepository([entry(id: 'a', description: 'on call')]),
+          absenceManagement: true,
+          absences: _FakeAbsences([
+            AbsenceRequest(
+              id: 'r1',
+              userId: 'me',
+              typeId: 't-vacation',
+              from: day,
+              to: day,
+              status: AbsenceRequestStatus.submitted,
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Its own chip and not a marking: a marking says what the day *is*, and
+      // a request says what it may turn out to be. Nothing is frozen, so time
+      // is recorded on it like on any other (R9).
+      expect(find.byType(RequestedDayChip), findsOneWidget);
+      expect(find.byType(DayMarkChip), findsNothing);
+    });
+
+    testWidgets('with absence management off nothing is asked of it', (
+      tester,
+    ) async {
+      // A flag that is off means no request, not a 404 on every visit.
+      await tester.pumpWidget(
+        host(time: _FakeTimeRepository([entry(id: 'a')])),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(RequestedDayChip), findsNothing);
     });
 
     testWidgets('a frozen entry is marked, and its menu offers no edit', (
@@ -997,6 +1054,25 @@ class _FakeIssueRepository implements IssueRepository {
 
 /// Behind the preferences the mode menu reads. Only their defaults are read
 /// here, so nothing is ever asked of it.
+/// Absence requests the timesheet may mark. None by default.
+class _FakeAbsences implements AbsenceRepository {
+  _FakeAbsences([this.requests = const []]);
+
+  final List<AbsenceRequest> requests;
+
+  @override
+  Future<PageResult<AbsenceRequest>> myRequests({
+    AbsenceRequestStatus? status,
+    int? year,
+    int page = 0,
+    int size = 25,
+  }) async => (items: requests, total: requests.length);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not faked');
+}
+
 class _FakeAccountRepository implements AccountRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) =>

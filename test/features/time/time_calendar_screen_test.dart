@@ -6,13 +6,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:hinata/core/api/api_client.dart';
+import 'package:hinata/core/blocs/app_config_bloc.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/blocs/time_privacy_cubit.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/blocs/timer_cubit.dart';
+import 'package:hinata/core/blocs/paged_cubit.dart';
+import 'package:hinata/core/models/absence_request_models.dart';
 import 'package:hinata/core/models/availability_models.dart';
 import 'package:hinata/core/models/time_models.dart';
 import 'package:hinata/core/models/work_models.dart';
+import 'package:hinata/core/repositories/absence_repository.dart';
 import 'package:hinata/core/repositories/issue_repository.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
@@ -27,6 +31,7 @@ import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:hinata/features/time/day_marks.dart';
 import 'package:hinata/features/time/time_calendar_screen.dart';
 
+import '../absences/absence_test_support.dart';
 import 'fake_time_policy_cubit.dart';
 import 'fake_time_privacy_cubit.dart';
 
@@ -67,6 +72,11 @@ void main() {
     required _FakeTimeRepository time,
     Size size = const Size(1400, 900),
     TimePolicySnapshot? policyOnLoad,
+    // Off unless a test is about the hatching: with the module off the page
+    // asks absence management nothing at all, which is the behaviour A1 settled
+    // — a flag that is off means no request, not a 404 on every visit.
+    bool absenceManagement = false,
+    AbsenceRepository? absences,
   }) {
     final router = GoRouter(
       routes: [
@@ -83,6 +93,9 @@ void main() {
                   ),
                   RepositoryProvider<IssueRepository>.value(
                     value: _FakeIssueRepository(),
+                  ),
+                  RepositoryProvider<AbsenceRepository>.value(
+                    value: absences ?? _FakeAbsenceRepository(),
                   ),
                 ],
                 child: MultiBlocProvider(
@@ -102,6 +115,10 @@ void main() {
                     ),
                     BlocProvider<TimePrivacyCubit>(
                       create: (_) => FakeTimePrivacyCubit(time),
+                    ),
+                    BlocProvider<AppConfigBloc>(
+                      create: (_) =>
+                          FakeAppConfig(absenceManagement: absenceManagement),
                     ),
                   ],
                   child: const TimeCalendarScreen(),
@@ -129,12 +146,20 @@ void main() {
     _FakeTimeRepository time, {
     Size size = const Size(1400, 900),
     TimePolicySnapshot? policyOnLoad,
+    bool absenceManagement = false,
+    AbsenceRepository? absences,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
-      host(time: time, size: size, policyOnLoad: policyOnLoad),
+      host(
+        time: time,
+        size: size,
+        policyOnLoad: policyOnLoad,
+        absenceManagement: absenceManagement,
+        absences: absences,
+      ),
     );
     await tester.pumpAndSettle();
   }
@@ -724,6 +749,53 @@ void main() {
 
     expect(find.byType(DayMarkChip), findsWidgets);
   });
+
+  testWidgets('with absence management off nothing is asked of it', (
+    tester,
+  ) async {
+    final absences = _FakeAbsenceRepository();
+    await pump(tester, _FakeTimeRepository(), absences: absences);
+
+    // A flag that is off means no request, not a 404 on every visit — the
+    // shape A1 settled after the balance panel asked anyway.
+    expect(absences.askedStatus, isNull);
+  });
+
+  testWidgets(
+    'a day somebody asked for is hatched, and never drawn as frozen',
+    (tester) async {
+      final absences = _FakeAbsenceRepository([
+        AbsenceRequest(
+          id: 'r1',
+          userId: 'me',
+          typeId: 't-vacation',
+          from: day,
+          to: day,
+          status: AbsenceRequestStatus.submitted,
+        ),
+      ]);
+      await pump(
+        tester,
+        _FakeTimeRepository(),
+        absenceManagement: true,
+        absences: absences,
+      );
+
+      // Only what nobody has decided: a settled absence is already a marking.
+      expect(absences.askedStatus, AbsenceRequestStatus.submitted);
+
+      final grid = tester.widget<TimeGrid>(find.byType(TimeGrid).first);
+      final hatch = grid.layers.firstWhere(
+        (layer) => layer.id == 'absence-requested',
+      );
+      expect(hatch.hatched, isTrue);
+      expect(hatch.placement, TimeGridPlacement.background);
+      // The day is claimed, not closed: time on it is recorded like on any
+      // other, so it must not wear the freeze's wash (R9).
+      expect(grid.layers.map((layer) => layer.id), isNot(contains('frozen')));
+      expect(hatch.tint, isNot(AppColors.closed));
+    },
+  );
 }
 
 /// The day the harness's locale starts a week on — the month grid is laid out
@@ -790,6 +862,33 @@ class _FakeProjectRepository implements ProjectRepository {
 }
 
 class _FakeIssueRepository implements IssueRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not faked');
+}
+
+/// Absence requests the calendar may hatch. Answers nothing by default, which
+/// is what every test but the hatching one wants.
+class _FakeAbsenceRepository implements AbsenceRepository {
+  _FakeAbsenceRepository([this.requests = const []]);
+
+  final List<AbsenceRequest> requests;
+
+  /// What the page asked for, so a test can assert it asked only for its own
+  /// and only for the ones nobody has decided.
+  AbsenceRequestStatus? askedStatus;
+
+  @override
+  Future<PageResult<AbsenceRequest>> myRequests({
+    AbsenceRequestStatus? status,
+    int? year,
+    int page = 0,
+    int size = 25,
+  }) async {
+    askedStatus = status;
+    return (items: requests, total: requests.length);
+  }
+
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} is not faked');

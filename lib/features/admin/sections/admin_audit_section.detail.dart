@@ -470,6 +470,12 @@ IconData _actionIcon(String action) => switch (action) {
   'TIME_OFF_ENTITLEMENT_CHANGED' => LucideIcons.calendarPlus,
   'TIME_OFF_LEDGER_BOOKED' => LucideIcons.bookOpenCheck,
   'TIME_OFF_EMPLOYMENT_CHANGED' => LucideIcons.idCard,
+  'TIME_OFF_REQUEST_SUBMITTED' => LucideIcons.send,
+  'TIME_OFF_REQUEST_APPROVED' => LucideIcons.calendarCheck,
+  'TIME_OFF_REQUEST_REJECTED' => LucideIcons.calendarX,
+  'TIME_OFF_REQUEST_WITHDRAWN' => LucideIcons.undo2,
+  'TIME_OFF_REQUEST_CANCELLED' => LucideIcons.calendarMinus,
+  'TIME_OFF_SICK_REPORTED' => LucideIcons.thermometer,
   _ => LucideIcons.history,
 };
 

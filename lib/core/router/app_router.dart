@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/account/account_screen.dart';
 import '../../features/admin/admin_screen.dart';
 import '../../features/absences/absence_entitlements_screen.dart';
+import '../../features/absences/absence_requests_screen.dart';
 import '../../features/absences/absence_types_screen.dart';
 import '../../features/admin/holidays/admin_holidays_screen.dart';
 import '../../features/admin/users/user_management_screen.dart';
@@ -580,6 +581,23 @@ GoRouter buildRouter({
             path: '/absences/entitlements',
             pageBuilder: (_, state) =>
                 _transition(state, const AbsenceEntitlementsScreen()),
+          ),
+          // Asking for time off and deciding it (HIN-117). Everybody's page,
+          // unlike the two above: the inbox half is simply empty for whoever
+          // decides nothing.
+          GoRoute(
+            path: '/absences/requests',
+            pageBuilder: (_, state) =>
+                _transition(state, const AbsenceRequestsScreen()),
+          ),
+          // The same page opened on the other list. Its own path because a
+          // notification about somebody else's request links here, and a query
+          // parameter would be a link that lands on the wrong half whenever a
+          // client dropped it.
+          GoRoute(
+            path: '/absences/inbox',
+            pageBuilder: (_, state) =>
+                _transition(state, const AbsenceRequestsScreen(inbox: true)),
           ),
         ],
       ),

@@ -1497,6 +1497,87 @@
       "journalEmpty": "لا حركات بعد",
       "journalEmptyMessage": "تظهر هنا التخصيصات والحجوزات والتصحيحات.",
       "manage": "إدارة الغيابات"
+    },
+    "calendar": {
+      "requested": "مطلوب",
+      "requestedHint": "لقد طلبت هذا اليوم. لم يُبتّ فيه بعد، ولا يزال بالإمكان تسجيل الوقت فيه."
+    },
+    "request": {
+      "pageTitle": "طلبات الغياب",
+      "moduleOff": "هذا الخادم لا يدير الغيابات.",
+      "ask": "طلب غياب",
+      "open": "طلباتي",
+      "title": "طلب غياب",
+      "subtitle": "تُحسب الأيام من أسبوعك ومن روزنامة العطل الخاصة بك.",
+      "type": "نوع الغياب",
+      "noTypes": "لا يوجد نوع غياب متاح",
+      "dates": "من وإلى",
+      "halfDayOnly": "نصف يوم فقط",
+      "halfFirst": "اليوم الأول نصف يوم",
+      "halfLast": "اليوم الأخير نصف يوم",
+      "note": "ملاحظة (اختيارية)",
+      "noteHint": "ما ينبغي أن يعرفه من يبتّ في الطلب.",
+      "substitute": "البديل",
+      "substitutePlaceholder": "اختر شخصًا (اختياري)",
+      "substituteHint": "يتم إبلاغه ولا يلزمه تأكيد شيء.",
+      "submit": "إرسال الطلب",
+      "filed": "تم إرسال الطلب.",
+      "autoApproved": "تمت الموافقة فورًا. لم يضطر أحد للبتّ فيه.",
+      "holidaysIn": "{{count}} يوم عطلة رسمية",
+      "daysOffIn": "{{count}} يوم غير عمل",
+      "remainingAfter": "يتبقى بعدها {{days}}",
+      "balanceShort": "رصيدك لا يغطي ذلك. من يبتّ في الطلب سيرى ذلك.",
+      "shortNotice": "المهلة أقصر مما يطلبه هذا النوع من الغياب.",
+      "balanceShortRow": "الرصيد لا يغطي هذا الغياب.",
+      "shortNoticeRow": "المهلة أقصر مما يطلبه هذا النوع من الغياب.",
+      "clashes": "{{count}} شخص آخر غائب في الفترة نفسها",
+      "approve": "موافقة",
+      "reject": "رفض",
+      "withdraw": "سحب",
+      "cancel": "إلغاء الغياب",
+      "approved": "تمت الموافقة على الطلب.",
+      "rejected": "تم رفض الطلب.",
+      "withdrawn": "تم سحب الطلب.",
+      "cancelled": "تم إلغاء الغياب.",
+      "rejectTitle": "لماذا يُرفض؟",
+      "cancelTitle": "إلغاء هذا الغياب",
+      "reason": "السبب",
+      "reasonRequiredHint": "الرفض يجب أن يذكر سببه (المادة 7 فقرة 1 من قانون الإجازات الألماني).",
+      "reasonOptionalHint": "اختياري، وسيقرؤه المعنيون.",
+      "noHistory": "لم يحدث شيء لهذا الطلب بعد.",
+      "scope": {
+        "mine": "طلباتي",
+        "inbox": "للبتّ"
+      },
+      "empty": {
+        "mine": "لا توجد طلبات بعد",
+        "inbox": "لا شيء للبتّ فيه"
+      },
+      "emptyMessage": {
+        "mine": "الغيابات التي تطلبها تظهر هنا مع ما آلت إليه.",
+        "inbox": "الطلبات التي تنتظر قرارك تظهر هنا."
+      },
+      "status": {
+        "submitted": "قيد الانتظار",
+        "approved": "تمت الموافقة",
+        "rejected": "مرفوض",
+        "withdrawn": "مسحوب",
+        "cancelled": "ملغي"
+      },
+      "holidaysIn_plural": "{{count}} أيام عطلة رسمية",
+      "daysOffIn_plural": "{{count}} أيام غير عمل",
+      "clashes_plural": "{{count}} أشخاص آخرون غائبون في الفترة نفسها"
+    },
+    "sick": {
+      "title": "الإبلاغ عن مرض",
+      "subtitle": "يُبلَّغ عنه ولا يُطلب. يسري فورًا.",
+      "dates": "من وإلى",
+      "halfDay": "نصف يوم فقط",
+      "type": "نوع المرض",
+      "report": "الإبلاغ عن مرض",
+      "reported": "تم الإبلاغ عن المرض.",
+      "reportedAndReturned": "تم الإبلاغ عن المرض. عادت {{days}} من الإجازة إلى رصيدك.",
+      "explainer": "لا يحتاج هذا إلى موافقة أحد، ولا مكان لشهادة طبية في hinata. تذكر أن تُبلِغ صاحب العمل أيضًا — أيام الإجازة المعتمدة التي يقع عليها المرض تعود إلى رصيدك تلقائيًا."
     }
   },
   "projects": {
@@ -2667,7 +2748,13 @@
       "TIME_OFF_TYPE_CHANGED": "تم تغيير نوع الغياب",
       "TIME_OFF_ENTITLEMENT_CHANGED": "تم تغيير رصيد الإجازة المستحق",
       "TIME_OFF_LEDGER_BOOKED": "تم قيد رصيد الغياب",
-      "TIME_OFF_EMPLOYMENT_CHANGED": "تم تغيير تاريخ الالتحاق أو انتهاء الخدمة"
+      "TIME_OFF_EMPLOYMENT_CHANGED": "تم تغيير تاريخ الالتحاق أو انتهاء الخدمة",
+      "TIME_OFF_REQUEST_SUBMITTED": "تم طلب الغياب",
+      "TIME_OFF_REQUEST_APPROVED": "تمت الموافقة على طلب الغياب",
+      "TIME_OFF_REQUEST_REJECTED": "تم رفض طلب الغياب",
+      "TIME_OFF_REQUEST_WITHDRAWN": "تم سحب طلب الغياب",
+      "TIME_OFF_REQUEST_CANCELLED": "تم إلغاء الغياب",
+      "TIME_OFF_SICK_REPORTED": "تم الإبلاغ عن المرض"
     },
     "meta": {
       "oldRole": "الدور السابق",
