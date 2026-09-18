@@ -1497,6 +1497,87 @@
       "journalEmpty": "还没有任何变动",
       "journalEmptyMessage": "分配、记入和更正会显示在这里。",
       "manage": "管理缺勤"
+    },
+    "calendar": {
+      "requested": "已申请",
+      "requestedHint": "你已为这一天提交申请。尚未有结果，仍可在这一天记录工时。"
+    },
+    "request": {
+      "pageTitle": "请假申请",
+      "moduleOff": "本服务器不管理请假。",
+      "ask": "申请请假",
+      "open": "我的申请",
+      "title": "申请请假",
+      "subtitle": "天数由你的周工作模式和节假日日历推导。",
+      "type": "请假类型",
+      "noTypes": "没有可用的请假类型",
+      "dates": "起止日期",
+      "halfDayOnly": "仅半天",
+      "halfFirst": "首日为半天",
+      "halfLast": "末日为半天",
+      "note": "备注（可选）",
+      "noteHint": "审批人应该知道的事。",
+      "substitute": "代理人",
+      "substitutePlaceholder": "选择一人（可选）",
+      "substituteHint": "对方会收到通知，无需确认。",
+      "submit": "发送申请",
+      "filed": "申请已发送。",
+      "autoApproved": "已立即批准，无需任何人处理。",
+      "holidaysIn": "{{count}} 个法定节假日",
+      "daysOffIn": "{{count}} 个非工作日",
+      "remainingAfter": "之后剩余 {{days}}",
+      "balanceShort": "你的余额不足。审批人会看到。",
+      "shortNotice": "比该请假类型要求的提前量更短。",
+      "balanceShortRow": "余额不足以覆盖此次请假。",
+      "shortNoticeRow": "比该请假类型要求的提前量更短。",
+      "clashes": "同期还有 {{count}} 人缺席",
+      "approve": "批准",
+      "reject": "驳回",
+      "withdraw": "撤回",
+      "cancel": "取消请假",
+      "approved": "申请已批准。",
+      "rejected": "申请已驳回。",
+      "withdrawn": "申请已撤回。",
+      "cancelled": "请假已取消。",
+      "rejectTitle": "为何驳回？",
+      "cancelTitle": "取消此次请假",
+      "reason": "理由",
+      "reasonRequiredHint": "驳回必须说明理由（德国联邦休假法第 7 条第 1 款）。",
+      "reasonOptionalHint": "可选，相关人员会读到。",
+      "noHistory": "该申请还没有任何进展。",
+      "scope": {
+        "mine": "我的",
+        "inbox": "待处理"
+      },
+      "empty": {
+        "mine": "还没有申请",
+        "inbox": "没有待处理事项"
+      },
+      "emptyMessage": {
+        "mine": "你提交的请假会出现在这里，并显示结果。",
+        "inbox": "等待你处理的申请会出现在这里。"
+      },
+      "status": {
+        "submitted": "待处理",
+        "approved": "已批准",
+        "rejected": "已驳回",
+        "withdrawn": "已撤回",
+        "cancelled": "已取消"
+      },
+      "holidaysIn_plural": "{{count}} 个法定节假日",
+      "daysOffIn_plural": "{{count}} 个非工作日",
+      "clashes_plural": "同期还有 {{count}} 人缺席"
+    },
+    "sick": {
+      "title": "报备病假",
+      "subtitle": "是报备，不是申请。立即生效。",
+      "dates": "起止日期",
+      "halfDay": "仅半天",
+      "type": "病假类型",
+      "report": "报备病假",
+      "reported": "病假已报备。",
+      "reportedAndReturned": "病假已报备。{{days}} 休假已退回你的余额。",
+      "explainer": "无需任何人批准，诊断证明也不属于 hinata。请记得同时向雇主报备病情 —— 病假落入的已批准休假天数会自动退回你的余额。"
     }
   },
   "projects": {
@@ -2667,7 +2748,13 @@
       "TIME_OFF_TYPE_CHANGED": "已更改缺勤类型",
       "TIME_OFF_ENTITLEMENT_CHANGED": "已更改假期额度",
       "TIME_OFF_LEDGER_BOOKED": "已记录假期余额",
-      "TIME_OFF_EMPLOYMENT_CHANGED": "已更改入职或离职日期"
+      "TIME_OFF_EMPLOYMENT_CHANGED": "已更改入职或离职日期",
+      "TIME_OFF_REQUEST_SUBMITTED": "已提交请假申请",
+      "TIME_OFF_REQUEST_APPROVED": "请假申请已批准",
+      "TIME_OFF_REQUEST_REJECTED": "请假申请已驳回",
+      "TIME_OFF_REQUEST_WITHDRAWN": "请假申请已撤回",
+      "TIME_OFF_REQUEST_CANCELLED": "请假已取消",
+      "TIME_OFF_SICK_REPORTED": "已报备病假"
     },
     "meta": {
       "oldRole": "原角色",

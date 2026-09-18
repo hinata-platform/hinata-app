@@ -85,6 +85,55 @@ class DayMarkChip extends StatelessWidget {
   }
 }
 
+/// A day inside an absence somebody asked for and nobody has decided yet
+/// (HIN-117).
+///
+/// Its own chip rather than a [DayMarkChip]: a marking says what the day *is*,
+/// and this says what it may turn out to be. The hourglass is the same glyph the
+/// calendar puts beside such a date, and the tone is the accent rather than
+/// [AppColors.closed] — nothing is frozen here and time is recorded on the day
+/// like on any other (R9).
+class RequestedDayChip extends StatelessWidget {
+  const RequestedDayChip({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = context.t('absence.calendar.requested');
+    return Tooltip(
+      message: context.t('absence.calendar.requestedHint'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: AppColors.accentStrong.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: AppColors.accentStrong.withValues(alpha: 0.28),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              LucideIcons.hourglass,
+              size: 11,
+              color: AppColors.accentStrong,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.accentStrong,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// A span of days as a reader says it: one day, or first and last.
 String formatDaySpan(BuildContext context, DateTime from, DateTime to) {
   final localizations = MaterialLocalizations.of(context);

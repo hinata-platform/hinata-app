@@ -137,6 +137,7 @@ class TimeGridLayer {
     this.tint,
     this.label,
     this.glyph,
+    this.hatched = false,
   });
 
   final String id;
@@ -158,4 +159,16 @@ class TimeGridLayer {
   /// the date. The freeze of HIN-88 is the first; holidays and absences (HIN-91)
   /// are the next, and the same one line carries them.
   final IconData? glyph;
+
+  /// Whether a background wash is drawn as diagonal hatching rather than a flat
+  /// rectangle. Background only.
+  ///
+  /// For a day that is **claimed but not settled** — the days of an absence
+  /// somebody asked for and nobody has decided (HIN-117). A flat wash says "this
+  /// is how the day is"; hatching says "this is how the day may turn out", which
+  /// is the whole difference between a request and an absence. It is also why it
+  /// is not another tone: the freeze already owns one wash and the weekend
+  /// another, and a third flat rectangle in the same grid is a colour nobody can
+  /// name.
+  final bool hatched;
 }

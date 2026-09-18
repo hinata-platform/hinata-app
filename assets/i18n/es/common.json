@@ -1497,6 +1497,87 @@
       "journalEmpty": "Aún no hay movimientos",
       "journalEmptyMessage": "Las asignaciones, las reservas y las correcciones aparecen aquí.",
       "manage": "Gestionar ausencias"
+    },
+    "calendar": {
+      "requested": "Solicitado",
+      "requestedHint": "Has solicitado este día. Aún no hay decisión y se puede seguir registrando tiempo en él."
+    },
+    "request": {
+      "pageTitle": "Solicitudes de ausencia",
+      "moduleOff": "Este servidor no gestiona ausencias.",
+      "ask": "Solicitar ausencia",
+      "open": "Mis solicitudes",
+      "title": "Solicitar ausencia",
+      "subtitle": "Los días salen de tu semana y de tu calendario de festivos.",
+      "type": "Tipo de ausencia",
+      "noTypes": "No hay ningún tipo de ausencia disponible",
+      "dates": "Desde y hasta",
+      "halfDayOnly": "Solo medio día",
+      "halfFirst": "El primer día es medio día",
+      "halfLast": "El último día es medio día",
+      "note": "Nota (opcional)",
+      "noteHint": "Lo que debería saber quien resuelva.",
+      "substitute": "Persona suplente",
+      "substitutePlaceholder": "Elegir a alguien (opcional)",
+      "substituteHint": "Se le avisa y no tiene que confirmar nada.",
+      "submit": "Enviar solicitud",
+      "filed": "Solicitud enviada.",
+      "autoApproved": "Aprobada al momento. Nadie tuvo que resolverla.",
+      "holidaysIn": "{{count}} festivo",
+      "holidaysIn_plural": "{{count}} festivos",
+      "daysOffIn": "{{count}} día no laborable",
+      "daysOffIn_plural": "{{count}} días no laborables",
+      "remainingAfter": "después quedan {{days}}",
+      "balanceShort": "Tu saldo no cubre esto. Quien resuelva lo verá.",
+      "shortNotice": "Es con menos antelación de la que pide este tipo de ausencia.",
+      "balanceShortRow": "El saldo no cubre esta ausencia.",
+      "shortNoticeRow": "Con menos antelación de la que pide este tipo de ausencia.",
+      "clashes": "{{count}} persona más ausente en el mismo periodo",
+      "clashes_plural": "{{count}} personas más ausentes en el mismo periodo",
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "withdraw": "Retirar",
+      "cancel": "Cancelar ausencia",
+      "approved": "Solicitud aprobada.",
+      "rejected": "Solicitud rechazada.",
+      "withdrawn": "Solicitud retirada.",
+      "cancelled": "Ausencia cancelada.",
+      "rejectTitle": "¿Por qué se rechaza?",
+      "cancelTitle": "Cancelar esta ausencia",
+      "reason": "Motivo",
+      "reasonRequiredHint": "Un rechazo tiene que decir por qué (§ 7 ap. 1 de la ley alemana de vacaciones).",
+      "reasonOptionalHint": "Opcional, y lo leerán las personas implicadas.",
+      "noHistory": "A esta solicitud todavía no le ha pasado nada.",
+      "scope": {
+        "mine": "Mías",
+        "inbox": "Por resolver"
+      },
+      "empty": {
+        "mine": "Aún no hay solicitudes",
+        "inbox": "Nada por resolver"
+      },
+      "emptyMessage": {
+        "mine": "Las ausencias que solicites aparecerán aquí, con lo que pasó con ellas.",
+        "inbox": "Las solicitudes que esperan tu decisión aparecerán aquí."
+      },
+      "status": {
+        "submitted": "Pendiente",
+        "approved": "Aprobada",
+        "rejected": "Rechazada",
+        "withdrawn": "Retirada",
+        "cancelled": "Cancelada"
+      }
+    },
+    "sick": {
+      "title": "Notificar enfermedad",
+      "subtitle": "Se notifica, no se solicita. Surte efecto al momento.",
+      "dates": "Desde y hasta",
+      "halfDay": "Solo medio día",
+      "type": "Tipo de enfermedad",
+      "report": "Notificar enfermedad",
+      "reported": "Enfermedad notificada.",
+      "reportedAndReturned": "Enfermedad notificada. {{days}} de vacaciones han vuelto a tu saldo.",
+      "explainer": "Nadie tiene que aprobar esto y ningún justificante va en hinata. Acuérdate de notificar la enfermedad también a tu empleador: los días de vacaciones aprobados sobre los que cae la enfermedad vuelven solos a tu saldo."
     }
   },
   "projects": {
@@ -2667,7 +2748,13 @@
       "TIME_OFF_TYPE_CHANGED": "Tipo de ausencia modificado",
       "TIME_OFF_ENTITLEMENT_CHANGED": "Derecho de ausencia modificado",
       "TIME_OFF_LEDGER_BOOKED": "Saldo de ausencias registrado",
-      "TIME_OFF_EMPLOYMENT_CHANGED": "Fechas de empleo modificadas"
+      "TIME_OFF_EMPLOYMENT_CHANGED": "Fechas de empleo modificadas",
+      "TIME_OFF_REQUEST_SUBMITTED": "Ausencia solicitada",
+      "TIME_OFF_REQUEST_APPROVED": "Solicitud de ausencia aprobada",
+      "TIME_OFF_REQUEST_REJECTED": "Solicitud de ausencia rechazada",
+      "TIME_OFF_REQUEST_WITHDRAWN": "Solicitud de ausencia retirada",
+      "TIME_OFF_REQUEST_CANCELLED": "Ausencia cancelada",
+      "TIME_OFF_SICK_REPORTED": "Enfermedad notificada"
     },
     "meta": {
       "oldRole": "Rol anterior",

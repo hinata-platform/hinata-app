@@ -806,6 +806,7 @@ class _TimeGridState extends State<TimeGrid> {
                             item.start.day,
                           ),
                           color: _washColor(item.tint ?? layer.tint),
+                          hatched: layer.hatched,
                         ),
                   ],
                 ),
@@ -1345,7 +1346,7 @@ class _GridPainter extends CustomPainter {
   final Color hourColor;
   final Color weekendColor;
   final Color nowColor;
-  final List<({DateTime day, Color color})> washes;
+  final List<({DateTime day, Color color, bool hatched})> washes;
   final DateTime? now;
 
   @override
@@ -1362,7 +1363,10 @@ class _GridPainter extends CustomPainter {
         canvas.drawRect(column, Paint()..color = weekendColor);
       }
       for (final wash in washes) {
-        if (_sameDay(wash.day, day)) {
+        if (!_sameDay(wash.day, day)) continue;
+        if (wash.hatched) {
+          _hatch(canvas, column, wash.color);
+        } else {
           canvas.drawRect(column, Paint()..color = wash.color);
         }
       }
@@ -1436,5 +1440,33 @@ class _GridPainter extends CustomPainter {
       if (a[i] != b[i]) return false;
     }
     return true;
+  }
+
+  /// Diagonal hatching across [column], for a day that is claimed and not yet
+  /// settled.
+  ///
+  /// Lines rather than a lighter rectangle: a wash is read as a state of the
+  /// day, and this grid already spends two of them — the weekend and the freeze.
+  /// A pattern is read as a qualification of one, which is what "asked for, not
+  /// decided" is.
+  static void _hatch(Canvas canvas, Rect column, Color color) {
+    canvas.save();
+    canvas.clipRect(column);
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+    // Bottom-left to top-right, every nine points: dense enough to read as a
+    // texture at a glance, open enough that an entry drawn over it stays the
+    // thing being read.
+    const step = 9.0;
+    for (var x = column.left - column.height; x < column.right; x += step) {
+      canvas.drawLine(
+        Offset(x, column.bottom),
+        Offset(x + column.height, column.top),
+        paint,
+      );
+    }
+    canvas.restore();
   }
 }
