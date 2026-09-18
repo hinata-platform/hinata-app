@@ -371,6 +371,64 @@ class WideToolbar extends StatelessWidget {
 ///
 /// The chevrons take the pill's full height, so the tap target is the pill and
 /// not an eighteen-point glyph floating in the middle of it.
+/// One of a page's lists as a glass pill, washed amber while it is the one
+/// showing. The proportions are the filter pills' on the time page, so every
+/// docked row in the app reads as one idiom.
+///
+/// Shared rather than private to the page that first needed it: absences grew a
+/// second pair of lists with the same shape (HIN-117), and two copies of a
+/// control are two things to keep in step for no gain.
+class GlassScopePill extends StatelessWidget {
+  const GlassScopePill({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: active,
+      child: GlassPill(
+        height: kGlassControlHeight,
+        active: active,
+        onTap: active ? null : onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color: active ? AppColors.accentStrong : AppColors.inkSoft,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                label,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+                  color: active ? AppColors.accentStrong : AppColors.ink,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class GlassStepperPill extends StatelessWidget {
   const GlassStepperPill({
     super.key,

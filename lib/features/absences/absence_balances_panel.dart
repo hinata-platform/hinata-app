@@ -19,6 +19,7 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/read_on_trigger.dart';
 import 'absence_entitlement_sheets.dart' show LedgerRow;
 import 'absence_labels.dart';
+import 'absence_request_sheet.dart';
 
 /// Settings → Working hours and absences → your absence balances (HIN-116).
 ///
@@ -214,7 +215,7 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
         else ...[
           ..._cards(context),
           ..._journal(context),
-          if (_keeper) _manageLink(context),
+          _actions(context),
         ],
         Divider(height: 1, color: AppColors.hairline2),
       ],
@@ -397,17 +398,59 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
 
   /// The way into the keeper's pages, for somebody an operator named who is not
   /// an administrator and would otherwise have no entry point at all.
-  Widget _manageLink(BuildContext context) => Padding(
+  /// What somebody does from here: ask for days, report sickness, read what
+  /// became of both — and, for a keeper, the pages where other people's years
+  /// are granted.
+  ///
+  /// On this panel rather than on a page of their own: the balance is the thing
+  /// somebody looks at before asking for leave, and a second place to start
+  /// from would be a second place to remember.
+  Widget _actions(BuildContext context) => Padding(
     padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
-    child: Align(
-      alignment: AlignmentDirectional.centerStart,
-      child: OutlinedButton.icon(
-        onPressed: () => context.go('/absences/entitlements'),
-        icon: const Icon(LucideIcons.usersRound, size: 16),
-        label: Text(context.t('absence.balances.manage')),
-      ),
+    child: Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        FilledButton.icon(
+          onPressed: () => unawaited(_ask()),
+          icon: const Icon(LucideIcons.calendarPlus, size: 16),
+          label: Text(context.t('absence.request.ask')),
+        ),
+        OutlinedButton.icon(
+          onPressed: () => unawaited(_reportSick()),
+          icon: const Icon(LucideIcons.thermometer, size: 16),
+          label: Text(context.t('absence.sick.report')),
+        ),
+        OutlinedButton.icon(
+          onPressed: () => context.go('/absences/requests'),
+          icon: const Icon(LucideIcons.listChecks, size: 16),
+          label: Text(context.t('absence.request.open')),
+        ),
+        if (_keeper)
+          OutlinedButton.icon(
+            onPressed: () => context.go('/absences/entitlements'),
+            icon: const Icon(LucideIcons.usersRound, size: 16),
+            label: Text(context.t('absence.balances.manage')),
+          ),
+      ],
     ),
   );
+
+  Future<void> _ask() async {
+    final filed = await showAbsenceRequestSheet(
+      context,
+      types: _types,
+      balances: _balances,
+    );
+    // Only on a change: an approval that happened as the request arrived has
+    // already moved the balance, and a withdrawn sheet has moved nothing.
+    if (filed != null && mounted) unawaited(_loadBalances());
+  }
+
+  Future<void> _reportSick() async {
+    final reported = await showSickReportSheet(context, types: _types);
+    if (reported != null && mounted) unawaited(_loadBalances());
+  }
 }
 
 /// One type's standing for the year: what is left, out of what, and the two

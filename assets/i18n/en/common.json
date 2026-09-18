@@ -1497,6 +1497,87 @@
       "journalEmpty": "No movements yet",
       "journalEmptyMessage": "Grants, bookings and corrections appear here.",
       "manage": "Manage absences"
+    },
+    "calendar": {
+      "requested": "Requested",
+      "requestedHint": "You have asked for this day off. Nobody has decided yet, and time can still be recorded on it."
+    },
+    "request": {
+      "pageTitle": "Absence requests",
+      "moduleOff": "This server does not manage absences.",
+      "ask": "Request absence",
+      "open": "My requests",
+      "title": "Request absence",
+      "subtitle": "The days are worked out from your week and your holiday calendar.",
+      "type": "Type of absence",
+      "noTypes": "No absence type on offer",
+      "dates": "From and to",
+      "halfDayOnly": "Half a day only",
+      "halfFirst": "First day is half a day",
+      "halfLast": "Last day is half a day",
+      "note": "Note (optional)",
+      "noteHint": "Anything whoever decides should know.",
+      "substitute": "Stand-in",
+      "substitutePlaceholder": "Choose somebody (optional)",
+      "substituteHint": "They are told, and have nothing to confirm.",
+      "submit": "Send request",
+      "filed": "Request sent.",
+      "autoApproved": "Approved straight away. Nobody had to decide it.",
+      "holidaysIn": "{{count}} public holiday",
+      "holidaysIn_plural": "{{count}} public holidays",
+      "daysOffIn": "{{count}} day off",
+      "daysOffIn_plural": "{{count}} days off",
+      "remainingAfter": "{{days}} left afterwards",
+      "balanceShort": "Your balance does not cover this. Whoever decides will see that.",
+      "shortNotice": "This is shorter notice than this absence type asks for.",
+      "balanceShortRow": "The balance does not cover this absence.",
+      "shortNoticeRow": "Shorter notice than this absence type asks for.",
+      "clashes": "{{count}} other person away at the same time",
+      "clashes_plural": "{{count}} other people away at the same time",
+      "approve": "Approve",
+      "reject": "Reject",
+      "withdraw": "Withdraw",
+      "cancel": "Cancel absence",
+      "approved": "Request approved.",
+      "rejected": "Request rejected.",
+      "withdrawn": "Request withdrawn.",
+      "cancelled": "Absence cancelled.",
+      "rejectTitle": "Why is this being rejected?",
+      "cancelTitle": "Cancel this absence",
+      "reason": "Reason",
+      "reasonRequiredHint": "A rejection has to say why (§ 7 (1) of the German Federal Leave Act).",
+      "reasonOptionalHint": "Optional, and the people it concerns will read it.",
+      "noHistory": "Nothing has happened to this request yet.",
+      "scope": {
+        "mine": "Mine",
+        "inbox": "To decide"
+      },
+      "empty": {
+        "mine": "No requests yet",
+        "inbox": "Nothing to decide"
+      },
+      "emptyMessage": {
+        "mine": "Absences you ask for show up here, with what became of them.",
+        "inbox": "Requests waiting for your decision show up here."
+      },
+      "status": {
+        "submitted": "Waiting",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "withdrawn": "Withdrawn",
+        "cancelled": "Cancelled"
+      }
+    },
+    "sick": {
+      "title": "Report sickness",
+      "subtitle": "Reported, not applied for. It takes effect at once.",
+      "dates": "From and to",
+      "halfDay": "Half a day only",
+      "type": "Kind of sickness",
+      "report": "Report sickness",
+      "reported": "Sickness reported.",
+      "reportedAndReturned": "Sickness reported. {{days}} of leave have gone back to your balance.",
+      "explainer": "Nobody has to approve this and no certificate belongs in hinata. Remember to report your sickness to your employer as well — days of approved leave that the sickness falls on come back to your balance by themselves."
     }
   },
   "projects": {
@@ -2667,7 +2748,13 @@
       "TIME_OFF_TYPE_CHANGED": "Absence type changed",
       "TIME_OFF_ENTITLEMENT_CHANGED": "Absence entitlement changed",
       "TIME_OFF_LEDGER_BOOKED": "Absence balance booked",
-      "TIME_OFF_EMPLOYMENT_CHANGED": "Employment dates changed"
+      "TIME_OFF_EMPLOYMENT_CHANGED": "Employment dates changed",
+      "TIME_OFF_REQUEST_SUBMITTED": "Absence requested",
+      "TIME_OFF_REQUEST_APPROVED": "Absence request approved",
+      "TIME_OFF_REQUEST_REJECTED": "Absence request rejected",
+      "TIME_OFF_REQUEST_WITHDRAWN": "Absence request withdrawn",
+      "TIME_OFF_REQUEST_CANCELLED": "Absence cancelled",
+      "TIME_OFF_SICK_REPORTED": "Sickness reported"
     },
     "meta": {
       "oldRole": "Previous role",

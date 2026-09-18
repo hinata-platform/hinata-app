@@ -1497,6 +1497,87 @@
       "journalEmpty": "まだ動きはありません",
       "journalEmptyMessage": "付与・取得・訂正がここに並びます。",
       "manage": "不在を管理"
+    },
+    "calendar": {
+      "requested": "申請中",
+      "requestedHint": "この日を申請済みです。まだ決定されておらず、引き続き時間を記録できます。"
+    },
+    "request": {
+      "pageTitle": "休暇申請",
+      "moduleOff": "このサーバーは休暇を管理しません。",
+      "ask": "休暇を申請",
+      "open": "自分の申請",
+      "title": "休暇を申請",
+      "subtitle": "日数はあなたの週と祝日カレンダーから求められます。",
+      "type": "休暇の種類",
+      "noTypes": "利用できる休暇区分がありません",
+      "dates": "開始と終了",
+      "halfDayOnly": "半日のみ",
+      "halfFirst": "初日は半日",
+      "halfLast": "最終日は半日",
+      "note": "メモ（任意）",
+      "noteHint": "判断する人に知らせておきたいこと。",
+      "substitute": "代理者",
+      "substitutePlaceholder": "誰かを選ぶ（任意）",
+      "substituteHint": "通知されるだけで、確認操作は不要です。",
+      "submit": "申請を送る",
+      "filed": "申請を送りました。",
+      "autoApproved": "その場で承認されました。誰も判断する必要はありませんでした。",
+      "holidaysIn": "祝日 {{count}} 日",
+      "daysOffIn": "非勤務日 {{count}} 日",
+      "remainingAfter": "このあと {{days}} 残ります",
+      "balanceShort": "残高が足りません。判断する人にも見えます。",
+      "shortNotice": "この休暇区分が求める予告期間より短いです。",
+      "balanceShortRow": "残高がこの休暇に足りません。",
+      "shortNoticeRow": "この休暇区分が求める予告期間より短いです。",
+      "clashes": "同じ期間に他に {{count}} 人不在",
+      "approve": "承認",
+      "reject": "却下",
+      "withdraw": "取り下げ",
+      "cancel": "休暇を取り消す",
+      "approved": "申請を承認しました。",
+      "rejected": "申請を却下しました。",
+      "withdrawn": "申請を取り下げました。",
+      "cancelled": "休暇を取り消しました。",
+      "rejectTitle": "却下の理由は？",
+      "cancelTitle": "この休暇を取り消す",
+      "reason": "理由",
+      "reasonRequiredHint": "却下には理由が必要です（ドイツ連邦休暇法第7条1項）。",
+      "reasonOptionalHint": "任意ですが、関係者が読みます。",
+      "noHistory": "この申請にはまだ何も起きていません。",
+      "scope": {
+        "mine": "自分の",
+        "inbox": "要対応"
+      },
+      "empty": {
+        "mine": "申請はまだありません",
+        "inbox": "対応するものはありません"
+      },
+      "emptyMessage": {
+        "mine": "申請した休暇とその結果がここに並びます。",
+        "inbox": "あなたの判断を待つ申請がここに並びます。"
+      },
+      "status": {
+        "submitted": "待機中",
+        "approved": "承認済み",
+        "rejected": "却下",
+        "withdrawn": "取り下げ",
+        "cancelled": "取り消し"
+      },
+      "holidaysIn_plural": "祝日 {{count}} 日",
+      "daysOffIn_plural": "非勤務日 {{count}} 日",
+      "clashes_plural": "同じ期間に他に {{count}} 人不在"
+    },
+    "sick": {
+      "title": "病欠を届け出る",
+      "subtitle": "申請ではなく届出です。すぐに有効になります。",
+      "dates": "開始と終了",
+      "halfDay": "半日のみ",
+      "type": "病欠の種類",
+      "report": "病欠を届け出る",
+      "reported": "病欠を届け出ました。",
+      "reportedAndReturned": "病欠を届け出ました。休暇 {{days}} が残高に戻りました。",
+      "explainer": "誰の承認も必要なく、診断書を hinata に入れる必要はありません。勤務先への届出も忘れずに — 病欠が重なった承認済みの休暇日数は自動で残高に戻ります。"
     }
   },
   "projects": {
@@ -2667,7 +2748,13 @@
       "TIME_OFF_TYPE_CHANGED": "休暇種別を変更",
       "TIME_OFF_ENTITLEMENT_CHANGED": "休暇付与日数を変更",
       "TIME_OFF_LEDGER_BOOKED": "休暇残高を記帳",
-      "TIME_OFF_EMPLOYMENT_CHANGED": "入社日・退職日を変更"
+      "TIME_OFF_EMPLOYMENT_CHANGED": "入社日・退職日を変更",
+      "TIME_OFF_REQUEST_SUBMITTED": "休暇を申請",
+      "TIME_OFF_REQUEST_APPROVED": "休暇申請を承認",
+      "TIME_OFF_REQUEST_REJECTED": "休暇申請を却下",
+      "TIME_OFF_REQUEST_WITHDRAWN": "休暇申請を取り下げ",
+      "TIME_OFF_REQUEST_CANCELLED": "休暇を取り消し",
+      "TIME_OFF_SICK_REPORTED": "病欠を届け出"
     },
     "meta": {
       "oldRole": "変更前のロール",

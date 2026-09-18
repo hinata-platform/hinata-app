@@ -261,7 +261,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
       (_corrections, LucideIcons.messageSquareWarning),
     ]) ...[
       if (scope != _mine) const SizedBox(width: 8),
-      _ScopePill(
+      GlassScopePill(
         icon: icon,
         label: context.t('time.approval.scope.$scope'),
         active: _scope == scope,
@@ -789,56 +789,3 @@ Future<void> _showEntries(
     ),
   ),
 );
-
-/// One of the page's three lists as a glass pill, washed amber while it is the
-/// one showing. The proportions are the filter pills' on the time page, so the
-/// module's docked rows read as one idiom.
-class _ScopePill extends StatelessWidget {
-  const _ScopePill({
-    required this.icon,
-    required this.label,
-    required this.active,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      selected: active,
-      child: GlassPill(
-        height: kGlassControlHeight,
-        active: active,
-        onTap: active ? null : onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 13),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 14,
-                color: active ? AppColors.accentStrong : AppColors.inkSoft,
-              ),
-              const SizedBox(width: 7),
-              Text(
-                label,
-                maxLines: 1,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-                  color: active ? AppColors.accentStrong : AppColors.ink,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

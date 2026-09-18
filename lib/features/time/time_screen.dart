@@ -5,16 +5,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
+import '../../core/models/absence_request_models.dart';
 import '../../core/models/availability_models.dart';
 import '../../core/models/time_models.dart';
 import '../../core/models/time_approval_models.dart';
 import '../../core/models/time_policy_models.dart';
 import '../../core/models/time_privacy_models.dart';
 import '../../core/models/work_models.dart';
+import '../../core/repositories/absence_repository.dart';
 import '../../core/repositories/availability_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/time_repository.dart';
@@ -120,6 +123,30 @@ class _TimeScreenState extends State<TimeScreen> {
     );
     offerTimePrivacyNotice(context);
     unawaited(_reload());
+    unawaited(_loadRequestedDays());
+  }
+
+  /// The days somebody has asked for and nobody has answered (HIN-117).
+  ///
+  /// Silent on failure and silent with the module off: the timesheet's subject
+  /// is recorded time, and a chip that could not be drawn costs a hint, not the
+  /// page.
+  Future<void> _loadRequestedDays() async {
+    if (!(context.read<AppConfigBloc>().state.meta?.absenceManagement ?? false)) {
+      return;
+    }
+    try {
+      final page = await context.read<AbsenceRepository>().myRequests(
+        status: AbsenceRequestStatus.submitted,
+        size: 100,
+      );
+      if (!mounted) return;
+      final days = daysCovered(page.items);
+      if (days.isEmpty && _requestedDays.isEmpty) return;
+      setState(() => _requestedDays = days);
+    } on ApiFailure {
+      // Nothing to say and nothing to do about it.
+    }
   }
 
   @override
@@ -252,6 +279,15 @@ class _TimeScreenState extends State<TimeScreen> {
   /// planned hours (HIN-91). A chip beside the day, never a reason to refuse an
   /// entry (R9).
   DayMarks _marks = DayMarks.none;
+
+  /// The days of the reader's own absence requests nobody has decided yet
+  /// (HIN-117), as day keys.
+  ///
+  /// Read once for the screen: an instance holds at most a hundred absences per
+  /// person per year, so one page covers everything anybody is waiting on. Their
+  /// own only — whose absences somebody may see is decided in the markings the
+  /// server sends, and a second list read here is not a second way in.
+  Set<DateTime> _requestedDays = const {};
 
   /// The windows whose markings are loaded or on their way.
   final Set<DateTime> _markWindows = {};
@@ -787,6 +823,9 @@ class _TimeScreenState extends State<TimeScreen> {
                 hints: _dayHints[group.day] ?? const [],
                 lateHints: _lateHints,
                 mark: _marks.on(group.day),
+                requested: _requestedDays.contains(
+                  DateUtils.dateOnly(group.day),
+                ),
               );
             },
           ),
@@ -966,6 +1005,7 @@ class _DayGroup extends StatelessWidget {
     this.hints = const [],
     this.lateHints = const {},
     this.mark,
+    this.requested = false,
   });
 
   final DateTime day;
@@ -973,6 +1013,11 @@ class _DayGroup extends StatelessWidget {
   /// What this day is, when it is not an ordinary working day: a holiday, an
   /// absence, or a day without planned hours (HIN-91). A chip, never a lock.
   final DayMark? mark;
+
+  /// Whether this day falls inside an absence the reader asked for and nobody
+  /// has decided. A chip, and never a reason to refuse an entry: the day is
+  /// claimed, not closed, and it may yet be refused (R9).
+  final bool requested;
 
   /// The reader's own hints about this day: a long day, a short rest, a Sunday.
   final List<TimeHint> hints;
@@ -1030,6 +1075,7 @@ class _DayGroup extends StatelessWidget {
                       final mark? => DayMarkChip(mark: mark),
                       null => null,
                     },
+                    if (requested) const RequestedDayChip(),
                     for (final hint in hints) TimeHintChip(hint: hint),
                   ],
                 ),

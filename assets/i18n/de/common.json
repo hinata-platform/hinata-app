@@ -1497,6 +1497,87 @@
       "journalEmpty": "Noch keine Bewegungen",
       "journalEmptyMessage": "Zuteilungen, Buchungen und Korrekturen erscheinen hier.",
       "manage": "Abwesenheiten verwalten"
+    },
+    "calendar": {
+      "requested": "Beantragt",
+      "requestedHint": "Du hast diesen Tag beantragt. Entschieden ist noch nichts, und Zeit lässt sich weiterhin darauf erfassen."
+    },
+    "request": {
+      "pageTitle": "Abwesenheitsanträge",
+      "moduleOff": "Dieser Server verwaltet keine Abwesenheiten.",
+      "ask": "Abwesenheit beantragen",
+      "open": "Meine Anträge",
+      "title": "Abwesenheit beantragen",
+      "subtitle": "Die Tage ergeben sich aus deiner Woche und deinem Feiertagskalender.",
+      "type": "Art der Abwesenheit",
+      "noTypes": "Keine Abwesenheitsart im Angebot",
+      "dates": "Von und bis",
+      "halfDayOnly": "Nur ein halber Tag",
+      "halfFirst": "Erster Tag ist ein halber Tag",
+      "halfLast": "Letzter Tag ist ein halber Tag",
+      "note": "Notiz (optional)",
+      "noteHint": "Was die entscheidende Person wissen sollte.",
+      "substitute": "Vertretung",
+      "substitutePlaceholder": "Jemanden wählen (optional)",
+      "substituteHint": "Sie wird informiert und muss nichts bestätigen.",
+      "submit": "Antrag senden",
+      "filed": "Antrag gesendet.",
+      "autoApproved": "Sofort genehmigt. Niemand musste darüber entscheiden.",
+      "holidaysIn": "{{count}} Feiertag",
+      "holidaysIn_plural": "{{count}} Feiertage",
+      "daysOffIn": "{{count}} freier Tag",
+      "daysOffIn_plural": "{{count}} freie Tage",
+      "remainingAfter": "danach bleiben {{days}}",
+      "balanceShort": "Dein Saldo deckt das nicht. Die entscheidende Person sieht das.",
+      "shortNotice": "Das ist kurzfristiger, als diese Abwesenheitsart verlangt.",
+      "balanceShortRow": "Der Saldo deckt diese Abwesenheit nicht.",
+      "shortNoticeRow": "Kurzfristiger, als diese Abwesenheitsart verlangt.",
+      "clashes": "{{count}} weitere Person im selben Zeitraum abwesend",
+      "clashes_plural": "{{count}} weitere Personen im selben Zeitraum abwesend",
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "withdraw": "Zurückziehen",
+      "cancel": "Abwesenheit stornieren",
+      "approved": "Antrag genehmigt.",
+      "rejected": "Antrag abgelehnt.",
+      "withdrawn": "Antrag zurückgezogen.",
+      "cancelled": "Abwesenheit storniert.",
+      "rejectTitle": "Warum wird abgelehnt?",
+      "cancelTitle": "Diese Abwesenheit stornieren",
+      "reason": "Begründung",
+      "reasonRequiredHint": "Eine Ablehnung muss sagen, warum (§ 7 Abs. 1 BUrlG).",
+      "reasonOptionalHint": "Optional, und die Beteiligten lesen sie.",
+      "noHistory": "Mit diesem Antrag ist noch nichts passiert.",
+      "scope": {
+        "mine": "Meine",
+        "inbox": "Zu entscheiden"
+      },
+      "empty": {
+        "mine": "Noch keine Anträge",
+        "inbox": "Nichts zu entscheiden"
+      },
+      "emptyMessage": {
+        "mine": "Abwesenheiten, die du beantragst, stehen hier — mit dem, was daraus wurde.",
+        "inbox": "Anträge, die auf deine Entscheidung warten, stehen hier."
+      },
+      "status": {
+        "submitted": "Offen",
+        "approved": "Genehmigt",
+        "rejected": "Abgelehnt",
+        "withdrawn": "Zurückgezogen",
+        "cancelled": "Storniert"
+      }
+    },
+    "sick": {
+      "title": "Krank melden",
+      "subtitle": "Gemeldet, nicht beantragt. Sofort wirksam.",
+      "dates": "Von und bis",
+      "halfDay": "Nur ein halber Tag",
+      "type": "Art der Krankheit",
+      "report": "Krank melden",
+      "reported": "Krankmeldung erfasst.",
+      "reportedAndReturned": "Krankmeldung erfasst. {{days}} Urlaub sind auf dein Konto zurückgegangen.",
+      "explainer": "Niemand muss das genehmigen, und ein Nachweis gehört nicht in hinata. Denke daran, die Krankheit auch deinem Arbeitgeber zu melden — genehmigte Urlaubstage, auf die die Krankheit fällt, gehen von selbst auf dein Konto zurück."
     }
   },
   "projects": {
@@ -2667,7 +2748,13 @@
       "TIME_OFF_TYPE_CHANGED": "Abwesenheitsart geändert",
       "TIME_OFF_ENTITLEMENT_CHANGED": "Abwesenheitsanspruch geändert",
       "TIME_OFF_LEDGER_BOOKED": "Abwesenheitssaldo gebucht",
-      "TIME_OFF_EMPLOYMENT_CHANGED": "Eintritts- oder Austrittsdatum geändert"
+      "TIME_OFF_EMPLOYMENT_CHANGED": "Eintritts- oder Austrittsdatum geändert",
+      "TIME_OFF_REQUEST_SUBMITTED": "Abwesenheit beantragt",
+      "TIME_OFF_REQUEST_APPROVED": "Abwesenheitsantrag genehmigt",
+      "TIME_OFF_REQUEST_REJECTED": "Abwesenheitsantrag abgelehnt",
+      "TIME_OFF_REQUEST_WITHDRAWN": "Abwesenheitsantrag zurückgezogen",
+      "TIME_OFF_REQUEST_CANCELLED": "Abwesenheit storniert",
+      "TIME_OFF_SICK_REPORTED": "Krankmeldung erfasst"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",

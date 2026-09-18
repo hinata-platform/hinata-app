@@ -6,12 +6,15 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
+import '../../core/models/absence_request_models.dart';
 import '../../core/models/availability_models.dart';
 import '../../core/models/time_models.dart';
 import '../../core/models/work_models.dart';
+import '../../core/repositories/absence_repository.dart';
 import '../../core/repositories/time_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
@@ -187,6 +190,19 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   /// from any other dependency.
   int? _firstDayOfWeekIndex;
 
+  /// The days of the reader's own absence requests that nobody has decided
+  /// yet (HIN-117), as day keys.
+  ///
+  /// Read once for the screen rather than with each month: an instance holds at
+  /// most a hundred absences per person per year, so one page covers everything
+  /// anybody is waiting on, and asking per window would be a request per swipe
+  /// for an answer that barely changes.
+  ///
+  /// Their own only. Whose absences somebody may see is decided in the calendar
+  /// layers the server sends, and a second list read by the client is not a
+  /// second way in.
+  Set<DateTime> _requestedDays = const {};
+
   /// The language the memoised layers, the docked strip and the held months
   /// were built in. A marked day's sentence, the bands' headings, the strip's
   /// weekday letters and the title of an entry without a description are words
@@ -248,6 +264,35 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     unawaited(context.read<TimePolicyCubit>().ensureLoaded());
     offerTimePrivacyNotice(context);
     unawaited(_ensureAround(_focused));
+    unawaited(_loadRequestedDays());
+  }
+
+  /// The days somebody has asked for and nobody has answered.
+  ///
+  /// Silent on failure and silent with the module off: the calendar's subject is
+  /// recorded time, and a hatch that could not be drawn costs a hint, not the
+  /// page.
+  Future<void> _loadRequestedDays() async {
+    if (!(context.read<AppConfigBloc>().state.meta?.absenceManagement ?? false)) {
+      return;
+    }
+    try {
+      final page = await context.read<AbsenceRepository>().myRequests(
+        status: AbsenceRequestStatus.submitted,
+        size: 100,
+      );
+      if (!mounted) return;
+      final days = daysCovered(page.items);
+      if (days.isEmpty && _requestedDays.isEmpty) return;
+      setState(() {
+        _requestedDays = days;
+        // The hatch rides in the memoised layers, so they have to be built
+        // again — the same reason a lifted freeze clears them.
+        _layerMemo.clear();
+      });
+    } on ApiFailure {
+      // Nothing to say and nothing to do about it.
+    }
   }
 
   @override
@@ -1156,6 +1201,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     ]),
     ..._frozenWash([addDays(day, -1), day, addDays(day, 1)]),
     ..._markLayers([addDays(day, -1), day, addDays(day, 1)]),
+    ..._requestedLayer([addDays(day, -1), day, addDays(day, 1)]),
   ];
 
   List<TimeGridLayer> _layersForWeek(List<DateTime> days) {
@@ -1167,6 +1213,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       ..._split([for (final day in window) ..._itemsForDay(dayKey(day))]),
       ..._frozenWash(window),
       ..._markLayers(window),
+      ..._requestedLayer(window),
     ];
   }
 
@@ -1177,8 +1224,53 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   /// hours — it has no business knowing what a holiday calendar is.
   ({IconData glyph, String label})? _monthMark(DateTime day) {
     final mark = _markOn(day);
-    if (mark == null) return null;
-    return (glyph: dayMarkIcon(mark), label: dayMarkLabel(context, mark));
+    if (mark != null) {
+      return (glyph: dayMarkIcon(mark), label: dayMarkLabel(context, mark));
+    }
+    // A settled absence wins over a request for the same day, which is not a
+    // tie so much as an order: once it is decided, what it was asked for is
+    // history. The month has one glyph per day and this is the second thing it
+    // would say.
+    if (_requestedDays.contains(DateUtils.dateOnly(day))) {
+      return (
+        glyph: LucideIcons.hourglass,
+        label: context.t('absence.calendar.requested'),
+      );
+    }
+    return null;
+  }
+
+  /// The days of an absence somebody asked for and nobody has decided, hatched.
+  ///
+  /// Hatched rather than washed, and in the accent rather than in the freeze's
+  /// tone: the day is claimed, not closed, and time on it is recorded like on
+  /// any other. Last in the list, so it reads over a weekend or a marked day
+  /// without taking either of their meanings away.
+  List<TimeGridLayer> _requestedLayer(List<DateTime> window) {
+    final items = <TimeGridItem>[];
+    for (final day in window) {
+      if (!_requestedDays.contains(DateUtils.dateOnly(day))) continue;
+      items.add(
+        TimeGridItem(
+          id: 'requested-${dayKey(day)}',
+          start: DateTime(day.year, day.month, day.day),
+          end: DateTime(day.year, day.month, day.day, 23, 59),
+          title: '',
+          movable: false,
+        ),
+      );
+    }
+    if (items.isEmpty) return const [];
+    return [
+      TimeGridLayer(
+        id: 'absence-requested',
+        placement: TimeGridPlacement.background,
+        items: items,
+        tint: AppColors.accentStrong.withValues(alpha: 0.30),
+        glyph: LucideIcons.hourglass,
+        hatched: true,
+      ),
+    ];
   }
 
   /// The marking of [day], from the month it was loaded with (HIN-91).

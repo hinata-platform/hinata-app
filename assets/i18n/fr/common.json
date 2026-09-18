@@ -1497,6 +1497,87 @@
       "journalEmpty": "Pas encore de mouvements",
       "journalEmptyMessage": "Les attributions, les imputations et les corrections apparaissent ici.",
       "manage": "Gérer les absences"
+    },
+    "calendar": {
+      "requested": "Demandé",
+      "requestedHint": "Vous avez demandé ce jour. Rien n'est encore tranché et le temps peut toujours y être saisi."
+    },
+    "request": {
+      "pageTitle": "Demandes d'absence",
+      "moduleOff": "Ce serveur ne gère pas les absences.",
+      "ask": "Demander une absence",
+      "open": "Mes demandes",
+      "title": "Demander une absence",
+      "subtitle": "Les jours découlent de votre semaine et de votre calendrier de jours fériés.",
+      "type": "Type d'absence",
+      "noTypes": "Aucun type d'absence proposé",
+      "dates": "Du et au",
+      "halfDayOnly": "Une demi-journée seulement",
+      "halfFirst": "Le premier jour est une demi-journée",
+      "halfLast": "Le dernier jour est une demi-journée",
+      "note": "Note (facultative)",
+      "noteHint": "Ce que la personne qui tranche devrait savoir.",
+      "substitute": "Remplaçant",
+      "substitutePlaceholder": "Choisir quelqu'un (facultatif)",
+      "substituteHint": "Cette personne est informée et n'a rien à confirmer.",
+      "submit": "Envoyer la demande",
+      "filed": "Demande envoyée.",
+      "autoApproved": "Approuvée immédiatement. Personne n'a eu à trancher.",
+      "holidaysIn": "{{count}} jour férié",
+      "holidaysIn_plural": "{{count}} jours fériés",
+      "daysOffIn": "{{count}} jour non travaillé",
+      "daysOffIn_plural": "{{count}} jours non travaillés",
+      "remainingAfter": "il restera {{days}}",
+      "balanceShort": "Votre solde ne couvre pas cela. La personne qui tranche le verra.",
+      "shortNotice": "Le délai est plus court que ce type d'absence ne le demande.",
+      "balanceShortRow": "Le solde ne couvre pas cette absence.",
+      "shortNoticeRow": "Délai plus court que ce type d'absence ne le demande.",
+      "clashes": "{{count}} autre personne absente sur la même période",
+      "clashes_plural": "{{count}} autres personnes absentes sur la même période",
+      "approve": "Approuver",
+      "reject": "Refuser",
+      "withdraw": "Retirer",
+      "cancel": "Annuler l'absence",
+      "approved": "Demande approuvée.",
+      "rejected": "Demande refusée.",
+      "withdrawn": "Demande retirée.",
+      "cancelled": "Absence annulée.",
+      "rejectTitle": "Pourquoi ce refus ?",
+      "cancelTitle": "Annuler cette absence",
+      "reason": "Motif",
+      "reasonRequiredHint": "Un refus doit dire pourquoi (§ 7 al. 1 de la loi allemande sur les congés).",
+      "reasonOptionalHint": "Facultatif, et les personnes concernées le liront.",
+      "noHistory": "Rien n'est encore arrivé à cette demande.",
+      "scope": {
+        "mine": "Les miennes",
+        "inbox": "À trancher"
+      },
+      "empty": {
+        "mine": "Aucune demande",
+        "inbox": "Rien à trancher"
+      },
+      "emptyMessage": {
+        "mine": "Les absences que vous demandez apparaîtront ici, avec leur suite.",
+        "inbox": "Les demandes qui attendent votre décision apparaîtront ici."
+      },
+      "status": {
+        "submitted": "En attente",
+        "approved": "Approuvée",
+        "rejected": "Refusée",
+        "withdrawn": "Retirée",
+        "cancelled": "Annulée"
+      }
+    },
+    "sick": {
+      "title": "Signaler une maladie",
+      "subtitle": "Signalée, pas demandée. Effet immédiat.",
+      "dates": "Du et au",
+      "halfDay": "Une demi-journée seulement",
+      "type": "Type de maladie",
+      "report": "Signaler une maladie",
+      "reported": "Maladie signalée.",
+      "reportedAndReturned": "Maladie signalée. {{days}} de congés sont revenus sur votre solde.",
+      "explainer": "Personne n'a à approuver ceci et aucun justificatif n'a sa place dans hinata. Pensez à signaler aussi votre maladie à votre employeur — les jours de congés approuvés sur lesquels tombe la maladie reviennent d'eux-mêmes sur votre solde."
     }
   },
   "projects": {
@@ -2667,7 +2748,13 @@
       "TIME_OFF_TYPE_CHANGED": "Type d'absence modifié",
       "TIME_OFF_ENTITLEMENT_CHANGED": "Droit à absence modifié",
       "TIME_OFF_LEDGER_BOOKED": "Solde d'absence enregistré",
-      "TIME_OFF_EMPLOYMENT_CHANGED": "Dates d'emploi modifiées"
+      "TIME_OFF_EMPLOYMENT_CHANGED": "Dates d'emploi modifiées",
+      "TIME_OFF_REQUEST_SUBMITTED": "Absence demandée",
+      "TIME_OFF_REQUEST_APPROVED": "Demande d'absence approuvée",
+      "TIME_OFF_REQUEST_REJECTED": "Demande d'absence refusée",
+      "TIME_OFF_REQUEST_WITHDRAWN": "Demande d'absence retirée",
+      "TIME_OFF_REQUEST_CANCELLED": "Absence annulée",
+      "TIME_OFF_SICK_REPORTED": "Maladie signalée"
     },
     "meta": {
       "oldRole": "Rôle précédent",
