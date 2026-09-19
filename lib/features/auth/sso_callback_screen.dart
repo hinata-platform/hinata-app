@@ -20,6 +20,11 @@ import 'auth_shell.dart';
 /// redemption's success and throws the signed-in user back to the login screen.
 final Map<String, bool?> _handoffAttempts = <String, bool?>{};
 
+/// Forgets every handoff this process tried — for tests, which share the
+/// process and would otherwise see each other's sign-ins as still underway.
+@visibleForTesting
+void resetSsoHandoffLedger() => _handoffAttempts.clear();
+
 /// How long the sign-in may take before we stop waiting. Covers the redeem POST
 /// (10s connect + 20s receive) plus the `/me` check that follows it, with room
 /// to spare — anything past this is a stall, not a slow network.
@@ -44,10 +49,18 @@ class SsoCallbackScreen extends StatefulWidget {
     this.code,
     required this.accessToken,
     required this.refreshToken,
+    this.error,
   });
 
   /// Single-use handoff code; redeemed for the token pair. Preferred path.
   final String? code;
+
+  /// What the server reported when the identity provider's sign-in failed.
+  ///
+  /// Its text is the server's and not for display; that there *is* one is what
+  /// counts: this was a failed sign-in, not a link that lost its code, and the
+  /// person is told so in their own words.
+  final String? error;
 
   /// Legacy fallback: tokens directly in the URL (older server redirects).
   final String? accessToken;
@@ -59,9 +72,9 @@ class SsoCallbackScreen extends StatefulWidget {
 
 class _SsoCallbackScreenState extends State<SsoCallbackScreen> {
   // Captured up front so the sign-in never depends on this widget still being
-  // mounted: a second delivery of the same link replaces this route while the
-  // redeem POST is still in flight, and the tokens it comes back with must
-  // still reach the bloc. They belong to the app, not to this screen.
+  // mounted: the route can be left while the redeem POST is still in flight,
+  // and the tokens it comes back with must still reach the bloc. They belong to
+  // the app, not to this screen.
   late final AuthBloc _auth;
   late final AuthRepository _repository;
   Timer? _watchdog;
@@ -74,13 +87,46 @@ class _SsoCallbackScreenState extends State<SsoCallbackScreen> {
     // be after this screen was replaced.
     _auth = context.read<AuthBloc>();
     _repository = context.read<AuthRepository>();
-    final code = widget.code;
-    final access = widget.accessToken;
-    final refresh = widget.refreshToken;
     // Nothing can hold this screen longer than the timeout, whatever goes wrong
     // below — a redeem that never settles, a bloc that never emits, a server
     // that accepts the connection and then goes quiet.
-    _watchdog = Timer(_handoffTimeout, () => _bail('auth.ssoTimedOut'));
+    _watchdog = Timer(
+      _handoffTimeout,
+      () => _bail('auth.ssoTimedOut', evenIfUnderway: true),
+    );
+    _follow();
+  }
+
+  /// A second link on the same route — the router keeps this screen and hands
+  /// it the new query. A fresh code in it is a sign-in of its own and is
+  /// redeemed; before, it was dropped, and the one link that carried the
+  /// success went nowhere.
+  @override
+  void didUpdateWidget(covariant SsoCallbackScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.code != oldWidget.code ||
+        widget.error != oldWidget.error ||
+        widget.accessToken != oldWidget.accessToken) {
+      _follow();
+    }
+  }
+
+  /// Whether a sign-in is already on its way: a handoff being redeemed, or
+  /// tokens being checked.
+  ///
+  /// An error or an empty link that arrives meanwhile is not this sign-in's
+  /// outcome. On iOS the identity provider's callback could arrive twice, and
+  /// the duplicate's failure reached the app first: acting on it sent the
+  /// person to the login screen with "the sign-in link was incomplete" while
+  /// their sign-in was completing behind it.
+  bool get _signInUnderway =>
+      _auth.state.status == AuthStatus.authenticating ||
+      _handoffAttempts.containsValue(null);
+
+  void _follow() {
+    final code = widget.code;
+    final access = widget.accessToken;
+    final refresh = widget.refreshToken;
     if (code != null && code.isNotEmpty) {
       if (_handoffAttempts.containsKey(code)) {
         switch (_handoffAttempts[code]) {
@@ -102,6 +148,9 @@ class _SsoCallbackScreenState extends State<SsoCallbackScreen> {
     } else if (access != null && refresh != null) {
       // Legacy redirect that still carried tokens in the URL.
       _auth.add(SsoTokensReceived(access, refresh));
+    } else if (widget.error != null) {
+      // The provider refused, or the server could not finish with it.
+      _bail('auth.ssoProviderFailed');
     } else {
       // Nothing usable in the URL: back to login.
       _bail('auth.ssoNoCode');
@@ -129,8 +178,12 @@ class _SsoCallbackScreenState extends State<SsoCallbackScreen> {
   /// Leaves the callback screen for `/login`, carrying [reasonKey] so the login
   /// screen can explain what happened. Nothing else navigates away from this
   /// route, so this is the only exit from a failed handoff.
-  void _bail(String reasonKey) {
-    _watchdog?.cancel();
+  ///
+  /// Not while another sign-in is underway ([_signInUnderway]): that one ends
+  /// in the dashboard, or in its own failure, which comes back through here.
+  /// Only the watchdog leaves regardless — [evenIfUnderway] — because a sign-in
+  /// that never finishes must not hold the screen forever either.
+  void _bail(String reasonKey, {bool evenIfUnderway = false}) {
     // Deferred: this is reachable straight from initState (no usable code in
     // the URL), and navigating while the route is still being built throws.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -138,6 +191,8 @@ class _SsoCallbackScreenState extends State<SsoCallbackScreen> {
       // A concurrent redemption may have signed the user in while this failure
       // was on its way; bouncing to /login would undo it.
       if (_auth.state.status == AuthStatus.authenticated) return;
+      if (!evenIfUnderway && _signInUnderway) return;
+      _watchdog?.cancel();
       // Settle the auth state too: a half-finished handoff can leave the bloc in
       // `authenticating`, which renders the login screen with every control
       // disabled — a second dead end right behind this one.

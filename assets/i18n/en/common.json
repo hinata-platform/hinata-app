@@ -270,7 +270,8 @@
       "title": "Switch server?",
       "body": "This link points to a different server ({{host}}). Switch to it?",
       "confirm": "Switch server"
-    }
+    },
+    "ssoProviderFailed": "your organisation's sign-in service did not complete it. Please try again."
   },
   "authShell": {
     "heroTitle": "Where your team's work comes together.",

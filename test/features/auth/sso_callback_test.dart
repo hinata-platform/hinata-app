@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -34,6 +36,7 @@ void main() {
       await SharedPreferences.getInstance(),
       const FlutterSecureStorage(),
     );
+    resetSsoHandoffLedger();
   });
 
   /// Boots just the callback route + a login marker, with [repository] behind
@@ -44,6 +47,7 @@ void main() {
     String? code,
     String? accessToken,
     String? refreshToken,
+    String? error,
   }) async {
     // Deliberately not closed here: awaiting Bloc.close() inside a
     // testWidgets body (or its teardown) runs against the fake clock and never
@@ -54,6 +58,7 @@ void main() {
       if (code != null) 'code=$code',
       if (accessToken != null) 'access_token=$accessToken',
       if (refreshToken != null) 'refresh_token=$refreshToken',
+      if (error != null) 'error=$error',
     ].join('&');
     final router = GoRouter(
       initialLocation: query.isEmpty
@@ -66,6 +71,7 @@ void main() {
             code: state.uri.queryParameters['code'],
             accessToken: state.uri.queryParameters['access_token'],
             refreshToken: state.uri.queryParameters['refresh_token'],
+            error: state.uri.queryParameters['error'],
           ),
         ),
         GoRoute(
@@ -192,6 +198,66 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('a failed provider sign-in says so, not "incomplete link"', (
+    tester,
+  ) async {
+    final router = await pumpCallback(
+      tester,
+      _FakeAuthRepository(),
+      error: 'invalid_token_response',
+    );
+    await advance(tester);
+
+    expect(location(router), '/login');
+    expect(
+      router.routerDelegate.currentConfiguration.uri.queryParameters['ssoError'],
+      'auth.ssoProviderFailed',
+    );
+  });
+
+  testWidgets('an error that arrives during a sign-in does not end it', (
+    tester,
+  ) async {
+    // The identity provider's callback arriving twice: the duplicate's error
+    // reached the app while the first one's code was being redeemed, and the
+    // person was sent to the login screen with a sign-in completing behind it.
+    final exchange = Completer<({String access, String refresh})>();
+    final repository = _FakeAuthRepository(onExchangeAsync: () => exchange.future);
+    final router = await pumpCallback(tester, repository, code: 'first');
+    await advance(tester);
+
+    router.go('/auth-callback?error=authorization_request_not_found');
+    await advance(tester);
+    expect(location(router), '/auth-callback');
+
+    exchange.complete((access: 'access-1', refresh: 'refresh-1'));
+    await advance(tester);
+
+    expect(location(router), '/auth-callback');
+    expect(storage.accessToken, 'access-1');
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('a second code on the same screen is redeemed', (tester) async {
+    // The router keeps the screen when only the query changes, and a code that
+    // came in on the kept screen used to be dropped.
+    final redeemed = <String>[];
+    final repository = _FakeAuthRepository(
+      onExchangeCode: (code) {
+        redeemed.add(code);
+        if (code == 'dead') throw ApiFailure('error.sso.invalidCode');
+        return (access: 'access-2', refresh: 'refresh-2');
+      },
+    );
+    final router = await pumpCallback(tester, repository, error: 'x');
+    router.go('/auth-callback?code=alive');
+    await advance(tester);
+
+    expect(redeemed, ['alive']);
+    expect(storage.accessToken, 'access-2');
+    await tester.pumpWidget(const SizedBox());
+  });
+
   group('AuthBloc always settles', () {
     test('AuthChecked emits even when /me fails unexpectedly', () async {
       await storage.setTokens(access: 'a', refresh: 'r');
@@ -244,14 +310,23 @@ void main() {
 /// Stands in for the network. Only the two calls the SSO handoff makes are
 /// scripted; everything else inherits the real (unused) implementation.
 class _FakeAuthRepository extends AuthRepository {
-  _FakeAuthRepository({this.onExchange, this.onMe})
-    : super(ApiClient(_UnusedStorage()));
+  _FakeAuthRepository({
+    this.onExchange,
+    this.onExchangeAsync,
+    this.onExchangeCode,
+    this.onMe,
+  }) : super(ApiClient(_UnusedStorage()));
 
   final ({String access, String refresh}) Function()? onExchange;
+  final Future<({String access, String refresh})> Function()? onExchangeAsync;
+  final ({String access, String refresh}) Function(String code)?
+  onExchangeCode;
   final AuthUser Function()? onMe;
 
   @override
   Future<({String access, String refresh})> exchangeSso(String code) async {
+    if (onExchangeAsync != null) return onExchangeAsync!();
+    if (onExchangeCode != null) return onExchangeCode!(code);
     if (onExchange == null) throw StateError('exchange not scripted');
     return onExchange!();
   }
