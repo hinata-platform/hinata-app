@@ -11,7 +11,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
@@ -36,12 +35,18 @@ import 'absence_labels.dart';
 /// makes no read of its own before it can draw: the reader's own balance is
 /// already on the screen behind it. [initialFrom] and [initialTo] are the days
 /// somebody marked in the calendar before asking.
+///
+/// With [existing] the form edits that request, which still waits for a
+/// decision; with [template] it files a new one that starts where an old one
+/// ended — "ask again" after a refusal or a withdrawal.
 Future<AbsenceRequest?> showAbsenceRequestSheet(
   BuildContext context, {
   required List<AbsenceType> types,
   AbsenceBalances? balances,
   DateTime? initialFrom,
   DateTime? initialTo,
+  AbsenceRequest? existing,
+  AbsenceRequest? template,
 }) {
   final askable = [
     for (final type in types)
@@ -62,6 +67,8 @@ Future<AbsenceRequest?> showAbsenceRequestSheet(
         balances: balances,
         initialFrom: initialFrom,
         initialTo: initialTo,
+        existing: existing,
+        template: existing ?? template,
       ),
     ),
   );
@@ -104,12 +111,20 @@ class _RequestForm extends StatefulWidget {
     required this.balances,
     required this.initialFrom,
     required this.initialTo,
+    required this.existing,
+    required this.template,
   });
 
   final List<AbsenceType> types;
   final AbsenceBalances? balances;
   final DateTime? initialFrom;
   final DateTime? initialTo;
+
+  /// The request being edited, or null for a new one.
+  final AbsenceRequest? existing;
+
+  /// What the form starts from: [existing], or an old request asked for again.
+  final AbsenceRequest? template;
 
   @override
   State<_RequestForm> createState() => _RequestFormState();
@@ -135,15 +150,48 @@ class _RequestFormState extends State<_RequestForm> {
   /// is read at once — each is a single, deliberate pick.
   Timer? _debounce;
 
+  /// Where a form nobody gave a day starts: today, or the Monday after a
+  /// weekend. Opened on a Saturday it would greet the reader with "there is
+  /// no working day here" before they had chosen anything.
+  static DateTime _nextWeekday(DateTime day) => switch (day.weekday) {
+    DateTime.saturday => day.add(const Duration(days: 2)),
+    DateTime.sunday => day.add(const Duration(days: 1)),
+    _ => day,
+  };
+
   @override
   void initState() {
     super.initState();
-    final start = DateUtils.dateOnly(widget.initialFrom ?? DateTime.now());
-    final end = DateUtils.dateOnly(widget.initialTo ?? start);
+    final template = widget.template;
+    final start = DateUtils.dateOnly(
+      template?.from ?? widget.initialFrom ?? _nextWeekday(DateTime.now()),
+    );
+    final end = DateUtils.dateOnly(template?.to ?? widget.initialTo ?? start);
     _from = start;
     _to = end.isBefore(start) ? start : end;
-    _type = _likelyType(widget.types);
+    _type =
+        widget.types.where((type) => type.id == template?.typeId).firstOrNull ??
+        _likelyType(widget.types);
+    if (template != null) {
+      _halfFirst = template.firstDayMilliDays == kMilliDay ~/ 2;
+      _halfLast = _to != _from && template.lastDayMilliDays == kMilliDay ~/ 2;
+      _note.text = template.note ?? '';
+      final substituteId = template.substituteId;
+      if (substituteId != null) unawaited(_loadSubstitute(substituteId));
+    }
     if (_type != null) unawaited(_loadPreview());
+  }
+
+  /// The stand-in the template named, as a person the field can show. The
+  /// request keeps only the id.
+  Future<void> _loadSubstitute(String id) async {
+    try {
+      final found = await context.read<UserRepository>().usersByIds([id]);
+      if (!mounted || found.isEmpty) return;
+      setState(() => _substitute = found.first);
+    } on ApiFailure {
+      // The form still works without the name; picking again sets it.
+    }
   }
 
   /// What somebody pressing "request time off" almost always means: leave.
@@ -232,7 +280,10 @@ class _RequestFormState extends State<_RequestForm> {
       anchorRect: anchor,
       options: [
         for (final type in widget.types)
-          (value: type, child: _TypeOption(type: type, balances: widget.balances)),
+          (
+            value: type,
+            child: _TypeOption(type: type, balances: widget.balances),
+          ),
       ],
     );
     if (picked == null || !mounted) return;
@@ -278,13 +329,19 @@ class _RequestFormState extends State<_RequestForm> {
   Future<void> _submit() async {
     setState(() => _saving = true);
     try {
-      final filed = await context.read<AbsenceRepository>().submit(_draft);
+      final repository = context.read<AbsenceRepository>();
+      final existing = widget.existing;
+      final filed = existing == null
+          ? await repository.submit(_draft)
+          : await repository.edit(existing.id, _draft);
       if (!mounted) return;
       showGlassToast(
         context,
         context.t(
           filed.status == AbsenceRequestStatus.approved
               ? 'absence.request.autoApproved'
+              : existing != null
+              ? 'absence.request.edited'
               : 'absence.request.filed',
         ),
       );
@@ -303,8 +360,14 @@ class _RequestFormState extends State<_RequestForm> {
       mainAxisSize: MainAxisSize.min,
       children: [
         GlassModalHeader(
-          icon: LucideIcons.calendarPlus,
-          title: context.t('absence.request.title'),
+          icon: widget.existing == null
+              ? LucideIcons.calendarPlus
+              : LucideIcons.calendarCog,
+          title: context.t(
+            widget.existing == null
+                ? 'absence.request.title'
+                : 'absence.request.editTitle',
+          ),
           subtitle: context.t('absence.request.subtitle'),
         ),
         Flexible(
@@ -320,14 +383,15 @@ class _RequestFormState extends State<_RequestForm> {
                     value: type == null
                         ? context.t('absence.request.noTypes')
                         : absenceTypeName(context, type),
-                    onTap: () => unawaited(_pickType(anchorRectOfContext(anchor))),
+                    onTap: () =>
+                        unawaited(_pickType(anchorRectOfContext(anchor))),
                   ),
                 ),
                 const SizedBox(height: 10),
                 FieldButton(
                   icon: LucideIcons.calendarRange,
                   label: context.t('absence.request.dates'),
-                  value: _spanLabel(context, _from, _to),
+                  value: spanLabel(context, _from, _to),
                   onTap: () => unawaited(_pickDates()),
                 ),
                 if (type?.halfDaysAllowed ?? false) ...[
@@ -394,7 +458,11 @@ class _RequestFormState extends State<_RequestForm> {
           ),
         ),
         GlassModalFooter(
-          confirmLabel: context.t('absence.request.submit'),
+          confirmLabel: context.t(
+            widget.existing == null
+                ? 'absence.request.submit'
+                : 'absence.request.saveEdit',
+          ),
           busy: _saving,
           onConfirm: _saving || type == null || (_preview?.milliDays ?? 0) <= 0
               ? null
@@ -686,9 +754,7 @@ class _SickFormState extends State<_SickForm> {
             // saying so is the only way anybody learns their balance moved.
             ? context.t(
                 'absence.sick.reportedAndReturned',
-                variables: {
-                  'days': days(context, reported.returnedMilliDays),
-                },
+                variables: {'days': days(context, reported.returnedMilliDays)},
               )
             : context.t('absence.sick.reported'),
       );
@@ -718,7 +784,7 @@ class _SickFormState extends State<_SickForm> {
               FieldButton(
                 icon: LucideIcons.calendarRange,
                 label: context.t('absence.sick.dates'),
-                value: _spanLabel(context, _from, _to),
+                value: spanLabel(context, _from, _to),
                 onTap: () => unawaited(_pickDates()),
               ),
               if (_from == _to) ...[
@@ -781,11 +847,4 @@ class _SickFormState extends State<_SickForm> {
       ),
     ],
   );
-}
-
-/// "15 – 19 Jun 2026", or one date where both ends are the same day.
-String _spanLabel(BuildContext context, DateTime from, DateTime to) {
-  final format = DateFormat.yMMMd(Localizations.localeOf(context).toLanguageTag());
-  if (from == to) return format.format(from);
-  return '${format.format(from)} – ${format.format(to)}';
 }

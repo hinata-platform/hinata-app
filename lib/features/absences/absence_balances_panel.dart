@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/blocs/app_config_bloc.dart';
+import '../../core/blocs/my_absences_cubit.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/absence_models.dart';
@@ -19,7 +20,6 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/read_on_trigger.dart';
 import 'absence_entitlement_sheets.dart' show LedgerRow;
 import 'absence_labels.dart';
-import 'absence_request_sheet.dart';
 
 /// Settings → Working hours and absences → your absence balances (HIN-116).
 ///
@@ -176,19 +176,25 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
       (bloc) => bloc.state.meta?.absenceManagement ?? false,
     );
     if (!on) return const SizedBox.shrink();
-    return BlocListener<AppConfigBloc, AppConfigState>(
-      // An administrator can switch the module on while somebody has this page
-      // open. The panel appears with the flag; the first read follows it here,
-      // rather than from inside build().
-      listenWhen: (before, after) =>
-          (before.meta?.absenceManagement ?? false) !=
-          (after.meta?.absenceManagement ?? false),
-      listener: (context, state) {
-        if ((state.meta?.absenceManagement ?? false) && _balances == null) {
-          unawaited(_load());
-        }
-      },
-      child: _panel(context),
+    return BlocListener<MyAbsencesCubit, MyAbsencesState>(
+      // A request filed, a leave cancelled, sickness reported — from anywhere
+      // in the module. The balance is what moved.
+      listenWhen: (before, after) => before.revision != after.revision,
+      listener: (context, state) => unawaited(_loadBalances()),
+      child: BlocListener<AppConfigBloc, AppConfigState>(
+        // An administrator can switch the module on while somebody has this page
+        // open. The panel appears with the flag; the first read follows it here,
+        // rather than from inside build().
+        listenWhen: (before, after) =>
+            (before.meta?.absenceManagement ?? false) !=
+            (after.meta?.absenceManagement ?? false),
+        listener: (context, state) {
+          if ((state.meta?.absenceManagement ?? false) && _balances == null) {
+            unawaited(_load());
+          }
+        },
+        child: _panel(context),
+      ),
     );
   }
 
@@ -286,11 +292,9 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
     }
     return [
       Padding(
-        // No side inset of its own. The section already insets its children by
-        // 18, and every card adds its own — three nested paddings put the text
-        // on a card further right than every other row in the section. The card
-        // is the box here, so its padding is the one that counts.
-        padding: const EdgeInsets.fromLTRB(0, 10, 0, 6),
+        // The same inset the header and the journal keep, so the cards line up
+        // with the words above them instead of sitting on the panel's edge.
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
         // The cards share the width rather than leaving a ragged edge: as many
         // per row as fit at their smallest, each stretched to fill what is left.
         // In the narrow column of a settings page that is one card, full width.
@@ -377,6 +381,12 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
                     shrinkWrap: true,
                     primary: false,
                     physics: const NeverScrollableScrollPhysics(),
+                    // Its own, and empty: a list with none takes the window's
+                    // insets from the MediaQuery, and inside a page whose app
+                    // bar and tab bar publish theirs that put a band of the
+                    // app bar's height above the first row and another the
+                    // height of the tab bar below the last.
+                    padding: EdgeInsets.zero,
                     itemCount: state.items.length + (state.hasMore ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index == state.items.length) {
@@ -398,59 +408,32 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
 
   /// The way into the keeper's pages, for somebody an operator named who is not
   /// an administrator and would otherwise have no entry point at all.
-  /// What somebody does from here: ask for days, report sickness, read what
-  /// became of both — and, for a keeper, the pages where other people's years
-  /// are granted.
   ///
-  /// On this panel rather than on a page of their own: the balance is the thing
-  /// somebody looks at before asking for leave, and a second place to start
-  /// from would be a second place to remember.
-  Widget _actions(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
-    child: Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        FilledButton.icon(
-          onPressed: () => unawaited(_ask()),
-          icon: const Icon(LucideIcons.calendarPlus, size: 16),
-          label: Text(context.t('absence.request.ask')),
-        ),
-        OutlinedButton.icon(
-          onPressed: () => unawaited(_reportSick()),
-          icon: const Icon(LucideIcons.thermometer, size: 16),
-          label: Text(context.t('absence.sick.report')),
-        ),
-        OutlinedButton.icon(
-          onPressed: () => context.go('/absences/requests'),
-          icon: const Icon(LucideIcons.listChecks, size: 16),
-          label: Text(context.t('absence.request.open')),
-        ),
-        if (_keeper)
-          OutlinedButton.icon(
-            onPressed: () => context.go('/absences/entitlements'),
-            icon: const Icon(LucideIcons.usersRound, size: 16),
-            label: Text(context.t('absence.balances.manage')),
+  /// Asking for leave and reporting sickness are not here any more: the page
+  /// this panel stands on — the absences view of the time module — has them in
+  /// its head, and a second pair of buttons under the balances would be the
+  /// same two doors twice.
+  Widget _actions(BuildContext context) => !_keeper
+      ? const SizedBox(height: 6)
+      : Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => context.go('/absences/entitlements'),
+                icon: const Icon(LucideIcons.usersRound, size: 16),
+                label: Text(context.t('absence.balances.manage')),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => context.go('/absences/types'),
+                icon: const Icon(LucideIcons.shapes, size: 16),
+                label: Text(context.t('absence.balances.manageTypes')),
+              ),
+            ],
           ),
-      ],
-    ),
-  );
-
-  Future<void> _ask() async {
-    final filed = await showAbsenceRequestSheet(
-      context,
-      types: _types,
-      balances: _balances,
-    );
-    // Only on a change: an approval that happened as the request arrived has
-    // already moved the balance, and a withdrawn sheet has moved nothing.
-    if (filed != null && mounted) unawaited(_loadBalances());
-  }
-
-  Future<void> _reportSick() async {
-    final reported = await showSickReportSheet(context, types: _types);
-    if (reported != null && mounted) unawaited(_loadBalances());
-  }
+        );
 }
 
 /// One type's standing for the year: what is left, out of what, and the two
@@ -527,10 +510,20 @@ class _BalanceCard extends StatelessWidget {
   }
 
   List<Widget> _figures(BuildContext context) {
+    // A type nobody is allotted days of — sickness, and whatever else an
+    // operator set up that way. There is no quota to count down, so the card
+    // says what there is: the days that went on it this year.
     if (balance.unlimited) {
+      final counted =
+          balance.takenMilliDays != 0 || balance.plannedMilliDays != 0;
       return [
         Text(
-          context.t('absence.balances.unlimited'),
+          counted
+              ? '${context.t('absence.balances.taken')} '
+                    '${days(context, balance.takenMilliDays)}  ·  '
+                    '${context.t('absence.balances.planned')} '
+                    '${days(context, balance.plannedMilliDays)}'
+              : context.t('absence.balances.noEntries'),
           style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
         ),
       ];

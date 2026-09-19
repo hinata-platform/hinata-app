@@ -49,6 +49,7 @@ class TimeMonthScroller extends StatefulWidget {
     this.showTotals = true,
     this.onTapDay,
     this.onNewOnDay,
+    this.onDayMenu,
     this.onTap,
     this.onRetryMonth,
     this.markOn,
@@ -107,6 +108,11 @@ class TimeMonthScroller extends StatefulWidget {
 
   /// A day held down: start an entry on it, without going there first.
   final void Function(DateTime day)? onNewOnDay;
+
+  /// A day held down or clicked with the secondary button, when the caller
+  /// offers more than a new entry for it — an absence, say. Takes the place of
+  /// [onNewOnDay] on the hold; [anchor] is the cell, for a menu to hang off.
+  final void Function(DateTime day, Rect anchor)? onDayMenu;
 
   /// A tap on one of the chips.
   final void Function(TimeGridItem item)? onTap;
@@ -374,6 +380,7 @@ class _TimeMonthScrollerState extends State<TimeMonthScroller> {
       showTotals: widget.showTotals,
       onTapDay: widget.onTapDay,
       onNewOnDay: widget.onNewOnDay,
+      onDayMenu: widget.onDayMenu,
       onTap: widget.onTap,
       markOn: widget.markOn,
     );
@@ -545,6 +552,7 @@ class _MonthBlock extends StatelessWidget {
     required this.showTotals,
     this.onTapDay,
     this.onNewOnDay,
+    this.onDayMenu,
     this.onTap,
     this.markOn,
   });
@@ -562,6 +570,7 @@ class _MonthBlock extends StatelessWidget {
   /// Somebody held a day: start an entry on it. Null leaves the month
   /// read-only for creation.
   final void Function(DateTime day)? onNewOnDay;
+  final void Function(DateTime day, Rect anchor)? onDayMenu;
   final void Function(TimeGridItem item)? onTap;
 
   @override
@@ -601,6 +610,7 @@ class _MonthBlock extends StatelessWidget {
                         showTotal: showTotals,
                         onTapDay: onTapDay,
                         onNewOnDay: onNewOnDay,
+                        onDayMenu: onDayMenu,
                         onTap: onTap,
                         markOn: markOn,
                       ),
@@ -688,6 +698,7 @@ class _Cell extends StatelessWidget {
     required this.showTotal,
     this.onTapDay,
     this.onNewOnDay,
+    this.onDayMenu,
     this.onTap,
     this.markOn,
   });
@@ -704,7 +715,14 @@ class _Cell extends StatelessWidget {
 
   final void Function(DateTime day)? onTapDay;
   final void Function(DateTime day)? onNewOnDay;
+  final void Function(DateTime day, Rect anchor)? onDayMenu;
   final void Function(TimeGridItem item)? onTap;
+
+  void _menu(BuildContext context, DateTime at) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return;
+    onDayMenu?.call(at, box.localToGlobal(Offset.zero) & box.size);
+  }
 
   /// Room a cell has under its number, in whole chips.
   static const int _room = ((kMonthWeekExtent - 8 - _kDayLine) ~/ _kChipRow);
@@ -733,7 +751,12 @@ class _Cell extends StatelessWidget {
       // month cell has room for. A tap here must stay a tap; pairing it with a
       // double-tap would delay every navigation by three hundred milliseconds.
       onTap: onTapDay == null ? null : () => onTapDay!(at),
-      onLongPress: onNewOnDay == null ? null : () => onNewOnDay!(at),
+      onLongPress: onDayMenu != null
+          ? () => _menu(context, at)
+          : onNewOnDay == null
+          ? null
+          : () => onNewOnDay!(at),
+      onSecondaryTap: onDayMenu == null ? null : () => _menu(context, at),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(_kCellPad, 4, _kCellPad, 4),
         child: Column(

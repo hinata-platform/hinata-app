@@ -6,7 +6,7 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/blocs/app_config_bloc.dart';
+import '../../core/blocs/my_absences_cubit.dart';
 import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
@@ -14,7 +14,6 @@ import '../../core/models/absence_request_models.dart';
 import '../../core/models/availability_models.dart';
 import '../../core/models/time_models.dart';
 import '../../core/models/work_models.dart';
-import '../../core/repositories/absence_repository.dart';
 import '../../core/repositories/time_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
@@ -22,6 +21,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/hue_colors.dart';
 import '../../core/util/dates.dart';
 import '../../core/widgets/glass_switch_chip.dart';
+import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
@@ -31,6 +31,8 @@ import '../../core/widgets/time_grid/time_month_grid.dart';
 import '../../core/widgets/time_grid/time_month_layout.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
+import '../absences/absence_actions.dart';
+import '../absences/absence_labels.dart';
 import 'day_marks.dart';
 import 'time_entry_sheet.dart';
 import 'time_privacy_sheet.dart';
@@ -190,18 +192,23 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   /// from any other dependency.
   int? _firstDayOfWeekIndex;
 
-  /// The days of the reader's own absence requests that nobody has decided
-  /// yet (HIN-117), as day keys.
+  /// The reader's own absence requests that nobody has decided yet (HIN-117),
+  /// and the days they cover.
   ///
-  /// Read once for the screen rather than with each month: an instance holds at
-  /// most a hundred absences per person per year, so one page covers everything
-  /// anybody is waiting on, and asking per window would be a request per swipe
-  /// for an answer that barely changes.
+  /// Taken from [MyAbsencesCubit], which reads them once for the session and
+  /// again after each of the reader's own changes. This screen used to read
+  /// them itself every time it was opened, and the module's views are separate
+  /// routes, so every switch between them was another read of an answer that
+  /// barely changes.
   ///
   /// Their own only. Whose absences somebody may see is decided in the calendar
   /// layers the server sends, and a second list read by the client is not a
   /// second way in.
+  List<AbsenceRequest> _pending = const [];
   Set<DateTime> _requestedDays = const {};
+
+  /// The [MyAbsencesState.revision] the months were last read at.
+  int _absenceRevision = 0;
 
   /// The language the memoised layers, the docked strip and the held months
   /// were built in. A marked day's sentence, the bands' headings, the strip's
@@ -264,35 +271,20 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     unawaited(context.read<TimePolicyCubit>().ensureLoaded());
     offerTimePrivacyNotice(context);
     unawaited(_ensureAround(_focused));
-    unawaited(_loadRequestedDays());
+    final absences = context.read<MyAbsencesCubit>();
+    _takePending(absences.state);
+    unawaited(absences.ensureLoaded(managed: absencesManaged(context)));
   }
 
-  /// The days somebody has asked for and nobody has answered.
+  /// Takes the waiting requests from [state].
   ///
-  /// Silent on failure and silent with the module off: the calendar's subject is
-  /// recorded time, and a hatch that could not be drawn costs a hint, not the
-  /// page.
-  Future<void> _loadRequestedDays() async {
-    if (!(context.read<AppConfigBloc>().state.meta?.absenceManagement ?? false)) {
-      return;
-    }
-    try {
-      final page = await context.read<AbsenceRepository>().myRequests(
-        status: AbsenceRequestStatus.submitted,
-        size: 100,
-      );
-      if (!mounted) return;
-      final days = daysCovered(page.items);
-      if (days.isEmpty && _requestedDays.isEmpty) return;
-      setState(() {
-        _requestedDays = days;
-        // The hatch rides in the memoised layers, so they have to be built
-        // again — the same reason a lifted freeze clears them.
-        _layerMemo.clear();
-      });
-    } on ApiFailure {
-      // Nothing to say and nothing to do about it.
-    }
+  /// The hatch and the requested band ride in the memoised layers, so they have
+  /// to be built again — the same reason a lifted freeze clears them.
+  void _takePending(MyAbsencesState state) {
+    if (identical(state.pending, _pending)) return;
+    _pending = state.pending;
+    _requestedDays = state.requestedDays;
+    _layerMemo.clear();
   }
 
   @override
@@ -679,6 +671,62 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     return _createFrom((start: on(fallback.start), end: on(fallback.end)));
   }
 
+  /// What can be done with a whole day, held down in the month or on a week's
+  /// heading: an entry on it, an absence from it, and — when the day has one —
+  /// opening the absence that is already there.
+  ///
+  /// The entry stays first: holding a day used to start one straight away, and
+  /// the one gesture somebody learned is now a menu that begins with it.
+  Future<void> _dayMenu(DateTime day, Rect anchor) async {
+    final absence = _months[monthKey(day)]?.marks.absenceOn(day);
+    final waiting = context.read<MyAbsencesCubit>().state.pendingOn(day);
+    final chosen = await showGlassMenu<String>(
+      context: context,
+      anchorRect: anchor,
+      width: 250,
+      value: '',
+      items: [
+        GlassMenuItem(
+          value: 'entry',
+          label: context.t('time.entry.new'),
+          leading: Icon(
+            LucideIcons.filePlus2,
+            size: 15,
+            color: AppColors.inkSoft,
+          ),
+        ),
+        if (absence != null || waiting != null)
+          GlassMenuItem(
+            value: 'open',
+            label: context.t('absence.calendar.open'),
+            leading: Icon(
+              LucideIcons.calendarSearch,
+              size: 15,
+              color: AppColors.inkSoft,
+            ),
+          ),
+        ...absenceMenuItems(
+          context,
+          managed: absencesManaged(context),
+          day: day,
+        ),
+      ],
+    );
+    if (chosen == null || !mounted) return;
+    switch (chosen) {
+      case 'entry':
+        await _newEntryOn(day);
+      case 'open':
+        await openAbsence(
+          context,
+          absence: absence,
+          request: absence == null ? waiting : null,
+        );
+      default:
+        await followAbsenceChoice(context, chosen, from: day, to: day);
+    }
+  }
+
   Future<void> _createFrom(TimeGridSpan span) async {
     final saved = await showTimeEntrySheet(context, span: span);
     if (saved == null || !mounted) return;
@@ -687,6 +735,16 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
 
   Future<void> _openEntry(TimeGridItem item) async {
     final entry = item.data;
+    // An absence band or the band of a request somebody made: the absence
+    // sheet, which knows what can still be done with either.
+    if (entry is TimeOff) {
+      unawaited(openAbsence(context, absence: entry));
+      return;
+    }
+    if (entry is AbsenceRequest) {
+      unawaited(openAbsence(context, request: entry));
+      return;
+    }
     if (entry is! WorkItem) return;
     // The grid has no row menu, so the sheet is the only way in — and until it
     // offered deleting, a block opened from here could be corrected in every
@@ -792,80 +850,94 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     final truncated = onScreen.any(
       (month) => _months[monthKey(month)]?.truncated ?? false,
     );
-    return PageChrome(
-      contentMax: double.infinity,
-      title: _title(),
-      onTitleTap: compact ? _openModuleMenu : null,
-      // On the leading edge, because the title is a month name that changes as
-      // the calendar scrolls and a centred one on a phone reads "Septem…".
-      titleLeading: true,
-      // Compact only, and that is not a style choice: the module's pages are
-      // nav destinations, so a wide window builds no sub-page bar and would
-      // drop these on the floor. A wide window has room for both ways of
-      // adding time and offers them separately — the entry button in the
-      // page's own head, the timer on the bar above it. One slot cannot, so
-      // the phone's button asks which.
-      actions: compact
-          ? [
-              PageAction(
-                icon: LucideIcons.plus,
-                label: context.t('time.add.title'),
-                primary: true,
-                // The module's one "+", shared by all three of its pages: an
-                // entry on the day this page would have offered anyway, or the
-                // timer. See [showTimeAddMenu].
-                onTap: (anchor) => unawaited(
-                  showTimeAddMenu(
-                    context,
-                    anchor: anchor,
-                    onNewEntry: _newEntry,
-                    onTimerStopped: _reload,
+    return BlocListener<MyAbsencesCubit, MyAbsencesState>(
+      // The reader's own absences moved — filed, edited, cancelled, reported —
+      // from this screen's menus or from anywhere else in the module. The
+      // requests redraw the hatch; the months hold the settled absences, so
+      // they are read again.
+      listener: (context, state) {
+        final revised = state.revision != _absenceRevision;
+        _absenceRevision = state.revision;
+        setState(() => _takePending(state));
+        if (revised) unawaited(_reload());
+      },
+      child: PageChrome(
+        contentMax: double.infinity,
+        title: _title(),
+        onTitleTap: compact ? _openModuleMenu : null,
+        // On the leading edge, because the title is a month name that changes as
+        // the calendar scrolls and a centred one on a phone reads "Septem…".
+        titleLeading: true,
+        // Compact only, and that is not a style choice: the module's pages are
+        // nav destinations, so a wide window builds no sub-page bar and would
+        // drop these on the floor. A wide window has room for both ways of
+        // adding time and offers them separately — the entry button in the
+        // page's own head, the timer on the bar above it. One slot cannot, so
+        // the phone's button asks which.
+        actions: compact
+            ? [
+                PageAction(
+                  icon: LucideIcons.plus,
+                  label: context.t('time.add.title'),
+                  primary: true,
+                  // The module's one "+", shared by all three of its pages: an
+                  // entry on the day this page would have offered anyway, or the
+                  // timer. See [showTimeAddMenu].
+                  onTap: (anchor) => unawaited(
+                    showTimeAddMenu(
+                      context,
+                      anchor: anchor,
+                      onNewEntry: _newEntry,
+                      onTimerStopped: _reload,
+                      absenceFrom: _focused,
+                      absenceTo: _focused,
+                    ),
                   ),
                 ),
-              ),
-            ]
-          : const [],
-      bottom: compact ? _dockedNavigation() : null,
-      bottomHeight: compact ? _dockHeight : 0,
-      child: BlocListener<TimerCubit, TimerState>(
-        listenWhen: (previous, current) =>
-            previous.isRunning && !current.isRunning,
-        listener: (context, state) => unawaited(_reload()),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (!compact) ..._wideHead(),
-            if (truncated)
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  context.pageGutter,
-                  compact ? context.topGutter + 8 : 0,
-                  context.pageGutter,
-                  8,
+              ]
+            : const [],
+        bottom: compact ? _dockedNavigation() : null,
+        bottomHeight: compact ? _dockHeight : 0,
+        child: BlocListener<TimerCubit, TimerState>(
+          listenWhen: (previous, current) =>
+              previous.isRunning && !current.isRunning,
+          listener: (context, state) => unawaited(_reload()),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (!compact) ..._wideHead(),
+              if (truncated)
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    context.pageGutter,
+                    compact ? context.topGutter + 8 : 0,
+                    context.pageGutter,
+                    8,
+                  ),
+                  child: const _TruncatedNotice(),
                 ),
-                child: const _TruncatedNotice(),
-              ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  // The month keeps a smaller inset than the rest of the app:
-                  // its cells are a grid, and a full gutter down both sides of
-                  // seven columns costs most of a column on a phone — but at
-                  // nothing the 1st and the 7th sit against the display edge.
-                  // The weekday letters docked above take the same one.
-                  _span == _Span.month ? kMonthGutter : context.pageGutter,
-                  // On a phone nothing sits above the canvas in the column —
-                  // the week strip is docked into the glass bar — so the body
-                  // spends the bar's height itself. (The notice above spends it
-                  // when it is there.)
-                  compact && !truncated ? context.topGutter : 0,
-                  _span == _Span.month ? kMonthGutter : context.pageGutter,
-                  context.bottomGutter + 8,
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    // The month keeps a smaller inset than the rest of the app:
+                    // its cells are a grid, and a full gutter down both sides of
+                    // seven columns costs most of a column on a phone — but at
+                    // nothing the 1st and the 7th sit against the display edge.
+                    // The weekday letters docked above take the same one.
+                    _span == _Span.month ? kMonthGutter : context.pageGutter,
+                    // On a phone nothing sits above the canvas in the column —
+                    // the week strip is docked into the glass bar — so the body
+                    // spends the bar's height itself. (The notice above spends it
+                    // when it is there.)
+                    compact && !truncated ? context.topGutter : 0,
+                    _span == _Span.month ? kMonthGutter : context.pageGutter,
+                    context.bottomGutter + 8,
+                  ),
+                  child: _body(onScreen),
                 ),
-                child: _body(onScreen),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -887,11 +959,10 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
         actions: [
           const TimeViewSwitcher(current: TimeView.calendar),
           const SizedBox(width: 8),
-          PrimaryButton(
-            icon: LucideIcons.plus,
-            label: context.t('time.entry.new'),
-            onPressed: _newEntry,
-            collapseToIcon: true,
+          TimeAddButton(
+            onNewEntry: _newEntry,
+            absenceFrom: _focused,
+            absenceTo: _focused,
           ),
         ],
       ),
@@ -1068,6 +1139,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       // day opens it instead, which is where those hours exist.
       onTapDay: _openDay,
       onNewOnDay: _newEntryOn,
+      onDayMenu: (day, anchor) => unawaited(_dayMenu(day, anchor)),
       onTap: _openEntry,
       onRetryMonth: _retryMonth,
       // The month says what the day and the week already say: a holiday, an
@@ -1139,6 +1211,8 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
         onMoved: _moveEntry,
         onTap: _openEntry,
         mark: _markOn(day),
+        waiting: context.read<MyAbsencesCubit>().state.pendingOn(day),
+        onDayMenu: (anchor) => unawaited(_dayMenu(day, anchor)),
       );
     },
   );
@@ -1150,6 +1224,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     onCreate: _createFrom,
     onMoved: _moveEntry,
     onTap: _openEntry,
+    onDayMenu: (day, anchor) => unawaited(_dayMenu(day, anchor)),
   );
 
   // --- the entries, as the grid wants them ---------------------------------
@@ -1248,8 +1323,35 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   /// without taking either of their meanings away.
   List<TimeGridLayer> _requestedLayer(List<DateTime> window) {
     final items = <TimeGridItem>[];
+    final bands = <TimeGridItem>[];
+    final types = context.read<MyAbsencesCubit>().state.types;
     for (final day in window) {
       if (!_requestedDays.contains(DateUtils.dateOnly(day))) continue;
+      final date = DateUtils.dateOnly(day);
+      final request = _pending
+          .where(
+            (request) =>
+                !date.isBefore(request.from) && !date.isAfter(request.to),
+          )
+          .firstOrNull;
+      if (request != null) {
+        final type = types
+            .where((type) => type.id == request.typeId)
+            .firstOrNull;
+        bands.add(
+          TimeGridItem(
+            id: 'requested-band-${dayKey(day)}',
+            start: date,
+            end: DateTime(day.year, day.month, day.day, 23, 59),
+            title: type == null
+                ? context.t('absence.calendar.requested')
+                : absenceTypeName(context, type),
+            movable: false,
+            day: date,
+            data: request,
+          ),
+        );
+      }
       items.add(
         TimeGridItem(
           id: 'requested-${dayKey(day)}',
@@ -1270,6 +1372,16 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
         glyph: LucideIcons.hourglass,
         hatched: true,
       ),
+      // The same days in words, under the headings — and the one part of the
+      // hatch a tap can reach: it opens the request.
+      if (bands.isNotEmpty)
+        TimeGridLayer(
+          id: 'absence-requested-band',
+          placement: TimeGridPlacement.band,
+          items: bands,
+          tint: AppColors.accentStrong,
+          label: context.t('absence.calendar.requested'),
+        ),
     ];
   }
 
@@ -1319,6 +1431,8 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
           title: dayMarkLabel(context, mark),
           movable: false,
           day: start,
+          // What a tap on the band opens: the absence itself.
+          data: mark.absence,
         ),
       );
     }
@@ -1625,9 +1739,17 @@ class _Day extends StatelessWidget {
     required this.onMoved,
     required this.onTap,
     this.mark,
+    this.waiting,
+    this.onDayMenu,
   });
 
   final DateTime day;
+
+  /// A request of the reader's that covers the day and waits for a decision.
+  final AbsenceRequest? waiting;
+
+  /// The day's menu, from its date held down; see the page's `_dayMenu`.
+  final void Function(Rect anchor)? onDayMenu;
 
   /// `[day]`, held by the page rather than built here — [TimeGrid] drops its
   /// packing memo when the list is not the identical object it was given last.
@@ -1647,24 +1769,58 @@ class _Day extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(
-          MaterialLocalizations.of(context).formatFullDate(day),
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 13.5,
-            fontWeight: FontWeight.w700,
-            color: AppColors.ink,
+      Builder(
+        // The date is the day's handle: held, it offers what the month's cell
+        // and the week's heading offer.
+        builder: (dateContext) => GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onLongPress: onDayMenu == null
+              ? null
+              : () {
+                  final box = dateContext.findRenderObject() as RenderBox?;
+                  if (box == null || !box.hasSize) return;
+                  onDayMenu!(box.localToGlobal(Offset.zero) & box.size);
+                },
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(
+              MaterialLocalizations.of(context).formatFullDate(day),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w700,
+                color: AppColors.ink,
+              ),
+            ),
           ),
         ),
       ),
-      if (mark case final mark?)
+      if (mark != null || waiting != null)
         Padding(
           padding: const EdgeInsets.only(bottom: 6),
-          child: Center(child: DayMarkChip(mark: mark)),
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              if (mark case final mark?)
+                DayMarkChip(
+                  mark: mark,
+                  onTap: mark.absence == null
+                      ? null
+                      : () => unawaited(
+                          openAbsence(context, absence: mark.absence),
+                        ),
+                ),
+              if (waiting case final waiting?)
+                RequestedDayChip(
+                  onTap: () =>
+                      unawaited(openAbsence(context, request: waiting)),
+                ),
+            ],
+          ),
         ),
       Expanded(
         child: TimeGrid(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/blocs/app_config_bloc.dart';
+import 'package:hinata/core/blocs/my_absences_cubit.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/models/absence_models.dart';
 import 'package:hinata/core/repositories/absence_repository.dart';
@@ -32,8 +33,13 @@ void main() {
         data: const MediaQueryData(size: Size(1100, 1600)),
         child: MaterialApp(
           home: Scaffold(
-            body: BlocProvider<AppConfigBloc>.value(
-              value: config,
+            body: MultiBlocProvider(
+              providers: [
+                BlocProvider<AppConfigBloc>.value(value: config),
+                BlocProvider<MyAbsencesCubit>(
+                  create: (_) => FakeMyAbsencesCubit(managed: moduleOn),
+                ),
+              ],
               child: RepositoryProvider<AbsenceRepository>.value(
                 value: repository,
                 child: const SingleChildScrollView(

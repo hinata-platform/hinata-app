@@ -1,14 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/blocs/my_absences_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/availability_models.dart';
 import '../../core/repositories/availability_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_widgets.dart' show fmtDuration;
 import '../../core/widgets/soft_card.dart';
+import '../absences/absence_actions.dart';
+import '../time/day_marks.dart' show formatDaySpan, timeOffIcon;
 
 /// The reader's own capacity for the window the timesheet shows, beside what
 /// they booked in it: "32 h of 40 h" (HIN-91).
@@ -70,6 +75,58 @@ class _TimesheetCapacityLineState extends State<TimesheetCapacityLine> {
   Widget build(BuildContext context) {
     final capacity = _capacity;
     if (capacity == null) return const SizedBox.shrink();
+    final waiting = [
+      for (final request in context.watch<MyAbsencesCubit>().state.pending)
+        if (!request.to.isBefore(widget.from) &&
+            !request.from.isAfter(widget.to))
+          request,
+    ];
+    return BlocListener<MyAbsencesCubit, MyAbsencesState>(
+      // An absence of the reader's changed: the capacity it takes away and
+      // the chips below are read again.
+      listenWhen: (before, after) => before.revision != after.revision,
+      listener: (context, state) => _load(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _line(context, capacity),
+          // The absences behind the figure, and the ones still waiting: the
+          // timesheet is where a week is looked at as a whole, and "why is my
+          // capacity short" was answered nowhere on it.
+          if (capacity.absences.isNotEmpty || waiting.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final absence in capacity.absences)
+                  _AbsenceChip(
+                    icon: timeOffIcon(absence.type),
+                    label:
+                        '${context.t(absence.type.labelKey)} · '
+                        '${formatDaySpan(context, absence.from, absence.to)}',
+                    onTap: () =>
+                        unawaited(openAbsence(context, absence: absence)),
+                  ),
+                for (final request in waiting)
+                  _AbsenceChip(
+                    icon: LucideIcons.hourglass,
+                    label:
+                        '${context.t('absence.calendar.requested')} · '
+                        '${formatDaySpan(context, request.from, request.to)}',
+                    accent: true,
+                    onTap: () =>
+                        unawaited(openAbsence(context, request: request)),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _line(BuildContext context, Capacity capacity) {
     return Tooltip(
       message: context.t('availability.capacity.hint'),
       child: SoftCard(
@@ -120,6 +177,63 @@ class _TimesheetCapacityLineState extends State<TimesheetCapacityLine> {
                     fontFeatures: const [FontFeature.tabularFigures()],
                     color: AppColors.ink,
                   ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One absence in the window, as a chip that opens it.
+class _AbsenceChip extends StatelessWidget {
+  const _AbsenceChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.accent = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  /// A request still waiting: the accent the calendar hatches it in.
+  final bool accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final tint = accent ? AppColors.accentStrong : AppColors.textSecondary;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          decoration: BoxDecoration(
+            color: accent
+                ? AppColors.accentStrong.withValues(alpha: 0.10)
+                : AppColors.recess,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: accent
+                  ? AppColors.accentStrong.withValues(alpha: 0.28)
+                  : AppColors.hairline2,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 12, color: tint),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: tint,
                 ),
               ),
             ],

@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/blocs/app_config_bloc.dart';
+import '../../core/blocs/my_absences_cubit.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/blocs/timer_cubit.dart';
@@ -17,7 +17,6 @@ import '../../core/models/time_approval_models.dart';
 import '../../core/models/time_policy_models.dart';
 import '../../core/models/time_privacy_models.dart';
 import '../../core/models/work_models.dart';
-import '../../core/repositories/absence_repository.dart';
 import '../../core/repositories/availability_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/time_repository.dart';
@@ -31,11 +30,8 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart'
-    show
-        GlassToastKind,
-        anchorRectOfContext,
-        showGlassDateRangePicker,
-        showGlassToast;
+    show GlassToastKind, showGlassDateRangePicker, showGlassToast;
+import '../absences/absence_actions.dart';
 import 'day_marks.dart';
 import 'lock_notice.dart';
 import 'placement_picker.dart';
@@ -123,30 +119,13 @@ class _TimeScreenState extends State<TimeScreen> {
     );
     offerTimePrivacyNotice(context);
     unawaited(_reload());
-    unawaited(_loadRequestedDays());
-  }
-
-  /// The days somebody has asked for and nobody has answered (HIN-117).
-  ///
-  /// Silent on failure and silent with the module off: the timesheet's subject
-  /// is recorded time, and a chip that could not be drawn costs a hint, not the
-  /// page.
-  Future<void> _loadRequestedDays() async {
-    if (!(context.read<AppConfigBloc>().state.meta?.absenceManagement ?? false)) {
-      return;
-    }
-    try {
-      final page = await context.read<AbsenceRepository>().myRequests(
-        status: AbsenceRequestStatus.submitted,
-        size: 100,
-      );
-      if (!mounted) return;
-      final days = daysCovered(page.items);
-      if (days.isEmpty && _requestedDays.isEmpty) return;
-      setState(() => _requestedDays = days);
-    } on ApiFailure {
-      // Nothing to say and nothing to do about it.
-    }
+    // The requests nobody has decided yet come from the session's one read of
+    // them (HIN-117); see [MyAbsencesCubit].
+    unawaited(
+      context.read<MyAbsencesCubit>().ensureLoaded(
+        managed: absencesManaged(context),
+      ),
+    );
   }
 
   @override
@@ -279,15 +258,6 @@ class _TimeScreenState extends State<TimeScreen> {
   /// planned hours (HIN-91). A chip beside the day, never a reason to refuse an
   /// entry (R9).
   DayMarks _marks = DayMarks.none;
-
-  /// The days of the reader's own absence requests nobody has decided yet
-  /// (HIN-117), as day keys.
-  ///
-  /// Read once for the screen: an instance holds at most a hundred absences per
-  /// person per year, so one page covers everything anybody is waiting on. Their
-  /// own only — whose absences somebody may see is decided in the markings the
-  /// server sends, and a second list read here is not a second way in.
-  Set<DateTime> _requestedDays = const {};
 
   /// The windows whose markings are loaded or on their way.
   final Set<DateTime> _markWindows = {};
@@ -453,10 +423,20 @@ class _TimeScreenState extends State<TimeScreen> {
         // pressed the button. On a phone the bar floats in the shell and knows
         // nothing about this page, so listening for the transition here is what
         // makes the two layouts behave the same.
-        child: BlocListener<TimerCubit, TimerState>(
-          listenWhen: (previous, current) =>
-              previous.isRunning && !current.isRunning,
-          listener: (context, state) => unawaited(_reloadAfterStop()),
+        child: MultiBlocListener(
+          listeners: [
+            BlocListener<TimerCubit, TimerState>(
+              listenWhen: (previous, current) =>
+                  previous.isRunning && !current.isRunning,
+              listener: (context, state) => unawaited(_reloadAfterStop()),
+            ),
+            // An absence of the reader's changed somewhere in the module: the
+            // day chips come from the markings, which are read again.
+            BlocListener<MyAbsencesCubit, MyAbsencesState>(
+              listenWhen: (before, after) => before.revision != after.revision,
+              listener: (context, state) => unawaited(_loadMarks(fresh: true)),
+            ),
+          ],
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -473,12 +453,7 @@ class _TimeScreenState extends State<TimeScreen> {
                     actions: [
                       const TimeViewSwitcher(current: TimeView.list),
                       const SizedBox(width: 8),
-                      PrimaryButton(
-                        icon: LucideIcons.plus,
-                        label: context.t('time.entry.new'),
-                        onPressed: _newEntry,
-                        collapseToIcon: true,
-                      ),
+                      TimeAddButton(onNewEntry: _newEntry),
                     ],
                   ),
                 ),
@@ -592,9 +567,9 @@ class _TimeScreenState extends State<TimeScreen> {
       ),
       // The gaps in _filterPills are the scroller's business; a Wrap spaces
       // its own children.
-      ..._filterPills().whereType<_FilterPill>(),
+      ..._filterPills().whereType<GlassFilterPill>(),
       if (!_filter.isEmpty)
-        _ClearFiltersPill(
+        GlassClearFiltersPill(
           onTap: () {
             _searchController.clear();
             _applyFilter(const TimeEntryFilter());
@@ -606,7 +581,7 @@ class _TimeScreenState extends State<TimeScreen> {
   List<Widget> _filterPills() {
     final localizations = MaterialLocalizations.of(context);
     return [
-      _FilterPill(
+      GlassFilterPill(
         icon: LucideIcons.calendarRange,
         label: _filter.from == null || _filter.to == null
             ? context.t('time.filter.allTime')
@@ -616,7 +591,7 @@ class _TimeScreenState extends State<TimeScreen> {
         onTap: (_) => _pickRange(),
       ),
       const SizedBox(width: 8),
-      _FilterPill(
+      GlassFilterPill(
         icon: LucideIcons.folder,
         label: _filter.projectId == null
             ? context.t('time.filter.allProjects')
@@ -630,7 +605,7 @@ class _TimeScreenState extends State<TimeScreen> {
       // tap target inside the first.
       if (!_filter.isEmpty) ...[
         const SizedBox(width: 8),
-        _ClearFiltersPill(
+        GlassClearFiltersPill(
           onTap: () {
             _searchController.clear();
             _applyFilter(const TimeEntryFilter());
@@ -735,6 +710,7 @@ class _TimeScreenState extends State<TimeScreen> {
     // dependency would land there and one emit would rebuild the whole list —
     // and the lookup would run again for every row the scroll materialises.
     final policy = context.watch<TimePolicyCubit>().state;
+    final absences = context.watch<MyAbsencesCubit>().state;
     return BlocBuilder<PagedCubit<WorkItem>, PagedState<WorkItem>>(
       builder: (context, state) {
         if (state.isLoading && !state.hasData) {
@@ -823,9 +799,7 @@ class _TimeScreenState extends State<TimeScreen> {
                 hints: _dayHints[group.day] ?? const [],
                 lateHints: _lateHints,
                 mark: _marks.on(group.day),
-                requested: _requestedDays.contains(
-                  DateUtils.dateOnly(group.day),
-                ),
+                waiting: absences.pendingOn(group.day),
               );
             },
           ),
@@ -908,88 +882,6 @@ class _TimeScreenState extends State<TimeScreen> {
 /// the band has laid itself out.
 const double _kDockHeight = kGlassDockRow;
 
-/// A docked filter: a glass pill that opens a picker, wearing the amber wash
-/// when it is narrowing something.
-///
-/// Its proportions are the audit log's, deliberately — one toolbar idiom in the
-/// app rather than two. [kGlassControlHeight] is shorter than the search field
-/// above it, which is what the token exists for.
-class _FilterPill extends StatelessWidget {
-  const _FilterPill({
-    required this.icon,
-    required this.label,
-    required this.active,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool active;
-
-  /// Receives the pill's own rectangle on screen, so what it opens can hang off
-  /// it on a wide window instead of rising out of the bottom of the display.
-  /// Measured here rather than by the caller: the caller holds the page's
-  /// context, and the page is the whole page.
-  ///
-  /// Null when the pill is no longer on screen, which is an answer and not a
-  /// failure — the pickers read it as "no anchor" and fall back to the sheet
-  /// rather than pinning a popover to the top-left corner of the display.
-  final ValueChanged<Rect?> onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = active ? AppColors.accentStrong : AppColors.inkSoft;
-    return GlassPill(
-      height: kGlassControlHeight,
-      active: active,
-      onTap: () => onTap(anchorRectOfContext(context)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 13),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 7),
-            ConstrainedBox(
-              // A project name can be long; the pill may not grow with it.
-              constraints: const BoxConstraints(maxWidth: 150),
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-                  color: active ? AppColors.accentStrong : AppColors.ink,
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(LucideIcons.chevronDown, size: 13, color: color),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Undoes every filter at once — icon-only, matched to the pill height.
-class _ClearFiltersPill extends StatelessWidget {
-  const _ClearFiltersPill({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => GlassPill(
-    height: kGlassControlHeight,
-    onTap: onTap,
-    child: SizedBox(
-      width: kGlassControlHeight,
-      child: Icon(LucideIcons.filterX, size: 16, color: AppColors.inkSoft),
-    ),
-  );
-}
-
 /// One day's entries under a header carrying the day and what it adds up to.
 class _DayGroup extends StatelessWidget {
   const _DayGroup({
@@ -1005,7 +897,7 @@ class _DayGroup extends StatelessWidget {
     this.hints = const [],
     this.lateHints = const {},
     this.mark,
-    this.requested = false,
+    this.waiting,
   });
 
   final DateTime day;
@@ -1014,10 +906,11 @@ class _DayGroup extends StatelessWidget {
   /// absence, or a day without planned hours (HIN-91). A chip, never a lock.
   final DayMark? mark;
 
-  /// Whether this day falls inside an absence the reader asked for and nobody
-  /// has decided. A chip, and never a reason to refuse an entry: the day is
-  /// claimed, not closed, and it may yet be refused (R9).
-  final bool requested;
+  /// The absence the reader asked for and nobody has decided, when the day falls
+  /// inside one. A chip, and never a reason to refuse an entry: the day is
+  /// claimed, not closed, and it may yet be refused (R9). Tapping it opens the
+  /// request.
+  final AbsenceRequest? waiting;
 
   /// The reader's own hints about this day: a long day, a short rest, a Sunday.
   final List<TimeHint> hints;
@@ -1072,10 +965,21 @@ class _DayGroup extends StatelessWidget {
                       ),
                     ),
                     ?switch (mark) {
-                      final mark? => DayMarkChip(mark: mark),
+                      final mark? => DayMarkChip(
+                        mark: mark,
+                        onTap: mark.absence == null
+                            ? null
+                            : () => unawaited(
+                                openAbsence(context, absence: mark.absence),
+                              ),
+                      ),
                       null => null,
                     },
-                    if (requested) const RequestedDayChip(),
+                    if (waiting case final waiting?)
+                      RequestedDayChip(
+                        onTap: () =>
+                            unawaited(openAbsence(context, request: waiting)),
+                      ),
                     for (final hint in hints) TimeHintChip(hint: hint),
                   ],
                 ),

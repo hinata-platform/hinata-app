@@ -11,8 +11,11 @@ import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/widgets/hive_widgets.dart' show GhostButton;
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/glass_switch_chip.dart';
+import '../absences/absence_actions.dart';
 import 'timer_bar.dart';
 
 /// The extended time module's ways of looking at the same hours.
@@ -25,6 +28,11 @@ enum TimeView {
   list('/time', 'time.view.list', LucideIcons.list),
   calendar('/time/calendar', 'time.view.calendar', LucideIcons.calendarDays),
   timesheet('/time/timesheet', 'time.view.timesheet', LucideIcons.table),
+
+  /// Days away — entered, asked for, decided. Here rather than on the account
+  /// page, where they used to be kept: planning time off is planning, and the
+  /// calendar it is planned in is one tab away.
+  absences('/time/absences', 'time.view.absences', LucideIcons.calendarOff),
 
   /// Handed-in periods. Unlike the other three this one is **conditional**: it
   /// exists only while the operator has switched approvals on, because without
@@ -80,15 +88,21 @@ class TimeViewSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconOnly = context.isCompact;
+    final iconOnly = !context.isExpanded;
     final views = visibleViews(context.watch<TimePolicyCubit>().state);
+    // Five words side by side are wider than the head has beside a title and
+    // the add button, so past four views only the one on screen is named and
+    // the others show their glyph, with the name as a tooltip.
+    final named = !iconOnly && views.length <= 4;
     return GlassSwitchBar(
       compact: iconOnly,
-      // Wider by one chip when the instance submits timesheets, so the fourth
-      // does not squeeze the three that were already there.
+      // Wider by a chip for each view past three, so a new one does not
+      // squeeze the ones that were already there.
       maxWidth: iconOnly
-          ? (views.length > 3 ? 215 : 170)
-          : (views.length > 3 ? 430 : 330),
+          ? 170 + 45.0 * (views.length - 3)
+          : named
+          ? 330 + 115.0 * (views.length - 3)
+          : 150 + 45.0 * views.length,
       chips: [
         for (final view in views) ...[
           if (view != views.first) const SizedBox(width: 2),
@@ -96,7 +110,7 @@ class TimeViewSwitcher extends StatelessWidget {
             label: context.t(view.labelKey),
             icon: view.icon,
             active: view == current,
-            iconOnly: iconOnly,
+            iconOnly: iconOnly || (!named && view != current),
             // Going rather than pushing: the three are one destination seen
             // three ways, so stepping back from the calendar belongs outside
             // the module, not on the list you came through. The one you are on
@@ -134,15 +148,22 @@ class TimeViewSwitcher extends StatelessWidget {
 ///
 /// A null [anchor] means the button was not on screen to measure; nothing
 /// opens, as with [showTimeViewMenu].
+///
+/// The absence rows ask for time off, or report sickness, from [absenceFrom] to
+/// [absenceTo] — the day or week the page is showing — through the same forms
+/// the absences view opens (`absence_actions.dart`).
 Future<void> showTimeAddMenu(
   BuildContext context, {
   required Rect? anchor,
   required Future<void> Function() onNewEntry,
   void Function()? onTimerStopped,
+  DateTime? absenceFrom,
+  DateTime? absenceTo,
 }) async {
   if (anchor == null) return;
   final timer = context.read<TimerCubit>().state.timer;
   final stopping = timer != null;
+  final managed = absencesManaged(context);
   final chosen = await showGlassMenu<String>(
     context: context,
     anchorRect: anchor,
@@ -177,11 +198,21 @@ Future<void> showTimeAddMenu(
           color: AppColors.inkSoft,
         ),
       ),
+      ...absenceMenuItems(context, managed: managed),
     ],
   );
   if (chosen == null || !context.mounted) return;
   if (chosen == 'entry') {
     await onNewEntry();
+    return;
+  }
+  if (chosen == 'absence' || chosen == 'sick') {
+    await followAbsenceChoice(
+      context,
+      chosen,
+      from: absenceFrom,
+      to: absenceTo,
+    );
     return;
   }
   if (stopping) {
@@ -192,6 +223,162 @@ Future<void> showTimeAddMenu(
     // view, where there is room to say what they are.
     await context.read<TimerCubit>().start();
   }
+}
+
+/// The absence rows of a "+" or a day's menu: ask for time off — or, without
+/// absence management, enter it — and report sickness. A day's menu passes
+/// its [day]: sickness is reported when it happens, so a day still ahead
+/// offers no report.
+List<GlassMenuItem<String>> absenceMenuItems(
+  BuildContext context, {
+  required bool managed,
+  DateTime? day,
+}) => [
+  GlassMenuItem(
+    value: 'absence',
+    label: context.t(
+      managed ? 'absence.request.ask' : 'availability.timeOff.add',
+    ),
+    leading: Icon(LucideIcons.calendarOff, size: 15, color: AppColors.inkSoft),
+  ),
+  if (managed &&
+      (day == null ||
+          !DateUtils.dateOnly(day).isAfter(DateUtils.dateOnly(DateTime.now()))))
+    GlassMenuItem(
+      value: 'sick',
+      label: context.t('absence.sick.report'),
+      leading: Icon(
+        LucideIcons.thermometer,
+        size: 15,
+        color: AppColors.inkSoft,
+      ),
+    ),
+];
+
+/// Runs [chosen] when it is one of [absenceMenuItems]; false for any other
+/// value, which the caller then answers itself.
+Future<bool> followAbsenceChoice(
+  BuildContext context,
+  String chosen, {
+  DateTime? from,
+  DateTime? to,
+}) async {
+  switch (chosen) {
+    case 'absence':
+      await askForAbsence(context, from: from, to: to);
+      return true;
+    case 'sick':
+      await reportSickness(context, from: from, to: to);
+      return true;
+  }
+  return false;
+}
+
+/// The wide head's add button: a new entry, with the absences beside it.
+///
+/// One button with two halves rather than two buttons. The head already
+/// carries the title and the switch between five views, and a second button
+/// was what made it run out of room; the arrow opens the absence rows the
+/// phone's "+" has. [absenceFrom] and [absenceTo] are the days the page shows,
+/// which the form starts on.
+class TimeAddButton extends StatelessWidget {
+  const TimeAddButton({
+    super.key,
+    required this.onNewEntry,
+    this.absenceFrom,
+    this.absenceTo,
+  });
+
+  final VoidCallback onNewEntry;
+  final DateTime? absenceFrom;
+  final DateTime? absenceTo;
+
+  @override
+  Widget build(BuildContext context) {
+    ButtonStyle half(BorderRadius radius, EdgeInsets padding) =>
+        FilledButton.styleFrom(
+          backgroundColor: AppColors.accent,
+          foregroundColor: const Color(0xFF2A2410),
+          padding: padding,
+          minimumSize: const Size(40, 44),
+          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          shape: RoundedRectangleBorder(borderRadius: radius),
+        );
+    const radius = Radius.circular(AppTheme.radiusControl);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FilledButton.icon(
+          onPressed: onNewEntry,
+          style: half(
+            const BorderRadius.horizontal(left: radius),
+            const EdgeInsets.fromLTRB(16, 13, 14, 13),
+          ),
+          icon: const Icon(LucideIcons.plus, size: 16),
+          label: Text(context.t('time.entry.new')),
+        ),
+        const SizedBox(width: 1),
+        Builder(
+          builder: (anchorContext) => Tooltip(
+            message: context.t('time.view.absences'),
+            child: FilledButton(
+              onPressed: () => unawaited(
+                showAbsenceMenu(
+                  anchorContext,
+                  from: absenceFrom,
+                  to: absenceTo,
+                ),
+              ),
+              style: half(
+                const BorderRadius.horizontal(right: radius),
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 13),
+              ),
+              child: const Icon(LucideIcons.chevronDown, size: 16),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The absence rows on their own, for a head without a "new entry" to hang
+/// them on — the timesheet's, where time is typed into the cells.
+class AbsenceMenuButton extends StatelessWidget {
+  const AbsenceMenuButton({super.key});
+
+  @override
+  Widget build(BuildContext context) => Builder(
+    builder: (anchorContext) => GhostButton(
+      icon: LucideIcons.calendarOff,
+      label: context.t('time.view.absences'),
+      onPressed: () => unawaited(showAbsenceMenu(anchorContext)),
+      iconOnly: true,
+    ),
+  );
+}
+
+/// Opens [absenceMenuItems] under the widget [anchorContext] belongs to and
+/// follows the choice; [from] and [to] are the days the form starts on.
+Future<void> showAbsenceMenu(
+  BuildContext anchorContext, {
+  DateTime? from,
+  DateTime? to,
+}) async {
+  final box = anchorContext.findRenderObject() as RenderBox?;
+  if (box == null || !box.hasSize) return;
+  final chosen = await showGlassMenu<String>(
+    context: anchorContext,
+    anchorRect: box.localToGlobal(Offset.zero) & box.size,
+    width: 240,
+    value: '',
+    items: absenceMenuItems(
+      anchorContext,
+      managed: absencesManaged(anchorContext),
+    ),
+  );
+  if (chosen == null || !anchorContext.mounted) return;
+  await followAbsenceChoice(anchorContext, chosen, from: from, to: to);
 }
 
 /// One entry of the module menu: a view to go to, or something the page itself

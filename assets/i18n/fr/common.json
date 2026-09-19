@@ -927,7 +927,8 @@
       "list": "Liste",
       "calendar": "Calendrier",
       "timesheet": "Feuille de temps",
-      "approvals": "Approbations"
+      "approvals": "Approbations",
+      "absences": "Absences"
     },
     "calendar": {
       "untimed": "Sans heure",
@@ -1203,8 +1204,8 @@
       "hint": "Vos heures prévues sur cette période, hors jours fériés et absences, à côté de ce que vous avez saisi. Cela ne s’affiche que pour vous et ne change rien à ce que vous pouvez saisir."
     },
     "section": {
-      "title": "Horaires de travail et absences",
-      "subtitle": "Vos heures prévues, les jours fériés que vous suivez et vos jours d’absence. Cela sert uniquement à la planification. Vous pouvez saisir du temps n’importe quel jour."
+      "title": "Heures de travail",
+      "subtitle": "Vos heures prévues et les jours fériés que vous suivez. Pour la planification uniquement. Vous pouvez saisir du temps chaque jour."
     },
     "pattern": {
       "title": "Heures prévues",
@@ -1225,8 +1226,6 @@
       "add": "Ajouter une absence",
       "edit": "Modifier l’absence",
       "hint": "Seulement le type et les jours. Aucun motif n’est nécessaire.",
-      "empty": "Aucune absence",
-      "emptyMessage": "Ajoutez ici vos absences pour que votre capacité reste juste.",
       "type": "Type",
       "days": "Jours",
       "halfDay": "Demi-journée",
@@ -1237,7 +1236,8 @@
       "deleteConfirm": "Voulez-vous supprimer cette absence ?",
       "saved": "Absence enregistrée.",
       "deleted": "Absence supprimée.",
-      "halfDaySpan": "{{days}}, une demi-journée"
+      "halfDaySpan": "{{days}}, une demi-journée",
+      "movedHint": "Saisissez-les, demandez-les et gérez-les dans le suivi du temps, juste à côté du calendrier."
     },
     "admin": {
       "cardTitle": "Jours fériés",
@@ -1289,7 +1289,7 @@
     "days_plural": "{{days}} jours",
     "kind": {
       "vacation": "Congés",
-      "sick": "Maladie",
+      "sick": "Arrêt maladie",
       "special": "Congé exceptionnel",
       "unpaid": "Sans solde",
       "parental": "Congé parental",
@@ -1331,7 +1331,7 @@
     },
     "type": {
       "vacation": "Congés",
-      "sick": "Maladie",
+      "sick": "Arrêt maladie",
       "other": "Autres"
     },
     "icon": {
@@ -1493,7 +1493,6 @@
       "remaining": "Reste",
       "notGranted": "Pas encore attribué",
       "notGrantedHint": "Aucun droit n'est encore enregistré pour cette année.",
-      "unlimited": "Sans quota",
       "expiresOn": "Le report de l'année précédente expire le {{date}}",
       "belowMinimum": "C'est moins que le congé minimum légal de {{days}} jours pour votre semaine de {{week}} jours (§ 3 BUrlG). Adressez-vous aux personnes qui gèrent les absences.",
       "empty": "Pas encore de soldes d'absence",
@@ -1501,17 +1500,17 @@
       "journal": "Journal",
       "journalEmpty": "Pas encore de mouvements",
       "journalEmptyMessage": "Les attributions, les imputations et les corrections apparaissent ici.",
-      "manage": "Gérer les absences"
+      "manage": "Gérer les absences",
+      "manageTypes": "Gérer les types",
+      "noEntries": "Aucune entrée pour l'instant"
     },
     "calendar": {
       "requested": "Demandé",
-      "requestedHint": "Vous avez demandé ce jour. Rien n'est encore tranché et le temps peut toujours y être saisi."
+      "requestedHint": "Vous avez demandé ce jour. Rien n'est encore tranché et le temps peut toujours y être saisi.",
+      "open": "Ouvrir l’absence"
     },
     "request": {
-      "pageTitle": "Demandes d'absence",
-      "moduleOff": "Ce serveur ne gère pas les absences.",
       "ask": "Demander une absence",
-      "open": "Mes demandes",
       "title": "Demander une absence",
       "subtitle": "Les jours découlent de votre semaine et de votre calendrier de jours fériés.",
       "type": "Type d'absence",
@@ -1552,25 +1551,19 @@
       "reason": "Motif",
       "reasonRequiredHint": "Un refus doit dire pourquoi (§ 7 al. 1 de la loi allemande sur les congés).",
       "reasonOptionalHint": "Facultatif, et les personnes concernées le liront.",
-      "noHistory": "Rien n'est encore arrivé à cette demande.",
-      "scope": {
-        "mine": "Les miennes",
-        "inbox": "À trancher"
-      },
-      "empty": {
-        "mine": "Aucune demande",
-        "inbox": "Rien à trancher"
-      },
-      "emptyMessage": {
-        "mine": "Les absences que vous demandez apparaîtront ici, avec leur suite.",
-        "inbox": "Les demandes qui attendent votre décision apparaîtront ici."
-      },
       "status": {
         "submitted": "En attente",
         "approved": "Approuvée",
         "rejected": "Refusée",
         "withdrawn": "Retirée",
         "cancelled": "Annulée"
+      },
+      "edited": "Demande mise à jour.",
+      "editTitle": "Modifier la demande",
+      "saveEdit": "Enregistrer",
+      "history": {
+        "edited": "Modifiée",
+        "shortened": "Raccourcie"
       }
     },
     "sick": {
@@ -1583,6 +1576,46 @@
       "reported": "Maladie signalée.",
       "reportedAndReturned": "Maladie signalée. {{days}} de congés sont revenus sur votre solde.",
       "explainer": "Personne n'a à approuver ceci et aucun justificatif n'a sa place dans hinata. Pensez à signaler aussi votre maladie à votre employeur — les jours de congés approuvés sur lesquels tombe la maladie reviennent d'eux-mêmes sur votre solde."
+    },
+    "sheet": {
+      "title": "Absence",
+      "halfDay": "Demi-journée",
+      "history": "Historique",
+      "substitute": "Remplaçant : {{name}}",
+      "startedHint": "Cette absence a déjà commencé. Seules les personnes qui gèrent les absences peuvent encore l’annuler.",
+      "fromRequest": "Cette absence a été approuvée par une demande et ne change que par elle.",
+      "askAgain": "Redemander",
+      "entered": "Saisie",
+      "reported": "Maladie signalée"
+    },
+    "view": {
+      "title": "Absences",
+      "scope": {
+        "mine": "Les miennes",
+        "requests": "Demandes",
+        "inbox": "À décider",
+        "balances": "Compteurs"
+      },
+      "search": "Rechercher des absences",
+      "type": "Type",
+      "allTypes": "Tous les types",
+      "newestFirst": "Plus récentes d’abord",
+      "oldestFirst": "Plus anciennes d’abord",
+      "pending": "En attente de décision",
+      "settled": "Saisies et approuvées",
+      "empty": {
+        "mine": "Aucune absence pour l’instant",
+        "requests": "Aucune demande pour l’instant",
+        "inbox": "Rien à décider"
+      },
+      "emptyMessage": {
+        "mine": "Quand vous êtes absent, saisissez-le ici ou dans le calendrier pour que votre planning soit juste.",
+        "requests": "Tout ce que vous demandez apparaît ici, avec la décision.",
+        "inbox": "Les demandes qui attendent votre décision apparaissent ici."
+      },
+      "noMatch": "Aucun résultat",
+      "noMatchMessage": "Aucune absence ne correspond à ces filtres.",
+      "clearFilters": "Effacer les filtres"
     }
   },
   "projects": {
@@ -2007,7 +2040,9 @@
       "logTime": "Saisir du temps",
       "focusMode": "Mode concentration",
       "time": "Temps",
-      "timesheet": "Feuille de temps"
+      "timesheet": "Feuille de temps",
+      "absences": "Absences",
+      "askAbsence": "Demander une absence"
     }
   },
   "settings": {

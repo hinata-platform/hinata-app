@@ -927,7 +927,8 @@
       "list": "Liste",
       "calendar": "Kalender",
       "timesheet": "Stundenzettel",
-      "approvals": "Freigaben"
+      "approvals": "Freigaben",
+      "absences": "Abwesenheiten"
     },
     "calendar": {
       "untimed": "Ohne Uhrzeit",
@@ -1203,8 +1204,8 @@
       "hint": "Deine geplanten Stunden in diesem Zeitraum, abzüglich Feiertage und Abwesenheiten, neben dem, was du gebucht hast. Nur du siehst das, und es ändert nichts daran, was du erfassen kannst."
     },
     "section": {
-      "title": "Arbeitszeiten und Abwesenheiten",
-      "subtitle": "Deine geplanten Stunden, die Feiertage, nach denen du dich richtest, und die Tage, an denen du nicht da bist. Nur zur Planung. Du kannst an jedem Tag Zeit erfassen."
+      "title": "Arbeitszeiten",
+      "subtitle": "Deine geplanten Stunden und die Feiertage, nach denen du dich richtest. Nur zur Planung. Du kannst an jedem Tag Zeit erfassen."
     },
     "pattern": {
       "title": "Geplante Stunden",
@@ -1225,8 +1226,6 @@
       "add": "Abwesenheit eintragen",
       "edit": "Abwesenheit bearbeiten",
       "hint": "Nur die Art und die Tage. Einen Grund brauchst du nicht anzugeben.",
-      "empty": "Keine Abwesenheiten",
-      "emptyMessage": "Wenn du nicht da bist, trag es hier ein, damit deine Kapazität stimmt.",
       "type": "Art",
       "days": "Tage",
       "halfDay": "Halber Tag",
@@ -1237,7 +1236,8 @@
       "deleteConfirm": "Möchtest du diese Abwesenheit löschen?",
       "saved": "Abwesenheit gespeichert.",
       "deleted": "Abwesenheit gelöscht.",
-      "halfDaySpan": "{{days}}, halber Tag"
+      "halfDaySpan": "{{days}}, halber Tag",
+      "movedHint": "Eintragen, beantragen und verwalten kannst du sie in der Zeiterfassung, direkt neben dem Kalender."
     },
     "admin": {
       "cardTitle": "Feiertage",
@@ -1289,7 +1289,7 @@
     "days_plural": "{{days}} Tage",
     "kind": {
       "vacation": "Urlaub",
-      "sick": "Krankheit",
+      "sick": "Krankmeldungen",
       "special": "Sonderurlaub",
       "unpaid": "Unbezahlt",
       "parental": "Elternzeit",
@@ -1331,7 +1331,7 @@
     },
     "type": {
       "vacation": "Urlaub",
-      "sick": "Krankheit",
+      "sick": "Krankmeldungen",
       "other": "Sonstiges"
     },
     "icon": {
@@ -1493,7 +1493,6 @@
       "remaining": "Rest",
       "notGranted": "Noch nicht zugeteilt",
       "notGrantedHint": "Für dieses Jahr ist noch kein Anspruch eingetragen.",
-      "unlimited": "Ohne Kontingent",
       "expiresOn": "Übertrag aus dem Vorjahr verfällt am {{date}}",
       "belowMinimum": "Das ist weniger als der gesetzliche Mindesturlaub von {{days}} Tagen bei deiner {{week}}-Tage-Woche (§ 3 BUrlG). Frag bitte in der Personalverwaltung nach.",
       "empty": "Noch keine Abwesenheitskonten",
@@ -1501,17 +1500,17 @@
       "journal": "Journal",
       "journalEmpty": "Noch keine Bewegungen",
       "journalEmptyMessage": "Zuteilungen, Buchungen und Korrekturen erscheinen hier.",
-      "manage": "Abwesenheiten verwalten"
+      "manage": "Abwesenheiten verwalten",
+      "manageTypes": "Arten verwalten",
+      "noEntries": "Noch keine Einträge"
     },
     "calendar": {
       "requested": "Beantragt",
-      "requestedHint": "Du hast diesen Tag beantragt. Entschieden ist noch nichts, und Zeit lässt sich weiterhin darauf erfassen."
+      "requestedHint": "Du hast diesen Tag beantragt. Entschieden ist noch nichts, und Zeit lässt sich weiterhin darauf erfassen.",
+      "open": "Abwesenheit öffnen"
     },
     "request": {
-      "pageTitle": "Abwesenheitsanträge",
-      "moduleOff": "Dieser Server verwaltet keine Abwesenheiten.",
       "ask": "Abwesenheit beantragen",
-      "open": "Meine Anträge",
       "title": "Abwesenheit beantragen",
       "subtitle": "Die Tage ergeben sich aus deiner Woche und deinem Feiertagskalender.",
       "type": "Art der Abwesenheit",
@@ -1552,25 +1551,19 @@
       "reason": "Begründung",
       "reasonRequiredHint": "Eine Ablehnung muss sagen, warum (§ 7 Abs. 1 BUrlG).",
       "reasonOptionalHint": "Optional, und die Beteiligten lesen sie.",
-      "noHistory": "Mit diesem Antrag ist noch nichts passiert.",
-      "scope": {
-        "mine": "Meine",
-        "inbox": "Zu entscheiden"
-      },
-      "empty": {
-        "mine": "Noch keine Anträge",
-        "inbox": "Nichts zu entscheiden"
-      },
-      "emptyMessage": {
-        "mine": "Abwesenheiten, die du beantragst, stehen hier — mit dem, was daraus wurde.",
-        "inbox": "Anträge, die auf deine Entscheidung warten, stehen hier."
-      },
       "status": {
         "submitted": "Offen",
         "approved": "Genehmigt",
         "rejected": "Abgelehnt",
         "withdrawn": "Zurückgezogen",
         "cancelled": "Storniert"
+      },
+      "edited": "Antrag geändert.",
+      "editTitle": "Antrag bearbeiten",
+      "saveEdit": "Änderungen speichern",
+      "history": {
+        "edited": "Geändert",
+        "shortened": "Verkürzt"
       }
     },
     "sick": {
@@ -1583,6 +1576,46 @@
       "reported": "Krankmeldung erfasst.",
       "reportedAndReturned": "Krankmeldung erfasst. {{days}} Urlaub sind auf dein Konto zurückgegangen.",
       "explainer": "Niemand muss das genehmigen, und ein Nachweis gehört nicht in hinata. Denke daran, die Krankheit auch deinem Arbeitgeber zu melden — genehmigte Urlaubstage, auf die die Krankheit fällt, gehen von selbst auf dein Konto zurück."
+    },
+    "sheet": {
+      "title": "Abwesenheit",
+      "halfDay": "Halber Tag",
+      "history": "Verlauf",
+      "substitute": "Vertretung: {{name}}",
+      "startedHint": "Dieser Urlaub hat schon begonnen. Stornieren kann ihn jetzt nur noch die Abwesenheitsverwaltung.",
+      "fromRequest": "Diese Abwesenheit wurde über einen Antrag genehmigt und lässt sich nur über ihn ändern.",
+      "askAgain": "Erneut beantragen",
+      "entered": "Eingetragen",
+      "reported": "Krank gemeldet"
+    },
+    "view": {
+      "title": "Abwesenheiten",
+      "scope": {
+        "mine": "Meine",
+        "requests": "Anträge",
+        "inbox": "Zu entscheiden",
+        "balances": "Konten"
+      },
+      "search": "Abwesenheiten durchsuchen",
+      "type": "Art",
+      "allTypes": "Alle Arten",
+      "newestFirst": "Neueste zuerst",
+      "oldestFirst": "Älteste zuerst",
+      "pending": "Warten auf Entscheidung",
+      "settled": "Eingetragen und genehmigt",
+      "empty": {
+        "mine": "Noch keine Abwesenheiten",
+        "requests": "Noch keine Anträge",
+        "inbox": "Nichts zu entscheiden"
+      },
+      "emptyMessage": {
+        "mine": "Wenn du nicht da bist, trag es hier oder im Kalender ein, damit deine Planung stimmt.",
+        "requests": "Alles, was du beantragst, erscheint hier, zusammen mit der Entscheidung.",
+        "inbox": "Anträge, die auf deine Entscheidung warten, erscheinen hier."
+      },
+      "noMatch": "Nichts gefunden",
+      "noMatchMessage": "Keine Abwesenheit passt zu diesen Filtern.",
+      "clearFilters": "Filter zurücksetzen"
     }
   },
   "projects": {
@@ -2007,7 +2040,9 @@
       "logTime": "Zeit erfassen",
       "focusMode": "Fokus-Modus",
       "time": "Zeit",
-      "timesheet": "Stundenzettel"
+      "timesheet": "Stundenzettel",
+      "absences": "Abwesenheiten",
+      "askAbsence": "Abwesenheit beantragen"
     }
   },
   "settings": {

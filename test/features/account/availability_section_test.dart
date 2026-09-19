@@ -1,40 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/models/availability_models.dart';
 import 'package:hinata/core/repositories/availability_repository.dart';
 import 'package:hinata/core/theme/app_colors.dart';
-import 'package:hinata/core/blocs/app_config_bloc.dart';
 import 'package:hinata/features/account/availability_section.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../absences/absence_test_support.dart';
-
-/// Settings → Working hours and absences (HIN-91): the pattern editor and the
-/// list of absences, empty and filled.
+/// Settings → Working hours (HIN-91): the pattern editor, and the way to the
+/// absences, which live in the time module since HIN-117.
 void main() {
   setUp(() => AppColors.brightness = Brightness.light);
 
   Future<void> pump(WidgetTester tester, _FakeAvailability repository) async {
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => const Scaffold(
+            body: SingleChildScrollView(child: AvailabilitySection()),
+          ),
+        ),
+        GoRoute(
+          path: '/time/absences',
+          builder: (_, _) => const Text('absences view'),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
     await tester.pumpWidget(
       MediaQuery(
-        data: const MediaQueryData(size: Size(1200, 1400)),
-        child: MaterialApp(
-          home: Scaffold(
-            // The section now carries the absence balances at the top, and
-            // those ask the server metadata whether the module exists. Off
-            // here, so this test keeps testing the hours and the absences.
-            body: BlocProvider<AppConfigBloc>.value(
-              value: FakeAppConfig(absenceManagement: false),
-              child: RepositoryProvider<AvailabilityRepository>.value(
-                value: repository,
-                child: const SingleChildScrollView(
-                  child: AvailabilitySection(),
-                ),
-              ),
-            ),
-          ),
+        data: const MediaQueryData(size: Size(800, 600)),
+        child: RepositoryProvider<AvailabilityRepository>.value(
+          value: repository,
+          child: MaterialApp.router(routerConfig: router),
         ),
       ),
     );
@@ -63,7 +64,7 @@ void main() {
     final repository = _FakeAvailability();
     await pump(tester, repository);
 
-    // The first plus is Monday's: the pattern comes before the absences.
+    // The first plus is Monday's.
     await tester.tap(find.byIcon(LucideIcons.plus).first);
     await tester.pump();
     expect(saveButton(tester).onPressed, isNotNull);
@@ -76,40 +77,21 @@ void main() {
     expect(repository.saved, [510, 480, 480, 480, 480, 0, 0]);
   });
 
-  testWidgets('no absences is a sentence, not a blank', (tester) async {
+  testWidgets('the absences are one tap away, in the time module', (
+    tester,
+  ) async {
     await pump(tester, _FakeAvailability());
 
-    expect(find.text('availability.timeOff.empty'), findsOneWidget);
-    expect(find.text('availability.timeOff.emptyMessage'), findsOneWidget);
-  });
+    await tester.ensureVisible(find.text('availability.timeOff.movedHint'));
+    await tester.tap(find.text('availability.timeOff.movedHint'));
+    await tester.pumpAndSettle();
 
-  testWidgets('an absence shows its type and its note', (tester) async {
-    await pump(
-      tester,
-      _FakeAvailability(
-        absences: [
-          TimeOff(
-            id: 'a1',
-            userId: 'me',
-            type: TimeOffType.vacation,
-            from: DateTime(2026, 12, 21),
-            to: DateTime(2026, 12, 23),
-            note: 'Familie',
-          ),
-        ],
-      ),
-    );
-
-    expect(find.text('availability.timeOff.empty'), findsNothing);
-    expect(find.text('availability.type.vacation'), findsOneWidget);
-    expect(find.text('Familie'), findsOneWidget);
+    expect(find.text('absences view'), findsOneWidget);
   });
 }
 
 class _FakeAvailability implements AvailabilityRepository {
-  _FakeAvailability({this.absences = const []});
-
-  final List<TimeOff> absences;
+  _FakeAvailability();
 
   /// The minutes of the last pattern saved.
   List<int>? saved;
@@ -130,13 +112,6 @@ class _FakeAvailability implements AvailabilityRepository {
     ],
     total: 1,
   );
-
-  @override
-  Future<PageResult<TimeOff>> timeOff({
-    DateTime? from,
-    int page = 0,
-    int size = 50,
-  }) async => (items: absences, total: absences.length);
 
   @override
   Future<WorkingPattern?> saveSchedule({

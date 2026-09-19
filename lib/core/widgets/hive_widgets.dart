@@ -693,6 +693,8 @@ class PrimaryButton extends StatelessWidget {
 /// White hairline-bordered secondary button.
 ///
 /// See [PrimaryButton.collapseToIcon] — same compact icon-only behaviour.
+/// [iconOnly] takes that shape at every width, for a secondary action in a
+/// head that is already full.
 class GhostButton extends StatelessWidget {
   const GhostButton({
     super.key,
@@ -700,16 +702,18 @@ class GhostButton extends StatelessWidget {
     required this.onPressed,
     this.icon,
     this.collapseToIcon = false,
+    this.iconOnly = false,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
   final bool collapseToIcon;
+  final bool iconOnly;
 
   @override
   Widget build(BuildContext context) {
-    if (collapseToIcon && context.isCompact) {
+    if (iconOnly || (collapseToIcon && context.isCompact)) {
       return Tooltip(
         message: label,
         child: OutlinedButton(

@@ -45,42 +45,68 @@ IconData timeOffIcon(TimeOffType type) => switch (type) {
 
 /// A marked day as a small chip beside the day, the size of a hint chip.
 class DayMarkChip extends StatelessWidget {
-  const DayMarkChip({super.key, required this.mark});
+  const DayMarkChip({super.key, required this.mark, this.onTap});
 
   final DayMark mark;
+
+  /// Opens what the mark is about — an absence opens its sheet. Null draws a
+  /// chip that only says.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final label = dayMarkLabel(context, mark);
-    return Tooltip(
-      message: label,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: AppColors.recess,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: AppColors.hairline2),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(dayMarkIcon(mark), size: 11, color: AppColors.textSecondary),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+    return _Tappable(
+      onTap: onTap,
+      child: Tooltip(
+        message: label,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: AppColors.recess,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: AppColors.hairline2),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(dayMarkIcon(mark), size: 11, color: AppColors.textSecondary),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// A chip that opens something when there is something to open, and stays a
+/// plain label otherwise — with the pointer that says which.
+class _Tappable extends StatelessWidget {
+  const _Tappable({required this.onTap, required this.child});
+
+  final VoidCallback? onTap;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final tap = onTap;
+    if (tap == null) return child;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(onTap: tap, child: child),
     );
   }
 }
@@ -94,40 +120,46 @@ class DayMarkChip extends StatelessWidget {
 /// [AppColors.closed] — nothing is frozen here and time is recorded on the day
 /// like on any other (R9).
 class RequestedDayChip extends StatelessWidget {
-  const RequestedDayChip({super.key});
+  const RequestedDayChip({super.key, this.onTap});
+
+  /// Opens the request the day belongs to.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final label = context.t('absence.calendar.requested');
-    return Tooltip(
-      message: context.t('absence.calendar.requestedHint'),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: AppColors.accentStrong.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: AppColors.accentStrong.withValues(alpha: 0.28),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              LucideIcons.hourglass,
-              size: 11,
-              color: AppColors.accentStrong,
+    return _Tappable(
+      onTap: onTap,
+      child: Tooltip(
+        message: context.t('absence.calendar.requestedHint'),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: AppColors.accentStrong.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: AppColors.accentStrong.withValues(alpha: 0.28),
             ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                LucideIcons.hourglass,
+                size: 11,
                 color: AppColors.accentStrong,
               ),
-            ),
-          ],
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.accentStrong,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:hinata/core/blocs/auth_bloc.dart';
+import 'package:hinata/core/blocs/my_absences_cubit.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/blocs/time_privacy_cubit.dart';
 import 'package:hinata/core/models/availability_models.dart';
@@ -24,6 +25,7 @@ import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:hinata/features/timesheet/timesheet_screen.dart';
 import '../time/fake_time_policy_cubit.dart';
 import '../time/fake_time_privacy_cubit.dart';
+import '../absences/absence_test_support.dart';
 
 /// The week grid has to answer for rows nobody owns any more and for time that
 /// belongs to no project — both are ordinary states of the data, not errors —
@@ -138,6 +140,9 @@ void main() {
                             value: FakeTimePrivacyCubit(
                               time ?? _FakeTimeRepository(rows),
                             ),
+                          ),
+                          BlocProvider<MyAbsencesCubit>(
+                            create: (_) => FakeMyAbsencesCubit(managed: false),
                           ),
                         ],
                         child: TimesheetScreen(moduleView: moduleView),

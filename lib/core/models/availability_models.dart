@@ -136,6 +136,7 @@ class TimeOff extends Equatable {
     this.typeId,
     this.halfDay = false,
     this.note,
+    this.requestId,
   });
 
   /// Longest note the server keeps (`TimeOff.NOTE_MAX`).
@@ -156,6 +157,14 @@ class TimeOff extends Equatable {
   final bool halfDay;
   final String? note;
 
+  /// The request this absence was approved from (HIN-117). Such an absence
+  /// changes only through its request — the server refuses a direct edit —
+  /// so a screen offers the request's actions for it, never edit and delete.
+  final String? requestId;
+
+  /// Whether this absence came from an approved request.
+  bool get fromRequest => requestId != null && requestId!.isNotEmpty;
+
   static TimeOff? fromJson(Map<String, dynamic> json) {
     final type = TimeOffType.fromWire(json['type']);
     final from = parseDate(json['from']);
@@ -170,6 +179,7 @@ class TimeOff extends Equatable {
       to: to,
       halfDay: json['halfDay'] as bool? ?? false,
       note: json['note'] as String?,
+      requestId: json['requestId'] as String?,
     );
   }
 
@@ -183,6 +193,7 @@ class TimeOff extends Equatable {
     to,
     halfDay,
     note,
+    requestId,
   ];
 }
 
@@ -361,27 +372,33 @@ enum DayMarkKind { holiday, absence, nonRegular }
 /// The marking of one day: a holiday, an absence, or a day without planned
 /// hours. A tone and a sentence, never a refusal.
 class DayMark extends Equatable {
-  const DayMark.holiday(this.name, {this.halfDay = false})
-    : kind = DayMarkKind.holiday,
-      absenceType = null;
-
-  const DayMark.absence(this.absenceType, {this.halfDay = false})
+  const DayMark.absence(this.absenceType, {this.halfDay = false, this.absence})
     : kind = DayMarkKind.absence,
       name = null;
+
+  const DayMark.holiday(this.name, {this.halfDay = false})
+    : kind = DayMarkKind.holiday,
+      absenceType = null,
+      absence = null;
 
   const DayMark.nonRegular()
     : kind = DayMarkKind.nonRegular,
       name = null,
       absenceType = null,
-      halfDay = false;
+      halfDay = false,
+      absence = null;
 
   final DayMarkKind kind;
   final String? name;
   final TimeOffType? absenceType;
   final bool halfDay;
 
+  /// The absence itself, when the day is one — what a tap on the mark opens.
+  /// Null for a mark that came without it.
+  final TimeOff? absence;
+
   @override
-  List<Object?> get props => [kind, name, absenceType, halfDay];
+  List<Object?> get props => [kind, name, absenceType, halfDay, absence?.id];
 }
 
 /// The markings of a window of days, asked for one day at a time.
@@ -430,11 +447,19 @@ class DayMarks {
     }
     final absence = _absences[key];
     if (absence != null) {
-      return DayMark.absence(absence.type, halfDay: absence.halfDay);
+      return DayMark.absence(
+        absence.type,
+        halfDay: absence.halfDay,
+        absence: absence,
+      );
     }
     if (_scheduled[key] == 0) return const DayMark.nonRegular();
     return null;
   }
+
+  /// The absence on [day], whatever else the day is — a holiday wins the mark,
+  /// but an absence that also covers it is still one somebody may open.
+  TimeOff? absenceOn(DateTime day) => _absences[_key(day)];
 
   /// One set of both windows' days, for windows loaded one at a time. A day
   /// both of them know is answered by [other], the window read later.

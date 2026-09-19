@@ -304,6 +304,17 @@ class AbsenceRepository {
             as Map<String, dynamic>,
       );
 
+  /// Changes a request that is still waiting. The server works the days out
+  /// again and asks again who decides; once somebody has decided, it is 409.
+  Future<AbsenceRequest> edit(String id, AbsenceRequestDraft draft) async =>
+      AbsenceRequest.fromJson(
+        await _api.patch(
+              '/api/v1/time-off/requests/${_id(id)}',
+              body: draft.toJson(),
+            )
+            as Map<String, dynamic>,
+      );
+
   Future<AbsenceRequest> approve(String id, {String? note}) =>
       _decide(id, 'approve', note);
 

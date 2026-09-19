@@ -927,7 +927,8 @@
       "list": "List",
       "calendar": "Calendar",
       "timesheet": "Timesheet",
-      "approvals": "Approvals"
+      "approvals": "Approvals",
+      "absences": "Absences"
     },
     "calendar": {
       "untimed": "Untimed",
@@ -1203,8 +1204,8 @@
       "hint": "Your planned hours in this period, less holidays and absences, beside what you booked. Only you see this, and it changes nothing about what you can record."
     },
     "section": {
-      "title": "Working hours and absences",
-      "subtitle": "Your planned hours, the holidays you follow and the days you are away. For planning only. You can record time on every day."
+      "title": "Working hours",
+      "subtitle": "Your planned hours and the holidays you follow. For planning only. You can record time on every day."
     },
     "pattern": {
       "title": "Planned hours",
@@ -1225,8 +1226,6 @@
       "add": "Add absence",
       "edit": "Edit absence",
       "hint": "Only the type and the days. No reason is needed.",
-      "empty": "No absences",
-      "emptyMessage": "When you are away, add it here so your capacity stays right.",
       "type": "Type",
       "days": "Days",
       "halfDay": "Half day",
@@ -1237,7 +1236,8 @@
       "deleteConfirm": "Do you want to delete this absence?",
       "saved": "Absence saved.",
       "deleted": "Absence deleted.",
-      "halfDaySpan": "{{days}}, half a day"
+      "halfDaySpan": "{{days}}, half a day",
+      "movedHint": "Enter, ask for and manage them in time tracking, right beside the calendar."
     },
     "admin": {
       "cardTitle": "Holidays",
@@ -1289,7 +1289,7 @@
     "days_plural": "{{days}} days",
     "kind": {
       "vacation": "Vacation",
-      "sick": "Sickness",
+      "sick": "Sick leave",
       "special": "Special leave",
       "unpaid": "Unpaid",
       "parental": "Parental leave",
@@ -1331,7 +1331,7 @@
     },
     "type": {
       "vacation": "Vacation",
-      "sick": "Sickness",
+      "sick": "Sick leave",
       "other": "Other"
     },
     "icon": {
@@ -1493,7 +1493,6 @@
       "remaining": "Left",
       "notGranted": "Not granted yet",
       "notGrantedHint": "No entitlement has been recorded for this year.",
-      "unlimited": "No quota",
       "expiresOn": "What was carried in from last year expires on {{date}}",
       "belowMinimum": "That is less than the statutory minimum of {{days}} days for your {{week}}-day week (§ 3 BUrlG). Please ask the people who keep absences.",
       "empty": "No absence balances yet",
@@ -1501,17 +1500,17 @@
       "journal": "Journal",
       "journalEmpty": "No movements yet",
       "journalEmptyMessage": "Grants, bookings and corrections appear here.",
-      "manage": "Manage absences"
+      "manage": "Manage absences",
+      "manageTypes": "Manage types",
+      "noEntries": "No entries yet"
     },
     "calendar": {
       "requested": "Requested",
-      "requestedHint": "You have asked for this day off. Nobody has decided yet, and time can still be recorded on it."
+      "requestedHint": "You have asked for this day off. Nobody has decided yet, and time can still be recorded on it.",
+      "open": "Open absence"
     },
     "request": {
-      "pageTitle": "Absence requests",
-      "moduleOff": "This server does not manage absences.",
       "ask": "Request absence",
-      "open": "My requests",
       "title": "Request absence",
       "subtitle": "The days are worked out from your week and your holiday calendar.",
       "type": "Type of absence",
@@ -1552,25 +1551,19 @@
       "reason": "Reason",
       "reasonRequiredHint": "A rejection has to say why (§ 7 (1) of the German Federal Leave Act).",
       "reasonOptionalHint": "Optional, and the people it concerns will read it.",
-      "noHistory": "Nothing has happened to this request yet.",
-      "scope": {
-        "mine": "Mine",
-        "inbox": "To decide"
-      },
-      "empty": {
-        "mine": "No requests yet",
-        "inbox": "Nothing to decide"
-      },
-      "emptyMessage": {
-        "mine": "Absences you ask for show up here, with what became of them.",
-        "inbox": "Requests waiting for your decision show up here."
-      },
       "status": {
         "submitted": "Waiting",
         "approved": "Approved",
         "rejected": "Rejected",
         "withdrawn": "Withdrawn",
         "cancelled": "Cancelled"
+      },
+      "edited": "Request updated.",
+      "editTitle": "Edit request",
+      "saveEdit": "Save changes",
+      "history": {
+        "edited": "Changed",
+        "shortened": "Shortened"
       }
     },
     "sick": {
@@ -1583,6 +1576,46 @@
       "reported": "Sickness reported.",
       "reportedAndReturned": "Sickness reported. {{days}} of leave have gone back to your balance.",
       "explainer": "Nobody has to approve this and no certificate belongs in hinata. Remember to report your sickness to your employer as well — days of approved leave that the sickness falls on come back to your balance by themselves."
+    },
+    "sheet": {
+      "title": "Absence",
+      "halfDay": "Half day",
+      "history": "History",
+      "substitute": "Stand-in: {{name}}",
+      "startedHint": "This leave has already started. From now on only the people who keep absences can cancel it.",
+      "fromRequest": "This absence was approved from a request and changes only through it.",
+      "askAgain": "Ask again",
+      "entered": "Entered",
+      "reported": "Reported sick"
+    },
+    "view": {
+      "title": "Absences",
+      "scope": {
+        "mine": "Mine",
+        "requests": "Requests",
+        "inbox": "To decide",
+        "balances": "Balances"
+      },
+      "search": "Search absences",
+      "type": "Type",
+      "allTypes": "All types",
+      "newestFirst": "Newest first",
+      "oldestFirst": "Oldest first",
+      "pending": "Waiting for a decision",
+      "settled": "Entered and approved",
+      "empty": {
+        "mine": "No absences yet",
+        "requests": "No requests yet",
+        "inbox": "Nothing to decide"
+      },
+      "emptyMessage": {
+        "mine": "When you are away, enter it here or in the calendar so your plan is right.",
+        "requests": "Everything you ask for shows up here, with what became of it.",
+        "inbox": "Requests that wait for your decision show up here."
+      },
+      "noMatch": "Nothing matches",
+      "noMatchMessage": "No absence fits these filters.",
+      "clearFilters": "Clear filters"
     }
   },
   "projects": {
@@ -2007,7 +2040,9 @@
       "logTime": "Log time",
       "focusMode": "Focus mode",
       "time": "Time",
-      "timesheet": "Timesheet"
+      "timesheet": "Timesheet",
+      "absences": "Absences",
+      "askAbsence": "Ask for time off"
     }
   },
   "settings": {

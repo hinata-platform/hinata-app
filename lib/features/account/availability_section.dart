@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/blocs/paged_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/availability_models.dart';
 import '../../core/repositories/availability_repository.dart';
@@ -16,19 +16,19 @@ import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show fmtDuration;
-import '../../core/widgets/read_on_trigger.dart';
-import '../absences/absence_balances_panel.dart';
 import '../sprint/modals/glass_modal.dart';
-import '../time/day_marks.dart';
 import 'account_widgets.dart';
-import 'time_off_sheet.dart';
 
-/// Settings → Working hours and absences (HIN-91).
+/// Settings → Working hours (HIN-91).
 ///
 /// What a person states about themselves for planning: the hours they plan per
-/// weekday, the holidays they follow, and the days they are away. None of it
-/// changes what they can record. A holiday or a day off is marked in the
-/// calendar and the list, and time on it is recorded like on any other day (R9).
+/// weekday and the holidays they follow. None of it changes what they can
+/// record. A holiday or a day off is marked in the calendar and the list, and
+/// time on it is recorded like on any other day (R9).
+///
+/// The days somebody is away used to be entered here as well. They moved into
+/// the time module (HIN-117), beside the calendar they are planned in; this
+/// section keeps a way there.
 class AvailabilitySection extends StatefulWidget {
   const AvailabilitySection({super.key});
 
@@ -54,34 +54,10 @@ class _AvailabilitySectionState extends State<AvailabilitySection> {
   String? _calendarId;
   bool _saving = false;
 
-  /// A year back and everything ahead: short enough to stay a list, and every
-  /// absence still being planned is in it.
-  late final PagedCubit<TimeOff> _absences = PagedCubit<TimeOff>(
-    (page, size) => context.read<AvailabilityRepository>().timeOff(
-      from: _since,
-      page: page,
-      size: size,
-    ),
-    pageSize: 50,
-    keyOf: (item) => item.id ?? '',
-  );
-
-  DateTime get _since {
-    final now = DateTime.now();
-    return DateTime(now.year - 1, now.month, now.day);
-  }
-
   @override
   void initState() {
     super.initState();
     unawaited(_load());
-    unawaited(_absences.load());
-  }
-
-  @override
-  void dispose() {
-    unawaited(_absences.close());
-    super.dispose();
   }
 
   Future<void> _load() async {
@@ -205,11 +181,6 @@ class _AvailabilitySectionState extends State<AvailabilitySection> {
         _defaultCalendarLabel(context);
   }
 
-  Future<void> _editAbsence(TimeOff? existing) async {
-    final saved = await showTimeOffSheet(context, existing: existing);
-    if (saved == true && mounted) unawaited(_absences.load());
-  }
-
   @override
   Widget build(BuildContext context) {
     return AccountSection(
@@ -217,10 +188,6 @@ class _AvailabilitySectionState extends State<AvailabilitySection> {
       title: context.t('availability.section.title'),
       subtitle: context.t('availability.section.subtitle'),
       children: [
-        // Absence management 2.0, when it is switched on: what this year gives
-        // you, before the hours you plan and the days you enter. It renders
-        // nothing at all while the module is off.
-        const AbsenceBalancesPanel(),
         if (_loading && _schedule == null)
           const Padding(
             padding: EdgeInsets.all(24),
@@ -231,7 +198,19 @@ class _AvailabilitySectionState extends State<AvailabilitySection> {
         else
           ..._pattern(context),
         Divider(height: 1, color: AppColors.hairline2),
-        BlocProvider.value(value: _absences, child: _absenceList(context)),
+        // Where the days away are kept now: in the time module, beside the
+        // calendar — with the balances, the requests and what was decided.
+        SettingRow(
+          icon: LucideIcons.calendarOff,
+          label: context.t('availability.timeOff.title'),
+          description: context.t('availability.timeOff.movedHint'),
+          trailing: Icon(
+            LucideIcons.chevronRight,
+            size: 16,
+            color: AppColors.inkSoft,
+          ),
+          onTap: () => context.go('/time/absences'),
+        ),
       ],
     );
   }
@@ -327,61 +306,17 @@ class _AvailabilitySectionState extends State<AvailabilitySection> {
       ),
     ];
   }
-
-  Widget _absenceList(BuildContext context) =>
-      BlocBuilder<PagedCubit<TimeOff>, PagedState<TimeOff>>(
-        builder: (context, state) => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _Label(
-              text: context.t('availability.timeOff.title'),
-              action: TextButton.icon(
-                onPressed: () => _editAbsence(null),
-                icon: const Icon(LucideIcons.plus, size: 15),
-                label: Text(context.t('availability.timeOff.add')),
-              ),
-            ),
-            _Hint(text: context.t('availability.timeOff.hint')),
-            if (state.isLoading && !state.hasData)
-              const Padding(
-                padding: EdgeInsets.all(20),
-                child: Center(child: HiveLoader(size: 28)),
-              )
-            else if (state.errorKey != null && !state.hasData)
-              _failed(context, state.errorKey!, _absences.load)
-            else if (state.items.isEmpty)
-              HiveEmptyState(
-                title: context.t('availability.timeOff.empty'),
-                message: context.t('availability.timeOff.emptyMessage'),
-                card: false,
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 22),
-              )
-            else ...[
-              for (final item in state.items)
-                _AbsenceRow(item: item, onTap: () => _editAbsence(item)),
-              if (state.hasMore)
-                ReadOnTrigger(
-                  count: state.items.length,
-                  loading: state.isLoadingMore,
-                  onReadOn: () => unawaited(_absences.loadMore()),
-                ),
-              const SizedBox(height: 8),
-            ],
-          ],
-        ),
-      );
 }
 
 class _Label extends StatelessWidget {
-  const _Label({required this.text, this.trailing, this.action});
+  const _Label({required this.text, this.trailing});
 
   final String text;
   final String? trailing;
-  final Widget? action;
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: EdgeInsets.fromLTRB(16, 14, action == null ? 16 : 8, 4),
+    padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
     child: Row(
       children: [
         Expanded(
@@ -404,7 +339,6 @@ class _Label extends StatelessWidget {
               color: AppColors.inkSoft,
             ),
           ),
-        ?action,
       ],
     ),
   );
@@ -563,75 +497,4 @@ class _PickedValue extends StatelessWidget {
       ],
     ),
   );
-}
-
-class _AbsenceRow extends StatelessWidget {
-  const _AbsenceRow({required this.item, required this.onTap});
-
-  final TimeOff item;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final span = formatDaySpan(context, item.from, item.to);
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-        child: Row(
-          children: [
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: AppColors.recess,
-                borderRadius: BorderRadius.circular(9),
-              ),
-              child: Icon(
-                timeOffIcon(item.type),
-                size: 15,
-                color: AppColors.inkSoft,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    context.t(item.type.labelKey),
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                  Text(
-                    item.halfDay
-                        ? context.t(
-                            'availability.timeOff.halfDaySpan',
-                            variables: {'days': span},
-                          )
-                        : span,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  if (item.note != null && item.note!.isNotEmpty)
-                    Text(
-                      item.note!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, color: AppColors.inkFaint),
-                    ),
-                ],
-              ),
-            ),
-            Icon(LucideIcons.chevronRight, size: 15, color: AppColors.inkFaint),
-          ],
-        ),
-      ),
-    );
-  }
 }

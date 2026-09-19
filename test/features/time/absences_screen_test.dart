@@ -10,12 +10,20 @@ import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/repositories/absence_repository.dart';
 import 'package:hinata/core/repositories/user_repository.dart';
 import 'package:hinata/core/theme/app_colors.dart';
+import 'package:hinata/core/blocs/my_absences_cubit.dart';
+import 'package:hinata/core/blocs/time_policy_cubit.dart';
+import 'package:hinata/core/models/availability_models.dart';
+import 'package:hinata/core/models/time_policy_models.dart';
+import 'package:hinata/core/repositories/availability_repository.dart';
+import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/features/absences/absence_request_sheet.dart';
-import 'package:hinata/features/absences/absence_requests_screen.dart';
+import 'package:hinata/features/time/absences_screen.dart';
 
-import 'absence_test_support.dart';
+import '../absences/absence_test_support.dart';
+import 'fake_time_policy_cubit.dart';
 
-/// Asking for time off, deciding it, and reporting sickness (HIN-117).
+/// Days away in the time module: one's own absences, the requests and what
+/// became of them, the inbox, and the forms behind them (HIN-117).
 ///
 /// What is worth failing a build over: an inbox that says the honest thing when
 /// it is empty; a rejection that cannot be sent without a reason (§ 7 (1)
@@ -66,14 +74,21 @@ void main() {
     Widget? child,
     bool moduleOn = true,
     String meId = 'me',
+    _FakeAbsences? absences,
+    List<AbsenceRequest> pending = const [],
   }) => MediaQuery(
-    data: const MediaQueryData(size: Size(1100, 1400)),
+    // The test surface's own size: a wider claim lays the page out for room
+    // it does not get, and its head runs over the edge.
+    data: const MediaQueryData(size: Size(800, 600)),
     child: MaterialApp(
       home: Scaffold(
         body: MultiRepositoryProvider(
           providers: [
             RepositoryProvider<AbsenceRepository>.value(value: repository),
             RepositoryProvider<UserRepository>.value(value: _FakeUsers()),
+            RepositoryProvider<AvailabilityRepository>.value(
+              value: absences ?? _FakeAbsences(),
+            ),
           ],
           child: MultiBlocProvider(
             providers: [
@@ -81,8 +96,16 @@ void main() {
                 create: (_) => FakeAppConfig(absenceManagement: moduleOn),
               ),
               BlocProvider<AuthBloc>.value(value: _FakeAuth(meId)),
+              BlocProvider<MyAbsencesCubit>(
+                create: (_) =>
+                    FakeMyAbsencesCubit(managed: moduleOn, pending: pending),
+              ),
+              BlocProvider<TimePolicyCubit>(
+                create: (_) =>
+                    FakeTimePolicyCubit(TimePolicySnapshot.none, _UnusedTime()),
+              ),
             ],
-            child: child ?? const AbsenceRequestsScreen(),
+            child: child ?? const TimeAbsencesScreen(scope: 'requests'),
           ),
         ),
       ),
@@ -95,33 +118,34 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      host(_FakeRequests(), child: const AbsenceRequestsScreen(inbox: true)),
+      host(_FakeRequests(), child: const TimeAbsencesScreen(scope: 'inbox')),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('absence.request.empty.inbox'), findsOneWidget);
-    expect(find.text('absence.request.emptyMessage.inbox'), findsOneWidget);
+    expect(find.text('absence.view.empty.inbox'), findsOneWidget);
+    expect(find.text('absence.view.emptyMessage.inbox'), findsOneWidget);
   });
 
-  testWidgets('a request in the inbox names who asked, and what it would cost', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      host(
-        _FakeRequests(inbox: [request(balanceShort: true, clashes: 2)]),
-        child: const AbsenceRequestsScreen(inbox: true),
-      ),
-    );
-    await tester.pumpAndSettle();
+  testWidgets(
+    'a request in the inbox names who asked, and what it would cost',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          _FakeRequests(inbox: [request(balanceShort: true, clashes: 2)]),
+          child: const TimeAbsencesScreen(scope: 'inbox'),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Lena'), findsOneWidget);
-    expect(find.text('absence.request.status.submitted'), findsOneWidget);
-    // The warnings a decider weighs, and never a figure: whether the days are
-    // there, not how many are left (R2, R10).
-    expect(find.text('absence.request.balanceShortRow'), findsOneWidget);
-    expect(find.text('absence.request.clashes'), findsOneWidget);
-    expect(find.text('absence.request.approve'), findsOneWidget);
-  });
+      expect(find.text('Lena'), findsOneWidget);
+      expect(find.text('absence.request.status.submitted'), findsOneWidget);
+      // The warnings a decider weighs, and never a figure: whether the days are
+      // there, not how many are left (R2, R10).
+      expect(find.text('absence.request.balanceShortRow'), findsOneWidget);
+      expect(find.text('absence.request.clashes'), findsOneWidget);
+      expect(find.text('absence.request.approve'), findsOneWidget);
+    },
+  );
 
   testWidgets('nobody is offered a decision on their own request', (
     tester,
@@ -130,8 +154,10 @@ void main() {
       host(
         // A lead's own request lands in their own inbox — the server does not
         // filter it out — and it is the one they may not decide.
-        _FakeRequests(inbox: [request(userId: 'me', personName: 'Me')]),
-        child: const AbsenceRequestsScreen(inbox: true),
+        _FakeRequests(
+          inbox: [request(userId: 'me', personName: 'Me')],
+        ),
+        child: const TimeAbsencesScreen(scope: 'inbox'),
       ),
     );
     await tester.pumpAndSettle();
@@ -144,7 +170,7 @@ void main() {
   testWidgets('approving sends it and says so', (tester) async {
     final repository = _FakeRequests(inbox: [request()]);
     await tester.pumpWidget(
-      host(repository, child: const AbsenceRequestsScreen(inbox: true)),
+      host(repository, child: const TimeAbsencesScreen(scope: 'inbox')),
     );
     await tester.pumpAndSettle();
 
@@ -157,7 +183,7 @@ void main() {
   testWidgets('a rejection cannot be sent without a reason', (tester) async {
     final repository = _FakeRequests(inbox: [request()]);
     await tester.pumpWidget(
-      host(repository, child: const AbsenceRequestsScreen(inbox: true)),
+      host(repository, child: const TimeAbsencesScreen(scope: 'inbox')),
     );
     await tester.pumpAndSettle();
 
@@ -275,10 +301,7 @@ void main() {
 
     // The figure with its reason beside it — one line, so that the total and
     // the holiday it fell on are read together — and nothing written yet.
-    expect(
-      find.textContaining('absence.request.holidaysIn'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('absence.request.holidaysIn'), findsOneWidget);
     expect(find.textContaining('absence.request.daysOffIn'), findsOneWidget);
     expect(repository.submitted, isEmpty);
   });
@@ -305,7 +328,9 @@ void main() {
     tester,
   ) async {
     final repository = _FakeRequests();
-    await tester.pumpWidget(host(repository, child: const _Opener(onTap: _openSick)));
+    await tester.pumpWidget(
+      host(repository, child: const _Opener(onTap: _openSick)),
+    );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
@@ -331,7 +356,9 @@ void main() {
         returnedMilliDays: 2 * kMilliDay,
       ),
     );
-    await tester.pumpWidget(host(repository, child: const _Opener(onTap: _openSick)));
+    await tester.pumpWidget(
+      host(repository, child: const _Opener(onTap: _openSick)),
+    );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('absence.sick.report'));
@@ -344,14 +371,199 @@ void main() {
 
   // --- the module switch ---------------------------------------------------------
 
-  testWidgets('with the module off the page says so rather than spinning', (
+  testWidgets('with the module off there are absences, and no requests', (
     tester,
   ) async {
-    final repository = _FakeRequests();
-    await tester.pumpWidget(host(repository, moduleOn: false));
+    await tester.pumpWidget(
+      host(_FakeRequests(), moduleOn: false, child: const TimeAbsencesScreen()),
+    );
     await tester.pumpAndSettle();
 
-    expect(find.text('absence.request.moduleOff'), findsOneWidget);
+    // Entered directly, as they always were: no inbox and no request history
+    // on an instance that has no approvals.
+    expect(find.text('absence.view.scope.inbox'), findsNothing);
+    expect(find.text('absence.view.empty.mine'), findsOneWidget);
+    expect(find.text('availability.timeOff.add'), findsWidgets);
+  });
+
+  // --- one's own absences --------------------------------------------------------
+
+  testWidgets(
+    'one\'s own absences are listed, with what is still waiting above',
+    (tester) async {
+      final absences = _FakeAbsences(
+        items: [
+          TimeOff(
+            id: 'a1',
+            userId: 'me',
+            type: TimeOffType.vacation,
+            from: monday,
+            to: monday.add(const Duration(days: 2)),
+            note: 'Baltic Sea',
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        host(
+          _FakeRequests(),
+          absences: absences,
+          pending: [request(userId: 'me', personName: 'Me')],
+          child: const TimeAbsencesScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('absence.view.pending'), findsOneWidget);
+      expect(find.text('absence.request.status.submitted'), findsOneWidget);
+      // Under the balances and what is waiting, below the fold of the surface.
+      await tester.scrollUntilVisible(
+        find.text('Baltic Sea'),
+        200,
+        scrollable: find
+            .byWidgetPredicate(
+              (widget) =>
+                  widget is Scrollable &&
+                  widget.axisDirection == AxisDirection.down,
+            )
+            .first,
+      );
+      expect(find.text('Baltic Sea'), findsOneWidget);
+      expect(find.text('absence.sheet.entered'), findsOneWidget);
+    },
+  );
+
+  testWidgets('the balances are a list of their own, not a block over the '
+      'absences', (tester) async {
+    await tester.pumpWidget(
+      host(_FakeRequests(), child: const TimeAbsencesScreen()),
+    );
+    await tester.pumpAndSettle();
+
+    // What is under the scopes on "mine": the search of the list, and no
+    // block of balances above it.
+    expect(find.text('absence.view.search'), findsOneWidget);
+    expect(find.text('absence.balances.title'), findsNothing);
+
+    // The scope of their own — where a notification or a link lands too.
+    await tester.pumpWidget(
+      host(
+        _FakeRequests(),
+        child: const TimeAbsencesScreen(scope: kAbsenceScopeBalances),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('absence.balances.title'), findsOneWidget);
+    expect(find.text('absence.view.search'), findsNothing);
+  });
+
+  testWidgets('the search and the order reach the server', (tester) async {
+    final absences = _FakeAbsences();
+    await tester.pumpWidget(
+      host(
+        _FakeRequests(),
+        absences: absences,
+        child: const TimeAbsencesScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'sea');
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(absences.lastQuery, 'sea');
+
+    await tester.tap(find.text('absence.view.newestFirst'));
+    await tester.pumpAndSettle();
+    expect(absences.lastOldestFirst, isTrue);
+  });
+
+  testWidgets('an absence entered directly opens with edit and delete', (
+    tester,
+  ) async {
+    final absences = _FakeAbsences(
+      items: [
+        TimeOff(
+          id: 'a1',
+          userId: 'me',
+          type: TimeOffType.other,
+          from: monday,
+          to: monday,
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      host(
+        _FakeRequests(),
+        absences: absences,
+        child: const TimeAbsencesScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('absence.sheet.entered'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('common.edit'), findsOneWidget);
+    expect(find.text('common.delete'), findsOneWidget);
+  });
+
+  testWidgets('an absence from a request opens the request, not an editor', (
+    tester,
+  ) async {
+    final ahead = DateTime.now().add(const Duration(days: 20));
+    final repository = _FakeRequests(
+      mine: [
+        request(
+          userId: 'me',
+          status: AbsenceRequestStatus.approved,
+          from: ahead,
+          to: ahead,
+        ),
+      ],
+    );
+    final absences = _FakeAbsences(
+      items: [
+        TimeOff(
+          id: 'a1',
+          userId: 'me',
+          type: TimeOffType.vacation,
+          from: ahead,
+          to: ahead,
+          requestId: 'r1',
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      host(repository, absences: absences, child: const TimeAbsencesScreen()),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('absence.request.status.approved'));
+    await tester.pumpAndSettle();
+
+    // Changed only through the request: its days are booked against a
+    // balance, and a direct edit would leave the booking behind.
+    expect(find.text('common.edit'), findsNothing);
+    expect(find.text('common.delete'), findsNothing);
+    expect(find.text('absence.request.cancel'), findsOneWidget);
+  });
+
+  testWidgets('a waiting request opens with edit and withdraw', (tester) async {
+    await tester.pumpWidget(
+      host(
+        _FakeRequests(
+          mine: [request(userId: 'me', personName: 'Me')],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('absence.request.status.submitted'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('common.edit'), findsOneWidget);
+    expect(find.text('absence.request.withdraw'), findsWidgets);
   });
 }
 
@@ -463,6 +675,10 @@ class _FakeRequests implements AbsenceRepository {
   }
 
   @override
+  Future<AbsenceRequest> request(String id) async =>
+      (_inbox + mine).firstWhere((request) => request.id == id);
+
+  @override
   Future<AbsencePreview> preview(AbsenceRequestDraft draft) async => _preview;
 
   @override
@@ -496,6 +712,9 @@ class _FakeRequests implements AbsenceRepository {
       );
 
   @override
+  Future<bool> isKeeper() async => false;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} is not faked');
 }
@@ -521,6 +740,41 @@ class _FakeAuth extends Bloc<AuthEvent, AuthState> implements AuthBloc {
         ),
       );
 
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not faked');
+}
+
+/// The reader's own absences, and what the list asked for last.
+class _FakeAbsences implements AvailabilityRepository {
+  _FakeAbsences({this.items = const []});
+
+  final List<TimeOff> items;
+  String? lastQuery;
+  bool? lastOldestFirst;
+
+  @override
+  Future<PageResult<TimeOff>> timeOff({
+    DateTime? from,
+    DateTime? to,
+    String? query,
+    String? typeId,
+    TimeOffType? type,
+    bool oldestFirst = false,
+    int page = 0,
+    int size = 50,
+  }) async {
+    lastQuery = query;
+    lastOldestFirst = oldestFirst;
+    return (items: items, total: items.length);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not faked');
+}
+
+class _UnusedTime implements TimeRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} is not faked');

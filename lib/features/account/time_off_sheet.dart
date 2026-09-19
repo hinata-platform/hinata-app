@@ -21,8 +21,18 @@ import '../time/day_marks.dart';
 import 'account_widgets.dart';
 
 /// Opens the form for a new absence, or for [existing]. Resolves to true once
-/// something was saved or deleted.
-Future<bool?> showTimeOffSheet(BuildContext context, {TimeOff? existing}) {
+/// something was saved or deleted. [initialRange] is the span somebody marked
+/// in the calendar before opening it.
+///
+/// This is the direct road: an absence entered is an absence taken. With
+/// absence management on it is left for what needs no approval — a type that
+/// needs one is asked for through the request form, and the server would
+/// refuse it here.
+Future<bool?> showTimeOffSheet(
+  BuildContext context, {
+  TimeOff? existing,
+  DateTimeRange? initialRange,
+}) {
   final repository = context.read<AvailabilityRepository>();
   final catalogue = context.read<AbsenceRepository>();
   final absenceManagement =
@@ -38,6 +48,7 @@ Future<bool?> showTimeOffSheet(BuildContext context, {TimeOff? existing}) {
       ],
       child: _TimeOffForm(
         existing: existing,
+        initialRange: initialRange,
         absenceManagement: absenceManagement,
       ),
     ),
@@ -45,9 +56,14 @@ Future<bool?> showTimeOffSheet(BuildContext context, {TimeOff? existing}) {
 }
 
 class _TimeOffForm extends StatefulWidget {
-  const _TimeOffForm({this.existing, this.absenceManagement = false});
+  const _TimeOffForm({
+    this.existing,
+    this.initialRange,
+    this.absenceManagement = false,
+  });
 
   final TimeOff? existing;
+  final DateTimeRange? initialRange;
 
   /// Whether the instance offers a catalogue of its own types (HIN-116). With
   /// it off this is the three-value picker stage 10 shipped, unchanged.
@@ -81,6 +97,13 @@ class _TimeOffFormState extends State<_TimeOffForm> {
     if (existing != null) {
       return DateTimeRange(start: existing.from, end: existing.to);
     }
+    final initial = widget.initialRange;
+    if (initial != null) {
+      return DateTimeRange(
+        start: DateUtils.dateOnly(initial.start),
+        end: DateUtils.dateOnly(initial.end),
+      );
+    }
     final today = DateUtils.dateOnly(DateTime.now());
     return DateTimeRange(start: today, end: today);
   }
@@ -105,7 +128,16 @@ class _TimeOffFormState extends State<_TimeOffForm> {
     try {
       final offered = await context.read<AbsenceRepository>().types();
       if (!mounted) return;
-      setState(() => _catalogue = offered);
+      // Only what may be entered directly. A type somebody approves goes
+      // through a request, and offering it here would be offering a refusal —
+      // except the type the absence already has, which stays nameable.
+      setState(
+        () => _catalogue = [
+          for (final type in offered)
+            if (!type.requiresApproval || type.id == widget.existing?.typeId)
+              type,
+        ],
+      );
     } on ApiFailure {
       // Left as it was.
     }

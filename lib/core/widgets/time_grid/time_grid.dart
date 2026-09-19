@@ -73,6 +73,7 @@ class TimeGrid extends StatefulWidget {
     this.onCreate,
     this.onMoved,
     this.onTap,
+    this.onDayMenu,
     this.initialScrollHour = 8,
     this.showHeadings = true,
     this.newEntryLength = const Duration(hours: 1),
@@ -106,6 +107,11 @@ class TimeGrid extends StatefulWidget {
   /// the canvas. The item is always the caller's own, never the copy a column
   /// was drawn from.
   final void Function(TimeGridItem item)? onTap;
+
+  /// A day's heading held down or clicked with the secondary button: what can
+  /// be done with the whole day — an absence, say — rather than with an hour of
+  /// it. [anchor] is the heading on screen, for a menu to hang off.
+  final void Function(DateTime day, Rect anchor)? onDayMenu;
 
   /// The hour the grid opens on, so a reader lands on the working day instead
   /// of on midnight.
@@ -578,6 +584,7 @@ class _TimeGridState extends State<TimeGrid> {
                                           day: day,
                                           today: _isToday(day),
                                           glyph: _glyphFor(day),
+                                          onMenu: widget.onDayMenu,
                                         ),
                                       ),
                                   ],
@@ -944,17 +951,42 @@ bool _sameDay(DateTime a, DateTime b) =>
 // ─────────────────────────────── parts ────────────────────────────────────
 
 class _DayHeading extends StatelessWidget {
-  const _DayHeading({required this.day, required this.today, this.glyph});
+  const _DayHeading({
+    required this.day,
+    required this.today,
+    this.glyph,
+    this.onMenu,
+  });
 
   final DateTime day;
   final bool today;
+
+  /// See [TimeGrid.onDayMenu].
+  final void Function(DateTime day, Rect anchor)? onMenu;
 
   /// What a background layer says about this day — a lock, a holiday. Beside the
   /// date rather than under it, so the column keeps its height.
   final IconData? glyph;
 
+  void _menu(BuildContext context) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return;
+    onMenu?.call(day, box.localToGlobal(Offset.zero) & box.size);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final heading = _heading(context);
+    if (onMenu == null) return heading;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: () => _menu(context),
+      onSecondaryTap: () => _menu(context),
+      child: heading,
+    );
+  }
+
+  Widget _heading(BuildContext context) {
     final localizations = MaterialLocalizations.of(context);
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
