@@ -967,18 +967,26 @@ class _DayGroup extends StatelessWidget {
                     ?switch (mark) {
                       final mark? => DayMarkChip(
                         mark: mark,
-                        onTap: mark.absence == null
-                            ? null
-                            : () => unawaited(
-                                openAbsence(context, absence: mark.absence),
-                              ),
+                        onTap: switch (mark.absence) {
+                          final absence? => () => unawaited(
+                            openAbsence(
+                              context,
+                              AbsenceTarget.entered(absence),
+                            ),
+                          ),
+                          null => null,
+                        },
                       ),
                       null => null,
                     },
                     if (waiting case final waiting?)
                       RequestedDayChip(
-                        onTap: () =>
-                            unawaited(openAbsence(context, request: waiting)),
+                        onTap: () => unawaited(
+                          openAbsence(
+                            context,
+                            AbsenceTarget.requested(waiting),
+                          ),
+                        ),
                       ),
                     for (final hint in hints) TimeHintChip(hint: hint),
                   ],

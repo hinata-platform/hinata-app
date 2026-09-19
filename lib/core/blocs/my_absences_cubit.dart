@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart' show DateUtils;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/absence_models.dart';
@@ -11,7 +12,9 @@ import '../repositories/absence_repository.dart';
 /// offer, this year's balances, the requests nobody has decided yet, and whether
 /// they keep absences for the organisation.
 class MyAbsencesState extends Equatable {
-  const MyAbsencesState({
+  // Not const: the day index below is built once per state rather than on
+  // every lookup, and a const object cannot hold one.
+  MyAbsencesState({
     this.managed = false,
     this.loaded = false,
     this.types = const [],
@@ -45,16 +48,21 @@ class MyAbsencesState extends Equatable {
   /// The days of [pending], at local midnight — what the calendar hatches.
   Set<DateTime> get requestedDays => daysCovered(pending);
 
+  /// Every requested day to the request that claimed it, built once per state.
+  /// The calendar asks per day of its window, the list per day group and the
+  /// timesheet per column, and each of those used to walk the whole list.
+  late final Map<DateTime, AbsenceRequest> _byDay = {
+    for (final request in pending.reversed)
+      for (
+        var day = DateUtils.dateOnly(request.from);
+        !day.isAfter(DateUtils.dateOnly(request.to));
+        day = day.add(const Duration(days: 1))
+      )
+        day: request,
+  };
+
   /// The pending request covering [day], if one does.
-  AbsenceRequest? pendingOn(DateTime day) {
-    final date = DateTime(day.year, day.month, day.day);
-    for (final request in pending) {
-      if (!date.isBefore(request.from) && !date.isAfter(request.to)) {
-        return request;
-      }
-    }
-    return null;
-  }
+  AbsenceRequest? pendingOn(DateTime day) => _byDay[DateUtils.dateOnly(day)];
 
   /// The types a person may ask for: active, and not sickness — sickness is
   /// reported, never requested (R11).
@@ -108,7 +116,7 @@ class MyAbsencesState extends Equatable {
 /// module's views, which are separate routes and rebuild their state on every
 /// switch. One read here, again after each of the reader's own changes.
 class MyAbsencesCubit extends Cubit<MyAbsencesState> {
-  MyAbsencesCubit(this._absences) : super(const MyAbsencesState());
+  MyAbsencesCubit(this._absences) : super(MyAbsencesState());
 
   final AbsenceRepository _absences;
 
@@ -144,7 +152,7 @@ class MyAbsencesCubit extends Cubit<MyAbsencesState> {
   /// Forgets the session that ended: another server may run another catalogue.
   void reset() {
     _inFlight = null;
-    if (state != const MyAbsencesState()) emit(const MyAbsencesState());
+    if (state != MyAbsencesState()) emit(MyAbsencesState());
   }
 
   Future<void> _load() async {

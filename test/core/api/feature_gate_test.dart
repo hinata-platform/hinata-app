@@ -148,7 +148,10 @@ void main() {
       isFeatureDisabledResponse(path: '/api/v1/time-off/types', status: 404),
       isTrue,
     );
-    expect(isFeatureDisabledResponse(path: '/api/v1/time-off', status: 404), isTrue);
+    expect(
+      isFeatureDisabledResponse(path: '/api/v1/time-off', status: 404),
+      isTrue,
+    );
     // And the module next door keeps its own boundary: /api/v1/time gates the
     // extended time tracking, not everything whose path starts with those letters.
     expect(

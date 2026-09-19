@@ -127,14 +127,19 @@ String _decimal(BuildContext context) =>
     ? ','
     : '.';
 
+final Map<String, DateFormat> _spanFormats = {};
+
 /// "15 – 19 Jun 2026", or one date where both ends are the same day.
 ///
 /// One place for it: the request form, the sick report, the request card and
 /// the absence sheet all name a span, and two copies had already drifted to
 /// two formats once.
 String spanLabel(BuildContext context, DateTime from, DateTime to) {
-  final format = DateFormat.yMMMd(
+  // Kept per language rather than built per row: a list of absences calls this
+  // once a card, and building a DateFormat parses its pattern each time.
+  final format = _spanFormats.putIfAbsent(
     Localizations.localeOf(context).toLanguageTag(),
+    () => DateFormat.yMMMd(Localizations.localeOf(context).toLanguageTag()),
   );
   if (DateUtils.isSameDay(from, to)) return format.format(from);
   return '${format.format(from)} – ${format.format(to)}';

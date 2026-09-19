@@ -719,8 +719,11 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       case 'open':
         await openAbsence(
           context,
-          absence: absence,
-          request: absence == null ? waiting : null,
+          // The absence itself where the day has one; otherwise the request
+          // still waiting on it.
+          absence != null
+              ? AbsenceTarget.entered(absence)
+              : AbsenceTarget.requested(waiting!),
         );
       default:
         await followAbsenceChoice(context, chosen, from: day, to: day);
@@ -738,11 +741,11 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
     // An absence band or the band of a request somebody made: the absence
     // sheet, which knows what can still be done with either.
     if (entry is TimeOff) {
-      unawaited(openAbsence(context, absence: entry));
+      unawaited(openAbsence(context, AbsenceTarget.entered(entry)));
       return;
     }
     if (entry is AbsenceRequest) {
-      unawaited(openAbsence(context, request: entry));
+      unawaited(openAbsence(context, AbsenceTarget.requested(entry)));
       return;
     }
     if (entry is! WorkItem) return;
@@ -1324,16 +1327,12 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
   List<TimeGridLayer> _requestedLayer(List<DateTime> window) {
     final items = <TimeGridItem>[];
     final bands = <TimeGridItem>[];
-    final types = context.read<MyAbsencesCubit>().state.types;
+    final mine = context.read<MyAbsencesCubit>().state;
+    final types = mine.types;
     for (final day in window) {
       if (!_requestedDays.contains(DateUtils.dateOnly(day))) continue;
       final date = DateUtils.dateOnly(day);
-      final request = _pending
-          .where(
-            (request) =>
-                !date.isBefore(request.from) && !date.isAfter(request.to),
-          )
-          .firstOrNull;
+      final request = mine.pendingOn(date);
       if (request != null) {
         final type = types
             .where((type) => type.id == request.typeId)
@@ -1808,16 +1807,18 @@ class _Day extends StatelessWidget {
               if (mark case final mark?)
                 DayMarkChip(
                   mark: mark,
-                  onTap: mark.absence == null
-                      ? null
-                      : () => unawaited(
-                          openAbsence(context, absence: mark.absence),
-                        ),
+                  onTap: switch (mark.absence) {
+                    final absence? => () => unawaited(
+                      openAbsence(context, AbsenceTarget.entered(absence)),
+                    ),
+                    null => null,
+                  },
                 ),
               if (waiting case final waiting?)
                 RequestedDayChip(
-                  onTap: () =>
-                      unawaited(openAbsence(context, request: waiting)),
+                  onTap: () => unawaited(
+                    openAbsence(context, AbsenceTarget.requested(waiting)),
+                  ),
                 ),
             ],
           ),

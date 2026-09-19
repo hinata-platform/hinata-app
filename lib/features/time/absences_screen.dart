@@ -78,7 +78,15 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
   late String _scope = _initialScope();
 
   late final PagedCubit<TimeOff> _absences;
-  late final PagedCubit<AbsenceRequest> _requests;
+
+  /// One per list rather than one that swaps its question: switching between
+  /// them and back re-read page one and threw away everything scrolled.
+  late final PagedCubit<AbsenceRequest> _myRequests;
+  late final PagedCubit<AbsenceRequest> _inbox;
+
+  /// The requests of the list on screen.
+  PagedCubit<AbsenceRequest> get _requests =>
+      _shownScope == kAbsenceScopeInbox ? _inbox : _myRequests;
 
   String _query = '';
 
@@ -91,6 +99,12 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
   bool _oldestFirst = false;
 
   String? get _meId => context.read<AuthBloc>().state.user?.id;
+
+  /// The list actually on screen. Without absence management there is one —
+  /// the absences themselves — and a link from an old notification naming a
+  /// scope that does not exist here must not leave the page loading one list
+  /// while it draws another.
+  String get _shownScope => _managed ? _scope : kAbsenceScopeMine;
 
   bool get _managed =>
       context.read<AppConfigBloc>().state.meta?.absenceManagement ?? false;
@@ -121,13 +135,15 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
       pageSize: 30,
       keyOf: (absence) => absence.id ?? absence.from.toIso8601String(),
     );
-    _requests = PagedCubit<AbsenceRequest>(
-      (page, size) => _scope == kAbsenceScopeInbox
-          ? context.read<AbsenceRepository>().inbox(page: page, size: size)
-          : context.read<AbsenceRepository>().myRequests(
-              page: page,
-              size: size,
-            ),
+    _myRequests = PagedCubit<AbsenceRequest>(
+      (page, size) =>
+          context.read<AbsenceRepository>().myRequests(page: page, size: size),
+      pageSize: 25,
+      keyOf: (request) => request.id,
+    );
+    _inbox = PagedCubit<AbsenceRequest>(
+      (page, size) =>
+          context.read<AbsenceRepository>().inbox(page: page, size: size),
       pageSize: 25,
       keyOf: (request) => request.id,
     );
@@ -150,22 +166,23 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
     _search.dispose();
     _searchDebounce?.cancel();
     unawaited(_absences.close());
-    unawaited(_requests.close());
+    unawaited(_myRequests.close());
+    unawaited(_inbox.close());
     super.dispose();
   }
 
   void _onScroll() {
-    if (!_scroll.hasClients || _scope == kAbsenceScopeBalances) return;
+    if (!_scroll.hasClients || _shownScope == kAbsenceScopeBalances) return;
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 400) {
       unawaited(
-        _scope == kAbsenceScopeMine
+        _shownScope == kAbsenceScopeMine
             ? _absences.loadMore()
             : _requests.loadMore(),
       );
     }
   }
 
-  Future<void> _reload() => switch (_scope) {
+  Future<void> _reload() => switch (_shownScope) {
     // The balances read themselves, in the panel that draws them.
     kAbsenceScopeBalances => Future<void>.value(),
     kAbsenceScopeMine => _absences.load(),
@@ -175,7 +192,11 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
   void _switchScope(String scope) {
     if (_scope == scope) return;
     setState(() => _scope = scope);
-    unawaited(_reload());
+    // Only a list that has nothing yet: each keeps its own pages, so coming
+    // back to one is the rows that were already there, where they were.
+    if (scope == kAbsenceScopeBalances) return;
+    final cubit = scope == kAbsenceScopeMine ? _absences : _requests;
+    if (!cubit.state.hasData) unawaited(_reload());
   }
 
   void _onSearchChanged(String value) {
@@ -471,11 +492,11 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
         await context.read<MyAbsencesCubit>().changed();
       },
       edgeOffset: context.topGutter,
-      child: !managed || _scope == kAbsenceScopeMine
-          ? _mine(padding, managed)
-          : _scope == kAbsenceScopeBalances
-          ? _balances(padding)
-          : _requestList(padding),
+      child: switch (_shownScope) {
+        kAbsenceScopeMine => _mine(padding, managed),
+        kAbsenceScopeBalances => _balances(padding),
+        _ => _requestList(padding),
+      },
     );
   }
 
@@ -641,7 +662,9 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
                     .firstOrNull,
                 inbox: false,
                 isMine: true,
-                onOpen: () => unawaited(openAbsence(context, request: request)),
+                onOpen: () => unawaited(
+                  openAbsence(context, AbsenceTarget.requested(request)),
+                ),
                 onWithdraw: () => unawaited(
                   _decide(
                     () =>
@@ -749,7 +772,9 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
                 type: types
                     .where((type) => type.id == absence.typeId)
                     .firstOrNull,
-                onTap: () => unawaited(openAbsence(context, absence: absence)),
+                onTap: () => unawaited(
+                  openAbsence(context, AbsenceTarget.entered(absence)),
+                ),
               ),
             );
           },
@@ -762,7 +787,7 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
 
   Widget _requestList(EdgeInsets padding) {
     final horizontal = padding.copyWith(top: 0, bottom: 0);
-    final inbox = _scope == kAbsenceScopeInbox;
+    final inbox = _shownScope == kAbsenceScopeInbox;
     return BlocProvider.value(
       value: _requests,
       child:
@@ -790,8 +815,10 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
                     padding: horizontal,
                     sliver: SliverToBoxAdapter(
                       child: HiveEmptyState(
-                        title: context.t('absence.view.empty.$_scope'),
-                        message: context.t('absence.view.emptyMessage.$_scope'),
+                        title: context.t('absence.view.empty.$_shownScope'),
+                        message: context.t(
+                          'absence.view.emptyMessage.$_shownScope',
+                        ),
                         action: inbox
                             ? null
                             : FilledButton.icon(
@@ -826,7 +853,10 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
                             inbox: inbox,
                             isMine: request.userId == _meId,
                             onOpen: () => unawaited(
-                              openAbsence(context, request: request),
+                              openAbsence(
+                                context,
+                                AbsenceTarget.requested(request),
+                              ),
                             ),
                             onApprove: () => unawaited(
                               _decide(

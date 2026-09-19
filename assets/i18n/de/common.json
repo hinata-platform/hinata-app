@@ -1236,7 +1236,6 @@
       "deleteConfirm": "Möchtest du diese Abwesenheit löschen?",
       "saved": "Abwesenheit gespeichert.",
       "deleted": "Abwesenheit gelöscht.",
-      "halfDaySpan": "{{days}}, halber Tag",
       "movedHint": "Eintragen, beantragen und verwalten kannst du sie in der Zeiterfassung, direkt neben dem Kalender."
     },
     "admin": {

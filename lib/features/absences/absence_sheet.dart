@@ -31,6 +31,7 @@ import '../account/time_off_sheet.dart';
 import '../sprint/modals/glass_modal.dart';
 import '../time/day_marks.dart' show timeOffIcon;
 import 'absence_labels.dart';
+import 'absence_actions.dart';
 import 'absence_request_sheet.dart';
 import 'absence_request_widgets.dart';
 
@@ -38,13 +39,14 @@ import 'absence_request_widgets.dart';
 /// changed, so the screen behind can redraw.
 Future<bool> showAbsenceSheet(
   BuildContext context, {
-  TimeOff? absence,
-  AbsenceRequest? request,
+  required AbsenceTarget target,
   required List<AbsenceType> types,
+  required List<AbsenceType> askable,
   AbsenceBalances? balances,
   bool keeper = false,
 }) async {
-  assert(absence != null || request != null, 'Nothing to open.');
+  final absence = target is EnteredAbsence ? target.absence : null;
+  final request = target is RequestedAbsence ? target.request : null;
   final absences = context.read<AbsenceRepository>();
   final availability = context.read<AvailabilityRepository>();
   final users = context.read<UserRepository>();
@@ -64,6 +66,7 @@ Future<bool> showAbsenceSheet(
         absence: absence,
         request: request,
         types: types,
+        askable: askable,
         balances: balances,
         keeper: keeper,
         meId: meId,
@@ -78,6 +81,7 @@ class _AbsenceSheet extends StatefulWidget {
     required this.absence,
     required this.request,
     required this.types,
+    required this.askable,
     required this.balances,
     required this.keeper,
     required this.meId,
@@ -86,6 +90,9 @@ class _AbsenceSheet extends StatefulWidget {
   final TimeOff? absence;
   final AbsenceRequest? request;
   final List<AbsenceType> types;
+
+  /// The types a new request may name — sickness is reported, never asked for.
+  final List<AbsenceType> askable;
   final AbsenceBalances? balances;
   final bool keeper;
 
@@ -109,18 +116,23 @@ class _AbsenceSheetState extends State<_AbsenceSheet> {
   @override
   void initState() {
     super.initState();
-    final requestId = _absence?.requestId;
-    if (_request == null && requestId != null && requestId.isNotEmpty) {
-      unawaited(_loadRequest(requestId));
+    // The one read this sheet makes. A row handed in from a list carries
+    // everything a card draws and no history: the lists leave it out, because
+    // fifty steps on a hundred rows is half a megabyte nobody looks at, and
+    // the story belongs to the screen that tells it.
+    final requestId = _request?.id ?? _absence?.requestId;
+    if (requestId != null && requestId.isNotEmpty) {
+      unawaited(_loadRequest(requestId, showLoader: _request == null));
     } else {
       unawaited(_loadSubstitute());
     }
   }
 
-  /// The request behind an absence it produced — the one place that says what
-  /// can still be done about it.
-  Future<void> _loadRequest(String id) async {
-    setState(() => _loading = true);
+  /// The request behind this sheet: the one an absence names, or the fuller
+  /// version of the row a list handed in. [showLoader] is false while there is
+  /// already something on screen to read.
+  Future<void> _loadRequest(String id, {bool showLoader = true}) async {
+    if (showLoader) setState(() => _loading = true);
     try {
       final found = await context.read<AbsenceRepository>().request(id);
       if (!mounted) return;
@@ -133,8 +145,11 @@ class _AbsenceSheetState extends State<_AbsenceSheet> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _errorKey = failure.message;
+        // A row is already on screen when the read was only for its history:
+        // that is a sheet without the story, not a sheet that failed.
+        if (_request == null) _errorKey = failure.message;
       });
+      unawaited(_loadSubstitute());
     }
   }
 
@@ -254,7 +269,7 @@ class _AbsenceSheetState extends State<_AbsenceSheet> {
   Future<void> _reopenForm(AbsenceRequest request, {required bool edit}) async {
     final filed = await showAbsenceRequestSheet(
       context,
-      types: widget.types,
+      types: widget.askable,
       balances: widget.balances,
       existing: edit ? request : null,
       template: edit ? null : request,
@@ -418,13 +433,13 @@ class _AbsenceSheetState extends State<_AbsenceSheet> {
 
   bool _isMine(AbsenceRequest request) => request.userId == widget.meId;
 
-  /// Approved leave that has begun, for somebody who cannot cancel it: it is a
-  /// record of what happened now, and only whoever keeps absences changes that.
+  /// Approved leave that has begun, for somebody who cannot call it off: it is
+  /// a record of what happened now, and only whoever keeps absences changes a
+  /// record. The rule itself lives beside the model, with the card's copy of it.
   bool _startedForMe(AbsenceRequest? request) =>
       request != null &&
       request.status == AbsenceRequestStatus.approved &&
-      !widget.keeper &&
-      !request.from.isAfter(DateUtils.dateOnly(DateTime.now()));
+      !request.cancellableBy(mine: _isMine(request), keeper: widget.keeper);
 
   Widget _footer(BuildContext context) {
     final buttons = _buttons(context);
@@ -498,7 +513,7 @@ class _AbsenceSheetState extends State<_AbsenceSheet> {
         ),
       ],
       AbsenceRequestStatus.approved when mine || widget.keeper => [
-        if (!_startedForMe(request))
+        if (request.cancellableBy(mine: mine, keeper: widget.keeper))
           _outlined(
             icon: LucideIcons.calendarMinus,
             label: context.t('absence.request.cancel'),

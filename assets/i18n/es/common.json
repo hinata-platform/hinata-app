@@ -1236,7 +1236,6 @@
       "deleteConfirm": "¿Quieres eliminar esta ausencia?",
       "saved": "Ausencia guardada.",
       "deleted": "Ausencia eliminada.",
-      "halfDaySpan": "{{days}}, medio día",
       "movedHint": "Regístralas, solicítalas y gestiónalas en el registro de tiempo, junto al calendario."
     },
     "admin": {

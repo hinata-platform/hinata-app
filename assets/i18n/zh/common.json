@@ -1236,7 +1236,6 @@
       "deleteConfirm": "要删除这条请假记录吗？",
       "saved": "请假已保存。",
       "deleted": "请假已删除。",
-      "halfDaySpan": "{{days}}，半天",
       "movedHint": "在时间记录中紧挨着日历登记、申请和管理它们。"
     },
     "admin": {

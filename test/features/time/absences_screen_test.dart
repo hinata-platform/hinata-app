@@ -97,8 +97,22 @@ void main() {
               ),
               BlocProvider<AuthBloc>.value(value: _FakeAuth(meId)),
               BlocProvider<MyAbsencesCubit>(
-                create: (_) =>
-                    FakeMyAbsencesCubit(managed: moduleOn, pending: pending),
+                create: (_) => FakeMyAbsencesCubit(
+                  managed: moduleOn,
+                  pending: pending,
+                  // What the module holds for every screen: the form a sheet
+                  // reopens takes its types from here.
+                  types: const [
+                    AbsenceType(
+                      id: 't-vacation',
+                      key: 'vacation',
+                      kind: AbsenceKind.vacation,
+                      systemKey: 'vacation',
+                      countsAgainstBalance: true,
+                      icon: 'palmtree',
+                    ),
+                  ],
+                ),
               ),
               BlocProvider<TimePolicyCubit>(
                 create: (_) =>
@@ -550,13 +564,10 @@ void main() {
   });
 
   testWidgets('a waiting request opens with edit and withdraw', (tester) async {
-    await tester.pumpWidget(
-      host(
-        _FakeRequests(
-          mine: [request(userId: 'me', personName: 'Me')],
-        ),
-      ),
+    final repository = _FakeRequests(
+      mine: [request(userId: 'me', personName: 'Me')],
     );
+    await tester.pumpWidget(host(repository));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('absence.request.status.submitted'));
@@ -564,6 +575,34 @@ void main() {
 
     expect(find.text('common.edit'), findsOneWidget);
     expect(find.text('absence.request.withdraw'), findsWidgets);
+
+    // And the button does what it says.
+    await tester.tap(find.text('absence.request.withdraw').last);
+    await tester.pumpAndSettle();
+    expect(repository.withdrawn, ['r1']);
+  });
+
+  testWidgets('editing a waiting request sends the new span to the server', (
+    tester,
+  ) async {
+    final repository = _FakeRequests(
+      mine: [request(userId: 'me', personName: 'Me')],
+    );
+    await tester.pumpWidget(host(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('absence.request.status.submitted'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('common.edit'));
+    await tester.pumpAndSettle();
+
+    // The form says it is editing rather than filing, and saves through the
+    // edit route with the request's own days.
+    expect(find.text('absence.request.editTitle'), findsOneWidget);
+    await tester.tap(find.text('absence.request.saveEdit'));
+    await tester.pumpAndSettle();
+
+    expect(repository.edited.keys, ['r1']);
   });
 }
 
@@ -631,6 +670,7 @@ class _FakeRequests implements AbsenceRepository {
   final List<String> approved = [];
   final Map<String, String> rejected = {};
   final List<String> withdrawn = [];
+  final Map<String, AbsenceRequestDraft> edited = {};
   final List<String> cancelled = [];
   final List<AbsenceRequestDraft> submitted = [];
   int sickReports = 0;
@@ -659,6 +699,12 @@ class _FakeRequests implements AbsenceRepository {
   @override
   Future<AbsenceRequest> reject(String id, {required String note}) async {
     rejected[id] = note;
+    return (_inbox + mine).firstWhere((request) => request.id == id);
+  }
+
+  @override
+  Future<AbsenceRequest> edit(String id, AbsenceRequestDraft draft) async {
+    edited[id] = draft;
     return (_inbox + mine).firstWhere((request) => request.id == id);
   }
 
