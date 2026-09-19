@@ -9,7 +9,6 @@ import '../../core/models/work_models.dart';
 import '../../core/repositories/issue_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../sprint/modals/glass_modal.dart'
     show
@@ -204,9 +203,6 @@ class _PlacementPickerBodyState extends State<_PlacementPickerBody> {
                     : 'time.placement.search',
               ),
               prefixIcon: const Icon(LucideIcons.search, size: 16),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-              ),
             ),
           ),
         ),

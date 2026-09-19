@@ -30,7 +30,11 @@
     "saved": "保存しました",
     "yes": "はい",
     "no": "いいえ",
-    "remove": "削除"
+    "remove": "削除",
+    "picker": {
+      "typeTime": "時刻を入力",
+      "typeDuration": "時間の長さを入力"
+    }
   },
   "delete": {
     "cta": "削除",

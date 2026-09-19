@@ -12,7 +12,6 @@ import '../../core/models/time_policy_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/repositories/time_repository.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/util/duration_input.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show fmtDuration;
@@ -317,11 +316,6 @@ class _CellFormState extends State<_CellForm> {
                         // box.
                         hintText: '1h 30m · 90m · 1:30',
                         prefixIcon: const Icon(LucideIcons.clock, size: 16),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.radiusControl,
-                          ),
-                        ),
                       ),
                     ),
                   const SizedBox(height: 10),

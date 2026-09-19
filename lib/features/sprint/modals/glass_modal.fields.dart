@@ -20,14 +20,7 @@ class GlassField extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
-                color: AppColors.inkSoft,
-              ),
-            ),
+            Text(label, style: GlassFieldStyle.caption),
             if (trailing != null) ...[const SizedBox(width: 6), trailing!],
           ],
         ),
@@ -38,26 +31,28 @@ class GlassField extends StatelessWidget {
   }
 }
 
-/// Input decoration for text fields rendered on the glass material.
-InputDecoration glassInputDecoration({String? hint}) => InputDecoration(
-  hintText: hint,
-  isDense: true,
-  filled: true,
-  fillColor: AppColors.surface.withValues(alpha: 0.7),
-  contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
-  border: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-    borderSide: BorderSide(color: AppColors.hairline),
-  ),
-  enabledBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-    borderSide: BorderSide(color: AppColors.hairline),
-  ),
-  focusedBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-    borderSide: const BorderSide(color: AppColors.accent, width: 1.6),
-  ),
-);
+/// Input decoration for a text field under a [GlassField] caption: the caption
+/// stands above it, so the field itself is a single dense line.
+///
+/// It carries the glass field look itself rather than leaning on
+/// [GlassFormTheme], because a few of these stand on a page and not in a
+/// modal, and there the page theme would fill them white.
+InputDecoration glassInputDecoration({String? hint}) {
+  final look = GlassFieldStyle.inputTheme(const InputDecorationThemeData());
+  return InputDecoration(
+    hintText: hint,
+    hintStyle: look.hintStyle,
+    isDense: true,
+    filled: false,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+    border: look.border,
+    enabledBorder: look.enabledBorder,
+    disabledBorder: look.disabledBorder,
+    focusedBorder: look.focusedBorder,
+    errorBorder: look.errorBorder,
+    focusedErrorBorder: look.focusedErrorBorder,
+  );
+}
 
 /// A segmented selector (e.g. sprint duration 1–4 weeks) sized to fill width.
 class GlassSegmented extends StatelessWidget {
@@ -86,12 +81,10 @@ class GlassSegmented extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: i == selected
-                      ? AppColors.navy
-                      : AppColors.surface.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                  color: i == selected ? AppColors.navy : null,
+                  borderRadius: GlassFieldStyle.radius,
                   border: Border.all(
-                    color: i == selected ? AppColors.navy : AppColors.hairline,
+                    color: i == selected ? AppColors.navy : GlassFieldStyle.rim,
                   ),
                 ),
                 child: Text(

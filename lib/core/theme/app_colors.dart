@@ -88,6 +88,15 @@ abstract final class AppColors {
   static const hairline2Dark = Color(0xFF27262F);
   static Color get hairline2 => _dark ? hairline2Dark : hairline2Light;
 
+  // The rim of a form field on glass. Translucent ink rather than a solid
+  // hairline: a field has no fill of its own, so its rim is the only thing
+  // that says where it is, and a fixed grey vanishes on whatever the glass
+  // happens to show behind it. Ink at a fifth takes its contrast from the
+  // surface it sits on.
+  static const fieldRimLight = Color(0x3323223F);
+  static const fieldRimDark = Color(0x38FFFFFF);
+  static Color get fieldRim => _dark ? fieldRimDark : fieldRimLight;
+
   // ---- nav rail (deep navy in both themes) ----
   static const rail = Color(0xFF211F3D);
   static const rail2 = Color(0xFF1A1830);

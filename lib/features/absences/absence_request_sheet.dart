@@ -24,20 +24,24 @@ import '../../core/repositories/user_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/field_button.dart';
 import '../../core/widgets/hive_loader.dart';
+import '../../core/widgets/hive_widgets.dart' show HiveAvatar, HiveSwitch;
 import '../../core/widgets/person_picker.dart';
+import '../account/account_widgets.dart' show SettingRow;
 import '../sprint/modals/glass_modal.dart';
 import 'absence_labels.dart';
 
 /// Opens the request form. Resolves to the filed request, or null if dismissed.
 ///
-/// [types] and [balances] come from the panel that opened it, so the sheet
+/// [types] and [balances] come from the screen that opened it, so the sheet
 /// makes no read of its own before it can draw: the reader's own balance is
-/// already on the screen behind it.
+/// already on the screen behind it. [initialFrom] and [initialTo] are the days
+/// somebody marked in the calendar before asking.
 Future<AbsenceRequest?> showAbsenceRequestSheet(
   BuildContext context, {
   required List<AbsenceType> types,
   AbsenceBalances? balances,
   DateTime? initialFrom,
+  DateTime? initialTo,
 }) {
   final askable = [
     for (final type in types)
@@ -57,15 +61,21 @@ Future<AbsenceRequest?> showAbsenceRequestSheet(
         types: askable,
         balances: balances,
         initialFrom: initialFrom,
+        initialTo: initialTo,
       ),
     ),
   );
 }
 
 /// Opens the sick report. Resolves to what it produced, or null if dismissed.
+///
+/// [initialFrom] and [initialTo] are the days marked in the calendar, if the
+/// report started there; otherwise it is today.
 Future<SickReport?> showSickReportSheet(
   BuildContext context, {
   required List<AbsenceType> types,
+  DateTime? initialFrom,
+  DateTime? initialTo,
 }) {
   final sickTypes = [
     for (final type in types)
@@ -77,7 +87,11 @@ Future<SickReport?> showSickReportSheet(
     width: 460,
     builder: (sheetContext) => RepositoryProvider<AbsenceRepository>.value(
       value: repository,
-      child: _SickForm(types: sickTypes),
+      child: _SickForm(
+        types: sickTypes,
+        initialFrom: initialFrom,
+        initialTo: initialTo,
+      ),
     ),
   );
 }
@@ -89,11 +103,13 @@ class _RequestForm extends StatefulWidget {
     required this.types,
     required this.balances,
     required this.initialFrom,
+    required this.initialTo,
   });
 
   final List<AbsenceType> types;
   final AbsenceBalances? balances;
   final DateTime? initialFrom;
+  final DateTime? initialTo;
 
   @override
   State<_RequestForm> createState() => _RequestFormState();
@@ -114,19 +130,32 @@ class _RequestFormState extends State<_RequestForm> {
   bool _saving = false;
   String? _errorKey;
 
-  /// Holds the keystrokes of a date change together, so dragging a range end
-  /// across a fortnight is one read rather than fourteen.
+  /// Holds a run of half-day flips together, so switching both ends on and
+  /// off again is one preview read rather than four. A new type or a new span
+  /// is read at once — each is a single, deliberate pick.
   Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     final start = DateUtils.dateOnly(widget.initialFrom ?? DateTime.now());
+    final end = DateUtils.dateOnly(widget.initialTo ?? start);
     _from = start;
-    _to = start;
-    _type = widget.types.firstOrNull;
+    _to = end.isBefore(start) ? start : end;
+    _type = _likelyType(widget.types);
     if (_type != null) unawaited(_loadPreview());
   }
+
+  /// What somebody pressing "request time off" almost always means: leave.
+  ///
+  /// The catalogue arrives sorted by name, so its first entry is whatever
+  /// happens to sort first — in German that was "Sonstiges". The system
+  /// vacation type if the catalogue has it, else the first type that has to
+  /// be asked for, else anything.
+  static AbsenceType? _likelyType(List<AbsenceType> types) =>
+      types.where((type) => type.systemKey == 'vacation').firstOrNull ??
+      types.where((type) => type.requiresApproval).firstOrNull ??
+      types.firstOrNull;
 
   @override
   void dispose() {
@@ -237,8 +266,11 @@ class _RequestFormState extends State<_RequestForm> {
     unawaited(_loadPreview());
   }
 
-  Future<void> _pickSubstitute(Rect anchor) async {
-    final picked = await showPersonPicker(context, anchorRect: anchor);
+  Future<void> _pickSubstitute(Rect? anchor) async {
+    final picked = await showPersonPicker(
+      context,
+      anchorRect: anchor ?? Rect.zero,
+    );
     if (picked == null || !mounted) return;
     setState(() => _substitute = picked);
   }
@@ -299,7 +331,7 @@ class _RequestFormState extends State<_RequestForm> {
                   onTap: () => unawaited(_pickDates()),
                 ),
                 if (type?.halfDaysAllowed ?? false) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 4),
                   _HalfDayRow(
                     labelKey: _from == _to
                         ? 'absence.request.halfDayOnly'
@@ -332,31 +364,23 @@ class _RequestFormState extends State<_RequestForm> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: _note,
-                  maxLines: 2,
+                  minLines: 1,
+                  maxLines: 3,
                   maxLength: 500,
                   decoration: InputDecoration(
-                    isDense: true,
                     labelText: context.t('absence.request.note'),
                     helperText: context.t('absence.request.noteHint'),
-                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Builder(
+                  builder: (anchor) => _SubstituteField(
+                    person: _substitute,
+                    onTap: () =>
+                        unawaited(_pickSubstitute(anchorRectOfContext(anchor))),
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  context.t('absence.request.substitute'),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.inkFaint,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                PersonPickerField(
-                  person: _substitute,
-                  placeholderKey: 'absence.request.substitutePlaceholder',
-                  onTap: (rect) => unawaited(_pickSubstitute(rect)),
-                ),
-                const SizedBox(height: 4),
                 Text(
                   context.t('absence.request.substituteHint'),
                   style: TextStyle(
@@ -424,17 +448,41 @@ class _HalfDayRow extends StatelessWidget {
   final ValueChanged<bool> onChanged;
 
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      Expanded(
-        child: Text(
-          context.t(labelKey),
-          style: TextStyle(fontSize: 13, color: AppColors.ink),
-        ),
-      ),
-      Switch(value: value, onChanged: onChanged),
-    ],
+  Widget build(BuildContext context) => SettingRow(
+    label: context.t(labelKey),
+    trailing: HiveSwitch(value: value, onChanged: onChanged),
   );
+}
+
+/// The stand-in, as a field like the ones above it: caption, then the choice.
+class _SubstituteField extends StatelessWidget {
+  const _SubstituteField({required this.person, required this.onTap});
+
+  final DirectoryUser? person;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final picked = person;
+    final name = picked == null
+        ? null
+        : (picked.displayName.isEmpty ? picked.username : picked.displayName);
+    return FieldButton(
+      icon: LucideIcons.userRound,
+      leading: picked == null
+          ? null
+          : HiveAvatar(
+              name: name!,
+              imageUrl: picked.avatarUrl,
+              pronouns: picked.pronouns,
+              size: 22,
+            ),
+      label: context.t('absence.request.substitute'),
+      value: name ?? context.t('absence.request.substitutePlaceholder'),
+      empty: picked == null,
+      onTap: onTap,
+    );
+  }
 }
 
 /// "7 working days, 1 public holiday — 12.5 days left afterwards."
@@ -573,9 +621,15 @@ class _PreviewLine extends StatelessWidget {
 // --- the sick report -------------------------------------------------------------
 
 class _SickForm extends StatefulWidget {
-  const _SickForm({required this.types});
+  const _SickForm({
+    required this.types,
+    required this.initialFrom,
+    required this.initialTo,
+  });
 
   final List<AbsenceType> types;
+  final DateTime? initialFrom;
+  final DateTime? initialTo;
 
   @override
   State<_SickForm> createState() => _SickFormState();
@@ -591,9 +645,10 @@ class _SickFormState extends State<_SickForm> {
   @override
   void initState() {
     super.initState();
-    final today = DateUtils.dateOnly(DateTime.now());
-    _from = today;
-    _to = today;
+    final start = DateUtils.dateOnly(widget.initialFrom ?? DateTime.now());
+    final end = DateUtils.dateOnly(widget.initialTo ?? start);
+    _from = start;
+    _to = end.isBefore(start) ? start : end;
     _type = widget.types.firstOrNull;
   }
 
@@ -667,7 +722,7 @@ class _SickFormState extends State<_SickForm> {
                 onTap: () => unawaited(_pickDates()),
               ),
               if (_from == _to) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 4),
                 _HalfDayRow(
                   labelKey: 'absence.sick.halfDay',
                   value: _halfDay,
