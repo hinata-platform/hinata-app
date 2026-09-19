@@ -131,11 +131,11 @@ void main() {
       // Adjacent and in this order: the two cards that act on the account
       // itself close the column somebody is already reading.
       final at = column.indexOf(SettingsCard.admin);
-      expect(
-        column.sublist(at),
-        [SettingsCard.admin, SettingsCard.data, SettingsCard.danger],
-        reason: '$count columns',
-      );
+      expect(column.sublist(at), [
+        SettingsCard.admin,
+        SettingsCard.data,
+        SettingsCard.danger,
+      ], reason: '$count columns');
     }
   });
 

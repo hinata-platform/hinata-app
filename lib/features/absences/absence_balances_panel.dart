@@ -76,26 +76,41 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
   }
 
   /// The first read: the year, plus the two answers that do not depend on it.
+  ///
+  /// The catalogue, whether this reader keeps absences, and this year's
+  /// balances are what [MyAbsencesCubit] holds for the whole module. Read from
+  /// there rather than asked again, so opening the balances beside the list is
+  /// one request and not four.
   Future<void> _load() async {
-    final repository = context.read<AbsenceRepository>();
-    // Side by side: the catalogue names the rows, the balances fill them, and
-    // whether this reader keeps absences decides one link at the bottom.
-    final types = repository.types();
-    final keeper = repository.isKeeper();
-    await _loadBalances();
+    final mine = context.read<MyAbsencesCubit>();
+    await mine.ensureLoaded(managed: _moduleOn);
     if (!mounted) return;
-    try {
-      final catalogue = await types;
-      final keeps = await keeper;
-      if (!mounted) return;
+    final held = mine.state;
+    setState(() {
+      _types = held.types;
+      _keeper = held.keeper;
+    });
+    final thisYear = held.balances;
+    if (_year == DateTime.now().year && thisYear != null) {
       setState(() {
-        _types = catalogue;
-        _keeper = keeps;
+        _balances = thisYear;
+        _loading = false;
       });
-    } on ApiFailure {
-      // The balances already said whatever went wrong; a second sentence about
-      // the same outage helps nobody.
+      _openJournalFor(_firstInteresting());
+      return;
     }
+    await _loadBalances();
+  }
+
+  /// This year's balances, as the module already read them.
+  Future<void> _takeBalances(AbsenceBalances standing) async {
+    if (!mounted) return;
+    setState(() {
+      _balances = standing;
+      _loading = false;
+      _errorKey = null;
+    });
+    _openJournalFor(_openTypeId ?? _firstInteresting());
   }
 
   /// One year's balances. Neither the catalogue nor "do I keep absences" depends
@@ -142,6 +157,11 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
   }
 
   void _openJournalFor(String? typeId) {
+    if (typeId != null && typeId == _openTypeId && _entries != null) {
+      // The same journal, read again rather than thrown away and built anew.
+      unawaited(_entries!.load());
+      return;
+    }
     if (typeId == null) return;
     unawaited(_entries?.close());
     final cubit = PagedCubit<AbsenceLedgerEntry>(
@@ -180,7 +200,13 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
       // A request filed, a leave cancelled, sickness reported — from anywhere
       // in the module. The balance is what moved.
       listenWhen: (before, after) => before.revision != after.revision,
-      listener: (context, state) => unawaited(_loadBalances()),
+      // The cubit re-read this year's balances as part of the change; another
+      // year is the panel's own business and is asked for again.
+      listener: (context, state) => unawaited(
+        _year == DateTime.now().year && state.balances != null
+            ? _takeBalances(state.balances!)
+            : _loadBalances(),
+      ),
       child: BlocListener<AppConfigBloc, AppConfigState>(
         // An administrator can switch the module on while somebody has this page
         // open. The panel appears with the flag; the first read follows it here,

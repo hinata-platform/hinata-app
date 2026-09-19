@@ -126,10 +126,7 @@ void main() {
   ) async {
     List<String>? changed;
     await tester.pumpWidget(
-      host(
-        managers: const ['gone'],
-        onManagersChanged: (ids) => changed = ids,
-      ),
+      host(managers: const ['gone'], onManagersChanged: (ids) => changed = ids),
     );
     await tester.pumpAndSettle();
 

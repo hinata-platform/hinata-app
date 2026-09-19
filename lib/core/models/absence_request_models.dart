@@ -168,8 +168,7 @@ class AbsenceRequest extends Equatable {
 
   /// Whether the span is a single half day, which is how the old calendar
   /// already understood one.
-  bool get isHalfDay =>
-      from == to && firstDayMilliDays == kMilliDay ~/ 2;
+  bool get isHalfDay => from == to && firstDayMilliDays == kMilliDay ~/ 2;
 
   static AbsenceRequest fromJson(Map<String, dynamic> json) => AbsenceRequest(
     id: json['id'] as String? ?? '',
@@ -358,4 +357,31 @@ class SickReport extends Equatable {
 
   @override
   List<Object?> get props => [absenceId, milliDays, returnedMilliDays];
+}
+
+/// The rules a screen asks about a request, in one place because three asked
+/// them in three shapes and had already drifted: the card offered a keeper no
+/// cancel on a leave that had begun while the sheet did.
+extension AbsenceRequestRules on AbsenceRequest {
+  /// Whether [today] — or now — is past the first day of it.
+  bool hasStarted([DateTime? today]) => !from.isAfter(
+    DateTime(
+      (today ?? DateTime.now()).year,
+      (today ?? DateTime.now()).month,
+      (today ?? DateTime.now()).day,
+    ),
+  );
+
+  /// Whether this can still be taken back before anybody decided it.
+  bool withdrawableBy({required bool mine}) => mine && status.open;
+
+  /// Whether the approved leave can still be called off.
+  ///
+  /// One's own while all of it is still ahead: once a day of it is behind the
+  /// person it is a record of what happened, and only whoever keeps absences
+  /// changes a record. The server decides the same way; the button is hidden
+  /// rather than offered and refused.
+  bool cancellableBy({required bool mine, required bool keeper}) =>
+      status == AbsenceRequestStatus.approved &&
+      (keeper || (mine && !hasStarted()));
 }

@@ -12,7 +12,9 @@ import '../../core/repositories/availability_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_widgets.dart' show fmtDuration;
 import '../../core/widgets/soft_card.dart';
+import '../../core/models/absence_models.dart';
 import '../absences/absence_actions.dart';
+import '../absences/absence_labels.dart' show absenceTypeName;
 import '../time/day_marks.dart' show formatDaySpan, timeOffIcon;
 
 /// The reader's own capacity for the window the timesheet shows, beside what
@@ -57,6 +59,22 @@ class _TimesheetCapacityLineState extends State<TimesheetCapacityLine> {
     if (oldWidget.from != widget.from || oldWidget.to != widget.to) _load();
   }
 
+  /// What to call [absence]: the operator's type where it names one, and the
+  /// plain kind where it does not.
+  String _typeName(
+    BuildContext context,
+    List<AbsenceType> types,
+    TimeOff absence,
+  ) {
+    final typeId = absence.typeId;
+    final type = typeId == null
+        ? null
+        : types.where((each) => each.id == typeId).firstOrNull;
+    return type == null
+        ? context.t(absence.type.labelKey)
+        : absenceTypeName(context, type);
+  }
+
   Future<void> _load() async {
     final read = ++_read;
     try {
@@ -75,8 +93,9 @@ class _TimesheetCapacityLineState extends State<TimesheetCapacityLine> {
   Widget build(BuildContext context) {
     final capacity = _capacity;
     if (capacity == null) return const SizedBox.shrink();
+    final mine = context.watch<MyAbsencesCubit>().state;
     final waiting = [
-      for (final request in context.watch<MyAbsencesCubit>().state.pending)
+      for (final request in mine.pending)
         if (!request.to.isBefore(widget.from) &&
             !request.from.isAfter(widget.to))
           request,
@@ -102,11 +121,14 @@ class _TimesheetCapacityLineState extends State<TimesheetCapacityLine> {
                 for (final absence in capacity.absences)
                   _AbsenceChip(
                     icon: timeOffIcon(absence.type),
+                    // The operator's own name for the type where the catalogue
+                    // has one, as every other surface says it.
                     label:
-                        '${context.t(absence.type.labelKey)} · '
+                        '${_typeName(context, mine.types, absence)} · '
                         '${formatDaySpan(context, absence.from, absence.to)}',
-                    onTap: () =>
-                        unawaited(openAbsence(context, absence: absence)),
+                    onTap: () => unawaited(
+                      openAbsence(context, AbsenceTarget.entered(absence)),
+                    ),
                   ),
                 for (final request in waiting)
                   _AbsenceChip(
@@ -115,8 +137,9 @@ class _TimesheetCapacityLineState extends State<TimesheetCapacityLine> {
                         '${context.t('absence.calendar.requested')} · '
                         '${formatDaySpan(context, request.from, request.to)}',
                     accent: true,
-                    onTap: () =>
-                        unawaited(openAbsence(context, request: request)),
+                    onTap: () => unawaited(
+                      openAbsence(context, AbsenceTarget.requested(request)),
+                    ),
                   ),
               ],
             ),

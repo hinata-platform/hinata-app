@@ -54,7 +54,7 @@ Future<bool> askForAbsence(
   if (!context.mounted) return false;
   final filed = await showAbsenceRequestSheet(
     context,
-    types: mine.types,
+    types: mine.askable,
     balances: mine.balances,
     initialFrom: from,
     initialTo: to,
@@ -77,7 +77,7 @@ Future<bool> reportSickness(
   if (!context.mounted) return false;
   final reported = await showSickReportSheet(
     context,
-    types: mine.types,
+    types: mine.sickTypes,
     initialFrom: from,
     initialTo: to,
   );
@@ -85,22 +85,45 @@ Future<bool> reportSickness(
   return reported != null;
 }
 
-/// Opens an absence — one that was entered, or one that was asked for — with
-/// everything that can still be done about it. Resolves to true when it
-/// changed.
-Future<bool> openAbsence(
-  BuildContext context, {
-  TimeOff? absence,
-  AbsenceRequest? request,
-}) async {
+/// What an absence sheet is opened on: an absence somebody entered, or a
+/// request somebody made. Exactly one of the two, said in the type rather than
+/// in a pair of optional arguments the caller has to keep apart.
+sealed class AbsenceTarget {
+  const AbsenceTarget();
+
+  /// The absence itself, from a list, a calendar band or a day chip.
+  const factory AbsenceTarget.entered(TimeOff absence) = EnteredAbsence;
+
+  /// A request, decided or not, from one of the request lists.
+  const factory AbsenceTarget.requested(AbsenceRequest request) =
+      RequestedAbsence;
+}
+
+class EnteredAbsence extends AbsenceTarget {
+  const EnteredAbsence(this.absence);
+
+  final TimeOff absence;
+}
+
+class RequestedAbsence extends AbsenceTarget {
+  const RequestedAbsence(this.request);
+
+  final AbsenceRequest request;
+}
+
+/// Opens [target] with everything that can still be done about it — edit and
+/// delete for one entered directly, withdraw or edit while a request waits,
+/// approve or reject somebody else's, cancel an approved one, ask again after
+/// a refusal. Resolves to true when something changed.
+Future<bool> openAbsence(BuildContext context, AbsenceTarget target) async {
   final cubit = context.read<MyAbsencesCubit>();
   final mine = await _mine(context);
   if (!context.mounted) return false;
   final changed = await showAbsenceSheet(
     context,
-    absence: absence,
-    request: request,
+    target: target,
     types: mine.types,
+    askable: mine.askable,
     balances: mine.balances,
     keeper: mine.keeper,
   );

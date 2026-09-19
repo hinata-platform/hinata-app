@@ -28,6 +28,14 @@ void main() {
     bool moduleOn = true,
   }) async {
     final config = FakeAppConfig(absenceManagement: moduleOn);
+    // The panel takes the catalogue and "do I keep absences" from the module's
+    // own state rather than asking again, so the fake holds what the fake
+    // repository would have answered.
+    final mine = FakeMyAbsencesCubit(
+      managed: moduleOn,
+      types: await repository.types(),
+      keeper: await repository.isKeeper(),
+    );
     await tester.pumpWidget(
       MediaQuery(
         data: const MediaQueryData(size: Size(1100, 1600)),
@@ -36,9 +44,7 @@ void main() {
             body: MultiBlocProvider(
               providers: [
                 BlocProvider<AppConfigBloc>.value(value: config),
-                BlocProvider<MyAbsencesCubit>(
-                  create: (_) => FakeMyAbsencesCubit(managed: moduleOn),
-                ),
+                BlocProvider<MyAbsencesCubit>.value(value: mine),
               ],
               child: RepositoryProvider<AbsenceRepository>.value(
                 value: repository,

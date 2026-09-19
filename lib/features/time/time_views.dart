@@ -34,7 +34,7 @@ enum TimeView {
   /// calendar it is planned in is one tab away.
   absences('/time/absences', 'time.view.absences', LucideIcons.calendarOff),
 
-  /// Handed-in periods. Unlike the other three this one is **conditional**: it
+  /// Handed-in periods. Unlike the others this one is **conditional**: it
   /// exists only while the operator has switched approvals on, because without
   /// them there is nothing to hand in and nothing to decide. [visibleViews]
   /// is where that is decided, once, for the pill and the phone's menu alike.
@@ -206,15 +206,15 @@ Future<void> showTimeAddMenu(
     await onNewEntry();
     return;
   }
-  if (chosen == 'absence' || chosen == 'sick') {
-    await followAbsenceChoice(
-      context,
-      chosen,
-      from: absenceFrom,
-      to: absenceTo,
-    );
+  if (await followAbsenceChoice(
+    context,
+    chosen,
+    from: absenceFrom,
+    to: absenceTo,
+  )) {
     return;
   }
+  if (!context.mounted) return;
   if (stopping) {
     await endTimerAndAdvise(context, onStopped: onTimerStopped);
   } else {

@@ -39,6 +39,8 @@ import 'absence_labels.dart';
 /// With [existing] the form edits that request, which still waits for a
 /// decision; with [template] it files a new one that starts where an old one
 /// ended — "ask again" after a refusal or a withdrawal.
+/// [types] are the ones a person may ask for — [MyAbsencesState.askable], which
+/// leaves out sickness: that is reported, never requested (R11).
 Future<AbsenceRequest?> showAbsenceRequestSheet(
   BuildContext context, {
   required List<AbsenceType> types,
@@ -48,10 +50,6 @@ Future<AbsenceRequest?> showAbsenceRequestSheet(
   AbsenceRequest? existing,
   AbsenceRequest? template,
 }) {
-  final askable = [
-    for (final type in types)
-      if (type.active && type.kind != AbsenceKind.sick) type,
-  ];
   final repository = context.read<AbsenceRepository>();
   final users = context.read<UserRepository>();
   return showGlassModal<AbsenceRequest>(
@@ -63,7 +61,7 @@ Future<AbsenceRequest?> showAbsenceRequestSheet(
         RepositoryProvider<UserRepository>.value(value: users),
       ],
       child: _RequestForm(
-        types: askable,
+        types: types,
         balances: balances,
         initialFrom: initialFrom,
         initialTo: initialTo,
@@ -78,16 +76,13 @@ Future<AbsenceRequest?> showAbsenceRequestSheet(
 ///
 /// [initialFrom] and [initialTo] are the days marked in the calendar, if the
 /// report started there; otherwise it is today.
+/// [types] are the ones sickness is reported under — [MyAbsencesState.sickTypes].
 Future<SickReport?> showSickReportSheet(
   BuildContext context, {
   required List<AbsenceType> types,
   DateTime? initialFrom,
   DateTime? initialTo,
 }) {
-  final sickTypes = [
-    for (final type in types)
-      if (type.active && type.kind == AbsenceKind.sick) type,
-  ];
   final repository = context.read<AbsenceRepository>();
   return showGlassModal<SickReport>(
     context,
@@ -95,7 +90,7 @@ Future<SickReport?> showSickReportSheet(
     builder: (sheetContext) => RepositoryProvider<AbsenceRepository>.value(
       value: repository,
       child: _SickForm(
-        types: sickTypes,
+        types: types,
         initialFrom: initialFrom,
         initialTo: initialTo,
       ),

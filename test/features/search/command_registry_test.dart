@@ -14,8 +14,9 @@ void main() {
 
     expect(without, isNot(contains('time.focus')));
     expect(without, isNot(contains('time.timesheet')));
-    // Five rows leading to a not-found page is worse than five rows fewer.
-    expect(with_.length - without.length, 5);
+    expect(without, isNot(contains('time.absences')));
+    // Rows leading to a not-found page are worse than rows fewer.
+    expect(with_.length - without.length, 7);
     expect(
       with_,
       containsAll([
@@ -24,6 +25,8 @@ void main() {
         'time.focus',
         'time.list',
         'time.timesheet',
+        'time.absences',
+        'time.askAbsence',
       ]),
     );
   });

@@ -1491,14 +1491,19 @@ class _GridPainter extends CustomPainter {
     // Bottom-left to top-right, every nine points: dense enough to read as a
     // texture at a glance, open enough that an entry drawn over it stays the
     // thing being read.
+    //
+    // One path rather than a draw call per line: a day column is as tall as the
+    // whole grid, so a week of requested days came to a thousand stroked lines
+    // on every repaint — and the grid repaints on the minute, for the line that
+    // says where now is.
     const step = 9.0;
+    final lines = Path();
     for (var x = column.left - column.height; x < column.right; x += step) {
-      canvas.drawLine(
-        Offset(x, column.bottom),
-        Offset(x + column.height, column.top),
-        paint,
-      );
+      lines
+        ..moveTo(x, column.bottom)
+        ..lineTo(x + column.height, column.top);
     }
+    canvas.drawPath(lines, paint);
     canvas.restore();
   }
 }

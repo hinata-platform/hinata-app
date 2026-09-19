@@ -1236,7 +1236,6 @@
       "deleteConfirm": "この不在を削除しますか？",
       "saved": "不在を保存しました。",
       "deleted": "不在を削除しました。",
-      "halfDaySpan": "{{days}}、半日",
       "movedHint": "登録・申請・管理は、カレンダーのすぐ隣の時間記録で行えます。"
     },
     "admin": {

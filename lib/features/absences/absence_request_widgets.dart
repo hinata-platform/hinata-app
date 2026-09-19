@@ -164,15 +164,10 @@ class AbsenceRequestCard extends StatelessWidget {
     );
   }
 
-  bool get _canWithdraw => !inbox && request.status.open;
+  bool get _canWithdraw => !inbox && request.withdrawableBy(mine: isMine);
 
-  /// Cancelling one's own is offered while all of it is still ahead. Once a day
-  /// of it is behind the person it takes a keeper, and the server says so — the
-  /// button is hidden here rather than offered and refused.
   bool get _canCancel =>
-      !inbox &&
-      request.status == AbsenceRequestStatus.approved &&
-      request.from.isAfter(DateUtils.dateOnly(DateTime.now()));
+      !inbox && request.cancellableBy(mine: isMine, keeper: false);
 
   List<Widget> _warnings(BuildContext context) {
     final lines = <(IconData, Color, String)>[
