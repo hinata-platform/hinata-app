@@ -30,7 +30,11 @@
     "saved": "Saved",
     "yes": "Yes",
     "no": "No",
-    "remove": "Remove"
+    "remove": "Remove",
+    "picker": {
+      "typeTime": "Type the time",
+      "typeDuration": "Type the duration"
+    }
   },
   "delete": {
     "cta": "Delete",

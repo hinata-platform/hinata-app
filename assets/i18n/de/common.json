@@ -30,7 +30,11 @@
     "saved": "Gespeichert",
     "yes": "Ja",
     "no": "Nein",
-    "remove": "Entfernen"
+    "remove": "Entfernen",
+    "picker": {
+      "typeTime": "Uhrzeit eintippen",
+      "typeDuration": "Dauer eintippen"
+    }
   },
   "delete": {
     "cta": "Löschen",
@@ -1519,7 +1523,7 @@
       "noteHint": "Was die entscheidende Person wissen sollte.",
       "substitute": "Vertretung",
       "substitutePlaceholder": "Jemanden wählen (optional)",
-      "substituteHint": "Sie wird informiert und muss nichts bestätigen.",
+      "substituteHint": "Die Vertretung wird informiert und muss nichts bestätigen.",
       "submit": "Antrag senden",
       "filed": "Antrag gesendet.",
       "autoApproved": "Sofort genehmigt. Niemand musste darüber entscheiden.",

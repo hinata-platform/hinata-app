@@ -30,7 +30,11 @@
     "saved": "Guardado",
     "yes": "Sí",
     "no": "No",
-    "remove": "Quitar"
+    "remove": "Quitar",
+    "picker": {
+      "typeTime": "Escribir la hora",
+      "typeDuration": "Escribir la duración"
+    }
   },
   "delete": {
     "cta": "Eliminar",

@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../theme/glass_field.dart';
 
 /// A one-line form field that opens a picker: the app's rule against inline
 /// selection lists, applied to every form that picks a value.
@@ -16,12 +17,21 @@ class FieldButton extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onTap,
+    this.leading,
+    this.empty = false,
   });
 
   final IconData icon;
   final String label;
   final String value;
   final VoidCallback onTap;
+
+  /// Drawn in place of [icon] — a chosen person's face, say.
+  final Widget? leading;
+
+  /// Whether [value] is the field's placeholder rather than a choice, which
+  /// draws it in the quieter placeholder ink.
+  final bool empty;
 
   @override
   Widget build(BuildContext context) => Material(
@@ -31,41 +41,29 @@ class FieldButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppTheme.radiusControl),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(color: AppColors.hairline),
-        ),
+        decoration: GlassFieldStyle.decoration,
         child: Row(
           children: [
-            Icon(icon, size: 16, color: AppColors.inkSoft),
+            leading ?? Icon(icon, size: 16, color: AppColors.inkSoft),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.inkFaint,
-                    ),
-                  ),
+                  Text(label, style: GlassFieldStyle.caption),
                   const SizedBox(height: 2),
                   Text(
                     value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.ink,
-                    ),
+                    style: empty
+                        ? GlassFieldStyle.placeholder
+                        : GlassFieldStyle.value,
                   ),
                 ],
               ),
             ),
-            Icon(LucideIcons.chevronRight, size: 15, color: AppColors.inkFaint),
+            Icon(LucideIcons.chevronRight, size: 15, color: AppColors.inkSoft),
           ],
         ),
       ),
