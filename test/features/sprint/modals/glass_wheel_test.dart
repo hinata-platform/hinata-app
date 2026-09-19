@@ -52,7 +52,10 @@ void main() {
 
   /// The minute wheel: the one that shows `00` in its selected row.
   Finder minuteWheel() => find
-      .ancestor(of: find.text('00').last, matching: find.byType(GestureDetector))
+      .ancestor(
+        of: find.text('00').last,
+        matching: find.byType(GestureDetector),
+      )
       .first;
 
   testWidgets('a mouse drag turns the wheel', (tester) async {

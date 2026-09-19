@@ -210,7 +210,11 @@ void main() {
 
     expect(location(router), '/login');
     expect(
-      router.routerDelegate.currentConfiguration.uri.queryParameters['ssoError'],
+      router
+          .routerDelegate
+          .currentConfiguration
+          .uri
+          .queryParameters['ssoError'],
       'auth.ssoProviderFailed',
     );
   });
@@ -222,7 +226,9 @@ void main() {
     // reached the app while the first one's code was being redeemed, and the
     // person was sent to the login screen with a sign-in completing behind it.
     final exchange = Completer<({String access, String refresh})>();
-    final repository = _FakeAuthRepository(onExchangeAsync: () => exchange.future);
+    final repository = _FakeAuthRepository(
+      onExchangeAsync: () => exchange.future,
+    );
     final router = await pumpCallback(tester, repository, code: 'first');
     await advance(tester);
 
@@ -319,8 +325,7 @@ class _FakeAuthRepository extends AuthRepository {
 
   final ({String access, String refresh}) Function()? onExchange;
   final Future<({String access, String refresh})> Function()? onExchangeAsync;
-  final ({String access, String refresh}) Function(String code)?
-  onExchangeCode;
+  final ({String access, String refresh}) Function(String code)? onExchangeCode;
   final AuthUser Function()? onMe;
 
   @override
