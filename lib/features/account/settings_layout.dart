@@ -64,13 +64,14 @@ List<GoldenGroup<SettingsCard>> settingsGroups({
       golden: 7.7,
       wide: true,
     ),
-    // The tallest card on the page and by a long way, since HIN-116 put the
-    // balances, the journal and the coming absences into it: on its own it is
-    // about a third of everything the page holds.
+    // A third of the page while it also held the balances, the journal and the
+    // absences; since those moved into the time module (HIN-117) it is the
+    // weekday pattern, the holiday calendar and the way to the absences.
+    // Measured at 688 points in a narrow column of the running app.
     GoldenGroup.measured(
       [SettingsCard.availability],
-      narrow: 22,
-      golden: 20,
+      narrow: 6.9,
+      golden: 5.9,
       wide: true,
     ),
   ],
