@@ -270,7 +270,8 @@
       "title": "Server wechseln?",
       "body": "Dieser Link verweist auf einen anderen Server ({{host}}). Dorthin wechseln?",
       "confirm": "Server wechseln"
-    }
+    },
+    "ssoProviderFailed": "Der Anmeldedienst deiner Organisation hat sie nicht abgeschlossen. Bitte versuche es erneut."
   },
   "authShell": {
     "heroTitle": "Wo die Arbeit deines Teams zusammenläuft.",

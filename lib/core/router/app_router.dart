@@ -301,6 +301,7 @@ GoRouter buildRouter({
           code: state.uri.queryParameters['code'],
           accessToken: state.uri.queryParameters['access_token'],
           refreshToken: state.uri.queryParameters['refresh_token'],
+          error: state.uri.queryParameters['error'],
         ),
       ),
       // The focus view. A top-level route on purpose, outside the ShellRoute:
