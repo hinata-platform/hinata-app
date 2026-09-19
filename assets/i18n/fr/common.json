@@ -270,7 +270,8 @@
       "title": "Changer de serveur ?",
       "body": "Ce lien pointe vers un autre serveur ({{host}}). Voulez-vous y basculer ?",
       "confirm": "Changer de serveur"
-    }
+    },
+    "ssoProviderFailed": "le service de connexion de votre organisation ne l’a pas finalisée. Réessayez."
   },
   "authShell": {
     "heroTitle": "Là où le travail de votre équipe se rassemble.",

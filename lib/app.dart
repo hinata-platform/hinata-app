@@ -459,15 +459,32 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     // that came in on the command line was never in that stream to begin with.
     Uri? replay = fromPlugin;
     final initial = fromPlugin ?? widget.initialLink;
+    Uri? streamed;
     _linkSubscription = appLinks.uriLinkStream.listen((uri) {
       // Only the *first* stream event can be that replay; from then on an
       // identical link is a second, deliberate tap and is followed again.
       final isReplay = uri == replay;
       replay = null;
       if (isReplay) return;
+      streamed = uri;
       unawaited(_handleUri(uri));
     });
     if (initial != null) await _handleUri(initial);
+    // A link that arrives while the app is still starting — after the one it
+    // was launched with, before anything listened — is kept by app_links as its
+    // latest link and never streamed. An SSO sign-in can hand the app two links
+    // in quick succession, and the second one, the one that carried the
+    // success, was lost that way.
+    try {
+      final latest = await appLinks.getLatestLink();
+      if (!mounted || latest == null) return;
+      if (latest == initial || latest == fromPlugin || latest == streamed) {
+        return;
+      }
+      await _handleUri(latest);
+    } catch (e) {
+      debugPrint('Latest deep link lookup failed: $e');
+    }
   }
 
   Future<void> _handleUri(Uri uri) async {

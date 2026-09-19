@@ -270,7 +270,8 @@
       "title": "切换服务器？",
       "body": "该链接指向另一台服务器（{{host}}）。要切换过去吗？",
       "confirm": "切换服务器"
-    }
+    },
+    "ssoProviderFailed": "你所在组织的登录服务未能完成登录。请重试。"
   },
   "authShell": {
     "heroTitle": "让团队的工作汇聚于此。",
