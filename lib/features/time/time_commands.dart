@@ -2,16 +2,17 @@ import 'dart:async';
 
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../absences/absence_actions.dart';
 import '../search/command_registry.dart';
 import 'time_entry_sheet.dart';
 import 'time_shortcuts.dart' show toggleTimer;
 
 /// What the time module contributes to the ⌘K palette.
 ///
-/// Listed only while the module is switched on — see [paletteCommands]. Five
-/// commands rather than three: the two pages were missing from the palette
-/// entirely, which is why somebody looking for the timesheet had to know it was
-/// under the Time entry rather than being able to ask for it by name.
+/// Listed only while the module is switched on — see [paletteCommands]. Every
+/// page of the module is in here by name: somebody looking for the timesheet or
+/// for their absences had to know which page they sit under before they could
+/// find them.
 final List<PaletteCommand> kTimeCommands = [
   const PaletteCommand(
     id: 'time.toggle',
@@ -41,6 +42,20 @@ final List<PaletteCommand> kTimeCommands = [
     icon: LucideIcons.list,
     route: '/time',
     keywords: 'time entries hours worklog',
+  ),
+  const PaletteCommand.route(
+    id: 'time.absences',
+    labelKey: 'search.cmd.absences',
+    icon: LucideIcons.calendarOff,
+    route: '/time/absences',
+    keywords: 'absence absences vacation leave sick holiday away off',
+  ),
+  PaletteCommand(
+    id: 'time.askAbsence',
+    labelKey: 'search.cmd.askAbsence',
+    icon: LucideIcons.calendarPlus,
+    keywords: 'absence request vacation leave holiday time off ask',
+    onSelect: (context) => unawaited(askForAbsence(context)),
   ),
   const PaletteCommand.route(
     id: 'time.timesheet',

@@ -29,6 +29,7 @@ import 'core/storage/app_storage.dart';
 import 'core/util/server_link.dart' show knownServers, normalizeServerLink;
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'core/blocs/my_absences_cubit.dart';
 import 'core/blocs/time_policy_cubit.dart';
 import 'core/blocs/time_privacy_cubit.dart';
 import 'core/blocs/time_preferences_cubit.dart';
@@ -118,6 +119,13 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   /// [TimePolicyCubit].
   late final TimePolicyCubit _timePolicy = TimePolicyCubit(
     widget.repositories.time,
+  );
+
+  /// The reader's own absence management — types, balances, open requests.
+  /// App-wide because the calendar, the list, the timesheet, the absences view
+  /// and every "+" ask the same questions; see [MyAbsencesCubit].
+  late final MyAbsencesCubit _myAbsences = MyAbsencesCubit(
+    widget.repositories.absences,
   );
 
   /// The module's privacy notice and whether it was confirmed. App-wide so the
@@ -337,6 +345,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       // that ended would grey out a day that is perfectly editable on the next.
       _timePolicy.reset();
       _timePrivacy.reset();
+      _myAbsences.reset();
     }
   }
 
@@ -744,6 +753,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
           BlocProvider.value(value: _timer),
           BlocProvider.value(value: _timePreferences),
           BlocProvider.value(value: _timePolicy),
+          BlocProvider.value(value: _myAbsences),
           BlocProvider.value(value: _timePrivacy),
           BlocProvider(create: (_) => ThemeCubit()),
         ],

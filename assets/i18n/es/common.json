@@ -927,7 +927,8 @@
       "list": "Lista",
       "calendar": "Calendario",
       "timesheet": "Parte de horas",
-      "approvals": "Aprobaciones"
+      "approvals": "Aprobaciones",
+      "absences": "Ausencias"
     },
     "calendar": {
       "untimed": "Sin hora",
@@ -1203,8 +1204,8 @@
       "hint": "Tus horas previstas en este periodo, sin contar festivos ni ausencias, junto a lo que has registrado. Solo lo ves tú y no cambia nada de lo que puedes registrar."
     },
     "section": {
-      "title": "Horario laboral y ausencias",
-      "subtitle": "Tus horas previstas, los festivos que sigues y los días que no estás. Solo sirve para planificar. Puedes registrar tiempo cualquier día."
+      "title": "Horario de trabajo",
+      "subtitle": "Tus horas previstas y los festivos que sigues. Solo para planificar. Puedes registrar tiempo cualquier día."
     },
     "pattern": {
       "title": "Horas previstas",
@@ -1225,8 +1226,6 @@
       "add": "Añadir ausencia",
       "edit": "Editar ausencia",
       "hint": "Solo el tipo y los días. No hace falta dar un motivo.",
-      "empty": "Sin ausencias",
-      "emptyMessage": "Cuando no estés, añádelo aquí para que tu capacidad sea correcta.",
       "type": "Tipo",
       "days": "Días",
       "halfDay": "Medio día",
@@ -1237,7 +1236,8 @@
       "deleteConfirm": "¿Quieres eliminar esta ausencia?",
       "saved": "Ausencia guardada.",
       "deleted": "Ausencia eliminada.",
-      "halfDaySpan": "{{days}}, medio día"
+      "halfDaySpan": "{{days}}, medio día",
+      "movedHint": "Regístralas, solicítalas y gestiónalas en el registro de tiempo, junto al calendario."
     },
     "admin": {
       "cardTitle": "Festivos",
@@ -1289,7 +1289,7 @@
     "days_plural": "{{days}} días",
     "kind": {
       "vacation": "Vacaciones",
-      "sick": "Enfermedad",
+      "sick": "Baja por enfermedad",
       "special": "Permiso especial",
       "unpaid": "Sin sueldo",
       "parental": "Permiso parental",
@@ -1331,7 +1331,7 @@
     },
     "type": {
       "vacation": "Vacaciones",
-      "sick": "Enfermedad",
+      "sick": "Baja por enfermedad",
       "other": "Otros"
     },
     "icon": {
@@ -1493,7 +1493,6 @@
       "remaining": "Resto",
       "notGranted": "Aún sin asignar",
       "notGrantedHint": "Para este año todavía no hay ningún derecho registrado.",
-      "unlimited": "Sin cupo",
       "expiresOn": "Lo traspasado del año anterior caduca el {{date}}",
       "belowMinimum": "Eso es menos que las {{days}} días de vacaciones mínimas legales para tu semana de {{week}} días (§ 3 BUrlG). Pregunta a quien gestiona las ausencias.",
       "empty": "Aún no hay saldos de ausencia",
@@ -1501,17 +1500,17 @@
       "journal": "Diario",
       "journalEmpty": "Aún no hay movimientos",
       "journalEmptyMessage": "Las asignaciones, las reservas y las correcciones aparecen aquí.",
-      "manage": "Gestionar ausencias"
+      "manage": "Gestionar ausencias",
+      "manageTypes": "Gestionar tipos",
+      "noEntries": "Todavía sin registros"
     },
     "calendar": {
       "requested": "Solicitado",
-      "requestedHint": "Has solicitado este día. Aún no hay decisión y se puede seguir registrando tiempo en él."
+      "requestedHint": "Has solicitado este día. Aún no hay decisión y se puede seguir registrando tiempo en él.",
+      "open": "Abrir ausencia"
     },
     "request": {
-      "pageTitle": "Solicitudes de ausencia",
-      "moduleOff": "Este servidor no gestiona ausencias.",
       "ask": "Solicitar ausencia",
-      "open": "Mis solicitudes",
       "title": "Solicitar ausencia",
       "subtitle": "Los días salen de tu semana y de tu calendario de festivos.",
       "type": "Tipo de ausencia",
@@ -1552,25 +1551,19 @@
       "reason": "Motivo",
       "reasonRequiredHint": "Un rechazo tiene que decir por qué (§ 7 ap. 1 de la ley alemana de vacaciones).",
       "reasonOptionalHint": "Opcional, y lo leerán las personas implicadas.",
-      "noHistory": "A esta solicitud todavía no le ha pasado nada.",
-      "scope": {
-        "mine": "Mías",
-        "inbox": "Por resolver"
-      },
-      "empty": {
-        "mine": "Aún no hay solicitudes",
-        "inbox": "Nada por resolver"
-      },
-      "emptyMessage": {
-        "mine": "Las ausencias que solicites aparecerán aquí, con lo que pasó con ellas.",
-        "inbox": "Las solicitudes que esperan tu decisión aparecerán aquí."
-      },
       "status": {
         "submitted": "Pendiente",
         "approved": "Aprobada",
         "rejected": "Rechazada",
         "withdrawn": "Retirada",
         "cancelled": "Cancelada"
+      },
+      "edited": "Solicitud actualizada.",
+      "editTitle": "Editar solicitud",
+      "saveEdit": "Guardar cambios",
+      "history": {
+        "edited": "Modificada",
+        "shortened": "Acortada"
       }
     },
     "sick": {
@@ -1583,6 +1576,46 @@
       "reported": "Enfermedad notificada.",
       "reportedAndReturned": "Enfermedad notificada. {{days}} de vacaciones han vuelto a tu saldo.",
       "explainer": "Nadie tiene que aprobar esto y ningún justificante va en hinata. Acuérdate de notificar la enfermedad también a tu empleador: los días de vacaciones aprobados sobre los que cae la enfermedad vuelven solos a tu saldo."
+    },
+    "sheet": {
+      "title": "Ausencia",
+      "halfDay": "Medio día",
+      "history": "Historial",
+      "substitute": "Sustituto: {{name}}",
+      "startedHint": "Esta ausencia ya ha empezado. Ahora solo quien gestiona las ausencias puede cancelarla.",
+      "fromRequest": "Esta ausencia se aprobó mediante una solicitud y solo cambia a través de ella.",
+      "askAgain": "Volver a solicitar",
+      "entered": "Registrada",
+      "reported": "Baja comunicada"
+    },
+    "view": {
+      "title": "Ausencias",
+      "scope": {
+        "mine": "Mías",
+        "requests": "Solicitudes",
+        "inbox": "Por decidir",
+        "balances": "Saldos"
+      },
+      "search": "Buscar ausencias",
+      "type": "Tipo",
+      "allTypes": "Todos los tipos",
+      "newestFirst": "Más recientes primero",
+      "oldestFirst": "Más antiguas primero",
+      "pending": "Pendientes de decisión",
+      "settled": "Registradas y aprobadas",
+      "empty": {
+        "mine": "Aún no hay ausencias",
+        "requests": "Aún no hay solicitudes",
+        "inbox": "Nada por decidir"
+      },
+      "emptyMessage": {
+        "mine": "Cuando no estés, regístralo aquí o en el calendario para que tu planificación sea correcta.",
+        "requests": "Todo lo que solicites aparece aquí junto con la decisión.",
+        "inbox": "Aquí aparecen las solicitudes que esperan tu decisión."
+      },
+      "noMatch": "Sin resultados",
+      "noMatchMessage": "Ninguna ausencia coincide con estos filtros.",
+      "clearFilters": "Quitar filtros"
     }
   },
   "projects": {
@@ -2007,7 +2040,9 @@
       "logTime": "Registrar tiempo",
       "focusMode": "Modo concentración",
       "time": "Tiempo",
-      "timesheet": "Parte de horas"
+      "timesheet": "Parte de horas",
+      "absences": "Ausencias",
+      "askAbsence": "Solicitar ausencia"
     }
   },
   "settings": {

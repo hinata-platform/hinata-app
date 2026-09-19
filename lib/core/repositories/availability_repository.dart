@@ -42,17 +42,30 @@ class AvailabilityRepository {
 
   // --- absences ----------------------------------------------------------------
 
-  /// One page of the reader's absences from [from] on, newest first.
+  /// One page of the reader's absences touching [from]–[to], newest first —
+  /// or oldest first with [oldestFirst]. [query] finds words in the note;
+  /// [typeId] keeps one operator type, [type] one plain type.
   Future<PageResult<TimeOff>> timeOff({
     DateTime? from,
+    DateTime? to,
+    String? query,
+    String? typeId,
+    TimeOffType? type,
+    bool oldestFirst = false,
     int page = 0,
     int size = 50,
   }) async {
+    final words = query?.trim() ?? '';
     final data =
         await _api.get(
               '/api/v1/availability/time-off',
               query: {
                 if (from != null) 'from': formatDateOnly(from),
+                if (to != null) 'to': formatDateOnly(to),
+                if (words.isNotEmpty) 'q': words,
+                'typeId': ?typeId,
+                if (type != null) 'type': type.wire,
+                if (oldestFirst) 'sort': 'oldest',
                 'page': page,
                 'size': size,
               },

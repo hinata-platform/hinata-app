@@ -610,3 +610,101 @@ class GlassFilterChip<T> extends StatelessWidget {
     );
   }
 }
+
+/// A docked filter: a glass pill that opens a picker, wearing the amber wash
+/// when it is narrowing something.
+///
+/// Its proportions are the audit log's, deliberately — one toolbar idiom in the
+/// app rather than two. [kGlassControlHeight] is shorter than the search field
+/// above it, which is what the token exists for.
+class GlassFilterPill extends StatelessWidget {
+  const GlassFilterPill({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+    this.chevron = true,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool active;
+
+  /// Whether the pill shows it opens something. A pill that toggles in place —
+  /// an order, say — has nothing to drop down.
+  final bool chevron;
+
+  /// Receives the pill's own rectangle on screen, so what it opens can hang off
+  /// it on a wide window instead of rising out of the bottom of the display.
+  /// Measured here rather than by the caller: the caller holds the page's
+  /// context, and the page is the whole page.
+  ///
+  /// Null when the pill is no longer on screen, which is an answer and not a
+  /// failure — the pickers read it as "no anchor" and fall back to the sheet
+  /// rather than pinning a popover to the top-left corner of the display.
+  final ValueChanged<Rect?> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active ? AppColors.accentStrong : AppColors.inkSoft;
+    return GlassPill(
+      height: kGlassControlHeight,
+      active: active,
+      onTap: () => onTap(_rectOf(context)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 7),
+            ConstrainedBox(
+              // A project name can be long; the pill may not grow with it.
+              constraints: const BoxConstraints(maxWidth: 150),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+                  color: active ? AppColors.accentStrong : AppColors.ink,
+                ),
+              ),
+            ),
+            if (chevron) ...[
+              const SizedBox(width: 4),
+              Icon(LucideIcons.chevronDown, size: 13, color: color),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Undoes every filter at once — icon-only, matched to the pill height.
+class GlassClearFiltersPill extends StatelessWidget {
+  const GlassClearFiltersPill({super.key, required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => GlassPill(
+    height: kGlassControlHeight,
+    onTap: onTap,
+    child: SizedBox(
+      width: kGlassControlHeight,
+      child: Icon(LucideIcons.filterX, size: 16, color: AppColors.inkSoft),
+    ),
+  );
+}
+
+/// The on-screen rectangle of the widget [context] belongs to, or null when it
+/// is not laid out — which the pickers read as "no anchor".
+Rect? _rectOf(BuildContext context) {
+  final box = context.findRenderObject() as RenderBox?;
+  if (box == null || !box.hasSize || !box.attached) return null;
+  return box.localToGlobal(Offset.zero) & box.size;
+}

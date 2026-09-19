@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/blocs/app_config_bloc.dart';
+import 'package:hinata/core/blocs/my_absences_cubit.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/blocs/time_privacy_cubit.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
@@ -64,6 +65,9 @@ void main() {
   );
 
   late PageChromeController chrome;
+
+  /// The shared absences cubit the last pumped page was given.
+  FakeMyAbsencesCubit? myAbsences;
   setUp(() => chrome = PageChromeController());
 
   const phone = Size(402, 874);
@@ -119,6 +123,16 @@ void main() {
                     BlocProvider<AppConfigBloc>(
                       create: (_) =>
                           FakeAppConfig(absenceManagement: absenceManagement),
+                    ),
+                    BlocProvider<MyAbsencesCubit>(
+                      create: (_) => myAbsences = FakeMyAbsencesCubit(
+                        managed: absenceManagement,
+                        pending:
+                            absenceManagement &&
+                                absences is _FakeAbsenceRepository
+                            ? absences.requests
+                            : const [],
+                      ),
                     ),
                   ],
                   child: const TimeCalendarScreen(),
@@ -545,9 +559,8 @@ void main() {
     expect(find.text('time.entry.edit'), findsWidgets);
   });
 
-  testWidgets('a long press on a month day opens a new entry on that day', (
-    tester,
-  ) async {
+  testWidgets('a long press on a month day offers an entry or an absence on '
+      'that day', (tester) async {
     await pump(tester, _FakeTimeRepository());
     await tester.ensureVisible(find.text('time.calendar.month'));
     await tester.tap(find.text('time.calendar.month'));
@@ -561,8 +574,15 @@ void main() {
     await gesture.up();
     await tester.pumpAndSettle();
 
+    // Without absence management the absence is entered, not asked for.
+    expect(find.text('availability.timeOff.add'), findsOneWidget);
+    expect(find.text('absence.sick.report'), findsNothing);
+
+    // The menu's row, not the head's button of the same name.
+    await tester.tap(find.text('time.entry.new').last);
+    await tester.pumpAndSettle();
+
     expect(find.text('time.entry.subtitle'), findsOneWidget);
-    expect(find.text('time.entry.new'), findsWidgets);
   });
 
   testWidgets('paging back asks for the week before', (tester) async {
@@ -753,12 +773,15 @@ void main() {
   testWidgets('with absence management off nothing is asked of it', (
     tester,
   ) async {
-    final absences = _FakeAbsenceRepository();
-    await pump(tester, _FakeTimeRepository(), absences: absences);
+    await pump(tester, _FakeTimeRepository());
 
-    // A flag that is off means no request, not a 404 on every visit — the
-    // shape A1 settled after the balance panel asked anyway.
-    expect(absences.askedStatus, isNull);
+    // A flag that is off means no hatch and nothing asked of the module: the
+    // shared cubit is told the flag and answers without a request.
+    final grid = tester.widget<TimeGrid>(find.byType(TimeGrid).first);
+    expect(
+      grid.layers.map((layer) => layer.id),
+      isNot(contains('absence-requested')),
+    );
   });
 
   testWidgets(
@@ -781,8 +804,8 @@ void main() {
         absences: absences,
       );
 
-      // Only what nobody has decided: a settled absence is already a marking.
-      expect(absences.askedStatus, AbsenceRequestStatus.submitted);
+      // The screen asks the session's one read of them, never the server.
+      expect(myAbsences?.loads, greaterThan(0));
 
       final grid = tester.widget<TimeGrid>(find.byType(TimeGrid).first);
       final hatch = grid.layers.firstWhere(

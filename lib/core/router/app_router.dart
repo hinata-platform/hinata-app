@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import '../../features/account/account_screen.dart';
 import '../../features/admin/admin_screen.dart';
 import '../../features/absences/absence_entitlements_screen.dart';
-import '../../features/absences/absence_requests_screen.dart';
 import '../../features/absences/absence_types_screen.dart';
 import '../../features/admin/holidays/admin_holidays_screen.dart';
 import '../../features/admin/users/user_management_screen.dart';
@@ -42,6 +41,7 @@ import '../../features/shell/app_shell.dart';
 import '../../features/shell/not_found_screen.dart';
 import '../../features/teams/team_detail_screen.dart';
 import '../../features/teams/teams_screen.dart';
+import '../../features/time/absences_screen.dart';
 import '../../features/time/approvals_screen.dart';
 import '../../features/time/time_calendar_screen.dart';
 import '../../features/time/time_focus_screen.dart';
@@ -504,6 +504,21 @@ GoRouter buildRouter({
               ),
             ),
           ),
+          // Days away, beside the calendar they are planned in (HIN-117).
+          // `scope` names the list it opens on — `requests`, or `inbox` for a
+          // notification about somebody else's request.
+          GoRoute(
+            path: '/time/absences',
+            pageBuilder: (_, state) => _transition(
+              state,
+              timeModulePage(
+                advancedTime:
+                    appConfig.state.meta?.advancedTimeTracking ?? false,
+                view: TimeView.absences,
+                scope: state.uri.queryParameters['scope'],
+              ),
+            ),
+          ),
           GoRoute(
             path: '/watched',
             pageBuilder: (_, state) =>
@@ -583,22 +598,16 @@ GoRouter buildRouter({
             pageBuilder: (_, state) =>
                 _transition(state, const AbsenceEntitlementsScreen()),
           ),
-          // Asking for time off and deciding it (HIN-117). Everybody's page,
-          // unlike the two above: the inbox half is simply empty for whoever
-          // decides nothing.
+          // Where requests used to live before absences moved into the time
+          // module. Notifications already sent link here, and the server still
+          // writes these paths, so both land on the list they always meant.
           GoRoute(
             path: '/absences/requests',
-            pageBuilder: (_, state) =>
-                _transition(state, const AbsenceRequestsScreen()),
+            redirect: (_, _) => '/time/absences?scope=requests',
           ),
-          // The same page opened on the other list. Its own path because a
-          // notification about somebody else's request links here, and a query
-          // parameter would be a link that lands on the wrong half whenever a
-          // client dropped it.
           GoRoute(
             path: '/absences/inbox',
-            pageBuilder: (_, state) =>
-                _transition(state, const AbsenceRequestsScreen(inbox: true)),
+            redirect: (_, _) => '/time/absences?scope=inbox',
           ),
         ],
       ),
@@ -617,6 +626,7 @@ GoRouter buildRouter({
 Widget timeModulePage({
   required bool advancedTime,
   TimeView view = TimeView.list,
+  String? scope,
 }) {
   if (!advancedTime) return const NotFoundScreen(standalone: false);
   return switch (view) {
@@ -625,6 +635,7 @@ Widget timeModulePage({
     // The same grid the base route draws, told that it belongs to the module:
     // paged rows, and a cell of your own that can be typed into.
     TimeView.timesheet => const TimesheetScreen(moduleView: true),
+    TimeView.absences => TimeAbsencesScreen(scope: scope),
     // Reachable even while approvals are switched off, and deliberately: the
     // route answers with what is there, which is then nothing. Gating it here
     // would turn a link somebody was sent into a not-found page on the day an

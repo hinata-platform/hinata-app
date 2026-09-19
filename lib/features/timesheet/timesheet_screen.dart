@@ -733,6 +733,8 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                       if (widget.moduleView) ...[
                         const TimeViewSwitcher(current: TimeView.timesheet),
                         const SizedBox(width: 8),
+                        const AbsenceMenuButton(),
+                        const SizedBox(width: 8),
                       ],
                       _todayButton(),
                     ],

@@ -927,7 +927,8 @@
       "list": "列表",
       "calendar": "日历",
       "timesheet": "工时表",
-      "approvals": "审批"
+      "approvals": "审批",
+      "absences": "缺勤"
     },
     "calendar": {
       "untimed": "无时段",
@@ -1203,8 +1204,8 @@
       "hint": "这段时间内你的计划工时（扣除节假日和请假），和你已记录的工时并排显示。只有你能看到，也不会影响你能记录什么。"
     },
     "section": {
-      "title": "工作时间和请假",
-      "subtitle": "你的计划工时、你所遵循的节假日，以及你请假的日子。仅用于计划。每一天都可以记录工时。"
+      "title": "工作时间",
+      "subtitle": "你的计划工时和遵循的节假日。仅用于计划。你可以在任何一天记录时间。"
     },
     "pattern": {
       "title": "计划工时",
@@ -1225,8 +1226,6 @@
       "add": "添加请假",
       "edit": "编辑请假",
       "hint": "只需类型和日期，不需要填写原因。",
-      "empty": "没有请假记录",
-      "emptyMessage": "如果你请假，请在这里添加，这样你的可用工时才准确。",
       "type": "类型",
       "days": "日期",
       "halfDay": "半天",
@@ -1237,7 +1236,8 @@
       "deleteConfirm": "要删除这条请假记录吗？",
       "saved": "请假已保存。",
       "deleted": "请假已删除。",
-      "halfDaySpan": "{{days}}，半天"
+      "halfDaySpan": "{{days}}，半天",
+      "movedHint": "在时间记录中紧挨着日历登记、申请和管理它们。"
     },
     "admin": {
       "cardTitle": "节假日",
@@ -1289,7 +1289,7 @@
     "days_plural": "{{days}} 天",
     "kind": {
       "vacation": "休假",
-      "sick": "生病",
+      "sick": "病假",
       "special": "特别假",
       "unpaid": "无薪",
       "parental": "育儿假",
@@ -1331,7 +1331,7 @@
     },
     "type": {
       "vacation": "休假",
-      "sick": "生病",
+      "sick": "病假",
       "other": "其他"
     },
     "icon": {
@@ -1493,7 +1493,6 @@
       "remaining": "剩余",
       "notGranted": "尚未分配",
       "notGrantedHint": "本年度还没有记录任何额度。",
-      "unlimited": "没有额度",
       "expiresOn": "自上一年结转的部分将于 {{date}} 失效",
       "belowMinimum": "这少于你每周 {{week}} 天工作制下 {{days}} 天的法定最低休假（§ 3 BUrlG）。请向缺勤管理人员咨询。",
       "empty": "还没有缺勤余额",
@@ -1501,17 +1500,17 @@
       "journal": "流水",
       "journalEmpty": "还没有任何变动",
       "journalEmptyMessage": "分配、记入和更正会显示在这里。",
-      "manage": "管理缺勤"
+      "manage": "管理缺勤",
+      "manageTypes": "管理类型",
+      "noEntries": "暂无记录"
     },
     "calendar": {
       "requested": "已申请",
-      "requestedHint": "你已为这一天提交申请。尚未有结果，仍可在这一天记录工时。"
+      "requestedHint": "你已为这一天提交申请。尚未有结果，仍可在这一天记录工时。",
+      "open": "打开缺勤"
     },
     "request": {
-      "pageTitle": "请假申请",
-      "moduleOff": "本服务器不管理请假。",
       "ask": "申请请假",
-      "open": "我的申请",
       "title": "申请请假",
       "subtitle": "天数由你的周工作模式和节假日日历推导。",
       "type": "请假类型",
@@ -1549,19 +1548,6 @@
       "reason": "理由",
       "reasonRequiredHint": "驳回必须说明理由（德国联邦休假法第 7 条第 1 款）。",
       "reasonOptionalHint": "可选，相关人员会读到。",
-      "noHistory": "该申请还没有任何进展。",
-      "scope": {
-        "mine": "我的",
-        "inbox": "待处理"
-      },
-      "empty": {
-        "mine": "还没有申请",
-        "inbox": "没有待处理事项"
-      },
-      "emptyMessage": {
-        "mine": "你提交的请假会出现在这里，并显示结果。",
-        "inbox": "等待你处理的申请会出现在这里。"
-      },
       "status": {
         "submitted": "待处理",
         "approved": "已批准",
@@ -1571,7 +1557,14 @@
       },
       "holidaysIn_plural": "{{count}} 个法定节假日",
       "daysOffIn_plural": "{{count}} 个非工作日",
-      "clashes_plural": "同期还有 {{count}} 人缺席"
+      "clashes_plural": "同期还有 {{count}} 人缺席",
+      "edited": "申请已更新。",
+      "editTitle": "编辑申请",
+      "saveEdit": "保存更改",
+      "history": {
+        "edited": "已修改",
+        "shortened": "已缩短"
+      }
     },
     "sick": {
       "title": "报备病假",
@@ -1583,6 +1576,46 @@
       "reported": "病假已报备。",
       "reportedAndReturned": "病假已报备。{{days}} 休假已退回你的余额。",
       "explainer": "无需任何人批准，诊断证明也不属于 hinata。请记得同时向雇主报备病情 —— 病假落入的已批准休假天数会自动退回你的余额。"
+    },
+    "sheet": {
+      "title": "缺勤",
+      "halfDay": "半天",
+      "history": "历史",
+      "substitute": "代理人：{{name}}",
+      "startedHint": "此假期已经开始。现在只有缺勤管理人员可以取消。",
+      "fromRequest": "此缺勤由申请批准，只能通过该申请更改。",
+      "askAgain": "重新申请",
+      "entered": "已登记",
+      "reported": "已报病假"
+    },
+    "view": {
+      "title": "缺勤",
+      "scope": {
+        "mine": "我的",
+        "requests": "申请",
+        "inbox": "待决定",
+        "balances": "余额"
+      },
+      "search": "搜索缺勤",
+      "type": "类型",
+      "allTypes": "所有类型",
+      "newestFirst": "最新在前",
+      "oldestFirst": "最早在前",
+      "pending": "等待决定",
+      "settled": "已登记和已批准",
+      "empty": {
+        "mine": "还没有缺勤",
+        "requests": "还没有申请",
+        "inbox": "没有待决定的内容"
+      },
+      "emptyMessage": {
+        "mine": "不在时请在这里或日历中登记，这样你的计划才准确。",
+        "requests": "你提交的所有申请及其结果都会显示在这里。",
+        "inbox": "等待你决定的申请会显示在这里。"
+      },
+      "noMatch": "没有匹配项",
+      "noMatchMessage": "没有符合这些筛选条件的缺勤。",
+      "clearFilters": "清除筛选"
     }
   },
   "projects": {
@@ -2007,7 +2040,9 @@
       "logTime": "记录工时",
       "focusMode": "专注模式",
       "time": "工时",
-      "timesheet": "工时表"
+      "timesheet": "工时表",
+      "absences": "缺勤",
+      "askAbsence": "申请缺勤"
     }
   },
   "settings": {

@@ -927,7 +927,8 @@
       "list": "リスト",
       "calendar": "カレンダー",
       "timesheet": "タイムシート",
-      "approvals": "承認"
+      "approvals": "承認",
+      "absences": "休暇"
     },
     "calendar": {
       "untimed": "時刻なし",
@@ -1203,8 +1204,8 @@
       "hint": "この期間の予定時間から祝日と不在を引いたものを、記録した時間と並べて表示します。表示されるのはあなただけで、記録できる内容は何も変わりません。"
     },
     "section": {
-      "title": "勤務時間と不在",
-      "subtitle": "予定時間、あなたに適用される祝日、不在の日です。計画のためだけのもので、どの日にも時間を記録できます。"
+      "title": "勤務時間",
+      "subtitle": "予定時間と従う祝日です。計画用のみで、どの日にも時間を記録できます。"
     },
     "pattern": {
       "title": "予定時間",
@@ -1225,8 +1226,6 @@
       "add": "不在を追加",
       "edit": "不在を編集",
       "hint": "種類と日付だけです。理由は必要ありません。",
-      "empty": "不在の予定はありません",
-      "emptyMessage": "不在のときはここに追加すると、稼働可能時間が正しく保たれます。",
       "type": "種類",
       "days": "日付",
       "halfDay": "半日",
@@ -1237,7 +1236,8 @@
       "deleteConfirm": "この不在を削除しますか？",
       "saved": "不在を保存しました。",
       "deleted": "不在を削除しました。",
-      "halfDaySpan": "{{days}}、半日"
+      "halfDaySpan": "{{days}}、半日",
+      "movedHint": "登録・申請・管理は、カレンダーのすぐ隣の時間記録で行えます。"
     },
     "admin": {
       "cardTitle": "祝日",
@@ -1289,7 +1289,7 @@
     "days_plural": "{{days}} 日",
     "kind": {
       "vacation": "休暇",
-      "sick": "病気",
+      "sick": "病欠",
       "special": "特別休暇",
       "unpaid": "無給",
       "parental": "育児休業",
@@ -1331,7 +1331,7 @@
     },
     "type": {
       "vacation": "休暇",
-      "sick": "病気",
+      "sick": "病欠",
       "other": "その他"
     },
     "icon": {
@@ -1493,7 +1493,6 @@
       "remaining": "残り",
       "notGranted": "まだ付与されていません",
       "notGrantedHint": "この年の付与はまだ記録されていません。",
-      "unlimited": "残数なし",
       "expiresOn": "前年からの繰り越しは {{date}} に失効します",
       "belowMinimum": "これはあなたの週 {{week}} 日勤務に対する法定最低休暇 {{days}} 日を下回ります（§ 3 BUrlG）。不在の管理者にご確認ください。",
       "empty": "不在の残数はまだありません",
@@ -1501,17 +1500,17 @@
       "journal": "履歴",
       "journalEmpty": "まだ動きはありません",
       "journalEmptyMessage": "付与・取得・訂正がここに並びます。",
-      "manage": "不在を管理"
+      "manage": "不在を管理",
+      "manageTypes": "区分を管理",
+      "noEntries": "まだ記録はありません"
     },
     "calendar": {
       "requested": "申請中",
-      "requestedHint": "この日を申請済みです。まだ決定されておらず、引き続き時間を記録できます。"
+      "requestedHint": "この日を申請済みです。まだ決定されておらず、引き続き時間を記録できます。",
+      "open": "休暇を開く"
     },
     "request": {
-      "pageTitle": "休暇申請",
-      "moduleOff": "このサーバーは休暇を管理しません。",
       "ask": "休暇を申請",
-      "open": "自分の申請",
       "title": "休暇を申請",
       "subtitle": "日数はあなたの週と祝日カレンダーから求められます。",
       "type": "休暇の種類",
@@ -1549,19 +1548,6 @@
       "reason": "理由",
       "reasonRequiredHint": "却下には理由が必要です（ドイツ連邦休暇法第7条1項）。",
       "reasonOptionalHint": "任意ですが、関係者が読みます。",
-      "noHistory": "この申請にはまだ何も起きていません。",
-      "scope": {
-        "mine": "自分の",
-        "inbox": "要対応"
-      },
-      "empty": {
-        "mine": "申請はまだありません",
-        "inbox": "対応するものはありません"
-      },
-      "emptyMessage": {
-        "mine": "申請した休暇とその結果がここに並びます。",
-        "inbox": "あなたの判断を待つ申請がここに並びます。"
-      },
       "status": {
         "submitted": "待機中",
         "approved": "承認済み",
@@ -1571,7 +1557,14 @@
       },
       "holidaysIn_plural": "祝日 {{count}} 日",
       "daysOffIn_plural": "非勤務日 {{count}} 日",
-      "clashes_plural": "同じ期間に他に {{count}} 人不在"
+      "clashes_plural": "同じ期間に他に {{count}} 人不在",
+      "edited": "申請を更新しました。",
+      "editTitle": "申請を編集",
+      "saveEdit": "変更を保存",
+      "history": {
+        "edited": "変更",
+        "shortened": "短縮"
+      }
     },
     "sick": {
       "title": "病欠を届け出る",
@@ -1583,6 +1576,46 @@
       "reported": "病欠を届け出ました。",
       "reportedAndReturned": "病欠を届け出ました。休暇 {{days}} が残高に戻りました。",
       "explainer": "誰の承認も必要なく、診断書を hinata に入れる必要はありません。勤務先への届出も忘れずに — 病欠が重なった承認済みの休暇日数は自動で残高に戻ります。"
+    },
+    "sheet": {
+      "title": "休暇",
+      "halfDay": "半日",
+      "history": "履歴",
+      "substitute": "代理: {{name}}",
+      "startedHint": "この休暇はすでに始まっています。取り消せるのは休暇の管理者だけです。",
+      "fromRequest": "この休暇は申請で承認されたため、申請からのみ変更できます。",
+      "askAgain": "再申請",
+      "entered": "登録済み",
+      "reported": "病欠を連絡済み"
+    },
+    "view": {
+      "title": "休暇",
+      "scope": {
+        "mine": "自分",
+        "requests": "申請",
+        "inbox": "要判断",
+        "balances": "残日数"
+      },
+      "search": "休暇を検索",
+      "type": "区分",
+      "allTypes": "すべての区分",
+      "newestFirst": "新しい順",
+      "oldestFirst": "古い順",
+      "pending": "判断待ち",
+      "settled": "登録済み・承認済み",
+      "empty": {
+        "mine": "休暇はまだありません",
+        "requests": "申請はまだありません",
+        "inbox": "判断が必要なものはありません"
+      },
+      "emptyMessage": {
+        "mine": "不在のときはここかカレンダーに登録すると、計画が正しくなります。",
+        "requests": "申請したものは、その結果とともにここに表示されます。",
+        "inbox": "あなたの判断を待つ申請がここに表示されます。"
+      },
+      "noMatch": "該当なし",
+      "noMatchMessage": "条件に合う休暇はありません。",
+      "clearFilters": "フィルターを解除"
     }
   },
   "projects": {
@@ -2007,7 +2040,9 @@
       "logTime": "作業時間を記録",
       "focusMode": "集中モード",
       "time": "時間",
-      "timesheet": "工数表"
+      "timesheet": "工数表",
+      "absences": "休暇",
+      "askAbsence": "休暇を申請"
     }
   },
   "settings": {
