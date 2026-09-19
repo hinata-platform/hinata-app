@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hinata/core/blocs/app_config_bloc.dart';
+import 'package:hinata/core/blocs/my_absences_cubit.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/blocs/time_preferences_cubit.dart';
@@ -151,6 +152,14 @@ void main() {
                       create: (_) =>
                           FakeAppConfig(absenceManagement: absenceManagement),
                     ),
+                    BlocProvider<MyAbsencesCubit>(
+                      create: (_) => FakeMyAbsencesCubit(
+                        managed: absenceManagement,
+                        pending: absenceManagement && absences is _FakeAbsences
+                            ? absences.requests
+                            : const [],
+                      ),
+                    ),
                   ],
                   child: const TimeScreen(),
                 ),
@@ -160,6 +169,18 @@ void main() {
         ),
       ],
     );
+    // A wide claim gets a surface that wide: on the default 800 points the
+    // head is laid out for room it does not get. A phone's claim keeps the
+    // wider surface, as the test font draws every glyph a full em wide and
+    // the rows would run out of room a phone with real text has.
+    final view =
+        TestWidgetsFlutterBinding.instance.platformDispatcher.views.single;
+    if (size.width * view.devicePixelRatio > view.physicalSize.width) {
+      view
+        ..physicalSize = size
+        ..devicePixelRatio = 1;
+      addTearDown(view.reset);
+    }
     return MediaQuery(
       data: MediaQueryData(size: size, padding: padding),
       child: MaterialApp.router(

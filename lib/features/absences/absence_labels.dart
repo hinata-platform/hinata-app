@@ -4,6 +4,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
@@ -125,3 +126,16 @@ String _decimal(BuildContext context) =>
     }.contains(Localizations.localeOf(context).languageCode)
     ? ','
     : '.';
+
+/// "15 – 19 Jun 2026", or one date where both ends are the same day.
+///
+/// One place for it: the request form, the sick report, the request card and
+/// the absence sheet all name a span, and two copies had already drifted to
+/// two formats once.
+String spanLabel(BuildContext context, DateTime from, DateTime to) {
+  final format = DateFormat.yMMMd(
+    Localizations.localeOf(context).toLanguageTag(),
+  );
+  if (DateUtils.isSameDay(from, to)) return format.format(from);
+  return '${format.format(from)} – ${format.format(to)}';
+}
