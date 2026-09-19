@@ -8,7 +8,6 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/time_policy_models.dart';
 import '../../core/repositories/time_repository.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/theme/hue_colors.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../sprint/modals/glass_modal.dart'
@@ -203,9 +202,6 @@ class _TagPickerBodyState extends State<_TagPickerBody> {
               counterText: '',
               hintText: context.t('time.tags.search'),
               prefixIcon: const Icon(LucideIcons.tag, size: 16),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-              ),
             ),
           ),
         ),

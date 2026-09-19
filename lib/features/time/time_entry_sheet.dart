@@ -17,6 +17,7 @@ import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/time_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/glass_field.dart';
 import '../../core/util/duration_input.dart';
 import '../../core/widgets/field_button.dart';
 import '../../core/widgets/hive_widgets.dart';
@@ -902,7 +903,7 @@ class _ModeButton extends StatelessWidget {
           color: selected ? AppColors.accentSoft : Colors.transparent,
           borderRadius: BorderRadius.circular(AppTheme.radiusControl),
           border: Border.all(
-            color: selected ? AppColors.accentLine : AppColors.hairline,
+            color: selected ? AppColors.accentLine : GlassFieldStyle.rim,
           ),
         ),
         child: Row(
@@ -1023,10 +1024,7 @@ class _MeasuredInterval extends StatelessWidget {
     );
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        border: Border.all(color: AppColors.hairline),
-      ),
+      decoration: GlassFieldStyle.decoration,
       child: Row(
         children: [
           Icon(LucideIcons.timer, size: 16, color: AppColors.inkSoft),
@@ -1038,22 +1036,13 @@ class _MeasuredInterval extends StatelessWidget {
               children: [
                 Text(
                   context.t('time.entry.measured'),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.inkFaint,
-                  ),
+                  style: GlassFieldStyle.caption,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${localizations.formatMediumDate(start)} · '
                   '${at(start)} – ${at(end)}',
-                  // Not const: AppColors' neutrals are theme-aware getters.
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.ink,
-                  ),
+                  style: GlassFieldStyle.value,
                 ),
               ],
             ),

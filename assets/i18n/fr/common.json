@@ -30,7 +30,11 @@
     "saved": "Enregistré",
     "yes": "Oui",
     "no": "Non",
-    "remove": "Retirer"
+    "remove": "Retirer",
+    "picker": {
+      "typeTime": "Saisir l’heure",
+      "typeDuration": "Saisir la durée"
+    }
   },
   "delete": {
     "cta": "Supprimer",

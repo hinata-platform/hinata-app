@@ -10,6 +10,7 @@ import '../models/core_models.dart';
 import '../repositories/user_repository.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../theme/glass_field.dart';
 import 'hive_loader.dart';
 import 'hive_widgets.dart' show HiveAvatar, hiveEase;
 import '../../features/sprint/modals/glass_modal.dart'
@@ -108,11 +109,7 @@ class PersonPickerField extends StatelessWidget {
         // 44-point row the text fields beside it stand in, so a row of fields
         // stays a row.
         padding: const EdgeInsets.fromLTRB(11, 9, 11, 9),
-        decoration: BoxDecoration(
-          color: AppColors.surface.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(color: AppColors.hairline),
-        ),
+        decoration: GlassFieldStyle.decoration,
         child: Row(
           children: [
             if (picked != null) ...[
@@ -133,15 +130,9 @@ class PersonPickerField extends StatelessWidget {
                     : _nameOf(context, picked, isMe),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: picked == null
-                      ? FontWeight.w400
-                      : FontWeight.w600,
-                  color: picked == null
-                      ? AppColors.textSecondary
-                      : AppColors.textPrimary,
-                ),
+                style: picked == null
+                    ? GlassFieldStyle.placeholder
+                    : GlassFieldStyle.value,
               ),
             ),
             const SizedBox(width: 8),

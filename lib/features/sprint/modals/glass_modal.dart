@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
@@ -16,11 +18,16 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/field_border.dart';
+import '../../../core/theme/glass_field.dart';
+import '../../../core/util/duration_input.dart';
+import '../../../core/util/time_input.dart';
 import '../../../core/widgets/glass_panel.dart';
 import '../../../core/widgets/hive_widgets.dart';
 import '../../search/search_tokens.dart';
 
 part 'glass_modal.fields.dart';
+part 'glass_modal.wheels.dart';
 
 /// Where a modal stops being a card and becomes a bottom sheet. The app's
 /// φ-stepped phone breakpoint, shared with the search palette.
@@ -117,8 +124,14 @@ Future<T?> showGlassModal<T>(
   return Navigator.of(context, rootNavigator: true).push<T>(
     _GlassDialogRoute<T>(
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-      pageBuilder: (_, _, _) =>
-          _GlassModalScaffold(width: width, builder: builder),
+      pageBuilder: (_, _, _) => _GlassModalScaffold(
+        width: width,
+        // A form (the modals that turn into a sheet on a phone) stands on
+        // the same thick paper here as it does there; a confirmation or a
+        // picker stays on thin glass.
+        thick: adaptive,
+        builder: builder,
+      ),
     ),
   );
 }
@@ -334,7 +347,7 @@ class _GlassBottomSheet extends StatelessWidget {
                     ),
                   ),
                 ],
-                Flexible(child: builder(context)),
+                Flexible(child: GlassFormTheme(child: builder(context))),
               ],
             ),
           ),
@@ -602,7 +615,10 @@ class _AnchoredPanel extends StatelessWidget {
               Positioned.fill(
                 child: IgnorePointer(child: ColoredBox(color: tokens.tint)),
               ),
-              Material(type: MaterialType.transparency, child: child),
+              Material(
+                type: MaterialType.transparency,
+                child: GlassFormTheme(child: child),
+              ),
               // The specular rim: the edge that separates the panel from what
               // it floats over. Every other glass surface in the app draws one
               // — this one never did, so it ended where its shadow did.
@@ -1465,8 +1481,10 @@ Widget glassWoltSurface(Widget pageContent) {
           // muddy here. The glass rim, soft translucency and floating shadow
           // keep the liquid-glass identity; small popovers keep the thin fill.
           child: ColoredBox(
-            color: AppColors.canvas.withValues(alpha: dark ? 0.84 : 0.88),
-            child: pageContent,
+            color: AppColors.canvas.withValues(
+              alpha: glassFormWashAlpha(dark: dark),
+            ),
+            child: GlassFormTheme(child: pageContent),
           ),
         ),
       );
@@ -1475,9 +1493,17 @@ Widget glassWoltSurface(Widget pageContent) {
 }
 
 class _GlassModalScaffold extends StatefulWidget {
-  const _GlassModalScaffold({required this.width, required this.builder});
+  const _GlassModalScaffold({
+    required this.width,
+    required this.thick,
+    required this.builder,
+  });
 
   final double width;
+
+  /// Whether the body stands on the thick paper wash ([glassFormWashAlpha])
+  /// rather than the thin glass fill.
+  final bool thick;
   final WidgetBuilder builder;
 
   @override
@@ -1545,6 +1571,11 @@ class _GlassModalScaffoldState extends State<_GlassModalScaffold> {
       size.height,
     );
 
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final body = Material(
+      type: MaterialType.transparency,
+      child: GlassFormTheme(child: widget.builder(context)),
+    );
     final panel = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxW, maxHeight: maxH),
       child: GlassPanelShadow(
@@ -1557,14 +1588,18 @@ class _GlassModalScaffoldState extends State<_GlassModalScaffold> {
           shape: const LiquidRoundedSuperellipse(borderRadius: 26),
           settings: liquidGlassPanelSettings(
             glassFill: tokens.glassFill,
-            dark: Theme.of(context).brightness == Brightness.dark,
+            dark: dark,
           ),
           child: KeyedSubtree(
             key: _body,
-            child: Material(
-              type: MaterialType.transparency,
-              child: widget.builder(context),
-            ),
+            child: widget.thick
+                ? ColoredBox(
+                    color: AppColors.canvas.withValues(
+                      alpha: glassFormWashAlpha(dark: dark, dialog: true),
+                    ),
+                    child: body,
+                  )
+                : body,
           ),
         ),
       ),
@@ -2121,240 +2156,6 @@ Future<DateTime?> showGlassDateTimePicker(
   );
 }
 
-/// The wheel both pickers are built from: a fixed-extent list on glass, with
-/// the selected row lit rather than boxed.
-class _GlassWheel extends StatefulWidget {
-  const _GlassWheel({
-    required this.count,
-    required this.index,
-    required this.label,
-    required this.onChanged,
-    this.semanticsLabel,
-  });
-
-  final int count;
-
-  /// The selected row. Controlled, not merely initial: a picker that sets its
-  /// value from somewhere other than this wheel — the "now" shortcut, or the
-  /// meridiem wheel moving the hour — has to be able to move it, and a wheel
-  /// that only read an initial index simply ignored that.
-  final int index;
-
-  /// What row [index] reads as — already formatted, because an hour is written
-  /// differently from a minute and from a count of hours.
-  final String Function(int index) label;
-  final ValueChanged<int> onChanged;
-  final String? semanticsLabel;
-
-  @override
-  State<_GlassWheel> createState() => _GlassWheelState();
-}
-
-class _GlassWheelState extends State<_GlassWheel> {
-  late final FixedExtentScrollController _controller =
-      FixedExtentScrollController(initialItem: widget.index);
-  late int _selected = widget.index;
-
-  @override
-  void didUpdateWidget(covariant _GlassWheel oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Only when the value moved from outside. A change this wheel just reported
-    // comes back as the same index, and animating to where we already are would
-    // fight the finger that is still on it.
-    if (widget.index != _selected && _controller.hasClients) {
-      setState(() => _selected = widget.index);
-      _controller.animateToItem(
-        widget.index,
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: widget.semanticsLabel,
-      child: SizedBox(
-        height: 176,
-        child: ListWheelScrollView.useDelegate(
-          controller: _controller,
-          itemExtent: 40,
-          // A gentle curve: the app's glass is flat, and a strongly barrelled
-          // wheel would be the one skeuomorphic surface in it.
-          diameterRatio: 2.2,
-          perspective: 0.002,
-          physics: const FixedExtentScrollPhysics(),
-          onSelectedItemChanged: (index) {
-            setState(() => _selected = index);
-            widget.onChanged(index);
-          },
-          childDelegate: ListWheelChildBuilderDelegate(
-            childCount: widget.count,
-            builder: (_, index) {
-              final selected = index == _selected;
-              return Center(
-                child: AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 120),
-                  style: TextStyle(
-                    fontSize: selected ? 26 : 20,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    fontFeatures: const [ui.FontFeature.tabularFigures()],
-                    color: selected ? AppColors.ink : AppColors.inkFaint,
-                  ),
-                  child: Text(widget.label(index)),
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// The lit band behind the selected row of a set of wheels, and the wheels
-/// themselves. Shared so the two pickers cannot drift apart visually.
-class _WheelRow extends StatelessWidget {
-  const _WheelRow({required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // The selection band. Behind the wheels and ignoring pointers, so it
-          // reads as a highlight on the surface rather than a control.
-          IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                // The app's active wash, which resolves against the theme; a
-                // navy tint would be a dark band on the dark canvas.
-                color: AppColors.accentSoft,
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-              ),
-              child: const SizedBox(height: 42, width: double.infinity),
-            ),
-          ),
-          Row(children: children),
-        ],
-      ),
-    );
-  }
-}
-
-/// The separator between two wheels — a colon for a clock time, a gap for a
-/// duration (whose units are written on the wheels themselves).
-class _WheelSeparator extends StatelessWidget {
-  const _WheelSeparator({this.text});
-
-  final String? text;
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    width: 18,
-    child: text == null
-        ? null
-        : Text(
-            text!,
-            textAlign: TextAlign.center,
-            // Not const: the ink tokens are theme-aware getters, so a const
-            // style would freeze the light-mode colour into the dark theme.
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: AppColors.inkSoft,
-            ),
-          ),
-  );
-}
-
-/// The hour and minute wheels, and the meridiem wheel when the locale wants
-/// one.
-///
-/// One widget rather than a pair per picker: a modal that shows "2:30 PM" in
-/// its header and then offers a 00–23 wheel underneath is a modal that was
-/// written twice, and only one of the two copies knew about twelve-hour
-/// locales.
-class _TimeWheels extends StatelessWidget {
-  const _TimeWheels({
-    required this.value,
-    required this.use24,
-    required this.onChanged,
-  });
-
-  final TimeOfDay value;
-  final bool use24;
-  final ValueChanged<TimeOfDay> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final localizations = MaterialLocalizations.of(context);
-    return _WheelRow(
-      children: [
-        Expanded(
-          child: _GlassWheel(
-            count: use24 ? 24 : 12,
-            index: use24 ? value.hour : value.hour % 12,
-            semanticsLabel: localizations.timePickerHourLabel,
-            label: (index) => use24
-                ? index.toString().padLeft(2, '0')
-                : (index == 0 ? 12 : index).toString(),
-            onChanged: (index) => onChanged(
-              TimeOfDay(
-                // Keep the half of the day the meridiem wheel is showing.
-                hour: use24
-                    ? index
-                    : (index % 12) + (value.hour >= 12 ? 12 : 0),
-                minute: value.minute,
-              ),
-            ),
-          ),
-        ),
-        const _WheelSeparator(text: ':'),
-        Expanded(
-          child: _GlassWheel(
-            count: 60,
-            index: value.minute,
-            semanticsLabel: localizations.timePickerMinuteLabel,
-            label: (index) => index.toString().padLeft(2, '0'),
-            onChanged: (index) =>
-                onChanged(TimeOfDay(hour: value.hour, minute: index)),
-          ),
-        ),
-        if (!use24) ...[
-          const _WheelSeparator(),
-          Expanded(
-            child: _GlassWheel(
-              count: 2,
-              index: value.hour >= 12 ? 1 : 0,
-              label: (index) => index == 0
-                  ? localizations.anteMeridiemAbbreviation
-                  : localizations.postMeridiemAbbreviation,
-              onChanged: (index) => onChanged(
-                TimeOfDay(
-                  hour: (value.hour % 12) + (index == 1 ? 12 : 0),
-                  minute: value.minute,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
 /// Whether the locale writes the time on a twelve-hour clock.
 bool _isTwelveHour(TimeOfDayFormat format) =>
     format == TimeOfDayFormat.h_colon_mm_space_a ||
@@ -2400,6 +2201,7 @@ class _GlassTimePickerState extends State<_GlassTimePicker> {
           value: _value,
           use24: use24,
           onChanged: (value) => setState(() => _value = value),
+          onSubmitted: () => Navigator.of(context).pop(_value),
         ),
         const SizedBox(height: 6),
         GlassModalFooter(
@@ -2432,6 +2234,14 @@ class _GlassDurationPickerState extends State<_GlassDurationPicker> {
 
   int get _total => _hours * 60 + _minutes;
 
+  int get _max => widget.maxHours * 60 + 59;
+
+  void _set(int minutes) => setState(() {
+    final total = minutes.clamp(0, _max);
+    _hours = total ~/ 60;
+    _minutes = total % 60;
+  });
+
   /// The lengths people pick without thinking. Offered as chips because
   /// scrolling two wheels to reach "30m" is three gestures for one of the four
   /// most common answers.
@@ -2448,6 +2258,25 @@ class _GlassDurationPickerState extends State<_GlassDurationPicker> {
           subtitle: fmtDuration(context, _total),
         ),
         const SizedBox(height: 6),
+        _TypedValueField<int>(
+          value: _total,
+          format: formatDurationInput,
+          parse: (text) {
+            final minutes = parseDurationInput(text);
+            // Past the wheel's end is not a value this picker can hold; the
+            // field turns red rather than quietly clamping what was typed.
+            return minutes == null || minutes > _max ? null : minutes;
+          },
+          onChanged: _set,
+          hint: formatDurationInput(90),
+          label: context.t('common.picker.typeDuration'),
+          onSubmitted: () {
+            if (_total > 0) Navigator.of(context).pop(_total);
+          },
+          // A unit or a separator still waiting for what follows it.
+          incomplete: (text) => RegExp(r'[:.,]$').hasMatch(text),
+        ),
+        const SizedBox(height: 8),
         _WheelRow(
           children: [
             Expanded(
@@ -2484,10 +2313,7 @@ class _GlassDurationPickerState extends State<_GlassDurationPicker> {
                 _PresetChip(
                   label: fmtDuration(context, preset),
                   selected: _total == preset,
-                  onTap: () => setState(() {
-                    _hours = preset ~/ 60;
-                    _minutes = preset % 60;
-                  }),
+                  onTap: () => _set(preset),
                 ),
             ],
           ),
@@ -2633,6 +2459,7 @@ class _GlassDateTimePickerState extends State<_GlassDateTimePicker> {
                     value: _time,
                     use24: use24,
                     onChanged: (picked) => setState(() => _time = picked),
+                    onSubmitted: () => Navigator.of(context).pop(_value),
                   ),
                 )
               : Theme(

@@ -30,7 +30,11 @@
     "saved": "已保存",
     "yes": "是",
     "no": "否",
-    "remove": "移除"
+    "remove": "移除",
+    "picker": {
+      "typeTime": "输入时间",
+      "typeDuration": "输入时长"
+    }
   },
   "delete": {
     "cta": "删除",

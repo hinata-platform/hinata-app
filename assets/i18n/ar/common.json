@@ -30,7 +30,11 @@
     "saved": "تم الحفظ",
     "yes": "نعم",
     "no": "لا",
-    "remove": "إزالة"
+    "remove": "إزالة",
+    "picker": {
+      "typeTime": "اكتب الوقت",
+      "typeDuration": "اكتب المدة"
+    }
   },
   "delete": {
     "cta": "حذف",

@@ -30,7 +30,11 @@
     "saved": "सहेजा गया",
     "yes": "हाँ",
     "no": "नहीं",
-    "remove": "हटाएँ"
+    "remove": "हटाएँ",
+    "picker": {
+      "typeTime": "समय टाइप करें",
+      "typeDuration": "अवधि टाइप करें"
+    }
   },
   "delete": {
     "cta": "हटाएँ",

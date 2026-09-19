@@ -778,7 +778,6 @@ class _ReasonFormState extends State<_ReasonForm> {
           decoration: InputDecoration(
             isDense: true,
             labelText: context.t('absence.request.reason'),
-            border: const OutlineInputBorder(),
           ),
         ),
       ),
