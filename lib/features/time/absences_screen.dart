@@ -500,9 +500,18 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
     ),
   );
 
+  /// The gap over the first row of the list.
+  ///
+  /// On a phone the scopes are docked into the app bar and the filters are the
+  /// line right under them, so the two read as one head. A full gutter between
+  /// them pushed the filters a finger's width away from the pills they belong
+  /// with; 6 points leave them as close together as the title and the scopes
+  /// above. Without the dock (module off) the ordinary gutter stands.
   EdgeInsets _padding() => EdgeInsets.fromLTRB(
     context.pageGutter,
-    context.isCompact ? context.topGutter + context.pageGutter : 0,
+    context.isCompact
+        ? context.topGutter + (_managed ? 6 : context.pageGutter)
+        : 0,
     context.pageGutter,
     context.pageGutter + context.bottomGutter,
   );
