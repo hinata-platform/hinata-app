@@ -4,11 +4,14 @@ import 'package:hinata/core/models/core_models.dart' show PlatformFlags;
 import 'package:hinata/core/widgets/hive_widgets.dart' show HiveSwitch;
 import 'package:hinata/features/admin/sections/admin_app_section.dart';
 
-/// The App section's raw flag editor writes whatever name is typed into it, and
-/// a flag the server *derives* would sit there looking authoritative while
-/// changing nothing. `advanced_time_tracking` is derived from the time-tracking
-/// module's own settings, so this section may only point at the place that owns
-/// it — and must refuse to create it by hand.
+/// The Platform section speaks about a module it does not own.
+///
+/// `advanced_time_tracking` is derived from the time-tracking module's own
+/// settings, so this section may only point at the place that owns it and never
+/// offer a switch of its own — two switches for one setting is a race whose
+/// loser is whichever screen was saved last. Project templates are the other
+/// way round: this section *does* own them, and writes a stored override rather
+/// than a raw flag.
 ///
 /// Nothing here asserts on translated copy: widget tests render raw i18n keys.
 void main() {
@@ -32,46 +35,6 @@ void main() {
       ),
     ),
   );
-
-  Map<String, dynamic> flagsOf(Map<String, dynamic> settings) =>
-      (settings['app'] as Map<String, dynamic>)['featureFlags']
-          as Map<String, dynamic>;
-
-  testWidgets('the derived flag cannot be typed in by hand', (tester) async {
-    final settings = <String, dynamic>{};
-    await tester.pumpWidget(host(settings));
-    await tester.pumpAndSettle();
-
-    final field = find.byType(TextField).last;
-    await tester.ensureVisible(field);
-    await tester.enterText(field, PlatformFlags.advancedTimeTracking);
-    await tester.pumpAndSettle();
-    await tester.testTextInput.receiveAction(TextInputAction.done);
-    await tester.pumpAndSettle();
-
-    expect(
-      flagsOf(settings).containsKey(PlatformFlags.advancedTimeTracking),
-      isFalse,
-    );
-  });
-
-  testWidgets('and it never shows up twice in the raw editor', (tester) async {
-    // Even when the server already reports it, the raw list leaves it out — the
-    // described row above is the one place it is spoken about.
-    final settings = <String, dynamic>{
-      'app': <String, dynamic>{
-        'featureFlags': <String, dynamic>{
-          PlatformFlags.advancedTimeTracking: true,
-          'something_else': true,
-        },
-      },
-    };
-    await tester.pumpWidget(host(settings));
-    await tester.pumpAndSettle();
-
-    expect(find.text('something_else'), findsOneWidget);
-    expect(find.text(PlatformFlags.advancedTimeTracking), findsNothing);
-  });
 
   group('the pointer row', () {
     testWidgets('opens the section that owns the setting', (tester) async {
@@ -199,23 +162,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('admin.envDefault'), findsWidgets);
-    });
-
-    testWidgets('it stays out of the raw flag editor', (tester) async {
-      await tester.pumpWidget(
-        host(<String, dynamic>{
-          'app': <String, dynamic>{
-            'featureFlags': <String, dynamic>{
-              PlatformFlags.projectTemplates: true,
-              'something_else': true,
-            },
-          },
-        }),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('something_else'), findsOneWidget);
-      expect(find.text(PlatformFlags.projectTemplates), findsNothing);
     });
   });
 
