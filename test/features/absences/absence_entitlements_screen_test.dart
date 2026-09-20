@@ -7,7 +7,9 @@ import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/repositories/absence_repository.dart';
 import 'package:hinata/core/repositories/user_repository.dart';
 import 'package:hinata/core/theme/app_colors.dart';
+import 'package:hinata/core/widgets/glass_filter_bar.dart';
 import 'package:hinata/features/absences/absence_entitlements_screen.dart';
+import 'package:hinata/features/shell/page_chrome.dart';
 
 /// Admin → Entitlements (HIN-116): a page of the directory beside where each
 /// person stands for one type and year.
@@ -18,10 +20,14 @@ import 'package:hinata/features/absences/absence_entitlements_screen.dart';
 void main() {
   setUp(() => AppColors.brightness = Brightness.light);
 
-  Future<void> pump(WidgetTester tester, _FakeAbsences repository) async {
+  Future<void> pump(
+    WidgetTester tester,
+    _FakeAbsences repository, {
+    Size size = const Size(1200, 1600),
+  }) async {
     await tester.pumpWidget(
       MediaQuery(
-        data: const MediaQueryData(size: Size(1200, 1600)),
+        data: MediaQueryData(size: size),
         child: MaterialApp(
           // A Scaffold, because the app shell is one: the page is mounted
           // inside it and its controls want the Material under them.
@@ -39,6 +45,38 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets('the tools are glass, and on a phone the search opens over them', (
+    tester,
+  ) async {
+    final repository = _FakeAbsences(
+      types: const [
+        AbsenceType(
+          id: 't-vacation',
+          key: 'vacation',
+          kind: AbsenceKind.vacation,
+          systemKey: 'vacation',
+          countsAgainstBalance: true,
+          allowanceMilliDays: 20 * kMilliDay,
+        ),
+      ],
+    );
+
+    // Wide: the search is a field beside the pills, the way every list has it.
+    await pump(tester, repository);
+    expect(find.byType(GlassSearchField), findsOneWidget);
+    expect(find.byType(GlassFilterPill), findsOneWidget);
+
+    // A phone: the same tools, handed to the shell to dock into the bar's own
+    // blur. Nothing of them is left in the body — a row of controls over the
+    // first person was a second header under the first one.
+    await pump(tester, repository, size: const Size(390, 844));
+    final chrome = tester.widget<PageChrome>(find.byType(PageChrome));
+    expect(chrome.bottom, isNotNull);
+    expect(chrome.bottomHeight, kGlassDockRow);
+    expect(find.byType(GlassSearchField), findsNothing);
+    expect(find.byType(GlassFilterPill), findsNothing);
+  });
 
   testWidgets('a type with no quota is not a type to grant', (tester) async {
     await pump(
