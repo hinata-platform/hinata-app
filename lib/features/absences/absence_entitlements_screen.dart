@@ -446,35 +446,43 @@ class _AbsenceEntitlementsScreenState extends State<AbsenceEntitlementsScreen> {
   /// The same shape as every other list in the app — glass pills, and a search
   /// that opens over them on a phone rather than taking a line of its own.
   Widget _filters(BuildContext context) => context.isCompact
-      ? Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: GlassSearchDock(
-            searching: _searching,
-            controller: _search,
-            hint: context.t('absence.entitlements.search'),
-            onChanged: _onSearch,
-            onClose: () => setState(() => _searching = false),
-            controls: SizedBox(
-              height: kGlassControlHeight,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                // The gutter is spent outside; inside it would clip the last
-                // pill rather than let it scroll into view.
-                clipBehavior: Clip.none,
-                child: Row(
-                  children: [
-                    SizedBox(width: context.pageGutter),
-                    GlassSearchButton(
-                      tooltip: context.t('absence.entitlements.search'),
-                      active: _query.isNotEmpty,
-                      onTap: () => setState(() => _searching = true),
-                    ),
-                    for (final pill in _filterPills(context)) ...[
-                      const SizedBox(width: 8),
-                      pill,
+      // The gutter belongs around the dock, not inside the row of pills: the
+      // search takes the whole dock over when it opens, and a gutter spent on
+      // the pills left the open field flush against both edges.
+      ? Padding(
+          padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
+          // The Align is load-bearing vertically: the bar hands the reserved
+          // height down as a tight constraint, and the row has to be able to
+          // come in under it. Directional, so a right-to-left reading starts
+          // where its reader does.
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: GlassSearchDock(
+              searching: _searching,
+              controller: _search,
+              hint: context.t('absence.entitlements.search'),
+              onChanged: _onSearch,
+              onClose: () => setState(() => _searching = false),
+              controls: SizedBox(
+                height: kGlassControlHeight,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  // The gutter is spent outside; inside it would clip the last
+                  // pill rather than let it scroll into view.
+                  clipBehavior: Clip.none,
+                  child: Row(
+                    children: [
+                      GlassSearchButton(
+                        tooltip: context.t('absence.entitlements.search'),
+                        active: _query.isNotEmpty,
+                        onTap: () => setState(() => _searching = true),
+                      ),
+                      for (final pill in _filterPills(context)) ...[
+                        const SizedBox(width: 8),
+                        pill,
+                      ],
                     ],
-                    SizedBox(width: context.pageGutter),
-                  ],
+                  ),
                 ),
               ),
             ),
