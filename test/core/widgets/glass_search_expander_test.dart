@@ -67,6 +67,44 @@ void main() {
     expect(find.byType(GlassSearchButton), findsOneWidget);
   });
 
+  testWidgets('in a head it asks for width and settles for what is left', (
+    tester,
+  ) async {
+    Widget head({required double width}) => MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: width,
+            child: Row(
+              children: [
+                const Expanded(child: Text('Projects')),
+                _Host(
+                  controller: controller,
+                  onChanged: changes.add,
+                  flexible: true,
+                  open: true,
+                ),
+                const SizedBox(width: 180, height: 42),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(head(width: 1200));
+    await tester.pumpAndSettle();
+    expect(tester.getSize(find.byType(GlassSearchField)).width, lessThan(360));
+
+    // The case a fixed width breaks: a window barely past the phone breakpoint
+    // still has a title, a button and now a field on one line.
+    await tester.pumpWidget(head(width: 420));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(tester.getSize(find.byType(GlassSearchField)).width, greaterThan(0));
+  });
+
   testWidgets('a query left in force keeps the pill lit', (tester) async {
     controller.text = 'hin';
     await tester.pumpWidget(host());
@@ -82,20 +120,31 @@ void main() {
 /// The page around the field: it owns whether the search is open, exactly as a
 /// screen does.
 class _Host extends StatefulWidget {
-  const _Host({required this.controller, required this.onChanged});
+  const _Host({
+    required this.controller,
+    required this.onChanged,
+    this.flexible = false,
+    this.open = false,
+  });
 
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
+  final bool flexible;
+
+  /// Whether the search starts open, for the cases that are about the field
+  /// rather than about opening it.
+  final bool open;
 
   @override
   State<_Host> createState() => _HostState();
 }
 
 class _HostState extends State<_Host> {
-  bool _searching = false;
+  late bool _searching = widget.open;
 
   @override
   Widget build(BuildContext context) => GlassSearchExpander(
+    flexible: widget.flexible,
     searching: _searching,
     hint: 'search',
     controller: widget.controller,

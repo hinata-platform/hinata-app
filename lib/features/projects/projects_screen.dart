@@ -101,6 +101,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     onChanged: (value) => setState(() => _query = value),
     onOpen: () => setState(() => _searching = true),
     onClose: () => setState(() => _searching = false),
+    // It sits in the head's Row beside the title, so it can take the width it
+    // needs on a wide window and give it back on a narrow one.
+    flexible: true,
   );
 
   /// Name or key, folded and trimmed: somebody looking for "HIN" should not

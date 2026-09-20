@@ -243,8 +243,9 @@ class GlassSearchExpander extends StatelessWidget {
     required this.onChanged,
     required this.onOpen,
     required this.onClose,
-    this.width = 240,
+    this.width = 360,
     this.height = kGlassPillHeight,
+    this.flexible = false,
   });
 
   final bool searching;
@@ -266,9 +267,19 @@ class GlassSearchExpander extends StatelessWidget {
   /// [searching] back to false.
   final VoidCallback onClose;
 
-  /// How much room the open field asks for. It is a ceiling, not a demand: in a
-  /// head the field takes what the title can spare.
+  /// How much room the open field asks for, close button included — enough to
+  /// read a typed query back, not just the first word of it.
+  ///
+  /// With [flexible] it is a ceiling rather than a demand.
   final double width;
+
+  /// Whether the shape may come in under [width] when the row is tight.
+  ///
+  /// Only legal directly inside a [Row] or [Column]: it wraps itself in a
+  /// [Flexible]. A page head is exactly that — title, search, switcher, button
+  /// on one line — and a narrow window has no [width] to spare, so the field
+  /// takes what is left instead of pushing the row into an overflow.
+  final bool flexible;
 
   void _close() {
     if (controller.text.isNotEmpty) {
@@ -279,17 +290,26 @@ class GlassSearchExpander extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) => AnimatedSize(
+  Widget build(BuildContext context) {
+    final shape = _shape(context);
+    return flexible ? Flexible(child: shape) : shape;
+  }
+
+  Widget _shape(BuildContext context) => AnimatedSize(
     duration: const Duration(milliseconds: 200),
     curve: Curves.easeOutCubic,
     alignment: AlignmentDirectional.centerEnd.resolve(
       Directionality.of(context),
     ),
     child: searching
-        ? SizedBox(
-            width: width,
-            height: height,
-            child: Row(
+        ? ConstrainedBox(
+            // Flexible hands down the share of the row that is going spare; the
+            // ceiling keeps a wide window from turning that into a banner.
+            constraints: BoxConstraints(maxWidth: width),
+            child: SizedBox(
+              width: flexible ? null : width,
+              height: height,
+              child: Row(
               children: [
                 Expanded(
                   child: GlassSearchField(
@@ -317,7 +337,8 @@ class GlassSearchExpander extends StatelessWidget {
                     ),
                   ),
                 ),
-              ],
+                ],
+              ),
             ),
           )
         : GlassSearchButton(
