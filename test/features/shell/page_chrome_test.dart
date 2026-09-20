@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hinata/core/responsive/responsive.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
 
@@ -218,6 +219,56 @@ void main() {
       controller.publish(owner, owner.chrome(busy: true));
 
       expect(notified, 2);
+    });
+  });
+
+  group('a branch kept alive behind the page on screen', () {
+    // The time module holds its five views side by side so switching between
+    // them keeps each one where it was. They all go on building, and without
+    // [PageChromeVisibility] the hidden ones would publish their titles and
+    // their actions over the view the reader is actually looking at.
+    testWidgets('publishes nothing until it is the view on screen', (
+      tester,
+    ) async {
+      final visible = ValueNotifier(false);
+      addTearDown(visible.dispose);
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => ValueListenableBuilder<bool>(
+              valueListenable: visible,
+              builder: (_, on, _) => PageChromeVisibility(
+                visible: on,
+                child: const PageChrome(
+                  title: 'Kalender',
+                  child: SizedBox.shrink(),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp.router(
+          routerConfig: router,
+          builder: (_, child) =>
+              PageChromeScope(controller: controller, child: child!),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(controller.titleFor('/'), isNull);
+
+      visible.value = true;
+      await tester.pumpAndSettle();
+      expect(controller.titleFor('/'), 'Kalender');
+
+      // And back: the bar belongs to whichever view is on screen now.
+      visible.value = false;
+      await tester.pumpAndSettle();
+      expect(controller.titleFor('/'), isNull);
     });
   });
 }

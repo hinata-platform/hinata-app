@@ -41,11 +41,8 @@ import '../../features/shell/app_shell.dart';
 import '../../features/shell/not_found_screen.dart';
 import '../../features/teams/team_detail_screen.dart';
 import '../../features/teams/teams_screen.dart';
-import '../../features/time/absences_screen.dart';
-import '../../features/time/approvals_screen.dart';
-import '../../features/time/time_calendar_screen.dart';
 import '../../features/time/time_focus_screen.dart';
-import '../../features/time/time_screen.dart';
+import '../../features/time/time_module_screen.dart';
 import '../../features/time/time_views.dart';
 import '../../features/timesheet/timesheet_screen.dart';
 import '../../features/weekly_summary/weekly_summary_screen.dart';
@@ -463,8 +460,7 @@ GoRouter buildRouter({
           // button, title, nav) stays right either way.
           GoRoute(
             path: '/time',
-            pageBuilder: (_, state) => _transition(
-              state,
+            pageBuilder: (_, state) => _timePage(
               timeModulePage(
                 advancedTime:
                     appConfig.state.meta?.advancedTimeTracking ?? false,
@@ -473,8 +469,7 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/time/calendar',
-            pageBuilder: (_, state) => _transition(
-              state,
+            pageBuilder: (_, _) => _timePage(
               timeModulePage(
                 advancedTime:
                     appConfig.state.meta?.advancedTimeTracking ?? false,
@@ -484,8 +479,7 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/time/timesheet',
-            pageBuilder: (_, state) => _transition(
-              state,
+            pageBuilder: (_, _) => _timePage(
               timeModulePage(
                 advancedTime:
                     appConfig.state.meta?.advancedTimeTracking ?? false,
@@ -495,8 +489,7 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/time/approvals',
-            pageBuilder: (_, state) => _transition(
-              state,
+            pageBuilder: (_, _) => _timePage(
               timeModulePage(
                 advancedTime:
                     appConfig.state.meta?.advancedTimeTracking ?? false,
@@ -509,8 +502,7 @@ GoRouter buildRouter({
           // notification about somebody else's request.
           GoRoute(
             path: '/time/absences',
-            pageBuilder: (_, state) => _transition(
-              state,
+            pageBuilder: (_, state) => _timePage(
               timeModulePage(
                 advancedTime:
                     appConfig.state.meta?.advancedTimeTracking ?? false,
@@ -629,20 +621,7 @@ Widget timeModulePage({
   String? scope,
 }) {
   if (!advancedTime) return const NotFoundScreen(standalone: false);
-  return switch (view) {
-    TimeView.list => const TimeScreen(),
-    TimeView.calendar => const TimeCalendarScreen(),
-    // The same grid the base route draws, told that it belongs to the module:
-    // paged rows, and a cell of your own that can be typed into.
-    TimeView.timesheet => const TimesheetScreen(moduleView: true),
-    TimeView.absences => TimeAbsencesScreen(scope: scope),
-    // Reachable even while approvals are switched off, and deliberately: the
-    // route answers with what is there, which is then nothing. Gating it here
-    // would turn a link somebody was sent into a not-found page on the day an
-    // administrator toggles the policy — and the page itself says honestly that
-    // there is nothing to decide.
-    TimeView.approvals => const ApprovalsScreen(),
-  };
+  return TimeModuleScreen(view: view, scope: scope);
 }
 
 /// The page behind `/time/focus`.
@@ -679,6 +658,33 @@ IssuesInitialView? _issuesView(String? value) => switch (value) {
 /// first, then the incoming page fades + rises in — they are never both visible
 /// at once. `fillColor` is transparent so the canvas (not an opaque box) shows
 /// through during the brief hand-off.
+/// The five views of the time module, under **one** page key.
+///
+/// A page key is what tells the navigator whether an address change is a new
+/// page or the same one saying something new. Given `state.pageKey`, every
+/// view of the module was a page of its own: switching from the list to the
+/// calendar tore the list down, played a transition and read the calendar back
+/// from the server, which is exactly what the reader complained about. Under
+/// one key the navigator keeps the page and hands [TimeModuleScreen] the view
+/// the address names, and that screen keeps the branches it has already built.
+///
+/// The addresses do not change: each view keeps its route, its deep link and
+/// its place in the back stack.
+CustomTransitionPage<void> _timePage(Widget child) => CustomTransitionPage<void>(
+  key: const ValueKey('time-module'),
+  transitionDuration: const Duration(milliseconds: 280),
+  reverseTransitionDuration: const Duration(milliseconds: 180),
+  child: child,
+  transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+      SharedAxisTransition(
+        animation: animation,
+        secondaryAnimation: secondaryAnimation,
+        transitionType: SharedAxisTransitionType.vertical,
+        fillColor: Colors.transparent,
+        child: child,
+      ),
+);
+
 CustomTransitionPage<void> _transition(GoRouterState state, Widget child) =>
     CustomTransitionPage<void>(
       key: state.pageKey,

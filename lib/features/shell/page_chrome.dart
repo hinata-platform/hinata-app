@@ -278,6 +278,38 @@ class PageChromeScope extends InheritedNotifier<PageChromeController> {
       context.getInheritedWidgetOfExactType<PageChromeScope>()?.notifier;
 }
 
+/// Marks a subtree as kept alive behind the page on screen — a branch of an
+/// [IndexedStack] that a reader is not looking at.
+///
+/// Such a branch goes on building, and a [PageChrome] inside it would publish
+/// its title and its actions for whatever route is showing: the calendar's "+"
+/// would sit over the list. So chrome from a hidden branch is held back until
+/// the branch is the one on screen, and retracted the moment it leaves.
+///
+/// Read with [dependOnInheritedWidgetOfExactType], so a branch that becomes
+/// visible publishes right then rather than on its next rebuild.
+class PageChromeVisibility extends InheritedWidget {
+  const PageChromeVisibility({
+    super.key,
+    required this.visible,
+    required super.child,
+  });
+
+  final bool visible;
+
+  /// Whether the subtree around [context] is the one on screen. True where
+  /// nothing says otherwise: a page is visible unless somebody hid it.
+  static bool of(BuildContext context) =>
+      context
+          .dependOnInheritedWidgetOfExactType<PageChromeVisibility>()
+          ?.visible ??
+      true;
+
+  @override
+  bool updateShouldNotify(PageChromeVisibility oldWidget) =>
+      oldWidget.visible != visible;
+}
+
 /// Declarative helper a sub-page wraps around its body to publish [title] /
 /// [onBack] to the shell's app bar. Re-publishes whenever those change and is a
 /// silent no-op where no [PageChromeScope] is present (e.g. in unit tests).
@@ -328,11 +360,19 @@ class _PageChromeState extends State<PageChrome> {
   /// by then, so the scope can no longer be looked up.
   PageChromeController? _controller;
 
+  /// Whether this page is the one on screen; see [PageChromeVisibility].
+  bool _visible = true;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _controller = PageChromeScope.maybeRead(context);
-    _schedulePublish();
+    _visible = PageChromeVisibility.of(context);
+    if (_visible) {
+      _schedulePublish();
+    } else {
+      _controller?.retract(this);
+    }
   }
 
   @override
@@ -363,7 +403,7 @@ class _PageChromeState extends State<PageChrome> {
   // top bar listens to the same controller) and lets us read the active route.
   void _schedulePublish() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+      if (!mounted || !_visible) return;
       final controller = _controller;
       if (controller == null) return;
       controller.publish(
