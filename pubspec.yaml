@@ -56,11 +56,10 @@ dependencies:
   wolt_modal_sheet: ^0.11.0
   fl_chart: ^1.1.1
 
-  # Liquid Glass UI (vendored — full control, MIT)
-  liquid_glass_widgets:
-    git:
-      url: https://github.com/hinata-platform/liquid_glass_widgets.git
-      ref: main
+  # Liquid Glass UI. Back on the published package: the rim-refraction fix we
+  # carried on the fork is upstream as of 1.7.0, so there is nothing left to
+  # carry. Patches go through a pull request first, never a pinned fork.
+  liquid_glass_widgets: ^1.7.0
 
   # Rich text. Documents are stored as Lexical JSON, so this is both the editor
   # and the renderer; there is no second markdown path any more. The bundle
