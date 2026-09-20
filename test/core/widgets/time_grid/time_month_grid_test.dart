@@ -32,6 +32,7 @@ void main() {
         );
 
     DateTime? tapped;
+    (DateTime, Rect)? menu;
     final needed = <int>{};
     final retried = <DateTime>[];
     var named = <DateTime>[];
@@ -48,6 +49,7 @@ void main() {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
       tapped = null;
+      menu = null;
       retried.clear();
       needed.clear();
       named = [];
@@ -75,6 +77,7 @@ void main() {
               onRetryMonth: (month) => retried.add(month),
               onMonthChanged: (month) => named.add(month),
               onTapDay: (day) => tapped = day,
+              onDayMenu: (day, anchor) => menu = (day, anchor),
             ),
           ),
         ),
@@ -102,6 +105,25 @@ void main() {
     expect(find.text('Standup'), findsOneWidget);
     expect(find.text('Review'), findsOneWidget);
     expect(find.text('2 h'), findsOneWidget);
+
+    // ── Held, a day hands over the day it is, anchored on its own number ──
+    // A popover opens under the rectangle it is given. A month cell is a whole
+    // week row tall, so a menu anchored on the cell opened level with the row
+    // below and pointed at the wrong day.
+    final number = find.text('7').first;
+    final cellRect = tester.getRect(
+      find.ancestor(of: number, matching: find.byType(InkWell)).first,
+    );
+    await tester.longPress(number);
+    await tester.pump();
+    expect(menu?.$1, DateTime(2026, 9, 7));
+    final anchor = menu!.$2;
+    expect(anchor.top, cellRect.top);
+    expect(
+      anchor.height,
+      lessThan(cellRect.height / 2),
+      reason: 'the number, not the cell: the menu must open on the day held',
+    );
 
     // ── It says which month it is in, and asks for that one and its neighbours ──
     expect(named, [DateTime(2026, 9)]);
