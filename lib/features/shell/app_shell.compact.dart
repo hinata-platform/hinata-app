@@ -5,6 +5,21 @@ part of 'app_shell.dart';
 /// Content height of the compact glass app bar (excludes the status-bar inset).
 const double _kCompactBarHeight = 52;
 
+/// Whether the compact bar writes its title on the leading edge.
+///
+/// A centred title is laid out in what the *wider* of the two sides leaves on
+/// both, so every button a page publishes costs the title twice the room that
+/// button takes — three circles on the right turned "Zeiterfassung" into
+/// "Zeiterfass…" with half the bar standing empty on the left. So a bar that
+/// carries any page action writes its title on the leading edge, where the
+/// title keeps everything the buttons do not take.
+///
+/// [asked] is a page that wants a leading title anyway: the calendar's month,
+/// the board's name — titles that change and are read as words, not as labels.
+@visibleForTesting
+bool compactTitleLeads({required bool asked, required bool hasActions}) =>
+    asked || hasActions;
+
 class _CompactShell extends StatefulWidget {
   const _CompactShell({
     required this.location,
@@ -334,7 +349,10 @@ class _GlassTopBar extends StatelessWidget {
       titleText = chrome.titleFor(location) ?? context.t(current.labelKey);
     }
     final onTitleTap = chrome.onTitleTapFor(location);
-    final titleLeading = chrome.titleLeadingFor(location);
+    final titleLeading = compactTitleLeads(
+      asked: chrome.titleLeadingFor(location),
+      hasActions: chrome.actionsFor(location).isNotEmpty,
+    );
     // Black scrim, strongest under the status bar, fading to nothing at the
     // bar's lower edge. Subtle in light (keeps dark status-bar icons legible),
     // stronger in dark.
