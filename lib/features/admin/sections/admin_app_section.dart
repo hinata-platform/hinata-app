@@ -5,13 +5,13 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/models/core_models.dart' show PlatformFlags;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/hive_widgets.dart';
-import '../../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
 import '../policy_controls.dart' show PolicySwitch;
 
-/// App/client settings served to the apps via /api/v1/meta: the minimum
-/// required app version, the privacy policy URL and optional feature flags.
+/// Platform settings served to the apps via /api/v1/meta: the minimum required
+/// app version, the store links, how people sign in, and what this platform
+/// offers.
 class AdminAppSection extends StatefulWidget {
   const AdminAppSection({
     super.key,
@@ -56,31 +56,6 @@ class _AdminAppSectionState extends State<AdminAppSection> {
       widget.settings['timeTracking'] is Map<String, dynamic>
       ? widget.settings['timeTracking'] as Map<String, dynamic>
       : const {};
-
-  /// Flags that have a dedicated, described toggle above — hidden from the raw
-  /// name→enabled editor so they aren't shown twice, and blocked from being
-  /// re-created there by name. `advanced_time_tracking` is in the list for the
-  /// second reason above all: the server derives it from the time-tracking
-  /// module's own settings, so a hand-typed flag of that name would sit in the
-  /// document looking authoritative and change nothing.
-  static const _dedicatedFlags = {
-    PlatformFlags.multiAssignee,
-    PlatformFlags.emailReply,
-    PlatformFlags.advancedTimeTracking,
-    // And the one nested under it: the server derives `absence_management`
-    // from the same block, so a hand-typed row of that name would look like a
-    // switch and flip nothing.
-    PlatformFlags.absenceManagement,
-    // Same reason: the server derives `mcp` from the MCP module's own settings,
-    // so a row of that name here would be a switch that looks authoritative,
-    // flips nothing, and cannot be deleted again.
-    PlatformFlags.mcp,
-    // And the same for project templates: the server derives
-    // `project_templates` from its own settings block, which the card below
-    // edits. A hand-typed row of that name would look like a switch, flip
-    // nothing, and could never be deleted again.
-    PlatformFlags.projectTemplates,
-  };
 
   @override
   Widget build(BuildContext context) {
@@ -211,13 +186,11 @@ class _AdminAppSectionState extends State<AdminAppSection> {
                       as bool?,
               onOpen: widget.onOpenTimeTracking,
             ),
-          ],
-        ),
-        'projectTemplates': AdminSectionCard(
-          icon: LucideIcons.copy,
-          title: context.t('admin.projectTemplates.title'),
-          subtitle: context.t('admin.projectTemplates.hint'),
-          children: [
+            const SizedBox(height: 14),
+            // Here rather than in a card of its own: it is one switch, and it
+            // answers the same question as the two above it — what this
+            // platform offers. A card holding a single row read as a heading
+            // with a footnote.
             PolicySwitch(
               key: const ValueKey('projectTemplatesSwitch'),
               title: context.t('admin.projectTemplates.enabledTitle'),
@@ -226,21 +199,6 @@ class _AdminAppSectionState extends State<AdminAppSection> {
               effective: _projectTemplatesEffective,
               onChanged: (v) =>
                   setState(() => _projectTemplates['enabled'] = v),
-            ),
-          ],
-        ),
-        'flags': AdminSectionCard(
-          icon: LucideIcons.flag,
-          title: context.t('admin.featureFlags'),
-          subtitle: context.t('admin.featureFlagsHint'),
-          children: [
-            _FeatureFlagEditor(
-              flags: _flags,
-              // The well-known flags have dedicated toggles above (with proper
-              // titles + descriptions), so keep them out of the raw editor to
-              // avoid showing the same switch twice.
-              hidden: _dedicatedFlags,
-              onChanged: () => setState(() {}),
             ),
           ],
         ),
@@ -416,141 +374,6 @@ class _StateChip extends StatelessWidget {
           color: lit ? AppColors.accentStrong : AppColors.inkSoft,
         ),
       ),
-    );
-  }
-}
-
-/// Add / toggle / remove arbitrary `name → enabled` feature flags.
-class _FeatureFlagEditor extends StatefulWidget {
-  const _FeatureFlagEditor({
-    required this.flags,
-    required this.onChanged,
-    this.hidden = const {},
-  });
-
-  final Map<String, dynamic> flags;
-  final VoidCallback onChanged;
-
-  /// Flag keys surfaced by a dedicated toggle elsewhere — excluded from the list
-  /// (and blocked from being re-added by name) so they never appear twice.
-  final Set<String> hidden;
-
-  @override
-  State<_FeatureFlagEditor> createState() => _FeatureFlagEditorState();
-}
-
-class _FeatureFlagEditorState extends State<_FeatureFlagEditor> {
-  final _newFlag = TextEditingController();
-
-  @override
-  void dispose() {
-    _newFlag.dispose();
-    super.dispose();
-  }
-
-  void _add() {
-    final name = _newFlag.text.trim();
-    if (name.isEmpty) return;
-    // Explain why an add did nothing instead of a dead button.
-    if (widget.flags.containsKey(name)) {
-      showGlassErrorToast(
-        context,
-        context.t('admin.featureFlagExists', variables: {'name': name}),
-      );
-      return;
-    }
-    if (widget.hidden.contains(name)) {
-      showGlassErrorToast(
-        context,
-        context.t('admin.featureFlagReserved', variables: {'name': name}),
-      );
-      return;
-    }
-    setState(() {
-      widget.flags[name] = true;
-      _newFlag.clear();
-    });
-    widget.onChanged();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final entries = widget.flags.entries
-        .where((e) => !widget.hidden.contains(e.key))
-        .toList();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (entries.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              context.t('admin.featureFlagsEmpty'),
-              style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
-            ),
-          ),
-        for (final entry in entries)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    entry.key,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                ),
-                HiveSwitch(
-                  value: entry.value == true,
-                  onChanged: (v) {
-                    setState(() => widget.flags[entry.key] = v);
-                    widget.onChanged();
-                  },
-                ),
-                IconButton(
-                  icon: Icon(
-                    LucideIcons.trash2,
-                    size: 16,
-                    color: AppColors.inkFaint,
-                  ),
-                  tooltip: context.t('common.delete'),
-                  onPressed: () {
-                    setState(() => widget.flags.remove(entry.key));
-                    widget.onChanged();
-                  },
-                ),
-              ],
-            ),
-          ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _newFlag,
-                autocorrect: false,
-                enableSuggestions: false,
-                textInputAction: TextInputAction.done,
-                decoration: InputDecoration(
-                  labelText: context.t('admin.featureFlagName'),
-                  isDense: true,
-                ),
-                onSubmitted: (_) => _add(),
-              ),
-            ),
-            const SizedBox(width: 8),
-            OutlinedButton.icon(
-              onPressed: _add,
-              icon: const Icon(LucideIcons.plus, size: 16),
-              label: Text(context.t('common.add')),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }
