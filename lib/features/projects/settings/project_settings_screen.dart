@@ -32,9 +32,14 @@ import 'members_section.dart';
 import 'settings_common.dart';
 import '../../../core/responsive/golden_columns.dart';
 import 'project_settings_layout.dart';
+import 'template_section.dart';
 import 'time_section.dart';
 import 'workflow_section.dart';
 import '../../../core/repositories/project_repository.dart';
+import '../../sprint/modals/glass_modal.dart'
+    show showGlassDatePicker, showGlassErrorToast, showGlassToast;
+import '../project_copy_sheet.dart';
+import '../schedule_move_sheet.dart';
 import '../../../core/repositories/user_repository.dart';
 
 /// Full project-settings surface: identity, accent, leads & members, colored
@@ -68,6 +73,11 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
 
   bool _loading = true;
   bool _saving = false;
+
+  /// True while the event date is being written. Its own flag, not [_saving]:
+  /// it is not part of the settings draft — moving it moves deadlines, so it
+  /// is a confirmed step of its own.
+  bool _movingEventDate = false;
   String? _loadError;
   int _rev = 0; // forces label/workflow sections to rebuild their controllers
   int _tmpSeq = 0;
@@ -375,6 +385,135 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
     ),
   );
 
+  // ── project templates ─────────────────────────────────────────────────
+
+  /// Picks a new event date and writes it.
+  ///
+  /// Written through its own route rather than with the settings save, because
+  /// it moves the deadlines of every issue that hangs off it: a field on this
+  /// form that quietly rewrote twelve dates would be a page doing something
+  /// other than what it says.
+  Future<void> _pickEventDate() async {
+    final project = _saved ?? _draft;
+    if (project == null) return;
+    final picked = await showGlassDatePicker(
+      context,
+      title: context.t('projectSettings.templates.eventDate'),
+      initialDate: project.eventDate ?? DateTime.now(),
+      firstDate: DateTime(2015),
+      lastDate: DateTime(2100),
+    );
+    if (picked == null || !mounted) return;
+    await _moveEventDate(picked);
+  }
+
+  /// Asks what the move would do, shows it, and writes only after somebody says
+  /// yes. With nothing to move there is no sheet: the date is simply set.
+  Future<void> _moveEventDate(DateTime date) async {
+    final project = _saved ?? _draft;
+    if (project == null || _movingEventDate) return;
+    setState(() => _movingEventDate = true);
+    try {
+      final preview = await context.read<ProjectRepository>().previewSchedule(
+        project.id,
+        eventDate: date,
+        limit: kScheduleMovesShown,
+      );
+      if (!mounted) return;
+      setState(() => _movingEventDate = false);
+      if (preview.hasChanges) {
+        final confirmed = await showScheduleMoveSheet(
+          context,
+          preview: preview,
+          newEventDate: date,
+        );
+        if (!confirmed || !mounted) return;
+      }
+      await _applyEventDate(date);
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      setState(() => _movingEventDate = false);
+      showGlassErrorToast(context, failure.message);
+    }
+  }
+
+  /// Takes the date away. The deadlines stay where they are and the rules stay
+  /// with their issues, so this loses nothing — and the toast says so.
+  Future<void> _clearEventDate() async {
+    // Only where the write went through: the failure path shows its own toast,
+    // and a green confirmation on top of a red error is a screen contradicting
+    // itself about something that did not happen.
+    if (await _applyEventDate(null) && mounted) {
+      showGlassToast(
+        context,
+        context.t('projectSettings.templates.dateCleared'),
+      );
+    }
+  }
+
+  /// Writes the date. Answers whether it landed, so a caller can say so.
+  Future<bool> _applyEventDate(DateTime? date) async {
+    if (_movingEventDate) return false;
+    final project = _saved ?? _draft;
+    if (project == null) return false;
+    setState(() => _movingEventDate = true);
+    try {
+      final result = await context.read<ProjectRepository>().applySchedule(
+        project.id,
+        eventDate: date,
+      );
+      if (!mounted) return false;
+      setState(() {
+        _movingEventDate = false;
+        _saved = _withEventDate(_saved, result.project.eventDate);
+        _draft = _withEventDate(_draft, result.project.eventDate);
+      });
+      if (date != null && result.deadlinesMoved > 0) {
+        showGlassToast(
+          context,
+          context.t(
+            'projectSettings.templates.datesMoved',
+            variables: {'count': '${result.deadlinesMoved}'},
+          ),
+        );
+      }
+      return true;
+    } on ApiFailure catch (failure) {
+      if (!mounted) return false;
+      setState(() => _movingEventDate = false);
+      showGlassErrorToast(context, failure.message);
+      return false;
+    }
+  }
+
+  /// The event date replaced on a project, leaving every edit in the draft
+  /// alone: the date is written elsewhere and must not discard what somebody is
+  /// still typing on this page.
+  static Project? _withEventDate(Project? project, DateTime? date) =>
+      project?.copyWith(eventDate: date);
+
+  Future<void> _copyProject() async {
+    final project = _saved ?? _draft;
+    if (project == null) return;
+    final result = await showProjectCopySheet(
+      context,
+      source: project,
+      mode: ProjectCopyMode.copy,
+    );
+    if (result == null || !mounted) return;
+    showGlassToast(
+      context,
+      context.t(
+        'projects.copy.done',
+        variables: {
+          'issues': '${result.issuesCopied}',
+          'deadlines': '${result.deadlinesSet}',
+        },
+      ),
+    );
+    if (mounted) context.go('/issues?projectId=${result.project.id}');
+  }
+
   // ── persistence ───────────────────────────────────────────────────────
   void _discard() {
     final saved = _saved;
@@ -404,6 +543,11 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
         'resolvedStates': d.resolvedStates,
         'labels': d.labels.map((l) => l.toJson()).toList(),
         'archived': d.archived,
+        // Only where the module exists. An instance with templates switched off
+        // refuses this field, and sending it would turn every settings save
+        // into an error over something nobody touched.
+        if (context.read<AppConfigBloc>().state.meta?.projectTemplates ?? false)
+          'template': d.template,
         if (_stateMigrations.isNotEmpty) 'stateMigrations': _stateMigrations,
       };
       final updated = await projectApi.updateProject(d.id, patch);
@@ -544,6 +688,23 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
         )
         ? ProjectTimeSection(projectId: widget.projectId)
         : null;
+    // Only while project templates are on: without the module a project has no
+    // marker, no event date and no way to be copied.
+    final templates =
+        context.select<AppConfigBloc, bool>(
+          (bloc) => bloc.state.meta?.projectTemplates ?? false,
+        )
+        ? TemplateSection(
+            isTemplate: draft.template,
+            onTemplateChanged: (v) =>
+                _mutate((d) => d.copyWith(template: v)),
+            eventDate: (_saved ?? draft).eventDate,
+            busy: _movingEventDate,
+            onPickEventDate: _pickEventDate,
+            onClearEventDate: _clearEventDate,
+            onCopy: _copyProject,
+          )
+        : null;
     final archive = ArchiveSection(
       archived: draft.archived,
       onChanged: (v) => _mutate((d) => d.copyWith(archived: v)),
@@ -561,6 +722,7 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
           draft: draft,
           contentMax: contentMax,
           general: general,
+          templates: templates,
           members: members,
           labels: labels,
           workflow: workflow,
@@ -578,6 +740,7 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
     required Project draft,
     required double contentMax,
     required Widget general,
+    required Widget? templates,
     required Widget members,
     required Widget labels,
     required Widget workflow,
@@ -612,9 +775,11 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
               GoldenColumns<ProjectSettingsCard>(
                 groups: projectSettingsGroups(
                   timeTracking: timeTracking != null,
+                  templates: templates != null,
                 ),
                 card: (card) => switch (card) {
                   ProjectSettingsCard.general => general,
+                  ProjectSettingsCard.templates => templates!,
                   ProjectSettingsCard.members => members,
                   ProjectSettingsCard.labels => labels,
                   ProjectSettingsCard.workflow => workflow,

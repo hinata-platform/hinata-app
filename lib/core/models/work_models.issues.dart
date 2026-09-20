@@ -33,6 +33,102 @@ class IssueRef extends Equatable {
   List<Object?> get props => [id, readableId, title, type];
 }
 
+/// A deadline kept as a distance from the project's event date: "four weeks
+/// before", "three days after".
+///
+/// Negative [amount] is before the event, positive after, and zero is the day
+/// of the event itself. The sign carries the direction rather than a separate
+/// field, because two fields that can contradict each other are two fields too
+/// many.
+///
+/// The offset is the rule; the date the issue carries is its result, written by
+/// the server. Nothing in the app computes a date from one — the holidays a
+/// working-day offset skips live on the server, and a second implementation of
+/// them would differ on exactly the days people plan around.
+class RelativeDate extends Equatable {
+  const RelativeDate({
+    required this.amount,
+    this.unit = RelativeDateUnit.days,
+    this.basis = RelativeDateBasis.calendar,
+  });
+
+  /// The furthest an offset may reach in either direction, per unit. The server
+  /// refuses more; the form stops before it has to.
+  static const maxDays = 730;
+  static const maxWeeks = 104;
+
+  final int amount;
+  final RelativeDateUnit unit;
+  final RelativeDateBasis basis;
+
+  /// Whether the offset points before the event. Zero counts as "on the day".
+  bool get isBefore => amount < 0;
+
+  /// The distance without its sign — what the form's number field holds.
+  int get magnitude => amount.abs();
+
+  /// Whether the distance is inside the bounds the server accepts.
+  bool get withinLimits =>
+      magnitude <= (unit == RelativeDateUnit.weeks ? maxWeeks : maxDays);
+
+  factory RelativeDate.fromJson(Map<String, dynamic> json) => RelativeDate(
+    amount: (json['amount'] as num?)?.toInt() ?? 0,
+    unit: RelativeDateUnit.fromWire(json['unit'] as String?),
+    basis: RelativeDateBasis.fromWire(json['basis'] as String?),
+  );
+
+  Map<String, dynamic> toJson() => {
+    'amount': amount,
+    'unit': unit.wire,
+    'basis': basis.wire,
+  };
+
+  RelativeDate copyWith({
+    int? amount,
+    RelativeDateUnit? unit,
+    RelativeDateBasis? basis,
+  }) => RelativeDate(
+    amount: amount ?? this.amount,
+    unit: unit ?? this.unit,
+    basis: basis ?? this.basis,
+  );
+
+  @override
+  List<Object?> get props => [amount, unit, basis];
+}
+
+/// What a [RelativeDate.amount] counts. A week is seven days, without
+/// exception.
+enum RelativeDateUnit {
+  days('DAYS'),
+  weeks('WEEKS');
+
+  const RelativeDateUnit(this.wire);
+
+  final String wire;
+
+  static RelativeDateUnit fromWire(String? value) =>
+      value == 'WEEKS' ? RelativeDateUnit.weeks : RelativeDateUnit.days;
+}
+
+/// Which days a [RelativeDate] counts.
+enum RelativeDateBasis {
+  /// Every day, weekends and holidays included. The preselected reading.
+  calendar('CALENDAR'),
+
+  /// Working days only: weekends are skipped, and so are the holidays of the
+  /// calendar the project names. Without such a calendar a holiday counts like
+  /// any other working day.
+  working('WORKING');
+
+  const RelativeDateBasis(this.wire);
+
+  final String wire;
+
+  static RelativeDateBasis fromWire(String? value) =>
+      value == 'WORKING' ? RelativeDateBasis.working : RelativeDateBasis.calendar;
+}
+
 class Issue extends Equatable {
   const Issue({
     required this.id,
@@ -56,6 +152,8 @@ class Issue extends Equatable {
     this.sprintId,
     this.startDate,
     this.dueDate,
+    this.startOffset,
+    this.dueOffset,
     this.estimateMinutes,
     this.storyPoints,
     this.spentMinutes = 0,
@@ -126,6 +224,13 @@ class Issue extends Equatable {
   final String? sprintId;
   final DateTime? startDate;
   final DateTime? dueDate;
+
+  /// The rule behind [startDate] / [dueDate] when the project keeps its dates
+  /// relative to an event, or null for a date somebody typed. Setting a date by
+  /// hand clears the rule, which is what keeps a deliberate decision from being
+  /// overwritten the next time the event moves.
+  final RelativeDate? startOffset;
+  final RelativeDate? dueOffset;
   final int? estimateMinutes;
 
   /// Scrum effort estimate in story points (Fibonacci); null = unestimated.
@@ -202,6 +307,8 @@ class Issue extends Equatable {
     sprintId: json['sprintId'] as String?,
     startDate: _date(json['startDate']),
     dueDate: _date(json['dueDate']),
+    startOffset: _offset(json['startOffset']),
+    dueOffset: _offset(json['dueOffset']),
     estimateMinutes: json['estimateMinutes'] as int?,
     storyPoints: json['storyPoints'] as int?,
     spentMinutes: json['spentMinutes'] as int? ?? 0,
@@ -252,6 +359,8 @@ class Issue extends Equatable {
     sprintId: sprintId == _noChange ? this.sprintId : sprintId as String?,
     startDate: startDate,
     dueDate: dueDate,
+    startOffset: startOffset,
+    dueOffset: dueOffset,
     estimateMinutes: estimateMinutes,
     storyPoints: storyPoints == _noChange
         ? this.storyPoints
@@ -286,6 +395,13 @@ class Issue extends Equatable {
     subtaskCount,
     subtaskDoneCount,
     epicId,
+    // Both dates and both rules: a row shows the date and marks that it hangs
+    // off the event, so a list that compared neither would not repaint when a
+    // reschedule moved every deadline on screen.
+    startDate,
+    dueDate,
+    startOffset,
+    dueOffset,
   ];
 }
 
@@ -686,3 +802,8 @@ class IssueActivity extends Equatable {
   @override
   List<Object?> get props => [id, field, fromValue, toValue, createdAt];
 }
+
+/// A stored offset, or null for a date nobody derived.
+RelativeDate? _offset(Object? value) => value is Map<String, dynamic>
+    ? RelativeDate.fromJson(value)
+    : null;

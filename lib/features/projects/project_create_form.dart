@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'project_key.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/i18n/i18n.dart';
@@ -58,7 +58,7 @@ class ProjectDraft extends ChangeNotifier {
   /// that for good — a key somebody typed is theirs to keep.
   bool _keyFollowsName = true;
 
-  static final _keyPattern = RegExp(r'^[A-Z][A-Z0-9]{1,9}$');
+  static final _keyPattern = kProjectKeyPattern;
 
   @override
   void dispose() {
@@ -274,7 +274,7 @@ class _ProjectCreateFieldsState extends State<ProjectCreateFields> {
             autocorrect: false,
             maxLength: 10,
             style: const TextStyle(fontFamily: AppTheme.fontMono),
-            inputFormatters: [_UpperAlphaNumFormatter()],
+            inputFormatters: const [ProjectKeyFormatter()],
             decoration: glassInputDecoration(
               hint: 'BILL',
             ).copyWith(counterText: ''),
@@ -434,24 +434,6 @@ class _AccentSwatches extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-/// Uppercases and strips non-[A-Z0-9] as the project key is typed.
-class _UpperAlphaNumFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final text = newValue.text.toUpperCase().replaceAll(
-      RegExp('[^A-Z0-9]'),
-      '',
-    );
-    return TextEditingValue(
-      text: text,
-      selection: TextSelection.collapsed(offset: text.length),
     );
   }
 }

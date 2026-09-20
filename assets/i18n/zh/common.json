@@ -815,6 +815,32 @@
       "unknownWatcher": "未知用户",
       "toastOn": "你已开始关注该事项",
       "toastOff": "你已取消关注该事项"
+    },
+    "deadline": {
+      "modeDate": "日期",
+      "modeOffset": "相对项目日期",
+      "fixedDate": "日期",
+      "amount": "数量",
+      "unit": "单位",
+      "unitDays": "天",
+      "unitWeeks": "周",
+      "direction": "方向",
+      "before": "之前",
+      "after": "之后",
+      "workingDays": "按工作日计算",
+      "workingDaysHint": "跳过周末以及项目所用日历中的节假日。",
+      "noEventDate": "该项目还没有日期，无从计算。规则仍然保留。",
+      "setEventDate": "设置项目日期",
+      "calculating": "正在计算",
+      "awaitingEventDate": "等待项目日期",
+      "dateReplacesOffset": "选择日期会取消规则，下次调整项目日期时这个截止日期保持不变。",
+      "days": "{{count}} 天",
+      "days_plural": "{{count}} 天",
+      "weeks": "{{count}} 周",
+      "weeks_plural": "{{count}} 周",
+      "workingSuffix": "（工作日）",
+      "sentenceBefore": "项目日期前 {{amount}}{{basis}}",
+      "sentenceAfter": "项目日期后 {{amount}}{{basis}}"
     }
   },
   "type": {
@@ -1651,7 +1677,44 @@
       "chooseOne": "选择一个项目…",
       "chooseLead": "选择负责人…"
     },
-    "keyTaken": "该项目键已被占用。"
+    "keyTaken": "该项目键已被占用。",
+    "templates": "模板",
+    "templateBadge": "模板",
+    "emptyTemplates": "还没有模板。在项目设置中把项目标记为模板，它就会出现在这里。",
+    "copy": {
+      "title": "复制项目",
+      "short": "复制",
+      "fromTemplate": "用该模板新建项目",
+      "fromTemplateShort": "新建项目",
+      "name": "名称",
+      "key": "标识",
+      "eventDate": "项目日期",
+      "noEventDate": "尚无日期",
+      "include": "一并带走",
+      "members": "成员与负责人",
+      "attachments": "附件",
+      "attachmentsDetail": "{{files}} 个文件，{{size}} MB",
+      "timeSettings": "时间设置",
+      "board": "看板与列",
+      "counting": "正在统计将带走的内容",
+      "scope": "将带走 {{issues}} 个事项，其中 {{subtasks}} 个子任务。",
+      "tooLarge": "该项目有 {{count}} 个事项，超过一次复制能带走的数量。",
+      "confirm": "复制",
+      "create": "新建项目",
+      "done": "已复制 {{issues}} 个事项，算出 {{deadlines}} 个截止日期。"
+    },
+    "schedule": {
+      "title": "调整项目日期",
+      "subtitle": "哪些随日期移动，哪些保持不变",
+      "noDate": "无日期",
+      "later": "晚 {{count}} 天",
+      "earlier": "早 {{count}} 天",
+      "moving": "{{count}} 个截止日期随之移动",
+      "andMore": "还有 {{count}} 个",
+      "staying": "{{count}} 个截止日期保持不变，它们是手动设置的。",
+      "pending": "{{count}} 个截止日期将等待新日期，因为项目的日期被移除。",
+      "confirm": "调整"
+    }
   },
   "board": {
     "title": "敏捷看板",
@@ -2626,7 +2689,13 @@
     "linuxStoreUrl": "Linux 下载 URL",
     "stateOn": "开启",
     "stateOff": "关闭",
-    "envDefault": "环境默认值"
+    "envDefault": "环境默认值",
+    "projectTemplates": {
+      "title": "项目模板",
+      "hint": "复制项目，将其中一个保留为模板，并按项目日期设置相对截止日期。",
+      "enabledTitle": "项目模板与相对截止日期",
+      "enabledHint": "关闭：项目与现在完全一样。开启：可以复制项目或将其标记为模板，截止日期也可以保存为相对项目日期的偏移。"
+    }
   },
   "audit": {
     "title": "审计日志",
@@ -2793,7 +2862,9 @@
       "TIME_OFF_REQUEST_REJECTED": "请假申请已驳回",
       "TIME_OFF_REQUEST_WITHDRAWN": "请假申请已撤回",
       "TIME_OFF_REQUEST_CANCELLED": "请假已取消",
-      "TIME_OFF_SICK_REPORTED": "已报备病假"
+      "TIME_OFF_SICK_REPORTED": "已报备病假",
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "已切换项目模板",
+      "PROJECT_SCHEDULE_SHIFTED": "已调整项目日期"
     },
     "meta": {
       "oldRole": "原角色",
@@ -3128,6 +3199,17 @@
       "estimateAlertHint": "事项达到其预估的该比例时，通知被指派的人。",
       "alertDefault": "默认（{{percent}}%）",
       "percent": "{{percent}}%"
+    },
+    "templates": {
+      "title": "模板与日期",
+      "eventDate": "项目日期",
+      "eventDateHint": "项目相对截止日期的起算日。改动它会一并调整这些日期。",
+      "noEventDate": "尚无日期",
+      "markTitle": "作为模板提供",
+      "markHint": "项目会列在“模板”中，并提供“用它新建项目”。其他不变。",
+      "copy": "复制项目",
+      "dateCleared": "已移除日期。截止日期保持原位，规则也保留。",
+      "datesMoved": "已调整 {{count}} 个截止日期。"
     }
   },
   "account": {
@@ -3695,7 +3777,8 @@
       "worklog_read": "读取工时记录",
       "worklog_write": "记录工时",
       "search_read": "搜索",
-      "notifications_read": "读取自己的通知"
+      "notifications_read": "读取自己的通知",
+      "projects_write": "创建项目"
     }
   },
   "watched": {

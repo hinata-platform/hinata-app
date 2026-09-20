@@ -3,6 +3,7 @@ import '../../../core/responsive/golden_columns.dart';
 /// A card on the project settings page.
 enum ProjectSettingsCard {
   general,
+  templates,
   members,
   labels,
   workflow,
@@ -22,8 +23,13 @@ enum ProjectSettingsCard {
 /// team's vocabulary and stay together, archive and deletion close the page.
 List<GoldenGroup<ProjectSettingsCard>> projectSettingsGroups({
   required bool timeTracking,
+  required bool templates,
 }) => [
   const GoldenGroup([ProjectSettingsCard.general], weight: 5.5, lead: true),
+  // The project's date, its template marker and the copy. Short — three rows
+  // and a button — so it rides with whichever column has room.
+  if (templates)
+    const GoldenGroup([ProjectSettingsCard.templates], weight: 3.2),
   const GoldenGroup([
     ProjectSettingsCard.members,
     ProjectSettingsCard.labels,

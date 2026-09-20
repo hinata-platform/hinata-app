@@ -293,6 +293,20 @@ class IssueRow extends StatelessWidget {
                     ),
                   if (due != null) ...[
                     const SizedBox(width: 10),
+                    // The rule behind the date, where there is one. The date
+                    // stays the headline — a list of deadlines has to be
+                    // scannable — and this says it will move with the event.
+                    if (issue.dueOffset != null) ...[
+                      Tooltip(
+                        message: offsetSentence(context, issue.dueOffset!),
+                        child: Icon(
+                          LucideIcons.calendarClock,
+                          size: 12,
+                          color: AppColors.inkSoft,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                    ],
                     Text(
                       due.text,
                       style: TextStyle(

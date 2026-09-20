@@ -815,6 +815,32 @@
       "unknownWatcher": "Unbekannte:r Nutzer:in",
       "toastOn": "Du beobachtest diesen Vorgang jetzt",
       "toastOff": "Du beobachtest diesen Vorgang nicht mehr"
+    },
+    "deadline": {
+      "modeDate": "Datum",
+      "modeOffset": "Zum Termin",
+      "fixedDate": "Datum",
+      "amount": "Anzahl",
+      "unit": "Einheit",
+      "unitDays": "Tage",
+      "unitWeeks": "Wochen",
+      "direction": "Richtung",
+      "before": "vorher",
+      "after": "nachher",
+      "workingDays": "In Werktagen rechnen",
+      "workingDaysHint": "Überspringt Wochenenden und die Feiertage des Kalenders, den das Projekt nutzt.",
+      "noEventDate": "Dieses Projekt hat noch keinen Termin, es gibt also nichts zum Rechnen. Der Versatz bleibt trotzdem erhalten.",
+      "setEventDate": "Termin des Projekts setzen",
+      "calculating": "Wird gerechnet",
+      "awaitingEventDate": "Wartet auf den Termin des Projekts",
+      "dateReplacesOffset": "Ein gewähltes Datum löst den Versatz ab. Die nächste Terminänderung lässt diese Frist dann in Ruhe.",
+      "days": "{{count}} Tag",
+      "days_plural": "{{count}} Tage",
+      "weeks": "{{count}} Woche",
+      "weeks_plural": "{{count}} Wochen",
+      "workingSuffix": " (Werktage)",
+      "sentenceBefore": "{{amount}}{{basis}} vor dem Termin",
+      "sentenceAfter": "{{amount}}{{basis}} nach dem Termin"
     }
   },
   "type": {
@@ -1651,7 +1677,44 @@
       "chooseOne": "Projekt wählen …",
       "chooseLead": "Leitung wählen …"
     },
-    "keyTaken": "Dieser Schlüssel ist bereits vergeben."
+    "keyTaken": "Dieser Schlüssel ist bereits vergeben.",
+    "templates": "Vorlagen",
+    "templateBadge": "Vorlage",
+    "emptyTemplates": "Noch keine Vorlagen. Kennzeichne ein Projekt in seinen Einstellungen als Vorlage, dann steht es hier.",
+    "copy": {
+      "title": "Projekt kopieren",
+      "short": "Kopieren",
+      "fromTemplate": "Projekt aus dieser Vorlage anlegen",
+      "fromTemplateShort": "Projekt anlegen",
+      "name": "Name",
+      "key": "Schlüssel",
+      "eventDate": "Termin",
+      "noEventDate": "Noch kein Termin",
+      "include": "Mitnehmen",
+      "members": "Mitglieder und Leitung",
+      "attachments": "Anhänge",
+      "attachmentsDetail": "{{files}} Dateien, {{size}} MB",
+      "timeSettings": "Zeit-Einstellungen",
+      "board": "Board mit Spalten",
+      "counting": "Wird gezählt, was mitkommt",
+      "scope": "{{issues}} Vorgänge kommen mit, davon {{subtasks}} Unteraufgaben.",
+      "tooLarge": "Dieses Projekt hat {{count}} Vorgänge, mehr als eine Kopie mitnehmen kann.",
+      "confirm": "Kopieren",
+      "create": "Projekt anlegen",
+      "done": "{{issues}} Vorgänge kopiert, {{deadlines}} Fristen gerechnet."
+    },
+    "schedule": {
+      "title": "Termin verschieben",
+      "subtitle": "Was mitzieht und was stehen bleibt",
+      "noDate": "kein Termin",
+      "later": "{{count}} Tage später",
+      "earlier": "{{count}} Tage früher",
+      "moving": "{{count}} Fristen ziehen mit",
+      "andMore": "und {{count}} weitere",
+      "staying": "{{count}} Fristen bleiben, wo sie sind. Die hat jemand von Hand gesetzt.",
+      "pending": "{{count}} Fristen warten auf einen Termin, weil das Projekt seinen verliert.",
+      "confirm": "Verschieben"
+    }
   },
   "board": {
     "title": "Agile Boards",
@@ -2626,7 +2689,13 @@
     "linuxStoreUrl": "Linux-Download-URL",
     "stateOn": "An",
     "stateOff": "Aus",
-    "envDefault": "Env-Default"
+    "envDefault": "Env-Default",
+    "projectTemplates": {
+      "title": "Projektvorlagen",
+      "hint": "Ein Projekt kopieren, eines als Vorlage behalten und Fristen relativ zum Termin des Projekts setzen.",
+      "enabledTitle": "Projektvorlagen und relative Fristen",
+      "enabledHint": "Aus: Projekte verhalten sich genau wie bisher. An: ein Projekt lässt sich kopieren oder als Vorlage kennzeichnen, und eine Frist lässt sich als Versatz zum Termin des Projekts pflegen."
+    }
   },
   "audit": {
     "title": "Audit-Protokoll",
@@ -2793,7 +2862,9 @@
       "TIME_OFF_REQUEST_REJECTED": "Abwesenheitsantrag abgelehnt",
       "TIME_OFF_REQUEST_WITHDRAWN": "Abwesenheitsantrag zurückgezogen",
       "TIME_OFF_REQUEST_CANCELLED": "Abwesenheit storniert",
-      "TIME_OFF_SICK_REPORTED": "Krankmeldung erfasst"
+      "TIME_OFF_SICK_REPORTED": "Krankmeldung erfasst",
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "Projektvorlagen umgeschaltet",
+      "PROJECT_SCHEDULE_SHIFTED": "Termin des Projekts verschoben"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",
@@ -3128,6 +3199,17 @@
       "estimateAlertHint": "Die zugewiesene Person erfährt es, sobald ein Vorgang diesen Anteil seiner Schätzung erreicht.",
       "alertDefault": "Standard ({{percent}} %)",
       "percent": "{{percent}} %"
+    },
+    "templates": {
+      "title": "Vorlagen und Termin",
+      "eventDate": "Termin",
+      "eventDateHint": "Der Tag, von dem die relativen Fristen des Projekts aus gerechnet werden. Wer ihn ändert, verschiebt sie.",
+      "noEventDate": "Noch kein Termin",
+      "markTitle": "Als Vorlage anbieten",
+      "markHint": "Das Projekt steht dann unter Vorlagen und bietet „Projekt daraus anlegen“. Sonst ändert sich nichts.",
+      "copy": "Projekt kopieren",
+      "dateCleared": "Termin entfernt. Die Fristen bleiben stehen und behalten ihren Versatz.",
+      "datesMoved": "{{count}} Fristen verschoben."
     }
   },
   "account": {
@@ -3695,7 +3777,8 @@
       "worklog_read": "Erfasste Arbeit lesen",
       "worklog_write": "Arbeit erfassen",
       "search_read": "Suchen",
-      "notifications_read": "Eigene Benachrichtigungen lesen"
+      "notifications_read": "Eigene Benachrichtigungen lesen",
+      "projects_write": "Projekte anlegen"
     }
   },
   "watched": {

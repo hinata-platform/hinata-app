@@ -20,7 +20,18 @@ class GlassField extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(label, style: GlassFieldStyle.caption),
+            // Flexible and ellipsized: a caption over a narrow field — a
+            // two-digit number box, a short code — is wider than the field in
+            // several languages, and a Text in a bare Row overflows rather
+            // than shrinking.
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GlassFieldStyle.caption,
+              ),
+            ),
             if (trailing != null) ...[const SizedBox(width: 6), trailing!],
           ],
         ),
@@ -306,14 +317,12 @@ class GlassModalFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hint = this.hint;
-    final cancel = Flexible(
-      child: TextButton(
-        onPressed: busy ? null : () => Navigator.of(context).maybePop(),
-        child: Text(
-          context.t('common.cancel'),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+    final cancel = TextButton(
+      onPressed: busy ? null : () => Navigator.of(context).maybePop(),
+      child: Text(
+        context.t('common.cancel'),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
     final confirm = FilledButton.icon(
@@ -351,51 +360,69 @@ class GlassModalFooter extends StatelessWidget {
           top: BorderSide(color: AppColors.hairline.withValues(alpha: 0.6)),
         ),
       ),
-      // The confirm button is measured before any room is handed out, because
-      // it names what is about to happen and half of that name is worse than
-      // useless: "Lösc…" is not a thing anyone should press. It is the only
-      // child here that is not flexible.
+      // Neither button is shortened. The confirm button names what is about to
+      // happen and half of that name is worse than useless — "Lösc…" is not a
+      // thing anyone should press — and a clipped "Abbrechen" is no better.
+      // Given room they sit side by side; given less, the pair takes a second
+      // line, which is the one outcome that keeps both labels readable.
       //
-      // Cancel is, and it is the one that yields: a shortened "Abbrechen" still
-      // reads as the way out, and it shrinks rather than letting the row
-      // overflow. A hint takes at most half of what is left over — `Expanded`,
-      // so a short one simply sits in more space than it needs, which costs
-      // nothing. A footer too narrow for that gives the hint a row of its own:
-      // squeezed beside both buttons in the date picker, "Ältere Tage anfragen"
-      // broke over three lines.
+      // A hint takes at most half of what is left over — `Expanded`, so a short
+      // one simply sits in more space than it needs, which costs nothing. A
+      // footer too narrow for that gives the hint a row of its own: squeezed
+      // beside both buttons in the date picker, "Ältere Tage anfragen" broke
+      // over three lines.
       //
-      // All three used to be flexible, the leading `Spacer` included, which
+      // Both buttons used to be flexible, the leading `Spacer` included, which
       // reads like "shrink if you must" and is not what a Flex does: the row
       // was divided in three and each button capped at a third of it. On a
       // phone that third is about 110 points and the confirm button wants 135,
       // so the label was cut on every sheet in the app, in every language.
       child: LayoutBuilder(
         builder: (context, constraints) {
+          // A Wrap rather than a Row: two buttons carrying translated labels do
+          // not fit a phone-width footer in every language, and one that
+          // overflows shows a striped bar where the confirm button should be.
+          // Given room they sit side by side exactly as before.
+          final buttons = Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 8,
+            runSpacing: 6,
+            children: [cancel, confirm],
+          );
           if (hint != null && constraints.maxWidth < _hintBesideButtons) {
             return Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [hint, const SizedBox(height: 6), buttons],
+            );
+          }
+          if (hint != null) {
+            // The buttons keep their natural width here and the hint takes what
+            // is left: a Flex lays its inflexible children out first, so this is
+            // the one arrangement where a long hint cannot push a button into a
+            // second line beside it.
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                hint,
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [cancel, const SizedBox(width: 8), confirm],
+                // The gap rides inside the hint's own space rather than being a
+                // fixed box beside it: a footer sized to exactly the two buttons
+                // has no eight points to spare, and a SizedBox there overflows
+                // by exactly that much.
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.only(end: 8),
+                    child: hint,
+                  ),
                 ),
+                buttons,
               ],
             );
           }
+          // Flexible so the buttons are handed a bounded width: a Wrap measured
+          // unbounded lays out in one line and overflows rather than wrapping.
           return Row(
             mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (hint != null) ...[
-                Expanded(child: hint),
-                const SizedBox(width: 8),
-              ],
-              cancel,
-              const SizedBox(width: 8),
-              confirm,
-            ],
+            children: [Flexible(child: buttons)],
           );
         },
       ),

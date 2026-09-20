@@ -815,6 +815,32 @@
       "unknownWatcher": "Unknown user",
       "toastOn": "You are now watching this issue",
       "toastOff": "You are no longer watching this issue"
+    },
+    "deadline": {
+      "modeDate": "Date",
+      "modeOffset": "From the event",
+      "fixedDate": "Date",
+      "amount": "Number",
+      "unit": "Unit",
+      "unitDays": "Days",
+      "unitWeeks": "Weeks",
+      "direction": "Direction",
+      "before": "Before",
+      "after": "After",
+      "workingDays": "Count working days",
+      "workingDaysHint": "Skips weekends, and the holidays of the calendar the project uses.",
+      "noEventDate": "This project has no date yet, so there is nothing to count from. The rule is kept either way.",
+      "setEventDate": "Set the project date",
+      "calculating": "Working it out",
+      "awaitingEventDate": "Waiting for the project date",
+      "dateReplacesOffset": "Picking a date drops the rule behind it, so the next change to the project date leaves this deadline alone.",
+      "days": "{{count}} day",
+      "days_plural": "{{count}} days",
+      "weeks": "{{count}} week",
+      "weeks_plural": "{{count}} weeks",
+      "workingSuffix": " of working days",
+      "sentenceBefore": "{{amount}}{{basis}} before the project date",
+      "sentenceAfter": "{{amount}}{{basis}} after the project date"
     }
   },
   "type": {
@@ -1651,7 +1677,44 @@
       "chooseOne": "Choose a project…",
       "chooseLead": "Choose a lead…"
     },
-    "keyTaken": "That key is already taken."
+    "keyTaken": "That key is already taken.",
+    "templates": "Templates",
+    "templateBadge": "Template",
+    "emptyTemplates": "No templates yet. Mark a project as a template in its settings and it will appear here.",
+    "copy": {
+      "title": "Copy project",
+      "short": "Copy",
+      "fromTemplate": "Create a project from this template",
+      "fromTemplateShort": "Create a project",
+      "name": "Name",
+      "key": "Key",
+      "eventDate": "Project date",
+      "noEventDate": "No date yet",
+      "include": "Take along",
+      "members": "Members and leads",
+      "attachments": "Attachments",
+      "attachmentsDetail": "{{files}} files, {{size}} MB",
+      "timeSettings": "Time settings",
+      "board": "Board and columns",
+      "counting": "Counting what would come along",
+      "scope": "{{issues}} issues come along, {{subtasks}} of them sub-tasks.",
+      "tooLarge": "This project has {{count}} issues, which is more than one copy can take.",
+      "confirm": "Copy",
+      "create": "Create project",
+      "done": "{{issues}} issues copied, {{deadlines}} deadlines worked out."
+    },
+    "schedule": {
+      "title": "Move the project date",
+      "subtitle": "What follows the date, and what stays where it is",
+      "noDate": "no date",
+      "later": "{{count}} days later",
+      "earlier": "{{count}} days earlier",
+      "moving": "{{count}} deadlines follow",
+      "andMore": "and {{count}} more",
+      "staying": "{{count}} deadlines stay where they are. Somebody set those by hand.",
+      "pending": "{{count}} deadlines wait for a date, because the project is losing the one it had.",
+      "confirm": "Move"
+    }
   },
   "board": {
     "title": "Agile Boards",
@@ -2626,7 +2689,13 @@
     "linuxStoreUrl": "Linux download URL",
     "stateOn": "On",
     "stateOff": "Off",
-    "envDefault": "Env default"
+    "envDefault": "Env default",
+    "projectTemplates": {
+      "title": "Project templates",
+      "hint": "Copy a project, keep one as a template, and set deadlines relative to the project's date.",
+      "enabledTitle": "Project templates and relative deadlines",
+      "enabledHint": "Off: projects work exactly as they do today. On: a project can be copied or marked as a template, and a deadline can be kept as an offset from the project's date."
+    }
   },
   "audit": {
     "title": "Audit log",
@@ -2793,7 +2862,9 @@
       "TIME_OFF_REQUEST_REJECTED": "Absence request rejected",
       "TIME_OFF_REQUEST_WITHDRAWN": "Absence request withdrawn",
       "TIME_OFF_REQUEST_CANCELLED": "Absence cancelled",
-      "TIME_OFF_SICK_REPORTED": "Sickness reported"
+      "TIME_OFF_SICK_REPORTED": "Sickness reported",
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "Project templates switched",
+      "PROJECT_SCHEDULE_SHIFTED": "Project date moved"
     },
     "meta": {
       "oldRole": "Previous role",
@@ -3128,6 +3199,17 @@
       "estimateAlertHint": "The assignee is told once an issue reaches this share of its estimate.",
       "alertDefault": "Default ({{percent}} %)",
       "percent": "{{percent}} %"
+    },
+    "templates": {
+      "title": "Templates and dates",
+      "eventDate": "Project date",
+      "eventDateHint": "The day the project's relative deadlines are counted from. Changing it moves them.",
+      "noEventDate": "No date yet",
+      "markTitle": "Offer as a template",
+      "markHint": "The project is listed under Templates and offers \"create a project from this\". Nothing else changes.",
+      "copy": "Copy project",
+      "dateCleared": "Date removed. The deadlines stay where they are and keep their rules.",
+      "datesMoved": "{{count}} deadlines moved."
     }
   },
   "account": {
@@ -3695,7 +3777,8 @@
       "worklog_read": "Read logged work",
       "worklog_write": "Log work",
       "search_read": "Search",
-      "notifications_read": "Read own notifications"
+      "notifications_read": "Read own notifications",
+      "projects_write": "Create projects"
     }
   },
   "watched": {

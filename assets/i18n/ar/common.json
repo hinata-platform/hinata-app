@@ -815,6 +815,32 @@
       "unknownWatcher": "مستخدم غير معروف",
       "toastOn": "أصبحت تتابع هذه المهمة",
       "toastOff": "لم تعد تتابع هذه المهمة"
+    },
+    "deadline": {
+      "modeDate": "تاريخ",
+      "modeOffset": "من تاريخ المشروع",
+      "fixedDate": "تاريخ",
+      "amount": "العدد",
+      "unit": "الوحدة",
+      "unitDays": "أيام",
+      "unitWeeks": "أسابيع",
+      "direction": "الاتجاه",
+      "before": "قبل",
+      "after": "بعد",
+      "workingDays": "العد بأيام العمل",
+      "workingDaysHint": "يتخطى عطلات نهاية الأسبوع وعطلات التقويم الذي يستخدمه المشروع.",
+      "noEventDate": "لا يوجد تاريخ لهذا المشروع بعد، فلا شيء يُحسب منه. تبقى القاعدة محفوظة على أي حال.",
+      "setEventDate": "تحديد تاريخ المشروع",
+      "calculating": "جاري الحساب",
+      "awaitingEventDate": "في انتظار تاريخ المشروع",
+      "dateReplacesOffset": "اختيار تاريخ يلغي القاعدة، ولن يمس التغيير التالي لتاريخ المشروع هذا الموعد.",
+      "days": "{{count}} يوم",
+      "days_plural": "{{count}} يوما",
+      "weeks": "{{count}} أسبوع",
+      "weeks_plural": "{{count}} أسابيع",
+      "workingSuffix": " من أيام العمل",
+      "sentenceBefore": "{{amount}}{{basis}} قبل تاريخ المشروع",
+      "sentenceAfter": "{{amount}}{{basis}} بعد تاريخ المشروع"
     }
   },
   "type": {
@@ -1651,7 +1677,44 @@
       "chooseOne": "اختر مشروعًا…",
       "chooseLead": "اختر المسؤول…"
     },
-    "keyTaken": "هذا المفتاح مستخدم بالفعل."
+    "keyTaken": "هذا المفتاح مستخدم بالفعل.",
+    "templates": "القوالب",
+    "templateBadge": "قالب",
+    "emptyTemplates": "لا توجد قوالب بعد. ضع علامة قالب على مشروع في إعداداته ليظهر هنا.",
+    "copy": {
+      "title": "نسخ المشروع",
+      "short": "نسخ",
+      "fromTemplate": "إنشاء مشروع من هذا القالب",
+      "fromTemplateShort": "إنشاء مشروع",
+      "name": "الاسم",
+      "key": "المفتاح",
+      "eventDate": "تاريخ المشروع",
+      "noEventDate": "لا يوجد تاريخ بعد",
+      "include": "ما يُنسخ معه",
+      "members": "الأعضاء والقيادة",
+      "attachments": "المرفقات",
+      "attachmentsDetail": "{{files}} ملفا، {{size}} ميغابايت",
+      "timeSettings": "إعدادات الوقت",
+      "board": "اللوحة وأعمدتها",
+      "counting": "يجري حساب ما سينتقل",
+      "scope": "ستنتقل {{issues}} مهمة، منها {{subtasks}} مهمة فرعية.",
+      "tooLarge": "يضم هذا المشروع {{count}} مهمة، وهو أكثر مما تأخذه نسخة واحدة.",
+      "confirm": "نسخ",
+      "create": "إنشاء المشروع",
+      "done": "تم نسخ {{issues}} مهمة وحساب {{deadlines}} موعدا."
+    },
+    "schedule": {
+      "title": "نقل تاريخ المشروع",
+      "subtitle": "ما يتبع التاريخ وما يبقى في مكانه",
+      "noDate": "بلا تاريخ",
+      "later": "{{count}} يوما لاحقا",
+      "earlier": "{{count}} يوما أبكر",
+      "moving": "{{count}} موعدا تتبع التاريخ",
+      "andMore": "و{{count}} غيرها",
+      "staying": "{{count}} موعدا تبقى في مكانها، فقد ضبطها أحدهم يدويا.",
+      "pending": "{{count}} موعدا تنتظر تاريخا، لأن المشروع يفقد تاريخه.",
+      "confirm": "نقل"
+    }
   },
   "board": {
     "title": "اللوحات الرشيقة",
@@ -2626,7 +2689,13 @@
     "linuxStoreUrl": "عنوان تنزيل Linux",
     "stateOn": "مفعّل",
     "stateOff": "معطّل",
-    "envDefault": "قيمة البيئة"
+    "envDefault": "قيمة البيئة",
+    "projectTemplates": {
+      "title": "قوالب المشاريع",
+      "hint": "انسخ مشروعا، واحتفظ بواحد كقالب، وحدد المواعيد النهائية نسبة إلى تاريخ المشروع.",
+      "enabledTitle": "قوالب المشاريع والمواعيد النسبية",
+      "enabledHint": "معطل: تعمل المشاريع تماما كما هي اليوم. مفعل: يمكن نسخ مشروع أو وضع علامة قالب عليه، ويمكن الاحتفاظ بموعد نهائي كإزاحة عن تاريخ المشروع."
+    }
   },
   "audit": {
     "title": "سجل التدقيق",
@@ -2793,7 +2862,9 @@
       "TIME_OFF_REQUEST_REJECTED": "تم رفض طلب الغياب",
       "TIME_OFF_REQUEST_WITHDRAWN": "تم سحب طلب الغياب",
       "TIME_OFF_REQUEST_CANCELLED": "تم إلغاء الغياب",
-      "TIME_OFF_SICK_REPORTED": "تم الإبلاغ عن المرض"
+      "TIME_OFF_SICK_REPORTED": "تم الإبلاغ عن المرض",
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "تم تبديل قوالب المشاريع",
+      "PROJECT_SCHEDULE_SHIFTED": "تم نقل تاريخ المشروع"
     },
     "meta": {
       "oldRole": "الدور السابق",
@@ -3128,6 +3199,17 @@
       "estimateAlertHint": "يُبلَّغ الشخص المسند إليه عندما تبلغ المهمة هذه النسبة من تقديرها.",
       "alertDefault": "افتراضي ({{percent}} %)",
       "percent": "{{percent}} %"
+    },
+    "templates": {
+      "title": "القوالب والتاريخ",
+      "eventDate": "تاريخ المشروع",
+      "eventDateHint": "اليوم الذي تُحسب منه المواعيد النسبية للمشروع. تغييره ينقلها.",
+      "noEventDate": "لا يوجد تاريخ بعد",
+      "markTitle": "عرضه كقالب",
+      "markHint": "يظهر المشروع ضمن القوالب ويتيح «إنشاء مشروع منه». ولا يتغير شيء آخر.",
+      "copy": "نسخ المشروع",
+      "dateCleared": "أُزيل التاريخ. تبقى المواعيد في مكانها وتحتفظ بقاعدتها.",
+      "datesMoved": "تم نقل {{count}} موعدا."
     }
   },
   "account": {
@@ -3695,7 +3777,8 @@
       "worklog_read": "قراءة العمل المسجَّل",
       "worklog_write": "تسجيل العمل",
       "search_read": "البحث",
-      "notifications_read": "قراءة إشعاراتك"
+      "notifications_read": "قراءة إشعاراتك",
+      "projects_write": "إنشاء المشاريع"
     }
   },
   "watched": {

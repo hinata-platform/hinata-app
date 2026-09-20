@@ -815,6 +815,32 @@
       "unknownWatcher": "Utilisateur inconnu",
       "toastOn": "Vous observez désormais ce ticket",
       "toastOff": "Vous n'observez plus ce ticket"
+    },
+    "deadline": {
+      "modeDate": "Date",
+      "modeOffset": "Depuis la date",
+      "fixedDate": "Date",
+      "amount": "Nombre",
+      "unit": "Unité",
+      "unitDays": "Jours",
+      "unitWeeks": "Semaines",
+      "direction": "Sens",
+      "before": "avant",
+      "after": "après",
+      "workingDays": "Compter en jours ouvrés",
+      "workingDaysHint": "Ignore les week-ends et les jours fériés du calendrier utilisé par le projet.",
+      "noEventDate": "Ce projet n'a pas encore de date, il n'y a donc rien à compter. La règle est conservée malgré tout.",
+      "setEventDate": "Définir la date du projet",
+      "calculating": "Calcul en cours",
+      "awaitingEventDate": "En attente de la date du projet",
+      "dateReplacesOffset": "Choisir une date supprime la règle : le prochain changement de date du projet laissera cette échéance tranquille.",
+      "days": "{{count}} jour",
+      "days_plural": "{{count}} jours",
+      "weeks": "{{count}} semaine",
+      "weeks_plural": "{{count}} semaines",
+      "workingSuffix": " ouvrés",
+      "sentenceBefore": "{{amount}}{{basis}} avant la date du projet",
+      "sentenceAfter": "{{amount}}{{basis}} après la date du projet"
     }
   },
   "type": {
@@ -1651,7 +1677,44 @@
       "chooseOne": "Choisir un projet…",
       "chooseLead": "Choisir un responsable…"
     },
-    "keyTaken": "Cette clé est déjà utilisée."
+    "keyTaken": "Cette clé est déjà utilisée.",
+    "templates": "Modèles",
+    "templateBadge": "Modèle",
+    "emptyTemplates": "Pas encore de modèle. Marquez un projet comme modèle dans ses paramètres et il apparaîtra ici.",
+    "copy": {
+      "title": "Copier le projet",
+      "short": "Copier",
+      "fromTemplate": "Créer un projet à partir de ce modèle",
+      "fromTemplateShort": "Créer un projet",
+      "name": "Nom",
+      "key": "Clé",
+      "eventDate": "Date du projet",
+      "noEventDate": "Pas encore de date",
+      "include": "Emporter",
+      "members": "Membres et responsables",
+      "attachments": "Pièces jointes",
+      "attachmentsDetail": "{{files}} fichiers, {{size}} Mo",
+      "timeSettings": "Paramètres de temps",
+      "board": "Tableau et colonnes",
+      "counting": "Décompte de ce qui suivrait",
+      "scope": "{{issues}} tickets suivent, dont {{subtasks}} sous-tâches.",
+      "tooLarge": "Ce projet compte {{count}} tickets, plus qu'une copie ne peut en prendre.",
+      "confirm": "Copier",
+      "create": "Créer le projet",
+      "done": "{{issues}} tickets copiés, {{deadlines}} échéances calculées."
+    },
+    "schedule": {
+      "title": "Déplacer la date du projet",
+      "subtitle": "Ce qui suit la date et ce qui reste en place",
+      "noDate": "sans date",
+      "later": "{{count}} jours plus tard",
+      "earlier": "{{count}} jours plus tôt",
+      "moving": "{{count}} échéances suivent",
+      "andMore": "et {{count}} autres",
+      "staying": "{{count}} échéances restent en place. Quelqu'un les a saisies à la main.",
+      "pending": "{{count}} échéances attendent une date, car le projet perd la sienne.",
+      "confirm": "Déplacer"
+    }
   },
   "board": {
     "title": "Tableaux agiles",
@@ -2626,7 +2689,13 @@
     "linuxStoreUrl": "URL de téléchargement Linux",
     "stateOn": "Activé",
     "stateOff": "Désactivé",
-    "envDefault": "Valeur d'environnement"
+    "envDefault": "Valeur d'environnement",
+    "projectTemplates": {
+      "title": "Modèles de projet",
+      "hint": "Copiez un projet, gardez-en un comme modèle et définissez des échéances relatives à la date du projet.",
+      "enabledTitle": "Modèles de projet et échéances relatives",
+      "enabledHint": "Désactivé : les projets fonctionnent exactement comme aujourd'hui. Activé : un projet peut être copié ou marqué comme modèle, et une échéance peut être conservée comme décalage par rapport à la date du projet."
+    }
   },
   "audit": {
     "title": "Journal d'audit",
@@ -2793,7 +2862,9 @@
       "TIME_OFF_REQUEST_REJECTED": "Demande d'absence refusée",
       "TIME_OFF_REQUEST_WITHDRAWN": "Demande d'absence retirée",
       "TIME_OFF_REQUEST_CANCELLED": "Absence annulée",
-      "TIME_OFF_SICK_REPORTED": "Maladie signalée"
+      "TIME_OFF_SICK_REPORTED": "Maladie signalée",
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "Modèles de projet basculés",
+      "PROJECT_SCHEDULE_SHIFTED": "Date du projet déplacée"
     },
     "meta": {
       "oldRole": "Rôle précédent",
@@ -3128,6 +3199,17 @@
       "estimateAlertHint": "La personne assignée est prévenue dès qu’un ticket atteint ce seuil de son estimation.",
       "alertDefault": "Par défaut ({{percent}} %)",
       "percent": "{{percent}} %"
+    },
+    "templates": {
+      "title": "Modèles et date",
+      "eventDate": "Date du projet",
+      "eventDateHint": "Le jour à partir duquel les échéances relatives du projet sont comptées. La changer les déplace.",
+      "noEventDate": "Pas encore de date",
+      "markTitle": "Proposer comme modèle",
+      "markHint": "Le projet figure sous Modèles et propose « créer un projet à partir de ceci ». Rien d'autre ne change.",
+      "copy": "Copier le projet",
+      "dateCleared": "Date retirée. Les échéances restent en place et gardent leur règle.",
+      "datesMoved": "{{count}} échéances déplacées."
     }
   },
   "account": {
@@ -3695,7 +3777,8 @@
       "worklog_read": "Lire les temps saisis",
       "worklog_write": "Saisir du temps",
       "search_read": "Rechercher",
-      "notifications_read": "Lire ses propres notifications"
+      "notifications_read": "Lire ses propres notifications",
+      "projects_write": "Créer des projets"
     }
   },
   "watched": {

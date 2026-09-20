@@ -157,6 +157,68 @@ void main() {
     });
   });
 
+  group('the project-template switch', () {
+    testWidgets('writes the stored override, not a raw flag', (tester) async {
+      // Seeded with an explicit false, because absent renders the env badge
+      // rather than a switch — see the case below, which is the point of it.
+      final settings = <String, dynamic>{
+        'projectTemplates': <String, dynamic>{'enabled': false},
+      };
+      await tester.pumpWidget(host(settings));
+      await tester.pumpAndSettle();
+
+      final toggle = find.descendant(
+        of: find.byKey(const ValueKey('projectTemplatesSwitch')),
+        matching: find.byType(HiveSwitch),
+      );
+      await tester.ensureVisible(toggle);
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+
+      expect(
+        (settings['projectTemplates'] as Map<String, dynamic>)['enabled'],
+        isTrue,
+      );
+      // And never as a free-form flag: the server derives the published flag
+      // from the block above, so a row of that name would flip nothing.
+      final flags = (settings['app'] as Map<String, dynamic>?)?['featureFlags'];
+      expect(
+        (flags as Map<String, dynamic>?)?.containsKey(
+              PlatformFlags.projectTemplates,
+            ) ??
+            false,
+        isFalse,
+      );
+    });
+
+    testWidgets('absent means the environment decides', (tester) async {
+      // Not "off": an operator can run a whole fleet from
+      // HINATA_PROJECT_TEMPLATES_ENABLED, and a screen claiming "off" there
+      // would be wrong about a module that is running.
+      await tester.pumpWidget(host(<String, dynamic>{}));
+      await tester.pumpAndSettle();
+
+      expect(find.text('admin.envDefault'), findsWidgets);
+    });
+
+    testWidgets('it stays out of the raw flag editor', (tester) async {
+      await tester.pumpWidget(
+        host(<String, dynamic>{
+          'app': <String, dynamic>{
+            'featureFlags': <String, dynamic>{
+              PlatformFlags.projectTemplates: true,
+              'something_else': true,
+            },
+          },
+        }),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('something_else'), findsOneWidget);
+      expect(find.text(PlatformFlags.projectTemplates), findsNothing);
+    });
+  });
+
   for (final width in <double>[320, 420, 900]) {
     testWidgets('lays out without overflow at ${width}px', (tester) async {
       await tester.pumpWidget(

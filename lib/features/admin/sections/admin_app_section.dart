@@ -8,6 +8,7 @@ import '../../../core/widgets/hive_widgets.dart';
 import '../../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
+import '../policy_controls.dart' show PolicySwitch;
 
 /// App/client settings served to the apps via /api/v1/meta: the minimum
 /// required app version, the privacy policy URL and optional feature flags.
@@ -36,6 +37,20 @@ class _AdminAppSectionState extends State<AdminAppSection> {
   Map<String, dynamic> get _flags =>
       (_app['featureFlags'] ??= <String, dynamic>{}) as Map<String, dynamic>;
 
+  /// The project-template block, created on demand so a switch always has
+  /// somewhere to write. Its one field is nullable on purpose: absent means
+  /// "whatever `HINATA_PROJECT_TEMPLATES_ENABLED` says", which is how an
+  /// operator keeps one answer across a fleet of servers.
+  Map<String, dynamic> get _projectTemplates =>
+      (widget.settings['projectTemplates'] ??= <String, dynamic>{})
+          as Map<String, dynamic>;
+
+  /// What the switch resolves to while nothing is stored — filled by the server
+  /// on the way out, never written back.
+  bool? get _projectTemplatesEffective =>
+      (_projectTemplates['effective'] as Map<String, dynamic>?)?['enabled']
+          as bool?;
+
   /// Read-only here — the section that owns these values is Zeiterfassung.
   Map<String, dynamic> get _timeTracking =>
       widget.settings['timeTracking'] is Map<String, dynamic>
@@ -60,6 +75,11 @@ class _AdminAppSectionState extends State<AdminAppSection> {
     // so a row of that name here would be a switch that looks authoritative,
     // flips nothing, and cannot be deleted again.
     PlatformFlags.mcp,
+    // And the same for project templates: the server derives
+    // `project_templates` from its own settings block, which the card below
+    // edits. A hand-typed row of that name would look like a switch, flip
+    // nothing, and could never be deleted again.
+    PlatformFlags.projectTemplates,
   };
 
   @override
@@ -190,6 +210,22 @@ class _AdminAppSectionState extends State<AdminAppSection> {
                           as Map<String, dynamic>?)?['advancedEnabled']
                       as bool?,
               onOpen: widget.onOpenTimeTracking,
+            ),
+          ],
+        ),
+        'projectTemplates': AdminSectionCard(
+          icon: LucideIcons.copy,
+          title: context.t('admin.projectTemplates.title'),
+          subtitle: context.t('admin.projectTemplates.hint'),
+          children: [
+            PolicySwitch(
+              key: const ValueKey('projectTemplatesSwitch'),
+              title: context.t('admin.projectTemplates.enabledTitle'),
+              description: context.t('admin.projectTemplates.enabledHint'),
+              value: _projectTemplates['enabled'] as bool?,
+              effective: _projectTemplatesEffective,
+              onChanged: (v) =>
+                  setState(() => _projectTemplates['enabled'] = v),
             ),
           ],
         ),

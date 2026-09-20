@@ -135,21 +135,25 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('a footer too narrow for both shortens cancel, not confirm', (
+  testWidgets('a footer too narrow for both keeps both labels whole', (
     tester,
   ) async {
     const label = 'Speichern';
     final width = await comfortable(tester, label);
 
-    // Two thirds of what the pair needs: something has to give, and it is the
-    // button that is not asking anyone to commit to anything.
+    // Two thirds of what the pair needs: something has to give. What gives is
+    // the line, not the wording — a clipped "Abbrechen" is no better than a
+    // clipped "Speichern", and a reader about to commit to something should
+    // not have to guess at either button.
     await pump(tester, width: width * 0.66, confirmLabel: label);
 
     expect(isTruncated(tester, label), isFalse);
+    expect(isTruncated(tester, 'common.cancel'), isFalse);
+    // Cancel is the one that moves: it takes the row above, so the button that
+    // commits stays where a reader's thumb expects it.
     expect(
-      isTruncated(tester, 'common.cancel'),
-      isTrue,
-      reason: 'cancel is the one that yields — otherwise the row overflows',
+      tester.getCenter(find.text('common.cancel')).dy,
+      lessThan(tester.getCenter(find.text(label)).dy),
     );
     expect(tester.takeException(), isNull);
   });

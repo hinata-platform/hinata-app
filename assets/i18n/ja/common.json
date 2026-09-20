@@ -815,6 +815,32 @@
       "unknownWatcher": "不明なユーザー",
       "toastOn": "この課題をウォッチしています",
       "toastOff": "この課題のウォッチを解除しました"
+    },
+    "deadline": {
+      "modeDate": "日付",
+      "modeOffset": "開催日から",
+      "fixedDate": "日付",
+      "amount": "数",
+      "unit": "単位",
+      "unitDays": "日",
+      "unitWeeks": "週",
+      "direction": "方向",
+      "before": "前",
+      "after": "後",
+      "workingDays": "営業日で数える",
+      "workingDaysHint": "週末と、プロジェクトが使う暦の祝日を飛ばします。",
+      "noEventDate": "このプロジェクトにはまだ日付がないため、数える起点がありません。ルールはそのまま残ります。",
+      "setEventDate": "プロジェクトの日付を設定",
+      "calculating": "計算中",
+      "awaitingEventDate": "プロジェクトの日付を待っています",
+      "dateReplacesOffset": "日付を選ぶとルールは外れ、次にプロジェクトの日付が変わってもこの期限は動きません。",
+      "days": "{{count}}日",
+      "days_plural": "{{count}}日",
+      "weeks": "{{count}}週",
+      "weeks_plural": "{{count}}週",
+      "workingSuffix": "（営業日）",
+      "sentenceBefore": "プロジェクトの日付の{{amount}}{{basis}}前",
+      "sentenceAfter": "プロジェクトの日付の{{amount}}{{basis}}後"
     }
   },
   "type": {
@@ -1651,7 +1677,44 @@
       "chooseOne": "プロジェクトを選択…",
       "chooseLead": "リードを選択…"
     },
-    "keyTaken": "そのキーはすでに使われています。"
+    "keyTaken": "そのキーはすでに使われています。",
+    "templates": "テンプレート",
+    "templateBadge": "テンプレート",
+    "emptyTemplates": "テンプレートはまだありません。プロジェクトの設定でテンプレートに指定すると、ここに並びます。",
+    "copy": {
+      "title": "プロジェクトを複製",
+      "short": "複製",
+      "fromTemplate": "このテンプレートからプロジェクトを作成",
+      "fromTemplateShort": "プロジェクトを作成",
+      "name": "名前",
+      "key": "キー",
+      "eventDate": "プロジェクトの日付",
+      "noEventDate": "日付はまだありません",
+      "include": "一緒に持っていくもの",
+      "members": "メンバーとリード",
+      "attachments": "添付ファイル",
+      "attachmentsDetail": "{{files}} 件、{{size}} MB",
+      "timeSettings": "時間の設定",
+      "board": "ボードと列",
+      "counting": "何が一緒に移るか集計中",
+      "scope": "{{issues}} 件の課題が移ります。うち {{subtasks}} 件はサブタスクです。",
+      "tooLarge": "このプロジェクトには課題が {{count}} 件あり、1回の複製で運べる数を超えています。",
+      "confirm": "複製",
+      "create": "プロジェクトを作成",
+      "done": "{{issues}} 件の課題を複製し、{{deadlines}} 件の期限を算出しました。"
+    },
+    "schedule": {
+      "title": "プロジェクトの日付を動かす",
+      "subtitle": "日付に追従するものと、そのまま残るもの",
+      "noDate": "日付なし",
+      "later": "{{count}}日後",
+      "earlier": "{{count}}日前",
+      "moving": "{{count}} 件の期限が追従します",
+      "andMore": "ほか {{count}} 件",
+      "staying": "{{count}} 件の期限はそのままです。手で設定されたものです。",
+      "pending": "{{count}} 件の期限は日付待ちになります。プロジェクトの日付がなくなるためです。",
+      "confirm": "動かす"
+    }
   },
   "board": {
     "title": "アジャイルボード",
@@ -2626,7 +2689,13 @@
     "linuxStoreUrl": "Linux のダウンロード URL",
     "stateOn": "オン",
     "stateOff": "オフ",
-    "envDefault": "環境の既定値"
+    "envDefault": "環境の既定値",
+    "projectTemplates": {
+      "title": "プロジェクトテンプレート",
+      "hint": "プロジェクトを複製し、テンプレートとして保持し、期限をプロジェクトの日付を基準に設定します。",
+      "enabledTitle": "プロジェクトテンプレートと相対期限",
+      "enabledHint": "オフ: プロジェクトはこれまでどおり動作します。オン: プロジェクトを複製したりテンプレートとして指定したりでき、期限をプロジェクトの日付からのずれとして保持できます。"
+    }
   },
   "audit": {
     "title": "監査ログ",
@@ -2793,7 +2862,9 @@
       "TIME_OFF_REQUEST_REJECTED": "休暇申請を却下",
       "TIME_OFF_REQUEST_WITHDRAWN": "休暇申請を取り下げ",
       "TIME_OFF_REQUEST_CANCELLED": "休暇を取り消し",
-      "TIME_OFF_SICK_REPORTED": "病欠を届け出"
+      "TIME_OFF_SICK_REPORTED": "病欠を届け出",
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "プロジェクトテンプレートを切り替え",
+      "PROJECT_SCHEDULE_SHIFTED": "プロジェクトの日付を変更"
     },
     "meta": {
       "oldRole": "変更前のロール",
@@ -2996,6 +3067,17 @@
       "estimateAlertHint": "課題が見積もりのこの割合に達すると担当者に通知します。",
       "alertDefault": "既定 ({{percent}} %)",
       "percent": "{{percent}} %"
+    },
+    "templates": {
+      "title": "テンプレートと日付",
+      "eventDate": "プロジェクトの日付",
+      "eventDateHint": "プロジェクトの相対期限を数える起点の日です。変更すると期限も動きます。",
+      "noEventDate": "日付はまだありません",
+      "markTitle": "テンプレートとして提供",
+      "markHint": "プロジェクトはテンプレートに並び、「これからプロジェクトを作成」を提供します。それ以外は変わりません。",
+      "copy": "プロジェクトを複製",
+      "dateCleared": "日付を削除しました。期限はそのままで、ルールも残ります。",
+      "datesMoved": "{{count}} 件の期限を移動しました。"
     }
   },
   "teams": {
@@ -3695,7 +3777,8 @@
       "worklog_read": "作業記録の読み取り",
       "worklog_write": "作業時間の記録",
       "search_read": "検索",
-      "notifications_read": "自分の通知の読み取り"
+      "notifications_read": "自分の通知の読み取り",
+      "projects_write": "プロジェクトの作成"
     }
   },
   "watched": {
