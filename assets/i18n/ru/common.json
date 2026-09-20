@@ -2800,7 +2800,8 @@
       "TIME_OFF_REQUEST_WITHDRAWN": "Заявка на отсутствие отозвана",
       "TIME_OFF_REQUEST_CANCELLED": "Отсутствие отменено",
       "TIME_OFF_SICK_REPORTED": "Болезнь зарегистрирована",
-      "PROJECT_TEMPLATES_POLICY_CHANGED": "Шаблоны проектов переключены"
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "Шаблоны проектов переключены",
+      "PROJECT_SCHEDULE_SHIFTED": "Дата проекта перенесена"
     },
     "meta": {
       "oldRole": "Прежняя роль",

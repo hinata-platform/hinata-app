@@ -2800,7 +2800,8 @@
       "TIME_OFF_REQUEST_WITHDRAWN": "Solicitud de ausencia retirada",
       "TIME_OFF_REQUEST_CANCELLED": "Ausencia cancelada",
       "TIME_OFF_SICK_REPORTED": "Enfermedad notificada",
-      "PROJECT_TEMPLATES_POLICY_CHANGED": "Plantillas de proyecto conmutadas"
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "Plantillas de proyecto conmutadas",
+      "PROJECT_SCHEDULE_SHIFTED": "Fecha del proyecto desplazada"
     },
     "meta": {
       "oldRole": "Rol anterior",

@@ -2800,7 +2800,8 @@
       "TIME_OFF_REQUEST_WITHDRAWN": "请假申请已撤回",
       "TIME_OFF_REQUEST_CANCELLED": "请假已取消",
       "TIME_OFF_SICK_REPORTED": "已报备病假",
-      "PROJECT_TEMPLATES_POLICY_CHANGED": "已切换项目模板"
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "已切换项目模板",
+      "PROJECT_SCHEDULE_SHIFTED": "已调整项目日期"
     },
     "meta": {
       "oldRole": "原角色",

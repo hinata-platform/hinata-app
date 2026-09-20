@@ -2800,7 +2800,8 @@
       "TIME_OFF_REQUEST_WITHDRAWN": "Abwesenheitsantrag zurückgezogen",
       "TIME_OFF_REQUEST_CANCELLED": "Abwesenheit storniert",
       "TIME_OFF_SICK_REPORTED": "Krankmeldung erfasst",
-      "PROJECT_TEMPLATES_POLICY_CHANGED": "Projektvorlagen umgeschaltet"
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "Projektvorlagen umgeschaltet",
+      "PROJECT_SCHEDULE_SHIFTED": "Termin des Projekts verschoben"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",

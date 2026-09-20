@@ -2800,7 +2800,8 @@
       "TIME_OFF_REQUEST_WITHDRAWN": "休暇申請を取り下げ",
       "TIME_OFF_REQUEST_CANCELLED": "休暇を取り消し",
       "TIME_OFF_SICK_REPORTED": "病欠を届け出",
-      "PROJECT_TEMPLATES_POLICY_CHANGED": "プロジェクトテンプレートを切り替え"
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "プロジェクトテンプレートを切り替え",
+      "PROJECT_SCHEDULE_SHIFTED": "プロジェクトの日付を変更"
     },
     "meta": {
       "oldRole": "変更前のロール",

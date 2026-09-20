@@ -2800,7 +2800,8 @@
       "TIME_OFF_REQUEST_WITHDRAWN": "تم سحب طلب الغياب",
       "TIME_OFF_REQUEST_CANCELLED": "تم إلغاء الغياب",
       "TIME_OFF_SICK_REPORTED": "تم الإبلاغ عن المرض",
-      "PROJECT_TEMPLATES_POLICY_CHANGED": "تم تبديل قوالب المشاريع"
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "تم تبديل قوالب المشاريع",
+      "PROJECT_SCHEDULE_SHIFTED": "تم نقل تاريخ المشروع"
     },
     "meta": {
       "oldRole": "الدور السابق",

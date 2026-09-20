@@ -2800,7 +2800,8 @@
       "TIME_OFF_REQUEST_WITHDRAWN": "अनुपस्थिति अनुरोध वापस लिया गया",
       "TIME_OFF_REQUEST_CANCELLED": "अनुपस्थिति रद्द की गई",
       "TIME_OFF_SICK_REPORTED": "बीमारी की सूचना दी गई",
-      "PROJECT_TEMPLATES_POLICY_CHANGED": "परियोजना टेम्पलेट बदले गए"
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "परियोजना टेम्पलेट बदले गए",
+      "PROJECT_SCHEDULE_SHIFTED": "परियोजना की तिथि बदली गई"
     },
     "meta": {
       "oldRole": "पिछली भूमिका",
