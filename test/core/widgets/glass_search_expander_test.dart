@@ -67,33 +67,68 @@ void main() {
     expect(find.byType(GlassSearchButton), findsOneWidget);
   });
 
-  testWidgets('in a head it asks for width and settles for what is left', (
-    tester,
-  ) async {
-    Widget head({required double width}) => MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: Center(
-          child: SizedBox(
-            width: width,
-            child: Row(
-              children: [
-                const Expanded(child: Text('Projects')),
-                _Host(
-                  controller: controller,
-                  onChanged: changes.add,
-                  flexible: true,
-                  open: true,
-                ),
-                const SizedBox(width: 180, height: 42),
-              ],
-            ),
+  /// A page head: a title that takes what is left, then the actions, hard
+  /// against the trailing edge.
+  Widget head({required double width, bool open = true}) => MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: Scaffold(
+      body: Center(
+        child: SizedBox(
+          width: width,
+          child: Row(
+            key: const Key('head'),
+            children: [
+              const Expanded(child: Text('Projects')),
+              _Host(
+                // A fresh state per case: the host latches `open` at init, so
+                // reusing the element would leave the search as it was.
+                key: ValueKey(open),
+                controller: controller,
+                onChanged: changes.add,
+                open: open,
+              ),
+              const SizedBox(key: Key('button'), width: 180, height: 42),
+            ],
           ),
         ),
       ),
-    );
+    ),
+  );
 
-    await tester.pumpWidget(head(width: 1200));
+  testWidgets('the actions stay against the edge, open or closed', (
+    tester,
+  ) async {
+    // The search is an ordinary child of the head's Row, never a flex one. A
+    // flex child is handed its share of the free space whether it fills it or
+    // not, and MainAxisAlignment.start leaves the unused part *after* it — so
+    // flexing would park the search in a reserved gap and push everything
+    // beside it away from the edge the actions belong to.
+    for (final open in [false, true]) {
+      await tester.pumpWidget(head(width: 780, open: open));
+      await tester.pumpAndSettle();
+
+      final row = tester.getRect(find.byKey(const Key('head')));
+      final search = tester.getRect(
+        open ? find.byType(GlassSearchField) : find.byType(GlassSearchButton),
+      );
+      final button = tester.getRect(find.byKey(const Key('button')));
+      expect(
+        search.right,
+        lessThanOrEqualTo(button.left),
+        reason: 'open: $open',
+      );
+      expect(
+        button.right,
+        moreOrLessEquals(row.right, epsilon: 0.5),
+        reason: 'open: $open',
+      );
+    }
+  });
+
+  testWidgets('in a head it asks for width and settles for what is left', (
+    tester,
+  ) async {
+    await tester.pumpWidget(head(width: 780));
     await tester.pumpAndSettle();
     expect(tester.getSize(find.byType(GlassSearchField)).width, lessThan(360));
 
@@ -121,15 +156,14 @@ void main() {
 /// screen does.
 class _Host extends StatefulWidget {
   const _Host({
+    super.key,
     required this.controller,
     required this.onChanged,
-    this.flexible = false,
     this.open = false,
   });
 
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
-  final bool flexible;
 
   /// Whether the search starts open, for the cases that are about the field
   /// rather than about opening it.
@@ -144,7 +178,6 @@ class _HostState extends State<_Host> {
 
   @override
   Widget build(BuildContext context) => GlassSearchExpander(
-    flexible: widget.flexible,
     searching: _searching,
     hint: 'search',
     controller: widget.controller,

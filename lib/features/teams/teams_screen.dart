@@ -82,8 +82,6 @@ class _TeamsScreenState extends State<TeamsScreen> {
     onChanged: (value) => setState(() => _query = value),
     onOpen: () => setState(() => _searching = true),
     onClose: () => setState(() => _searching = false),
-    // In the head's Row: ask for the full width, settle for what is left.
-    flexible: true,
   );
 
   /// Name or key, folded and trimmed — the same match the projects page makes,

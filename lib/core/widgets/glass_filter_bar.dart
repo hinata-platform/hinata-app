@@ -8,6 +8,8 @@
 /// it is not the last.
 library;
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -245,7 +247,6 @@ class GlassSearchExpander extends StatelessWidget {
     required this.onClose,
     this.width = 360,
     this.height = kGlassPillHeight,
-    this.flexible = false,
   });
 
   final bool searching;
@@ -267,19 +268,10 @@ class GlassSearchExpander extends StatelessWidget {
   /// [searching] back to false.
   final VoidCallback onClose;
 
-  /// How much room the open field asks for, close button included — enough to
-  /// read a typed query back, not just the first word of it.
-  ///
-  /// With [flexible] it is a ceiling rather than a demand.
+  /// How much room the open field asks for on a window wide enough to give it,
+  /// close button included — enough to read a typed query back, not just the
+  /// first word of it. Narrower windows get [_openWidth].
   final double width;
-
-  /// Whether the shape may come in under [width] when the row is tight.
-  ///
-  /// Only legal directly inside a [Row] or [Column]: it wraps itself in a
-  /// [Flexible]. A page head is exactly that — title, search, switcher, button
-  /// on one line — and a narrow window has no [width] to spare, so the field
-  /// takes what is left instead of pushing the row into an overflow.
-  final bool flexible;
 
   void _close() {
     if (controller.text.isNotEmpty) {
@@ -289,27 +281,32 @@ class GlassSearchExpander extends StatelessWidget {
     onClose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final shape = _shape(context);
-    return flexible ? Flexible(child: shape) : shape;
-  }
+  /// The open width on this window.
+  ///
+  /// A fixed width, deliberately: the shape is an ordinary child of the head's
+  /// Row, so [AnimatedSize] growing it is the only thing that moves and the
+  /// title beside it gives the room up frame by frame. Flexing instead would
+  /// hand the shape a share of the row the moment the search opens — the whole
+  /// action row jumps sideways, and only then does the field animate.
+  ///
+  /// So the window is what caps it, at a share that on a narrow one comes out
+  /// at the 240 this used to be fixed at — never tighter than the head already
+  /// coped with.
+  double _openWidth(BuildContext context) =>
+      math.min(width, math.max(240, MediaQuery.sizeOf(context).width * 0.3));
 
-  Widget _shape(BuildContext context) => AnimatedSize(
+  @override
+  Widget build(BuildContext context) => AnimatedSize(
     duration: const Duration(milliseconds: 200),
     curve: Curves.easeOutCubic,
     alignment: AlignmentDirectional.centerEnd.resolve(
       Directionality.of(context),
     ),
     child: searching
-        ? ConstrainedBox(
-            // Flexible hands down the share of the row that is going spare; the
-            // ceiling keeps a wide window from turning that into a banner.
-            constraints: BoxConstraints(maxWidth: width),
-            child: SizedBox(
-              width: flexible ? null : width,
-              height: height,
-              child: Row(
+        ? SizedBox(
+            width: _openWidth(context),
+            height: height,
+            child: Row(
               children: [
                 Expanded(
                   child: GlassSearchField(
@@ -321,9 +318,7 @@ class GlassSearchExpander extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Tooltip(
-                  message: MaterialLocalizations.of(
-                    context,
-                  ).closeButtonTooltip,
+                  message: MaterialLocalizations.of(context).closeButtonTooltip,
                   child: GlassPill(
                     height: height,
                     onTap: _close,
@@ -337,8 +332,7 @@ class GlassSearchExpander extends StatelessWidget {
                     ),
                   ),
                 ),
-                ],
-              ),
+              ],
             ),
           )
         : GlassSearchButton(
