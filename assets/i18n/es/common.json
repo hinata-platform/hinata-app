@@ -1701,7 +1701,11 @@
       "tooLarge": "Este proyecto tiene {{count}} incidencias, más de las que admite una copia.",
       "confirm": "Copiar",
       "create": "Crear proyecto",
-      "done": "{{issues}} incidencias copiadas, {{deadlines}} plazos calculados."
+      "done": "{{issues}} incidencias copiadas, {{deadlines}} plazos calculados.",
+      "makeTemplate": "Crear una plantilla",
+      "makeTemplateConfirm": "Crear plantilla",
+      "templateName": "{{name}} (plantilla)",
+      "pickSource": "¿De qué proyecto quieres crearla?"
     },
     "schedule": {
       "title": "Mover la fecha del proyecto",

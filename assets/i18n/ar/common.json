@@ -1701,7 +1701,11 @@
       "tooLarge": "يضم هذا المشروع {{count}} مهمة، وهو أكثر مما تأخذه نسخة واحدة.",
       "confirm": "نسخ",
       "create": "إنشاء المشروع",
-      "done": "تم نسخ {{issues}} مهمة وحساب {{deadlines}} موعدا."
+      "done": "تم نسخ {{issues}} مهمة وحساب {{deadlines}} موعدا.",
+      "makeTemplate": "إنشاء قالب",
+      "makeTemplateConfirm": "إنشاء القالب",
+      "templateName": "{{name}} (قالب)",
+      "pickSource": "من أي مشروع تريد إنشاءه؟"
     },
     "schedule": {
       "title": "نقل تاريخ المشروع",

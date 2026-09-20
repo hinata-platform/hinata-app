@@ -1701,7 +1701,11 @@
       "tooLarge": "Ce projet compte {{count}} tickets, plus qu'une copie ne peut en prendre.",
       "confirm": "Copier",
       "create": "Créer le projet",
-      "done": "{{issues}} tickets copiés, {{deadlines}} échéances calculées."
+      "done": "{{issues}} tickets copiés, {{deadlines}} échéances calculées.",
+      "makeTemplate": "Créer un modèle",
+      "makeTemplateConfirm": "Créer le modèle",
+      "templateName": "{{name}} (modèle)",
+      "pickSource": "À partir de quel projet la créer ?"
     },
     "schedule": {
       "title": "Déplacer la date du projet",

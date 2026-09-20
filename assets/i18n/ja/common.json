@@ -1701,7 +1701,11 @@
       "tooLarge": "このプロジェクトには課題が {{count}} 件あり、1回の複製で運べる数を超えています。",
       "confirm": "複製",
       "create": "プロジェクトを作成",
-      "done": "{{issues}} 件の課題を複製し、{{deadlines}} 件の期限を算出しました。"
+      "done": "{{issues}} 件の課題を複製し、{{deadlines}} 件の期限を算出しました。",
+      "makeTemplate": "テンプレートを作成",
+      "makeTemplateConfirm": "テンプレートを作成",
+      "templateName": "{{name}}（テンプレート）",
+      "pickSource": "どのプロジェクトから作成しますか"
     },
     "schedule": {
       "title": "プロジェクトの日付を動かす",

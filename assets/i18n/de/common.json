@@ -1701,7 +1701,11 @@
       "tooLarge": "Dieses Projekt hat {{count}} Vorgänge, mehr als eine Kopie mitnehmen kann.",
       "confirm": "Kopieren",
       "create": "Projekt anlegen",
-      "done": "{{issues}} Vorgänge kopiert, {{deadlines}} Fristen gerechnet."
+      "done": "{{issues}} Vorgänge kopiert, {{deadlines}} Fristen gerechnet.",
+      "makeTemplate": "Vorlage erstellen",
+      "makeTemplateConfirm": "Vorlage anlegen",
+      "templateName": "{{name}} (Vorlage)",
+      "pickSource": "Aus welchem Projekt soll sie entstehen?"
     },
     "schedule": {
       "title": "Termin verschieben",

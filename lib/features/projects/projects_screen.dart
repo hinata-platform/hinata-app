@@ -17,6 +17,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/entity_avatar.dart';
 import '../../core/widgets/glass_filter_bar.dart';
+import '../../core/widgets/project_picker.dart';
 import '../shell/page_chrome.dart';
 import '../../core/widgets/glass_switch_chip.dart';
 import '../../core/widgets/hive_widgets.dart';
@@ -166,7 +167,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                       icon: LucideIcons.plus,
                       label: context.t('projects.new'),
                       primary: true,
-                      onTap: (_) => _showCreate(),
+                      onTap: (anchor) => _newOnTab(tab, anchor),
                     ),
                   ]
                 : const [],
@@ -214,10 +215,19 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                           actions: [
                             _searchField(context),
                             switcher,
-                            PrimaryButton(
-                              icon: LucideIcons.plus,
-                              label: context.t('projects.new'),
-                              onPressed: _showCreate,
+                            Builder(
+                              builder: (buttonContext) => PrimaryButton(
+                                icon: LucideIcons.plus,
+                                label: context.t(
+                                  tab == _ProjectTab.templates
+                                      ? 'projects.copy.makeTemplate'
+                                      : 'projects.new',
+                                ),
+                                onPressed: () => _newOnTab(
+                                  tab,
+                                  anchorRectOfContext(buttonContext),
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -392,6 +402,43 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
   /// Where a tab sits in the control, which is one place to the left when
   /// templates are not offered.
+  /// What the plus does depends on the list it is standing on. On Templates it
+  /// asks which project the template should be made from — the other way round
+  /// from the switch in a project's settings, so both directions exist.
+  Future<void> _newOnTab(_ProjectTab tab, Rect? anchor) async {
+    if (tab != _ProjectTab.templates) return _showCreate();
+    final picked = await showProjectPicker(
+      context,
+      anchorRect: anchor ?? Rect.zero,
+      selected: const {},
+      titleKey: 'projects.copy.pickSource',
+      multi: false,
+    );
+    final source = picked?.firstOrNull;
+    if (source == null || !mounted) return;
+    final result = await showProjectCopySheet(
+      context,
+      source: source,
+      mode: ProjectCopyMode.template,
+    );
+    if (result == null || !mounted) return;
+    // Stays on the Templates tab rather than following the copy into its
+    // issues: the point of this way in was to get a template, and the template
+    // is the row that has just appeared behind the sheet.
+    await _cubit.load();
+    if (!mounted) return;
+    showGlassToast(
+      context,
+      context.t(
+        'projects.copy.done',
+        variables: {
+          'issues': '${result.issuesCopied}',
+          'deadlines': '${result.deadlinesSet}',
+        },
+      ),
+    );
+  }
+
   Future<void> _copy(Project project) =>
       _copyThrough(project, ProjectCopyMode.copy);
 
