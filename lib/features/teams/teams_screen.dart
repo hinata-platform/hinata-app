@@ -149,6 +149,9 @@ class _TeamsScreenState extends State<TeamsScreen> {
               color: AppColors.accent,
               edgeOffset: context.topGutter,
               child: CustomScrollView(
+                // Its own stored offset, so it never inherits the one another
+                // list left in the PageStorage bucket for this slot.
+                key: const PageStorageKey<String>('teams'),
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
                   if (!compact)
@@ -186,9 +189,14 @@ class _TeamsScreenState extends State<TeamsScreen> {
                   else
                     SliverLayoutBuilder(
                       builder: (context, room) => SliverPadding(
+                        // On a phone the head is the app bar, and it floats
+                        // over the list: without this clearance the first card
+                        // starts underneath it, which reads as a list that
+                        // opened halfway down and will not scroll back up. On a
+                        // wide window the head sliver above has already spent it.
                         padding: EdgeInsets.fromLTRB(
                           context.pageGutter,
-                          0,
+                          compact ? context.topGutter + context.pageGutter : 0,
                           context.pageGutter,
                           context.pageGutter + context.bottomGutter,
                         ),

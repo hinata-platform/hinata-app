@@ -266,9 +266,14 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   else
                     SliverLayoutBuilder(
                       builder: (context, room) => SliverPadding(
+                        // On a phone the head is the app bar, and it floats
+                        // over the list: without this clearance the first card
+                        // starts underneath it, which reads as a list that
+                        // opened halfway down and will not scroll back up. On a
+                        // wide window the head sliver above has already spent it.
                         padding: EdgeInsets.fromLTRB(
                           context.pageGutter,
-                          0,
+                          compact ? context.topGutter + context.pageGutter : 0,
                           context.pageGutter,
                           context.pageGutter + context.bottomGutter,
                         ),
@@ -761,6 +766,10 @@ class _SettingsButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
+      // `container: true` is what makes this a node of its own. A bare
+      // Semantics only annotates, and the card's own tappable node merges the
+      // annotation into itself — which is how the label went missing.
+      container: true,
       button: true,
       label: context.t('projects.settings'),
       onTap: onTap,
@@ -999,6 +1008,10 @@ class _CardAction extends StatelessWidget {
     // every card. Excluding what is underneath and stating the label and the
     // tap here is the arrangement that survives that merge.
     return Semantics(
+      // `container: true` is what makes this a node of its own. A bare
+      // Semantics only annotates, and the card's own tappable node merges the
+      // annotation into itself — which is how the label went missing.
+      container: true,
       button: true,
       label: label,
       onTap: onTap,

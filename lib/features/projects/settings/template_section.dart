@@ -126,45 +126,73 @@ class _EventDateRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    final label = date == null
+        ? context.t('projectSettings.templates.noEventDate')
+        : MaterialLocalizations.of(context).formatMediumDate(date!);
+    // Named, and a node of its own. An InkWell around an icon and a Text is a
+    // button with no name to a screen reader, and the clear × inside it had no
+    // name either — so the row reached assistive technology as "button" twice.
+    // `container: true` is what makes it a node rather than an annotation the
+    // card above merges into itself.
+    return Semantics(
+      container: true,
+      button: true,
+      label: label,
       onTap: busy ? null : onTap,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(color: AppColors.hairline2),
-        ),
-        child: Row(
-          children: [
-            Icon(LucideIcons.calendarDays, size: 15, color: AppColors.inkSoft),
-            const SizedBox(width: 9),
-            Expanded(
-              child: Text(
-                date == null
-                    ? context.t('projectSettings.templates.noEventDate')
-                    : MaterialLocalizations.of(context).formatMediumDate(date!),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w600,
-                  color: date == null ? AppColors.inkFaint : AppColors.ink,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: busy ? null : onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+            border: Border.all(color: AppColors.hairline2),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                LucideIcons.calendarDays,
+                size: 15,
+                color: AppColors.inkSoft,
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: date == null ? AppColors.inkFaint : AppColors.ink,
+                  ),
                 ),
               ),
-            ),
-            if (busy)
-              const SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(strokeWidth: 1.6),
-              )
-            else if (date != null)
-              GestureDetector(
-                onTap: onClear,
-                child: Icon(LucideIcons.x, size: 15, color: AppColors.inkFaint),
-              ),
-          ],
+              if (busy)
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 1.6),
+                )
+              else if (date != null)
+                Semantics(
+                  container: true,
+                  button: true,
+                  label: context.t('common.clear'),
+                  onTap: onClear,
+                  excludeSemantics: true,
+                  child: GestureDetector(
+                    onTap: onClear,
+                    child: Icon(
+                      LucideIcons.x,
+                      size: 15,
+                      color: AppColors.inkFaint,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
