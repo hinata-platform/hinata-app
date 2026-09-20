@@ -37,48 +37,13 @@ class TimeModuleScreen extends StatefulWidget {
   State<TimeModuleScreen> createState() => _TimeModuleScreenState();
 }
 
-class _TimeModuleScreenState extends State<TimeModuleScreen>
-    with SingleTickerProviderStateMixin {
+class _TimeModuleScreenState extends State<TimeModuleScreen> {
   /// The views that have been asked for, and are therefore built.
   ///
   /// A module the reader only ever uses for its calendar must not also hold a
   /// timesheet, an inbox and two lists it never showed — each of them would
   /// read from the server to fill a page nobody opened.
   final Set<TimeView> _opened = {};
-
-  /// The view being left, kept on screen until it has faded out.
-  TimeView? _leaving;
-
-  /// Drives the hand-over, and rests at its end.
-  ///
-  /// The view arriving is painted over the one it replaces and dissolves in
-  /// over it; the one underneath keeps its opacity until it is covered. That
-  /// is one animated layer rather than two, and no moment in the middle where
-  /// both are half transparent and the canvas shows through.
-  late final AnimationController _switch = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 240),
-    value: 1,
-  )..addStatusListener((status) {
-    if (status == AnimationStatus.completed && _leaving != null) {
-      setState(() => _leaving = null);
-    }
-  });
-
-  late final Animation<double> _arrive = CurvedAnimation(
-    parent: _switch,
-    curve: Curves.easeOutCubic,
-  );
-
-  /// A hand's breadth of movement, no more: the view arrives rather than flies
-  /// in. A fractional offset costs no layer — it is an offset on the paint.
-  late final Animation<Offset> _rise =
-      Tween<Offset>(begin: const Offset(0, 0.012), end: Offset.zero).animate(
-        CurvedAnimation(parent: _switch, curve: Curves.easeOutCubic),
-      );
-
-  static const Animation<double> _opaque = AlwaysStoppedAnimation(1);
-  static const Animation<Offset> _still = AlwaysStoppedAnimation(Offset.zero);
 
   @override
   void initState() {
@@ -87,76 +52,35 @@ class _TimeModuleScreenState extends State<TimeModuleScreen>
   }
 
   @override
-  void dispose() {
-    _switch.dispose();
-    super.dispose();
-  }
-
-  @override
   void didUpdateWidget(TimeModuleScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Before the build that follows, so the branch is there to be shown.
     _opened.add(widget.view);
-    if (oldWidget.view == widget.view) return;
-    if (MediaQuery.disableAnimationsOf(context)) {
-      _leaving = null;
-      _switch.value = 1;
-      return;
-    }
-    _leaving = oldWidget.view;
-    _switch.forward(from: 0);
   }
 
   @override
-  Widget build(BuildContext context) => Stack(
-    fit: StackFit.expand,
-    children: [
-      // The view on screen is painted last, so the one arriving dissolves in
-      // over the one it replaces rather than under it. The branches are keyed,
-      // so putting them in a different order does not rebuild any of them.
-      for (final view in TimeView.values)
-        if (view != widget.view) _branch(view),
-      _branch(widget.view),
-    ],
-  );
+  Widget build(BuildContext context) {
+    const views = TimeView.values;
+    return IndexedStack(
+      index: views.indexOf(widget.view),
+      sizing: StackFit.expand,
+      children: [
+        for (final view in views)
+          if (_opened.contains(view)) _branch(view) else const SizedBox.shrink(),
+      ],
+    );
+  }
 
-  /// One view, in the same wrappers whatever it is doing.
-  ///
-  /// The chain never changes shape — only what it is told — because a branch
-  /// whose wrappers changed would be built again from nothing, and keeping
-  /// what it has is the whole point of holding it here.
+  /// One view, told whether it is the one on screen.
   ///
   /// A branch behind the others goes on building, which would otherwise mean
   /// its chrome in the shell's bar ([PageChromeVisibility]) and its animations
-  /// on the raster thread ([TickerMode]) while nobody is looking at it. While
-  /// the two trade places both are drawn; before and after, exactly one is,
-  /// and [FadeTransition] at full opacity draws without a layer of its own.
+  /// on the raster thread ([TickerMode]) while nobody is looking at it.
   Widget _branch(TimeView view) {
-    final current = view == widget.view;
-    final shown = current || view == _leaving;
-    return Offstage(
-      key: ValueKey(view),
-      offstage: !shown,
-      child: !_opened.contains(view)
-          ? const SizedBox.shrink()
-          : IgnorePointer(
-              // The view on its way out must not answer a tap meant for the
-              // one arriving over it.
-              ignoring: !current,
-              child: TickerMode(
-                enabled: current,
-                child: FadeTransition(
-                  opacity: current ? _arrive : _opaque,
-                  child: SlideTransition(
-                    position: current ? _rise : _still,
-                    child: PageChromeVisibility(
-                      visible: current,
-                      child: _view(view),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+    final visible = view == widget.view;
+    return TickerMode(
+      enabled: visible,
+      child: PageChromeVisibility(visible: visible, child: _view(view)),
     );
   }
 
