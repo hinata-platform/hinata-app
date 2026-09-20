@@ -77,4 +77,39 @@ void main() {
       );
     });
   });
+
+  group('projectTemplates', () {
+    test('defaults to off when the server says nothing', () {
+      expect(meta().projectTemplates, isFalse);
+    });
+
+    test('reads the snake_case wire key', () {
+      final parsed = ServerMeta.fromJson(const {
+        'serverVersion': '1.0.0',
+        'minAppVersion': '1.0.0',
+        'setupCompleted': true,
+        'featureFlags': {'project_templates': true},
+      });
+      expect(parsed.projectTemplates, isTrue);
+      expect(PlatformFlags.projectTemplates, 'project_templates');
+    });
+
+    test('it is a flag of its own, not a corner of another one', () {
+      // An instance may run the extended time-tracking module and no
+      // templates, or the other way round. A screen that read one for the
+      // other would show a menu entry whose route answers 404.
+      expect(
+        meta(
+          flags: const {PlatformFlags.advancedTimeTracking: true},
+        ).projectTemplates,
+        isFalse,
+      );
+      expect(
+        meta(
+          flags: const {PlatformFlags.projectTemplates: true},
+        ).advancedTimeTracking,
+        isFalse,
+      );
+    });
+  });
 }

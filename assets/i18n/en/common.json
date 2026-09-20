@@ -2626,7 +2626,13 @@
     "linuxStoreUrl": "Linux download URL",
     "stateOn": "On",
     "stateOff": "Off",
-    "envDefault": "Env default"
+    "envDefault": "Env default",
+    "projectTemplates": {
+      "title": "Project templates",
+      "hint": "Copy a project, keep one as a template, and set deadlines relative to the project's date.",
+      "enabledTitle": "Project templates and relative deadlines",
+      "enabledHint": "Off: projects work exactly as they do today. On: a project can be copied or marked as a template, and a deadline can be kept as an offset from the project's date."
+    }
   },
   "audit": {
     "title": "Audit log",
@@ -2793,7 +2799,8 @@
       "TIME_OFF_REQUEST_REJECTED": "Absence request rejected",
       "TIME_OFF_REQUEST_WITHDRAWN": "Absence request withdrawn",
       "TIME_OFF_REQUEST_CANCELLED": "Absence cancelled",
-      "TIME_OFF_SICK_REPORTED": "Sickness reported"
+      "TIME_OFF_SICK_REPORTED": "Sickness reported",
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "Project templates switched"
     },
     "meta": {
       "oldRole": "Previous role",

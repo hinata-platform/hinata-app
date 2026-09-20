@@ -2626,7 +2626,13 @@
     "linuxStoreUrl": "Linux のダウンロード URL",
     "stateOn": "オン",
     "stateOff": "オフ",
-    "envDefault": "環境の既定値"
+    "envDefault": "環境の既定値",
+    "projectTemplates": {
+      "title": "プロジェクトテンプレート",
+      "hint": "プロジェクトを複製し、テンプレートとして保持し、期限をプロジェクトの日付を基準に設定します。",
+      "enabledTitle": "プロジェクトテンプレートと相対期限",
+      "enabledHint": "オフ: プロジェクトはこれまでどおり動作します。オン: プロジェクトを複製したりテンプレートとして指定したりでき、期限をプロジェクトの日付からのずれとして保持できます。"
+    }
   },
   "audit": {
     "title": "監査ログ",
@@ -2793,7 +2799,8 @@
       "TIME_OFF_REQUEST_REJECTED": "休暇申請を却下",
       "TIME_OFF_REQUEST_WITHDRAWN": "休暇申請を取り下げ",
       "TIME_OFF_REQUEST_CANCELLED": "休暇を取り消し",
-      "TIME_OFF_SICK_REPORTED": "病欠を届け出"
+      "TIME_OFF_SICK_REPORTED": "病欠を届け出",
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "プロジェクトテンプレートを切り替え"
     },
     "meta": {
       "oldRole": "変更前のロール",

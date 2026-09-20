@@ -2626,7 +2626,13 @@
     "linuxStoreUrl": "عنوان تنزيل Linux",
     "stateOn": "مفعّل",
     "stateOff": "معطّل",
-    "envDefault": "قيمة البيئة"
+    "envDefault": "قيمة البيئة",
+    "projectTemplates": {
+      "title": "قوالب المشاريع",
+      "hint": "انسخ مشروعا، واحتفظ بواحد كقالب، وحدد المواعيد النهائية نسبة إلى تاريخ المشروع.",
+      "enabledTitle": "قوالب المشاريع والمواعيد النسبية",
+      "enabledHint": "معطل: تعمل المشاريع تماما كما هي اليوم. مفعل: يمكن نسخ مشروع أو وضع علامة قالب عليه، ويمكن الاحتفاظ بموعد نهائي كإزاحة عن تاريخ المشروع."
+    }
   },
   "audit": {
     "title": "سجل التدقيق",
@@ -2793,7 +2799,8 @@
       "TIME_OFF_REQUEST_REJECTED": "تم رفض طلب الغياب",
       "TIME_OFF_REQUEST_WITHDRAWN": "تم سحب طلب الغياب",
       "TIME_OFF_REQUEST_CANCELLED": "تم إلغاء الغياب",
-      "TIME_OFF_SICK_REPORTED": "تم الإبلاغ عن المرض"
+      "TIME_OFF_SICK_REPORTED": "تم الإبلاغ عن المرض",
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "تم تبديل قوالب المشاريع"
     },
     "meta": {
       "oldRole": "الدور السابق",

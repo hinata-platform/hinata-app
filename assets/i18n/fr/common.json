@@ -2626,7 +2626,13 @@
     "linuxStoreUrl": "URL de téléchargement Linux",
     "stateOn": "Activé",
     "stateOff": "Désactivé",
-    "envDefault": "Valeur d'environnement"
+    "envDefault": "Valeur d'environnement",
+    "projectTemplates": {
+      "title": "Modèles de projet",
+      "hint": "Copiez un projet, gardez-en un comme modèle et définissez des échéances relatives à la date du projet.",
+      "enabledTitle": "Modèles de projet et échéances relatives",
+      "enabledHint": "Désactivé : les projets fonctionnent exactement comme aujourd'hui. Activé : un projet peut être copié ou marqué comme modèle, et une échéance peut être conservée comme décalage par rapport à la date du projet."
+    }
   },
   "audit": {
     "title": "Journal d'audit",
@@ -2793,7 +2799,8 @@
       "TIME_OFF_REQUEST_REJECTED": "Demande d'absence refusée",
       "TIME_OFF_REQUEST_WITHDRAWN": "Demande d'absence retirée",
       "TIME_OFF_REQUEST_CANCELLED": "Absence annulée",
-      "TIME_OFF_SICK_REPORTED": "Maladie signalée"
+      "TIME_OFF_SICK_REPORTED": "Maladie signalée",
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "Modèles de projet basculés"
     },
     "meta": {
       "oldRole": "Rôle précédent",

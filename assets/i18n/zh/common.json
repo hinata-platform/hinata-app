@@ -2626,7 +2626,13 @@
     "linuxStoreUrl": "Linux 下载 URL",
     "stateOn": "开启",
     "stateOff": "关闭",
-    "envDefault": "环境默认值"
+    "envDefault": "环境默认值",
+    "projectTemplates": {
+      "title": "项目模板",
+      "hint": "复制项目，将其中一个保留为模板，并按项目日期设置相对截止日期。",
+      "enabledTitle": "项目模板与相对截止日期",
+      "enabledHint": "关闭：项目与现在完全一样。开启：可以复制项目或将其标记为模板，截止日期也可以保存为相对项目日期的偏移。"
+    }
   },
   "audit": {
     "title": "审计日志",
@@ -2793,7 +2799,8 @@
       "TIME_OFF_REQUEST_REJECTED": "请假申请已驳回",
       "TIME_OFF_REQUEST_WITHDRAWN": "请假申请已撤回",
       "TIME_OFF_REQUEST_CANCELLED": "请假已取消",
-      "TIME_OFF_SICK_REPORTED": "已报备病假"
+      "TIME_OFF_SICK_REPORTED": "已报备病假",
+      "PROJECT_TEMPLATES_POLICY_CHANGED": "已切换项目模板"
     },
     "meta": {
       "oldRole": "原角色",

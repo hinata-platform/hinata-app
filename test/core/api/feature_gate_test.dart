@@ -119,6 +119,56 @@ void main() {
     }
   });
 
+  group('project templates, gated inside a prefix that is not', () {
+    test('the four routes of the module are recognised', () {
+      for (final path in const [
+        '/api/v1/projects/6a64/copy',
+        '/api/v1/projects/6a64/instantiate',
+        '/api/v1/projects/6a64/schedule',
+        '/api/v1/projects/6a64/schedule/preview',
+        '/api/v1/projects/6a64/schedule/apply',
+        'https://track.asta.hn/api/v1/projects/6a64/copy',
+      ]) {
+        expect(
+          isFeatureDisabledResponse(path: path, status: 404),
+          isTrue,
+          reason: path,
+        );
+      }
+    });
+
+    test('the project routes themselves are never read as gated', () {
+      // The whole point of writing these as patterns. `/api/v1/projects` is on
+      // every server and always will be, so an ordinary 404 there — a deleted
+      // project, a mistyped id — must stay an ordinary 404 and must not send
+      // the app re-reading /meta.
+      for (final path in const [
+        '/api/v1/projects',
+        '/api/v1/projects/6a64',
+        '/api/v1/projects/6a64/state-usage',
+        '/api/v1/projects/search?q=copy',
+        '/api/v1/projects/6a64/deletion-impact',
+      ]) {
+        expect(
+          isFeatureDisabledResponse(path: path, status: 404),
+          isFalse,
+          reason: path,
+        );
+      }
+    });
+
+    test('the patterns are the ones the server gates, spelled its way', () {
+      // Mirrors ProjectTemplateGate.GATED_PATTERNS in hinata-server. A pattern
+      // covers its own path and everything under it, which is how the server
+      // writes the same rule as a bare path plus `/**`.
+      expect(kFlagGatedRoutePatterns, const [
+        '/api/v1/projects/*/copy',
+        '/api/v1/projects/*/instantiate',
+        '/api/v1/projects/*/schedule',
+      ]);
+    });
+  });
+
   test('an ordinary dead link stays an ordinary dead link', () {
     expect(
       isFeatureDisabledResponse(
