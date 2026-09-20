@@ -6,10 +6,8 @@ import 'package:hinata/core/router/app_router.dart'
 import 'package:hinata/features/time/time_focus_screen.dart';
 import 'package:hinata/core/widgets/hive_empty_state.dart';
 import 'package:hinata/features/shell/not_found_screen.dart';
-import 'package:hinata/features/time/time_calendar_screen.dart';
-import 'package:hinata/features/time/time_screen.dart';
+import 'package:hinata/features/time/time_module_screen.dart';
 import 'package:hinata/features/time/time_views.dart';
-import 'package:hinata/features/timesheet/timesheet_screen.dart';
 
 /// A link that leads nowhere used to render an empty page under the brand mark,
 /// which reads as a broken app. It now says what happened and offers the way
@@ -123,26 +121,26 @@ void main() {
     test('with the module on, it is the module', () {
       // Stage 3 replaced the placeholder: `/time` is now the module's own
       // list, and the timesheet keeps its own route underneath it.
-      expect(timeModulePage(advancedTime: true), isA<TimeScreen>());
+      final page = timeModulePage(advancedTime: true);
+      expect(page, isA<TimeModuleScreen>());
+      expect((page as TimeModuleScreen).view, TimeView.list);
     });
 
-    test('each of the module\'s three routes builds its own view', () {
-      expect(
-        timeModulePage(advancedTime: true, view: TimeView.list),
-        isA<TimeScreen>(),
-      );
-      expect(
-        timeModulePage(advancedTime: true, view: TimeView.calendar),
-        isA<TimeCalendarScreen>(),
-      );
-      // The same grid the base `/timesheet` draws, told it belongs to the
-      // module: paged rows, and a cell of your own that can be typed into.
-      final sheet = timeModulePage(
+    test('every route names its view on the one module page', () {
+      // One page for all of them, carrying the view its address names: the
+      // module keeps the views it has already built, so switching between
+      // them no longer tears one down and reads the next back.
+      for (final view in TimeView.values) {
+        final page = timeModulePage(advancedTime: true, view: view);
+        expect(page, isA<TimeModuleScreen>(), reason: view.route);
+        expect((page as TimeModuleScreen).view, view, reason: view.route);
+      }
+      final absences = timeModulePage(
         advancedTime: true,
-        view: TimeView.timesheet,
+        view: TimeView.absences,
+        scope: 'inbox',
       );
-      expect(sheet, isA<TimesheetScreen>());
-      expect((sheet as TimesheetScreen).moduleView, isTrue);
+      expect((absences as TimeModuleScreen).scope, 'inbox');
     });
 
     test('with the module off, none of the three exists', () {
