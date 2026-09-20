@@ -292,7 +292,14 @@ class GlassSearchExpander extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shape = _shape(context);
-    return flexible ? Flexible(child: shape) : shape;
+    if (!flexible) return shape;
+    // Flex only while the field is open. A flex child is handed a share of the
+    // row's free space whether or not it fills it, so a closed pill with flex 1
+    // would sit in the middle of a reserved gap and drag the whole action row
+    // away from the edge it belongs to. At flex 0 the row lays it out like any
+    // other fixed control — and the shape stays in one place in the tree, so
+    // the open and close still animate.
+    return Flexible(flex: searching ? 1 : 0, child: shape);
   }
 
   Widget _shape(BuildContext context) => AnimatedSize(

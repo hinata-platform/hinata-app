@@ -67,33 +67,52 @@ void main() {
     expect(find.byType(GlassSearchButton), findsOneWidget);
   });
 
-  testWidgets('in a head it asks for width and settles for what is left', (
-    tester,
-  ) async {
-    Widget head({required double width}) => MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: Center(
-          child: SizedBox(
-            width: width,
-            child: Row(
-              children: [
-                const Expanded(child: Text('Projects')),
-                _Host(
-                  controller: controller,
-                  onChanged: changes.add,
-                  flexible: true,
-                  open: true,
-                ),
-                const SizedBox(width: 180, height: 42),
-              ],
-            ),
+  /// A page head: a title that takes what is left, then the actions, hard
+  /// against the trailing edge.
+  Widget head({required double width, bool open = true}) => MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: Scaffold(
+      body: Center(
+        child: SizedBox(
+          width: width,
+          child: Row(
+            key: const Key('head'),
+            children: [
+              const Expanded(child: Text('Projects')),
+              _Host(
+                controller: controller,
+                onChanged: changes.add,
+                flexible: true,
+                open: open,
+              ),
+              const SizedBox(key: Key('button'), width: 180, height: 42),
+            ],
           ),
         ),
       ),
-    );
+    ),
+  );
 
-    await tester.pumpWidget(head(width: 1200));
+  testWidgets('the closed pill stays with the actions, not in a gap', (
+    tester,
+  ) async {
+    await tester.pumpWidget(head(width: 780, open: false));
+    await tester.pumpAndSettle();
+
+    // A flex child is handed its share of the free space whether it fills it or
+    // not. Giving the closed pill one would park it in the middle of a reserved
+    // gap and pull the button beside it off the edge of the head.
+    final row = tester.getRect(find.byKey(const Key('head')));
+    final pill = tester.getRect(find.byType(GlassSearchButton));
+    final button = tester.getRect(find.byKey(const Key('button')));
+    expect(pill.right, moreOrLessEquals(button.left, epsilon: 0.5));
+    expect(button.right, moreOrLessEquals(row.right, epsilon: 0.5));
+  });
+
+  testWidgets('in a head it asks for width and settles for what is left', (
+    tester,
+  ) async {
+    await tester.pumpWidget(head(width: 780));
     await tester.pumpAndSettle();
     expect(tester.getSize(find.byType(GlassSearchField)).width, lessThan(360));
 
