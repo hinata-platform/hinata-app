@@ -32,6 +32,14 @@ class PlatformFlags {
   /// `error.feature.disabled` and absences stay what they were: a span
   /// somebody enters that shapes capacity.
   static const absenceManagement = 'absence_management';
+
+  /// Expose project templates and deadlines kept as an offset from a project's
+  /// event date: copying a project, marking one as a template, creating a
+  /// project from one, and moving an event date with a preview of the
+  /// deadlines that follow. Configured in Adminbereich → App, not in the raw
+  /// flag editor. Off → none of those entries exist and the server answers the
+  /// module's routes with 404 `error.feature.disabled`.
+  static const projectTemplates = 'project_templates';
 }
 
 /// Server metadata from GET /api/v1/meta (version gate, branding, flags).
@@ -137,6 +145,11 @@ class ServerMeta extends Equatable {
   /// while the extended module above is on too, so a screen may read it alone
   /// and does not have to check both.
   bool get absenceManagement => isFlagEnabled(PlatformFlags.absenceManagement);
+
+  /// Project templates and relative deadlines (default off). Decides whether
+  /// the copy and template entries exist at all and whether a deadline can be
+  /// kept as an offset; the projects themselves are unaffected either way.
+  bool get projectTemplates => isFlagEnabled(PlatformFlags.projectTemplates);
 
   @override
   List<Object?> get props => [

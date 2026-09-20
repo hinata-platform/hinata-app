@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/blocs/auth_bloc.dart';
+import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
@@ -19,6 +20,7 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/entity_avatar_editor.dart';
 import '../sprint/modals/glass_modal.dart';
+import 'project_copy_sheet.dart';
 import 'project_create_form.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/user_repository.dart';
@@ -39,7 +41,10 @@ class ProjectsScreen extends StatefulWidget {
 
 class _ProjectsScreenState extends State<ProjectsScreen> {
   late final FetchCubit<_ProjectsData> _cubit;
-  bool _showArchived = false;
+
+  /// Which of the three lists is on screen: the running projects, the
+  /// templates, or the archive. Templates only exist while the module is on.
+  _ProjectTab _tab = _ProjectTab.active;
 
   @override
   void initState() {
@@ -80,11 +85,33 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       value: _cubit,
       child: BlocBuilder<FetchCubit<_ProjectsData>, FetchState<_ProjectsData>>(
         builder: (context, state) {
-          final active = state.data?.active ?? const <Project>[];
+          final all = state.data?.active ?? const <Project>[];
           final archived = state.data?.archived ?? const <Project>[];
           final names = state.data?.names ?? const <String, String>{};
           final avatars = state.data?.avatars ?? const <String, String>{};
-          final projects = _showArchived ? archived : active;
+          // The list route answers with both kinds unless asked otherwise, so
+          // the split happens here rather than in a second request.
+          final templatesOffered = context
+              .select<AppConfigBloc, bool>(
+                (bloc) => bloc.state.meta?.projectTemplates ?? false,
+              );
+          final templates = templatesOffered
+              ? all.where((p) => p.template).toList(growable: false)
+              : const <Project>[];
+          final active = templatesOffered
+              ? all.where((p) => !p.template).toList(growable: false)
+              : all;
+          // A tab that stopped existing — the flag went off while we were
+          // looking at it — falls back to the running projects rather than to
+          // an empty screen with no way out.
+          final tab = _tab == _ProjectTab.templates && !templatesOffered
+              ? _ProjectTab.active
+              : _tab;
+          final projects = switch (tab) {
+            _ProjectTab.active => active,
+            _ProjectTab.templates => templates,
+            _ProjectTab.archived => archived,
+          };
           return RefreshIndicator(
             onRefresh: _cubit.load,
             color: AppColors.accent,
@@ -130,14 +157,22 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     child: Align(
                       alignment: AlignmentDirectional.centerStart,
                       child: SegmentedControl(
-                        selected: _showArchived ? 1 : 0,
-                        onChanged: (i) =>
-                            setState(() => _showArchived = i == 1),
+                        selected: _tabIndex(tab, templatesOffered),
+                        onChanged: (i) => setState(
+                          () => _tab = _tabAt(i, templatesOffered),
+                        ),
                         items: [
                           SegmentItem(
                             label: context.t('projects.active'),
                             icon: LucideIcons.folderOpen,
                           ),
+                          if (templatesOffered)
+                            SegmentItem(
+                              label: templates.isEmpty
+                                  ? context.t('projects.templates')
+                                  : '${context.t('projects.templates')} · ${templates.length}',
+                              icon: LucideIcons.copy,
+                            ),
                           SegmentItem(
                             label: archived.isEmpty
                                 ? context.t('projects.archived')
@@ -162,9 +197,15 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                       child: Center(
                         child: HiveEmptyState(
                           title: context.t('projects.title'),
-                          message: _showArchived
-                              ? context.t('projects.emptyArchived')
-                              : context.t('projects.empty'),
+                          message: switch (tab) {
+                            _ProjectTab.archived => context.t(
+                              'projects.emptyArchived',
+                            ),
+                            _ProjectTab.templates => context.t(
+                              'projects.emptyTemplates',
+                            ),
+                            _ProjectTab.active => context.t('projects.empty'),
+                          },
                         ),
                       ),
                     ),
@@ -194,6 +235,13 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                             names: names,
                             avatars: avatars,
                             onSettings: () => _openSettings(projects[index]),
+                            onCopy: templatesOffered
+                                ? () => _copy(projects[index])
+                                : null,
+                            onInstantiate:
+                                templatesOffered && projects[index].template
+                                ? () => _instantiate(projects[index])
+                                : null,
                           ),
                           childCount: projects.length,
                         ),
@@ -241,7 +289,54 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     await context.push('/projects/${project.id}/settings');
     if (mounted) _cubit.load();
   }
+
+  /// Where a tab sits in the control, which is one place to the left when
+  /// templates are not offered.
+  int _tabIndex(_ProjectTab tab, bool templatesOffered) => switch (tab) {
+    _ProjectTab.active => 0,
+    _ProjectTab.templates => 1,
+    _ProjectTab.archived => templatesOffered ? 2 : 1,
+  };
+
+  _ProjectTab _tabAt(int index, bool templatesOffered) {
+    if (index == 0) return _ProjectTab.active;
+    if (!templatesOffered) return _ProjectTab.archived;
+    return index == 1 ? _ProjectTab.templates : _ProjectTab.archived;
+  }
+
+  Future<void> _copy(Project project) =>
+      _copyThrough(project, ProjectCopyMode.copy);
+
+  Future<void> _instantiate(Project project) =>
+      _copyThrough(project, ProjectCopyMode.instantiate);
+
+  /// Opens the sheet, and on success lands in the new project's issues with a
+  /// toast saying what came along.
+  Future<void> _copyThrough(Project project, ProjectCopyMode mode) async {
+    final result = await showProjectCopySheet(
+      context,
+      source: project,
+      mode: mode,
+    );
+    if (result == null || !mounted) return;
+    // No reload here: the line below leaves this screen, and it loads again on
+    // the way back in.
+    showGlassToast(
+      context,
+      context.t(
+        'projects.copy.done',
+        variables: {
+          'issues': '${result.issuesCopied}',
+          'deadlines': '${result.deadlinesSet}',
+        },
+      ),
+    );
+    if (mounted) context.go('/issues?projectId=${result.project.id}');
+  }
 }
+
+/// The three lists the projects page holds.
+enum _ProjectTab { active, templates, archived }
 
 /// Parses a project's stored hex color (e.g. "#AEC6F4") to a Color, with a
 /// stable hue fallback derived from the project key.
@@ -260,12 +355,21 @@ class _ProjectCard extends StatelessWidget {
     required this.names,
     required this.avatars,
     required this.onSettings,
+    this.onCopy,
+    this.onInstantiate,
   });
 
   final Project project;
   final Map<String, String> names;
   final Map<String, String> avatars;
   final VoidCallback onSettings;
+
+  /// Null while project templates are switched off: then there is no way to
+  /// copy a project and the entry does not exist.
+  final VoidCallback? onCopy;
+
+  /// Only on a template, and the first thing offered there.
+  final VoidCallback? onInstantiate;
 
   @override
   Widget build(BuildContext context) {
@@ -347,15 +451,25 @@ class _ProjectCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontFamily: AppTheme.fontMono,
-                        fontSize: 11.5,
-                        color: AppColors.inkFaint,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: AppTheme.fontMono,
+                              fontSize: 11.5,
+                              color: AppColors.inkFaint,
+                            ),
+                          ),
+                        ),
+                        if (project.template) ...[
+                          const SizedBox(width: 6),
+                          _TemplateBadge(),
+                        ],
+                      ],
                     ),
                   ],
                 ),
@@ -405,6 +519,23 @@ class _ProjectCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
               ],
+              if (onInstantiate != null)
+                _CardAction(
+                  icon: LucideIcons.sparkles,
+                  label: context.t('projects.copy.fromTemplateShort'),
+                  onTap: onInstantiate!,
+                  primary: true,
+                )
+              else if (onCopy != null && !compact)
+                _CardAction(
+                  icon: LucideIcons.copy,
+                  label: context.t('projects.copy.short'),
+                  onTap: onCopy!,
+                ),
+              if ((onInstantiate != null || (onCopy != null && !compact)) &&
+                  !compact &&
+                  canManage)
+                const SizedBox(width: 8),
               if (!compact && canManage) _SettingsButton(onTap: onSettings),
             ],
           ),
@@ -640,5 +771,96 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
         _error = failure.message;
       });
     }
+  }
+}
+
+/// The small "template" mark on a project card.
+///
+/// The Templates tab already says it for the cards under it — this is for the
+/// moment the tab is not what somebody is looking at: a card in the middle of a
+/// search, or the one they landed on from a link.
+class _TemplateBadge extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.hairline2),
+      ),
+      child: Text(
+        context.t('projects.templateBadge'),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: AppColors.inkSoft,
+        ),
+      ),
+    );
+  }
+}
+
+/// A ghost action in a project card's footer, beside the settings button.
+class _CardAction extends StatelessWidget {
+  const _CardAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.primary = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  /// The one action a card leads with — "create a project from this" on a
+  /// template. Drawn filled so it reads as the thing to do.
+  final bool primary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: primary ? AppColors.navy : AppColors.surface,
+      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+            border: Border.all(
+              color: primary ? AppColors.navy : AppColors.hairline,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 13,
+                color: primary ? Colors.white : AppColors.inkSoft,
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: primary ? Colors.white : AppColors.inkSoft,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

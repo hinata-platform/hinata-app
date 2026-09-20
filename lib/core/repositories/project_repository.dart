@@ -2,7 +2,9 @@ import 'package:dio/dio.dart';
 
 import '../api/api_client.dart';
 import '../models/deletion_models.dart';
+import '../models/project_template_models.dart';
 import '../models/work_models.dart';
+import '../util/dates.dart';
 
 /// Projects: CRUD, workflow/label settings support, the Gantt aggregate, and
 /// cascading deletion.
@@ -18,10 +20,18 @@ class ProjectRepository {
   /// "no project has a name".
   static const resolveChunk = 200;
 
-  Future<List<Project>> projects({bool archived = false}) async =>
+  /// The visible projects.
+  ///
+  /// [template] narrows the answer to templates or to the running projects;
+  /// leaving it out asks for both, which is what every screen that predates
+  /// templates does and must keep doing.
+  Future<List<Project>> projects({bool archived = false, bool? template}) async =>
       ((await _api.get(
                 '/api/v1/projects',
-                query: archived ? {'archived': 'true'} : null,
+                query: {
+                  if (archived) 'archived': 'true',
+                  if (template != null) 'template': '$template',
+                },
               ))
               as List<dynamic>)
           .map((p) => Project.fromJson(p as Map<String, dynamic>))
@@ -129,6 +139,120 @@ class ProjectRepository {
             )
             as Map<String, dynamic>,
       );
+
+  // --- project templates (HIN-120) ------------------------------------------
+  //
+  // Every route below lives behind the `project_templates` flag. A 404 from one
+  // of them means the flag went off while we were running, which `feature_gate`
+  // recognises by path and answers by re-reading /meta.
+
+  /// What copying this project would involve: how many issues, how many of them
+  /// sub-tasks, how many files and how large, plus a free key to suggest.
+  ///
+  /// Asked of the server rather than counted in the app, because the numbers sit
+  /// next to switches somebody is deciding about, and a client-side guess is
+  /// wrong exactly when it matters.
+  Future<ProjectCopyScope> scopeOfCopy(String id) async =>
+      ProjectCopyScope.fromJson(
+        await _api.get('/api/v1/projects/${Uri.encodeComponent(id)}/copy')
+            as Map<String, dynamic>,
+      );
+
+  /// Copies the project and returns the copy with what came along.
+  Future<ProjectCopyResult> copyProject(
+    String id, {
+    String? name,
+    String? key,
+    DateTime? eventDate,
+    bool includeMembers = true,
+    bool includeAttachments = false,
+    bool includeTimeSettings = true,
+    bool includeBoard = false,
+  }) async => ProjectCopyResult.fromJson(
+    await _api.post(
+          '/api/v1/projects/${Uri.encodeComponent(id)}/copy',
+          body: {
+            if (name != null && name.isNotEmpty) 'name': name,
+            if (key != null && key.isNotEmpty) 'key': key,
+            if (eventDate != null) 'eventDate': formatDateOnly(eventDate),
+            'includeMembers': includeMembers,
+            'includeAttachments': includeAttachments,
+            'includeTimeSettings': includeTimeSettings,
+            'includeBoard': includeBoard,
+          },
+        )
+        as Map<String, dynamic>,
+  );
+
+  /// Creates a project from a template in one step: the copy, the date and the
+  /// deadlines that follow from it.
+  Future<ProjectCopyResult> instantiateTemplate(
+    String id, {
+    required String name,
+    String? key,
+    DateTime? eventDate,
+  }) async => ProjectCopyResult.fromJson(
+    await _api.post(
+          '/api/v1/projects/${Uri.encodeComponent(id)}/instantiate',
+          body: {
+            'name': name,
+            if (key != null && key.isNotEmpty) 'key': key,
+            if (eventDate != null) 'eventDate': formatDateOnly(eventDate),
+          },
+        )
+        as Map<String, dynamic>,
+  );
+
+  /// What moving the event date to [eventDate] would do, without doing it.
+  ///
+  /// [limit] is how many moved deadlines come back by name; the rest are only
+  /// counted, which is what lets the sheet say "and 9 more".
+  Future<SchedulePreview> previewSchedule(
+    String id, {
+    DateTime? eventDate,
+    int? limit,
+  }) async => SchedulePreview.fromJson(
+    await _api.post(
+          '/api/v1/projects/${Uri.encodeComponent(id)}/schedule/preview'
+          '${limit == null ? '' : '?limit=$limit'}',
+          body: {'eventDate': eventDate == null ? null : formatDateOnly(eventDate)},
+        )
+        as Map<String, dynamic>,
+  );
+
+  /// Sets the event date and writes the deadlines that follow from it.
+  Future<ScheduleResult> applySchedule(String id, {DateTime? eventDate}) async =>
+      ScheduleResult.fromJson(
+        await _api.post(
+              '/api/v1/projects/${Uri.encodeComponent(id)}/schedule/apply',
+              body: {
+                'eventDate': eventDate == null ? null : formatDateOnly(eventDate),
+              },
+            )
+            as Map<String, dynamic>,
+      );
+
+  /// The date one offset lands on, for the line beside a deadline field while
+  /// somebody is still typing into it.
+  ///
+  /// The app could almost compute this, and that is why it does not: "almost"
+  /// is weekends and the holidays of whichever calendar the project names.
+  Future<DateTime?> resolveOffset(
+    String id, {
+    required RelativeDate offset,
+    DateTime? eventDate,
+  }) async {
+    final data =
+        await _api.post(
+              '/api/v1/projects/${Uri.encodeComponent(id)}/schedule/resolve',
+              body: {
+                'offset': offset.toJson(),
+                if (eventDate != null) 'eventDate': formatDateOnly(eventDate),
+              },
+            )
+            as Map<String, dynamic>;
+    return parseDate(data['date']);
+  }
 
   /// Uploads a new project picture and returns its fresh URL.
   ///

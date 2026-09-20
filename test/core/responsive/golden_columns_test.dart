@@ -30,7 +30,7 @@ void main() {
   });
 
   test('one column keeps the order the page declares', () {
-    final groups = projectSettingsGroups(timeTracking: true);
+    final groups = projectSettingsGroups(timeTracking: true, templates: false);
 
     expect(
       arrangeGolden(groups, 1).columns.single,
@@ -84,8 +84,8 @@ void main() {
   test(
     'the project settings end about level with and without time tracking',
     () {
-      expectLevel(projectSettingsGroups(timeTracking: true), 'project time');
-      expectLevel(projectSettingsGroups(timeTracking: false), 'project');
+      expectLevel(projectSettingsGroups(timeTracking: true, templates: false), 'project time');
+      expectLevel(projectSettingsGroups(timeTracking: false, templates: false), 'project');
     },
   );
 
@@ -141,7 +141,7 @@ void main() {
 
   test('two project columns: General opens the page, whatever else moves', () {
     final columns = arrangeGolden(
-      projectSettingsGroups(timeTracking: true),
+      projectSettingsGroups(timeTracking: true, templates: false),
       2,
     ).columns;
 
@@ -165,7 +165,7 @@ void main() {
     for (final timeTracking in [true, false]) {
       for (final columns in [2, 3]) {
         final arrangement = arrangeGolden(
-          projectSettingsGroups(timeTracking: timeTracking),
+          projectSettingsGroups(timeTracking: timeTracking, templates: false),
           columns,
         );
         expect(
@@ -178,16 +178,41 @@ void main() {
   });
 
   test('a page too short for three columns keeps two on a wide screen', () {
-    final groups = projectSettingsGroups(timeTracking: false);
+    final groups = projectSettingsGroups(timeTracking: false, templates: false);
 
     // Three columns would leave the third half empty beside two long ones.
     expect(spreadOf(arrangeGolden(groups, 3).loads), greaterThan(levelEnough));
     expect(arrangeBalanced(groups, 3).columns, hasLength(2));
   });
 
+  test('the template card does not unseat General or unbalance the page', () {
+    // It is short — a date, a switch and a button — so it rides with whichever
+    // column has room. What it must not do is take the lead position or leave
+    // one column towering over the others.
+    for (final columns in [2, 3]) {
+      final arrangement = arrangeGolden(
+        projectSettingsGroups(timeTracking: true, templates: true),
+        columns,
+      );
+      expect(
+        arrangement.columns.first.first,
+        ProjectSettingsCard.general,
+        reason: 'columns=$columns',
+      );
+      expect(
+        arrangement.columns.expand((column) => column),
+        contains(ProjectSettingsCard.templates),
+      );
+    }
+    expectLevel(
+      projectSettingsGroups(timeTracking: true, templates: true),
+      'project templates',
+    );
+  });
+
   test('the first column is the golden one', () {
     final arrangement = arrangeGolden(
-      projectSettingsGroups(timeTracking: true),
+      projectSettingsGroups(timeTracking: true, templates: false),
       3,
     );
 

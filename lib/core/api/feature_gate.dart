@@ -46,6 +46,26 @@ const List<String> kFlagGatedRoutePrefixes = [
   '/api/v1/me/calendar-subscriptions',
 ];
 
+/// Gated routes that sit *inside* a prefix which is not gated, written with `*`
+/// for the one segment that varies.
+///
+/// `project_templates` (`ProjectTemplateGate.GATED_PATTERNS` in hinata-server)
+/// needs this shape and the list above cannot express it. The module hangs four
+/// routes under `/api/v1/projects/{id}/…`, and `/api/v1/projects` itself is not
+/// gated and never will be: a project that a client can no longer read because
+/// copying is switched off would be a broken product, and the published store
+/// app would lose its project list outright. Listing the prefix here would also
+/// read every ordinary 404 — a deleted project, a mistyped key — as "the flag
+/// went off" and send the app re-reading `/api/v1/meta` for nothing.
+///
+/// A pattern matches its own path and everything under it, which is how the
+/// server writes the same rule as a bare path plus `/**`.
+const List<String> kFlagGatedRoutePatterns = [
+  '/api/v1/projects/*/copy',
+  '/api/v1/projects/*/instantiate',
+  '/api/v1/projects/*/schedule',
+];
+
 /// Whether [path] is served by a module that can be switched off.
 ///
 /// Matched on segment boundaries, not as a substring: `/api/v1/timesheet` is the
@@ -54,9 +74,30 @@ const List<String> kFlagGatedRoutePrefixes = [
 /// must not turn an unrelated 404 into "the module is off".
 bool isFlagGatedRoute(String path) {
   final route = _routeOf(path);
-  return kFlagGatedRoutePrefixes.any(
+  final gatedByPrefix = kFlagGatedRoutePrefixes.any(
     (prefix) => route == prefix || route.startsWith('$prefix/'),
   );
+  if (gatedByPrefix) return true;
+  final segments = route.split('/');
+  return kFlagGatedRoutePatterns.any(
+    (pattern) => _matchesPattern(segments, pattern.split('/')),
+  );
+}
+
+/// Whether [segments] starts with [pattern], where `*` stands for exactly one
+/// segment.
+///
+/// Prefix rather than equality, so one pattern covers both forms the server
+/// gates: `/api/v1/projects/{id}/schedule` and everything below it. A route
+/// shorter than the pattern never matches — `/api/v1/projects/{id}` is an
+/// ordinary project read and its 404 is an ordinary one.
+bool _matchesPattern(List<String> segments, List<String> pattern) {
+  if (segments.length < pattern.length) return false;
+  for (var i = 0; i < pattern.length; i++) {
+    if (pattern[i] == '*') continue;
+    if (segments[i] != pattern[i]) return false;
+  }
+  return true;
 }
 
 /// The path portion of whatever dio was handed.

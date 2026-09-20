@@ -8,6 +8,7 @@ const List<String> kPatScopes = [
   'issues:read',
   'issues:write',
   'projects:read',
+  'projects:write',
   'boards:read',
   'sprints:write',
   'teams:read',

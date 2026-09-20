@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart' show MultipartFile;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
@@ -9,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/hue_colors.dart';
 import '../../../core/util/keys.dart';
 import '../../../core/widgets/entity_avatar_editor.dart';
+import '../project_key.dart';
 import 'settings_common.dart';
 
 /// General card: picture, name (required), key (required, uppercase),
@@ -274,7 +274,7 @@ class _KeyField extends StatelessWidget {
           autocorrect: false,
           maxLength: 10,
           style: const TextStyle(fontFamily: AppTheme.fontMono),
-          inputFormatters: [_UpperAlphaNum()],
+          inputFormatters: const [ProjectKeyFormatter()],
           decoration: settingsInput(
             context,
             hint: 'KEY',
@@ -299,24 +299,6 @@ class _KeyField extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Uppercases and strips anything outside [A-Z0-9] as the user types.
-class _UpperAlphaNum extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final text = newValue.text.toUpperCase().replaceAll(
-      RegExp('[^A-Z0-9]'),
-      '',
-    );
-    return TextEditingValue(
-      text: text,
-      selection: TextSelection.collapsed(offset: text.length),
     );
   }
 }

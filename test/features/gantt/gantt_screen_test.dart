@@ -138,7 +138,7 @@ class _FakeProjectRepository implements ProjectRepository {
   final GanttView view;
 
   @override
-  Future<List<Project>> projects({bool archived = false}) async => [
+  Future<List<Project>> projects({bool archived = false, bool? template}) async => [
     const Project(id: 'p1', key: 'HIN', name: 'Hinata', color: '#AEC6F4'),
   ];
 

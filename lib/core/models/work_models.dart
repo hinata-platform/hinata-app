@@ -100,6 +100,9 @@ class Project extends Equatable {
     this.git,
     this.extraRepos = const [],
     this.avatarUrl,
+    this.eventDate,
+    this.workdayCalendarId,
+    this.template = false,
   });
 
   final String id;
@@ -131,6 +134,23 @@ class Project extends Equatable {
 
   /// Additional connected repositories beyond [git] (multi-repo).
   final List<GitConnection> extraRepos;
+
+  /// The one date the project's relative deadlines are counted from: the day of
+  /// the event, the action day, the party. Null while nobody has set one, which
+  /// is the normal state of a template.
+  ///
+  /// Never written through the settings PATCH. Moving it moves deadlines, so it
+  /// goes through the preview sheet and `schedule/apply`.
+  final DateTime? eventDate;
+
+  /// Which holiday calendar a working-day offset skips, or null for weekends
+  /// alone.
+  final String? workdayCalendarId;
+
+  /// Whether the project is offered as a template rather than listed among the
+  /// running ones. Same rights, same search, same boards: only the section it
+  /// appears in and the action it offers are different.
+  final bool template;
 
   /// Every connected repository, primary first (empty when none linked).
   List<GitConnection> get allRepos => [?git, ...extraRepos];
@@ -180,6 +200,9 @@ class Project extends Equatable {
     git: GitConnection.fromJson(json['git'] as Map<String, dynamic>?),
     extraRepos: _gitList(json['extraRepos']),
     avatarUrl: json['avatarUrl'] as String?,
+    eventDate: parseDate(json['eventDate']),
+    workdayCalendarId: json['workdayCalendarId'] as String?,
+    template: json['template'] as bool? ?? false,
   );
 
   static List<GitConnection> _gitList(Object? raw) {
@@ -206,6 +229,9 @@ class Project extends Equatable {
     List<GitConnection>? extraRepos,
     String? avatarUrl,
     bool clearAvatar = false,
+    Object? eventDate = _noProjectChange,
+    Object? workdayCalendarId = _noProjectChange,
+    bool? template,
   }) => Project(
     id: id,
     key: key ?? this.key,
@@ -224,6 +250,15 @@ class Project extends Equatable {
     // has to survive every unrelated copy — but removing it must still be
     // expressible, hence the explicit [clearAvatar] flag.
     avatarUrl: clearAvatar ? null : (avatarUrl ?? this.avatarUrl),
+    // Both can legitimately be set back to "none", so they need the sentinel
+    // rather than the `?? this.` shorthand the rest of these fields use.
+    eventDate: eventDate == _noProjectChange
+        ? this.eventDate
+        : eventDate as DateTime?,
+    workdayCalendarId: workdayCalendarId == _noProjectChange
+        ? this.workdayCalendarId
+        : workdayCalendarId as String?,
+    template: template ?? this.template,
   );
 
   /// Returns a copy with the Git repositories replaced — the primary [git]
@@ -248,6 +283,9 @@ class Project extends Equatable {
         git: git,
         extraRepos: extraRepos ?? this.extraRepos,
         avatarUrl: avatarUrl,
+        eventDate: eventDate,
+        workdayCalendarId: workdayCalendarId,
+        template: template,
       );
 
   @override
@@ -266,8 +304,15 @@ class Project extends Equatable {
     git,
     extraRepos,
     avatarUrl,
+    eventDate,
+    workdayCalendarId,
+    template,
   ];
 }
+
+/// Sentinel so [Project.copyWith] can tell "leave unchanged" from "set to
+/// null" for the two fields that can genuinely be cleared.
+const Object _noProjectChange = Object();
 
 /// Resolves the primary lead id from either the new [leadIds] array or the
 /// legacy single `leadId` field.
