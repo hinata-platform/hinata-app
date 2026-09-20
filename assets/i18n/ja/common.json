@@ -3777,7 +3777,8 @@
       "worklog_read": "作業記録の読み取り",
       "worklog_write": "作業時間の記録",
       "search_read": "検索",
-      "notifications_read": "自分の通知の読み取り"
+      "notifications_read": "自分の通知の読み取り",
+      "projects_write": "プロジェクトの作成"
     }
   },
   "watched": {

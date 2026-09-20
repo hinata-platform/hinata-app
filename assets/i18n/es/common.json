@@ -3777,7 +3777,8 @@
       "worklog_read": "Leer el trabajo registrado",
       "worklog_write": "Registrar trabajo",
       "search_read": "Buscar",
-      "notifications_read": "Leer las notificaciones propias"
+      "notifications_read": "Leer las notificaciones propias",
+      "projects_write": "Crear proyectos"
     }
   },
   "watched": {

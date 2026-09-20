@@ -3777,7 +3777,8 @@
       "worklog_read": "Erfasste Arbeit lesen",
       "worklog_write": "Arbeit erfassen",
       "search_read": "Suchen",
-      "notifications_read": "Eigene Benachrichtigungen lesen"
+      "notifications_read": "Eigene Benachrichtigungen lesen",
+      "projects_write": "Projekte anlegen"
     }
   },
   "watched": {

@@ -3777,7 +3777,8 @@
       "worklog_read": "Чтение записей о работе",
       "worklog_write": "Запись работы",
       "search_read": "Поиск",
-      "notifications_read": "Чтение своих уведомлений"
+      "notifications_read": "Чтение своих уведомлений",
+      "projects_write": "Создание проектов"
     }
   },
   "watched": {

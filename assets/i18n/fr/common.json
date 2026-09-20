@@ -3777,7 +3777,8 @@
       "worklog_read": "Lire les temps saisis",
       "worklog_write": "Saisir du temps",
       "search_read": "Rechercher",
-      "notifications_read": "Lire ses propres notifications"
+      "notifications_read": "Lire ses propres notifications",
+      "projects_write": "Créer des projets"
     }
   },
   "watched": {

@@ -3777,7 +3777,8 @@
       "worklog_read": "قراءة العمل المسجَّل",
       "worklog_write": "تسجيل العمل",
       "search_read": "البحث",
-      "notifications_read": "قراءة إشعاراتك"
+      "notifications_read": "قراءة إشعاراتك",
+      "projects_write": "إنشاء المشاريع"
     }
   },
   "watched": {

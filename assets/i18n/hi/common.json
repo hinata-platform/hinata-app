@@ -3777,7 +3777,8 @@
       "worklog_read": "दर्ज किया गया काम पढ़ना",
       "worklog_write": "काम दर्ज करना",
       "search_read": "खोज",
-      "notifications_read": "अपनी सूचनाएँ पढ़ना"
+      "notifications_read": "अपनी सूचनाएँ पढ़ना",
+      "projects_write": "परियोजनाएं बनाना"
     }
   },
   "watched": {

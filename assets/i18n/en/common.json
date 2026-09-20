@@ -3777,7 +3777,8 @@
       "worklog_read": "Read logged work",
       "worklog_write": "Log work",
       "search_read": "Search",
-      "notifications_read": "Read own notifications"
+      "notifications_read": "Read own notifications",
+      "projects_write": "Create projects"
     }
   },
   "watched": {

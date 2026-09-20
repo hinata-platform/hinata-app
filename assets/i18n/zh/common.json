@@ -3777,7 +3777,8 @@
       "worklog_read": "读取工时记录",
       "worklog_write": "记录工时",
       "search_read": "搜索",
-      "notifications_read": "读取自己的通知"
+      "notifications_read": "读取自己的通知",
+      "projects_write": "创建项目"
     }
   },
   "watched": {
