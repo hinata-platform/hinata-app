@@ -1702,6 +1702,18 @@
       "confirm": "复制",
       "create": "新建项目",
       "done": "已复制 {{issues}} 个事项，算出 {{deadlines}} 个截止日期。"
+    },
+    "schedule": {
+      "title": "调整项目日期",
+      "subtitle": "哪些随日期移动，哪些保持不变",
+      "noDate": "无日期",
+      "later": "晚 {{count}} 天",
+      "earlier": "早 {{count}} 天",
+      "moving": "{{count}} 个截止日期随之移动",
+      "andMore": "还有 {{count}} 个",
+      "staying": "{{count}} 个截止日期保持不变，它们是手动设置的。",
+      "pending": "{{count}} 个截止日期将等待新日期，因为项目的日期被移除。",
+      "confirm": "调整"
     }
   },
   "board": {

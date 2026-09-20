@@ -1702,6 +1702,18 @@
       "confirm": "複製",
       "create": "プロジェクトを作成",
       "done": "{{issues}} 件の課題を複製し、{{deadlines}} 件の期限を算出しました。"
+    },
+    "schedule": {
+      "title": "プロジェクトの日付を動かす",
+      "subtitle": "日付に追従するものと、そのまま残るもの",
+      "noDate": "日付なし",
+      "later": "{{count}}日後",
+      "earlier": "{{count}}日前",
+      "moving": "{{count}} 件の期限が追従します",
+      "andMore": "ほか {{count}} 件",
+      "staying": "{{count}} 件の期限はそのままです。手で設定されたものです。",
+      "pending": "{{count}} 件の期限は日付待ちになります。プロジェクトの日付がなくなるためです。",
+      "confirm": "動かす"
     }
   },
   "board": {

@@ -39,6 +39,7 @@ import '../../../core/repositories/project_repository.dart';
 import '../../sprint/modals/glass_modal.dart'
     show showGlassDatePicker, showGlassErrorToast, showGlassToast;
 import '../project_copy_sheet.dart';
+import '../schedule_move_sheet.dart';
 import '../../../core/repositories/user_repository.dart';
 
 /// Full project-settings surface: identity, accent, leads & members, colored
@@ -403,7 +404,37 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
       lastDate: DateTime(2100),
     );
     if (picked == null || !mounted) return;
-    await _applyEventDate(picked);
+    await _moveEventDate(picked);
+  }
+
+  /// Asks what the move would do, shows it, and writes only after somebody says
+  /// yes. With nothing to move there is no sheet: the date is simply set.
+  Future<void> _moveEventDate(DateTime date) async {
+    final project = _saved ?? _draft;
+    if (project == null || _movingEventDate) return;
+    setState(() => _movingEventDate = true);
+    try {
+      final preview = await context.read<ProjectRepository>().previewSchedule(
+        project.id,
+        eventDate: date,
+        limit: kScheduleMovesShown,
+      );
+      if (!mounted) return;
+      setState(() => _movingEventDate = false);
+      if (preview.hasChanges) {
+        final confirmed = await showScheduleMoveSheet(
+          context,
+          preview: preview,
+          newEventDate: date,
+        );
+        if (!confirmed || !mounted) return;
+      }
+      await _applyEventDate(date);
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      setState(() => _movingEventDate = false);
+      showGlassErrorToast(context, failure.message);
+    }
   }
 
   /// Takes the date away. The deadlines stay where they are and the rules stay

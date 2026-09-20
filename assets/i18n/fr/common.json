@@ -1702,6 +1702,18 @@
       "confirm": "Copier",
       "create": "Créer le projet",
       "done": "{{issues}} tickets copiés, {{deadlines}} échéances calculées."
+    },
+    "schedule": {
+      "title": "Déplacer la date du projet",
+      "subtitle": "Ce qui suit la date et ce qui reste en place",
+      "noDate": "sans date",
+      "later": "{{count}} jours plus tard",
+      "earlier": "{{count}} jours plus tôt",
+      "moving": "{{count}} échéances suivent",
+      "andMore": "et {{count}} autres",
+      "staying": "{{count}} échéances restent en place. Quelqu'un les a saisies à la main.",
+      "pending": "{{count}} échéances attendent une date, car le projet perd la sienne.",
+      "confirm": "Déplacer"
     }
   },
   "board": {

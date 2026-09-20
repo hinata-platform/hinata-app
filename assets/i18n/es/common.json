@@ -1702,6 +1702,18 @@
       "confirm": "Copiar",
       "create": "Crear proyecto",
       "done": "{{issues}} incidencias copiadas, {{deadlines}} plazos calculados."
+    },
+    "schedule": {
+      "title": "Mover la fecha del proyecto",
+      "subtitle": "Lo que sigue a la fecha y lo que se queda",
+      "noDate": "sin fecha",
+      "later": "{{count}} días más tarde",
+      "earlier": "{{count}} días antes",
+      "moving": "{{count}} plazos siguen",
+      "andMore": "y {{count}} más",
+      "staying": "{{count}} plazos se quedan donde están. Alguien los puso a mano.",
+      "pending": "{{count}} plazos esperan una fecha, porque el proyecto pierde la que tenía.",
+      "confirm": "Mover"
     }
   },
   "board": {

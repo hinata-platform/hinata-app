@@ -1702,6 +1702,18 @@
       "confirm": "Copy",
       "create": "Create project",
       "done": "{{issues}} issues copied, {{deadlines}} deadlines worked out."
+    },
+    "schedule": {
+      "title": "Move the project date",
+      "subtitle": "What follows the date, and what stays where it is",
+      "noDate": "no date",
+      "later": "{{count}} days later",
+      "earlier": "{{count}} days earlier",
+      "moving": "{{count}} deadlines follow",
+      "andMore": "and {{count}} more",
+      "staying": "{{count}} deadlines stay where they are. Somebody set those by hand.",
+      "pending": "{{count}} deadlines wait for a date, because the project is losing the one it had.",
+      "confirm": "Move"
     }
   },
   "board": {

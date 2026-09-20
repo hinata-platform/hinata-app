@@ -1702,6 +1702,18 @@
       "confirm": "Kopieren",
       "create": "Projekt anlegen",
       "done": "{{issues}} Vorgänge kopiert, {{deadlines}} Fristen gerechnet."
+    },
+    "schedule": {
+      "title": "Termin verschieben",
+      "subtitle": "Was mitzieht und was stehen bleibt",
+      "noDate": "kein Termin",
+      "later": "{{count}} Tage später",
+      "earlier": "{{count}} Tage früher",
+      "moving": "{{count}} Fristen ziehen mit",
+      "andMore": "und {{count}} weitere",
+      "staying": "{{count}} Fristen bleiben, wo sie sind. Die hat jemand von Hand gesetzt.",
+      "pending": "{{count}} Fristen warten auf einen Termin, weil das Projekt seinen verliert.",
+      "confirm": "Verschieben"
     }
   },
   "board": {
