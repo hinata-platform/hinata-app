@@ -40,6 +40,7 @@ import '../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassToast, showGlassDateRangePicker;
 import '../reports/logo_raster.dart';
 import '../shell/page_chrome.dart';
+import 'deadline_editor.dart';
 import 'issue_detail_sheet.dart';
 import 'issue_export.dart';
 import 'issue_filter.dart';

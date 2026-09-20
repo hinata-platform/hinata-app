@@ -20,7 +20,18 @@ class GlassField extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(label, style: GlassFieldStyle.caption),
+            // Flexible and ellipsized: a caption over a narrow field — a
+            // two-digit number box, a short code — is wider than the field in
+            // several languages, and a Text in a bare Row overflows rather
+            // than shrinking.
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GlassFieldStyle.caption,
+              ),
+            ),
             if (trailing != null) ...[const SizedBox(width: 6), trailing!],
           ],
         ),

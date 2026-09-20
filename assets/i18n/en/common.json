@@ -815,6 +815,32 @@
       "unknownWatcher": "Unknown user",
       "toastOn": "You are now watching this issue",
       "toastOff": "You are no longer watching this issue"
+    },
+    "deadline": {
+      "modeDate": "Date",
+      "modeOffset": "From the event",
+      "fixedDate": "Date",
+      "amount": "Number",
+      "unit": "Unit",
+      "unitDays": "Days",
+      "unitWeeks": "Weeks",
+      "direction": "Direction",
+      "before": "Before",
+      "after": "After",
+      "workingDays": "Count working days",
+      "workingDaysHint": "Skips weekends, and the holidays of the calendar the project uses.",
+      "noEventDate": "This project has no date yet, so there is nothing to count from. The rule is kept either way.",
+      "setEventDate": "Set the project date",
+      "calculating": "Working it out",
+      "awaitingEventDate": "Waiting for the project date",
+      "dateReplacesOffset": "Picking a date drops the rule behind it, so the next change to the project date leaves this deadline alone.",
+      "days": "{{count}} day",
+      "days_plural": "{{count}} days",
+      "weeks": "{{count}} week",
+      "weeks_plural": "{{count}} weeks",
+      "workingSuffix": " of working days",
+      "sentenceBefore": "{{amount}}{{basis}} before the project date",
+      "sentenceAfter": "{{amount}}{{basis}} after the project date"
     }
   },
   "type": {

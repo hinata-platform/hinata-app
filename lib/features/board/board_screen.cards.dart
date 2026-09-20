@@ -427,7 +427,12 @@ class _BoardCard extends StatelessWidget {
                           if (issue.estimateMinutes != null)
                             const SizedBox(width: 10),
                           _MiniMeta(
-                            icon: LucideIcons.calendar,
+                            // A deadline that follows the project's event date
+                            // gets the clock glyph, so a card says the date
+                            // will move without spending a second line on it.
+                            icon: issue.dueOffset == null
+                                ? LucideIcons.calendar
+                                : LucideIcons.calendarClock,
                             text: due.text,
                             color: due.late ? AppColors.danger : null,
                           ),

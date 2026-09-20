@@ -815,6 +815,32 @@
       "unknownWatcher": "Неизвестный пользователь",
       "toastOn": "Вы отслеживаете эту задачу",
       "toastOff": "Вы больше не отслеживаете эту задачу"
+    },
+    "deadline": {
+      "modeDate": "Дата",
+      "modeOffset": "От даты проекта",
+      "fixedDate": "Дата",
+      "amount": "Количество",
+      "unit": "Единица",
+      "unitDays": "Дни",
+      "unitWeeks": "Недели",
+      "direction": "Направление",
+      "before": "до",
+      "after": "после",
+      "workingDays": "Считать в рабочих днях",
+      "workingDaysHint": "Пропускает выходные и праздники календаря, который использует проект.",
+      "noEventDate": "У проекта ещё нет даты, значит, считать не от чего. Правило всё равно сохраняется.",
+      "setEventDate": "Задать дату проекта",
+      "calculating": "Идёт расчёт",
+      "awaitingEventDate": "Ожидает дату проекта",
+      "dateReplacesOffset": "Выбранная дата отменяет правило, и следующий перенос даты проекта этот срок не тронет.",
+      "days": "{{count}} день",
+      "days_plural": "{{count}} дней",
+      "weeks": "{{count}} неделя",
+      "weeks_plural": "{{count}} недель",
+      "workingSuffix": " рабочих",
+      "sentenceBefore": "{{amount}}{{basis}} до даты проекта",
+      "sentenceAfter": "{{amount}}{{basis}} после даты проекта"
     }
   },
   "type": {

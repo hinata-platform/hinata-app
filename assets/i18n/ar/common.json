@@ -815,6 +815,32 @@
       "unknownWatcher": "مستخدم غير معروف",
       "toastOn": "أصبحت تتابع هذه المهمة",
       "toastOff": "لم تعد تتابع هذه المهمة"
+    },
+    "deadline": {
+      "modeDate": "تاريخ",
+      "modeOffset": "من تاريخ المشروع",
+      "fixedDate": "تاريخ",
+      "amount": "العدد",
+      "unit": "الوحدة",
+      "unitDays": "أيام",
+      "unitWeeks": "أسابيع",
+      "direction": "الاتجاه",
+      "before": "قبل",
+      "after": "بعد",
+      "workingDays": "العد بأيام العمل",
+      "workingDaysHint": "يتخطى عطلات نهاية الأسبوع وعطلات التقويم الذي يستخدمه المشروع.",
+      "noEventDate": "لا يوجد تاريخ لهذا المشروع بعد، فلا شيء يُحسب منه. تبقى القاعدة محفوظة على أي حال.",
+      "setEventDate": "تحديد تاريخ المشروع",
+      "calculating": "جاري الحساب",
+      "awaitingEventDate": "في انتظار تاريخ المشروع",
+      "dateReplacesOffset": "اختيار تاريخ يلغي القاعدة، ولن يمس التغيير التالي لتاريخ المشروع هذا الموعد.",
+      "days": "{{count}} يوم",
+      "days_plural": "{{count}} يوما",
+      "weeks": "{{count}} أسبوع",
+      "weeks_plural": "{{count}} أسابيع",
+      "workingSuffix": " من أيام العمل",
+      "sentenceBefore": "{{amount}}{{basis}} قبل تاريخ المشروع",
+      "sentenceAfter": "{{amount}}{{basis}} بعد تاريخ المشروع"
     }
   },
   "type": {

@@ -815,6 +815,32 @@
       "unknownWatcher": "不明なユーザー",
       "toastOn": "この課題をウォッチしています",
       "toastOff": "この課題のウォッチを解除しました"
+    },
+    "deadline": {
+      "modeDate": "日付",
+      "modeOffset": "開催日から",
+      "fixedDate": "日付",
+      "amount": "数",
+      "unit": "単位",
+      "unitDays": "日",
+      "unitWeeks": "週",
+      "direction": "方向",
+      "before": "前",
+      "after": "後",
+      "workingDays": "営業日で数える",
+      "workingDaysHint": "週末と、プロジェクトが使う暦の祝日を飛ばします。",
+      "noEventDate": "このプロジェクトにはまだ日付がないため、数える起点がありません。ルールはそのまま残ります。",
+      "setEventDate": "プロジェクトの日付を設定",
+      "calculating": "計算中",
+      "awaitingEventDate": "プロジェクトの日付を待っています",
+      "dateReplacesOffset": "日付を選ぶとルールは外れ、次にプロジェクトの日付が変わってもこの期限は動きません。",
+      "days": "{{count}}日",
+      "days_plural": "{{count}}日",
+      "weeks": "{{count}}週",
+      "weeks_plural": "{{count}}週",
+      "workingSuffix": "（営業日）",
+      "sentenceBefore": "プロジェクトの日付の{{amount}}{{basis}}前",
+      "sentenceAfter": "プロジェクトの日付の{{amount}}{{basis}}後"
     }
   },
   "type": {

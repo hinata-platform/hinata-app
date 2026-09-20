@@ -815,6 +815,32 @@
       "unknownWatcher": "Utilisateur inconnu",
       "toastOn": "Vous observez désormais ce ticket",
       "toastOff": "Vous n'observez plus ce ticket"
+    },
+    "deadline": {
+      "modeDate": "Date",
+      "modeOffset": "Depuis la date",
+      "fixedDate": "Date",
+      "amount": "Nombre",
+      "unit": "Unité",
+      "unitDays": "Jours",
+      "unitWeeks": "Semaines",
+      "direction": "Sens",
+      "before": "avant",
+      "after": "après",
+      "workingDays": "Compter en jours ouvrés",
+      "workingDaysHint": "Ignore les week-ends et les jours fériés du calendrier utilisé par le projet.",
+      "noEventDate": "Ce projet n'a pas encore de date, il n'y a donc rien à compter. La règle est conservée malgré tout.",
+      "setEventDate": "Définir la date du projet",
+      "calculating": "Calcul en cours",
+      "awaitingEventDate": "En attente de la date du projet",
+      "dateReplacesOffset": "Choisir une date supprime la règle : le prochain changement de date du projet laissera cette échéance tranquille.",
+      "days": "{{count}} jour",
+      "days_plural": "{{count}} jours",
+      "weeks": "{{count}} semaine",
+      "weeks_plural": "{{count}} semaines",
+      "workingSuffix": " ouvrés",
+      "sentenceBefore": "{{amount}}{{basis}} avant la date du projet",
+      "sentenceAfter": "{{amount}}{{basis}} après la date du projet"
     }
   },
   "type": {

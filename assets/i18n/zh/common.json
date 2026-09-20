@@ -815,6 +815,32 @@
       "unknownWatcher": "未知用户",
       "toastOn": "你已开始关注该事项",
       "toastOff": "你已取消关注该事项"
+    },
+    "deadline": {
+      "modeDate": "日期",
+      "modeOffset": "相对项目日期",
+      "fixedDate": "日期",
+      "amount": "数量",
+      "unit": "单位",
+      "unitDays": "天",
+      "unitWeeks": "周",
+      "direction": "方向",
+      "before": "之前",
+      "after": "之后",
+      "workingDays": "按工作日计算",
+      "workingDaysHint": "跳过周末以及项目所用日历中的节假日。",
+      "noEventDate": "该项目还没有日期，无从计算。规则仍然保留。",
+      "setEventDate": "设置项目日期",
+      "calculating": "正在计算",
+      "awaitingEventDate": "等待项目日期",
+      "dateReplacesOffset": "选择日期会取消规则，下次调整项目日期时这个截止日期保持不变。",
+      "days": "{{count}} 天",
+      "days_plural": "{{count}} 天",
+      "weeks": "{{count}} 周",
+      "weeks_plural": "{{count}} 周",
+      "workingSuffix": "（工作日）",
+      "sentenceBefore": "项目日期前 {{amount}}{{basis}}",
+      "sentenceAfter": "项目日期后 {{amount}}{{basis}}"
     }
   },
   "type": {

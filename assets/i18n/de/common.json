@@ -815,6 +815,32 @@
       "unknownWatcher": "Unbekannte:r Nutzer:in",
       "toastOn": "Du beobachtest diesen Vorgang jetzt",
       "toastOff": "Du beobachtest diesen Vorgang nicht mehr"
+    },
+    "deadline": {
+      "modeDate": "Datum",
+      "modeOffset": "Zum Termin",
+      "fixedDate": "Datum",
+      "amount": "Anzahl",
+      "unit": "Einheit",
+      "unitDays": "Tage",
+      "unitWeeks": "Wochen",
+      "direction": "Richtung",
+      "before": "vorher",
+      "after": "nachher",
+      "workingDays": "In Werktagen rechnen",
+      "workingDaysHint": "Überspringt Wochenenden und die Feiertage des Kalenders, den das Projekt nutzt.",
+      "noEventDate": "Dieses Projekt hat noch keinen Termin, es gibt also nichts zum Rechnen. Der Versatz bleibt trotzdem erhalten.",
+      "setEventDate": "Termin des Projekts setzen",
+      "calculating": "Wird gerechnet",
+      "awaitingEventDate": "Wartet auf den Termin des Projekts",
+      "dateReplacesOffset": "Ein gewähltes Datum löst den Versatz ab. Die nächste Terminänderung lässt diese Frist dann in Ruhe.",
+      "days": "{{count}} Tag",
+      "days_plural": "{{count}} Tage",
+      "weeks": "{{count}} Woche",
+      "weeks_plural": "{{count}} Wochen",
+      "workingSuffix": " (Werktage)",
+      "sentenceBefore": "{{amount}}{{basis}} vor dem Termin",
+      "sentenceAfter": "{{amount}}{{basis}} nach dem Termin"
     }
   },
   "type": {

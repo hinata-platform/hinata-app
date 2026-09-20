@@ -248,7 +248,7 @@ class _CountingBoardRepository implements BoardRepository {
 
 class _FakeProjectRepository implements ProjectRepository {
   @override
-  Future<List<Project>> projects({bool archived = false}) async => const [
+  Future<List<Project>> projects({bool archived = false, bool? template}) async => const [
     Project(id: 'p1', key: 'STU', name: 'Stupa'),
   ];
 

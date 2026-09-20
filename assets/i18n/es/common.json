@@ -815,6 +815,32 @@
       "unknownWatcher": "Usuario desconocido",
       "toastOn": "Ahora sigues esta incidencia",
       "toastOff": "Ya no sigues esta incidencia"
+    },
+    "deadline": {
+      "modeDate": "Fecha",
+      "modeOffset": "Desde el evento",
+      "fixedDate": "Fecha",
+      "amount": "Cantidad",
+      "unit": "Unidad",
+      "unitDays": "Días",
+      "unitWeeks": "Semanas",
+      "direction": "Dirección",
+      "before": "antes",
+      "after": "después",
+      "workingDays": "Contar días laborables",
+      "workingDaysHint": "Omite los fines de semana y los festivos del calendario que usa el proyecto.",
+      "noEventDate": "Este proyecto aún no tiene fecha, así que no hay desde dónde contar. La regla se conserva igualmente.",
+      "setEventDate": "Definir la fecha del proyecto",
+      "calculating": "Calculando",
+      "awaitingEventDate": "A la espera de la fecha del proyecto",
+      "dateReplacesOffset": "Elegir una fecha descarta la regla, y el próximo cambio de la fecha del proyecto dejará este plazo intacto.",
+      "days": "{{count}} día",
+      "days_plural": "{{count}} días",
+      "weeks": "{{count}} semana",
+      "weeks_plural": "{{count}} semanas",
+      "workingSuffix": " laborables",
+      "sentenceBefore": "{{amount}}{{basis}} antes de la fecha del proyecto",
+      "sentenceAfter": "{{amount}}{{basis}} después de la fecha del proyecto"
     }
   },
   "type": {

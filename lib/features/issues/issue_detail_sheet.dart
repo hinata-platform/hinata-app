@@ -21,6 +21,7 @@ import '../../core/repositories/domain_providers.dart';
 import '../../core/repositories/issue_repository.dart';
 import '../../core/repositories/media_repository.dart';
 import '../../core/repositories/project_repository.dart';
+import 'deadline_editor.dart';
 import '../../core/repositories/sprint_repository.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';

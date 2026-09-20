@@ -103,6 +103,11 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
   int? _storyPoints;
   DateTime? _startDate;
   DateTime? _dueDate;
+
+  /// The rule behind the two dates above, when the deadline follows the
+  /// project's event date rather than a day somebody picked.
+  RelativeDate? _startOffset;
+  RelativeDate? _dueOffset;
   List<String> _labels = const [];
   final Set<String> _deletedLabels = {};
 
@@ -301,9 +306,15 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
         if (_parentId != null) 'parentId': _parentId,
         if (_sprintId != null) 'sprintId': _sprintId,
         if (_storyPoints != null) 'storyPoints': _storyPoints,
-        if (_startDate != null)
+        // A rule and a date are mutually exclusive on the way out, exactly as
+        // they are on the way in: the server derives the date from the rule.
+        if (_startOffset != null)
+          'startOffset': _startOffset!.toJson()
+        else if (_startDate != null)
           'startDate': _startDate!.toIso8601String().substring(0, 10),
-        if (_dueDate != null)
+        if (_dueOffset != null)
+          'dueOffset': _dueOffset!.toJson()
+        else if (_dueDate != null)
           'dueDate': _dueDate!.toIso8601String().substring(0, 10),
         if (_labels.isNotEmpty) 'tags': _labels,
       });
@@ -622,12 +633,12 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
           const SizedBox(height: 6),
           _DetailRow(
             label: context.t('issues.startDate'),
-            onTap: (_) => _pickDate(isStart: true),
+            onTap: (anchor) => _pickDate(isStart: true, anchorRect: anchor),
             child: _dateValue(_startDate, isStart: true),
           ),
           _DetailRow(
             label: context.t('issues.dueDate'),
-            onTap: (_) => _pickDate(isStart: false),
+            onTap: (anchor) => _pickDate(isStart: false, anchorRect: anchor),
             last: true,
             child: _dateValue(_dueDate, isStart: false),
           ),
@@ -655,6 +666,13 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
   }
 
   Widget _dateValue(DateTime? date, {required bool isStart}) {
+    final offset = isStart ? _startOffset : _dueOffset;
+    if (offset != null) {
+      // The rule is what somebody set; the date it works out to is written by
+      // the server once the issue exists, so before that there is nothing to
+      // show but the rule itself.
+      return DeadlineOffsetLabel(offset: offset, date: date);
+    }
     if (date == null) {
       return Text(
         context.t('issues.noValue'),
@@ -677,8 +695,10 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
           onTap: () => setState(() {
             if (isStart) {
               _startDate = null;
+              _startOffset = null;
             } else {
               _dueDate = null;
+              _dueOffset = null;
             }
           }),
           child: Icon(LucideIcons.x, size: 15, color: AppColors.inkFaint),
@@ -948,24 +968,54 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     );
   }
 
-  Future<void> _pickDate({required bool isStart}) async {
-    final current = isStart ? _startDate : _dueDate;
-    final picked = await showGlassDatePicker(
+  /// Whether this server offers deadlines that follow a project's event date.
+  bool get _offsetsOffered =>
+      context.read<AppConfigBloc>().state.meta?.projectTemplates ?? false;
+
+  Future<void> _pickDate({required bool isStart, Rect? anchorRect}) async {
+    if (!_offsetsOffered) {
+      // Without the module the field is exactly what it always was.
+      final current = isStart ? _startDate : _dueDate;
+      final picked = await showGlassDatePicker(
+        context,
+        title: context.t(isStart ? 'issues.startDate' : 'issues.dueDate'),
+        initialDate: current ?? DateTime.now(),
+        firstDate: DateTime(2015),
+        lastDate: DateTime(2100),
+      );
+      if (picked != null && mounted) {
+        setState(() {
+          if (isStart) {
+            _startDate = picked;
+          } else {
+            _dueDate = picked;
+          }
+        });
+      }
+      return;
+    }
+    final projectId = _projectId;
+    if (projectId == null) return;
+    final choice = await showDeadlineEditor(
       context,
       title: context.t(isStart ? 'issues.startDate' : 'issues.dueDate'),
-      initialDate: current ?? DateTime.now(),
-      firstDate: DateTime(2015),
-      lastDate: DateTime(2100),
+      date: isStart ? _startDate : _dueDate,
+      offset: isStart ? _startOffset : _dueOffset,
+      eventDate: _project?.eventDate,
+      anchorRect: anchorRect,
+      resolve: (offset) =>
+          _projectApi.resolveOffset(projectId, offset: offset),
     );
-    if (picked != null) {
-      setState(() {
-        if (isStart) {
-          _startDate = picked;
-        } else {
-          _dueDate = picked;
-        }
-      });
-    }
+    if (choice == null || !mounted) return;
+    setState(() {
+      if (isStart) {
+        _startOffset = choice.offset;
+        _startDate = choice.offset == null ? choice.date : null;
+      } else {
+        _dueOffset = choice.offset;
+        _dueDate = choice.offset == null ? choice.date : null;
+      }
+    });
   }
 
   // Anchor unused: estimate opens as a centered glass dialog, not a popover.

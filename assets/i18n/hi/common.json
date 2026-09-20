@@ -815,6 +815,32 @@
       "unknownWatcher": "अज्ञात उपयोगकर्ता",
       "toastOn": "अब आप इस इश्यू को वॉच कर रहे हैं",
       "toastOff": "अब आप इस इश्यू को वॉच नहीं कर रहे हैं"
+    },
+    "deadline": {
+      "modeDate": "तिथि",
+      "modeOffset": "परियोजना की तिथि से",
+      "fixedDate": "तिथि",
+      "amount": "संख्या",
+      "unit": "इकाई",
+      "unitDays": "दिन",
+      "unitWeeks": "सप्ताह",
+      "direction": "दिशा",
+      "before": "पहले",
+      "after": "बाद",
+      "workingDays": "कार्यदिवसों में गिनें",
+      "workingDaysHint": "सप्ताहांत और परियोजना के कैलेंडर की छुट्टियां छोड़ देता है।",
+      "noEventDate": "इस परियोजना की अभी कोई तिथि नहीं है, इसलिए गिनने के लिए कुछ नहीं है। नियम फिर भी बना रहता है।",
+      "setEventDate": "परियोजना की तिथि तय करें",
+      "calculating": "गणना हो रही है",
+      "awaitingEventDate": "परियोजना की तिथि की प्रतीक्षा है",
+      "dateReplacesOffset": "तिथि चुनने पर नियम हट जाता है, और परियोजना की तिथि बदलने पर यह समय सीमा अछूती रहेगी।",
+      "days": "{{count}} दिन",
+      "days_plural": "{{count}} दिन",
+      "weeks": "{{count}} सप्ताह",
+      "weeks_plural": "{{count}} सप्ताह",
+      "workingSuffix": " कार्यदिवस",
+      "sentenceBefore": "परियोजना की तिथि से {{amount}}{{basis}} पहले",
+      "sentenceAfter": "परियोजना की तिथि से {{amount}}{{basis}} बाद"
     }
   },
   "type": {
