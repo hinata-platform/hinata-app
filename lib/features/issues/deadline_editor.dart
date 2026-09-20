@@ -442,24 +442,39 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
           runSpacing: 8,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
+            // The number rides the switchers' own track rather than a form
+            // field's box: same height, same corner, same wash. A bordered
+            // input at 56 by 42 with a pill corner is not a pill, it is an
+            // ellipse, and a dense field inside a fixed height hangs its digit
+            // below the middle of it.
             SizedBox(
-              width: 56,
+              width: 66,
               height: kGlassPillHeight,
-              child: TextField(
-                controller: _amount,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                textAlign: TextAlign.center,
-                textAlignVertical: TextAlignVertical.center,
-                style: const TextStyle(
-                  fontFamily: AppTheme.fontMono,
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
+              child: GlassInlineTrack(
+                radius: kGlassPillHeight / 2,
+                child: Center(
+                  child: TextField(
+                    controller: _amount,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: AppTheme.fontMono,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      height: 1,
+                    ),
+                    decoration: const InputDecoration(
+                      isCollapsed: true,
+                      filled: false,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                    ),
+                    onChanged: (_) => _scheduleResolve(),
+                  ),
                 ),
-                decoration: glassInputDecoration().copyWith(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                ),
-                onChanged: (_) => _scheduleResolve(),
               ),
             ),
             GlassSwitchBar(

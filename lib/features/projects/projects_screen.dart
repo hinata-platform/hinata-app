@@ -17,6 +17,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/entity_avatar.dart';
 import '../../core/widgets/glass_filter_bar.dart';
+import '../shell/page_chrome.dart';
 import '../../core/widgets/glass_switch_chip.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
@@ -26,6 +27,9 @@ import 'project_copy_sheet.dart';
 import 'project_create_form.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/user_repository.dart';
+
+/// The phone's docked row, the same height every other page's is.
+const double _kProjectsDockHeight = kGlassDockRow;
 
 typedef _ProjectsData = ({
   List<Project> active,
@@ -124,10 +128,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           final avatars = state.data?.avatars ?? const <String, String>{};
           // The list route answers with both kinds unless asked otherwise, so
           // the split happens here rather than in a second request.
-          final templatesOffered = context
-              .select<AppConfigBloc, bool>(
-                (bloc) => bloc.state.meta?.projectTemplates ?? false,
-              );
+          final templatesOffered = context.select<AppConfigBloc, bool>(
+            (bloc) => bloc.state.meta?.projectTemplates ?? false,
+          );
           final templates = templatesOffered
               ? all.where((p) => p.template).toList(growable: false)
               : const <Project>[];
@@ -145,140 +148,208 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
             _ProjectTab.templates => templates,
             _ProjectTab.archived => archived,
           });
-          return RefreshIndicator(
-            onRefresh: _cubit.load,
-            color: AppColors.accent,
-            edgeOffset: context.topGutter,
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                    context.pageGutter,
-                    24 + context.topGutter,
-                    context.pageGutter,
-                    16,
-                  ),
-                  sliver: SliverToBoxAdapter(
-                    child: PageHead(
-                      title: context.t('projects.title'),
-                      subtitle: context.t(
-                        'projects.summary',
-                        variables: {
-                          'active': '${active.length}',
-                          'archived': '${archived.length}',
-                        },
-                      ),
-                      actions: [
-                        // On a phone the open field is the head: a title, a
-                        // switcher, a button and a text field do not share one
-                        // line at 360 points, and the field is the only one of
-                        // them somebody is using at that moment.
-                        if (context.isCompact && _searching)
-                          Expanded(child: _searchField(context))
-                        else
-                          _searchField(context),
-                        if (!(context.isCompact && _searching)) ...[
-                          _TabSwitcher(
-                            current: tab,
-                            templates: templatesOffered
-                                ? templates.length
-                                : null,
-                            archived: archived.length,
-                            onChanged: (value) => setState(() => _tab = value),
-                          ),
-                          PrimaryButton(
-                            icon: LucideIcons.plus,
-                            label: context.t('projects.new'),
-                            onPressed: _showCreate,
-                            collapseToIcon: true,
-                          ),
-                        ],
-                      ],
+          final compact = context.isCompact;
+          final switcher = _TabSwitcher(
+            current: tab,
+            templates: templatesOffered ? templates.length : null,
+            archived: archived.length,
+            onChanged: (value) => setState(() => _tab = value),
+          );
+          return PageChrome(
+            title: context.t('projects.title'),
+            // A phone's app bar has room for one trailing action, and this page
+            // has exactly one: a new project. On a wide window it is a button in
+            // the page's own head instead, where it can carry its name.
+            actions: compact
+                ? [
+                    PageAction(
+                      icon: LucideIcons.plus,
+                      label: context.t('projects.new'),
+                      primary: true,
+                      onTap: (_) => _showCreate(),
                     ),
-                  ),
-                ),
-                if (state.isLoading && projects.isEmpty)
-                  const SliverFillRemaining(child: Center(child: HiveLoader()))
-                else if (projects.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: context.pageGutter,
-                        vertical: 24,
-                      ),
-                      child: Center(
-                        child: HiveEmptyState(
-                          title: context.t('projects.title'),
-                          // A list emptied by a search is not an empty list,
-                          // and "create your first project" is the wrong thing
-                          // to say to somebody who has forty and mistyped one.
-                          message: _query.trim().isNotEmpty
-                              ? context.t(
-                                  'search.noMatch',
-                                  variables: {'q': _query.trim()},
-                                )
-                              : switch (tab) {
-                                  _ProjectTab.archived => context.t(
-                                    'projects.emptyArchived',
-                                  ),
-                                  _ProjectTab.templates => context.t(
-                                    'projects.emptyTemplates',
-                                  ),
-                                  _ProjectTab.active => context.t(
-                                    'projects.empty',
-                                  ),
-                                },
-                        ),
-                      ),
+                  ]
+                : const [],
+            // The pills ride in the app bar's blur, the way the audit log, user
+            // management and the time module all wear them. Down the page they
+            // were a second title under the one the bar already shows.
+            bottom: compact
+                ? _dockedToolbar(
+                    context,
+                    _TabSwitcher(
+                      current: tab,
+                      templates: templatesOffered ? templates.length : null,
+                      archived: archived.length,
+                      onChanged: (value) => setState(() => _tab = value),
+                      dock: true,
                     ),
                   )
-                else
-                  SliverLayoutBuilder(
-                    builder: (context, room) => SliverPadding(
+                : null,
+            bottomHeight: compact ? _kProjectsDockHeight : 0,
+            child: RefreshIndicator(
+              onRefresh: _cubit.load,
+              color: AppColors.accent,
+              edgeOffset: context.topGutter,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  if (!compact)
+                    SliverPadding(
                       padding: EdgeInsets.fromLTRB(
                         context.pageGutter,
-                        0,
+                        24 + context.topGutter,
                         context.pageGutter,
-                        context.pageGutter + context.bottomGutter,
+                        16,
                       ),
-                      sliver: SliverGrid(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: context.gridColumns(
-                            minTileWidth: 300,
-                            width: room.crossAxisExtent,
+                      sliver: SliverToBoxAdapter(
+                        child: PageHead(
+                          title: context.t('projects.title'),
+                          subtitle: context.t(
+                            'projects.summary',
+                            variables: {
+                              'active': '${active.length}',
+                              'archived': '${archived.length}',
+                            },
                           ),
-                          mainAxisSpacing: 18,
-                          crossAxisSpacing: 18,
-                          mainAxisExtent: 210,
-                        ),
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) => _ProjectCard(
-                            project: projects[index],
-                            names: names,
-                            avatars: avatars,
-                            onSettings: () => _openSettings(projects[index]),
-                            onCopy: templatesOffered
-                                ? () => _copy(projects[index])
-                                : null,
-                            onInstantiate:
-                                templatesOffered && projects[index].template
-                                ? () => _instantiate(projects[index])
-                                : null,
-                          ),
-                          childCount: projects.length,
+                          actions: [
+                            _searchField(context),
+                            switcher,
+                            PrimaryButton(
+                              icon: LucideIcons.plus,
+                              label: context.t('projects.new'),
+                              onPressed: _showCreate,
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ),
-              ],
+                  if (state.isLoading && projects.isEmpty)
+                    const SliverFillRemaining(
+                      child: Center(child: HiveLoader()),
+                    )
+                  else if (projects.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          context.pageGutter,
+                          compact ? context.topGutter + 24 : 24,
+                          context.pageGutter,
+                          24,
+                        ),
+                        child: Center(
+                          child: HiveEmptyState(
+                            title: context.t('projects.title'),
+                            // A list emptied by a search is not an empty list,
+                            // and "create your first project" is the wrong thing
+                            // to say to somebody who has forty and mistyped one.
+                            message: _query.trim().isNotEmpty
+                                ? context.t(
+                                    'search.noMatch',
+                                    variables: {'q': _query.trim()},
+                                  )
+                                : switch (tab) {
+                                    _ProjectTab.archived => context.t(
+                                      'projects.emptyArchived',
+                                    ),
+                                    _ProjectTab.templates => context.t(
+                                      'projects.emptyTemplates',
+                                    ),
+                                    _ProjectTab.active => context.t(
+                                      'projects.empty',
+                                    ),
+                                  },
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    SliverLayoutBuilder(
+                      builder: (context, room) => SliverPadding(
+                        padding: EdgeInsets.fromLTRB(
+                          context.pageGutter,
+                          0,
+                          context.pageGutter,
+                          context.pageGutter + context.bottomGutter,
+                        ),
+                        sliver: SliverGrid(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: context.gridColumns(
+                                  minTileWidth: 300,
+                                  width: room.crossAxisExtent,
+                                ),
+                                mainAxisSpacing: 18,
+                                crossAxisSpacing: 18,
+                                mainAxisExtent: 210,
+                              ),
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) => _ProjectCard(
+                              project: projects[index],
+                              names: names,
+                              avatars: avatars,
+                              onSettings: () => _openSettings(projects[index]),
+                              onCopy: templatesOffered
+                                  ? () => _copy(projects[index])
+                                  : null,
+                              onInstantiate:
+                                  templatesOffered && projects[index].template
+                                  ? () => _instantiate(projects[index])
+                                  : null,
+                            ),
+                            childCount: projects.length,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           );
         },
       ),
     );
   }
+
+  /// The phone's one docked row: the search pill and the three lists, inside
+  /// the app bar's blur. The field takes the row over while somebody is typing
+  /// in it and hands it back on close, exactly as it does in the audit log and
+  /// in user management.
+  Widget _dockedToolbar(BuildContext context, Widget switcher) => Padding(
+    padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
+    // The Align is load-bearing: the bar hands the reserved height down as a
+    // tight constraint, and the row has to be able to come in under it.
+    child: Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: GlassSearchDock(
+        searching: _searching,
+        controller: _search,
+        hint: context.t('projects.searchHint'),
+        onChanged: (value) => setState(() => _query = value),
+        onClose: () => setState(() => _searching = false),
+        controls: SizedBox(
+          height: kGlassControlHeight,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            // The gutter is spent above; inside the scroller it would clip the
+            // last pill instead of letting it come into view.
+            clipBehavior: Clip.none,
+            child: Row(
+              children: [
+                GlassSearchButton(
+                  tooltip: context.t('projects.searchHint'),
+                  active: _query.isNotEmpty,
+                  onTap: () => setState(() => _searching = true),
+                ),
+                const SizedBox(width: 8),
+                switcher,
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 
   /// Keys of the projects this user can see — archived ones included, since
   /// they hold their key too. What the create dialog steps around when it
@@ -364,7 +435,12 @@ class _TabSwitcher extends StatelessWidget {
     required this.templates,
     required this.archived,
     required this.onChanged,
+    this.dock = false,
   });
+
+  /// Whether this is the copy inside the app bar's docked row. There it is a
+  /// docked control tall, beside a search pill of the same height; in a page
+  /// head it is a search field tall, beside one of those.
 
   final _ProjectTab current;
 
@@ -373,6 +449,7 @@ class _TabSwitcher extends StatelessWidget {
   final int? templates;
   final int archived;
   final ValueChanged<_ProjectTab> onChanged;
+  final bool dock;
 
   @override
   Widget build(BuildContext context) {
@@ -380,12 +457,22 @@ class _TabSwitcher extends StatelessWidget {
     // plus two counts do not fit beside a title and the new-project button on a
     // phone, and a switcher that pushes the title off the head is worse than one
     // that asks to be recognised by its icon.
-    final iconOnly = !context.isExpanded;
+    final iconOnly = dock || !context.isExpanded;
     final tabs = <(_ProjectTab, IconData, String, int?)>[
       (_ProjectTab.active, LucideIcons.folderOpen, 'projects.active', null),
       if (templates != null)
-        (_ProjectTab.templates, LucideIcons.copy, 'projects.templates', templates),
-      (_ProjectTab.archived, LucideIcons.archive, 'projects.archived', archived),
+        (
+          _ProjectTab.templates,
+          LucideIcons.copy,
+          'projects.templates',
+          templates,
+        ),
+      (
+        _ProjectTab.archived,
+        LucideIcons.archive,
+        'projects.archived',
+        archived,
+      ),
     ];
     String label((_ProjectTab, IconData, String, int?) tab) {
       final name = context.t(tab.$3);
@@ -396,7 +483,7 @@ class _TabSwitcher extends StatelessWidget {
     }
 
     return GlassSwitchBar(
-      compact: iconOnly,
+      compact: dock,
       maxWidth: iconOnly ? 45.0 * tabs.length + 30 : 150.0 * tabs.length,
       chips: [
         for (final tab in tabs) ...[
@@ -673,36 +760,42 @@ class _SettingsButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: InkWell(
-        onTap: onTap,
+    return Semantics(
+      button: true,
+      label: context.t('projects.settings'),
+      onTap: onTap,
+      excludeSemantics: true,
+      child: Material(
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(color: AppColors.hairline),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                LucideIcons.slidersHorizontal,
-                size: 14,
-                color: AppColors.inkSoft,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                context.t('projects.settings'),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              border: Border.all(color: AppColors.hairline),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  LucideIcons.slidersHorizontal,
+                  size: 14,
                   color: AppColors.inkSoft,
                 ),
-              ),
-            ],
+                const SizedBox(width: 6),
+                Text(
+                  context.t('projects.settings'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.inkSoft,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -900,42 +993,53 @@ class _CardAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: primary ? AppColors.navy : AppColors.surface,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: InkWell(
-        onTap: onTap,
+    // One node, named, and it answers. The card around it is tappable, so its
+    // own semantics take every plain Text below with them — which left the two
+    // buttons in the footer with a role and no name: "button" and "button", on
+    // every card. Excluding what is underneath and stating the label and the
+    // tap here is the arrangement that survives that merge.
+    return Semantics(
+      button: true,
+      label: label,
+      onTap: onTap,
+      excludeSemantics: true,
+      child: Material(
+        color: primary ? AppColors.navy : AppColors.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(
-              color: primary ? AppColors.navy : AppColors.hairline,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 13,
-                color: primary ? Colors.white : AppColors.inkSoft,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              border: Border.all(
+                color: primary ? AppColors.navy : AppColors.hairline,
               ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: primary ? Colors.white : AppColors.inkSoft,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 13,
+                  color: primary ? Colors.white : AppColors.inkSoft,
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: primary ? Colors.white : AppColors.inkSoft,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

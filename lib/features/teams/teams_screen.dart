@@ -12,6 +12,7 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_filter_bar.dart';
+import '../shell/page_chrome.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
@@ -20,6 +21,9 @@ import 'team_widgets.dart';
 import '../../core/repositories/team_repository.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/widgets/user_pronouns.dart';
+
+/// The phone's docked row, the same height every other page's is.
+const double _kTeamsDockHeight = kGlassDockRow;
 
 typedef _TeamsData = ({
   List<Team> teams,
@@ -117,96 +121,137 @@ class _TeamsScreenState extends State<TeamsScreen> {
         builder: (context, state) {
           final all = state.data?.teams ?? const <Team>[];
           final teams = _matching(all);
+          final compact = context.isCompact;
           final names = state.data?.names ?? const <String, String>{};
           final avatars = state.data?.avatars ?? const <String, String>{};
           final pronouns = state.data?.pronouns ?? const <String, String>{};
-          return RefreshIndicator(
-            onRefresh: _cubit.load,
-            color: AppColors.accent,
-            edgeOffset: context.topGutter,
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                    context.pageGutter,
-                    24 + context.topGutter,
-                    context.pageGutter,
-                    16,
-                  ),
-                  sliver: SliverToBoxAdapter(
-                    child: PageHead(
-                      title: context.t('teams.title'),
-                      subtitle: context.t(
-                        'teams.summary',
-                        variables: {'count': '${all.length}'},
-                        count: all.length,
-                      ),
-                      actions: [
-                        // On a phone the open field is the head: a title, a
-                        // switcher, a button and a text field do not share one
-                        // line at 360 points, and the field is the only one of
-                        // them somebody is using at that moment.
-                        if (context.isCompact && _searching)
-                          Expanded(child: _searchField(context))
-                        else
-                          _searchField(context),
-                        if (!(context.isCompact && _searching))
-                          PrimaryButton(
-                            icon: LucideIcons.plus,
-                            label: context.t('teams.new'),
-                            onPressed: _create,
-                            collapseToIcon: true,
-                          ),
-                      ],
+          return PageChrome(
+            title: context.t('teams.title'),
+            // One trailing action is what a phone's app bar holds, and this
+            // page has exactly one.
+            actions: compact
+                ? [
+                    PageAction(
+                      icon: LucideIcons.plus,
+                      label: context.t('teams.new'),
+                      primary: true,
+                      onTap: (_) => _create(),
                     ),
-                  ),
-                ),
-                if (state.isLoading && all.isEmpty)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(child: HiveLoader()),
-                  )
-                else
-                  SliverLayoutBuilder(
-                    builder: (context, room) => SliverPadding(
+                  ]
+                : const [],
+            // The search rides in the app bar's blur, as it does on every other
+            // list page. Down the page it was a second title under the one the
+            // bar already shows.
+            bottom: compact ? _dockedToolbar(context) : null,
+            bottomHeight: compact ? _kTeamsDockHeight : 0,
+            child: RefreshIndicator(
+              onRefresh: _cubit.load,
+              color: AppColors.accent,
+              edgeOffset: context.topGutter,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  if (!compact)
+                    SliverPadding(
                       padding: EdgeInsets.fromLTRB(
                         context.pageGutter,
-                        0,
+                        24 + context.topGutter,
                         context.pageGutter,
-                        context.pageGutter + context.bottomGutter,
+                        16,
                       ),
-                      sliver: SliverGrid(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: context.gridColumns(
-                            minTileWidth: 300,
-                            width: room.crossAxisExtent,
+                      sliver: SliverToBoxAdapter(
+                        child: PageHead(
+                          title: context.t('teams.title'),
+                          subtitle: context.t(
+                            'teams.summary',
+                            variables: {'count': '${all.length}'},
+                            count: all.length,
                           ),
-                          mainAxisSpacing: 18,
-                          crossAxisSpacing: 18,
-                          mainAxisExtent: 206,
+                          actions: [
+                            _searchField(context),
+                            PrimaryButton(
+                              icon: LucideIcons.plus,
+                              label: context.t('teams.new'),
+                              onPressed: _create,
+                            ),
+                          ],
                         ),
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          if (index == teams.length) {
-                            return _NewTeamCard(onTap: _create);
-                          }
-                          return _TeamCard(
-                            team: teams[index],
-                            names: names,
-                            avatars: avatars,
-                            pronouns: pronouns,
-                          );
-                        }, childCount: teams.length + 1),
                       ),
                     ),
-                  ),
-              ],
+                  if (state.isLoading && all.isEmpty)
+                    const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(child: HiveLoader()),
+                    )
+                  else
+                    SliverLayoutBuilder(
+                      builder: (context, room) => SliverPadding(
+                        padding: EdgeInsets.fromLTRB(
+                          context.pageGutter,
+                          0,
+                          context.pageGutter,
+                          context.pageGutter + context.bottomGutter,
+                        ),
+                        sliver: SliverGrid(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: context.gridColumns(
+                                  minTileWidth: 300,
+                                  width: room.crossAxisExtent,
+                                ),
+                                mainAxisSpacing: 18,
+                                crossAxisSpacing: 18,
+                                mainAxisExtent: 206,
+                              ),
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            if (index == teams.length) {
+                              return _NewTeamCard(onTap: _create);
+                            }
+                            return _TeamCard(
+                              team: teams[index],
+                              names: names,
+                              avatars: avatars,
+                              pronouns: pronouns,
+                            );
+                          }, childCount: teams.length + 1),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           );
         },
       ),
     );
   }
+
+  /// The phone's one docked row: the search pill inside the app bar's blur,
+  /// taking the row over while somebody types in it.
+  Widget _dockedToolbar(BuildContext context) => Padding(
+    padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
+    child: Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: GlassSearchDock(
+        searching: _searching,
+        controller: _search,
+        hint: context.t('teams.searchHint'),
+        onChanged: (value) => setState(() => _query = value),
+        onClose: () => setState(() => _searching = false),
+        controls: SizedBox(
+          height: kGlassControlHeight,
+          child: GlassSearchButton(
+            tooltip: context.t('teams.searchHint'),
+            active: _query.isNotEmpty,
+            onTap: () => setState(() => _searching = true),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class _TeamCard extends StatelessWidget {

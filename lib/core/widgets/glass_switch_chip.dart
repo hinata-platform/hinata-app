@@ -186,7 +186,7 @@ class GlassSwitchBar extends StatelessWidget {
       child: SizedBox(
         height: _height,
         child: inline
-            ? _InlineTrack(radius: _height / 2, child: track)
+            ? GlassInlineTrack(radius: _height / 2, child: track)
             : GlassFloatingSurface(radius: _height / 2, child: track),
       ),
     );
@@ -197,8 +197,13 @@ class GlassSwitchBar extends StatelessWidget {
 /// key and a hairline, and nothing else. No blur, no shadow, no rim — the panel
 /// around it already carries all three, and a second set of them is what makes
 /// a small control look like a slab.
-class _InlineTrack extends StatelessWidget {
-  const _InlineTrack({required this.radius, required this.child});
+///
+/// Public because a switcher is not the only thing that rides in one. Where a
+/// number field stands beside two of these — "3 days before" — it takes the
+/// same track, so the row is one shape repeated rather than three controls that
+/// happen to be adjacent.
+class GlassInlineTrack extends StatelessWidget {
+  const GlassInlineTrack({super.key, required this.radius, required this.child});
 
   final double radius;
   final Widget child;

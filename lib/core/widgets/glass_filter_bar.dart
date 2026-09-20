@@ -190,21 +190,27 @@ class GlassSearchButton extends StatelessWidget {
     required this.tooltip,
     required this.onTap,
     this.active = false,
+    this.height = kGlassControlHeight,
   });
 
   final String tooltip;
   final VoidCallback onTap;
   final bool active;
 
+  /// How tall the pill is. A docked row gives [kGlassControlHeight]; a page
+  /// head gives [kGlassPillHeight], so the button lines up with the switcher
+  /// next to it rather than sitting a few points low in the row.
+  final double height;
+
   @override
   Widget build(BuildContext context) => Tooltip(
     message: tooltip,
     child: GlassPill(
-      height: kGlassControlHeight,
+      height: height,
       onTap: onTap,
       active: active,
       child: SizedBox(
-        width: kGlassControlHeight,
+        width: height,
         child: Icon(
           LucideIcons.search,
           size: 17,
@@ -238,10 +244,16 @@ class GlassSearchExpander extends StatelessWidget {
     required this.onOpen,
     required this.onClose,
     this.width = 240,
+    this.height = kGlassPillHeight,
   });
 
   final bool searching;
   final String hint;
+
+  /// The height of both shapes. A page head puts a switcher and a button on the
+  /// same line, and all three have to be the same height or the row reads as
+  /// three controls that happened to land near each other.
+  final double height;
 
   /// Required, because closing the search clears it — see [onClose].
   final TextEditingController controller;
@@ -276,7 +288,7 @@ class GlassSearchExpander extends StatelessWidget {
     child: searching
         ? SizedBox(
             width: width,
-            height: kGlassControlHeight,
+            height: height,
             child: Row(
               children: [
                 Expanded(
@@ -293,10 +305,10 @@ class GlassSearchExpander extends StatelessWidget {
                     context,
                   ).closeButtonTooltip,
                   child: GlassPill(
-                    height: kGlassControlHeight,
+                    height: height,
                     onTap: _close,
                     child: SizedBox(
-                      width: kGlassControlHeight,
+                      width: height,
                       child: Icon(
                         LucideIcons.x,
                         size: 17,
@@ -312,6 +324,7 @@ class GlassSearchExpander extends StatelessWidget {
             tooltip: hint,
             active: controller.text.isNotEmpty,
             onTap: onOpen,
+            height: height,
           ),
   );
 }
