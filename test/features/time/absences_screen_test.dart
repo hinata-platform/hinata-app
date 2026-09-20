@@ -31,6 +31,25 @@ import 'fake_time_policy_cubit.dart';
 /// because the server refuses that and a button that is going to be refused is
 /// worse than no button; a request form that will not send a span worth nothing;
 /// and a sick report that says what § 9 BUrlG handed back.
+/// The catalogue most cases get: leave, and the sickness a filter can pick
+/// beside it.
+const _vacationType = AbsenceType(
+  id: 't-vacation',
+  key: 'vacation',
+  kind: AbsenceKind.vacation,
+  systemKey: 'vacation',
+  countsAgainstBalance: true,
+  icon: 'palmtree',
+);
+
+const _sickType = AbsenceType(
+  id: 't-sick',
+  key: 'sick',
+  kind: AbsenceKind.sick,
+  systemKey: 'sick',
+  icon: 'thermometer',
+);
+
 void main() {
   setUp(() => AppColors.brightness = Brightness.light);
 
@@ -76,6 +95,7 @@ void main() {
     String meId = 'me',
     _FakeAbsences? absences,
     List<AbsenceRequest> pending = const [],
+    List<AbsenceType> types = const [_vacationType],
   }) => MediaQuery(
     // The test surface's own size: a wider claim lays the page out for room
     // it does not get, and its head runs over the edge.
@@ -102,16 +122,7 @@ void main() {
                   pending: pending,
                   // What the module holds for every screen: the form a sheet
                   // reopens takes its types from here.
-                  types: const [
-                    AbsenceType(
-                      id: 't-vacation',
-                      key: 'vacation',
-                      kind: AbsenceKind.vacation,
-                      systemKey: 'vacation',
-                      countsAgainstBalance: true,
-                      icon: 'palmtree',
-                    ),
-                  ],
+                  types: types,
                 ),
               ),
               BlocProvider<TimePolicyCubit>(
@@ -490,6 +501,33 @@ void main() {
     await tester.tap(find.text('absence.view.newestFirst'));
     await tester.pumpAndSettle();
     expect(absences.lastOldestFirst, isTrue);
+  });
+
+  testWidgets('a type filter takes the waiting requests with it', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        _FakeRequests(),
+        pending: [request(userId: 'me', personName: 'Me')],
+        types: const [_vacationType, _sickType],
+        child: const TimeAbsencesScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('absence.view.pending'), findsOneWidget);
+
+    await tester.tap(find.text('absence.view.allTypes'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('absence.type.sick').last);
+    await tester.pumpAndSettle();
+
+    // The leave that waits is not sickness, so the block above the list goes
+    // with the rest of it — a filter that only reaches half a page reads as a
+    // broken filter.
+    expect(find.text('absence.view.pending'), findsNothing);
+    expect(find.text('absence.request.status.submitted'), findsNothing);
   });
 
   testWidgets('an absence entered directly opens with edit and delete', (

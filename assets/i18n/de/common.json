@@ -1288,7 +1288,7 @@
     "days_plural": "{{days}} Tage",
     "kind": {
       "vacation": "Urlaub",
-      "sick": "Krankmeldungen",
+      "sick": "Krankmeldung",
       "special": "Sonderurlaub",
       "unpaid": "Unbezahlt",
       "parental": "Elternzeit",
@@ -1330,7 +1330,7 @@
     },
     "type": {
       "vacation": "Urlaub",
-      "sick": "Krankmeldungen",
+      "sick": "Krankmeldung",
       "other": "Sonstiges"
     },
     "icon": {

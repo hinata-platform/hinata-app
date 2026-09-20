@@ -219,6 +219,28 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
       _typeId != null ||
       _plainType != null;
 
+  /// Whether a request that still waits belongs under the filters above it.
+  ///
+  /// The waiting block and the entered rows are one list to whoever reads the
+  /// page, so filtering it to sickness and still finding leave at the top reads
+  /// as a broken filter. The server answers the same questions for the entered
+  /// rows; these few the page already holds, so it asks them itself.
+  bool _matchesFilters(AbsenceRequest request) {
+    final typeId = _typeId;
+    if (typeId != null && request.typeId != typeId) return false;
+    final plain = _plainType;
+    if (plain != null && request.typeSystemKey != plain.name) return false;
+    final range = _range;
+    if (range != null &&
+        (request.to.isBefore(DateUtils.dateOnly(range.start)) ||
+            request.from.isAfter(DateUtils.dateOnly(range.end)))) {
+      return false;
+    }
+    final query = _query;
+    return query.isEmpty ||
+        (request.note ?? '').toLowerCase().contains(query.toLowerCase());
+  }
+
   void _clearFilters() {
     _search.clear();
     _applyFilters(() {
@@ -636,23 +658,24 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
   /// may still change, and the part somebody opens this page to look for.
   List<Widget> _pending(EdgeInsets horizontal) {
     final mine = context.watch<MyAbsencesCubit>().state;
-    if (mine.pending.isEmpty) return const [];
+    final waiting = mine.pending.where(_matchesFilters).toList();
+    if (waiting.isEmpty) return const [];
     return [
       SliverPadding(
         padding: horizontal.copyWith(bottom: 8),
         sliver: SliverToBoxAdapter(
           child: _SectionTitle(
             text: context.t('absence.view.pending'),
-            count: mine.pending.length,
+            count: waiting.length,
           ),
         ),
       ),
       SliverPadding(
         padding: horizontal.copyWith(bottom: 12),
         sliver: SliverList.builder(
-          itemCount: mine.pending.length,
+          itemCount: waiting.length,
           itemBuilder: (context, index) {
-            final request = mine.pending[index];
+            final request = waiting[index];
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: AbsenceRequestCard(
