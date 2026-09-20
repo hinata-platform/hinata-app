@@ -218,6 +218,30 @@ class AuthGlassCard extends StatelessWidget {
     // app-wide `floatingLabelStyle` sizes a caption that sits inside the field.
     // On the rim the label is the label again.
     return theme.copyWith(
+      // The one action on a sign-in card is the reason somebody opened it, so
+      // it keeps the height it has in the published app rather than the compact
+      // one a toolbar button wants. Scoped to this card: nothing else in the
+      // app grows with it.
+      filledButtonTheme: FilledButtonThemeData(
+        style: (theme.filledButtonTheme.style ?? const ButtonStyle()).copyWith(
+          minimumSize: const WidgetStatePropertyAll(Size(44, 52)),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
+          textStyle: const WidgetStatePropertyAll(
+            TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: (theme.outlinedButtonTheme.style ?? const ButtonStyle())
+            .copyWith(
+              minimumSize: const WidgetStatePropertyAll(Size(44, 52)),
+              padding: const WidgetStatePropertyAll(
+                EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              ),
+            ),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: base.filled,
         fillColor: base.fillColor,
