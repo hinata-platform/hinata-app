@@ -440,8 +440,10 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
   /// Takes the date away. The deadlines stay where they are and the rules stay
   /// with their issues, so this loses nothing — and the toast says so.
   Future<void> _clearEventDate() async {
-    await _applyEventDate(null);
-    if (mounted) {
+    // Only where the write went through: the failure path shows its own toast,
+    // and a green confirmation on top of a red error is a screen contradicting
+    // itself about something that did not happen.
+    if (await _applyEventDate(null) && mounted) {
       showGlassToast(
         context,
         context.t('projectSettings.templates.dateCleared'),
@@ -449,17 +451,18 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
     }
   }
 
-  Future<void> _applyEventDate(DateTime? date) async {
-    if (_movingEventDate) return;
+  /// Writes the date. Answers whether it landed, so a caller can say so.
+  Future<bool> _applyEventDate(DateTime? date) async {
+    if (_movingEventDate) return false;
     final project = _saved ?? _draft;
-    if (project == null) return;
+    if (project == null) return false;
     setState(() => _movingEventDate = true);
     try {
       final result = await context.read<ProjectRepository>().applySchedule(
         project.id,
         eventDate: date,
       );
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() {
         _movingEventDate = false;
         _saved = _withEventDate(_saved, result.project.eventDate);
@@ -474,10 +477,12 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
           ),
         );
       }
+      return true;
     } on ApiFailure catch (failure) {
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() => _movingEventDate = false);
       showGlassErrorToast(context, failure.message);
+      return false;
     }
   }
 

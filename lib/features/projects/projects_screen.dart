@@ -319,7 +319,8 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       mode: mode,
     );
     if (result == null || !mounted) return;
-    _cubit.load();
+    // No reload here: the line below leaves this screen, and it loads again on
+    // the way back in.
     showGlassToast(
       context,
       context.t(
@@ -775,8 +776,9 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
 
 /// The small "template" mark on a project card.
 ///
-/// The section a card sits in already says it, but a card also turns up in a
-/// search result and in a picker, where the section does not travel with it.
+/// The Templates tab already says it for the cards under it — this is for the
+/// moment the tab is not what somebody is looking at: a card in the middle of a
+/// search, or the one they landed on from a link.
 class _TemplateBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

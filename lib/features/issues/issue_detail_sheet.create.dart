@@ -668,9 +668,8 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
   Widget _dateValue(DateTime? date, {required bool isStart}) {
     final offset = isStart ? _startOffset : _dueOffset;
     if (offset != null) {
-      // The rule is what somebody set; the date it works out to is written by
-      // the server once the issue exists, so before that there is nothing to
-      // show but the rule itself.
+      // The date beside the rule is the one the editor resolved; where the
+      // project has no date to count from there is none, and the label says so.
       return DeadlineOffsetLabel(offset: offset, date: date);
     }
     if (date == null) {
@@ -1008,12 +1007,16 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     );
     if (choice == null || !mounted) return;
     setState(() {
+      // The date travels either way: from the picker when somebody chose a day,
+      // and from the editor's own result line when they chose a rule. Only the
+      // rule is sent on save — the server writes the date — but the row has a
+      // day to show instead of saying it is waiting for the project's.
       if (isStart) {
         _startOffset = choice.offset;
-        _startDate = choice.offset == null ? choice.date : null;
+        _startDate = choice.date;
       } else {
         _dueOffset = choice.offset;
-        _dueDate = choice.offset == null ? choice.date : null;
+        _dueDate = choice.date;
       }
     });
   }

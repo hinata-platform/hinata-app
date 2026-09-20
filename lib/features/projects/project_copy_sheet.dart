@@ -12,6 +12,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../sprint/modals/glass_modal.dart';
+import 'project_key.dart';
 
 /// Which of the two ways in somebody took.
 enum ProjectCopyMode {
@@ -114,7 +115,9 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
     if (_scope?.withinLimit == false) return false;
     if (_name.text.trim().isEmpty) return false;
     final key = _key.text.trim();
-    return key.isEmpty || RegExp(r'^[A-Za-z][A-Za-z0-9]{1,9}$').hasMatch(key);
+    // Empty is allowed: the server suggests one. Anything else holds to the
+    // shape every other key field in the app holds to.
+    return key.isEmpty || isProjectKey(key);
   }
 
   Future<void> _submit() async {
@@ -201,9 +204,8 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
                     controller: _key,
                     textCapitalization: TextCapitalization.characters,
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9]')),
                       LengthLimitingTextInputFormatter(10),
-                      _UpperCase(),
+                      const ProjectKeyFormatter(),
                     ],
                     style: const TextStyle(
                       fontFamily: AppTheme.fontMono,
@@ -453,16 +455,4 @@ class _Toggle extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Keeps the key field upper case as it is typed, the way the server stores it.
-class _UpperCase extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) => TextEditingValue(
-    text: newValue.text.toUpperCase(),
-    selection: newValue.selection,
-  );
 }

@@ -136,7 +136,9 @@ void main() {
     expect(asked.last.amount, 3);
   });
 
-  testWidgets('applying a rule returns a rule', (tester) async {
+  testWidgets('applying a rule returns the rule and the day it resolved to', (
+    tester,
+  ) async {
     DeadlineChoice? result;
     await tester.pumpWidget(
       host(
@@ -146,12 +148,15 @@ void main() {
       ),
     );
     await open(tester);
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.tap(find.text('common.apply'));
     await tester.pumpAndSettle();
 
     expect(result?.offset?.amount, -6);
-    expect(result?.date, isNull);
     expect(result?.cleared, isFalse);
+    // The day travels with the rule, so the row that renders it has something
+    // to show instead of claiming the project has no date.
+    expect(result?.date, DateTime(2026, 10, 1));
   });
 
   testWidgets('clearing returns neither a date nor a rule', (tester) async {
@@ -201,7 +206,48 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(tester.takeException(), isNull);
-    expect(find.text('issues.deadline.calculating'), findsOneWidget);
+    // Blank, not "working it out": nothing is in flight any more, and a line
+    // promising a date that is never coming is worse than an empty one.
+    expect(find.text('issues.deadline.calculating'), findsNothing);
+  });
+
+  testWidgets('the date the issue already carries is not asked for again', (
+    tester,
+  ) async {
+    // The stored date *is* the server's answer for that rule — it writes it on
+    // every save — so opening the editor has nothing to ask.
+    await tester.pumpWidget(
+      host(
+        date: DateTime(2026, 10, 1),
+        offset: const RelativeDate(amount: -6, unit: RelativeDateUnit.weeks),
+        eventDate: DateTime(2026, 11, 12),
+      ),
+    );
+    await open(tester);
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(asked, isEmpty);
+  });
+
+  testWidgets('touching a control without changing the rule asks nothing', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        offset: const RelativeDate(amount: -6),
+        eventDate: DateTime(2026, 11, 12),
+      ),
+    );
+    await open(tester);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(asked, hasLength(1));
+
+    // "Before" is already the direction. The line on screen answers this rule
+    // already, so there is nothing to ask.
+    await tester.tap(find.text('issues.deadline.before'));
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(asked, hasLength(1));
   });
 
   testWidgets('switching to date mode warns that the rule goes with it', (
@@ -243,7 +289,7 @@ void main() {
   }
 
   group('the rule in words', () {
-    testWidgets('names the unit, the direction and the basis', (tester) async {
+    testWidgets('the sign picks the before or after sentence', (tester) async {
       late String before;
       late String after;
       late String working;
@@ -269,6 +315,9 @@ void main() {
         ),
       );
 
+      // The harness renders raw keys, so what is observable here is which
+      // sentence the sign chose — the unit and the basis are interpolated into
+      // it and only visible with real translations loaded.
       expect(before, contains('issues.deadline.sentenceBefore'));
       expect(after, contains('issues.deadline.sentenceAfter'));
       expect(working, contains('issues.deadline.sentenceBefore'));

@@ -19,9 +19,11 @@ import '../sprint/modals/glass_modal.dart';
 class DeadlineChoice {
   const DeadlineChoice.date(DateTime this.date) : offset = null, cleared = false;
 
-  const DeadlineChoice.offset(RelativeDate this.offset)
-    : date = null,
-      cleared = false;
+  /// A rule, and the day it worked out to while the editor was open — null only
+  /// where the project has no date to count from. The caller shows that day
+  /// rather than claiming it is still waiting for one.
+  const DeadlineChoice.offset(RelativeDate this.offset, {this.date})
+    : cleared = false;
 
   const DeadlineChoice.cleared() : date = null, offset = null, cleared = true;
 
@@ -118,6 +120,11 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
   DateTime? _resolved;
   bool _resolving = false;
 
+  /// The rule the line on screen already answers, so the same one is not asked
+  /// about twice — toggling working days off and on again, or retyping the same
+  /// digit, would otherwise each cost a round trip for a date already shown.
+  RelativeDate? _resolvedFor;
+
   /// Guards against an older answer overwriting a newer one: each request takes
   /// a number, and only the newest is allowed to write.
   int _request = 0;
@@ -134,8 +141,13 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
     _unit = offset?.unit ?? RelativeDateUnit.weeks;
     _before = offset == null || offset.isBefore;
     _workingDays = offset?.basis == RelativeDateBasis.working;
-    if (offset != null) {
+    if (offset != null && widget.date != null) {
+      // The date the issue carries *is* this rule's answer — the server writes it
+      // on every save — so there is nothing to ask until somebody changes
+      // something.
       _resolved = widget.date;
+      _resolvedFor = offset;
+    } else if (offset != null) {
       _scheduleResolve();
     }
   }
@@ -168,10 +180,12 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
     if (offset == null || widget.eventDate == null) {
       setState(() {
         _resolved = null;
+        _resolvedFor = null;
         _resolving = false;
       });
       return;
     }
+    if (offset == _resolvedFor) return;
     setState(() => _resolving = true);
     _pending = Timer(_debounce, () => _resolve(offset));
   }
@@ -183,6 +197,7 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
       if (!mounted || ticket != _request) return;
       setState(() {
         _resolved = date;
+        _resolvedFor = offset;
         _resolving = false;
       });
     } on Object {
@@ -192,6 +207,7 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
       // save regardless of what this line said.
       setState(() {
         _resolved = null;
+        _resolvedFor = null;
         _resolving = false;
       });
     }
@@ -222,7 +238,9 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
     }
     final offset = _currentOffset;
     if (offset == null) return;
-    Navigator.of(context).pop(DeadlineChoice.offset(offset));
+    Navigator.of(context).pop(
+      DeadlineChoice.offset(offset, date: offset == _resolvedFor ? _resolved : null),
+    );
   }
 
   @override
@@ -458,10 +476,14 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
           Icon(LucideIcons.calendarCheck, size: 15, color: AppColors.inkSoft),
           const SizedBox(width: 9),
           Expanded(
+            // Three states, not two: a date, a lookup in flight, and nothing to
+            // say. Collapsing the last into "working it out" left the line
+            // promising a date that was never coming — after a failed lookup, or
+            // while the number field is empty.
             child: Text(
-              resolved == null
-                  ? context.t('issues.deadline.calculating')
-                  : MaterialLocalizations.of(context).formatMediumDate(resolved),
+              resolved != null
+                  ? MaterialLocalizations.of(context).formatMediumDate(resolved)
+                  : (_resolving ? context.t('issues.deadline.calculating') : ''),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(

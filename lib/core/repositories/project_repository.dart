@@ -168,7 +168,6 @@ class ProjectRepository {
     bool includeAttachments = false,
     bool includeTimeSettings = true,
     bool includeBoard = false,
-    bool asTemplate = false,
   }) async => ProjectCopyResult.fromJson(
     await _api.post(
           '/api/v1/projects/${Uri.encodeComponent(id)}/copy',
@@ -180,7 +179,6 @@ class ProjectRepository {
             'includeAttachments': includeAttachments,
             'includeTimeSettings': includeTimeSettings,
             'includeBoard': includeBoard,
-            'asTemplate': asTemplate,
           },
         )
         as Map<String, dynamic>,
