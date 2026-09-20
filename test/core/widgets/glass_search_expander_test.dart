@@ -80,9 +80,11 @@ void main() {
             children: [
               const Expanded(child: Text('Projects')),
               _Host(
+                // A fresh state per case: the host latches `open` at init, so
+                // reusing the element would leave the search as it was.
+                key: ValueKey(open),
                 controller: controller,
                 onChanged: changes.add,
-                flexible: true,
                 open: open,
               ),
               const SizedBox(key: Key('button'), width: 180, height: 42),
@@ -93,20 +95,34 @@ void main() {
     ),
   );
 
-  testWidgets('the closed pill stays with the actions, not in a gap', (
+  testWidgets('the actions stay against the edge, open or closed', (
     tester,
   ) async {
-    await tester.pumpWidget(head(width: 780, open: false));
-    await tester.pumpAndSettle();
+    // The search is an ordinary child of the head's Row, never a flex one. A
+    // flex child is handed its share of the free space whether it fills it or
+    // not, and MainAxisAlignment.start leaves the unused part *after* it — so
+    // flexing would park the search in a reserved gap and push everything
+    // beside it away from the edge the actions belong to.
+    for (final open in [false, true]) {
+      await tester.pumpWidget(head(width: 780, open: open));
+      await tester.pumpAndSettle();
 
-    // A flex child is handed its share of the free space whether it fills it or
-    // not. Giving the closed pill one would park it in the middle of a reserved
-    // gap and pull the button beside it off the edge of the head.
-    final row = tester.getRect(find.byKey(const Key('head')));
-    final pill = tester.getRect(find.byType(GlassSearchButton));
-    final button = tester.getRect(find.byKey(const Key('button')));
-    expect(pill.right, moreOrLessEquals(button.left, epsilon: 0.5));
-    expect(button.right, moreOrLessEquals(row.right, epsilon: 0.5));
+      final row = tester.getRect(find.byKey(const Key('head')));
+      final search = tester.getRect(
+        open ? find.byType(GlassSearchField) : find.byType(GlassSearchButton),
+      );
+      final button = tester.getRect(find.byKey(const Key('button')));
+      expect(
+        search.right,
+        lessThanOrEqualTo(button.left),
+        reason: 'open: $open',
+      );
+      expect(
+        button.right,
+        moreOrLessEquals(row.right, epsilon: 0.5),
+        reason: 'open: $open',
+      );
+    }
   });
 
   testWidgets('in a head it asks for width and settles for what is left', (
@@ -140,15 +156,14 @@ void main() {
 /// screen does.
 class _Host extends StatefulWidget {
   const _Host({
+    super.key,
     required this.controller,
     required this.onChanged,
-    this.flexible = false,
     this.open = false,
   });
 
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
-  final bool flexible;
 
   /// Whether the search starts open, for the cases that are about the field
   /// rather than about opening it.
@@ -163,7 +178,6 @@ class _HostState extends State<_Host> {
 
   @override
   Widget build(BuildContext context) => GlassSearchExpander(
-    flexible: widget.flexible,
     searching: _searching,
     hint: 'search',
     controller: widget.controller,
