@@ -14,7 +14,7 @@ import '../../core/repositories/absence_repository.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/widgets/glass_filter_bar.dart' show GlassStepperPill;
+import '../../core/widgets/glass_filter_bar.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveAvatar;
@@ -67,6 +67,10 @@ class _AbsenceEntitlementsScreenState extends State<AbsenceEntitlementsScreen> {
   final Map<String, DirectoryUser> _people = {};
 
   final TextEditingController _search = TextEditingController();
+
+  /// Whether the phone's docked row shows the search field instead of the
+  /// pills. See [GlassSearchDock].
+  bool _searching = false;
   Timer? _debounce;
 
   late final PagedCubit<AbsenceStanding> _standings =
@@ -257,6 +261,12 @@ class _AbsenceEntitlementsScreenState extends State<AbsenceEntitlementsScreen> {
         onTap: (_) => context.go('/absences/types'),
       ),
     ],
+    // On a phone the tools ride in the bar's own blur, as they do on every
+    // other list in the app: the type, the leave year and a search that opens
+    // over them. A row of controls sitting in the body above the first person
+    // was a second header under the first one.
+    bottom: context.isCompact && _types.isNotEmpty ? _filters(context) : null,
+    bottomHeight: context.isCompact && _types.isNotEmpty ? kGlassDockRow : 0,
     child: _body(context),
   );
 
@@ -290,7 +300,12 @@ class _AbsenceEntitlementsScreenState extends State<AbsenceEntitlementsScreen> {
         ),
       );
     }
-    final padding = context.pagePadding;
+    // With the tools docked into the bar, the list starts right under them —
+    // a whole gutter on top of a docked row reads as a gap, not as breathing
+    // space.
+    final padding = context.isCompact
+        ? context.pagePadding.copyWith(top: context.topGutter + 6)
+        : context.pagePadding;
     return BlocProvider.value(
       value: _standings,
       child:
@@ -317,8 +332,13 @@ class _AbsenceEntitlementsScreenState extends State<AbsenceEntitlementsScreen> {
                               color: AppColors.textSecondary,
                             ),
                           ),
-                          const SizedBox(height: 14),
-                          _controls(context),
+                          // On a phone the tools are docked in the bar; here
+                          // they would be a second header under the first.
+                          if (!context.isCompact) ...[
+                            const SizedBox(height: 14),
+                            _filters(context),
+                          ],
+                          if (_chosen.isNotEmpty) _chosenCount(context),
                         ],
                       ),
                     ),
@@ -421,72 +441,130 @@ class _AbsenceEntitlementsScreenState extends State<AbsenceEntitlementsScreen> {
     return null;
   }
 
-  Widget _controls(BuildContext context) => Wrap(
-    spacing: 10,
-    runSpacing: 10,
-    crossAxisAlignment: WrapCrossAlignment.center,
-    children: [
-      Builder(
-        builder: (anchor) => OutlinedButton.icon(
-          icon: Icon(absenceIcon(_type?.icon), size: 16),
-          label: Text(_type == null ? '—' : absenceTypeName(context, _type!)),
-          onPressed: () async {
-            final picked = await showGlassOptions<AbsenceType>(
-              context,
-              title: context.t('absence.entitlements.type'),
-              anchorRect: anchorRectOfContext(anchor),
-              options: [
-                for (final type in _types)
-                  (value: type, child: Text(absenceTypeName(context, type))),
-              ],
-            );
-            if (picked != null && mounted) _pickType(picked);
-          },
-        ),
-      ),
-      GlassStepperPill(
-        label: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: Text(
-            '$_year',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontFeatures: const [FontFeature.tabularFigures()],
-              color: AppColors.ink,
+  /// The page's tools: which type, which leave year, and who to find.
+  ///
+  /// The same shape as every other list in the app — glass pills, and a search
+  /// that opens over them on a phone rather than taking a line of its own.
+  Widget _filters(BuildContext context) => context.isCompact
+      ? Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: GlassSearchDock(
+            searching: _searching,
+            controller: _search,
+            hint: context.t('absence.entitlements.search'),
+            onChanged: _onSearch,
+            onClose: () => setState(() => _searching = false),
+            controls: SizedBox(
+              height: kGlassControlHeight,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                // The gutter is spent outside; inside it would clip the last
+                // pill rather than let it scroll into view.
+                clipBehavior: Clip.none,
+                child: Row(
+                  children: [
+                    SizedBox(width: context.pageGutter),
+                    GlassSearchButton(
+                      tooltip: context.t('absence.entitlements.search'),
+                      active: _query.isNotEmpty,
+                      onTap: () => setState(() => _searching = true),
+                    ),
+                    for (final pill in _filterPills(context)) ...[
+                      const SizedBox(width: 8),
+                      pill,
+                    ],
+                    SizedBox(width: context.pageGutter),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-        onBack: () => _moveYear(-1),
-        onForward: () => _moveYear(1),
-        backTooltip: context.t('absence.entitlements.previousYear'),
-        forwardTooltip: context.t('absence.entitlements.nextYear'),
-      ),
-      SizedBox(
-        width: 240,
-        child: TextField(
-          controller: _search,
-          onChanged: _onSearch,
-          decoration: InputDecoration(
-            isDense: true,
-            prefixIcon: const Icon(LucideIcons.search, size: 16),
-            hintText: context.t('absence.entitlements.search'),
+        )
+      : Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            SizedBox(
+              width: 260,
+              child: GlassSearchField(
+                controller: _search,
+                hint: context.t('absence.entitlements.search'),
+                onChanged: _onSearch,
+              ),
+            ),
+            ..._filterPills(context),
+          ],
+        );
+
+  List<Widget> _filterPills(BuildContext context) => [
+    GlassFilterPill(
+      icon: absenceIcon(_type?.icon),
+      label: _type == null ? '—' : absenceTypeName(context, _type!),
+      active: true,
+      onTap: (anchor) => unawaited(_pickTypeFrom(anchor)),
+    ),
+    GlassStepperPill(
+      label: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Text(
+          '$_year',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontFeatures: const [FontFeature.tabularFigures()],
+            color: AppColors.ink,
           ),
         ),
       ),
-      if (_chosen.isNotEmpty)
-        Text(
-          context.t(
-            'absence.entitlements.peopleChosen',
-            count: _chosen.length,
-            variables: {'count': '${_chosen.length}'},
+      onBack: () => _moveYear(-1),
+      onForward: () => _moveYear(1),
+      backTooltip: context.t('absence.entitlements.previousYear'),
+      forwardTooltip: context.t('absence.entitlements.nextYear'),
+    ),
+  ];
+
+  Future<void> _pickTypeFrom(Rect? anchor) async {
+    final picked = await showGlassOptions<AbsenceType>(
+      context,
+      title: context.t('absence.entitlements.type'),
+      anchorRect: anchor,
+      options: [
+        for (final type in _types)
+          (
+            value: type,
+            child: Row(
+              children: [
+                Icon(
+                  absenceIcon(type.icon),
+                  size: 16,
+                  color: absenceColor(context, type.hue),
+                ),
+                const SizedBox(width: 10),
+                Expanded(child: Text(absenceTypeName(context, type))),
+              ],
+            ),
           ),
-          style: const TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w600,
-            color: AppColors.accentStrong,
-          ),
-        ),
-    ],
+      ],
+    );
+    if (picked != null && mounted) _pickType(picked);
+  }
+
+  /// How many people are ticked for a grant, said where the rows are rather
+  /// than among the tools: it is about the list, and it comes and goes.
+  Widget _chosenCount(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 10),
+    child: Text(
+      context.t(
+        'absence.entitlements.peopleChosen',
+        count: _chosen.length,
+        variables: {'count': '${_chosen.length}'},
+      ),
+      style: const TextStyle(
+        fontSize: 12.5,
+        fontWeight: FontWeight.w600,
+        color: AppColors.accentStrong,
+      ),
+    ),
   );
 }
 
