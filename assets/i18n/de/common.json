@@ -1714,7 +1714,8 @@
       "staying": "{{count}} Fristen bleiben, wo sie sind. Die hat jemand von Hand gesetzt.",
       "pending": "{{count}} Fristen warten auf einen Termin, weil das Projekt seinen verliert.",
       "confirm": "Verschieben"
-    }
+    },
+    "searchHint": "Projekte durchsuchen"
   },
   "board": {
     "title": "Agile Boards",
@@ -3111,7 +3112,8 @@
     "dangerZone": "Gefahrenzone",
     "deleteThis": "Dieses Team löschen",
     "deleteThisHint": "Entfernt das Team und alle Mitgliedschaften. Projekte bleiben im Workspace.",
-    "keyTaken": "Schlüssel bereits vergeben."
+    "keyTaken": "Schlüssel bereits vergeben.",
+    "searchHint": "Teams durchsuchen"
   },
   "projectSettings": {
     "avatar": {

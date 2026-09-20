@@ -135,7 +135,6 @@ class _PatSectionState extends State<PatSection> {
           )
         else if (tokens == null || tokens.isEmpty)
           HiveEmptyState(
-            card: false,
             title: context.t('pat.empty.title'),
             message: context.t('pat.empty.message'),
           )

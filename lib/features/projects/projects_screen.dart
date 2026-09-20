@@ -16,6 +16,8 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/entity_avatar.dart';
+import '../../core/widgets/glass_filter_bar.dart';
+import '../../core/widgets/glass_switch_chip.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/entity_avatar_editor.dart';
@@ -46,6 +48,13 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   /// templates, or the archive. Templates only exist while the module is on.
   _ProjectTab _tab = _ProjectTab.active;
 
+  /// The search in the head: closed until asked for, and what is typed in it.
+  /// Both, because the pill stays washed while a query is in force and the head
+  /// may have closed the field on the way to a narrower window.
+  final TextEditingController _search = TextEditingController();
+  bool _searching = false;
+  String _query = '';
+
   @override
   void initState() {
     super.initState();
@@ -75,8 +84,32 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
   @override
   void dispose() {
+    _search.dispose();
     _cubit.close();
     super.dispose();
+  }
+
+  Widget _searchField(BuildContext context) => GlassSearchExpander(
+    searching: _searching,
+    hint: context.t('projects.searchHint'),
+    controller: _search,
+    onChanged: (value) => setState(() => _query = value),
+    onOpen: () => setState(() => _searching = true),
+    onClose: () => setState(() => _searching = false),
+  );
+
+  /// Name or key, folded and trimmed: somebody looking for "HIN" should not
+  /// have to know whether the project spells its key in capitals.
+  List<Project> _matching(List<Project> projects) {
+    final query = _query.trim().toLowerCase();
+    if (query.isEmpty) return projects;
+    return projects
+        .where(
+          (p) =>
+              p.name.toLowerCase().contains(query) ||
+              p.key.toLowerCase().contains(query),
+        )
+        .toList(growable: false);
   }
 
   @override
@@ -107,11 +140,11 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           final tab = _tab == _ProjectTab.templates && !templatesOffered
               ? _ProjectTab.active
               : _tab;
-          final projects = switch (tab) {
+          final projects = _matching(switch (tab) {
             _ProjectTab.active => active,
             _ProjectTab.templates => templates,
             _ProjectTab.archived => archived,
-          };
+          });
           return RefreshIndicator(
             onRefresh: _cubit.load,
             color: AppColors.accent,
@@ -137,50 +170,31 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                         },
                       ),
                       actions: [
-                        PrimaryButton(
-                          icon: LucideIcons.plus,
-                          label: context.t('projects.new'),
-                          onPressed: _showCreate,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                    context.pageGutter,
-                    0,
-                    context.pageGutter,
-                    16,
-                  ),
-                  sliver: SliverToBoxAdapter(
-                    child: Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: SegmentedControl(
-                        selected: _tabIndex(tab, templatesOffered),
-                        onChanged: (i) => setState(
-                          () => _tab = _tabAt(i, templatesOffered),
-                        ),
-                        items: [
-                          SegmentItem(
-                            label: context.t('projects.active'),
-                            icon: LucideIcons.folderOpen,
+                        // On a phone the open field is the head: a title, a
+                        // switcher, a button and a text field do not share one
+                        // line at 360 points, and the field is the only one of
+                        // them somebody is using at that moment.
+                        if (context.isCompact && _searching)
+                          Expanded(child: _searchField(context))
+                        else
+                          _searchField(context),
+                        if (!(context.isCompact && _searching)) ...[
+                          _TabSwitcher(
+                            current: tab,
+                            templates: templatesOffered
+                                ? templates.length
+                                : null,
+                            archived: archived.length,
+                            onChanged: (value) => setState(() => _tab = value),
                           ),
-                          if (templatesOffered)
-                            SegmentItem(
-                              label: templates.isEmpty
-                                  ? context.t('projects.templates')
-                                  : '${context.t('projects.templates')} · ${templates.length}',
-                              icon: LucideIcons.copy,
-                            ),
-                          SegmentItem(
-                            label: archived.isEmpty
-                                ? context.t('projects.archived')
-                                : '${context.t('projects.archived')} · ${archived.length}',
-                            icon: LucideIcons.archive,
+                          PrimaryButton(
+                            icon: LucideIcons.plus,
+                            label: context.t('projects.new'),
+                            onPressed: _showCreate,
+                            collapseToIcon: true,
                           ),
                         ],
-                      ),
+                      ],
                     ),
                   ),
                 ),
@@ -197,15 +211,25 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                       child: Center(
                         child: HiveEmptyState(
                           title: context.t('projects.title'),
-                          message: switch (tab) {
-                            _ProjectTab.archived => context.t(
-                              'projects.emptyArchived',
-                            ),
-                            _ProjectTab.templates => context.t(
-                              'projects.emptyTemplates',
-                            ),
-                            _ProjectTab.active => context.t('projects.empty'),
-                          },
+                          // A list emptied by a search is not an empty list,
+                          // and "create your first project" is the wrong thing
+                          // to say to somebody who has forty and mistyped one.
+                          message: _query.trim().isNotEmpty
+                              ? context.t(
+                                  'search.noMatch',
+                                  variables: {'q': _query.trim()},
+                                )
+                              : switch (tab) {
+                                  _ProjectTab.archived => context.t(
+                                    'projects.emptyArchived',
+                                  ),
+                                  _ProjectTab.templates => context.t(
+                                    'projects.emptyTemplates',
+                                  ),
+                                  _ProjectTab.active => context.t(
+                                    'projects.empty',
+                                  ),
+                                },
                         ),
                       ),
                     ),
@@ -292,18 +316,6 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
   /// Where a tab sits in the control, which is one place to the left when
   /// templates are not offered.
-  int _tabIndex(_ProjectTab tab, bool templatesOffered) => switch (tab) {
-    _ProjectTab.active => 0,
-    _ProjectTab.templates => 1,
-    _ProjectTab.archived => templatesOffered ? 2 : 1,
-  };
-
-  _ProjectTab _tabAt(int index, bool templatesOffered) {
-    if (index == 0) return _ProjectTab.active;
-    if (!templatesOffered) return _ProjectTab.archived;
-    return index == 1 ? _ProjectTab.templates : _ProjectTab.archived;
-  }
-
   Future<void> _copy(Project project) =>
       _copyThrough(project, ProjectCopyMode.copy);
 
@@ -337,6 +349,72 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
 /// The three lists the projects page holds.
 enum _ProjectTab { active, templates, archived }
+
+/// Which of the three lists is on screen, as the switcher every other page of
+/// the app wears: a glass pill with one chip per list, docked in the page head
+/// beside the title.
+///
+/// It was a [SegmentedControl] here — full width, under the head, three opaque
+/// navy blocks — which is the one control on this page that looked like it came
+/// from a different app. Moving it into the head also gives the list back the
+/// line it was taking.
+class _TabSwitcher extends StatelessWidget {
+  const _TabSwitcher({
+    required this.current,
+    required this.templates,
+    required this.archived,
+    required this.onChanged,
+  });
+
+  final _ProjectTab current;
+
+  /// How many templates there are, or null while the module is off — then the
+  /// chip is not offered at all.
+  final int? templates;
+  final int archived;
+  final ValueChanged<_ProjectTab> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    // Narrow windows get the glyphs and keep the name as a tooltip: three words
+    // plus two counts do not fit beside a title and the new-project button on a
+    // phone, and a switcher that pushes the title off the head is worse than one
+    // that asks to be recognised by its icon.
+    final iconOnly = !context.isExpanded;
+    final tabs = <(_ProjectTab, IconData, String, int?)>[
+      (_ProjectTab.active, LucideIcons.folderOpen, 'projects.active', null),
+      if (templates != null)
+        (_ProjectTab.templates, LucideIcons.copy, 'projects.templates', templates),
+      (_ProjectTab.archived, LucideIcons.archive, 'projects.archived', archived),
+    ];
+    String label((_ProjectTab, IconData, String, int?) tab) {
+      final name = context.t(tab.$3);
+      final count = tab.$4;
+      // A count of nothing is not worth the width: an empty archive says so by
+      // being empty once you are in it.
+      return count == null || count == 0 ? name : '$name · $count';
+    }
+
+    return GlassSwitchBar(
+      compact: iconOnly,
+      maxWidth: iconOnly ? 45.0 * tabs.length + 30 : 150.0 * tabs.length,
+      chips: [
+        for (final tab in tabs) ...[
+          if (tab != tabs.first) const SizedBox(width: 2),
+          GlassSwitchChip(
+            label: label(tab),
+            icon: tab.$2,
+            active: tab.$1 == current,
+            iconOnly: iconOnly,
+            // The list you are on is not a button: null stops it rippling,
+            // taking focus, and telling a screen reader it leads somewhere.
+            onTap: tab.$1 == current ? null : () => onChanged(tab.$1),
+          ),
+        ],
+      ],
+    );
+  }
+}
 
 /// Parses a project's stored hex color (e.g. "#AEC6F4") to a Color, with a
 /// stable hue fallback derived from the project key.

@@ -215,6 +215,107 @@ class GlassSearchButton extends StatelessWidget {
   );
 }
 
+/// The search a page head carries: a round pill that opens into a field, and
+/// closes back into a pill.
+///
+/// [GlassSearchDock] solves the phone's problem — one docked row, shared
+/// between a search and a row of filters. This solves the other one. A page
+/// head is a title, a switcher and a button on one line, and a field wide
+/// enough to type into does not fit beside them; but a page whose list runs to
+/// a hundred rows still needs one. So it is a pill until it is asked for, and
+/// the head gives up the width only while somebody is typing.
+///
+/// The open and the close are the same animation run backwards: the pill grows
+/// along its trailing edge into the field, because that is the edge it is
+/// pinned to in a head.
+class GlassSearchExpander extends StatelessWidget {
+  const GlassSearchExpander({
+    super.key,
+    required this.searching,
+    required this.hint,
+    required this.controller,
+    required this.onChanged,
+    required this.onOpen,
+    required this.onClose,
+    this.width = 240,
+  });
+
+  final bool searching;
+  final String hint;
+
+  /// Required, because closing the search clears it — see [onClose].
+  final TextEditingController controller;
+
+  final ValueChanged<String> onChanged;
+  final VoidCallback onOpen;
+
+  /// Told that the search is over. The field has already been cleared and
+  /// [onChanged] called with the empty string; this is where the page puts
+  /// [searching] back to false.
+  final VoidCallback onClose;
+
+  /// How much room the open field asks for. It is a ceiling, not a demand: in a
+  /// head the field takes what the title can spare.
+  final double width;
+
+  void _close() {
+    if (controller.text.isNotEmpty) {
+      controller.clear();
+      onChanged('');
+    }
+    onClose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedSize(
+    duration: const Duration(milliseconds: 200),
+    curve: Curves.easeOutCubic,
+    alignment: AlignmentDirectional.centerEnd.resolve(
+      Directionality.of(context),
+    ),
+    child: searching
+        ? SizedBox(
+            width: width,
+            height: kGlassControlHeight,
+            child: Row(
+              children: [
+                Expanded(
+                  child: GlassSearchField(
+                    hint: hint,
+                    controller: controller,
+                    onChanged: onChanged,
+                    autofocus: true,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Tooltip(
+                  message: MaterialLocalizations.of(
+                    context,
+                  ).closeButtonTooltip,
+                  child: GlassPill(
+                    height: kGlassControlHeight,
+                    onTap: _close,
+                    child: SizedBox(
+                      width: kGlassControlHeight,
+                      child: Icon(
+                        LucideIcons.x,
+                        size: 17,
+                        color: AppColors.inkSoft,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        : GlassSearchButton(
+            tooltip: hint,
+            active: controller.text.isNotEmpty,
+            onTap: onOpen,
+          ),
+  );
+}
+
 /// A page's one docked row, which is either its controls or its search.
 ///
 /// The rule this exists for: the blurred band above a page holds at most two

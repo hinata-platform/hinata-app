@@ -130,6 +130,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(asked.last.amount, -3);
 
+    // The switcher scrolls its chips past its own width, and a raw i18n key is
+    // three times as long as the word it stands for — so in a test, and only in
+    // a test, "after" starts life outside the pill.
+    await tester.ensureVisible(find.text('issues.deadline.after'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('issues.deadline.after'));
     await tester.pump(const Duration(milliseconds: 400));
 

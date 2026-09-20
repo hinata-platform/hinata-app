@@ -1714,7 +1714,8 @@
       "staying": "{{count}} plazos se quedan donde están. Alguien los puso a mano.",
       "pending": "{{count}} plazos esperan una fecha, porque el proyecto pierde la que tenía.",
       "confirm": "Mover"
-    }
+    },
+    "searchHint": "Buscar proyectos"
   },
   "board": {
     "title": "Tableros ágiles",
@@ -3111,7 +3112,8 @@
     "dangerZone": "Zona de peligro",
     "deleteThis": "Eliminar este equipo",
     "deleteThisHint": "Quita el equipo y todos sus miembros. Los proyectos permanecen en el espacio de trabajo.",
-    "keyTaken": "Esa clave ya está en uso."
+    "keyTaken": "Esa clave ya está en uso.",
+    "searchHint": "Buscar equipos"
   },
   "projectSettings": {
     "avatar": {

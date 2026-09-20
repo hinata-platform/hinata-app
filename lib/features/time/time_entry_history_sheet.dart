@@ -91,7 +91,6 @@ class _HistoryBody extends StatelessWidget {
                 child: HiveEmptyState(
                   title: context.t('time.history.emptyTitle'),
                   message: context.t('time.history.emptyMessage'),
-                  card: false,
                 ),
               );
             }

@@ -388,7 +388,6 @@ class _AdminHolidaysScreenState extends State<AdminHolidaysScreen> {
                 variables: {'year': '$_year'},
               ),
               message: context.t('availability.admin.noHolidaysMessage'),
-              card: false,
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
             ),
           )

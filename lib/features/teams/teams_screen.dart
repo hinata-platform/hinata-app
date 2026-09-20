@@ -11,6 +11,7 @@ import '../../core/models/team_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/glass_filter_bar.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
@@ -37,6 +38,11 @@ class TeamsScreen extends StatefulWidget {
 class _TeamsScreenState extends State<TeamsScreen> {
   late final FetchCubit<_TeamsData> _cubit;
 
+  /// The search in the head: closed until asked for, and what is typed in it.
+  final TextEditingController _search = TextEditingController();
+  bool _searching = false;
+  String _query = '';
+
   @override
   void initState() {
     super.initState();
@@ -60,8 +66,32 @@ class _TeamsScreenState extends State<TeamsScreen> {
 
   @override
   void dispose() {
+    _search.dispose();
     _cubit.close();
     super.dispose();
+  }
+
+  Widget _searchField(BuildContext context) => GlassSearchExpander(
+    searching: _searching,
+    hint: context.t('teams.searchHint'),
+    controller: _search,
+    onChanged: (value) => setState(() => _query = value),
+    onOpen: () => setState(() => _searching = true),
+    onClose: () => setState(() => _searching = false),
+  );
+
+  /// Name or key, folded and trimmed — the same match the projects page makes,
+  /// so looking for something works the same way on both.
+  List<Team> _matching(List<Team> teams) {
+    final query = _query.trim().toLowerCase();
+    if (query.isEmpty) return teams;
+    return teams
+        .where(
+          (t) =>
+              t.name.toLowerCase().contains(query) ||
+              t.key.toLowerCase().contains(query),
+        )
+        .toList(growable: false);
   }
 
   /// Keys already in use — what the create modal steps around when it suggests
@@ -85,7 +115,8 @@ class _TeamsScreenState extends State<TeamsScreen> {
       value: _cubit,
       child: BlocBuilder<FetchCubit<_TeamsData>, FetchState<_TeamsData>>(
         builder: (context, state) {
-          final teams = state.data?.teams ?? const <Team>[];
+          final all = state.data?.teams ?? const <Team>[];
+          final teams = _matching(all);
           final names = state.data?.names ?? const <String, String>{};
           final avatars = state.data?.avatars ?? const <String, String>{};
           final pronouns = state.data?.pronouns ?? const <String, String>{};
@@ -108,20 +139,30 @@ class _TeamsScreenState extends State<TeamsScreen> {
                       title: context.t('teams.title'),
                       subtitle: context.t(
                         'teams.summary',
-                        variables: {'count': '${teams.length}'},
-                        count: teams.length,
+                        variables: {'count': '${all.length}'},
+                        count: all.length,
                       ),
                       actions: [
-                        PrimaryButton(
-                          icon: LucideIcons.plus,
-                          label: context.t('teams.new'),
-                          onPressed: _create,
-                        ),
+                        // On a phone the open field is the head: a title, a
+                        // switcher, a button and a text field do not share one
+                        // line at 360 points, and the field is the only one of
+                        // them somebody is using at that moment.
+                        if (context.isCompact && _searching)
+                          Expanded(child: _searchField(context))
+                        else
+                          _searchField(context),
+                        if (!(context.isCompact && _searching))
+                          PrimaryButton(
+                            icon: LucideIcons.plus,
+                            label: context.t('teams.new'),
+                            onPressed: _create,
+                            collapseToIcon: true,
+                          ),
                       ],
                     ),
                   ),
                 ),
-                if (state.isLoading && teams.isEmpty)
+                if (state.isLoading && all.isEmpty)
                   const SliverFillRemaining(
                     hasScrollBody: false,
                     child: Center(child: HiveLoader()),

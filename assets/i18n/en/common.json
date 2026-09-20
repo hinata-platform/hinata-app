@@ -1714,7 +1714,8 @@
       "staying": "{{count}} deadlines stay where they are. Somebody set those by hand.",
       "pending": "{{count}} deadlines wait for a date, because the project is losing the one it had.",
       "confirm": "Move"
-    }
+    },
+    "searchHint": "Search projects"
   },
   "board": {
     "title": "Agile Boards",
@@ -3111,7 +3112,8 @@
     "dangerZone": "Danger zone",
     "deleteThis": "Delete this team",
     "deleteThisHint": "Removes the team and all memberships. Projects stay in the workspace.",
-    "keyTaken": "Key already in use."
+    "keyTaken": "Key already in use.",
+    "searchHint": "Search teams"
   },
   "projectSettings": {
     "avatar": {
