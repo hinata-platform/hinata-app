@@ -187,8 +187,75 @@ class AuthGlassCard extends StatelessWidget {
         ),
         child: Material(
           type: MaterialType.transparency,
-          child: Padding(padding: pad, child: child),
+          child: Theme(
+            data: _authFields(Theme.of(context)),
+            child: Padding(padding: pad, child: child),
+          ),
         ),
+      ),
+    );
+  }
+
+  /// The sign-in fields keep the outlined shape the published app wears: one
+  /// line tall, the label riding on the rim once there is something in the
+  /// field.
+  ///
+  /// Everywhere else in Hinata a field carries its label *inside* itself
+  /// ([HiveFieldBorder]), because those fields sit on a page beside pickers
+  /// built the same way, and a label astride the rim was cut in half by the
+  /// seam between the fill and the page. Neither reason holds here: these
+  /// fields stand alone on glass, there is nothing beside them to match, and
+  /// reserving a line for a caption makes a two-line slab out of a field that
+  /// holds one word. So this is the one place that opts out.
+  ThemeData _authFields(ThemeData theme) {
+    OutlineInputBorder rim(Color color, [double width = 1]) =>
+        OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          borderSide: BorderSide(color: color, width: width),
+        );
+    final base = theme.inputDecorationTheme;
+    // Built rather than copied: `copyWith` cannot clear a field, and the
+    // app-wide `floatingLabelStyle` sizes a caption that sits inside the field.
+    // On the rim the label is the label again.
+    return theme.copyWith(
+      // The one action on a sign-in card is the reason somebody opened it, so
+      // it keeps the height it has in the published app rather than the compact
+      // one a toolbar button wants. Scoped to this card: nothing else in the
+      // app grows with it.
+      filledButtonTheme: FilledButtonThemeData(
+        style: (theme.filledButtonTheme.style ?? const ButtonStyle()).copyWith(
+          minimumSize: const WidgetStatePropertyAll(Size(44, 52)),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
+          textStyle: const WidgetStatePropertyAll(
+            TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: (theme.outlinedButtonTheme.style ?? const ButtonStyle())
+            .copyWith(
+              minimumSize: const WidgetStatePropertyAll(Size(44, 52)),
+              padding: const WidgetStatePropertyAll(
+                EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              ),
+            ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: base.filled,
+        fillColor: base.fillColor,
+        hintStyle: base.hintStyle,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
+        border: rim(AppColors.hairline),
+        enabledBorder: rim(AppColors.hairline),
+        disabledBorder: rim(AppColors.hairline),
+        focusedBorder: rim(AppColors.accent, 1.5),
+        errorBorder: rim(AppColors.danger),
+        focusedErrorBorder: rim(AppColors.danger, 1.5),
       ),
     );
   }

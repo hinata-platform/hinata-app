@@ -1099,7 +1099,6 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                         ? 'timesheet.empty'
                         : 'timesheet.emptyPeriod',
                   ),
-                  card: false,
                 ),
               ),
             )

@@ -8,6 +8,8 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/glass_filter_bar.dart' show kGlassPillHeight;
+import '../../core/widgets/glass_switch_chip.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../sprint/modals/glass_modal.dart';
 
@@ -251,10 +253,14 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 10),
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 12),
           child: Text(
             widget.title,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.1,
+            ),
           ),
         ),
         Flexible(
@@ -263,16 +269,21 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                GlassSegmented(
-                  labels: [
-                    context.t('issues.deadline.modeDate'),
-                    context.t('issues.deadline.modeOffset'),
-                  ],
-                  selected: _mode.index,
-                  onChanged: (index) {
-                    setState(() => _mode = _Mode.values[index]);
-                    if (_mode == _Mode.offset) _scheduleResolve();
-                  },
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: GlassSwitchBar(
+                    // Inline: this editor is already a glass panel, and a lens
+                    // inside a lens refracts a refraction. See the flag.
+                    inline: true,
+                    maxWidth: 300,
+                    chips: [
+                      _modeChip(_Mode.date, LucideIcons.calendar,
+                          'issues.deadline.modeDate'),
+                      const SizedBox(width: 2),
+                      _modeChip(_Mode.offset, LucideIcons.calendarClock,
+                          'issues.deadline.modeOffset'),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 14),
                 if (_mode == _Mode.date) _dateMode() else _offsetMode(),
@@ -282,32 +293,33 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
         ),
         Container(height: 1, color: AppColors.hairline2),
         Padding(
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-          // A Wrap rather than a Row: three buttons carrying translated labels
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+          // A Wrap rather than a Row: three actions carrying translated labels
           // do not fit a 330-pixel popover in every language, and a footer that
           // overflows is worse than one that takes a second line.
           child: Wrap(
             alignment: WrapAlignment.end,
-            spacing: 6,
-            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 2,
+            runSpacing: 2,
             children: [
               if (widget.date != null || widget.offset != null)
                 TextButton(
                   onPressed: () => Navigator.of(
                     context,
                   ).pop(const DeadlineChoice.cleared()),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.inkSoft,
-                  ),
+                  style: glassQuietActionStyle,
                   child: Text(context.t('common.clear')),
                 ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                style: TextButton.styleFrom(foregroundColor: AppColors.inkSoft),
+                style: glassQuietActionStyle,
                 child: Text(context.t('common.cancel')),
               ),
+              const SizedBox(width: 4),
               FilledButton(
                 onPressed: canSubmit ? _submit : null,
+                style: glassCompactPrimaryStyle,
                 child: Text(context.t('common.apply')),
               ),
             ],
@@ -316,6 +328,45 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
       ],
     );
   }
+
+  /// The three switchers in this editor are the same control the board, the
+  /// Gantt and the time sheet use. They were segmented blocks here once — three
+  /// of them stacked, each a full-width opaque slab — which made a small
+  /// question look like a form. A wash of amber under the chip you are on says
+  /// the same thing and lets the sentence underneath stay the loudest part.
+  Widget _modeChip(_Mode mode, IconData icon, String key) => GlassSwitchChip(
+    label: context.t(key),
+    icon: icon,
+    active: _mode == mode,
+    onTap: _mode == mode
+        ? null
+        : () {
+            setState(() => _mode = mode);
+            if (mode == _Mode.offset) _scheduleResolve();
+          },
+  );
+
+  Widget _unitChip(RelativeDateUnit unit, String key) => GlassSwitchChip(
+    label: context.t(key),
+    active: _unit == unit,
+    onTap: _unit == unit
+        ? null
+        : () {
+            setState(() => _unit = unit);
+            _scheduleResolve();
+          },
+  );
+
+  Widget _directionChip(bool before, String key) => GlassSwitchChip(
+    label: context.t(key),
+    active: _before == before,
+    onTap: _before == before
+        ? null
+        : () {
+            setState(() => _before = before);
+            _scheduleResolve();
+          },
+  );
 
   Widget _dateMode() {
     final date = _date;
@@ -377,67 +428,79 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+        // One line that reads as a sentence — a number, what it counts, and
+        // which way it points — rather than three labelled blocks stacked on
+        // top of each other. The two switchers are the app's own glass chips,
+        // so the control looks like the rest of the product instead of like a
+        // form somebody built for this one field.
+        // A Wrap, not two rows: the three parts read as one sentence — how
+        // many, of what, which way — and sit on one line wherever the words
+        // fit. Where they do not, in German or at phone width, the sentence
+        // takes a second line instead of clipping a chip.
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
+            // The number rides the switchers' own track rather than a form
+            // field's box: same height, same corner, same wash. A bordered
+            // input at 56 by 42 with a pill corner is not a pill, it is an
+            // ellipse, and a dense field inside a fixed height hangs its digit
+            // below the middle of it.
             SizedBox(
-              width: 74,
-              child: GlassField(
-                label: context.t('issues.deadline.amount'),
-                child: TextField(
-                  controller: _amount,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: AppTheme.fontMono,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+              width: 66,
+              height: kGlassPillHeight,
+              child: GlassInlineTrack(
+                radius: kGlassPillHeight / 2,
+                child: Center(
+                  child: TextField(
+                    controller: _amount,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: AppTheme.fontMono,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      height: 1,
+                    ),
+                    decoration: const InputDecoration(
+                      isCollapsed: true,
+                      filled: false,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                    ),
+                    onChanged: (_) => _scheduleResolve(),
                   ),
-                  decoration: glassInputDecoration(),
-                  onChanged: (_) => _scheduleResolve(),
                 ),
               ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: GlassField(
-                label: context.t('issues.deadline.unit'),
-                child: GlassSegmented(
-                  labels: [
-                    context.t('issues.deadline.unitDays'),
-                    context.t('issues.deadline.unitWeeks'),
-                  ],
-                  selected: _unit == RelativeDateUnit.weeks ? 1 : 0,
-                  onChanged: (index) {
-                    setState(
-                      () => _unit = index == 1
-                          ? RelativeDateUnit.weeks
-                          : RelativeDateUnit.days,
-                    );
-                    _scheduleResolve();
-                  },
-                ),
-              ),
+            GlassSwitchBar(
+              inline: true,
+              // Wide enough that neither pair of words ever scrolls inside the
+              // bar; the Row within shrink-wraps, so this is a ceiling and not
+              // a width.
+              maxWidth: 220,
+              chips: [
+                _unitChip(RelativeDateUnit.days, 'issues.deadline.unitDays'),
+                const SizedBox(width: 2),
+                _unitChip(RelativeDateUnit.weeks, 'issues.deadline.unitWeeks'),
+              ],
+            ),
+            GlassSwitchBar(
+              inline: true,
+              maxWidth: 220,
+              chips: [
+                _directionChip(true, 'issues.deadline.before'),
+                const SizedBox(width: 2),
+                _directionChip(false, 'issues.deadline.after'),
+              ],
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        GlassField(
-          label: context.t('issues.deadline.direction'),
-          child: GlassSegmented(
-            labels: [
-              context.t('issues.deadline.before'),
-              context.t('issues.deadline.after'),
-            ],
-            selected: _before ? 0 : 1,
-            onChanged: (index) {
-              setState(() => _before = index == 0);
-              _scheduleResolve();
-            },
-          ),
-        ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         _WorkingDaysRow(
           value: _workingDays,
           onChanged: (value) {

@@ -237,7 +237,6 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
         else if (_errorKey != null && _balances == null)
           HiveEmptyState(
             title: context.t(_errorKey!),
-            card: false,
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 22),
             action: OutlinedButton(
               onPressed: () => unawaited(_load()),
@@ -311,7 +310,6 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
         HiveEmptyState(
           title: context.t('absence.balances.empty'),
           message: context.t('absence.balances.emptyMessage'),
-          card: false,
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 22),
         ),
       ];
@@ -394,7 +392,6 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
                   return HiveEmptyState(
                     title: context.t('absence.balances.journalEmpty'),
                     message: context.t('absence.balances.journalEmptyMessage'),
-                    card: false,
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
                   );
                 }

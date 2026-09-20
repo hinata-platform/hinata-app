@@ -689,7 +689,6 @@ class _BarReportCard extends StatelessWidget {
           const SizedBox(height: 14),
           if (data.isEmpty)
             HiveEmptyState(
-              card: false,
               padding: const EdgeInsets.symmetric(vertical: 24),
               title: context.t('reports.empty'),
             )

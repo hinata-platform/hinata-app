@@ -65,6 +65,36 @@ InputDecoration glassInputDecoration({String? hint}) {
   );
 }
 
+/// The quiet action in a popover footer: Cancel, Clear, Back. A label and
+/// nothing else, so the one button that commits is the only thing with weight.
+///
+/// A getter rather than a constant because [AppColors] resolves against the
+/// current brightness; a `final` here would freeze the light-mode ink into
+/// every dark-mode footer for the life of the isolate.
+ButtonStyle get glassQuietActionStyle => TextButton.styleFrom(
+  foregroundColor: AppColors.inkSoft,
+  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  minimumSize: const Size(0, 34),
+  textStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+  ),
+);
+
+/// The committing action in a popover footer. Deliberately smaller than
+/// [GlassModalFooter]'s: a sheet fills the screen and can carry a button that
+/// size, a 330-point popover cannot — there it reads as a slab.
+ButtonStyle get glassCompactPrimaryStyle => FilledButton.styleFrom(
+  backgroundColor: AppColors.navy,
+  foregroundColor: Colors.white,
+  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+  minimumSize: const Size(0, 34),
+  textStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+  ),
+);
+
 /// A segmented selector (e.g. sprint duration 1–4 weeks) sized to fill width.
 class GlassSegmented extends StatelessWidget {
   const GlassSegmented({

@@ -1701,7 +1701,11 @@
       "tooLarge": "Este proyecto tiene {{count}} incidencias, más de las que admite una copia.",
       "confirm": "Copiar",
       "create": "Crear proyecto",
-      "done": "{{issues}} incidencias copiadas, {{deadlines}} plazos calculados."
+      "done": "{{issues}} incidencias copiadas, {{deadlines}} plazos calculados.",
+      "makeTemplate": "Crear una plantilla",
+      "makeTemplateConfirm": "Crear plantilla",
+      "templateName": "{{name}} (plantilla)",
+      "pickSource": "¿De qué proyecto quieres crearla?"
     },
     "schedule": {
       "title": "Mover la fecha del proyecto",
@@ -1714,7 +1718,8 @@
       "staying": "{{count}} plazos se quedan donde están. Alguien los puso a mano.",
       "pending": "{{count}} plazos esperan una fecha, porque el proyecto pierde la que tenía.",
       "confirm": "Mover"
-    }
+    },
+    "searchHint": "Buscar proyectos"
   },
   "board": {
     "title": "Tableros ágiles",
@@ -3111,7 +3116,8 @@
     "dangerZone": "Zona de peligro",
     "deleteThis": "Eliminar este equipo",
     "deleteThisHint": "Quita el equipo y todos sus miembros. Los proyectos permanecen en el espacio de trabajo.",
-    "keyTaken": "Esa clave ya está en uso."
+    "keyTaken": "Esa clave ya está en uso.",
+    "searchHint": "Buscar equipos"
   },
   "projectSettings": {
     "avatar": {

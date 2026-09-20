@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/widgets/glass_filter_bar.dart';
+import 'package:hinata/core/widgets/glass_panel.dart';
 import 'package:hinata/core/widgets/glass_switch_chip.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -88,5 +89,48 @@ void main() {
         reason: 'icon $i',
       );
     }
+  });
+  testWidgets('inline drops the lens and keeps the shape', (tester) async {
+    // A switcher inside a sheet or a popover sits on a surface that is already
+    // glass, and Apple's own guidance is not to layer one on another. The
+    // inline form is the same pill with a flat backing: same height, same
+    // chips, no floating glass surface and no shadow.
+    Future<Size> pump({required bool inline}) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topLeft,
+              child: GlassSwitchBar(
+                inline: inline,
+                maxWidth: 300,
+                chips: const [
+                  GlassSwitchChip(label: 'Tage', active: true),
+                  SizedBox(width: 2),
+                  GlassSwitchChip(label: 'Wochen', active: false),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      return tester.getSize(find.byType(GlassSwitchBar));
+    }
+
+    final glass = await pump(inline: false);
+    expect(find.byType(GlassFloatingSurface), findsOneWidget);
+
+    final inline = await pump(inline: true);
+    expect(find.byType(GlassFloatingSurface), findsNothing);
+
+    // The one thing that must not move: a control that changed height between
+    // the two forms would make every row it sits in jump.
+    expect(inline.height, glass.height);
+    expect(inline.width, glass.width);
+
+    // Both labels are still there, and the chips still answer.
+    expect(find.text('Tage'), findsOneWidget);
+    expect(find.text('Wochen'), findsOneWidget);
   });
 }

@@ -1701,7 +1701,11 @@
       "tooLarge": "This project has {{count}} issues, which is more than one copy can take.",
       "confirm": "Copy",
       "create": "Create project",
-      "done": "{{issues}} issues copied, {{deadlines}} deadlines worked out."
+      "done": "{{issues}} issues copied, {{deadlines}} deadlines worked out.",
+      "makeTemplate": "Make a template",
+      "makeTemplateConfirm": "Create template",
+      "templateName": "{{name}} (template)",
+      "pickSource": "Which project should it be made from?"
     },
     "schedule": {
       "title": "Move the project date",
@@ -1714,7 +1718,8 @@
       "staying": "{{count}} deadlines stay where they are. Somebody set those by hand.",
       "pending": "{{count}} deadlines wait for a date, because the project is losing the one it had.",
       "confirm": "Move"
-    }
+    },
+    "searchHint": "Search projects"
   },
   "board": {
     "title": "Agile Boards",
@@ -3111,7 +3116,8 @@
     "dangerZone": "Danger zone",
     "deleteThis": "Delete this team",
     "deleteThisHint": "Removes the team and all memberships. Projects stay in the workspace.",
-    "keyTaken": "Key already in use."
+    "keyTaken": "Key already in use.",
+    "searchHint": "Search teams"
   },
   "projectSettings": {
     "avatar": {

@@ -295,7 +295,6 @@ class _IngestConnectionsCardState extends State<IngestConnectionsCard> {
           )
         else if (_errorKey != null)
           HiveEmptyState(
-            card: false,
             title: context.t(_errorKey!),
             action: OutlinedButton(
               onPressed: _load,
@@ -304,7 +303,6 @@ class _IngestConnectionsCardState extends State<IngestConnectionsCard> {
           )
         else if (_connections.isEmpty)
           HiveEmptyState(
-            card: false,
             title: context.t('admin.ingest.emptyTitle'),
             message: context.t('admin.ingest.emptyMessage'),
             action: OutlinedButton.icon(

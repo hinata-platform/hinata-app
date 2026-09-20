@@ -1701,7 +1701,11 @@
       "tooLarge": "该项目有 {{count}} 个事项，超过一次复制能带走的数量。",
       "confirm": "复制",
       "create": "新建项目",
-      "done": "已复制 {{issues}} 个事项，算出 {{deadlines}} 个截止日期。"
+      "done": "已复制 {{issues}} 个事项，算出 {{deadlines}} 个截止日期。",
+      "makeTemplate": "创建模板",
+      "makeTemplateConfirm": "创建模板",
+      "templateName": "{{name}}（模板）",
+      "pickSource": "要从哪个项目创建？"
     },
     "schedule": {
       "title": "调整项目日期",
@@ -1714,7 +1718,8 @@
       "staying": "{{count}} 个截止日期保持不变，它们是手动设置的。",
       "pending": "{{count}} 个截止日期将等待新日期，因为项目的日期被移除。",
       "confirm": "调整"
-    }
+    },
+    "searchHint": "搜索项目"
   },
   "board": {
     "title": "敏捷看板",
@@ -3111,7 +3116,8 @@
     "dangerZone": "危险操作",
     "deleteThis": "删除该团队",
     "deleteThisHint": "移除该团队及其全部成员关系。项目仍保留在工作区中。",
-    "keyTaken": "该团队键已被占用。"
+    "keyTaken": "该团队键已被占用。",
+    "searchHint": "搜索团队"
   },
   "projectSettings": {
     "avatar": {

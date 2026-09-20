@@ -135,6 +135,7 @@ class GlassSwitchBar extends StatelessWidget {
     required this.chips,
     required this.maxWidth,
     this.compact = false,
+    this.inline = false,
   });
 
   final List<Widget> chips;
@@ -144,32 +145,81 @@ class GlassSwitchBar extends StatelessWidget {
   /// the chips are given.
   final bool compact;
 
+  /// Drops the floating glass and keeps the shape: the same pill, filled with
+  /// a flat wash and drawn with a hairline instead of a lens.
+  ///
+  /// This is the form to use **inside** a sheet, a popover or a card. Glass is
+  /// for the layer that floats above a page — a switcher docked in a page head,
+  /// a toolbar, the bottom bar. Put a lens inside a lens and you are refracting
+  /// a refraction: the chips pick up the panel's own blur, the shadow lands on
+  /// the panel rather than on the page, and Apple names the result outright —
+  /// "avoid overcrowding or layering Liquid Glass elements on top of each
+  /// other", and "don't use Liquid Glass in the content layer … instead, use
+  /// standard materials".
+  ///
+  /// The wash and the ink of the chips do not change with it. One switcher, two
+  /// backings: that is the whole difference.
+  final bool inline;
+
   /// What the bar occupies: a docked control's height on a phone, a search
   /// field's on a wide window, where it rides beside a page title rather than
   /// in a toolbar.
   double get _height => compact ? kGlassControlHeight : kGlassPillHeight;
 
   @override
-  Widget build(BuildContext context) => ConstrainedBox(
-    constraints: BoxConstraints(maxWidth: maxWidth),
-    child: SizedBox(
-      height: _height,
-      child: GlassFloatingSurface(
-        radius: _height / 2,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              // The chips take the bar's height rather than inventing one, so
-              // there is one place that decides how tall a switcher is.
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: chips,
-            ),
-          ),
+  Widget build(BuildContext context) {
+    final track = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          // The chips take the bar's height rather than inventing one, so
+          // there is one place that decides how tall a switcher is.
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: chips,
         ),
       ),
-    ),
-  );
+    );
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: SizedBox(
+        height: _height,
+        child: inline
+            ? GlassInlineTrack(radius: _height / 2, child: track)
+            : GlassFloatingSurface(radius: _height / 2, child: track),
+      ),
+    );
+  }
+}
+
+/// The flat backing an inline switcher rides in: a wash the depth of a pressed
+/// key and a hairline, and nothing else. No blur, no shadow, no rim — the panel
+/// around it already carries all three, and a second set of them is what makes
+/// a small control look like a slab.
+///
+/// Public because a switcher is not the only thing that rides in one. Where a
+/// number field stands beside two of these — "3 days before" — it takes the
+/// same track, so the row is one shape repeated rather than three controls that
+/// happen to be adjacent.
+class GlassInlineTrack extends StatelessWidget {
+  const GlassInlineTrack({super.key, required this.radius, required this.child});
+
+  final double radius;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.ink.withValues(alpha: dark ? 0.16 : 0.045),
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(
+          color: AppColors.hairline.withValues(alpha: dark ? 0.5 : 0.8),
+        ),
+      ),
+      child: Material(type: MaterialType.transparency, child: child),
+    );
+  }
 }

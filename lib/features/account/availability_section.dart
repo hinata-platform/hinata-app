@@ -223,7 +223,6 @@ class _AvailabilitySectionState extends State<AvailabilitySection> {
     Future<void> Function() retry,
   ) => HiveEmptyState(
     title: context.t(errorKey),
-    card: false,
     padding: const EdgeInsets.fromLTRB(20, 12, 20, 22),
     action: OutlinedButton(
       onPressed: () => unawaited(retry()),
