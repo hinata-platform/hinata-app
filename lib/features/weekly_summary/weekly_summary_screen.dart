@@ -931,7 +931,6 @@ class _UpcomingCard extends StatelessWidget {
       return _GlassCard(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: HiveEmptyState(
-          card: false,
           title: context.t('weeklySummary.allCaughtUpTitle'),
           message: context.t('weeklySummary.allCaughtUpMessage'),
         ),

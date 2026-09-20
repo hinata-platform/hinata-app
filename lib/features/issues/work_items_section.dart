@@ -652,7 +652,6 @@ class _AllWorkItemsSheetState extends State<AllWorkItemsSheet> {
         Padding(
           padding: EdgeInsets.only(bottom: bottomInset),
           child: HiveEmptyState(
-            card: false,
             title: context.t('time.noEntries'),
             padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
           ),

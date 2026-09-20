@@ -1701,7 +1701,11 @@
       "tooLarge": "Ce projet compte {{count}} tickets, plus qu'une copie ne peut en prendre.",
       "confirm": "Copier",
       "create": "Créer le projet",
-      "done": "{{issues}} tickets copiés, {{deadlines}} échéances calculées."
+      "done": "{{issues}} tickets copiés, {{deadlines}} échéances calculées.",
+      "makeTemplate": "Créer un modèle",
+      "makeTemplateConfirm": "Créer le modèle",
+      "templateName": "{{name}} (modèle)",
+      "pickSource": "À partir de quel projet la créer ?"
     },
     "schedule": {
       "title": "Déplacer la date du projet",
@@ -1714,7 +1718,8 @@
       "staying": "{{count}} échéances restent en place. Quelqu'un les a saisies à la main.",
       "pending": "{{count}} échéances attendent une date, car le projet perd la sienne.",
       "confirm": "Déplacer"
-    }
+    },
+    "searchHint": "Rechercher des projets"
   },
   "board": {
     "title": "Tableaux agiles",
@@ -3111,7 +3116,8 @@
     "dangerZone": "Zone sensible",
     "deleteThis": "Supprimer cette équipe",
     "deleteThisHint": "Supprime l'équipe et toutes ses adhésions. Les projets restent dans l'espace de travail.",
-    "keyTaken": "Cette clé est déjà utilisée."
+    "keyTaken": "Cette clé est déjà utilisée.",
+    "searchHint": "Rechercher des équipes"
   },
   "projectSettings": {
     "avatar": {

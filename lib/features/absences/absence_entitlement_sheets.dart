@@ -782,7 +782,6 @@ class _LedgerSheetState extends State<_LedgerSheet> {
                 HiveEmptyState(
                   title: context.t('absence.entitlements.ledgerEmpty'),
                   message: context.t('absence.entitlements.ledgerEmptyMessage'),
-                  card: false,
                   padding: const EdgeInsets.fromLTRB(22, 10, 22, 26),
                 )
               else

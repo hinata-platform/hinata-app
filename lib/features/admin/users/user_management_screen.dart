@@ -639,7 +639,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       return HiveEmptyState(
         title: context.t('admin.um.emptyTitle'),
         message: context.t('admin.um.emptyMessage'),
-        card: true,
       );
     }
     return LayoutBuilder(

@@ -155,7 +155,6 @@ class _OAuthConsentScreenState extends State<OAuthConsentScreen> {
       return SoftCard(
         padding: const EdgeInsets.all(28),
         child: HiveEmptyState(
-          card: false,
           title: context.t('oauthConsent.expired.title'),
           message: context.t('oauthConsent.expired.message'),
         ),

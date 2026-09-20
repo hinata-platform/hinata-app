@@ -205,6 +205,25 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('a template is the same copy with one flag set', (tester) async {
+    // The way in from the Templates tab. The project it is made from keeps
+    // running — that is the whole difference from the switch in its settings,
+    // which moves the project itself onto the Templates list.
+    await tester.pumpWidget(
+      host(project: source(), mode: ProjectCopyMode.template),
+    );
+    await open(tester);
+
+    expect(find.text('projects.copy.makeTemplate'), findsOneWidget);
+    expect(find.text('projects.copy.makeTemplateConfirm'), findsOneWidget);
+
+    await tester.tap(find.text('projects.copy.makeTemplateConfirm'));
+    await tester.pumpAndSettle();
+
+    expect(repo.copies, hasLength(1));
+    expect(repo.copies.single.asTemplate, isTrue);
+  });
 }
 
 /// What the sheet asked for, in the order it asked.
@@ -216,6 +235,7 @@ typedef _CopyCall = ({
   bool includeAttachments,
   bool includeTimeSettings,
   bool includeBoard,
+  bool asTemplate,
 });
 
 typedef _InstantiateCall = ({String name, String? key, DateTime? eventDate});
@@ -256,6 +276,7 @@ class _FakeProjectRepository implements ProjectRepository {
       includeAttachments: includeAttachments,
       includeTimeSettings: includeTimeSettings,
       includeBoard: includeBoard,
+      asTemplate: asTemplate,
     ));
     return ProjectCopyResult(
       project: Project(id: 'p2', key: key ?? 'X', name: name ?? 'copy'),

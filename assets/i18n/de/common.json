@@ -1701,7 +1701,11 @@
       "tooLarge": "Dieses Projekt hat {{count}} Vorgänge, mehr als eine Kopie mitnehmen kann.",
       "confirm": "Kopieren",
       "create": "Projekt anlegen",
-      "done": "{{issues}} Vorgänge kopiert, {{deadlines}} Fristen gerechnet."
+      "done": "{{issues}} Vorgänge kopiert, {{deadlines}} Fristen gerechnet.",
+      "makeTemplate": "Vorlage erstellen",
+      "makeTemplateConfirm": "Vorlage anlegen",
+      "templateName": "{{name}} (Vorlage)",
+      "pickSource": "Aus welchem Projekt soll sie entstehen?"
     },
     "schedule": {
       "title": "Termin verschieben",
@@ -1714,7 +1718,8 @@
       "staying": "{{count}} Fristen bleiben, wo sie sind. Die hat jemand von Hand gesetzt.",
       "pending": "{{count}} Fristen warten auf einen Termin, weil das Projekt seinen verliert.",
       "confirm": "Verschieben"
-    }
+    },
+    "searchHint": "Projekte durchsuchen"
   },
   "board": {
     "title": "Agile Boards",
@@ -3111,7 +3116,8 @@
     "dangerZone": "Gefahrenzone",
     "deleteThis": "Dieses Team löschen",
     "deleteThisHint": "Entfernt das Team und alle Mitgliedschaften. Projekte bleiben im Workspace.",
-    "keyTaken": "Schlüssel bereits vergeben."
+    "keyTaken": "Schlüssel bereits vergeben.",
+    "searchHint": "Teams durchsuchen"
   },
   "projectSettings": {
     "avatar": {

@@ -22,6 +22,12 @@ enum ProjectCopyMode {
   /// "Create a project from this" — the scope is decided and the date is the
   /// point of the exercise.
   instantiate,
+
+  /// "Make a template from …" — the copy is marked as a template, so the
+  /// project it was made from keeps running. The other way round, marking a
+  /// project you already have, is the switch in its settings; this is the way in
+  /// from the Templates tab, for somebody who wants to keep both.
+  template,
 }
 
 /// Opens the copy sheet and returns the project it produced, or null when
@@ -72,13 +78,34 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
   String? _error;
 
   bool get _isInstantiate => widget.mode == ProjectCopyMode.instantiate;
+  bool get _isTemplate => widget.mode == ProjectCopyMode.template;
 
   @override
   void initState() {
     super.initState();
-    _name.text = _isInstantiate ? '' : '${widget.source.name} 2';
     _eventDate = _isInstantiate ? null : widget.source.eventDate;
     _loadScope();
+  }
+
+  /// Whether the name field has had its suggestion. Here rather than in
+  /// [initState] because the template's suggestion is a translated string, and
+  /// a translation is an inherited widget — reading one before the first
+  /// dependency pass is an assertion failure.
+  bool _named = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_named) return;
+    _named = true;
+    _name.text = _isInstantiate
+        ? ''
+        : _isTemplate
+        ? context.t(
+            'projects.copy.templateName',
+            variables: {'name': widget.source.name},
+          )
+        : '${widget.source.name} 2';
   }
 
   @override
@@ -144,6 +171,7 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
               includeAttachments: _includeAttachments,
               includeTimeSettings: _includeTimeSettings,
               includeBoard: _includeBoard,
+              asTemplate: _isTemplate,
             );
       if (mounted) Navigator.of(context).pop(result);
     } on ApiFailure catch (failure) {
@@ -176,9 +204,17 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
       mainAxisSize: MainAxisSize.min,
       children: [
         GlassModalHeader(
-          icon: _isInstantiate ? LucideIcons.sparkles : LucideIcons.copy,
+          icon: _isInstantiate
+              ? LucideIcons.sparkles
+              : _isTemplate
+              ? LucideIcons.bookmarkPlus
+              : LucideIcons.copy,
           title: context.t(
-            _isInstantiate ? 'projects.copy.fromTemplate' : 'projects.copy.title',
+            _isInstantiate
+                ? 'projects.copy.fromTemplate'
+                : _isTemplate
+                ? 'projects.copy.makeTemplate'
+                : 'projects.copy.title',
           ),
           subtitle: widget.source.name,
         ),
@@ -282,7 +318,11 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
         ),
         GlassModalFooter(
           confirmLabel: context.t(
-            _isInstantiate ? 'projects.copy.create' : 'projects.copy.confirm',
+            _isInstantiate
+                ? 'projects.copy.create'
+                : _isTemplate
+                ? 'projects.copy.makeTemplateConfirm'
+                : 'projects.copy.confirm',
           ),
           confirmIcon: LucideIcons.check,
           busy: _saving,
