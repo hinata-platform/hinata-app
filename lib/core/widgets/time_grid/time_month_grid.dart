@@ -718,10 +718,20 @@ class _Cell extends StatelessWidget {
   final void Function(DateTime day, Rect anchor)? onDayMenu;
   final void Function(TimeGridItem item)? onTap;
 
+  /// The menu hangs under the day's number, not under the whole cell.
+  ///
+  /// A popover opens beneath the rectangle it is given, and a month cell is a
+  /// whole week row tall: anchored on the cell, the menu for the 2nd opened
+  /// level with the 9th and pointed at a day nobody held. The number is where
+  /// the date is written and where the finger was, so that strip is the anchor.
   void _menu(BuildContext context, DateTime at) {
     final box = context.findRenderObject() as RenderBox?;
     if (box == null || !box.hasSize) return;
-    onDayMenu?.call(at, box.localToGlobal(Offset.zero) & box.size);
+    final origin = box.localToGlobal(Offset.zero);
+    onDayMenu?.call(
+      at,
+      Rect.fromLTWH(origin.dx, origin.dy, box.size.width, _kDayLine + 4),
+    );
   }
 
   /// Room a cell has under its number, in whole chips.
