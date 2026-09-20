@@ -36,18 +36,40 @@ class GlassSwitchChip extends StatelessWidget {
   /// switcher with words would run past the screen.
   final bool iconOnly;
 
+  /// How long the wash takes to move from one chip to the next. Short enough
+  /// that a second tap is never waiting on it.
+  static const Duration _settle = Duration(milliseconds: 180);
+
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final tokens = SearchTokens.of(dark ? Brightness.dark : Brightness.light);
-    final fg = active
-        ? (dark ? AppColors.accent : AppColors.accentStrong)
-        : tokens.inkSoft;
+    final lit = dark ? AppColors.accent : AppColors.accentStrong;
     final compact = iconOnly && icon != null;
+    // The switch is a colour, so the colour is what moves: the wash rises under
+    // the chip being chosen while it fades from under the one being left, and
+    // the ink warms with it. Nothing is laid out again and nothing is faded as
+    // a layer — the pages behind the switcher do not move at all.
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(end: active ? 1 : 0),
+      duration: _settle,
+      curve: Curves.easeOut,
+      builder: (context, t, _) =>
+          _chip(context, t: t, lit: lit, rest: tokens.inkSoft, compact: compact),
+    );
+  }
+
+  Widget _chip(
+    BuildContext context, {
+    required double t,
+    required Color lit,
+    required Color rest,
+    required bool compact,
+  }) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final fg = Color.lerp(rest, lit, t)!;
     final chip = Material(
-      color: active
-          ? AppColors.accent.withValues(alpha: dark ? 0.30 : 0.22)
-          : Colors.transparent,
+      color: AppColors.accent.withValues(alpha: (dark ? 0.30 : 0.22) * t),
       borderRadius: BorderRadius.circular(AppTheme.radiusPill),
       child: InkWell(
         onTap: onTap,
