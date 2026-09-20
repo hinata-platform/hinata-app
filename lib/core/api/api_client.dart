@@ -55,6 +55,39 @@ class ApiFailure implements Exception {
   String toString() => message;
 }
 
+/// Whether a failed request means the server **refused this token**, as opposed
+/// to never having answered the question.
+///
+/// One rule, in one place, because two places act on it: the client, deciding
+/// whether a failed refresh ends the session, and [AuthBloc], deciding the same
+/// thing about the `/me` it asks at boot. They used to answer it separately and
+/// both answered it wrong — every failure counted, so a 429 from the auth
+/// budget, a 503 from a server coming back up, or a keep-alive socket the pool
+/// had already lost signed somebody out in the middle of their work, at no
+/// particular moment.
+///
+/// 401 and 403 are the server saying no. 400 is it refusing to read the body at
+/// all, which for a token means the same thing. Everything else — a rate limit,
+/// a 5xx, a timeout, a connection that never opened, no status at all — says
+/// nothing about the token, and a session survives it.
+bool refusesTheToken(int? status) =>
+    status == 400 || status == 401 || status == 403;
+
+/// What came back from a refresh, and the whole reason the three are told
+/// apart: only a refusal ends a session.
+enum _Refresh {
+  /// A new pair is stored.
+  ok,
+
+  /// The server would not take the token. The session is over and the tokens
+  /// are gone.
+  refused,
+
+  /// Nothing was decided — a rate limit, a 5xx, a socket that died. The tokens
+  /// are untouched and the next request may try again.
+  unavailable,
+}
+
 /// Dio-based client bound to the configured server URL. Transparently
 /// attaches the bearer token and refreshes it once on 401.
 class ApiClient {
@@ -112,8 +145,8 @@ class ApiClient {
               !isRefreshRequest &&
               _storage.refreshToken != null &&
               error.requestOptions.extra['retried'] != true) {
-            final refreshed = await _tryRefresh();
-            if (refreshed) {
+            final outcome = await _tryRefresh();
+            if (outcome == _Refresh.ok) {
               final options = error.requestOptions;
               options.extra['retried'] = true;
               options.headers['Authorization'] =
@@ -125,7 +158,10 @@ class ApiClient {
                 return handler.next(retryError);
               }
             }
-            onSessionExpired?.call();
+            // Only a refusal ends the session. A refresh that never reached an
+            // answer leaves the tokens where they are and lets this one request
+            // fail: the next one tries again.
+            if (outcome == _Refresh.refused) onSessionExpired?.call();
           }
           // A module that is switched off answers 404 on its own routes. We only
           // asked because our copy of /meta said the module was on, so that copy
@@ -159,7 +195,7 @@ class ApiClient {
   /// they trigger ONE `/auth/refresh` instead of a thundering herd (which wastes
   /// connections and — if the server rotates refresh tokens — makes all but the
   /// first refresh fail and wipe the session). Cleared when the refresh settles.
-  Future<bool>? _refreshing;
+  Future<_Refresh>? _refreshing;
 
   /// Invoked when the session can no longer be refreshed.
   void Function()? onSessionExpired;
@@ -223,15 +259,15 @@ class ApiClient {
   }
 
   /// Single-flight refresh: concurrent 401s all await the same in-flight call.
-  Future<bool> _tryRefresh() =>
+  Future<_Refresh> _tryRefresh() =>
       _refreshing ??= _doRefresh().whenComplete(() => _refreshing = null);
 
-  Future<bool> _doRefresh() async {
+  Future<_Refresh> _doRefresh() async {
     // Snapshot the refresh token now: a parallel request may have already
     // rotated it by the time this runs, but the single-flight guard means only
     // one _doRefresh is ever in flight, so this is the current one.
     final refresh = _storage.refreshToken;
-    if (refresh == null) return false;
+    if (refresh == null) return _Refresh.refused;
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '$baseUrl/api/v1/auth/refresh',
@@ -242,10 +278,18 @@ class ApiClient {
         access: data['accessToken'] as String,
         refresh: data['refreshToken'] as String,
       );
-      return true;
+      return _Refresh.ok;
+    } on DioException catch (error) {
+      // See [refusesTheToken]: only a refusal clears anything.
+      if (refusesTheToken(error.response?.statusCode)) {
+        await _storage.clearTokens();
+        return _Refresh.refused;
+      }
+      return _Refresh.unavailable;
     } catch (_) {
-      await _storage.clearTokens();
-      return false;
+      // A malformed answer from something that is not our server — a captive
+      // portal, a proxy error page. Nothing was refused, so nothing is cleared.
+      return _Refresh.unavailable;
     }
   }
 

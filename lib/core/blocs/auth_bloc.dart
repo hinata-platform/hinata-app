@@ -119,9 +119,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     var rejected = false;
     try {
       user = await repository.me();
-    } on ApiFailure {
-      // The server refused this token — it is genuinely dead, so drop it.
-      rejected = true;
+    } on ApiFailure catch (failure) {
+      // `ApiFailure` is what this client throws for *every* failed request, a
+      // timeout and a rate limit included, so the status is what decides. See
+      // [refusesTheToken] — by the time /me answers 401 the client has already
+      // tried to refresh it, so this is the second half of one rule.
+      rejected = refusesTheToken(failure.statusCode);
     } catch (_) {
       // Anything else (malformed body, transport oddity): don't destroy the
       // session over it, just fall back to signed-out so the UI is usable and
