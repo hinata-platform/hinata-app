@@ -1677,7 +1677,32 @@
       "chooseOne": "Projekt wählen …",
       "chooseLead": "Leitung wählen …"
     },
-    "keyTaken": "Dieser Schlüssel ist bereits vergeben."
+    "keyTaken": "Dieser Schlüssel ist bereits vergeben.",
+    "templates": "Vorlagen",
+    "templateBadge": "Vorlage",
+    "emptyTemplates": "Noch keine Vorlagen. Kennzeichne ein Projekt in seinen Einstellungen als Vorlage, dann steht es hier.",
+    "copy": {
+      "title": "Projekt kopieren",
+      "short": "Kopieren",
+      "fromTemplate": "Projekt aus dieser Vorlage anlegen",
+      "fromTemplateShort": "Projekt anlegen",
+      "name": "Name",
+      "key": "Schlüssel",
+      "eventDate": "Termin",
+      "noEventDate": "Noch kein Termin",
+      "include": "Mitnehmen",
+      "members": "Mitglieder und Leitung",
+      "attachments": "Anhänge",
+      "attachmentsDetail": "{{files}} Dateien, {{size}} MB",
+      "timeSettings": "Zeit-Einstellungen",
+      "board": "Board mit Spalten",
+      "counting": "Wird gezählt, was mitkommt",
+      "scope": "{{issues}} Vorgänge kommen mit, davon {{subtasks}} Unteraufgaben.",
+      "tooLarge": "Dieses Projekt hat {{count}} Vorgänge, mehr als eine Kopie mitnehmen kann.",
+      "confirm": "Kopieren",
+      "create": "Projekt anlegen",
+      "done": "{{issues}} Vorgänge kopiert, {{deadlines}} Fristen gerechnet."
+    }
   },
   "board": {
     "title": "Agile Boards",
@@ -3162,6 +3187,17 @@
       "estimateAlertHint": "Die zugewiesene Person erfährt es, sobald ein Vorgang diesen Anteil seiner Schätzung erreicht.",
       "alertDefault": "Standard ({{percent}} %)",
       "percent": "{{percent}} %"
+    },
+    "templates": {
+      "title": "Vorlagen und Termin",
+      "eventDate": "Termin",
+      "eventDateHint": "Der Tag, von dem die relativen Fristen des Projekts aus gerechnet werden. Wer ihn ändert, verschiebt sie.",
+      "noEventDate": "Noch kein Termin",
+      "markTitle": "Als Vorlage anbieten",
+      "markHint": "Das Projekt steht dann unter Vorlagen und bietet „Projekt daraus anlegen“. Sonst ändert sich nichts.",
+      "copy": "Projekt kopieren",
+      "dateCleared": "Termin entfernt. Die Fristen bleiben stehen und behalten ihren Versatz.",
+      "datesMoved": "{{count}} Fristen verschoben."
     }
   },
   "account": {

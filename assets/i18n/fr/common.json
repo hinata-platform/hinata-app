@@ -1677,7 +1677,32 @@
       "chooseOne": "Choisir un projet…",
       "chooseLead": "Choisir un responsable…"
     },
-    "keyTaken": "Cette clé est déjà utilisée."
+    "keyTaken": "Cette clé est déjà utilisée.",
+    "templates": "Modèles",
+    "templateBadge": "Modèle",
+    "emptyTemplates": "Pas encore de modèle. Marquez un projet comme modèle dans ses paramètres et il apparaîtra ici.",
+    "copy": {
+      "title": "Copier le projet",
+      "short": "Copier",
+      "fromTemplate": "Créer un projet à partir de ce modèle",
+      "fromTemplateShort": "Créer un projet",
+      "name": "Nom",
+      "key": "Clé",
+      "eventDate": "Date du projet",
+      "noEventDate": "Pas encore de date",
+      "include": "Emporter",
+      "members": "Membres et responsables",
+      "attachments": "Pièces jointes",
+      "attachmentsDetail": "{{files}} fichiers, {{size}} Mo",
+      "timeSettings": "Paramètres de temps",
+      "board": "Tableau et colonnes",
+      "counting": "Décompte de ce qui suivrait",
+      "scope": "{{issues}} tickets suivent, dont {{subtasks}} sous-tâches.",
+      "tooLarge": "Ce projet compte {{count}} tickets, plus qu'une copie ne peut en prendre.",
+      "confirm": "Copier",
+      "create": "Créer le projet",
+      "done": "{{issues}} tickets copiés, {{deadlines}} échéances calculées."
+    }
   },
   "board": {
     "title": "Tableaux agiles",
@@ -3162,6 +3187,17 @@
       "estimateAlertHint": "La personne assignée est prévenue dès qu’un ticket atteint ce seuil de son estimation.",
       "alertDefault": "Par défaut ({{percent}} %)",
       "percent": "{{percent}} %"
+    },
+    "templates": {
+      "title": "Modèles et date",
+      "eventDate": "Date du projet",
+      "eventDateHint": "Le jour à partir duquel les échéances relatives du projet sont comptées. La changer les déplace.",
+      "noEventDate": "Pas encore de date",
+      "markTitle": "Proposer comme modèle",
+      "markHint": "Le projet figure sous Modèles et propose « créer un projet à partir de ceci ». Rien d'autre ne change.",
+      "copy": "Copier le projet",
+      "dateCleared": "Date retirée. Les échéances restent en place et gardent leur règle.",
+      "datesMoved": "{{count}} échéances déplacées."
     }
   },
   "account": {

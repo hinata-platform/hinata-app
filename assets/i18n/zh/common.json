@@ -1677,7 +1677,32 @@
       "chooseOne": "选择一个项目…",
       "chooseLead": "选择负责人…"
     },
-    "keyTaken": "该项目键已被占用。"
+    "keyTaken": "该项目键已被占用。",
+    "templates": "模板",
+    "templateBadge": "模板",
+    "emptyTemplates": "还没有模板。在项目设置中把项目标记为模板，它就会出现在这里。",
+    "copy": {
+      "title": "复制项目",
+      "short": "复制",
+      "fromTemplate": "用该模板新建项目",
+      "fromTemplateShort": "新建项目",
+      "name": "名称",
+      "key": "标识",
+      "eventDate": "项目日期",
+      "noEventDate": "尚无日期",
+      "include": "一并带走",
+      "members": "成员与负责人",
+      "attachments": "附件",
+      "attachmentsDetail": "{{files}} 个文件，{{size}} MB",
+      "timeSettings": "时间设置",
+      "board": "看板与列",
+      "counting": "正在统计将带走的内容",
+      "scope": "将带走 {{issues}} 个事项，其中 {{subtasks}} 个子任务。",
+      "tooLarge": "该项目有 {{count}} 个事项，超过一次复制能带走的数量。",
+      "confirm": "复制",
+      "create": "新建项目",
+      "done": "已复制 {{issues}} 个事项，算出 {{deadlines}} 个截止日期。"
+    }
   },
   "board": {
     "title": "敏捷看板",
@@ -3162,6 +3187,17 @@
       "estimateAlertHint": "事项达到其预估的该比例时，通知被指派的人。",
       "alertDefault": "默认（{{percent}}%）",
       "percent": "{{percent}}%"
+    },
+    "templates": {
+      "title": "模板与日期",
+      "eventDate": "项目日期",
+      "eventDateHint": "项目相对截止日期的起算日。改动它会一并调整这些日期。",
+      "noEventDate": "尚无日期",
+      "markTitle": "作为模板提供",
+      "markHint": "项目会列在“模板”中，并提供“用它新建项目”。其他不变。",
+      "copy": "复制项目",
+      "dateCleared": "已移除日期。截止日期保持原位，规则也保留。",
+      "datesMoved": "已调整 {{count}} 个截止日期。"
     }
   },
   "account": {

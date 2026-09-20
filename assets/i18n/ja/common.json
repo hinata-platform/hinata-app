@@ -1677,7 +1677,32 @@
       "chooseOne": "プロジェクトを選択…",
       "chooseLead": "リードを選択…"
     },
-    "keyTaken": "そのキーはすでに使われています。"
+    "keyTaken": "そのキーはすでに使われています。",
+    "templates": "テンプレート",
+    "templateBadge": "テンプレート",
+    "emptyTemplates": "テンプレートはまだありません。プロジェクトの設定でテンプレートに指定すると、ここに並びます。",
+    "copy": {
+      "title": "プロジェクトを複製",
+      "short": "複製",
+      "fromTemplate": "このテンプレートからプロジェクトを作成",
+      "fromTemplateShort": "プロジェクトを作成",
+      "name": "名前",
+      "key": "キー",
+      "eventDate": "プロジェクトの日付",
+      "noEventDate": "日付はまだありません",
+      "include": "一緒に持っていくもの",
+      "members": "メンバーとリード",
+      "attachments": "添付ファイル",
+      "attachmentsDetail": "{{files}} 件、{{size}} MB",
+      "timeSettings": "時間の設定",
+      "board": "ボードと列",
+      "counting": "何が一緒に移るか集計中",
+      "scope": "{{issues}} 件の課題が移ります。うち {{subtasks}} 件はサブタスクです。",
+      "tooLarge": "このプロジェクトには課題が {{count}} 件あり、1回の複製で運べる数を超えています。",
+      "confirm": "複製",
+      "create": "プロジェクトを作成",
+      "done": "{{issues}} 件の課題を複製し、{{deadlines}} 件の期限を算出しました。"
+    }
   },
   "board": {
     "title": "アジャイルボード",
@@ -3030,6 +3055,17 @@
       "estimateAlertHint": "課題が見積もりのこの割合に達すると担当者に通知します。",
       "alertDefault": "既定 ({{percent}} %)",
       "percent": "{{percent}} %"
+    },
+    "templates": {
+      "title": "テンプレートと日付",
+      "eventDate": "プロジェクトの日付",
+      "eventDateHint": "プロジェクトの相対期限を数える起点の日です。変更すると期限も動きます。",
+      "noEventDate": "日付はまだありません",
+      "markTitle": "テンプレートとして提供",
+      "markHint": "プロジェクトはテンプレートに並び、「これからプロジェクトを作成」を提供します。それ以外は変わりません。",
+      "copy": "プロジェクトを複製",
+      "dateCleared": "日付を削除しました。期限はそのままで、ルールも残ります。",
+      "datesMoved": "{{count}} 件の期限を移動しました。"
     }
   },
   "teams": {

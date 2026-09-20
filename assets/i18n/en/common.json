@@ -1677,7 +1677,32 @@
       "chooseOne": "Choose a project…",
       "chooseLead": "Choose a lead…"
     },
-    "keyTaken": "That key is already taken."
+    "keyTaken": "That key is already taken.",
+    "templates": "Templates",
+    "templateBadge": "Template",
+    "emptyTemplates": "No templates yet. Mark a project as a template in its settings and it will appear here.",
+    "copy": {
+      "title": "Copy project",
+      "short": "Copy",
+      "fromTemplate": "Create a project from this template",
+      "fromTemplateShort": "Create a project",
+      "name": "Name",
+      "key": "Key",
+      "eventDate": "Project date",
+      "noEventDate": "No date yet",
+      "include": "Take along",
+      "members": "Members and leads",
+      "attachments": "Attachments",
+      "attachmentsDetail": "{{files}} files, {{size}} MB",
+      "timeSettings": "Time settings",
+      "board": "Board and columns",
+      "counting": "Counting what would come along",
+      "scope": "{{issues}} issues come along, {{subtasks}} of them sub-tasks.",
+      "tooLarge": "This project has {{count}} issues, which is more than one copy can take.",
+      "confirm": "Copy",
+      "create": "Create project",
+      "done": "{{issues}} issues copied, {{deadlines}} deadlines worked out."
+    }
   },
   "board": {
     "title": "Agile Boards",
@@ -3162,6 +3187,17 @@
       "estimateAlertHint": "The assignee is told once an issue reaches this share of its estimate.",
       "alertDefault": "Default ({{percent}} %)",
       "percent": "{{percent}} %"
+    },
+    "templates": {
+      "title": "Templates and dates",
+      "eventDate": "Project date",
+      "eventDateHint": "The day the project's relative deadlines are counted from. Changing it moves them.",
+      "noEventDate": "No date yet",
+      "markTitle": "Offer as a template",
+      "markHint": "The project is listed under Templates and offers \"create a project from this\". Nothing else changes.",
+      "copy": "Copy project",
+      "dateCleared": "Date removed. The deadlines stay where they are and keep their rules.",
+      "datesMoved": "{{count}} deadlines moved."
     }
   },
   "account": {

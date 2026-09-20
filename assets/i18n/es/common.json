@@ -1677,7 +1677,32 @@
       "chooseOne": "Elegir un proyecto…",
       "chooseLead": "Elegir responsable…"
     },
-    "keyTaken": "Esa clave ya está en uso."
+    "keyTaken": "Esa clave ya está en uso.",
+    "templates": "Plantillas",
+    "templateBadge": "Plantilla",
+    "emptyTemplates": "Aún no hay plantillas. Marca un proyecto como plantilla en sus ajustes y aparecerá aquí.",
+    "copy": {
+      "title": "Copiar proyecto",
+      "short": "Copiar",
+      "fromTemplate": "Crear un proyecto a partir de esta plantilla",
+      "fromTemplateShort": "Crear proyecto",
+      "name": "Nombre",
+      "key": "Clave",
+      "eventDate": "Fecha del proyecto",
+      "noEventDate": "Todavía sin fecha",
+      "include": "Llevar",
+      "members": "Miembros y responsables",
+      "attachments": "Archivos adjuntos",
+      "attachmentsDetail": "{{files}} archivos, {{size}} MB",
+      "timeSettings": "Ajustes de tiempo",
+      "board": "Tablero y columnas",
+      "counting": "Contando lo que se llevaría",
+      "scope": "Se llevan {{issues}} incidencias, {{subtasks}} de ellas subtareas.",
+      "tooLarge": "Este proyecto tiene {{count}} incidencias, más de las que admite una copia.",
+      "confirm": "Copiar",
+      "create": "Crear proyecto",
+      "done": "{{issues}} incidencias copiadas, {{deadlines}} plazos calculados."
+    }
   },
   "board": {
     "title": "Tableros ágiles",
@@ -3162,6 +3187,17 @@
       "estimateAlertHint": "La persona asignada recibe un aviso cuando una incidencia alcanza este porcentaje de su estimación.",
       "alertDefault": "Predeterminado ({{percent}} %)",
       "percent": "{{percent}} %"
+    },
+    "templates": {
+      "title": "Plantillas y fecha",
+      "eventDate": "Fecha del proyecto",
+      "eventDateHint": "El día desde el que se cuentan los plazos relativos del proyecto. Cambiarlo los desplaza.",
+      "noEventDate": "Todavía sin fecha",
+      "markTitle": "Ofrecer como plantilla",
+      "markHint": "El proyecto aparece en Plantillas y ofrece «crear un proyecto a partir de esto». Nada más cambia.",
+      "copy": "Copiar proyecto",
+      "dateCleared": "Fecha quitada. Los plazos se quedan donde están y conservan su regla.",
+      "datesMoved": "{{count}} plazos desplazados."
     }
   },
   "account": {
