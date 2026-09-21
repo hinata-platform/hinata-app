@@ -133,7 +133,9 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
           onEnabledChanged: (v) => _set('absenceManagementEnabled', v),
           onManagersChanged: (ids) => _set('absenceManagers', ids),
           calendar: _value<String>('absenceCalendarVisibility'),
-          calendarEffective: _effectiveValue<String>('absenceCalendarVisibility'),
+          calendarEffective: _effectiveValue<String>(
+            'absenceCalendarVisibility',
+          ),
           onCalendarChanged: (v) => _set('absenceCalendarVisibility', v),
         ),
         'capture': _capture(context),
