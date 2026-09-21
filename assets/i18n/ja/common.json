@@ -335,7 +335,8 @@
       "kpis": "主要な数値",
       "completion": "プロジェクトの進捗",
       "tracker": "集中した時間",
-      "ranking": "チームランキング"
+      "ranking": "チームランキング",
+      "away": "本日の不在"
     },
     "saveError": "ダッシュボードを保存できませんでした。もう一度お試しください。",
     "saved": "ダッシュボードを保存しました",
@@ -381,7 +382,11 @@
     "viewAll": "すべて表示",
     "teamRanking": "チームランキング",
     "thisWeek": "今週",
-    "pointsShort": "{{count}} P"
+    "pointsShort": "{{count}} P",
+    "awayToday": "本日の不在",
+    "awayNone": "今日は全員そろっています。",
+    "awayMore": "ほか{{count}}人",
+    "awayOpen": "チームカレンダーを開く"
   },
   "comments": {
     "actionCamera": "写真または動画を撮影",
@@ -1532,7 +1537,12 @@
     "calendar": {
       "requested": "申請中",
       "requestedHint": "この日を申請済みです。まだ決定されておらず、引き続き時間を記録できます。",
-      "open": "休暇を開く"
+      "open": "休暇を開く",
+      "level": {
+        "off": "オフ",
+        "busyOnly": "不在であることのみ",
+        "type": "不在の種類"
+      }
     },
     "request": {
       "ask": "休暇を申請",
@@ -1619,7 +1629,8 @@
         "mine": "自分",
         "requests": "申請",
         "inbox": "要判断",
-        "balances": "残日数"
+        "balances": "残日数",
+        "team": "チーム"
       },
       "search": "休暇を検索",
       "type": "区分",
@@ -1641,6 +1652,35 @@
       "noMatch": "該当なし",
       "noMatchMessage": "条件に合う休暇はありません。",
       "clearFilters": "フィルターを解除"
+    },
+    "team": {
+      "group": "グループ",
+      "myProjects": "自分のプロジェクト",
+      "pickProject": "プロジェクトを選択…",
+      "month": "月",
+      "quarter": "四半期",
+      "previous": "前の期間",
+      "next": "次の期間",
+      "today": "今日",
+      "awayOnly": "不在者のみ",
+      "errorTitle": "カレンダーを読み込めませんでした",
+      "emptyTitle": "表示できる人がいません",
+      "emptyMessage": "このグループのプロジェクトで自分で時間を記録した人だけがここに表示されます。",
+      "truncated": "このグループは1つのカレンダーに表示できる人数を超えています。全員を見るにはチームかプロジェクトを選んでください。",
+      "person": "担当者",
+      "capacity": "稼働可能",
+      "capacityPeople": "{{count}}人",
+      "capacityPeople_plural": "{{count}}人",
+      "capacityDay": "{{planned}}時間中{{left}}時間が稼働可能 · 不在{{away}}人 · 申請中{{requested}}人",
+      "away": "不在",
+      "legend": {
+        "away": "不在",
+        "requested": "申請中",
+        "dayOff": "週末または祝日"
+      },
+      "thisWeek": "今週",
+      "capacityWeek": "{{planned}}時間中{{left}}時間が稼働可能",
+      "everybodyHere": "全員そろっています。"
     }
   },
   "projects": {

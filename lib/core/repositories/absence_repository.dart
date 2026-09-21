@@ -2,6 +2,7 @@ import '../api/api_client.dart';
 import '../blocs/paged_cubit.dart';
 import '../models/absence_models.dart';
 import '../models/absence_request_models.dart';
+import '../models/team_absence_models.dart';
 import '../util/dates.dart';
 
 /// Absence management 2.0: the catalogue of absence types, what people are
@@ -398,6 +399,56 @@ class AbsenceRepository {
             if (hiredOn != null) 'hiredOn': formatDateOnly(hiredOn),
             if (leftOn != null) 'leftOn': formatDateOnly(leftOn),
             'note': ?note,
+          },
+        )
+        as Map<String, dynamic>,
+  );
+
+  // --- the team calendar (HIN-118) ---------------------------------------------
+
+  /// A page of rows of [scope] from [from] to [to], a quarter at most.
+  /// [awayOnly] keeps only the people with something to show — the dashboard
+  /// asks for today this way.
+  ///
+  /// 404 `error.feature.disabled` while the calendar level is off, exactly as
+  /// for a module that is off: the calendar then does not exist.
+  Future<TeamAbsencePage> teamCalendar({
+    required DateTime from,
+    required DateTime to,
+    TeamAbsenceScope scope = TeamAbsenceScope.mine,
+    bool awayOnly = false,
+    int page = 0,
+    int size = 50,
+  }) async => TeamAbsencePage.fromJson(
+    await _api.get(
+          '/api/v1/time-off/calendar',
+          query: {
+            'from': formatDateOnly(from),
+            'to': formatDateOnly(to),
+            ...scope.query,
+            if (awayOnly) 'awayOnly': true,
+            'page': page,
+            'size': size,
+          },
+        )
+        as Map<String, dynamic>,
+  );
+
+  /// What [scope] has left per day or per week. For who plans only — a lead
+  /// of the project, an admin of the team, a keeper; 403 for everybody else.
+  Future<CapacityBand> capacityBand({
+    required DateTime from,
+    required DateTime to,
+    TeamAbsenceScope scope = TeamAbsenceScope.mine,
+    CapacityResolution resolution = CapacityResolution.day,
+  }) async => CapacityBand.fromJson(
+    await _api.get(
+          '/api/v1/time-off/capacity-band',
+          query: {
+            'from': formatDateOnly(from),
+            'to': formatDateOnly(to),
+            ...scope.query,
+            'resolution': resolution.wire,
           },
         )
         as Map<String, dynamic>,

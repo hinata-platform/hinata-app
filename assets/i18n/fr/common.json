@@ -335,7 +335,8 @@
       "kpis": "Chiffres clés",
       "completion": "Avancement des projets",
       "tracker": "Temps de concentration",
-      "ranking": "Classement de l'équipe"
+      "ranking": "Classement de l'équipe",
+      "away": "Absents aujourd'hui"
     },
     "saveError": "Impossible d'enregistrer votre tableau de bord. Réessayez.",
     "saved": "Tableau de bord enregistré",
@@ -381,7 +382,11 @@
     "viewAll": "Tout afficher",
     "teamRanking": "Classement de l'équipe",
     "thisWeek": "cette semaine",
-    "pointsShort": "{{count}} P"
+    "pointsShort": "{{count}} P",
+    "awayToday": "Absents aujourd'hui",
+    "awayNone": "Tout le monde est là aujourd'hui.",
+    "awayMore": "et {{count}} autres",
+    "awayOpen": "Ouvrir le calendrier de l'équipe"
   },
   "comments": {
     "actionCamera": "Prendre une photo ou une vidéo",
@@ -1532,7 +1537,12 @@
     "calendar": {
       "requested": "Demandé",
       "requestedHint": "Vous avez demandé ce jour. Rien n'est encore tranché et le temps peut toujours y être saisi.",
-      "open": "Ouvrir l’absence"
+      "open": "Ouvrir l’absence",
+      "level": {
+        "off": "Désactivé",
+        "busyOnly": "Seulement que quelqu'un est absent",
+        "type": "Le type d'absence"
+      }
     },
     "request": {
       "ask": "Demander une absence",
@@ -1619,7 +1629,8 @@
         "mine": "Les miennes",
         "requests": "Demandes",
         "inbox": "À décider",
-        "balances": "Compteurs"
+        "balances": "Compteurs",
+        "team": "Équipe"
       },
       "search": "Rechercher des absences",
       "type": "Type",
@@ -1641,6 +1652,35 @@
       "noMatch": "Aucun résultat",
       "noMatchMessage": "Aucune absence ne correspond à ces filtres.",
       "clearFilters": "Effacer les filtres"
+    },
+    "team": {
+      "group": "Groupe",
+      "myProjects": "Mes projets",
+      "pickProject": "Choisir un projet…",
+      "month": "Mois",
+      "quarter": "Trimestre",
+      "previous": "Période précédente",
+      "next": "Période suivante",
+      "today": "Aujourd'hui",
+      "awayOnly": "Absents uniquement",
+      "errorTitle": "Le calendrier n'a pas pu être chargé",
+      "emptyTitle": "Personne à afficher",
+      "emptyMessage": "N'apparaissent ici que les personnes ayant saisi du temps sur un projet de ce groupe.",
+      "truncated": "Ce groupe dépasse ce qu'un calendrier peut afficher. Choisissez une équipe ou un projet pour voir tout le monde.",
+      "person": "Personne",
+      "capacity": "Disponible",
+      "capacityPeople": "{{count}} personne",
+      "capacityPeople_plural": "{{count}} personnes",
+      "capacityDay": "{{left}} h sur {{planned}} h disponibles · {{away}} absents · {{requested}} demandés",
+      "away": "Absent",
+      "legend": {
+        "away": "Absent",
+        "requested": "Demandé",
+        "dayOff": "Week-end ou jour férié"
+      },
+      "thisWeek": "Cette semaine",
+      "capacityWeek": "{{left}} h sur {{planned}} h disponibles",
+      "everybodyHere": "Tout le monde est là."
     }
   },
   "projects": {
