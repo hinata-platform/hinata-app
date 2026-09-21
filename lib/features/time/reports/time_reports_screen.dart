@@ -212,10 +212,18 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
 
   Future<void> _openLink(String link) async {
     try {
-      final report = link.startsWith('shared:')
-          ? await _repository.openShared(link.substring(7))
-          : await _repository.openSaved(link.substring(6));
+      final report = switch (link) {
+        _ when link.startsWith('shared:') => await _repository.openShared(
+          link.substring('shared:'.length),
+        ),
+        _ when link.startsWith('saved:') => await _repository.openSaved(
+          link.substring('saved:'.length),
+        ),
+        // Nothing this page knows how to open: the reports as they stand.
+        _ => null,
+      };
       if (!mounted) return;
+      if (report == null) return _loadTab();
       _open(report);
     } on ApiFailure {
       if (!mounted) return;

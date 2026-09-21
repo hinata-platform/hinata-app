@@ -47,10 +47,17 @@ class _TimeModuleScreenState extends State<TimeModuleScreen> {
   /// read from the server to fill a page nobody opened.
   final Set<TimeView> _opened = {};
 
+  /// The scope each view was last opened with. The address carries only the
+  /// visible view's; handing it to the others too would rebuild the reports
+  /// behind the absences as a report link named "team", and the absences
+  /// behind the reports as a list named after a report.
+  final Map<TimeView, String?> _scopes = {};
+
   @override
   void initState() {
     super.initState();
     _opened.add(widget.view);
+    _scopes[widget.view] = widget.scope;
   }
 
   @override
@@ -58,6 +65,7 @@ class _TimeModuleScreenState extends State<TimeModuleScreen> {
     super.didUpdateWidget(oldWidget);
     // Before the build that follows, so the branch is there to be shown.
     _opened.add(widget.view);
+    _scopes[widget.view] = widget.scope;
   }
 
   @override
@@ -99,15 +107,15 @@ class _TimeModuleScreenState extends State<TimeModuleScreen> {
     // built: a notification about somebody else's request has to open the
     // inbox even when the absences were already on screen.
     TimeView.absences => TimeAbsencesScreen(
-      key: ValueKey('absences-${widget.scope ?? ''}'),
-      scope: widget.scope,
+      key: ValueKey('absences-${_scopes[view] ?? ''}'),
+      scope: _scopes[view],
     ),
     // Keyed by the link, read once when the page is built: a report opened from
     // a mail or a shared link has to open even when the reports were already
     // on screen.
     TimeView.reports => TimeReportsScreen(
-      key: ValueKey('reports-${widget.scope ?? ''}'),
-      link: widget.scope,
+      key: ValueKey('reports-${_scopes[view] ?? ''}'),
+      link: _scopes[view],
     ),
     // Reachable even while approvals are switched off, and deliberately: the
     // route answers with what is there, which is then nothing. Gating it here
