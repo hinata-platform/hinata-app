@@ -513,14 +513,14 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
             (kAbsenceScopeTeam, LucideIcons.usersRound),
           ])
             if (scope != kAbsenceScopeTeam || team) ...[
-            if (scope != kAbsenceScopeMine) const SizedBox(width: 8),
-            GlassScopePill(
-              icon: icon,
-              label: context.t('absence.view.scope.$scope'),
-              active: _shownScope == scope,
-              onTap: () => _switchScope(scope),
-            ),
-          ],
+              if (scope != kAbsenceScopeMine) const SizedBox(width: 8),
+              GlassScopePill(
+                icon: icon,
+                label: context.t('absence.view.scope.$scope'),
+                active: _shownScope == scope,
+                onTap: () => _switchScope(scope),
+              ),
+            ],
         ],
       ),
     ),

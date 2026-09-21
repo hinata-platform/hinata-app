@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/core_models.dart';
+import '../../../core/models/time_policy_models.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -165,15 +166,16 @@ class _AdminAbsenceManagementCardState
             helper: context.t('admin.absence.calendarHint'),
             value: widget.calendar,
             effective: widget.calendarEffective,
-            options: const {
-              'OFF': 'absence.calendar.level.off',
-              'BUSY_ONLY': 'absence.calendar.level.busyOnly',
-              'TYPE': 'absence.calendar.level.type',
+            options: {
+              for (final level in AbsenceCalendarLevel.values)
+                level.wire: level.labelKey,
             },
             onChanged: widget.onCalendarChanged!,
           ),
           // A calendar of who is away when is a holiday plan: Nr. 5, not Nr. 6.
-          const CodeterminationNote(textKey: 'admin.absence.calendarCodetermination'),
+          const CodeterminationNote(
+            textKey: 'admin.absence.calendarCodetermination',
+          ),
         ],
         const SizedBox(height: 8),
         _keepers(context),

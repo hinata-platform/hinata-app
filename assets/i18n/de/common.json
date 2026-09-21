@@ -1177,7 +1177,8 @@
         "leadsSee": "Leitungen deiner Projekte sehen Art und Zeitraum deiner Abwesenheiten, nie eine Notiz, und Krankheit nur als abwesend.",
         "leadsDoNot": "Leitungen deiner Projekte sehen deine Abwesenheiten nicht.",
         "keepersNamed": "Nur die benannten Abwesenheitsverwalter und Administratoren sehen einen Krankheitstag als Krankheit.",
-        "keepersAdmins": "Nur Administratoren sehen einen Krankheitstag als Krankheit."
+        "keepersAdmins": "Nur Administratoren sehen einen Krankheitstag als Krankheit.",
+        "band": "Leitungen deiner Projekte und Admins deiner Teams sehen, wie viel Kapazität ihrer Gruppe bleibt, als Summe über mindestens drei Personen. Deine genehmigten Tage und geplanten Stunden fließen ein, dein Name nicht."
       }
     },
     "hint": {
@@ -1692,7 +1693,8 @@
       },
       "thisWeek": "Diese Woche",
       "capacityWeek": "{{left}} h von {{planned}} h verfügbar",
-      "everybodyHere": "Alle sind da."
+      "everybodyHere": "Alle sind da.",
+      "holiday": "Feiertag"
     }
   },
   "projects": {

@@ -1,10 +1,16 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../core/blocs/fetch_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/team_absence_models.dart';
+import '../../core/repositories/absence_repository.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveAvatar;
-import 'team_absence_calendar.dart' show teamAbsenceLabel;
+import 'team_absence_style.dart';
 
 /// Who is away today, as the dashboard card lists it (HIN-118): the names of
 /// the page it is handed, then how many more the day holds.
@@ -59,7 +65,7 @@ class AwayTodayList extends StatelessWidget {
                   if (row.entries.isNotEmpty)
                     Flexible(
                       child: Text(
-                        _label(context, row.entries.first),
+                        teamAbsenceLabelWithState(context, row.entries.first),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.end,
@@ -84,11 +90,65 @@ class AwayTodayList extends StatelessWidget {
       ],
     );
   }
+}
 
-  static String _label(BuildContext context, TeamAbsenceEntry entry) {
-    final label = teamAbsenceLabel(context, entry);
-    return entry.requested
-        ? '$label · ${context.t('absence.team.legend.requested')}'
-        : label;
+/// Reads who is away today and shows it: one page of [shown], and the server's
+/// total for the rest. The dashboard card is this inside its glass.
+class AwayToday extends StatefulWidget {
+  const AwayToday({super.key});
+
+  /// How many names a card has room for; the rest is a count.
+  static const shown = 5;
+
+  @override
+  State<AwayToday> createState() => _AwayTodayState();
+}
+
+class _AwayTodayState extends State<AwayToday> {
+  late final FetchCubit<TeamAbsencePage> _today;
+
+  @override
+  void initState() {
+    super.initState();
+    final day = DateUtils.dateOnly(DateTime.now());
+    final repository = context.read<AbsenceRepository>();
+    _today = FetchCubit<TeamAbsencePage>(
+      () => repository.teamCalendar(
+        from: day,
+        to: day,
+        awayOnly: true,
+        size: AwayToday.shown,
+      ),
+    );
+    unawaited(_today.load());
   }
+
+  @override
+  void dispose() {
+    unawaited(_today.close());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      BlocBuilder<FetchCubit<TeamAbsencePage>, FetchState<TeamAbsencePage>>(
+        bloc: _today,
+        builder: (context, state) {
+          final page = state.data;
+          if (page != null) return AwayTodayList(page: page);
+          if (state.errorKey != null) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Text(
+                context.t(state.errorKey!),
+                style: TextStyle(color: AppColors.inkSoft),
+              ),
+            );
+          }
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 14),
+            child: Center(child: HiveLoader(size: 24)),
+          );
+        },
+      );
 }
