@@ -3655,8 +3655,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       );
       if (picked != null) {
         await _patch({
-          isStart ? 'startDate' : 'dueDate':
-              picked.toIso8601String().substring(0, 10),
+          isStart ? 'startDate' : 'dueDate': picked.toIso8601String().substring(
+            0,
+            10,
+          ),
         });
       }
       return;
@@ -3687,8 +3689,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     // A date somebody picked. The server drops the rule behind it, which is
     // what keeps the next event move from overwriting a deliberate decision.
     await _patch({
-      isStart ? 'startDate' : 'dueDate':
-          choice.date!.toIso8601String().substring(0, 10),
+      isStart ? 'startDate' : 'dueDate': choice.date!
+          .toIso8601String()
+          .substring(0, 10),
     });
   }
 

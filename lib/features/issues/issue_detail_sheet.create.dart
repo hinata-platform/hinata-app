@@ -1002,8 +1002,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
       offset: isStart ? _startOffset : _dueOffset,
       eventDate: _project?.eventDate,
       anchorRect: anchorRect,
-      resolve: (offset) =>
-          _projectApi.resolveOffset(projectId, offset: offset),
+      resolve: (offset) => _projectApi.resolveOffset(projectId, offset: offset),
     );
     if (choice == null || !mounted) return;
     setState(() {
