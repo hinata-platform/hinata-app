@@ -29,6 +29,7 @@ class ReportControlsRow extends StatelessWidget {
     required this.onClear,
     this.groupings,
     this.onGroupBy,
+    this.scope,
   });
 
   final ReportQuery query;
@@ -43,6 +44,10 @@ class ReportControlsRow extends StatelessWidget {
   /// The groupings on offer, or null where the tab has no grouping.
   final List<ReportGroupBy>? groupings;
   final ValueChanged<ReportGroupBy>? onGroupBy;
+
+  /// A tab's own narrowing, such as the workload's project; it joins the
+  /// line rather than opening one of its own.
+  final Widget? scope;
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +82,7 @@ class ReportControlsRow extends StatelessWidget {
           active: query.groupBy != ReportGroupBy.project,
           onTap: (anchor) => unawaited(_pickGroup(context, anchor)),
         ),
+      ?scope,
       if (count > 0)
         Tooltip(
           message: context.t('time.reports.clear'),
