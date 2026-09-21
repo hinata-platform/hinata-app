@@ -293,4 +293,12 @@ void main() {
       }
     });
   });
+
+  test('the yearly run is a sub-page that leads back to the entitlements', () {
+    expect(
+      subPageTitleKey('/absences/year-run', advancedTime: true),
+      'absence.yearRun.pageTitle',
+    );
+    expect(subPageBackRoute('/absences/year-run'), '/absences/entitlements');
+  });
 }

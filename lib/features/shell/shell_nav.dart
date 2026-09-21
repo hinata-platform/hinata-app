@@ -184,6 +184,7 @@ String? subPageTitleKey(String location, {required bool advancedTime}) {
   if (location == '/absences/entitlements') {
     return 'absence.entitlements.pageTitle';
   }
+  if (location == '/absences/year-run') return 'absence.yearRun.pageTitle';
   if (location == '/notifications') return 'nav.notifications';
   if (location == '/weekly-summary') return 'weeklySummary.title';
   if (location == '/settings') return 'nav.settings';
@@ -224,6 +225,8 @@ String subPageBackRoute(String location) {
   // Settings rather than the admin area: the keeper's pages are reached from
   // both, and a named keeper who is not an administrator would be sent to a
   // page that is not theirs.
+  // The yearly run is opened from the entitlements, and goes back there.
+  if (location == '/absences/year-run') return '/absences/entitlements';
   if (location.startsWith('/absences/')) return '/settings';
   if (location.startsWith('/issues/')) return '/issues';
   if (location.startsWith('/knowledge/')) return '/knowledge';

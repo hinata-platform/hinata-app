@@ -232,13 +232,16 @@ class _AbsenceReportTabState extends State<AbsenceReportTab> {
       if (_types.length > 1 || !byPerson)
         GlassFilterPill(
           icon: LucideIcons.tag,
-          label: _query.typeId == null
-              ? context.t(
-                  byPerson
-                      ? 'absence.report.pickType'
-                      : 'absence.report.allTypes',
-                )
-              : _typeName(_query.typeId),
+          // By person the server answers for one type even when none was
+          // picked; the pill names the one it chose.
+          label: switch (_typeName(
+            _query.typeId ?? (byPerson ? head?.typeId : null),
+          )) {
+            '' => context.t(
+              byPerson ? 'absence.report.pickType' : 'absence.report.allTypes',
+            ),
+            final name => name,
+          },
           active: _query.typeId != null,
           onTap: (anchor) => unawaited(_pickType(anchor)),
         ),

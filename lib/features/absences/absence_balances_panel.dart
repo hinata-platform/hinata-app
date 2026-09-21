@@ -705,9 +705,12 @@ class _BalanceCard extends StatelessWidget {
         ],
       ),
       const SizedBox(height: 6),
+      // Last year's days on the same line: without them the rest reads as
+      // more than the entitlement allows.
       Text(
         '${context.t('absence.balances.entitled')} '
-        '${daysLabel(context, balance.accruedMilliDays)}',
+        '${daysLabel(context, balance.accruedMilliDays)}'
+        '${balance.carriedInMilliDays > 0 ? '  ·  ${context.t('absence.report.carriedIn')} ${days(context, balance.carriedInMilliDays)}' : ''}',
         style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
       ),
       Text(
@@ -717,16 +720,12 @@ class _BalanceCard extends StatelessWidget {
         '${days(context, balance.plannedMilliDays)}',
         style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
       ),
-      if (balance.expiresOn != null) ...[
+      if (balance.expiresOn != null && balance.carriedInMilliDays > 0) ...[
         const SizedBox(height: 4),
         Text(
           context.t(
             'absence.balances.expiresOn',
-            variables: {
-              'date': MaterialLocalizations.of(
-                context,
-              ).formatMediumDate(balance.expiresOn!.toLocal()),
-            },
+            variables: {'date': dayMonthLabel(context, balance.expiresOn!)},
           ),
           style: TextStyle(
             fontSize: 11,
