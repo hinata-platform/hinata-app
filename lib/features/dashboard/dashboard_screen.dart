@@ -7,12 +7,15 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
+import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/events/board_events.dart';
 import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
+import '../../core/models/team_absence_models.dart';
 import '../../core/models/team_models.dart' show Team;
 import '../../core/models/work_models.dart';
 import '../../core/responsive/golden_columns.dart';
@@ -23,7 +26,9 @@ import '../../core/widgets/hex_mark.dart' show HexMark;
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/user_pronouns.dart';
 import '../../core/widgets/status_widgets.dart';
+import '../absences/away_today_list.dart';
 import '../admin/connect_hint.dart';
+import '../../core/widgets/hive_loader.dart';
 import '../board/board_links.dart';
 import '../issues/issue_detail_sheet.dart';
 import '../shell/page_chrome.dart';
@@ -35,6 +40,7 @@ import '../sprint/modals/glass_modal.dart'
         GlassToastKind,
         showGlassErrorToast,
         showGlassToast;
+import '../../core/repositories/absence_repository.dart';
 import '../../core/repositories/dashboard_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
@@ -69,6 +75,7 @@ abstract final class _Card {
   static const completion = 'completion';
   static const tracker = 'tracker';
   static const ranking = 'ranking';
+  static const away = 'away';
 }
 
 class DashboardScreen extends StatelessWidget {
@@ -122,6 +129,12 @@ class _DashboardViewState extends State<_DashboardView> {
     _issueSub = IssueEvents.instance.changes.listen((_) => _cubit.load());
     _boardSub = BoardEvents.instance.changes.listen((_) => _cubit.load());
     _loadPickerData();
+    // Whether the "away today" card exists is a policy (HIN-118). Asked only
+    // with absence management on: with it off the route answers 404, and a 404
+    // sends the whole app to re-read /meta.
+    if (context.read<AppConfigBloc>().state.meta?.absenceManagement ?? false) {
+      unawaited(context.read<TimePolicyCubit>().ensureLoaded());
+    }
     // One-time nudge for admins on a not-yet-connected self-hosted instance.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) maybeShowConnectHint(context);
@@ -200,6 +213,11 @@ class _DashboardViewState extends State<_DashboardView> {
     // only says how wide it is once its data has arrived spends the whole load
     // laid out as something else and then jumps — which is exactly what the
     // dashboard did: one column for a second, then three.
+    //
+    // Watched so the "away today" card appears once the policy has arrived.
+    context.select<TimePolicyCubit, bool>(
+      (cubit) => cubit.state.absenceCalendar.isOn,
+    );
     return PageChrome(
       contentMax: goldenContentMax,
       child: BlocProvider.value(
@@ -294,6 +312,12 @@ class _DashboardViewState extends State<_DashboardView> {
     if (data.gitActivity.isNotEmpty)
       _Card.git: _GitCard(events: data.gitActivity),
     _Card.ranking: _LeaderboardCard(ranking: data.ranking),
+    // Only with the team calendar on (HIN-118); otherwise it does not exist,
+    // not even as a card that could be switched back on.
+    if ((context.read<AppConfigBloc>().state.meta?.absenceManagement ??
+            false) &&
+        context.read<TimePolicyCubit>().state.absenceCalendar.isOn)
+      _Card.away: const _AwayTodayCard(),
   };
 
   // Desktop / tablet: the cards spread over golden columns by how tall they
@@ -324,6 +348,7 @@ class _DashboardViewState extends State<_DashboardView> {
       group([_Card.hero], weight: 7, wide: true, lead: true),
       group([_Card.kpis, _Card.completion], weight: 6),
       group([_Card.focus], weight: 6),
+      group([_Card.away], weight: 4),
       group([_Card.tracker], weight: 5, wide: true),
       group([_Card.git], weight: 6),
       group([_Card.ranking], weight: 5.5),
@@ -342,6 +367,7 @@ class _DashboardViewState extends State<_DashboardView> {
       _Card.hero,
       _Card.kpis,
       _Card.focus,
+      _Card.away,
       _Card.completion,
       _Card.tracker,
       _Card.git,

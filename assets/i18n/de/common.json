@@ -1166,7 +1166,19 @@
         "maxDaysBack": "Du kannst bis zu {{count}} Tag zurück erfassen. Ältere Tage öffnet ein Administrator auf Anfrage.",
         "maxDaysBack_plural": "Du kannst bis zu {{count}} Tage zurück erfassen. Ältere Tage öffnet ein Administrator auf Anfrage."
       },
-      "loadFailed": "Der Hinweis konnte nicht geladen werden. Prüfe deine Verbindung und versuch es noch einmal."
+      "loadFailed": "Der Hinweis konnte nicht geladen werden. Prüfe deine Verbindung und versuch es noch einmal.",
+      "absence": {
+        "heading": "Meine Abwesenheiten",
+        "calendar": {
+          "off": "Kolleginnen und Kollegen sehen deine Abwesenheiten nicht.",
+          "busyOnly": "Wer in deinen Projekten arbeitet, sieht im Teamkalender, dass du abwesend bist, aber nicht warum.",
+          "type": "Wer in deinen Projekten arbeitet, sieht im Teamkalender die Art deiner Abwesenheit. Krankheit steht dort immer nur als abwesend, und Arten, die nur für dich sichtbar sind, erscheinen dort gar nicht."
+        },
+        "leadsSee": "Leitungen deiner Projekte sehen Art und Zeitraum deiner Abwesenheiten, nie eine Notiz, und Krankheit nur als abwesend.",
+        "leadsDoNot": "Leitungen deiner Projekte sehen deine Abwesenheiten nicht.",
+        "keepersNamed": "Nur die benannten Abwesenheitsverwalter und Administratoren sehen einen Krankheitstag als Krankheit.",
+        "keepersAdmins": "Nur Administratoren sehen einen Krankheitstag als Krankheit."
+      }
     },
     "hint": {
       "chip": {
@@ -1423,7 +1435,7 @@
       "negativeHint": "Jemand darf mehr nehmen, als schon zugewachsen ist.",
       "negativeLimit": "Höchster Minussaldo",
       "visibility": "Was andere sehen",
-      "visibilityHint": "Mehr als „abwesend“ ist eine Entscheidung über Gesundheitsdaten (Art. 9 DSGVO). Sie wirkt ab Stufe A3 im Kalender.",
+      "visibilityHint": "Was andere im Teamkalender von dieser Art sehen. Die Richtlinie der Instanz ist die Obergrenze, und Krankheit erscheint dort nie als Krankheit.",
       "quota": "Kontingent",
       "allowance": "Tage pro Jahr",
       "allowanceHint": "Der Standard für neue Zuteilungen. Einzelne Personen können davon abweichen.",
@@ -2432,7 +2444,10 @@
       "keepersTitle": "Wer Abwesenheiten verwaltet",
       "keepersHint": "Diese Personen verwalten Abwesenheitsarten, Ansprüche und Salden für alle und sehen einen Krankheitstag als Krankheitstag. Administratoren dürfen es immer.",
       "keepersEmpty": "Niemand benannt: Administratoren verwalten die Abwesenheiten.",
-      "keepersAdd": "Person hinzufügen"
+      "keepersAdd": "Person hinzufügen",
+      "calendarTitle": "Team-Abwesenheitskalender",
+      "calendarHint": "Ob sich Kolleginnen und Kollegen gegenseitig in einem Kalender abwesend sehen, und wie viel davon. Standardmäßig aus. Leitungen und Abwesenheitsverwalter sehen zusätzlich, wie viel Kapazität ihrer Gruppe bleibt. Jede Abwesenheitsart kann das weiter einschränken.",
+      "calendarCodetermination": "Ein Kalender, wer wann abwesend ist, ist ein Urlaubsplan im Sinne von § 87 Abs. 1 Nr. 5 BetrVG (im öffentlichen Dienst das LPVG). Vor dem Einschalten mit dem Betriebsrat oder Personalrat vereinbaren; die Bewertung obliegt den Betriebsparteien."
     },
     "passwordPolicy": "Passwortrichtlinie",
     "passwordPolicyHint": "Mindestanforderungen für Benutzerpasswörter.",

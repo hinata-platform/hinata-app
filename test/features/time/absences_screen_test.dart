@@ -96,6 +96,7 @@ void main() {
     _FakeAbsences? absences,
     List<AbsenceRequest> pending = const [],
     List<AbsenceType> types = const [_vacationType],
+    TimePolicySnapshot policy = TimePolicySnapshot.none,
   }) => MediaQuery(
     // The test surface's own size: a wider claim lays the page out for room
     // it does not get, and its head runs over the edge.
@@ -126,8 +127,7 @@ void main() {
                 ),
               ),
               BlocProvider<TimePolicyCubit>(
-                create: (_) =>
-                    FakeTimePolicyCubit(TimePolicySnapshot.none, _UnusedTime()),
+                create: (_) => FakeTimePolicyCubit(policy, _UnusedTime()),
               ),
             ],
             child: child ?? const TimeAbsencesScreen(scope: 'requests'),
@@ -136,6 +136,43 @@ void main() {
       ),
     ),
   );
+
+  // --- the team calendar (HIN-118) -------------------------------------------
+
+  // Keys render wider than words, so five pills need more than the default
+  // surface; the row is lazy and would not build the ones past its edge.
+  void wide(WidgetTester tester) {
+    tester.view
+      ..physicalSize = const Size(3000, 800)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+  }
+
+  testWidgets('without the calendar policy there is no team list to pick', (
+    tester,
+  ) async {
+    wide(tester);
+    await tester.pumpWidget(host(_FakeRequests()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('absence.view.scope.balances'), findsOneWidget);
+    expect(find.text('absence.view.scope.team'), findsNothing);
+  });
+
+  testWidgets('with it, the team list joins the others', (tester) async {
+    wide(tester);
+    await tester.pumpWidget(
+      host(
+        _FakeRequests(),
+        policy: const TimePolicySnapshot(
+          absenceCalendar: AbsenceCalendarLevel.busyOnly,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('absence.view.scope.team'), findsOneWidget);
+  });
 
   // --- the two lists -------------------------------------------------------
 

@@ -117,9 +117,11 @@ void main() {
           .map((p) => p.title)
           .toSet();
       expect(flagged, monitoring);
+      // One more than the switches: the team-calendar level (HIN-118) is a
+      // choice, not a switch, and a holiday plan carries its Nr. 5 note too.
       expect(
         find.byType(CodeterminationNote),
-        findsNWidgets(monitoring.length),
+        findsNWidgets(monitoring.length + 1),
       );
     });
 

@@ -20,7 +20,8 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveAvatar;
 import '../../core/widgets/soft_card.dart';
 import 'absence_labels.dart';
-import 'team_absence_calendar.dart' show teamAbsenceLabel, TeamAbsenceBarPainter;
+import 'team_absence_calendar.dart'
+    show teamAbsenceLabel, TeamAbsenceBarPainter;
 
 DateTime _dayOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 
@@ -57,7 +58,11 @@ class TeamAbsenceAgenda extends StatelessWidget {
     var start = _dayOnly(from);
     final end = _dayOnly(to);
     while (!start.isAfter(end)) {
-      final sunday = DateTime(start.year, start.month, start.day + (7 - start.weekday));
+      final sunday = DateTime(
+        start.year,
+        start.month,
+        start.day + (7 - start.weekday),
+      );
       final last = sunday.isAfter(end) ? end : sunday;
       weeks.add(_Week(start, last));
       start = DateTime(last.year, last.month, last.day + 1);
@@ -72,7 +77,8 @@ class TeamAbsenceAgenda extends StatelessWidget {
       onNotification: (notification) {
         final ask = onNearEnd;
         if (ask != null &&
-            notification.metrics.pixels >= notification.metrics.maxScrollExtent - 300) {
+            notification.metrics.pixels >=
+                notification.metrics.maxScrollExtent - 300) {
           ask();
         }
         return false;
@@ -81,11 +87,8 @@ class TeamAbsenceAgenda extends StatelessWidget {
         padding: padding,
         itemCount: weeks.length,
         separatorBuilder: (_, _) => const SizedBox(height: 12),
-        itemBuilder: (context, index) => _WeekCard(
-          week: weeks[index],
-          rows: rows,
-          capacity: capacity,
-        ),
+        itemBuilder: (context, index) =>
+            _WeekCard(week: weeks[index], rows: rows, capacity: capacity),
       ),
     );
   }
@@ -152,7 +155,10 @@ class _WeekCard extends StatelessWidget {
               ),
               if (current)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.accentDeep,
                     borderRadius: BorderRadius.circular(10),
@@ -252,7 +258,11 @@ class _Meter extends StatelessWidget {
 }
 
 class _AgendaRow extends StatelessWidget {
-  const _AgendaRow({required this.row, required this.entry, required this.week});
+  const _AgendaRow({
+    required this.row,
+    required this.entry,
+    required this.week,
+  });
 
   final TeamAbsenceRow row;
   final TeamAbsenceEntry entry;
@@ -269,7 +279,9 @@ class _AgendaRow extends StatelessWidget {
     final to = entry.to.isAfter(week.to) ? week.to : entry.to;
     final span = from == to ? day(from) : '${day(from)} – ${day(to)}';
     final label = teamAbsenceLabel(context, entry);
-    final tint = entry.typed ? absenceColor(context, entry.hue) : AppColors.inkSoft;
+    final tint = entry.typed
+        ? absenceColor(context, entry.hue)
+        : AppColors.inkSoft;
     final ink = entry.typed ? absenceInk(context, entry.hue) : AppColors.ink;
     final requested = context.t('absence.team.legend.requested');
     return MergeSemantics(

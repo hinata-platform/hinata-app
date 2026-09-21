@@ -163,7 +163,7 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
     );
     _scroll.addListener(_onScroll);
     unawaited(context.read<MyAbsencesCubit>().ensureLoaded(managed: _managed));
-    unawaited(context.read<TimePolicyCubit>().ensureLoaded());
+    if (_managed) unawaited(context.read<TimePolicyCubit>().ensureLoaded());
     unawaited(_reload());
   }
 

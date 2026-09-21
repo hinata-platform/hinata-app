@@ -30,14 +30,15 @@ class ProjectCopyScope extends Equatable {
   /// says so before anybody presses the button.
   final bool withinLimit;
 
-  factory ProjectCopyScope.fromJson(Map<String, dynamic> json) => ProjectCopyScope(
-    issues: (json['issues'] as num?)?.toInt() ?? 0,
-    subtasks: (json['subtasks'] as num?)?.toInt() ?? 0,
-    attachments: (json['attachments'] as num?)?.toInt() ?? 0,
-    attachmentBytes: (json['attachmentBytes'] as num?)?.toInt() ?? 0,
-    suggestedKey: json['suggestedKey'] as String? ?? '',
-    withinLimit: json['withinLimit'] as bool? ?? true,
-  );
+  factory ProjectCopyScope.fromJson(Map<String, dynamic> json) =>
+      ProjectCopyScope(
+        issues: (json['issues'] as num?)?.toInt() ?? 0,
+        subtasks: (json['subtasks'] as num?)?.toInt() ?? 0,
+        attachments: (json['attachments'] as num?)?.toInt() ?? 0,
+        attachmentBytes: (json['attachmentBytes'] as num?)?.toInt() ?? 0,
+        suggestedKey: json['suggestedKey'] as String? ?? '',
+        withinLimit: json['withinLimit'] as bool? ?? true,
+      );
 
   @override
   List<Object?> get props => [
@@ -70,13 +71,14 @@ class ProjectCopyResult extends Equatable {
   /// the dates are still to come.
   final int deadlinesSet;
 
-  factory ProjectCopyResult.fromJson(Map<String, dynamic> json) => ProjectCopyResult(
-    project: Project.fromJson(json['project'] as Map<String, dynamic>),
-    issuesCopied: (json['issuesCopied'] as num?)?.toInt() ?? 0,
-    subtasksCopied: (json['subtasksCopied'] as num?)?.toInt() ?? 0,
-    attachmentsCopied: (json['attachmentsCopied'] as num?)?.toInt() ?? 0,
-    deadlinesSet: (json['deadlinesSet'] as num?)?.toInt() ?? 0,
-  );
+  factory ProjectCopyResult.fromJson(Map<String, dynamic> json) =>
+      ProjectCopyResult(
+        project: Project.fromJson(json['project'] as Map<String, dynamic>),
+        issuesCopied: (json['issuesCopied'] as num?)?.toInt() ?? 0,
+        subtasksCopied: (json['subtasksCopied'] as num?)?.toInt() ?? 0,
+        attachmentsCopied: (json['attachmentsCopied'] as num?)?.toInt() ?? 0,
+        deadlinesSet: (json['deadlinesSet'] as num?)?.toInt() ?? 0,
+      );
 
   @override
   List<Object?> get props => [
@@ -164,19 +166,20 @@ class SchedulePreview extends Equatable {
   /// simply set and no sheet appears.
   bool get hasChanges => moved > 0;
 
-  factory SchedulePreview.fromJson(Map<String, dynamic> json) => SchedulePreview(
-    eventDate: parseDate(json['eventDate']),
-    newEventDate: parseDate(json['newEventDate']),
-    shiftDays: (json['shiftDays'] as num?)?.toInt(),
-    moved: (json['moved'] as num?)?.toInt() ?? 0,
-    unchanged: (json['unchanged'] as num?)?.toInt() ?? 0,
-    pending: (json['pending'] as num?)?.toInt() ?? 0,
-    manual: (json['manual'] as num?)?.toInt() ?? 0,
-    named: (json['named'] as num?)?.toInt() ?? 0,
-    moves: ((json['moves'] as List<dynamic>?) ?? const [])
-        .map((m) => ScheduleMove.fromJson(m as Map<String, dynamic>))
-        .toList(growable: false),
-  );
+  factory SchedulePreview.fromJson(Map<String, dynamic> json) =>
+      SchedulePreview(
+        eventDate: parseDate(json['eventDate']),
+        newEventDate: parseDate(json['newEventDate']),
+        shiftDays: (json['shiftDays'] as num?)?.toInt(),
+        moved: (json['moved'] as num?)?.toInt() ?? 0,
+        unchanged: (json['unchanged'] as num?)?.toInt() ?? 0,
+        pending: (json['pending'] as num?)?.toInt() ?? 0,
+        manual: (json['manual'] as num?)?.toInt() ?? 0,
+        named: (json['named'] as num?)?.toInt() ?? 0,
+        moves: ((json['moves'] as List<dynamic>?) ?? const [])
+            .map((m) => ScheduleMove.fromJson(m as Map<String, dynamic>))
+            .toList(growable: false),
+      );
 
   @override
   List<Object?> get props => [
