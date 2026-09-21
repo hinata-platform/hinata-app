@@ -511,6 +511,24 @@ GoRouter buildRouter({
               ),
             ),
           ),
+          // Reports (HIN-93). `shared` is the token of a colleague's link,
+          // `saved` the id a report mail points at; either opens that report in
+          // the reader's own scope.
+          GoRoute(
+            path: '/time/reports',
+            pageBuilder: (_, state) => _timePage(
+              timeModulePage(
+                advancedTime:
+                    appConfig.state.meta?.advancedTimeTracking ?? false,
+                view: TimeView.reports,
+                scope: switch (state.uri.queryParameters) {
+                  {'shared': final token} => 'shared:$token',
+                  {'saved': final id} => 'saved:$id',
+                  _ => null,
+                },
+              ),
+            ),
+          ),
           GoRoute(
             path: '/watched',
             pageBuilder: (_, state) =>
@@ -670,20 +688,21 @@ IssuesInitialView? _issuesView(String? value) => switch (value) {
 ///
 /// The addresses do not change: each view keeps its route, its deep link and
 /// its place in the back stack.
-CustomTransitionPage<void> _timePage(Widget child) => CustomTransitionPage<void>(
-  key: const ValueKey('time-module'),
-  transitionDuration: const Duration(milliseconds: 280),
-  reverseTransitionDuration: const Duration(milliseconds: 180),
-  child: child,
-  transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-      SharedAxisTransition(
-        animation: animation,
-        secondaryAnimation: secondaryAnimation,
-        transitionType: SharedAxisTransitionType.vertical,
-        fillColor: Colors.transparent,
-        child: child,
-      ),
-);
+CustomTransitionPage<void> _timePage(Widget child) =>
+    CustomTransitionPage<void>(
+      key: const ValueKey('time-module'),
+      transitionDuration: const Duration(milliseconds: 280),
+      reverseTransitionDuration: const Duration(milliseconds: 180),
+      child: child,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+          SharedAxisTransition(
+            animation: animation,
+            secondaryAnimation: secondaryAnimation,
+            transitionType: SharedAxisTransitionType.vertical,
+            fillColor: Colors.transparent,
+            child: child,
+          ),
+    );
 
 CustomTransitionPage<void> _transition(GoRouterState state, Widget child) =>
     CustomTransitionPage<void>(
