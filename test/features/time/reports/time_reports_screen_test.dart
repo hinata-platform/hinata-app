@@ -13,6 +13,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/blocs/app_config_bloc.dart';
 import 'package:hinata/core/blocs/auth_bloc.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/models/core_models.dart';
@@ -28,6 +29,7 @@ import 'package:hinata/features/time/reports/report_filter_sheet.dart';
 import 'package:hinata/features/time/reports/report_import_wizard.dart';
 import 'package:hinata/features/time/reports/time_reports_screen.dart';
 
+import '../../absences/absence_test_support.dart';
 import '../fake_time_policy_cubit.dart';
 
 void main() {
@@ -56,6 +58,7 @@ void main() {
     child: MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>.value(value: _FakeAuth(admin: admin)),
+        BlocProvider<AppConfigBloc>.value(value: FakeAppConfig()),
         BlocProvider<TimePolicyCubit>(
           create: (_) => FakeTimePolicyCubit(policy, _UnusedTime()),
         ),
@@ -210,7 +213,7 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    for (final file in ReportFile.values) {
+    for (final file in ReportFile.forTime) {
       expect(find.text(file.labelKey), findsOneWidget);
     }
   });

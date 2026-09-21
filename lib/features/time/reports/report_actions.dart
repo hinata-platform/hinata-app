@@ -35,9 +35,21 @@ enum ReportFile {
     LucideIcons.fileSpreadsheet,
   ),
   csv('csv', 'text/csv', 'time.reports.export.csv', LucideIcons.fileType),
+  docx(
+    'docx',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'time.reports.export.docx',
+    LucideIcons.fileText,
+  ),
   print(null, null, 'time.reports.export.print', LucideIcons.printer);
 
   const ReportFile(this.extension, this.mimeType, this.labelKey, this.icon);
+
+  /// What the time report comes out as; it has no Word file.
+  static const forTime = [pdf, xlsx, csv, print];
+
+  /// What the absence report comes out as (HIN-119).
+  static const forAbsences = [pdf, xlsx, csv, docx, print];
 
   final String? extension;
   final String? mimeType;
@@ -47,33 +59,36 @@ enum ReportFile {
 
 /// The export menu, anchored where it was asked for — the same popover the
 /// issue export opens, so the two read as one idiom.
-Future<ReportFile?> showReportFileMenu(BuildContext context, Rect? anchor) =>
-    showGlassOptions<ReportFile>(
-      context,
-      title: context.t('time.reports.export.title'),
-      anchorRect: anchor,
-      options: [
-        for (final file in ReportFile.values)
-          (
-            value: file,
-            child: Row(
-              children: [
-                Icon(file.icon, size: 16, color: AppColors.inkSoft),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    context.t(file.labelKey),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+Future<ReportFile?> showReportFileMenu(
+  BuildContext context,
+  Rect? anchor, {
+  List<ReportFile> files = ReportFile.forTime,
+}) => showGlassOptions<ReportFile>(
+  context,
+  title: context.t('time.reports.export.title'),
+  anchorRect: anchor,
+  options: [
+    for (final file in files)
+      (
+        value: file,
+        child: Row(
+          children: [
+            Icon(file.icon, size: 16, color: AppColors.inkSoft),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                context.t(file.labelKey),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
+              ),
             ),
-          ),
-      ],
-    );
+          ],
+        ),
+      ),
+  ],
+);
 
 /// Takes the report out as [file]: a download, a share sheet, or the print
 /// dialog. Says what happened, and that a file was cut short when it was.

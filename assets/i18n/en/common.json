@@ -1179,7 +1179,11 @@
         "leadsDoNot": "Leads of your projects do not see your absences.",
         "keepersNamed": "Only the people named to keep absences, and administrators, see a sick day as a sick day.",
         "keepersAdmins": "Only administrators see a sick day as a sick day.",
-        "band": "Leads of your projects and admins of your teams see how much capacity their group has left, as a sum over at least three people. Your approved days and planned hours are part of it; your name is not."
+        "band": "Leads of your projects and admins of your teams see how much capacity their group has left, as a sum over at least three people. Your approved days and planned hours are part of it; your name is not.",
+        "report": "In the report “absences and balances” you see your own figures. Absence keepers see everybody’s.",
+        "reportLeads": "Leads of your projects see only sums there, over at least three people, without sickness.",
+        "rate": "Absence keepers see what share of your planned working time you were away, sickness included.",
+        "sickDetail": "After {{count}} months a sick day reads only “away (other)”."
       }
     },
     "hint": {
@@ -1230,7 +1234,8 @@
         "summary": "Summary",
         "detailed": "Entries",
         "workload": "Workload",
-        "saved": "Saved"
+        "saved": "Saved",
+        "absences": "Absences"
       },
       "group": {
         "project": "Project",
@@ -1334,7 +1339,8 @@
         "print": "Print",
         "done": "Export saved",
         "truncated": "Export saved. The file is cut short; narrow the filters to get everything.",
-        "failed": "The export failed."
+        "failed": "The export failed.",
+        "docx": "Word (DOCX)"
       },
       "save": {
         "title": "Save report",
@@ -1912,6 +1918,102 @@
       "capacityWeek": "{{left}} h of {{planned}} h available",
       "everybodyHere": "Everybody is here.",
       "holiday": "Public holiday"
+    },
+    "report": {
+      "remaining": "Remaining",
+      "taken": "Taken",
+      "planned": "Planned",
+      "carriedIn": "Carried over",
+      "entitled": "Entitlement",
+      "rate": "Absence rate",
+      "person": "Person",
+      "type": "Type",
+      "people": "{{count}} person",
+      "people_plural": "{{count}} people",
+      "leftOf": "of {{days}}",
+      "expiringOn": "{{days}} lapse on {{date}}",
+      "groupPerson": "By person",
+      "groupType": "By type",
+      "year": "Leave year {{year}}",
+      "previousYear": "Previous year",
+      "nextYear": "Next year",
+      "pickType": "Choose a type",
+      "allTypes": "All types",
+      "everybody": "Everybody",
+      "onlyMe": "Only me",
+      "pickProject": "Choose a project",
+      "empty": "No balances in this year",
+      "emptyHint": "Days appear here once a year has been granted.",
+      "leadHint": "Sums over at least three people, without sickness.",
+      "pickGroupHint": "Choose a project you lead to see the sums.",
+      "rateHint": "Share of planned working time the person was away, every kind included.",
+      "rateShort": "Rate"
+    },
+    "expiry": {
+      "title": "{{type}} lapses on {{date}}",
+      "body": "{{days}} left. Take them by then; after that they lapse."
+    },
+    "notices": {
+      "title": "Notices received",
+      "hint": "The same notices a lapse rests on.",
+      "empty": "No notices yet",
+      "line": "{{type}} {{year}}: {{days}} left",
+      "until": "Deadline {{date}}",
+      "kind": {
+        "ANNUAL": "Yearly notice",
+        "BEFORE_YEAR_END": "Before the year ends",
+        "BEFORE_CARRYOVER_DEADLINE": "Before the carryover ends",
+        "MANUAL": "Sent by hand"
+      }
+    },
+    "yearRun": {
+      "pageTitle": "Yearly run",
+      "open": "Open the yearly run",
+      "intro": "Carryover, lapses and monthly accrual run every night. Nothing lapses without a notice: whoever was not told keeps the days.",
+      "never": "The yearly run has not run yet",
+      "last": "Last run on {{date}}",
+      "lastFailed": "Stopped on {{date}}; it carries on next night",
+      "explain": "Every booking exists once. A second run changes nothing.",
+      "carried": "Carried",
+      "expired": "Lapsed",
+      "held": "Held",
+      "accrued": "Accrued",
+      "missingTitle": "Notice missing",
+      "missingHint": "These days lapse only once the person was told before the deadline.",
+      "missingEmpty": "Everybody has been told",
+      "missingLine": "{{type}} {{year}}: {{days}}",
+      "overdue": "Deadline {{date}} passed, days held",
+      "dueBy": "Deadline {{date}}",
+      "sendNow": "Send notice now",
+      "sent": "Notice sent",
+      "proposalsTitle": "Proposals after a long illness",
+      "proposalsHint": "After 15 months of illness leave may lapse. Whether that applies is your decision, with a reason.",
+      "proposalsEmpty": "No open proposals",
+      "proposalLine": "{{type}} {{year}}: {{days}}",
+      "proposalSick": "{{count}} days of illness in {{span}}",
+      "decide": "Decide",
+      "decisionTitle": "Decide the proposal",
+      "reason": "Reason",
+      "reasonHint": "Kept on the proposal, not in the audit log.",
+      "confirm": "Book the lapse",
+      "dismiss": "Keep the days",
+      "confirmed": "Lapse booked",
+      "dismissed": "Proposal dismissed, the days stay"
+    },
+    "settlement": {
+      "title": "Settlement on leaving",
+      "hint": "The year recomputed with the leaving date (§ 5 BUrlG). Hinata counts days, never money.",
+      "needsLeftOn": "Enter a leaving date to see the settlement.",
+      "accrued": "Entitlement with leaving date",
+      "correction": "Correction",
+      "remaining": "Left now",
+      "payout": "To pay out",
+      "bookCorrection": "Book the correction",
+      "correctionReason": "Twelfths on leaving (§ 5 BUrlG)",
+      "bookPayout": "Book the payout",
+      "payoutReason": "Paid out with the final pay",
+      "done": "Booked",
+      "confirmTitle": "{{what}} of {{days}}?"
     }
   },
   "projects": {
@@ -2651,7 +2753,24 @@
       "grantRevoked": "The days are closed again.",
       "suggestedDailyTargetLabel": "Suggested daily target",
       "suggestedWeeklyTargetLabel": "Suggested weekly target",
-      "suggestedTargetHint": "Offered to people in their reminder settings. Whether to use it is up to each person."
+      "suggestedTargetHint": "Offered to people in their reminder settings. Whether to use it is up to each person.",
+      "absenceReportsTitle": "Report “absences and balances”",
+      "absenceReportsHint": "Everybody sees their own figures, absence keepers everybody’s. Leads see sums over at least three people, without sickness, if they see their members’ entries anyway. Only with absence management.",
+      "absenceRateTitle": "Absence rate per person",
+      "absenceRateHint": "For absence keepers only, never for leads. The rate includes sickness and is therefore conduct and health data: its own co-determined decision (§ 87 Abs. 1 Nr. 6 BetrVG).",
+      "expiryNoticeTitle": "Notices before leave lapses",
+      "expiryNoticeHint": "Without a timely notice no leave lapses (BAG 19.02.2019, 9 AZR 541/15). Once a year on the chosen day, and some weeks before each deadline.",
+      "expiryMonthLabel": "Month of the yearly notice",
+      "expiryDayLabel": "Day of the yearly notice",
+      "expiryWeeksLabel": "Weeks before each deadline",
+      "weeksSuffix": "weeks",
+      "yearsSuffix": "years",
+      "sickDetailPurgeLabel": "Coarsen sickness after",
+      "sickDetailPurgeHint": "After that a sick day reads “away (other)”, without its note. The day and the balance stay. 0 keeps the detail.",
+      "requestPurgeLabel": "Delete closed requests after",
+      "requestPurgeHint": "Refused, withdrawn and cancelled requests. Approved ones stay as evidence. 0 keeps all.",
+      "ledgerPurgeLabel": "Delete the leave journal after",
+      "ledgerPurgeHint": "0 keeps the journal. Otherwise at least 3 years (§§ 195, 199 BGB). Expiry notices are never deleted."
     },
     "absence": {
       "title": "Absence management 2.0",

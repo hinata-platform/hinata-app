@@ -46,6 +46,10 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
   /// unrelated sections. Mirrors TimePolicy.RETENTION_MAX_MONTHS.
   static const int _retentionMaxMonths = 1200;
 
+  /// Mirrors `TimePolicy.LEDGER_RETENTION_MAX_YEARS` and `EXPIRY_NOTICE_WEEKS_MAX`.
+  static const int _ledgerRetentionMaxYears = 100;
+  static const int _expiryNoticeMaxWeeks = 26;
+
   /// Ten years. Mirrors TimePolicy.MAX_DAYS_BACK_CEILING.
   static const int _maxDaysBackCeiling = 3660;
 
@@ -429,6 +433,24 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         monitoring: true,
         pending: true,
       ),
+      // HIN-119: the absence report and, separately, the absence rate in it.
+      // Both need absence management; the rate is conduct and health data.
+      PolicySwitch(
+        title: context.t('admin.timeTracking.absenceReportsTitle'),
+        description: context.t('admin.timeTracking.absenceReportsHint'),
+        value: _value<bool>('absenceReportsEnabled'),
+        effective: _effectiveValue<bool>('absenceReportsEnabled'),
+        onChanged: (v) => _set('absenceReportsEnabled', v),
+        monitoring: true,
+      ),
+      PolicySwitch(
+        title: context.t('admin.timeTracking.absenceRateTitle'),
+        description: context.t('admin.timeTracking.absenceRateHint'),
+        value: _value<bool>('absenceRateEnabled'),
+        effective: _effectiveValue<bool>('absenceRateEnabled'),
+        onChanged: (v) => _set('absenceRateEnabled', v),
+        monitoring: true,
+      ),
       PolicySwitch(
         title: context.t('admin.timeTracking.alertsTitle'),
         description: context.t('admin.timeTracking.alertsHint'),
@@ -550,6 +572,66 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         value: _nested<num>('retention', 'entryPurgeMonths')?.toInt(),
         onChanged: (v) => _setNestedQuietly('retention', 'entryPurgeMonths', v),
         maxValue: _retentionMaxMonths,
+      ),
+      // HIN-119: what of absence data is kept, and for how long. The notices
+      // behind a lapse are never deleted, and the fields say so.
+      PolicyNumber(
+        label: context.t('admin.timeTracking.sickDetailPurgeLabel'),
+        helper: context.t('admin.timeTracking.sickDetailPurgeHint'),
+        suffix: context.t('admin.timeTracking.monthsSuffix'),
+        value: _nested<num>(
+          'timeOffRetention',
+          'sickDetailPurgeMonths',
+        )?.toInt(),
+        onChanged: (v) =>
+            _setNestedQuietly('timeOffRetention', 'sickDetailPurgeMonths', v),
+        maxValue: _retentionMaxMonths,
+      ),
+      PolicyNumber(
+        label: context.t('admin.timeTracking.requestPurgeLabel'),
+        helper: context.t('admin.timeTracking.requestPurgeHint'),
+        suffix: context.t('admin.timeTracking.monthsSuffix'),
+        value: _nested<num>('timeOffRetention', 'requestPurgeMonths')?.toInt(),
+        onChanged: (v) =>
+            _setNestedQuietly('timeOffRetention', 'requestPurgeMonths', v),
+        maxValue: _retentionMaxMonths,
+      ),
+      PolicyNumber(
+        label: context.t('admin.timeTracking.ledgerPurgeLabel'),
+        helper: context.t('admin.timeTracking.ledgerPurgeHint'),
+        suffix: context.t('admin.timeTracking.yearsSuffix'),
+        value: _nested<num>('timeOffRetention', 'ledgerPurgeYears')?.toInt(),
+        onChanged: (v) =>
+            _setNestedQuietly('timeOffRetention', 'ledgerPurgeYears', v),
+        maxValue: _ledgerRetentionMaxYears,
+      ),
+      const SizedBox(height: 12),
+      AdminNote(
+        icon: LucideIcons.mailWarning,
+        text: context.t('admin.timeTracking.expiryNoticeHint'),
+      ),
+      const SizedBox(height: 8),
+      PolicyNumber(
+        label: context.t('admin.timeTracking.expiryMonthLabel'),
+        helper: context.t('admin.timeTracking.expiryNoticeTitle'),
+        value: _nested<num>('expiryNotice', 'month')?.toInt(),
+        onChanged: (v) => _setNestedQuietly('expiryNotice', 'month', v),
+        maxValue: 12,
+      ),
+      PolicyNumber(
+        label: context.t('admin.timeTracking.expiryDayLabel'),
+        helper: context.t('admin.timeTracking.expiryNoticeTitle'),
+        value: _nested<num>('expiryNotice', 'day')?.toInt(),
+        onChanged: (v) => _setNestedQuietly('expiryNotice', 'day', v),
+        maxValue: 31,
+      ),
+      PolicyNumber(
+        label: context.t('admin.timeTracking.expiryWeeksLabel'),
+        helper: context.t('admin.timeTracking.expiryNoticeTitle'),
+        suffix: context.t('admin.timeTracking.weeksSuffix'),
+        value: _nested<num>('expiryNotice', 'weeksBefore')?.toInt(),
+        onChanged: (v) => _setNestedQuietly('expiryNotice', 'weeksBefore', v),
+        maxValue: _expiryNoticeMaxWeeks,
       ),
       const SizedBox(height: 8),
       AdminPrivacyNoticeField(

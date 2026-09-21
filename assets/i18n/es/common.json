@@ -1179,7 +1179,11 @@
         "leadsDoNot": "Los responsables de tus proyectos no ven tus ausencias.",
         "keepersNamed": "Solo los gestores de ausencias designados y los administradores ven un día de enfermedad como tal.",
         "keepersAdmins": "Solo los administradores ven un día de enfermedad como tal.",
-        "band": "Los responsables de tus proyectos y los administradores de tus equipos ven cuánta capacidad le queda a su grupo, como suma de al menos tres personas. Tus días aprobados y horas previstas cuentan, tu nombre no."
+        "band": "Los responsables de tus proyectos y los administradores de tus equipos ven cuánta capacidad le queda a su grupo, como suma de al menos tres personas. Tus días aprobados y horas previstas cuentan, tu nombre no.",
+        "report": "En el informe «ausencias y saldos» ves tus propias cifras. La gestión de ausencias ve las de todos.",
+        "reportLeads": "Los responsables de tus proyectos solo ven allí sumas de al menos tres personas, sin enfermedad.",
+        "rate": "La gestión de ausencias ve qué parte de tu tiempo de trabajo previsto estuviste ausente, incluida la enfermedad.",
+        "sickDetail": "Tras {{count}} meses, un día de enfermedad solo figura como «ausente (otro)»."
       }
     },
     "hint": {
@@ -1230,7 +1234,8 @@
         "summary": "Resumen",
         "detailed": "Entradas",
         "workload": "Carga",
-        "saved": "Guardados"
+        "saved": "Guardados",
+        "absences": "Ausencias"
       },
       "group": {
         "project": "Proyecto",
@@ -1334,7 +1339,8 @@
         "print": "Imprimir",
         "done": "Exportación guardada",
         "truncated": "Exportación guardada. El archivo está recortado; acota los filtros para obtenerlo todo.",
-        "failed": "La exportación ha fallado."
+        "failed": "La exportación ha fallado.",
+        "docx": "Word (DOCX)"
       },
       "save": {
         "title": "Guardar informe",
@@ -1912,6 +1918,102 @@
       "capacityWeek": "{{left}} h de {{planned}} h disponibles",
       "everybodyHere": "Están todos.",
       "holiday": "Festivo"
+    },
+    "report": {
+      "remaining": "Restante",
+      "taken": "Disfrutado",
+      "planned": "Previsto",
+      "carriedIn": "Trasladado",
+      "entitled": "Derecho",
+      "rate": "Tasa de ausencia",
+      "person": "Persona",
+      "type": "Tipo",
+      "people": "{{count}} persona",
+      "people_plural": "{{count}} personas",
+      "leftOf": "de {{days}}",
+      "expiringOn": "{{days}} caducan el {{date}}",
+      "groupPerson": "Por persona",
+      "groupType": "Por tipo",
+      "year": "Año de vacaciones {{year}}",
+      "previousYear": "Año anterior",
+      "nextYear": "Año siguiente",
+      "pickType": "Elegir tipo",
+      "allTypes": "Todos los tipos",
+      "everybody": "Todas las personas",
+      "onlyMe": "Solo yo",
+      "pickProject": "Elegir proyecto",
+      "empty": "No hay saldos en este año",
+      "emptyHint": "Los días aparecen aquí cuando se asigna un año.",
+      "leadHint": "Sumas de al menos tres personas, sin enfermedad.",
+      "pickGroupHint": "Elige un proyecto que dirijas para ver las sumas.",
+      "rateHint": "Parte del tiempo de trabajo previsto en que la persona estuvo ausente, todos los tipos incluidos.",
+      "rateShort": "Tasa"
+    },
+    "expiry": {
+      "title": "{{type}} caduca el {{date}}",
+      "body": "Quedan {{days}}. Tómalos antes; después caducan."
+    },
+    "notices": {
+      "title": "Avisos recibidos",
+      "hint": "Los mismos avisos en los que se basa una caducidad.",
+      "empty": "Aún no hay avisos",
+      "line": "{{type}} {{year}}: quedan {{days}}",
+      "until": "Fecha límite {{date}}",
+      "kind": {
+        "ANNUAL": "Aviso anual",
+        "BEFORE_YEAR_END": "Antes de fin de año",
+        "BEFORE_CARRYOVER_DEADLINE": "Antes de que acabe el traslado",
+        "MANUAL": "Enviado a mano"
+      }
+    },
+    "yearRun": {
+      "pageTitle": "Proceso anual",
+      "open": "Ver el proceso anual",
+      "intro": "El traslado, la caducidad y el devengo mensual se ejecutan cada noche. Nada caduca sin aviso: quien no fue avisado conserva los días.",
+      "never": "El proceso anual aún no se ha ejecutado",
+      "last": "Última ejecución el {{date}}",
+      "lastFailed": "Interrumpido el {{date}}; continúa la próxima noche",
+      "explain": "Cada asiento existe una sola vez. Una segunda ejecución no cambia nada.",
+      "carried": "Trasladados",
+      "expired": "Caducados",
+      "held": "Retenidos",
+      "accrued": "Devengados",
+      "missingTitle": "Falta el aviso",
+      "missingHint": "Estos días solo caducan si la persona fue avisada antes de la fecha límite.",
+      "missingEmpty": "Todos han sido avisados",
+      "missingLine": "{{type}} {{year}}: {{days}}",
+      "overdue": "Plazo {{date}} vencido, días retenidos",
+      "dueBy": "Plazo {{date}}",
+      "sendNow": "Enviar aviso ahora",
+      "sent": "Aviso enviado",
+      "proposalsTitle": "Propuestas tras una enfermedad larga",
+      "proposalsHint": "Tras 15 meses de enfermedad las vacaciones pueden caducar. Si procede, lo decides tú con una justificación.",
+      "proposalsEmpty": "No hay propuestas abiertas",
+      "proposalLine": "{{type}} {{year}}: {{days}}",
+      "proposalSick": "{{count}} días de enfermedad en {{span}}",
+      "decide": "Decidir",
+      "decisionTitle": "Decidir la propuesta",
+      "reason": "Justificación",
+      "reasonHint": "Se guarda en la propuesta, no en el registro de auditoría.",
+      "confirm": "Registrar la caducidad",
+      "dismiss": "Conservar los días",
+      "confirmed": "Caducidad registrada",
+      "dismissed": "Propuesta descartada, los días se mantienen"
+    },
+    "settlement": {
+      "title": "Liquidación a la salida",
+      "hint": "El año recalculado con la fecha de salida (§ 5 BUrlG). Hinata cuenta días, nunca dinero.",
+      "needsLeftOn": "Introduce una fecha de salida para ver la liquidación.",
+      "accrued": "Derecho con la salida",
+      "correction": "Corrección",
+      "remaining": "Restante ahora",
+      "payout": "A compensar",
+      "bookCorrection": "Registrar la corrección",
+      "correctionReason": "Doceavas partes a la salida (§ 5 BUrlG)",
+      "bookPayout": "Registrar la compensación",
+      "payoutReason": "Compensado con la última nómina",
+      "done": "Registrado",
+      "confirmTitle": "¿{{what}} de {{days}}?"
     }
   },
   "projects": {
@@ -2651,7 +2753,24 @@
       "grantRevoked": "Los días vuelven a estar cerrados.",
       "suggestedDailyTargetLabel": "Objetivo diario sugerido",
       "suggestedWeeklyTargetLabel": "Objetivo semanal sugerido",
-      "suggestedTargetHint": "Se ofrece a las personas en sus recordatorios. Cada persona decide si lo usa."
+      "suggestedTargetHint": "Se ofrece a las personas en sus recordatorios. Cada persona decide si lo usa.",
+      "absenceReportsTitle": "Informe «ausencias y saldos»",
+      "absenceReportsHint": "Cada persona ve sus cifras y la gestión de ausencias las de todos. Los responsables ven sumas de al menos tres personas sin enfermedad si ya ven las entradas de sus miembros. Solo con la gestión de ausencias.",
+      "absenceRateTitle": "Tasa de ausencia por persona",
+      "absenceRateHint": "Solo para la gestión de ausencias, nunca para responsables. La tasa incluye la enfermedad y es un dato de conducta y de salud: una decisión propia y codeterminada (§ 87 Abs. 1 Nr. 6 BetrVG).",
+      "expiryNoticeTitle": "Avisos antes de que caduquen las vacaciones",
+      "expiryNoticeHint": "Sin aviso a tiempo no caduca ninguna vacación (BAG 19.02.2019, 9 AZR 541/15). Una vez al año el día elegido y unas semanas antes de cada plazo.",
+      "expiryMonthLabel": "Mes del aviso anual",
+      "expiryDayLabel": "Día del aviso anual",
+      "expiryWeeksLabel": "Semanas antes de cada plazo",
+      "weeksSuffix": "semanas",
+      "yearsSuffix": "años",
+      "sickDetailPurgeLabel": "Anonimizar la enfermedad tras",
+      "sickDetailPurgeHint": "Después, un día de enfermedad figura como «ausente (otro)», sin nota. El día y el saldo se mantienen. 0 conserva el dato.",
+      "requestPurgeLabel": "Eliminar solicitudes cerradas tras",
+      "requestPurgeHint": "Solicitudes rechazadas, retiradas y canceladas. Las aprobadas se conservan como prueba. 0 las conserva todas.",
+      "ledgerPurgeLabel": "Eliminar el registro de vacaciones tras",
+      "ledgerPurgeHint": "0 conserva el registro. Si no, al menos 3 años (§§ 195, 199 BGB). Los avisos de caducidad nunca se eliminan."
     },
     "absence": {
       "title": "Gestión de ausencias 2.0",

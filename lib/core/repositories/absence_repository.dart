@@ -1,6 +1,9 @@
+import 'dart:typed_data';
+
 import '../api/api_client.dart';
 import '../blocs/paged_cubit.dart';
 import '../models/absence_models.dart';
+import '../models/absence_report_models.dart';
 import '../models/absence_request_models.dart';
 import '../models/team_absence_models.dart';
 import '../util/dates.dart';
@@ -453,4 +456,190 @@ class AbsenceRepository {
         )
         as Map<String, dynamic>,
   );
+
+  // --- the report on absences and balances (HIN-119) ------------------------------
+
+  /// One page of the report, with its head figures. 404
+  /// `error.feature.disabled` while the report policy is off.
+  Future<AbsenceReportPage> report(
+    AbsenceReportQuery query, {
+    int page = 0,
+    int size = 50,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/time-off/report',
+              query: {...query.toQuery(), 'page': page, 'size': size},
+            )
+            as Map<String, dynamic>;
+    final rows = data['rows'] as Map<String, dynamic>? ?? const {};
+    return (
+      head: AbsenceReportHead.fromJson(data),
+      rows: [
+        for (final item in (rows['content'] as List<dynamic>?) ?? const [])
+          AbsenceReportRow.fromJson(item as Map<String, dynamic>),
+      ],
+      total: (rows['totalElements'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  /// The report as a file in memory: `csv`, `xlsx`, `pdf` or `docx`.
+  /// [truncated] says the server stopped at the format's ceiling.
+  Future<({Uint8List bytes, bool truncated})> exportReport(
+    AbsenceReportQuery query,
+    String format,
+  ) async {
+    final file = await _api.getFile(
+      _exportPath(query, format),
+      receiveTimeout: const Duration(minutes: 3),
+    );
+    return (
+      bytes: file.bytes,
+      truncated: file.header('x-export-truncated') == 'true',
+    );
+  }
+
+  /// The same file written straight to [path]; answers whether it was cut.
+  Future<bool> exportReportTo(
+    AbsenceReportQuery query,
+    String format,
+    String path,
+  ) async =>
+      (await _api.downloadTo(
+        _exportPath(query, format),
+        path,
+        receiveTimeout: const Duration(minutes: 5),
+      ))('x-export-truncated') ==
+      'true';
+
+  String _exportPath(AbsenceReportQuery query, String format) {
+    final pairs = [
+      for (final entry in query.toQuery().entries)
+        '${Uri.encodeQueryComponent(entry.key)}='
+            '${Uri.encodeQueryComponent('${entry.value}')}',
+    ];
+    return '/api/v1/time-off/report/export.$format?${pairs.join('&')}';
+  }
+
+  // --- notices, the yearly run, leaving -----------------------------------------
+
+  /// The expiry notices one person received, newest first. Without [userId]
+  /// the reader's own.
+  Future<PageResult<AbsenceNotice>> notices({
+    String? userId,
+    int page = 0,
+    int size = 25,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/time-off/notices',
+              query: {'userId': ?userId, 'page': page, 'size': size},
+            )
+            as Map<String, dynamic>;
+    return _page(data, AbsenceNotice.fromJson);
+  }
+
+  /// A keeper sending a notice now, about [year]'s leave.
+  Future<AbsenceNotice> sendNotice({
+    required String userId,
+    required String typeId,
+    required int year,
+  }) async => AbsenceNotice.fromJson(
+    await _api.post(
+          '/api/v1/time-off/notices',
+          body: {'userId': userId, 'typeId': typeId, 'year': year},
+        )
+        as Map<String, dynamic>,
+  );
+
+  /// What the yearly run did last, and how many proposals wait.
+  Future<AbsenceYearRun> yearRun() async => AbsenceYearRun.fromJson(
+    await _api.get('/api/v1/time-off/year-run') as Map<String, dynamic>,
+  );
+
+  /// People whose days would lapse without having been told.
+  Future<PageResult<AbsenceMissingNotice>> missingNotices({
+    int page = 0,
+    int size = 50,
+  }) async => _page(
+    await _api.get(
+          '/api/v1/time-off/year-run/missing',
+          query: {'page': page, 'size': size},
+        )
+        as Map<String, dynamic>,
+    AbsenceMissingNotice.fromJson,
+  );
+
+  /// Proposed lapses after a long illness, oldest first.
+  Future<PageResult<AbsenceProposal>> proposals({
+    int page = 0,
+    int size = 50,
+  }) async => _page(
+    await _api.get(
+          '/api/v1/time-off/year-run/proposals',
+          query: {'page': page, 'size': size},
+        )
+        as Map<String, dynamic>,
+    AbsenceProposal.fromJson,
+  );
+
+  Future<void> confirmProposal(String id, String reason) => _api.post(
+    '/api/v1/time-off/year-run/proposals/${_id(id)}/confirm',
+    body: {'reason': reason},
+  );
+
+  Future<void> dismissProposal(String id, String reason) => _api.post(
+    '/api/v1/time-off/year-run/proposals/${_id(id)}/dismiss',
+    body: {'reason': reason},
+  );
+
+  /// What settling somebody's leave would take, with their leaving date.
+  Future<List<AbsenceSettlement>> settlement(String userId) async {
+    final data =
+        await _api.get('/api/v1/time-off/employment/${_id(userId)}/settlement')
+            as List<dynamic>;
+    return [
+      for (final item in data)
+        AbsenceSettlement.fromJson(item as Map<String, dynamic>),
+    ];
+  }
+
+  /// Books a payout, in days.
+  Future<AbsenceLedgerEntry> payout({
+    required String userId,
+    required String typeId,
+    required int year,
+    required int milliDays,
+    required String reason,
+  }) async => AbsenceLedgerEntry.fromJson(
+    await _api.post(
+          '/api/v1/time-off/payouts',
+          body: {
+            'userId': userId,
+            'typeId': typeId,
+            'year': year,
+            'milliDays': milliDays,
+            'reason': reason,
+          },
+        )
+        as Map<String, dynamic>,
+  );
+
+  static PageResult<T> _page<T>(
+    Map<String, dynamic> data,
+    T Function(Map<String, dynamic>) read,
+  ) => (
+    items: [
+      for (final item in (data['content'] as List<dynamic>?) ?? const [])
+        read(item as Map<String, dynamic>),
+    ],
+    total: (data['totalElements'] as num?)?.toInt() ?? 0,
+  );
 }
+
+/// One page of the absence report, with the head figures over everybody in it.
+typedef AbsenceReportPage = ({
+  AbsenceReportHead head,
+  List<AbsenceReportRow> rows,
+  int total,
+});

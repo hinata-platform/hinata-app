@@ -136,6 +136,11 @@ abstract final class AppColors {
   // ---- semantic ----
   static const danger = Color(0xFFD9544B);
   static const dangerSoft = Color(0xFFFBE7E4);
+
+  /// Danger as small text: [danger] itself reaches 3.9:1 on white and 4.3:1 on
+  /// the dark surface, short of 4.5 for body text (HIN-119, measured).
+  static Color get dangerInk =>
+      _dark ? const Color(0xFFEC7F77) : const Color(0xFFB23A32);
   static const success = Color(0xFF2FA06E);
   static const warning = Color(0xFFD9A032);
 

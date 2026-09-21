@@ -142,6 +142,9 @@ class AbsenceVisibility extends Equatable {
     this.leadsSeeSpans = false,
     this.keepersNamed = false,
     this.bandForPlanners = false,
+    this.report = false,
+    this.rateForKeepers = false,
+    this.sickDetailMonths = 0,
   });
 
   /// What colleagues see in the team calendar; never sickness as sickness.
@@ -157,12 +160,25 @@ class AbsenceVisibility extends Equatable {
   /// over at least three people, the reader's days and hours counted in.
   final bool bandForPlanners;
 
+  /// The report "absences and balances" exists (HIN-119): the reader sees their
+  /// own figures, keepers everybody's, leads — with [leadsSeeSpans] — sums.
+  final bool report;
+
+  /// Keepers see the share of working time the reader was away.
+  final bool rateForKeepers;
+
+  /// After this many months a sick day reads "away (other)"; 0 never.
+  final int sickDetailMonths;
+
   factory AbsenceVisibility.fromJson(Map<String, dynamic> json) =>
       AbsenceVisibility(
         calendar: AbsenceCalendarLevel.fromWire(json['calendar'] as String?),
         leadsSeeSpans: json['leadsSeeSpans'] as bool? ?? false,
         keepersNamed: json['keepersNamed'] as bool? ?? false,
         bandForPlanners: json['bandForPlanners'] as bool? ?? false,
+        report: json['report'] as bool? ?? false,
+        rateForKeepers: json['rateForKeepers'] as bool? ?? false,
+        sickDetailMonths: (json['sickDetailMonths'] as num?)?.toInt() ?? 0,
       );
 
   @override
@@ -171,6 +187,9 @@ class AbsenceVisibility extends Equatable {
     leadsSeeSpans,
     keepersNamed,
     bandForPlanners,
+    report,
+    rateForKeepers,
+    sickDetailMonths,
   ];
 }
 
