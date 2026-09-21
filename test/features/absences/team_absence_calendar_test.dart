@@ -74,9 +74,16 @@ void main() {
       for (final name in ['Amira', 'Ben', 'Chiara']) {
         expect(find.text(name), findsOneWidget);
       }
-      // The typed bar is labelled with its type, the busy one only as away.
-      expect(find.text('absence.type.vacation'), findsWidgets);
-      expect(find.text('absence.team.away'), findsOneWidget);
+      // Named by type, or only as away, in the label a screen reader reads:
+      // it carries the name even where the word does not fit on the bar.
+      expect(
+        find.bySemanticsLabel(RegExp('Amira · absence.type.vacation')),
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel(RegExp('Ben · absence.team.away')),
+        findsOneWidget,
+      );
       // A request says so in its accessible label, not only with a hatch.
       expect(
         find.bySemanticsLabel(RegExp('Chiara.*absence.team.legend.requested')),
@@ -142,8 +149,11 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('absence.team.away'), findsOneWidget);
-        expect(find.textContaining('absence.type.'), findsNothing);
+        expect(
+          find.bySemanticsLabel(RegExp('Ben · absence.team.away')),
+          findsOneWidget,
+        );
+        expect(find.bySemanticsLabel(RegExp('absence.type.')), findsNothing);
       },
     );
   });
