@@ -19,11 +19,8 @@ import '../../core/models/team_absence_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveAvatar;
 import '../../core/widgets/soft_card.dart';
-import 'absence_labels.dart';
-import 'team_absence_calendar.dart'
-    show teamAbsenceLabel, TeamAbsenceBarPainter;
-
-DateTime _dayOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+import '../../core/util/dates.dart';
+import 'team_absence_style.dart';
 
 /// One week of the window: Monday to Sunday, cut at the window's edges.
 class _Week {
@@ -42,7 +39,6 @@ class TeamAbsenceAgenda extends StatelessWidget {
     required this.to,
     required this.rows,
     this.capacity,
-    this.onNearEnd,
     this.padding = EdgeInsets.zero,
   });
 
@@ -50,13 +46,12 @@ class TeamAbsenceAgenda extends StatelessWidget {
   final DateTime to;
   final List<TeamAbsenceRow> rows;
   final CapacityBand? capacity;
-  final VoidCallback? onNearEnd;
   final EdgeInsets padding;
 
   List<_Week> _weeks() {
     final weeks = <_Week>[];
-    var start = _dayOnly(from);
-    final end = _dayOnly(to);
+    var start = dateOnly(from);
+    final end = dateOnly(to);
     while (!start.isAfter(end)) {
       final sunday = DateTime(
         start.year,
@@ -73,23 +68,14 @@ class TeamAbsenceAgenda extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final weeks = _weeks();
-    return NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        final ask = onNearEnd;
-        if (ask != null &&
-            notification.metrics.pixels >=
-                notification.metrics.maxScrollExtent - 300) {
-          ask();
-        }
-        return false;
-      },
-      child: ListView.separated(
-        padding: padding,
-        itemCount: weeks.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 12),
-        itemBuilder: (context, index) =>
-            _WeekCard(week: weeks[index], rows: rows, capacity: capacity),
-      ),
+    // Every row is here: the page reads the whole group before it draws the
+    // agenda, because a week card cannot say "and more on a later page".
+    return ListView.separated(
+      padding: padding,
+      itemCount: weeks.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (context, index) =>
+          _WeekCard(week: weeks[index], rows: rows, capacity: capacity),
     );
   }
 }
@@ -106,7 +92,7 @@ class _WeekCard extends StatelessWidget {
     final locale = Localizations.localeOf(context).toString();
     final dayMonth = DateFormat.MMMd(locale);
     final weekday = DateFormat.E(locale);
-    final today = _dayOnly(DateTime.now());
+    final today = dateOnly(DateTime.now());
     final current = week.holds(today);
 
     final people = <({TeamAbsenceRow row, TeamAbsenceEntry entry})>[
@@ -119,22 +105,22 @@ class _WeekCard extends StatelessWidget {
     final holidays = <String>{
       for (final row in rows)
         for (final holiday in row.holidays)
-          if (week.holds(_dayOnly(holiday.date)))
-            '${weekday.format(holiday.date)} ${dayMonth.format(holiday.date)} · ${holiday.name}',
+          if (week.holds(dateOnly(holiday.date)))
+            '${weekday.format(holiday.date)} ${dayMonth.format(holiday.date)} · ${holiday.name ?? context.t('absence.team.holiday')}',
     }.toList()..sort();
 
+    // The band arrives in weeks for the agenda (Monday to Sunday, cut at the
+    // window like these cards), so a card reads its bucket rather than adding
+    // days up a second time.
     var planned = 0;
     var left = 0;
     for (final bucket in capacity?.buckets ?? const <CapacityBucket>[]) {
-      if (week.holds(_dayOnly(bucket.from))) {
+      if (week.holds(dateOnly(bucket.from))) {
         planned += bucket.scheduledMinutes;
         left += bucket.capacityMinutes;
       }
     }
-    String hours(int minutes) => NumberFormat.decimalPatternDigits(
-      locale: locale,
-      decimalDigits: minutes % 60 == 0 ? 0 : 1,
-    ).format(minutes / 60);
+    String hours(int minutes) => formatAbsenceHours(context, minutes);
 
     return SoftCard(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
@@ -168,7 +154,7 @@ class _WeekCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: AppColors.textOnDark,
                     ),
                   ),
                 ),
@@ -271,19 +257,15 @@ class _AgendaRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context).toString();
-    // "Do. 3." stays one word: at a large text size the plain space broke
-    // the weekday from its date.
-    final format = DateFormat('E d.', locale);
+    // The locale's own short weekday and date ("Do., 3.9.", "Thu, 9/3"), kept
+    // on one line: at a large text size a plain space broke the weekday from
+    // its date.
+    final format = DateFormat.MEd(locale);
     String day(DateTime date) => format.format(date).replaceAll(' ', '\u00a0');
     final from = entry.from.isBefore(week.from) ? week.from : entry.from;
     final to = entry.to.isAfter(week.to) ? week.to : entry.to;
     final span = from == to ? day(from) : '${day(from)} – ${day(to)}';
-    final label = teamAbsenceLabel(context, entry);
-    final tint = entry.typed
-        ? absenceColor(context, entry.hue)
-        : AppColors.inkSoft;
-    final ink = entry.typed ? absenceInk(context, entry.hue) : AppColors.ink;
-    final requested = context.t('absence.team.legend.requested');
+    final visuals = TeamAbsenceVisuals.of(context, entry);
     return MergeSemantics(
       child: Row(
         children: [
@@ -311,34 +293,22 @@ class _AgendaRow extends StatelessWidget {
           const SizedBox(width: 8),
           Flexible(
             child: CustomPaint(
-              painter: TeamAbsenceBarPainter(
-                color: tint,
-                hatched: entry.requested,
-                outline: entry.requested ? ink : null,
-              ),
+              painter: visuals.painter(entry),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      entry.requested
-                          ? LucideIcons.hourglass
-                          : entry.typed
-                          ? absenceIcon(entry.icon)
-                          : LucideIcons.calendarOff,
-                      size: 12,
-                      color: ink,
-                    ),
+                    Icon(visuals.icon, size: 12, color: visuals.ink),
                     const SizedBox(width: 5),
                     Flexible(
                       child: Text(
-                        entry.requested ? '$label · $requested' : label,
+                        teamAbsenceLabelWithState(context, entry),
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
-                          color: ink,
+                          color: visuals.ink,
                         ),
                       ),
                     ),

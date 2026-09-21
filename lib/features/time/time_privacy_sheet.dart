@@ -285,6 +285,8 @@ class TimeVisibilityPanel extends StatelessWidget {
                     : 'time.privacy.absence.leadsDoNot',
               ),
             ),
+            if (absences.bandForPlanners)
+              (LucideIcons.chartColumn, context.t('time.privacy.absence.band')),
             (
               LucideIcons.shieldCheck,
               context.t(
@@ -300,9 +302,7 @@ class TimeVisibilityPanel extends StatelessWidget {
         for (final (icon, sentence) in rows) _sentence(icon, sentence),
         if (absenceRows.isNotEmpty) ...[
           const SizedBox(height: 12),
-          _Heading(
-            text: context.t('time.privacy.absence.heading'),
-          ),
+          _Heading(text: context.t('time.privacy.absence.heading')),
           const SizedBox(height: 4),
           for (final (icon, sentence) in absenceRows) _sentence(icon, sentence),
         ],

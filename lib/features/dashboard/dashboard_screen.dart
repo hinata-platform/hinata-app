@@ -15,7 +15,6 @@ import '../../core/events/board_events.dart';
 import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
-import '../../core/models/team_absence_models.dart';
 import '../../core/models/team_models.dart' show Team;
 import '../../core/models/work_models.dart';
 import '../../core/responsive/golden_columns.dart';
@@ -28,7 +27,6 @@ import '../../core/widgets/user_pronouns.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../absences/away_today_list.dart';
 import '../admin/connect_hint.dart';
-import '../../core/widgets/hive_loader.dart';
 import '../board/board_links.dart';
 import '../issues/issue_detail_sheet.dart';
 import '../shell/page_chrome.dart';
@@ -40,7 +38,6 @@ import '../sprint/modals/glass_modal.dart'
         GlassToastKind,
         showGlassErrorToast,
         showGlassToast;
-import '../../core/repositories/absence_repository.dart';
 import '../../core/repositories/dashboard_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
@@ -313,10 +310,9 @@ class _DashboardViewState extends State<_DashboardView> {
       _Card.git: _GitCard(events: data.gitActivity),
     _Card.ranking: _LeaderboardCard(ranking: data.ranking),
     // Only with the team calendar on (HIN-118); otherwise it does not exist,
-    // not even as a card that could be switched back on.
-    if ((context.read<AppConfigBloc>().state.meta?.absenceManagement ??
-            false) &&
-        context.read<TimePolicyCubit>().state.absenceCalendar.isOn)
+    // not even as a card that could be switched back on. The policy reads off
+    // whenever absence management is, so one question covers both.
+    if (context.read<TimePolicyCubit>().state.absenceCalendar.isOn)
       _Card.away: const _AwayTodayCard(),
   };
 

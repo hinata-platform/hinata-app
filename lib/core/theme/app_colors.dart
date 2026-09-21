@@ -160,6 +160,12 @@ abstract final class AppColors {
   // so this lifts to the brighter [accent].
   static Color get accentInk => _dark ? accent : accentStrong;
 
+  // The wash behind weekends and holidays in the team absence calendar
+  // (HIN-118). In dark mode the recessed canvas is nearly black against a card
+  // and turned a month into stripes; a breath of white reads as "not a working
+  // day" without shouting it.
+  static Color get dayOffWash => _dark ? const Color(0x0BFFFFFF) : canvas2Light;
+
   // Pastel card tints — light & warm on light, muted & dark (white-text safe)
   // on dark, so colourful cards keep their hue without losing legibility.
   static const pastelBlue = Color(0xFFE9EEF8);
