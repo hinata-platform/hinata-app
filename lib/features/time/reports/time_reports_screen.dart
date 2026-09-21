@@ -143,12 +143,20 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
       _fresh.clear();
       _loadTab();
     });
-    final link = widget.link;
-    if (link != null) {
-      unawaited(_openLink(link));
-    } else {
-      _loadTab();
-    }
+    // The policy first: it says whether the workload tab exists and which day
+    // a week starts on, and a direct link to this page is the first reader of
+    // it. A policy that cannot be read still leaves a report to show.
+    unawaited(
+      context.read<TimePolicyCubit>().ensureLoaded().whenComplete(() {
+        if (!mounted) return;
+        final link = widget.link;
+        if (link != null) {
+          unawaited(_openLink(link));
+        } else {
+          _loadTab();
+        }
+      }),
+    );
   }
 
   @override
