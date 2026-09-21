@@ -398,10 +398,8 @@ enum AbsenceCalendarLevel {
 
   String get labelKey => 'absence.calendar.level.$name';
 
-  static AbsenceCalendarLevel fromWire(String? wire) => values.firstWhere(
-    (level) => level.wire == wire,
-    orElse: () => off,
-  );
+  static AbsenceCalendarLevel fromWire(String? wire) =>
+      values.firstWhere((level) => level.wire == wire, orElse: () => off);
 }
 
 /// Days an administrator opened for the reader, until [expiresAt].

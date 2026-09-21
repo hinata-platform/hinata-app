@@ -1166,7 +1166,19 @@
         "maxDaysBack": "Vous pouvez saisir jusqu’à {{count}} jour en arrière. Un administrateur ouvre les jours plus anciens sur demande.",
         "maxDaysBack_plural": "Vous pouvez saisir jusqu’à {{count}} jours en arrière. Un administrateur ouvre les jours plus anciens sur demande."
       },
-      "loadFailed": "La note n’a pas pu être chargée. Vérifiez votre connexion et réessayez."
+      "loadFailed": "La note n’a pas pu être chargée. Vérifiez votre connexion et réessayez.",
+      "absence": {
+        "heading": "Mes absences",
+        "calendar": {
+          "off": "Vos collègues ne voient pas vos absences.",
+          "busyOnly": "Les personnes de vos projets voient dans le calendrier d'équipe que vous êtes absent, pas pourquoi.",
+          "type": "Les personnes de vos projets voient le type de votre absence dans le calendrier d'équipe. La maladie n'y apparaît que comme absence, et les types réservés à vous-même n'y apparaissent pas."
+        },
+        "leadsSee": "Les responsables des projets sur lesquels vous travaillez voient le type et la période de vos absences, jamais une note, et la maladie seulement comme absence.",
+        "leadsDoNot": "Les responsables de vos projets ne voient pas vos absences.",
+        "keepersNamed": "Seuls les gestionnaires des absences désignés et les administrateurs voient un jour de maladie comme tel.",
+        "keepersAdmins": "Seuls les administrateurs voient un jour de maladie comme tel."
+      }
     },
     "hint": {
       "chip": {
@@ -1423,7 +1435,7 @@
       "negativeHint": "Quelqu'un peut prendre plus que ce qui est acquis à ce jour.",
       "negativeLimit": "Solde négatif maximal",
       "visibility": "Ce que voient les autres",
-      "visibilityHint": "Aller au-delà d'« absent » est une décision sur des données de santé (art. 9 RGPD). Cela prend effet dans le calendrier à partir de l'étape A3.",
+      "visibilityHint": "Ce que les collègues voient de ce type dans le calendrier d'équipe. La règle de l'instance est la limite supérieure, et la maladie n'y apparaît jamais comme maladie.",
       "quota": "Quota",
       "allowance": "Jours par an",
       "allowanceHint": "La valeur par défaut des nouvelles attributions. Chaque personne peut y déroger.",
@@ -2432,7 +2444,10 @@
       "keepersTitle": "Qui gère les absences",
       "keepersHint": "Ces personnes gèrent les types d'absence, les droits et les soldes de tout le monde, et voient un arrêt maladie comme tel. Les administrateurs le peuvent toujours.",
       "keepersEmpty": "Personne de désigné : les administrateurs gèrent les absences.",
-      "keepersAdd": "Ajouter une personne"
+      "keepersAdd": "Ajouter une personne",
+      "calendarTitle": "Calendrier des absences de l'équipe",
+      "calendarHint": "Si les collègues voient les absences des autres dans un calendrier, et dans quelle mesure. Désactivé par défaut. Les responsables et les gestionnaires des absences voient aussi la capacité restante de leur groupe. Chaque type d'absence peut restreindre davantage.",
+      "calendarCodetermination": "Un calendrier indiquant qui est absent et quand constitue un plan de congés au sens du § 87 al. 1 n° 5 BetrVG (dans le secteur public, la loi régionale sur la représentation du personnel). À convenir avec le comité d'entreprise ou la représentation du personnel avant l'activation ; l'appréciation revient aux partenaires sociaux."
     },
     "passwordPolicy": "Politique de mots de passe",
     "passwordPolicyHint": "Exigences minimales pour les mots de passe des utilisateurs.",

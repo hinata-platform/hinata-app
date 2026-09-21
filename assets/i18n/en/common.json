@@ -1166,7 +1166,19 @@
         "maxDaysBack": "You can record up to {{count}} day back. An administrator opens older days on request.",
         "maxDaysBack_plural": "You can record up to {{count}} days back. An administrator opens older days on request."
       },
-      "loadFailed": "The notice could not be loaded. Check your connection and try again."
+      "loadFailed": "The notice could not be loaded. Check your connection and try again.",
+      "absence": {
+        "heading": "My absences",
+        "calendar": {
+          "off": "Colleagues do not see your absences.",
+          "busyOnly": "People in your projects see in the team calendar that you are away, not why.",
+          "type": "People in your projects see the type of your absence in the team calendar. Sickness only ever appears there as away, and types kept to yourself do not appear at all."
+        },
+        "leadsSee": "Leads of projects you work on see the type and span of your absences, never a note, and sickness only as away.",
+        "leadsDoNot": "Leads of your projects do not see your absences.",
+        "keepersNamed": "Only the people named to keep absences, and administrators, see a sick day as a sick day.",
+        "keepersAdmins": "Only administrators see a sick day as a sick day."
+      }
     },
     "hint": {
       "chip": {
@@ -1423,7 +1435,7 @@
       "negativeHint": "Somebody may take more than has accrued so far.",
       "negativeLimit": "Deepest negative balance",
       "visibility": "What others see",
-      "visibilityHint": "Anything beyond \"away\" is a decision about health data (Art. 9 GDPR). It takes effect in the calendar from stage A3.",
+      "visibilityHint": "What colleagues see of this type in the team calendar. The instance policy is the upper limit, and sickness never appears there as sickness.",
       "quota": "Quota",
       "allowance": "Days per year",
       "allowanceHint": "The default for new grants. Individual people may differ.",
@@ -2432,7 +2444,10 @@
       "keepersTitle": "Who keeps absences",
       "keepersHint": "These people keep absence types, entitlements and balances for everybody, and they see a sick day as a sick day. Administrators always may.",
       "keepersEmpty": "Nobody named: administrators keep absences.",
-      "keepersAdd": "Add person"
+      "keepersAdd": "Add person",
+      "calendarTitle": "Team absence calendar",
+      "calendarHint": "Whether colleagues see each other's absences in a calendar, and how much of them. Off by default. Leads and absence keepers also see what capacity their group has left. Each absence type can narrow this further.",
+      "calendarCodetermination": "A calendar of who is away when is a holiday plan within the meaning of § 87 (1) no. 5 BetrVG (in the public sector, the state staff representation act). Agree it with the works council or staff council before switching it on; the assessment is for the parties to the works agreement."
     },
     "passwordPolicy": "Password policy",
     "passwordPolicyHint": "Minimum requirements for user passwords.",

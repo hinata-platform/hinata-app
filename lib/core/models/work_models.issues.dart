@@ -125,8 +125,9 @@ enum RelativeDateBasis {
 
   final String wire;
 
-  static RelativeDateBasis fromWire(String? value) =>
-      value == 'WORKING' ? RelativeDateBasis.working : RelativeDateBasis.calendar;
+  static RelativeDateBasis fromWire(String? value) => value == 'WORKING'
+      ? RelativeDateBasis.working
+      : RelativeDateBasis.calendar;
 }
 
 class Issue extends Equatable {
@@ -804,6 +805,5 @@ class IssueActivity extends Equatable {
 }
 
 /// A stored offset, or null for a date nobody derived.
-RelativeDate? _offset(Object? value) => value is Map<String, dynamic>
-    ? RelativeDate.fromJson(value)
-    : null;
+RelativeDate? _offset(Object? value) =>
+    value is Map<String, dynamic> ? RelativeDate.fromJson(value) : null;

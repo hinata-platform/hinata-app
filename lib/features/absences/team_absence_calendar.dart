@@ -70,30 +70,39 @@ class _TeamAbsenceCalendarState extends State<TeamAbsenceCalendar> {
   bool _truncated = false;
 
   DateTime get _from => _month;
-  DateTime get _to => DateTime(_month.year, _month.month + (_quarter ? 3 : 1), 0);
+  DateTime get _to =>
+      DateTime(_month.year, _month.month + (_quarter ? 3 : 1), 0);
 
   @override
   void initState() {
     super.initState();
     final repository = context.read<AbsenceRepository>();
-    _rows = PagedCubit<TeamAbsenceRow>((page, size) async {
-      final result = await repository.teamCalendar(
-        from: _from,
-        to: _to,
-        scope: _scope,
-        // The agenda lists only who is away, so a phone never asks for the rest.
-        awayOnly: _awayOnly || _compact,
-        page: page,
-        size: size,
-      );
-      if (mounted && result.truncated != _truncated) {
-        setState(() => _truncated = result.truncated);
-      }
-      return (items: result.rows, total: result.total);
-    }, pageSize: 50, keyOf: (row) => row.userId);
+    _rows = PagedCubit<TeamAbsenceRow>(
+      (page, size) async {
+        final result = await repository.teamCalendar(
+          from: _from,
+          to: _to,
+          scope: _scope,
+          // The agenda lists only who is away, so a phone never asks for the rest.
+          awayOnly: _awayOnly || _compact,
+          page: page,
+          size: size,
+        );
+        if (mounted && result.truncated != _truncated) {
+          setState(() => _truncated = result.truncated);
+        }
+        return (items: result.rows, total: result.total);
+      },
+      pageSize: 50,
+      keyOf: (row) => row.userId,
+    );
     _band = FetchCubit<CapacityBand?>(() async {
       try {
-        return await repository.capacityBand(from: _from, to: _to, scope: _scope);
+        return await repository.capacityBand(
+          from: _from,
+          to: _to,
+          scope: _scope,
+        );
       } on ApiFailure catch (failure) {
         // Not somebody who plans this group: the band is simply not shown.
         if (failure.statusCode == 403) return null;
@@ -275,59 +284,68 @@ class _TeamAbsenceCalendarState extends State<TeamAbsenceCalendar> {
                 ),
               if (!_compact)
                 GlassFilterPill(
-                icon: LucideIcons.userX,
-                label: context.t('absence.team.awayOnly'),
-                active: _awayOnly,
-                chevron: false,
-                onTap: (_) {
-                  setState(() => _awayOnly = !_awayOnly);
-                  unawaited(_rows.load());
-                },
-              ),
+                  icon: LucideIcons.userX,
+                  label: context.t('absence.team.awayOnly'),
+                  active: _awayOnly,
+                  chevron: false,
+                  onTap: (_) {
+                    setState(() => _awayOnly = !_awayOnly);
+                    unawaited(_rows.load());
+                  },
+                ),
             ],
           ),
           const SizedBox(height: 12),
           Flexible(
-            child: BlocBuilder<PagedCubit<TeamAbsenceRow>,
-                PagedState<TeamAbsenceRow>>(
-              bloc: _rows,
-              builder: (context, rows) {
-                if (!rows.hasData && rows.errorKey == null) {
-                  return const Center(child: HiveLoader(size: 32));
-                }
-                if (rows.errorKey != null && rows.items.isEmpty) {
-                  return HiveEmptyState(
-                    title: context.t('absence.team.errorTitle'),
-                    message: context.t(rows.errorKey!),
-                  );
-                }
-                if (rows.items.isEmpty && !_compact) {
-                  return HiveEmptyState(
-                    title: context.t('absence.team.emptyTitle'),
-                    message: context.t('absence.team.emptyMessage'),
-                  );
-                }
-                return BlocBuilder<FetchCubit<CapacityBand?>,
-                    FetchState<CapacityBand?>>(
-                  bloc: _band,
-                  builder: (context, band) => _compact
-                      ? TeamAbsenceAgenda(
-                          from: _from,
-                          to: _to,
-                          rows: rows.items,
-                          capacity: band.data,
-                          onNearEnd: rows.hasMore ? () => unawaited(_rows.loadMore()) : null,
-                        )
-                      : TeamAbsenceBand(
-                    from: _from,
-                    to: _to,
-                    rows: rows.items,
-                    capacity: band.data,
-                    onNearEnd: rows.hasMore ? () => unawaited(_rows.loadMore()) : null,
-                  ),
-                );
-              },
-            ),
+            child:
+                BlocBuilder<
+                  PagedCubit<TeamAbsenceRow>,
+                  PagedState<TeamAbsenceRow>
+                >(
+                  bloc: _rows,
+                  builder: (context, rows) {
+                    if (!rows.hasData && rows.errorKey == null) {
+                      return const Center(child: HiveLoader(size: 32));
+                    }
+                    if (rows.errorKey != null && rows.items.isEmpty) {
+                      return HiveEmptyState(
+                        title: context.t('absence.team.errorTitle'),
+                        message: context.t(rows.errorKey!),
+                      );
+                    }
+                    if (rows.items.isEmpty && !_compact) {
+                      return HiveEmptyState(
+                        title: context.t('absence.team.emptyTitle'),
+                        message: context.t('absence.team.emptyMessage'),
+                      );
+                    }
+                    return BlocBuilder<
+                      FetchCubit<CapacityBand?>,
+                      FetchState<CapacityBand?>
+                    >(
+                      bloc: _band,
+                      builder: (context, band) => _compact
+                          ? TeamAbsenceAgenda(
+                              from: _from,
+                              to: _to,
+                              rows: rows.items,
+                              capacity: band.data,
+                              onNearEnd: rows.hasMore
+                                  ? () => unawaited(_rows.loadMore())
+                                  : null,
+                            )
+                          : TeamAbsenceBand(
+                              from: _from,
+                              to: _to,
+                              rows: rows.items,
+                              capacity: band.data,
+                              onNearEnd: rows.hasMore
+                                  ? () => unawaited(_rows.loadMore())
+                                  : null,
+                            ),
+                    );
+                  },
+                ),
           ),
           if (!_compact) ...[
             const SizedBox(height: 10),
@@ -413,7 +431,10 @@ class _PeriodNav extends StatelessWidget {
           const Positioned.fill(
             top: (_Arrow.extent - kGlassControlHeight) / 2,
             bottom: (_Arrow.extent - kGlassControlHeight) / 2,
-            child: GlassPill(height: kGlassControlHeight, child: SizedBox.expand()),
+            child: GlassPill(
+              height: kGlassControlHeight,
+              child: SizedBox.expand(),
+            ),
           ),
           row,
         ],
@@ -423,7 +444,11 @@ class _PeriodNav extends StatelessWidget {
 }
 
 class _Arrow extends StatelessWidget {
-  const _Arrow({required this.icon, required this.tooltip, required this.onTap});
+  const _Arrow({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
 
   static const extent = 48.0;
 
@@ -486,11 +511,7 @@ class TeamAbsenceLegend extends StatelessWidget {
 }
 
 class _Swatch extends StatelessWidget {
-  const _Swatch({
-    required this.color,
-    this.hatched = false,
-    this.flat = false,
-  });
+  const _Swatch({required this.color, this.hatched = false, this.flat = false});
 
   final Color color;
   final bool hatched;
@@ -505,7 +526,11 @@ class _Swatch extends StatelessWidget {
     child: CustomPaint(
       painter: flat
           ? _FlatPainter(color)
-          : TeamAbsenceBarPainter(color: color, hatched: hatched, outline: hatched ? color : null),
+          : TeamAbsenceBarPainter(
+              color: color,
+              hatched: hatched,
+              outline: hatched ? color : null,
+            ),
     ),
   );
 }
@@ -625,7 +650,10 @@ class _TeamAbsenceBandState extends State<TeamAbsenceBand> {
 
   Widget _chart(BuildContext context, double available) {
     final compact = context.isCompact;
-    final scale = (MediaQuery.textScalerOf(context).scale(14) / 14).clamp(1.0, 2.5);
+    final scale = (MediaQuery.textScalerOf(context).scale(14) / 14).clamp(
+      1.0,
+      2.5,
+    );
     _rowHeight = _baseRow * scale;
     _headerHeight = _baseHeader * scale;
     _capacityHeight = _baseCapacity * scale;
@@ -644,7 +672,10 @@ class _TeamAbsenceBandState extends State<TeamAbsenceBand> {
     // At least the base width a day needs, and wide enough that a month fills
     // the card on a wide window rather than stopping two thirds across it.
     final minPerDay = (compact ? 28.0 : 32.0) * (1 + (scale - 1) * 0.5);
-    final pxPerDay = math.max(minPerDay, (available - labelWidth - 3) / days.length);
+    final pxPerDay = math.max(
+      minPerDay,
+      (available - labelWidth - 3) / days.length,
+    );
     final width = days.length * pxPerDay;
     final today = _dayOnly(DateTime.now());
     final todayIndex = days.indexWhere((day) => day == today);
@@ -667,7 +698,18 @@ class _TeamAbsenceBandState extends State<TeamAbsenceBand> {
           heightFactor: 1,
           child: SizedBox(
             height: head + 1 + body + cardBorder,
-            child: _card(context, head, body, labelWidth, width, days, pxPerDay, todayIndex, capacity, scale),
+            child: _card(
+              context,
+              head,
+              body,
+              labelWidth,
+              width,
+              days,
+              pxPerDay,
+              todayIndex,
+              capacity,
+              scale,
+            ),
           ),
         );
       },
@@ -765,8 +807,10 @@ class _TeamAbsenceBandState extends State<TeamAbsenceBand> {
                     physics: const NeverScrollableScrollPhysics(),
                     itemExtent: _rowHeight,
                     itemCount: widget.rows.length,
-                    itemBuilder: (context, index) =>
-                        _PersonLabel(row: widget.rows[index], lines: scale > 1.3 ? 2 : 1),
+                    itemBuilder: (context, index) => _PersonLabel(
+                      row: widget.rows[index],
+                      lines: scale > 1.3 ? 2 : 1,
+                    ),
                   ),
                 ),
                 Container(width: 1, color: AppColors.hairline),
@@ -919,44 +963,50 @@ class _DayHead extends StatelessWidget {
   Widget build(BuildContext context) {
     final weekend =
         day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final color = today
-        ? AppColors.accentStrong
+        // accentStrong reaches 3.3:1 on the card; the deeper honey clears 4.5.
+        ? (dark ? AppColors.accent : AppColors.accentDeep)
         : weekend
         ? AppColors.inkFaint
         : AppColors.inkSoft;
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          month ?? '',
-          maxLines: 1,
-          overflow: TextOverflow.clip,
-          softWrap: false,
-          style: TextStyle(
-            fontSize: 9.5,
-            fontWeight: FontWeight.w700,
-            color: AppColors.inkSoft,
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-          decoration: today
-              ? BoxDecoration(
-                  color: AppColors.accentDeep,
-                  borderRadius: BorderRadius.circular(9),
-                )
-              : null,
-          child: Text(
-            '${day.day}',
+    // Scaled down rather than cut off when a font runs taller than the head.
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            month ?? '',
+            maxLines: 1,
+            overflow: TextOverflow.clip,
+            softWrap: false,
             style: TextStyle(
-              fontSize: 12,
-              fontWeight: today ? FontWeight.w800 : FontWeight.w600,
-              color: today ? Colors.white : color,
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+              color: AppColors.inkSoft,
             ),
           ),
-        ),
-        Text(weekday, style: TextStyle(fontSize: 9.5, color: color)),
-      ],
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+            decoration: today
+                ? BoxDecoration(
+                    color: AppColors.accentDeep,
+                    borderRadius: BorderRadius.circular(9),
+                  )
+                : null,
+            child: Text(
+              '${day.day}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: today ? FontWeight.w800 : FontWeight.w600,
+                color: today ? Colors.white : color,
+              ),
+            ),
+          ),
+          Text(weekday, style: TextStyle(fontSize: 9.5, color: color)),
+        ],
+      ),
     );
   }
 }
@@ -977,7 +1027,9 @@ class _CapacityStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final byDay = {for (final bucket in band.buckets) _dayOnly(bucket.from): bucket};
+    final byDay = {
+      for (final bucket in band.buckets) _dayOnly(bucket.from): bucket,
+    };
     return Row(
       children: [
         for (final day in days)
@@ -1001,17 +1053,19 @@ class _CapacityDay extends StatelessWidget {
     if (bucket == null || bucket.scheduledMinutes <= 0) {
       return const SizedBox.shrink();
     }
-    String hours(int minutes) =>
-        NumberFormat.decimalPatternDigits(
-          locale: Localizations.localeOf(context).toString(),
-          decimalDigits: minutes % 60 == 0 ? 0 : 1,
-        ).format(minutes / 60);
-    final message = context.t('absence.team.capacityDay', variables: {
-      'left': hours(bucket.capacityMinutes),
-      'planned': hours(bucket.scheduledMinutes),
-      'away': '${bucket.away}',
-      'requested': '${bucket.requested}',
-    });
+    String hours(int minutes) => NumberFormat.decimalPatternDigits(
+      locale: Localizations.localeOf(context).toString(),
+      decimalDigits: minutes % 60 == 0 ? 0 : 1,
+    ).format(minutes / 60);
+    final message = context.t(
+      'absence.team.capacityDay',
+      variables: {
+        'left': hours(bucket.capacityMinutes),
+        'planned': hours(bucket.scheduledMinutes),
+        'away': '${bucket.away}',
+        'requested': '${bucket.requested}',
+      },
+    );
     final share = bucket.share.clamp(0.0, 1.0);
     final low = share < 0.5;
     return Tooltip(
@@ -1058,7 +1112,9 @@ class _PersonRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final first = days.first;
     final last = days.last;
-    final holidays = {for (final holiday in row.holidays) _dayOnly(holiday.date): holiday};
+    final holidays = {
+      for (final holiday in row.holidays) _dayOnly(holiday.date): holiday,
+    };
     return Stack(
       children: [
         Positioned.fill(
@@ -1118,7 +1174,9 @@ class _PersonRow extends StatelessWidget {
     final span = to.difference(from).inDays + 1;
     final widthDays = entry.halfDay && span == 1 ? 0.5 : span.toDouble();
     final width = math.max(8.0, widthDays * pxPerDay - 4);
-    final tint = entry.typed ? absenceColor(context, entry.hue) : AppColors.inkSoft;
+    final tint = entry.typed
+        ? absenceColor(context, entry.hue)
+        : AppColors.inkSoft;
     final ink = entry.typed ? absenceInk(context, entry.hue) : AppColors.ink;
     final label = teamAbsenceLabel(context, entry);
     final localizations = MaterialLocalizations.of(context);
@@ -1267,7 +1325,11 @@ class _RowWashPainter extends CustomPainter {
 /// an absence, the same outline with a hatch and no wash for a request. The
 /// word and the icon on top carry the meaning; the colour only groups.
 class TeamAbsenceBarPainter extends CustomPainter {
-  TeamAbsenceBarPainter({required this.color, this.hatched = false, this.outline});
+  TeamAbsenceBarPainter({
+    required this.color,
+    this.hatched = false,
+    this.outline,
+  });
 
   final Color color;
   final bool hatched;
