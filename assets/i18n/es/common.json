@@ -1177,7 +1177,8 @@
         "leadsSee": "Los responsables de los proyectos en los que trabajas ven el tipo y el periodo de tus ausencias, nunca una nota, y la enfermedad solo como ausencia.",
         "leadsDoNot": "Los responsables de tus proyectos no ven tus ausencias.",
         "keepersNamed": "Solo los gestores de ausencias designados y los administradores ven un día de enfermedad como tal.",
-        "keepersAdmins": "Solo los administradores ven un día de enfermedad como tal."
+        "keepersAdmins": "Solo los administradores ven un día de enfermedad como tal.",
+        "band": "Los responsables de tus proyectos y los administradores de tus equipos ven cuánta capacidad le queda a su grupo, como suma de al menos tres personas. Tus días aprobados y horas previstas cuentan, tu nombre no."
       }
     },
     "hint": {
@@ -1692,7 +1693,8 @@
       },
       "thisWeek": "Esta semana",
       "capacityWeek": "{{left}} h de {{planned}} h disponibles",
-      "everybodyHere": "Están todos."
+      "everybodyHere": "Están todos.",
+      "holiday": "Festivo"
     }
   },
   "projects": {

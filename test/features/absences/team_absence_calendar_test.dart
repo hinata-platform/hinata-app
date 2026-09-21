@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/api/api_client.dart';
+import 'package:hinata/core/repositories/absence_repository.dart';
 import 'package:hinata/core/models/team_absence_models.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/models/time_privacy_models.dart';
 import 'package:hinata/core/theme/app_colors.dart';
 import 'package:hinata/features/absences/team_absence_agenda.dart';
+import 'package:hinata/features/absences/team_absence_band.dart';
 import 'package:hinata/features/absences/team_absence_calendar.dart';
 import 'package:hinata/features/absences/away_today_list.dart';
 import 'package:hinata/features/time/time_privacy_sheet.dart';
@@ -114,10 +118,34 @@ void main() {
       },
     );
 
-    test('a type the server did not send is never invented', () {
-      final entry = busy(1, 1);
-      expect(entry.typed, isFalse);
-    });
+    testWidgets(
+      'an entry sent without a type is drawn as away, never as a type',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 700);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+
+        await tester.pumpWidget(
+          app(
+            TeamAbsenceBand(
+              from: from,
+              to: to,
+              rows: [
+                TeamAbsenceRow(
+                  userId: 'b',
+                  name: 'Ben',
+                  entries: [busy(8, 10)],
+                ),
+              ],
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('absence.team.away'), findsOneWidget);
+        expect(find.textContaining('absence.type.'), findsNothing);
+      },
+    );
   });
 
   group('agenda', () {
@@ -180,27 +208,33 @@ void main() {
   });
 
   group('away today', () {
-    testWidgets('lists at most five and says how many more', (tester) async {
-      final seven = [
-        for (var i = 0; i < 5; i++)
-          TeamAbsenceRow(
-            userId: 'u$i',
-            name: 'Person $i',
-            entries: [busy(1, 1)],
-          ),
-      ];
-      await tester.pumpWidget(
-        app(
-          AwayTodayList(
-            page: TeamAbsencePage(
-              rows: seven,
-              total: 8,
-              level: AbsenceCalendarLevel.busyOnly,
-            ),
-          ),
+    testWidgets('asks for one page of five and counts the rest', (
+      tester,
+    ) async {
+      final repository = _FakeCalendar(
+        TeamAbsencePage(
+          rows: [
+            for (var i = 0; i < 5; i++)
+              TeamAbsenceRow(
+                userId: 'u$i',
+                name: 'Person $i',
+                entries: [busy(1, 1)],
+              ),
+          ],
+          total: 8,
+          level: AbsenceCalendarLevel.busyOnly,
         ),
       );
+      await tester.pumpWidget(
+        RepositoryProvider<AbsenceRepository>.value(
+          value: repository,
+          child: app(const AwayToday()),
+        ),
+      );
+      await tester.pumpAndSettle();
 
+      expect(repository.sizes, [AwayToday.shown]);
+      expect(repository.awayOnly, isTrue);
       expect(find.textContaining('Person '), findsNWidgets(5));
       expect(find.text('dashboard.awayMore'), findsOneWidget);
     });
@@ -219,6 +253,68 @@ void main() {
       );
 
       expect(find.text('dashboard.awayNone'), findsOneWidget);
+    });
+  });
+
+  group('calendar page', () {
+    testWidgets(
+      'a reader who does not plan the group sees no capacity, and a cut group says so',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final repository = _FakeCalendar(
+          TeamAbsencePage(
+            rows: rows,
+            total: rows.length,
+            level: AbsenceCalendarLevel.type,
+            truncated: true,
+          ),
+        );
+
+        await tester.pumpWidget(
+          RepositoryProvider<AbsenceRepository>.value(
+            value: repository,
+            child: app(
+              const TeamAbsenceCalendar(),
+              size: const Size(1200, 800),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Amira'), findsOneWidget);
+        expect(find.text('ABSENCE.TEAM.CAPACITY'), findsNothing);
+        expect(find.text('absence.team.truncated'), findsOneWidget);
+      },
+    );
+
+    testWidgets('on a phone the same rows are an agenda by week', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final repository = _FakeCalendar(
+        TeamAbsencePage(
+          rows: rows,
+          total: rows.length,
+          level: AbsenceCalendarLevel.type,
+        ),
+      );
+
+      await tester.pumpWidget(
+        RepositoryProvider<AbsenceRepository>.value(
+          value: repository,
+          child: app(const TeamAbsenceCalendar(), size: const Size(390, 800)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Only who is away is asked for, and the band's grid is not there.
+      expect(repository.awayOnly, isTrue);
+      expect(find.byType(TeamAbsenceBand), findsNothing);
+      expect(find.byType(TeamAbsenceAgenda), findsOneWidget);
     });
   });
 
@@ -336,4 +432,39 @@ void main() {
       expect(band.buckets.single.requested, 2);
     });
   });
+}
+
+/// Answers the calendar with one fixed page, and the band with the 403 a
+/// reader gets who does not plan the group.
+class _FakeCalendar implements AbsenceRepository {
+  _FakeCalendar(this.page);
+
+  final TeamAbsencePage page;
+  final List<int> sizes = [];
+  bool? awayOnly;
+
+  @override
+  Future<TeamAbsencePage> teamCalendar({
+    required DateTime from,
+    required DateTime to,
+    TeamAbsenceScope scope = TeamAbsenceScope.mine,
+    bool awayOnly = false,
+    int page = 0,
+    int size = 50,
+  }) async {
+    sizes.add(size);
+    this.awayOnly = awayOnly;
+    return this.page;
+  }
+
+  @override
+  Future<CapacityBand> capacityBand({
+    required DateTime from,
+    required DateTime to,
+    TeamAbsenceScope scope = TeamAbsenceScope.mine,
+    CapacityResolution resolution = CapacityResolution.day,
+  }) async => throw ApiFailure('error.availability.forbidden', statusCode: 403);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

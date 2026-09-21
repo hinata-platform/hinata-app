@@ -833,79 +833,22 @@ class _LeaderboardCard extends StatelessWidget {
 ///
 /// Names and what the reader may know about each absence, never why beyond
 /// that: the server coarsens before it answers, and sickness is only "away".
-class _AwayTodayCard extends StatefulWidget {
+class _AwayTodayCard extends StatelessWidget {
   const _AwayTodayCard();
 
   @override
-  State<_AwayTodayCard> createState() => _AwayTodayCardState();
-}
-
-class _AwayTodayCardState extends State<_AwayTodayCard> {
-  static const _shown = 5;
-
-  late final FetchCubit<TeamAbsencePage> _today;
-
-  @override
-  void initState() {
-    super.initState();
-    final now = DateTime.now();
-    final day = DateTime(now.year, now.month, now.day);
-    final repository = context.read<AbsenceRepository>();
-    _today = FetchCubit<TeamAbsencePage>(
-      () => repository.teamCalendar(
-        from: day,
-        to: day,
-        awayOnly: true,
-        size: _shown,
-      ),
-    );
-    unawaited(_today.load());
-  }
-
-  @override
-  void dispose() {
-    unawaited(_today.close());
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<
-      FetchCubit<TeamAbsencePage>,
-      FetchState<TeamAbsencePage>
-    >(
-      bloc: _today,
-      builder: (context, state) {
-        final page = state.data;
-        return _GlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _CardHead(
-                title: context.t('dashboard.awayToday'),
-                actionLabel: context.t('dashboard.awayOpen'),
-                onAction: () => context.go('/time/absences?scope=team'),
-              ),
-              const SizedBox(height: 6),
-              if (page == null && state.errorKey == null)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 14),
-                  child: Center(child: HiveLoader(size: 24)),
-                )
-              else if (page == null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Text(
-                    context.t(state.errorKey!),
-                    style: TextStyle(color: AppColors.inkSoft),
-                  ),
-                )
-              else
-                AwayTodayList(page: page),
-            ],
-          ),
-        );
-      },
-    );
-  }
+  Widget build(BuildContext context) => _GlassCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _CardHead(
+          title: context.t('dashboard.awayToday'),
+          actionLabel: context.t('dashboard.awayOpen'),
+          onAction: () => context.go('/time/absences?scope=team'),
+        ),
+        const SizedBox(height: 6),
+        const AwayToday(),
+      ],
+    ),
+  );
 }

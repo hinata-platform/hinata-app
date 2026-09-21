@@ -77,18 +77,21 @@ class TeamAbsenceEntry extends Equatable {
 class TeamAbsenceHoliday extends Equatable {
   const TeamAbsenceHoliday({
     required this.date,
-    required this.name,
+    this.name,
     this.halfDay = false,
   });
 
   final DateTime date;
-  final String name;
+
+  /// Only on the reader's own row: a holiday's name says which region
+  /// somebody works in, and planning needs only that the day is off.
+  final String? name;
   final bool halfDay;
 
   factory TeamAbsenceHoliday.fromJson(Map<String, dynamic> json) =>
       TeamAbsenceHoliday(
         date: parseDate(json['date'])!,
-        name: json['name'] as String? ?? '',
+        name: json['name'] as String?,
         halfDay: json['halfDay'] as bool? ?? false,
       );
 
