@@ -247,9 +247,7 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
                       fontFamily: AppTheme.fontMono,
                       fontWeight: FontWeight.w700,
                     ),
-                    decoration: glassInputDecoration(
-                      hint: scope?.suggestedKey,
-                    ),
+                    decoration: glassInputDecoration(hint: scope?.suggestedKey),
                     onChanged: (_) => setState(() {}),
                   ),
                 ),
@@ -364,11 +362,7 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
             if (date != null)
               GestureDetector(
                 onTap: () => setState(() => _eventDate = null),
-                child: Icon(
-                  LucideIcons.x,
-                  size: 15,
-                  color: AppColors.inkFaint,
-                ),
+                child: Icon(LucideIcons.x, size: 15, color: AppColors.inkFaint),
               ),
           ],
         ),
@@ -487,10 +481,7 @@ class _Toggle extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          HiveSwitch(
-            value: enabled && value,
-            onChanged: onChanged ?? (_) {},
-          ),
+          HiveSwitch(value: enabled && value, onChanged: onChanged ?? (_) {}),
         ],
       ),
     );

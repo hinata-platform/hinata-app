@@ -25,7 +25,10 @@ class ProjectRepository {
   /// [template] narrows the answer to templates or to the running projects;
   /// leaving it out asks for both, which is what every screen that predates
   /// templates does and must keep doing.
-  Future<List<Project>> projects({bool archived = false, bool? template}) async =>
+  Future<List<Project>> projects({
+    bool archived = false,
+    bool? template,
+  }) async =>
       ((await _api.get(
                 '/api/v1/projects',
                 query: {
@@ -220,22 +223,26 @@ class ProjectRepository {
     await _api.post(
           '/api/v1/projects/${Uri.encodeComponent(id)}/schedule/preview'
           '${limit == null ? '' : '?limit=$limit'}',
-          body: {'eventDate': eventDate == null ? null : formatDateOnly(eventDate)},
+          body: {
+            'eventDate': eventDate == null ? null : formatDateOnly(eventDate),
+          },
         )
         as Map<String, dynamic>,
   );
 
   /// Sets the event date and writes the deadlines that follow from it.
-  Future<ScheduleResult> applySchedule(String id, {DateTime? eventDate}) async =>
-      ScheduleResult.fromJson(
-        await _api.post(
-              '/api/v1/projects/${Uri.encodeComponent(id)}/schedule/apply',
-              body: {
-                'eventDate': eventDate == null ? null : formatDateOnly(eventDate),
-              },
-            )
-            as Map<String, dynamic>,
-      );
+  Future<ScheduleResult> applySchedule(
+    String id, {
+    DateTime? eventDate,
+  }) async => ScheduleResult.fromJson(
+    await _api.post(
+          '/api/v1/projects/${Uri.encodeComponent(id)}/schedule/apply',
+          body: {
+            'eventDate': eventDate == null ? null : formatDateOnly(eventDate),
+          },
+        )
+        as Map<String, dynamic>,
+  );
 
   /// The date one offset lands on, for the line beside a deadline field while
   /// somebody is still typing into it.

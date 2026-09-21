@@ -696,8 +696,7 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
         )
         ? TemplateSection(
             isTemplate: draft.template,
-            onTemplateChanged: (v) =>
-                _mutate((d) => d.copyWith(template: v)),
+            onTemplateChanged: (v) => _mutate((d) => d.copyWith(template: v)),
             eventDate: (_saved ?? draft).eventDate,
             busy: _movingEventDate,
             onPickEventDate: _pickEventDate,

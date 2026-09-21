@@ -19,7 +19,9 @@ import '../sprint/modals/glass_modal.dart';
 /// deadline that follows the event" are different answers and the caller has to
 /// send different things for them.
 class DeadlineChoice {
-  const DeadlineChoice.date(DateTime this.date) : offset = null, cleared = false;
+  const DeadlineChoice.date(DateTime this.date)
+    : offset = null,
+      cleared = false;
 
   /// A rule, and the day it worked out to while the editor was open — null only
   /// where the project has no date to count from. The caller shows that day
@@ -241,7 +243,10 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
     final offset = _currentOffset;
     if (offset == null) return;
     Navigator.of(context).pop(
-      DeadlineChoice.offset(offset, date: offset == _resolvedFor ? _resolved : null),
+      DeadlineChoice.offset(
+        offset,
+        date: offset == _resolvedFor ? _resolved : null,
+      ),
     );
   }
 
@@ -277,11 +282,17 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
                     inline: true,
                     maxWidth: 300,
                     chips: [
-                      _modeChip(_Mode.date, LucideIcons.calendar,
-                          'issues.deadline.modeDate'),
+                      _modeChip(
+                        _Mode.date,
+                        LucideIcons.calendar,
+                        'issues.deadline.modeDate',
+                      ),
                       const SizedBox(width: 2),
-                      _modeChip(_Mode.offset, LucideIcons.calendarClock,
-                          'issues.deadline.modeOffset'),
+                      _modeChip(
+                        _Mode.offset,
+                        LucideIcons.calendarClock,
+                        'issues.deadline.modeOffset',
+                      ),
                     ],
                   ),
                 ),
@@ -305,9 +316,8 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
             children: [
               if (widget.date != null || widget.offset != null)
                 TextButton(
-                  onPressed: () => Navigator.of(
-                    context,
-                  ).pop(const DeadlineChoice.cleared()),
+                  onPressed: () =>
+                      Navigator.of(context).pop(const DeadlineChoice.cleared()),
                   style: glassQuietActionStyle,
                   child: Text(context.t('common.clear')),
                 ),
@@ -404,7 +414,9 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
                       style: TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w600,
-                        color: date == null ? AppColors.inkFaint : AppColors.ink,
+                        color: date == null
+                            ? AppColors.inkFaint
+                            : AppColors.ink,
                       ),
                     ),
                   ),
@@ -546,7 +558,9 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
             child: Text(
               resolved != null
                   ? MaterialLocalizations.of(context).formatMediumDate(resolved)
-                  : (_resolving ? context.t('issues.deadline.calculating') : ''),
+                  : (_resolving
+                        ? context.t('issues.deadline.calculating')
+                        : ''),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
