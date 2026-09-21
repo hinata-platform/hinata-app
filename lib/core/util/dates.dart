@@ -53,6 +53,10 @@ DateTime? parseDate(Object? value) {
 /// `toIso8601String()`: a value that is a *day* must be sent as the day it
 /// says, and a UTC-flagged `DateTime` would otherwise be formatted in UTC and
 /// slide to the previous day for anyone east of Greenwich.
+/// [value] at midnight of its own calendar day, in its own zone.
+DateTime dateOnly(DateTime value) =>
+    DateTime(value.year, value.month, value.day);
+
 String formatDateOnly(DateTime date) =>
     '${date.year.toString().padLeft(4, '0')}-'
     '${date.month.toString().padLeft(2, '0')}-'

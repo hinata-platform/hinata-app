@@ -1177,7 +1177,8 @@
         "leadsSee": "Leads of projects you work on see the type and span of your absences, never a note, and sickness only as away.",
         "leadsDoNot": "Leads of your projects do not see your absences.",
         "keepersNamed": "Only the people named to keep absences, and administrators, see a sick day as a sick day.",
-        "keepersAdmins": "Only administrators see a sick day as a sick day."
+        "keepersAdmins": "Only administrators see a sick day as a sick day.",
+        "band": "Leads of your projects and admins of your teams see how much capacity their group has left, as a sum over at least three people. Your approved days and planned hours are part of it; your name is not."
       }
     },
     "hint": {
@@ -1692,7 +1693,8 @@
       },
       "thisWeek": "This week",
       "capacityWeek": "{{left}} h of {{planned}} h available",
-      "everybodyHere": "Everybody is here."
+      "everybodyHere": "Everybody is here.",
+      "holiday": "Public holiday"
     }
   },
   "projects": {

@@ -141,6 +141,7 @@ class AbsenceVisibility extends Equatable {
     this.calendar = AbsenceCalendarLevel.off,
     this.leadsSeeSpans = false,
     this.keepersNamed = false,
+    this.bandForPlanners = false,
   });
 
   /// What colleagues see in the team calendar; never sickness as sickness.
@@ -152,15 +153,25 @@ class AbsenceVisibility extends Equatable {
   /// An operator named who keeps absences; otherwise it is the administrators.
   final bool keepersNamed;
 
+  /// Leads and team admins see the capacity their group has left, as a sum
+  /// over at least three people, the reader's days and hours counted in.
+  final bool bandForPlanners;
+
   factory AbsenceVisibility.fromJson(Map<String, dynamic> json) =>
       AbsenceVisibility(
         calendar: AbsenceCalendarLevel.fromWire(json['calendar'] as String?),
         leadsSeeSpans: json['leadsSeeSpans'] as bool? ?? false,
         keepersNamed: json['keepersNamed'] as bool? ?? false,
+        bandForPlanners: json['bandForPlanners'] as bool? ?? false,
       );
 
   @override
-  List<Object?> get props => [calendar, leadsSeeSpans, keepersNamed];
+  List<Object?> get props => [
+    calendar,
+    leadsSeeSpans,
+    keepersNamed,
+    bandForPlanners,
+  ];
 }
 
 /// One self-hint about the reader's own entries, from `GET /api/v1/time/hints`.
