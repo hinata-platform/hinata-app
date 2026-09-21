@@ -94,7 +94,12 @@ class AbsenceReportOverview extends StatelessWidget {
                 ),
             ],
           );
-          final wide = !compact && constraints.maxWidth >= 640;
+          // A medium window keeps the ring beside two columns of figures; below
+          // it on its own row it left half the card empty.
+          final wide =
+              !compact &&
+              (constraints.maxWidth >= 640 ||
+                  (constraints.maxWidth >= 520 && textFactor(context) <= 1.3));
           final people = Text(
             context.t(
               'absence.report.people',
