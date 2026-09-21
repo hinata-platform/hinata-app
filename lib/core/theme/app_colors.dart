@@ -107,6 +107,12 @@ abstract final class AppColors {
   static const accent = Color(0xFFD9A032); // oklch(.74 .135 70)
   static const accentStrong = Color(0xFFB9831F); // oklch(.66 .145 70)
   static const accentLine = Color(0xFFE4CE96); // oklch(.86 .07 70)
+  // White text on honey (the "today" chip of HIN-118): [accentStrong] reaches
+  // only 3.3:1 under white, this deeper honey 4.85:1 (WCAG 1.4.3).
+  static const accentDeep = Color(0xFF946A16);
+  // Amber text on an amber wash in the light theme, where [accentStrong] is too
+  // light to read on its own tint.
+  static const accentText = Color(0xFF7A5410);
 
   // Soft accent fill (active pill / unread highlight). Theme-aware: an opaque
   // cream tint in light, a translucent amber wash on dark surfaces.

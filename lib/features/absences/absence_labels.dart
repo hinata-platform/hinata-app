@@ -55,6 +55,19 @@ Color absenceColor(BuildContext context, int? hue) {
   ).toColor();
 }
 
+/// Text and icon drawn on a pale wash of [absenceColor]: the same hue, dark
+/// enough in light mode and light enough in dark mode to read on it (HIN-118).
+Color absenceInk(BuildContext context, int? hue) {
+  final dark = Theme.of(context).brightness == Brightness.dark;
+  if (hue == null) return dark ? AppColors.accent : AppColors.accentText;
+  return HSLColor.fromAHSL(
+    1,
+    (hue % 360).toDouble(),
+    dark ? 0.60 : 0.62,
+    dark ? 0.80 : 0.22,
+  ).toColor();
+}
+
 /// What a type is called: what an operator typed, or the translated label of a
 /// built-in nobody renamed.
 ///
