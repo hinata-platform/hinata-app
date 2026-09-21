@@ -220,8 +220,14 @@ class WorkloadRowView extends StatelessWidget {
       color: AppColors.ink,
     );
     final label = TextStyle(fontSize: 11.5, color: AppColors.inkSoft);
-    Widget cell(String caption, String value) => Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    // On a phone the three figures spread across the row: the first keeps to
+    // the start, the middle to the centre, the last to the end.
+    Widget cell(
+      String caption,
+      String value, [
+      CrossAxisAlignment align = CrossAxisAlignment.end,
+    ]) => Column(
+      crossAxisAlignment: compact ? align : CrossAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(value, style: figure),
@@ -232,10 +238,12 @@ class WorkloadRowView extends StatelessWidget {
       cell(
         context.t('time.reports.workload.capacity'),
         fmtDuration(context, row.capacityMinutes),
+        CrossAxisAlignment.start,
       ),
       cell(
         context.t('time.reports.workload.booked'),
         fmtDuration(context, row.bookedMinutes),
+        CrossAxisAlignment.center,
       ),
       cell(
         context.t('time.reports.workload.difference'),

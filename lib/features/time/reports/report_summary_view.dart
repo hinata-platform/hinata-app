@@ -43,6 +43,7 @@ class ReportTotalsStrip extends StatelessWidget {
     // Two figures side by side on a phone, one per line once text is large
     // enough that "152 h 15 min" would break across three lines.
     final perLine = compact && textFactor(context) > 1.3 ? 1.0 : 0.5;
+    final factor = textFactor(context);
     final figures = [
       _Figure(
         label: context.t('time.reports.total'),
@@ -75,22 +76,27 @@ class ReportTotalsStrip extends StatelessWidget {
         horizontal: compact ? 14 : 20,
         vertical: compact ? 14 : 18,
       ),
-      child: compact
-          ? Wrap(
-              runSpacing: 14,
-              children: [
-                for (final figure in figures)
-                  FractionallySizedBox(widthFactor: perLine, child: figure),
-              ],
-            )
-          : Row(
-              children: [
-                for (final (index, figure) in figures.indexed) ...[
-                  if (index > 0) const SizedBox(width: 24),
-                  Expanded(child: figure),
+      // A figure in a row needs about 210 points before "443 h 30 min"
+      // breaks; a narrower window puts two on a line, as a phone does.
+      child: LayoutBuilder(
+        builder: (context, constraints) =>
+            !compact && constraints.maxWidth / figures.length >= 210 * factor
+            ? Row(
+                children: [
+                  for (final (index, figure) in figures.indexed) ...[
+                    if (index > 0) const SizedBox(width: 24),
+                    Expanded(child: figure),
+                  ],
                 ],
-              ],
-            ),
+              )
+            : Wrap(
+                runSpacing: 14,
+                children: [
+                  for (final figure in figures)
+                    FractionallySizedBox(widthFactor: perLine, child: figure),
+                ],
+              ),
+      ),
     );
   }
 }
