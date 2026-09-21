@@ -39,6 +39,7 @@ class TimePolicySnapshot extends Equatable {
     this.suggestedDailyTargetMinutes,
     this.suggestedWeeklyTargetMinutes,
     this.alertsEnabled = false,
+    this.absenceCalendar = AbsenceCalendarLevel.off,
   });
 
   /// What the server enforces when it says nothing: a year, as the 1.x routes
@@ -133,6 +134,11 @@ class TimePolicySnapshot extends Equatable {
   /// Whether leads and assignees hear about budgets and estimates; the project
   /// thresholds mean something only while this is on.
   final bool alertsEnabled;
+
+  /// How much of other people's absences the team calendar shows (HIN-118).
+  /// [AbsenceCalendarLevel.off] whenever absence management is off, so the
+  /// calendar and the "away today" card are asked for only where they exist.
+  final AbsenceCalendarLevel absenceCalendar;
 
   /// Whether `GET /time/hints` answers at all. Asked before calling it, so a
   /// screen never pays for a 404.
@@ -303,6 +309,7 @@ class TimePolicySnapshot extends Equatable {
         suggestedDailyTargetMinutes: suggestedDailyTargetMinutes,
         suggestedWeeklyTargetMinutes: suggestedWeeklyTargetMinutes,
         alertsEnabled: alertsEnabled,
+        absenceCalendar: absenceCalendar,
       );
 
   factory TimePolicySnapshot.fromJson(Map<String, dynamic> json) {
@@ -340,6 +347,9 @@ class TimePolicySnapshot extends Equatable {
       suggestedWeeklyTargetMinutes:
           (reminders?['suggestedWeeklyTargetMinutes'] as num?)?.toInt(),
       alertsEnabled: json['alertsEnabled'] as bool? ?? false,
+      absenceCalendar: AbsenceCalendarLevel.fromWire(
+        json['absenceCalendarVisibility'] as String?,
+      ),
     );
   }
 
@@ -367,7 +377,31 @@ class TimePolicySnapshot extends Equatable {
     suggestedDailyTargetMinutes,
     suggestedWeeklyTargetMinutes,
     alertsEnabled,
+    absenceCalendar,
   ];
+}
+
+/// The levels of the team absence calendar, as the server names them.
+///
+/// The level is a ceiling: every absence type has its own visibility, and the
+/// server sends the narrower of the two. Sickness is "away" on every level.
+enum AbsenceCalendarLevel {
+  off('OFF'),
+  busyOnly('BUSY_ONLY'),
+  type('TYPE');
+
+  const AbsenceCalendarLevel(this.wire);
+
+  final String wire;
+
+  bool get isOn => this != off;
+
+  String get labelKey => 'absence.calendar.level.$name';
+
+  static AbsenceCalendarLevel fromWire(String? wire) => values.firstWhere(
+    (level) => level.wire == wire,
+    orElse: () => off,
+  );
 }
 
 /// Days an administrator opened for the reader, until [expiresAt].

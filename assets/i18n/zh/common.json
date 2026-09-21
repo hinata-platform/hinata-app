@@ -335,7 +335,8 @@
       "kpis": "关键指标",
       "completion": "项目进度",
       "tracker": "专注时间",
-      "ranking": "团队排名"
+      "ranking": "团队排名",
+      "away": "今日缺勤"
     },
     "saveError": "无法保存仪表板。请重试。",
     "saved": "仪表板已保存",
@@ -381,7 +382,11 @@
     "viewAll": "查看全部",
     "teamRanking": "团队排名",
     "thisWeek": "本周",
-    "pointsShort": "{{count}} 点"
+    "pointsShort": "{{count}} 点",
+    "awayToday": "今日缺勤",
+    "awayNone": "今天大家都在。",
+    "awayMore": "以及另外 {{count}} 人",
+    "awayOpen": "打开团队日历"
   },
   "comments": {
     "actionCamera": "拍摄照片或视频",
@@ -1532,7 +1537,12 @@
     "calendar": {
       "requested": "已申请",
       "requestedHint": "你已为这一天提交申请。尚未有结果，仍可在这一天记录工时。",
-      "open": "打开缺勤"
+      "open": "打开缺勤",
+      "level": {
+        "off": "关闭",
+        "busyOnly": "仅显示有人缺勤",
+        "type": "缺勤类型"
+      }
     },
     "request": {
       "ask": "申请请假",
@@ -1619,7 +1629,8 @@
         "mine": "我的",
         "requests": "申请",
         "inbox": "待决定",
-        "balances": "余额"
+        "balances": "余额",
+        "team": "团队"
       },
       "search": "搜索缺勤",
       "type": "类型",
@@ -1641,6 +1652,35 @@
       "noMatch": "没有匹配项",
       "noMatchMessage": "没有符合这些筛选条件的缺勤。",
       "clearFilters": "清除筛选"
+    },
+    "team": {
+      "group": "小组",
+      "myProjects": "我的项目",
+      "pickProject": "选择项目…",
+      "month": "月",
+      "quarter": "季度",
+      "previous": "上一时段",
+      "next": "下一时段",
+      "today": "今天",
+      "awayOnly": "仅显示缺勤者",
+      "errorTitle": "无法加载日历",
+      "emptyTitle": "暂无可显示的人员",
+      "emptyMessage": "只有在本组项目上亲自记录过工时的人才会显示在这里。",
+      "truncated": "此小组人数超出一个日历的显示范围。请选择一个团队或项目以查看所有人。",
+      "person": "人员",
+      "capacity": "可用",
+      "capacityPeople": "{{count}} 人",
+      "capacityPeople_plural": "{{count}} 人",
+      "capacityDay": "{{planned}} 小时中可用 {{left}} 小时 · {{away}} 人缺勤 · {{requested}} 人已申请",
+      "away": "缺勤",
+      "legend": {
+        "away": "缺勤",
+        "requested": "已申请",
+        "dayOff": "周末或公共假日"
+      },
+      "thisWeek": "本周",
+      "capacityWeek": "{{planned}} 小时中可用 {{left}} 小时",
+      "everybodyHere": "大家都在。"
     }
   },
   "projects": {

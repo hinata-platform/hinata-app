@@ -335,7 +335,8 @@
       "kpis": "Cifras clave",
       "completion": "Progreso del proyecto",
       "tracker": "Tiempo de concentración",
-      "ranking": "Ranking del equipo"
+      "ranking": "Ranking del equipo",
+      "away": "Ausentes hoy"
     },
     "saveError": "No se pudo guardar tu panel. Inténtalo de nuevo.",
     "saved": "Panel guardado",
@@ -381,7 +382,11 @@
     "viewAll": "Ver todo",
     "teamRanking": "Ranking del equipo",
     "thisWeek": "esta semana",
-    "pointsShort": "{{count}} P"
+    "pointsShort": "{{count}} P",
+    "awayToday": "Ausentes hoy",
+    "awayNone": "Hoy están todos.",
+    "awayMore": "y {{count}} más",
+    "awayOpen": "Abrir el calendario del equipo"
   },
   "comments": {
     "actionCamera": "Hacer foto o vídeo",
@@ -1532,7 +1537,12 @@
     "calendar": {
       "requested": "Solicitado",
       "requestedHint": "Has solicitado este día. Aún no hay decisión y se puede seguir registrando tiempo en él.",
-      "open": "Abrir ausencia"
+      "open": "Abrir ausencia",
+      "level": {
+        "off": "Desactivado",
+        "busyOnly": "Solo que alguien está ausente",
+        "type": "El tipo de ausencia"
+      }
     },
     "request": {
       "ask": "Solicitar ausencia",
@@ -1619,7 +1629,8 @@
         "mine": "Mías",
         "requests": "Solicitudes",
         "inbox": "Por decidir",
-        "balances": "Saldos"
+        "balances": "Saldos",
+        "team": "Equipo"
       },
       "search": "Buscar ausencias",
       "type": "Tipo",
@@ -1641,6 +1652,35 @@
       "noMatch": "Sin resultados",
       "noMatchMessage": "Ninguna ausencia coincide con estos filtros.",
       "clearFilters": "Quitar filtros"
+    },
+    "team": {
+      "group": "Grupo",
+      "myProjects": "Mis proyectos",
+      "pickProject": "Elegir un proyecto…",
+      "month": "Mes",
+      "quarter": "Trimestre",
+      "previous": "Periodo anterior",
+      "next": "Periodo siguiente",
+      "today": "Hoy",
+      "awayOnly": "Solo ausentes",
+      "errorTitle": "No se pudo cargar el calendario",
+      "emptyTitle": "Nadie que mostrar",
+      "emptyMessage": "Aquí solo aparece quien ha registrado tiempo en un proyecto de este grupo.",
+      "truncated": "Este grupo es mayor de lo que muestra un calendario. Elige un equipo o un proyecto para ver a todos.",
+      "person": "Persona",
+      "capacity": "Disponible",
+      "capacityPeople": "{{count}} persona",
+      "capacityPeople_plural": "{{count}} personas",
+      "capacityDay": "{{left}} h de {{planned}} h disponibles · {{away}} ausentes · {{requested}} solicitadas",
+      "away": "Ausente",
+      "legend": {
+        "away": "Ausente",
+        "requested": "Solicitado",
+        "dayOff": "Fin de semana o festivo"
+      },
+      "thisWeek": "Esta semana",
+      "capacityWeek": "{{left}} h de {{planned}} h disponibles",
+      "everybodyHere": "Están todos."
     }
   },
   "projects": {
