@@ -1179,7 +1179,11 @@
         "leadsDoNot": "Les responsables de vos projets ne voient pas vos absences.",
         "keepersNamed": "Seuls les gestionnaires des absences désignés et les administrateurs voient un jour de maladie comme tel.",
         "keepersAdmins": "Seuls les administrateurs voient un jour de maladie comme tel.",
-        "band": "Les responsables de vos projets et les administrateurs de vos équipes voient la capacité restante de leur groupe, sous forme de somme sur au moins trois personnes. Vos jours approuvés et vos heures prévues y entrent, votre nom non."
+        "band": "Les responsables de vos projets et les administrateurs de vos équipes voient la capacité restante de leur groupe, sous forme de somme sur au moins trois personnes. Vos jours approuvés et vos heures prévues y entrent, votre nom non.",
+        "report": "Dans le rapport « absences et soldes », vous voyez vos propres chiffres. Les gestionnaires des absences voient ceux de tous.",
+        "reportLeads": "Les responsables de vos projets n’y voient que des sommes sur au moins trois personnes, sans maladie.",
+        "rate": "Les gestionnaires des absences voient la part de votre temps de travail prévu pendant laquelle vous étiez absent, maladie comprise.",
+        "sickDetail": "Après {{count}} mois, un jour de maladie n’apparaît plus que comme « absent (autre) »."
       }
     },
     "hint": {
@@ -1230,7 +1234,8 @@
         "summary": "Synthèse",
         "detailed": "Entrées",
         "workload": "Charge",
-        "saved": "Enregistrés"
+        "saved": "Enregistrés",
+        "absences": "Absences"
       },
       "group": {
         "project": "Projet",
@@ -1334,7 +1339,8 @@
         "print": "Imprimer",
         "done": "Export enregistré",
         "truncated": "Export enregistré. Le fichier est tronqué ; affinez les filtres pour tout obtenir.",
-        "failed": "L’export a échoué."
+        "failed": "L’export a échoué.",
+        "docx": "Word (DOCX)"
       },
       "save": {
         "title": "Enregistrer le rapport",
@@ -1912,6 +1918,102 @@
       "capacityWeek": "{{left}} h sur {{planned}} h disponibles",
       "everybodyHere": "Tout le monde est là.",
       "holiday": "Jour férié"
+    },
+    "report": {
+      "remaining": "Restant",
+      "taken": "Pris",
+      "planned": "Prévu",
+      "carriedIn": "Report",
+      "entitled": "Droit",
+      "rate": "Taux d’absence",
+      "person": "Personne",
+      "type": "Type",
+      "people": "{{count}} personne",
+      "people_plural": "{{count}} personnes",
+      "leftOf": "sur {{days}}",
+      "expiringOn": "{{days}} perdus le {{date}}",
+      "groupPerson": "Par personne",
+      "groupType": "Par type",
+      "year": "Année de congés {{year}}",
+      "previousYear": "Année précédente",
+      "nextYear": "Année suivante",
+      "pickType": "Choisir un type",
+      "allTypes": "Tous les types",
+      "everybody": "Tout le monde",
+      "onlyMe": "Moi seulement",
+      "pickProject": "Choisir un projet",
+      "empty": "Aucun solde cette année",
+      "emptyHint": "Les jours apparaissent ici dès qu’une année est attribuée.",
+      "leadHint": "Sommes sur au moins trois personnes, sans maladie.",
+      "pickGroupHint": "Choisissez un projet que vous dirigez pour voir les sommes.",
+      "rateHint": "Part du temps de travail prévu pendant laquelle la personne était absente, tous types compris.",
+      "rateShort": "Taux"
+    },
+    "expiry": {
+      "title": "{{type}} : perte le {{date}}",
+      "body": "Il reste {{days}}. Prenez-les d’ici là, sinon ils seront perdus."
+    },
+    "notices": {
+      "title": "Rappels reçus",
+      "hint": "Les mêmes rappels sur lesquels repose une perte.",
+      "empty": "Aucun rappel pour l’instant",
+      "line": "{{type}} {{year}} : {{days}} restants",
+      "until": "Échéance {{date}}",
+      "kind": {
+        "ANNUAL": "Rappel annuel",
+        "BEFORE_YEAR_END": "Avant la fin de l’année",
+        "BEFORE_CARRYOVER_DEADLINE": "Avant la fin du report",
+        "MANUAL": "Envoyé manuellement"
+      }
+    },
+    "yearRun": {
+      "pageTitle": "Traitement annuel",
+      "open": "Voir le traitement annuel",
+      "intro": "Report, perte et acquisition mensuelle tournent chaque nuit. Rien n’est perdu sans rappel : qui n’a pas été informé garde ses jours.",
+      "never": "Le traitement annuel n’a pas encore tourné",
+      "last": "Dernier passage le {{date}}",
+      "lastFailed": "Interrompu le {{date}}, il reprend la nuit suivante",
+      "explain": "Chaque écriture n’existe qu’une fois. Un second passage ne change rien.",
+      "carried": "Reportés",
+      "expired": "Perdus",
+      "held": "Conservés",
+      "accrued": "Acquis",
+      "missingTitle": "Rappel manquant",
+      "missingHint": "Ces jours ne sont perdus que si la personne a été informée avant l’échéance.",
+      "missingEmpty": "Tout le monde a été informé",
+      "missingLine": "{{type}} {{year}} : {{days}}",
+      "overdue": "Échéance {{date}} dépassée, jours conservés",
+      "dueBy": "Échéance {{date}}",
+      "sendNow": "Envoyer le rappel",
+      "sent": "Rappel envoyé",
+      "proposalsTitle": "Propositions après une longue maladie",
+      "proposalsHint": "Après 15 mois de maladie, les congés peuvent être perdus. C’est à vous de décider, avec un motif.",
+      "proposalsEmpty": "Aucune proposition ouverte",
+      "proposalLine": "{{type}} {{year}} : {{days}}",
+      "proposalSick": "{{count}} jours de maladie sur {{span}}",
+      "decide": "Décider",
+      "decisionTitle": "Statuer sur la proposition",
+      "reason": "Motif",
+      "reasonHint": "Conservé sur la proposition, pas dans le journal d’audit.",
+      "confirm": "Enregistrer la perte",
+      "dismiss": "Garder les jours",
+      "confirmed": "Perte enregistrée",
+      "dismissed": "Proposition écartée, les jours restent"
+    },
+    "settlement": {
+      "title": "Solde de départ",
+      "hint": "L’année recalculée avec la date de départ (§ 5 BUrlG). Hinata compte des jours, jamais de l’argent.",
+      "needsLeftOn": "Saisissez une date de départ pour voir le solde.",
+      "accrued": "Droit avec le départ",
+      "correction": "Correction",
+      "remaining": "Restant actuel",
+      "payout": "À indemniser",
+      "bookCorrection": "Enregistrer la correction",
+      "correctionReason": "Douzièmes au départ (§ 5 BUrlG)",
+      "bookPayout": "Enregistrer l’indemnité",
+      "payoutReason": "Indemnisé avec le dernier salaire",
+      "done": "Enregistré",
+      "confirmTitle": "{{what}} de {{days}} ?"
     }
   },
   "projects": {
@@ -2651,7 +2753,24 @@
       "grantRevoked": "Les jours sont de nouveau fermés.",
       "suggestedDailyTargetLabel": "Objectif du jour proposé",
       "suggestedWeeklyTargetLabel": "Objectif hebdomadaire proposé",
-      "suggestedTargetHint": "Proposé aux personnes dans leurs rappels. Chacun décide de l’utiliser ou non."
+      "suggestedTargetHint": "Proposé aux personnes dans leurs rappels. Chacun décide de l’utiliser ou non.",
+      "absenceReportsTitle": "Rapport « absences et soldes »",
+      "absenceReportsHint": "Chacun voit ses propres chiffres, les gestionnaires des absences ceux de tous. Les responsables voient des sommes sur au moins trois personnes, sans maladie, s’ils voient déjà les saisies de leurs membres. Uniquement avec la gestion des absences.",
+      "absenceRateTitle": "Taux d’absence par personne",
+      "absenceRateHint": "Uniquement pour les gestionnaires des absences, jamais pour les responsables. Le taux inclut la maladie et constitue une donnée de comportement et de santé : une décision propre, soumise à codétermination (§ 87 Abs. 1 Nr. 6 BetrVG).",
+      "expiryNoticeTitle": "Rappels avant la perte des congés",
+      "expiryNoticeHint": "Sans rappel à temps, aucun congé n’est perdu (BAG 19.02.2019, 9 AZR 541/15). Une fois par an au jour choisi, et quelques semaines avant chaque échéance.",
+      "expiryMonthLabel": "Mois du rappel annuel",
+      "expiryDayLabel": "Jour du rappel annuel",
+      "expiryWeeksLabel": "Semaines avant chaque échéance",
+      "weeksSuffix": "semaines",
+      "yearsSuffix": "ans",
+      "sickDetailPurgeLabel": "Généraliser la maladie après",
+      "sickDetailPurgeHint": "Ensuite, un jour de maladie devient « absent (autre) », sans note. Le jour et le solde restent. 0 conserve la mention.",
+      "requestPurgeLabel": "Supprimer les demandes closes après",
+      "requestPurgeHint": "Demandes refusées, retirées et annulées. Les approuvées restent comme preuve. 0 conserve tout.",
+      "ledgerPurgeLabel": "Supprimer le journal des congés après",
+      "ledgerPurgeHint": "0 conserve le journal. Sinon au moins 3 ans (§§ 195, 199 BGB). Les rappels d’expiration ne sont jamais supprimés."
     },
     "absence": {
       "title": "Gestion des absences 2.0",

@@ -11,6 +11,7 @@ import '../../core/blocs/my_absences_cubit.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/absence_models.dart';
+import '../../core/models/absence_report_models.dart';
 import '../../core/repositories/absence_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -20,6 +21,7 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/read_on_trigger.dart';
 import 'absence_entitlement_sheets.dart' show LedgerRow;
 import 'absence_labels.dart';
+import 'absence_year_views.dart';
 
 /// Settings → Working hours and absences → your absence balances (HIN-116).
 ///
@@ -56,6 +58,10 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
 
   PagedCubit<AbsenceLedgerEntry>? _entries;
 
+  /// The notices this person received (HIN-119): the same record a lapse rests
+  /// on, a page at a time.
+  PagedCubit<AbsenceNotice>? _notices;
+
   @override
   void initState() {
     super.initState();
@@ -72,7 +78,19 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
   @override
   void dispose() {
     unawaited(_entries?.close());
+    unawaited(_notices?.close());
     super.dispose();
+  }
+
+  /// Reads the first page of the person's notices, once the module is known.
+  void _loadNotices() {
+    final cubit = _notices ??= PagedCubit<AbsenceNotice>(
+      (page, size) =>
+          context.read<AbsenceRepository>().notices(page: page, size: size),
+      pageSize: 10,
+      keyOf: (notice) => notice.id,
+    );
+    unawaited(cubit.load());
   }
 
   /// The first read: the year, plus the two answers that do not depend on it.
@@ -90,6 +108,7 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
       _types = held.types;
       _keeper = held.keeper;
     });
+    _loadNotices();
     final thisYear = held.balances;
     if (_year == DateTime.now().year && thisYear != null) {
       setState(() {
@@ -244,8 +263,10 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
             ),
           )
         else ...[
+          ..._expiring(context),
           ..._cards(context),
           ..._journal(context),
+          ..._noticeList(context),
           _actions(context),
         ],
         Divider(height: 1, color: AppColors.hairline2),
@@ -302,6 +323,92 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
       ],
     ),
   );
+
+  /// "Your vacation lapses on 31 March": one card per type with days about to
+  /// go, above the balances, where the person looks first (HIN-119).
+  List<Widget> _expiring(BuildContext context) {
+    final rows = (_balances?.balances ?? const <AbsenceBalance>[])
+        .where((row) => row.expiringMilliDays > 0 && row.expiringOn != null)
+        .toList();
+    return [
+      for (final row in rows)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+          child: AbsenceExpiryCard(
+            typeName: _typeOf(row.typeId) == null
+                ? ''
+                : absenceTypeName(context, _typeOf(row.typeId)!),
+            milliDays: row.expiringMilliDays,
+            on: row.expiringOn!,
+          ),
+        ),
+    ];
+  }
+
+  /// The notices received, newest first, with more on request.
+  List<Widget> _noticeList(BuildContext context) {
+    final cubit = _notices;
+    if (cubit == null) return const [];
+    return [
+      BlocBuilder<PagedCubit<AbsenceNotice>, PagedState<AbsenceNotice>>(
+        bloc: cubit,
+        builder: (context, state) {
+          if (!state.hasData) return const SizedBox.shrink();
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 2),
+                child: Text(
+                  context.t('absence.notices.title'),
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.inkSoft,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                child: Text(
+                  context.t(
+                    state.items.isEmpty
+                        ? 'absence.notices.empty'
+                        : 'absence.notices.hint',
+                  ),
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    height: 1.4,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              for (final notice in state.items)
+                AbsenceNoticeTile(
+                  notice: notice,
+                  typeName: _typeOf(notice.typeId) == null
+                      ? ''
+                      : absenceTypeName(context, _typeOf(notice.typeId)!),
+                ),
+              if (state.hasMore)
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 6),
+                    child: TextButton(
+                      onPressed: state.isLoadingMore
+                          ? null
+                          : () => unawaited(cubit.loadMore()),
+                      child: Text(context.t('common.loadMore')),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    ];
+  }
 
   List<Widget> _cards(BuildContext context) {
     final rows = _balances?.balances ?? const <AbsenceBalance>[];

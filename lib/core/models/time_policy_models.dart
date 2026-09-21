@@ -41,6 +41,7 @@ class TimePolicySnapshot extends Equatable {
     this.alertsEnabled = false,
     this.absenceCalendar = AbsenceCalendarLevel.off,
     this.workloadReportsEnabled = false,
+    this.absenceReportsEnabled = false,
   });
 
   /// What the server enforces when it says nothing: a year, as the 1.x routes
@@ -144,6 +145,10 @@ class TimePolicySnapshot extends Equatable {
   /// Whether the workload report exists on this instance (HIN-93). Who may
   /// read it the server decides; the tab is offered only where it could answer.
   final bool workloadReportsEnabled;
+
+  /// Whether the report "absences and balances" exists (HIN-119): only while
+  /// absence management does, and only with its own policy on.
+  final bool absenceReportsEnabled;
 
   /// Whether `GET /time/hints` answers at all. Asked before calling it, so a
   /// screen never pays for a 404.
@@ -316,6 +321,7 @@ class TimePolicySnapshot extends Equatable {
         alertsEnabled: alertsEnabled,
         absenceCalendar: absenceCalendar,
         workloadReportsEnabled: workloadReportsEnabled,
+        absenceReportsEnabled: absenceReportsEnabled,
       );
 
   factory TimePolicySnapshot.fromJson(Map<String, dynamic> json) {
@@ -357,6 +363,7 @@ class TimePolicySnapshot extends Equatable {
         json['absenceCalendarVisibility'] as String?,
       ),
       workloadReportsEnabled: json['workloadReportsEnabled'] as bool? ?? false,
+      absenceReportsEnabled: json['absenceReportsEnabled'] as bool? ?? false,
     );
   }
 
@@ -386,6 +393,7 @@ class TimePolicySnapshot extends Equatable {
     alertsEnabled,
     absenceCalendar,
     workloadReportsEnabled,
+    absenceReportsEnabled,
   ];
 }
 

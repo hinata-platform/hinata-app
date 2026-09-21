@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/account/account_screen.dart';
 import '../../features/admin/admin_screen.dart';
 import '../../features/absences/absence_entitlements_screen.dart';
+import '../../features/absences/absence_year_run_screen.dart';
 import '../../features/absences/absence_types_screen.dart';
 import '../../features/admin/holidays/admin_holidays_screen.dart';
 import '../../features/admin/users/user_management_screen.dart';
@@ -607,6 +608,13 @@ GoRouter buildRouter({
             path: '/absences/entitlements',
             pageBuilder: (_, state) =>
                 _transition(state, const AbsenceEntitlementsScreen()),
+          ),
+          // The yearly run (HIN-119): what it did, who was not told, and the
+          // lapses it proposes after a long illness. A keeper's page.
+          GoRoute(
+            path: '/absences/year-run',
+            pageBuilder: (_, state) =>
+                _transition(state, const AbsenceYearRunScreen()),
           ),
           // Where requests used to live before absences moved into the time
           // module. Notifications already sent link here, and the server still

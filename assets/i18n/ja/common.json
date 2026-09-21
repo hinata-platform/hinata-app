@@ -1179,7 +1179,11 @@
         "leadsDoNot": "プロジェクトのリーダーはあなたの不在を見られません。",
         "keepersNamed": "病気の日を病気として見られるのは、指名された不在管理者と管理者だけです。",
         "keepersAdmins": "病気の日を病気として見られるのは管理者だけです。",
-        "band": "プロジェクトのリーダーとチームの管理者は、グループに残る稼働可能量を3人以上の合計として見られます。承認済みの日と予定時間は含まれますが、名前は含まれません。"
+        "band": "プロジェクトのリーダーとチームの管理者は、グループに残る稼働可能量を3人以上の合計として見られます。承認済みの日と予定時間は含まれますが、名前は含まれません。",
+        "report": "レポート「不在と残日数」では自分の数字が見られます。不在管理者は全員分を見られます。",
+        "reportLeads": "プロジェクトのリーダーは、そこで3人以上の合計（病気を除く）のみ見られます。",
+        "rate": "不在管理者は、予定労働時間のうちあなたが不在だった割合（病気を含む）を見られます。",
+        "sickDetail": "{{count}}か月後、病気の日は「不在（その他）」とだけ表示されます。"
       }
     },
     "hint": {
@@ -1230,7 +1234,8 @@
         "summary": "サマリー",
         "detailed": "エントリー",
         "workload": "稼働状況",
-        "saved": "保存済み"
+        "saved": "保存済み",
+        "absences": "不在"
       },
       "group": {
         "project": "プロジェクト",
@@ -1334,7 +1339,8 @@
         "print": "印刷",
         "done": "エクスポートを保存しました",
         "truncated": "エクスポートを保存しました。ファイルは途中までです。すべて取得するにはフィルターを絞り込んでください。",
-        "failed": "エクスポートに失敗しました。"
+        "failed": "エクスポートに失敗しました。",
+        "docx": "Word (DOCX)"
       },
       "save": {
         "title": "レポートを保存",
@@ -1912,6 +1918,102 @@
       "capacityWeek": "{{planned}}時間中{{left}}時間が稼働可能",
       "everybodyHere": "全員そろっています。",
       "holiday": "祝日"
+    },
+    "report": {
+      "remaining": "残り",
+      "taken": "取得済み",
+      "planned": "予定",
+      "carriedIn": "繰越",
+      "entitled": "付与",
+      "rate": "不在率",
+      "person": "氏名",
+      "type": "種類",
+      "people": "{{count}}人",
+      "people_plural": "{{count}}人",
+      "leftOf": "{{days}}日中",
+      "expiringOn": "{{date}}に{{days}}が失効",
+      "groupPerson": "人別",
+      "groupType": "種類別",
+      "year": "休暇年度 {{year}}",
+      "previousYear": "前年",
+      "nextYear": "翌年",
+      "pickType": "種類を選択",
+      "allTypes": "すべての種類",
+      "everybody": "全員",
+      "onlyMe": "自分のみ",
+      "pickProject": "プロジェクトを選択",
+      "empty": "この年度の残日数はありません",
+      "emptyHint": "年度が付与されると、ここに日数が表示されます。",
+      "leadHint": "3人以上の合計で、病気は含みません。",
+      "pickGroupHint": "合計を見るには、あなたがリードするプロジェクトを選んでください。",
+      "rateHint": "予定労働時間のうち不在だった割合（すべての種類を含む）。",
+      "rateShort": "不在率"
+    },
+    "expiry": {
+      "title": "{{type}}は{{date}}に失効します",
+      "body": "残り{{days}}。それまでに取得しないと失効します。"
+    },
+    "notices": {
+      "title": "受け取った通知",
+      "hint": "失効の根拠となる通知と同じものです。",
+      "empty": "まだ通知はありません",
+      "line": "{{type}} {{year}}：残り{{days}}",
+      "until": "期限 {{date}}",
+      "kind": {
+        "ANNUAL": "年次通知",
+        "BEFORE_YEAR_END": "年度末の前",
+        "BEFORE_CARRYOVER_DEADLINE": "繰越期限の前",
+        "MANUAL": "手動で送信"
+      }
+    },
+    "yearRun": {
+      "pageTitle": "年次処理",
+      "open": "年次処理を開く",
+      "intro": "繰越、失効、月次付与は毎晩実行されます。通知なしに失効することはなく、知らされていない人は日数を保持します。",
+      "never": "年次処理はまだ実行されていません",
+      "last": "最終実行 {{date}}",
+      "lastFailed": "{{date}}に中断しました。翌晩に続行します",
+      "explain": "各記帳は一度だけ存在し、2回目の実行では何も変わりません。",
+      "carried": "繰越",
+      "expired": "失効",
+      "held": "保持",
+      "accrued": "付与",
+      "missingTitle": "通知なし",
+      "missingHint": "これらの日数は、期限前に本人へ通知された場合にのみ失効します。",
+      "missingEmpty": "全員に通知済みです",
+      "missingLine": "{{type}} {{year}}：{{days}}",
+      "overdue": "期限{{date}}を過ぎたため日数を保持",
+      "dueBy": "期限 {{date}}",
+      "sendNow": "今すぐ通知を送信",
+      "sent": "通知を送信しました",
+      "proposalsTitle": "長期病気後の提案",
+      "proposalsHint": "15か月の病気の後、休暇が失効する場合があります。該当するかは理由を添えてあなたが決めます。",
+      "proposalsEmpty": "未処理の提案はありません",
+      "proposalLine": "{{type}} {{year}}：{{days}}",
+      "proposalSick": "{{span}}の病気日数 {{count}}日",
+      "decide": "決定",
+      "decisionTitle": "提案を決定",
+      "reason": "理由",
+      "reasonHint": "提案に保存され、監査ログには残りません。",
+      "confirm": "失効を記帳",
+      "dismiss": "日数を保持",
+      "confirmed": "失効を記帳しました",
+      "dismissed": "提案を却下しました。日数は残ります"
+    },
+    "settlement": {
+      "title": "退職時の精算",
+      "hint": "退職日で年度を再計算します（§ 5 BUrlG）。Hinataは日数のみを扱い、金額は扱いません。",
+      "needsLeftOn": "精算を見るには退職日を入力してください。",
+      "accrued": "退職日時点の付与",
+      "correction": "修正",
+      "remaining": "現在の残り",
+      "payout": "買い取り対象",
+      "bookCorrection": "修正を記帳",
+      "correctionReason": "退職時の12分の1計算（§ 5 BUrlG）",
+      "bookPayout": "買い取りを記帳",
+      "payoutReason": "最終給与で買い取り",
+      "done": "記帳しました",
+      "confirmTitle": "{{days}}の{{what}}？"
     }
   },
   "projects": {
@@ -2651,7 +2753,24 @@
       "grantRevoked": "日を再び閉じました。",
       "suggestedDailyTargetLabel": "提案する 1 日の目標",
       "suggestedWeeklyTargetLabel": "提案する週の目標",
-      "suggestedTargetHint": "各自のリマインダー設定で提案されます。使うかどうかは本人が決めます。"
+      "suggestedTargetHint": "各自のリマインダー設定で提案されます。使うかどうかは本人が決めます。",
+      "absenceReportsTitle": "レポート「不在と残日数」",
+      "absenceReportsHint": "各自は自分の数字を、不在管理者は全員の数字を見られます。リーダーはメンバーの記録を見られる場合に、3人以上の合計（病気を除く）を見られます。不在管理が有効な場合のみ。",
+      "absenceRateTitle": "個人別の不在率",
+      "absenceRateHint": "不在管理者のみが見られ、リーダーには表示されません。病気を含むため行動・健康データにあたり、独立した共同決定事項です（§ 87 Abs. 1 Nr. 6 BetrVG）。",
+      "expiryNoticeTitle": "休暇失効前の通知",
+      "expiryNoticeHint": "適時の通知がなければ休暇は失効しません（BAG 19.02.2019, 9 AZR 541/15）。年に一度、選んだ日に、そして各期限の数週間前に送信します。",
+      "expiryMonthLabel": "年次通知の月",
+      "expiryDayLabel": "年次通知の日",
+      "expiryWeeksLabel": "各期限の何週間前",
+      "weeksSuffix": "週",
+      "yearsSuffix": "年",
+      "sickDetailPurgeLabel": "病気情報を粗くするまで",
+      "sickDetailPurgeHint": "その後、病気の日は「不在（その他）」となりメモは削除されます。日付と残日数は残ります。0で詳細を保持。",
+      "requestPurgeLabel": "終了した申請を削除するまで",
+      "requestPurgeHint": "却下・取り下げ・取消の申請です。承認済みは証拠として残ります。0ですべて保持。",
+      "ledgerPurgeLabel": "休暇台帳を削除するまで",
+      "ledgerPurgeHint": "0で台帳を保持。それ以外は最低3年（§§ 195, 199 BGB）。失効通知は削除されません。"
     },
     "absence": {
       "title": "休暇管理 2.0",

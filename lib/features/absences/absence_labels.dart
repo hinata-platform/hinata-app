@@ -157,3 +157,15 @@ String spanLabel(BuildContext context, DateTime from, DateTime to) {
   if (DateUtils.isSameDay(from, to)) return format.format(from);
   return '${format.format(from)} – ${format.format(to)}';
 }
+
+final Map<String, DateFormat> _dayFormats = {};
+
+/// "31. März 2027": one day, written the way the reader's locale writes it —
+/// for a deadline, where the year matters as much as the day.
+String dayMonthLabel(BuildContext context, DateTime day) {
+  final format = _dayFormats.putIfAbsent(
+    Localizations.localeOf(context).toLanguageTag(),
+    () => DateFormat.yMMMMd(Localizations.localeOf(context).toLanguageTag()),
+  );
+  return format.format(day);
+}

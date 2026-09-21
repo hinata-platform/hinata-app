@@ -1179,7 +1179,11 @@
         "leadsDoNot": "Leitungen deiner Projekte sehen deine Abwesenheiten nicht.",
         "keepersNamed": "Nur die benannten Abwesenheitsverwalter und Administratoren sehen einen Krankheitstag als Krankheit.",
         "keepersAdmins": "Nur Administratoren sehen einen Krankheitstag als Krankheit.",
-        "band": "Leitungen deiner Projekte und Admins deiner Teams sehen, wie viel Kapazität ihrer Gruppe bleibt, als Summe über mindestens drei Personen. Deine genehmigten Tage und geplanten Stunden fließen ein, dein Name nicht."
+        "band": "Leitungen deiner Projekte und Admins deiner Teams sehen, wie viel Kapazität ihrer Gruppe bleibt, als Summe über mindestens drei Personen. Deine genehmigten Tage und geplanten Stunden fließen ein, dein Name nicht.",
+        "report": "Im Bericht „Abwesenheiten und Salden“ siehst du deine eigenen Zahlen. Die Abwesenheitsverwaltung sieht alle.",
+        "reportLeads": "Leitungen deiner Projekte sehen dort nur Summen über mindestens drei Personen, ohne Krankheit.",
+        "rate": "Die Abwesenheitsverwaltung sieht, welchen Anteil deiner geplanten Arbeitszeit du abwesend warst, Krankheit eingeschlossen.",
+        "sickDetail": "Nach {{count}} Monaten steht ein Krankheitstag nur noch als „abwesend (sonstiges)“ da."
       }
     },
     "hint": {
@@ -1230,7 +1234,8 @@
         "summary": "Übersicht",
         "detailed": "Einträge",
         "workload": "Auslastung",
-        "saved": "Gespeichert"
+        "saved": "Gespeichert",
+        "absences": "Abwesenheiten"
       },
       "group": {
         "project": "Projekt",
@@ -1334,7 +1339,8 @@
         "print": "Drucken",
         "done": "Export gespeichert",
         "truncated": "Export gespeichert. Die Datei ist gekürzt; grenze die Filter ein, um alles zu erhalten.",
-        "failed": "Der Export ist fehlgeschlagen."
+        "failed": "Der Export ist fehlgeschlagen.",
+        "docx": "Word (DOCX)"
       },
       "save": {
         "title": "Bericht speichern",
@@ -1912,6 +1918,102 @@
       "capacityWeek": "{{left}} h von {{planned}} h verfügbar",
       "everybodyHere": "Alle sind da.",
       "holiday": "Feiertag"
+    },
+    "report": {
+      "remaining": "Rest",
+      "taken": "Genommen",
+      "planned": "Geplant",
+      "carriedIn": "Übertrag",
+      "entitled": "Anspruch",
+      "rate": "Abwesenheitsquote",
+      "person": "Person",
+      "type": "Art",
+      "people": "{{count}} Person",
+      "people_plural": "{{count}} Personen",
+      "leftOf": "von {{days}}",
+      "expiringOn": "{{days}} verfallen am {{date}}",
+      "groupPerson": "Nach Person",
+      "groupType": "Nach Art",
+      "year": "Urlaubsjahr {{year}}",
+      "previousYear": "Vorheriges Jahr",
+      "nextYear": "Nächstes Jahr",
+      "pickType": "Art wählen",
+      "allTypes": "Alle Arten",
+      "everybody": "Alle Personen",
+      "onlyMe": "Nur ich",
+      "pickProject": "Projekt wählen",
+      "empty": "Keine Salden in diesem Jahr",
+      "emptyHint": "Hier erscheinen Tage, sobald ein Jahr zugeteilt ist.",
+      "leadHint": "Summen über mindestens drei Personen, ohne Krankheit.",
+      "pickGroupHint": "Wähle ein Projekt, das du leitest, um die Summen zu sehen.",
+      "rateHint": "Anteil der geplanten Arbeitszeit, in der die Person abwesend war, jede Art eingeschlossen.",
+      "rateShort": "Quote"
+    },
+    "expiry": {
+      "title": "{{type}} verfällt am {{date}}",
+      "body": "Noch {{days}}. Nimm sie bis dahin, danach verfallen sie."
+    },
+    "notices": {
+      "title": "Erhaltene Hinweise",
+      "hint": "Dieselben Hinweise, auf die sich ein Verfall stützt.",
+      "empty": "Noch keine Hinweise",
+      "line": "{{type}} {{year}}: {{days}} übrig",
+      "until": "Frist {{date}}",
+      "kind": {
+        "ANNUAL": "Jährlicher Hinweis",
+        "BEFORE_YEAR_END": "Vor dem Jahresende",
+        "BEFORE_CARRYOVER_DEADLINE": "Vor dem Ende des Übertrags",
+        "MANUAL": "Von Hand gesendet"
+      }
+    },
+    "yearRun": {
+      "pageTitle": "Jahreslauf",
+      "open": "Jahreslauf ansehen",
+      "intro": "Übertrag, Verfall und monatlicher Zuwachs laufen jede Nacht. Ohne Hinweis verfällt nichts: Wer nicht informiert wurde, behält die Tage.",
+      "never": "Der Jahreslauf ist noch nicht gelaufen",
+      "last": "Zuletzt gelaufen am {{date}}",
+      "lastFailed": "Am {{date}} abgebrochen, er setzt in der nächsten Nacht fort",
+      "explain": "Jede Buchung gibt es nur einmal. Ein zweiter Lauf ändert nichts.",
+      "carried": "Übertragen",
+      "expired": "Verfallen",
+      "held": "Gehalten",
+      "accrued": "Zuwachs",
+      "missingTitle": "Hinweis fehlt",
+      "missingHint": "Diese Tage verfallen erst, wenn die Person vor der Frist informiert wurde.",
+      "missingEmpty": "Alle sind informiert",
+      "missingLine": "{{type}} {{year}}: {{days}}",
+      "overdue": "Frist {{date}} verstrichen, Tage gehalten",
+      "dueBy": "Frist {{date}}",
+      "sendNow": "Hinweis jetzt senden",
+      "sent": "Hinweis gesendet",
+      "proposalsTitle": "Vorschläge nach langer Krankheit",
+      "proposalsHint": "Nach 15 Monaten Krankheit kann Urlaub verfallen. Ob das zutrifft, entscheidest du mit Begründung.",
+      "proposalsEmpty": "Keine offenen Vorschläge",
+      "proposalLine": "{{type}} {{year}}: {{days}}",
+      "proposalSick": "{{count}} Krankheitstage im Zeitraum {{span}}",
+      "decide": "Entscheiden",
+      "decisionTitle": "Vorschlag entscheiden",
+      "reason": "Begründung",
+      "reasonHint": "Wird beim Vorschlag gespeichert, nicht im Audit-Protokoll.",
+      "confirm": "Verfall buchen",
+      "dismiss": "Tage behalten",
+      "confirmed": "Verfall gebucht",
+      "dismissed": "Vorschlag verworfen, die Tage bleiben"
+    },
+    "settlement": {
+      "title": "Abrechnung beim Austritt",
+      "hint": "Das Jahr mit dem Austrittsdatum neu gerechnet (§ 5 BUrlG). Hinata rechnet in Tagen, nie in Geld.",
+      "needsLeftOn": "Trag ein Austrittsdatum ein, um die Abrechnung zu sehen.",
+      "accrued": "Anspruch mit Austritt",
+      "correction": "Korrektur",
+      "remaining": "Jetzt übrig",
+      "payout": "Abzugelten",
+      "bookCorrection": "Korrektur buchen",
+      "correctionReason": "Zwölftelung beim Austritt (§ 5 BUrlG)",
+      "bookPayout": "Abgeltung buchen",
+      "payoutReason": "Abgeltung mit der letzten Abrechnung",
+      "done": "Gebucht",
+      "confirmTitle": "{{what}} über {{days}}?"
     }
   },
   "projects": {
@@ -2651,7 +2753,24 @@
       "grantRevoked": "Die Tage sind wieder geschlossen.",
       "suggestedDailyTargetLabel": "Vorgeschlagenes Tagesziel",
       "suggestedWeeklyTargetLabel": "Vorgeschlagenes Wochenziel",
-      "suggestedTargetHint": "Wird Personen in ihren Erinnerungen angeboten. Ob sie es übernehmen, entscheidet jede Person selbst."
+      "suggestedTargetHint": "Wird Personen in ihren Erinnerungen angeboten. Ob sie es übernehmen, entscheidet jede Person selbst.",
+      "absenceReportsTitle": "Bericht „Abwesenheiten und Salden“",
+      "absenceReportsHint": "Jede Person sieht ihre eigenen Zahlen, die Abwesenheitsverwaltung alle. Leitungen sehen Summen über mindestens drei Personen ohne Krankheit, wenn sie die Einträge ihrer Mitglieder ohnehin sehen. Wirkt nur mit Abwesenheitsmanagement.",
+      "absenceRateTitle": "Abwesenheitsquote je Person",
+      "absenceRateHint": "Nur für die Abwesenheitsverwaltung, nie für Leitungen. Die Quote enthält Krankheit und ist damit Verhaltens- und Gesundheitsdatum: eine eigene, mitbestimmte Entscheidung (§ 87 Abs. 1 Nr. 6 BetrVG).",
+      "expiryNoticeTitle": "Hinweise auf Urlaubsverfall",
+      "expiryNoticeHint": "Ohne rechtzeitigen Hinweis verfällt kein Urlaub (BAG 19.02.2019, 9 AZR 541/15). Einmal im Jahr am gewählten Tag und einige Wochen vor jeder Frist.",
+      "expiryMonthLabel": "Monat des jährlichen Hinweises",
+      "expiryDayLabel": "Tag des jährlichen Hinweises",
+      "expiryWeeksLabel": "Wochen vor jeder Frist",
+      "weeksSuffix": "Wochen",
+      "yearsSuffix": "Jahre",
+      "sickDetailPurgeLabel": "Krankheit vergröbern nach",
+      "sickDetailPurgeHint": "Danach steht ein Krankheitstag als „abwesend (sonstiges)“ da, ohne Notiz. Tag und Saldo bleiben. 0 behält die Angabe.",
+      "requestPurgeLabel": "Abgeschlossene Anträge löschen nach",
+      "requestPurgeHint": "Abgelehnte, zurückgezogene und stornierte Anträge. Genehmigte bleiben als Nachweis. 0 behält alle.",
+      "ledgerPurgeLabel": "Urlaubsjournal löschen nach",
+      "ledgerPurgeHint": "0 behält das Journal. Sonst mindestens 3 Jahre (§§ 195, 199 BGB). Hinweise auf Urlaubsverfall werden nie gelöscht."
     },
     "absence": {
       "title": "Abwesenheitsmanagement 2.0",
