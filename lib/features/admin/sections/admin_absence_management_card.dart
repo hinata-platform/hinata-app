@@ -41,7 +41,19 @@ class AdminAbsenceManagementCard extends StatefulWidget {
     required this.managers,
     required this.onEnabledChanged,
     required this.onManagersChanged,
+    this.calendar,
+    this.calendarEffective,
+    this.onCalendarChanged,
   });
+
+  /// The stored team-calendar level (HIN-118), or null for the environment's.
+  final String? calendar;
+
+  /// What the level resolves to while nothing is stored.
+  final String? calendarEffective;
+
+  /// Null leaves the choice out, for a host that does not offer it.
+  final ValueChanged<String?>? onCalendarChanged;
 
   /// What an administrator stored; null means the environment decides.
   final bool? enabled;
@@ -144,6 +156,25 @@ class _AdminAbsenceManagementCardState
               text: context.t('admin.absence.needsAdvanced'),
             ),
           ),
+        if (widget.onCalendarChanged != null) ...[
+          const SizedBox(height: 8),
+          // The team calendar sits under the module: with the module off the
+          // level is stored and does nothing, like the switch above it.
+          PolicyChoice(
+            label: context.t('admin.absence.calendarTitle'),
+            helper: context.t('admin.absence.calendarHint'),
+            value: widget.calendar,
+            effective: widget.calendarEffective,
+            options: const {
+              'OFF': 'absence.calendar.level.off',
+              'BUSY_ONLY': 'absence.calendar.level.busyOnly',
+              'TYPE': 'absence.calendar.level.type',
+            },
+            onChanged: widget.onCalendarChanged!,
+          ),
+          // A calendar of who is away when is a holiday plan: Nr. 5, not Nr. 6.
+          const CodeterminationNote(textKey: 'admin.absence.calendarCodetermination'),
+        ],
         const SizedBox(height: 8),
         _keepers(context),
         // Only once the module is actually running. The two pages behind these

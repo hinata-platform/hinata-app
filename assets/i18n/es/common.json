@@ -1166,7 +1166,19 @@
         "maxDaysBack": "Puedes registrar hasta {{count}} día atrás. Un administrador abre los días anteriores si se lo pides.",
         "maxDaysBack_plural": "Puedes registrar hasta {{count}} días atrás. Un administrador abre los días anteriores si se lo pides."
       },
-      "loadFailed": "No se ha podido cargar el aviso. Comprueba tu conexión e inténtalo de nuevo."
+      "loadFailed": "No se ha podido cargar el aviso. Comprueba tu conexión e inténtalo de nuevo.",
+      "absence": {
+        "heading": "Mis ausencias",
+        "calendar": {
+          "off": "Tus compañeros no ven tus ausencias.",
+          "busyOnly": "Quienes trabajan en tus proyectos ven en el calendario del equipo que estás ausente, pero no por qué.",
+          "type": "Quienes trabajan en tus proyectos ven el tipo de tu ausencia en el calendario del equipo. La enfermedad solo aparece como ausencia, y los tipos visibles solo para ti no aparecen."
+        },
+        "leadsSee": "Los responsables de los proyectos en los que trabajas ven el tipo y el periodo de tus ausencias, nunca una nota, y la enfermedad solo como ausencia.",
+        "leadsDoNot": "Los responsables de tus proyectos no ven tus ausencias.",
+        "keepersNamed": "Solo los gestores de ausencias designados y los administradores ven un día de enfermedad como tal.",
+        "keepersAdmins": "Solo los administradores ven un día de enfermedad como tal."
+      }
     },
     "hint": {
       "chip": {
@@ -1423,7 +1435,7 @@
       "negativeHint": "Alguien puede tomar más de lo acumulado hasta ahora.",
       "negativeLimit": "Saldo negativo máximo",
       "visibility": "Lo que ven los demás",
-      "visibilityHint": "Ir más allá de «ausente» es una decisión sobre datos de salud (art. 9 RGPD). Surte efecto en el calendario a partir de la etapa A3.",
+      "visibilityHint": "Lo que los compañeros ven de este tipo en el calendario del equipo. La política de la instancia es el límite superior, y la enfermedad nunca aparece allí como enfermedad.",
       "quota": "Cupo",
       "allowance": "Días por año",
       "allowanceHint": "El valor por defecto para las nuevas asignaciones. Cada persona puede tener otro.",
@@ -2432,7 +2444,10 @@
       "keepersTitle": "Quién gestiona las ausencias",
       "keepersHint": "Estas personas gestionan tipos de ausencia, derechos y saldos de todos, y ven una baja por enfermedad como tal. Los administradores siempre pueden.",
       "keepersEmpty": "Nadie designado: los administradores gestionan las ausencias.",
-      "keepersAdd": "Añadir persona"
+      "keepersAdd": "Añadir persona",
+      "calendarTitle": "Calendario de ausencias del equipo",
+      "calendarHint": "Si los compañeros ven las ausencias de los demás en un calendario, y cuánto de ellas. Desactivado por defecto. Los responsables y gestores de ausencias ven además la capacidad que le queda a su grupo. Cada tipo de ausencia puede restringirlo más.",
+      "calendarCodetermination": "Un calendario de quién está ausente y cuándo es un plan de vacaciones en el sentido del § 87 apdo. 1 n.º 5 BetrVG (en el sector público, la ley regional de representación del personal). Acuérdelo con el comité de empresa o la representación del personal antes de activarlo; la valoración corresponde a las partes sociales."
     },
     "passwordPolicy": "Política de contraseñas",
     "passwordPolicyHint": "Requisitos mínimos de las contraseñas de los usuarios.",

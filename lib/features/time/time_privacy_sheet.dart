@@ -267,36 +267,68 @@ class TimeVisibilityPanel extends StatelessWidget {
         context.t('time.privacy.row.maxDaysBack', count: v.maxDaysBack),
       ),
     ];
+    final absences = v.absences;
+    final absenceRows = absences == null
+        ? const <(IconData, String)>[]
+        : <(IconData, String)>[
+            (
+              LucideIcons.usersRound,
+              context.t(
+                'time.privacy.absence.calendar.${absences.calendar.name}',
+              ),
+            ),
+            (
+              LucideIcons.users,
+              context.t(
+                absences.leadsSeeSpans
+                    ? 'time.privacy.absence.leadsSee'
+                    : 'time.privacy.absence.leadsDoNot',
+              ),
+            ),
+            (
+              LucideIcons.shieldCheck,
+              context.t(
+                absences.keepersNamed
+                    ? 'time.privacy.absence.keepersNamed'
+                    : 'time.privacy.absence.keepersAdmins',
+              ),
+            ),
+          ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final (icon, sentence) in rows)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 1),
-                  child: Icon(icon, size: 16, color: AppColors.inkSoft),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    sentence,
-                    style: TextStyle(
-                      fontSize: 13,
-                      height: 1.45,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+        for (final (icon, sentence) in rows) _sentence(icon, sentence),
+        if (absenceRows.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _Heading(
+            text: context.t('time.privacy.absence.heading'),
           ),
+          const SizedBox(height: 4),
+          for (final (icon, sentence) in absenceRows) _sentence(icon, sentence),
+        ],
       ],
     );
   }
+
+  Widget _sentence(IconData icon, String sentence) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 5),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(icon, size: 16, color: AppColors.inkSoft),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            sentence,
+            style: TextStyle(fontSize: 13, height: 1.45, color: AppColors.ink),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _Heading extends StatelessWidget {

@@ -132,6 +132,9 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
           managers: _stringList('absenceManagers'),
           onEnabledChanged: (v) => _set('absenceManagementEnabled', v),
           onManagersChanged: (ids) => _set('absenceManagers', ids),
+          calendar: _value<String>('absenceCalendarVisibility'),
+          calendarEffective: _effectiveValue<String>('absenceCalendarVisibility'),
+          onCalendarChanged: (v) => _set('absenceCalendarVisibility', v),
         ),
         'capture': _capture(context),
         // Only where there is a catalogue to manage: the routes behind them are

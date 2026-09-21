@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'time_policy_models.dart';
+
 import '../util/dates.dart';
 
 /// What a person is told about the processing of their working time, from
@@ -63,6 +65,7 @@ class TimeVisibility extends Equatable {
     this.foreignChangesRecorded = true,
     this.entryCreationRecorded = false,
     this.timerEventsRecorded = false,
+    this.absences,
   });
 
   final bool leadsSeeEntries;
@@ -89,6 +92,10 @@ class TimeVisibility extends Equatable {
   /// Starting and stopping a timer is recorded in the audit log.
   final bool timerEventsRecorded;
 
+  /// Who sees the reader's absences (HIN-118); null while absence management
+  /// is off, when there is nothing more to say about them.
+  final AbsenceVisibility? absences;
+
   factory TimeVisibility.fromJson(Map<String, dynamic> json) => TimeVisibility(
     leadsSeeEntries: json['leadsSeeEntries'] as bool? ?? false,
     approvalsEnabled: json['approvalsEnabled'] as bool? ?? false,
@@ -104,6 +111,9 @@ class TimeVisibility extends Equatable {
     foreignChangesRecorded: json['foreignChangesRecorded'] as bool? ?? true,
     entryCreationRecorded: json['entryCreationRecorded'] as bool? ?? false,
     timerEventsRecorded: json['timerEventsRecorded'] as bool? ?? false,
+    absences: json['absences'] is Map<String, dynamic>
+        ? AbsenceVisibility.fromJson(json['absences'] as Map<String, dynamic>)
+        : null,
   );
 
   @override
@@ -121,7 +131,36 @@ class TimeVisibility extends Equatable {
     foreignChangesRecorded,
     entryCreationRecorded,
     timerEventsRecorded,
+    absences,
   ];
+}
+
+/// Who sees the reader's absences, computed from the policies in force.
+class AbsenceVisibility extends Equatable {
+  const AbsenceVisibility({
+    this.calendar = AbsenceCalendarLevel.off,
+    this.leadsSeeSpans = false,
+    this.keepersNamed = false,
+  });
+
+  /// What colleagues see in the team calendar; never sickness as sickness.
+  final AbsenceCalendarLevel calendar;
+
+  /// Leads of projects the reader worked on see type and span.
+  final bool leadsSeeSpans;
+
+  /// An operator named who keeps absences; otherwise it is the administrators.
+  final bool keepersNamed;
+
+  factory AbsenceVisibility.fromJson(Map<String, dynamic> json) =>
+      AbsenceVisibility(
+        calendar: AbsenceCalendarLevel.fromWire(json['calendar'] as String?),
+        leadsSeeSpans: json['leadsSeeSpans'] as bool? ?? false,
+        keepersNamed: json['keepersNamed'] as bool? ?? false,
+      );
+
+  @override
+  List<Object?> get props => [calendar, leadsSeeSpans, keepersNamed];
 }
 
 /// One self-hint about the reader's own entries, from `GET /api/v1/time/hints`.
