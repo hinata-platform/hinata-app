@@ -335,7 +335,8 @@
       "kpis": "Kennzahlen",
       "completion": "Projektfortschritt",
       "tracker": "Fokuszeit",
-      "ranking": "Team-Ranking"
+      "ranking": "Team-Ranking",
+      "away": "Heute abwesend"
     },
     "saveError": "Dashboard konnte nicht gespeichert werden. Bitte erneut versuchen.",
     "saved": "Dashboard gespeichert",
@@ -381,7 +382,11 @@
     "viewAll": "Alle ansehen",
     "teamRanking": "Team-Ranking",
     "thisWeek": "diese Woche",
-    "pointsShort": "{{count}} P"
+    "pointsShort": "{{count}} P",
+    "awayToday": "Heute abwesend",
+    "awayNone": "Heute sind alle da.",
+    "awayMore": "und {{count}} weitere",
+    "awayOpen": "Teamkalender öffnen"
   },
   "comments": {
     "actionCamera": "Foto/Video aufnehmen",
@@ -1532,7 +1537,12 @@
     "calendar": {
       "requested": "Beantragt",
       "requestedHint": "Du hast diesen Tag beantragt. Entschieden ist noch nichts, und Zeit lässt sich weiterhin darauf erfassen.",
-      "open": "Abwesenheit öffnen"
+      "open": "Abwesenheit öffnen",
+      "level": {
+        "off": "Aus",
+        "busyOnly": "Nur, dass jemand abwesend ist",
+        "type": "Die Art der Abwesenheit"
+      }
     },
     "request": {
       "ask": "Abwesenheit beantragen",
@@ -1619,7 +1629,8 @@
         "mine": "Meine",
         "requests": "Anträge",
         "inbox": "Zu entscheiden",
-        "balances": "Konten"
+        "balances": "Konten",
+        "team": "Team"
       },
       "search": "Abwesenheiten durchsuchen",
       "type": "Art",
@@ -1641,6 +1652,35 @@
       "noMatch": "Nichts gefunden",
       "noMatchMessage": "Keine Abwesenheit passt zu diesen Filtern.",
       "clearFilters": "Filter zurücksetzen"
+    },
+    "team": {
+      "group": "Gruppe",
+      "myProjects": "Meine Projekte",
+      "pickProject": "Projekt wählen …",
+      "month": "Monat",
+      "quarter": "Quartal",
+      "previous": "Vorheriger Zeitraum",
+      "next": "Nächster Zeitraum",
+      "today": "Heute",
+      "awayOnly": "Nur Abwesende",
+      "errorTitle": "Der Kalender ließ sich nicht laden",
+      "emptyTitle": "Niemand zu zeigen",
+      "emptyMessage": "Hier erscheint nur, wer selbst Zeit auf einem Projekt dieser Gruppe erfasst hat.",
+      "truncated": "Diese Gruppe ist größer, als ein Kalender zeigt. Wähle ein Team oder ein Projekt, um alle zu sehen.",
+      "person": "Person",
+      "capacity": "Verfügbar",
+      "capacityPeople": "{{count}} Person",
+      "capacityPeople_plural": "{{count}} Personen",
+      "capacityDay": "{{left}} h von {{planned}} h verfügbar · {{away}} abwesend · {{requested}} beantragt",
+      "away": "Abwesend",
+      "legend": {
+        "away": "Abwesend",
+        "requested": "Beantragt",
+        "dayOff": "Wochenende oder Feiertag"
+      },
+      "thisWeek": "Diese Woche",
+      "capacityWeek": "{{left}} h von {{planned}} h verfügbar",
+      "everybodyHere": "Alle sind da."
     }
   },
   "projects": {

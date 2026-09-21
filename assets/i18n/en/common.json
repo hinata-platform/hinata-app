@@ -335,7 +335,8 @@
       "kpis": "Key figures",
       "completion": "Project progress",
       "tracker": "Focus time",
-      "ranking": "Team ranking"
+      "ranking": "Team ranking",
+      "away": "Away today"
     },
     "saveError": "Couldn't save your dashboard. Please try again.",
     "saved": "Dashboard saved",
@@ -381,7 +382,11 @@
     "viewAll": "View all",
     "teamRanking": "Team ranking",
     "thisWeek": "this week",
-    "pointsShort": "{{count}} P"
+    "pointsShort": "{{count}} P",
+    "awayToday": "Away today",
+    "awayNone": "Everybody is here today.",
+    "awayMore": "and {{count}} more",
+    "awayOpen": "Open the team calendar"
   },
   "comments": {
     "actionCamera": "Take photo or video",
@@ -1532,7 +1537,12 @@
     "calendar": {
       "requested": "Requested",
       "requestedHint": "You have asked for this day off. Nobody has decided yet, and time can still be recorded on it.",
-      "open": "Open absence"
+      "open": "Open absence",
+      "level": {
+        "off": "Off",
+        "busyOnly": "Only that somebody is away",
+        "type": "The absence type"
+      }
     },
     "request": {
       "ask": "Request absence",
@@ -1619,7 +1629,8 @@
         "mine": "Mine",
         "requests": "Requests",
         "inbox": "To decide",
-        "balances": "Balances"
+        "balances": "Balances",
+        "team": "Team"
       },
       "search": "Search absences",
       "type": "Type",
@@ -1641,6 +1652,35 @@
       "noMatch": "Nothing matches",
       "noMatchMessage": "No absence fits these filters.",
       "clearFilters": "Clear filters"
+    },
+    "team": {
+      "group": "Group",
+      "myProjects": "My projects",
+      "pickProject": "Choose a project…",
+      "month": "Month",
+      "quarter": "Quarter",
+      "previous": "Previous period",
+      "next": "Next period",
+      "today": "Today",
+      "awayOnly": "Only who is away",
+      "errorTitle": "The calendar could not be loaded",
+      "emptyTitle": "Nobody to show",
+      "emptyMessage": "Only people who recorded time on a project of this group appear here.",
+      "truncated": "This group is larger than one calendar shows. Choose a team or a project to see everybody.",
+      "person": "Person",
+      "capacity": "Available",
+      "capacityPeople": "{{count}} person",
+      "capacityPeople_plural": "{{count}} people",
+      "capacityDay": "{{left}} h of {{planned}} h available · {{away}} away · {{requested}} requested",
+      "away": "Away",
+      "legend": {
+        "away": "Away",
+        "requested": "Requested",
+        "dayOff": "Weekend or public holiday"
+      },
+      "thisWeek": "This week",
+      "capacityWeek": "{{left}} h of {{planned}} h available",
+      "everybodyHere": "Everybody is here."
     }
   },
   "projects": {

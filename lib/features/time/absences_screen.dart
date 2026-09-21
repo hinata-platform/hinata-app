@@ -20,6 +20,7 @@ import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/my_absences_cubit.dart';
 import '../../core/blocs/paged_cubit.dart';
+import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/absence_models.dart';
 import '../../core/models/absence_request_models.dart';
@@ -38,6 +39,7 @@ import '../absences/absence_actions.dart';
 import '../absences/absence_balances_panel.dart';
 import '../absences/absence_labels.dart';
 import '../absences/absence_request_widgets.dart';
+import '../absences/team_absence_calendar.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'day_marks.dart' show timeOffIcon;
@@ -57,6 +59,10 @@ const String kAbsenceScopeInbox = 'inbox';
 /// absences: it is tall, and it pushed the search and the filters of the list
 /// it sat on off the screen.
 const String kAbsenceScopeBalances = 'balances';
+
+/// Who in a group is away when (HIN-118). Only while the operator switched the
+/// team calendar on; otherwise the pill is not there and the scope falls back.
+const String kAbsenceScopeTeam = 'team';
 
 class TimeAbsencesScreen extends StatefulWidget {
   const TimeAbsencesScreen({super.key, this.scope});
@@ -104,7 +110,14 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
   /// the absences themselves — and a link from an old notification naming a
   /// scope that does not exist here must not leave the page loading one list
   /// while it draws another.
-  String get _shownScope => _managed ? _scope : kAbsenceScopeMine;
+  String get _shownScope {
+    if (!_managed) return kAbsenceScopeMine;
+    if (_scope == kAbsenceScopeTeam && !_teamCalendar) return kAbsenceScopeMine;
+    return _scope;
+  }
+
+  bool get _teamCalendar =>
+      context.read<TimePolicyCubit>().state.absenceCalendar.isOn;
 
   bool get _managed =>
       context.read<AppConfigBloc>().state.meta?.absenceManagement ?? false;
@@ -113,7 +126,8 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
     final wanted = widget.scope;
     return wanted == kAbsenceScopeRequests ||
             wanted == kAbsenceScopeInbox ||
-            wanted == kAbsenceScopeBalances
+            wanted == kAbsenceScopeBalances ||
+            wanted == kAbsenceScopeTeam
         ? wanted!
         : kAbsenceScopeMine;
   }
@@ -149,6 +163,7 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
     );
     _scroll.addListener(_onScroll);
     unawaited(context.read<MyAbsencesCubit>().ensureLoaded(managed: _managed));
+    unawaited(context.read<TimePolicyCubit>().ensureLoaded());
     unawaited(_reload());
   }
 
@@ -172,7 +187,11 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
   }
 
   void _onScroll() {
-    if (!_scroll.hasClients || _shownScope == kAbsenceScopeBalances) return;
+    if (!_scroll.hasClients ||
+        _shownScope == kAbsenceScopeBalances ||
+        _shownScope == kAbsenceScopeTeam) {
+      return;
+    }
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 400) {
       unawaited(
         _shownScope == kAbsenceScopeMine
@@ -183,8 +202,8 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
   }
 
   Future<void> _reload() => switch (_shownScope) {
-    // The balances read themselves, in the panel that draws them.
-    kAbsenceScopeBalances => Future<void>.value(),
+    // The balances and the team calendar read themselves, in what draws them.
+    kAbsenceScopeBalances || kAbsenceScopeTeam => Future<void>.value(),
     kAbsenceScopeMine => _absences.load(),
     _ => _requests.load(),
   };
@@ -194,7 +213,7 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
     setState(() => _scope = scope);
     // Only a list that has nothing yet: each keeps its own pages, so coming
     // back to one is the rows that were already there, where they were.
-    if (scope == kAbsenceScopeBalances) return;
+    if (scope == kAbsenceScopeBalances || scope == kAbsenceScopeTeam) return;
     final cubit = scope == kAbsenceScopeMine ? _absences : _requests;
     if (!cubit.state.hasData) unawaited(_reload());
   }
@@ -381,6 +400,10 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
     final managed = context.select<AppConfigBloc, bool>(
       (bloc) => bloc.state.meta?.absenceManagement ?? false,
     );
+    // Read here so the pill appears as soon as the policy arrives.
+    final team = context.select<TimePolicyCubit, bool>(
+      (cubit) => cubit.state.absenceCalendar.isOn,
+    );
     return BlocListener<MyAbsencesCubit, MyAbsencesState>(
       // Something of the reader's changed — from here, from the calendar's
       // sheet, from a "+" anywhere — and the lists on this page show it.
@@ -408,7 +431,7 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
                 ),
               ]
             : const [],
-        bottom: compact && managed ? _scopeRow(managed) : null,
+        bottom: compact && managed ? _scopeRow(team) : null,
         bottomHeight: compact && managed ? kGlassDockRow : 0,
         child: compact
             ? _body(managed)
@@ -448,7 +471,7 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
                         context.pageGutter,
                         12,
                       ),
-                      child: _scopeRow(managed),
+                      child: _scopeRow(team),
                     ),
                   Expanded(child: _body(managed)),
                 ],
@@ -470,8 +493,9 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
     await followAbsenceChoice(context, chosen);
   }
 
-  /// The three lists, each a glass pill of its own, as on the approvals page.
-  Widget _scopeRow(bool managed) => Align(
+  /// The lists, each a glass pill of its own, as on the approvals page. The
+  /// team calendar joins them only while it exists.
+  Widget _scopeRow(bool team) => Align(
     alignment: AlignmentDirectional.centerStart,
     child: SizedBox(
       height: kGlassControlHeight,
@@ -486,12 +510,14 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
             (kAbsenceScopeRequests, LucideIcons.listChecks),
             (kAbsenceScopeInbox, LucideIcons.inbox),
             (kAbsenceScopeBalances, LucideIcons.wallet),
-          ]) ...[
+            (kAbsenceScopeTeam, LucideIcons.usersRound),
+          ])
+            if (scope != kAbsenceScopeTeam || team) ...[
             if (scope != kAbsenceScopeMine) const SizedBox(width: 8),
             GlassScopePill(
               icon: icon,
               label: context.t('absence.view.scope.$scope'),
-              active: _scope == scope,
+              active: _shownScope == scope,
               onTap: () => _switchScope(scope),
             ),
           ],
@@ -526,6 +552,7 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
       child: switch (_shownScope) {
         kAbsenceScopeMine => _mine(padding, managed),
         kAbsenceScopeBalances => _balances(padding),
+        kAbsenceScopeTeam => TeamAbsenceCalendar(padding: padding),
         _ => _requestList(padding),
       },
     );

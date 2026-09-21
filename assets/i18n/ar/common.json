@@ -335,7 +335,8 @@
       "kpis": "الأرقام الرئيسية",
       "completion": "تقدم المشاريع",
       "tracker": "وقت التركيز",
-      "ranking": "ترتيب الفريق"
+      "ranking": "ترتيب الفريق",
+      "away": "الغائبون اليوم"
     },
     "saveError": "تعذر حفظ لوحة المعلومات. أعد المحاولة.",
     "saved": "تم حفظ لوحة المعلومات",
@@ -381,7 +382,11 @@
     "viewAll": "عرض الكل",
     "teamRanking": "ترتيب الفريق",
     "thisWeek": "هذا الأسبوع",
-    "pointsShort": "{{count}} ن"
+    "pointsShort": "{{count}} ن",
+    "awayToday": "الغائبون اليوم",
+    "awayNone": "الجميع حاضرون اليوم.",
+    "awayMore": "و{{count}} آخرون",
+    "awayOpen": "فتح تقويم الفريق"
   },
   "comments": {
     "actionCamera": "التقاط صورة أو فيديو",
@@ -1532,7 +1537,12 @@
     "calendar": {
       "requested": "مطلوب",
       "requestedHint": "لقد طلبت هذا اليوم. لم يُبتّ فيه بعد، ولا يزال بالإمكان تسجيل الوقت فيه.",
-      "open": "فتح الغياب"
+      "open": "فتح الغياب",
+      "level": {
+        "off": "متوقف",
+        "busyOnly": "فقط أن شخصًا ما غائب",
+        "type": "نوع الغياب"
+      }
     },
     "request": {
       "ask": "طلب غياب",
@@ -1619,7 +1629,8 @@
         "mine": "غياباتي",
         "requests": "الطلبات",
         "inbox": "للبت فيها",
-        "balances": "الأرصدة"
+        "balances": "الأرصدة",
+        "team": "الفريق"
       },
       "search": "البحث في الغيابات",
       "type": "النوع",
@@ -1641,6 +1652,35 @@
       "noMatch": "لا توجد نتائج",
       "noMatchMessage": "لا يوجد غياب يطابق هذه المرشحات.",
       "clearFilters": "مسح المرشحات"
+    },
+    "team": {
+      "group": "المجموعة",
+      "myProjects": "مشاريعي",
+      "pickProject": "اختر مشروعًا…",
+      "month": "شهر",
+      "quarter": "ربع سنة",
+      "previous": "الفترة السابقة",
+      "next": "الفترة التالية",
+      "today": "اليوم",
+      "awayOnly": "الغائبون فقط",
+      "errorTitle": "تعذّر تحميل التقويم",
+      "emptyTitle": "لا أحد لعرضه",
+      "emptyMessage": "يظهر هنا فقط من سجّل وقتًا بنفسه على مشروع من هذه المجموعة.",
+      "truncated": "هذه المجموعة أكبر مما يعرضه تقويم واحد. اختر فريقًا أو مشروعًا لرؤية الجميع.",
+      "person": "الشخص",
+      "capacity": "المتاح",
+      "capacityPeople": "شخص واحد",
+      "capacityPeople_plural": "{{count}} أشخاص",
+      "capacityDay": "{{left}} س من {{planned}} س متاحة · {{away}} غائبون · {{requested}} مطلوبة",
+      "away": "غائب",
+      "legend": {
+        "away": "غائب",
+        "requested": "مطلوب",
+        "dayOff": "عطلة نهاية الأسبوع أو عطلة رسمية"
+      },
+      "thisWeek": "هذا الأسبوع",
+      "capacityWeek": "{{left}} س من {{planned}} س متاحة",
+      "everybodyHere": "الجميع حاضرون."
     }
   },
   "projects": {
