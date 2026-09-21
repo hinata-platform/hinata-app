@@ -97,6 +97,21 @@ void main() {
     expect(find.text('time.reports.emptyHint'), findsOneWidget);
   });
 
+  testWidgets('a link it cannot read opens the reports as they stand', (
+    tester,
+  ) async {
+    // The module once handed the absences' "team" to this page as a link.
+    wide(tester);
+    final reports = _FakeReports();
+    await tester.pumpWidget(
+      host(reports, child: const TimeReportsScreen(link: 'team')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(reports.summaries, 1);
+  });
+
   testWidgets('the summary shows the totals and every group it was given', (
     tester,
   ) async {
