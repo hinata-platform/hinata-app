@@ -2448,7 +2448,7 @@
       "keepersEmpty": "Nobody named: administrators keep absences.",
       "keepersAdd": "Add person",
       "calendarTitle": "Team absence calendar",
-      "calendarHint": "Whether colleagues see each other's absences in a calendar, and how much of them. Off by default. Leads and absence keepers also see what capacity their group has left. Each absence type can narrow this further.",
+      "calendarHint": "Whether colleagues see each other's absences in a team calendar. Off by default; every absence type can narrow it further.",
       "calendarCodetermination": "A calendar of who is away when is a holiday plan within the meaning of § 87 (1) no. 5 BetrVG (in the public sector, the state staff representation act). Agree it with the works council or staff council before switching it on; the assessment is for the parties to the works agreement."
     },
     "passwordPolicy": "Password policy",

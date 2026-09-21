@@ -2448,7 +2448,7 @@
       "keepersEmpty": "Nadie designado: los administradores gestionan las ausencias.",
       "keepersAdd": "Añadir persona",
       "calendarTitle": "Calendario de ausencias del equipo",
-      "calendarHint": "Si los compañeros ven las ausencias de los demás en un calendario, y cuánto de ellas. Desactivado por defecto. Los responsables y gestores de ausencias ven además la capacidad que le queda a su grupo. Cada tipo de ausencia puede restringirlo más.",
+      "calendarHint": "Si los compañeros ven las ausencias de los demás en un calendario de equipo. Desactivado por defecto; cada tipo de ausencia puede restringirlo.",
       "calendarCodetermination": "Un calendario de quién está ausente y cuándo es un plan de vacaciones en el sentido del § 87 apdo. 1 n.º 5 BetrVG (en el sector público, la ley regional de representación del personal). Acuérdelo con el comité de empresa o la representación del personal antes de activarlo; la valoración corresponde a las partes sociales."
     },
     "passwordPolicy": "Política de contraseñas",

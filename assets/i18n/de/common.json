@@ -2448,7 +2448,7 @@
       "keepersEmpty": "Niemand benannt: Administratoren verwalten die Abwesenheiten.",
       "keepersAdd": "Person hinzufügen",
       "calendarTitle": "Team-Abwesenheitskalender",
-      "calendarHint": "Ob sich Kolleginnen und Kollegen gegenseitig in einem Kalender abwesend sehen, und wie viel davon. Standardmäßig aus. Leitungen und Abwesenheitsverwalter sehen zusätzlich, wie viel Kapazität ihrer Gruppe bleibt. Jede Abwesenheitsart kann das weiter einschränken.",
+      "calendarHint": "Ob sich Kolleginnen und Kollegen im Teamkalender abwesend sehen. Standardmäßig aus; jede Abwesenheitsart kann das weiter einschränken.",
       "calendarCodetermination": "Ein Kalender, wer wann abwesend ist, ist ein Urlaubsplan im Sinne von § 87 Abs. 1 Nr. 5 BetrVG (im öffentlichen Dienst das LPVG). Vor dem Einschalten mit dem Betriebsrat oder Personalrat vereinbaren; die Bewertung obliegt den Betriebsparteien."
     },
     "passwordPolicy": "Passwortrichtlinie",
