@@ -16,6 +16,7 @@ import '../../core/api/api_client.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/absence_models.dart';
+import '../../core/models/absence_report_models.dart';
 import '../../core/repositories/absence_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/field_button.dart';
@@ -493,6 +494,12 @@ class _EmploymentFormState extends State<_EmploymentForm> {
   bool _loading = true;
   bool _saving = false;
 
+  /// What settling this person's leave takes (HIN-119), read once a leaving
+  /// date is stored; null until then.
+  List<AbsenceSettlement>? _settlement;
+  List<AbsenceType> _types = const [];
+  bool _booking = false;
+
   @override
   void initState() {
     super.initState();
@@ -517,11 +524,165 @@ class _EmploymentFormState extends State<_EmploymentForm> {
         _note.text = dates.note ?? '';
         _loading = false;
       });
+      if (dates.leftOn != null) unawaited(_loadSettlement());
     } on ApiFailure catch (failure) {
       if (!mounted) return;
       setState(() => _loading = false);
       showGlassErrorToast(context, context.t(failure.message));
     }
+  }
+
+  Future<void> _loadSettlement() async {
+    final repository = context.read<AbsenceRepository>();
+    try {
+      final answers = await Future.wait([
+        repository.settlement(widget.userId),
+        repository.types(includeInactive: true),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _settlement = answers[0] as List<AbsenceSettlement>;
+        _types = answers[1] as List<AbsenceType>;
+      });
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      showGlassErrorToast(context, context.t(failure.message));
+    }
+  }
+
+  /// Books the correction or the payout of one row, after asking once: each
+  /// takes days away, and hinata only ever books them when a person says so.
+  Future<void> _book(AbsenceSettlement row, {required bool payout}) async {
+    final milliDays = payout ? row.payoutMilliDays : row.correctionMilliDays;
+    final what = context.t(
+      payout
+          ? 'absence.settlement.bookPayout'
+          : 'absence.settlement.bookCorrection',
+    );
+    final sure = await showGlassConfirm(
+      context,
+      icon: payout ? LucideIcons.banknote : LucideIcons.squarePen,
+      title: context.t(
+        'absence.settlement.confirmTitle',
+        variables: {'what': what, 'days': daysLabel(context, milliDays.abs())},
+      ),
+      message: context.t('absence.settlement.hint'),
+      confirmLabel: what,
+    );
+    if (sure != true || !mounted) return;
+    setState(() => _booking = true);
+    final repository = context.read<AbsenceRepository>();
+    try {
+      if (payout) {
+        await repository.payout(
+          userId: widget.userId,
+          typeId: row.typeId,
+          year: row.year,
+          milliDays: milliDays,
+          reason: context.t('absence.settlement.payoutReason'),
+        );
+      } else {
+        await repository.adjust(
+          userId: widget.userId,
+          typeId: row.typeId,
+          year: row.year,
+          milliDays: milliDays,
+          reason: context.t('absence.settlement.correctionReason'),
+        );
+      }
+      if (!mounted) return;
+      showGlassToast(context, context.t('absence.settlement.done'));
+      await _loadSettlement();
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      showGlassErrorToast(context, context.t(failure.message));
+    } finally {
+      if (mounted) setState(() => _booking = false);
+    }
+  }
+
+  Widget _settlementSection(BuildContext context) {
+    final rows = _settlement;
+    final label = TextStyle(fontSize: 12, color: AppColors.inkSoft);
+    final figure = TextStyle(fontSize: 13, color: AppColors.ink);
+    Widget line(String key, int milliDays, {bool signed = false}) => Padding(
+      padding: const EdgeInsets.only(top: 3),
+      child: Row(
+        children: [
+          Expanded(child: Text(context.t(key), style: label)),
+          Text(
+            signed
+                ? signedDaysLabel(context, milliDays)
+                : daysLabel(context, milliDays),
+            style: figure,
+          ),
+        ],
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 14),
+        Text(
+          context.t('absence.settlement.title'),
+          style: TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w700,
+            color: AppColors.ink,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          context.t(
+            _leftOn == null
+                ? 'absence.settlement.needsLeftOn'
+                : 'absence.settlement.hint',
+          ),
+          style: TextStyle(fontSize: 12, height: 1.4, color: AppColors.inkSoft),
+        ),
+        if (rows != null)
+          for (final row in rows) ...[
+            const SizedBox(height: 10),
+            Text(
+              '${_types.where((type) => type.id == row.typeId).map((type) => absenceTypeName(context, type)).firstOrNull ?? ''} ${row.year}',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+            ),
+            line('absence.settlement.accrued', row.accruedMilliDays),
+            line(
+              'absence.settlement.correction',
+              row.correctionMilliDays,
+              signed: true,
+            ),
+            line('absence.settlement.remaining', row.remainingMilliDays),
+            line('absence.settlement.payout', row.payoutMilliDays),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (row.correctionMilliDays != 0)
+                  OutlinedButton(
+                    onPressed: _booking
+                        ? null
+                        : () => unawaited(_book(row, payout: false)),
+                    child: Text(context.t('absence.settlement.bookCorrection')),
+                  ),
+                if (row.correctionMilliDays == 0 && row.payoutMilliDays > 0)
+                  FilledButton.tonal(
+                    onPressed: _booking
+                        ? null
+                        : () => unawaited(_book(row, payout: true)),
+                    child: Text(context.t('absence.settlement.bookPayout')),
+                  ),
+              ],
+            ),
+          ],
+      ],
+    );
   }
 
   Future<void> _pick(
@@ -621,6 +782,7 @@ class _EmploymentFormState extends State<_EmploymentForm> {
                   labelText: context.t('absence.entitlements.employmentNote'),
                 ),
               ),
+              _settlementSection(context),
             ],
           ),
         ),

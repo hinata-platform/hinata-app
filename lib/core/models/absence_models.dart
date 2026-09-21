@@ -287,6 +287,8 @@ class AbsenceBalance extends Equatable {
     this.reason,
     this.belowLegalMinimum = false,
     this.legalMinimumMilliDays = 0,
+    this.expiringMilliDays = 0,
+    this.expiringOn,
   });
 
   final String typeId;
@@ -324,6 +326,11 @@ class AbsenceBalance extends Equatable {
 
   final int legalMinimumMilliDays;
 
+  /// What lapses next, and on which day, if nothing is taken before then
+  /// (HIN-119). Zero and null when nothing is about to lapse.
+  final int expiringMilliDays;
+  final DateTime? expiringOn;
+
   static AbsenceBalance fromJson(Map<String, dynamic> json) => AbsenceBalance(
     typeId: json['typeId'] as String? ?? '',
     year: (json['year'] as num?)?.toInt() ?? 0,
@@ -343,6 +350,8 @@ class AbsenceBalance extends Equatable {
     belowLegalMinimum: json['belowLegalMinimum'] as bool? ?? false,
     legalMinimumMilliDays:
         (json['legalMinimumMilliDays'] as num?)?.toInt() ?? 0,
+    expiringMilliDays: (json['expiringMilliDays'] as num?)?.toInt() ?? 0,
+    expiringOn: DateTime.tryParse(json['expiringOn'] as String? ?? ''),
   );
 
   @override

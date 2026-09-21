@@ -295,6 +295,25 @@ class TimeVisibilityPanel extends StatelessWidget {
                     : 'time.privacy.absence.keepersAdmins',
               ),
             ),
+            // HIN-119: the report on balances, the rate, and how long a sick
+            // day keeps saying "sick".
+            if (absences.report)
+              (LucideIcons.chartPie, context.t('time.privacy.absence.report')),
+            if (absences.report && absences.leadsSeeSpans)
+              (
+                LucideIcons.usersRound,
+                context.t('time.privacy.absence.reportLeads'),
+              ),
+            if (absences.rateForKeepers)
+              (LucideIcons.percent, context.t('time.privacy.absence.rate')),
+            if (absences.sickDetailMonths > 0)
+              (
+                LucideIcons.eraser,
+                context.t(
+                  'time.privacy.absence.sickDetail',
+                  variables: {'count': absences.sickDetailMonths},
+                ),
+              ),
           ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
