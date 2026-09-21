@@ -63,7 +63,10 @@ class AwayTodayList extends StatelessWidget {
                     ),
                   ),
                   if (row.entries.isNotEmpty)
-                    Flexible(
+                    // At the row's end: sharing the space with the name left
+                    // it in the middle of the card (live check).
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 170),
                       child: Text(
                         teamAbsenceLabelWithState(context, row.entries.first),
                         maxLines: 1,

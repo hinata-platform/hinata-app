@@ -73,7 +73,7 @@ class _Swatch extends StatelessWidget {
     height: 12,
     child: CustomPaint(
       painter: flat
-          ? _FlatPainter(color)
+          ? _FlatPainter(color, AppColors.hairline)
           : TeamAbsenceBarPainter(
               color: color,
               hatched: hatched,
@@ -83,19 +83,33 @@ class _Swatch extends StatelessWidget {
   );
 }
 
+/// The wash of days off, with a hairline: the legend sits on the page, whose
+/// background is the same tone as the wash, and without an edge the swatch
+/// was not there at all (live check, light theme).
 class _FlatPainter extends CustomPainter {
-  _FlatPainter(this.color);
+  _FlatPainter(this.color, this.edge);
 
   final Color color;
+  final Color edge;
 
   @override
-  void paint(Canvas canvas, Size size) => canvas.drawRRect(
-    RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(3)),
-    Paint()..color = color,
-  );
+  void paint(Canvas canvas, Size size) {
+    final shape = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      const Radius.circular(3),
+    );
+    canvas.drawRRect(shape, Paint()..color = color);
+    canvas.drawRRect(
+      shape.deflate(0.5),
+      Paint()
+        ..color = edge
+        ..style = PaintingStyle.stroke,
+    );
+  }
 
   @override
-  bool shouldRepaint(covariant _FlatPainter old) => old.color != color;
+  bool shouldRepaint(covariant _FlatPainter old) =>
+      old.color != color || old.edge != edge;
 }
 
 /// The chart: people down the side, days across, and the group's capacity on
@@ -235,7 +249,9 @@ class _TeamAbsenceBandState extends State<TeamAbsenceBand> {
     final days = _daysOf(widget.from, widget.to);
     // At least the base width a day needs, and wide enough that a month fills
     // the card on a wide window rather than stopping two thirds across it.
-    final minPerDay = (compact ? 28.0 : 32.0) * (1 + (scale - 1) * 0.5);
+    // 26 points fit a two-digit day at the base size, so a month fits a wide
+    // window without hiding its first days behind a scroll (live check).
+    final minPerDay = (compact ? 28.0 : 26.0) * (1 + (scale - 1) * 0.5);
     final pxPerDay = math.max(
       minPerDay,
       (available - labelWidth - 3) / days.length,
@@ -379,23 +395,28 @@ class _TeamAbsenceBandState extends State<TeamAbsenceBand> {
                 ),
                 Container(width: 1, color: AppColors.hairline),
                 Expanded(
-                  child: SingleChildScrollView(
+                  // A visible thumb says there are days off to the side: on a
+                  // narrow window the first days of a month sit behind it.
+                  child: Scrollbar(
                     controller: _hBody,
-                    scrollDirection: Axis.horizontal,
-                    child: SizedBox(
-                      width: width,
-                      child: ListView.builder(
-                        controller: _vBody,
-                        itemExtent: _rowHeight,
-                        itemCount: widget.rows.length,
-                        // Each row paints on its own layer: a page arriving
-                        // below must not repaint the rows already on screen.
-                        itemBuilder: (context, index) => RepaintBoundary(
-                          child: _PersonRow(
-                            row: widget.rows[index],
-                            days: days,
-                            pxPerDay: pxPerDay,
-                            todayIndex: todayIndex,
+                    child: SingleChildScrollView(
+                      controller: _hBody,
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: width,
+                        child: ListView.builder(
+                          controller: _vBody,
+                          itemExtent: _rowHeight,
+                          itemCount: widget.rows.length,
+                          // Each row paints on its own layer: a page arriving
+                          // below must not repaint the rows already on screen.
+                          itemBuilder: (context, index) => RepaintBoundary(
+                            child: _PersonRow(
+                              row: widget.rows[index],
+                              days: days,
+                              pxPerDay: pxPerDay,
+                              todayIndex: todayIndex,
+                            ),
                           ),
                         ),
                       ),
@@ -725,6 +746,20 @@ class _PersonRow extends StatelessWidget {
     );
   }
 
+  static TextStyle _labelStyle(Color ink) =>
+      TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: ink);
+
+  static bool _fits(BuildContext context, String label, double room) {
+    if (room <= 0) return false;
+    final painter = TextPainter(
+      text: TextSpan(text: label, style: _labelStyle(Colors.black)),
+      maxLines: 1,
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    return painter.width <= room;
+  }
+
   int _index(DateTime day) => dateOnly(day).difference(days.first).inDays;
 
   Widget _bar(
@@ -770,19 +805,15 @@ class _PersonRow extends StatelessWidget {
                     child: Row(
                       children: [
                         Icon(visuals.icon, size: 12, color: visuals.ink),
-                        if (width >= 56) ...[
+                        // The word only where it fits whole: "Ab…" or
+                        // "Fortbildu…" read as a mistake. The name stays in
+                        // the tooltip and the screen reader label.
+                        if (_fits(context, label, width - 14 - 17)) ...[
                           const SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              label,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: visuals.ink,
-                              ),
-                            ),
+                          Text(
+                            label,
+                            maxLines: 1,
+                            style: _labelStyle(visuals.ink),
                           ),
                         ],
                       ],

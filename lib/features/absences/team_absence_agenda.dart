@@ -102,12 +102,21 @@ class _WeekCard extends StatelessWidget {
             (row: row, entry: entry),
     ]..sort((a, b) => a.entry.from.compareTo(b.entry.from));
 
-    final holidays = <String>{
-      for (final row in rows)
-        for (final holiday in row.holidays)
-          if (week.holds(dateOnly(holiday.date)))
-            '${weekday.format(holiday.date)} ${dayMonth.format(holiday.date)} · ${holiday.name ?? context.t('absence.team.holiday')}',
-    }.toList()..sort();
+    // One line per day: the reader's own row names a holiday, other rows only
+    // say that the day is off, and the same day came twice (live check).
+    final namedByDay = <DateTime, String?>{};
+    for (final row in rows) {
+      for (final holiday in row.holidays) {
+        final day = dateOnly(holiday.date);
+        if (!week.holds(day)) continue;
+        namedByDay[day] = namedByDay[day] ?? holiday.name;
+      }
+    }
+    final holidays = [
+      for (final day in namedByDay.keys.toList()..sort())
+        '${weekday.format(day)} ${dayMonth.format(day)} · '
+            '${namedByDay[day] ?? context.t('absence.team.holiday')}',
+    ];
 
     // The band arrives in weeks for the agenda (Monday to Sunday, cut at the
     // window like these cards), so a card reads its bucket rather than adding
@@ -291,7 +300,10 @@ class _AgendaRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Flexible(
+          // Its own width, at the row's end, never more than half the row:
+          // sharing the space with the name put it in the middle.
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 170),
             child: CustomPaint(
               painter: visuals.painter(entry),
               child: Padding(

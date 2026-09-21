@@ -225,66 +225,64 @@ class _TeamAbsenceCalendarState extends State<TeamAbsenceCalendar> {
               '${DateFormat.yMMM(locale).format(_to)}'
         : DateFormat.yMMMM(locale).format(_from);
     return Padding(
-      padding: widget.padding,
+      // On a phone the bottom inset belongs inside the agenda's scroll view:
+      // outside it, the list stopped hard above the floating navigation instead
+      // of running under its glass like every other page (live check).
+      padding: _compact ? widget.padding.copyWith(bottom: 0) : widget.padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
+          _controls(<Widget>[
+            GlassFilterPill(
+              icon: _scope.teamId != null
+                  ? LucideIcons.users
+                  : LucideIcons.folderKanban,
+              label: _scope.label ?? context.t('absence.team.myProjects'),
+              active: _scope != TeamAbsenceScope.mine,
+              onTap: (anchor) => unawaited(_pickScope(anchor)),
+            ),
+            GlassSwitchBar(
+              compact: true,
+              maxWidth: 220,
+              chips: [
+                GlassSwitchChip(
+                  label: context.t('absence.team.month'),
+                  active: !_quarter,
+                  onTap: _quarter ? () => _setQuarter(false) : null,
+                ),
+                const SizedBox(width: 2),
+                GlassSwitchChip(
+                  label: context.t('absence.team.quarter'),
+                  active: _quarter,
+                  onTap: _quarter ? null : () => _setQuarter(true),
+                ),
+              ],
+            ),
+            _PeriodNav(
+              label: period,
+              onPrevious: () => _move(_quarter ? -3 : -1),
+              onNext: () => _move(_quarter ? 3 : 1),
+            ),
+            if (!_showsToday)
               GlassFilterPill(
-                icon: _scope.teamId != null
-                    ? LucideIcons.users
-                    : LucideIcons.folderKanban,
-                label: _scope.label ?? context.t('absence.team.myProjects'),
-                active: _scope != TeamAbsenceScope.mine,
-                onTap: (anchor) => unawaited(_pickScope(anchor)),
+                icon: LucideIcons.calendarCheck,
+                label: context.t('absence.team.today'),
+                active: false,
+                chevron: false,
+                onTap: (_) => _today(),
               ),
-              GlassSwitchBar(
-                compact: true,
-                maxWidth: 220,
-                chips: [
-                  GlassSwitchChip(
-                    label: context.t('absence.team.month'),
-                    active: !_quarter,
-                    onTap: _quarter ? () => _setQuarter(false) : null,
-                  ),
-                  const SizedBox(width: 2),
-                  GlassSwitchChip(
-                    label: context.t('absence.team.quarter'),
-                    active: _quarter,
-                    onTap: _quarter ? null : () => _setQuarter(true),
-                  ),
-                ],
+            if (!_compact)
+              GlassFilterPill(
+                icon: LucideIcons.userX,
+                label: context.t('absence.team.awayOnly'),
+                active: _awayOnly,
+                chevron: false,
+                onTap: (_) {
+                  setState(() => _awayOnly = !_awayOnly);
+                  unawaited(_loadRows());
+                },
               ),
-              _PeriodNav(
-                label: period,
-                onPrevious: () => _move(_quarter ? -3 : -1),
-                onNext: () => _move(_quarter ? 3 : 1),
-              ),
-              if (!_showsToday)
-                GlassFilterPill(
-                  icon: LucideIcons.calendarCheck,
-                  label: context.t('absence.team.today'),
-                  active: false,
-                  chevron: false,
-                  onTap: (_) => _today(),
-                ),
-              if (!_compact)
-                GlassFilterPill(
-                  icon: LucideIcons.userX,
-                  label: context.t('absence.team.awayOnly'),
-                  active: _awayOnly,
-                  chevron: false,
-                  onTap: (_) {
-                    setState(() => _awayOnly = !_awayOnly);
-                    unawaited(_loadRows());
-                  },
-                ),
-            ],
-          ),
+          ]),
           const SizedBox(height: 12),
           Flexible(
             child:
@@ -293,20 +291,20 @@ class _TeamAbsenceCalendarState extends State<TeamAbsenceCalendar> {
                   builder: (context, rows) => Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // Above the list on a phone: below it, the note would
+                      // sit under the floating navigation.
+                      if (_compact && _rows.truncated) ...[
+                        _truncatedNote(context),
+                        const SizedBox(height: 8),
+                      ],
                       Flexible(child: _content(rows)),
                       if (!_compact && rows.items.isNotEmpty) ...[
                         const SizedBox(height: 10),
                         const TeamAbsenceLegend(),
                       ],
-                      if (_rows.truncated) ...[
+                      if (!_compact && _rows.truncated) ...[
                         const SizedBox(height: 6),
-                        Text(
-                          context.t('absence.team.truncated'),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.inkSoft,
-                          ),
-                        ),
+                        _truncatedNote(context),
                       ],
                     ],
                   ),
@@ -316,6 +314,42 @@ class _TeamAbsenceCalendarState extends State<TeamAbsenceCalendar> {
       ),
     );
   }
+
+  /// The group, month or quarter, the period and the shortcuts. On a phone
+  /// they are one row that scrolls sideways, so the page head is two rows at
+  /// most under the scope pills (Rebar, live check); on a wide window they wrap.
+  Widget _controls(List<Widget> children) {
+    if (!_compact) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: children,
+      );
+    }
+    return SizedBox(
+      height: kGlassControlHeight,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        // The page gutter is outside; clipping here would cut the last pill
+        // instead of letting it scroll into view.
+        clipBehavior: Clip.none,
+        child: Row(
+          children: [
+            for (final (index, child) in children.indexed) ...[
+              if (index > 0) const SizedBox(width: 8),
+              child,
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _truncatedNote(BuildContext context) => Text(
+    context.t('absence.team.truncated'),
+    style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+  );
 
   Widget _content(PagedState<TeamAbsenceRow> rows) {
     if (!rows.hasData && rows.errorKey == null) {
@@ -343,6 +377,7 @@ class _TeamAbsenceCalendarState extends State<TeamAbsenceCalendar> {
               to: _to,
               rows: rows.items,
               capacity: band.data,
+              padding: EdgeInsets.only(bottom: widget.padding.bottom),
             )
           : TeamAbsenceBand(
               from: _from,
@@ -414,25 +449,10 @@ class _PeriodNav extends StatelessWidget {
         ),
       ],
     );
-    // The capsule is drawn at the toolbar's 36 points; the arrows take 48 by
-    // 48 to hit (WCAG 2.5.8 and a thumb), reaching past it above and below.
-    return SizedBox(
-      height: _Arrow.extent,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          const Positioned.fill(
-            top: (_Arrow.extent - kGlassControlHeight) / 2,
-            bottom: (_Arrow.extent - kGlassControlHeight) / 2,
-            child: GlassPill(
-              height: kGlassControlHeight,
-              child: SizedBox.expand(),
-            ),
-          ),
-          row,
-        ],
-      ),
-    );
+    // The pill height every control row in Hinata shares: a taller capsule
+    // pushed the whole row down and doubled the unified gap under the scope
+    // pills (Rebar, live check). The arrows keep a 48-point width to hit.
+    return GlassPill(height: kGlassControlHeight, child: row);
   }
 }
 
@@ -461,7 +481,7 @@ class _Arrow extends StatelessWidget {
         radius: 20,
         child: SizedBox(
           width: extent,
-          height: extent,
+          height: kGlassControlHeight,
           child: Icon(icon, size: 16, color: AppColors.inkSoft),
         ),
       ),

@@ -94,6 +94,9 @@ InputDecoration adminInputDecoration(
     labelText: label,
     hintText: hint,
     helperText: helper,
+    // A helper that explains a policy is often two sentences; one line cut the
+    // second off mid-word (HIN-118, the team calendar level).
+    helperMaxLines: 3,
     suffixText: suffix,
     filled: true,
     fillColor: AppColors.surfaceMuted,
