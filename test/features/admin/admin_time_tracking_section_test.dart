@@ -381,6 +381,8 @@ void main() {
         // Stage 11 (HIN-92): the reminder and alert jobs read these two.
         'admin.timeTracking.alertsTitle',
         'admin.timeTracking.targetRemindersTitle',
+        // Stage 12 (HIN-93): the workload tab and its endpoint read this one.
+        'admin.timeTracking.workloadReportsTitle',
       ]) {
         expect(
           find.descendant(
@@ -392,8 +394,7 @@ void main() {
         );
       }
       for (final title in const [
-        // The reports and billing of the later stages.
-        'admin.timeTracking.workloadReportsTitle',
+        // Billing and the calendar import of the later stages.
         'admin.timeTracking.billingEnabledTitle',
         'admin.timeTracking.icsImportTitle',
       ]) {
