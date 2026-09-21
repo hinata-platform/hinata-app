@@ -609,7 +609,17 @@ class _StandingCard extends StatelessWidget {
     final name = person?.displayName ?? row.userId;
     return SoftCard(
       padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),
-      child: Row(
+      // On a phone four icon buttons beside the name left it a column one
+      // word wide, broken mid-word; there they move under the numbers.
+      child: LayoutBuilder(
+        builder: (context, constraints) =>
+            _layout(context, name, narrow: constraints.maxWidth < 480),
+      ),
+    );
+  }
+
+  Widget _layout(BuildContext context, String name, {required bool narrow}) =>
+      Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Checkbox(
@@ -640,15 +650,21 @@ class _StandingCard extends StatelessWidget {
                 ],
                 const SizedBox(height: 8),
                 _numbers(context),
+                if (narrow) ...[
+                  const SizedBox(height: 4),
+                  Transform.translate(
+                    // The first button's own padding, so its icon sits on the
+                    // numbers' edge.
+                    offset: const Offset(-16, 0),
+                    child: _actions(context),
+                  ),
+                ],
               ],
             ),
           ),
-          const SizedBox(width: 6),
-          _actions(context),
+          if (!narrow) ...[const SizedBox(width: 6), _actions(context)],
         ],
-      ),
-    );
-  }
+      );
 
   /// Joining and leaving beside the numbers, because they are the reason the
   /// numbers are what they are.
@@ -692,8 +708,14 @@ class _StandingCard extends StatelessWidget {
           label: context.t('absence.entitlements.entitled'),
           value: daysLabel(context, row.accruedMilliDays),
         ),
-        // Only when there is one. Without it a row reads "20 entitled, 25 left"
-        // and looks like an arithmetic error rather than a keeper's correction.
+        // Both only when there is one. Without them a row reads "20 entitled,
+        // 25 left" and looks like an arithmetic error rather than last year's
+        // days or a keeper's correction.
+        if (row.carriedInMilliDays != 0)
+          _Figure(
+            label: context.t('absence.report.carriedIn'),
+            value: daysLabel(context, row.carriedInMilliDays),
+          ),
         if (row.adjustedMilliDays != 0)
           _Figure(
             label: context.t('absence.entitlements.adjusted'),

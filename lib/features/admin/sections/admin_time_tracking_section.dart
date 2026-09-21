@@ -431,7 +431,6 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         effective: _effectiveValue<bool>('workloadReportsEnabled'),
         onChanged: (v) => _set('workloadReportsEnabled', v),
         monitoring: true,
-        pending: true,
       ),
       // HIN-119: the absence report and, separately, the absence rate in it.
       // Both need absence management; the rate is conduct and health data.

@@ -619,6 +619,7 @@ class AbsenceStanding extends Equatable {
     this.entitledMilliDays = 0,
     this.accruedMilliDays = 0,
     this.adjustedMilliDays = 0,
+    this.carriedInMilliDays = 0,
     this.takenMilliDays = 0,
     this.plannedMilliDays = 0,
     this.remainingMilliDays = 0,
@@ -636,6 +637,9 @@ class AbsenceStanding extends Equatable {
   /// one number that explains it would be buried in the journal.
   final int adjustedMilliDays;
 
+  /// What the yearly run carried in from last year; zero where nothing was.
+  final int carriedInMilliDays;
+
   final int takenMilliDays;
   final int plannedMilliDays;
   final int remainingMilliDays;
@@ -652,6 +656,7 @@ class AbsenceStanding extends Equatable {
     entitledMilliDays: (json['entitledMilliDays'] as num?)?.toInt() ?? 0,
     accruedMilliDays: (json['accruedMilliDays'] as num?)?.toInt() ?? 0,
     adjustedMilliDays: (json['adjustedMilliDays'] as num?)?.toInt() ?? 0,
+    carriedInMilliDays: (json['carriedInMilliDays'] as num?)?.toInt() ?? 0,
     takenMilliDays: (json['takenMilliDays'] as num?)?.toInt() ?? 0,
     plannedMilliDays: (json['plannedMilliDays'] as num?)?.toInt() ?? 0,
     remainingMilliDays: (json['remainingMilliDays'] as num?)?.toInt() ?? 0,
@@ -666,6 +671,7 @@ class AbsenceStanding extends Equatable {
     entitledMilliDays,
     accruedMilliDays,
     adjustedMilliDays,
+    carriedInMilliDays,
     takenMilliDays,
     plannedMilliDays,
     remainingMilliDays,
