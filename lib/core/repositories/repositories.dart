@@ -22,6 +22,7 @@ import 'project_repository.dart';
 import 'search_repository.dart';
 import 'sprint_repository.dart';
 import 'team_repository.dart';
+import 'time_report_repository.dart';
 import 'time_repository.dart';
 import 'timesheet_repository.dart';
 import 'user_repository.dart';
@@ -45,6 +46,7 @@ export 'project_repository.dart';
 export 'search_repository.dart';
 export 'sprint_repository.dart';
 export 'team_repository.dart';
+export 'time_report_repository.dart';
 export 'time_repository.dart';
 export 'timesheet_repository.dart';
 export 'user_repository.dart';
@@ -68,6 +70,7 @@ class HinataRepositories {
       sprints: SprintRepository(api, boards: boards),
       timesheet: TimesheetRepository(api),
       time: TimeRepository(api),
+      timeReports: TimeReportRepository(api),
       availability: AvailabilityRepository(api),
       absences: AbsenceRepository(api),
       search: SearchRepository(api),
@@ -94,6 +97,7 @@ class HinataRepositories {
     required this.sprints,
     required this.timesheet,
     required this.time,
+    required this.timeReports,
     required this.availability,
     required this.absences,
     required this.search,
@@ -118,6 +122,10 @@ class HinataRepositories {
   final SprintRepository sprints;
   final TimesheetRepository timesheet;
   final TimeRepository time;
+
+  /// Summary, detailed and workload reports, their files, the CSV import and
+  /// saved reports (HIN-93).
+  final TimeReportRepository timeReports;
   final AvailabilityRepository availability;
 
   /// Absence types, entitlements and balances (HIN-116), behind their own flag.

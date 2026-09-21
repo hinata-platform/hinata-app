@@ -1,4 +1,4 @@
-/// The extended time module as one page with five views (HIN-60).
+/// The extended time module as one page with six views (HIN-60).
 ///
 /// Each view keeps its own address — `/time`, `/time/calendar`,
 /// `/time/timesheet`, `/time/absences`, `/time/approvals` — so every one of
@@ -20,6 +20,7 @@ import '../shell/page_chrome.dart';
 import '../timesheet/timesheet_screen.dart';
 import 'absences_screen.dart';
 import 'approvals_screen.dart';
+import 'reports/time_reports_screen.dart';
 import 'time_calendar_screen.dart';
 import 'time_screen.dart';
 import 'time_views.dart';
@@ -30,7 +31,8 @@ class TimeModuleScreen extends StatefulWidget {
   /// The view the address names.
   final TimeView view;
 
-  /// The list `/time/absences` opens on — see [TimeAbsencesScreen.scope].
+  /// The list `/time/absences` opens on — see [TimeAbsencesScreen.scope] —
+  /// or the report `/time/reports` opens: `shared:<token>`, `saved:<id>`.
   final String? scope;
 
   @override
@@ -66,7 +68,10 @@ class _TimeModuleScreenState extends State<TimeModuleScreen> {
       sizing: StackFit.expand,
       children: [
         for (final view in views)
-          if (_opened.contains(view)) _branch(view) else const SizedBox.shrink(),
+          if (_opened.contains(view))
+            _branch(view)
+          else
+            const SizedBox.shrink(),
       ],
     );
   }
@@ -96,6 +101,13 @@ class _TimeModuleScreenState extends State<TimeModuleScreen> {
     TimeView.absences => TimeAbsencesScreen(
       key: ValueKey('absences-${widget.scope ?? ''}'),
       scope: widget.scope,
+    ),
+    // Keyed by the link, read once when the page is built: a report opened from
+    // a mail or a shared link has to open even when the reports were already
+    // on screen.
+    TimeView.reports => TimeReportsScreen(
+      key: ValueKey('reports-${widget.scope ?? ''}'),
+      link: widget.scope,
     ),
     // Reachable even while approvals are switched off, and deliberately: the
     // route answers with what is there, which is then nothing. Gating it here

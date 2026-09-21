@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -97,4 +98,28 @@ Future<void> applyServerFromLink(BuildContext context, String? raw) async {
       context.read<AppConfigBloc>().add(ServerUrlSubmitted(server));
     }
   }
+}
+
+/// A shareable, clean (non-`#`) URL for [path] in the web app — both a
+/// verified deep link into the app and a normal web route. On web it is the
+/// origin the app is served from; on native the public web origin is derived
+/// from the configured API server, by the convention that the API lives at
+/// `api.<domain>` and the web app and App Links at `<domain>`.
+String appWebLink(String apiBaseUrl, String path) {
+  if (kIsWeb) {
+    try {
+      return '${Uri.base.origin}$path';
+    } catch (_) {
+      return path;
+    }
+  }
+  final api = Uri.tryParse(apiBaseUrl);
+  if (api == null || api.host.isEmpty) return path;
+  final host = api.host.startsWith('api.') ? api.host.substring(4) : api.host;
+  final origin = Uri(
+    scheme: api.scheme,
+    host: host,
+    port: api.hasPort ? api.port : null,
+  );
+  return '$origin$path';
 }
