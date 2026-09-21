@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../core/util/server_link.dart' show appWebLink;
 import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_loader.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
@@ -120,24 +120,8 @@ Color? _projStateColor(Project? project, String state) {
 /// origin the app is served from; on native we derive the public web origin from
 /// the configured API server ([apiBaseUrl]) using the convention that the API
 /// lives at `api.<domain>` and the web app + App Links at `<domain>`.
-String issueWebLink(String apiBaseUrl, String id) {
-  if (kIsWeb) {
-    try {
-      return '${Uri.base.origin}/issues/$id';
-    } catch (_) {
-      return '/issues/$id';
-    }
-  }
-  final api = Uri.tryParse(apiBaseUrl);
-  if (api == null || api.host.isEmpty) return '/issues/$id';
-  final host = api.host.startsWith('api.') ? api.host.substring(4) : api.host;
-  final origin = Uri(
-    scheme: api.scheme,
-    host: host,
-    port: api.hasPort ? api.port : null,
-  );
-  return '$origin/issues/$id';
-}
+String issueWebLink(String apiBaseUrl, String id) =>
+    appWebLink(apiBaseUrl, '/issues/$id');
 
 /// How wide the issue dialogs grow on a desktop screen.
 ///

@@ -31,6 +31,7 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/glass_filter_bar.dart';
 import '../../core/widgets/glass_popup_menu.dart';
+import '../../core/widgets/glass_scope_row.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show PageHead, PrimaryButton;
@@ -495,13 +496,20 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
 
   /// The lists, each a glass pill of its own, as on the approvals page. The
   /// team calendar joins them only while it exists.
-  Widget _scopeRow(bool team) => _ScopeRow(
+  Widget _scopeRow(bool team) => GlassScopeRow(
     scopes: [
-      (kAbsenceScopeMine, LucideIcons.calendarOff),
-      (kAbsenceScopeRequests, LucideIcons.listChecks),
-      (kAbsenceScopeInbox, LucideIcons.inbox),
-      (kAbsenceScopeBalances, LucideIcons.wallet),
-      if (team) (kAbsenceScopeTeam, LucideIcons.usersRound),
+      for (final (scope, icon) in [
+        (kAbsenceScopeMine, LucideIcons.calendarOff),
+        (kAbsenceScopeRequests, LucideIcons.listChecks),
+        (kAbsenceScopeInbox, LucideIcons.inbox),
+        (kAbsenceScopeBalances, LucideIcons.wallet),
+        if (team) (kAbsenceScopeTeam, LucideIcons.usersRound),
+      ])
+        (
+          key: scope,
+          icon: icon,
+          label: context.t('absence.view.scope.$scope'),
+        ),
     ],
     active: _shownScope,
     onSelected: _switchScope,
@@ -1050,92 +1058,6 @@ class AbsenceRow extends StatelessWidget {
           else
             AbsenceEnteredChip(sick: absence.type == TimeOffType.sick),
         ],
-      ),
-    );
-  }
-}
-
-/// The lists, each a glass pill of its own, as on the approvals page. The team
-/// calendar joins them only while it exists.
-///
-/// The active one scrolls into view: on a phone five pills are wider than the
-/// screen, and "Team" sat past the edge while it was the list shown (live
-/// check). A widget of its own because the docked row is built by the shell a
-/// frame after the page, so only the row itself knows when it is laid out.
-class _ScopeRow extends StatefulWidget {
-  const _ScopeRow({
-    required this.scopes,
-    required this.active,
-    required this.onSelected,
-  });
-
-  final List<(String, IconData)> scopes;
-  final String active;
-  final ValueChanged<String> onSelected;
-
-  @override
-  State<_ScopeRow> createState() => _ScopeRowState();
-}
-
-class _ScopeRowState extends State<_ScopeRow> {
-  final _scroll = ScrollController();
-
-  @override
-  void dispose() {
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  void _reveal() {
-    if (!mounted || !_scroll.hasClients) return;
-    final index = widget.scopes.indexWhere(
-      (entry) => entry.$1 == widget.active,
-    );
-    final position = _scroll.position;
-    final target = widget.scopes.length <= 1 || index <= 0
-        ? 0.0
-        : position.maxScrollExtent * index / (widget.scopes.length - 1);
-    if ((position.pixels - target).abs() < 1) return;
-    if (MediaQuery.disableAnimationsOf(context)) {
-      position.jumpTo(target);
-    } else {
-      unawaited(
-        position.animateTo(
-          target,
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-        ),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) => _reveal());
-    return Align(
-      alignment: AlignmentDirectional.centerStart,
-      child: SizedBox(
-        height: kGlassControlHeight,
-        child: SingleChildScrollView(
-          controller: _scroll,
-          scrollDirection: Axis.horizontal,
-          padding: context.isCompact
-              ? EdgeInsets.symmetric(horizontal: context.pageGutter)
-              : EdgeInsets.zero,
-          child: Row(
-            children: [
-              for (final (index, (scope, icon)) in widget.scopes.indexed) ...[
-                if (index > 0) const SizedBox(width: 8),
-                GlassScopePill(
-                  icon: icon,
-                  label: context.t('absence.view.scope.$scope'),
-                  active: widget.active == scope,
-                  onTap: () => widget.onSelected(scope),
-                ),
-              ],
-            ],
-          ),
-        ),
       ),
     );
   }

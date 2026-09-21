@@ -34,6 +34,10 @@ enum TimeView {
   /// calendar it is planned in is one tab away.
   absences('/time/absences', 'time.view.absences', LucideIcons.calendarOff),
 
+  /// Reports on the recorded time — summary, entries, workload, saved ones —
+  /// with their files and the CSV import (HIN-93).
+  reports('/time/reports', 'time.view.reports', LucideIcons.chartColumn),
+
   /// Handed-in periods. Unlike the others this one is **conditional**: it
   /// exists only while the operator has switched approvals on, because without
   /// them there is nothing to hand in and nothing to decide. [visibleViews]
