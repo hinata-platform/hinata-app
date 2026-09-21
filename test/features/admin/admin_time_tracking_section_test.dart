@@ -42,6 +42,10 @@ void main() {
     'admin.timeTracking.leadsSeeMemberEntriesTitle',
     'admin.timeTracking.approvalsTitle',
     'admin.timeTracking.workloadReportsTitle',
+    // HIN-119: the report on everybody's balances, and the absence rate in it,
+    // which with sickness counted in is conduct and health data at once.
+    'admin.timeTracking.absenceReportsTitle',
+    'admin.timeTracking.absenceRateTitle',
     'admin.timeTracking.alertsTitle',
     'admin.timeTracking.targetRemindersTitle',
     'admin.timeTracking.arbzgHintsTitle',

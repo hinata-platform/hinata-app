@@ -1179,7 +1179,11 @@
         "leadsDoNot": "你项目的负责人看不到你的缺勤。",
         "keepersNamed": "只有指定的缺勤管理员和管理员能看到病假日为病假。",
         "keepersAdmins": "只有管理员能看到病假日为病假。",
-        "band": "你项目的负责人和团队管理员能看到其小组剩余的容量，以至少三人的总和显示。你已批准的天数和计划工时计入其中，但不显示你的名字。"
+        "band": "你项目的负责人和团队管理员能看到其小组剩余的容量，以至少三人的总和显示。你已批准的天数和计划工时计入其中，但不显示你的名字。",
+        "report": "在“缺勤与余额”报告中你只能看到自己的数字，缺勤管理员可看到所有人。",
+        "reportLeads": "你所在项目的负责人在那里只能看到至少三人的合计，不含病假。",
+        "rate": "缺勤管理员可以看到你缺勤时间占计划工作时间的比例，包括病假。",
+        "sickDetail": "{{count}}个月后，病假日仅显示为“缺勤（其他）”。"
       }
     },
     "hint": {
@@ -1230,7 +1234,8 @@
         "summary": "汇总",
         "detailed": "条目",
         "workload": "工作量",
-        "saved": "已保存"
+        "saved": "已保存",
+        "absences": "缺勤"
       },
       "group": {
         "project": "项目",
@@ -1334,7 +1339,8 @@
         "print": "打印",
         "done": "已保存导出",
         "truncated": "已保存导出。文件内容不完整，请缩小筛选范围以获取全部内容。",
-        "failed": "导出失败。"
+        "failed": "导出失败。",
+        "docx": "Word (DOCX)"
       },
       "save": {
         "title": "保存报表",
@@ -1912,6 +1918,102 @@
       "capacityWeek": "{{planned}} 小时中可用 {{left}} 小时",
       "everybodyHere": "大家都在。",
       "holiday": "公共假日"
+    },
+    "report": {
+      "remaining": "剩余",
+      "taken": "已休",
+      "planned": "计划",
+      "carriedIn": "结转",
+      "entitled": "应享",
+      "rate": "缺勤率",
+      "person": "人员",
+      "type": "类型",
+      "people": "{{count}}人",
+      "people_plural": "{{count}}人",
+      "leftOf": "共{{days}}天",
+      "expiringOn": "{{days}}于{{date}}失效",
+      "groupPerson": "按人员",
+      "groupType": "按类型",
+      "year": "休假年度 {{year}}",
+      "previousYear": "上一年",
+      "nextYear": "下一年",
+      "pickType": "选择类型",
+      "allTypes": "所有类型",
+      "everybody": "所有人",
+      "onlyMe": "仅我自己",
+      "pickProject": "选择项目",
+      "empty": "本年度没有余额",
+      "emptyHint": "年度分配后，天数会显示在这里。",
+      "leadHint": "至少三人的合计，不含病假。",
+      "pickGroupHint": "选择你负责的项目以查看合计。",
+      "rateHint": "此人缺勤时间占计划工作时间的比例，包含所有类型。",
+      "rateShort": "比率"
+    },
+    "expiry": {
+      "title": "{{type}}将于{{date}}失效",
+      "body": "还剩{{days}}。请在此之前休完，否则将失效。"
+    },
+    "notices": {
+      "title": "已收到的通知",
+      "hint": "这些通知就是失效所依据的通知。",
+      "empty": "暂无通知",
+      "line": "{{type}} {{year}}：剩余{{days}}",
+      "until": "截止 {{date}}",
+      "kind": {
+        "ANNUAL": "年度通知",
+        "BEFORE_YEAR_END": "年度结束前",
+        "BEFORE_CARRYOVER_DEADLINE": "结转期结束前",
+        "MANUAL": "手动发送"
+      }
+    },
+    "yearRun": {
+      "pageTitle": "年度处理",
+      "open": "查看年度处理",
+      "intro": "结转、失效和按月累计每晚运行。未经通知不会失效：未被告知的人保留天数。",
+      "never": "年度处理尚未运行",
+      "last": "上次运行于{{date}}",
+      "lastFailed": "于{{date}}中断，将在下一晚继续",
+      "explain": "每笔记账只存在一次。再次运行不会改变任何内容。",
+      "carried": "已结转",
+      "expired": "已失效",
+      "held": "保留",
+      "accrued": "已累计",
+      "missingTitle": "缺少通知",
+      "missingHint": "只有在截止日前通知本人后，这些天数才会失效。",
+      "missingEmpty": "所有人都已收到通知",
+      "missingLine": "{{type}} {{year}}：{{days}}",
+      "overdue": "截止日{{date}}已过，天数保留",
+      "dueBy": "截止 {{date}}",
+      "sendNow": "立即发送通知",
+      "sent": "通知已发送",
+      "proposalsTitle": "长期病假后的提议",
+      "proposalsHint": "病假15个月后假期可能失效。是否适用由你决定，并需说明理由。",
+      "proposalsEmpty": "没有待处理的提议",
+      "proposalLine": "{{type}} {{year}}：{{days}}",
+      "proposalSick": "{{span}}期间病假{{count}}天",
+      "decide": "决定",
+      "decisionTitle": "决定提议",
+      "reason": "理由",
+      "reasonHint": "保存在提议中，不记入审计日志。",
+      "confirm": "记录失效",
+      "dismiss": "保留天数",
+      "confirmed": "已记录失效",
+      "dismissed": "提议已驳回，天数保留"
+    },
+    "settlement": {
+      "title": "离职结算",
+      "hint": "按离职日期重新计算该年度（§ 5 BUrlG）。Hinata只计算天数，不计算金额。",
+      "needsLeftOn": "请输入离职日期以查看结算。",
+      "accrued": "离职时应享",
+      "correction": "更正",
+      "remaining": "当前剩余",
+      "payout": "待折算",
+      "bookCorrection": "记录更正",
+      "correctionReason": "离职时按十二分之一计算（§ 5 BUrlG）",
+      "bookPayout": "记录折算",
+      "payoutReason": "随最后一次工资折算",
+      "done": "已记录",
+      "confirmTitle": "{{what}}：{{days}}？"
     }
   },
   "projects": {
@@ -2651,7 +2753,24 @@
       "grantRevoked": "这些日期已重新关闭。",
       "suggestedDailyTargetLabel": "建议的每日目标",
       "suggestedWeeklyTargetLabel": "建议的每周目标",
-      "suggestedTargetHint": "会在个人的提醒设置中提供。是否采用由每个人自己决定。"
+      "suggestedTargetHint": "会在个人的提醒设置中提供。是否采用由每个人自己决定。",
+      "absenceReportsTitle": "“缺勤与余额”报告",
+      "absenceReportsHint": "每个人看到自己的数字，缺勤管理员看到所有人。负责人若本就能看到成员记录，可看到至少三人的合计（不含病假）。仅在启用缺勤管理时有效。",
+      "absenceRateTitle": "每人缺勤率",
+      "absenceRateHint": "仅缺勤管理员可见，负责人永远不可见。该比率包含病假，属于行为和健康数据，是一项需共同决定的独立决策（§ 87 Abs. 1 Nr. 6 BetrVG）。",
+      "expiryNoticeTitle": "假期失效前的通知",
+      "expiryNoticeHint": "未及时通知则假期不会失效（BAG 19.02.2019, 9 AZR 541/15）。每年在选定日期发送一次，并在每个截止日前几周发送。",
+      "expiryMonthLabel": "年度通知月份",
+      "expiryDayLabel": "年度通知日期",
+      "expiryWeeksLabel": "每个截止日前的周数",
+      "weeksSuffix": "周",
+      "yearsSuffix": "年",
+      "sickDetailPurgeLabel": "病假模糊化时间",
+      "sickDetailPurgeHint": "之后病假日显示为“缺勤（其他）”，不含备注。日期和余额保留。0表示保留详情。",
+      "requestPurgeLabel": "删除已结束申请的时间",
+      "requestPurgeHint": "被拒绝、撤回和取消的申请。已批准的作为证据保留。0表示全部保留。",
+      "ledgerPurgeLabel": "删除休假台账的时间",
+      "ledgerPurgeHint": "0表示保留台账。否则至少3年（§§ 195, 199 BGB）。失效通知永不删除。"
     },
     "absence": {
       "title": "缺勤管理 2.0",

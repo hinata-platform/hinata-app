@@ -6,11 +6,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/blocs/app_config_bloc.dart';
 import '../../../core/blocs/auth_bloc.dart';
 import '../../../core/blocs/paged_cubit.dart';
 import '../../../core/blocs/time_policy_cubit.dart';
 import '../../../core/blocs/time_report_cubit.dart';
 import '../../../core/i18n/i18n.dart';
+import '../../../core/models/absence_report_models.dart';
 import '../../../core/models/time_report_models.dart';
 import '../../../core/repositories/time_report_repository.dart';
 import '../../../core/repositories/user_repository.dart';
@@ -29,12 +31,14 @@ import '../../../core/widgets/project_picker.dart';
 import '../../shell/page_chrome.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../time_views.dart';
+import 'absence_report_tab.dart';
 import 'report_actions.dart';
 import 'report_controls.dart';
 import 'report_detail_views.dart';
 import 'report_filter_sheet.dart';
 import 'report_format.dart';
 import 'report_import_wizard.dart';
+import 'report_list_parts.dart';
 import 'report_summary_view.dart';
 
 /// The tabs of the report page (HIN-93).
@@ -42,6 +46,7 @@ enum ReportTab {
   summary('summary', LucideIcons.chartColumn),
   detailed('detailed', LucideIcons.list),
   workload('workload', LucideIcons.gauge),
+  absences('absences', LucideIcons.calendarOff),
   saved('saved', LucideIcons.bookmark);
 
   const ReportTab(this.key, this.icon);
@@ -108,6 +113,12 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
   );
   StreamSubscription<ReportQuery>? _querySub;
 
+  /// The absence report's question (HIN-119), held here because the head
+  /// exports what that tab shows.
+  final _absenceQuery = ValueNotifier<AbsenceReportQuery>(
+    const AbsenceReportQuery(),
+  );
+
   /// The question the lists last answered, to tell a new question from a new
   /// chart of the same answer.
   ReportQuery _asked = const ReportQuery();
@@ -168,6 +179,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
     unawaited(_entries.close());
     unawaited(_workload.close());
     unawaited(_saved.close());
+    _absenceQuery.dispose();
     super.dispose();
   }
 
@@ -201,6 +213,8 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
       ReportTab.summary => _groups.load(),
       ReportTab.detailed => _entries.load(),
       ReportTab.workload => _workload.load(),
+      // The absence report reads its own list, with its own question.
+      ReportTab.absences => Future<void>.value(),
       ReportTab.saved => _saved.load(),
     });
   }
@@ -266,9 +280,10 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
 
   // --- the head ------------------------------------------------------------------
 
-  List<GlassScope> _tabs(bool workload) => [
+  List<GlassScope> _tabs({required bool workload, required bool absences}) => [
     for (final tab in ReportTab.values)
-      if (tab != ReportTab.workload || workload)
+      if ((tab != ReportTab.workload || workload) &&
+          (tab != ReportTab.absences || absences))
         (
           key: tab.key,
           icon: tab.icon,
@@ -362,8 +377,24 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
     }
   }
 
+  Future<void> _exportAbsences(Rect? anchor) async {
+    final file = await showReportFileMenu(
+      context,
+      anchor,
+      files: ReportFile.forAbsences,
+    );
+    if (file == null || !mounted) return;
+    await exportAbsenceReport(
+      context,
+      query: _absenceQuery.value,
+      file: file,
+      anchor: anchor,
+    );
+  }
+
   Future<void> _moreMenu(Rect? anchor) async {
     if (anchor == null) return;
+    if (_tab == ReportTab.absences) return _exportAbsences(anchor);
     const import = 'import';
     const save = 'save';
     final chosen = await showGlassMenu<Object>(
@@ -372,7 +403,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
       width: 250,
       value: '',
       items: [
-        for (final file in ReportFile.values)
+        for (final file in ReportFile.forTime)
           GlassMenuItem(
             value: file,
             label: context.t(file.labelKey),
@@ -426,11 +457,21 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
     final workload = context.select<TimePolicyCubit, bool>(
       (cubit) => cubit.state.workloadReportsEnabled,
     );
-    if (_tab == ReportTab.workload && !workload) {
+    // HIN-119: the absence report exists with absence management and its own
+    // policy, and never without both.
+    final absenceReports = context.select<TimePolicyCubit, bool>(
+      (cubit) => cubit.state.absenceReportsEnabled,
+    );
+    final absenceModule = context.select<AppConfigBloc, bool>(
+      (bloc) => bloc.state.meta?.absenceManagement ?? false,
+    );
+    final absences = absenceReports && absenceModule;
+    if (_tab == ReportTab.workload && !workload ||
+        _tab == ReportTab.absences && !absences) {
       _tab = ReportTab.summary;
     }
     final tabs = GlassScopeRow(
-      scopes: _tabs(workload),
+      scopes: _tabs(workload: workload, absences: absences),
       active: _tab.key,
       onSelected: _switchTab,
     );
@@ -477,7 +518,18 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
                       title: context.t('nav.time'),
                       actions: [
                         const TimeViewSwitcher(current: TimeView.reports),
-                        if (constraints.maxWidth < 1000 * textFactor(context))
+                        if (_tab == ReportTab.absences)
+                          // The absence report has one way out: its files.
+                          Builder(
+                            builder: (anchor) => GhostButton(
+                              icon: LucideIcons.download,
+                              label: context.t('time.reports.export.title'),
+                              onPressed: () =>
+                                  unawaited(_exportAbsences(_rectOf(anchor))),
+                            ),
+                          )
+                        else if (constraints.maxWidth <
+                            1000 * textFactor(context))
                           Builder(
                             builder: (anchor) => GhostButton(
                               icon: LucideIcons.ellipsis,
@@ -543,6 +595,9 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
 
   Widget _body() {
     final padding = _padding();
+    if (_tab == ReportTab.absences) {
+      return AbsenceReportTab(query: _absenceQuery, padding: padding);
+    }
     return RefreshIndicator(
       edgeOffset: context.topGutter,
       onRefresh: () async {
@@ -554,6 +609,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
         ReportTab.detailed => _detailed(padding),
         ReportTab.workload => _workloadTab(padding),
         ReportTab.saved => _savedTab(padding),
+        ReportTab.absences => const SizedBox.shrink(),
       },
     );
   }
@@ -649,7 +705,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
       builder: (context, state) {
         final summary = _groups.summary;
         final query = _query.state;
-        return _Paged(
+        return ReportPagedScroll(
           onEnd: _groups.loadMore,
           slivers: [
             ..._head(padding, grouping: true),
@@ -696,7 +752,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
                 SliverPadding(
                   padding: horizontal,
                   sliver: SliverToBoxAdapter(
-                    child: _CardEdge(
+                    child: ReportCardEdge(
                       top: true,
                       last: state.items.isEmpty,
                       child: ReportGroupHead(groupBy: query.groupBy),
@@ -709,7 +765,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
                   itemCount: state.items.length,
                   itemBuilder: (context, index) {
                     final group = state.items[index];
-                    return _CardEdge(
+                    return ReportCardEdge(
                       top: compact && index == 0,
                       last: index == state.items.length - 1,
                       child: ReportGroupRow(
@@ -801,7 +857,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
           }
           rows.add(entry);
         }
-        return _Paged(
+        return ReportPagedScroll(
           onEnd: _entries.loadMore,
           slivers: [
             ..._head(padding, grouping: false),
@@ -903,7 +959,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
       builder: (context, state) {
         final forbidden =
             state.errorKey == 'error.time.report.workloadForbidden';
-        return _Paged(
+        return ReportPagedScroll(
           onEnd: _workload.loadMore,
           slivers: [
             ..._head(
@@ -961,7 +1017,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
                 padding: horizontal,
                 sliver: SliverList.builder(
                   itemCount: state.items.length,
-                  itemBuilder: (context, index) => _CardEdge(
+                  itemBuilder: (context, index) => ReportCardEdge(
                     top: index == 0,
                     last: index == state.items.length - 1,
                     child: WorkloadRowView(
@@ -985,7 +1041,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
     final horizontal = padding.copyWith(top: 0, bottom: 0);
     return BlocBuilder<PagedCubit<SavedReport>, PagedState<SavedReport>>(
       bloc: _saved,
-      builder: (context, state) => _Paged(
+      builder: (context, state) => ReportPagedScroll(
         onEnd: _saved.loadMore,
         slivers: [
           SliverPadding(padding: EdgeInsets.only(top: padding.top)),
@@ -1172,140 +1228,6 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
       ),
     ),
   );
-}
-
-/// A scroll view of slivers that asks for more when the reader nears its end.
-class _Paged extends StatelessWidget {
-  const _Paged({required this.slivers, required this.onEnd});
-
-  final List<Widget> slivers;
-  final Future<void> Function() onEnd;
-
-  @override
-  Widget build(BuildContext context) {
-    return NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        if (notification.metrics.axis == Axis.vertical &&
-            notification.metrics.extentAfter < 600) {
-          unawaited(onEnd());
-        }
-        return false;
-      },
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: slivers,
-      ),
-    );
-  }
-}
-
-/// A slice of one card: its sides always, its top edge on the first slice and
-/// its bottom edge and corners on the last — so a lazy list of rows reads as
-/// one card. Each edge is its own line, never a border with a gap in it.
-class _CardEdge extends StatelessWidget {
-  const _CardEdge({required this.child, this.top = false, this.last = false});
-
-  final Widget child;
-  final bool top;
-  final bool last;
-
-  @override
-  Widget build(BuildContext context) {
-    const radius = Radius.circular(AppTheme.radiusCard);
-    return ClipRRect(
-      borderRadius: BorderRadius.vertical(
-        top: top ? radius : Radius.zero,
-        bottom: last ? radius : Radius.zero,
-      ),
-      child: CustomPaint(
-        foregroundPainter: _EdgePainter(
-          color: AppColors.hairline,
-          top: top,
-          bottom: last,
-          radius: AppTheme.radiusCard,
-        ),
-        child: ColoredBox(color: AppColors.surface, child: child),
-      ),
-    );
-  }
-}
-
-class _EdgePainter extends CustomPainter {
-  const _EdgePainter({
-    required this.color,
-    required this.top,
-    required this.bottom,
-    required this.radius,
-  });
-
-  final Color color;
-  final bool top;
-  final bool bottom;
-  final double radius;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    final rect = Offset.zero & size;
-    final path = Path();
-    final r = radius;
-    final left = rect.left + 0.5;
-    final right = rect.right - 0.5;
-    final topY = rect.top + 0.5;
-    final bottomY = rect.bottom - 0.5;
-    // Left side, the bottom edge when this slice closes the card, the right
-    // side, and the top edge when it opens it.
-    path.moveTo(left, top ? topY + r : rect.top);
-    path.lineTo(left, bottom ? bottomY - r : rect.bottom);
-    if (bottom) {
-      path.arcToPoint(
-        Offset(left + r, bottomY),
-        radius: Radius.circular(r),
-        clockwise: false,
-      );
-      path.lineTo(right - r, bottomY);
-      path.arcToPoint(
-        Offset(right, bottomY - r),
-        radius: Radius.circular(r),
-        clockwise: false,
-      );
-    } else {
-      path.moveTo(right, rect.bottom);
-    }
-    path.lineTo(right, top ? topY + r : rect.top);
-    if (top) {
-      path.arcToPoint(
-        Offset(right - r, topY),
-        radius: Radius.circular(r),
-        clockwise: false,
-      );
-      path.lineTo(left + r, topY);
-      path.arcToPoint(
-        Offset(left, topY + r),
-        radius: Radius.circular(r),
-        clockwise: false,
-      );
-    }
-    canvas.drawPath(path, paint);
-    if (!bottom) {
-      // The line between two rows, inset like a list's divider.
-      canvas.drawLine(
-        Offset(16, rect.bottom - 0.5),
-        Offset(rect.right - 16, rect.bottom - 0.5),
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_EdgePainter old) =>
-      old.color != color ||
-      old.top != top ||
-      old.bottom != bottom ||
-      old.radius != radius;
 }
 
 /// A line over the report: which saved or shared report is on screen, or why

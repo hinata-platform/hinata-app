@@ -260,6 +260,11 @@ class _AbsenceEntitlementsScreenState extends State<AbsenceEntitlementsScreen> {
         label: context.t('absence.types.open'),
         onTap: (_) => context.go('/absences/types'),
       ),
+      PageAction(
+        icon: LucideIcons.calendarClock,
+        label: context.t('absence.yearRun.open'),
+        onTap: (_) => context.go('/absences/year-run'),
+      ),
     ],
     // On a phone the tools ride in the bar's own blur, as they do on every
     // other list in the app: the type, the leave year and a search that opens
