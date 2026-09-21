@@ -714,8 +714,12 @@ class GhostButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (iconOnly || (collapseToIcon && context.isCompact)) {
+      // The name goes inside the button's own node, as an IconButton's does:
+      // a tooltip around the button lands on a node above it and leaves the
+      // button itself without one.
       return Tooltip(
         message: label,
+        excludeFromSemantics: true,
         child: OutlinedButton(
           onPressed: onPressed,
           style: OutlinedButton.styleFrom(
@@ -726,7 +730,10 @@ class GhostButton extends StatelessWidget {
             minimumSize: const Size(46, 46),
             shape: const CircleBorder(),
           ),
-          child: Icon(icon ?? LucideIcons.slidersHorizontal, size: 18),
+          child: Semantics(
+            label: label,
+            child: Icon(icon ?? LucideIcons.slidersHorizontal, size: 18),
+          ),
         ),
       );
     }

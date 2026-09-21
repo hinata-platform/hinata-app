@@ -33,6 +33,7 @@ import 'report_actions.dart';
 import 'report_controls.dart';
 import 'report_detail_views.dart';
 import 'report_filter_sheet.dart';
+import 'report_format.dart';
 import 'report_import_wizard.dart';
 import 'report_summary_view.dart';
 
@@ -460,34 +461,46 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
                     context.pageGutter,
                     12,
                   ),
-                  child: PageHead(
-                    title: context.t('nav.time'),
-                    actions: [
-                      const TimeViewSwitcher(current: TimeView.reports),
-                      const SizedBox(width: 8),
-                      GhostButton(
-                        icon: LucideIcons.fileUp,
-                        label: context.t('time.import.action'),
-                        onPressed: () => unawaited(_import()),
-                        collapseToIcon: true,
-                      ),
-                      const SizedBox(width: 8),
-                      Builder(
-                        builder: (anchor) => GhostButton(
-                          icon: LucideIcons.download,
-                          label: context.t('time.reports.export.title'),
-                          onPressed: () => unawaited(_export(_rectOf(anchor))),
-                          collapseToIcon: true,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      PrimaryButton(
-                        icon: LucideIcons.bookmarkPlus,
-                        label: context.t('time.reports.save.title'),
-                        onPressed: () => unawaited(_save()),
-                        collapseToIcon: true,
-                      ),
-                    ],
+                  // The title, the switcher and three labelled buttons need
+                  // about a thousand points; narrower, the three fold into
+                  // the menu the phone uses.
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => PageHead(
+                      title: context.t('nav.time'),
+                      actions: [
+                        const TimeViewSwitcher(current: TimeView.reports),
+                        if (constraints.maxWidth < 1000 * textFactor(context))
+                          Builder(
+                            builder: (anchor) => GhostButton(
+                              icon: LucideIcons.ellipsis,
+                              label: context.t('time.reports.actions'),
+                              onPressed: () =>
+                                  unawaited(_moreMenu(_rectOf(anchor))),
+                              iconOnly: true,
+                            ),
+                          )
+                        else ...[
+                          GhostButton(
+                            icon: LucideIcons.fileUp,
+                            label: context.t('time.import.action'),
+                            onPressed: () => unawaited(_import()),
+                          ),
+                          Builder(
+                            builder: (anchor) => GhostButton(
+                              icon: LucideIcons.download,
+                              label: context.t('time.reports.export.title'),
+                              onPressed: () =>
+                                  unawaited(_export(_rectOf(anchor))),
+                            ),
+                          ),
+                          PrimaryButton(
+                            icon: LucideIcons.bookmarkPlus,
+                            label: context.t('time.reports.save.title'),
+                            onPressed: () => unawaited(_save()),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
                 Padding(
@@ -538,7 +551,11 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
   }
 
   /// The controls row and the notes that stand over every report tab.
-  List<Widget> _head(EdgeInsets padding, {required bool grouping}) {
+  List<Widget> _head(
+    EdgeInsets padding, {
+    required bool grouping,
+    Widget? scope,
+  }) {
     final horizontal = padding.copyWith(top: 0, bottom: 0);
     final people = _admin || (_groups.summary?.people ?? false);
     return [
@@ -572,6 +589,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
                     ? (group) =>
                           _query.change((q) => q.copyWith(groupBy: group))
                     : null,
+                scope: scope,
               );
             },
           ),
@@ -665,18 +683,18 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
                   ),
                 ),
               ),
-              SliverPadding(
-                padding: horizontal,
-                sliver: SliverToBoxAdapter(
-                  child: _CardEdge(
-                    top: true,
-                    last: state.items.isEmpty,
-                    child: compact
-                        ? const SizedBox(height: 4)
-                        : ReportGroupHead(groupBy: query.groupBy),
+              // Phones drop the column heads; the first row opens the card.
+              if (!compact)
+                SliverPadding(
+                  padding: horizontal,
+                  sliver: SliverToBoxAdapter(
+                    child: _CardEdge(
+                      top: true,
+                      last: state.items.isEmpty,
+                      child: ReportGroupHead(groupBy: query.groupBy),
+                    ),
                   ),
                 ),
-              ),
               SliverPadding(
                 padding: horizontal,
                 sliver: SliverList.builder(
@@ -684,6 +702,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
                   itemBuilder: (context, index) {
                     final group = state.items[index];
                     return _CardEdge(
+                      top: compact && index == 0,
                       last: index == state.items.length - 1,
                       child: ReportGroupRow(
                         groupBy: query.groupBy,
@@ -879,21 +898,16 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
         return _Paged(
           onEnd: _workload.loadMore,
           slivers: [
-            ..._head(padding, grouping: false),
-            SliverPadding(
-              padding: horizontal.copyWith(bottom: 12),
-              sliver: SliverToBoxAdapter(
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: GlassFilterPill(
-                    icon: LucideIcons.folderKanban,
-                    label:
-                        _workloadProjectName ??
-                        context.t('time.reports.workload.myProjects'),
-                    active: _workloadProject != null,
-                    onTap: (anchor) => unawaited(_pickWorkloadGroup(anchor)),
-                  ),
-                ),
+            ..._head(
+              padding,
+              grouping: false,
+              scope: GlassFilterPill(
+                icon: LucideIcons.folderKanban,
+                label:
+                    _workloadProjectName ??
+                    context.t('time.reports.workload.myProjects'),
+                active: _workloadProject != null,
+                onTap: (anchor) => unawaited(_pickWorkloadGroup(anchor)),
               ),
             ),
             if (forbidden)
