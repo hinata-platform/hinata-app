@@ -54,8 +54,13 @@ class GlassSwitchChip extends StatelessWidget {
       tween: Tween<double>(end: active ? 1 : 0),
       duration: _settle,
       curve: Curves.easeOut,
-      builder: (context, t, _) =>
-          _chip(context, t: t, lit: lit, rest: tokens.inkSoft, compact: compact),
+      builder: (context, t, _) => _chip(
+        context,
+        t: t,
+        lit: lit,
+        rest: tokens.inkSoft,
+        compact: compact,
+      ),
     );
   }
 
@@ -203,7 +208,11 @@ class GlassSwitchBar extends StatelessWidget {
 /// same track, so the row is one shape repeated rather than three controls that
 /// happen to be adjacent.
 class GlassInlineTrack extends StatelessWidget {
-  const GlassInlineTrack({super.key, required this.radius, required this.child});
+  const GlassInlineTrack({
+    super.key,
+    required this.radius,
+    required this.child,
+  });
 
   final double radius;
   final Widget child;
