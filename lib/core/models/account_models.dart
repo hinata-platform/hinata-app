@@ -419,54 +419,130 @@ class ChannelPair extends Equatable {
   List<Object?> get props => [email, push];
 }
 
-/// Notification matrix + two master channel switches.
+/// Whether e-mail and push follow a schedule (HIN-131).
+enum NotifSchedule {
+  /// Any day, any time.
+  always,
+
+  /// On chosen days between two times of day.
+  custom;
+
+  String get wire => name.toUpperCase();
+
+  static NotifSchedule? fromWire(Object? value) => switch ('$value') {
+    'ALWAYS' => NotifSchedule.always,
+    'CUSTOM' => NotifSchedule.custom,
+    _ => null,
+  };
+}
+
+/// Notification matrix, two master channel switches and the times e-mail and
+/// push may arrive.
 class NotifPrefs extends Equatable {
   const NotifPrefs({
     required this.emailEnabled,
     required this.pushEnabled,
     required this.events,
+    this.schedule,
     this.weekdays,
+    this.from,
+    this.until,
     this.defaultWeekdays = workingWeekdays,
+    this.defaultSchedule,
+    this.defaultFrom,
+    this.defaultUntil,
   });
 
   final bool emailEnabled;
   final bool pushEnabled;
   final Map<String, ChannelPair> events;
 
+  /// The person's choice, or null for the organisation's default. Null with
+  /// [weekdays] set is a choice made before schedules existed: those days,
+  /// all day long.
+  final NotifSchedule? schedule;
+
   /// The days (ISO, [DateTime.monday] to [DateTime.sunday], ascending) on which
   /// e-mail and push may reach the person, or null to follow
-  /// [defaultWeekdays]. On other days both channels stay silent; the bell in
-  /// the app keeps everything and security mail always goes out.
+  /// [defaultWeekdays]. Outside them both channels wait; the bell in the app
+  /// keeps everything and security mail always goes out.
   final List<int>? weekdays;
+
+  /// The window's start and end as `HH:mm` in the person's zone, or both null
+  /// for the whole day. An end before the start runs over midnight.
+  final String? from;
+  final String? until;
 
   /// What a null [weekdays] works out to: the working days where the person
   /// lives, as the server reckons them from locale and time zone. Read-only.
   final List<int> defaultWeekdays;
 
+  /// What applies without a choice, from the organisation's day count:
+  /// office hours on working days, or always. Null from a server that predates
+  /// schedules, which only knew days. Read-only, like the two times below.
+  final NotifSchedule? defaultSchedule;
+  final String? defaultFrom;
+  final String? defaultUntil;
+
   /// Monday to Friday, the fallback when an older server sends no default.
   static const List<int> workingWeekdays = [1, 2, 3, 4, 5];
+
+  /// The office hours a first switch to [NotifSchedule.custom] starts from.
+  static const String officeFrom = '09:00';
+  static const String officeUntil = '17:00';
+
+  /// Whether the person chose anything at all.
+  bool get followsDefault => schedule == null && weekdays == null;
+
+  /// The schedule that applies right now.
+  NotifSchedule get effectiveSchedule =>
+      schedule ??
+      (weekdays != null
+          ? NotifSchedule.custom
+          : (defaultSchedule ?? NotifSchedule.custom));
 
   /// The days that actually apply right now.
   List<int> get effectiveWeekdays => weekdays ?? defaultWeekdays;
 
+  /// The window that applies right now; both null for the whole day.
+  String? get effectiveFrom => _window.$1;
+  String? get effectiveUntil => _window.$2;
+
+  (String?, String?) get _window {
+    if (schedule == NotifSchedule.custom) return (from, until);
+    if (schedule == null && weekdays != null) return (null, null);
+    return (defaultFrom, defaultUntil);
+  }
+
   /// Whether the person picked their own days instead of the default.
   bool get hasCustomWeekdays => weekdays != null;
 
-  /// [weekdays] takes an explicit null to go back to the default, so it
-  /// defaults to a sentinel rather than to null.
+  /// Nullable fields take an explicit null to go back to the default, so they
+  /// default to a sentinel rather than to null.
   NotifPrefs copyWith({
     bool? emailEnabled,
     bool? pushEnabled,
     Map<String, ChannelPair>? events,
+    Object? schedule = _keepWeekdays,
     Object? weekdays = _keepWeekdays,
+    Object? from = _keepWeekdays,
+    Object? until = _keepWeekdays,
   }) => NotifPrefs(
     emailEnabled: emailEnabled ?? this.emailEnabled,
     pushEnabled: pushEnabled ?? this.pushEnabled,
     events: events ?? this.events,
+    schedule: identical(schedule, _keepWeekdays)
+        ? this.schedule
+        : schedule as NotifSchedule?,
     weekdays: identical(weekdays, _keepWeekdays)
         ? this.weekdays
         : weekdays as List<int>?,
+    from: identical(from, _keepWeekdays) ? this.from : from as String?,
+    until: identical(until, _keepWeekdays) ? this.until : until as String?,
     defaultWeekdays: defaultWeekdays,
+    defaultSchedule: defaultSchedule,
+    defaultFrom: defaultFrom,
+    defaultUntil: defaultUntil,
   );
 
   factory NotifPrefs.fromJson(Map<String, dynamic> json) {
@@ -478,19 +554,28 @@ class NotifPrefs extends Equatable {
       events: raw.map(
         (k, v) => MapEntry(k, ChannelPair.fromJson(v as Map<String, dynamic>)),
       ),
+      schedule: NotifSchedule.fromWire(json['schedule']),
       weekdays: _weekdaysFromJson(json['weekdays']),
+      from: json['from'] as String?,
+      until: json['until'] as String?,
       defaultWeekdays: (defaults == null || defaults.isEmpty)
           ? workingWeekdays
           : defaults,
+      defaultSchedule: NotifSchedule.fromWire(json['defaultSchedule']),
+      defaultFrom: json['defaultFrom'] as String?,
+      defaultUntil: json['defaultUntil'] as String?,
     );
   }
 
-  /// [defaultWeekdays] is the server's to compute and is never sent back.
+  /// The defaults are the server's to compute and are never sent back.
   Map<String, dynamic> toJson() => {
     'emailEnabled': emailEnabled,
     'pushEnabled': pushEnabled,
     'events': events.map((k, v) => MapEntry(k, v.toJson())),
+    'schedule': schedule?.wire,
     'weekdays': weekdays?.map(dayOfWeekWire).toList(),
+    'from': from,
+    'until': until,
   };
 
   @override
@@ -498,8 +583,14 @@ class NotifPrefs extends Equatable {
     emailEnabled,
     pushEnabled,
     events,
+    schedule,
     weekdays,
+    from,
+    until,
     defaultWeekdays,
+    defaultSchedule,
+    defaultFrom,
+    defaultUntil,
   ];
 }
 

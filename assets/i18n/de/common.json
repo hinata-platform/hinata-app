@@ -849,7 +849,7 @@
       "direction": "Richtung",
       "before": "vorher",
       "after": "nachher",
-      "workingDays": "In Arbeitstagen rechnen",
+      "workingDays": "In Werktagen rechnen",
       "workingDaysHint": "Überspringt Wochenenden und die Feiertage des Kalenders, den das Projekt nutzt.",
       "noEventDate": "Dieses Projekt hat noch keinen Termin, es gibt also nichts zum Rechnen. Der Versatz bleibt trotzdem erhalten.",
       "setEventDate": "Termin des Projekts setzen",
@@ -860,7 +860,7 @@
       "days_plural": "{{count}} Tage",
       "weeks": "{{count}} Woche",
       "weeks_plural": "{{count}} Wochen",
-      "workingSuffix": " (Arbeitstage)",
+      "workingSuffix": " (Werktage)",
       "sentenceBefore": "{{amount}}{{basis}} vor dem Termin",
       "sentenceAfter": "{{amount}}{{basis}} nach dem Termin"
     },
@@ -2134,7 +2134,7 @@
     "deadlineBasis": {
       "label": "Fristen zählen in",
       "calendar": "Kalendertage",
-      "working": "Arbeitstage",
+      "working": "Werktage",
       "orgDefault": "Standard deiner Organisation: {{basis}}.",
       "followsOrg": "Folgt dem Standard deiner Organisation ({{basis}}).",
       "hint": "Neue Fristen starten mit dieser Einstellung. Bestehende Fristen bleiben, wie sie sind.",
@@ -3847,6 +3847,20 @@
         "range": "{{from}} bis {{to}}",
         "useDefault": "Standard verwenden",
         "lastDay": "Mindestens ein Tag muss aktiv bleiben. Um alles abzustellen, schalte oben die Kanäle aus."
+      },
+      "schedule": {
+        "title": "Benachrichtigungszeiten",
+        "hint": "Außerhalb deiner Zeiten warten E-Mails und Push-Nachrichten und kommen gesammelt, sobald deine nächste Zeit beginnt. Die Glocke zeigt alles sofort. Sicherheitsmeldungen und wichtige Hinweise kommen immer.",
+        "always": "Immer",
+        "custom": "Benutzerdefiniert",
+        "from": "Von",
+        "until": "Bis",
+        "allDay": "Ganztägig",
+        "defaultAlways": "Standard deiner Organisation: immer",
+        "defaultCustom": "Standard deiner Organisation: {{days}}, {{from}} bis {{until}}",
+        "defaultCustomAllDay": "Standard deiner Organisation: {{days}}, ganztägig",
+        "useDefault": "Standard verwenden",
+        "overnight": "Geht über Mitternacht und gehört zum Tag, an dem es beginnt."
       }
     },
     "access": {
@@ -4315,11 +4329,11 @@
     "title": "Organisation",
     "subtitle": "Diese Einstellungen gelten für die ganze Organisation: Zeiterfassung, Abwesenheiten, Feiertage, Abrechnung und Fristen. Organisationsadmins sehen Arbeitszeiten, Zeitnachweise, Abwesenheiten und Buchungen aller Personen, Titel und Beschreibungen von Vorgängen aber nur aus Projekten, in denen sie selbst sind. Krankheit sehen sie nur, solange niemand für Abwesenheiten benannt ist, sonst nur, wenn sie selbst benannt sind.",
     "deadlines": {
-      "title": "Fristen",
-      "hint": "Worin neue relative Fristen zählen, wenn ein Projekt nichts anderes festlegt.",
+      "title": "Zählweise",
+      "hint": "Ob die Organisation in Kalendertagen oder Werktagen rechnet: für neue relative Fristen und als Standard für Benachrichtigungszeiten.",
       "followsPlatform": "Es gilt der Standard der Plattform: {{basis}}.",
       "followsPlatformUnknown": "Es gilt der Standard der Plattform.",
-      "ownChoice": "Deine Organisation zählt in {{basis}}.",
+      "ownChoice": "Gewählt: {{basis}}.",
       "existingStay": "Bestehende Fristen bleiben, wie sie sind.",
       "usePlatform": "Standard der Plattform verwenden"
     },

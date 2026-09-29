@@ -3847,6 +3847,20 @@
         "range": "{{from}}至{{to}}",
         "useDefault": "使用默认",
         "lastDay": "至少要保留一天。要停止所有通知，请关闭上方的通道。"
+      },
+      "schedule": {
+        "title": "通知时间",
+        "hint": "在你的时间之外，邮件和推送会暂存，在你的下一个时段开始时一并送达。铃铛会立即显示全部内容。安全消息和重要通知始终送达。",
+        "always": "始终",
+        "custom": "自定义",
+        "from": "从",
+        "until": "至",
+        "allDay": "全天",
+        "defaultAlways": "组织默认：始终",
+        "defaultCustom": "组织默认：{{days}}，{{from}} 至 {{until}}",
+        "defaultCustomAllDay": "组织默认：{{days}}，全天",
+        "useDefault": "使用默认值",
+        "overnight": "跨越午夜，属于开始的那一天。"
       }
     },
     "access": {
@@ -4315,11 +4329,11 @@
     "title": "组织",
     "subtitle": "这些设置适用于整个组织：时间记录、缺勤、节假日、结算和截止日期。组织管理员可查看所有人的工作时间、工时表、缺勤和工时记录，但事项标题和描述仅来自其所在的项目。只有在未指定缺勤管理人时才能看到病假，否则仅在其本人被指定时可见。",
     "deadlines": {
-      "title": "截止日期",
-      "hint": "项目未自行设定时，新的相对截止日期按什么计算。",
+      "title": "计日方式",
+      "hint": "组织按自然日还是工作日计算：用于新的相对截止日期，也作为通知时间的默认值。",
       "followsPlatform": "使用平台默认值：{{basis}}。",
       "followsPlatformUnknown": "使用平台默认值。",
-      "ownChoice": "你的组织按{{basis}}计算。",
+      "ownChoice": "已选：{{basis}}。",
       "existingStay": "已有的截止日期保持不变。",
       "usePlatform": "使用平台默认值"
     },
