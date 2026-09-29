@@ -617,38 +617,37 @@ class _OrgAdminToggleState extends State<OrgAdminToggle> {
     // Nobody hands this role to themselves; the server refuses it too.
     final self = widget.user.id == widget.actions.currentUserId;
     final title = context.t('admin.um.orgAdminTitle');
-    return MergeSemantics(
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(color: AppColors.hairline),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceMuted,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                LucideIcons.building2,
-                size: 17,
-                color: AppColors.ink,
-              ),
+    // Not one merged node: the "i" next to the title is a control of its own,
+    // and merged into the switch a screen reader could not reach it. The
+    // switch carries the title as its name instead.
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        border: Border.all(color: AppColors.hairline),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(10),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
+            child: Icon(LucideIcons.building2, size: 17, color: AppColors.ink),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: ExcludeSemantics(
                         child: Text(
                           title,
                           style: TextStyle(
@@ -658,44 +657,47 @@ class _OrgAdminToggleState extends State<OrgAdminToggle> {
                           ),
                         ),
                       ),
-                      // What the role may see is long; it waits behind the
-                      // "i" instead of pushing the drawer's actions down.
-                      InfoCircleButton(
-                        title: title,
-                        message: context.t('admin.um.orgAdminHint'),
-                        tooltip: context.t('admin.um.orgAdminInfo'),
-                      ),
-                    ],
-                  ),
-                  // Only why the switch cannot move stays in view.
-                  if (invited || self)
-                    Text(
-                      context.t(
-                        invited
-                            ? 'admin.um.reasonPendingInvite'
-                            : 'admin.um.reasonOwnOrgRole',
-                      ),
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        height: 1.3,
-                        color: AppColors.inkSoft,
-                      ),
                     ),
-                ],
-              ),
+                    // What the role may see is long; it waits behind the
+                    // "i" instead of pushing the drawer's actions down.
+                    InfoCircleButton(
+                      title: title,
+                      message: context.t('admin.um.orgAdminHint'),
+                      tooltip: context.t('admin.um.orgAdminInfo'),
+                    ),
+                  ],
+                ),
+                // Only why the switch cannot move stays in view.
+                if (invited || self)
+                  Text(
+                    context.t(
+                      invited
+                          ? 'admin.um.reasonPendingInvite'
+                          : 'admin.um.reasonOwnOrgRole',
+                    ),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      height: 1.3,
+                      color: AppColors.inkSoft,
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(width: 8),
-            SizedBox(
-              height: 48,
-              child: Center(
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            height: 48,
+            child: Center(
+              child: Semantics(
+                label: title,
                 child: HiveSwitch(
                   value: _value,
                   onChanged: invited || self || _busy ? null : _set,
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
