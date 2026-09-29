@@ -30,21 +30,27 @@ final kNavGlassDark = _withoutFrost(LiquidGlassSettings.ios27Dark);
 /// without its frost (see [_withoutFrost]).
 final kNavGlassLight = _withoutFrost(LiquidGlassSettings.ios27Light);
 
+const _chromeBlur = 3.0;
+
 /// [preset] without the frost pass, for the chrome that sits over scrolling content.
 ///
 /// Measured on the iPhone simulator with real frames (hin-130-review/perf): the
 /// frost is a blur pass of its own on every surface, and the bar, its round
 /// buttons, the docked toolbar and the tab pill each paid it on every scrolled
 /// frame. Scrolling the issues list went from 5.2 to 9.2 ms at the 90th
-/// percentile, past a 120 Hz display's 8.3 ms. Without the frost it is back at
-/// 5.5 ms, and the rim shade, rim light and lens that make the glass read as
+/// percentile, past a 120 Hz display's 8.3 ms. Without the frost, and with the
+/// chrome's own blur of 3 in its place, it is at 5.7 ms, and the rim shade, rim
+/// light and lens that make the glass read as
 /// iOS 27 stay. Menus, popovers and sheets keep their frost: they open over
 /// still content, where the pass is paid once, not per frame.
 LiquidGlassSettings _withoutFrost(LiquidGlassSettings preset) =>
     LiquidGlassSettings(
       glassColor: preset.glassColor,
       saturation: preset.saturation,
-      blur: preset.blur,
+      // The blur the chrome always had. The preset's own 0.6 counts on the
+      // frost to diffuse what is behind; without it, a list row's text stood
+      // sharp behind the tab labels, text on text.
+      blur: _chromeBlur,
       thickness: preset.thickness,
       refractiveIndex: preset.refractiveIndex,
       lensModel: preset.lensModel,
