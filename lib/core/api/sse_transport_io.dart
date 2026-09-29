@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 
 /// Native SSE transport. dio's `IOHttpClientAdapter` (dart:io) delivers the
 /// response body incrementally, so we can consume `response.data.stream`
@@ -24,5 +25,21 @@ Future<Stream<List<int>>> openEventStream({
     ),
     cancelToken: cancelToken,
   );
-  return response.data!.stream;
+  return withoutCancellation(response.data!.stream);
 }
+
+/// [bytes] without the error a deliberate cancel ends it with.
+///
+/// Stopping a connection cancels its token, and dio answers by closing the
+/// response stream with a "request cancelled" error. By then the SSE parser
+/// has been told to stop listening, but an `async*` generator only notices at
+/// its next event — so that error arrived at a generator nobody listened to
+/// any more and surfaced as an uncaught error on every page that closed an
+/// open stream (leaving an issue, for one). A cancel we asked for is not a
+/// failure; every other error still passes through.
+@visibleForTesting
+Stream<List<int>> withoutCancellation(Stream<List<int>> bytes) =>
+    bytes.handleError(
+      (Object _) {},
+      test: (error) => error is DioException && CancelToken.isCancel(error),
+    );

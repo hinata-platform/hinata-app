@@ -148,6 +148,7 @@ class _NotificationBellState extends State<_NotificationBell> {
                     );
               Widget buildNativeButton(VoidCallback toggle) => GlassButton(
                 icon: const Icon(LucideIcons.bell),
+                label: context.t('nav.notifications'),
                 onTap: toggle,
                 width: 42,
                 height: 42,

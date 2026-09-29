@@ -438,7 +438,16 @@
     "deleteSelectedBody": "Il sera définitivement supprimé pour tout le monde.",
     "deleteSelectedBody_plural": "{{count}} commentaires seront définitivement supprimés pour tout le monde.",
     "recorderToolMissing": "Enregistrement impossible : {{tool}} n'est pas installé. Sous Linux, l'enregistrement passe par parecord (pulseaudio-utils) et ffmpeg.",
-    "voiceNeedsGstreamer": "Ce message vocal ne peut pas être lu : les plugins de base de GStreamer sont absents. Installez gstreamer1.0-plugins-base."
+    "voiceNeedsGstreamer": "Ce message vocal ne peut pas être lu : les plugins de base de GStreamer sont absents. Installez gstreamer1.0-plugins-base.",
+    "composer": {
+      "attach": "Pièce jointe ou mise en forme",
+      "record": "Enregistrer un message vocal",
+      "send": "Envoyer le commentaire",
+      "cancelEdit": "Arrêter la modification",
+      "closeFormat": "Fermer la mise en forme",
+      "discardRecording": "Supprimer l’enregistrement",
+      "sendVoice": "Envoyer le message vocal"
+    }
   },
   "filePicker": {
     "images": "Images",
