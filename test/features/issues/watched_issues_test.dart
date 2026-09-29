@@ -184,9 +184,10 @@ class _FakeUserRepository implements UserRepository {
 
 class _FakeProjectRepository implements ProjectRepository {
   @override
-  Future<List<Project>> projects({bool archived = false, bool? template}) async => const [
-    Project(id: 'p1', key: 'HIN', name: 'Hinata'),
-  ];
+  Future<List<Project>> projects({
+    bool archived = false,
+    bool? template,
+  }) async => const [Project(id: 'p1', key: 'HIN', name: 'Hinata')];
 
   @override
   dynamic noSuchMethod(Invocation invocation) =>
