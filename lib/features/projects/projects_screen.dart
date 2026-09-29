@@ -5,12 +5,14 @@ import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/access/project_permissions.dart';
 import '../../core/api/api_client.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
+import '../../core/models/team_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
@@ -24,9 +26,11 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/entity_avatar_editor.dart';
 import '../sprint/modals/glass_modal.dart';
+import 'deadline_basis_field.dart';
 import 'project_copy_sheet.dart';
 import 'project_create_form.dart';
 import '../../core/repositories/project_repository.dart';
+import '../../core/repositories/team_repository.dart';
 import '../../core/repositories/user_repository.dart';
 
 /// The phone's docked row, the same height every other page's is.
@@ -37,6 +41,7 @@ typedef _ProjectsData = ({
   List<Project> archived,
   Map<String, String> names,
   Map<String, String> avatars,
+  List<Team> teams,
 });
 
 class ProjectsScreen extends StatefulWidget {
@@ -68,10 +73,15 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         context.read<ProjectRepository>().projects(),
         context.read<ProjectRepository>().projects(archived: true),
         context.read<UserRepository>().users(),
+        // The teams I am in, once per load: a Team-Admin of a team owning a
+        // project may open its settings, and the cards ask that of this list
+        // rather than each asking the server.
+        context.read<TeamRepository>().teams(),
       ]);
       final active = results[0] as List<Project>;
       final archived = results[1] as List<Project>;
       final users = results[2] as List<DirectoryUser>;
+      final teams = results[3] as List<Team>;
       final names = {for (final u in users) u.id: u.displayName};
       final avatars = {
         for (final u in users)
@@ -83,6 +93,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         archived: archived,
         names: names,
         avatars: avatars,
+        teams: teams,
       );
     })..load();
   }
@@ -127,6 +138,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           final archived = state.data?.archived ?? const <Project>[];
           final names = state.data?.names ?? const <String, String>{};
           final avatars = state.data?.avatars ?? const <String, String>{};
+          final teams = state.data?.teams ?? const <Team>[];
           // The list route answers with both kinds unless asked otherwise, so
           // the split happens here rather than in a second request.
           final templatesOffered = context.select<AppConfigBloc, bool>(
@@ -303,6 +315,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                               project: projects[index],
                               names: names,
                               avatars: avatars,
+                              teams: teams,
                               onSettings: () => _openSettings(projects[index]),
                               onCopy: templatesOffered
                                   ? () => _copy(projects[index])
@@ -381,6 +394,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     final projects = context.read<ProjectRepository>();
     final users = context.read<UserRepository>();
     final meId = context.read<AuthBloc>().state.user?.id;
+    final deadlineDefault = offeredDeadlineDefault(context);
     final created = await showGlassModal<Project>(
       context,
       width: 580,
@@ -389,7 +403,11 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           RepositoryProvider.value(value: projects),
           RepositoryProvider.value(value: users),
         ],
-        child: _CreateProjectBody(meId: meId, takenKeys: _takenProjectKeys()),
+        child: _CreateProjectBody(
+          meId: meId,
+          takenKeys: _takenProjectKeys(),
+          deadlineDefault: deadlineDefault,
+        ),
       ),
     );
     if (created != null) _cubit.load();
@@ -571,6 +589,7 @@ class _ProjectCard extends StatelessWidget {
     required this.project,
     required this.names,
     required this.avatars,
+    required this.teams,
     required this.onSettings,
     this.onCopy,
     this.onInstantiate,
@@ -579,6 +598,9 @@ class _ProjectCard extends StatelessWidget {
   final Project project;
   final Map<String, String> names;
   final Map<String, String> avatars;
+
+  /// The teams I am in: a Team-Admin of one owning this project manages it.
+  final List<Team> teams;
   final VoidCallback onSettings;
 
   /// Null while project templates are switched off: then there is no way to
@@ -593,11 +615,11 @@ class _ProjectCard extends StatelessWidget {
     // Mobile shows the compact gear in the corner; larger views show the
     // full-width "Settings" button in the footer instead.
     final compact = context.isCompact;
-    // Only project leads (and platform admins) may open project settings —
-    // regular members work on the project but never see its configuration.
+    // Only project leads and Team-Admins of an owning team may open project
+    // settings; regular members work on the project but never see its
+    // configuration, and the platform admin role adds nothing here.
     final me = context.read<AuthBloc>().state.user;
-    final canManage =
-        me != null && (me.isAdmin || project.leadIds.contains(me.id));
+    final canManage = canManageProject(project, me, teams);
     final color = _projectColor(project);
     final glyphColor = project.archived
         ? HSLColor.fromColor(color).withSaturation(0.25).toColor()
@@ -888,9 +910,16 @@ class _Stat extends StatelessWidget {
 /// (same as the sprint/team modals) and matching the design: glyph + name/key,
 /// description, lead, accent color and the default-workflow note.
 class _CreateProjectBody extends StatefulWidget {
-  const _CreateProjectBody({required this.meId, this.takenKeys = const {}});
+  const _CreateProjectBody({
+    required this.meId,
+    this.takenKeys = const {},
+    this.deadlineDefault,
+  });
 
   final String? meId;
+
+  /// The organisation's deadline basis while project templates are on.
+  final RelativeDateBasis? deadlineDefault;
 
   /// Keys already in use, so the suggested one doesn't walk into a conflict the
   /// server would only report after the form is submitted. Best effort — the
@@ -905,6 +934,7 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
   late final ProjectDraft _draft = ProjectDraft(
     takenKeys: widget.takenKeys,
     meId: widget.meId,
+    deadlineDefault: widget.deadlineDefault,
   );
 
   bool _saving = false;
@@ -982,6 +1012,7 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
         description: _draft.trimmedDescription,
         color: _draft.colorHex,
         leadId: _draft.lead?.id,
+        deadlineBasis: _draft.deadlineBasisToSend,
       );
       if (mounted) {
         await uploadPendingAvatar(

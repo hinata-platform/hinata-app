@@ -3,19 +3,18 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/account_models.dart' show TimePreferences;
-import '../admin_cards.dart';
-import '../admin_form_helpers.dart';
-import '../policy_controls.dart';
-import 'admin_absence_management_card.dart';
-import 'admin_approval_period_preview.dart';
-import 'admin_backfill_grants_card.dart';
-import 'admin_correction_requests_card.dart';
-import 'admin_holidays_card.dart';
-import 'admin_lock_exceptions_card.dart';
-import 'admin_privacy_notice_field.dart';
-import 'admin_time_tags_card.dart';
+import '../../admin/admin_form_helpers.dart';
+import '../../admin/policy_controls.dart';
+import '../org_link_card.dart';
+import 'absence_management_card.dart';
+import 'approval_period_preview.dart';
+import 'backfill_grants_card.dart';
+import 'correction_requests_card.dart';
+import 'lock_exceptions_card.dart';
+import 'privacy_notice_field.dart';
+import 'time_tags_card.dart';
 
-/// Admin → Zeiterfassung.
+/// Organisation → Zeiterfassung (HIN-129; the admin area's section until then).
 ///
 /// Two things live here. The master switch for the extended time-tracking
 /// module — which is what `/api/v1/meta` reports as the platform flag
@@ -24,23 +23,42 @@ import 'admin_time_tags_card.dart';
 /// them nullable: absent means the operator's environment decides, which is why
 /// each control offers a way back to that state.
 ///
+/// It edits [timeTracking] in place: the `timeTracking` block of
+/// `GET /api/v1/org/settings`, which the Organisation page holds as its draft
+/// and writes back with `PUT /api/v1/org/settings` when its Save is pressed.
+/// The cards that act at once (tags, lock exceptions, corrections, backfill
+/// grants) save themselves, as they always did.
+///
 /// The policies with a co-determination note are not decoration either. A
 /// setting that makes one person's working time legible to another is subject
 /// to § 87 Abs. 1 Nr. 6 BetrVG (LPVG in the public sector) — objective
 /// suitability for monitoring is enough — so the note sits at the switch, where
 /// somebody is about to reach for it. They all default to off; the functions
 /// behind them arrive in the later stages of HIN-60.
-class AdminTimeTrackingSection extends StatefulWidget {
-  const AdminTimeTrackingSection({super.key, required this.settings});
+///
+/// The section brings its cards and nothing around them: [layout] receives
+/// them by name, in the order they are declared, and the page decides where
+/// they stand and what stands beside them.
+class OrgTimeTrackingSection extends StatefulWidget {
+  const OrgTimeTrackingSection({
+    super.key,
+    required this.timeTracking,
+    required this.layout,
+  });
 
-  final Map<String, dynamic> settings;
+  /// The draft of the time-tracking block, with the server's read-only
+  /// `effective` beside the stored values. Written into as the controls move.
+  final Map<String, dynamic> timeTracking;
+
+  /// Lays the section's cards out. Called on every rebuild of the section, so
+  /// a moved control shows at once wherever the page put its card.
+  final Widget Function(BuildContext context, Map<String, Widget> cards) layout;
 
   @override
-  State<AdminTimeTrackingSection> createState() =>
-      _AdminTimeTrackingSectionState();
+  State<OrgTimeTrackingSection> createState() => _OrgTimeTrackingSectionState();
 }
 
-class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
+class _OrgTimeTrackingSectionState extends State<OrgTimeTrackingSection> {
   /// A hundred years — the ceiling the server puts on a retention. Clamped in
   /// the field so an operator is not told about it by a rejected save of five
   /// unrelated sections. Mirrors TimePolicy.RETENTION_MAX_MONTHS.
@@ -56,9 +74,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
   /// A year. Mirrors TimePolicy.LATE_ENTRY_HINT_MAX_DAYS.
   static const int _lateEntryHintMaxDays = 365;
 
-  Map<String, dynamic> get _tt =>
-      (widget.settings['timeTracking'] ??= <String, dynamic>{})
-          as Map<String, dynamic>;
+  Map<String, dynamic> get _tt => widget.timeTracking;
 
   /// What the server says these policies currently resolve to. Read-only: the
   /// server sends it beside the stored block so the screen can show what is in
@@ -119,54 +135,55 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
   @override
   Widget build(BuildContext context) {
     final advanced = _effectiveValue<bool>('advancedEnabled') ?? false;
-    return AdminCards(
-      note: AdminNote(text: context.t('admin.timeTracking.hint')),
-      cards: {
-        'module': _module(context),
-        // Its own card rather than a switch inside the one above: absence
-        // management brings its own routes, screens and notifications, and
-        // holiday principles are co-determined under § 87 Abs. 1 Nr. 5 BetrVG
-        // in their own right. It stays visible while the module above is off,
-        // because an operator may set it before switching the module on — the
-        // card says it cannot take effect yet.
-        'absenceManagement': AdminAbsenceManagementCard(
-          enabled: _value<bool>('absenceManagementEnabled'),
-          effective: _effectiveValue<bool>('absenceManagementEnabled'),
-          advancedOn: advanced,
-          managers: _stringList('absenceManagers'),
-          onEnabledChanged: (v) => _set('absenceManagementEnabled', v),
-          onManagersChanged: (ids) => _set('absenceManagers', ids),
-          calendar: _value<String>('absenceCalendarVisibility'),
-          calendarEffective: _effectiveValue<String>(
-            'absenceCalendarVisibility',
-          ),
-          onCalendarChanged: (v) => _set('absenceCalendarVisibility', v),
+    return widget.layout(context, {
+      'module': _module(context),
+      // Its own card rather than a switch inside the one above: absence
+      // management brings its own routes, screens and notifications, and
+      // holiday principles are co-determined under § 87 Abs. 1 Nr. 5 BetrVG
+      // in their own right. It stays visible while the module above is off,
+      // because an operator may set it before switching the module on — the
+      // card says it cannot take effect yet.
+      'absenceManagement': OrgAbsenceManagementCard(
+        enabled: _value<bool>('absenceManagementEnabled'),
+        effective: _effectiveValue<bool>('absenceManagementEnabled'),
+        advancedOn: advanced,
+        managers: _stringList('absenceManagers'),
+        onEnabledChanged: (v) => _set('absenceManagementEnabled', v),
+        onManagersChanged: (ids) => _set('absenceManagers', ids),
+        calendar: _value<String>('absenceCalendarVisibility'),
+        calendarEffective: _effectiveValue<String>('absenceCalendarVisibility'),
+        onCalendarChanged: (v) => _set('absenceCalendarVisibility', v),
+      ),
+      'capture': _capture(context),
+      // Only where there is a catalogue to manage: the routes behind them are
+      // part of the module, so with the module off they do not exist and a
+      // card that spun forever would be the only thing on the screen that did
+      // not respect the switch above it.
+      if (advanced) ...{
+        'tags': const OrgTimeTagsCard(),
+        // The holiday calendars (HIN-91): a page of their own, because a
+        // calendar, its feed and a year of days do not fit this form.
+        'holidays': const OrgLinkCard(
+          icon: LucideIcons.calendarHeart,
+          titleKey: 'availability.admin.cardTitle',
+          hintKey: 'availability.admin.cardHint',
+          openKey: 'availability.admin.open',
+          route: '/organization/holidays',
         ),
-        'capture': _capture(context),
-        // Only where there is a catalogue to manage: the routes behind them are
-        // part of the module, so with the module off they do not exist and a
-        // card that spun forever would be the only thing on the screen that did
-        // not respect the switch above it.
-        if (advanced) ...{
-          'tags': const AdminTimeTagsCard(),
-          // The holiday calendars (HIN-91): a page of their own, because a
-          // calendar, its feed and a year of days do not fit this form.
-          'holidays': const AdminHolidaysCard(),
-          // Beside the lock date it belongs to: a span reopened inside the
-          // freeze is an event with an author, not a setting, so it saves
-          // immediately rather than with the form.
-          'lockExceptions': const AdminLockExceptionsCard(),
-          'corrections': const AdminCorrectionRequestsCard(),
-          // Under the requests they answer: the days opened for single people,
-          // which close by themselves and can be closed sooner here.
-          'backfillGrants': const AdminBackfillGrantsCard(),
-        },
-        'visibility': _visibility(context),
-        'reports': _reports(context),
-        'billing': _billing(context),
-        'privacy': _privacy(context),
+        // Beside the lock date it belongs to: a span reopened inside the
+        // freeze is an event with an author, not a setting, so it saves
+        // immediately rather than with the form.
+        'lockExceptions': const OrgLockExceptionsCard(),
+        'corrections': const OrgCorrectionRequestsCard(),
+        // Under the requests they answer: the days opened for single people,
+        // which close by themselves and can be closed sooner here.
+        'backfillGrants': const OrgBackfillGrantsCard(),
       },
-    );
+      'visibility': _visibility(context),
+      'reports': _reports(context),
+      'billing': _billing(context),
+      'privacy': _privacy(context),
+    });
   }
 
   // ── The module itself ──────────────────────────────────────────────────
@@ -633,7 +650,7 @@ class _AdminTimeTrackingSectionState extends State<AdminTimeTrackingSection> {
         maxValue: _expiryNoticeMaxWeeks,
       ),
       const SizedBox(height: 8),
-      AdminPrivacyNoticeField(
+      OrgPrivacyNoticeField(
         value: _value<String>('privacyNotice'),
         onChanged: (v) => _setQuietly('privacyNotice', v),
       ),

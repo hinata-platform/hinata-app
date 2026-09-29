@@ -18,6 +18,7 @@ import 'issue_repository.dart';
 import 'media_repository.dart';
 import 'meta_repository.dart';
 import 'notification_repository.dart';
+import 'org_settings_repository.dart';
 import 'project_repository.dart';
 import 'search_repository.dart';
 import 'sprint_repository.dart';
@@ -42,6 +43,7 @@ export 'issue_repository.dart';
 export 'media_repository.dart';
 export 'meta_repository.dart';
 export 'notification_repository.dart';
+export 'org_settings_repository.dart';
 export 'project_repository.dart';
 export 'search_repository.dart';
 export 'sprint_repository.dart';
@@ -79,6 +81,7 @@ class HinataRepositories {
       weeklySummary: WeeklySummaryRepository(api),
       notifications: NotificationRepository(api),
       admin: AdminRepository(api),
+      organization: OrgSettingsRepository(api),
       teams: TeamRepository(api),
       git: GitRepository(api),
     );
@@ -106,6 +109,7 @@ class HinataRepositories {
     required this.weeklySummary,
     required this.notifications,
     required this.admin,
+    required this.organization,
     required this.teams,
     required this.git,
   });
@@ -136,6 +140,9 @@ class HinataRepositories {
   final WeeklySummaryRepository weeklySummary;
   final NotificationRepository notifications;
   final AdminRepository admin;
+
+  /// The organisation's own settings, for organisation admins (HIN-129).
+  final OrgSettingsRepository organization;
   final TeamRepository teams;
   final GitRepository git;
 }

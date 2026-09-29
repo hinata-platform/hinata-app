@@ -204,7 +204,9 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
     return index < 0 ? DateTime.monday : index + 1;
   }
 
-  bool get _admin => context.read<AuthBloc>().state.user?.isAdmin ?? false;
+  /// Everybody's time is the organisation admin's to report on (HIN-129).
+  bool get _isOrgAdmin =>
+      context.read<AuthBloc>().state.user?.isOrgAdmin ?? false;
 
   void _loadTab() {
     if (_fresh.contains(_tab)) return;
@@ -313,7 +315,8 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
       query: _query.state,
       labels: _labels,
       people:
-          _admin || (_groups.summary?.people ?? policy.leadsSeeMemberEntries),
+          _isOrgAdmin ||
+          (_groups.summary?.people ?? policy.leadsSeeMemberEntries),
       approvals: policy.approvalsEnabled,
     );
     if (next != null) _query.set(next);
@@ -332,7 +335,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
   }
 
   Future<void> _import() async {
-    final inserted = await showTimeImportWizard(context, admin: _admin);
+    final inserted = await showTimeImportWizard(context, admin: _isOrgAdmin);
     if (inserted == null || !mounted) return;
     showGlassToast(
       context,
@@ -621,7 +624,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
     Widget? scope,
   }) {
     final horizontal = padding.copyWith(top: 0, bottom: 0);
-    final people = _admin || (_groups.summary?.people ?? false);
+    final people = _isOrgAdmin || (_groups.summary?.people ?? false);
     return [
       SliverPadding(padding: EdgeInsets.only(top: padding.top)),
       SliverPadding(
@@ -842,7 +845,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
   Widget _detailed(EdgeInsets padding) {
     final horizontal = padding.copyWith(top: 0, bottom: 0);
     final compact = context.isCompact;
-    final people = _admin || (_groups.summary?.people ?? false);
+    final people = _isOrgAdmin || (_groups.summary?.people ?? false);
     return BlocBuilder<PagedCubit<ReportEntry>, PagedState<ReportEntry>>(
       bloc: _entries,
       builder: (context, state) {

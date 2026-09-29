@@ -281,6 +281,36 @@ class IssueRepository {
           .map((i) => Issue.fromJson(i as Map<String, dynamic>))
           .toList();
 
+  /// The most issues one bulk deadline call may carry; the server refuses more
+  /// with `error.issue.bulkTooMany`, so the list checks before it asks.
+  static const bulkDeadlineMax = 100;
+
+  /// Sets one deadline on all of [issueIds] at once: a fixed [dueDate], a
+  /// [dueOffset] rule against the project's event date, or none at all with
+  /// [clearDueDate]. Exactly one of the three should be given.
+  ///
+  /// All or nothing: when the caller may not edit one of the issues, none of
+  /// them change. Returns the updated issues.
+  Future<List<Issue>> bulkSetDeadline(
+    List<String> issueIds, {
+    DateTime? dueDate,
+    RelativeDate? dueOffset,
+    bool clearDueDate = false,
+  }) async =>
+      ((await _api.post(
+                '/api/v1/issues/bulk/deadline',
+                body: {
+                  'issueIds': issueIds,
+                  if (dueDate != null)
+                    'dueDate': dueDate.toIso8601String().substring(0, 10),
+                  if (dueOffset != null) 'dueOffset': dueOffset.toJson(),
+                  if (clearDueDate) 'clearDueDate': true,
+                },
+              ))
+              as List<dynamic>)
+          .map((i) => Issue.fromJson(i as Map<String, dynamic>))
+          .toList();
+
   /// Soft delete — any project member may archive; the issue disappears from
   /// all default listings but stays restorable.
   Future<Issue> archiveIssue(String id) async => Issue.fromJson(

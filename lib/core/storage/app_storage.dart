@@ -27,6 +27,7 @@ class AppStorage {
   static const _kRefreshToken = 'refresh_token';
   static const _kOnboardingDone = 'onboarding_done';
   static const _kConnectHintSeen = 'connect_hint_seen';
+  static const _kMultiSelectHintSeen = 'multi_select_hint_seen';
   static const _kLocale = 'locale';
   static const _kRecentSearch = 'hinata.recentSearch.v1';
   // v2 holds a list; v1 held a single id under the old key name and is simply
@@ -432,6 +433,27 @@ class AppStorage {
     final url = serverUrl;
     if (url == null) return;
     await _prefs.setBool(_connectHintKey(url), true);
+  }
+
+  // --- Issues multi-select hint (scoped per server) ---------------------------
+
+  String _multiSelectHintKey(String url) => '$_kMultiSelectHintSeen::$url';
+
+  /// Whether the phone-layout tip "hold an issue to select several" has been
+  /// dismissed for the current server. Per server like [connectHintSeen]: each
+  /// instance is its own workspace, and somebody new to one is new to its
+  /// lists. True (suppressed) while no server is selected.
+  bool get multiSelectHintSeen {
+    final url = serverUrl;
+    return url == null
+        ? true
+        : (_prefs.getBool(_multiSelectHintKey(url)) ?? false);
+  }
+
+  Future<void> setMultiSelectHintSeen() async {
+    final url = serverUrl;
+    if (url == null) return;
+    await _prefs.setBool(_multiSelectHintKey(url), true);
   }
 
   String? get locale => _prefs.getString(_kLocale);

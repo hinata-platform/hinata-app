@@ -133,6 +133,33 @@ class AuditEntry {
   );
 }
 
+/// The query of one audit feed page, as both feeds read it: the platform's
+/// (`/api/v1/admin/audit`) and the organisation's (`/api/v1/org/audit`).
+/// Blank or null filters widen the query.
+Map<String, dynamic> auditQuery({
+  String query = '',
+  AuditCategory? category,
+  AuditSeverity? severity,
+  String? action,
+  String? outcome,
+  String? actorId,
+  int page = 1,
+  int perPage = 30,
+}) => {
+  'query': ?(query.trim().isEmpty ? null : query.trim()),
+  'category': ?(category == null || category == AuditCategory.unknown
+      ? null
+      : category.wire),
+  'severity': ?(severity == null || severity == AuditSeverity.unknown
+      ? null
+      : severity.wire),
+  'action': ?action,
+  'outcome': ?outcome,
+  'actorId': ?actorId,
+  'page': '$page',
+  'perPage': '$perPage',
+};
+
 /// One page of audit records plus the total count for pagination.
 @immutable
 class AuditPage {

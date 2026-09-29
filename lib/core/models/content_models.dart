@@ -4,6 +4,44 @@ import '../util/dates.dart';
 
 import 'work_models.dart';
 
+/// One knowledge page of a team as the page picker needs it: where it sits in
+/// the tree and what it is called, nothing of its content.
+///
+/// From `GET /api/v1/teams/{id}/pages`, which answers this slim shape so that
+/// picking pages for a grant never downloads whole documents.
+class TeamPageRef extends Equatable {
+  const TeamPageRef({
+    required this.id,
+    required this.title,
+    this.icon,
+    this.parentId,
+    this.sortOrder = 0,
+  });
+
+  final String id;
+  final String title;
+
+  /// Lucide icon name (kebab-case), or null for the default glyph.
+  final String? icon;
+  final String? parentId;
+  final int sortOrder;
+
+  factory TeamPageRef.fromJson(Map<String, dynamic> json) => TeamPageRef(
+    id: json['id'] as String,
+    title: json['title'] as String? ?? '',
+    icon: json['icon'] as String?,
+    parentId: json['parentId'] as String?,
+    sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
+  );
+
+  @override
+  List<Object?> get props => [id, title, icon, parentId, sortOrder];
+}
+
+/// A list the server may have cut at its cap: [truncated] is true when it
+/// said so with `X-Truncated: true`.
+typedef CappedList<T> = ({List<T> items, bool truncated});
+
 class Article extends Equatable {
   const Article({
     required this.id,
@@ -32,10 +70,12 @@ class Article extends Equatable {
   /// The Lexical document — the source of truth, and what the reader renders.
   final String? contentDoc;
 
-  /// Project the article is scoped to (visible only with project access).
+  /// Project the article lives in: whoever sees the project reads it.
   final String? projectId;
 
-  /// Team the article belongs to (team-wide, no project). Null otherwise.
+  /// Team the article lives in: Team-Admins always read it, members per their
+  /// knowledge access. With neither [projectId] nor [teamId] the page is
+  /// private to its author. A subpage always lives where its parent lives.
   final String? teamId;
   final String? parentId;
 
@@ -68,7 +108,15 @@ class Article extends Equatable {
   );
 
   @override
-  List<Object?> get props => [id, title, parentId, space, updatedAt];
+  List<Object?> get props => [
+    id,
+    title,
+    parentId,
+    projectId,
+    teamId,
+    space,
+    updatedAt,
+  ];
 }
 
 /// A knowledge-base space ("Bereich"). Its [name] is the key articles reference

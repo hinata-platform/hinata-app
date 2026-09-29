@@ -19,7 +19,7 @@ import '../../sprint/modals/glass_modal.dart'
         showGlassDateRangePicker,
         showGlassToast;
 import '../../time/lock_notice.dart';
-import '../admin_form_helpers.dart';
+import '../../admin/admin_form_helpers.dart';
 
 /// The way back out of the lock date.
 ///
@@ -39,15 +39,14 @@ import '../admin_form_helpers.dart';
 /// inconsistency with the policies above it: an exception is an *event* with an
 /// author and a timestamp, not a setting, and a draft that vanished when somebody
 /// navigated away would lose a reason they had typed.
-class AdminLockExceptionsCard extends StatefulWidget {
-  const AdminLockExceptionsCard({super.key});
+class OrgLockExceptionsCard extends StatefulWidget {
+  const OrgLockExceptionsCard({super.key});
 
   @override
-  State<AdminLockExceptionsCard> createState() =>
-      _AdminLockExceptionsCardState();
+  State<OrgLockExceptionsCard> createState() => _OrgLockExceptionsCardState();
 }
 
-class _AdminLockExceptionsCardState extends State<AdminLockExceptionsCard> {
+class _OrgLockExceptionsCardState extends State<OrgLockExceptionsCard> {
   /// What the instance currently has open. Null until the policy has answered —
   /// different from "answered, and there are none", which is an empty list.
   List<TimeLockException>? _exceptions;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/widgets/glass_switch_chip.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/widgets/hive_widgets.dart' show HiveSwitch;
 import 'package:hinata/features/issues/deadline_editor.dart';
@@ -25,6 +26,9 @@ void main() {
     double width = 900,
     Future<DateTime?> Function(RelativeDate)? resolve,
     void Function(DeadlineChoice?)? onResult,
+    RelativeDateBasis defaultBasis = RelativeDateBasis.calendar,
+    bool allowOffset = true,
+    bool? allowClear,
   }) => MaterialApp(
     debugShowCheckedModeBanner: false,
     home: Scaffold(
@@ -40,6 +44,9 @@ void main() {
                   date: date,
                   offset: offset,
                   eventDate: eventDate,
+                  defaultBasis: defaultBasis,
+                  allowOffset: allowOffset,
+                  allowClear: allowClear,
                   resolve:
                       resolve ??
                       (asked_) async {
@@ -78,10 +85,7 @@ void main() {
     await tester.pumpWidget(
       host(
         date: DateTime(2026, 10, 1),
-        offset: const RelativeDate(
-          amount: -6,
-          unit: RelativeDateUnit.weeks,
-        ),
+        offset: const RelativeDate(amount: -6, unit: RelativeDateUnit.weeks),
         eventDate: DateTime(2026, 11, 12),
       ),
     );
@@ -270,6 +274,84 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('issues.deadline.dateReplacesOffset'), findsOneWidget);
+  });
+
+  group('defaults', () {
+    testWidgets('a new rule starts from the default basis', (tester) async {
+      DeadlineChoice? result;
+      await tester.pumpWidget(
+        host(
+          eventDate: DateTime(2026, 11, 12),
+          defaultBasis: RelativeDateBasis.working,
+          onResult: (choice) => result = choice,
+        ),
+      );
+      await open(tester);
+      // The raw key in the test font is wider than the 300 px switch bar, so
+      // its centre lies outside the chip; call the chip instead of tapping.
+      tester
+          .widget<GlassSwitchChip>(
+            find.ancestor(
+              of: find.text('issues.deadline.modeOffset'),
+              matching: find.byType(GlassSwitchChip),
+            ),
+          )
+          .onTap!();
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<HiveSwitch>(find.byType(HiveSwitch)).value, isTrue);
+
+      await tester.tap(find.text('common.apply'));
+      await tester.pumpAndSettle();
+      expect(result?.offset?.basis, RelativeDateBasis.working);
+    });
+
+    testWidgets('an existing rule keeps its own basis', (tester) async {
+      await tester.pumpWidget(
+        host(
+          date: DateTime(2026, 10, 1),
+          offset: const RelativeDate(amount: -6),
+          eventDate: DateTime(2026, 11, 12),
+          defaultBasis: RelativeDateBasis.working,
+        ),
+      );
+      await open(tester);
+
+      expect(tester.widget<HiveSwitch>(find.byType(HiveSwitch)).value, isFalse);
+    });
+
+    testWidgets('without rules on offer there is no mode switch', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(eventDate: DateTime(2026, 11, 12), allowOffset: false),
+      );
+      await open(tester);
+
+      expect(find.text('issues.deadline.modeOffset'), findsNothing);
+      expect(find.text('issues.deadline.modeDate'), findsNothing);
+      expect(find.text('issues.deadline.fixedDate'), findsOneWidget);
+    });
+
+    testWidgets('clearing is offered on request even with nothing set', (
+      tester,
+    ) async {
+      DeadlineChoice? result;
+      await tester.pumpWidget(
+        host(allowClear: true, onResult: (choice) => result = choice),
+      );
+      await open(tester);
+
+      // Nothing picked, nothing to replace: "apply" has no answer to give.
+      final apply = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'common.apply'),
+      );
+      expect(apply.onPressed, isNull);
+
+      await tester.tap(find.text('common.clear'));
+      await tester.pumpAndSettle();
+      expect(result?.cleared, isTrue);
+    });
   });
 
   for (final width in <double>[360, 700, 1200]) {

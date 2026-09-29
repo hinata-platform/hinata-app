@@ -126,6 +126,14 @@
     },
     "avatar": {
       "tooLarge": "Das Bild ist zu groß. Höchstens {{max}} MB."
+    },
+    "user": {
+      "cannotGrantOwnOrgRole": "Du kannst dich nicht selbst zum Organisationsadmin machen. Bitte eine andere Person aus der Administration darum.",
+      "cannotRemoveLastOrgAdmin": "Das ist der letzte Organisationsadmin. Mache zuerst eine andere Person zum Organisationsadmin, damit Zeitnachweise und Abwesenheiten weiter bei jemandem ankommen.",
+      "resetAfterEmailChange": "Die Anmeldeadresse wurde vor weniger als einem Tag von der Administration geändert. Ein Passwort-Reset ist erst danach wieder möglich."
+    },
+    "article": {
+      "moveNotAllowed": "Diese Seite dürfen nur die Verantwortlichen ihres Orts verschieben: die Projektleitung, die Team-Admins oder bei einer privaten Seite die Person, die sie geschrieben hat."
     }
   },
   "notFound": {
@@ -832,7 +840,7 @@
       "direction": "Richtung",
       "before": "vorher",
       "after": "nachher",
-      "workingDays": "In Werktagen rechnen",
+      "workingDays": "In Arbeitstagen rechnen",
       "workingDaysHint": "Überspringt Wochenenden und die Feiertage des Kalenders, den das Projekt nutzt.",
       "noEventDate": "Dieses Projekt hat noch keinen Termin, es gibt also nichts zum Rechnen. Der Versatz bleibt trotzdem erhalten.",
       "setEventDate": "Termin des Projekts setzen",
@@ -843,9 +851,30 @@
       "days_plural": "{{count}} Tage",
       "weeks": "{{count}} Woche",
       "weeks_plural": "{{count}} Wochen",
-      "workingSuffix": " (Werktage)",
+      "workingSuffix": " (Arbeitstage)",
       "sentenceBefore": "{{amount}}{{basis}} vor dem Termin",
       "sentenceAfter": "{{amount}}{{basis}} nach dem Termin"
+    },
+    "bulkDeadline": {
+      "action": "Frist festlegen",
+      "title": "Frist für {{count}} Vorgang",
+      "title_plural": "Frist für {{count}} Vorgänge",
+      "done": "Frist für {{count}} Vorgang gesetzt",
+      "done_plural": "Frist für {{count}} Vorgänge gesetzt",
+      "cleared": "Frist bei {{count}} Vorgang entfernt",
+      "cleared_plural": "Frist bei {{count}} Vorgängen entfernt",
+      "tooMany": "Du kannst höchstens {{max}} Vorgänge auf einmal ändern. Wähle ein paar ab und versuch es noch mal."
+    },
+    "selectAll": "Alle auswählen",
+    "selectAllCapped": "Die ersten {{max}} sind ausgewählt. Mehr lassen sich nicht auf einmal ändern.",
+    "selection": {
+      "enter": "Mehrere auswählen",
+      "exit": "Auswahl beenden",
+      "select": "Auswählen"
+    },
+    "multiSelectHint": {
+      "text": "Tipp: Halte einen Vorgang gedrückt, um mehrere auszuwählen und gemeinsam zu bearbeiten, zum Beispiel um für alle dieselbe Frist zu setzen.",
+      "gotIt": "Verstanden"
     }
   },
   "type": {
@@ -1001,7 +1030,7 @@
       "none": "Keine Tags",
       "search": "Tags suchen",
       "create": "\"{{name}}\" anlegen",
-      "noneCurated": "Noch keine Tags. Auf diesem Server dürfen sie nur Administratoren anlegen."
+      "noneCurated": "Noch keine Tags. Auf diesem Server dürfen sie nur Organisationsadmins anlegen."
     },
     "policy": {
       "locked": "Einträge an diesem Tag sind gesperrt und lassen sich nicht mehr ändern",
@@ -1041,19 +1070,19 @@
         "approval": "Du hast {{from}} – {{to}} eingereicht, diese Einträge stehen damit fest.",
         "invoice": "Eine gestellte Rechnung verweist auf diesen Eintrag.",
         "unknown": "Dieser Eintrag ist für Änderungen geschlossen.",
-        "maxDaysBack": "Tage vor dem {{date}} lassen sich erst erfassen, wenn ein Administrator sie öffnet."
+        "maxDaysBack": "Tage vor dem {{date}} lassen sich erst erfassen, wenn ein Organisationsadmin sie öffnet."
       },
       "holder": {
-        "lockDate": "Ein Administrator kann den Tag für dich öffnen oder einen Zeitraum innerhalb der Sperre wieder öffnen.",
-        "approval": "Die Projektleitung oder ein Administrator kann den Zeitraum wieder öffnen.",
+        "lockDate": "Ein Organisationsadmin kann den Tag für dich öffnen oder einen Zeitraum innerhalb der Sperre wieder öffnen.",
+        "approval": "Die Projektleitung oder ein Organisationsadmin kann den Zeitraum wieder öffnen.",
         "invoice": "Wer Rechnungen stellt, gleicht das über eine Gutschrift aus.",
-        "maxDaysBack": "Ein Administrator kann ältere Tage für dich öffnen."
+        "maxDaysBack": "Ein Organisationsadmin kann ältere Tage für dich öffnen."
       },
       "remedy": {
-        "lockDate": "Bitte um eine Korrektur. Deine Begründung wird festgehalten und erreicht einen Administrator.",
+        "lockDate": "Bitte um eine Korrektur. Deine Begründung wird festgehalten und erreicht einen Organisationsadmin.",
         "approval": "Bitte um eine Korrektur oder lass den Zeitraum wieder öffnen.",
         "invoice": "Die Rechnung wird nie umgeschrieben; eine Gutschrift gleicht sie aus.",
-        "maxDaysBack": "Bitte darum, den Tag für dich zu öffnen. Deine Begründung wird festgehalten und geht an die Administratoren."
+        "maxDaysBack": "Bitte darum, den Tag für dich zu öffnen. Deine Begründung wird festgehalten und geht an die Organisationsadmins."
       },
       "chip": {
         "lockDate": "Abgeschlossen",
@@ -1070,7 +1099,7 @@
       "requestDays": "Tag öffnen lassen",
       "requestDaysTitle": "Ältere Tage öffnen lassen",
       "requestDaysHint": "Warum musst du diese Tage jetzt nachtragen?",
-      "requestDaysSent": "Deine Anfrage ist bei den Administratoren.",
+      "requestDaysSent": "Deine Anfrage ist bei den Organisationsadmins.",
       "requestOlderDays": "Ältere Tage anfragen",
       "pickDaysTitle": "Welche Tage brauchst du?"
     },
@@ -1144,7 +1173,7 @@
       "acknowledgeFailed": "Das konnte nicht gespeichert werden. Bitte versuch es noch einmal.",
       "row": {
         "self": "Du siehst alle deine eigenen Einträge.",
-        "admins": "Administratoren dieser Instanz können alle Einträge sehen und ändern.",
+        "admins": "Organisationsadmins können alle Einträge sehen und ändern.",
         "members": "Andere Mitglieder deiner Projekte sehen an einem Vorgang und in Berichten, wie viel Zeit gebucht wurde, aber nicht, wer sie gebucht hat und was in der Beschreibung steht.",
         "leadsSee": "Leitungen deiner Projekte sehen deine einzelnen Einträge, ihren Verlauf und deine Zeilen im Stundenzettel, auch in Berichten und Exporten, und können deine Einträge ändern.",
         "leadsTotals": "Leitungen deiner Projekte sehen nur Projektsummen, nie wer was gebucht hat.",
@@ -1164,8 +1193,8 @@
         "entryKept": "Einträge werden nicht automatisch gelöscht.",
         "descriptionRetention": "Wird ein Konto gelöscht, werden die Beschreibungen seiner Einträge und die Notizen an seinen Stundenzetteln nach {{count}} Monat geleert.",
         "descriptionRetention_plural": "Wird ein Konto gelöscht, werden die Beschreibungen seiner Einträge und die Notizen an seinen Stundenzetteln nach {{count}} Monaten geleert.",
-        "maxDaysBack": "Du kannst bis zu {{count}} Tag zurück erfassen. Ältere Tage öffnet ein Administrator auf Anfrage.",
-        "maxDaysBack_plural": "Du kannst bis zu {{count}} Tage zurück erfassen. Ältere Tage öffnet ein Administrator auf Anfrage."
+        "maxDaysBack": "Du kannst bis zu {{count}} Tag zurück erfassen. Ältere Tage öffnet ein Organisationsadmin auf Anfrage.",
+        "maxDaysBack_plural": "Du kannst bis zu {{count}} Tage zurück erfassen. Ältere Tage öffnet ein Organisationsadmin auf Anfrage."
       },
       "loadFailed": "Der Hinweis konnte nicht geladen werden. Prüfe deine Verbindung und versuch es noch einmal.",
       "absence": {
@@ -1177,8 +1206,8 @@
         },
         "leadsSee": "Leitungen deiner Projekte sehen Art und Zeitraum deiner Abwesenheiten, nie eine Notiz, und Krankheit nur als abwesend.",
         "leadsDoNot": "Leitungen deiner Projekte sehen deine Abwesenheiten nicht.",
-        "keepersNamed": "Nur die benannten Abwesenheitsverwalter und Administratoren sehen einen Krankheitstag als Krankheit.",
-        "keepersAdmins": "Nur Administratoren sehen einen Krankheitstag als Krankheit.",
+        "keepersNamed": "Nur die benannten Abwesenheitsverwalter sehen einen Krankheitstag als Krankheit.",
+        "keepersAdmins": "Nur Organisationsadmins sehen einen Krankheitstag als Krankheit.",
         "band": "Leitungen deiner Projekte und Admins deiner Teams sehen, wie viel Kapazität ihrer Gruppe bleibt, als Summe über mindestens drei Personen. Deine genehmigten Tage und geplanten Stunden fließen ein, dein Name nicht.",
         "report": "Im Bericht „Abwesenheiten und Salden“ siehst du deine eigenen Zahlen. Die Abwesenheitsverwaltung sieht alle.",
         "reportLeads": "Leitungen deiner Projekte sehen dort nur Summen über mindestens drei Personen, ohne Krankheit.",
@@ -1394,7 +1423,7 @@
         "difference": "Differenz",
         "away": "{{duration}} frei oder abwesend",
         "ledOnly": "Gebucht zählt nur die Zeit auf Projekten, die du leitest.",
-        "forbidden": "Den Auslastungsbericht sehen nur Admins und Projektleitungen.",
+        "forbidden": "Den Auslastungsbericht sehen nur Organisationsadmins und Projektleitungen.",
         "truncated": "Die Gruppe ist größer als ein Bericht liest. Es erscheinen die ersten 1000 Personen.",
         "group": "Gruppe",
         "myProjects": "Meine Projekte",
@@ -1576,7 +1605,7 @@
     "approver": {
       "teamLead": "Teamleitung",
       "named": "Benannte Personen",
-      "admin": "Administration",
+      "admin": "Organisationsadmins",
       "auto": "Automatisch"
     },
     "visibility": {
@@ -2092,7 +2121,16 @@
       "pending": "{{count}} Fristen warten auf einen Termin, weil das Projekt seinen verliert.",
       "confirm": "Verschieben"
     },
-    "searchHint": "Projekte durchsuchen"
+    "searchHint": "Projekte durchsuchen",
+    "deadlineBasis": {
+      "label": "Fristen zählen in",
+      "calendar": "Kalendertage",
+      "working": "Arbeitstage",
+      "orgDefault": "Standard deiner Organisation: {{basis}}.",
+      "followsOrg": "Folgt dem Standard deiner Organisation ({{basis}}).",
+      "hint": "Neue Fristen starten mit dieser Einstellung. Bestehende Fristen bleiben, wie sie sind.",
+      "useOrgDefault": "Standard der Organisation nutzen"
+    }
   },
   "board": {
     "title": "Agile Boards",
@@ -2341,7 +2379,23 @@
     "saved": "Änderungen gespeichert",
     "deleted": "Artikel gelöscht",
     "articleCount": "{{count}} Artikel",
-    "saveWouldBlank": "Speichern würde den Artikel durch eine leere Seite ersetzen. Bitte zuerst Inhalt einfügen."
+    "saveWouldBlank": "Speichern würde den Artikel durch eine leere Seite ersetzen. Bitte zuerst Inhalt einfügen.",
+    "place": {
+      "label": "Sichtbar für",
+      "private": "Nur ich",
+      "team": "Team",
+      "project": "Projekt",
+      "followsParent": "Wie die übergeordnete Seite",
+      "privateAuthorOnly": "Nur wer die Seite geschrieben hat, kann sie privat machen.",
+      "pickProject": "Projekt wählen",
+      "otherProject": "{{name}} (anderes Projekt wählen)",
+      "saved": "Sichtbarkeit geändert. Die Unterseiten sind mitgezogen."
+    },
+    "emptyTitle": "Noch keine Seiten für dich",
+    "emptyMessage": "Seiten werden über Projekte und Teams geteilt. Eine neue Seite bleibt privat, bis du sie einem Projekt oder Team zuordnest.",
+    "tree": {
+      "truncated": "Hier stehen nicht alle Seiten, weil es zu viele für eine Liste sind. Eine Unterseite kann deshalb oben stehen, obwohl es ihre übergeordnete Seite gibt."
+    }
   },
   "md": {
     "heading1": "Überschrift 1",
@@ -2500,7 +2554,8 @@
     "about": "Über",
     "appVersion": "App-Version",
     "serverVersion": "Server-Version",
-    "organization": "Organisation"
+    "organization": "Organisation",
+    "organizationDesc": "Zeiterfassung, Abwesenheiten, Feiertage und Fristen für die ganze Organisation."
   },
   "admin": {
     "title": "Adminbereich",
@@ -2604,7 +2659,6 @@
     "gitTokenSecretDefault": "Standardschlüssel aktiv — vor dem Live-Betrieb eigenen setzen.",
     "security": "Sicherheit",
     "timeTracking": {
-      "title": "Zeiterfassung",
       "hint": "Die erweiterte Zeiterfassung ist standardmäßig aus. Jede Richtlinie darf leer bleiben, dann gilt der Wert aus der Umgebung dieses Servers. Schalter, die die Zeiten einer Person für andere sichtbar machen, sind standardmäßig aus und tragen einen Hinweis zur Mitbestimmung.",
       "codetermination": "Mitbestimmungspflichtig: § 87 Abs. 1 Nr. 6 BetrVG (im öffentlichen Dienst das LPVG). Vor dem Einschalten mit dem Betriebsrat oder Personalrat vereinbaren. Es reicht, dass sich die Funktion zur Überwachung eignet.",
       "envDefault": "Env-Default",
@@ -2614,7 +2668,7 @@
       "moduleHint": "Der Hauptschalter für das erweiterte Time-Tracking.",
       "advancedTitle": "Erweitertes Time-Tracking",
       "advancedHint": "Timer, Richtlinien, Freigaben, Berichte und Abrechnung. Aus → der bisherige Stundenzettel bleibt unverändert, und die Endpunkte des Moduls existieren für die Apps nicht. Wirkt ohne Neustart.",
-      "advancedFromSection": "Wird im Adminbereich → Zeiterfassung eingestellt, zusammen mit den Richtlinien, die dazugehören.",
+      "advancedFromSection": "Wird auf der Seite Organisation eingestellt, zusammen mit den Richtlinien, die dazugehören. Dafür braucht es die Rolle Organisationsadmin.",
       "captureTitle": "Erfassung",
       "captureHint": "Was ein Eintrag enthalten muss und ab wann er nicht mehr änderbar ist.",
       "requiredProjectTitle": "Projekt erforderlich",
@@ -2645,7 +2699,7 @@
         "m60": "60 Minuten"
       },
       "limitTagAccessTitle": "Tags einschränken",
-      "limitTagAccessHint": "Nur Admins legen neue Tags an; alle anderen wählen aus den vorhandenen.",
+      "limitTagAccessHint": "Nur Organisationsadmins legen neue Tags an; alle anderen wählen aus den vorhandenen.",
       "defaultBillableTitle": "Standardmäßig abrechenbar",
       "defaultBillableHint": "Neue Einträge sind zunächst als abrechenbar markiert.",
       "icsImportTitle": "Kalender-Import",
@@ -2655,7 +2709,7 @@
       "leadsSeeMemberEntriesTitle": "Leitungen sehen Einträge der Mitglieder",
       "leadsSeeMemberEntriesHint": "Aus: Leitungen sehen nur Projektsummen. An Vorgängen sehen sie weder Namen noch Beschreibungen und ändern keine fremden Einträge. Ein: Leitungen sehen die einzelnen Einträge ihrer Projektmitglieder, deren Verlauf und die Zeilen im Stundenzettel und dürfen diese Einträge ändern.",
       "approvalsTitle": "Stundenzettel-Freigaben",
-      "approvalsHint": "Personen reichen ihren Stundenzettel für einen Zeitraum ein; eine Leitung oder ein Admin gibt ihn frei oder lehnt ihn ab. Setzt „Leitungen sehen Einträge der Mitglieder“ voraus.",
+      "approvalsHint": "Personen reichen ihren Stundenzettel für einen Zeitraum ein; eine Leitung oder ein Organisationsadmin gibt ihn frei oder lehnt ihn ab. Setzt „Leitungen sehen Einträge der Mitglieder“ voraus.",
       "approvalPeriodLabel": "Freigabe-Zeitraum",
       "approvalPeriodHint": "In welchem Rhythmus Stundenzettel eingereicht werden. „Frei wählbar“ überlässt den Zeitraum der Person selbst.",
       "period": {
@@ -2696,7 +2750,7 @@
       "billingTitle": "Abrechnung",
       "billingHint": "Sätze, Kosten und Rechnungen aus gebuchter Zeit.",
       "billingEnabledTitle": "Abrechnung",
-      "billingEnabledHint": "Sätze, Personalkosten, Abrechnungs- und Profitabilitätsberichte, Rechnungen. Sichtbar für Leitungen und Admins.",
+      "billingEnabledHint": "Sätze, Personalkosten, Abrechnungs- und Profitabilitätsberichte, Rechnungen. Sichtbar für Leitungen und Organisationsadmins.",
       "currencyLabel": "Währung",
       "currencyHint": "Dreistelliger ISO-Code, z. B. EUR.",
       "privacyTitle": "Datenschutz und Aufbewahrung",
@@ -2720,7 +2774,7 @@
       "tagDeleteTitle": "Tag löschen?",
       "tagDeleteMessage": "\"{{name}}\" wird von {{count}} Eintrag entfernt. Der Eintrag selbst bleibt.",
       "tagDeleteMessage_plural": "\"{{name}}\" wird von {{count}} Einträgen entfernt. Die Einträge selbst bleiben.",
-      "lockBeforeEveryone": "Die Sperre gilt für alle, auch für Administratoren. Sie aufzuheben ist der dokumentierte Weg, einen abgeschlossenen Zeitraum zu ändern.",
+      "lockBeforeEveryone": "Die Sperre gilt für alle, auch für Organisationsadmins. Sie aufzuheben ist der dokumentierte Weg, einen abgeschlossenen Zeitraum zu ändern.",
       "approvalsNeedVisibility": "Freigeben heißt, die Einträge einer Person zu lesen. Schalte deshalb auch „Leitungen sehen Einträge der Mitglieder“ ein, sonst sieht die freigebende Person nur eine Summe ohne Inhalt.",
       "periodPreviewTitle": "Die nächsten Zeiträume",
       "periodPreviewHint": "Eine Änderung des Rhythmus betrifft nur künftige Einreichungen. Bereits eingereichte Zeiträume behalten die Tage, die sie benannt haben.",
@@ -2738,7 +2792,7 @@
       "retentionLegal": "Solange hier keine Frist steht, wird nichts automatisch gelöscht. § 16 Abs. 2 ArbZG und § 17 MiLoG verlangen, Arbeitszeitaufzeichnungen zwei Jahre aufzubewahren. 24 Monate sind deshalb eine übliche Wahl. Danach gilt die Speicherbegrenzung (Art. 5 DSGVO). Ein nächtlicher Job löscht und hält jeden Lauf im Audit-Protokoll fest.",
       "privacyNoticePreview": "Vorschau",
       "maxDaysBackLabel": "Erfassen bis",
-      "maxDaysBackHint": "Wie viele Tage zurück Zeit erfasst werden kann. Ein älterer Tag wird abgelehnt, und die Person kann einen Administrator bitten, ihn für sie zu öffnen. Leer heißt 365.",
+      "maxDaysBackHint": "Wie viele Tage zurück Zeit erfasst werden kann. Ein älterer Tag wird abgelehnt, und die Person kann einen Organisationsadmin bitten, ihn für sie zu öffnen. Leer heißt 365.",
       "lateEntryHintDaysLabel": "Hinweis auf späte Erfassung nach",
       "lateEntryHintDaysHint": "Markiert einen Eintrag, der mehr als so viele Tage nach dem Arbeitstag erfasst wurde, nur für die Person selbst. Er blockiert nie etwas und meldet nichts. 0 schaltet ihn aus, leer übernimmt die Voreinstellung des Servers.",
       "correctionsTitle": "Korrekturanfragen",
@@ -2780,8 +2834,8 @@
       "needsAdvanced": "Wirkt nur, solange das erweiterte Time-Tracking an ist: Jeder Tag, den dieses Modul zählt, kommt aus einem Arbeitszeitmuster, einem Feiertagskalender und der Kapazität darauf. Der Schalter behält die Stellung, in der Sie ihn lassen.",
       "codetermination": "Mitbestimmungspflichtig: § 87 Abs. 1 Nr. 5 BetrVG — allgemeine Urlaubsgrundsätze, der Urlaubsplan und im Streitfall die zeitliche Lage (im öffentlichen Dienst das LPVG). Vor dem Einschalten mit dem Betriebsrat oder Personalrat vereinbaren.",
       "keepersTitle": "Wer Abwesenheiten verwaltet",
-      "keepersHint": "Diese Personen verwalten Abwesenheitsarten, Ansprüche und Salden für alle und sehen einen Krankheitstag als Krankheitstag. Administratoren dürfen es immer.",
-      "keepersEmpty": "Niemand benannt: Administratoren verwalten die Abwesenheiten.",
+      "keepersHint": "Diese Personen verwalten Abwesenheitsarten, Ansprüche und Salden für alle und sehen einen Krankheitstag als Krankheitstag. Organisationsadmins dürfen Abwesenheiten ebenfalls verwalten, sehen Krankheit aber nicht mehr, sobald hier jemand benannt ist.",
+      "keepersEmpty": "Niemand benannt: Organisationsadmins verwalten die Abwesenheiten und sehen Krankheitstage als Krankheit.",
       "keepersAdd": "Person hinzufügen",
       "calendarTitle": "Team-Abwesenheitskalender",
       "calendarHint": "Ob sich Kolleginnen und Kollegen im Teamkalender abwesend sehen. Standardmäßig aus; jede Abwesenheitsart kann das weiter einschränken.",
@@ -2918,7 +2972,7 @@
       "revokeAdminRights": "Admin-Rechte entziehen",
       "revokeAdminRightsSub": "Zur normalen Benutzerrolle zurücksetzen",
       "promoteToAdmin": "Zum Admin befördern",
-      "promoteToAdminSub": "Volle Plattformverwaltung gewähren",
+      "promoteToAdminSub": "Verwaltet die Plattform: Nutzer, Anmeldung und Integrationen. Sieht keine Inhalte von Teams und Projekten, in denen die Person nicht Mitglied ist.",
       "passwordManagedByIdp": "Passwort vom IdP verwaltet",
       "passwordManagedByIdpSub": "Der Identity Provider verwaltet die Zugangsdaten dieses Benutzers",
       "sendPasswordResetSub": "Einen sicheren Reset-Link an {{email}} senden",
@@ -2956,7 +3010,7 @@
       "resetSubMany": "Passwort-Reset-Links an {{n}} Benutzer senden",
       "sendReset": "Reset senden",
       "deleteSub": "Diese Aktion kann nicht rückgängig gemacht werden",
-      "deleteWarn": "Die Konten und Mitgliedschaften werden dauerhaft entfernt. Verfasste Vorgänge werden einem ehemaligen Benutzer zugewiesen.",
+      "deleteWarn": "Die Konten und Mitgliedschaften werden dauerhaft entfernt. Verfasste Vorgänge werden einem ehemaligen Benutzer zugewiesen. Private Seiten im Wissen werden mit dem Konto gelöscht; wichtige Seiten lassen sich vorher in ein Projekt oder Team verschieben.",
       "deleteTypeHint": "Gib DELETE ein, um zu bestätigen.",
       "fieldName": "Name",
       "fieldTitle": "Position",
@@ -2975,7 +3029,18 @@
       "toastProfileUpdated": "Profil aktualisiert",
       "statusPending": "Wartet auf Freigabe",
       "approve": "Freigeben",
-      "approved": "Registrierung freigegeben."
+      "approved": "Registrierung freigegeben.",
+      "roles": "Rollen",
+      "orgAdminBadge": "Org-Admin",
+      "orgAdminTitle": "Organisationsadmin",
+      "orgAdminHint": "Sieht Arbeitszeiten, Zeitnachweise, Abwesenheiten und Buchungen aller Personen und verwaltet Zeitregeln, Feiertage und Abrechnung der Organisation. Berichte und Freigaben zeigen Titel, Schlüssel und Beschreibungen von Vorgängen nur aus Projekten, in denen die Person selbst ist. Krankheit nur, solange niemand für Abwesenheiten benannt ist, sonst nur, wenn die Person selbst benannt ist. Kein Zugang zum Adminbereich.",
+      "makeOrgAdmin": "Zum Organisationsadmin machen",
+      "revokeOrgAdmin": "Organisationsadmin entziehen",
+      "toastOrgAdminGranted": "Rolle Organisationsadmin vergeben",
+      "toastOrgAdminRevoked": "Rolle Organisationsadmin entzogen",
+      "orgAdminConfirmOne": "{{name}} sieht danach Arbeitszeiten, Zeitnachweise, Abwesenheiten und Buchungen aller Personen. Krankheit nur, solange niemand für Abwesenheiten benannt ist, sonst nur, wenn {{name}} selbst benannt ist. Titel und Beschreibungen von Vorgängen nur aus Projekten, in denen {{name}} ist.",
+      "orgAdminConfirmMany": "{{names}} sehen danach Arbeitszeiten, Zeitnachweise, Abwesenheiten und Buchungen aller Personen. Krankheit nur, solange niemand für Abwesenheiten benannt ist, sonst nur, wer selbst benannt ist. Titel und Beschreibungen von Vorgängen nur aus den eigenen Projekten.",
+      "reasonOwnOrgRole": "Diese Rolle vergibt dir eine andere Person aus der Administration."
     },
     "iosStoreUrl": "iOS App-Store-URL",
     "androidStoreUrl": "Android Play-Store-URL",
@@ -3256,7 +3321,9 @@
       "TIME_OFF_REQUEST_CANCELLED": "Abwesenheit storniert",
       "TIME_OFF_SICK_REPORTED": "Krankmeldung erfasst",
       "PROJECT_TEMPLATES_POLICY_CHANGED": "Projektvorlagen umgeschaltet",
-      "PROJECT_SCHEDULE_SHIFTED": "Termin des Projekts verschoben"
+      "PROJECT_SCHEDULE_SHIFTED": "Termin des Projekts verschoben",
+      "USER_EMAIL_CHANGED": "E-Mail von einem Admin geändert",
+      "ARTICLE_MOVED": "Seite verschoben"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",
@@ -3486,7 +3553,8 @@
       "removedMember": "entfernte",
       "attachedProject": "hängte an",
       "createdProject": "erstellte",
-      "detachedProject": "entfernte"
+      "detachedProject": "entfernte",
+      "knowledgeChanged": "änderte den Seitenzugriff von"
     },
     "membersSummary": "{{members}} Mitglieder · {{admins}} Admins",
     "you": "Du",
@@ -3495,16 +3563,42 @@
     "detachTitle": "Projekt entfernen?",
     "detachConfirm": "{{name}} aus diesem Team entfernen? Mitglieder verlieren den über dieses Team gewährten Zugriff.",
     "adminsOnly": "Nur für Admins",
-    "adminsOnlyHint": "Nur Team-Admins und Plattform-Administratoren können Team-Einstellungen ändern.",
+    "adminsOnlyHint": "Nur Team-Admins können Team-Einstellungen ändern.",
     "identity": "Team-Identität",
     "rolesPermissions": "Rollen & Berechtigungen",
-    "permAdmin": "Volle Kontrolle über dieses Team — Mitglieder, Projekte, Einstellungen. Gleiche Rechte wie ein Plattform-Admin, beschränkt auf {{name}}.",
+    "permAdmin": "Volle Kontrolle über {{name}}: Mitglieder, Projekte und Einstellungen.",
     "permMember": "Arbeiten an den gewährten Projekten. Können Mitgliedschaft oder Einstellungen nicht ändern.",
     "dangerZone": "Gefahrenzone",
     "deleteThis": "Dieses Team löschen",
     "deleteThisHint": "Entfernt das Team und alle Mitgliedschaften. Projekte bleiben im Workspace.",
     "keyTaken": "Schlüssel bereits vergeben.",
-    "searchHint": "Teams durchsuchen"
+    "searchHint": "Teams durchsuchen",
+    "knowledge": {
+      "label": "Wissensdatenbank",
+      "adminReadsAll": "Team-Admins lesen sowieso alle Seiten dieses Teams.",
+      "none": "Keine",
+      "noneHint": "Team-Seiten bleiben für sie geschlossen",
+      "all": "Alle Seiten des Teams",
+      "allHint": "Auch Seiten, die später dazukommen",
+      "some": "Ausgewählte Seiten",
+      "someHint": "Eine Seite schließt alles darunter ein",
+      "choosePages": "Seiten auswählen",
+      "pagesPicked": "{{count}} Seite ausgewählt",
+      "pagesPicked_plural": "{{count}} Seiten ausgewählt",
+      "chip": "Wissen: {{value}}",
+      "chipAll": "alle",
+      "chipSome": "{{count}} Seite",
+      "chipSome_plural": "{{count}} Seiten",
+      "chipNone": "keine",
+      "pickerNote": "Eine Seite schließt alles darunter ein. Wähle die oberste Seite, die passt.",
+      "searchPages": "Seiten durchsuchen",
+      "noPages": "Dieses Team hat noch keine Seiten.",
+      "noPageMatches": "Keine Seite passt.",
+      "limitReached": "Du kannst höchstens {{max}} Seiten wählen.",
+      "apply": "Übernehmen",
+      "includedVia": "Enthalten über {{title}}",
+      "truncated": "Nicht alle Seiten passen in diese Liste. Über die Suche findest du auch die übrigen."
+    }
   },
   "projectSettings": {
     "avatar": {
@@ -3734,7 +3828,15 @@
           "desc": "Hinweise zu deinem Timer und deinen Zeiten"
         }
       },
-      "pushUnsupported": "Hier kein Push-Dienst — gilt weiterhin für dein Handy und deine anderen Geräte"
+      "pushUnsupported": "Hier gibt es keinen Push-Dienst. Die Einstellung gilt weiterhin für dein Handy und deine anderen Geräte.",
+      "days": {
+        "title": "Benachrichtigungstage",
+        "hint": "An anderen Tagen kommen keine E-Mails und Push-Nachrichten. Die Glocke in der App zeigt trotzdem alles. Sicherheitsmeldungen und wichtige Hinweise, etwa zu verfallendem Urlaub, kommen immer.",
+        "defaultLine": "Standard: Arbeitstage ({{days}})",
+        "range": "{{from}} bis {{to}}",
+        "useDefault": "Standard verwenden",
+        "lastDay": "Mindestens ein Tag muss aktiv bleiben. Um alles abzustellen, schalte oben die Kanäle aus."
+      }
     },
     "access": {
       "title": "Zugriff",
@@ -4196,6 +4298,24 @@
     },
     "focus": {
       "leave": "Fokus-Modus verlassen"
+    }
+  },
+  "org": {
+    "title": "Organisation",
+    "subtitle": "Diese Einstellungen gelten für die ganze Organisation: Zeiterfassung, Abwesenheiten, Feiertage, Abrechnung und Fristen. Organisationsadmins sehen Arbeitszeiten, Zeitnachweise, Abwesenheiten und Buchungen aller Personen, Titel und Beschreibungen von Vorgängen aber nur aus Projekten, in denen sie selbst sind. Krankheit sehen sie nur, solange niemand für Abwesenheiten benannt ist, sonst nur, wenn sie selbst benannt sind.",
+    "deadlines": {
+      "title": "Fristen",
+      "hint": "Worin neue relative Fristen zählen, wenn ein Projekt nichts anderes festlegt.",
+      "followsPlatform": "Es gilt der Standard der Plattform: {{basis}}.",
+      "followsPlatformUnknown": "Es gilt der Standard der Plattform.",
+      "ownChoice": "Deine Organisation zählt in {{basis}}.",
+      "existingStay": "Bestehende Fristen bleiben, wie sie sind.",
+      "usePlatform": "Standard der Plattform verwenden"
+    },
+    "audit": {
+      "title": "Protokoll",
+      "hint": "Was in Zeiterfassung, Abwesenheiten und Zeitnachweisen passiert ist, und wer es getan hat.",
+      "open": "Protokoll öffnen"
     }
   }
 }

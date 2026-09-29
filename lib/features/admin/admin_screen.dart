@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/blocs/app_config_bloc.dart';
+import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/repositories/admin_repository.dart';
 import '../../core/i18n/i18n.dart';
@@ -33,7 +34,6 @@ import 'sections/admin_general_section.dart';
 import 'sections/admin_git_section.dart';
 import 'sections/admin_mcp_section.dart';
 import 'sections/admin_security_section.dart';
-import 'sections/admin_time_tracking_section.dart';
 import '../../core/widgets/hive_widgets.dart' show forwardChevron;
 
 // ─────────────────────────── Section enum ────────────────────────────────
@@ -41,7 +41,6 @@ import '../../core/widgets/hive_widgets.dart' show forwardChevron;
 enum _AdminSection {
   general,
   app,
-  timeTracking,
   authentication,
   connect,
   email,
@@ -77,12 +76,6 @@ const _navItems = <_SectionMeta>[
     section: _AdminSection.security,
     icon: LucideIcons.shield,
     labelKey: 'admin.security',
-    group: 'navGeneral',
-  ),
-  (
-    section: _AdminSection.timeTracking,
-    icon: LucideIcons.timer,
-    labelKey: 'admin.timeTracking.title',
     group: 'navGeneral',
   ),
   (
@@ -208,8 +201,11 @@ class _AdminScreenState extends State<AdminScreen> {
     if (_settings == null) return;
     setState(() => _saving = true);
     try {
+      // Without the time-tracking block: it is kept on the Organisation page
+      // now (HIN-129), and for an admin who also holds that role the copy
+      // loaded here would overwrite what was saved there in the meantime.
       _settings = await context.read<AdminRepository>().updateAdminSettings(
-        _settings!,
+        {..._settings!}..remove('timeTracking'),
       );
       if (mounted) {
         // These settings decide what /meta reports — feature flags above all.
@@ -301,8 +297,7 @@ class _AdminScreenState extends State<AdminScreen> {
               child: _MobileDetailView(
                 section: current,
                 settings: settings,
-                onOpenTimeTracking: () =>
-                    _selectSection(_AdminSection.timeTracking, mobile: true),
+                onOpenTimeTracking: _openTimeTracking(context),
               ),
             );
           }
@@ -328,11 +323,20 @@ class _AdminScreenState extends State<AdminScreen> {
             section: _desktopSection,
             settings: settings,
             onSectionChanged: (s) => _selectSection(s, mobile: false),
+            onOpenTimeTracking: _openTimeTracking(context),
           ),
         );
       },
     );
   }
+
+  /// The way to the time-tracking settings, which moved to the Organisation
+  /// page (HIN-129). Only for an admin who also holds the organisation role;
+  /// for anyone else the App section reports the state and leads nowhere.
+  VoidCallback? _openTimeTracking(BuildContext context) =>
+      (context.read<AuthBloc>().state.user?.isOrgAdmin ?? false)
+      ? () => context.go('/organization')
+      : null;
 
   /// The Save action published into the glass app bar — omitted for sections
   /// that manage their own persistence (audit log, connect).
@@ -360,7 +364,6 @@ bool _sectionHasSave(_AdminSection section) =>
 String _sectionTitleKey(_AdminSection section) => switch (section) {
   _AdminSection.general => 'admin.general',
   _AdminSection.app => 'admin.app',
-  _AdminSection.timeTracking => 'admin.timeTracking.title',
   _AdminSection.authentication => 'admin.authentication',
   _AdminSection.connect => 'admin.connect',
   _AdminSection.email => 'admin.email',
@@ -507,9 +510,10 @@ class _MobileDetailView extends StatelessWidget {
   final _AdminSection section;
   final Map<String, dynamic> settings;
 
-  /// Jump to the Zeiterfassung section — the App section points at it rather
-  /// than duplicating the module's master switch.
-  final VoidCallback onOpenTimeTracking;
+  /// Opens Organisation, where the time-tracking module is switched — the App
+  /// section points at it rather than duplicating the master switch. Null for
+  /// an admin without the organisation role.
+  final VoidCallback? onOpenTimeTracking;
 
   @override
   Widget build(BuildContext context) {
@@ -542,7 +546,6 @@ class _MobileDetailView extends StatelessWidget {
       settings: settings,
       onOpenTimeTracking: onOpenTimeTracking,
     ),
-    _AdminSection.timeTracking => AdminTimeTrackingSection(settings: settings),
     _AdminSection.authentication => AdminSsoSection(settings: settings),
     _AdminSection.connect => const AdminConnectSection(),
     _AdminSection.email => AdminEmailSection(settings: settings),
@@ -565,6 +568,7 @@ class _WideAdminShell extends StatelessWidget {
     required this.section,
     required this.settings,
     required this.onSectionChanged,
+    this.onOpenTimeTracking,
   });
 
   final _AdminSection section;
@@ -572,8 +576,8 @@ class _WideAdminShell extends StatelessWidget {
   final ValueChanged<_AdminSection> onSectionChanged;
 
   /// Same jump as on the compact layout: the App section's row for the extended
-  /// time-tracking flag opens the section that actually owns it.
-  void _openTimeTracking() => onSectionChanged(_AdminSection.timeTracking);
+  /// time-tracking flag opens the Organisation page that owns it.
+  final VoidCallback? onOpenTimeTracking;
 
   @override
   Widget build(BuildContext context) {
@@ -637,9 +641,8 @@ class _WideAdminShell extends StatelessWidget {
     _AdminSection.general => AdminGeneralSection(settings: settings),
     _AdminSection.app => AdminAppSection(
       settings: settings,
-      onOpenTimeTracking: _openTimeTracking,
+      onOpenTimeTracking: onOpenTimeTracking,
     ),
-    _AdminSection.timeTracking => AdminTimeTrackingSection(settings: settings),
     _AdminSection.authentication => AdminSsoSection(settings: settings),
     _AdminSection.connect => const AdminConnectSection(),
     _AdminSection.email => AdminEmailSection(settings: settings),

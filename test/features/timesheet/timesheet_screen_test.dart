@@ -1072,7 +1072,7 @@ class _FakeAuthBloc extends Bloc<AuthEvent, AuthState> implements AuthBloc {
             email: 'me@example.test',
             username: 'me',
             displayName: 'Me',
-            roles: admin ? const {'ADMIN'} : const {'USER'},
+            roles: admin ? const {'ORG_ADMIN'} : const {'USER'},
           ),
         ),
       );

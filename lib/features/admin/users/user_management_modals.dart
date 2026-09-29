@@ -107,14 +107,18 @@ class _Footer extends StatelessWidget {
           top: BorderSide(color: AppColors.hairline.withValues(alpha: 0.6)),
         ),
       ),
-      child: Row(
+      // Side by side at the end, stacked when a long label or a large text
+      // size leaves no room, rather than running off the edge.
+      child: OverflowBar(
+        alignment: MainAxisAlignment.end,
+        overflowAlignment: OverflowBarAlignment.end,
+        spacing: 8,
+        overflowSpacing: 8,
         children: [
-          const Spacer(),
           TextButton(
             onPressed: () => Navigator.of(context).maybePop(),
             child: Text(context.t('common.cancel')),
           ),
-          const SizedBox(width: 8),
           FilledButton.icon(
             onPressed: onConfirm,
             style: FilledButton.styleFrom(
@@ -317,6 +321,43 @@ Future<bool> showRevokeAdminModal(BuildContext context, List<AdminUser> users) {
     subtitle: context.t('admin.um.revokeAdminSub'),
     confirmLabel: context.t('admin.um.revokeAdmin'),
     confirmIcon: LucideIcons.shieldMinus,
+    body: _previewList(context, users),
+  );
+}
+
+/// Whether the organisation role may change for [users]: granting asks
+/// first ([showGrantOrgAdminModal]); taking it back only narrows what somebody
+/// sees and goes ahead at once.
+Future<bool> confirmOrgAdminChange(
+  BuildContext context,
+  List<AdminUser> users, {
+  required bool grant,
+}) async => !grant || await showGrantOrgAdminModal(context, users);
+
+/// Asks before the organisation role is granted, and says what it opens.
+///
+/// The role reads other people's working times, approvals and absences, which
+/// is not a switch to flip in passing. Taking it back asks nothing: that only
+/// narrows what somebody sees.
+Future<bool> showGrantOrgAdminModal(
+  BuildContext context,
+  List<AdminUser> users,
+) {
+  return _confirm(
+    context,
+    icon: LucideIcons.building2,
+    title: context.t('admin.um.makeOrgAdmin'),
+    subtitle: users.length == 1
+        ? context.t(
+            'admin.um.orgAdminConfirmOne',
+            variables: {'name': users.single.name},
+          )
+        : context.t(
+            'admin.um.orgAdminConfirmMany',
+            variables: {'names': users.map((u) => u.name).join(', ')},
+          ),
+    confirmLabel: context.t('admin.um.makeOrgAdmin'),
+    confirmIcon: LucideIcons.building2,
     body: _previewList(context, users),
   );
 }

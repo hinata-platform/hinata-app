@@ -20,13 +20,21 @@ class IssueEvents {
   /// The shared app-wide instance.
   static final IssueEvents instance = IssueEvents._();
 
-  final StreamController<void> _controller = StreamController<void>.broadcast();
+  final StreamController<Object?> _controller =
+      StreamController<Object?>.broadcast();
 
   /// Fires whenever an issue is created, updated or deleted anywhere in the app.
-  Stream<void> get changes => _controller.stream;
+  ///
+  /// Each event carries the `origin` passed to [notifyChanged], so a screen
+  /// that already applied a change to its own rows can skip the re-fetch its
+  /// own announcement would otherwise trigger.
+  Stream<Object?> get changes => _controller.stream;
 
   /// Signal that the set of issues changed so subscribed screens re-fetch.
-  void notifyChanged() => _controller.add(null);
+  ///
+  /// [origin] names who made the change, typically the announcing screen's
+  /// state object; listeners compare it with `identical` to ignore their own.
+  void notifyChanged({Object? origin}) => _controller.add(origin);
 }
 
 /// App-wide broadcast for *watch* changes only.

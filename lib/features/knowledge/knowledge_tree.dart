@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
@@ -43,7 +44,9 @@ class KnowledgeTree extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final inSpace = repo.articlesInSpace(spaceId);
-    final roots = inSpace.where((a) => a.parentId == null).toList();
+    // Includes pages whose parent this person cannot read: they are roots
+    // here rather than lost.
+    final roots = repo.rootsInSpace(spaceId);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -109,9 +112,42 @@ class KnowledgeTree extends StatelessWidget {
             onMove: onMove,
             onDelete: onDelete,
           ),
+        // The server stops at its cap. Said once, quietly, under the tree, so a
+        // subpage standing at the top is not read as "its parent is hidden
+        // from me" when the parent is merely past the cut.
+        if (repo.listTruncated) const _TruncatedNote(),
       ],
     );
   }
+}
+
+class _TruncatedNote extends StatelessWidget {
+  const _TruncatedNote();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsetsDirectional.fromSTEB(8, 12, 8, 4),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Icon(LucideIcons.info, size: 13, color: AppColors.inkFaint),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            context.t('knowledge.tree.truncated'),
+            style: TextStyle(
+              fontSize: 11.5,
+              height: 1.4,
+              color: AppColors.inkSoft,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _RootDropZone extends StatefulWidget {
@@ -319,6 +355,10 @@ class _TreeBranchState extends State<_TreeBranch> {
                     ),
                   ),
                 ),
+                // Where a top-level page lives; its subpages live there too, so
+                // repeating it on every row would only add noise.
+                if (widget.depth == 0)
+                  KbPlaceGlyph(place: widget.article.place),
                 // Row actions (reveal on hover; always present for touch).
                 if (_hover) ...[
                   _RowAction(
@@ -456,6 +496,43 @@ class _DragChip extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The small glyph saying where a page lives: a lock for "only me", people for
+/// a team, a folder for a project. Shape carries the meaning, the tooltip names
+/// it, so it never rests on colour.
+class KbPlaceGlyph extends StatelessWidget {
+  const KbPlaceGlyph({super.key, required this.place, this.size = 13});
+
+  final KbPlace place;
+  final double size;
+
+  static IconData iconFor(KbPlace place) => switch (place) {
+    KbPlace.private => LucideIcons.lock,
+    KbPlace.team => LucideIcons.users,
+    KbPlace.project => LucideIcons.folder,
+  };
+
+  static String labelKeyFor(KbPlace place) => switch (place) {
+    KbPlace.private => 'knowledge.place.private',
+    KbPlace.team => 'knowledge.place.team',
+    KbPlace.project => 'knowledge.place.project',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final label = context.t(labelKeyFor(place));
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        label: label,
+        child: Padding(
+          padding: const EdgeInsetsDirectional.only(start: 6, end: 2),
+          child: Icon(iconFor(place), size: size, color: AppColors.inkFaint),
         ),
       ),
     );

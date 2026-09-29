@@ -188,18 +188,15 @@ class SprintPlanningSurface extends StatelessWidget {
             ),
           ],
         ),
+        // Docked from the nav's own edge, not from the scroll gutter, which
+        // counts the home indicator a second time on an iPhone.
         if (selected.isNotEmpty)
-          Positioned(
-            left: gutter,
-            right: gutter,
-            bottom: context.bottomGutter + 12,
-            child: Center(
-              child: _BulkBar(
-                count: selected.length,
-                sprints: sprints,
-                onMove: onBulkMove,
-                onClose: onClearSelection,
-              ),
+          GlassBulkBarDock(
+            child: _BulkBar(
+              count: selected.length,
+              sprints: sprints,
+              onMove: onBulkMove,
+              onClose: onClearSelection,
             ),
           ),
       ],

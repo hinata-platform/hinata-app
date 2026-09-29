@@ -20,6 +20,7 @@ import 'knowledge_editor.dart';
 import 'knowledge_home.dart';
 import 'knowledge_space_dialog.dart';
 import 'knowledge_link_resolver.dart';
+import 'knowledge_place_field.dart';
 import 'knowledge_reader.dart';
 import 'knowledge_scope.dart';
 import 'knowledge_tokens.dart';
@@ -67,6 +68,9 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
   bool _treeCollapsed = false;
   bool _asideCollapsed = false;
   String? _pendingParentId;
+
+  /// A place change of the open page is on its way to the server.
+  bool _placeBusy = false;
 
   @override
   void initState() {
@@ -136,7 +140,8 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
   }
 
   void _openSpace(String id) {
-    final first = _repo.articlesInSpace(id).where((a) => a.parentId == null);
+    // Roots include pages whose parent this person cannot read.
+    final first = _repo.rootsInSpace(id);
     setState(() {
       _spaceId = id;
       if (first.isNotEmpty) {
@@ -194,6 +199,28 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
       if (mounted) setState(() => _spaceId = spaceId);
     } on ApiFailure catch (failure) {
       if (mounted) _toast(failure.message, kind: GlassToastKind.error);
+    }
+  }
+
+  /// Moves the open top-level page, and everything below it, to [place].
+  Future<void> _placeArticle(String id, KbPlaceChoice place) async {
+    setState(() => _placeBusy = true);
+    try {
+      await _repo.placeArticle(
+        id,
+        projectId: place.projectId,
+        teamId: place.teamId,
+      );
+      if (mounted) {
+        _toast(
+          context.t('knowledge.place.saved'),
+          kind: GlassToastKind.success,
+        );
+      }
+    } on ApiFailure catch (failure) {
+      if (mounted) _toast(failure.message, kind: GlassToastKind.error);
+    } finally {
+      if (mounted) setState(() => _placeBusy = false);
     }
   }
 
@@ -300,6 +327,8 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
           doc: r.doc,
           spaceId: r.spaceId,
           parentId: parentId,
+          projectId: r.projectId,
+          teamId: r.teamId,
         );
         if (!mounted) return;
         setState(() {
@@ -480,6 +509,8 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
       asideMode: asideMode,
       onEdit: () => setState(() => _mode = _Mode.edit),
       onDelete: () => _confirmDeleteArticle(_current!.id),
+      onPlace: (place) => _placeArticle(_current!.id, place),
+      placeBusy: _placeBusy,
     );
 
     if (!showTree) {
@@ -665,6 +696,9 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
               // its content rather than blank over it.
               initialBody: isNew ? '' : current?.body ?? '',
               spaceId: _spaceId,
+              // A new top-level page chooses where it lives (only its author
+              // by default); a subpage lives where its parent lives.
+              choosePlace: isNew && _pendingParentId == null,
               onSave: _save,
               onCancel: () => setState(() {
                 _pendingParentId = null;

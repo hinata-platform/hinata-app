@@ -21,6 +21,7 @@ import '../sprint/modals/glass_modal.dart'
     show showGlassConfirm, showGlassErrorToast;
 import 'team_detail_screen.dart' show TeamDetailData;
 import 'team_modals.dart';
+import 'team_modal_kit.dart' show KnowledgeAccessChip;
 import 'team_widgets.dart';
 
 part 'team_tabs.members_projects.dart';
@@ -403,6 +404,7 @@ class _ActivityRow extends StatelessWidget {
       'PROMOTED',
       'DEMOTED',
       'REMOVED_MEMBER',
+      'KNOWLEDGE_CHANGED',
     }.contains(activity.verb);
     final object = memberVerb
         ? (data.usersById[activity.objectLabel]?.displayName ??
@@ -470,6 +472,7 @@ class _ActivityRow extends StatelessWidget {
     'PROMOTED' => 'promoted',
     'DEMOTED' => 'demoted',
     'REMOVED_MEMBER' => 'removedMember',
+    'KNOWLEDGE_CHANGED' => 'knowledgeChanged',
     'ATTACHED_PROJECT' => 'attachedProject',
     'CREATED_PROJECT' => 'createdProject',
     'DETACHED_PROJECT' => 'detachedProject',
