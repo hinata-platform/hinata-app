@@ -3034,6 +3034,7 @@
       "orgAdminBadge": "Org-Admin",
       "orgAdminTitle": "Organisationsadmin",
       "orgAdminHint": "Sieht Arbeitszeiten, Zeitnachweise, Abwesenheiten und Buchungen aller Personen und verwaltet Zeitregeln, Feiertage und Abrechnung der Organisation. Berichte und Freigaben zeigen Titel, Schlüssel und Beschreibungen von Vorgängen nur aus Projekten, in denen die Person selbst ist. Krankheit nur, solange niemand für Abwesenheiten benannt ist, sonst nur, wenn die Person selbst benannt ist. Kein Zugang zum Adminbereich.",
+      "orgAdminInfo": "Was darf ein Organisationsadmin?",
       "makeOrgAdmin": "Zum Organisationsadmin machen",
       "revokeOrgAdmin": "Organisationsadmin entziehen",
       "toastOrgAdminGranted": "Rolle Organisationsadmin vergeben",

@@ -169,22 +169,32 @@ void main() {
       expect(back.height, greaterThanOrEqualTo(48));
     });
 
-    testWidgets('a narrow screen wraps the days instead of shrinking them', (
-      tester,
-    ) async {
-      await pump(tester, width: 320);
+    testWidgets('a phone keeps the week on one line', (tester) async {
+      await pump(tester, width: 330);
       final monday = tester.getRect(day('Montag'));
       final sunday = tester.getRect(day('Sonntag'));
-      expect(monday.width, greaterThanOrEqualTo(48));
-      expect(sunday.top, greaterThan(monday.top));
+      expect(monday.width, greaterThanOrEqualTo(40));
+      expect(sunday.top, monday.top);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('the days grow with the text', (tester) async {
+    testWidgets('the narrowest screen at double text keeps one line', (
+      tester,
+    ) async {
+      await pump(tester, width: 280, textScale: 2);
+      final monday = tester.getRect(day('Montag'));
+      final sunday = tester.getRect(day('Sonntag'));
+      expect(sunday.top, monday.top);
+      expect(sunday.right, lessThanOrEqualTo(280));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the days grow with the text where there is room', (
+      tester,
+    ) async {
       await pump(tester, textScale: 2);
       final size = tester.getSize(day('Montag'));
       expect(size.width, greaterThanOrEqualTo(96));
-      expect(find.byType(FittedBox), findsNothing);
       expect(tester.takeException(), isNull);
     });
   });

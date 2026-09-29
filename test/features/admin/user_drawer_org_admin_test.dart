@@ -75,7 +75,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('admin.um.orgAdminTitle'), findsOneWidget);
+    // What it grants waits behind the "i" rather than filling the drawer.
+    expect(find.text('admin.um.orgAdminHint'), findsNothing);
+    await tester.ensureVisible(find.byTooltip('admin.um.orgAdminInfo'));
+    await tester.tap(find.byTooltip('admin.um.orgAdminInfo'));
+    await tester.pumpAndSettle();
     expect(find.text('admin.um.orgAdminHint'), findsOneWidget);
+    await tester.tapAt(const Offset(4, 4));
+    await tester.pumpAndSettle();
     expect(tester.widget<HiveSwitch>(orgSwitch()).value, isFalse);
     // No badge for a role the user does not hold.
     expect(find.byType(OrgAdminBadge), findsNothing);

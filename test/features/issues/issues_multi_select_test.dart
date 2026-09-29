@@ -26,6 +26,7 @@ import 'package:hinata/core/repositories/user_repository.dart';
 import 'package:hinata/core/storage/app_storage.dart';
 import 'package:hinata/core/widgets/glass_bulk_bar.dart';
 import 'package:hinata/core/widgets/glass_switch_chip.dart';
+import 'package:hinata/core/widgets/hive_widgets.dart' show PageHead;
 import 'package:hinata/features/issues/issues_screen.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -58,6 +59,8 @@ void main() {
 
   setUp(() => issueRepo = _FakeIssueRepository(_issues));
 
+  late PageChromeController chrome;
+
   Future<void> settle(WidgetTester tester, [int frames = 4]) async {
     for (var i = 0; i < frames; i++) {
       await tester.pump(const Duration(milliseconds: 100));
@@ -76,7 +79,7 @@ void main() {
       ..physicalSize = Size(width, 1000)
       ..devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    final chrome = PageChromeController();
+    chrome = PageChromeController();
     await tester.pumpWidget(
       MultiRepositoryProvider(
         providers: [
@@ -100,7 +103,22 @@ void main() {
                   path: '/issues',
                   builder: (_, _) => PageChromeScope(
                     controller: chrome,
-                    child: const Scaffold(body: IssuesScreen()),
+                    // Draws what the phone's bar docks, the way the shell
+                    // does, so the controls in it can be found and tapped.
+                    child: Scaffold(
+                      body: Column(
+                        children: [
+                          ListenableBuilder(
+                            listenable: chrome,
+                            builder: (_, _) => SizedBox(
+                              height: chrome.bottomHeightFor('/issues'),
+                              child: chrome.bottomFor('/issues'),
+                            ),
+                          ),
+                          const Expanded(child: IssuesScreen()),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -260,6 +278,49 @@ void main() {
       expect(issueRepo.bulkCalls.single.ids.toSet(), {
         for (final issue in _issues) issue.id,
       });
+      await tester.pump(const Duration(seconds: 10));
+    });
+  });
+
+  group('head on a phone', () {
+    testWidgets('leaves the title and "+" to the bar', (tester) async {
+      await open(tester, width: 390);
+
+      // The bar names the page; no second, larger title under it.
+      expect(find.byType(PageHead), findsNothing);
+      final add = chrome.actionsFor('/issues').single;
+      expect(add.label, 'issues.new');
+      expect(add.primary, isTrue);
+      // The selection switch stands in the docked toolbar instead.
+      expect(find.byTooltip('issues.selection.enter'), findsOneWidget);
+    });
+  });
+
+  group('bulk bar on a phone', () {
+    testWidgets('keeps every action on screen as an icon', (tester) async {
+      await open(tester, width: 390);
+
+      await tester.longPress(find.text('Issue number 1'));
+      await settle(tester, 2);
+
+      final screen =
+          Offset.zero & tester.view.physicalSize / tester.view.devicePixelRatio;
+      for (final key in const [
+        'issues.selectAll',
+        'issues.bulkDeadline.action',
+        'issues.move.action',
+      ]) {
+        final button = find.byTooltip(key);
+        expect(button, findsOneWidget, reason: key);
+        expect(screen.contains(tester.getCenter(button)), isTrue, reason: key);
+      }
+
+      await tester.tap(find.byTooltip('issues.bulkDeadline.action'));
+      await settle(tester);
+      await tester.tap(find.text('common.clear'));
+      await settle(tester);
+
+      expect(issueRepo.bulkCalls.single.ids, ['i1']);
       await tester.pump(const Duration(seconds: 10));
     });
   });
