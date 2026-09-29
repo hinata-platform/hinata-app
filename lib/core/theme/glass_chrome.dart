@@ -28,6 +28,49 @@ const kNavGlassDark = LiquidGlassSettings.ios27Dark;
 /// Neutral chrome, light: Apple's iOS 27 regular glass in the light appearance.
 const kNavGlassLight = LiquidGlassSettings.ios27Light;
 
+/// The optics of the standard quality tier, which the iOS 27 terms do not
+/// reach: its lightweight shader knows no frost, rim shade or rim light, and
+/// the iOS 27 presets switch the older white specular off in their favour.
+/// Handed the iOS 27 settings, a surface pinned to standard lost its lit edge
+/// and kept only the thicker lens, which read as a grey band inside the rim.
+/// Surfaces that stay on standard for their cost keep this recipe.
+const _stdThickness = 30.0;
+const _stdBlur = 3.0;
+const _stdChromaticAberration = 0.3;
+const _stdLightIntensity = 0.6;
+const _stdRefractiveIndex = 1.59;
+const _stdSaturation = 0.7;
+const _stdAmbientStrength = 1.0;
+
+/// 0.75π — the key light the standard tier is lit from.
+const _stdLightAngle = 2.356194490192345;
+
+/// Neutral chrome on the standard tier, dark.
+const kNavGlassStandardDark = LiquidGlassSettings(
+  thickness: _stdThickness,
+  blur: _stdBlur,
+  chromaticAberration: _stdChromaticAberration,
+  lightIntensity: _stdLightIntensity,
+  refractiveIndex: _stdRefractiveIndex,
+  saturation: _stdSaturation,
+  ambientStrength: _stdAmbientStrength,
+  lightAngle: _stdLightAngle,
+  glassColor: Color(0x4D0A0A0A),
+);
+
+/// Neutral chrome on the standard tier, light.
+const kNavGlassStandardLight = LiquidGlassSettings(
+  thickness: _stdThickness,
+  blur: _stdBlur,
+  chromaticAberration: _stdChromaticAberration,
+  lightIntensity: _stdLightIntensity,
+  refractiveIndex: _stdRefractiveIndex,
+  saturation: _stdSaturation,
+  ambientStrength: _stdAmbientStrength,
+  lightAngle: _stdLightAngle,
+  glassColor: Color(0x3DFFFFFF),
+);
+
 /// iOS 27 glass in the app's own [glassColor].
 ///
 /// The optics — thickness, lens, rim shade and rim light, the light from above
@@ -90,13 +133,36 @@ LiquidGlassSettings ios27Glass({
 /// channel of 295. What fixes it is making the third that comes through *amber
 /// too*, which is this alpha. It lands at RGB(208,154,51) against light's
 /// (209,156,54).
-LiquidGlassSettings amberFrost(bool dark) => ios27Glass(
-  dark: dark,
-  // Saturation stays at 1 and there is no frost: over amber the colour *is*
-  // the design, and a white frost cloud would dilute it just as the old white
-  // veil did. The iOS 27 rim light takes over from the white specular stroke
-  // that bloomed into a grey reif over a dark page.
-  glassColor: dark ? const Color(0x59FFBC3B) : const Color(0x1FD9A032),
+LiquidGlassSettings amberFrost(bool dark, {bool standard = false}) => standard
+    ? _amberFrostStandard(dark)
+    : ios27Glass(
+        dark: dark,
+        // Saturation stays at 1 and there is no frost: over amber the colour
+        // *is* the design, and a white frost cloud would dilute it just as the
+        // old white veil did. The iOS 27 rim light takes over from the white
+        // specular stroke that bloomed into a grey reif over a dark page.
+        glassColor: _amberVeil(dark),
+      );
+
+Color _amberVeil(bool dark) =>
+    dark ? const Color(0x59FFBC3B) : const Color(0x1FD9A032);
+
+/// [amberFrost] on the standard tier: the white specular rim is a stroke drawn
+/// with BlendMode.overlay, so it wants opposite things over the two pages.
+/// Over a near-black page it blooms into a grey reif and has to stay narrow
+/// and faint; over the light page there is nothing to bloom against and the
+/// full stroke is what gives the disc its lit edge.
+LiquidGlassSettings _amberFrostStandard(bool dark) => LiquidGlassSettings(
+  thickness: _stdThickness,
+  blur: _stdBlur,
+  chromaticAberration: _stdChromaticAberration,
+  lightIntensity: dark ? 0.45 : 0.9,
+  refractiveIndex: _stdRefractiveIndex,
+  // Left at 1: more blew red and green out to a glowing disc in dark.
+  saturation: 1,
+  ambientStrength: dark ? 0.3 : _stdAmbientStrength,
+  lightAngle: _stdLightAngle,
+  glassColor: _amberVeil(dark),
 );
 
 /// The honey-amber ground a primary action's glass floats on. Same three stops
@@ -134,8 +200,10 @@ LinearGradient amberGround(bool dark) => dark ? kAmberGroundDark : kAmberGround;
 /// is in.
 const kOnAmber = Color(0xFF2A2410);
 
-LiquidGlassSettings navGlass(bool dark) =>
-    dark ? kNavGlassDark : kNavGlassLight;
+/// The neutral chrome for [dark], on the premium tier unless [standard].
+LiquidGlassSettings navGlass(bool dark, {bool standard = false}) => standard
+    ? (dark ? kNavGlassStandardDark : kNavGlassStandardLight)
+    : (dark ? kNavGlassDark : kNavGlassLight);
 
 /// A round Liquid Glass button, the shape the app's floating chrome is made of.
 ///
@@ -182,7 +250,9 @@ class GlassCircleButton extends StatelessWidget {
       shape: LiquidRoundedSuperellipse(borderRadius: size / 2),
       useOwnLayer: true,
       quality: GlassQuality.standard,
-      settings: amber ? amberFrost(dark) : navGlass(dark),
+      settings: amber
+          ? amberFrost(dark, standard: true)
+          : navGlass(dark, standard: true),
       iconColor: amber
           ? kOnAmber
           : (dark ? AppColors.inkDark : AppColors.inkLight),
@@ -243,9 +313,19 @@ class GlassCircleButton extends StatelessWidget {
 /// The iOS 27 material for every glass widget that does not bring its own
 /// settings — the tab bar, switches, sliders, sheets. Handed to
 /// `LiquidGlassWidgets.wrap` once, at the top of the app.
+///
+/// Premium is the default tier with it, because only premium renders the
+/// material; a widget that asks for less keeps asking, and the adaptive
+/// ceiling (`kGlassCeiling`) still steps a device down that cannot keep up.
 GlassThemeData ios27GlassTheme() => GlassThemeData(
-  light: GlassThemeVariant(settings: _themeSettings(kNavGlassLight)),
-  dark: GlassThemeVariant(settings: _themeSettings(kNavGlassDark)),
+  light: GlassThemeVariant(
+    settings: _themeSettings(kNavGlassLight),
+    quality: GlassQuality.premium,
+  ),
+  dark: GlassThemeVariant(
+    settings: _themeSettings(kNavGlassDark),
+    quality: GlassQuality.premium,
+  ),
 );
 
 GlassThemeSettings _themeSettings(LiquidGlassSettings s) => GlassThemeSettings(

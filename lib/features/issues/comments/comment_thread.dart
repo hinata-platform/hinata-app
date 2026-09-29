@@ -14,7 +14,6 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/glass_chrome.dart' show ios27Glass;
 import '../../../core/widgets/hive_widgets.dart';
 import '../../../core/widgets/user_pronouns.dart';
 import '../../../core/lexical/hinata_document.dart';
@@ -33,11 +32,31 @@ const List<String> kQuickReactions = ['❤️', '👍', '😂', '😮', '😢', 
 /// like the composer — they need a strong tint (transparent nav glass would be
 /// unreadable) and, on native, the standard lightweight shader (the default
 /// premium pipeline corrupts on rotation). Same lighting as [kNavGlassDark].
-LiquidGlassSettings _navGlass(bool dark) => ios27Glass(
-  dark: dark,
-  // ~0.85 opaque dark slate / ~0.95 near-solid frost, as the composer.
-  glassColor: dark ? const Color(0xD91A1A22) : const Color(0xF2FFFFFF),
+const _menuGlassDark = LiquidGlassSettings(
+  thickness: 30,
+  blur: 3,
+  chromaticAberration: 0.3,
+  lightIntensity: 0.6,
+  refractiveIndex: 1.59,
+  saturation: 0.7,
+  ambientStrength: 1,
+  lightAngle: 2.356194490192345,
+  glassColor: Color(0xD91A1A22), // ~0.85 opaque dark slate
 );
+const _menuGlassLight = LiquidGlassSettings(
+  thickness: 30,
+  blur: 3,
+  chromaticAberration: 0.3,
+  lightIntensity: 0.6,
+  refractiveIndex: 1.59,
+  saturation: 0.7,
+  ambientStrength: 1,
+  lightAngle: 2.356194490192345,
+  glassColor: Color(0xF2FFFFFF), // ~0.95 near-solid frost
+);
+
+LiquidGlassSettings _navGlass(bool dark) =>
+    dark ? _menuGlassDark : _menuGlassLight;
 
 /// How top-level comments are ordered. Reply threads are *always* oldest-first,
 /// independent of this.
