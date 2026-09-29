@@ -7,6 +7,7 @@ part of 'glass_comment_composer.dart';
 class _CircleButton extends StatelessWidget {
   const _CircleButton({
     required this.icon,
+    required this.label,
     this.onTap,
     this.send = false,
     this.danger = false,
@@ -14,6 +15,10 @@ class _CircleButton extends StatelessWidget {
   });
 
   final IconData icon;
+
+  /// The button's name for a screen reader and a long press: the glyph is all
+  /// the eye gets.
+  final String label;
   final VoidCallback? onTap;
   final bool send;
   final bool danger;
@@ -43,6 +48,7 @@ class _CircleButton extends StatelessWidget {
       );
       return Semantics(
         button: true,
+        label: label,
         child: GestureDetector(
           onTap: onTap,
           child: AnimatedContainer(
@@ -70,6 +76,7 @@ class _CircleButton extends StatelessWidget {
     // the halo. See lightweight_liquid_glass.dart's LiquidOval note.
     return GlassButton(
       icon: Icon(icon, size: 22),
+      label: label,
       iconColor: danger ? AppColors.danger : AppColors.ink,
       onTap: onTap ?? () {},
       enabled: onTap != null,
@@ -368,7 +375,12 @@ class _FormatToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _CircleButton(icon: LucideIcons.x, size: 46, onTap: onClose),
+        _CircleButton(
+          icon: LucideIcons.x,
+          label: context.t('comments.composer.closeFormat'),
+          size: 46,
+          onTap: onClose,
+        ),
         const SizedBox(width: 5),
         Expanded(
           child: Row(
@@ -395,6 +407,7 @@ class _FormatToolbar extends StatelessWidget {
         const SizedBox(width: 5),
         _CircleButton(
           icon: LucideIcons.send,
+          label: context.t('comments.composer.send'),
           size: 46,
           send: true,
           onTap: canSend ? onSend : null,
@@ -433,6 +446,7 @@ class _RecordingBar extends StatelessWidget {
       children: [
         _CircleButton(
           icon: LucideIcons.trash2,
+          label: context.t('comments.composer.discardRecording'),
           size: buttonSize,
           danger: true,
           onTap: onCancel,
@@ -465,6 +479,7 @@ class _RecordingBar extends StatelessWidget {
         const SizedBox(width: 11),
         _CircleButton(
           icon: LucideIcons.send,
+          label: context.t('comments.composer.sendVoice'),
           size: buttonSize,
           send: true,
           onTap: onSend,

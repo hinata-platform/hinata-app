@@ -438,7 +438,16 @@
     "deleteSelectedBody": "Se elimina de forma permanente para todo el mundo.",
     "deleteSelectedBody_plural": "Se eliminan {{count}} comentarios de forma permanente para todo el mundo.",
     "recorderToolMissing": "No se puede grabar: {{tool}} no está instalado. En Linux se graba con parecord (pulseaudio-utils) y ffmpeg.",
-    "voiceNeedsGstreamer": "Este mensaje de voz no se puede reproducir: faltan los plugins base de GStreamer. Instala gstreamer1.0-plugins-base."
+    "voiceNeedsGstreamer": "Este mensaje de voz no se puede reproducir: faltan los plugins base de GStreamer. Instala gstreamer1.0-plugins-base.",
+    "composer": {
+      "attach": "Adjunto o formato",
+      "record": "Grabar un mensaje de voz",
+      "send": "Enviar comentario",
+      "cancelEdit": "Dejar de editar",
+      "closeFormat": "Cerrar formato",
+      "discardRecording": "Descartar grabación",
+      "sendVoice": "Enviar mensaje de voz"
+    }
   },
   "filePicker": {
     "images": "Imágenes",

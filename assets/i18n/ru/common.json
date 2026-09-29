@@ -438,7 +438,16 @@
     "deleteSelectedBody": "Выбранные комментарии будут безвозвратно удалены для всех.",
     "deleteSelectedBody_plural": "Комментарии ({{count}}) будут безвозвратно удалены для всех.",
     "recorderToolMissing": "Запись невозможна: {{tool}} не установлен. В Linux запись идёт через parecord (pulseaudio-utils) и ffmpeg.",
-    "voiceNeedsGstreamer": "Это голосовое сообщение не воспроизвести: нет базовых плагинов GStreamer. Установите gstreamer1.0-plugins-base."
+    "voiceNeedsGstreamer": "Это голосовое сообщение не воспроизвести: нет базовых плагинов GStreamer. Установите gstreamer1.0-plugins-base.",
+    "composer": {
+      "attach": "Вложение или форматирование",
+      "record": "Записать голосовое сообщение",
+      "send": "Отправить комментарий",
+      "cancelEdit": "Прекратить редактирование",
+      "closeFormat": "Закрыть форматирование",
+      "discardRecording": "Удалить запись",
+      "sendVoice": "Отправить голосовое сообщение"
+    }
   },
   "filePicker": {
     "images": "Изображения",

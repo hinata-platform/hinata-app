@@ -438,7 +438,16 @@
     "deleteSelectedBody": "全員の画面から完全に削除されます。",
     "deleteSelectedBody_plural": "{{count}} 件のコメントが全員の画面から完全に削除されます。",
     "recorderToolMissing": "録音できません: {{tool}} がインストールされていません。Linux では parecord（pulseaudio-utils）と ffmpeg で録音します。",
-    "voiceNeedsGstreamer": "このボイスメッセージを再生できません: GStreamer の base プラグインがありません。gstreamer1.0-plugins-base をインストールしてください。"
+    "voiceNeedsGstreamer": "このボイスメッセージを再生できません: GStreamer の base プラグインがありません。gstreamer1.0-plugins-base をインストールしてください。",
+    "composer": {
+      "attach": "添付ファイルまたは書式",
+      "record": "ボイスメッセージを録音",
+      "send": "コメントを送信",
+      "cancelEdit": "編集をやめる",
+      "closeFormat": "書式を閉じる",
+      "discardRecording": "録音を破棄",
+      "sendVoice": "ボイスメッセージを送信"
+    }
   },
   "filePicker": {
     "images": "画像",
