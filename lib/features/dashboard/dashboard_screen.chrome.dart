@@ -138,6 +138,10 @@ class _CustomizeButton extends StatelessWidget {
           onTap: saving ? null : onPressed,
           borderRadius: BorderRadius.circular(12),
           child: AnimatedContainer(
+            // A new one when the layout flips: a width of 40 cannot tween into
+            // no width at all, and resizing a window across the breakpoint
+            // (or turning an iPad) asserted in the middle of the animation.
+            key: ValueKey(compact),
             duration: const Duration(milliseconds: 180),
             height: 40,
             width: compact ? 40 : null,
