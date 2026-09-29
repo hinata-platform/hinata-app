@@ -7,11 +7,13 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/access/project_permissions.dart';
 import '../../../core/blocs/app_config_bloc.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/blocs/auth_bloc.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/core_models.dart';
+import '../../../core/models/team_models.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
@@ -36,6 +38,7 @@ import 'template_section.dart';
 import 'time_section.dart';
 import 'workflow_section.dart';
 import '../../../core/repositories/project_repository.dart';
+import '../../../core/repositories/team_repository.dart';
 import '../../sprint/modals/glass_modal.dart'
     show showGlassDatePicker, showGlassErrorToast, showGlassToast;
 import '../project_copy_sheet.dart';
@@ -73,6 +76,11 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
 
   bool _loading = true;
   bool _saving = false;
+
+  /// Whether I lead this project. This page is also open to Team-Admins of a
+  /// team owning it; for them the git integration and the deletion are not
+  /// on it, because the server keeps both with the leads.
+  bool _isLead = false;
 
   /// True while the event date is being written. Its own flag, not [_saving]:
   /// it is not part of the settings draft — moving it moves deadlines, so it
@@ -124,21 +132,25 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
         context.read<ProjectRepository>().project(widget.projectId),
         context.read<UserRepository>().users(),
         context.read<ProjectRepository>().projectStateUsage(widget.projectId),
+        // One list call: the teams I am in, membership scoped on the server.
+        context.read<TeamRepository>().teams(),
       ]);
       final project = results[0] as Project;
       final users = results[1] as List<DirectoryUser>;
       final usage = results[2] as Map<String, int>;
-      // Settings are lead/admin-only. A member who deep-links here is bounced
-      // back to the project's issues (the server also rejects any save).
+      final teams = results[3] as List<Team>;
+      // Settings are for the leads and the Team-Admins of an owning team; the
+      // platform admin role opens nothing here. Anybody else who deep-links
+      // here is bounced back to the project's issues (the server also rejects
+      // any save).
       if (!mounted) return;
       final me = context.read<AuthBloc>().state.user;
-      final canManage =
-          me != null && (me.isAdmin || project.leadIds.contains(me.id));
-      if (!canManage) {
+      if (!canManageProject(project, me, teams)) {
         context.go('/issues?projectId=${widget.projectId}');
         return;
       }
       setState(() {
+        _isLead = isProjectLead(project, me);
         _saved = project;
         _draft = project;
         _allUsers = users;
@@ -546,8 +558,13 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
         // Only where the module exists. An instance with templates switched off
         // refuses this field, and sending it would turn every settings save
         // into an error over something nobody touched.
-        if (context.read<AppConfigBloc>().state.meta?.projectTemplates ?? false)
+        if (context.read<AppConfigBloc>().state.meta?.projectTemplates ??
+            false) ...{
           'template': d.template,
+          // Only when it changed: `deadlineBasis`, or `clearDeadlineBasis`
+          // to follow the organisation again.
+          ...deadlineBasisPatch(_saved?.deadlineBasis, d.deadlineBasis),
+        },
         if (_stateMigrations.isNotEmpty) 'stateMigrations': _stateMigrations,
       };
       final updated = await projectApi.updateProject(d.id, patch);
@@ -690,10 +707,10 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
         : null;
     // Only while project templates are on: without the module a project has no
     // marker, no event date and no way to be copied.
-    final templates =
-        context.select<AppConfigBloc, bool>(
-          (bloc) => bloc.state.meta?.projectTemplates ?? false,
-        )
+    final meta = context.select<AppConfigBloc, ServerMeta?>(
+      (bloc) => bloc.state.meta,
+    );
+    final templates = meta?.projectTemplates ?? false
         ? TemplateSection(
             isTemplate: draft.template,
             onTemplateChanged: (v) => _mutate((d) => d.copyWith(template: v)),
@@ -702,6 +719,10 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
             onPickEventDate: _pickEventDate,
             onClearEventDate: _clearEventDate,
             onCopy: _copyProject,
+            deadlineBasis: draft.deadlineBasis,
+            organisationDeadlineBasis: meta!.defaultDeadlineBasis,
+            onDeadlineBasisChanged: (basis) =>
+                _mutate((d) => d.copyWith(deadlineBasis: basis)),
           )
         : null;
     final archive = ArchiveSection(
@@ -775,6 +796,7 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
                 groups: projectSettingsGroups(
                   timeTracking: timeTracking != null,
                   templates: templates != null,
+                  lead: _isLead,
                 ),
                 card: (card) => switch (card) {
                   ProjectSettingsCard.general => general,

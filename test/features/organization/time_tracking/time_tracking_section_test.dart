@@ -7,8 +7,9 @@ import 'package:hinata/core/models/time_approval_models.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/core/widgets/hive_widgets.dart' show HiveSwitch;
+import 'package:hinata/features/admin/admin_cards.dart';
 import 'package:hinata/features/admin/policy_controls.dart';
-import 'package:hinata/features/admin/sections/admin_time_tracking_section.dart';
+import 'package:hinata/features/organization/time_tracking/time_tracking_section.dart';
 
 /// Two things in this section are not decoration.
 ///
@@ -72,7 +73,14 @@ void main() {
             child: SizedBox(
               width: width,
               child: SingleChildScrollView(
-                child: AdminTimeTrackingSection(settings: settings),
+                // The section edits the block it is handed in place; the
+                // tests read it back from the map around it.
+                child: OrgTimeTrackingSection(
+                  timeTracking:
+                      (settings['timeTracking'] ??= <String, dynamic>{})
+                          as Map<String, dynamic>,
+                  layout: (context, cards) => AdminCards(cards: cards),
+                ),
               ),
             ),
           ),

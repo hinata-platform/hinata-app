@@ -21,9 +21,14 @@ enum ProjectSettingsCard {
 /// mistake. The workflow and the git integration are wide: their rows carry a
 /// handle, a name, toggles and actions side by side. Members and labels are the
 /// team's vocabulary and stay together, archive and deletion close the page.
+///
+/// [lead] is false for a Team-Admin of an owning team who does not lead the
+/// project: the git integration and the deletion stay with the leads, so those
+/// cards are not on their page at all.
 List<GoldenGroup<ProjectSettingsCard>> projectSettingsGroups({
   required bool timeTracking,
   required bool templates,
+  bool lead = true,
 }) => [
   const GoldenGroup([ProjectSettingsCard.general], weight: 5.5, lead: true),
   // The project's date, its template marker and the copy. Short — three rows
@@ -35,11 +40,14 @@ List<GoldenGroup<ProjectSettingsCard>> projectSettingsGroups({
     ProjectSettingsCard.labels,
   ], weight: 7),
   const GoldenGroup([ProjectSettingsCard.workflow], weight: 6, wide: true),
-  const GoldenGroup([ProjectSettingsCard.git], weight: 9, wide: true),
+  if (lead) const GoldenGroup([ProjectSettingsCard.git], weight: 9, wide: true),
   if (timeTracking)
     const GoldenGroup([ProjectSettingsCard.timeTracking], weight: 6),
-  const GoldenGroup([
-    ProjectSettingsCard.archive,
-    ProjectSettingsCard.danger,
-  ], weight: 3.8),
+  if (lead)
+    const GoldenGroup([
+      ProjectSettingsCard.archive,
+      ProjectSettingsCard.danger,
+    ], weight: 3.8)
+  else
+    const GoldenGroup([ProjectSettingsCard.archive], weight: 1.6),
 ];

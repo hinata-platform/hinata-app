@@ -74,6 +74,9 @@ List<RepositoryProvider> domainRepositoryProviders(BuildContext source) => [
   RepositoryProvider<AdminRepository>.value(
     value: source.read<AdminRepository>(),
   ),
+  RepositoryProvider<OrgSettingsRepository>.value(
+    value: source.read<OrgSettingsRepository>(),
+  ),
   RepositoryProvider<TeamRepository>.value(
     value: source.read<TeamRepository>(),
   ),

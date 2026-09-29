@@ -170,11 +170,7 @@ class UserDrawerBody extends StatelessWidget {
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
-                children: [
-                  RoleBadge(u.role),
-                  StatusBadge(u),
-                  OriginTag(u.origin),
-                ],
+                children: [RoleBadges(u), StatusBadge(u), OriginTag(u.origin)],
               ),
             ],
           ),
@@ -189,6 +185,13 @@ class UserDrawerBody extends StatelessWidget {
                 const SizedBox(height: 18),
                 _expiredBanner(context, u),
               ],
+              const SizedBox(height: 22),
+              // The roles, each with one line on what it grants: the
+              // organisation role is a switch of its own, beside the platform
+              // role and independent of it (HIN-129).
+              _sectionLabel(context, context.t('admin.um.roles')),
+              const SizedBox(height: 12),
+              OrgAdminToggle(user: u, actions: actions),
               const SizedBox(height: 22),
               _sectionLabel(context, context.t('admin.um.manage')),
               const SizedBox(height: 12),
@@ -254,9 +257,14 @@ class UserDrawerBody extends StatelessWidget {
               children: [
                 Icon(ic, size: 13, color: AppColors.inkFaint),
                 const SizedBox(width: 5),
-                Text(
-                  k,
-                  style: TextStyle(fontSize: 11, color: AppColors.inkFaint),
+                // Flexible: a narrow drawer or a large text size would push a
+                // long label past the tile's edge.
+                Flexible(
+                  child: Text(
+                    k,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11, color: AppColors.inkFaint),
+                  ),
                 ),
               ],
             ),
@@ -559,6 +567,124 @@ class UserDrawerBody extends StatelessWidget {
       out.add(rows[i]);
     }
     return out;
+  }
+}
+
+/// The organisation role in the drawer: a switch with one line on what the role
+/// grants and what it does not.
+///
+/// Holds the value itself so the switch moves at once; it returns to what the
+/// server holds when the change is refused (the board shows the error toast).
+/// An invitation nobody accepted yet has no account to hand the role to.
+class OrgAdminToggle extends StatefulWidget {
+  const OrgAdminToggle({super.key, required this.user, required this.actions});
+
+  final AdminUser user;
+  final UserActions actions;
+
+  @override
+  State<OrgAdminToggle> createState() => _OrgAdminToggleState();
+}
+
+class _OrgAdminToggleState extends State<OrgAdminToggle> {
+  late bool _value = widget.user.orgAdmin;
+  bool _busy = false;
+
+  @override
+  void didUpdateWidget(OrgAdminToggle oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.user.orgAdmin != widget.user.orgAdmin) {
+      _value = widget.user.orgAdmin;
+    }
+  }
+
+  Future<void> _set(bool value) async {
+    setState(() {
+      _value = value;
+      _busy = true;
+    });
+    final ok = await widget.actions.setOrgAdmin([widget.user.id], value);
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      if (!ok) _value = !value;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final invited = widget.user.status == UserStatus.invited;
+    // Nobody hands this role to themselves; the server refuses it too.
+    final self = widget.user.id == widget.actions.currentUserId;
+    final title = context.t('admin.um.orgAdminTitle');
+    return MergeSemantics(
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          border: Border.all(color: AppColors.hairline),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                LucideIcons.building2,
+                size: 17,
+                color: AppColors.ink,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                  Text(
+                    context.t(
+                      invited
+                          ? 'admin.um.reasonPendingInvite'
+                          : self
+                          ? 'admin.um.reasonOwnOrgRole'
+                          : 'admin.um.orgAdminHint',
+                    ),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      height: 1.3,
+                      color: AppColors.inkSoft,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              height: 48,
+              child: Center(
+                child: HiveSwitch(
+                  value: _value,
+                  onChanged: invited || self || _busy ? null : _set,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

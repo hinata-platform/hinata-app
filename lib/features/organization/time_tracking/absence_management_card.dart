@@ -11,8 +11,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/hive_widgets.dart' show HiveAvatar;
 import '../../../core/widgets/person_picker.dart';
-import '../admin_form_helpers.dart';
-import '../policy_controls.dart';
+import '../../admin/admin_form_helpers.dart';
+import '../../admin/policy_controls.dart';
 
 /// Admin → Zeiterfassung → Abwesenheitsmanagement 2.0.
 ///
@@ -33,8 +33,8 @@ import '../policy_controls.dart';
 /// three belong to the extended time-tracking module. With that off this stays
 /// stored but cannot take effect, and the note says so rather than letting
 /// somebody wonder why nothing appeared.
-class AdminAbsenceManagementCard extends StatefulWidget {
-  const AdminAbsenceManagementCard({
+class OrgAbsenceManagementCard extends StatefulWidget {
+  const OrgAbsenceManagementCard({
     super.key,
     required this.enabled,
     required this.effective,
@@ -73,12 +73,11 @@ class AdminAbsenceManagementCard extends StatefulWidget {
   final ValueChanged<List<String>> onManagersChanged;
 
   @override
-  State<AdminAbsenceManagementCard> createState() =>
-      _AdminAbsenceManagementCardState();
+  State<OrgAbsenceManagementCard> createState() =>
+      _OrgAbsenceManagementCardState();
 }
 
-class _AdminAbsenceManagementCardState
-    extends State<AdminAbsenceManagementCard> {
+class _OrgAbsenceManagementCardState extends State<OrgAbsenceManagementCard> {
   /// Names for the ids we hold, so a chip reads as a person rather than as an
   /// object id. Filled from the directory once and topped up by the picker.
   final Map<String, DirectoryUser> _people = {};
@@ -91,7 +90,7 @@ class _AdminAbsenceManagementCardState
   }
 
   @override
-  void didUpdateWidget(AdminAbsenceManagementCard oldWidget) {
+  void didUpdateWidget(OrgAbsenceManagementCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.managers != widget.managers) _loadNames();
   }

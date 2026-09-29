@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/repositories/article_repository.dart';
 import '../../core/repositories/team_repository.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/i18n/i18n.dart';
@@ -15,10 +16,12 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
+import '../knowledge/team_pages_picker.dart';
 import 'team_modal_kit.dart';
 import 'team_widgets.dart';
 
-/// Add-members flow (2 steps: pick people → role & project access).
+/// Add-members flow (2 steps: pick people, then role, project access and
+/// knowledge access).
 Future<bool?> showAddMembersModal(
   BuildContext context, {
   required Team team,
@@ -26,11 +29,13 @@ Future<bool?> showAddMembersModal(
 }) {
   final repo = context.read<TeamRepository>();
   final userRepo = context.read<UserRepository>();
+  final articles = context.read<ArticleRepository>();
   return showTeamModal<bool>(
     context,
-    _AddMembersBody(
+    AddMembersBody(
       repo: repo,
       userRepo: userRepo,
+      articles: articles,
       team: team,
       projectsById: projectsById,
     ),
@@ -47,10 +52,12 @@ Future<bool?> showManageMemberModal(
   required bool isSelf,
 }) {
   final repo = context.read<TeamRepository>();
+  final articles = context.read<ArticleRepository>();
   return showTeamModal<bool>(
     context,
-    _ManageMemberBody(
+    ManageMemberBody(
       repo: repo,
+      articles: articles,
       team: team,
       membership: membership,
       user: user,
@@ -70,24 +77,83 @@ mixin _ProjectLookup {
   String? pAvatar(String id) => projectsById[id]?.avatarUrl;
 }
 
-class _AddMembersBody extends StatefulWidget {
-  const _AddMembersBody({
+/// Knowledge access being edited in a member modal: the scope, the picked
+/// pages, and the page picker behind "selected pages".
+mixin _KnowledgeDraft<W extends StatefulWidget> on State<W> {
+  ArticleRepository get articles;
+  Team get team;
+
+  AccessScope knowledgeScope = AccessScope.none;
+  List<String> knowledgePages = [];
+
+  KnowledgeAccess get knowledgeAccess => switch (knowledgeScope) {
+    AccessScope.all => const KnowledgeAccess.all(),
+    AccessScope.none => const KnowledgeAccess.none(),
+    AccessScope.some => KnowledgeAccess.some(knowledgePages),
+  };
+
+  /// "Selected pages" needs at least one page; Admins read all regardless.
+  bool knowledgeReady(TeamRole role) =>
+      role == TeamRole.admin ||
+      knowledgeScope != AccessScope.some ||
+      knowledgePages.isNotEmpty;
+
+  Future<void> pickKnowledgePages(Rect anchor) async {
+    final picked = await showTeamPagesPicker(
+      context,
+      anchorRect: anchor,
+      teamId: team.id,
+      selected: knowledgePages,
+      articles: articles,
+    );
+    if (picked != null && mounted) setState(() => knowledgePages = picked);
+  }
+
+  Widget knowledgeSection(BuildContext context, TeamRole role) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const SizedBox(height: 18),
+      FieldLabel(context.t('teams.knowledge.label')),
+      KnowledgeAccessPicker(
+        scope: knowledgeScope,
+        pickedCount: knowledgePages.length,
+        adminReadsAll: role == TeamRole.admin,
+        onScope: (s) => setState(() => knowledgeScope = s),
+        onPickPages: pickKnowledgePages,
+      ),
+    ],
+  );
+}
+
+/// The add-members modal's body. Public so tests can pump it without the
+/// modal route.
+class AddMembersBody extends StatefulWidget {
+  const AddMembersBody({
+    super.key,
     required this.repo,
     required this.userRepo,
+    required this.articles,
     required this.team,
     required this.projectsById,
   });
 
   final TeamRepository repo;
   final UserRepository userRepo;
+  final ArticleRepository articles;
   final Team team;
   final Map<String, Project> projectsById;
 
   @override
-  State<_AddMembersBody> createState() => _AddMembersBodyState();
+  State<AddMembersBody> createState() => _AddMembersBodyState();
 }
 
-class _AddMembersBodyState extends State<_AddMembersBody> with _ProjectLookup {
+class _AddMembersBodyState extends State<AddMembersBody>
+    with _ProjectLookup, _KnowledgeDraft<AddMembersBody> {
+  @override
+  ArticleRepository get articles => widget.articles;
+  @override
+  Team get team => widget.team;
+
   // Debounced server-side type-ahead over the directory (replaces draining the
   // whole org via users() and filtering in Dart).
   static const _debounceDelay = Duration(milliseconds: 250);
@@ -174,6 +240,7 @@ class _AddMembersBodyState extends State<_AddMembersBody> with _ProjectLookup {
         _selected.toList(),
         role: _role,
         access: access,
+        knowledge: knowledgeAccess,
       );
       if (mounted) Navigator.of(context).pop(true);
     } on ApiFailure catch (failure) {
@@ -188,7 +255,9 @@ class _AddMembersBodyState extends State<_AddMembersBody> with _ProjectLookup {
   Widget build(BuildContext context) {
     final stepTwo = _step == 2;
     final canContinue = _selected.isNotEmpty;
-    final canAdd = !(_scope == AccessScope.some && _picked.isEmpty);
+    final canAdd =
+        !(_scope == AccessScope.some && _picked.isEmpty) &&
+        knowledgeReady(_role);
     return ModalShell(
       icon: LucideIcons.userPlus,
       title: context.t('teams.addMembersTitle'),
@@ -332,13 +401,18 @@ class _AddMembersBodyState extends State<_AddMembersBody> with _ProjectLookup {
         projectColor: pColor,
         projectAvatar: pAvatar,
       ),
+      knowledgeSection(context, _role),
     ];
   }
 }
 
-class _ManageMemberBody extends StatefulWidget {
-  const _ManageMemberBody({
+/// The manage-member modal's body. Public so tests can pump it without the
+/// modal route.
+class ManageMemberBody extends StatefulWidget {
+  const ManageMemberBody({
+    super.key,
     required this.repo,
+    required this.articles,
     required this.team,
     required this.membership,
     required this.user,
@@ -347,6 +421,7 @@ class _ManageMemberBody extends StatefulWidget {
   });
 
   final TeamRepository repo;
+  final ArticleRepository articles;
   final Team team;
   final TeamMembership membership;
   final DirectoryUser user;
@@ -354,11 +429,23 @@ class _ManageMemberBody extends StatefulWidget {
   final bool isSelf;
 
   @override
-  State<_ManageMemberBody> createState() => _ManageMemberBodyState();
+  State<ManageMemberBody> createState() => _ManageMemberBodyState();
 }
 
-class _ManageMemberBodyState extends State<_ManageMemberBody>
-    with _ProjectLookup {
+class _ManageMemberBodyState extends State<ManageMemberBody>
+    with _ProjectLookup, _KnowledgeDraft<ManageMemberBody> {
+  @override
+  ArticleRepository get articles => widget.articles;
+  @override
+  Team get team => widget.team;
+
+  @override
+  void initState() {
+    super.initState();
+    knowledgeScope = widget.membership.knowledge.scope;
+    knowledgePages = widget.membership.knowledge.articleIds.toList();
+  }
+
   late TeamRole _role = widget.membership.role;
   late AccessScope _scope = widget.membership.access.scope;
   late final List<String> _picked = widget.membership.access.projectIds
@@ -399,6 +486,9 @@ class _ManageMemberBodyState extends State<_ManageMemberBody>
       widget.user.id,
       role: _role,
       access: access,
+      // An Admin reads every page anyway; keep what is stored so a later
+      // demotion lands on the access they had before.
+      knowledge: _role == TeamRole.admin ? null : knowledgeAccess,
     );
   });
 
@@ -456,6 +546,7 @@ class _ManageMemberBodyState extends State<_ManageMemberBody>
             projectColor: pColor,
             projectAvatar: pAvatar,
           ),
+          knowledgeSection(context, _role),
           if (_error != null) ...[
             const SizedBox(height: 14),
             Text(
@@ -474,7 +565,7 @@ class _ManageMemberBodyState extends State<_ManageMemberBody>
         leadingDanger: true,
         primaryLabel: context.t('common.save'),
         busy: _busy,
-        onPrimary: _save,
+        onPrimary: knowledgeReady(_role) ? _save : null,
       ),
     );
   }

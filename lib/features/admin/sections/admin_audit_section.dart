@@ -29,6 +29,17 @@ part 'admin_audit_section.filters.dart';
 part 'admin_audit_section.timeline.dart';
 part 'admin_audit_section.detail.dart';
 
+/// Reads one filtered page of an audit feed.
+typedef AuditLoader =
+    Future<AuditPage> Function({
+      String query,
+      AuditCategory? category,
+      AuditSeverity? severity,
+      String? outcome,
+      int page,
+      int perPage,
+    });
+
 /// Docked-toolbar height on compact: one row, tall enough for the search field
 /// the chips give way to. One and not two, because the blurred band above a
 /// page holds the app bar's title row and exactly one more.
@@ -44,12 +55,26 @@ const double _kAuditDockHeight = kGlassDockRow;
 /// Data comes from `GET /api/v1/admin/audit` (newest-first, server-paginated);
 /// entries are grouped under day headers and rendered as a vertical timeline
 /// with severity-tinted glyphs. Tapping a row opens a liquid-glass detail sheet.
+///
+/// The Organisation page shows the same timeline over its own feed: pass
+/// [load] and [titleKey] for that.
 class AdminAuditSection extends StatefulWidget {
-  const AdminAuditSection({super.key, this.onBack});
+  const AdminAuditSection({
+    super.key,
+    this.onBack,
+    this.load,
+    this.titleKey = 'admin.auditLog',
+  });
 
   /// Compact only: the shell back handler. When set, the section owns its own
   /// [PageChrome] so it can dock the filter bar into the glass app bar.
   final VoidCallback? onBack;
+
+  /// Reads one page of the feed. The admin feed when null.
+  final AuditLoader? load;
+
+  /// The title of the section's own [PageChrome] on compact.
+  final String titleKey;
 
   @override
   State<AdminAuditSection> createState() => _AdminAuditSectionState();
@@ -135,8 +160,8 @@ class _AdminAuditSectionState extends State<AdminAuditSection> {
     }
 
     try {
-      final repo = context.read<AdminRepository>();
-      final result = await repo.auditLog(
+      final load = widget.load ?? context.read<AdminRepository>().auditLog;
+      final result = await load(
         query: _query,
         category: _category,
         severity: _severity,
@@ -249,7 +274,7 @@ class _AdminAuditSectionState extends State<AdminAuditSection> {
     // PageChrome + rail, so the glass filter bar stays in-pane above the timeline.
     if (compact) {
       return PageChrome(
-        title: context.t('admin.auditLog'),
+        title: context.t(widget.titleKey),
         onBack: widget.onBack,
         // The filter bar applies the section gutter itself so its chip row can
         // scroll edge-to-edge; don't double-pad here.

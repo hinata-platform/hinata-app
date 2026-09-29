@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/repositories/user_repository.dart';
 import 'package:hinata/features/admin/policy_controls.dart';
-import 'package:hinata/features/admin/sections/admin_absence_management_card.dart';
+import 'package:hinata/features/organization/time_tracking/absence_management_card.dart';
 
 /// The switch that brings absence management into existence, and the circle of
 /// people who keep it.
@@ -33,7 +33,7 @@ void main() {
           child: SizedBox(
             width: 900,
             child: SingleChildScrollView(
-              child: AdminAbsenceManagementCard(
+              child: OrgAbsenceManagementCard(
                 enabled: enabled,
                 effective: effective,
                 advancedOn: advancedOn,

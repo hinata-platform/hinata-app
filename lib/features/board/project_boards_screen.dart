@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
+import '../../core/access/project_permissions.dart';
 import '../../core/api/api_client.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
@@ -66,21 +67,14 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen>
       final boards = results[0] as List<AgileBoard>;
       final project = results[1] as Project;
       final teams = results[2] as List<Team>;
-      // Project/team leads (and platform admins) may manage every board of this
-      // project; the board owner is handled per-card.
-      final canManageProject =
-          me != null &&
-          (me.isAdmin ||
-              project.leadIds.contains(me.id) ||
-              teams.any(
-                (t) =>
-                    t.projectIds.contains(widget.projectId) &&
-                    (t.membershipOf(me.id)?.isAdmin ?? false),
-              ));
+      // Project leads and Team-Admins of an owning team may manage every
+      // board of this project; the board owner is handled per-card. The
+      // platform admin role adds nothing.
+      final mayManage = canManageProject(project, me, teams);
       return (
         projectName: project.name,
         boards: boards,
-        canManageProject: canManageProject,
+        canManageProject: mayManage,
       );
     });
     _boardSub = BoardEvents.instance.changes.listen((_) => markStale());

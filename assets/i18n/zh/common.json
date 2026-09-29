@@ -126,6 +126,14 @@
     },
     "avatar": {
       "tooLarge": "图片太大。最多 {{max}} MB。"
+    },
+    "user": {
+      "cannotGrantOwnOrgRole": "你不能将自己设为组织管理员。请让另一位管理员操作。",
+      "cannotRemoveLastOrgAdmin": "这是最后一位组织管理员。请先指定其他人为组织管理员，以便工时表和缺勤仍有人处理。",
+      "resetAfterEmailChange": "登录地址在不到一天前被管理员更改。之后才能再次重置密码。"
+    },
+    "article": {
+      "moveNotAllowed": "只有该页面所在位置的负责人才能移动它：项目负责人、团队管理员或私有页面的作者。"
     }
   },
   "notFound": {
@@ -846,6 +854,27 @@
       "workingSuffix": "（工作日）",
       "sentenceBefore": "项目日期前 {{amount}}{{basis}}",
       "sentenceAfter": "项目日期后 {{amount}}{{basis}}"
+    },
+    "bulkDeadline": {
+      "action": "设置截止日期",
+      "title": "为 {{count}} 个事项设置截止日期",
+      "title_plural": "为 {{count}} 个事项设置截止日期",
+      "done": "已为 {{count}} 个事项设置截止日期",
+      "done_plural": "已为 {{count}} 个事项设置截止日期",
+      "cleared": "已移除 {{count}} 个事项的截止日期",
+      "cleared_plural": "已移除 {{count}} 个事项的截止日期",
+      "tooMany": "一次最多可更改 {{max}} 个事项。请取消选择一些后再试。"
+    },
+    "selectAll": "全选",
+    "selectAllCapped": "已选择前 {{max}} 个。一次更改最多只能这么多。",
+    "selection": {
+      "enter": "多选",
+      "exit": "结束选择",
+      "select": "选择"
+    },
+    "multiSelectHint": {
+      "text": "提示：长按一个事项即可多选并一起编辑，例如为它们设置同一个截止日期。",
+      "gotIt": "知道了"
     }
   },
   "type": {
@@ -1001,7 +1030,7 @@
       "none": "无标签",
       "search": "搜索标签",
       "create": "创建“{{name}}”",
-      "noneCurated": "还没有标签。在此服务器上只有管理员可以创建。"
+      "noneCurated": "还没有标签。在此服务器上只有组织管理员可以创建。"
     },
     "policy": {
       "locked": "该日期的记录已锁定，无法再修改",
@@ -1041,19 +1070,19 @@
         "approval": "你已提交 {{from}} – {{to}}，因此这些记录已固定。",
         "invoice": "一张已开出的发票引用了这条记录。",
         "unknown": "这条记录已关闭，无法修改。",
-        "maxDaysBack": "{{date}} 之前的日期需要管理员开启后才能记录。"
+        "maxDaysBack": "{{date}}之前的日期需由组织管理员开放后才能记录。"
       },
       "holder": {
-        "lockDate": "管理员可以为你开启这一天，或重新开启已结账期间中的某段时间。",
-        "approval": "项目负责人或管理员可以重新开启该周期。",
+        "lockDate": "组织管理员可以为你开放这一天，或重新开放锁定期内的一段时间。",
+        "approval": "项目负责人或组织管理员可以重新开启该周期。",
         "invoice": "开票的人用贷记通知单来冲抵。",
-        "maxDaysBack": "管理员可以为你开启更早的日期。"
+        "maxDaysBack": "组织管理员可以为你开放更早的日期。"
       },
       "remedy": {
-        "lockDate": "申请更正。你的原因会被记录并送达管理员。",
+        "lockDate": "请申请更正。你的理由会被记录并送达组织管理员。",
         "approval": "申请更正，或请人重新开启该周期。",
         "invoice": "发票永不改写；由贷记通知单冲抵。",
-        "maxDaysBack": "申请为你开启这一天。你的原因会被记录并发送给管理员。"
+        "maxDaysBack": "请申请为你开放这一天。你的理由会被记录并发送给组织管理员。"
       },
       "chip": {
         "lockDate": "已结账",
@@ -1070,7 +1099,7 @@
       "requestDays": "申请开启这一天",
       "requestDaysTitle": "申请开启更早的日期",
       "requestDaysHint": "为什么现在需要记录这些日期？",
-      "requestDaysSent": "你的申请已发送给管理员。",
+      "requestDaysSent": "你的请求已发送给组织管理员。",
       "requestOlderDays": "申请更早的日期",
       "pickDaysTitle": "你需要哪些日期？"
     },
@@ -1144,7 +1173,7 @@
       "acknowledgeFailed": "无法保存，请重试。",
       "row": {
         "self": "你可以看到自己的全部记录。",
-        "admins": "此实例的管理员可以查看和修改所有记录。",
+        "admins": "组织管理员可以查看和修改所有记录。",
         "members": "你所在项目的其他成员能在事项和报表中看到记录了多少工时，但看不到是谁记录的，也看不到说明内容。",
         "leadsSee": "你所在项目的负责人可以看到你的单条记录、记录历史，以及你在工时表中的行，在报表和导出中也可以看到，并且可以修改你的记录。",
         "leadsTotals": "你所在项目的负责人只能看到项目合计，看不到谁记录了什么。",
@@ -1164,8 +1193,8 @@
         "entryKept": "记录不会被自动删除。",
         "descriptionRetention": "账户被删除后，其记录的说明和工时表上的备注会在 {{count}} 个月后清空。",
         "descriptionRetention_plural": "账户被删除后，其记录的说明和工时表上的备注会在 {{count}} 个月后清空。",
-        "maxDaysBack": "最多可以追溯记录 {{count}} 天。更早的日期可申请由管理员开启。",
-        "maxDaysBack_plural": "最多可以追溯记录 {{count}} 天。更早的日期可申请由管理员开启。"
+        "maxDaysBack": "你最多可以向前记录{{count}}天。更早的日期由组织管理员按申请开放。",
+        "maxDaysBack_plural": "你最多可以向前记录{{count}}天。更早的日期由组织管理员按申请开放。"
       },
       "loadFailed": "无法加载说明。请检查网络连接后重试。",
       "absence": {
@@ -1177,8 +1206,8 @@
         },
         "leadsSee": "你参与项目的负责人能看到你缺勤的类型和时段，看不到备注，病假只显示为缺勤。",
         "leadsDoNot": "你项目的负责人看不到你的缺勤。",
-        "keepersNamed": "只有指定的缺勤管理员和管理员能看到病假日为病假。",
-        "keepersAdmins": "只有管理员能看到病假日为病假。",
+        "keepersNamed": "只有指定的缺勤管理人能看到病假日为病假。",
+        "keepersAdmins": "只有组织管理员能看到病假日为病假。",
         "band": "你项目的负责人和团队管理员能看到其小组剩余的容量，以至少三人的总和显示。你已批准的天数和计划工时计入其中，但不显示你的名字。",
         "report": "在“缺勤与余额”报告中你只能看到自己的数字，缺勤管理员可看到所有人。",
         "reportLeads": "你所在项目的负责人在那里只能看到至少三人的合计，不含病假。",
@@ -1394,7 +1423,7 @@
         "difference": "差值",
         "away": "休假或缺勤 {{duration}}",
         "ledOnly": "已记录仅统计你负责的项目上的工时。",
-        "forbidden": "只有管理员和项目负责人可以查看工作量报表。",
+        "forbidden": "只有组织管理员和项目负责人可以查看工作负载报告。",
         "truncated": "该组超出单个报表的读取上限，仅显示前 1000 人。",
         "group": "分组",
         "myProjects": "我的项目",
@@ -1576,7 +1605,7 @@
     "approver": {
       "teamLead": "团队负责人",
       "named": "指定人员",
-      "admin": "管理员",
+      "admin": "组织管理员",
       "auto": "自动"
     },
     "visibility": {
@@ -2092,7 +2121,16 @@
       "pending": "{{count}} 个截止日期将等待新日期，因为项目的日期被移除。",
       "confirm": "调整"
     },
-    "searchHint": "搜索项目"
+    "searchHint": "搜索项目",
+    "deadlineBasis": {
+      "label": "期限计算方式",
+      "calendar": "日历日",
+      "working": "工作日",
+      "orgDefault": "你所在组织的默认设置是{{basis}}。",
+      "followsOrg": "跟随组织的默认设置（{{basis}}）。",
+      "hint": "新期限从此设置开始。现有期限保持不变。",
+      "useOrgDefault": "使用组织的默认设置"
+    }
   },
   "board": {
     "title": "敏捷看板",
@@ -2341,7 +2379,23 @@
     "saved": "更改已保存",
     "deleted": "文章已删除",
     "articleCount": "{{count}} 篇文章",
-    "saveWouldBlank": "现在保存会把文章替换成一个空白页面。请先添加内容。"
+    "saveWouldBlank": "现在保存会把文章替换成一个空白页面。请先添加内容。",
+    "place": {
+      "label": "可见范围",
+      "private": "仅自己",
+      "team": "团队",
+      "project": "项目",
+      "followsParent": "与上级页面相同",
+      "privateAuthorOnly": "只有作者可以将页面设为私有。",
+      "pickProject": "选择项目",
+      "otherProject": "{{name}}（选择其他项目）",
+      "saved": "可见范围已更改，子页面也一并移动。"
+    },
+    "emptyTitle": "暂时还没有你可见的页面",
+    "emptyMessage": "页面通过项目和团队共享。新页面在放入项目或团队之前一直是私有的。",
+    "tree": {
+      "truncated": "页面太多，一个列表放不下，因此这里没有显示全部页面。子页面可能因此显示在顶层，尽管其上级页面存在。"
+    }
   },
   "md": {
     "heading1": "标题 1",
@@ -2500,7 +2554,8 @@
     "about": "关于",
     "appVersion": "应用版本",
     "serverVersion": "服务器版本",
-    "organization": "组织"
+    "organization": "组织",
+    "organizationDesc": "整个组织的时间记录、缺勤、节假日和截止日期。"
   },
   "admin": {
     "title": "管理区",
@@ -2604,7 +2659,6 @@
     "gitTokenSecretDefault": "当前使用内置默认密钥——正式上线前请设置自己的密钥。",
     "security": "安全",
     "timeTracking": {
-      "title": "工时",
       "hint": "扩展工时功能默认关闭。下面每项策略都可以不设值，这时采用本服务器环境中的值。凡是让一个人的工时对他人可见的开关，默认都是关闭的，并附有共同决定权提示。",
       "codetermination": "受共同决定权约束：§ 87 第 1 款第 6 项 BetrVG（公共部门适用 LPVG）。启用前请与职工委员会或人事代表委员会达成一致。只要该功能可以用于监控，就已属于这种情况。",
       "envDefault": "环境默认值",
@@ -2614,7 +2668,7 @@
       "moduleHint": "扩展工时模块的总开关。",
       "advancedTitle": "扩展工时",
       "advancedHint": "计时器、策略、审批、报表与计费。关闭 → 原有工时表保持不变，模块的接口对各客户端不存在。无需重启即可生效。",
-      "advancedFromSection": "在“管理 → 工时”中与相关策略一起设置。",
+      "advancedFromSection": "在组织页面中与相关策略一起设置。需要组织管理员角色。",
       "captureTitle": "记录",
       "captureHint": "一条记录必须包含什么，以及从何时起不再可改。",
       "requiredProjectTitle": "必须填写项目",
@@ -2645,7 +2699,7 @@
         "m60": "60 分钟"
       },
       "limitTagAccessTitle": "限制标签",
-      "limitTagAccessHint": "只有管理员可以新建标签，其他人从现有标签中选择。",
+      "limitTagAccessHint": "只有组织管理员可以新建标签，其他人从现有标签中选择。",
       "defaultBillableTitle": "默认可计费",
       "defaultBillableHint": "新记录一开始就标记为可计费。",
       "icsImportTitle": "日历导入",
@@ -2655,7 +2709,7 @@
       "leadsSeeMemberEntriesTitle": "负责人查看成员记录",
       "leadsSeeMemberEntriesHint": "关闭：负责人只能看到项目合计。在事项上，他们既看不到姓名也看不到说明，也不会修改他人的记录。开启：负责人可以看到其项目成员的单条记录、记录历史和工时表中的行，并可以修改这些记录。",
       "approvalsTitle": "工时表审批",
-      "approvalsHint": "各人提交某一周期的工时表；负责人或管理员批准或退回。需要先开启“负责人查看成员记录”。",
+      "approvalsHint": "各人提交某一周期的工时表；负责人或组织管理员批准或退回。需要先开启“负责人查看成员记录”。",
       "approvalPeriodLabel": "审批周期",
       "approvalPeriodHint": "工时表多久提交一次。“自由选择”把周期交给本人决定。",
       "period": {
@@ -2696,7 +2750,7 @@
       "billingTitle": "计费",
       "billingHint": "由记录工时得出的费率、成本与发票。",
       "billingEnabledTitle": "计费",
-      "billingEnabledHint": "费率、人工成本、计费与盈利报表、发票。对负责人和管理员可见。",
+      "billingEnabledHint": "费率、人工成本、计费与盈利报表、发票。对负责人和组织管理员可见。",
       "currencyLabel": "货币",
       "currencyHint": "三位 ISO 代码，例如 EUR。",
       "privacyTitle": "隐私与保留",
@@ -2720,7 +2774,7 @@
       "tagDeleteTitle": "删除标签？",
       "tagDeleteMessage": "将从 {{count}} 条记录中移除“{{name}}”。记录本身保留。",
       "tagDeleteMessage_plural": "将从 {{count}} 条记录中移除“{{name}}”。记录本身保留。",
-      "lockBeforeEveryone": "锁定对所有人生效，管理员也不例外。解除锁定是修改已结算期间的留痕方式。",
+      "lockBeforeEveryone": "锁定对所有人生效，组织管理员也不例外。解除锁定是修改已结算期间的留痕方式。",
       "approvalsNeedVisibility": "批准就意味着读取某个人的记录。请同时开启“负责人查看成员记录”，否则审批人只能看到一个没有内容的合计。",
       "periodPreviewTitle": "接下来的周期",
       "periodPreviewHint": "更改节奏只影响将来的提交。已提交的周期保留它们当时的日期。",
@@ -2738,7 +2792,7 @@
       "retentionLegal": "在这里设置期限之前，不会自动删除任何内容。§ 16 (2) ArbZG 和 § 17 MiLoG 要求工作时间记录保存两年，因此 24 个月是常见的选择。此后适用存储限制原则（GDPR 第 5 条）。删除由每晚运行的任务完成，每次运行都会记入审计日志。",
       "privacyNoticePreview": "预览",
       "maxDaysBackLabel": "最多追溯记录",
-      "maxDaysBackHint": "最多可以往前记录多少天的工时。更早的日期会被拒绝，本人可以请管理员为其开启。留空表示 365。",
+      "maxDaysBackHint": "最多可以往前记录多少天的工时。更早的日期会被拒绝，本人可以请组织管理员为其开启。留空表示 365。",
       "lateEntryHintDaysLabel": "延迟录入提示：超过",
       "lateEntryHintDaysHint": "为工作日之后超过这么多天才录入的记录加上标记，只有本人能看到。它从不阻止任何操作，也不会上报。填 0 表示关闭，留空则使用服务器默认值。",
       "correctionsTitle": "更正申请",
@@ -2780,8 +2834,8 @@
       "needsAdvanced": "仅在扩展工时记录开启时生效：此处计算的每一天都来自工作模式、节假日日历以及由此得出的产能。开关会保持您设置的状态。",
       "codetermination": "须共同决定：§ 87 Abs. 1 Nr. 5 BetrVG —— 休假的一般原则、休假计划，以及发生争议时的时间安排（公共部门适用 LPVG）。启用前请与职工委员会达成一致。",
       "keepersTitle": "由谁管理缺勤",
-      "keepersHint": "这些人为所有人管理缺勤类型、额度与余额，并能看到病假的真实类型。管理员始终可以。",
-      "keepersEmpty": "未指定任何人：由管理员管理缺勤。",
+      "keepersHint": "这些人为所有人管理缺勤类型、额度和余额，并能看到病假日为病假日。组织管理员也可以管理缺勤，但一旦在此指定了人员，就不再能看到病假。",
+      "keepersEmpty": "未指定任何人：由组织管理员管理缺勤，并能看到病假日为病假。",
       "keepersAdd": "添加人员",
       "calendarTitle": "团队缺勤日历",
       "calendarHint": "同事能否在团队日历中看到彼此的缺勤。默认关闭；每种缺勤类型都可以进一步限制。",
@@ -2918,7 +2972,7 @@
       "revokeAdminRights": "撤销管理员权限",
       "revokeAdminRightsSub": "恢复为普通用户角色",
       "promoteToAdmin": "提升为管理员",
-      "promoteToAdminSub": "授予完整的平台管理权限",
+      "promoteToAdminSub": "管理平台：用户、登录和集成。看不到自己未加入的团队和项目的内容。",
       "passwordManagedByIdp": "密码由 IdP 管理",
       "passwordManagedByIdpSub": "该用户的凭据由身份提供方控制",
       "sendPasswordResetSub": "向 {{email}} 发送安全的重置链接",
@@ -2956,7 +3010,7 @@
       "resetSubMany": "向 {{n}} 名用户发送密码重置链接",
       "sendReset": "发送重置链接",
       "deleteSub": "此操作无法撤销",
-      "deleteWarn": "这些账户及其成员关系将被永久移除。其创建的事项会转交给一个“前用户”。",
+      "deleteWarn": "这些账户及其成员关系将被永久移除。其创建的事项会转交给一个“前用户”。其私有知识库页面会随账户一同删除；重要页面可先移到项目或团队中。",
       "deleteTypeHint": "请输入 DELETE 以确认。",
       "fieldName": "姓名",
       "fieldTitle": "职位",
@@ -2975,7 +3029,18 @@
       "toastProfileUpdated": "资料已更新",
       "statusPending": "待审批",
       "approve": "批准",
-      "approved": "注册已批准。"
+      "approved": "注册已批准。",
+      "roles": "角色",
+      "orgAdminBadge": "组织管理员",
+      "orgAdminTitle": "组织管理员",
+      "orgAdminHint": "可查看所有人的工作时间、工时表、缺勤和工时记录，并管理组织的时间规则、节假日和结算。报表和审批中只显示其所在项目的事项标题、键和描述。只有在未指定缺勤管理人时才能看到病假，否则仅在其本人被指定时可见。无法进入管理区。",
+      "makeOrgAdmin": "设为组织管理员",
+      "revokeOrgAdmin": "撤销组织管理员",
+      "toastOrgAdminGranted": "已授予组织管理员角色",
+      "toastOrgAdminRevoked": "已撤销组织管理员角色",
+      "orgAdminConfirmOne": "{{name}} 之后将能看到所有人的工作时间、工时表、缺勤和工时记录。只有在未指定缺勤管理人时才能看到病假，否则仅在 {{name}} 被指定时可见。事项标题和描述仅来自 {{name}} 所在的项目。",
+      "orgAdminConfirmMany": "{{names}} 之后将能看到所有人的工作时间、工时表、缺勤和工时记录。只有在未指定缺勤管理人时才能看到病假，否则仅被指定者可见。事项标题和描述仅来自其所在的项目。",
+      "reasonOwnOrgRole": "此角色需由管理团队中的其他人授予你。"
     },
     "iosStoreUrl": "iOS App Store URL",
     "androidStoreUrl": "Android Play Store URL",
@@ -3256,7 +3321,9 @@
       "TIME_OFF_REQUEST_CANCELLED": "请假已取消",
       "TIME_OFF_SICK_REPORTED": "已报备病假",
       "PROJECT_TEMPLATES_POLICY_CHANGED": "已切换项目模板",
-      "PROJECT_SCHEDULE_SHIFTED": "已调整项目日期"
+      "PROJECT_SCHEDULE_SHIFTED": "已调整项目日期",
+      "USER_EMAIL_CHANGED": "管理员更改了电子邮件",
+      "ARTICLE_MOVED": "页面已移动"
     },
     "meta": {
       "oldRole": "原角色",
@@ -3486,7 +3553,8 @@
       "removedMember": "移除了",
       "attachedProject": "关联了",
       "createdProject": "创建了",
-      "detachedProject": "移除了"
+      "detachedProject": "移除了",
+      "knowledgeChanged": "更改了页面访问权限："
     },
     "membersSummary": "{{members}} 名成员 · {{admins}} 名管理员",
     "you": "你",
@@ -3495,16 +3563,42 @@
     "detachTitle": "移除项目？",
     "detachConfirm": "要把 {{name}} 从该团队中移除吗？成员将失去通过该团队获得的访问权限。",
     "adminsOnly": "仅限管理员",
-    "adminsOnlyHint": "只有团队管理员和平台管理员才能更改团队设置。",
+    "adminsOnlyHint": "只有团队管理员才能更改团队设置。",
     "identity": "团队标识",
     "rolesPermissions": "角色与权限",
-    "permAdmin": "对该团队的完全控制权——成员、项目、设置。权限等同于平台管理员，但仅限于 {{name}}。",
+    "permAdmin": "对 {{name}} 的完全控制权：成员、项目和设置。",
     "permMember": "可在被授予的项目中工作，不能更改团队成员或设置。",
     "dangerZone": "危险操作",
     "deleteThis": "删除该团队",
     "deleteThisHint": "移除该团队及其全部成员关系。项目仍保留在工作区中。",
     "keyTaken": "该团队键已被占用。",
-    "searchHint": "搜索团队"
+    "searchHint": "搜索团队",
+    "knowledge": {
+      "label": "知识库",
+      "adminReadsAll": "团队管理员本来就能阅读该团队的所有页面。",
+      "none": "无",
+      "noneHint": "团队页面对其保持关闭",
+      "all": "团队的所有页面",
+      "allHint": "包括之后新增的页面",
+      "some": "选定的页面",
+      "someHint": "页面包含其下的所有内容",
+      "choosePages": "选择页面",
+      "pagesPicked": "已选 {{count}} 个页面",
+      "pagesPicked_plural": "已选 {{count}} 个页面",
+      "chip": "知识库：{{value}}",
+      "chipAll": "全部",
+      "chipSome": "{{count}} 个页面",
+      "chipSome_plural": "{{count}} 个页面",
+      "chipNone": "无",
+      "pickerNote": "页面包含其下的所有内容。请选择合适的最上层页面。",
+      "searchPages": "搜索页面",
+      "noPages": "该团队还没有页面。",
+      "noPageMatches": "没有匹配的页面。",
+      "limitReached": "最多可选择 {{max}} 个页面。",
+      "apply": "应用",
+      "includedVia": "已通过 {{title}} 包含",
+      "truncated": "此列表无法显示全部页面。请通过搜索查找其余页面。"
+    }
   },
   "projectSettings": {
     "avatar": {
@@ -3734,7 +3828,15 @@
           "desc": "关于你的计时器和工时的通知"
         }
       },
-      "pushUnsupported": "此处没有推送服务，该设置仍对你的手机和其他设备生效"
+      "pushUnsupported": "此处没有推送服务，该设置仍对你的手机和其他设备生效",
+      "days": {
+        "title": "通知日",
+        "hint": "其他日子不会收到邮件或推送通知。应用内的铃铛仍会显示全部内容。安全提醒和重要通知（例如即将过期的假期）始终会送达。",
+        "defaultLine": "默认：工作日（{{days}}）",
+        "range": "{{from}}至{{to}}",
+        "useDefault": "使用默认",
+        "lastDay": "至少要保留一天。要停止所有通知，请关闭上方的通道。"
+      }
     },
     "access": {
       "title": "访问权限",
@@ -4196,6 +4298,24 @@
     },
     "focus": {
       "leave": "退出专注模式"
+    }
+  },
+  "org": {
+    "title": "组织",
+    "subtitle": "这些设置适用于整个组织：时间记录、缺勤、节假日、结算和截止日期。组织管理员可查看所有人的工作时间、工时表、缺勤和工时记录，但事项标题和描述仅来自其所在的项目。只有在未指定缺勤管理人时才能看到病假，否则仅在其本人被指定时可见。",
+    "deadlines": {
+      "title": "截止日期",
+      "hint": "项目未自行设定时，新的相对截止日期按什么计算。",
+      "followsPlatform": "使用平台默认值：{{basis}}。",
+      "followsPlatformUnknown": "使用平台默认值。",
+      "ownChoice": "你的组织按{{basis}}计算。",
+      "existingStay": "已有的截止日期保持不变。",
+      "usePlatform": "使用平台默认值"
+    },
+    "audit": {
+      "title": "日志",
+      "hint": "时间记录、缺勤和工时表中发生了什么，以及由谁操作。",
+      "open": "打开日志"
     }
   }
 }

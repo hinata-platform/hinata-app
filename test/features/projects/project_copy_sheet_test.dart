@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/api/api_client.dart';
+import 'package:hinata/core/blocs/app_config_bloc.dart';
+import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/project_template_models.dart';
 import 'package:hinata/core/models/work_models.dart';
+import 'package:hinata/core/repositories/meta_repository.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
+import 'package:hinata/core/storage/app_storage.dart';
+import 'package:hinata/core/widgets/glass_switch_chip.dart';
 import 'package:hinata/features/projects/project_copy_sheet.dart';
 
 /// The copy sheet: what it shows, what it sends, and what it does with a
@@ -22,22 +27,29 @@ void main() {
 
   setUp(() => repo = _FakeProjectRepository());
 
-  Project source({bool template = false, DateTime? eventDate}) => Project(
+  Project source({
+    bool template = false,
+    DateTime? eventDate,
+    RelativeDateBasis? deadlineBasis,
+  }) => Project(
     id: 'p1',
     key: 'BFQ',
     name: 'Beers 4 Queers',
     template: template,
     eventDate: eventDate,
+    deadlineBasis: deadlineBasis,
   );
 
+  /// [config] null hosts the sheet without any [AppConfigBloc], the way the
+  /// older cases here do: the sheet then offers no deadline basis.
   Widget host({
     required Project project,
     ProjectCopyMode mode = ProjectCopyMode.copy,
     void Function(ProjectCopyResult?)? onResult,
     double width = 900,
-  }) => MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: RepositoryProvider<ProjectRepository>.value(
+    AppConfigBloc? config,
+  }) {
+    final sheet = RepositoryProvider<ProjectRepository>.value(
       value: repo,
       child: Builder(
         builder: (context) => Scaffold(
@@ -59,8 +71,14 @@ void main() {
           ),
         ),
       ),
-    ),
-  );
+    );
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: config == null
+          ? sheet
+          : BlocProvider<AppConfigBloc>.value(value: config, child: sheet),
+    );
+  }
 
   Future<void> open(WidgetTester tester) async {
     await tester.tap(find.text('open'));
@@ -133,10 +151,7 @@ void main() {
   ) async {
     repo.scope = const ProjectCopyScope(issues: 8, suggestedKey: 'TPL2');
     await tester.pumpWidget(
-      host(
-        project: source(template: true),
-        mode: ProjectCopyMode.instantiate,
-      ),
+      host(project: source(template: true), mode: ProjectCopyMode.instantiate),
     );
     await open(tester);
 
@@ -206,6 +221,100 @@ void main() {
     });
   }
 
+  group('deadline basis', () {
+    testWidgets('is neither shown nor sent while templates are off', (
+      tester,
+    ) async {
+      repo.scope = const ProjectCopyScope(issues: 4, suggestedKey: 'BFQ2');
+      await tester.pumpWidget(
+        host(
+          project: source(),
+          config: _FakeAppConfig(templates: false, basis: 'WORKING'),
+        ),
+      );
+      await open(tester);
+
+      expect(find.text('projects.deadlineBasis.label'), findsNothing);
+      await tester.tap(find.text('projects.copy.confirm'));
+      await tester.pumpAndSettle();
+      expect(repo.copies.single.deadlineBasis, isNull);
+    });
+
+    testWidgets('shows the source\'s effective basis and the org default', (
+      tester,
+    ) async {
+      repo.scope = const ProjectCopyScope(issues: 4, suggestedKey: 'BFQ2');
+      await tester.pumpWidget(
+        host(
+          project: source(),
+          config: _FakeAppConfig(templates: true, basis: 'WORKING'),
+        ),
+      );
+      await open(tester);
+
+      expect(find.text('projects.deadlineBasis.label'), findsOneWidget);
+      expect(find.text('projects.deadlineBasis.orgDefault'), findsOneWidget);
+      // The source follows the organisation, so working days are on and the
+      // chip for them is the inert one.
+      final working = tester.widget<GlassSwitchChip>(
+        find.widgetWithText(GlassSwitchChip, 'projects.deadlineBasis.working'),
+      );
+      expect(working.active, isTrue);
+
+      // Untouched, nothing is sent: the copy keeps the source's own setting,
+      // which here is "follow the organisation".
+      await tester.tap(find.text('projects.copy.confirm'));
+      await tester.pumpAndSettle();
+      expect(repo.copies.single.deadlineBasis, isNull);
+    });
+
+    testWidgets('a picked basis is sent', (tester) async {
+      repo.scope = const ProjectCopyScope(issues: 4, suggestedKey: 'BFQ2');
+      await tester.pumpWidget(
+        host(
+          project: source(),
+          config: _FakeAppConfig(templates: true, basis: 'CALENDAR'),
+        ),
+      );
+      await open(tester);
+
+      await tester.ensureVisible(find.text('projects.deadlineBasis.working'));
+      await tester.tap(find.text('projects.deadlineBasis.working'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('projects.copy.confirm'));
+      await tester.pumpAndSettle();
+
+      expect(repo.copies.single.deadlineBasis, RelativeDateBasis.working);
+    });
+
+    testWidgets('instantiating sends the picked basis too', (tester) async {
+      repo.scope = const ProjectCopyScope(issues: 8, suggestedKey: 'TPL2');
+      await tester.pumpWidget(
+        host(
+          project: source(
+            template: true,
+            deadlineBasis: RelativeDateBasis.working,
+          ),
+          mode: ProjectCopyMode.instantiate,
+          config: _FakeAppConfig(templates: true, basis: 'CALENDAR'),
+        ),
+      );
+      await open(tester);
+
+      await tester.enterText(find.byType(TextField).first, 'Beers SoSe 27');
+      await tester.ensureVisible(find.text('projects.deadlineBasis.calendar'));
+      await tester.tap(find.text('projects.deadlineBasis.calendar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('projects.copy.create'));
+      await tester.pumpAndSettle();
+
+      expect(
+        repo.instantiations.single.deadlineBasis,
+        RelativeDateBasis.calendar,
+      );
+    });
+  });
+
   testWidgets('a template is the same copy with one flag set', (tester) async {
     // The way in from the Templates tab. The project it is made from keeps
     // running — that is the whole difference from the switch in its settings,
@@ -236,9 +345,15 @@ typedef _CopyCall = ({
   bool includeTimeSettings,
   bool includeBoard,
   bool asTemplate,
+  RelativeDateBasis? deadlineBasis,
 });
 
-typedef _InstantiateCall = ({String name, String? key, DateTime? eventDate});
+typedef _InstantiateCall = ({
+  String name,
+  String? key,
+  DateTime? eventDate,
+  RelativeDateBasis? deadlineBasis,
+});
 
 class _FakeProjectRepository implements ProjectRepository {
   ProjectCopyScope scope = const ProjectCopyScope();
@@ -264,6 +379,7 @@ class _FakeProjectRepository implements ProjectRepository {
     bool includeTimeSettings = true,
     bool includeBoard = false,
     bool asTemplate = false,
+    RelativeDateBasis? deadlineBasis,
   }) async {
     if (failCopyWith != null) {
       throw ApiFailure(failCopyWith!, statusCode: 400);
@@ -277,6 +393,7 @@ class _FakeProjectRepository implements ProjectRepository {
       includeTimeSettings: includeTimeSettings,
       includeBoard: includeBoard,
       asTemplate: asTemplate,
+      deadlineBasis: deadlineBasis,
     ));
     return ProjectCopyResult(
       project: Project(id: 'p2', key: key ?? 'X', name: name ?? 'copy'),
@@ -290,8 +407,14 @@ class _FakeProjectRepository implements ProjectRepository {
     required String name,
     String? key,
     DateTime? eventDate,
+    RelativeDateBasis? deadlineBasis,
   }) async {
-    instantiations.add((name: name, key: key, eventDate: eventDate));
+    instantiations.add((
+      name: name,
+      key: key,
+      eventDate: eventDate,
+      deadlineBasis: deadlineBasis,
+    ));
     return ProjectCopyResult(
       project: Project(id: 'p2', key: key ?? 'X', name: name),
       issuesCopied: 8,
@@ -302,4 +425,35 @@ class _FakeProjectRepository implements ProjectRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} is not used here');
+}
+
+/// An [AppConfigBloc] with one fixed answer, whether project templates are on
+/// and what the organisation's deadline basis is.
+class _FakeAppConfig extends AppConfigBloc {
+  _FakeAppConfig({required bool templates, required String basis})
+    : _fixed = AppConfigState(
+        meta: ServerMeta(
+          serverVersion: '1.0.0',
+          minAppVersion: '1.0.0',
+          setupCompleted: true,
+          featureFlags: {PlatformFlags.projectTemplates: templates},
+          defaultDeadlineBasis: RelativeDateBasis.fromWire(basis),
+        ),
+      ),
+      super(repository: _UnusedMeta(), storage: _UnusedStorage());
+
+  final AppConfigState _fixed;
+
+  @override
+  AppConfigState get state => _fixed;
+}
+
+class _UnusedMeta implements MetaRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
+}
+
+class _UnusedStorage implements AppStorage {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
 }

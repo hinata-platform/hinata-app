@@ -201,6 +201,34 @@ class RoleBadge extends StatelessWidget {
   }
 }
 
+/// Marks a holder of the organisation role beside their platform role. The
+/// icon and the label carry it, never the colour alone.
+class OrgAdminBadge extends StatelessWidget {
+  const OrgAdminBadge({super.key});
+
+  @override
+  Widget build(BuildContext context) => _Badge(
+    icon: LucideIcons.building2,
+    label: context.t('admin.um.orgAdminBadge'),
+    bg: _hue(200, s: .4, l: .92),
+    fg: _hue(200, s: .5, l: .34),
+  );
+}
+
+/// The platform role, followed by the organisation role when the user holds it.
+class RoleBadges extends StatelessWidget {
+  const RoleBadges(this.user, {super.key});
+  final AdminUser user;
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+    spacing: 6,
+    runSpacing: 6,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [RoleBadge(user.role), if (user.orgAdmin) const OrgAdminBadge()],
+  );
+}
+
 class StatusBadge extends StatelessWidget {
   const StatusBadge(this.user, {super.key});
   final AdminUser user;
@@ -396,6 +424,7 @@ class UserActions {
     required this.approve,
     required this.openDeactivate,
     required this.setRole,
+    required this.setOrgAdmin,
     required this.openDemote,
     required this.openResend,
     required this.openReset,
@@ -412,6 +441,10 @@ class UserActions {
   final void Function(List<String> ids) approve;
   final void Function(List<String> ids) openDeactivate;
   final void Function(List<String> ids, AdminRole role) setRole;
+
+  /// Grants or takes back the organisation role (HIN-129). Completes with
+  /// whether the server accepted it, so a switch can settle on the truth.
+  final Future<bool> Function(List<String> ids, bool orgAdmin) setOrgAdmin;
   final void Function(List<String> ids) openDemote;
   final void Function(List<String> ids) openResend;
   final void Function(List<String> ids) openReset;
@@ -608,6 +641,16 @@ class BulkActionBar extends StatelessWidget {
       (u) => u.role != AdminRole.admin && u.status != UserStatus.invited,
     );
     final admins = _ids((u) => u.role == AdminRole.admin);
+    // Like the platform role, an invitation that was never accepted has nobody
+    // to hand the organisation role to yet. Nor the acting admin: the server
+    // refuses a grant to oneself, and would stop the batch at that row.
+    final nonOrgAdmins = _ids(
+      (u) =>
+          !u.orgAdmin &&
+          u.status != UserStatus.invited &&
+          u.id != actions.currentUserId,
+    );
+    final orgAdmins = _ids((u) => u.orgAdmin);
 
     return GlassBulkBar(
       countLabel: context.t(
@@ -652,6 +695,18 @@ class BulkActionBar extends StatelessWidget {
             icon: LucideIcons.shieldMinus,
             label: context.t('admin.um.revokeAdmin'),
             onTap: () => actions.openDemote(admins),
+          ),
+        if (nonOrgAdmins.isNotEmpty)
+          GlassBulkAction(
+            icon: LucideIcons.building2,
+            label: context.t('admin.um.makeOrgAdmin'),
+            onTap: () => actions.setOrgAdmin(nonOrgAdmins, true),
+          ),
+        if (orgAdmins.isNotEmpty)
+          GlassBulkAction(
+            icon: LucideIcons.userMinus,
+            label: context.t('admin.um.revokeOrgAdmin'),
+            onTap: () => actions.setOrgAdmin(orgAdmins, false),
           ),
         GlassBulkAction(
           icon: LucideIcons.trash2,

@@ -9,7 +9,8 @@ import '../../features/admin/admin_screen.dart';
 import '../../features/absences/absence_entitlements_screen.dart';
 import '../../features/absences/absence_year_run_screen.dart';
 import '../../features/absences/absence_types_screen.dart';
-import '../../features/admin/holidays/admin_holidays_screen.dart';
+import '../../features/organization/audit/org_audit_screen.dart';
+import '../../features/organization/holidays/holidays_screen.dart';
 import '../../features/admin/users/user_management_screen.dart';
 import '../../features/auth/accept_invite_screen.dart';
 import '../../features/auth/forgot_password_screen.dart';
@@ -34,6 +35,7 @@ import '../../features/knowledge/knowledge_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/oauth/oauth_consent_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
+import '../../features/organization/organization_screen.dart';
 import '../../features/projects/projects_screen.dart';
 import '../../features/projects/settings/project_settings_screen.dart';
 import '../../features/reports/reports_screen.dart';
@@ -49,6 +51,7 @@ import '../../features/timesheet/timesheet_screen.dart';
 import '../../features/weekly_summary/weekly_summary_screen.dart';
 import '../blocs/app_config_bloc.dart';
 import '../blocs/auth_bloc.dart';
+import '../models/core_models.dart' show AuthUser;
 import '../storage/app_storage.dart';
 import 'board_routes.dart';
 
@@ -589,11 +592,34 @@ GoRouter buildRouter({
               ),
             ),
           ),
-          // Holiday calendars (HIN-91), a page of its own under the admin area.
+          // Where the holiday calendars lived before they became an
+          // organisation duty (HIN-129). Old links still land on them.
           GoRoute(
             path: '/admin/holidays',
+            redirect: (_, _) => '/organization/holidays',
+          ),
+          // Organisation (HIN-129): the organisation admin's page, apart from
+          // the platform's admin area. The server refuses everybody else too;
+          // the guard keeps them from a page that could only say so.
+          GoRoute(
+            path: '/organization',
+            redirect: (_, _) => organizationGuard(auth.state.user),
             pageBuilder: (_, state) =>
-                _transition(state, const AdminHolidaysScreen()),
+                _transition(state, const OrganizationScreen()),
+          ),
+          // Holiday calendars (HIN-91), a page of its own under Organisation.
+          GoRoute(
+            path: '/organization/holidays',
+            redirect: (_, _) => organizationGuard(auth.state.user),
+            pageBuilder: (_, state) =>
+                _transition(state, const OrgHolidaysScreen()),
+          ),
+          // The organisation's audit records, apart from the admin's log.
+          GoRoute(
+            path: '/organization/audit',
+            redirect: (_, _) => organizationGuard(auth.state.user),
+            pageBuilder: (_, state) =>
+                _transition(state, const OrgAuditScreen()),
           ),
           // Absence management 2.0 (HIN-116). Outside `/admin` on purpose: an
           // operator names who keeps absences, and a named keeper need not be
@@ -632,6 +658,16 @@ GoRouter buildRouter({
     ],
   );
 }
+
+/// Where somebody without the organisation role is sent from the Organisation
+/// pages, or null to let an organisation admin through.
+///
+/// The platform role does not open them: an administrator runs the platform,
+/// and the organisation's time, absences and holidays are the organisation
+/// admin's (HIN-129). Named so the rule can be tested without a router.
+@visibleForTesting
+String? organizationGuard(AuthUser? user) =>
+    (user?.isOrgAdmin ?? false) ? null : '/dashboard';
 
 /// The page behind `/time`, for a server whose extended time-tracking module is
 /// ([advancedTime]) or is not switched on.

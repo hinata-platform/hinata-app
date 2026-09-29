@@ -45,8 +45,9 @@ class WorkItemAccess {
   /// The signed-in user, or null while the session is still resolving.
   final String? meId;
 
-  /// Whether the caller may manage other people's entries on this project: an
-  /// admin, or a lead while the policy lets leads read their members' entries.
+  /// Whether the caller may manage other people's entries on this project: a
+  /// lead (see `isProjectLead`), while the policy lets them read their members'
+  /// entries. Neither the platform admin role nor Team-Admin counts.
   /// May remove them, and the legacy remainder that belongs to nobody.
   final bool managesProject;
 

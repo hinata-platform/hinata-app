@@ -14,6 +14,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
+import '../../core/access/project_permissions.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/sse_connection.dart';
 import '../../core/repositories/comment_repository.dart';

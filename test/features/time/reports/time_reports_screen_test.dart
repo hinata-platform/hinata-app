@@ -336,7 +336,7 @@ class _FakeAuth extends Bloc<AuthEvent, AuthState> implements AuthBloc {
             email: 'me@example.org',
             username: 'me',
             displayName: 'Me',
-            roles: {admin ? 'ADMIN' : 'USER'},
+            roles: {admin ? 'ORG_ADMIN' : 'USER'},
           ),
         ),
       );

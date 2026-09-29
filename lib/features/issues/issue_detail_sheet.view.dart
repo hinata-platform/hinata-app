@@ -157,6 +157,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// sheet pages.
   static const _workItemPageSize = WorkItemList.headCount;
   Project? _project;
+
   // Cross-feature smart-links: project issues (keyed by readable id) feed the
   // comment composer's `@`-menu and resolve `{{issue:…}}` chips; KB articles
   // that mention this issue are its "Documented in" backlinks.
@@ -2740,18 +2741,19 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     );
   }
 
-  /// Who may correct which entry: me for my own, plus everyone's for a lead
-  /// of this project or an admin — the rule the server enforces, read from
-  /// the session and the project rather than guessed per row. An entry the
-  /// server sent without its details is never offered for removal; see
-  /// [WorkItemAccess.canDelete].
+  /// Who may correct which entry: me for my own, plus everyone's for whoever
+  /// leads this project, the rule the server enforces for other people's hours.
+  /// Neither a Team-Admin nor a platform admin corrects somebody's recorded
+  /// working time through that role. An
+  /// entry the server sent without its details is never offered for removal;
+  /// see [WorkItemAccess.canDelete].
   WorkItemAccess get _workItemAccess {
     final me = context.read<AuthBloc>().state.user;
     if (me == null) return WorkItemAccess.none;
-    final leads = _project?.leadIds ?? const <String>[];
+    final project = _project;
     return WorkItemAccess(
       meId: me.id,
-      managesProject: me.isAdmin || leads.contains(me.id),
+      managesProject: project != null && isProjectLead(project, me),
     );
   }
 
@@ -3640,6 +3642,11 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   bool get _offsetsOffered =>
       context.read<AppConfigBloc>().state.meta?.projectTemplates ?? false;
 
+  /// How a new rule counts until somebody says otherwise: the project's own
+  /// choice, else the organisation's default.
+  RelativeDateBasis get _defaultDeadlineBasis =>
+      deadlineBasisFor(_project, context.read<AppConfigBloc>().state.meta);
+
   Future<void> _pickDate({required bool isStart, Rect? anchorRect}) async {
     final issue = _issue;
     if (issue == null) return;
@@ -3670,6 +3677,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       offset: isStart ? issue.startOffset : issue.dueOffset,
       eventDate: _project?.eventDate,
       anchorRect: anchorRect,
+      defaultBasis: _defaultDeadlineBasis,
       resolve: (offset) =>
           _projectApi.resolveOffset(issue.projectId, offset: offset),
     );

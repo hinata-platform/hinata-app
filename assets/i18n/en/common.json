@@ -126,6 +126,14 @@
     },
     "avatar": {
       "tooLarge": "The picture is too large. At most {{max}} MB."
+    },
+    "user": {
+      "cannotGrantOwnOrgRole": "You cannot make yourself an organization admin. Ask another administrator.",
+      "cannotRemoveLastOrgAdmin": "This is the last organization admin. Make someone else organization admin first, so timesheets and absences still reach somebody.",
+      "resetAfterEmailChange": "The sign-in address was changed by an administrator less than a day ago. A password reset is possible again after that day."
+    },
+    "article": {
+      "moveNotAllowed": "Only the people who run this page's place can move it: the project's leads, the team's admins, or the author of a private page."
     }
   },
   "notFound": {
@@ -271,7 +279,7 @@
       "body": "This link points to a different server ({{host}}). Switch to it?",
       "confirm": "Switch server"
     },
-    "ssoProviderFailed": "your organisation's sign-in service did not complete it. Please try again."
+    "ssoProviderFailed": "your organization's sign-in service did not complete it. Please try again."
   },
   "authShell": {
     "heroTitle": "Where your team's work comes together.",
@@ -846,6 +854,27 @@
       "workingSuffix": " of working days",
       "sentenceBefore": "{{amount}}{{basis}} before the project date",
       "sentenceAfter": "{{amount}}{{basis}} after the project date"
+    },
+    "bulkDeadline": {
+      "action": "Set deadline",
+      "title": "Deadline for {{count}} issue",
+      "title_plural": "Deadline for {{count}} issues",
+      "done": "Deadline set for {{count}} issue",
+      "done_plural": "Deadline set for {{count}} issues",
+      "cleared": "Deadline removed from {{count}} issue",
+      "cleared_plural": "Deadline removed from {{count}} issues",
+      "tooMany": "You can change at most {{max}} issues at once. Unselect a few and try again."
+    },
+    "selectAll": "Select all",
+    "selectAllCapped": "The first {{max}} are selected. That is as many as one change can take.",
+    "selection": {
+      "enter": "Select several",
+      "exit": "Stop selecting",
+      "select": "Select"
+    },
+    "multiSelectHint": {
+      "text": "Tip: Press and hold an issue to select several and edit them together, for example to give them all the same deadline.",
+      "gotIt": "Got it"
     }
   },
   "type": {
@@ -1001,7 +1030,7 @@
       "none": "No tags",
       "search": "Search tags",
       "create": "Create \"{{name}}\"",
-      "noneCurated": "No tags yet. Only administrators can create them on this server."
+      "noneCurated": "No tags yet. Only organization admins can create them on this server."
     },
     "policy": {
       "locked": "Entries on this day are locked and can no longer be changed",
@@ -1041,19 +1070,19 @@
         "approval": "You handed in {{from}} – {{to}}, so these entries are fixed.",
         "invoice": "An issued invoice references this entry.",
         "unknown": "This entry is closed for editing.",
-        "maxDaysBack": "Days before {{date}} can only be recorded once an administrator opens them."
+        "maxDaysBack": "Days before {{date}} can only be recorded once an organization admin opens them."
       },
       "holder": {
-        "lockDate": "An administrator can open the day for you or reopen a span inside the closed period.",
-        "approval": "A lead of the project, or an administrator, can reopen the period.",
+        "lockDate": "An organization admin can open the day for you or reopen a span inside the closed period.",
+        "approval": "A lead of the project, or an organization admin, can reopen the period.",
         "invoice": "Whoever issues invoices can settle it with a credit note.",
-        "maxDaysBack": "An administrator can open older days for you."
+        "maxDaysBack": "An organization admin can open older days for you."
       },
       "remedy": {
-        "lockDate": "Ask for a correction. Your reason is recorded and reaches an administrator.",
+        "lockDate": "Ask for a correction. Your reason is recorded and reaches an organization admin.",
         "approval": "Ask for a correction, or have the period reopened.",
         "invoice": "The invoice is never rewritten; a credit note settles it.",
-        "maxDaysBack": "Ask for the day to be opened for you. Your reason is recorded and goes to the administrators."
+        "maxDaysBack": "Ask for the day to be opened for you. Your reason is recorded and goes to the organization admins."
       },
       "chip": {
         "lockDate": "Closed",
@@ -1070,7 +1099,7 @@
       "requestDays": "Ask to open this day",
       "requestDaysTitle": "Ask to open older days",
       "requestDaysHint": "Why do you need to record these days now?",
-      "requestDaysSent": "Your request has been sent to the administrators.",
+      "requestDaysSent": "Your request has been sent to the organization admins.",
       "requestOlderDays": "Ask for older days",
       "pickDaysTitle": "Which days do you need?"
     },
@@ -1144,7 +1173,7 @@
       "acknowledgeFailed": "That could not be saved. Please try again.",
       "row": {
         "self": "You see all of your own entries.",
-        "admins": "Administrators of this instance can see and change every entry.",
+        "admins": "Organization admins can see and change every entry.",
         "members": "Other members of your projects see on an issue and in reports how much time was booked, but not who booked it or what the description says.",
         "leadsSee": "Leads of your projects see your individual entries, their history and your rows in the timesheet, in reports and exports too, and can change your entries.",
         "leadsTotals": "Leads of your projects see project totals only, never who booked what.",
@@ -1164,8 +1193,8 @@
         "entryKept": "Entries are not deleted automatically.",
         "descriptionRetention": "If an account is deleted, the descriptions of its entries and the notes on its timesheets are cleared after {{count}} month.",
         "descriptionRetention_plural": "If an account is deleted, the descriptions of its entries and the notes on its timesheets are cleared after {{count}} months.",
-        "maxDaysBack": "You can record up to {{count}} day back. An administrator opens older days on request.",
-        "maxDaysBack_plural": "You can record up to {{count}} days back. An administrator opens older days on request."
+        "maxDaysBack": "You can record up to {{count}} day back. An organization admin opens older days on request.",
+        "maxDaysBack_plural": "You can record up to {{count}} days back. An organization admin opens older days on request."
       },
       "loadFailed": "The notice could not be loaded. Check your connection and try again.",
       "absence": {
@@ -1177,8 +1206,8 @@
         },
         "leadsSee": "Leads of projects you work on see the type and span of your absences, never a note, and sickness only as away.",
         "leadsDoNot": "Leads of your projects do not see your absences.",
-        "keepersNamed": "Only the people named to keep absences, and administrators, see a sick day as a sick day.",
-        "keepersAdmins": "Only administrators see a sick day as a sick day.",
+        "keepersNamed": "Only the people named to keep absences see a sick day as a sick day.",
+        "keepersAdmins": "Only organization admins see a sick day as a sick day.",
         "band": "Leads of your projects and admins of your teams see how much capacity their group has left, as a sum over at least three people. Your approved days and planned hours are part of it; your name is not.",
         "report": "In the report “absences and balances” you see your own figures. Absence keepers see everybody’s.",
         "reportLeads": "Leads of your projects see only sums there, over at least three people, without sickness.",
@@ -1394,7 +1423,7 @@
         "difference": "Difference",
         "away": "{{duration}} off or away",
         "ledOnly": "Booked counts only time on projects you lead.",
-        "forbidden": "Only administrators and project leads can see the workload report.",
+        "forbidden": "Only organization admins and project leads can see the workload report.",
         "truncated": "The group is larger than one report reads. The first 1000 people are shown.",
         "group": "Group",
         "myProjects": "My projects",
@@ -1576,7 +1605,7 @@
     "approver": {
       "teamLead": "Team lead",
       "named": "Named people",
-      "admin": "Administrators",
+      "admin": "Organization admins",
       "auto": "Automatic"
     },
     "visibility": {
@@ -2092,7 +2121,16 @@
       "pending": "{{count}} deadlines wait for a date, because the project is losing the one it had.",
       "confirm": "Move"
     },
-    "searchHint": "Search projects"
+    "searchHint": "Search projects",
+    "deadlineBasis": {
+      "label": "Deadlines count in",
+      "calendar": "Calendar days",
+      "working": "Working days",
+      "orgDefault": "Your organization's default: {{basis}}.",
+      "followsOrg": "Follows your organization's default ({{basis}}).",
+      "hint": "New deadlines start with this setting. Existing deadlines stay where they are.",
+      "useOrgDefault": "Use the organization's default"
+    }
   },
   "board": {
     "title": "Agile Boards",
@@ -2341,7 +2379,23 @@
     "saved": "Changes saved",
     "deleted": "Article deleted",
     "articleCount": "{{count}} articles",
-    "saveWouldBlank": "Saving now would replace the article with an empty page. Add some content first."
+    "saveWouldBlank": "Saving now would replace the article with an empty page. Add some content first.",
+    "place": {
+      "label": "Visible to",
+      "private": "Only me",
+      "team": "Team",
+      "project": "Project",
+      "followsParent": "Same as the page above",
+      "privateAuthorOnly": "Only the author can make a page private.",
+      "pickProject": "Choose a project",
+      "otherProject": "{{name}} (choose another project)",
+      "saved": "Visibility changed. Pages below it moved along."
+    },
+    "emptyTitle": "No pages for you yet",
+    "emptyMessage": "Pages are shared through projects and teams. A new page stays private until you put it into a project or a team.",
+    "tree": {
+      "truncated": "Not every page is listed here, as there are too many for one list. A subpage may therefore stand at the top even though its parent page exists."
+    }
   },
   "md": {
     "heading1": "Heading 1",
@@ -2500,7 +2554,8 @@
     "about": "About",
     "appVersion": "App version",
     "serverVersion": "Server version",
-    "organization": "Organization"
+    "organization": "Organization",
+    "organizationDesc": "Time tracking, absences, holidays and deadlines for the whole organization."
   },
   "admin": {
     "title": "Admin area",
@@ -2604,7 +2659,6 @@
     "gitTokenSecretDefault": "Using the built-in default — set your own before going live.",
     "security": "Security",
     "timeTracking": {
-      "title": "Time tracking",
       "hint": "Extended time tracking is off by default. Every policy below may stay unset, and then the value from this server's environment applies. Switches that make one person's hours visible to another are off by default and carry a co-determination note.",
       "codetermination": "Subject to co-determination: § 87 (1) no. 6 BetrVG (LPVG in the public sector). Agree this with the works or staff council before switching it on. It is enough that the function could be used for monitoring.",
       "envDefault": "Env default",
@@ -2614,7 +2668,7 @@
       "moduleHint": "The master switch for the extended time-tracking module.",
       "advancedTitle": "Extended time tracking",
       "advancedHint": "Timer, policies, approvals, reports and billing. Off → the plain timesheet stays exactly as it is and the module's endpoints do not exist for the apps. Takes effect without a restart.",
-      "advancedFromSection": "Configured under Administration → Time tracking, together with the policies that belong to it.",
+      "advancedFromSection": "Configured on the Organization page, together with the policies that belong to it. It takes the organization admin role.",
       "captureTitle": "Capture",
       "captureHint": "What an entry has to carry, and from when it can no longer be changed.",
       "requiredProjectTitle": "Project required",
@@ -2645,7 +2699,7 @@
         "m60": "60 minutes"
       },
       "limitTagAccessTitle": "Restrict tags",
-      "limitTagAccessHint": "Only admins create new tags; everyone else picks from the existing ones.",
+      "limitTagAccessHint": "Only organization admins create new tags; everyone else picks from the existing ones.",
       "defaultBillableTitle": "Billable by default",
       "defaultBillableHint": "New entries start out marked as billable.",
       "icsImportTitle": "Calendar import",
@@ -2655,7 +2709,7 @@
       "leadsSeeMemberEntriesTitle": "Leads see members' entries",
       "leadsSeeMemberEntriesHint": "Off: leads see project totals only. They see neither names nor descriptions on issues, and they do not change other people's entries. On: leads see the individual entries of their project members, their history and their timesheet rows, and may change those entries.",
       "approvalsTitle": "Timesheet approvals",
-      "approvalsHint": "People submit their timesheet for a period; a lead or admin approves or rejects it. Requires “Leads see members' entries”.",
+      "approvalsHint": "People submit their timesheet for a period; a lead or an organization admin approves or rejects it. Requires “Leads see members' entries”.",
       "approvalPeriodLabel": "Approval period",
       "approvalPeriodHint": "How often timesheets are handed in. “Freely chosen” leaves the period to the person.",
       "period": {
@@ -2696,7 +2750,7 @@
       "billingTitle": "Billing",
       "billingHint": "Rates, costs and invoices out of booked time.",
       "billingEnabledTitle": "Billing",
-      "billingEnabledHint": "Rates, labour costs, billing and profitability reports, invoices. Visible to leads and admins.",
+      "billingEnabledHint": "Rates, labour costs, billing and profitability reports, invoices. Visible to leads and organization admins.",
       "currencyLabel": "Currency",
       "currencyHint": "Three-letter ISO code, e.g. EUR.",
       "privacyTitle": "Privacy and retention",
@@ -2720,7 +2774,7 @@
       "tagDeleteTitle": "Delete tag?",
       "tagDeleteMessage": "\"{{name}}\" is removed from {{count}} entry. The entry itself stays.",
       "tagDeleteMessage_plural": "\"{{name}}\" is removed from {{count}} entries. The entries themselves stay.",
-      "lockBeforeEveryone": "The lock applies to everyone, administrators included. Lifting it is the recorded way to edit a frozen period.",
+      "lockBeforeEveryone": "The lock applies to everyone, organization admins included. Lifting it is the recorded way to edit a frozen period.",
       "approvalsNeedVisibility": "Approving means reading a person's entries. Switch on “Leads see members' entries” as well, otherwise the approver only sees a total without content.",
       "periodPreviewTitle": "The next periods",
       "periodPreviewHint": "Changing the rhythm affects future submissions only. Periods already handed in keep the days they named.",
@@ -2738,7 +2792,7 @@
       "retentionLegal": "Nothing is deleted automatically until you set a period here. § 16 (2) ArbZG and § 17 MiLoG ask for working time records to be kept for two years, so 24 months is a common choice. After that, storage limitation applies (Art. 5 GDPR). A nightly job does the deleting and records every run in the audit log.",
       "privacyNoticePreview": "Preview",
       "maxDaysBackLabel": "Record up to",
-      "maxDaysBackHint": "How many days back time can be recorded. An older day is refused, and the person can ask an administrator to open it for them. Empty means 365.",
+      "maxDaysBackHint": "How many days back time can be recorded. An older day is refused, and the person can ask an organization admin to open it for them. Empty means 365.",
       "lateEntryHintDaysLabel": "Hint for late entries after",
       "lateEntryHintDaysHint": "Marks an entry recorded more than this many days after its working day, for that person only. It never blocks anything and reports nothing. 0 switches it off, empty uses the server default.",
       "correctionsTitle": "Correction requests",
@@ -2780,8 +2834,8 @@
       "needsAdvanced": "Only takes effect while extended time tracking is on: every day this counts comes from a working pattern, a holiday calendar and the capacity built on them. The switch keeps the position you leave it in.",
       "codetermination": "Subject to co-determination: § 87 Abs. 1 Nr. 5 BetrVG — general holiday principles, the holiday plan and, in a dispute, the timing (LPVG in the public sector). Agree it with the works council before switching it on.",
       "keepersTitle": "Who keeps absences",
-      "keepersHint": "These people keep absence types, entitlements and balances for everybody, and they see a sick day as a sick day. Administrators always may.",
-      "keepersEmpty": "Nobody named: administrators keep absences.",
+      "keepersHint": "These people keep absence types, entitlements and balances for everybody, and they see a sick day as a sick day. Organization admins may keep absences too, but once somebody is named here they no longer see sickness.",
+      "keepersEmpty": "Nobody named: organization admins keep absences and see sick days as sick days.",
       "keepersAdd": "Add person",
       "calendarTitle": "Team absence calendar",
       "calendarHint": "Whether colleagues see each other's absences in a team calendar. Off by default; every absence type can narrow it further.",
@@ -2918,7 +2972,7 @@
       "revokeAdminRights": "Revoke admin rights",
       "revokeAdminRightsSub": "Return to a regular user role",
       "promoteToAdmin": "Promote to admin",
-      "promoteToAdminSub": "Grant full platform administration",
+      "promoteToAdminSub": "Manages the platform: users, sign-in and integrations. Sees no content of teams and projects they do not belong to.",
       "passwordManagedByIdp": "Password managed by IdP",
       "passwordManagedByIdpSub": "The identity provider controls credentials for this user",
       "sendPasswordResetSub": "Email a secure reset link to {{email}}",
@@ -2956,7 +3010,7 @@
       "resetSubMany": "Email password reset links to {{n}} users",
       "sendReset": "Send reset",
       "deleteSub": "This action cannot be undone",
-      "deleteWarn": "The account(s) and memberships are permanently removed. Authored issues are reassigned to a former user.",
+      "deleteWarn": "The account(s) and memberships are permanently removed. Authored issues are reassigned to a former user. Their private knowledge base pages are deleted with the account; important pages can be moved into a project or team first.",
       "deleteTypeHint": "Type DELETE to confirm.",
       "fieldName": "Name",
       "fieldTitle": "Job title",
@@ -2975,7 +3029,18 @@
       "toastProfileUpdated": "Profile updated",
       "statusPending": "Pending approval",
       "approve": "Approve",
-      "approved": "Registration approved."
+      "approved": "Registration approved.",
+      "roles": "Roles",
+      "orgAdminBadge": "Org admin",
+      "orgAdminTitle": "Organization admin",
+      "orgAdminHint": "Sees working times, timesheets, absences and bookings of all people and keeps the organization's time rules, holidays and billing. Reports and approvals show issue titles, keys and descriptions only from projects the person is part of. Sickness only while nobody is named to keep absences, otherwise only if the person is named. No access to the admin area.",
+      "makeOrgAdmin": "Make organization admin",
+      "revokeOrgAdmin": "Revoke organization admin",
+      "toastOrgAdminGranted": "Organization admin role granted",
+      "toastOrgAdminRevoked": "Organization admin role revoked",
+      "orgAdminConfirmOne": "{{name}} will then see working times, timesheets, absences and bookings of all people. Sickness only while nobody is named to keep absences, otherwise only if {{name}} is named. Issue titles and descriptions only from projects {{name}} is part of.",
+      "orgAdminConfirmMany": "{{names}} will then see working times, timesheets, absences and bookings of all people. Sickness only while nobody is named to keep absences, otherwise only those who are named. Issue titles and descriptions only from their own projects.",
+      "reasonOwnOrgRole": "Another person from the administration gives you this role."
     },
     "iosStoreUrl": "iOS App Store URL",
     "androidStoreUrl": "Android Play Store URL",
@@ -3256,7 +3321,9 @@
       "TIME_OFF_REQUEST_CANCELLED": "Absence cancelled",
       "TIME_OFF_SICK_REPORTED": "Sickness reported",
       "PROJECT_TEMPLATES_POLICY_CHANGED": "Project templates switched",
-      "PROJECT_SCHEDULE_SHIFTED": "Project date moved"
+      "PROJECT_SCHEDULE_SHIFTED": "Project date moved",
+      "USER_EMAIL_CHANGED": "E-mail changed by an admin",
+      "ARTICLE_MOVED": "Page moved"
     },
     "meta": {
       "oldRole": "Previous role",
@@ -3486,7 +3553,8 @@
       "removedMember": "removed",
       "attachedProject": "attached",
       "createdProject": "created",
-      "detachedProject": "removed"
+      "detachedProject": "removed",
+      "knowledgeChanged": "changed page access for"
     },
     "membersSummary": "{{members}} members · {{admins}} admins",
     "you": "You",
@@ -3495,16 +3563,42 @@
     "detachTitle": "Remove project?",
     "detachConfirm": "Remove {{name}} from this team? Members lose access granted through this team.",
     "adminsOnly": "Admins only",
-    "adminsOnlyHint": "Only Team-Admins and platform administrators can change team settings.",
+    "adminsOnlyHint": "Only Team-Admins can change team settings.",
     "identity": "Team identity",
     "rolesPermissions": "Roles & permissions",
-    "permAdmin": "Full control of this team — members, projects, settings. Same rights as a platform admin, scoped to {{name}}.",
+    "permAdmin": "Full control of {{name}}: members, projects and settings.",
     "permMember": "Work on the projects they're granted. Can't change team membership or settings.",
     "dangerZone": "Danger zone",
     "deleteThis": "Delete this team",
     "deleteThisHint": "Removes the team and all memberships. Projects stay in the workspace.",
     "keyTaken": "Key already in use.",
-    "searchHint": "Search teams"
+    "searchHint": "Search teams",
+    "knowledge": {
+      "label": "Knowledge base",
+      "adminReadsAll": "Team admins read every page of this team anyway.",
+      "none": "None",
+      "noneHint": "Team pages stay closed to them",
+      "all": "All pages of the team",
+      "allHint": "Including pages added later",
+      "some": "Selected pages",
+      "someHint": "A page includes everything below it",
+      "choosePages": "Choose pages",
+      "pagesPicked": "{{count}} page selected",
+      "pagesPicked_plural": "{{count}} pages selected",
+      "chip": "Knowledge: {{value}}",
+      "chipAll": "all",
+      "chipSome": "{{count}} page",
+      "chipSome_plural": "{{count}} pages",
+      "chipNone": "none",
+      "pickerNote": "A page includes everything below it. Pick the highest page that fits.",
+      "searchPages": "Search pages",
+      "noPages": "This team has no pages yet.",
+      "noPageMatches": "No page matches.",
+      "limitReached": "You can pick up to {{max}} pages.",
+      "apply": "Apply",
+      "includedVia": "Included through {{title}}",
+      "truncated": "Not every page fits in this list. Search to find the others."
+    }
   },
   "projectSettings": {
     "avatar": {
@@ -3734,7 +3828,15 @@
           "desc": "Your own timer and timesheet notices"
         }
       },
-      "pushUnsupported": "No push service here — this still applies to your phone and your other devices"
+      "pushUnsupported": "No push service here. The setting still applies to your phone and your other devices.",
+      "days": {
+        "title": "Notification days",
+        "hint": "On other days no e-mails or push notifications arrive. The bell in the app still shows everything. Security alerts and important notices, such as leave that is about to expire, always come through.",
+        "defaultLine": "Default: working days ({{days}})",
+        "range": "{{from}} to {{to}}",
+        "useDefault": "Use default",
+        "lastDay": "At least one day has to stay on. To stop all notifications, turn off the channels above."
+      }
     },
     "access": {
       "title": "Access",
@@ -4196,6 +4298,24 @@
     },
     "focus": {
       "leave": "Leave focus mode"
+    }
+  },
+  "org": {
+    "title": "Organization",
+    "subtitle": "These settings apply to the whole organization: time tracking, absences, holidays, billing and deadlines. Organization admins see working times, timesheets, absences and bookings of all people, but issue titles and descriptions only from projects they are part of. They see sickness only while nobody is named to keep absences, otherwise only if they are named themselves.",
+    "deadlines": {
+      "title": "Deadlines",
+      "hint": "What new relative deadlines count in when a project does not set its own.",
+      "followsPlatform": "The platform default applies: {{basis}}.",
+      "followsPlatformUnknown": "The platform default applies.",
+      "ownChoice": "Your organization counts in {{basis}}.",
+      "existingStay": "Existing deadlines stay as they are.",
+      "usePlatform": "Use the platform default"
+    },
+    "audit": {
+      "title": "Log",
+      "hint": "What happened in time tracking, absences and timesheets, and who did it.",
+      "open": "Open log"
     }
   }
 }

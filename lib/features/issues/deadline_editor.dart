@@ -50,6 +50,17 @@ class DeadlineChoice {
 /// repository because the arithmetic belongs to the server — weekends are easy,
 /// the holidays of whichever calendar the project names are not — and because a
 /// widget that takes a function can be tested without one.
+///
+/// [defaultBasis] is where the working-days switch starts when there is no rule
+/// yet: the project's own preference, or the organisation's. A rule that
+/// already exists keeps the basis it was saved with.
+///
+/// [allowOffset] false leaves only the date: a selection spanning several
+/// projects has no single event date a rule could follow.
+///
+/// [allowClear] shows "clear" even when [date] and [offset] are both empty.
+/// Several issues at once have no one current deadline to show, yet removing
+/// theirs is still a fair thing to want.
 Future<DeadlineChoice?> showDeadlineEditor(
   BuildContext context, {
   required String title,
@@ -59,6 +70,9 @@ Future<DeadlineChoice?> showDeadlineEditor(
   required Future<DateTime?> Function(RelativeDate offset) resolve,
   Rect? anchorRect,
   VoidCallback? onOpenProjectSettings,
+  RelativeDateBasis defaultBasis = RelativeDateBasis.calendar,
+  bool allowOffset = true,
+  bool? allowClear,
 }) {
   Widget body(BuildContext innerContext) => _DeadlineEditor(
     title: title,
@@ -67,6 +81,9 @@ Future<DeadlineChoice?> showDeadlineEditor(
     eventDate: eventDate,
     resolve: resolve,
     onOpenProjectSettings: onOpenProjectSettings,
+    defaultBasis: defaultBasis,
+    allowOffset: allowOffset,
+    allowClear: allowClear ?? (date != null || offset != null),
   );
 
   final wide = MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint;
@@ -94,6 +111,9 @@ class _DeadlineEditor extends StatefulWidget {
     required this.eventDate,
     required this.resolve,
     this.onOpenProjectSettings,
+    this.defaultBasis = RelativeDateBasis.calendar,
+    this.allowOffset = true,
+    this.allowClear = false,
   });
 
   final String title;
@@ -102,6 +122,9 @@ class _DeadlineEditor extends StatefulWidget {
   final DateTime? eventDate;
   final Future<DateTime?> Function(RelativeDate offset) resolve;
   final VoidCallback? onOpenProjectSettings;
+  final RelativeDateBasis defaultBasis;
+  final bool allowOffset;
+  final bool allowClear;
 
   @override
   State<_DeadlineEditor> createState() => _DeadlineEditorState();
@@ -136,7 +159,9 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
   @override
   void initState() {
     super.initState();
-    final offset = widget.offset;
+    // Without rules on offer an existing one is not shown either: the caller
+    // asked for a date, and a date is all it can send.
+    final offset = widget.allowOffset ? widget.offset : null;
     _mode = offset == null ? _Mode.date : _Mode.offset;
     _date = widget.date;
     _amount = TextEditingController(
@@ -144,7 +169,10 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
     );
     _unit = offset?.unit ?? RelativeDateUnit.weeks;
     _before = offset == null || offset.isBefore;
-    _workingDays = offset?.basis == RelativeDateBasis.working;
+    // A new rule starts from the project's preferred way of counting; one that
+    // exists keeps the way it was saved with.
+    _workingDays =
+        (offset?.basis ?? widget.defaultBasis) == RelativeDateBasis.working;
     if (offset != null && widget.date != null) {
       // The date the issue carries *is* this rule's answer — the server writes it
       // on every save — so there is nothing to ask until somebody changes
@@ -252,7 +280,12 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
 
   @override
   Widget build(BuildContext context) {
-    final canSubmit = _mode == _Mode.date || _currentOffset != null;
+    // An empty date with nothing to replace is no answer at all: "apply" would
+    // come back as "clear" and wipe deadlines nobody meant to touch when
+    // several issues are edited at once. Clearing has its own button.
+    final canSubmit = _mode == _Mode.date
+        ? (_date != null || widget.date != null || widget.offset != null)
+        : _currentOffset != null;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -274,29 +307,31 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: GlassSwitchBar(
-                    // Inline: this editor is already a glass panel, and a lens
-                    // inside a lens refracts a refraction. See the flag.
-                    inline: true,
-                    maxWidth: 300,
-                    chips: [
-                      _modeChip(
-                        _Mode.date,
-                        LucideIcons.calendar,
-                        'issues.deadline.modeDate',
-                      ),
-                      const SizedBox(width: 2),
-                      _modeChip(
-                        _Mode.offset,
-                        LucideIcons.calendarClock,
-                        'issues.deadline.modeOffset',
-                      ),
-                    ],
+                if (widget.allowOffset) ...[
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: GlassSwitchBar(
+                      // Inline: this editor is already a glass panel, and a
+                      // lens inside a lens refracts a refraction. See the flag.
+                      inline: true,
+                      maxWidth: 300,
+                      chips: [
+                        _modeChip(
+                          _Mode.date,
+                          LucideIcons.calendar,
+                          'issues.deadline.modeDate',
+                        ),
+                        const SizedBox(width: 2),
+                        _modeChip(
+                          _Mode.offset,
+                          LucideIcons.calendarClock,
+                          'issues.deadline.modeOffset',
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 14),
+                  const SizedBox(height: 14),
+                ],
                 if (_mode == _Mode.date) _dateMode() else _offsetMode(),
               ],
             ),
@@ -314,7 +349,7 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
             spacing: 2,
             runSpacing: 2,
             children: [
-              if (widget.date != null || widget.offset != null)
+              if (widget.allowClear)
                 TextButton(
                   onPressed: () =>
                       Navigator.of(context).pop(const DeadlineChoice.cleared()),
@@ -425,7 +460,7 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
             ),
           ),
         ),
-        if (widget.offset != null) ...[
+        if (widget.offset != null && widget.allowOffset) ...[
           const SizedBox(height: 10),
           _Note(
             icon: LucideIcons.triangleAlert,

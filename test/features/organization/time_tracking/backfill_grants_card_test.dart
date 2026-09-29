@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/models/time_privacy_models.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
-import 'package:hinata/features/admin/sections/admin_backfill_grants_card.dart';
+import 'package:hinata/features/organization/time_tracking/backfill_grants_card.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// The days opened for single people (HIN-89): who, which days, why, until when,
@@ -35,7 +35,7 @@ void main() {
         value: repository,
         child: const MaterialApp(
           home: Scaffold(
-            body: SingleChildScrollView(child: AdminBackfillGrantsCard()),
+            body: SingleChildScrollView(child: OrgBackfillGrantsCard()),
           ),
         ),
       ),

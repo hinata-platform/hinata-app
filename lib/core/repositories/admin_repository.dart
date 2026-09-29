@@ -245,6 +245,13 @@ class AdminRepository {
     body: {'ids': ids, 'role': role.wire},
   );
 
+  /// Grants ([orgAdmin] true) or takes back the organisation role (HIN-129)
+  /// for every user in [ids]. Independent of the platform role above.
+  Future<void> adminSetOrgRole(List<String> ids, bool orgAdmin) => _api.post(
+    '/api/v1/admin/users/org-role',
+    body: {'ids': ids, 'orgAdmin': orgAdmin},
+  );
+
   Future<void> adminSendPasswordReset(List<String> ids) =>
       _api.post('/api/v1/admin/users/password-reset', body: {'ids': ids});
 
@@ -280,20 +287,16 @@ class AdminRepository {
   }) async => AuditPage.fromJson(
     await _api.get(
           '/api/v1/admin/audit',
-          query: {
-            'query': ?(query.trim().isEmpty ? null : query.trim()),
-            'category': ?(category == null || category == AuditCategory.unknown
-                ? null
-                : category.wire),
-            'severity': ?(severity == null || severity == AuditSeverity.unknown
-                ? null
-                : severity.wire),
-            'action': ?action,
-            'outcome': ?outcome,
-            'actorId': ?actorId,
-            'page': '$page',
-            'perPage': '$perPage',
-          },
+          query: auditQuery(
+            query: query,
+            category: category,
+            severity: severity,
+            action: action,
+            outcome: outcome,
+            actorId: actorId,
+            page: page,
+            perPage: perPage,
+          ),
         )
         as Map<String, dynamic>,
   );

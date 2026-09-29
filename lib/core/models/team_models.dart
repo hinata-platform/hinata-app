@@ -66,17 +66,80 @@ class ProjectAccess extends Equatable {
   List<Object?> get props => [scope, projectIds];
 }
 
-/// The join row embedded in a [Team]: a user's role + project access.
+/// A membership's knowledge-base access: which of the team's pages the member
+/// may read (`scope` + the explicit `articleIds` when SOME).
+///
+/// A SOME grant opens the listed pages *and everything below them*. Team-Admins
+/// read every page of their team whatever this says. Missing on the wire means
+/// NONE: team pages are closed until someone opens them.
+class KnowledgeAccess extends Equatable {
+  const KnowledgeAccess({
+    this.scope = AccessScope.none,
+    this.articleIds = const [],
+    int? count,
+  }) : _count = count;
+
+  final AccessScope scope;
+
+  /// The granted pages. Only a Team-Admin of the team (and the member
+  /// themselves) receives them; for everyone else the server sends this
+  /// empty and says how many there are in [count].
+  final List<String> articleIds;
+
+  final int? _count;
+
+  /// How many pages are granted, whether or not [articleIds] came along.
+  int get count => _count ?? articleIds.length;
+
+  /// The server's cap on explicitly granted pages per membership.
+  static const maxPages = 200;
+
+  const KnowledgeAccess.all()
+    : scope = AccessScope.all,
+      articleIds = const [],
+      _count = null;
+  const KnowledgeAccess.none()
+    : scope = AccessScope.none,
+      articleIds = const [],
+      _count = null;
+  KnowledgeAccess.some(List<String> ids)
+    : scope = AccessScope.some,
+      articleIds = List.unmodifiable(ids),
+      _count = null;
+
+  factory KnowledgeAccess.fromJson(Map<String, dynamic>? json) {
+    if (json == null) return const KnowledgeAccess.none();
+    return KnowledgeAccess(
+      scope: AccessScope.fromJson(json['scope'] as String?),
+      articleIds: ((json['articleIds'] as List<dynamic>?) ?? const [])
+          .cast<String>(),
+      count: (json['count'] as num?)?.toInt(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'scope': scope.wire,
+    if (scope == AccessScope.some) 'articleIds': articleIds,
+  };
+
+  @override
+  List<Object?> get props => [scope, articleIds, count];
+}
+
+/// The join row embedded in a [Team]: a user's role, project access and
+/// knowledge-base access.
 class TeamMembership extends Equatable {
   const TeamMembership({
     required this.userId,
     this.role = TeamRole.member,
     this.access = const ProjectAccess.none(),
+    this.knowledge = const KnowledgeAccess.none(),
   });
 
   final String userId;
   final TeamRole role;
   final ProjectAccess access;
+  final KnowledgeAccess knowledge;
 
   bool get isAdmin => role == TeamRole.admin;
 
@@ -84,10 +147,13 @@ class TeamMembership extends Equatable {
     userId: json['userId'] as String,
     role: TeamRole.fromJson(json['role'] as String?),
     access: ProjectAccess.fromJson(json['access'] as Map<String, dynamic>?),
+    knowledge: KnowledgeAccess.fromJson(
+      json['knowledge'] as Map<String, dynamic>?,
+    ),
   );
 
   @override
-  List<Object?> get props => [userId, role, access];
+  List<Object?> get props => [userId, role, access, knowledge];
 }
 
 /// A Team groups users (with per-team roles) and grants them project access.

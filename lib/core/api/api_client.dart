@@ -305,6 +305,19 @@ class ApiClient {
     idempotent: true,
   );
 
+  /// [get] with the response's headers, for a list whose headers say more
+  /// about it than its body does (`X-Truncated` when the server cut it short).
+  Future<({dynamic data, String? Function(String name) header})> getWithHeaders(
+    String path, {
+    Map<String, dynamic>? query,
+  }) async {
+    final response = await _runResponse(
+      () => _dio.get<dynamic>(_url(path), queryParameters: query),
+      idempotent: true,
+    );
+    return (data: response.data, header: response.headers.value);
+  }
+
   /// Raw binary GET (e.g. the logo proxy). Returns the bytes and the response
   /// content-type, or null on any non-2xx / transport error. Retried once on a
   /// transient connection loss (a reused-but-dead keep-alive socket).

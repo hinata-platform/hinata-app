@@ -5,7 +5,7 @@ import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/core/theme/app_theme.dart';
-import 'package:hinata/features/admin/sections/admin_time_tags_card.dart';
+import 'package:hinata/features/organization/time_tracking/time_tags_card.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Opening a tag dialog and closing it again without saving.
@@ -24,7 +24,7 @@ void main() {
     child: MaterialApp(
       theme: AppTheme.light(),
       home: const Scaffold(
-        body: Center(child: SizedBox(width: 700, child: AdminTimeTagsCard())),
+        body: Center(child: SizedBox(width: 700, child: OrgTimeTagsCard())),
       ),
     ),
   );

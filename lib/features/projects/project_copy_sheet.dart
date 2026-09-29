@@ -12,6 +12,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../sprint/modals/glass_modal.dart';
+import 'deadline_basis_field.dart';
 import 'project_key.dart';
 
 /// Which of the two ways in somebody took.
@@ -42,21 +43,34 @@ Future<ProjectCopyResult?> showProjectCopySheet(
   required ProjectCopyMode mode,
 }) {
   final projects = context.read<ProjectRepository>();
+  final deadlineDefault = offeredDeadlineDefault(context);
   return showGlassModal<ProjectCopyResult>(
     context,
     width: 560,
     builder: (modalContext) => RepositoryProvider.value(
       value: projects,
-      child: _ProjectCopyBody(source: source, mode: mode),
+      child: _ProjectCopyBody(
+        source: source,
+        mode: mode,
+        deadlineDefault: deadlineDefault,
+      ),
     ),
   );
 }
 
 class _ProjectCopyBody extends StatefulWidget {
-  const _ProjectCopyBody({required this.source, required this.mode});
+  const _ProjectCopyBody({
+    required this.source,
+    required this.mode,
+    this.deadlineDefault,
+  });
 
   final Project source;
   final ProjectCopyMode mode;
+
+  /// The organisation's deadline basis while project templates are on; null
+  /// hides the switch and keeps the field out of the request.
+  final RelativeDateBasis? deadlineDefault;
 
   @override
   State<_ProjectCopyBody> createState() => _ProjectCopyBodyState();
@@ -71,6 +85,11 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
   bool _includeAttachments = false;
   bool _includeTimeSettings = true;
   bool _includeBoard = false;
+
+  /// The basis picked for the new project's deadlines, null until somebody
+  /// picks one, and then nothing is sent: the copy keeps the source's own
+  /// setting, including "follow the organisation".
+  RelativeDateBasis? _deadlineBasis;
 
   ProjectCopyScope? _scope;
   bool _loadingScope = true;
@@ -161,6 +180,7 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
               name: _name.text.trim(),
               key: _key.text.trim(),
               eventDate: _eventDate,
+              deadlineBasis: _deadlineBasisToSend,
             )
           : await repo.copyProject(
               widget.source.id,
@@ -172,6 +192,7 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
               includeTimeSettings: _includeTimeSettings,
               includeBoard: _includeBoard,
               asTemplate: _isTemplate,
+              deadlineBasis: _deadlineBasisToSend,
             );
       if (mounted) Navigator.of(context).pop(result);
     } on ApiFailure catch (failure) {
@@ -185,6 +206,9 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
       });
     }
   }
+
+  RelativeDateBasis? get _deadlineBasisToSend =>
+      widget.deadlineDefault == null ? null : _deadlineBasis;
 
   Future<void> _pickEventDate() async {
     final picked = await showGlassDatePicker(
@@ -256,6 +280,22 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
                   label: context.t('projects.copy.eventDate'),
                   child: _dateRow(),
                 ),
+                if (widget.deadlineDefault != null) ...[
+                  const SizedBox(height: 12),
+                  GlassField(
+                    label: context.t('projects.deadlineBasis.label'),
+                    child: DeadlineBasisField(
+                      value:
+                          _deadlineBasis ??
+                          widget.source.effectiveDeadlineBasis(
+                            widget.deadlineDefault!,
+                          ),
+                      organisationDefault: widget.deadlineDefault!,
+                      onChanged: (basis) =>
+                          setState(() => _deadlineBasis = basis),
+                    ),
+                  ),
+                ],
                 if (!_isInstantiate) ...[
                   const SizedBox(height: 16),
                   Text(
