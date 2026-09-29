@@ -427,7 +427,10 @@ class _GlassTopBar extends StatelessWidget {
                 // both, and a month name does not survive that on a phone.
                 centerTitle: !titleLeading,
                 toolbarHeight: _kCompactBarHeight,
-                padding: const EdgeInsets.symmetric(horizontal: 6),
+                // The page's own gutter, so the back button, the logo and the
+                // round buttons on the right stand exactly as far from the
+                // edge as the docked toolbar under them and the content below.
+                padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
                 leading: onBack != null
                     ? Tooltip(
                         message: MaterialLocalizations.of(
@@ -467,8 +470,10 @@ class _GlassTopBar extends StatelessWidget {
                           // leading wider than the actions steals from the
                           // title twice over — and a logo that grew past it
                           // would shove the title off its own centre.
+                          // Nothing on the leading side: the bar's padding
+                          // already sets the logo on the page's gutter.
                           child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10),
+                            padding: EdgeInsetsDirectional.only(end: 10),
                             child: OrgLogo(
                               height: 24,
                               maxWidth: 72,

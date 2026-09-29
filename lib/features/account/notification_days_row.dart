@@ -50,9 +50,9 @@ String formatDaySpan(
 /// on: the last one says why instead of switching off, because "no days" would
 /// read as "notifications off", which the channel switches above already are.
 ///
-/// Every toggle is at least 48 by 48 and grows with the text size; where seven
-/// of them do not fit side by side they wrap onto a second line rather than
-/// shrinking below what a thumb hits.
+/// The week always sits on one line. Each toggle is 48 by 48 where seven fit
+/// and grows with the text size; on a narrow screen or at a large text size
+/// the seven share the width instead, the name scaling down with its ring.
 class NotificationDaysRow extends StatefulWidget {
   const NotificationDaysRow({
     super.key,
@@ -136,20 +136,31 @@ class _NotificationDaysRowState extends State<NotificationDaysRow> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            children: [
-              for (final d in order)
-                _DayToggle(
-                  tipKey: _tips[d]!,
-                  label: shortName(d),
-                  fullName: weekdayName(context, d),
-                  selected: days.contains(d),
-                  isLast: days.length == 1 && days.contains(d),
-                  onTap: () => _toggle(d),
-                ),
-            ],
+          // Always one line, the way a week is read. Each day gets a
+          // seventh of the width, capped at its natural size, so a wide
+          // window keeps round 48s and a narrow phone or a large text size
+          // shrinks the rings rather than breaking the week in two.
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final cell = math.min(
+                _DayToggle.sideFor(context),
+                constraints.maxWidth / order.length,
+              );
+              return Row(
+                children: [
+                  for (final d in order)
+                    _DayToggle(
+                      tipKey: _tips[d]!,
+                      label: shortName(d),
+                      fullName: weekdayName(context, d),
+                      selected: days.contains(d),
+                      isLast: days.length == 1 && days.contains(d),
+                      cell: cell,
+                      onTap: () => _toggle(d),
+                    ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 6),
           Wrap(
@@ -188,8 +199,8 @@ class _NotificationDaysRowState extends State<NotificationDaysRow> {
 }
 
 /// One round day toggle. The whole square cell is the hit target: 48 across
-/// at the normal text size, and growing with the text so the name inside the
-/// circle never has to shrink.
+/// at the normal text size and growing with the text, as far as a seventh of
+/// the row allows.
 class _DayToggle extends StatelessWidget {
   const _DayToggle({
     required this.tipKey,
@@ -198,7 +209,12 @@ class _DayToggle extends StatelessWidget {
     required this.selected,
     required this.isLast,
     required this.onTap,
+    required this.cell,
   });
+
+  /// 48 at the normal text size, and as much more as the text grows.
+  static double sideFor(BuildContext context) =>
+      math.max(48.0, MediaQuery.textScalerOf(context).scale(48));
 
   final GlobalKey<TooltipState> tipKey;
   final String label;
@@ -207,14 +223,16 @@ class _DayToggle extends StatelessWidget {
   final bool isLast;
   final VoidCallback onTap;
 
+  /// The square cell's side: [sideFor], or less where seven do not fit.
+  final double cell;
+
   static const Duration _settle = Duration(milliseconds: 180);
 
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final lastReason = context.t('account.notifications.days.lastDay');
-    // 48 at the normal text size, and as much more as the text grows.
-    final side = math.max(48.0, MediaQuery.textScalerOf(context).scale(48));
+    final ring = cell - 4;
     return Tooltip(
       key: tipKey,
       message: isLast ? lastReason : fullName,
@@ -229,13 +247,13 @@ class _DayToggle extends StatelessWidget {
           onTap: onTap,
           customBorder: const CircleBorder(),
           child: SizedBox.square(
-            dimension: side,
+            dimension: cell,
             child: Center(
               child: AnimatedContainer(
                 duration: _settle,
                 curve: Curves.easeOut,
-                width: side - 4,
-                height: side - 4,
+                width: ring,
+                height: ring,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   // A wash, not a slab: the honey tint of the switch
@@ -250,19 +268,22 @@ class _DayToggle extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 padding: const EdgeInsets.all(4),
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.visible,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    // The deep honey ink in light mode: the amber of
-                    // the ring is too pale for text this small.
-                    color: selected
-                        ? (dark ? AppColors.accent : AppColors.accentText)
-                        : AppColors.inkSoft,
+                // Scales the name down only when the ring had to shrink.
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      // The deep honey ink in light mode: the amber of
+                      // the ring is too pale for text this small.
+                      color: selected
+                          ? (dark ? AppColors.accent : AppColors.accentText)
+                          : AppColors.inkSoft,
+                    ),
                   ),
                 ),
               ),

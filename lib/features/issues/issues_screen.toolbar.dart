@@ -15,7 +15,8 @@ class _Section {
 // ─────────────────────────── toolbar ────────────────────────────────────
 
 /// The Issues controls: group-by, sort, filter and time range, with the export
-/// on the trailing edge.
+/// on the trailing edge — and on a phone the selection switch just before it,
+/// since the page head it sits in on a wide window is not drawn there.
 ///
 /// On a phone they are one glass housing docked into the app bar, scrolling
 /// sideways when the phone is narrow. On a wide window each is a glass pill of
@@ -34,6 +35,8 @@ class _Toolbar extends StatelessWidget {
     required this.onTimeRange,
     required this.onExport,
     required this.exporting,
+    required this.selecting,
+    required this.onToggleSelection,
   });
 
   final IssueGrouping grouping;
@@ -50,6 +53,10 @@ class _Toolbar extends StatelessWidget {
   /// While true the export is paging the full result set; the button shows the
   /// loader and ignores taps.
   final bool exporting;
+
+  /// Whether the list is in selection mode, and the switch in and out of it.
+  final bool selecting;
+  final VoidCallback onToggleSelection;
 
   @override
   Widget build(BuildContext context) {
@@ -89,13 +96,59 @@ class _Toolbar extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        if (onExport != null)
+        _DockedSelectionToggle(active: selecting, onTap: onToggleSelection),
+        if (onExport != null) ...[
+          const SizedBox(width: 8),
           _ExportButton(
             onSelected: onExport!,
             exporting: exporting,
             docked: true,
           ),
+        ],
       ],
+    );
+  }
+}
+
+/// The selection switch in the phone's docked toolbar: the export button's
+/// glass and size, so the two read as one pair. The glyph turns from a checked
+/// list into a crossed one while selecting, so the state is never carried by
+/// colour alone, and a screen reader hears it as a toggle.
+class _DockedSelectionToggle extends StatelessWidget {
+  const _DockedSelectionToggle({required this.active, required this.onTap});
+
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = context.t(
+      active ? 'issues.selection.exit' : 'issues.selection.enter',
+    );
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        toggled: active,
+        label: label,
+        excludeSemantics: true,
+        onTap: onTap,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: _GlassControlSurface(
+            radius: _kSegmentedRadius,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Icon(
+                active ? LucideIcons.listX : LucideIcons.listChecks,
+                size: 16,
+                color: active ? AppColors.accentStrong : AppColors.ink,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
