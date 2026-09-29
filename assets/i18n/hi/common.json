@@ -438,7 +438,16 @@
     "deleteSelectedBody": "यह इसे सभी के लिए स्थायी रूप से हटा देगा।",
     "deleteSelectedBody_plural": "इससे {{count}} टिप्पणियाँ सभी के लिए स्थायी रूप से हट जाएँगी।",
     "recorderToolMissing": "रिकॉर्ड नहीं किया जा सकता: {{tool}} इंस्टॉल नहीं है। Linux पर रिकॉर्डिंग parecord (pulseaudio-utils) और ffmpeg से होती है।",
-    "voiceNeedsGstreamer": "यह वॉइस मैसेज नहीं चल सकता: GStreamer के बेस प्लगइन मौजूद नहीं हैं। gstreamer1.0-plugins-base इंस्टॉल करें।"
+    "voiceNeedsGstreamer": "यह वॉइस मैसेज नहीं चल सकता: GStreamer के बेस प्लगइन मौजूद नहीं हैं। gstreamer1.0-plugins-base इंस्टॉल करें।",
+    "composer": {
+      "attach": "अटैचमेंट या फ़ॉर्मैटिंग",
+      "record": "वॉइस संदेश रिकॉर्ड करें",
+      "send": "टिप्पणी भेजें",
+      "cancelEdit": "संपादन रोकें",
+      "closeFormat": "फ़ॉर्मैटिंग बंद करें",
+      "discardRecording": "रिकॉर्डिंग हटाएँ",
+      "sendVoice": "वॉइस संदेश भेजें"
+    }
   },
   "filePicker": {
     "images": "छवियाँ",

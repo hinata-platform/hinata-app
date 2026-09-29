@@ -438,7 +438,16 @@
     "deleteSelectedBody": "Er wird dauerhaft für alle entfernt.",
     "deleteSelectedBody_plural": "{{count}} Kommentare werden dauerhaft für alle entfernt.",
     "recorderToolMissing": "Aufnahme nicht möglich: {{tool}} ist nicht installiert. Unter Linux wird über parecord (pulseaudio-utils) und ffmpeg aufgenommen.",
-    "voiceNeedsGstreamer": "Diese Sprachnachricht lässt sich nicht abspielen: Die GStreamer-Basis-Plugins fehlen. Installiere gstreamer1.0-plugins-base."
+    "voiceNeedsGstreamer": "Diese Sprachnachricht lässt sich nicht abspielen: Die GStreamer-Basis-Plugins fehlen. Installiere gstreamer1.0-plugins-base.",
+    "composer": {
+      "attach": "Anhang oder Formatierung",
+      "record": "Sprachnachricht aufnehmen",
+      "send": "Kommentar senden",
+      "cancelEdit": "Bearbeiten abbrechen",
+      "closeFormat": "Formatierung schließen",
+      "discardRecording": "Aufnahme verwerfen",
+      "sendVoice": "Sprachnachricht senden"
+    }
   },
   "filePicker": {
     "images": "Bilder",

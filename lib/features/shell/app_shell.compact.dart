@@ -443,6 +443,9 @@ class _GlassTopBar extends StatelessWidget {
                               )
                             : GlassButton(
                                 icon: Icon(backArrow(context)),
+                                label: MaterialLocalizations.of(
+                                  context,
+                                ).backButtonTooltip,
                                 onTap: onBack,
                                 width: 42,
                                 height: 42,
@@ -596,6 +599,7 @@ class _GlassTopActions extends StatelessWidget {
                 message: context.t('nav.settings'),
                 child: GlassButton(
                   icon: const Icon(LucideIcons.settings2),
+                  label: context.t('nav.settings'),
                   onTap: () => context.go('/settings'),
                   width: 42,
                   height: 42,
@@ -759,6 +763,7 @@ class _PageActionButton extends StatelessWidget {
         message: action.label,
         child: GlassButton(
           icon: Icon(action.icon),
+          label: action.label,
           onTap: tap,
           width: 42,
           height: 42,

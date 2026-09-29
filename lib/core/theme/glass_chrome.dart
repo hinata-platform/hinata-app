@@ -242,6 +242,8 @@ class GlassCircleButton extends StatelessWidget {
     final dark = AppColors.brightness == Brightness.dark;
     Widget button = GlassButton(
       icon: Icon(icon, size: iconSize),
+      // The tooltip names it for a pointer; a screen reader needs the label.
+      label: tooltip ?? '',
       onTap: onTap ?? () {},
       enabled: onTap != null,
       width: size,

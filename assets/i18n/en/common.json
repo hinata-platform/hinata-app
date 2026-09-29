@@ -438,7 +438,16 @@
     "deleteSelectedBody": "This permanently removes it for everyone.",
     "deleteSelectedBody_plural": "This permanently removes {{count}} comments for everyone.",
     "recorderToolMissing": "Can't record: {{tool}} isn't installed. Linux records via parecord (pulseaudio-utils) and ffmpeg.",
-    "voiceNeedsGstreamer": "This voice message can't play: GStreamer's base plugins are missing. Install gstreamer1.0-plugins-base."
+    "voiceNeedsGstreamer": "This voice message can't play: GStreamer's base plugins are missing. Install gstreamer1.0-plugins-base.",
+    "composer": {
+      "attach": "Attachment or formatting",
+      "record": "Record a voice message",
+      "send": "Send comment",
+      "cancelEdit": "Stop editing",
+      "closeFormat": "Close formatting",
+      "discardRecording": "Discard recording",
+      "sendVoice": "Send voice message"
+    }
   },
   "filePicker": {
     "images": "Images",
