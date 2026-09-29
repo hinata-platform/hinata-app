@@ -3714,7 +3714,8 @@
       "owner": "オーナー",
       "lead": "リード",
       "viewer": "閲覧者",
-      "contributor": "コントリビューター"
+      "contributor": "コントリビューター",
+      "org_admin": "組織管理者"
     },
     "avatar": {
       "title": "プロフィール画像",
