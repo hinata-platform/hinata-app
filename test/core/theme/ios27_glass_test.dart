@@ -6,9 +6,18 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 void main() {
   group('iOS 27 glass', () {
-    test('the neutral chrome is Apple\'s regular glass in both themes', () {
-      expect(kNavGlassLight, LiquidGlassSettings.ios27Light);
-      expect(kNavGlassDark, LiquidGlassSettings.ios27Dark);
+    test('the neutral chrome is Apple\'s glass without the frost', () {
+      for (final (chrome, apple) in [
+        (kNavGlassLight, LiquidGlassSettings.ios27Light),
+        (kNavGlassDark, LiquidGlassSettings.ios27Dark),
+      ]) {
+        // Frost is a blur pass per surface per scrolled frame; the rim stays.
+        expect(chrome.frost, 0);
+        expect(chrome.rimShade, apple.rimShade);
+        expect(chrome.rimLight, apple.rimLight);
+        expect(chrome.lensModel, GlassLensModel.paraxial);
+        expect(chrome.glassColor, apple.glassColor);
+      }
       expect(navGlass(false), same(kNavGlassLight));
       expect(navGlass(true), same(kNavGlassDark));
     });
@@ -77,7 +86,7 @@ void main() {
       final light = theme.light.settings!.applyTo(const LiquidGlassSettings());
       final dark = theme.dark.settings!.applyTo(const LiquidGlassSettings());
       expect(light.rimLight, LiquidGlassSettings.ios27Light.rimLight);
-      expect(light.frost, LiquidGlassSettings.ios27Light.frost);
+      expect(light.frost, 0);
       expect(dark.rimShade, LiquidGlassSettings.ios27Dark.rimShade);
       expect(dark.lensModel, GlassLensModel.paraxial);
     });
