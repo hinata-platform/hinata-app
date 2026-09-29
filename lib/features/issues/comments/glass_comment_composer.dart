@@ -385,6 +385,7 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
     if (widget.editing) {
       return _CircleButton(
         icon: LucideIcons.x,
+        label: context.t('comments.composer.cancelEdit'),
         size: size,
         onTap: widget.enabled ? widget.onCancelEdit : null,
       );
@@ -406,6 +407,7 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
       quality: GlassQuality.premium,
       triggerBuilder: (context, toggle) => _CircleButton(
         icon: LucideIcons.plus,
+        label: context.t('comments.composer.attach'),
         size: size,
         onTap: widget.enabled ? toggle : null,
       ),
@@ -447,6 +449,7 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
     if (_canSend) {
       return _CircleButton(
         icon: LucideIcons.send,
+        label: context.t('comments.composer.send'),
         size: size,
         send: true,
         onTap: widget.enabled ? _submitText : null,
@@ -454,6 +457,7 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
     }
     return _CircleButton(
       icon: LucideIcons.mic,
+      label: context.t('comments.composer.record'),
       size: size,
       onTap: widget.enabled ? _startRecording : null,
     );

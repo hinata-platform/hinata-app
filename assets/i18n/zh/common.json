@@ -438,7 +438,16 @@
     "deleteSelectedBody": "这将为所有人永久移除该评论。",
     "deleteSelectedBody_plural": "这将为所有人永久移除 {{count}} 条评论。",
     "recorderToolMissing": "无法录音：未安装 {{tool}}。Linux 通过 parecord（pulseaudio-utils）和 ffmpeg 录音。",
-    "voiceNeedsGstreamer": "该语音消息无法播放：缺少 GStreamer 基础插件。请安装 gstreamer1.0-plugins-base。"
+    "voiceNeedsGstreamer": "该语音消息无法播放：缺少 GStreamer 基础插件。请安装 gstreamer1.0-plugins-base。",
+    "composer": {
+      "attach": "附件或格式",
+      "record": "录制语音消息",
+      "send": "发送评论",
+      "cancelEdit": "停止编辑",
+      "closeFormat": "关闭格式",
+      "discardRecording": "放弃录音",
+      "sendVoice": "发送语音消息"
+    }
   },
   "filePicker": {
     "images": "图片",

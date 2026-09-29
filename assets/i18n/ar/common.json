@@ -438,7 +438,16 @@
     "deleteSelectedBody": "يؤدي هذا إلى حذفه نهائيًا لدى الجميع.",
     "deleteSelectedBody_plural": "يؤدي هذا إلى حذف التعليقات المحددة ({{count}}) نهائيًا لدى الجميع.",
     "recorderToolMissing": "تعذر التسجيل: {{tool}} غير مثبّت. يسجّل Linux عبر parecord (من pulseaudio-utils) وffmpeg.",
-    "voiceNeedsGstreamer": "تعذر تشغيل هذه الرسالة الصوتية: إضافات GStreamer الأساسية مفقودة. ثبّت gstreamer1.0-plugins-base."
+    "voiceNeedsGstreamer": "تعذر تشغيل هذه الرسالة الصوتية: إضافات GStreamer الأساسية مفقودة. ثبّت gstreamer1.0-plugins-base.",
+    "composer": {
+      "attach": "مرفق أو تنسيق",
+      "record": "تسجيل رسالة صوتية",
+      "send": "إرسال التعليق",
+      "cancelEdit": "إيقاف التعديل",
+      "closeFormat": "إغلاق التنسيق",
+      "discardRecording": "تجاهل التسجيل",
+      "sendVoice": "إرسال الرسالة الصوتية"
+    }
   },
   "filePicker": {
     "images": "الصور",

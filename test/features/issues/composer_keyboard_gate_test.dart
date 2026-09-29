@@ -89,6 +89,19 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets('names its round buttons for a screen reader', (tester) async {
+    phone(tester);
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(host());
+    await tester.pump();
+
+    // Icon-only glass buttons: the glyph is all the eye gets, the name is all
+    // a screen reader gets.
+    expect(find.bySemanticsLabel('comments.composer.attach'), findsOneWidget);
+    expect(find.bySemanticsLabel('comments.composer.record'), findsOneWidget);
+    semantics.dispose();
+  });
+
   testWidgets('a keyboard the composer did not raise takes the dock away', (
     tester,
   ) async {
