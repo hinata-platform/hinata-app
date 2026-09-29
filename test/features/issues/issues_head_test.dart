@@ -133,6 +133,25 @@ void main() {
     }
   });
 
+  testWidgets('the round tools on a phone are circles as tall as the bar', (
+    tester,
+  ) async {
+    await open(tester, width: 390);
+
+    final toggle = tester.getSize(find.byTooltip('issues.selection.enter'));
+    expect(toggle.width, toggle.height, reason: 'a circle, not an oval');
+    // The segmented housing to its left: the row that holds its four cells.
+    final housing = tester.getSize(
+      find
+          .ancestor(
+            of: find.byTooltip('issues.sort.label'),
+            matching: find.byType(Row),
+          )
+          .first,
+    );
+    expect(toggle.height, housing.height);
+  });
+
   testWidgets('wraps its tools on a narrow window instead of cutting them', (
     tester,
   ) async {
