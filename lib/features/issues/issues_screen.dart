@@ -741,6 +741,15 @@ class _IssuesScreenState extends State<IssuesScreen> {
 
   void _onTimeRangeChanged(IssueTimeRange r) => setState(() => _timeRange = r);
 
+  Future<void> _newIssue() async {
+    final created = await showIssueForm(context, projectId: widget.projectId);
+    if (created != null && mounted) _reload();
+  }
+
+  // A tear-off, so the bar's action compares equal across rebuilds and the
+  // page does not re-publish its chrome every frame.
+  void _newIssueFromBar(Rect? _) => unawaited(_newIssue());
+
   /// Fixed height of the toolbar when docked into the app bar (compact).
   static const double _kDockedToolbarHeight = 56;
 
@@ -760,6 +769,8 @@ class _IssuesScreenState extends State<IssuesScreen> {
     onTimeRange: _onTimeRangeChanged,
     onExport: _export,
     exporting: _exporting,
+    selecting: _selectionMode,
+    onToggleSelection: _toggleSelectionMode,
   );
 
   Future<void> _export(String format) async {
@@ -1050,6 +1061,9 @@ class _IssuesScreenState extends State<IssuesScreen> {
             (state.isLoadingMore || (_hasClientResidual && state.hasMore));
 
         final compact = context.isCompact;
+        // Only a wide window draws this head. On a phone the bar above says
+        // the page's name already, "+" sits in the bar beside the bell and the
+        // selection switch in the docked toolbar beside the export.
         final head = PageHead(
           title: projectName ?? context.t('nav.issues'),
           subtitle: projectName != null
@@ -1058,34 +1072,33 @@ class _IssuesScreenState extends State<IssuesScreen> {
           actions: [
             // Selection without holding: nobody holds a mouse button down on
             // a row to see what happens, and a screen reader or switch user
-            // cannot press and hold at all. On a phone as well, then; the
-            // one-time tip there (see _SelectHint) still teaches the gesture.
+            // cannot press and hold at all.
             _SelectionToggle(
               active: _selectionMode,
               onTap: _toggleSelectionMode,
             ),
-            // One button on every platform: the honey fill is the app's
-            // primary action colour, and the native shell had drifted to a
-            // glass outline that read as secondary. `collapseToIcon` keeps the
-            // phone form — a bare "+" — so only the paint changed.
             PrimaryButton(
               icon: LucideIcons.plus,
               label: context.t('issues.new'),
               collapseToIcon: true,
-              onPressed: () async {
-                final created = await showIssueForm(
-                  context,
-                  projectId: widget.projectId,
-                );
-                if (created != null && mounted) {
-                  _reload();
-                }
-              },
+              onPressed: _newIssue,
             ),
           ],
         );
         return PageChrome(
           title: projectName ?? context.t('nav.issues'),
+          // The bar's own "+": with an action in it the title moves to the
+          // leading edge, where a project's name has the room to be read.
+          actions: compact
+              ? [
+                  PageAction(
+                    icon: LucideIcons.plus,
+                    label: context.t('issues.new'),
+                    primary: true,
+                    onTap: _newIssueFromBar,
+                  ),
+                ]
+              : const [],
           // On compact the toolbar docks into the app bar (shared blur, no
           // separate band); on wide it stands under the title, above the list.
           bottom: compact
@@ -1113,20 +1126,11 @@ class _IssuesScreenState extends State<IssuesScreen> {
                       controller: _scroll,
                       physics: const AlwaysScrollableScrollPhysics(),
                       slivers: [
-                        // On a phone the head scrolls with the list, under the
-                        // app bar's blur.
+                        // On a phone the list starts right under the bar; the
+                        // head is the bar's title and buttons there.
                         if (compact)
-                          SliverPadding(
-                            padding: EdgeInsets.fromLTRB(
-                              context.pageGutter,
-                              // topGutter now includes the docked toolbar height
-                              // on compact, so content clears the whole (taller)
-                              // app bar.
-                              24 + context.topGutter,
-                              context.pageGutter,
-                              14,
-                            ),
-                            sliver: SliverToBoxAdapter(child: head),
+                          SliverToBoxAdapter(
+                            child: SizedBox(height: context.topGutter + 12),
                           ),
                         // The long-press tip, once per server, and only where
                         // there is a row to press.

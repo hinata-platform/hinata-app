@@ -3034,6 +3034,7 @@
       "orgAdminBadge": "Admin de org.",
       "orgAdminTitle": "Administrador de la organización",
       "orgAdminHint": "Ve los tiempos de trabajo, partes de horas, ausencias y registros de todas las personas y gestiona las reglas de tiempo, los festivos y la facturación de la organización. Los informes y las aprobaciones muestran títulos, claves y descripciones de incidencias solo de los proyectos de los que forma parte. La enfermedad solo mientras nadie esté designado para gestionar ausencias; si no, solo si esa persona está designada. Sin acceso al área de administración.",
+      "orgAdminInfo": "¿Qué puede hacer un administrador de la organización?",
       "makeOrgAdmin": "Hacer administrador de la organización",
       "revokeOrgAdmin": "Quitar administrador de la organización",
       "toastOrgAdminGranted": "Rol de administrador de la organización asignado",

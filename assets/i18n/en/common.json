@@ -3034,6 +3034,7 @@
       "orgAdminBadge": "Org admin",
       "orgAdminTitle": "Organization admin",
       "orgAdminHint": "Sees working times, timesheets, absences and bookings of all people and keeps the organization's time rules, holidays and billing. Reports and approvals show issue titles, keys and descriptions only from projects the person is part of. Sickness only while nobody is named to keep absences, otherwise only if the person is named. No access to the admin area.",
+      "orgAdminInfo": "What can an organization admin do?",
       "makeOrgAdmin": "Make organization admin",
       "revokeOrgAdmin": "Revoke organization admin",
       "toastOrgAdminGranted": "Organization admin role granted",

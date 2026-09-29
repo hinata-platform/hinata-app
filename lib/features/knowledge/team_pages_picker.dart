@@ -254,7 +254,10 @@ class _TeamPagesPickerPanelState extends State<TeamPagesPickerPanel> {
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           child: TextField(
             controller: _search,
-            autofocus: true,
+            // On a phone the keyboard would cover half the tree before anyone
+            // asked to search; the popover beside a wide form may take focus.
+            autofocus:
+                MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint,
             onChanged: _onQueryChanged,
             textInputAction: TextInputAction.search,
             style: const TextStyle(fontSize: 14),
@@ -505,7 +508,8 @@ class _Check extends StatelessWidget {
             : AppColors.surface,
         borderRadius: BorderRadius.circular(7),
         border: Border.all(
-          color: on || included ? AppColors.accent : AppColors.hairline,
+          // An empty box needs a rim that reads on the glass, not a hairline.
+          color: on || included ? AppColors.accent : AppColors.inkFaint,
         ),
       ),
       child: on || included

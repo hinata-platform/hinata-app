@@ -646,28 +646,41 @@ class _OrgAdminToggleState extends State<OrgAdminToggle> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.ink,
-                    ),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                      ),
+                      // What the role may see is long; it waits behind the
+                      // "i" instead of pushing the drawer's actions down.
+                      InfoCircleButton(
+                        title: title,
+                        message: context.t('admin.um.orgAdminHint'),
+                        tooltip: context.t('admin.um.orgAdminInfo'),
+                      ),
+                    ],
                   ),
-                  Text(
-                    context.t(
-                      invited
-                          ? 'admin.um.reasonPendingInvite'
-                          : self
-                          ? 'admin.um.reasonOwnOrgRole'
-                          : 'admin.um.orgAdminHint',
+                  // Only why the switch cannot move stays in view.
+                  if (invited || self)
+                    Text(
+                      context.t(
+                        invited
+                            ? 'admin.um.reasonPendingInvite'
+                            : 'admin.um.reasonOwnOrgRole',
+                      ),
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        height: 1.3,
+                        color: AppColors.inkSoft,
+                      ),
                     ),
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      height: 1.3,
-                      color: AppColors.inkSoft,
-                    ),
-                  ),
                 ],
               ),
             ),
