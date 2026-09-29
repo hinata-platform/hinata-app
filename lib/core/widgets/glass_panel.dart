@@ -28,14 +28,31 @@ import '../theme/glass_chrome.dart' show ios27Glass;
 LiquidGlassSettings liquidGlassPanelSettings({
   required Color glassFill,
   required bool dark,
-}) => ios27Glass(
-  dark: dark,
-  glassColor: glassFill,
-  saturation: 1.6,
-  frost: true,
-  // The panel paints its own clipped drop shadow.
-  shadowElevation: 0,
-);
+  bool standard = false,
+}) => standard
+    ? LiquidGlassSettings(
+        // The standard tier cannot draw the iOS 27 rim; this is the recipe it
+        // was tuned with.
+        glassColor: glassFill,
+        blur: 6,
+        thickness: 22,
+        refractiveIndex: 1.2,
+        chromaticAberration: 0.04,
+        saturation: 1.6,
+        lightIntensity: 0.7,
+        glowIntensity: 0.6,
+        whitenStrength: 0.04,
+        whitenGated: false,
+        shadowElevation: 0, // the panel paints its own clipped drop shadow
+      )
+    : ios27Glass(
+        dark: dark,
+        glassColor: glassFill,
+        saturation: 1.6,
+        frost: true,
+        // The panel paints its own clipped drop shadow.
+        shadowElevation: 0,
+      );
 
 /// A floating liquid-glass surface: the lens, its clipped drop shadow and the
 /// specular rim, in the app's standard recipe.

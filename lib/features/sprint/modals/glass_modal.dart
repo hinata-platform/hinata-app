@@ -1474,6 +1474,8 @@ Widget glassWoltSurface(Widget pageContent) {
           settings: liquidGlassPanelSettings(
             glassFill: tokens.glassFill,
             dark: dark,
+            // Pinned to standard for its cost; see liquidGlassPanelSettings.
+            standard: true,
           ),
           // Large editing sheets carry dense content over the busy app behind,
           // so float it on a *thick* near-opaque warm-canvas wash (iOS "thick
