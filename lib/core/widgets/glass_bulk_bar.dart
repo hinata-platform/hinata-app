@@ -88,14 +88,21 @@ class GlassBulkBar extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                countLabel,
-                style: TextStyle(
-                  color: tokens.ink,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+            // Shares the width with the action strip, so a long translation
+            // or a large text size shortens the count instead of pushing the
+            // actions and the close button off the bar.
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  countLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: tokens.ink,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ),
@@ -125,6 +132,10 @@ class GlassBulkBar extends StatelessWidget {
 }
 
 /// One icon+label action inside a [GlassBulkBar].
+///
+/// On a phone it drops the label and keeps the icon, the label moving into the
+/// tooltip and the semantics: three labelled actions next to the count do not
+/// fit a phone's width, and a strip that scrolls hides the last ones from view.
 class GlassBulkAction extends StatelessWidget {
   const GlassBulkAction({
     super.key,
@@ -150,6 +161,14 @@ class GlassBulkAction extends StatelessWidget {
         ? (dark ? const Color(0xFFFF8A80) : AppColors.danger)
         : tokens.ink;
     final color = enabled ? base : tokens.inkSoft;
+    if (context.isCompact) {
+      return IconButton(
+        onPressed: onTap,
+        tooltip: label,
+        style: IconButton.styleFrom(overlayColor: tokens.rowHover),
+        icon: Icon(icon, size: 20, color: color),
+      );
+    }
     return TextButton.icon(
       onPressed: onTap,
       style: TextButton.styleFrom(

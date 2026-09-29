@@ -3034,6 +3034,7 @@
       "orgAdminBadge": "组织管理员",
       "orgAdminTitle": "组织管理员",
       "orgAdminHint": "可查看所有人的工作时间、工时表、缺勤和工时记录，并管理组织的时间规则、节假日和结算。报表和审批中只显示其所在项目的事项标题、键和描述。只有在未指定缺勤管理人时才能看到病假，否则仅在其本人被指定时可见。无法进入管理区。",
+      "orgAdminInfo": "组织管理员可以做什么？",
       "makeOrgAdmin": "设为组织管理员",
       "revokeOrgAdmin": "撤销组织管理员",
       "toastOrgAdminGranted": "已授予组织管理员角色",

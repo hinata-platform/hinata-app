@@ -3034,6 +3034,7 @@
       "orgAdminBadge": "Admin org.",
       "orgAdminTitle": "Administrateur de l'organisation",
       "orgAdminHint": "Voit les temps de travail, feuilles de temps, absences et saisies de toutes les personnes et gère les règles de temps, les jours fériés et la facturation de l'organisation. Les rapports et les validations n'affichent titres, clés et descriptions des tickets que pour les projets dont la personne fait partie. La maladie seulement tant que personne n'est désigné pour gérer les absences, sinon seulement si la personne est elle-même désignée. Pas d'accès à l'espace d'administration.",
+      "orgAdminInfo": "Que peut faire un administrateur de l’organisation ?",
       "makeOrgAdmin": "Nommer administrateur de l'organisation",
       "revokeOrgAdmin": "Retirer administrateur de l'organisation",
       "toastOrgAdminGranted": "Rôle d'administrateur de l'organisation attribué",
