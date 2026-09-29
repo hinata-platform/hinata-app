@@ -56,14 +56,11 @@ dependencies:
   wolt_modal_sheet: ^0.11.0
   fl_chart: ^1.1.1
 
-  # Liquid Glass UI. Back on our package repo's main: the iOS 27 glass
-  # material (frost, rimShade/rimLight, GlassLensModel.paraxial) landed there
-  # but hasn't cut a release yet (CHANGELOG "Unreleased", ahead of tag
-  # v1.6.2 / pubspec 1.7.2). Move back to pub.dev once a release tag covers it.
-  liquid_glass_widgets:
-    git:
-      url: https://github.com/hinata-platform/liquid_glass_widgets.git
-      ref: main
+  # Liquid Glass UI, the published package. 1.8.0 carries the iOS 27 glass
+  # material (frost, rimShade/rimLight, GlassLensModel.paraxial) we briefly
+  # took from the repo's main. Patches go through a pull request first, never
+  # a pinned fork.
+  liquid_glass_widgets: ^1.8.0
 
   # Rich text. Documents are stored as Lexical JSON, so this is both the editor
   # and the renderer; there is no second markdown path any more. The bundle
