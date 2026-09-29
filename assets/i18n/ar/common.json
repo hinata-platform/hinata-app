@@ -3714,7 +3714,8 @@
       "owner": "مالك",
       "lead": "قائد",
       "viewer": "مُطّلع",
-      "contributor": "مساهم"
+      "contributor": "مساهم",
+      "org_admin": "مسؤول المؤسسة"
     },
     "avatar": {
       "title": "الصورة الشخصية",
