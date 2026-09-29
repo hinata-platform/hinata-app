@@ -9,6 +9,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
         LiquidRoundedSuperellipse;
 
 import '../../features/search/search_tokens.dart';
+import '../theme/glass_chrome.dart' show ios27Glass;
 
 /// Shared liquid-glass plumbing for the app's glass panels / overlays.
 ///
@@ -20,28 +21,21 @@ import '../../features/search/search_tokens.dart';
 /// `GlassContainer` (texture capture + chromatic aberration on Impeller; it
 /// falls back gracefully on Skia/Web).
 
-/// The app's standard liquid-glass settings for panels/overlays.
+/// The app's standard liquid-glass settings for panels/overlays: the iOS 27
+/// material (see [ios27Glass]) in the panel's own [glassFill], frosted the way
+/// iOS menus and popovers are. The fill still decides legibility; the frost
+/// only calms what shows through it.
 LiquidGlassSettings liquidGlassPanelSettings({
   required Color glassFill,
   required bool dark,
-  double blur = 6,
-  double thickness = 22,
-}) {
-  return LiquidGlassSettings(
-    glassColor: glassFill,
-    blur: blur,
-    thickness: thickness,
-    refractiveIndex: 1.2,
-    chromaticAberration: 0.04,
-    saturation: 1.6,
-    lightIntensity: 0.7,
-    glowIntensity: 0.6,
-    // Dark glass gets a slight frost lift; light relies on the tint.
-    whitenStrength: dark ? 0.04 : 0.04,
-    whitenGated: false,
-    shadowElevation: 0, // the panel paints its own clipped drop shadow
-  );
-}
+}) => ios27Glass(
+  dark: dark,
+  glassColor: glassFill,
+  saturation: 1.6,
+  frost: true,
+  // The panel paints its own clipped drop shadow.
+  shadowElevation: 0,
+);
 
 /// A floating liquid-glass surface: the lens, its clipped drop shadow and the
 /// specular rim, in the app's standard recipe.
