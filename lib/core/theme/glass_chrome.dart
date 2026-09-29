@@ -14,7 +14,7 @@ import 'app_colors.dart';
 // liquid_glass_widgets 1.8.0 measured it against SwiftUI: a frost cloud the
 // content still shows through, a half-point rim shade and a rim light instead
 // of the older white specular stroke, and a paraxial lens that folds the rim
-// band evenly. The neutral chrome takes Apple's presets as they are; every
+// band evenly. The neutral chrome takes Apple's presets without their frost; every
 // tinted surface (the honey of a primary action, the near-solid composer and
 // menus) keeps its own colour but shares the rim and the lens through
 // [ios27Glass], so the app reads as one material in both themes.
@@ -22,11 +22,41 @@ import 'app_colors.dart';
 // The terms only render at `GlassQuality.premium` on Impeller. Standard and
 // minimal quality, and the web, keep their lighter fallbacks untouched.
 
-/// Neutral chrome, dark: Apple's iOS 27 regular glass in the dark appearance.
-const kNavGlassDark = LiquidGlassSettings.ios27Dark;
+/// Neutral chrome, dark: Apple's iOS 27 regular glass in the dark appearance,
+/// without its frost (see [_withoutFrost]).
+final kNavGlassDark = _withoutFrost(LiquidGlassSettings.ios27Dark);
 
-/// Neutral chrome, light: Apple's iOS 27 regular glass in the light appearance.
-const kNavGlassLight = LiquidGlassSettings.ios27Light;
+/// Neutral chrome, light: Apple's iOS 27 regular glass in the light appearance,
+/// without its frost (see [_withoutFrost]).
+final kNavGlassLight = _withoutFrost(LiquidGlassSettings.ios27Light);
+
+/// [preset] without the frost pass, for the chrome that sits over scrolling content.
+///
+/// Measured on the iPhone simulator with real frames (hin-130-review/perf): the
+/// frost is a blur pass of its own on every surface, and the bar, its round
+/// buttons, the docked toolbar and the tab pill each paid it on every scrolled
+/// frame. Scrolling the issues list went from 5.2 to 9.2 ms at the 90th
+/// percentile, past a 120 Hz display's 8.3 ms. Without the frost it is back at
+/// 5.5 ms, and the rim shade, rim light and lens that make the glass read as
+/// iOS 27 stay. Menus, popovers and sheets keep their frost: they open over
+/// still content, where the pass is paid once, not per frame.
+LiquidGlassSettings _withoutFrost(LiquidGlassSettings preset) =>
+    LiquidGlassSettings(
+      glassColor: preset.glassColor,
+      saturation: preset.saturation,
+      blur: preset.blur,
+      thickness: preset.thickness,
+      refractiveIndex: preset.refractiveIndex,
+      lensModel: preset.lensModel,
+      lightAngle: preset.lightAngle,
+      lightIntensity: 0,
+      fresnelStrength: 0,
+      chromaticAberration: 0,
+      edgeAbsorption: preset.edgeAbsorption,
+      rimShade: preset.rimShade,
+      rimShadeEnds: preset.rimShadeEnds,
+      rimLight: preset.rimLight,
+    );
 
 /// The optics of the standard quality tier, which the iOS 27 terms do not
 /// reach: its lightweight shader knows no frost, rim shade or rim light, and
@@ -87,7 +117,10 @@ LiquidGlassSettings ios27Glass({
   bool frost = false,
   double shadowElevation = 1,
 }) {
-  final base = dark ? kNavGlassDark : kNavGlassLight;
+  // The full presets, frost terms included: a panel that frosts wants Apple's.
+  final base = dark
+      ? LiquidGlassSettings.ios27Dark
+      : LiquidGlassSettings.ios27Light;
   return LiquidGlassSettings(
     glassColor: glassColor,
     saturation: saturation,
