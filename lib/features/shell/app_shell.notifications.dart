@@ -181,6 +181,8 @@ class _NotificationBellState extends State<_NotificationBell> {
                 settings: liquidGlassPanelSettings(
                   glassFill: glassFill,
                   dark: dark,
+                  // Pinned to standard for its cost; see liquidGlassPanelSettings.
+                  standard: true,
                 ),
                 quality: GlassQuality.standard,
                 onOpen: () {

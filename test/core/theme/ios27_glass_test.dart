@@ -49,6 +49,29 @@ void main() {
       });
     }
 
+    test('surfaces pinned to standard keep a lit edge', () {
+      for (final dark in const [false, true]) {
+        // The standard shader cannot draw the iOS 27 rim, so the older white
+        // specular stays on there.
+        expect(navGlass(dark, standard: true).lightIntensity, greaterThan(0));
+        expect(amberFrost(dark, standard: true).lightIntensity, greaterThan(0));
+        expect(
+          liquidGlassPanelSettings(
+            glassFill: Colors.white,
+            dark: dark,
+            standard: true,
+          ).lightIntensity,
+          greaterThan(0),
+        );
+      }
+    });
+
+    test('premium is the default tier, since only premium draws it', () {
+      final theme = ios27GlassTheme();
+      expect(theme.light.quality, GlassQuality.premium);
+      expect(theme.dark.quality, GlassQuality.premium);
+    });
+
     test('widgets without settings wear the same material', () {
       final theme = ios27GlassTheme();
       final light = theme.light.settings!.applyTo(const LiquidGlassSettings());
