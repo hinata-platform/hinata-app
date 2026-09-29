@@ -60,7 +60,21 @@ void main() {
                 path: '/issues',
                 builder: (_, _) => PageChromeScope(
                   controller: chrome,
-                  child: const Scaffold(body: IssuesScreen()),
+                  // Draws what a phone's bar docks, as the shell does.
+                  child: Scaffold(
+                    body: Column(
+                      children: [
+                        ListenableBuilder(
+                          listenable: chrome,
+                          builder: (_, _) => SizedBox(
+                            height: chrome.bottomHeightFor('/issues'),
+                            child: chrome.bottomFor('/issues'),
+                          ),
+                        ),
+                        const Expanded(child: IssuesScreen()),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -103,6 +117,20 @@ void main() {
     );
     // Narrowing a long list starts at its tools, not at scrolling back up.
     expect(tester.getTopLeft(find.byType(WideToolbar)), toolbar);
+  });
+
+  testWidgets('names every icon-only tool on a phone', (tester) async {
+    await open(tester, width: 390);
+
+    // The phone draws glyphs only; each carries its name for the pointer and
+    // for a screen reader.
+    for (final name in const [
+      'board.groupBy',
+      'issues.sort.label',
+      'board.filterButton',
+    ]) {
+      expect(find.byTooltip(name), findsOneWidget, reason: name);
+    }
   });
 
   testWidgets('wraps its tools on a narrow window instead of cutting them', (
