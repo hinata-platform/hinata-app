@@ -216,7 +216,7 @@ void main() {
     expect(json['from'], '09:00');
     expect(json.containsKey('defaultSchedule'), isFalse);
 
-    final read = NotifPrefs.fromJson({
+    final read = NotifPrefs.fromJson(const {
       'schedule': 'ALWAYS',
       'defaultSchedule': 'CUSTOM',
       'defaultFrom': '09:00',
