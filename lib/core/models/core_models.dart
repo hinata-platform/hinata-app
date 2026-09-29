@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'work_models.dart' show Project, RelativeDateBasis;
+
 /// Well-known platform feature-flag keys (admin-configurable in Adminbereich →
 /// App). All default to OFF when absent, keeping the platform Jira-conform until
 /// an admin opts in.
@@ -20,12 +22,12 @@ class PlatformFlags {
   /// Expose the extended time-tracking module (timer, policies, approvals,
   /// reports, billing). Off → the plain timesheet stays exactly as it is and
   /// the server answers every extended route with 404 `error.feature.disabled`.
-  /// Configured in Adminbereich → Zeiterfassung, not in the raw flag editor.
+  /// Configured on the Organisation page (org admins), not in the raw flag editor.
   static const advancedTimeTracking = 'advanced_time_tracking';
 
   /// Expose absence management 2.0: absence types with their own rules, yearly
   /// entitlements, balances and (from A2) requests. Its own switch beside the
-  /// one above, configured in Adminbereich → Zeiterfassung, and nested under
+  /// one above, configured on the Organisation page, and nested under
   /// it: the server only reports this on when the extended module is on too,
   /// because every day it counts comes from a working pattern, a holiday
   /// calendar and the capacity built on them. Off → the routes answer 404
@@ -62,6 +64,7 @@ class ServerMeta extends Equatable {
     this.adminApprovalRequired = false,
     this.passwordMinLength = 10,
     this.uploadLimits = const UploadLimits(),
+    this.defaultDeadlineBasis = RelativeDateBasis.calendar,
   });
 
   final String serverVersion;
@@ -101,6 +104,11 @@ class ServerMeta extends Equatable {
   final int passwordMinLength;
   final UploadLimits uploadLimits;
 
+  /// How a new relative deadline counts where a project does not say, the
+  /// organisation's default. Calendar days on a server that predates the
+  /// field. Read through [deadlineBasisFor].
+  final RelativeDateBasis defaultDeadlineBasis;
+
   factory ServerMeta.fromJson(Map<String, dynamic> json) => ServerMeta(
     serverVersion: json['serverVersion'] as String? ?? '0.0.0',
     minAppVersion: json['minAppVersion'] as String? ?? '0.0.0',
@@ -125,6 +133,9 @@ class ServerMeta extends Equatable {
     uploadLimits: json['uploadLimits'] is Map<String, dynamic>
         ? UploadLimits.fromJson(json['uploadLimits'] as Map<String, dynamic>)
         : const UploadLimits(),
+    defaultDeadlineBasis: RelativeDateBasis.fromWire(
+      json['defaultDeadlineBasis'] as String?,
+    ),
   );
 
   bool isFlagEnabled(String flag) => featureFlags[flag] ?? false;
@@ -174,7 +185,18 @@ class ServerMeta extends Equatable {
     // listener and `context.watch` saw no change and nothing rebuilt.
     featureFlags,
     uploadLimits,
+    defaultDeadlineBasis,
   ];
+}
+
+/// How a new relative deadline counts for [project]: the project's own
+/// basis, else the organisation's default from [meta], else calendar days.
+///
+/// The one place the deadline editors (create sheet, detail sheet, bulk edit)
+/// ask, so the fallback order cannot drift apart between them.
+RelativeDateBasis deadlineBasisFor(Project? project, ServerMeta? meta) {
+  final organisation = meta?.defaultDeadlineBasis ?? RelativeDateBasis.calendar;
+  return project?.effectiveDeadlineBasis(organisation) ?? organisation;
 }
 
 /// Outcome of a one-off reachability probe of a *candidate* server — a timed
@@ -274,6 +296,11 @@ class AuthUser extends Equatable {
   final String locale;
 
   bool get isAdmin => roles.contains('ADMIN');
+
+  /// Runs the organisation's time, absence and billing side (`ORG_ADMIN`).
+  /// Independent of [isAdmin]: neither role implies the other, and neither
+  /// opens anybody's projects.
+  bool get isOrgAdmin => roles.contains('ORG_ADMIN');
 
   factory AuthUser.fromJson(Map<String, dynamic> json) => AuthUser(
     id: json['id'] as String,

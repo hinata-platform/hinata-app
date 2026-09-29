@@ -12,6 +12,7 @@ import '../../../core/models/admin_user_models.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/glass_bulk_bar.dart' show GlassBulkBarDock;
 import '../../../core/widgets/glass_popup_menu.dart';
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_loader.dart';
@@ -260,6 +261,27 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             : 'admin.um.toastDemoted',
         clearSel: true,
       ),
+      setOrgAdmin: (ids, orgAdmin) async {
+        final users = _usersFor(ids);
+        if (!await confirmOrgAdminChange(context, users, grant: orgAdmin)) {
+          return false;
+        }
+        if (!mounted) return false;
+        try {
+          await _repo.adminSetOrgRole(ids, orgAdmin);
+        } on ApiFailure catch (failure) {
+          _toastRaw(failure.message);
+          return false;
+        }
+        _sel.clear();
+        _toast(
+          orgAdmin
+              ? 'admin.um.toastOrgAdminGranted'
+              : 'admin.um.toastOrgAdminRevoked',
+        );
+        await _load();
+        return true;
+      },
       openDemote: (ids) async {
         final users = _usersFor(ids);
         if (!await showRevokeAdminModal(context, users)) return;
@@ -879,21 +901,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final selected =
         _page?.items.where((u) => _sel.contains(u.id)).toList() ?? [];
     if (selected.isEmpty) return const SizedBox.shrink();
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 16 + context.bottomGutter,
-      child: Center(
-        child: Padding(
-          // The glass bar scrolls its action strip internally, so it only
-          // ever needs the page gutters — never the screen edge.
-          padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
-          child: BulkActionBar(
-            selected: selected,
-            actions: _actions,
-            onClear: () => setState(_sel.clear),
-          ),
-        ),
+    // Docked above the floating nav (or the safe area without one); the glass
+    // bar scrolls its action strip internally, so it only needs the gutters.
+    return GlassBulkBarDock(
+      child: BulkActionBar(
+        selected: selected,
+        actions: _actions,
+        onClear: () => setState(_sel.clear),
       ),
     );
   }

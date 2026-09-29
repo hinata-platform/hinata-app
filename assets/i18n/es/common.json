@@ -126,6 +126,14 @@
     },
     "avatar": {
       "tooLarge": "La imagen es demasiado grande. Como máximo {{max}} MB."
+    },
+    "user": {
+      "cannotGrantOwnOrgRole": "No puedes nombrarte a ti mismo administrador de la organización. Pídeselo a otra persona administradora.",
+      "cannotRemoveLastOrgAdmin": "Es la última persona que administra la organización. Nombra primero a otra, para que los partes de horas y las ausencias sigan llegando a alguien.",
+      "resetAfterEmailChange": "Una persona administradora cambió la dirección de acceso hace menos de un día. Podrás restablecer la contraseña cuando haya pasado ese día."
+    },
+    "article": {
+      "moveNotAllowed": "Solo pueden mover esta página quienes gestionan su lugar: los responsables del proyecto, los administradores del equipo o la persona autora de una página privada."
     }
   },
   "notFound": {
@@ -846,6 +854,27 @@
       "workingSuffix": " laborables",
       "sentenceBefore": "{{amount}}{{basis}} antes de la fecha del proyecto",
       "sentenceAfter": "{{amount}}{{basis}} después de la fecha del proyecto"
+    },
+    "bulkDeadline": {
+      "action": "Fijar fecha límite",
+      "title": "Fecha límite para {{count}} incidencia",
+      "title_plural": "Fecha límite para {{count}} incidencias",
+      "done": "Fecha límite fijada para {{count}} incidencia",
+      "done_plural": "Fecha límite fijada para {{count}} incidencias",
+      "cleared": "Fecha límite quitada de {{count}} incidencia",
+      "cleared_plural": "Fecha límite quitada de {{count}} incidencias",
+      "tooMany": "Puedes cambiar como máximo {{max}} incidencias a la vez. Quita algunas de la selección y vuelve a intentarlo."
+    },
+    "selectAll": "Seleccionar todo",
+    "selectAllCapped": "Están seleccionadas las primeras {{max}}. Es el máximo que admite un solo cambio.",
+    "selection": {
+      "enter": "Seleccionar varias",
+      "exit": "Terminar selección",
+      "select": "Seleccionar"
+    },
+    "multiSelectHint": {
+      "text": "Consejo: mantén pulsada una incidencia para seleccionar varias y editarlas juntas, por ejemplo para darles a todas la misma fecha límite.",
+      "gotIt": "Entendido"
     }
   },
   "type": {
@@ -1001,7 +1030,7 @@
       "none": "Sin etiquetas",
       "search": "Buscar etiquetas",
       "create": "Crear \"{{name}}\"",
-      "noneCurated": "Todavía no hay etiquetas. En este servidor solo los administradores pueden crearlas."
+      "noneCurated": "Aún no hay etiquetas. En este servidor solo pueden crearlas los administradores de la organización."
     },
     "policy": {
       "locked": "Las entradas de este día están bloqueadas y ya no se pueden modificar",
@@ -1041,19 +1070,19 @@
         "approval": "Has enviado {{from}} – {{to}}, así que estos registros quedan fijos.",
         "invoice": "Una factura emitida hace referencia a este registro.",
         "unknown": "Este registro está cerrado a cambios.",
-        "maxDaysBack": "Los días anteriores al {{date}} solo se pueden registrar cuando un administrador los abre."
+        "maxDaysBack": "Los días anteriores al {{date}} solo se pueden registrar cuando un administrador de la organización los abre."
       },
       "holder": {
-        "lockDate": "Un administrador puede abrirte el día o reabrir un intervalo dentro del periodo cerrado.",
-        "approval": "Quien dirige el proyecto, o un administrador, puede reabrir el periodo.",
+        "lockDate": "Un administrador de la organización puede abrirte el día o reabrir un tramo dentro del periodo cerrado.",
+        "approval": "Quien dirige el proyecto, o un administrador de la organización, puede reabrir el periodo.",
         "invoice": "Quien emite facturas lo compensa con un abono.",
-        "maxDaysBack": "Un administrador puede abrirte días más antiguos."
+        "maxDaysBack": "Un administrador de la organización puede abrirte días anteriores."
       },
       "remedy": {
-        "lockDate": "Pide una corrección: tu motivo se registra y llega a un administrador.",
+        "lockDate": "Pide una corrección. Tu motivo queda registrado y llega a un administrador de la organización.",
         "approval": "Pide una corrección o que se reabra el periodo.",
         "invoice": "La factura nunca se reescribe; un abono la compensa.",
-        "maxDaysBack": "Pide que te abran el día. Tu motivo queda registrado y llega a los administradores."
+        "maxDaysBack": "Pide que te abran el día. Tu motivo queda registrado y va a los administradores de la organización."
       },
       "chip": {
         "lockDate": "Cerrado",
@@ -1070,7 +1099,7 @@
       "requestDays": "Pedir que se abra este día",
       "requestDaysTitle": "Pedir que se abran días anteriores",
       "requestDaysHint": "¿Por qué necesitas registrar estos días ahora?",
-      "requestDaysSent": "Tu petición se ha enviado a los administradores.",
+      "requestDaysSent": "Tu solicitud se ha enviado a los administradores de la organización.",
       "requestOlderDays": "Pedir días anteriores",
       "pickDaysTitle": "¿Qué días necesitas?"
     },
@@ -1144,7 +1173,7 @@
       "acknowledgeFailed": "No se ha podido guardar. Inténtalo de nuevo.",
       "row": {
         "self": "Ves todos tus propios registros.",
-        "admins": "Los administradores de esta instancia pueden ver y cambiar todos los registros.",
+        "admins": "Los administradores de la organización pueden ver y cambiar todas las entradas.",
         "members": "Los demás miembros de tus proyectos ven en una incidencia y en los informes cuánto tiempo se registró, pero no quién lo registró ni qué dice la descripción.",
         "leadsSee": "Los responsables de tus proyectos ven tus registros individuales, su historial y tus filas en la hoja de horas, también en informes y exportaciones, y pueden cambiar tus registros.",
         "leadsTotals": "Los responsables de tus proyectos solo ven los totales del proyecto, nunca quién registró qué.",
@@ -1164,8 +1193,8 @@
         "entryKept": "Los registros no se eliminan automáticamente.",
         "descriptionRetention": "Si se elimina una cuenta, las descripciones de sus registros y las notas de sus hojas de horas se vacían pasado {{count}} mes.",
         "descriptionRetention_plural": "Si se elimina una cuenta, las descripciones de sus registros y las notas de sus hojas de horas se vacían pasados {{count}} meses.",
-        "maxDaysBack": "Puedes registrar hasta {{count}} día atrás. Un administrador abre los días anteriores si se lo pides.",
-        "maxDaysBack_plural": "Puedes registrar hasta {{count}} días atrás. Un administrador abre los días anteriores si se lo pides."
+        "maxDaysBack": "Puedes registrar hasta {{count}} día hacia atrás. Un administrador de la organización abre días anteriores si lo pides.",
+        "maxDaysBack_plural": "Puedes registrar hasta {{count}} días hacia atrás. Un administrador de la organización abre días anteriores si lo pides."
       },
       "loadFailed": "No se ha podido cargar el aviso. Comprueba tu conexión e inténtalo de nuevo.",
       "absence": {
@@ -1177,8 +1206,8 @@
         },
         "leadsSee": "Los responsables de los proyectos en los que trabajas ven el tipo y el periodo de tus ausencias, nunca una nota, y la enfermedad solo como ausencia.",
         "leadsDoNot": "Los responsables de tus proyectos no ven tus ausencias.",
-        "keepersNamed": "Solo los gestores de ausencias designados y los administradores ven un día de enfermedad como tal.",
-        "keepersAdmins": "Solo los administradores ven un día de enfermedad como tal.",
+        "keepersNamed": "Solo los gestores de ausencias designados ven un día de enfermedad como tal.",
+        "keepersAdmins": "Solo los administradores de la organización ven un día de enfermedad como tal.",
         "band": "Los responsables de tus proyectos y los administradores de tus equipos ven cuánta capacidad le queda a su grupo, como suma de al menos tres personas. Tus días aprobados y horas previstas cuentan, tu nombre no.",
         "report": "En el informe «ausencias y saldos» ves tus propias cifras. La gestión de ausencias ve las de todos.",
         "reportLeads": "Los responsables de tus proyectos solo ven allí sumas de al menos tres personas, sin enfermedad.",
@@ -1394,7 +1423,7 @@
         "difference": "Diferencia",
         "away": "{{duration}} libre o ausente",
         "ledOnly": "Lo registrado solo cuenta el tiempo en proyectos que diriges.",
-        "forbidden": "Solo las personas administradoras y responsables de proyecto pueden ver el informe de carga.",
+        "forbidden": "Solo los administradores de la organización y quienes dirigen proyectos pueden ver el informe de carga de trabajo.",
         "truncated": "El grupo es mayor de lo que lee un informe. Se muestran las primeras 1000 personas.",
         "group": "Grupo",
         "myProjects": "Mis proyectos",
@@ -1576,7 +1605,7 @@
     "approver": {
       "teamLead": "Responsable del equipo",
       "named": "Personas designadas",
-      "admin": "Administración",
+      "admin": "Administradores de la organización",
       "auto": "Automático"
     },
     "visibility": {
@@ -2092,7 +2121,16 @@
       "pending": "{{count}} plazos esperan una fecha, porque el proyecto pierde la que tenía.",
       "confirm": "Mover"
     },
-    "searchHint": "Buscar proyectos"
+    "searchHint": "Buscar proyectos",
+    "deadlineBasis": {
+      "label": "Los plazos se cuentan en",
+      "calendar": "Días naturales",
+      "working": "Días laborables",
+      "orgDefault": "El valor predeterminado de tu organización es {{basis}}.",
+      "followsOrg": "Sigue el valor predeterminado de tu organización ({{basis}}).",
+      "hint": "Los plazos nuevos empiezan con este ajuste. Los plazos existentes no cambian.",
+      "useOrgDefault": "Usar el valor de la organización"
+    }
   },
   "board": {
     "title": "Tableros ágiles",
@@ -2341,7 +2379,23 @@
     "saved": "Cambios guardados",
     "deleted": "Artículo eliminado",
     "articleCount": "{{count}} artículos",
-    "saveWouldBlank": "Guardar ahora sustituiría el artículo por una página vacía. Añade antes algo de contenido."
+    "saveWouldBlank": "Guardar ahora sustituiría el artículo por una página vacía. Añade antes algo de contenido.",
+    "place": {
+      "label": "Visible para",
+      "private": "Solo yo",
+      "team": "Equipo",
+      "project": "Proyecto",
+      "followsParent": "Igual que la página superior",
+      "privateAuthorOnly": "Solo quien escribió la página puede hacerla privada.",
+      "pickProject": "Elegir un proyecto",
+      "otherProject": "{{name}} (elegir otro proyecto)",
+      "saved": "Visibilidad cambiada. Las subpáginas se movieron con ella."
+    },
+    "emptyTitle": "Todavía no hay páginas para ti",
+    "emptyMessage": "Las páginas se comparten a través de proyectos y equipos. Una página nueva es privada hasta que la pongas en un proyecto o un equipo.",
+    "tree": {
+      "truncated": "Aquí no aparecen todas las páginas porque son demasiadas para una lista. Por eso una subpágina puede aparecer arriba aunque su página superior exista."
+    }
   },
   "md": {
     "heading1": "Título 1",
@@ -2500,7 +2554,8 @@
     "about": "Acerca de",
     "appVersion": "Versión de la app",
     "serverVersion": "Versión del servidor",
-    "organization": "Organización"
+    "organization": "Organización",
+    "organizationDesc": "Registro de tiempo, ausencias, festivos y plazos para toda la organización."
   },
   "admin": {
     "title": "Área de administración",
@@ -2604,7 +2659,6 @@
     "gitTokenSecretDefault": "Se está usando el valor predeterminado: define el tuyo antes de pasar a producción.",
     "security": "Seguridad",
     "timeTracking": {
-      "title": "Registro de tiempo",
       "hint": "El registro de tiempo ampliado está desactivado por defecto. Cada política de abajo puede quedar sin valor, y entonces se aplica el valor del entorno de este servidor. Los interruptores que hacen visibles las horas de una persona para otra están desactivados por defecto y llevan una nota de cogestión.",
       "codetermination": "Sujeto a cogestión: § 87 (1) n.º 6 BetrVG (LPVG en el sector público). Acuérdalo con el comité de empresa o de personal antes de activarlo. Basta con que la función pueda usarse para vigilar.",
       "envDefault": "Valor del entorno",
@@ -2614,7 +2668,7 @@
       "moduleHint": "El interruptor principal del módulo de registro de tiempo ampliado.",
       "advancedTitle": "Registro de tiempo ampliado",
       "advancedHint": "Temporizador, políticas, aprobaciones, informes y facturación. Desactivado → la hoja de horas sigue igual y los endpoints del módulo no existen para las apps. Surte efecto sin reiniciar.",
-      "advancedFromSection": "Se configura en Administración → Registro de tiempo, junto con las políticas que le corresponden.",
+      "advancedFromSection": "Se configura en la página Organización, junto con las directivas que le corresponden. Hace falta el rol de administrador de la organización.",
       "captureTitle": "Registro",
       "captureHint": "Qué debe contener una entrada y a partir de cuándo deja de poder cambiarse.",
       "requiredProjectTitle": "Proyecto obligatorio",
@@ -2645,7 +2699,7 @@
         "m60": "60 minutos"
       },
       "limitTagAccessTitle": "Restringir etiquetas",
-      "limitTagAccessHint": "Solo los administradores crean etiquetas nuevas; el resto elige entre las existentes.",
+      "limitTagAccessHint": "Solo los administradores de la organización crean etiquetas nuevas; el resto elige entre las existentes.",
       "defaultBillableTitle": "Facturable por defecto",
       "defaultBillableHint": "Las entradas nuevas nacen marcadas como facturables.",
       "icsImportTitle": "Importación de calendario",
@@ -2655,7 +2709,7 @@
       "leadsSeeMemberEntriesTitle": "Los responsables ven las entradas de los miembros",
       "leadsSeeMemberEntriesHint": "Desactivado: los responsables solo ven los totales del proyecto. En las incidencias no ven nombres ni descripciones, y no cambian entradas ajenas. Activado: los responsables ven las entradas individuales de los miembros de sus proyectos, su historial y sus filas en la hoja de horas, y pueden cambiar esas entradas.",
       "approvalsTitle": "Aprobación de hojas de horas",
-      "approvalsHint": "Las personas envían su hoja de horas de un periodo; un responsable o administrador la aprueba o la rechaza. Requiere «Los responsables ven las entradas de los miembros».",
+      "approvalsHint": "Las personas envían su hoja de horas de un periodo; un responsable o un administrador de la organización la aprueba o la rechaza. Requiere «Los responsables ven las entradas de los miembros».",
       "approvalPeriodLabel": "Periodo de aprobación",
       "approvalPeriodHint": "Con qué frecuencia se entregan las hojas de horas. «Libre» deja el periodo a la propia persona.",
       "period": {
@@ -2696,7 +2750,7 @@
       "billingTitle": "Facturación",
       "billingHint": "Tarifas, costes y facturas a partir del tiempo registrado.",
       "billingEnabledTitle": "Facturación",
-      "billingEnabledHint": "Tarifas, costes de personal, informes de facturación y rentabilidad, facturas. Visible para responsables y administradores.",
+      "billingEnabledHint": "Tarifas, costes de personal, informes de facturación y rentabilidad, facturas. Visible para responsables y administradores de la organización.",
       "currencyLabel": "Moneda",
       "currencyHint": "Código ISO de tres letras, p. ej. EUR.",
       "privacyTitle": "Privacidad y conservación",
@@ -2720,7 +2774,7 @@
       "tagDeleteTitle": "¿Eliminar la etiqueta?",
       "tagDeleteMessage": "\"{{name}}\" se quitará de {{count}} entrada. La entrada se conserva.",
       "tagDeleteMessage_plural": "\"{{name}}\" se quitará de {{count}} entradas. Las entradas se conservan.",
-      "lockBeforeEveryone": "El bloqueo rige para todos, también para los administradores. Levantarlo es la vía documentada para modificar un periodo cerrado.",
+      "lockBeforeEveryone": "El bloqueo rige para todos, también para los administradores de la organización. Levantarlo es la vía documentada para modificar un periodo cerrado.",
       "approvalsNeedVisibility": "Aprobar significa leer las entradas de una persona. Activa también «Los responsables ven las entradas de los miembros»; si no, quien aprueba solo ve un total sin contenido.",
       "periodPreviewTitle": "Los próximos periodos",
       "periodPreviewHint": "Cambiar el ritmo solo afecta a los envíos futuros. Los periodos ya enviados conservan los días que nombraron.",
@@ -2738,7 +2792,7 @@
       "retentionLegal": "No se borra nada automáticamente mientras no fijes aquí un plazo. El § 16 (2) ArbZG y el § 17 MiLoG exigen conservar los registros de jornada durante dos años, por eso 24 meses es una elección habitual. Después se aplica la limitación del plazo de conservación (art. 5 RGPD). Un proceso nocturno se encarga del borrado y deja constancia de cada ejecución en el registro de auditoría.",
       "privacyNoticePreview": "Vista previa",
       "maxDaysBackLabel": "Registrar hasta",
-      "maxDaysBackHint": "Cuántos días hacia atrás se puede registrar tiempo. Un día anterior se rechaza, y la persona puede pedir a un administrador que se lo abra. Vacío significa 365.",
+      "maxDaysBackHint": "Cuántos días hacia atrás se puede registrar tiempo. Un día anterior se rechaza, y la persona puede pedir a un administrador de la organización que se lo abra. Vacío significa 365.",
       "lateEntryHintDaysLabel": "Aviso de registro tardío tras",
       "lateEntryHintDaysHint": "Marca un registro creado más de estos días después de su día trabajado, solo para esa persona. Nunca bloquea nada ni informa a nadie. 0 lo desactiva y vacío usa el valor predeterminado del servidor.",
       "correctionsTitle": "Peticiones de corrección",
@@ -2780,8 +2834,8 @@
       "needsAdvanced": "Solo surte efecto mientras el seguimiento de tiempo ampliado esté activo: cada día que cuenta aquí procede de un patrón de trabajo, un calendario de festivos y la capacidad que resulta de ellos. El interruptor conserva la posición en la que lo deje.",
       "codetermination": "Sujeto a codeterminación: § 87 Abs. 1 Nr. 5 BetrVG — principios generales de vacaciones, el plan de vacaciones y, en caso de conflicto, las fechas (LPVG en el sector público). Acuérdelo con el comité de empresa antes de activarlo.",
       "keepersTitle": "Quién gestiona las ausencias",
-      "keepersHint": "Estas personas gestionan tipos de ausencia, derechos y saldos de todos, y ven una baja por enfermedad como tal. Los administradores siempre pueden.",
-      "keepersEmpty": "Nadie designado: los administradores gestionan las ausencias.",
+      "keepersHint": "Estas personas gestionan los tipos de ausencia, los derechos y los saldos de todos, y ven un día de enfermedad como tal. Los administradores de la organización también pueden gestionar ausencias, pero dejan de ver la enfermedad en cuanto se designa a alguien aquí.",
+      "keepersEmpty": "Nadie designado: los administradores de la organización gestionan las ausencias y ven los días de enfermedad como tales.",
       "keepersAdd": "Añadir persona",
       "calendarTitle": "Calendario de ausencias del equipo",
       "calendarHint": "Si los compañeros ven las ausencias de los demás en un calendario de equipo. Desactivado por defecto; cada tipo de ausencia puede restringirlo.",
@@ -2918,7 +2972,7 @@
       "revokeAdminRights": "Revocar los derechos de admin",
       "revokeAdminRightsSub": "Vuelve al rol de usuario normal",
       "promoteToAdmin": "Ascender a admin",
-      "promoteToAdminSub": "Concede la administración completa de la plataforma",
+      "promoteToAdminSub": "Gestiona la plataforma: usuarios, inicio de sesión e integraciones. No ve contenido de equipos ni proyectos de los que no es miembro.",
       "passwordManagedByIdp": "Contraseña gestionada por el IdP",
       "passwordManagedByIdpSub": "El proveedor de identidad controla las credenciales de este usuario",
       "sendPasswordResetSub": "Envía un enlace de restablecimiento seguro a {{email}}",
@@ -2956,7 +3010,7 @@
       "resetSubMany": "Envía enlaces de restablecimiento de contraseña a {{n}} usuarios",
       "sendReset": "Enviar el restablecimiento",
       "deleteSub": "Esta acción no se puede deshacer",
-      "deleteWarn": "Las cuentas y sus pertenencias se eliminan de forma permanente. Las incidencias creadas por ellos se reasignan a un usuario anterior.",
+      "deleteWarn": "Las cuentas y sus pertenencias se eliminan de forma permanente. Las incidencias creadas por ellos se reasignan a un usuario anterior. Sus páginas privadas de conocimiento se eliminan con la cuenta; antes se pueden mover las páginas importantes a un proyecto o equipo.",
       "deleteTypeHint": "Escribe DELETE para confirmar.",
       "fieldName": "Nombre",
       "fieldTitle": "Puesto",
@@ -2975,7 +3029,18 @@
       "toastProfileUpdated": "Perfil actualizado",
       "statusPending": "Pendiente de aprobación",
       "approve": "Aprobar",
-      "approved": "Registro aprobado."
+      "approved": "Registro aprobado.",
+      "roles": "Roles",
+      "orgAdminBadge": "Admin de org.",
+      "orgAdminTitle": "Administrador de la organización",
+      "orgAdminHint": "Ve los tiempos de trabajo, partes de horas, ausencias y registros de todas las personas y gestiona las reglas de tiempo, los festivos y la facturación de la organización. Los informes y las aprobaciones muestran títulos, claves y descripciones de incidencias solo de los proyectos de los que forma parte. La enfermedad solo mientras nadie esté designado para gestionar ausencias; si no, solo si esa persona está designada. Sin acceso al área de administración.",
+      "makeOrgAdmin": "Hacer administrador de la organización",
+      "revokeOrgAdmin": "Quitar administrador de la organización",
+      "toastOrgAdminGranted": "Rol de administrador de la organización asignado",
+      "toastOrgAdminRevoked": "Rol de administrador de la organización retirado",
+      "orgAdminConfirmOne": "{{name}} verá después los tiempos de trabajo, partes de horas, ausencias y registros de todas las personas. La enfermedad solo mientras nadie esté designado para gestionar ausencias; si no, solo si {{name}} está designada. Títulos y descripciones de incidencias solo de los proyectos de los que {{name}} forma parte.",
+      "orgAdminConfirmMany": "{{names}} verán después los tiempos de trabajo, partes de horas, ausencias y registros de todas las personas. La enfermedad solo mientras nadie esté designado para gestionar ausencias; si no, solo quien esté designado. Títulos y descripciones de incidencias solo de sus propios proyectos.",
+      "reasonOwnOrgRole": "Este rol te lo da otra persona de la administración."
     },
     "iosStoreUrl": "URL de la App Store de iOS",
     "androidStoreUrl": "URL de Google Play para Android",
@@ -3256,7 +3321,9 @@
       "TIME_OFF_REQUEST_CANCELLED": "Ausencia cancelada",
       "TIME_OFF_SICK_REPORTED": "Enfermedad notificada",
       "PROJECT_TEMPLATES_POLICY_CHANGED": "Plantillas de proyecto conmutadas",
-      "PROJECT_SCHEDULE_SHIFTED": "Fecha del proyecto desplazada"
+      "PROJECT_SCHEDULE_SHIFTED": "Fecha del proyecto desplazada",
+      "USER_EMAIL_CHANGED": "Correo cambiado por un administrador",
+      "ARTICLE_MOVED": "Página movida"
     },
     "meta": {
       "oldRole": "Rol anterior",
@@ -3486,7 +3553,8 @@
       "removedMember": "quitó a",
       "attachedProject": "vinculó",
       "createdProject": "creó",
-      "detachedProject": "quitó"
+      "detachedProject": "quitó",
+      "knowledgeChanged": "cambió el acceso a páginas de"
     },
     "membersSummary": "{{members}} miembros · {{admins}} administradores",
     "you": "Tú",
@@ -3495,16 +3563,42 @@
     "detachTitle": "¿Quitar el proyecto?",
     "detachConfirm": "¿Quitar {{name}} de este equipo? Los miembros perderán el acceso concedido a través de él.",
     "adminsOnly": "Solo administradores",
-    "adminsOnlyHint": "Solo los administradores del equipo y los administradores de la plataforma pueden cambiar los ajustes del equipo.",
+    "adminsOnlyHint": "Solo los administradores del equipo pueden cambiar los ajustes del equipo.",
     "identity": "Identidad del equipo",
     "rolesPermissions": "Roles y permisos",
-    "permAdmin": "Control total de este equipo: miembros, proyectos y ajustes. Los mismos derechos que un administrador de la plataforma, limitados a {{name}}.",
+    "permAdmin": "Control total de {{name}}: miembros, proyectos y ajustes.",
     "permMember": "Trabaja en los proyectos que se le conceden. No puede cambiar los miembros ni los ajustes del equipo.",
     "dangerZone": "Zona de peligro",
     "deleteThis": "Eliminar este equipo",
     "deleteThisHint": "Quita el equipo y todos sus miembros. Los proyectos permanecen en el espacio de trabajo.",
     "keyTaken": "Esa clave ya está en uso.",
-    "searchHint": "Buscar equipos"
+    "searchHint": "Buscar equipos",
+    "knowledge": {
+      "label": "Base de conocimiento",
+      "adminReadsAll": "Los administradores del equipo leen todas sus páginas de todos modos.",
+      "none": "Ninguna",
+      "noneHint": "Las páginas del equipo siguen cerradas para ellos",
+      "all": "Todas las páginas del equipo",
+      "allHint": "Incluidas las que se añadan después",
+      "some": "Páginas seleccionadas",
+      "someHint": "Una página incluye todo lo que tiene debajo",
+      "choosePages": "Elegir páginas",
+      "pagesPicked": "{{count}} página seleccionada",
+      "pagesPicked_plural": "{{count}} páginas seleccionadas",
+      "chip": "Conocimiento: {{value}}",
+      "chipAll": "todas",
+      "chipSome": "{{count}} página",
+      "chipSome_plural": "{{count}} páginas",
+      "chipNone": "ninguna",
+      "pickerNote": "Una página incluye todo lo que tiene debajo. Elige la página más alta que encaje.",
+      "searchPages": "Buscar páginas",
+      "noPages": "Este equipo aún no tiene páginas.",
+      "noPageMatches": "Ninguna página coincide.",
+      "limitReached": "Puedes elegir hasta {{max}} páginas.",
+      "apply": "Aplicar",
+      "includedVia": "Incluida a través de {{title}}",
+      "truncated": "No todas las páginas caben en esta lista. Busca para encontrar las demás."
+    }
   },
   "projectSettings": {
     "avatar": {
@@ -3734,7 +3828,15 @@
           "desc": "Avisos sobre tu temporizador y tus horas"
         }
       },
-      "pushUnsupported": "Aquí no hay servicio push; esto sigue aplicándose a tu móvil y a tus otros dispositivos"
+      "pushUnsupported": "Aquí no hay servicio push; esto sigue aplicándose a tu móvil y a tus otros dispositivos",
+      "days": {
+        "title": "Días de notificación",
+        "hint": "Los demás días no llegan correos ni notificaciones push. La campana de la app sigue mostrándolo todo. Los avisos de seguridad y los avisos importantes, como vacaciones a punto de caducar, llegan siempre.",
+        "defaultLine": "Predeterminado: días laborables ({{days}})",
+        "range": "de {{from}} a {{to}}",
+        "useDefault": "Usar predeterminado",
+        "lastDay": "Al menos un día tiene que quedar activo. Para no recibir nada, desactiva los canales de arriba."
+      }
     },
     "access": {
       "title": "Acceso",
@@ -4196,6 +4298,24 @@
     },
     "focus": {
       "leave": "Salir del modo concentración"
+    }
+  },
+  "org": {
+    "title": "Organización",
+    "subtitle": "Estos ajustes valen para toda la organización: registro de tiempo, ausencias, festivos, facturación y plazos. Los administradores de la organización ven los tiempos de trabajo, partes de horas, ausencias y registros de todas las personas, pero títulos y descripciones de incidencias solo de los proyectos de los que forman parte. Solo ven la enfermedad mientras nadie esté designado para gestionar ausencias; si no, solo si están designados.",
+    "deadlines": {
+      "title": "Plazos",
+      "hint": "En qué cuentan los nuevos plazos relativos cuando un proyecto no fija los suyos.",
+      "followsPlatform": "Se aplica el valor predeterminado de la plataforma: {{basis}}.",
+      "followsPlatformUnknown": "Se aplica el valor predeterminado de la plataforma.",
+      "ownChoice": "Tu organización cuenta en {{basis}}.",
+      "existingStay": "Los plazos existentes se quedan como están.",
+      "usePlatform": "Usar el valor predeterminado de la plataforma"
+    },
+    "audit": {
+      "title": "Registro",
+      "hint": "Qué pasó en el registro de tiempo, las ausencias y las hojas de horas, y quién lo hizo.",
+      "open": "Abrir registro"
     }
   }
 }

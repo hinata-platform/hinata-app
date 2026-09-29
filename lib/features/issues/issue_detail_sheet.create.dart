@@ -971,6 +971,11 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
   bool get _offsetsOffered =>
       context.read<AppConfigBloc>().state.meta?.projectTemplates ?? false;
 
+  /// How a new rule counts until somebody says otherwise: the project's own
+  /// choice, else the organisation's default.
+  RelativeDateBasis get _defaultDeadlineBasis =>
+      deadlineBasisFor(_project, context.read<AppConfigBloc>().state.meta);
+
   Future<void> _pickDate({required bool isStart, Rect? anchorRect}) async {
     if (!_offsetsOffered) {
       // Without the module the field is exactly what it always was.
@@ -1002,6 +1007,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
       offset: isStart ? _startOffset : _dueOffset,
       eventDate: _project?.eventDate,
       anchorRect: anchorRect,
+      defaultBasis: _defaultDeadlineBasis,
       resolve: (offset) => _projectApi.resolveOffset(projectId, offset: offset),
     );
     if (choice == null || !mounted) return;

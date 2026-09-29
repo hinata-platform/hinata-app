@@ -177,6 +177,22 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
     );
   }
 
+  /// [replaceItem] for several at once, in one emit: a bulk edit answers with
+  /// every row it changed. Items not loaded here are ignored.
+  void replaceItems(Iterable<T> items) {
+    final key = keyOf;
+    if (key == null) return;
+    final byKey = {for (final item in items) key(item): item};
+    if (byKey.isEmpty) return;
+    emit(
+      state.copyWith(
+        items: [
+          for (final existing in state.items) byKey[key(existing)] ?? existing,
+        ],
+      ),
+    );
+  }
+
   /// Drops one loaded item and counts one fewer, for the same reason.
   ///
   /// Safe to do mid-list because [loadMore] asks for the page the held rows end

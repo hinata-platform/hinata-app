@@ -3,9 +3,10 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' show CustomSemanticsAction;
 import 'package:flutter/services.dart';
 import 'package:hinata/core/theme/glass_chrome.dart'
-    show kNavGlassDark, kNavGlassLight;
+    show GlassCircleButton, kNavGlassDark, kNavGlassLight;
 import 'package:hinata/features/shell/app_shell.dart' show isNativeApp;
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show GlassContainer, LiquidRoundedSuperellipse;
@@ -13,6 +14,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/api/api_client.dart' show ApiFailure;
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/paged_cubit.dart';
@@ -21,6 +23,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
+import '../../core/storage/app_storage.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/project_palette.dart';
@@ -37,7 +40,11 @@ import '../../core/widgets/subtask_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../sprint/modals/glass_modal.dart'
-    show GlassToastKind, showGlassToast, showGlassDateRangePicker;
+    show
+        GlassToastKind,
+        showGlassToast,
+        showGlassDatePicker,
+        showGlassDateRangePicker;
 import '../reports/logo_raster.dart';
 import '../shell/page_chrome.dart';
 import 'deadline_editor.dart';
@@ -55,6 +62,7 @@ import '../../core/widgets/user_pronouns.dart';
 
 part 'issues_screen.toolbar.dart';
 part 'issues_screen.rows.dart';
+part 'issues_screen.bulk.dart';
 
 /// Shared lookup data for rendering issue rows — loaded once alongside the
 /// paginated issue stream (users → names/avatars, projects → names/palette and
@@ -114,42 +122,225 @@ class _IssuesScreenState extends State<IssuesScreen> {
   // Guards the "export everything" flow so the menu can't fire twice.
   bool _exporting = false;
 
-  /// Multi-select for bulk actions (currently: move to another project).
-  /// Entered by long-pressing a row — the same gesture the comment thread uses
-  /// — after which a plain tap toggles instead of opening the issue.
-  final Set<String> _selectedIds = {};
+  /// Multi-select for bulk actions (move to another project, one deadline for
+  /// all). Entered by long-pressing a row — the same gesture the comment
+  /// thread uses — after which a plain tap toggles instead of opening the
+  /// issue. The head also carries a toggle for it: a long press with a mouse
+  /// is something nobody tries, and a screen reader or switch user cannot
+  /// press and hold at all.
+  ///
+  /// Keyed by issue id, holding the project each ticked issue belongs to,
+  /// noted the moment it is ticked. Whether a selection sits in one project is
+  /// read from here rather than from the loaded rows, which a reload may have
+  /// replaced in the meantime.
+  final Map<String, String> _selected = {};
   bool _selectionMode = false;
 
-  void _enterSelection(String issueId) => setState(() {
-    _selectionMode = true;
-    _selectedIds.add(issueId);
-  });
+  /// Whether selection mode was switched on deliberately with the head's
+  /// toggle rather than by a long press. Then it stays on with nothing
+  /// selected: somebody who asked for it is about to pick rows, and the mode
+  /// vanishing under them after unticking the first one would be a surprise.
+  bool _selectionPinned = false;
 
-  void _toggleSelection(String issueId) => setState(() {
-    if (!_selectedIds.remove(issueId)) _selectedIds.add(issueId);
+  /// While a bulk request runs; keeps the bar's actions from firing twice.
+  bool _bulkBusy = false;
+
+  /// Projects by id, kept from the reference load, so a bulk deadline can
+  /// count from the event date of the one project a selection belongs to.
+  Map<String, Project> _projectsById = const {};
+
+  /// Whether the phone-layout tip about long-pressing is still to be shown.
+  /// Read once from [AppStorage] as the screen opens. False where no storage
+  /// is provided, so a screen without it just shows no tip.
+  bool _showSelectHint = false;
+
+  void _enterSelection(Issue issue) {
+    setState(() {
+      _selectionMode = true;
+      _selected[issue.id] = issue.projectId;
+    });
+    // Whoever found the long press on their own needs no tip about it.
+    if (_showSelectHint) _dismissSelectHint();
+  }
+
+  void _toggleSelection(Issue issue) => setState(() {
+    if (_selected.remove(issue.id) == null) {
+      _selected[issue.id] = issue.projectId;
+    }
     // Deselecting the last row leaves selection mode, so a stray long-press
-    // never strands the list with no way out but the ✕.
-    if (_selectedIds.isEmpty) _selectionMode = false;
+    // never strands the list with no way out but the ✕. Not when the mode was
+    // asked for with the toggle; see [_selectionPinned].
+    if (_selected.isEmpty && !_selectionPinned) _selectionMode = false;
   });
 
   void _exitSelection() => setState(() {
     _selectionMode = false;
-    _selectedIds.clear();
+    _selectionPinned = false;
+    _selected.clear();
   });
+
+  /// Refetches from page 0 because the server query changed (filter, sort).
+  ///
+  /// The selection is dropped with it: the ticked rows may not be part of the
+  /// new result at all, and a bulk action on rows the reader can no longer see
+  /// would be a surprise. A mode switched on with the toggle stays on.
+  void _reloadFromStart() {
+    if (_selected.isNotEmpty || _selectionMode) {
+      setState(() {
+        _selected.clear();
+        if (!_selectionPinned) _selectionMode = false;
+      });
+    }
+    _issues.load();
+  }
+
+  /// The head's toggle: into selection mode with nothing selected yet, or out
+  /// of it again.
+  void _toggleSelectionMode() {
+    if (_selectionMode) {
+      _exitSelection();
+      return;
+    }
+    setState(() {
+      _selectionMode = true;
+      _selectionPinned = true;
+    });
+  }
+
+  /// Ticks every row on screen: the loaded rows that match the current view,
+  /// minus those folded away in a collapsed group. Capped at what one bulk
+  /// request may carry, so "select all" never builds a selection the bar's
+  /// actions would then refuse.
+  void _selectAllVisible() {
+    final visible = _grouping == IssueGrouping.none
+        ? _viewList
+        : [
+            for (final section in _viewSections)
+              if (!_collapsed.contains(section.key)) ...section.issues,
+          ];
+    const max = IssueRepository.bulkDeadlineMax;
+    var capped = false;
+    setState(() {
+      for (final issue in visible) {
+        if (_selected.containsKey(issue.id)) continue;
+        if (_selected.length >= max) {
+          capped = true;
+          break;
+        }
+        _selected[issue.id] = issue.projectId;
+      }
+    });
+    if (capped) {
+      showGlassToast(
+        context,
+        context.t('issues.selectAllCapped', variables: {'max': '$max'}),
+      );
+    }
+  }
+
+  /// Hides the long-press tip for good on this server.
+  void _dismissSelectHint() {
+    setState(() => _showSelectHint = false);
+    unawaited(context.read<AppStorage?>()?.setMultiSelectHintSeen());
+  }
+
+  /// One deadline for every selected issue.
+  ///
+  /// Rules that follow an event date are offered only where they can mean one
+  /// thing: the module is on, and every selected issue sits in the same
+  /// project, whose event date they would count from. Otherwise a date is all
+  /// there is to choose. The server applies it to all of them or to none.
+  Future<void> _setDeadlineSelected() async {
+    if (_selected.isEmpty || _bulkBusy) return;
+    const max = IssueRepository.bulkDeadlineMax;
+    if (_selected.length > max) {
+      showGlassToast(
+        context,
+        context.t('issues.bulkDeadline.tooMany', variables: {'max': '$max'}),
+        kind: GlassToastKind.error,
+      );
+      return;
+    }
+    final ids = _selected.keys.toList();
+    final issueApi = context.read<IssueRepository>();
+    final projectApi = context.read<ProjectRepository>();
+    final meta = context.read<AppConfigBloc?>()?.state.meta;
+    final projectIds = _selected.values.toSet();
+    final project = projectIds.length == 1
+        ? _projectsById[projectIds.first]
+        : null;
+    final choice = await _askBulkDeadline(
+      context,
+      count: ids.length,
+      offsetsOffered: meta?.projectTemplates ?? false,
+      project: project,
+      defaultBasis: deadlineBasisFor(project, meta),
+      // Only asked while a rule is on offer, which needs the one project.
+      resolve: (offset) async {
+        if (project == null) return null;
+        return projectApi.resolveOffset(project.id, offset: offset);
+      },
+    );
+    if (choice == null || !mounted) return;
+    setState(() => _bulkBusy = true);
+    try {
+      final updated = await issueApi.bulkSetDeadline(
+        ids,
+        // A rule's day is only what the editor showed; the server writes the
+        // real one from the rule, so it is not sent alongside.
+        dueDate: choice.offset == null ? choice.date : null,
+        dueOffset: choice.offset,
+        clearDueDate: choice.cleared,
+      );
+      if (!mounted) return;
+      showGlassToast(
+        context,
+        context.t(
+          choice.cleared
+              ? 'issues.bulkDeadline.cleared'
+              : 'issues.bulkDeadline.done',
+          count: updated.length,
+        ),
+        kind: GlassToastKind.success,
+      );
+      _exitSelection();
+      // The server answers with the updated issues, so the rows are swapped
+      // in place: the pages already scrolled through stay, and nothing is
+      // fetched again. The board and the dashboard show these deadlines too
+      // and hear it on the app-wide bus; this screen skips its own message.
+      _issues.replaceItems(updated);
+      IssueEvents.instance.notifyChanged(origin: this);
+    } on ApiFailure catch (failure) {
+      if (mounted) {
+        showGlassToast(
+          context,
+          context.t(failure.message),
+          kind: GlassToastKind.error,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        showGlassToast(
+          context,
+          context.t('errors.unexpected'),
+          kind: GlassToastKind.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _bulkBusy = false);
+    }
+  }
 
   /// Bulk-moves the selected issues. The wizard asks for the target project and
   /// the status mapping once for the whole set.
   Future<void> _moveSelected() async {
-    if (_selectedIds.isEmpty) return;
+    if (_selected.isEmpty) return;
     // A selection may span projects (the unscoped list shows all of them); only
     // a single-project selection can pre-exclude its own project as a target.
-    final projectIds = {
-      for (final issue in _issues.state.items)
-        if (_selectedIds.contains(issue.id)) issue.projectId,
-    };
+    final projectIds = _selected.values.toSet();
     final moved = await showIssueMoveWizard(
       context,
-      issueIds: _selectedIds.toList(),
+      issueIds: _selected.keys.toList(),
       currentProjectId: projectIds.length == 1 ? projectIds.first : null,
     );
     if (moved != true || !mounted) return;
@@ -191,12 +382,15 @@ class _IssuesScreenState extends State<IssuesScreen> {
 
   /// Re-fetch when an issue is created/changed elsewhere (e.g. the global
   /// nav-rail "new issue" button, which can't reach this screen's cubit).
-  StreamSubscription<void>? _issueSub;
+  StreamSubscription<Object?>? _issueSub;
 
   @override
   void initState() {
     super.initState();
-    _issueSub = IssueEvents.instance.changes.listen((_) => _reload());
+    _issueSub = IssueEvents.instance.changes.listen((origin) {
+      // Changes this screen made itself are already in its rows.
+      if (!identical(origin, this)) _reload();
+    });
     _issues = PagedCubit<Issue>(
       (page, size) async {
         final result = await context.read<IssueRepository>().issues(
@@ -217,6 +411,10 @@ class _IssuesScreenState extends State<IssuesScreen> {
     )..load();
     _scroll.addListener(_onScroll);
     _loadRef();
+    // Nullable lookup: the storage is there in the app, and a test that does
+    // not care about the tip need not provide it.
+    _showSelectHint =
+        !(context.read<AppStorage?>()?.multiSelectHintSeen ?? true);
   }
 
   @override
@@ -255,6 +453,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
       }
       if (!mounted) return;
       setState(() {
+        _projectsById = {for (final p in projects) p.id: p};
         _ref = (
           names: {for (final u in users) u.id: u.displayName},
           avatars: {
@@ -517,7 +716,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
       // time range / "unassigned") only need a rebuild.
       final before = _serverQuerySignature;
       setState(() => _filter = f);
-      if (_serverQuerySignature != before) _issues.load();
+      if (_serverQuerySignature != before) _reloadFromStart();
     },
   );
 
@@ -537,7 +736,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
   void _onSortChanged(IssueSort s) {
     if (s == _sort) return;
     setState(() => _sort = s);
-    _issues.load();
+    _reloadFromStart();
   }
 
   void _onTimeRangeChanged(IssueTimeRange r) => setState(() => _timeRange = r);
@@ -857,6 +1056,14 @@ class _IssuesScreenState extends State<IssuesScreen> {
               ? '${context.t('nav.issues')} · ${_subtitle(list.length, state.total)}'
               : _subtitle(list.length, state.total),
           actions: [
+            // Selection without holding: nobody holds a mouse button down on
+            // a row to see what happens, and a screen reader or switch user
+            // cannot press and hold at all. On a phone as well, then; the
+            // one-time tip there (see _SelectHint) still teaches the gesture.
+            _SelectionToggle(
+              active: _selectionMode,
+              onTap: _toggleSelectionMode,
+            ),
             // One button on every platform: the honey fill is the app's
             // primary action colour, and the native shell had drifted to a
             // glass outline that read as secondary. `collapseToIcon` keeps the
@@ -921,6 +1128,23 @@ class _IssuesScreenState extends State<IssuesScreen> {
                             ),
                             sliver: SliverToBoxAdapter(child: head),
                           ),
+                        // The long-press tip, once per server, and only where
+                        // there is a row to press.
+                        if (compact &&
+                            _showSelectHint &&
+                            !_selectionMode &&
+                            list.isNotEmpty)
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              context.pageGutter,
+                              0,
+                              context.pageGutter,
+                              4,
+                            ),
+                            sliver: SliverToBoxAdapter(
+                              child: _SelectHint(onDismiss: _dismissSelectHint),
+                            ),
+                          ),
                         if (list.isEmpty && !searchingMore)
                           SliverToBoxAdapter(
                             child: Padding(
@@ -941,7 +1165,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
                                             _filter = IssueFilter.empty;
                                             _timeRange = IssueTimeRange.none;
                                           });
-                                          if (refetch) _issues.load();
+                                          if (refetch) _reloadFromStart();
                                         },
                                         child: Text(
                                           context.t('board.clearFilters'),
@@ -1034,27 +1258,41 @@ class _IssuesScreenState extends State<IssuesScreen> {
                   },
                 ),
               ),
-              // Bulk-action bar, docked above the nav while rows are selected.
+              // Bulk-action bar, docked above the nav while selecting. The
+              // dock measures from the nav's own edge; the scroll gutter used
+              // here before counts the home indicator twice on an iPhone.
               if (_selectionMode)
-                Positioned(
-                  left: context.pageGutter,
-                  right: context.pageGutter,
-                  bottom: context.bottomGutter + 12,
-                  child: Center(
-                    child: GlassBulkBar(
-                      countLabel: context.t(
-                        'issues.selectedCount',
-                        variables: {'count': '${_selectedIds.length}'},
-                      ),
-                      onClear: _exitSelection,
-                      actions: [
-                        GlassBulkAction(
-                          icon: LucideIcons.folderInput,
-                          label: context.t('issues.move.action'),
-                          onTap: _moveSelected,
-                        ),
-                      ],
+                GlassBulkBarDock(
+                  child: GlassBulkBar(
+                    countLabel: context.t(
+                      'issues.selectedCount',
+                      variables: {'count': '${_selected.length}'},
                     ),
+                    onClear: _exitSelection,
+                    clearTooltip: context.t('issues.selection.exit'),
+                    actions: [
+                      GlassBulkAction(
+                        icon: LucideIcons.listChecks,
+                        label: context.t('issues.selectAll'),
+                        onTap: _bulkBusy ? null : _selectAllVisible,
+                      ),
+                      // Disabled, not hidden, while nothing is ticked: the bar
+                      // then says what it will offer once something is.
+                      GlassBulkAction(
+                        icon: LucideIcons.calendarClock,
+                        label: context.t('issues.bulkDeadline.action'),
+                        onTap: _selected.isEmpty || _bulkBusy
+                            ? null
+                            : _setDeadlineSelected,
+                      ),
+                      GlassBulkAction(
+                        icon: LucideIcons.folderInput,
+                        label: context.t('issues.move.action'),
+                        onTap: _selected.isEmpty || _bulkBusy
+                            ? null
+                            : _moveSelected,
+                      ),
+                    ],
                   ),
                 ),
             ],
@@ -1176,9 +1414,9 @@ class _IssuesScreenState extends State<IssuesScreen> {
             assigneePronouns: pronouns[issue.assigneeId],
             palette: palette,
             selectionMode: _selectionMode,
-            selected: _selectedIds.contains(issue.id),
-            onToggleSelect: () => _toggleSelection(issue.id),
-            onLongPress: () => _enterSelection(issue.id),
+            selected: _selected.containsKey(issue.id),
+            onToggleSelect: () => _toggleSelection(issue),
+            onLongPress: () => _enterSelection(issue),
           ),
         );
     }

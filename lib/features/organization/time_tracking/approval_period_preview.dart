@@ -10,7 +10,7 @@ import '../../../core/models/time_approval_models.dart';
 import '../../../core/repositories/time_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../time/lock_notice.dart';
-import '../admin_form_helpers.dart';
+import '../../admin/admin_form_helpers.dart';
 
 /// The next three periods the configured rhythm will cut.
 ///

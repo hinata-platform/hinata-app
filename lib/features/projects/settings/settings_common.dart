@@ -85,30 +85,37 @@ class FieldLabel extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 7),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              color: AppColors.inkSoft,
+          Flexible(
+            child: Text(
+              text,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.inkSoft,
+              ),
             ),
           ),
           if (required) ...[
             const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-              decoration: BoxDecoration(
-                color: AppColors.accentSoft,
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Text(
-                context.t('projectSettings.required'),
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.4,
-                  color: AppColors.accentStrong,
+            Flexible(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  color: AppColors.accentSoft,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Text(
+                  context.t('projectSettings.required'),
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                    color: AppColors.accentStrong,
+                  ),
                 ),
               ),
             ),

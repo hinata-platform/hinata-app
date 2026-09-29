@@ -689,69 +689,311 @@ class AccessPicker extends StatelessWidget {
     IconData icon,
     String title,
     String hint,
-  ) {
-    final on = scope == value;
-    return Material(
-      color: on ? AppColors.accentSoft : _fill,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: InkWell(
-        onTap: () => onScope(value),
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-          decoration: BoxDecoration(
+  ) => _ScopeOption(
+    on: scope == value,
+    icon: icon,
+    title: title,
+    hint: hint,
+    onTap: () => onScope(value),
+  );
+}
+
+/// One radio-style scope row shared by the project and knowledge pickers:
+/// icon tile, title and hint, radio. A null [onTap] shows it disabled.
+class _ScopeOption extends StatelessWidget {
+  const _ScopeOption({
+    required this.on,
+    required this.icon,
+    required this.title,
+    required this.hint,
+    required this.onTap,
+  });
+
+  final bool on;
+  final IconData icon;
+  final String title;
+  final String hint;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = onTap == null;
+    return Semantics(
+      inMutuallyExclusiveGroup: true,
+      checked: on,
+      child: Opacity(
+        opacity: disabled ? 0.55 : 1,
+        child: Material(
+          color: on ? AppColors.accentSoft : _fill,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(
-              color: on ? AppColors.accent : AppColors.hairline,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                border: Border.all(
+                  color: on ? AppColors.accent : AppColors.hairline,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: on ? AppColors.surface : _fillSoft,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      icon,
+                      size: 17,
+                      color: on ? AppColors.accentStrong : AppColors.inkSoft,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        Text(
+                          hint,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.inkSoft,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  _Radio(on: on),
+                ],
+              ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Knowledge-base access for a membership: none (the default), every page of
+/// the team, or selected pages — the last one as a one-line field that opens
+/// the page picker, never an inline list.
+///
+/// Team-Admins read every page of their team whatever is stored here, so with
+/// [adminReadsAll] the rows are disabled and a note says why.
+class KnowledgeAccessPicker extends StatelessWidget {
+  const KnowledgeAccessPicker({
+    super.key,
+    required this.scope,
+    required this.pickedCount,
+    required this.onScope,
+    required this.onPickPages,
+    this.adminReadsAll = false,
+  });
+
+  final AccessScope scope;
+  final int pickedCount;
+  final ValueChanged<AccessScope> onScope;
+
+  /// Opens the page picker anchored to the field's global rect.
+  final void Function(Rect anchorRect) onPickPages;
+  final bool adminReadsAll;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = !adminReadsAll;
+    VoidCallback? pick(AccessScope s) => enabled ? () => onScope(s) : null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (adminReadsAll) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(LucideIcons.info, size: 14, color: AppColors.inkFaint),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  context.t('teams.knowledge.adminReadsAll'),
+                  style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 9),
+        ],
+        _ScopeOption(
+          on: enabled && scope == AccessScope.none,
+          icon: LucideIcons.lock,
+          title: context.t('teams.knowledge.none'),
+          hint: context.t('teams.knowledge.noneHint'),
+          onTap: pick(AccessScope.none),
+        ),
+        const SizedBox(height: 7),
+        _ScopeOption(
+          on: !enabled || scope == AccessScope.all,
+          icon: LucideIcons.bookOpen,
+          title: context.t('teams.knowledge.all'),
+          hint: context.t('teams.knowledge.allHint'),
+          onTap: pick(AccessScope.all),
+        ),
+        const SizedBox(height: 7),
+        _ScopeOption(
+          on: enabled && scope == AccessScope.some,
+          icon: LucideIcons.files,
+          title: context.t('teams.knowledge.some'),
+          hint: context.t('teams.knowledge.someHint'),
+          onTap: pick(AccessScope.some),
+        ),
+        if (enabled && scope == AccessScope.some) ...[
+          const SizedBox(height: 10),
+          _PagesField(count: pickedCount, onTap: onPickPages),
+        ],
+      ],
+    );
+  }
+}
+
+/// "3 pages selected ›" — the one-line field in front of the page picker.
+class _PagesField extends StatelessWidget {
+  const _PagesField({required this.count, required this.onTap});
+
+  final int count;
+  final void Function(Rect anchorRect) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = count == 0
+        ? context.t('teams.knowledge.choosePages')
+        : context.t(
+            'teams.knowledge.pagesPicked',
+            variables: {'count': '$count'},
+            count: count,
+          );
+    return Semantics(
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        onTap: () {
+          final box = context.findRenderObject() as RenderBox?;
+          onTap(
+            (box != null && box.hasSize)
+                ? box.localToGlobal(Offset.zero) & box.size
+                : Rect.zero,
+          );
+        },
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 48),
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+          decoration: BoxDecoration(
+            color: _fillSoft,
+            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+            border: Border.all(color: AppColors.hairline),
           ),
           child: Row(
             children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: on ? AppColors.surface : _fillSoft,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  icon,
-                  size: 17,
-                  color: on ? AppColors.accentStrong : AppColors.inkSoft,
-                ),
-              ),
-              const SizedBox(width: 12),
+              Icon(LucideIcons.files, size: 16, color: AppColors.inkSoft),
+              const SizedBox(width: 9),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                    Text(
-                      hint,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 11, color: AppColors.inkSoft),
-                    ),
-                  ],
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: count == 0 ? AppColors.inkSoft : AppColors.ink,
+                  ),
                 ),
               ),
-              const SizedBox(width: 10),
-              _Radio(on: on),
+              Icon(
+                LucideIcons.chevronRight,
+                size: 16,
+                color: AppColors.inkFaint,
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Inline chip for the member list: "Knowledge: all / 3 pages / none".
+class KnowledgeAccessChip extends StatelessWidget {
+  const KnowledgeAccessChip({super.key, required this.membership});
+
+  final TeamMembership membership;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = membership.knowledge;
+    final (IconData icon, Color color, String value) = membership.isAdmin
+        ? (
+            LucideIcons.bookOpen,
+            AppColors.stDone,
+            context.t('teams.knowledge.chipAll'),
+          )
+        : switch (k.scope) {
+            AccessScope.all => (
+              LucideIcons.bookOpen,
+              AppColors.stDone,
+              context.t('teams.knowledge.chipAll'),
+            ),
+            AccessScope.some => (
+              LucideIcons.files,
+              AppColors.accentStrong,
+              context.t(
+                'teams.knowledge.chipSome',
+                // The count, not the ids: those reach only the team's admins.
+                variables: {'count': '${k.count}'},
+                count: k.count,
+              ),
+            ),
+            AccessScope.none => (
+              LucideIcons.bookLock,
+              AppColors.inkSoft,
+              context.t('teams.knowledge.chipNone'),
+            ),
+          };
+    final label = context.t(
+      'teams.knowledge.chip',
+      variables: {'value': value},
+    );
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: color),
+        const SizedBox(width: 5),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

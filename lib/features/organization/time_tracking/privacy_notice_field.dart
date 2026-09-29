@@ -21,8 +21,8 @@ import '../../../core/theme/app_theme.dart';
 /// section on every keystroke repaints two dozen policy controls under the
 /// shell's blur and changes nothing on screen. Only the preview follows the text,
 /// and it follows it a moment later.
-class AdminPrivacyNoticeField extends StatefulWidget {
-  const AdminPrivacyNoticeField({
+class OrgPrivacyNoticeField extends StatefulWidget {
+  const OrgPrivacyNoticeField({
     super.key,
     required this.value,
     required this.onChanged,
@@ -37,11 +37,10 @@ class AdminPrivacyNoticeField extends StatefulWidget {
   static const maxLength = 20000;
 
   @override
-  State<AdminPrivacyNoticeField> createState() =>
-      _AdminPrivacyNoticeFieldState();
+  State<OrgPrivacyNoticeField> createState() => _OrgPrivacyNoticeFieldState();
 }
 
-class _AdminPrivacyNoticeFieldState extends State<AdminPrivacyNoticeField> {
+class _OrgPrivacyNoticeFieldState extends State<OrgPrivacyNoticeField> {
   late final TextEditingController _text = TextEditingController(
     text: widget.value ?? '',
   );
@@ -72,7 +71,7 @@ class _AdminPrivacyNoticeFieldState extends State<AdminPrivacyNoticeField> {
           controller: _text,
           minLines: 6,
           maxLines: 14,
-          maxLength: AdminPrivacyNoticeField.maxLength,
+          maxLength: OrgPrivacyNoticeField.maxLength,
           keyboardType: TextInputType.multiline,
           onChanged: _changed,
           decoration: InputDecoration(

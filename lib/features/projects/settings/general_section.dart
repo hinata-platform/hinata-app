@@ -249,7 +249,14 @@ class _KeyField extends StatelessWidget {
       children: [
         Row(
           children: [
-            FieldLabel(text: context.t('projects.key'), required: true),
+            // Flexible: the key field is narrow, and a long translation or a
+            // large text size must not push the label past it.
+            Flexible(
+              child: FieldLabel(
+                text: context.t('projects.key'),
+                required: true,
+              ),
+            ),
             const Spacer(),
             Tooltip(
               message: context.t('projectSettings.keyFromName'),

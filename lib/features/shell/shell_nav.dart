@@ -160,6 +160,7 @@ bool showsTimerBar(String location, {required bool immersive}) =>
 double pageContentMax(String location) {
   if (location == '/' || location == '/dashboard') return goldenContentMax;
   if (location == '/admin') return goldenContentMax;
+  if (location == '/organization') return goldenContentMax;
   // A week of a timesheet or a month of a calendar is a grid to scan across,
   // not a column to read: it takes the window.
   if (isTimeModuleRoute(location) || location == '/timesheet') {
@@ -177,9 +178,11 @@ double pageContentMax(String location) {
 String? subPageTitleKey(String location, {required bool advancedTime}) {
   if (location == '/admin') return 'admin.title';
   if (location.startsWith('/admin/users')) return 'admin.users';
-  if (location.startsWith('/admin/holidays')) {
+  if (location == '/organization') return 'org.title';
+  if (location.startsWith('/organization/holidays')) {
     return 'availability.admin.pageTitle';
   }
+  if (location.startsWith('/organization/audit')) return 'org.audit.title';
   if (location == '/absences/types') return 'absence.types.pageTitle';
   if (location == '/absences/entitlements') {
     return 'absence.entitlements.pageTitle';
@@ -220,8 +223,10 @@ String? subPageTitleKey(String location, {required bool advancedTime}) {
 /// ignored.
 String subPageBackRoute(String location) {
   if (location.startsWith('/admin/users')) return '/admin';
-  if (location.startsWith('/admin/holidays')) return '/admin';
   if (location == '/admin') return '/settings';
+  // Every page under Organisation goes back to it.
+  if (location.startsWith('/organization/')) return '/organization';
+  if (location == '/organization') return '/settings';
   // Settings rather than the admin area: the keeper's pages are reached from
   // both, and a named keeper who is not an administrator would be sent to a
   // page that is not theirs.

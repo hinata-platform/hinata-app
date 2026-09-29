@@ -11,17 +11,29 @@ import '../../core/lexical/hinata_markdown_preview.dart';
 import '../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
+import 'knowledge_place_field.dart';
 import 'knowledge_scope.dart';
 import 'knowledge_tokens.dart';
 
 /// Result handed back to the shell on Save / Publish.
 class EditorResult {
-  EditorResult(this.title, this.doc, this.spaceId);
+  EditorResult(
+    this.title,
+    this.doc,
+    this.spaceId, {
+    this.projectId,
+    this.teamId,
+  });
   final String title;
 
   /// The Lexical document to store.
   final String doc;
   final String spaceId;
+
+  /// Where a new top-level page lives; both null keeps it to its author.
+  /// Ignored for an edit, which never moves a page.
+  final String? projectId;
+  final String? teamId;
 }
 
 /// Article editor: title + space picker over a rich-text body.
@@ -40,6 +52,7 @@ class KnowledgeEditor extends StatefulWidget {
     required this.onSave,
     required this.onCancel,
     this.initialBody = '',
+    this.choosePlace = false,
   });
 
   final bool isNew;
@@ -58,6 +71,9 @@ class KnowledgeEditor extends StatefulWidget {
   final ValueChanged<EditorResult> onSave;
   final VoidCallback onCancel;
 
+  /// Show "visible to" — for a new top-level page, which starts private.
+  final bool choosePlace;
+
   @override
   State<KnowledgeEditor> createState() => _KnowledgeEditorState();
 }
@@ -70,6 +86,10 @@ class _KnowledgeEditorState extends State<KnowledgeEditor> {
     doc: documentOrLegacy(widget.initialDoc, widget.initialBody),
   );
   late String _spaceId = widget.spaceId;
+
+  /// A new page starts private: nobody but its author sees it until it is put
+  /// into a project or a team.
+  KbPlaceChoice _place = (projectId: null, teamId: null);
 
   @override
   void dispose() {
@@ -95,7 +115,15 @@ class _KnowledgeEditorState extends State<KnowledgeEditor> {
       showGlassErrorToast(context, context.t('knowledge.saveWouldBlank'));
       return;
     }
-    widget.onSave(EditorResult(_title.text.trim(), _body.doc, _spaceId));
+    widget.onSave(
+      EditorResult(
+        _title.text.trim(),
+        _body.doc,
+        _spaceId,
+        projectId: _place.projectId,
+        teamId: _place.teamId,
+      ),
+    );
     _body.markSaved();
   }
 
@@ -206,6 +234,13 @@ class _KnowledgeEditorState extends State<KnowledgeEditor> {
               ],
             ),
           ),
+          if (widget.choosePlace)
+            KnowledgePlaceField(
+              repo: repo,
+              projectId: _place.projectId,
+              teamId: _place.teamId,
+              onChanged: (place) => setState(() => _place = place),
+            ),
           TextButton(
             onPressed: widget.onCancel,
             child: Text(context.t('common.cancel')),

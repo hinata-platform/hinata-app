@@ -13,7 +13,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/hue_colors.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../sprint/modals/glass_modal.dart';
-import '../admin_form_helpers.dart';
+import '../../admin/admin_form_helpers.dart';
 
 /// The tag catalogue, managed.
 ///
@@ -30,14 +30,14 @@ import '../admin_form_helpers.dart';
 /// Paged, and never drained: an instance that has been running for two years has
 /// a vocabulary, and a screen that loads all of it is a screen that stops
 /// working on exactly the instances that need it.
-class AdminTimeTagsCard extends StatefulWidget {
-  const AdminTimeTagsCard({super.key});
+class OrgTimeTagsCard extends StatefulWidget {
+  const OrgTimeTagsCard({super.key});
 
   @override
-  State<AdminTimeTagsCard> createState() => _AdminTimeTagsCardState();
+  State<OrgTimeTagsCard> createState() => _OrgTimeTagsCardState();
 }
 
-class _AdminTimeTagsCardState extends State<AdminTimeTagsCard> {
+class _OrgTimeTagsCardState extends State<OrgTimeTagsCard> {
   static const int _pageSize = 25;
 
   final _search = TextEditingController();

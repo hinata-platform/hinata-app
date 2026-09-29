@@ -74,6 +74,7 @@ class AdminUser {
     required this.title,
     this.pronouns,
     required this.role,
+    this.orgAdmin = false,
     required this.origin,
     required this.status,
     required this.twoFA,
@@ -93,6 +94,11 @@ class AdminUser {
   final String title;
   final String? pronouns;
   final AdminRole role;
+
+  /// Holds the organisation role (`ORG_ADMIN`, HIN-129): keeps time tracking,
+  /// absences, holidays and billing for the organisation. Independent of
+  /// [role] — neither implies the other.
+  final bool orgAdmin;
   final UserOrigin origin;
   final UserStatus status;
   final bool twoFA;
@@ -121,6 +127,7 @@ class AdminUser {
     title: (json['title'] as String?) ?? '',
     pronouns: json['pronouns'] as String?,
     role: AdminRole.fromWire(json['role'] as String?),
+    orgAdmin: json['orgAdmin'] == true,
     origin: UserOrigin.fromWire(json['origin'] as String?),
     status: UserStatus.fromWire(json['status'] as String?),
     twoFA: json['twoFA'] == true,

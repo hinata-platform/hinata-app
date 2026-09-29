@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'deadline_basis_field.dart';
 import 'project_key.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
+import '../../core/models/work_models.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
@@ -26,8 +28,12 @@ import '../sprint/modals/glass_modal.dart';
 /// directory open. This is the one form; the screens own only the chrome around
 /// it and what they do with the result.
 class ProjectDraft extends ChangeNotifier {
-  ProjectDraft({required this.takenKeys, int? hue, this.meId})
-    : hue = hue ?? kProjectHues.first.hue {
+  ProjectDraft({
+    required this.takenKeys,
+    int? hue,
+    this.meId,
+    this.deadlineDefault,
+  }) : hue = hue ?? kProjectHues.first.hue {
     name.addListener(_onNameChanged);
     key.addListener(_onKeyChanged);
   }
@@ -53,6 +59,16 @@ class ProjectDraft extends ChangeNotifier {
 
   /// The picture chosen before the project exists, uploaded right after it does.
   PickedImage? pendingAvatar;
+
+  /// The organisation's deadline basis while project templates are on, null
+  /// while they are off — and then the form neither offers nor sends one. See
+  /// [offeredDeadlineDefault].
+  final RelativeDateBasis? deadlineDefault;
+
+  /// The basis somebody picked for the new project's deadlines. Null until they
+  /// pick one: the project then follows the organisation's default, including
+  /// when that default changes later.
+  RelativeDateBasis? deadlineBasis;
 
   /// While true the key follows the name. The first edit of the key field ends
   /// that for good — a key somebody typed is theirs to keep.
@@ -105,6 +121,20 @@ class ProjectDraft extends ChangeNotifier {
     lead = value;
     notifyListeners();
   }
+
+  void setDeadlineBasis(RelativeDateBasis value) {
+    if (deadlineBasis == value) return;
+    deadlineBasis = value;
+    notifyListeners();
+  }
+
+  /// What the switch shows: the pick, or the organisation's default.
+  RelativeDateBasis get shownDeadlineBasis =>
+      deadlineBasis ?? deadlineDefault ?? RelativeDateBasis.calendar;
+
+  /// What create sends: the pick, and only while the module is switched on.
+  RelativeDateBasis? get deadlineBasisToSend =>
+      deadlineDefault == null ? null : deadlineBasis;
 
   void setAvatar(PickedImage? value) {
     pendingAvatar = value;
@@ -214,6 +244,17 @@ class _ProjectCreateFieldsState extends State<ProjectCreateFields> {
         ),
         const SizedBox(height: 16),
         _leadAndColor(compact),
+        if (widget.draft.deadlineDefault != null) ...[
+          const SizedBox(height: 16),
+          GlassField(
+            label: context.t('projects.deadlineBasis.label'),
+            child: DeadlineBasisField(
+              value: widget.draft.shownDeadlineBasis,
+              organisationDefault: widget.draft.deadlineDefault!,
+              onChanged: widget.draft.setDeadlineBasis,
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         GlassInfoLine(
           icon: LucideIcons.info,
