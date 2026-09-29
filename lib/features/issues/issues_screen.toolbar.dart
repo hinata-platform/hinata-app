@@ -268,47 +268,59 @@ class _GlassControlSurface extends StatelessWidget {
 /// app-bar bell's active tint so it reads as glass, not a painted chip).
 /// [badge] optionally trails the icon (the filter count).
 class _SegmentCell extends StatelessWidget {
-  const _SegmentCell({required this.icon, required this.active, this.badge});
+  const _SegmentCell({
+    required this.icon,
+    required this.label,
+    required this.active,
+    this.badge,
+  });
 
   final IconData icon;
+
+  /// What the glyph stands for: the phone shows only the icon, so the name
+  /// lives in the tooltip, which is also what a screen reader announces.
+  final String label;
   final bool active;
   final Widget? badge;
 
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return Padding(
-      // Inset so the active fill floats inside the housing, clear of the glass
-      // rim and the neighbouring dividers.
-      padding: const EdgeInsets.all(_kSegmentInset),
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: badge == null ? 13 : 11,
-          vertical: 7,
-        ),
-        decoration: active
-            ? BoxDecoration(
-                color: AppColors.accent.withValues(alpha: dark ? 0.30 : 0.20),
-                // Concentric with the housing (radius − inset), so a pill
-                // housing gives a pill indicator; clamps to a stadium when the
-                // fill is shorter than twice the radius.
-                borderRadius: BorderRadius.circular(
-                  _kSegmentedRadius - _kSegmentInset,
-                ),
-              )
-            : null,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: active
-                  ? (dark ? AppColors.accent : AppColors.accentStrong)
-                  : AppColors.inkSoft,
-            ),
-            if (badge != null) ...[const SizedBox(width: 6), badge!],
-          ],
+    return Tooltip(
+      message: label,
+      child: Padding(
+        // Inset so the active fill floats inside the housing, clear of the glass
+        // rim and the neighbouring dividers.
+        padding: const EdgeInsets.all(_kSegmentInset),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: badge == null ? 13 : 11,
+            vertical: 7,
+          ),
+          decoration: active
+              ? BoxDecoration(
+                  color: AppColors.accent.withValues(alpha: dark ? 0.30 : 0.20),
+                  // Concentric with the housing (radius − inset), so a pill
+                  // housing gives a pill indicator; clamps to a stadium when the
+                  // fill is shorter than twice the radius.
+                  borderRadius: BorderRadius.circular(
+                    _kSegmentedRadius - _kSegmentInset,
+                  ),
+                )
+              : null,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: active
+                    ? (dark ? AppColors.accent : AppColors.accentStrong)
+                    : AppColors.inkSoft,
+              ),
+              if (badge != null) ...[const SizedBox(width: 6), badge!],
+            ],
+          ),
         ),
       ),
     );
@@ -367,7 +379,11 @@ class _GroupByButton extends StatelessWidget {
           ),
       ],
       child: segmented
-          ? _SegmentCell(icon: _groupingIcon(value), active: active)
+          ? _SegmentCell(
+              icon: _groupingIcon(value),
+              label: context.t('board.groupBy'),
+              active: active,
+            )
           : _ToolPill(
               icon: _groupingIcon(value),
               label: active
@@ -430,7 +446,11 @@ class _SortButton extends StatelessWidget {
           ),
       ],
       child: segmented
-          ? _SegmentCell(icon: LucideIcons.arrowUpDown, active: active)
+          ? _SegmentCell(
+              icon: LucideIcons.arrowUpDown,
+              label: context.t('issues.sort.label'),
+              active: active,
+            )
           : _ToolPill(
               icon: LucideIcons.arrowUpDown,
               label: context.t('issues.sort.label'),
@@ -467,6 +487,7 @@ class _FilterButton extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         child: _SegmentCell(
           icon: LucideIcons.slidersHorizontal,
+          label: context.t('board.filterButton'),
           active: active,
           badge: active ? _CountBadge(count: count) : null,
         ),
@@ -634,7 +655,11 @@ class _TimeRangeButton extends StatelessWidget {
         ),
       ],
       child: segmented
-          ? _SegmentCell(icon: LucideIcons.calendar, active: active)
+          ? _SegmentCell(
+              icon: LucideIcons.calendar,
+              label: _timeLabel(context, value),
+              active: active,
+            )
           : _ToolPill(
               icon: LucideIcons.calendar,
               label: _timeLabel(context, value),
