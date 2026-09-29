@@ -3847,6 +3847,20 @@
         "range": "de {{from}} a {{to}}",
         "useDefault": "Usar predeterminado",
         "lastDay": "Al menos un día tiene que quedar activo. Para no recibir nada, desactiva los canales de arriba."
+      },
+      "schedule": {
+        "title": "Horario de notificaciones",
+        "hint": "Fuera de tu horario, los correos y las notificaciones push esperan y llegan juntos cuando empieza tu siguiente franja. La campana lo muestra todo al momento. Los mensajes de seguridad y los avisos importantes llegan siempre.",
+        "always": "Siempre",
+        "custom": "Personalizado",
+        "from": "Desde",
+        "until": "Hasta",
+        "allDay": "Todo el día",
+        "defaultAlways": "Predeterminado de tu organización: siempre",
+        "defaultCustom": "Predeterminado de tu organización: {{days}}, de {{from}} a {{until}}",
+        "defaultCustomAllDay": "Predeterminado de tu organización: {{days}}, todo el día",
+        "useDefault": "Usar el predeterminado",
+        "overnight": "Pasa de medianoche y pertenece al día en que empieza."
       }
     },
     "access": {
@@ -4315,11 +4329,11 @@
     "title": "Organización",
     "subtitle": "Estos ajustes valen para toda la organización: registro de tiempo, ausencias, festivos, facturación y plazos. Los administradores de la organización ven los tiempos de trabajo, partes de horas, ausencias y registros de todas las personas, pero títulos y descripciones de incidencias solo de los proyectos de los que forman parte. Solo ven la enfermedad mientras nadie esté designado para gestionar ausencias; si no, solo si están designados.",
     "deadlines": {
-      "title": "Plazos",
-      "hint": "En qué cuentan los nuevos plazos relativos cuando un proyecto no fija los suyos.",
+      "title": "Cómputo de días",
+      "hint": "Si la organización cuenta en días naturales o laborables: para los nuevos plazos relativos y como valor predeterminado del horario de notificaciones.",
       "followsPlatform": "Se aplica el valor predeterminado de la plataforma: {{basis}}.",
       "followsPlatformUnknown": "Se aplica el valor predeterminado de la plataforma.",
-      "ownChoice": "Tu organización cuenta en {{basis}}.",
+      "ownChoice": "Elegido: {{basis}}.",
       "existingStay": "Los plazos existentes se quedan como están.",
       "usePlatform": "Usar el valor predeterminado de la plataforma"
     },

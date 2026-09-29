@@ -37,7 +37,7 @@ import '../shell/page_chrome.dart';
 import 'account_modals.dart';
 import 'account_widgets.dart';
 import 'availability_section.dart';
-import 'notification_days_row.dart';
+import 'notification_schedule_row.dart';
 import 'time_preferences_section.dart';
 import 'pat_section.dart';
 import 'settings_layout.dart';
@@ -1258,12 +1258,8 @@ class _AccountScreenState extends State<AccountScreen> {
           undeliverableHere: !pushSupportedOnThisPlatform,
         ),
         Divider(height: 1, color: AppColors.hairline2),
-        // HIN-129: the days e-mail and push may arrive on.
-        NotificationDaysRow(
-          weekdays: prefs.weekdays,
-          defaultWeekdays: prefs.defaultWeekdays,
-          onChanged: (days) => _onTogglePrefs(prefs.copyWith(weekdays: days)),
-        ),
+        // HIN-131: when e-mail and push may arrive (HIN-129's days within).
+        NotificationScheduleRow(prefs: prefs, onChanged: _onTogglePrefs),
         const SizedBox(height: 8),
         if (context.isCompact)
           ..._notifEvents.map(_notifCard)
