@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:hinata/core/theme/glass_ceiling.dart';
+import 'package:hinata/core/theme/glass_chrome.dart' show ios27GlassTheme;
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -814,6 +815,11 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
                     };
                     return LiquidGlassWidgets.wrap(
                       adaptiveQuality: true,
+                      // iOS 27 glass for every widget without its own
+                      // settings, and the app's theme mode rather than the
+                      // device's deciding which of the two it wears.
+                      theme: ios27GlassTheme(),
+                      brightnessResolver: Theme.maybeBrightnessOf,
                       // Deliberately using the package's experimental adaptive
                       // quality API — it is the intended, supported way to gate
                       // glass cost per device.

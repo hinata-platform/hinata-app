@@ -8,60 +8,78 @@ import 'app_colors.dart';
 // They live in core rather than beside their first user because more than one
 // surface has to refract identically to read as the same material — the mobile
 // nav is two separate floating elements (the tab pill and the detached search
-// button) and the page headers add a third. Values mirror the package's
-// `kBottomBarGlassDefaults`.
+// button) and the page headers add a third.
 //
-// Everything below shares one optical profile and differs only in [glassColor]:
-// the tint is the whole design, and splitting the optics would make two pieces
-// of the same chrome look like two materials.
+// Since HIN-130 the material is iOS 27's `glassEffect(.regular)`, as
+// liquid_glass_widgets 1.8.0 measured it against SwiftUI: a frost cloud the
+// content still shows through, a half-point rim shade and a rim light instead
+// of the older white specular stroke, and a paraxial lens that folds the rim
+// band evenly. The neutral chrome takes Apple's presets as they are; every
+// tinted surface (the honey of a primary action, the near-solid composer and
+// menus) keeps its own colour but shares the rim and the lens through
+// [ios27Glass], so the app reads as one material in both themes.
+//
+// The terms only render at `GlassQuality.premium` on Impeller. Standard and
+// minimal quality, and the web, keep their lighter fallbacks untouched.
 
-/// The optics every chrome preset here is built on.
-const _thickness = 30.0;
-const _blur = 3.0;
-const _chromaticAberration = 0.3;
-const _lightIntensity = 0.6;
-const _refractiveIndex = 1.59;
-const _saturation = 0.7;
-const _ambientStrength = 1.0;
+/// Neutral chrome, dark: Apple's iOS 27 regular glass in the dark appearance.
+const kNavGlassDark = LiquidGlassSettings.ios27Dark;
 
-/// 0.75π — the Apple key-light angle the whole app is lit from.
-const _lightAngle = 2.356194490192345;
+/// Neutral chrome, light: Apple's iOS 27 regular glass in the light appearance.
+const kNavGlassLight = LiquidGlassSettings.ios27Light;
 
-/// Neutral chrome: translucent black in dark (so it doesn't turn milky) and
-/// translucent white in light (clean frost).
-const kNavGlassDark = LiquidGlassSettings(
-  thickness: _thickness,
-  blur: _blur,
-  chromaticAberration: _chromaticAberration,
-  lightIntensity: _lightIntensity,
-  refractiveIndex: _refractiveIndex,
-  saturation: _saturation,
-  ambientStrength: _ambientStrength,
-  lightAngle: _lightAngle,
-  glassColor: Color(0x4D0A0A0A),
-);
-const kNavGlassLight = LiquidGlassSettings(
-  thickness: _thickness,
-  blur: _blur,
-  chromaticAberration: _chromaticAberration,
-  lightIntensity: _lightIntensity,
-  refractiveIndex: _refractiveIndex,
-  saturation: _saturation,
-  ambientStrength: _ambientStrength,
-  lightAngle: _lightAngle,
-  glassColor: Color(0x3DFFFFFF),
-);
+/// iOS 27 glass in the app's own [glassColor].
+///
+/// The optics — thickness, lens, rim shade and rim light, the light from above
+/// in light mode and from below in dark — are those of [kNavGlassLight] and
+/// [kNavGlassDark], so a tinted surface sits next to the neutral chrome as the
+/// same material. What a surface changes is its colour, how much of the colour
+/// behind it survives ([saturation]), and whether it frosts at all: a surface
+/// that is nearly opaque anyway gains nothing from a frost pass but its cost,
+/// and the honey of a primary action would only be washed out by one.
+LiquidGlassSettings ios27Glass({
+  required bool dark,
+  required Color glassColor,
+  double saturation = 1,
+  bool frost = false,
+  double shadowElevation = 1,
+}) {
+  final base = dark ? kNavGlassDark : kNavGlassLight;
+  return LiquidGlassSettings(
+    glassColor: glassColor,
+    saturation: saturation,
+    blur: base.blur,
+    blurWeight: frost ? base.blurWeight : 1,
+    frost: frost ? base.frost : 0,
+    frostOpacity: base.frostOpacity,
+    frostClamp: base.frostClamp,
+    frostWeight: base.frostWeight,
+    thickness: base.thickness,
+    refractiveIndex: base.refractiveIndex,
+    lensModel: base.lensModel,
+    lightAngle: base.lightAngle,
+    lightIntensity: 0,
+    fresnelStrength: 0,
+    chromaticAberration: 0,
+    edgeAbsorption: base.edgeAbsorption,
+    rimShade: base.rimShade,
+    rimShadeEnds: base.rimShadeEnds,
+    rimLight: base.rimLight,
+    // The package's own shadow; a surface that paints its own clipped shadow
+    // passes 0.
+    shadowElevation: shadowElevation,
+  );
+}
 
 /// The frost that sits *on top of* the amber ground of a primary action.
 ///
-/// It does **not** inherit the chrome optics above, and the reason is the whole
-/// point of this preset. Neutral chrome desaturates what it refracts
-/// (`saturation: 0.7`) and lays a white veil over it, which is right for a
-/// surface whose job is to disappear. Over amber it is exactly wrong: the
-/// colour *is* the design, and 30% of it taken away plus a white wash leaves
-/// the beige button that shipped in 10.3.2. So: saturation left at 1, and the
-/// veil in amber rather than white — a white one dilutes the ground instead of
-/// sitting in it.
+/// It shares the chrome's optics but not its colour handling, and the reason
+/// is the whole point of this preset. Neutral chrome frosts what it refracts
+/// and lays a white cloud over it, which is right for a surface whose job is to
+/// disappear. Over amber it is exactly wrong: the colour *is* the design, and a
+/// white wash leaves the beige button that shipped in 10.3.2. So: saturation
+/// left at 1, no frost, and the veil in amber rather than white — a white one
+/// dilutes the ground instead of sitting in it.
 ///
 /// **The veil is much heavier over a dark page, and that is not a taste call.**
 /// Measured on the running app: the button is only ~64% opaque, so a third of
@@ -72,33 +90,12 @@ const kNavGlassLight = LiquidGlassSettings(
 /// channel of 295. What fixes it is making the third that comes through *amber
 /// too*, which is this alpha. It lands at RGB(208,154,51) against light's
 /// (209,156,54).
-LiquidGlassSettings amberFrost(bool dark) => LiquidGlassSettings(
-  thickness: _thickness,
-  blur: _blur,
-  chromaticAberration: _chromaticAberration,
-  // The specular rim is a *white* stroke drawn on the shape's outer path with
-  // BlendMode.overlay: lightIntensity sets its width, ambientStrength its
-  // opacity. What it does depends entirely on what is behind the edge, so the
-  // two themes want opposite things from it.
-  //
-  // Dark: half the rim falls outside the disc, onto a near-black page, where
-  // white over dark blooms. It stops being a highlight and becomes a grey reif
-  // — measured at saturation 0.14 against a face at 0.75 — that eats the edge
-  // and reads as an inner shadow. Narrow and faint is the only way it stays a
-  // highlight.
-  //
-  // Light: the page behind that same edge is nearly as bright as the rim, so
-  // there is nothing to bloom against and the full-strength version is what
-  // gives the disc its lit edge. Take it away and the button looks unfinished.
-  lightIntensity: dark ? 0.45 : 0.9,
-  refractiveIndex: _refractiveIndex,
-  // Left at 1. Turning it up to claw back what the veil costs looked right in
-  // light and blew out in dark — the specular has more headroom to spend over a
-  // dark page, and red and green clipped at 255 into a glowing yellow disc with
-  // the glyph lost in it.
-  saturation: 1,
-  ambientStrength: dark ? 0.3 : _ambientStrength,
-  lightAngle: _lightAngle,
+LiquidGlassSettings amberFrost(bool dark) => ios27Glass(
+  dark: dark,
+  // Saturation stays at 1 and there is no frost: over amber the colour *is*
+  // the design, and a white frost cloud would dilute it just as the old white
+  // veil did. The iOS 27 rim light takes over from the white specular stroke
+  // that bloomed into a grey reif over a dark page.
   glassColor: dark ? const Color(0x59FFBC3B) : const Color(0x1FD9A032),
 );
 
@@ -242,3 +239,33 @@ class GlassCircleButton extends StatelessWidget {
     return label == null ? button : Tooltip(message: label, child: button);
   }
 }
+
+/// The iOS 27 material for every glass widget that does not bring its own
+/// settings — the tab bar, switches, sliders, sheets. Handed to
+/// `LiquidGlassWidgets.wrap` once, at the top of the app.
+GlassThemeData ios27GlassTheme() => GlassThemeData(
+  light: GlassThemeVariant(settings: _themeSettings(kNavGlassLight)),
+  dark: GlassThemeVariant(settings: _themeSettings(kNavGlassDark)),
+);
+
+GlassThemeSettings _themeSettings(LiquidGlassSettings s) => GlassThemeSettings(
+  glassColor: s.glassColor,
+  thickness: s.thickness,
+  blur: s.blur,
+  blurWeight: s.blurWeight,
+  frost: s.frost,
+  frostOpacity: s.frostOpacity,
+  frostClamp: s.frostClamp,
+  frostWeight: s.frostWeight,
+  chromaticAberration: s.chromaticAberration,
+  lightAngle: s.lightAngle,
+  lightIntensity: s.lightIntensity,
+  fresnelStrength: s.fresnelStrength,
+  refractiveIndex: s.refractiveIndex,
+  saturation: s.saturation,
+  edgeAbsorption: s.edgeAbsorption,
+  rimShade: s.rimShade,
+  rimShadeEnds: s.rimShadeEnds,
+  rimLight: s.rimLight,
+  lensModel: s.lensModel,
+);

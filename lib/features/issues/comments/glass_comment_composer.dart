@@ -17,6 +17,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/glass_chrome.dart' show ios27Glass;
 import 'package:lexical_editor_flutter/lexical_editor_flutter.dart'
     show TextFormat;
 
@@ -37,31 +38,12 @@ part 'glass_comment_composer.widgets.dart';
 /// the input becomes unreadable. Same refraction/lighting as the nav preset, but
 /// a strong tint (dark slate / near-solid frost) so the field + buttons read
 /// clearly in both themes. See `kNavGlassDark/Light` for the transparent siblings.
-const _composerGlassDark = LiquidGlassSettings(
-  thickness: 30,
-  blur: 3,
-  chromaticAberration: 0.3,
-  lightIntensity: 0.6,
-  refractiveIndex: 1.59,
-  saturation: 0.7,
-  ambientStrength: 1,
-  lightAngle: 2.356194490192345, // 0.75π — Apple key light
-  glassColor: Color(0xD91A1A22), // ~0.85 opaque dark slate
+LiquidGlassSettings _composerGlass(bool dark) => ios27Glass(
+  dark: dark,
+  // ~0.85 opaque dark slate / ~0.95 near-solid frost: the feed must not bleed
+  // through the field.
+  glassColor: dark ? const Color(0xD91A1A22) : const Color(0xF2FFFFFF),
 );
-const _composerGlassLight = LiquidGlassSettings(
-  thickness: 30,
-  blur: 3,
-  chromaticAberration: 0.3,
-  lightIntensity: 0.6,
-  refractiveIndex: 1.59,
-  saturation: 0.7,
-  ambientStrength: 1,
-  lightAngle: 2.356194490192345, // 0.75π — Apple key light
-  glassColor: Color(0xF2FFFFFF), // ~0.95 near-solid frost
-);
-
-LiquidGlassSettings _composerGlass(bool dark) =>
-    dark ? _composerGlassDark : _composerGlassLight;
 
 /// A rounded composer surface (field pill, popup, recording bar, format editor).
 ///
