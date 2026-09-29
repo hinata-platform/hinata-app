@@ -1126,12 +1126,11 @@ packages:
   liquid_glass_widgets:
     dependency: "direct main"
     description:
-      path: "."
-      ref: main
-      resolved-ref: ab865a82f352d5b6b725112abd63773403167d0f
-      url: "https://github.com/hinata-platform/liquid_glass_widgets.git"
-    source: git
-    version: "1.7.2"
+      name: liquid_glass_widgets
+      sha256: f44b2fdc2f8d10c58f4577dffa35a12aa0e84d4456943c1018519cb35e539475
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.8.0"
   logging:
     dependency: transitive
     description:
