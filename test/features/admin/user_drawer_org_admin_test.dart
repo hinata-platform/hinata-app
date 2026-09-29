@@ -88,6 +88,24 @@ void main() {
     expect(find.byType(OrgAdminBadge), findsNothing);
   });
 
+  testWidgets('a screen reader reaches the switch and the "i" apart', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(host(user(), _FakeAdminRepository()));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getSemantics(find.byTooltip('admin.um.orgAdminInfo')),
+      isSemantics(isButton: true, hasTapAction: true),
+    );
+    expect(
+      tester.getSemantics(orgSwitch()),
+      isSemantics(label: 'admin.um.orgAdminTitle', hasToggledState: true),
+    );
+    semantics.dispose();
+  });
+
   testWidgets('switching it on grants the role through the repository', (
     tester,
   ) async {
