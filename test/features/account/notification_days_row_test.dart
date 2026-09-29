@@ -5,12 +5,13 @@ import 'package:hinata/core/theme/app_colors.dart';
 import 'package:hinata/features/account/notification_days_row.dart';
 
 /// HIN-129: the days e-mail and push may arrive on, in the reader's week.
+/// What the default is and the way back to it are the schedule's (HIN-131).
 void main() {
   setUp(() => AppColors.brightness = Brightness.light);
 
   Future<List<List<int>?>> pump(
     WidgetTester tester, {
-    List<int>? weekdays,
+    List<int> weekdays = const [1, 2, 3, 4, 5],
     List<int> defaults = const [1, 2, 3, 4, 5],
     Locale locale = const Locale('de'),
     double width = 800,
@@ -78,15 +79,6 @@ void main() {
   });
 
   group('default', () {
-    testWidgets('shows the default days and no way back to it', (tester) async {
-      await pump(tester);
-      expect(
-        find.text('account.notifications.days.defaultLine'),
-        findsOneWidget,
-      );
-      expect(find.text('account.notifications.days.useDefault'), findsNothing);
-    });
-
     test('an unbroken run reads as a range, gaps as a list', () {
       String short(int d) =>
           const ['', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'][d];
@@ -105,14 +97,6 @@ void main() {
         formatDaySpan([1, 3, 5], orderedWeekdays(1), short, range),
         'Mo, Mi, Fr',
       );
-    });
-
-    testWidgets('custom days offer the way back to the default', (
-      tester,
-    ) async {
-      final emitted = await pump(tester, weekdays: const [1, 3]);
-      await tester.tap(find.text('account.notifications.days.useDefault'));
-      expect(emitted.single, isNull);
     });
   });
 
@@ -150,23 +134,13 @@ void main() {
   group('size', () {
     Finder day(String name) => find.bySemanticsLabel(name);
 
-    testWidgets('every day and the way back are at least 48 by 48', (
-      tester,
-    ) async {
+    testWidgets('every day is at least 48 by 48', (tester) async {
       await pump(tester, weekdays: const [1, 3]);
       for (final name in ['Montag', 'Mittwoch', 'Sonntag']) {
         final size = tester.getSize(day(name));
         expect(size.width, greaterThanOrEqualTo(48));
         expect(size.height, greaterThanOrEqualTo(48));
       }
-      final back = tester.getSize(
-        find.ancestor(
-          of: find.text('account.notifications.days.useDefault'),
-          matching: find.byType(TextButton),
-        ),
-      );
-      expect(back.width, greaterThanOrEqualTo(48));
-      expect(back.height, greaterThanOrEqualTo(48));
     });
 
     testWidgets('a phone keeps the week on one line', (tester) async {

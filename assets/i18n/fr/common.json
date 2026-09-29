@@ -3847,6 +3847,20 @@
         "range": "du {{from}} au {{to}}",
         "useDefault": "Utiliser la valeur par défaut",
         "lastDay": "Au moins un jour doit rester actif. Pour tout couper, désactive les canaux ci-dessus."
+      },
+      "schedule": {
+        "title": "Horaires de notification",
+        "hint": "En dehors de tes horaires, les e-mails et notifications push attendent et arrivent ensemble au début de ta prochaine plage. La cloche montre tout immédiatement. Les messages de sécurité et les avis importants arrivent toujours.",
+        "always": "Toujours",
+        "custom": "Personnalisé",
+        "from": "De",
+        "until": "À",
+        "allDay": "Toute la journée",
+        "defaultAlways": "Par défaut de ton organisation : toujours",
+        "defaultCustom": "Par défaut de ton organisation : {{days}}, de {{from}} à {{until}}",
+        "defaultCustomAllDay": "Par défaut de ton organisation : {{days}}, toute la journée",
+        "useDefault": "Utiliser le réglage par défaut",
+        "overnight": "Passe minuit et appartient au jour où elle commence."
       }
     },
     "access": {
@@ -4315,11 +4329,11 @@
     "title": "Organisation",
     "subtitle": "Ces réglages valent pour toute l'organisation : suivi du temps, absences, jours fériés, facturation et échéances. Les administrateurs de l'organisation voient les temps de travail, feuilles de temps, absences et saisies de toutes les personnes, mais les titres et descriptions des tickets uniquement pour les projets dont ils font partie. Ils ne voient la maladie que tant que personne n'est désigné pour gérer les absences, sinon seulement s'ils sont eux-mêmes désignés.",
     "deadlines": {
-      "title": "Échéances",
-      "hint": "Ce que comptent les nouvelles échéances relatives quand un projet ne fixe pas les siennes.",
+      "title": "Décompte des jours",
+      "hint": "Si l’organisation compte en jours calendaires ou ouvrés : pour les nouveaux délais relatifs et comme réglage par défaut des horaires de notification.",
       "followsPlatform": "La valeur par défaut de la plateforme s'applique : {{basis}}.",
       "followsPlatformUnknown": "La valeur par défaut de la plateforme s'applique.",
-      "ownChoice": "Ton organisation compte en {{basis}}.",
+      "ownChoice": "Choisi : {{basis}}.",
       "existingStay": "Les échéances existantes restent telles quelles.",
       "usePlatform": "Utiliser la valeur par défaut de la plateforme"
     },

@@ -3847,6 +3847,20 @@
         "range": "{{from}} to {{to}}",
         "useDefault": "Use default",
         "lastDay": "At least one day has to stay on. To stop all notifications, turn off the channels above."
+      },
+      "schedule": {
+        "title": "Notification times",
+        "hint": "Outside your times, e-mail and push wait and arrive together when your next window begins. The bell shows everything at once. Security messages and important notices always arrive.",
+        "always": "Always",
+        "custom": "Custom",
+        "from": "From",
+        "until": "Until",
+        "allDay": "All day",
+        "defaultAlways": "Your organization’s default: always",
+        "defaultCustom": "Your organization’s default: {{days}}, {{from}} to {{until}}",
+        "defaultCustomAllDay": "Your organization’s default: {{days}}, all day",
+        "useDefault": "Use default",
+        "overnight": "Runs past midnight and belongs to the day it starts on."
       }
     },
     "access": {
@@ -4315,11 +4329,11 @@
     "title": "Organization",
     "subtitle": "These settings apply to the whole organization: time tracking, absences, holidays, billing and deadlines. Organization admins see working times, timesheets, absences and bookings of all people, but issue titles and descriptions only from projects they are part of. They see sickness only while nobody is named to keep absences, otherwise only if they are named themselves.",
     "deadlines": {
-      "title": "Deadlines",
-      "hint": "What new relative deadlines count in when a project does not set its own.",
+      "title": "Day count",
+      "hint": "Whether the organization counts in calendar days or working days: for new relative deadlines and as the default for notification times.",
       "followsPlatform": "The platform default applies: {{basis}}.",
       "followsPlatformUnknown": "The platform default applies.",
-      "ownChoice": "Your organization counts in {{basis}}.",
+      "ownChoice": "Chosen: {{basis}}.",
       "existingStay": "Existing deadlines stay as they are.",
       "usePlatform": "Use the platform default"
     },

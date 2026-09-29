@@ -3,12 +3,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:intl/intl.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/util/dates.dart';
-import 'account_widgets.dart';
 
 /// The ISO weekdays (1 Monday to 7 Sunday) in the order a week is read in a
 /// locale whose week starts on [firstDayOfWeekIndex] (0 Sunday to 6 Saturday,
@@ -41,7 +39,7 @@ String formatDaySpan(
   return positions.map((p) => shortName(order[p])).join(', ');
 }
 
-/// Settings → Notifications: the days on which e-mail and push may arrive.
+/// The seven days of a notification schedule (HIN-129, HIN-131).
 ///
 /// Seven round day toggles, in the reader's week order. The design takes its
 /// cue from Sahil Vhora's "Notification schedule" shot on Dribbble (initials in
@@ -67,8 +65,8 @@ class NotificationDaysRow extends StatefulWidget {
   /// What null works out to where the person lives.
   final List<int> defaultWeekdays;
 
-  /// The new days, ascending; null to follow the default again.
-  final ValueChanged<List<int>?> onChanged;
+  /// The new days, ascending.
+  final ValueChanged<List<int>> onChanged;
 
   @override
   State<NotificationDaysRow> createState() => _NotificationDaysRowState();
@@ -117,83 +115,32 @@ class _NotificationDaysRowState extends State<NotificationDaysRow> {
     }
 
     final days = _effective;
-    final defaultSpan = formatDaySpan(
-      widget.defaultWeekdays,
-      order,
-      shortName,
-      (from, to) => context.t(
-        'account.notifications.days.range',
-        variables: {'from': from, 'to': to},
-      ),
-    );
 
-    return SettingRow(
-      label: context.t('account.notifications.days.title'),
-      description: context.t('account.notifications.days.hint'),
-      icon: LucideIcons.calendarDays,
-      stack: true,
-      trailing: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Always one line, the way a week is read. Each day gets a
-          // seventh of the width, capped at its natural size, so a wide
-          // window keeps round 48s and a narrow phone or a large text size
-          // shrinks the rings rather than breaking the week in two.
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final cell = math.min(
-                _DayToggle.sideFor(context),
-                constraints.maxWidth / order.length,
-              );
-              return Row(
-                children: [
-                  for (final d in order)
-                    _DayToggle(
-                      tipKey: _tips[d]!,
-                      label: shortName(d),
-                      fullName: weekdayName(context, d),
-                      selected: days.contains(d),
-                      isLast: days.length == 1 && days.contains(d),
-                      cell: cell,
-                      onTap: () => _toggle(d),
-                    ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 6),
-          Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 4,
-            children: [
-              Text(
-                context.t(
-                  'account.notifications.days.defaultLine',
-                  variables: {'days': defaultSpan},
-                ),
-                style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+    // Always one line, the way a week is read. Each day gets a seventh of the
+    // width, capped at its natural size, so a wide window keeps round 48s and
+    // a narrow phone or a large text size shrinks the rings rather than
+    // breaking the week in two.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cell = math.min(
+          _DayToggle.sideFor(context),
+          constraints.maxWidth / order.length,
+        );
+        return Row(
+          children: [
+            for (final d in order)
+              _DayToggle(
+                tipKey: _tips[d]!,
+                label: shortName(d),
+                fullName: weekdayName(context, d),
+                selected: days.contains(d),
+                isLast: days.length == 1 && days.contains(d),
+                cell: cell,
+                onTap: () => _toggle(d),
               ),
-              if (widget.weekdays != null)
-                TextButton(
-                  onPressed: () => widget.onChanged(null),
-                  style: TextButton.styleFrom(
-                    minimumSize: const Size(48, 48),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    foregroundColor: AppColors.accentInk,
-                    textStyle: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  child: Text(
-                    context.t('account.notifications.days.useDefault'),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 }
