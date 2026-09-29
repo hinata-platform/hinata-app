@@ -12,6 +12,7 @@ import '../../core/lexical/hinata_markdown_preview.dart';
 import '../../core/lexical/hinata_outline.dart';
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
+import 'knowledge_place_field.dart';
 import 'knowledge_scope.dart';
 import 'knowledge_tokens.dart';
 import 'markdown/smart_link_resolver.dart';
@@ -28,12 +29,21 @@ class KnowledgeReader extends StatefulWidget {
     required this.asideMode,
     required this.onEdit,
     required this.onDelete,
+    this.onPlace,
+    this.placeBusy = false,
   });
 
   final KbArticle article;
   final AsideMode asideMode;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+
+  /// Moves the page (a top-level one; subpages follow their parent) into a
+  /// project, a team or back to its author. Null hides the "visible to" row.
+  final ValueChanged<KbPlaceChoice>? onPlace;
+
+  /// A place change is on its way to the server.
+  final bool placeBusy;
 
   @override
   State<KnowledgeReader> createState() => _KnowledgeReaderState();
@@ -314,6 +324,22 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
             spacing: 6,
             runSpacing: 6,
             children: [for (final l in a.labels) _tag(l)],
+          ),
+        ],
+        if (widget.onPlace != null) ...[
+          const SizedBox(height: 8),
+          KnowledgePlaceField(
+            repo: repo,
+            projectId: a.projectId,
+            teamId: a.teamId,
+            followsParent: !repo.isTopLevel(a),
+            // Only the author may make a page private; a page that already is
+            // private can only be the author's own.
+            allowPrivate:
+                a.authorId == repo.me.id || a.place == KbPlace.private,
+            canChange: () => repo.mayChangePlace(a),
+            busy: widget.placeBusy,
+            onChanged: widget.onPlace!,
           ),
         ],
         const SizedBox(height: 22),

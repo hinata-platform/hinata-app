@@ -37,6 +37,7 @@ import '../shell/page_chrome.dart';
 import 'account_modals.dart';
 import 'account_widgets.dart';
 import 'availability_section.dart';
+import 'notification_days_row.dart';
 import 'time_preferences_section.dart';
 import 'pat_section.dart';
 import 'settings_layout.dart';
@@ -467,13 +468,15 @@ class _AccountScreenState extends State<AccountScreen> {
   /// Desktop and tablet: every section on one scroll behind the account hero,
   /// in as many golden columns as the width holds ([GoldenColumns]).
   Widget _wideView() {
-    final isAdmin = context.read<AuthBloc>().state.user?.isAdmin ?? false;
+    final user = context.read<AuthBloc>().state.user;
     // Resolved here, in build: the flag is watched, and a LayoutBuilder's
     // builder runs during layout, where watching is not allowed.
     final groups = settingsGroups(
       timeTracking: _advancedTime,
       tokens: _mcpEnabled,
-      admin: isAdmin,
+      // One card carries the admin area and Organisation (HIN-129), each for
+      // the role that opens it.
+      admin: (user?.isAdmin ?? false) || (user?.isOrgAdmin ?? false),
     );
     // The shell's reading width, which is what the team's settings take too:
     // one width for every page of settings, so moving between them does not
@@ -556,6 +559,7 @@ class _AccountScreenState extends State<AccountScreen> {
   /// navigates to `/admin` rather than opening an in-page section).
   Widget _sectionMenu() {
     final isAdmin = context.read<AuthBloc>().state.user?.isAdmin ?? false;
+    final isOrgAdmin = context.read<AuthBloc>().state.user?.isOrgAdmin ?? false;
     final mcpEnabled = _mcpEnabled;
     final advancedTime = _advancedTime;
     final tiles = <Widget>[];
@@ -579,6 +583,17 @@ class _AccountScreenState extends State<AccountScreen> {
             title: context.t('settings.adminArea'),
             subtitle: context.t('settings.adminAreaDesc'),
             onTap: () => context.go('/admin'),
+          ),
+        );
+      }
+      // Organisation (HIN-129): its own role, beside the admin area.
+      if (item.section == _SettingsSection.appearance && isOrgAdmin) {
+        tiles.add(
+          _navTile(
+            icon: LucideIcons.building2,
+            title: context.t('settings.organization'),
+            subtitle: context.t('settings.organizationDesc'),
+            onTap: () => context.go('/organization'),
           ),
         );
       }
@@ -1242,6 +1257,13 @@ class _AccountScreenState extends State<AccountScreen> {
           (v) => _onTogglePrefs(prefs.copyWith(pushEnabled: v)),
           undeliverableHere: !pushSupportedOnThisPlatform,
         ),
+        Divider(height: 1, color: AppColors.hairline2),
+        // HIN-129: the days e-mail and push may arrive on.
+        NotificationDaysRow(
+          weekdays: prefs.weekdays,
+          defaultWeekdays: prefs.defaultWeekdays,
+          onChanged: (days) => _onTogglePrefs(prefs.copyWith(weekdays: days)),
+        ),
         const SizedBox(height: 8),
         if (context.isCompact)
           ..._notifEvents.map(_notifCard)
@@ -1754,6 +1776,25 @@ class _AccountScreenState extends State<AccountScreen> {
   /// A standalone nav card on the wide layout that opens the Admin area —
   /// promoted out of the Appearance section to its own top-level entry.
   Widget _adminSection() {
+    // The admin area for admins, Organisation for organisation admins
+    // (HIN-129): two roles, one card, each row only for the role it opens.
+    final user = context.read<AuthBloc>().state.user;
+    final rows = [
+      if (user?.isAdmin ?? false)
+        _navTile(
+          icon: LucideIcons.shieldUser,
+          title: context.t('settings.adminArea'),
+          subtitle: context.t('settings.adminAreaDesc'),
+          onTap: () => context.go('/admin'),
+        ),
+      if (user?.isOrgAdmin ?? false)
+        _navTile(
+          icon: LucideIcons.building2,
+          title: context.t('settings.organization'),
+          subtitle: context.t('settings.organizationDesc'),
+          onTap: () => context.go('/organization'),
+        ),
+    ];
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -1761,11 +1802,14 @@ class _AccountScreenState extends State<AccountScreen> {
         border: Border.all(color: AppColors.hairline),
       ),
       clipBehavior: Clip.antiAlias,
-      child: _navTile(
-        icon: LucideIcons.shieldUser,
-        title: context.t('settings.adminArea'),
-        subtitle: context.t('settings.adminAreaDesc'),
-        onTap: () => context.go('/admin'),
+      child: Column(
+        children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0)
+              Divider(height: 1, indent: 62, color: AppColors.hairline2),
+            rows[i],
+          ],
+        ],
       ),
     );
   }

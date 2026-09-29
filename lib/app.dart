@@ -159,6 +159,8 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     articles: widget.repositories.articles,
     users: widget.repositories.users,
     auth: widget.repositories.auth,
+    projects: widget.repositories.projects,
+    teams: widget.repositories.teams,
   );
   StreamSubscription<Uri>? _linkSubscription;
 
@@ -744,6 +746,9 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
           value: domains.notifications,
         ),
         RepositoryProvider<AdminRepository>.value(value: domains.admin),
+        RepositoryProvider<OrgSettingsRepository>.value(
+          value: domains.organization,
+        ),
         RepositoryProvider<TeamRepository>.value(value: domains.teams),
         RepositoryProvider<GitRepository>.value(value: domains.git),
       ],

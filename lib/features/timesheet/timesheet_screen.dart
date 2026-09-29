@@ -51,7 +51,7 @@ import '../sprint/modals/glass_modal.dart'
 /// the "today" jump into the shell's glass app bar ([PageChrome]) and takes the
 /// full content width: the table is a grid to scan across, not prose to read.
 ///
-/// Admins additionally get a user and a project filter — both server-side
+/// Organisation admins additionally get a user and a project filter — both server-side
 /// parameters, so the narrowing happens in the database rather than by hiding
 /// rows that were already fetched. Everyone else sees only their own time (the
 /// server refuses another user's), so a filter would have nothing to offer.
@@ -174,7 +174,10 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
 
   bool get _isCurrentWeek => weekStartFor(context, DateTime.now()) == _from;
 
-  bool get _isAdmin => context.watch<AuthBloc>().state.user?.isAdmin ?? false;
+  /// Reading other people's time is an organisation duty (HIN-129): the
+  /// platform administrator sees only their own like anyone else.
+  bool get _isOrgAdmin =>
+      context.watch<AuthBloc>().state.user?.isOrgAdmin ?? false;
 
   /// The operator's rules. Watched, so switching approvals on takes effect
   /// without a reopen.
@@ -207,7 +210,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// administrator without a pick, who reads everybody's, and not a project
   /// picked while [_leadsSeeMembers] may let its members' rows in.
   bool get _showsOwnRows => _userFilter == null
-      ? !_isAdmin && !(_projectFilter != null && _leadsSeeMembers(_policy))
+      ? !_isOrgAdmin && !(_projectFilter != null && _leadsSeeMembers(_policy))
       : _userFilter == _editableUserId;
 
   /// The period the grid is showing, clamped to what the grid route accepts.
@@ -251,7 +254,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     // would not by itself forget the pick behind it — every later week would go
     // on asking for a colleague's rows. (The server refuses, which is what
     // actually protects them; this is so the page stops asking.)
-    if (!(context.read<AuthBloc>().state.user?.isAdmin ?? false)) {
+    if (!(context.read<AuthBloc>().state.user?.isOrgAdmin ?? false)) {
       _userFilter = null;
       _userFilterLabel = null;
       // A lead keeps the project they picked while the policy lets them see its
@@ -661,7 +664,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final admin = _isAdmin;
+    final orgAdmin = _isOrgAdmin;
     final compact = context.isCompact;
     // [PageChrome] carries two things the shell owns. `fullWidth`, because a
     // seven-day grid wants the whole page rather than the reading column. And
@@ -711,7 +714,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
               ),
             ]
           : const [],
-      bottom: compact ? _dockedBar(admin) : null,
+      bottom: compact ? _dockedBar(orgAdmin) : null,
       bottomHeight: compact ? kGlassDockRow : 0,
       child: compact
           ? _body()
@@ -747,7 +750,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                     context.pageGutter,
                     12,
                   ),
-                  child: _toolbar(admin),
+                  child: _toolbar(orgAdmin),
                 ),
                 Expanded(child: _body()),
               ],
@@ -777,7 +780,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// — the same shape the audit log's docked filters use, so a reader meets one
   /// toolbar idiom in the app and not two. A set filter wears the amber wash,
   /// so a narrowing nobody meant cannot be mistaken for an empty week.
-  Widget _dockedBar(bool admin) {
+  Widget _dockedBar(bool orgAdmin) {
     final localizations = MaterialLocalizations.of(context);
     // Centred in the band's height, and the `Align` is load-bearing: the bar
     // hands the reserved height down as a *tight* constraint, which a
@@ -847,7 +850,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                 active: !_isCurrentWeek,
               ),
             ),
-            if (admin) ...[
+            if (orgAdmin) ...[
               const SizedBox(width: 8),
               _DockedFilterPill(
                 icon: LucideIcons.userRound,
@@ -856,7 +859,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                 onTap: _pickUser,
               ),
             ],
-            if (admin || _leadsSeeMembers(_policy)) ...[
+            if (orgAdmin || _leadsSeeMembers(_policy)) ...[
               const SizedBox(width: 8),
               _DockedFilterPill(
                 icon: LucideIcons.folderKanban,
@@ -872,11 +875,11 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     );
   }
 
-  Widget _toolbar(bool admin) {
+  Widget _toolbar(bool orgAdmin) {
     final localizations = MaterialLocalizations.of(context);
     // Read here, in build, rather than inside the LayoutBuilder below: its
     // builder runs during layout, where watching a cubit is not allowed.
-    final projectFilter = admin || _leadsSeeMembers(_policy);
+    final projectFilter = orgAdmin || _leadsSeeMembers(_policy);
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = math.min(_filterWidth, constraints.maxWidth);
@@ -886,7 +889,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             _weekNav(localizations),
-            if (admin) ...[
+            if (orgAdmin) ...[
               SizedBox(
                 width: width,
                 child: _FilterField(

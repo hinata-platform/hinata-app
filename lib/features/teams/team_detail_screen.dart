@@ -72,10 +72,11 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
     super.dispose();
   }
 
+  /// Team-Admins of this team only. The platform admin role manages no team it
+  /// is not an admin of; the server refuses those writes too.
   bool _canManage(Team team) {
     final user = context.read<AuthBloc>().state.user;
     if (user == null) return false;
-    if (user.isAdmin) return true;
     return team.membershipOf(user.id)?.isAdmin ?? false;
   }
 

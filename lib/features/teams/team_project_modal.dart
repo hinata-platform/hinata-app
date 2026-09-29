@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/access/project_permissions.dart';
 import '../../core/api/api_client.dart';
+import '../../core/blocs/auth_bloc.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
 import '../../core/i18n/i18n.dart';
@@ -12,6 +14,7 @@ import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/entity_avatar_editor.dart';
+import '../projects/deadline_basis_field.dart';
 import '../projects/project_create_form.dart';
 import 'team_modal_kit.dart';
 import 'team_widgets.dart';
@@ -30,15 +33,24 @@ Future<bool?> showAddProjectModal(
   Set<String> takenKeys = const {},
 }) {
   final repo = context.read<TeamRepository>();
+  final deadlineDefault = offeredDeadlineDefault(context);
+  // Attaching a project to a team is for its leads alone; the server refuses
+  // anybody else, platform admins included. Offering the rest would only
+  // collect refusals.
+  final me = context.read<AuthBloc>().state.user;
+  final attachable = available
+      .where((p) => isProjectLead(p, me))
+      .toList(growable: false);
   return showTeamModal<bool>(
     context,
     _AddProjectBody(
       repo: repo,
       team: team,
-      available: available,
+      available: attachable,
       leadCandidates: leadCandidates,
       currentUserId: currentUserId,
       takenKeys: takenKeys,
+      deadlineDefault: deadlineDefault,
     ),
   );
 }
@@ -51,6 +63,7 @@ class _AddProjectBody extends StatefulWidget {
     required this.leadCandidates,
     required this.currentUserId,
     required this.takenKeys,
+    this.deadlineDefault,
   });
 
   final TeamRepository repo;
@@ -61,6 +74,9 @@ class _AddProjectBody extends StatefulWidget {
   final List<DirectoryUser> leadCandidates;
   final String currentUserId;
   final Set<String> takenKeys;
+
+  /// The organisation's deadline basis while project templates are on.
+  final RelativeDateBasis? deadlineDefault;
 
   @override
   State<_AddProjectBody> createState() => _AddProjectBodyState();
@@ -77,6 +93,7 @@ class _AddProjectBodyState extends State<_AddProjectBody> {
     takenKeys: widget.takenKeys,
     hue: widget.team.colorHue,
     meId: widget.currentUserId.isEmpty ? null : widget.currentUserId,
+    deadlineDefault: widget.deadlineDefault,
   );
 
   bool _busy = false;
@@ -127,9 +144,11 @@ class _AddProjectBodyState extends State<_AddProjectBody> {
       description: _draft.trimmedDescription,
       color: _draft.colorHex,
       leadId: _draft.lead?.id,
+      deadlineBasis: _draft.deadlineBasisToSend,
     );
+    if (!mounted) return;
+    final repo = context.read<ProjectRepository>();
     if (mounted) {
-      final repo = context.read<ProjectRepository>();
       await uploadPendingAvatar(
         context,
         _draft.pendingAvatar,

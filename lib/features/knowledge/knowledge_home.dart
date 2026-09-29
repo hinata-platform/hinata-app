@@ -64,7 +64,17 @@ class _KnowledgeHomeState extends State<KnowledgeHome> {
         else ...[
           _spacesGrid(repo),
           const SizedBox(height: 26),
-          _sectionHeader(context.t('knowledge.recentlyUpdated')),
+          // No pages at all: pages are private to their author until they are
+          // put into a project or a team, so an empty list usually means
+          // nothing has been shared with this person yet. Say that, rather
+          // than show an empty "recently updated" heading.
+          if (repo.articles.isEmpty)
+            HiveEmptyState(
+              title: context.t('knowledge.emptyTitle'),
+              message: context.t('knowledge.emptyMessage'),
+            )
+          else
+            _sectionHeader(context.t('knowledge.recentlyUpdated')),
           const SizedBox(height: 12),
           ..._recent(repo).map(
             (a) => Padding(

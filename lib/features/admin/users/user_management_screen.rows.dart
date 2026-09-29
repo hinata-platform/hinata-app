@@ -89,7 +89,7 @@ class _UserTableRow extends StatelessWidget {
             flex: 2,
             child: Align(
               alignment: AlignmentDirectional.centerStart,
-              child: RoleBadge(u.role),
+              child: RoleBadges(u),
             ),
           ),
           if (showOrigin) Expanded(flex: 2, child: OriginTag(u.origin)),
@@ -261,7 +261,7 @@ class _UserCard extends StatelessWidget {
           Wrap(
             spacing: 6,
             runSpacing: 6,
-            children: [RoleBadge(u.role), StatusBadge(u), OriginTag(u.origin)],
+            children: [RoleBadges(u), StatusBadge(u), OriginTag(u.origin)],
           ),
           const SizedBox(height: 8),
           Row(

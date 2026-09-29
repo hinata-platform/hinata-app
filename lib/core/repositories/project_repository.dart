@@ -117,6 +117,7 @@ class ProjectRepository {
     String? description,
     String? color,
     String? leadId,
+    RelativeDateBasis? deadlineBasis,
   }) async => Project.fromJson(
     await _api.post(
           '/api/v1/projects',
@@ -126,6 +127,10 @@ class ProjectRepository {
             'description': ?description,
             'color': ?color,
             'leadId': ?leadId,
+            // Behind `project_templates`: the server answers 400 for it while
+            // the module is off, so callers pass it only while it is on. Left
+            // out, the project follows the organisation's default.
+            'deadlineBasis': ?deadlineBasis?.wire,
           },
         )
         as Map<String, dynamic>,
@@ -134,6 +139,10 @@ class ProjectRepository {
   /// Atomically commits the full edited project from the settings surface. Pass
   /// only the fields that changed; the server re-validates every invariant
   /// (>=1 lead, >=2 states, >=1 resolved) and cascades workflow/label renames.
+  ///
+  /// The deadline basis travels as `deadlineBasis` (a wire name) or as
+  /// `clearDeadlineBasis: true` to follow the organisation again; build them
+  /// with [deadlineBasisPatch]. Both only while `project_templates` is on.
   Future<Project> updateProject(String id, Map<String, dynamic> patch) async =>
       Project.fromJson(
         await _api.patch(
@@ -162,6 +171,9 @@ class ProjectRepository {
       );
 
   /// Copies the project and returns the copy with what came along.
+  ///
+  /// [deadlineBasis] left out keeps the source's; see [createProject] for
+  /// when it may be sent at all.
   Future<ProjectCopyResult> copyProject(
     String id, {
     String? name,
@@ -172,6 +184,7 @@ class ProjectRepository {
     bool includeTimeSettings = true,
     bool includeBoard = false,
     bool asTemplate = false,
+    RelativeDateBasis? deadlineBasis,
   }) async => ProjectCopyResult.fromJson(
     await _api.post(
           '/api/v1/projects/${Uri.encodeComponent(id)}/copy',
@@ -187,6 +200,7 @@ class ProjectRepository {
             // project", the way in from the Templates tab. The other way round,
             // marking a project you already have, is the switch in its settings.
             'asTemplate': asTemplate,
+            'deadlineBasis': ?deadlineBasis?.wire,
           },
         )
         as Map<String, dynamic>,
@@ -194,11 +208,14 @@ class ProjectRepository {
 
   /// Creates a project from a template in one step: the copy, the date and the
   /// deadlines that follow from it.
+  ///
+  /// [deadlineBasis] left out keeps the template's.
   Future<ProjectCopyResult> instantiateTemplate(
     String id, {
     required String name,
     String? key,
     DateTime? eventDate,
+    RelativeDateBasis? deadlineBasis,
   }) async => ProjectCopyResult.fromJson(
     await _api.post(
           '/api/v1/projects/${Uri.encodeComponent(id)}/instantiate',
@@ -206,6 +223,7 @@ class ProjectRepository {
             'name': name,
             if (key != null && key.isNotEmpty) 'key': key,
             if (eventDate != null) 'eventDate': formatDateOnly(eventDate),
+            'deadlineBasis': ?deadlineBasis?.wire,
           },
         )
         as Map<String, dynamic>,
@@ -347,4 +365,16 @@ class ProjectRepository {
       cancelToken: cancelToken,
     );
   }
+}
+
+/// The PATCH fields that move a project's deadline basis from [saved] to
+/// [draft]: nothing when it is unchanged, `clearDeadlineBasis` when the
+/// project goes back to the organisation's default, `deadlineBasis` otherwise.
+Map<String, dynamic> deadlineBasisPatch(
+  RelativeDateBasis? saved,
+  RelativeDateBasis? draft,
+) {
+  if (saved == draft) return const {};
+  if (draft == null) return const {'clearDeadlineBasis': true};
+  return {'deadlineBasis': draft.wire};
 }

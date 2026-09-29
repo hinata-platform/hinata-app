@@ -38,6 +38,26 @@ void main() {
     expect(cubit.state.total, 4);
   });
 
+  test('replaceItems swaps every answered row in one go', () async {
+    final server = [('a', 0), ('b', 0), ('c', 0)];
+    final cubit = PagedCubit<(String, int)>(
+      (page, size) async => (items: server, total: server.length),
+      keyOf: (item) => item.$1,
+    );
+    await cubit.load();
+    final emitted = <PagedState<(String, int)>>[];
+    final sub = cubit.stream.listen(emitted.add);
+
+    // 'z' is not loaded here and is ignored.
+    cubit.replaceItems([('c', 2), ('a', 1), ('z', 9)]);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(cubit.state.items, [('a', 1), ('b', 0), ('c', 2)]);
+    expect(cubit.state.total, 3);
+    expect(emitted, hasLength(1));
+    await sub.cancel();
+  });
+
   test('a delete does not let the next page skip a row', () async {
     // Pages are offsets, so removing a row shifts every boundary below it. The
     // reader holds a+b; deleting b makes what was page 1 start one row early,

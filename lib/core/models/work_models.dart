@@ -103,6 +103,7 @@ class Project extends Equatable {
     this.eventDate,
     this.workdayCalendarId,
     this.template = false,
+    this.deadlineBasis,
   });
 
   final String id;
@@ -151,6 +152,17 @@ class Project extends Equatable {
   /// running ones. Same rights, same search, same boards: only the section it
   /// appears in and the action it offers are different.
   final bool template;
+
+  /// How a new relative deadline on this project counts, or null to follow the
+  /// organisation's default ([effectiveDeadlineBasis]). What the deadline editor
+  /// preselects, never a rule: a saved deadline keeps its own basis.
+  final RelativeDateBasis? deadlineBasis;
+
+  /// [deadlineBasis], or the organisation's default when the project does not
+  /// set one. [organisationDefault] is `ServerMeta.defaultDeadlineBasis`.
+  RelativeDateBasis effectiveDeadlineBasis(
+    RelativeDateBasis organisationDefault,
+  ) => deadlineBasis ?? organisationDefault;
 
   /// Every connected repository, primary first (empty when none linked).
   List<GitConnection> get allRepos => [?git, ...extraRepos];
@@ -203,6 +215,9 @@ class Project extends Equatable {
     eventDate: parseDate(json['eventDate']),
     workdayCalendarId: json['workdayCalendarId'] as String?,
     template: json['template'] as bool? ?? false,
+    deadlineBasis: json['deadlineBasis'] is String
+        ? RelativeDateBasis.fromWire(json['deadlineBasis'] as String)
+        : null,
   );
 
   static List<GitConnection> _gitList(Object? raw) {
@@ -232,6 +247,7 @@ class Project extends Equatable {
     Object? eventDate = _noProjectChange,
     Object? workdayCalendarId = _noProjectChange,
     bool? template,
+    Object? deadlineBasis = _noProjectChange,
   }) => Project(
     id: id,
     key: key ?? this.key,
@@ -259,6 +275,9 @@ class Project extends Equatable {
         ? this.workdayCalendarId
         : workdayCalendarId as String?,
     template: template ?? this.template,
+    deadlineBasis: deadlineBasis == _noProjectChange
+        ? this.deadlineBasis
+        : deadlineBasis as RelativeDateBasis?,
   );
 
   /// Returns a copy with the Git repositories replaced — the primary [git]
@@ -286,6 +305,7 @@ class Project extends Equatable {
         eventDate: eventDate,
         workdayCalendarId: workdayCalendarId,
         template: template,
+        deadlineBasis: deadlineBasis,
       );
 
   @override
@@ -307,11 +327,12 @@ class Project extends Equatable {
     eventDate,
     workdayCalendarId,
     template,
+    deadlineBasis,
   ];
 }
 
 /// Sentinel so [Project.copyWith] can tell "leave unchanged" from "set to
-/// null" for the two fields that can genuinely be cleared.
+/// null" for the fields that can genuinely be cleared.
 const Object _noProjectChange = Object();
 
 /// Resolves the primary lead id from either the new [leadIds] array or the

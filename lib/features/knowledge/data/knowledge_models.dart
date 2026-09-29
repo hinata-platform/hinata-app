@@ -47,6 +47,30 @@ class KbSpace {
   final String desc;
 }
 
+/// Where a knowledge page lives, which decides who reads it.
+enum KbPlace {
+  /// Neither project nor team: only the author reads it.
+  private,
+
+  /// A team page: Team-Admins always, members per their knowledge access.
+  team,
+
+  /// A project page: whoever sees the project.
+  project,
+}
+
+/// Where a page with [projectId] and [teamId] lives. A project wins over a
+/// team; the server never sets both.
+KbPlace placeOf(String? projectId, String? teamId) => projectId != null
+    ? KbPlace.project
+    : teamId != null
+    ? KbPlace.team
+    : KbPlace.private;
+
+/// Marks a nullable [KbArticle.copyWith] argument as "leave as it is", so
+/// null can mean "none".
+const Object _keep = Object();
+
 /// A knowledge article. [body] is markdown that may embed `{{…}}` smart-link
 /// tokens; the issue⇄article relationship is *derived* from those tokens, never
 /// stored separately.
@@ -66,6 +90,8 @@ class KbArticle {
     required this.status,
     required this.body,
     this.doc,
+    this.projectId,
+    this.teamId,
   });
 
   final String id;
@@ -86,12 +112,26 @@ class KbArticle {
   /// The Lexical document — what the reader renders and the editor opens.
   final String? doc;
 
+  /// The project the page lives in, if any.
+  final String? projectId;
+
+  /// The team the page lives in, if any.
+  final String? teamId;
+
+  KbPlace get place => placeOf(projectId, teamId);
+
+  /// A copy with the given fields replaced. [projectId] and [teamId] can be
+  /// set back to null, so they are left alone only while not passed at all; a
+  /// place change moves the whole subtree, and the repository copies the new
+  /// place onto every page below it this way.
   KbArticle copyWith({
     String? spaceId,
     String? title,
     String? body,
     String? doc,
     String? updated,
+    Object? projectId = _keep,
+    Object? teamId = _keep,
   }) => KbArticle(
     id: id,
     spaceId: spaceId ?? this.spaceId,
@@ -107,6 +147,10 @@ class KbArticle {
     status: status,
     body: body ?? this.body,
     doc: doc ?? this.doc,
+    projectId: identical(projectId, _keep)
+        ? this.projectId
+        : projectId as String?,
+    teamId: identical(teamId, _keep) ? this.teamId : teamId as String?,
   );
 
   Map<String, dynamic> toJson() => {
@@ -124,6 +168,8 @@ class KbArticle {
     'status': status,
     'body': body,
     'doc': doc,
+    'projectId': projectId,
+    'teamId': teamId,
   };
 
   factory KbArticle.fromJson(Map<String, dynamic> json) => KbArticle(
@@ -142,6 +188,8 @@ class KbArticle {
     status: json['status'] as String? ?? 'published',
     body: json['body'] as String? ?? '',
     doc: json['doc'] as String?,
+    projectId: json['projectId'] as String?,
+    teamId: json['teamId'] as String?,
   );
 }
 

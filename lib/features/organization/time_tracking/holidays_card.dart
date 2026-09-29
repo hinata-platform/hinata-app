@@ -4,14 +4,14 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/widgets/hive_widgets.dart' show forwardArrow;
-import '../admin_form_helpers.dart';
+import '../../admin/admin_form_helpers.dart';
 
-/// Admin → Time tracking → Holidays (HIN-91): the way to the holiday calendars.
+/// Organisation → Time tracking → Holidays (HIN-91; an org admin's duty since HIN-129): the way to the holiday calendars.
 ///
 /// A card that leads to a page of its own, because calendars, their feeds and a
 /// year of days each do not fit a card in a form that saves as a whole.
-class AdminHolidaysCard extends StatelessWidget {
-  const AdminHolidaysCard({super.key});
+class OrgHolidaysCard extends StatelessWidget {
+  const OrgHolidaysCard({super.key});
 
   @override
   Widget build(BuildContext context) => AdminSectionCard(
@@ -24,7 +24,7 @@ class AdminHolidaysCard extends StatelessWidget {
         child: Align(
           alignment: AlignmentDirectional.centerStart,
           child: FilledButton.tonalIcon(
-            onPressed: () => context.go('/admin/holidays'),
+            onPressed: () => context.go('/organization/holidays'),
             icon: Icon(forwardArrow(context), size: 16),
             label: Text(context.t('availability.admin.open')),
           ),

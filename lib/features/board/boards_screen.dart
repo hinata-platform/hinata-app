@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/access/project_permissions.dart';
 import '../../core/api/api_client.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/events/board_events.dart';
@@ -54,20 +55,28 @@ class _BoardScreenState extends State<BoardScreen>
   /// still showing the boards from before the one that had just been made.
   StreamSubscription<void>? _boardSub;
 
-  /// Owner / project-lead / team-lead / platform-admin may manage a board.
+  /// The board's owner, a lead of one of its projects, or a Team-Admin of a
+  /// team owning one of them may manage it. The platform admin role adds
+  /// nothing: the server refuses it like anybody else's.
   bool _canManageBoard(AgileBoard board) {
     final me = context.read<AuthBloc>().state.user;
     if (me == null) return false;
-    if (me.isAdmin || board.ownerId == me.id) return true;
+    if (board.ownerId == me.id) return true;
     for (final pid in board.projectIds) {
       final project = _projects.where((p) => p.id == pid).firstOrNull;
-      if (project != null && project.leadIds.contains(me.id)) return true;
-      final teamLead = _teams.any(
-        (t) =>
-            t.projectIds.contains(pid) &&
-            (t.membershipOf(me.id)?.isAdmin ?? false),
-      );
-      if (teamLead) return true;
+      if (project != null && canManageProject(project, me, _teams)) {
+        return true;
+      }
+      // A project the list did not return (an archived one) can still be owned
+      // by one of my teams.
+      if (project == null &&
+          _teams.any(
+            (t) =>
+                t.projectIds.contains(pid) &&
+                (t.membershipOf(me.id)?.isAdmin ?? false),
+          )) {
+        return true;
+      }
     }
     return false;
   }

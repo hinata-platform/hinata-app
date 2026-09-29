@@ -16,22 +16,21 @@ import '../../../core/widgets/hive_widgets.dart';
 import '../../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassConfirm, showGlassToast;
 import '../../time/lock_notice.dart' show formatPeriod;
-import '../admin_form_helpers.dart';
+import '../../admin/admin_form_helpers.dart';
 
 /// Admin → Time tracking: the days opened for single people that are still open.
 ///
 /// Under the requests they answer. Each opening closes by itself after two weeks;
 /// this is where an administrator closes one sooner, which is recorded like the
 /// opening was.
-class AdminBackfillGrantsCard extends StatefulWidget {
-  const AdminBackfillGrantsCard({super.key});
+class OrgBackfillGrantsCard extends StatefulWidget {
+  const OrgBackfillGrantsCard({super.key});
 
   @override
-  State<AdminBackfillGrantsCard> createState() =>
-      _AdminBackfillGrantsCardState();
+  State<OrgBackfillGrantsCard> createState() => _OrgBackfillGrantsCardState();
 }
 
-class _AdminBackfillGrantsCardState extends State<AdminBackfillGrantsCard> {
+class _OrgBackfillGrantsCardState extends State<OrgBackfillGrantsCard> {
   late final PagedCubit<TimeBackfillGrant> _grants =
       PagedCubit<TimeBackfillGrant>(
         (page, size) => context.read<TimeRepository>().backfillGrants(

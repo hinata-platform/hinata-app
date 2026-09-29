@@ -425,41 +425,110 @@ class NotifPrefs extends Equatable {
     required this.emailEnabled,
     required this.pushEnabled,
     required this.events,
+    this.weekdays,
+    this.defaultWeekdays = workingWeekdays,
   });
 
   final bool emailEnabled;
   final bool pushEnabled;
   final Map<String, ChannelPair> events;
 
+  /// The days (ISO, [DateTime.monday] to [DateTime.sunday], ascending) on which
+  /// e-mail and push may reach the person, or null to follow
+  /// [defaultWeekdays]. On other days both channels stay silent; the bell in
+  /// the app keeps everything and security mail always goes out.
+  final List<int>? weekdays;
+
+  /// What a null [weekdays] works out to: the working days where the person
+  /// lives, as the server reckons them from locale and time zone. Read-only.
+  final List<int> defaultWeekdays;
+
+  /// Monday to Friday, the fallback when an older server sends no default.
+  static const List<int> workingWeekdays = [1, 2, 3, 4, 5];
+
+  /// The days that actually apply right now.
+  List<int> get effectiveWeekdays => weekdays ?? defaultWeekdays;
+
+  /// Whether the person picked their own days instead of the default.
+  bool get hasCustomWeekdays => weekdays != null;
+
+  /// [weekdays] takes an explicit null to go back to the default, so it
+  /// defaults to a sentinel rather than to null.
   NotifPrefs copyWith({
     bool? emailEnabled,
     bool? pushEnabled,
     Map<String, ChannelPair>? events,
+    Object? weekdays = _keepWeekdays,
   }) => NotifPrefs(
     emailEnabled: emailEnabled ?? this.emailEnabled,
     pushEnabled: pushEnabled ?? this.pushEnabled,
     events: events ?? this.events,
+    weekdays: identical(weekdays, _keepWeekdays)
+        ? this.weekdays
+        : weekdays as List<int>?,
+    defaultWeekdays: defaultWeekdays,
   );
 
   factory NotifPrefs.fromJson(Map<String, dynamic> json) {
     final raw = (json['events'] as Map<String, dynamic>?) ?? const {};
+    final defaults = _weekdaysFromJson(json['defaultWeekdays']);
     return NotifPrefs(
       emailEnabled: json['emailEnabled'] as bool? ?? true,
       pushEnabled: json['pushEnabled'] as bool? ?? true,
       events: raw.map(
         (k, v) => MapEntry(k, ChannelPair.fromJson(v as Map<String, dynamic>)),
       ),
+      weekdays: _weekdaysFromJson(json['weekdays']),
+      defaultWeekdays: (defaults == null || defaults.isEmpty)
+          ? workingWeekdays
+          : defaults,
     );
   }
 
+  /// [defaultWeekdays] is the server's to compute and is never sent back.
   Map<String, dynamic> toJson() => {
     'emailEnabled': emailEnabled,
     'pushEnabled': pushEnabled,
     'events': events.map((k, v) => MapEntry(k, v.toJson())),
+    'weekdays': weekdays?.map(dayOfWeekWire).toList(),
   };
 
   @override
-  List<Object?> get props => [emailEnabled, pushEnabled, events];
+  List<Object?> get props => [
+    emailEnabled,
+    pushEnabled,
+    events,
+    weekdays,
+    defaultWeekdays,
+  ];
+}
+
+const Object _keepWeekdays = Object();
+
+/// Java `DayOfWeek` names, Monday first — index `weekday - 1`.
+const _dayOfWeekNames = [
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+  'SUNDAY',
+];
+
+/// The wire name of an ISO [weekday] (1 Monday to 7 Sunday).
+String dayOfWeekWire(int weekday) => _dayOfWeekNames[weekday - 1];
+
+/// Parses a list of `DayOfWeek` names into sorted, distinct ISO weekdays.
+/// Unknown names are dropped; null stays null.
+List<int>? _weekdaysFromJson(dynamic value) {
+  if (value is! List) return null;
+  final days = <int>{};
+  for (final name in value) {
+    final i = _dayOfWeekNames.indexOf('$name'.toUpperCase());
+    if (i >= 0) days.add(i + 1);
+  }
+  return days.toList()..sort();
 }
 
 /// TOTP enrolment payload returned by the setup endpoint.

@@ -75,12 +75,14 @@ class TeamRepository {
   Future<void> deleteTeamAvatar(String id) =>
       _api.delete('/api/v1/teams/$id/avatar');
 
-  /// Adds [userIds] to the team with a single [role] + [access] for the batch.
+  /// Adds [userIds] to the team with a single [role], project [access] and
+  /// [knowledge] access for the batch.
   Future<Team> addTeamMembers(
     String teamId,
     List<String> userIds, {
     required TeamRole role,
     required ProjectAccess access,
+    KnowledgeAccess knowledge = const KnowledgeAccess.none(),
   }) async => Team.fromJson(
     await _api.post(
           '/api/v1/teams/$teamId/members',
@@ -88,6 +90,7 @@ class TeamRepository {
             'userIds': userIds,
             'role': role.wire,
             'access': access.toJson(),
+            'knowledge': knowledge.toJson(),
           },
         )
         as Map<String, dynamic>,
@@ -98,12 +101,16 @@ class TeamRepository {
     String userId, {
     TeamRole? role,
     ProjectAccess? access,
+
+    /// Null leaves the member's knowledge access as it is.
+    KnowledgeAccess? knowledge,
   }) async => Team.fromJson(
     await _api.patch(
           '/api/v1/teams/$teamId/members/$userId',
           body: {
             if (role != null) 'role': role.wire,
             if (access != null) 'access': access.toJson(),
+            if (knowledge != null) 'knowledge': knowledge.toJson(),
           },
         )
         as Map<String, dynamic>,
@@ -133,6 +140,7 @@ class TeamRepository {
     String? description,
     String? color,
     String? leadId,
+    RelativeDateBasis? deadlineBasis,
   }) async => Project.fromJson(
     await _api.post(
           '/api/v1/teams/$teamId/projects/new',
@@ -142,6 +150,7 @@ class TeamRepository {
             'description': ?description,
             'color': ?color,
             'leadId': ?leadId,
+            'deadlineBasis': ?deadlineBasis?.wire,
           },
         )
         as Map<String, dynamic>,

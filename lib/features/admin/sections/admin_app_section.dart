@@ -21,9 +21,11 @@ class AdminAppSection extends StatefulWidget {
 
   final Map<String, dynamic> settings;
 
-  /// Opens Adminbereich → Zeiterfassung. The extended time-tracking flag is
-  /// derived from that module's own settings, so this section can only point at
-  /// it — a switch here would write somewhere the server does not read.
+  /// Opens Organisation, where time tracking is kept since HIN-129. The
+  /// extended time-tracking flag is derived from that module's own settings, so
+  /// this section can only point at it — a switch here would write somewhere
+  /// the server does not read. Null for an admin without the organisation
+  /// role: the row then reports the state and leads nowhere.
   final VoidCallback? onOpenTimeTracking;
 
   @override
@@ -51,7 +53,7 @@ class _AdminAppSectionState extends State<AdminAppSection> {
       (_projectTemplates['effective'] as Map<String, dynamic>?)?['enabled']
           as bool?;
 
-  /// Read-only here — the section that owns these values is Zeiterfassung.
+  /// Read-only here — the Organisation page owns these values.
   Map<String, dynamic> get _timeTracking =>
       widget.settings['timeTracking'] is Map<String, dynamic>
       ? widget.settings['timeTracking'] as Map<String, dynamic>

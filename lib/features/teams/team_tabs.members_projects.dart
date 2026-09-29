@@ -164,6 +164,7 @@ class _MemberRow extends StatelessWidget {
             children: [
               RoleBadge(role: membership.role),
               AccessChip(team: data.team, membership: membership),
+              KnowledgeAccessChip(membership: membership),
             ],
           );
 

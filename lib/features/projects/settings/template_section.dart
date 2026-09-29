@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
+import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/hive_widgets.dart';
+import '../deadline_basis_field.dart';
 import 'settings_common.dart';
 
-/// Templates and the project's event date: the marker that decides where the
+/// Templates, the project's event date and how its deadlines count: the marker that decides where the
 /// project is listed, the date its relative deadlines hang off, and the way to
 /// copy the whole thing.
 ///
@@ -27,6 +29,9 @@ class TemplateSection extends StatelessWidget {
     required this.onPickEventDate,
     required this.onClearEventDate,
     required this.onCopy,
+    required this.deadlineBasis,
+    required this.organisationDeadlineBasis,
+    required this.onDeadlineBasisChanged,
     this.busy = false,
   });
 
@@ -44,6 +49,16 @@ class TemplateSection extends StatelessWidget {
   final VoidCallback onClearEventDate;
 
   final VoidCallback onCopy;
+
+  /// The project's own deadline basis, null while it follows the
+  /// organisation. Part of the settings draft, saved with the rest.
+  final RelativeDateBasis? deadlineBasis;
+
+  /// The organisation's default.
+  final RelativeDateBasis organisationDeadlineBasis;
+
+  /// A basis of the project's own, or null to follow the organisation again.
+  final ValueChanged<RelativeDateBasis?> onDeadlineBasisChanged;
 
   /// True while the event date is being written, so the row cannot be opened
   /// twice over one decision.
@@ -67,6 +82,15 @@ class TemplateSection extends StatelessWidget {
           Text(
             context.t('projectSettings.templates.eventDateHint'),
             style: TextStyle(fontSize: 12, color: AppColors.inkFaint),
+          ),
+          const SizedBox(height: 18),
+          FieldLabel(text: context.t('projects.deadlineBasis.label')),
+          DeadlineBasisField(
+            value: deadlineBasis ?? organisationDeadlineBasis,
+            organisationDefault: organisationDeadlineBasis,
+            followsOrganisation: deadlineBasis == null,
+            onChanged: onDeadlineBasisChanged,
+            onFollowOrganisation: () => onDeadlineBasisChanged(null),
           ),
           const SizedBox(height: 18),
           Row(

@@ -1,7 +1,13 @@
+import '../../../core/access/project_permissions.dart';
+import '../../../core/api/api_client.dart';
 import '../../../core/models/content_models.dart';
 import '../../../core/models/core_models.dart';
+import '../../../core/models/team_models.dart';
+import '../../../core/models/work_models.dart' show Project;
 import '../../../core/repositories/article_repository.dart';
 import '../../../core/repositories/auth_repository.dart';
+import '../../../core/repositories/project_repository.dart';
+import '../../../core/repositories/team_repository.dart';
 import '../../../core/repositories/user_repository.dart';
 import 'knowledge_models.dart';
 
@@ -19,13 +25,37 @@ class KnowledgeRepository {
     required ArticleRepository articles,
     required UserRepository users,
     required AuthRepository auth,
+    ProjectRepository? projects,
+    TeamRepository? teams,
   }) : _articleApi = articles,
        _userApi = users,
-       _authApi = auth;
+       _authApi = auth,
+       _projectApi = projects,
+       _teamApi = teams;
 
   final ArticleRepository _articleApi;
   final UserRepository _userApi;
   final AuthRepository _authApi;
+
+  /// For the names of the places pages live in, and the teams a page can be
+  /// moved to. Optional: without them a place shows its generic label.
+  final ProjectRepository? _projectApi;
+  final TeamRepository? _teamApi;
+
+  /// Names of the projects and teams pages live in, by id. Filled once per
+  /// load by [loadPlaces], not once per opened page.
+  final Map<String, String> _placeNames = {};
+  final Map<String, Project> _placeProjects = {};
+  List<Team> _myTeams = const [];
+
+  /// The signed-in person as the server knows them, for who may move a page.
+  AuthUser? _authUser;
+  Future<void>? _placesLoad;
+
+  /// Whether the server cut the page list at its cap. Then a page whose
+  /// parent is missing may just be past the cut, and the tree says so.
+  bool _truncated = false;
+  bool get listTruncated => _truncated;
 
   final Map<String, KbArticle> _articles = {};
   final Map<String, KbUser> _users = {};
@@ -56,10 +86,12 @@ class KnowledgeRepository {
 
   Future<void> reload() async {
     final results = await Future.wait([
-      _articleApi.articles(all: true),
+      _articleApi.readableArticles(all: true),
       _userApi.users(),
     ]);
-    final articles = results[0] as List<Article>;
+    final readable = results[0] as CappedList<Article>;
+    final articles = readable.items;
+    _truncated = readable.truncated;
     final dirUsers = results[1] as List<DirectoryUser>;
 
     _users
@@ -67,6 +99,7 @@ class KnowledgeRepository {
       ..addEntries(dirUsers.map((u) => MapEntry(u.id, _toKbUser(u))));
     try {
       final me = await _authApi.me();
+      _authUser = me;
       _me = KbUser(
         id: me.id,
         name: me.displayName,
@@ -91,8 +124,80 @@ class KnowledgeRepository {
       ..clear()
       ..addEntries(articles.map((a) => MapEntry(a.id, _toKbArticle(a))));
     _rebuildSpaces();
+    // Names follow the new list: a page may have moved to a place not known yet.
+    _placesLoad = null;
     _loaded = true;
   }
+
+  // ── places ──────────────────────────────────────────────────────────────
+
+  /// Loads the names of the places the loaded pages live in and the signed-in
+  /// person's teams: one list of teams and one lookup of the projects named,
+  /// however many pages there are. Shared by every caller until the next
+  /// [reload]; a failure lets the next caller try again.
+  Future<void> loadPlaces() => _placesLoad ??= _fetchPlaces();
+
+  Future<void> _fetchPlaces() async {
+    try {
+      final teamApi = _teamApi;
+      if (teamApi != null) {
+        final all = await teamApi.teams();
+        final me = _me?.id;
+        _myTeams = me == null || me.isEmpty
+            ? all
+            : all.where((t) => t.membershipOf(me) != null).toList();
+        for (final t in all) {
+          _placeNames[t.id] = t.name;
+        }
+      }
+      final projectApi = _projectApi;
+      if (projectApi != null) {
+        final missing = {
+          for (final a in _articles.values)
+            if (a.projectId case final id? when !_placeNames.containsKey(id))
+              id,
+        };
+        for (final p in await projectApi.resolveProjects(missing.toList())) {
+          rememberProject(p);
+        }
+      }
+    } on ApiFailure {
+      _placesLoad = null;
+    }
+  }
+
+  /// The name of the project or team [id], once [loadPlaces] knows it.
+  String? placeName(String? id) => id == null ? null : _placeNames[id];
+
+  /// Notes a project learnt elsewhere (one just picked in the picker).
+  void rememberProject(Project project) {
+    _placeNames[project.id] = project.name;
+    _placeProjects[project.id] = project;
+  }
+
+  /// Whether the signed-in person may move [article] to another place, as the
+  /// server decides it: a private page only its author; a project page its
+  /// leads and the Team-Admins of a team that owns the project; a team page
+  /// that team's admins. False until [loadPlaces] has what it takes to know.
+  bool mayChangePlace(KbArticle article) {
+    final me = _authUser;
+    if (me == null) return false;
+    return switch (article.place) {
+      KbPlace.private => article.authorId == me.id,
+      KbPlace.team => _myTeams.any(
+        (t) => t.id == article.teamId && t.membershipOf(me.id)?.isAdmin == true,
+      ),
+      KbPlace.project => switch (_placeProjects[article.projectId]) {
+        final project? => canManageProject(project, me, _myTeams),
+        null => false,
+      },
+    };
+  }
+
+  /// The teams the signed-in person belongs to, as of [loadPlaces]: where a
+  /// page can be moved. The server lists only those; the filter keeps the
+  /// menu honest should an older server not.
+  List<Team> get myTeams => _myTeams;
 
   void _rebuildSpaces() {
     final articleNames = <String>{for (final a in _articles.values) a.spaceId}
@@ -138,6 +243,8 @@ class KnowledgeRepository {
       status: 'published',
       body: a.content ?? '',
       doc: a.contentDoc,
+      projectId: a.projectId,
+      teamId: a.teamId,
     );
   }
 
@@ -208,6 +315,25 @@ class KnowledgeRepository {
   List<KbArticle> articlesInSpace(String spaceId) =>
       articles.where((a) => a.spaceId == spaceId).toList();
 
+  /// The pages [spaceId]'s tree starts from: top-level pages, plus every page
+  /// whose parent is not in this space's list.
+  ///
+  /// The second kind is not an edge case. Access can be granted on a subpage
+  /// alone, and the server then returns the page without its parent; a tree
+  /// that only started from `parentId == null` dropped such a page without a
+  /// trace, although the person had just been given it.
+  List<KbArticle> rootsInSpace(String spaceId) {
+    final inSpace = articlesInSpace(spaceId);
+    final ids = {for (final a in inSpace) a.id};
+    return inSpace
+        .where((a) => a.parentId == null || !ids.contains(a.parentId))
+        .toList();
+  }
+
+  /// Whether [article] sits at the top of its place, so its place can be
+  /// changed. A subpage lives wherever its parent lives.
+  bool isTopLevel(KbArticle article) => article.parentId == null;
+
   int articleCountInSpace(String spaceId) =>
       articles.where((a) => a.spaceId == spaceId).length;
 
@@ -241,6 +367,9 @@ class KnowledgeRepository {
 
   // ── mutations (write through to the backend) ──────────────────────────────
 
+  /// Saves title, body and space. Never sends a project or team: an edit does
+  /// not move a page between places (the server ignores both on PATCH), that
+  /// is [placeArticle]'s job.
   Future<KbArticle> saveEdit(
     String id, {
     required String title,
@@ -262,17 +391,25 @@ class KnowledgeRepository {
     return kb;
   }
 
+  /// Creates a page. Under a [parentId] it takes the parent's place and
+  /// [projectId]/[teamId] are not sent; at the top level they choose where it
+  /// lives, and with neither it is private to its author.
   Future<KbArticle> createArticle({
     required String title,
     required String doc,
     required String spaceId,
     String? parentId,
+    String? projectId,
+    String? teamId,
   }) async {
+    final topLevel = parentId == null;
     final saved = await _articleApi.saveArticle(
       title: title,
       contentDoc: doc,
       space: spaceId,
       parentId: parentId,
+      projectId: topLevel ? projectId : null,
+      teamId: topLevel ? teamId : null,
       icon: 'file-text',
     );
     final kb = _toKbArticle(saved);
@@ -300,6 +437,32 @@ class KnowledgeRepository {
     final kb = _toKbArticle(saved);
     _articles[id] = kb;
     _rebuildSpaces();
+    return kb;
+  }
+
+  /// Moves the top-level page [id] with everything below it into a project,
+  /// a team, or (both null) back to its author alone. The server moves the
+  /// subtree; the cache follows so the tree glyphs are right without a reload.
+  Future<KbArticle> placeArticle(
+    String id, {
+    String? projectId,
+    String? teamId,
+  }) async {
+    final saved = await _articleApi.placeArticle(
+      id,
+      projectId: projectId,
+      teamId: teamId,
+    );
+    for (final a in _articles.values.toList()) {
+      if (a.id != id && isSelfOrAncestor(id, a.id)) {
+        _articles[a.id] = a.copyWith(
+          projectId: saved.projectId,
+          teamId: saved.teamId,
+        );
+      }
+    }
+    final kb = _toKbArticle(saved);
+    _articles[id] = kb;
     return kb;
   }
 

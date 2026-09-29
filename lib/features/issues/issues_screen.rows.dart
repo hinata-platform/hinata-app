@@ -228,6 +228,7 @@ class IssueRow extends StatelessWidget {
 
     if (compact) {
       return _selectable(
+        context,
         SoftCard(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           onTap: tap,
@@ -325,6 +326,7 @@ class IssueRow extends StatelessWidget {
     }
 
     return _selectable(
+      context,
       SoftCard(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
         onTap: tap,
@@ -445,13 +447,29 @@ class IssueRow extends StatelessWidget {
   /// Adds the long-press gesture that puts the host list into multi-select
   /// mode. [HitTestBehavior.opaque] so the press registers on the card's
   /// padding too, not only on its text.
-  Widget _selectable(Widget card) => onLongPress == null
-      ? card
-      : GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onLongPress: onLongPress,
-          child: card,
-        );
+  /// Adds the long press that starts selecting, and the same as a named
+  /// action for assistive technology: a screen reader or switch user cannot
+  /// press and hold, and "Select" in the actions menu says what it does. While
+  /// selecting, the row reports whether it is ticked.
+  Widget _selectable(BuildContext context, Widget card) {
+    final longPress = onLongPress;
+    if (longPress == null) return card;
+    return Semantics(
+      selected: selectionMode ? selected : null,
+      customSemanticsActions: selectionMode
+          ? null
+          : {
+              CustomSemanticsAction(
+                label: context.t('issues.selection.select'),
+              ): longPress,
+            },
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onLongPress: longPress,
+        child: card,
+      ),
+    );
+  }
 }
 
 /// The check affordance shown at the head of a row while selecting.

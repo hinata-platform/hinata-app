@@ -8,17 +8,33 @@ class ArticleRepository {
 
   final ApiClient _api;
 
-  /// Lists articles. [all] fetches every article (the whole knowledge base
-  /// across projects + org-wide); otherwise scoped by [projectId] (or org-wide
-  /// when null).
+  /// Lists articles. [all] fetches every page the caller may read (project
+  /// pages of visible projects, team pages per membership, their own private
+  /// pages); otherwise scoped by [projectId].
   Future<List<Article>> articles({String? projectId, bool all = false}) async =>
-      ((await _api.get(
-                '/api/v1/articles',
-                query: {'projectId': ?projectId, if (all) 'all': true},
-              ))
-              as List<dynamic>)
+      (await readableArticles(projectId: projectId, all: all)).items;
+
+  /// [articles], saying whether the server cut the list at its cap. The tree
+  /// needs to know: a page whose parent is missing may then simply be past the
+  /// cut rather than unreadable.
+  Future<CappedList<Article>> readableArticles({
+    String? projectId,
+    bool all = false,
+  }) async {
+    final response = await _api.getWithHeaders(
+      '/api/v1/articles',
+      query: {'projectId': ?projectId, if (all) 'all': true},
+    );
+    return (
+      items: (response.data as List<dynamic>)
           .map((a) => Article.fromJson(a as Map<String, dynamic>))
-          .toList();
+          .toList(),
+      truncated: _truncated(response.header),
+    );
+  }
+
+  static bool _truncated(String? Function(String name) header) =>
+      header('x-truncated')?.toLowerCase() == 'true';
 
   Future<Article> article(String id) async => Article.fromJson(
     await _api.get('/api/v1/articles/$id') as Map<String, dynamic>,
@@ -38,6 +54,12 @@ class ArticleRepository {
           .map((a) => Article.fromJson(a as Map<String, dynamic>))
           .toList();
 
+  /// Creates ([id] null) or edits an article.
+  ///
+  /// [projectId]/[teamId] only count on create, and only without a
+  /// [parentId] (a subpage takes its parent's place). An edit never changes
+  /// where a page lives: that is [placeArticle]'s job, and a new [parentId]
+  /// moves the page into the parent's place.
   Future<Article> saveArticle({
     String? id,
     required String title,
@@ -85,6 +107,43 @@ class ArticleRepository {
       body: {'title': title, 'parentId': parentId, 'space': ?space},
     );
     return Article.fromJson(data as Map<String, dynamic>);
+  }
+
+  /// Moves a top-level page, with everything below it, into a project, a team,
+  /// or (both null) back to its author alone. Only the author may make a page
+  /// private; a subpage refuses with `error.article.placeFollowsParent`.
+  Future<Article> placeArticle(
+    String id, {
+    String? projectId,
+    String? teamId,
+  }) async => Article.fromJson(
+    await _api.put(
+          '/api/v1/articles/$id/place',
+          body: {'projectId': projectId, 'teamId': teamId},
+        )
+        as Map<String, dynamic>,
+  );
+
+  /// The pages of [teamId] the caller reads (a Team-Admin: all of them), in
+  /// the slim shape of [TeamPageRef]. For the knowledge-access picker in the
+  /// team modals. [query] narrows by title on the server; the server stops at
+  /// its cap and says so ([CappedList.truncated]).
+  Future<CappedList<TeamPageRef>> teamPages(
+    String teamId, {
+    String? query,
+  }) async {
+    final q = query?.trim();
+    final response = await _api.getWithHeaders(
+      '/api/v1/teams/${Uri.encodeComponent(teamId)}/pages',
+      query: {if (q != null && q.isNotEmpty) 'q': q},
+    );
+    return (
+      items: (response.data as List<dynamic>)
+          .cast<Map<String, dynamic>>()
+          .map(TeamPageRef.fromJson)
+          .toList(),
+      truncated: _truncated(response.header),
+    );
   }
 
   Future<void> deleteArticle(String id) async =>

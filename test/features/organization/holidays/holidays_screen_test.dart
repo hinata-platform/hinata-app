@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/models/availability_models.dart';
 import 'package:hinata/core/repositories/availability_repository.dart';
-import 'package:hinata/features/admin/holidays/admin_holidays_screen.dart';
+import 'package:hinata/features/organization/holidays/holidays_screen.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
 
 /// Admin → Holidays (HIN-91): an instance without calendars, and a calendar
@@ -25,7 +25,7 @@ void main() {
               controller: PageChromeController(),
               child: RepositoryProvider<AvailabilityRepository>.value(
                 value: repository,
-                child: const AdminHolidaysScreen(),
+                child: const OrgHolidaysScreen(),
               ),
             ),
           ),

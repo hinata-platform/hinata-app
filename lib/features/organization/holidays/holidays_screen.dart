@@ -20,7 +20,8 @@ import 'holiday_calendar_card.dart';
 import 'holiday_calendar_sheet.dart';
 import 'holiday_sheet.dart';
 
-/// Admin → Holidays (HIN-91): the instance's holiday calendars and their days.
+/// Organisation → Holidays (HIN-91; under Organisation since HIN-129): the
+/// instance's holiday calendars and their days.
 ///
 /// No country logic anywhere: a region's holidays are whatever its calendar
 /// holds, kept by hand or imported from a calendar address. People pick the
@@ -30,14 +31,14 @@ import 'holiday_sheet.dart';
 /// An import runs on the server and answers at once, so this page reads the
 /// calendars again every two seconds while one is importing, and stops after a
 /// minute whatever the state.
-class AdminHolidaysScreen extends StatefulWidget {
-  const AdminHolidaysScreen({super.key});
+class OrgHolidaysScreen extends StatefulWidget {
+  const OrgHolidaysScreen({super.key});
 
   @override
-  State<AdminHolidaysScreen> createState() => _AdminHolidaysScreenState();
+  State<OrgHolidaysScreen> createState() => _OrgHolidaysScreenState();
 }
 
-class _AdminHolidaysScreenState extends State<AdminHolidaysScreen> {
+class _OrgHolidaysScreenState extends State<OrgHolidaysScreen> {
   static const _pollEvery = Duration(seconds: 2);
   static const _pollRoundsMax = 30;
 
