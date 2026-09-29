@@ -3714,7 +3714,8 @@
       "owner": "Owner",
       "lead": "Lead",
       "viewer": "Viewer",
-      "contributor": "Contributor"
+      "contributor": "Contributor",
+      "org_admin": "Organization admin"
     },
     "avatar": {
       "title": "Profile picture",

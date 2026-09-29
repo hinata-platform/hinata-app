@@ -3714,7 +3714,8 @@
       "owner": "Propriétaire",
       "lead": "Responsable",
       "viewer": "Lecteur",
-      "contributor": "Contributeur"
+      "contributor": "Contributeur",
+      "org_admin": "Administrateur de l'organisation"
     },
     "avatar": {
       "title": "Photo de profil",
