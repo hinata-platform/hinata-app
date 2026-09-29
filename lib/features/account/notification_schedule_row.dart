@@ -85,7 +85,17 @@ class NotificationScheduleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final custom = prefs.effectiveSchedule == NotifSchedule.custom;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final fade = reduceMotion ? Duration.zero : _fade;
+    final Widget block = custom
+        ? Padding(
+            key: const ValueKey('custom'),
+            padding: const EdgeInsets.only(top: 12),
+            child: _CustomBlock(
+              prefs: prefs,
+              onDays: (days) => onChanged(_custom(days: days)),
+              onPick: (start) => unawaited(_pick(context, start: start)),
+            ),
+          )
+        : const SizedBox(key: ValueKey('always'), width: 0);
     return SettingRow(
       label: context.t('account.notifications.schedule.title'),
       description: context.t('account.notifications.schedule.hint'),
@@ -113,29 +123,22 @@ class NotificationScheduleRow extends StatelessWidget {
             ),
           ),
           // The custom block fades in and the card grows to it, rather than
-          // the controls appearing all at once.
-          AnimatedSize(
-            duration: fade,
-            curve: Curves.easeOutCubic,
-            alignment: AlignmentDirectional.topStart,
-            child: AnimatedSwitcher(
-              duration: fade,
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeIn,
-              child: custom
-                  ? Padding(
-                      key: const ValueKey('custom'),
-                      padding: const EdgeInsets.only(top: 12),
-                      child: _CustomBlock(
-                        prefs: prefs,
-                        onDays: (days) => onChanged(_custom(days: days)),
-                        onPick: (start) =>
-                            unawaited(_pick(context, start: start)),
-                      ),
-                    )
-                  : const SizedBox(key: ValueKey('always'), width: 0),
+          // the controls appearing all at once; with reduced motion it simply
+          // appears (an AnimatedSize of zero length re-dirties its own layout).
+          if (reduceMotion)
+            block
+          else
+            AnimatedSize(
+              duration: _fade,
+              curve: Curves.easeOutCubic,
+              alignment: AlignmentDirectional.topStart,
+              child: AnimatedSwitcher(
+                duration: _fade,
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                child: block,
+              ),
             ),
-          ),
           const SizedBox(height: 6),
           _DefaultLine(
             prefs: prefs,
@@ -255,9 +258,13 @@ class _TimeButton extends StatelessWidget {
     final shown = value == null
         ? context.t('account.notifications.schedule.allDay')
         : _formatTime(context, value!);
+    // A Wrap, so a long caption or a large text size puts the button under
+    // the caption instead of pushing it off the card.
     return MergeSemantics(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 8,
+        runSpacing: 4,
         children: [
           Text(
             label,
@@ -267,7 +274,6 @@ class _TimeButton extends StatelessWidget {
               color: AppColors.inkSoft,
             ),
           ),
-          const SizedBox(width: 8),
           AccountActionButton(
             label: shown,
             icon: LucideIcons.clock,
