@@ -3714,7 +3714,8 @@
       "owner": "स्वामी",
       "lead": "लीड",
       "viewer": "व्यूअर",
-      "contributor": "योगदानकर्ता"
+      "contributor": "योगदानकर्ता",
+      "org_admin": "संगठन एडमिन"
     },
     "avatar": {
       "title": "प्रोफ़ाइल चित्र",

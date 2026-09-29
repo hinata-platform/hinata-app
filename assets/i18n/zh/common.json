@@ -3714,7 +3714,8 @@
       "owner": "所有者",
       "lead": "负责人",
       "viewer": "访客",
-      "contributor": "贡献者"
+      "contributor": "贡献者",
+      "org_admin": "组织管理员"
     },
     "avatar": {
       "title": "头像",
