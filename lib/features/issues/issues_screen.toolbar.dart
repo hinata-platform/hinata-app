@@ -138,11 +138,11 @@ class _DockedSelectionToggle extends StatelessWidget {
           onTap: onTap,
           child: _GlassControlSurface(
             radius: _kSegmentedRadius,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: SizedBox.square(
+              dimension: _kDockedButton,
               child: Icon(
                 active ? LucideIcons.listX : LucideIcons.listChecks,
-                size: 16,
+                size: 18,
                 color: active ? AppColors.accentStrong : AppColors.ink,
               ),
             ),
@@ -159,6 +159,11 @@ class _DockedSelectionToggle extends StatelessWidget {
 /// so it echoes this shape: a pill housing yields pill indicators, a gentler
 /// radius yields gentler indicators. Change this one value and all three follow.
 const double _kSegmentedRadius = 30;
+
+/// Side of the round buttons beside the housing (selection, export): the
+/// housing's own height, and the round buttons' in the bar above, so the two
+/// rows read as one set of circles. A padded icon came out 44 by 40, an oval.
+const double _kDockedButton = 42;
 
 /// Inset of each segment's active indicator inside the glass housing.
 const double _kSegmentInset = 5;
@@ -709,16 +714,13 @@ class _ExportButton extends StatelessWidget {
       child: docked
           ? _GlassControlSurface(
               radius: _kSegmentedRadius,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
+              child: SizedBox.square(
+                dimension: _kDockedButton,
                 child: exporting
-                    ? const HiveLoader(size: 16)
+                    ? const Center(child: HiveLoader(size: 16))
                     : Icon(
                         LucideIcons.download,
-                        size: 16,
+                        size: 18,
                         color: AppColors.ink,
                       ),
               ),
