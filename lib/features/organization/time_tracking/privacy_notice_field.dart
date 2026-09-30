@@ -6,6 +6,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/lexical/hinata_markdown_preview.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/folded_hint.dart';
 
 /// The operator's privacy notice for the time-tracking module, as Markdown with
 /// a live preview.
@@ -76,8 +77,15 @@ class _OrgPrivacyNoticeFieldState extends State<OrgPrivacyNoticeField> {
           onChanged: _changed,
           decoration: InputDecoration(
             labelText: context.t('admin.timeTracking.privacyNoticeLabel'),
-            helperText: context.t('admin.timeTracking.privacyNoticeHint'),
-            helperMaxLines: 4,
+            helper: FoldedHint(
+              context.t('admin.timeTracking.privacyNoticeHint'),
+              title: context.t('admin.timeTracking.privacyNoticeLabel'),
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.35,
+                color: AppColors.inkFaint,
+              ),
+            ),
             alignLabelWithHint: true,
           ),
         ),

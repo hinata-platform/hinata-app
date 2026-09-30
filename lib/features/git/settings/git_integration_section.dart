@@ -18,6 +18,7 @@ import '../../sprint/modals/glass_modal.dart';
 import '../widgets/copy_field.dart';
 import '../widgets/provider_glyph.dart';
 import 'connect_repo_wizard.dart';
+import '../../../core/widgets/folded_hint.dart';
 
 /// Project-settings section: per-project repository connection + development
 /// automation + branch-naming template. Connect/disconnect/automation each
@@ -681,7 +682,7 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
+                FoldedHint(
                   context.t('git.smartCommitsDesc'),
                   style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
                 ),

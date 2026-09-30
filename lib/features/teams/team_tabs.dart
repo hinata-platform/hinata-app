@@ -23,6 +23,7 @@ import 'team_detail_screen.dart' show TeamDetailData;
 import 'team_modals.dart';
 import 'team_modal_kit.dart' show KnowledgeAccessChip;
 import 'team_widgets.dart';
+import '../../core/widgets/folded_hint.dart';
 
 part 'team_tabs.members_projects.dart';
 part 'team_tabs.settings.dart';

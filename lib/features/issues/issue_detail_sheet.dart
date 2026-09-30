@@ -96,6 +96,7 @@ import 'watch/issue_watch_menu.dart';
 import 'issue_labels.dart';
 import 'issue_link_resolver.dart';
 import 'work_items_section.dart';
+import '../../core/widgets/folded_hint.dart';
 
 part 'issue_detail_sheet.view.dart';
 part 'issue_detail_sheet.dialogs.dart';

@@ -17,6 +17,7 @@ import '../../core/util/keys.dart';
 import '../../core/widgets/entity_avatar_editor.dart';
 import '../../core/widgets/person_picker.dart';
 import '../sprint/modals/glass_modal.dart';
+import '../../core/widgets/folded_hint.dart';
 
 /// Everything a new project needs before it exists, in one place.
 ///
@@ -258,7 +259,7 @@ class _ProjectCreateFieldsState extends State<ProjectCreateFields> {
         const SizedBox(height: 16),
         GlassInfoLine(
           icon: LucideIcons.info,
-          child: Text(
+          child: FoldedHint(
             context.t('projects.defaultWorkflowInfo'),
             style: TextStyle(
               fontSize: 12.5,

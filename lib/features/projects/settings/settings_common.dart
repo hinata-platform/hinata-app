@@ -9,6 +9,7 @@ import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/hue_colors.dart';
+import '../../../core/widgets/folded_hint.dart';
 import '../../../core/widgets/glass_panel.dart';
 import '../../../core/widgets/hive_widgets.dart';
 import '../../../core/widgets/soft_card.dart';
@@ -56,8 +57,9 @@ class SettingsSection extends StatelessWidget {
           ),
           if (note != null) ...[
             const SizedBox(height: 4),
-            Text(
+            FoldedHint(
               note!,
+              title: title,
               style: TextStyle(
                 fontSize: 12.5,
                 height: 1.5,

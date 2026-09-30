@@ -10,6 +10,7 @@ import '../../../core/util/keys.dart';
 import '../../../core/widgets/entity_avatar_editor.dart';
 import '../project_key.dart';
 import 'settings_common.dart';
+import '../../../core/widgets/folded_hint.dart';
 
 /// General card: picture, name (required), key (required, uppercase),
 /// description, accent.
@@ -175,7 +176,7 @@ class _AvatarRow extends StatelessWidget {
         ),
         const SizedBox(width: 14),
         Expanded(
-          child: Text(
+          child: FoldedHint(
             context.t('projectSettings.avatar.hint'),
             style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
           ),
