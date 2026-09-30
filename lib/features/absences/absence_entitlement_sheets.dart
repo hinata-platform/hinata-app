@@ -25,6 +25,7 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/read_on_trigger.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'absence_labels.dart';
+import '../../core/widgets/folded_hint.dart';
 
 /// Grants [year] of [typeId] to [userIds], after showing what that would do.
 ///
@@ -161,7 +162,7 @@ class _GrantFormState extends State<_GrantForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
+              FoldedHint(
                 context.t('absence.entitlements.grantHint'),
                 style: TextStyle(
                   fontSize: 11.5,

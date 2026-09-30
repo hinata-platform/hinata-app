@@ -6,9 +6,11 @@ import '../../../core/api/api_client.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/availability_models.dart';
 import '../../../core/repositories/availability_repository.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/hive_widgets.dart' show HiveSwitch;
 import '../../account/account_widgets.dart';
 import '../../sprint/modals/glass_modal.dart';
+import '../../../core/widgets/folded_hint.dart';
 
 /// Opens the form for a new holiday calendar, or for [existing]. Resolves to
 /// true once it was saved.
@@ -96,7 +98,20 @@ class _CalendarFormState extends State<_CalendarForm> {
   }
 
   InputDecoration _decoration(String label, {String? helper}) =>
-      InputDecoration(labelText: label, helperText: helper, helperMaxLines: 3);
+      InputDecoration(
+        labelText: label,
+        helper: helper == null
+            ? null
+            : FoldedHint(
+                helper,
+                title: label,
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.35,
+                  color: AppColors.inkFaint,
+                ),
+              ),
+      );
 
   @override
   Widget build(BuildContext context) {

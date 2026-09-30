@@ -13,6 +13,7 @@ import '../../core/widgets/field_button.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveSwitch;
 import '../account/account_widgets.dart';
 import '../sprint/modals/glass_modal.dart';
+import '../../core/widgets/folded_hint.dart';
 import 'absence_labels.dart';
 
 /// Opens the editor for a new absence type, or for [existing]. Resolves to true
@@ -603,7 +604,7 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
     final short = _allowance < fiveDayFloor;
     return Padding(
       padding: const EdgeInsets.only(top: 2, bottom: 6),
-      child: Text(
+      child: FoldedHint(
         context.t(
           'absence.types.legalFloor',
           variables: {
@@ -760,7 +761,7 @@ class _Hint extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 4),
-    child: Text(
+    child: FoldedHint(
       text,
       style: TextStyle(
         fontSize: 11.5,

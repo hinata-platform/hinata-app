@@ -27,6 +27,7 @@ import '../sprint/modals/glass_modal.dart'
 import '../time/lock_notice.dart' show requestOlderDays;
 import '../time/time_privacy_sheet.dart';
 import 'account_widgets.dart';
+import '../../core/widgets/folded_hint.dart';
 
 /// Settings → Time tracking: the person's own rhythm.
 ///
@@ -274,7 +275,7 @@ class _RemindersState extends State<_Reminders> {
         _GroupLabel(text: context.t('account.timeTracking.reminders')),
         Padding(
           padding: const EdgeInsets.fromLTRB(2, 0, 2, 8),
-          child: Text(
+          child: FoldedHint(
             context.t('account.timeTracking.remindersHint'),
             style: TextStyle(
               fontSize: 12,

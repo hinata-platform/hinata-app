@@ -269,7 +269,7 @@ class _TeamAvatarSettingState extends State<_TeamAvatarSetting> {
         ),
         const SizedBox(width: 14),
         Expanded(
-          child: Text(
+          child: FoldedHint(
             context.t('teams.avatar.hint'),
             style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
           ),

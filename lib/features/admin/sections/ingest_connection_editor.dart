@@ -14,6 +14,7 @@ import '../../../core/theme/hue_colors.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../../core/widgets/hive_widgets.dart';
 import '../../sprint/modals/glass_modal.dart';
+import '../../../core/widgets/folded_hint.dart';
 
 /// Result of the connection editor: the saved connection plus the picked
 /// project option (so the list can label it without re-resolving).
@@ -373,10 +374,17 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
             decoration: InputDecoration(
               labelText: context.t('admin.ingest.folder'),
               hintText: 'INBOX',
-              helperText: _scanning
-                  ? context.t('admin.ingest.scanning')
-                  : context.t('admin.ingest.folderHint'),
-              helperMaxLines: 3,
+              helper: FoldedHint(
+                _scanning
+                    ? context.t('admin.ingest.scanning')
+                    : context.t('admin.ingest.folderHint'),
+                title: context.t('admin.ingest.folder'),
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.35,
+                  color: AppColors.inkFaint,
+                ),
+              ),
               suffixIcon: _scanning
                   ? const Padding(
                       padding: EdgeInsets.all(10),

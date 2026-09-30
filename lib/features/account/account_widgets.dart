@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/folded_hint.dart';
 
 /// A titled card section used down the account screen. Header carries an amber
 /// icon tile + title/subtitle and an optional trailing widget.
@@ -131,31 +132,19 @@ class SettingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13.5,
-            fontWeight: FontWeight.w600,
-            color: AppColors.ink,
-          ),
-        ),
-        if (description != null) ...[
-          const SizedBox(height: 2),
-          Text(
-            description!,
-            style: TextStyle(
-              fontSize: 12,
-              height: 1.35,
-              color: AppColors.inkSoft,
-            ),
-            softWrap: true,
-          ),
-        ],
-      ],
+    final text = TitledHint(
+      title: label,
+      titleStyle: TextStyle(
+        fontSize: 13.5,
+        fontWeight: FontWeight.w600,
+        color: AppColors.ink,
+      ),
+      hint: description,
+      hintStyle: TextStyle(
+        fontSize: 12,
+        height: 1.35,
+        color: AppColors.inkSoft,
+      ),
     );
 
     final body = stack

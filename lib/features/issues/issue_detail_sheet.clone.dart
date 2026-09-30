@@ -283,7 +283,7 @@ class _IssueCloneBodyState extends State<_IssueCloneBody> {
                 const SizedBox(height: 14),
                 GlassInfoLine(
                   icon: LucideIcons.info,
-                  child: Text(
+                  child: FoldedHint(
                     context.t('issues.clone.reporterNote'),
                     style: TextStyle(
                       fontSize: 12,
