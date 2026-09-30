@@ -5,6 +5,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/field_border.dart';
+import '../../core/widgets/folded_hint.dart';
 import '../../core/widgets/hive_widgets.dart';
 
 /// Tone of an [AdminNote] — drives its tint, rim and glyph colour.
@@ -48,6 +49,11 @@ class AdminNote extends StatelessWidget {
         AppColors.danger,
       ),
     };
+    final style = TextStyle(
+      fontSize: 12.5,
+      height: 1.5,
+      color: AppColors.inkSoft,
+    );
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -61,14 +67,11 @@ class AdminNote extends StatelessWidget {
           Icon(icon, size: 17, color: glyph),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 12.5,
-                height: 1.5,
-                color: AppColors.inkSoft,
-              ),
-            ),
+            // A danger note says what is about to go wrong; that stays in
+            // full. The others fold to a line once they are longer.
+            child: tone == AdminNoteTone.danger
+                ? Text(text, style: style)
+                : FoldedHint(text, style: style),
           ),
         ],
       ),
@@ -93,10 +96,19 @@ InputDecoration adminInputDecoration(
   return InputDecoration(
     labelText: label,
     hintText: hint,
-    helperText: helper,
-    // A helper that explains a policy is often two sentences; one line cut the
-    // second off mid-word (HIN-118, the team calendar level).
-    helperMaxLines: 3,
+    // A helper that explains a policy is often two sentences: one line of it
+    // stays, the rest waits behind an "i".
+    helper: helper == null
+        ? null
+        : FoldedHint(
+            helper,
+            title: label,
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.35,
+              color: AppColors.inkFaint,
+            ),
+          ),
     suffixText: suffix,
     filled: true,
     fillColor: AppColors.surfaceMuted,
@@ -159,33 +171,21 @@ class AdminSectionCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontFamily: AppTheme.fontBrand,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                          letterSpacing: -0.2,
-                          color: AppColors.ink,
-                        ),
-                      ),
-                      if (subtitle != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            subtitle!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              height: 1.3,
-                              color: AppColors.inkSoft,
-                            ),
-                          ),
-                        ),
-                    ],
+                  child: TitledHint(
+                    title: title,
+                    titleStyle: TextStyle(
+                      fontFamily: AppTheme.fontBrand,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      letterSpacing: -0.2,
+                      color: AppColors.ink,
+                    ),
+                    hint: subtitle,
+                    hintStyle: TextStyle(
+                      fontSize: 12,
+                      height: 1.3,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                 ),
               ],

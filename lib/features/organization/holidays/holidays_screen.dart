@@ -19,6 +19,7 @@ import '../../sprint/modals/glass_modal.dart';
 import 'holiday_calendar_card.dart';
 import 'holiday_calendar_sheet.dart';
 import 'holiday_sheet.dart';
+import '../../../core/widgets/folded_hint.dart';
 
 /// Organisation → Holidays (HIN-91; under Organisation since HIN-129): the
 /// instance's holiday calendars and their days.
@@ -270,7 +271,7 @@ class _OrgHolidaysScreenState extends State<OrgHolidaysScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
+                  FoldedHint(
                     context.t('availability.admin.intro'),
                     style: TextStyle(
                       fontSize: 13,

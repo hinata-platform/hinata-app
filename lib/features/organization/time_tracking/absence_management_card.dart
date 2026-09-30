@@ -13,6 +13,7 @@ import '../../../core/widgets/hive_widgets.dart' show HiveAvatar;
 import '../../../core/widgets/person_picker.dart';
 import '../../admin/admin_form_helpers.dart';
 import '../../admin/policy_controls.dart';
+import '../../../core/widgets/folded_hint.dart';
 
 /// Admin → Zeiterfassung → Abwesenheitsmanagement 2.0.
 ///
@@ -222,7 +223,7 @@ class _OrgAbsenceManagementCardState extends State<OrgAbsenceManagementCard> {
         ).textTheme.titleSmall?.copyWith(color: AppColors.ink),
       ),
       const SizedBox(height: 4),
-      Text(
+      FoldedHint(
         context.t('admin.absence.keepersHint'),
         style: Theme.of(
           context,
