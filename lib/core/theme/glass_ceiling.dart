@@ -40,6 +40,9 @@ const GlassAdaptiveScopeConfig kGlassCeiling = GlassAdaptiveScopeConfig(
   minQuality: GlassQuality.minimal,
   allowStepUp: true,
   targetFrameMs: 16,
+  // First step down from premium drops only the iOS 27 frost
+  // (liquid_glass_widgets PR #359).
+  frostStep: true,
   onQualityChanged: _logQualityChange,
 );
 

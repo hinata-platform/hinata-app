@@ -219,66 +219,72 @@ class _CompactShellState extends State<_CompactShell> {
               left: 0,
               right: 0,
               bottom: 0,
-              child: FloatingNavPadding(
-                // The bar rides inside the nav's own padding so the two share
-                // one safe-area inset and cannot drift apart when the keyboard
-                // moves. TimerBar collapses itself to nothing when no timer is
-                // running, which is what keeps the footprint above honest.
-                above: timerMounted ? const TimerBar(compact: true) : null,
-                // iOS-26 layout: the tab pill and a detached global-search
-                // button. The button is the package's own `extraButton` rather
-                // than a GlassButton we place beside the bar in a Row — that
-                // gave it a glass layer of its own, so it refracted
-                // independently of the pill and read as a separate material
-                // sitting next to the navigation instead of part of it. The
-                // padding that used to live inside GlassBottomBar is hoisted
-                // out to the wrapper above so both elements share one inset and
-                // the footprint agrees with both.
-                child: GlassTabBar.bottom(
-                  horizontalPadding: 0,
-                  verticalPadding: 0,
-                  // The gap between the pill and the search button. Was a
-                  // SizedBox in the Row this replaces; same 12.
-                  spacing: 12,
-                  extraButton: GlassTabBarExtraButton(
-                    icon: const Icon(LucideIcons.search),
-                    onTap: () => openGlobalSearch(context),
-                    label: context.t('appbar.search'),
-                    // Square, on the pill's height: the two float side by
-                    // side, and a button taller than the pill would
-                    // stretch the row that carries both.
-                    size: kFloatingNavBarHeight,
-                    iconColor: dark ? AppColors.inkDark : AppColors.ink,
-                    placement: floatingNavExtraPlacement(
-                      Directionality.of(context),
-                    ),
-                  ),
-                  // Ours, not the package default: navFootprint and the
-                  // scrim are built from this number, and a bump to the
-                  // default would otherwise push the pill over content
-                  // that still reserved the old height.
-                  barHeight: kFloatingNavBarHeight,
-                  selectedIndex: _selectedIndex,
-                  onTabSelected: _onTap,
-                  // Black-tinted glass in dark mode (so it doesn't turn
-                  // milky), clean white frost in light — see _kNavGlass*.
-                  settings: dark ? kNavGlassDark : kNavGlassLight,
-                  // Honey-amber indicator (translucent so the glass shows
-                  // through).
-                  indicatorColor: AppColors.accent.withValues(
-                    alpha: dark ? 0.30 : 0.22,
-                  ),
-                  selectedIconColor: dark
-                      ? AppColors.accent
-                      : AppColors.accentStrong,
-                  unselectedIconColor: dark ? AppColors.inkDark : AppColors.ink,
-                  tabs: [
-                    for (final d in bottomTabs)
-                      GlassTab(
-                        icon: Icon(d.icon),
-                        label: context.t(d.labelKey),
+              // One shared backdrop read for the pill and the search button,
+              // which sit side by side (liquid_glass_widgets PR #359).
+              child: GlassBackdropGroup(
+                child: FloatingNavPadding(
+                  // The bar rides inside the nav's own padding so the two share
+                  // one safe-area inset and cannot drift apart when the keyboard
+                  // moves. TimerBar collapses itself to nothing when no timer is
+                  // running, which is what keeps the footprint above honest.
+                  above: timerMounted ? const TimerBar(compact: true) : null,
+                  // iOS-26 layout: the tab pill and a detached global-search
+                  // button. The button is the package's own `extraButton` rather
+                  // than a GlassButton we place beside the bar in a Row — that
+                  // gave it a glass layer of its own, so it refracted
+                  // independently of the pill and read as a separate material
+                  // sitting next to the navigation instead of part of it. The
+                  // padding that used to live inside GlassBottomBar is hoisted
+                  // out to the wrapper above so both elements share one inset and
+                  // the footprint agrees with both.
+                  child: GlassTabBar.bottom(
+                    horizontalPadding: 0,
+                    verticalPadding: 0,
+                    // The gap between the pill and the search button. Was a
+                    // SizedBox in the Row this replaces; same 12.
+                    spacing: 12,
+                    extraButton: GlassTabBarExtraButton(
+                      icon: const Icon(LucideIcons.search),
+                      onTap: () => openGlobalSearch(context),
+                      label: context.t('appbar.search'),
+                      // Square, on the pill's height: the two float side by
+                      // side, and a button taller than the pill would
+                      // stretch the row that carries both.
+                      size: kFloatingNavBarHeight,
+                      iconColor: dark ? AppColors.inkDark : AppColors.ink,
+                      placement: floatingNavExtraPlacement(
+                        Directionality.of(context),
                       ),
-                  ],
+                    ),
+                    // Ours, not the package default: navFootprint and the
+                    // scrim are built from this number, and a bump to the
+                    // default would otherwise push the pill over content
+                    // that still reserved the old height.
+                    barHeight: kFloatingNavBarHeight,
+                    selectedIndex: _selectedIndex,
+                    onTabSelected: _onTap,
+                    // Black-tinted glass in dark mode (so it doesn't turn
+                    // milky), clean white frost in light — see _kNavGlass*.
+                    settings: dark ? kNavGlassDark : kNavGlassLight,
+                    // Honey-amber indicator (translucent so the glass shows
+                    // through).
+                    indicatorColor: AppColors.accent.withValues(
+                      alpha: dark ? 0.30 : 0.22,
+                    ),
+                    selectedIconColor: dark
+                        ? AppColors.accent
+                        : AppColors.accentStrong,
+                    unselectedIconColor: dark
+                        ? AppColors.inkDark
+                        : AppColors.ink,
+                    tabs: [
+                      for (final d in bottomTabs)
+                        GlassTab(
+                          icon: Icon(d.icon),
+                          label: context.t(d.labelKey),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -289,10 +295,14 @@ class _CompactShellState extends State<_CompactShell> {
               top: 0,
               left: 0,
               right: 0,
-              child: _GlassTopBar(
-                location: widget.location,
-                dark: dark,
-                advancedTime: widget.advancedTime,
+              // One shared backdrop read for the bar's buttons, which sit
+              // side by side (liquid_glass_widgets PR #359).
+              child: GlassBackdropGroup(
+                child: _GlassTopBar(
+                  location: widget.location,
+                  dark: dark,
+                  advancedTime: widget.advancedTime,
+                ),
               ),
             ),
         ],
