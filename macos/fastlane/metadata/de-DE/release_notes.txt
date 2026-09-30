@@ -1,1 +1,6 @@
-• Der Neu-Knopf ist im dunklen Modus wieder honiggolden und behält seine Farbe, während man ihn drückt
+• Die erweiterte Zeiterfassung lässt sich einschalten: Timer, Fokusmodus, Stundenzettel, Freigaben, Berichte
+• Mit Abwesenheiten Urlaub beantragen, Krankheit melden und das Team im Blick behalten
+• Projekte aus Vorlagen anlegen, mit Fristen ab einem gewählten Datum
+• Benachrichtigungen kommen immer oder nur an deinen Tagen und Uhrzeiten
+• Aufgeräumte Einstellungen: lange Erklärungen stecken hinter einem Info-Knopf
+• Mehrere kleinere Korrekturen und Verbesserungen
