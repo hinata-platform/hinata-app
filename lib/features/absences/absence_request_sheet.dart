@@ -28,6 +28,7 @@ import '../../core/widgets/person_picker.dart';
 import '../account/account_widgets.dart' show SettingRow;
 import '../sprint/modals/glass_modal.dart';
 import 'absence_labels.dart';
+import '../../core/widgets/folded_hint.dart';
 
 /// Opens the request form. Resolves to the filed request, or null if dismissed.
 ///
@@ -823,7 +824,7 @@ class _SickFormState extends State<_SickForm> {
                 ),
               ],
               const SizedBox(height: 14),
-              Text(
+              FoldedHint(
                 context.t('absence.sick.explainer'),
                 style: TextStyle(
                   fontSize: 12,

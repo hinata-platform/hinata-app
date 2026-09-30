@@ -24,6 +24,7 @@ import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'absence_entitlement_sheets.dart';
 import 'absence_labels.dart';
+import '../../core/widgets/folded_hint.dart';
 
 /// Admin → Entitlements (HIN-116): who has how much of one absence type in one
 /// leave year, and everything a keeper does about it.
@@ -329,7 +330,7 @@ class _AbsenceEntitlementsScreenState extends State<AbsenceEntitlementsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Text(
+                          FoldedHint(
                             context.t('absence.entitlements.intro'),
                             style: TextStyle(
                               fontSize: 13,

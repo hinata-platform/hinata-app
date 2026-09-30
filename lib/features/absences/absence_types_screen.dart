@@ -19,6 +19,7 @@ import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'absence_labels.dart';
 import 'absence_type_sheet.dart';
+import '../../core/widgets/folded_hint.dart';
 
 /// Admin → Absence types (HIN-116): the catalogue an operator keeps.
 ///
@@ -162,7 +163,7 @@ class _AbsenceTypesScreenState extends State<AbsenceTypesScreen> {
       child: ListView(
         padding: context.pagePadding,
         children: [
-          Text(
+          FoldedHint(
             context.t('absence.types.intro'),
             style: TextStyle(
               fontSize: 13,

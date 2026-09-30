@@ -11,6 +11,7 @@ import '../../../core/repositories/time_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../time/lock_notice.dart';
 import '../../admin/admin_form_helpers.dart';
+import '../../../core/widgets/folded_hint.dart';
 
 /// The next three periods the configured rhythm will cut.
 ///
@@ -158,7 +159,7 @@ class _ApprovalPeriodPreviewState extends State<ApprovalPeriodPreview> {
                 ),
               ),
             const SizedBox(height: 6),
-            Text(
+            FoldedHint(
               context.t('admin.timeTracking.periodPreviewHint'),
               style: TextStyle(
                 fontSize: 11.5,

@@ -22,6 +22,7 @@ import '../../core/widgets/read_on_trigger.dart';
 import 'absence_entitlement_sheets.dart' show LedgerRow;
 import 'absence_labels.dart';
 import 'absence_year_views.dart';
+import '../../core/widgets/folded_hint.dart';
 
 /// Settings → Working hours and absences → your absence balances (HIN-116).
 ///
@@ -291,7 +292,7 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
                 ),
               ),
               const SizedBox(height: 3),
-              Text(
+              FoldedHint(
                 context.t('absence.balances.hint'),
                 style: TextStyle(
                   fontSize: 11.5,

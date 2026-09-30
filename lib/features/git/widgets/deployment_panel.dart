@@ -18,6 +18,7 @@ import 'dev_rows.dart';
 import 'provider_glyph.dart';
 import '../../../core/widgets/hive_widgets.dart'
     show chevronTurn, forwardChevron;
+import '../../../core/widgets/folded_hint.dart';
 
 /// Issue right-rail quick-actions (`DeploymentPanel`): Create
 /// branch (with a copyable `git checkout -b …` + a branch-template gear) ·
@@ -268,7 +269,7 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
+            FoldedHint(
               context.t('git.tokensHint'),
               style: TextStyle(
                 fontSize: 12,
@@ -305,7 +306,7 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
             style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
-          Text(
+          FoldedHint(
             context.t('git.linkCommitsDesc'),
             style: TextStyle(
               fontSize: 12,

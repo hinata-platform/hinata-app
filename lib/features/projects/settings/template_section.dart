@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/hive_widgets.dart';
 import '../deadline_basis_field.dart';
 import 'settings_common.dart';
+import '../../../core/widgets/folded_hint.dart';
 
 /// Templates, the project's event date and how its deadlines count: the marker that decides where the
 /// project is listed, the date its relative deadlines hang off, and the way to
@@ -79,7 +80,7 @@ class TemplateSection extends StatelessWidget {
             onClear: onClearEventDate,
           ),
           const SizedBox(height: 6),
-          Text(
+          FoldedHint(
             context.t('projectSettings.templates.eventDateHint'),
             style: TextStyle(fontSize: 12, color: AppColors.inkFaint),
           ),
@@ -108,7 +109,7 @@ class TemplateSection extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
+                    FoldedHint(
                       context.t('projectSettings.templates.markHint'),
                       style: TextStyle(fontSize: 12, color: AppColors.inkFaint),
                     ),

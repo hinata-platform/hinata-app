@@ -20,6 +20,7 @@ import '../time/reports/report_list_parts.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'absence_labels.dart';
 import 'absence_year_views.dart';
+import '../../core/widgets/folded_hint.dart';
 
 /// The yearly run, for the people who keep absences (HIN-119): what it did last
 /// night, who would lose days without having been told, and the lapses it
@@ -175,7 +176,7 @@ class _AbsenceYearRunScreenState extends State<AbsenceYearRunScreen> {
             SliverPadding(
               padding: padding.copyWith(bottom: 12),
               sliver: SliverToBoxAdapter(
-                child: Text(
+                child: FoldedHint(
                   context.t('absence.yearRun.intro'),
                   style: TextStyle(
                     fontSize: 13,
