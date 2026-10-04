@@ -18,6 +18,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassModal,
         showGlassToast;
 import 'time_requests_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// Why an entry is frozen, who can lift it, and what to do about it — one
 /// component for every reason there is.
@@ -112,7 +113,7 @@ class LockNotice extends StatelessWidget {
                     Text(
                       reasonOf(context, lock),
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         height: 1.5,
                         fontWeight: FontWeight.w600,
                         color: AppColors.ink,
@@ -123,7 +124,7 @@ class LockNotice extends StatelessWidget {
                       Text(
                         context.t(lock.holderKey),
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: AppType.label,
                           height: 1.5,
                           color: AppColors.textSecondary,
                         ),
@@ -133,7 +134,7 @@ class LockNotice extends StatelessWidget {
                     Text(
                       context.t(lock.remedyKey),
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         height: 1.5,
                         color: AppColors.textSecondary,
                       ),
@@ -314,7 +315,7 @@ class LockChip extends StatelessWidget {
             Text(
               context.t(lock.chipKey),
               style: TextStyle(
-                fontSize: 11,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary,
               ),

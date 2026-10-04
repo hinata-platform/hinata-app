@@ -19,6 +19,7 @@ import '../../features/sprint/modals/glass_modal.dart'
         kGlassPopoverBreakpoint,
         showGlassAnchoredPopover,
         showGlassBottomSheet;
+import '../theme/app_type.dart';
 
 /// Opens the people picker anchored to [anchorRect] — the searchable,
 /// server-paged counterpart to a dropdown that has to hold the whole directory
@@ -340,7 +341,7 @@ class _PersonPickerPanelState extends State<_PersonPickerPanel> {
                   focusNode: _focus,
                   onChanged: _onQueryChanged,
                   textInputAction: TextInputAction.search,
-                  style: const TextStyle(fontSize: 13.5),
+                  style: const TextStyle(fontSize: AppType.label),
                   cursorColor: AppColors.accentStrong,
                   // Every border state is cleared by hand: the app's input theme
                   // supplies `enabledBorder`/`focusedBorder`, and those survive
@@ -357,7 +358,7 @@ class _PersonPickerPanelState extends State<_PersonPickerPanel> {
                     contentPadding: const EdgeInsets.symmetric(vertical: 11),
                     hintText: context.t('issues.searchPeople'),
                     hintStyle: TextStyle(
-                      fontSize: 13.5,
+                      fontSize: AppType.label,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -404,7 +405,7 @@ class _PersonPickerPanelState extends State<_PersonPickerPanel> {
         padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
         child: Text(
           context.t(_error!),
-          style: TextStyle(fontSize: 12.5, color: AppColors.dangerInk),
+          style: TextStyle(fontSize: AppType.label, color: AppColors.dangerInk),
         ),
       );
     }
@@ -422,7 +423,10 @@ class _PersonPickerPanelState extends State<_PersonPickerPanel> {
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
           child: Text(
             context.t('issues.noPeopleFound'),
-            style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+            style: TextStyle(
+              fontSize: AppType.label,
+              color: AppColors.textSecondary,
+            ),
           ),
         ),
       if (_loadingMore)
@@ -492,7 +496,7 @@ class _PersonRow extends StatelessWidget {
                       _nameOf(context, user, isMe),
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 13.5,
+                        fontSize: AppType.label,
                         fontWeight: selected
                             ? FontWeight.w600
                             : FontWeight.w500,
@@ -504,7 +508,7 @@ class _PersonRow extends StatelessWidget {
                         user.title!,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: AppType.caption,
                           color: AppColors.textSecondary,
                         ),
                       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 import 'field_border.dart';
+import 'app_type.dart';
 
 /// Hinata "Hive" Material theme — redesign 2026.
 ///
@@ -107,7 +108,10 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusControl),
           ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: AppType.label,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -119,7 +123,10 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusControl),
           ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: AppType.label,
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -141,7 +148,7 @@ abstract final class AppTheme {
         // The label rides inside the field (see [HiveFieldBorder]), so it wants
         // the size and weight of a caption rather than of a second value.
         floatingLabelStyle: TextStyle(
-          fontSize: 15,
+          fontSize: AppType.body,
           fontWeight: FontWeight.w600,
           color: inkSoft,
         ),
@@ -150,7 +157,7 @@ abstract final class AppTheme {
         backgroundColor: surfaceMuted,
         side: BorderSide(color: hairline2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        labelStyle: TextStyle(color: inkSoft, fontSize: 11),
+        labelStyle: TextStyle(color: inkSoft, fontSize: AppType.caption),
       ),
       dividerTheme: DividerThemeData(color: hairline, thickness: 1, space: 1),
       navigationBarTheme: NavigationBarThemeData(
@@ -172,7 +179,7 @@ abstract final class AppTheme {
         contentTextStyle: const TextStyle(
           color: Color(0xFFECEBF3),
           fontFamily: fontUi,
-          fontSize: 13.5,
+          fontSize: AppType.label,
           fontWeight: FontWeight.w500,
         ),
         actionTextColor: AppColors.accent,

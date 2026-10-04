@@ -46,6 +46,7 @@ import '../sprint/modals/glass_modal.dart';
 import 'day_marks.dart' show timeOffIcon;
 import 'time_absences_cubit.dart';
 import 'time_views.dart';
+import '../../core/theme/app_type.dart';
 
 /// The reader's own absences.
 const String kAbsenceScopeMine = 'mine';
@@ -971,7 +972,7 @@ class _SectionTitle extends StatelessWidget {
       Text(
         text,
         style: TextStyle(
-          fontSize: 12.5,
+          fontSize: AppType.label,
           fontWeight: FontWeight.w700,
           color: AppColors.inkSoft,
         ),
@@ -981,7 +982,7 @@ class _SectionTitle extends StatelessWidget {
         Text(
           '$count',
           style: TextStyle(
-            fontSize: 12.5,
+            fontSize: AppType.label,
             fontWeight: FontWeight.w700,
             color: AppColors.accentInk,
           ),
@@ -1036,7 +1037,7 @@ class AbsenceRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: AppType.body,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),
@@ -1048,7 +1049,7 @@ class AbsenceRow extends StatelessWidget {
                     if (absence.halfDay) context.t('absence.sheet.halfDay'),
                   ].join(' · '),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppType.caption,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -1058,7 +1059,10 @@ class AbsenceRow extends StatelessWidget {
                     note,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                 ],
               ],

@@ -127,7 +127,7 @@ class _AuditDetailSheet extends StatelessWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: AppType.title,
                                 fontWeight: FontWeight.w800,
                                 color: tokens.ink,
                                 height: 1.2,
@@ -137,7 +137,7 @@ class _AuditDetailSheet extends StatelessWidget {
                             Text(
                               context.t('audit.detail.title'),
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: AppType.caption,
                                 color: tokens.inkFaint,
                               ),
                             ),
@@ -229,7 +229,7 @@ class _DetailRow extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w600,
                     color: tokens.inkFaint,
                     letterSpacing: 0.2,
@@ -252,7 +252,7 @@ class _DetailRow extends StatelessWidget {
                     sub!,
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: 11,
+                      fontSize: AppType.caption,
                       color: tokens.inkFaint,
                     ),
                   ),
@@ -295,7 +295,7 @@ class _MetadataBlock extends StatelessWidget {
             context.t('audit.detail.metadata').toUpperCase(),
             style: TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 10,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.8,
               color: tokens.inkFaint,
@@ -326,7 +326,7 @@ class _MetadataBlock extends StatelessWidget {
                           child: Text(
                             _label(context, entries[i].key),
                             style: TextStyle(
-                              fontSize: 12.5,
+                              fontSize: AppType.label,
                               fontWeight: FontWeight.w600,
                               color: tokens.inkSoft,
                             ),
@@ -339,7 +339,7 @@ class _MetadataBlock extends StatelessWidget {
                             entries[i].value,
                             textAlign: TextAlign.right,
                             style: TextStyle(
-                              fontSize: 12.5,
+                              fontSize: AppType.label,
                               fontWeight: FontWeight.w700,
                               color: tokens.ink,
                             ),
@@ -378,7 +378,7 @@ class _EventIdFooter extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontFamily: AppTheme.fontMono,
-                fontSize: 11,
+                fontSize: AppType.caption,
                 color: tokens.inkFaint,
               ),
             ),
@@ -398,7 +398,7 @@ class _EventIdFooter extends StatelessWidget {
             label: Text(
               context.t('audit.detail.copyId'),
               style: TextStyle(
-                fontSize: 12,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w600,
                 color: tokens.inkSoft,
               ),

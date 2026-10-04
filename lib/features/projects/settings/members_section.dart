@@ -9,6 +9,7 @@ import '../../../core/widgets/hive_widgets.dart';
 import '../../../core/widgets/user_pronouns.dart';
 import '../../../core/widgets/hit_slop.dart';
 import 'settings_common.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Leads & members card: member rows with a star→lead toggle and remove.
 class MembersSection extends StatelessWidget {
@@ -98,7 +99,7 @@ class _MemberRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 13.5,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -111,7 +112,10 @@ class _MemberRow extends StatelessWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
               ],
             ),
@@ -183,7 +187,7 @@ class _LeadStar extends StatelessWidget {
                     Text(
                       context.t('projectSettings.lead'),
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppType.caption,
                         fontWeight: FontWeight.w600,
                         color: AppColors.accentInk,
                       ),

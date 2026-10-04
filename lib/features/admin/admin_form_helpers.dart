@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/field_border.dart';
 import '../../core/widgets/folded_hint.dart';
 import '../../core/widgets/hive_widgets.dart';
+import '../../core/theme/app_type.dart';
 
 /// Tone of an [AdminNote] — drives its tint, rim and glyph colour.
 enum AdminNoteTone { accent, info, warning, danger }
@@ -50,7 +51,7 @@ class AdminNote extends StatelessWidget {
       ),
     };
     final style = TextStyle(
-      fontSize: 12.5,
+      fontSize: AppType.label,
       height: 1.5,
       color: AppColors.inkSoft,
     );
@@ -104,7 +105,7 @@ InputDecoration adminInputDecoration(
             helper,
             title: label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppType.caption,
               height: 1.35,
               color: AppColors.inkFaint,
             ),
@@ -117,12 +118,12 @@ InputDecoration adminInputDecoration(
     border: border(AppColors.hairline),
     enabledBorder: border(AppColors.hairline),
     focusedBorder: border(AppColors.accent, 1.4),
-    labelStyle: TextStyle(fontSize: 13.5, color: AppColors.inkSoft),
+    labelStyle: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
     // The label rides inside the field once it floats (see [HiveFieldBorder]),
     // where it is a caption over the value rather than a second value. The rim
     // already turns amber on focus, so it does not have to say so too.
     floatingLabelStyle: TextStyle(
-      fontSize: 15,
+      fontSize: AppType.body,
       fontWeight: FontWeight.w600,
       color: AppColors.inkFaint,
     ),
@@ -176,13 +177,13 @@ class AdminSectionCard extends StatelessWidget {
                     titleStyle: TextStyle(
                       fontFamily: AppTheme.fontBrand,
                       fontWeight: FontWeight.w700,
-                      fontSize: 15,
+                      fontSize: AppType.body,
                       letterSpacing: -0.2,
                       color: AppColors.ink,
                     ),
                     hint: subtitle,
                     hintStyle: TextStyle(
-                      fontSize: 12,
+                      fontSize: AppType.caption,
                       height: 1.3,
                       color: AppColors.inkSoft,
                     ),
@@ -239,7 +240,7 @@ class AdminField extends StatelessWidget {
         keyboardType: keyboardType,
         autocorrect: !noAutocorrect,
         enableSuggestions: !isSecret,
-        style: TextStyle(fontSize: 14, color: AppColors.ink),
+        style: TextStyle(fontSize: AppType.body, color: AppColors.ink),
         decoration: adminInputDecoration(
           context,
           label: label,
@@ -337,7 +338,7 @@ class _AdminNumberFieldState extends State<AdminNumberField> {
         focusNode: _focus,
         keyboardType: TextInputType.number,
         textInputAction: TextInputAction.done,
-        style: TextStyle(fontSize: 14, color: AppColors.ink),
+        style: TextStyle(fontSize: AppType.body, color: AppColors.ink),
         decoration: adminInputDecoration(
           context,
           label: widget.label,
@@ -398,7 +399,7 @@ class AdminToggle extends StatelessWidget {
                         label,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                          fontSize: AppType.body,
                           color: AppColors.ink,
                         ),
                       ),
@@ -408,7 +409,7 @@ class AdminToggle extends StatelessWidget {
                           child: Text(
                             subtitle!,
                             style: TextStyle(
-                              fontSize: 12.5,
+                              fontSize: AppType.label,
                               height: 1.35,
                               color: AppColors.inkSoft,
                             ),
@@ -523,7 +524,7 @@ class _ProviderTileState extends State<ProviderTile> {
                         widget.title,
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: 14,
+                          fontSize: AppType.body,
                           color: enabled ? AppColors.ink : AppColors.inkSoft,
                         ),
                       ),
@@ -531,7 +532,7 @@ class _ProviderTileState extends State<ProviderTile> {
                         Text(
                           widget.subtitle!,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: AppType.caption,
                             color: AppColors.inkFaint,
                           ),
                         ),
@@ -554,7 +555,10 @@ class _ProviderTileState extends State<ProviderTile> {
                     obscureText: secret,
                     autocorrect: false,
                     enableSuggestions: !secret,
-                    style: TextStyle(fontSize: 14, color: AppColors.ink),
+                    style: TextStyle(
+                      fontSize: AppType.body,
+                      color: AppColors.ink,
+                    ),
                     decoration: adminInputDecoration(
                       context,
                       label: label,

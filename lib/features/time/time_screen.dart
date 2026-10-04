@@ -42,6 +42,7 @@ import 'time_privacy_sheet.dart';
 import 'time_screen_cubit.dart';
 import 'time_views.dart';
 import 'timer_bar.dart';
+import '../../core/theme/app_type.dart';
 
 /// The module's home: what this person has tracked, newest first, with the
 /// timer above it.
@@ -978,7 +979,7 @@ class _DayGroup extends StatelessWidget {
                     Text(
                       _dayLabel(context, day),
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
                       ),
@@ -1016,7 +1017,7 @@ class _DayGroup extends StatelessWidget {
                 Text(
                   fmtDuration(context, total),
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w700,
                     fontFeatures: const [FontFeature.tabularFigures()],
                     color: AppColors.inkSoft,
@@ -1121,7 +1122,7 @@ class _EntryRow extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 13.5,
+                            fontSize: AppType.label,
                             fontWeight: FontWeight.w600,
                             color: entry.description?.trim().isNotEmpty ?? false
                                 ? AppColors.ink
@@ -1171,7 +1172,7 @@ class _EntryRow extends StatelessWidget {
                   Text(
                     fmtDuration(context, entry.durationMinutes),
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppType.body,
                       fontWeight: FontWeight.w700,
                       fontFeatures: const [FontFeature.tabularFigures()],
                       color: AppColors.ink,
@@ -1214,7 +1215,10 @@ class _MetaChip extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+          style: TextStyle(
+            fontSize: AppType.caption,
+            color: AppColors.inkFaint,
+          ),
         ),
       ),
     ],

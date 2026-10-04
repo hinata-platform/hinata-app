@@ -12,6 +12,7 @@ import '../../core/widgets/glass_filter_bar.dart' show kGlassPillHeight;
 import '../../core/widgets/glass_switch_chip.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../sprint/modals/glass_modal.dart';
+import '../../core/theme/app_type.dart';
 
 /// What somebody chose in the deadline editor.
 ///
@@ -295,7 +296,7 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
           child: Text(
             widget.title,
             style: const TextStyle(
-              fontSize: 13.5,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.1,
             ),
@@ -453,7 +454,7 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13.5,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w600,
                           color: date == null
                               ? AppColors.inkFaint
@@ -517,7 +518,7 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontFamily: AppTheme.fontMono,
-                        fontSize: 14,
+                        fontSize: AppType.body,
                         fontWeight: FontWeight.w700,
                         height: 1,
                       ),
@@ -610,7 +611,7 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 13.5,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w700,
                 color: resolved == null ? AppColors.inkFaint : AppColors.ink,
               ),
@@ -652,14 +653,17 @@ class _WorkingDaysRow extends StatelessWidget {
               Text(
                 context.t('issues.deadline.workingDays'),
                 style: const TextStyle(
-                  fontSize: 13.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 context.t('issues.deadline.workingDaysHint'),
-                style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+                style: TextStyle(
+                  fontSize: AppType.caption,
+                  color: AppColors.inkFaint,
+                ),
               ),
             ],
           ),
@@ -705,7 +709,10 @@ class _Note extends StatelessWidget {
               Expanded(
                 child: Text(
                   text,
-                  style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
               ),
             ],
@@ -722,7 +729,10 @@ class _Note extends StatelessWidget {
                   // grows to 48 dp around it.
                   tapTargetSize: MaterialTapTargetSize.padded,
                 ),
-                child: Text(action!, style: const TextStyle(fontSize: 12)),
+                child: Text(
+                  action!,
+                  style: const TextStyle(fontSize: AppType.caption),
+                ),
               ),
             ),
         ],

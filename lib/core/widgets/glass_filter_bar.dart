@@ -22,6 +22,7 @@ import 'glass_popup_menu.dart';
 import 'hive_widgets.dart' show backChevron, forwardChevron;
 import '../../features/shell/app_shell.dart' show isNativeApp;
 import '../theme/glass_chrome.dart' show kNavGlassDark, kNavGlassLight;
+import '../theme/app_type.dart';
 
 /// Height of a docked search field. A text input needs the room; a control
 /// does not, which is what [kGlassControlHeight] is for.
@@ -203,7 +204,10 @@ class GlassSearchField extends StatelessWidget {
                     LengthLimitingTextInputFormatter(maxLength),
                   ],
                   textInputAction: TextInputAction.search,
-                  style: TextStyle(fontSize: 14, color: AppColors.ink),
+                  style: TextStyle(
+                    fontSize: AppType.body,
+                    color: AppColors.ink,
+                  ),
                   cursorColor: AppColors.accentStrong,
                   // The pill itself is the surface — strip every field border/fill
                   // so the theme's amber focus outline can't bleed through.
@@ -212,7 +216,7 @@ class GlassSearchField extends StatelessWidget {
                     filled: false,
                     hintText: hint,
                     hintStyle: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppType.body,
                       color: AppColors.inkFaint,
                     ),
                     border: InputBorder.none,
@@ -604,7 +608,7 @@ class GlassScopePill extends StatelessWidget {
                 label,
                 maxLines: 1,
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: AppType.label,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w600,
                   color: active ? AppColors.accentStrong : AppColors.ink,
                 ),
@@ -719,7 +723,7 @@ class GlassCountPill extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w700,
                 color: AppColors.accentInk,
               ),
@@ -785,7 +789,7 @@ class GlassFilterChip<T> extends StatelessWidget {
               Text(
                 text,
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                   color: fg,
                 ),
@@ -860,7 +864,7 @@ class GlassFilterPill extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: AppType.label,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w600,
                   color: active ? AppColors.accentStrong : AppColors.ink,
                 ),

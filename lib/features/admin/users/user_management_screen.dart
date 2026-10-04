@@ -26,6 +26,7 @@ import 'user_management_modals.dart';
 import 'user_management_widgets.dart';
 import '../../../core/widgets/hive_widgets.dart'
     show backChevron, forwardChevron;
+import '../../../core/theme/app_type.dart';
 
 part 'user_management_screen.rows.dart';
 
@@ -514,7 +515,7 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
             ? Text(
                 ' · ${context.t('admin.um.expiredCount', variables: {'n': '${c.expiredInvites}'})}',
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w700,
                   color: AppColors.dangerInk,
                 ),
@@ -747,7 +748,7 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
                       key.toUpperCase(),
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
-                        fontSize: 10,
+                        fontSize: AppType.caption,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.6,
                         color: AppColors.inkFaint,
@@ -816,14 +817,17 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
               'total': '$total',
             },
           ),
-          style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+          style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
         ),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               context.t('admin.um.rowsPerPage'),
-              style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+              style: TextStyle(
+                fontSize: AppType.label,
+                color: AppColors.inkSoft,
+              ),
             ),
             const SizedBox(width: 8),
             GlassPopupMenu<int>(
@@ -854,7 +858,7 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
                     Text(
                       '$_perPage',
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                         color: AppColors.ink,
                       ),

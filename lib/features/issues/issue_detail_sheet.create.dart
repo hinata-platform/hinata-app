@@ -451,7 +451,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
   Widget _sectionLabel(String text) => Text(
     text.toUpperCase(),
     style: TextStyle(
-      fontSize: 11,
+      fontSize: AppType.caption,
       fontWeight: FontWeight.w700,
       letterSpacing: 0.8,
       color: AppColors.inkFaint,
@@ -474,13 +474,16 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
             textCapitalization: TextCapitalization.sentences,
             style: const TextStyle(
               fontFamily: AppTheme.fontBrand,
-              fontSize: 20,
+              fontSize: AppType.heading,
               fontWeight: FontWeight.w700,
               // height: 1.25,
             ),
             decoration: InputDecoration(
               hintText: context.t('issues.title'),
-              errorStyle: TextStyle(color: AppColors.dangerInk, fontSize: 12),
+              errorStyle: TextStyle(
+                color: AppColors.dangerInk,
+                fontSize: AppType.caption,
+              ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 8,
                 vertical: 8,
@@ -497,7 +500,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
         const SizedBox(height: 8),
         HinataEditor(
           controller: _descCtrl,
-          fontSize: 14,
+          fontSize: AppType.body,
           minHeight: 140,
           trailing: hinataEditorTools(context, _descCtrl),
         ),
@@ -517,7 +520,10 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
         children: [
           Text(
             context.t('issues.details'),
-            style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: AppType.body,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 6),
           _DetailRow(
@@ -529,7 +535,10 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
                   : context.t('errors.required'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                fontSize: AppType.label,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           _DetailRow(
@@ -544,7 +553,10 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
                   )
                 : Text(
                     context.t('issues.noValue'),
-                    style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      color: AppColors.inkFaint,
+                    ),
                   ),
           ),
           _DetailRow(
@@ -588,7 +600,10 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
             child: _labels.isEmpty
                 ? Text(
                     context.t('issues.noLabels'),
-                    style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      color: AppColors.inkFaint,
+                    ),
                   )
                 : Wrap(
                     spacing: 6,
@@ -606,7 +621,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
             child: Text(
               sprintName ?? context.t('issues.noSprint'),
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
                 color: sprintName != null
                     ? AppColors.stTodo
@@ -628,7 +643,10 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
         children: [
           Text(
             context.t('issues.timeline'),
-            style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: AppType.body,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 6),
           _DetailRow(
@@ -652,14 +670,14 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     if (points == null) {
       return Text(
         context.t('issues.noValue'),
-        style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
+        style: TextStyle(fontSize: AppType.label, color: AppColors.inkFaint),
       );
     }
     return Text(
       '$points',
       style: const TextStyle(
         fontFamily: AppTheme.fontMono,
-        fontSize: 13,
+        fontSize: AppType.label,
         fontWeight: FontWeight.w700,
       ),
     );
@@ -675,7 +693,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     if (date == null) {
       return Text(
         context.t('issues.noValue'),
-        style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
+        style: TextStyle(fontSize: AppType.label, color: AppColors.inkFaint),
       );
     }
     return Row(
@@ -684,7 +702,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
         Text(
           MaterialLocalizations.of(context).formatMediumDate(date),
           style: TextStyle(
-            fontSize: 13,
+            fontSize: AppType.label,
             fontWeight: FontWeight.w600,
             color: AppColors.ink,
           ),
@@ -799,7 +817,10 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
       child: parent == null
           ? Text(
               isSubtask ? '—' : context.t('issues.noEpic'),
-              style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
+              style: TextStyle(
+                fontSize: AppType.label,
+                color: AppColors.inkFaint,
+              ),
             )
           : _createParentChip(parent),
     );
@@ -854,7 +875,10 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
           '${parent.readableId}  ${parent.title}',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            fontSize: AppType.label,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     ],

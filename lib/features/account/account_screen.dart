@@ -45,6 +45,7 @@ import 'pat_section.dart';
 import 'settings_layout.dart';
 import 'twofa_modals.dart';
 import 'package:hinata/core/widgets/user_pronouns.dart';
+import '../../core/theme/app_type.dart';
 
 part 'account_screen.widgets.dart';
 
@@ -673,7 +674,7 @@ class _AccountScreenState extends State<_AccountBody> {
                         title,
                         style: TextStyle(
                           fontFamily: AppTheme.fontBrand,
-                          fontSize: 14.5,
+                          fontSize: AppType.body,
                           fontWeight: FontWeight.w700,
                           color: danger ? AppColors.danger : AppColors.ink,
                         ),
@@ -684,7 +685,7 @@ class _AccountScreenState extends State<_AccountBody> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: AppType.caption,
                           height: 1.35,
                           color: AppColors.inkSoft,
                         ),
@@ -863,7 +864,7 @@ class _AccountScreenState extends State<_AccountBody> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   color: Colors.white.withValues(alpha: 0.78),
                 ),
               ),
@@ -1208,7 +1209,7 @@ class _AccountScreenState extends State<_AccountBody> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13.5,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w600,
                           color: AppColors.ink,
                         ),
@@ -1226,7 +1227,10 @@ class _AccountScreenState extends State<_AccountBody> {
                   const SizedBox(height: 2),
                   Text(
                     meta,
-                    style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      color: AppColors.inkSoft,
+                    ),
                     softWrap: true,
                   ),
                 ],
@@ -1341,7 +1345,7 @@ class _AccountScreenState extends State<_AccountBody> {
       label,
       textAlign: TextAlign.center,
       style: TextStyle(
-        fontSize: 10.5,
+        fontSize: AppType.caption,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.3,
         color: AppColors.inkFaint,
@@ -1373,14 +1377,17 @@ class _AccountScreenState extends State<_AccountBody> {
                 Text(
                   _eventLabel(e.id),
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
                 ),
                 Text(
                   _eventDesc(e.id),
-                  style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkSoft,
+                  ),
                   softWrap: true,
                 ),
               ],
@@ -1447,7 +1454,10 @@ class _AccountScreenState extends State<_AccountBody> {
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  color: AppColors.inkSoft,
+                ),
               ),
             ),
             if (e.locked)
@@ -1481,7 +1491,7 @@ class _AccountScreenState extends State<_AccountBody> {
                 child: Text(
                   _eventLabel(e.id),
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
@@ -1492,7 +1502,10 @@ class _AccountScreenState extends State<_AccountBody> {
           const SizedBox(height: 2),
           Text(
             _eventDesc(e.id),
-            style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkSoft,
+            ),
             softWrap: true,
           ),
           channel(
@@ -1610,7 +1623,7 @@ class _AccountScreenState extends State<_AccountBody> {
                         ),
                   style: TextStyle(
                     fontFamily: AppTheme.fontMono,
-                    fontSize: 10.5,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w700,
                     color: color,
                   ),
@@ -1626,7 +1639,7 @@ class _AccountScreenState extends State<_AccountBody> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 13.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                         color: AppColors.ink,
                       ),
@@ -1634,7 +1647,7 @@ class _AccountScreenState extends State<_AccountBody> {
                     Text(
                       meta,
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         color: AppColors.inkSoft,
                       ),
                     ),
@@ -1698,7 +1711,7 @@ class _AccountScreenState extends State<_AccountBody> {
                     I18n.localeNames[locale.languageCode] ??
                         locale.languageCode,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                       color: AppColors.ink,
                     ),
@@ -1789,12 +1802,15 @@ class _AccountScreenState extends State<_AccountBody> {
         Expanded(
           child: Text(
             label,
-            style: TextStyle(color: AppColors.inkSoft, fontSize: 13),
+            style: TextStyle(color: AppColors.inkSoft, fontSize: AppType.label),
           ),
         ),
         Text(
           value,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: AppType.label,
+          ),
         ),
       ],
     ),
@@ -1893,7 +1909,7 @@ class _AccountScreenState extends State<_AccountBody> {
     padding: const EdgeInsets.symmetric(vertical: 14),
     child: Text(
       message,
-      style: TextStyle(fontSize: 12.5, color: AppColors.inkFaint),
+      style: TextStyle(fontSize: AppType.label, color: AppColors.inkFaint),
     ),
   );
 
@@ -1975,7 +1991,7 @@ class _SessionsExpander extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
                 color: AppColors.accentInk,
               ),

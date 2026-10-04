@@ -14,6 +14,7 @@ import '../sprint/modals/glass_modal.dart'
 import 'account_widgets.dart';
 import '../../core/widgets/hive_widgets.dart' show forwardArrow;
 import 'account_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// Renders a QR matrix for an `otpauth://` URI using the pure-Dart [qr]
 /// package — no network, no platform channel.
@@ -149,7 +150,7 @@ class _OtpInputState extends State<OtpInput> {
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     style: const TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: 20,
+                      fontSize: AppType.heading,
                       fontWeight: FontWeight.w700,
                     ),
                     decoration: InputDecoration(
@@ -316,7 +317,7 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
         Text(
           context.t('twofa.scanHint'),
           style: TextStyle(
-            fontSize: 12.5,
+            fontSize: AppType.label,
             height: 1.45,
             color: AppColors.inkSoft,
           ),
@@ -349,7 +350,7 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
         Text(
           context.t('twofa.manualKey'),
           style: TextStyle(
-            fontSize: 11.5,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w600,
             color: AppColors.inkSoft,
           ),
@@ -369,7 +370,7 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
         Text(
           context.t('twofa.verifyHint'),
           style: TextStyle(
-            fontSize: 12.5,
+            fontSize: AppType.label,
             height: 1.45,
             color: AppColors.inkSoft,
           ),
@@ -414,7 +415,7 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
                   code,
                   style: const TextStyle(
                     fontFamily: AppTheme.fontMono,
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -455,7 +456,7 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
                           child: Text(
                             context.t('twofa.saved'),
                             style: TextStyle(
-                              fontSize: 12.5,
+                              fontSize: AppType.label,
                               fontWeight: FontWeight.w600,
                               color: AppColors.ink,
                             ),
@@ -755,7 +756,7 @@ class _CodeGatedActionState extends State<_CodeGatedAction> {
                   code,
                   style: const TextStyle(
                     fontFamily: AppTheme.fontMono,
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -801,7 +802,7 @@ class _CopyField extends StatelessWidget {
               label,
               style: const TextStyle(
                 fontFamily: AppTheme.fontMono,
-                fontSize: 14,
+                fontSize: AppType.body,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1,
               ),

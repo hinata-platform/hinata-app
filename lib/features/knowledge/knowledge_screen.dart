@@ -29,6 +29,7 @@ import 'knowledge_tree.dart';
 import 'markdown/smart_link_resolver.dart';
 import '../../core/repositories/issue_repository.dart';
 import '../../core/repositories/user_repository.dart';
+import '../../core/theme/app_type.dart';
 
 /// Confluence-style Knowledge Base shell: spaces home, nested article tree,
 /// reader with TOC/aside/linked-issues, and a full markdown editor with
@@ -565,7 +566,7 @@ class _KnowledgeScreenState extends State<_KnowledgeBody> {
                           Text(
                             _store.spaceById(_spaceId)?.name ?? '',
                             style: const TextStyle(
-                              fontSize: 13,
+                              fontSize: AppType.label,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -702,7 +703,7 @@ class _KnowledgeScreenState extends State<_KnowledgeBody> {
                     : context.t('knowledge.editing'),
                 style: const TextStyle(
                   fontFamily: AppTheme.fontBrand,
-                  fontSize: 17,
+                  fontSize: AppType.title,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.2,
                 ),

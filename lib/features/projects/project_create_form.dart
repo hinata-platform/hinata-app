@@ -20,6 +20,7 @@ import '../../core/widgets/entity_avatar_editor.dart';
 import '../../core/widgets/person_picker.dart';
 import '../sprint/modals/glass_modal.dart';
 import '../../core/widgets/folded_hint.dart';
+import '../../core/theme/app_type.dart';
 
 /// Everything a new project needs before it exists, in one place.
 ///
@@ -290,7 +291,7 @@ class _ProjectCreateFieldsBodyState extends State<_ProjectCreateFieldsBody> {
           child: FoldedHint(
             context.t('projects.defaultWorkflowInfo'),
             style: TextStyle(
-              fontSize: 12.5,
+              fontSize: AppType.label,
               height: 1.45,
               color: AppColors.inkSoft,
             ),
@@ -363,7 +364,10 @@ class _ProjectCreateFieldsBodyState extends State<_ProjectCreateFieldsBody> {
               padding: const EdgeInsets.only(top: 4),
               child: Text(
                 context.t('projects.keyTaken'),
-                style: TextStyle(fontSize: 11.5, color: AppColors.dangerInk),
+                style: TextStyle(
+                  fontSize: AppType.caption,
+                  color: AppColors.dangerInk,
+                ),
               ),
             ),
         ],
@@ -473,7 +477,7 @@ class ProjectGlyphPreview extends StatelessWidget {
           style: TextStyle(
             fontFamily: AppTheme.fontMono,
             fontWeight: FontWeight.w700,
-            fontSize: 15,
+            fontSize: AppType.body,
             color: hueChipText(hue),
           ),
         ),

@@ -11,6 +11,7 @@ import '../../account/account_widgets.dart';
 import '../../sprint/modals/glass_modal.dart';
 import 'org_holidays_cubit.dart';
 import '../../../core/widgets/folded_hint.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Opens the form for a new holiday calendar, or for [existing]. Resolves to
 /// true once it was saved.
@@ -107,7 +108,7 @@ class _CalendarFormState extends State<_CalendarForm> {
                 helper,
                 title: label,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: AppType.caption,
                   height: 1.35,
                   color: AppColors.inkFaint,
                 ),

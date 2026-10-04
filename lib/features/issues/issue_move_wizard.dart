@@ -16,6 +16,7 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/project_picker.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'issue_move_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// Moves one or more issues into another project.
 ///
@@ -361,7 +362,7 @@ class _MoveWizardBodyState extends State<_MoveWizardBody> {
 
   Widget _errorText() => Text(
     context.t(_error!),
-    style: TextStyle(color: AppColors.dangerInk, fontSize: 12.5),
+    style: TextStyle(color: AppColors.dangerInk, fontSize: AppType.label),
   );
 }
 
@@ -400,7 +401,7 @@ class _MappingRow extends StatelessWidget {
                   Text(
                     '×${mapping.issueCount}',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: AppType.caption,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -455,7 +456,7 @@ class _MappingRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -516,18 +517,21 @@ class _PreviewRow extends StatelessWidget {
             ),
             const SizedBox(width: 6),
           ],
-          IdMono(preview.readableId, fontSize: 11.5),
+          IdMono(preview.readableId, fontSize: AppType.caption),
           const SizedBox(width: 6),
           Icon(forwardArrow(context), size: 12, color: AppColors.inkFaint),
           const SizedBox(width: 6),
-          IdMono(preview.nextReadableId, fontSize: 11.5),
+          IdMono(preview.nextReadableId, fontSize: AppType.caption),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               preview.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
           if (nextState != null) ...[
@@ -588,7 +592,7 @@ class _WarningRow extends StatelessWidget {
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: AppType.caption,
                 height: 1.4,
                 color: AppColors.textSecondary,
               ),
@@ -616,7 +620,7 @@ class _Pill extends StatelessWidget {
     child: Text(
       text,
       style: TextStyle(
-        fontSize: 10.5,
+        fontSize: AppType.caption,
         fontWeight: FontWeight.w700,
         color: color,
       ),

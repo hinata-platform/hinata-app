@@ -33,6 +33,7 @@ import '../../core/widgets/hit_slop.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
 import '../../core/repositories/user_repository.dart';
+import '../../core/theme/app_type.dart';
 
 /// The phone's docked row, the same height every other page's is.
 const double _kProjectsDockHeight = kGlassDockRow;
@@ -632,7 +633,7 @@ class _ProjectCard extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
                       fontWeight: FontWeight.w600,
-                      fontSize: 14,
+                      fontSize: AppType.body,
                       color: glyphColor,
                     ),
                   ),
@@ -653,7 +654,7 @@ class _ProjectCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 15,
+                          fontSize: AppType.body,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -668,7 +669,7 @@ class _ProjectCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: AppTheme.fontMono,
-                              fontSize: 11.5,
+                              fontSize: AppType.caption,
                               color: AppColors.inkFaint,
                             ),
                           ),
@@ -720,7 +721,7 @@ class _ProjectCard extends StatelessWidget {
                 Text(
                   '${project.labels.length}',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w600,
                     color: AppColors.inkSoft,
                   ),
@@ -856,7 +857,7 @@ class _SettingsButton extends StatelessWidget {
                 Text(
                   context.t('projects.settings'),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w600,
                     color: AppColors.inkSoft,
                   ),
@@ -884,12 +885,15 @@ class _Stat extends StatelessWidget {
           value,
           style: TextStyle(
             fontFamily: AppTheme.fontBrand,
-            fontSize: 20,
+            fontSize: AppType.heading,
             fontWeight: FontWeight.w700,
             color: AppColors.ink,
           ),
         ),
-        Text(label, style: TextStyle(fontSize: 11, color: AppColors.inkSoft)),
+        Text(
+          label,
+          style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
+        ),
       ],
     );
   }
@@ -969,7 +973,7 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
                     _error!,
                     style: TextStyle(
                       color: AppColors.dangerInk,
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                     ),
                   ),
                 ],
@@ -1041,7 +1045,7 @@ class _TemplateBadge extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w700,
           color: AppColors.inkSoft,
         ),
@@ -1112,7 +1116,7 @@ class _CardAction extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w600,
                       color: primary ? Colors.white : AppColors.inkSoft,
                     ),

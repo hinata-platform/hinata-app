@@ -13,6 +13,7 @@ import '../../core/widgets/glass_panel.dart';
 import '../../core/branding/org_logo.dart';
 import '../../core/widgets/hex_mark.dart';
 import '../search/search_tokens.dart';
+import '../../core/theme/app_type.dart';
 
 /// Golden-ratio split threshold. At or above this width the auth screens show
 /// the input pane (left, 38.2 %) beside a calm brand hero (right, 61.8 %). Below
@@ -231,7 +232,7 @@ class AuthGlassCard extends StatelessWidget {
             EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           ),
           textStyle: const WidgetStatePropertyAll(
-            TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            TextStyle(fontWeight: FontWeight.w600, fontSize: AppType.body),
           ),
         ),
       ),
@@ -378,7 +379,7 @@ class _AuthHero extends StatelessWidget {
                       context.t('authShell.heroTitle'),
                       style: TextStyle(
                         fontFamily: AppTheme.fontBrand,
-                        fontSize: 36,
+                        fontSize: AppType.hero,
                         height: 1.08,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.6,
@@ -392,7 +393,7 @@ class _AuthHero extends StatelessWidget {
                     child: Text(
                       context.t('authShell.heroBody'),
                       style: TextStyle(
-                        fontSize: 15.5,
+                        fontSize: AppType.body,
                         height: 1.5,
                         color: AppColors.inkSoft,
                       ),
@@ -455,7 +456,7 @@ class _HeroChip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 12.5,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w600,
               color: textColor,
             ),
@@ -548,7 +549,7 @@ class _ImageHero extends StatelessWidget {
                       context.t('authShell.heroTitle'),
                       style: TextStyle(
                         fontFamily: AppTheme.fontBrand,
-                        fontSize: 36,
+                        fontSize: AppType.hero,
                         height: 1.08,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.6,
@@ -562,7 +563,7 @@ class _ImageHero extends StatelessWidget {
                     child: Text(
                       context.t('authShell.heroBody'),
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: AppType.body,
                         height: 1.5,
                         color: subColor,
                       ),
@@ -635,7 +636,7 @@ class _BrandRow extends StatelessWidget {
           'hinata',
           style: TextStyle(
             fontFamily: AppTheme.fontBrand,
-            fontSize: 25,
+            fontSize: AppType.display,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.4,
             color: wordColor,

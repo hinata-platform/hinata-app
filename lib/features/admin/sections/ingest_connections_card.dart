@@ -17,6 +17,7 @@ import '../../sprint/modals/glass_modal.dart';
 import '../admin_form_helpers.dart';
 import 'ingest_connection_editor.dart';
 import 'ingest_connections_cubit.dart';
+import '../../../core/theme/app_type.dart';
 
 /// E-mail-to-ticket connection management: any number of IMAP mailbox/folder
 /// connections, each feeding a different project. Replaces the former single
@@ -271,14 +272,17 @@ class _IngestConnectionsCardState extends State<_IngestConnectionsView> {
                 title,
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
-                  fontSize: 14,
+                  fontSize: AppType.body,
                   color: AppColors.ink,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  color: AppColors.inkSoft,
+                ),
               ),
             ],
           ),
@@ -401,7 +405,7 @@ class _ConnectionTile extends StatelessWidget {
                   connection.label,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 14,
+                    fontSize: AppType.body,
                     color: enabled ? AppColors.ink : AppColors.inkSoft,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -515,7 +519,10 @@ class _MetaChip extends StatelessWidget {
         Flexible(
           child: Text(
             text,
-            style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkSoft,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

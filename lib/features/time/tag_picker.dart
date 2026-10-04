@@ -16,6 +16,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassAnchoredPopover,
         showGlassBottomSheet;
 import 'tag_picker_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// Picks the tags on an entry: an anchored glass popover on a wide window, a
 /// glass sheet on a phone.
@@ -274,7 +275,7 @@ class _TagPickerBodyState extends State<_TagPickerBody> {
                           ),
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: AppType.label,
                             color: AppColors.inkSoft,
                           ),
                         ),
@@ -349,7 +350,7 @@ class _TagRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                     color: AppColors.ink,
                   ),

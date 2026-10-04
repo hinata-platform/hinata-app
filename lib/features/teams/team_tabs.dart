@@ -23,6 +23,7 @@ import 'team_modals.dart';
 import 'team_modal_kit.dart' show KnowledgeAccessChip;
 import 'team_widgets.dart';
 import '../../core/widgets/folded_hint.dart';
+import '../../core/theme/app_type.dart';
 
 part 'team_tabs.members_projects.dart';
 part 'team_tabs.settings.dart';
@@ -262,7 +263,10 @@ class _ProjectsMiniCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
                 context.t('teams.noProjectsYet'),
-                style: TextStyle(fontSize: 12.5, color: AppColors.inkFaint),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  color: AppColors.inkFaint,
+                ),
               ),
             )
           else
@@ -302,7 +306,7 @@ class _MiniProjectRow extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -344,7 +348,10 @@ class _ActivityCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
                 context.t('teams.noActivity'),
-                style: TextStyle(fontSize: 12.5, color: AppColors.inkFaint),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  color: AppColors.inkFaint,
+                ),
               ),
             )
           else
@@ -370,7 +377,7 @@ class _ActivityCard extends StatelessWidget {
                 label: Text(
                   context.t('issues.loadMore'),
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: AppColors.inkSoft,
                   ),
@@ -428,7 +435,7 @@ class _ActivityRow extends StatelessWidget {
           child: RichText(
             text: TextSpan(
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 height: 1.45,
                 color: AppColors.inkSoft,
               ),
@@ -459,7 +466,7 @@ class _ActivityRow extends StatelessWidget {
           _ago(activity.createdAt),
           style: TextStyle(
             fontFamily: AppTheme.fontMono,
-            fontSize: 11,
+            fontSize: AppType.caption,
             color: AppColors.inkFaint,
           ),
         ),

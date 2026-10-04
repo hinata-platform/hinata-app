@@ -11,6 +11,7 @@ import '../../core/widgets/glass_switch_chip.dart';
 import '../sprint/modals/glass_modal.dart' show showGlassTimePicker;
 import 'account_widgets.dart';
 import 'notification_days_row.dart';
+import '../../core/theme/app_type.dart';
 
 /// Settings → Notifications: when e-mail and push may arrive (HIN-131).
 ///
@@ -231,7 +232,10 @@ class _CustomBlock extends StatelessWidget {
             padding: const EdgeInsets.only(top: 6),
             child: Text(
               context.t('account.notifications.schedule.overnight'),
-              style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.inkSoft,
+              ),
             ),
           ),
       ],
@@ -269,7 +273,7 @@ class _TimeButton extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w600,
               color: AppColors.inkSoft,
             ),
@@ -300,7 +304,7 @@ class _DefaultLine extends StatelessWidget {
       children: [
         Text(
           _describe(context),
-          style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+          style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
         ),
         if (onUseDefault != null)
           TextButton(
@@ -310,7 +314,7 @@ class _DefaultLine extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               foregroundColor: AppColors.accentInk,
               textStyle: const TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
               ),
             ),

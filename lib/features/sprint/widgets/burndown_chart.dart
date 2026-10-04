@@ -4,6 +4,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Sprint burndown: dashed guideline (committed → 0) with the solid actual line
 /// drawn only up to today, animated in via a stroke reveal. Honours
@@ -118,7 +119,7 @@ class _BurndownPainter extends CustomPainter {
       ..strokeWidth = 1;
     final textStyle = TextStyle(
       fontFamily: AppTheme.fontMono,
-      fontSize: 10,
+      fontSize: AppType.caption,
       color: textColor,
     );
 

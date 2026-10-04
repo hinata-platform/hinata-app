@@ -14,6 +14,7 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/project_picker.dart' show projectAccent;
 import '../sprint/modals/glass_modal.dart';
 import 'board_columns_editor_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// Arranges a board's columns by hand.
 ///
@@ -195,7 +196,7 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
               _columns[i].controller.text.trim().isEmpty
                   ? context.t('board.columns.unnamed')
                   : _columns[i].controller.text.trim(),
-              style: const TextStyle(fontSize: 13.5),
+              style: const TextStyle(fontSize: AppType.label),
             ),
           ),
     ];
@@ -341,7 +342,10 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
             const SizedBox(height: 6),
             Text(
               context.t(_error!),
-              style: TextStyle(color: AppColors.dangerInk, fontSize: 12.5),
+              style: TextStyle(
+                color: AppColors.dangerInk,
+                fontSize: AppType.label,
+              ),
             ),
           ],
         ],
@@ -374,7 +378,10 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
               Expanded(
                 child: Text(
                   context.t('board.columns.unassignedHint'),
-                  style: const TextStyle(fontSize: 12, height: 1.35),
+                  style: const TextStyle(
+                    fontSize: AppType.caption,
+                    height: 1.35,
+                  ),
                 ),
               ),
             ],
@@ -438,7 +445,7 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
                     controller: column.controller,
                     onChanged: (_) => setState(() {}),
                     style: const TextStyle(
-                      fontSize: 13.5,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                     ),
                     decoration: InputDecoration(
@@ -450,7 +457,7 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
                       contentPadding: const EdgeInsets.symmetric(vertical: 8),
                       hintText: context.t('board.columns.namePlaceholder'),
                       hintStyle: TextStyle(
-                        fontSize: 13.5,
+                        fontSize: AppType.label,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -480,7 +487,7 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
                 ? Text(
                     context.t('board.columns.emptyColumn'),
                     style: TextStyle(
-                      fontSize: 11.5,
+                      fontSize: AppType.caption,
                       color: AppColors.textSecondary,
                     ),
                   )
@@ -570,12 +577,18 @@ class _StateChip extends StatelessWidget {
             group.projects.length == 1
                 ? group.projects.first.key
                 : '${group.projects.length}×',
-            style: TextStyle(fontSize: 10.5, color: AppColors.textSecondary),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.textSecondary,
+            ),
           ),
           const SizedBox(width: 5),
           Text(
             group.name,
-            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: AppType.label,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(width: 2),
           Semantics(
@@ -640,7 +653,7 @@ class _WipFieldState extends State<_WipField> {
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12.5),
+            style: const TextStyle(fontSize: AppType.label),
             onChanged: (raw) {
               widget.onChanged(int.tryParse(raw));
               setState(() {});
@@ -652,12 +665,12 @@ class _WipFieldState extends State<_WipField> {
                   ? context.t('board.columns.wipPrefix')
                   : null,
               prefixStyle: TextStyle(
-                fontSize: 10.5,
+                fontSize: AppType.caption,
                 color: AppColors.textSecondary,
               ),
               hintText: context.t('board.columns.wipHint'),
               hintStyle: TextStyle(
-                fontSize: 11,
+                fontSize: AppType.caption,
                 color: AppColors.textSecondary,
               ),
               filled: true,

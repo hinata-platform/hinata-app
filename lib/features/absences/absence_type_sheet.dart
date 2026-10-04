@@ -16,6 +16,7 @@ import '../sprint/modals/glass_modal.dart';
 import '../../core/widgets/folded_hint.dart';
 import 'absence_labels.dart';
 import 'absence_types_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// Opens the editor for a new absence type, or for [existing]. Resolves to true
 /// once something was saved.
@@ -612,7 +613,7 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
           },
         ),
         style: TextStyle(
-          fontSize: 11.5,
+          fontSize: AppType.caption,
           height: 1.4,
           color: short ? AppColors.danger : AppColors.textSecondary,
         ),
@@ -626,7 +627,7 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
       Text(
         context.t('absence.types.icon'),
         style: TextStyle(
-          fontSize: 11,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w600,
           color: AppColors.inkFaint,
         ),
@@ -688,7 +689,7 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
       Text(
         context.t('absence.types.hue'),
         style: TextStyle(
-          fontSize: 11,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w600,
           color: AppColors.inkFaint,
         ),
@@ -797,7 +798,7 @@ class _Heading extends StatelessWidget {
     child: Text(
       text,
       style: TextStyle(
-        fontSize: 12,
+        fontSize: AppType.caption,
         fontWeight: FontWeight.w800,
         letterSpacing: 0.4,
         color: AppColors.inkSoft,
@@ -817,7 +818,7 @@ class _Hint extends StatelessWidget {
     child: FoldedHint(
       text,
       style: TextStyle(
-        fontSize: 11.5,
+        fontSize: AppType.caption,
         height: 1.4,
         color: AppColors.textSecondary,
       ),
@@ -887,7 +888,10 @@ class _NumberRowState extends State<_NumberRow> {
           decoration: InputDecoration(
             isDense: true,
             suffixText: widget.suffix,
-            suffixStyle: TextStyle(fontSize: 11, color: AppColors.inkFaint),
+            suffixStyle: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkFaint,
+            ),
           ),
           // Reported when the field is left or submitted, not per keystroke: each
           // report is a setState on the form, which rebuilds forty rows and two
@@ -966,7 +970,10 @@ class _DaysRowState extends State<_DaysRow> {
           decoration: InputDecoration(
             isDense: true,
             suffixText: context.t('absence.types.daysUnit'),
-            suffixStyle: TextStyle(fontSize: 11, color: AppColors.inkFaint),
+            suffixStyle: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkFaint,
+            ),
           ),
           focusNode: _focus,
           onSubmitted: (text) => widget.onChanged(parseDays(text)),

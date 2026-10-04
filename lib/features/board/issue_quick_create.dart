@@ -20,6 +20,7 @@ import '../../core/widgets/hive_widgets.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'issue_quick_create_cubit.dart';
 import 'package:hinata/core/widgets/user_pronouns.dart';
+import '../../core/theme/app_type.dart';
 
 /// Issue types the quick composer offers. Mirrors the full create form minus
 /// `SUBTASK`, which never gets picked — it arrives forced by a sub-task lane.
@@ -332,7 +333,7 @@ class _QuickComposerState extends State<_QuickComposer> {
                 readOnly: _saving,
                 onChanged: (_) => setState(() {}),
                 style: const TextStyle(
-                  fontSize: 13.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                   height: 1.35,
                 ),
@@ -344,7 +345,7 @@ class _QuickComposerState extends State<_QuickComposer> {
                   contentPadding: EdgeInsets.zero,
                   hintText: context.t('board.quickCreateHint'),
                   hintStyle: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w500,
                     color: AppColors.inkFaint,
                   ),
@@ -384,7 +385,7 @@ class _QuickComposerState extends State<_QuickComposer> {
       _project?.key ?? '—',
       style: TextStyle(
         fontFamily: AppTheme.fontMono,
-        fontSize: 11.5,
+        fontSize: AppType.caption,
         fontWeight: FontWeight.w700,
         color: AppColors.inkSoft,
       ),
@@ -942,7 +943,7 @@ class _QuickPeoplePickerState extends State<_QuickPeoplePicker> {
                             Text(
                               context.t('issues.assignToMe'),
                               style: TextStyle(
-                                fontSize: 11.5,
+                                fontSize: AppType.caption,
                                 color: AppColors.inkFaint,
                               ),
                             ),
@@ -1021,7 +1022,7 @@ class _DottedAddButtonState extends State<DottedAddButton> {
                     Text(
                       widget.label,
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                         color: accent,
                       ),

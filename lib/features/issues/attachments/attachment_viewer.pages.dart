@@ -1319,7 +1319,7 @@ class _FileCard extends StatelessWidget {
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 15,
+              fontSize: AppType.body,
               fontWeight: FontWeight.w700,
               color: _ViewerInk.ink,
             ),
@@ -1327,13 +1327,19 @@ class _FileCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '${item.kind.toUpperCase()} · ${formatBytes(item.size)}',
-            style: const TextStyle(fontSize: 12.5, color: _ViewerInk.soft),
+            style: const TextStyle(
+              fontSize: AppType.label,
+              color: _ViewerInk.soft,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             reason,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12, color: _ViewerInk.faint),
+            style: const TextStyle(
+              fontSize: AppType.caption,
+              color: _ViewerInk.faint,
+            ),
           ),
           if (action != null) ...[const SizedBox(height: 16), action!],
         ],
@@ -1387,7 +1393,7 @@ class _CardAction extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                       color: _ViewerInk.accentInk,
                     ),

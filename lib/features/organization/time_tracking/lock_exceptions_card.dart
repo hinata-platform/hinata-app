@@ -21,6 +21,7 @@ import '../../sprint/modals/glass_modal.dart'
 import '../../time/lock_notice.dart';
 import '../../admin/admin_form_helpers.dart';
 import 'lock_exceptions_cubit.dart';
+import '../../../core/theme/app_type.dart';
 
 /// The way back out of the lock date.
 ///
@@ -174,7 +175,7 @@ class _OrgLockExceptionsCardState extends State<_OrgLockExceptionsBody> {
             child: Text(
               context.t('admin.timeTracking.lockExceptionsEmpty'),
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 height: 1.5,
                 color: AppColors.textSecondary,
               ),
@@ -194,7 +195,7 @@ class _OrgLockExceptionsCardState extends State<_OrgLockExceptionsBody> {
                         Text(
                           formatPeriod(context, exception.from, exception.to),
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: AppType.label,
                             fontWeight: FontWeight.w700,
                             color: AppColors.ink,
                           ),
@@ -203,7 +204,7 @@ class _OrgLockExceptionsCardState extends State<_OrgLockExceptionsBody> {
                           Text(
                             exception.note!,
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: AppType.caption,
                               height: 1.45,
                               color: AppColors.textSecondary,
                             ),

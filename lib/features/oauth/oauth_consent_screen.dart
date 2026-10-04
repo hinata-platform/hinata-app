@@ -19,6 +19,7 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/soft_card.dart';
 import '../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import 'oauth_consent_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// The OAuth 2.1 consent screen an AI client (e.g. Claude) lands the user on
 /// when it starts an authorization flow against their Hinata instance.
@@ -241,13 +242,13 @@ class _ConsentCard extends StatelessWidget {
               variables: {'client': info.clientName, 'product': product},
             ),
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.inkSoft, fontSize: 13.5),
+            style: TextStyle(color: AppColors.inkSoft, fontSize: AppType.label),
           ),
           const SizedBox(height: 24),
           Text(
             context.t('oauthConsent.scopesHeader'),
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               color: AppColors.inkSoft,
               letterSpacing: 0.2,
@@ -257,7 +258,10 @@ class _ConsentCard extends StatelessWidget {
           if (info.scopes.isEmpty)
             Text(
               context.t('oauthConsent.noScopes'),
-              style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
+              style: TextStyle(
+                fontSize: AppType.label,
+                color: AppColors.inkFaint,
+              ),
             )
           else
             Container(
@@ -347,7 +351,7 @@ class _ScopeRow extends StatelessWidget {
                 Text(
                   label == key ? scope : label,
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
@@ -357,7 +361,7 @@ class _ScopeRow extends StatelessWidget {
                   scope,
                   style: TextStyle(
                     fontFamily: AppTheme.fontMono,
-                    fontSize: 11,
+                    fontSize: AppType.caption,
                     color: AppColors.inkFaint,
                   ),
                 ),
@@ -386,7 +390,10 @@ class _RedirectNote extends StatelessWidget {
         Expanded(
           child: Text(
             context.t('oauthConsent.redirectNote', variables: {'host': host}),
-            style: TextStyle(fontSize: 12, color: AppColors.inkFaint),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkFaint,
+            ),
           ),
         ),
       ],

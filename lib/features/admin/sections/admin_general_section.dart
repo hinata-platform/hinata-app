@@ -19,6 +19,7 @@ import '../../sprint/modals/glass_modal.dart'
 import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
 import '../admin_settings_cubit.dart';
+import '../../../core/theme/app_type.dart';
 
 /// General organization settings: name, logo, timezone, default language.
 class AdminGeneralSection extends StatefulWidget {
@@ -202,7 +203,7 @@ class _AdminGeneralSectionState extends State<AdminGeneralSection> {
             Expanded(
               child: Text(
                 current.label,
-                style: TextStyle(fontSize: 14, color: AppColors.ink),
+                style: TextStyle(fontSize: AppType.body, color: AppColors.ink),
               ),
             ),
             Icon(LucideIcons.chevronDown, size: 18, color: AppColors.inkSoft),
@@ -234,7 +235,7 @@ class _AdminGeneralSectionState extends State<AdminGeneralSection> {
                     Text(
                       context.t('admin.logo'),
                       style: TextStyle(
-                        fontSize: 13.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                         color: AppColors.ink,
                       ),
@@ -330,7 +331,7 @@ class _AdminGeneralSectionState extends State<AdminGeneralSection> {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: color,
                   ),

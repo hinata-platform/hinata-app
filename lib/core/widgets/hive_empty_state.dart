@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import 'hex_mark.dart';
+import '../theme/app_type.dart';
 
 /// The brand empty state, used on every surface that can run out of rows: the
 /// amber HexMark signet over a title and a caption, centred.
@@ -44,7 +45,7 @@ class HiveEmptyState extends StatelessWidget {
               title,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14.5,
+                fontSize: AppType.body,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
               ),
@@ -55,7 +56,7 @@ class HiveEmptyState extends StatelessWidget {
                 message!,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   height: 1.4,
                   color: AppColors.inkSoft,
                 ),

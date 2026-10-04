@@ -23,6 +23,7 @@ import 'org_deadline_basis_card.dart';
 import 'organization_cubit.dart';
 import 'time_tracking/time_tracking_section.dart';
 import '../../core/widgets/folded_hint.dart';
+import '../../core/theme/app_type.dart';
 
 /// Organisation (HIN-129): what an organisation admin keeps for the whole
 /// organisation, apart from the platform's admin area.
@@ -139,7 +140,7 @@ class OrganizationView extends StatelessWidget {
             FoldedHint(
               context.t('org.subtitle'),
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppType.label,
                 height: 1.4,
                 color: AppColors.inkSoft,
               ),

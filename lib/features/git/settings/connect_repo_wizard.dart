@@ -16,6 +16,7 @@ import '../git_tokens.dart';
 import '../widgets/provider_glyph.dart';
 import 'git_settings_cubit.dart';
 import '../../../core/widgets/hive_widgets.dart' show backArrow, forwardChevron;
+import '../../../core/theme/app_type.dart';
 
 part 'connect_repo_wizard.data.dart';
 part 'connect_repo_wizard.widgets.dart';
@@ -321,7 +322,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
                   context.t('git.connect.title'),
                   style: const TextStyle(
                     fontFamily: AppTheme.fontBrand,
-                    fontSize: 18,
+                    fontSize: AppType.heading,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.2,
                   ),
@@ -343,7 +344,10 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.label,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
               ],
             ),
@@ -429,7 +433,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               : Text(
                   '${index + 1}',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w700,
                     color: fg,
                   ),
@@ -442,7 +446,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
               color: on ? AppColors.ink : AppColors.inkFaint,
             ),
@@ -499,7 +503,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               ],
             ),
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppType.caption,
               height: 1.5,
               color: AppColors.inkSoft,
             ),
@@ -526,12 +530,15 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
                   style: const TextStyle(
                     fontFamily: AppTheme.fontBrand,
                     fontWeight: FontWeight.w700,
-                    fontSize: 15,
+                    fontSize: AppType.body,
                   ),
                 ),
                 Text(
                   p.host,
-                  style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkFaint,
+                  ),
                 ),
               ],
             ),
@@ -545,7 +552,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
             child: Text(
               'OAuth',
               style: TextStyle(
-                fontSize: 10,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.5,
                 color: AppColors.accentInk,
@@ -572,7 +579,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               variables: {'provider': p.label},
             ),
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppType.caption,
               height: 1.5,
               color: AppColors.inkSoft,
             ),
@@ -596,7 +603,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               'git.connect.awaitingWaiting',
               variables: {'provider': p.label},
             ),
-            style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+            style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
           ),
         ),
         const SizedBox(height: 14),
@@ -656,7 +663,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontFamily: AppTheme.fontBrand,
-              fontSize: 16,
+              fontSize: AppType.title,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -670,7 +677,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
             ),
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 12.5,
+              fontSize: AppType.label,
               height: 1.55,
               color: AppColors.inkSoft,
             ),
@@ -694,7 +701,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               ],
             ),
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppType.caption,
               height: 1.5,
               color: AppColors.inkSoft,
             ),
@@ -746,7 +753,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
             ),
             style: const TextStyle(
               fontFamily: AppTheme.fontBrand,
-              fontSize: 17,
+              fontSize: AppType.title,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -758,7 +765,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               'git.connect.authorizeSubtitle',
               variables: {'provider': p.label},
             ),
-            style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+            style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
           ),
         ),
         const SizedBox(height: 14),
@@ -813,14 +820,14 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
                                 ],
                               ),
                               style: const TextStyle(
-                                fontSize: 12.5,
+                                fontSize: AppType.label,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             Text(
                               context.t(perms[i].descKey),
                               style: TextStyle(
-                                fontSize: 11.5,
+                                fontSize: AppType.caption,
                                 color: AppColors.inkFaint,
                               ),
                             ),
@@ -832,7 +839,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
                         context.t('git.connect.scope.${perms[i].scopeKey}'),
                         style: TextStyle(
                           fontFamily: AppTheme.fontMono,
-                          fontSize: 10.5,
+                          fontSize: AppType.caption,
                           color: AppColors.inkFaint,
                         ),
                       ),
@@ -860,7 +867,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               'git.connect.chooseOwner',
               variables: {'owner': p.ownerWord},
             ),
-            style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+            style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
           ),
         ),
         for (final o in _owners) ...[
@@ -964,7 +971,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
           child: Text(
             context.t('git.connect.tokenIntro'),
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppType.caption,
               height: 1.5,
               color: AppColors.inkSoft,
             ),
@@ -1128,7 +1135,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w600,
                 color: AppColors.accentInk,
               ),

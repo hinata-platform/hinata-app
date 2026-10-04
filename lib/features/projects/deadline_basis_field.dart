@@ -7,6 +7,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/glass_switch_chip.dart';
+import '../../core/theme/app_type.dart';
 
 /// The organisation's deadline basis while project templates are on, and null
 /// while they are off.
@@ -76,7 +77,7 @@ class DeadlineBasisField extends StatelessWidget {
   Widget build(BuildContext context) {
     final orgLabel = context.t(deadlineBasisLabelKey(organisationDefault));
     final hintStyle = TextStyle(
-      fontSize: 12,
+      fontSize: AppType.caption,
       height: 1.4,
       color: AppColors.inkFaint,
     );

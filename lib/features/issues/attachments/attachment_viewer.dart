@@ -25,6 +25,7 @@ import 'attachment_kind.dart';
 import 'attachment_viewer_cubit.dart';
 import '../../../core/widgets/hive_widgets.dart'
     show backChevron, forwardChevron;
+import '../../../core/theme/app_type.dart';
 
 part 'attachment_viewer.pages.dart';
 

@@ -12,6 +12,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../sprint/modals/glass_modal.dart';
+import '../../core/theme/app_type.dart';
 
 /// "Who sees my time data?" and the privacy notice of the module (Art. 12–14
 /// DSGVO), as one sheet.
@@ -108,7 +109,7 @@ class _TimePrivacyBodyState extends State<TimePrivacyBody> {
                       context.t('time.privacy.loadFailed'),
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: AppType.label,
                         height: 1.45,
                         color: AppColors.textSecondary,
                       ),
@@ -145,7 +146,7 @@ class _TimePrivacyBodyState extends State<TimePrivacyBody> {
                     const SizedBox(height: 6),
                     HinataMarkdownPreview(
                       markdown: privacy.notice,
-                      fontSize: 13.5,
+                      fontSize: AppType.label,
                     ),
                   ],
                 ),
@@ -342,7 +343,11 @@ class TimeVisibilityPanel extends StatelessWidget {
         Expanded(
           child: Text(
             sentence,
-            style: TextStyle(fontSize: 13, height: 1.45, color: AppColors.ink),
+            style: TextStyle(
+              fontSize: AppType.label,
+              height: 1.45,
+              color: AppColors.ink,
+            ),
           ),
         ),
       ],
@@ -359,7 +364,7 @@ class _Heading extends StatelessWidget {
   Widget build(BuildContext context) => Text(
     text,
     style: TextStyle(
-      fontSize: 12,
+      fontSize: AppType.caption,
       fontWeight: FontWeight.w700,
       letterSpacing: 0.4,
       color: AppColors.inkFaint,

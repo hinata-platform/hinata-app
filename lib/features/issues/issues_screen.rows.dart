@@ -71,7 +71,10 @@ class _GroupHeader extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                fontSize: AppType.body,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -86,7 +89,7 @@ class _GroupHeader extends StatelessWidget {
               '$count',
               style: TextStyle(
                 fontFamily: AppTheme.fontMono,
-                fontSize: 11.5,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w600,
                 color: AppColors.inkSoft,
               ),
@@ -144,7 +147,7 @@ class _IssueTableHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = TextStyle(
-      fontSize: 11,
+      fontSize: AppType.caption,
       fontWeight: FontWeight.w600,
       letterSpacing: 0.6,
       color: AppColors.inkFaint,
@@ -269,7 +272,7 @@ class IssueRow extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 13.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -316,7 +319,7 @@ class IssueRow extends StatelessWidget {
                       due.text,
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
-                        fontSize: 12,
+                        fontSize: AppType.caption,
                         color: due.late ? AppColors.danger : AppColors.inkSoft,
                       ),
                     ),
@@ -356,7 +359,7 @@ class IssueRow extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 13.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -416,7 +419,7 @@ class IssueRow extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 12.5,
+                              fontSize: AppType.label,
                               color: AppColors.inkSoft,
                             ),
                           ),
@@ -433,7 +436,7 @@ class IssueRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontFamily: AppTheme.fontMono,
-                  fontSize: 12,
+                  fontSize: AppType.caption,
                   color: due != null && due.late
                       ? AppColors.danger
                       : AppColors.inkSoft,

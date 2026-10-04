@@ -135,7 +135,7 @@ class _VoiceBubbleState extends State<VoiceBubble> {
         final total = _controller.duration;
         final timeStyle = TextStyle(
           fontFamily: AppTheme.fontMono,
-          fontSize: 10.5,
+          fontSize: AppType.caption,
           color: AppColors.inkFaint,
         );
         return SizedBox(

@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/glass_panel.dart';
 import '../../search/search_tokens.dart';
 import '../../../core/widgets/hive_widgets.dart' show forwardChevron;
+import '../../../core/theme/app_type.dart';
 
 /// Where an attachment is being sourced from. Picked in [showUploadSourceSheet]
 /// on touch platforms, where the OS offers distinct gallery / camera / document
@@ -109,7 +110,7 @@ class _UploadSourceSheet extends StatelessWidget {
                   child: Text(
                     context.t('issues.attachments.source.title'),
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: AppType.body,
                       fontWeight: FontWeight.w700,
                       color: tokens.ink,
                     ),
@@ -182,7 +183,7 @@ class _SourceRow extends StatelessWidget {
                     Text(
                       label,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: AppType.body,
                         fontWeight: FontWeight.w600,
                         color: tokens.ink,
                       ),
@@ -192,7 +193,7 @@ class _SourceRow extends StatelessWidget {
                       Text(
                         subtitle!,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           color: tokens.inkFaint,
                         ),
                       ),

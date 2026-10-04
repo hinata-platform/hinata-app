@@ -20,6 +20,7 @@ import '../widgets/provider_glyph.dart';
 import 'connect_repo_wizard.dart';
 import 'git_settings_cubit.dart';
 import '../../../core/widgets/folded_hint.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Project-settings section: per-project repository connection + development
 /// automation + branch-naming template. Connect/disconnect/automation each
@@ -206,7 +207,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
                 Text(
                   prov.label,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w600,
                     color: AppColors.inkFaint,
                   ),
@@ -242,7 +243,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontFamily: AppTheme.fontBrand,
-            fontSize: 17,
+            fontSize: AppType.title,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -253,7 +254,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
             context.t('git.ctaBody'),
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppType.label,
               height: 1.6,
               color: AppColors.inkSoft,
             ),
@@ -284,7 +285,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
                       child: Text(
                         context.t('git.ctaTokenLink'),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: AppType.caption,
                           fontWeight: FontWeight.w600,
                           color: AppColors.accentInk,
                         ),
@@ -297,7 +298,10 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
             ],
           ),
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 12, color: AppColors.inkFaint),
+          style: TextStyle(
+            fontSize: AppType.caption,
+            color: AppColors.inkFaint,
+          ),
         ),
         const SizedBox(height: 6),
       ],
@@ -373,7 +377,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
                           ),
                           style: const TextStyle(
                             fontFamily: AppTheme.fontMono,
-                            fontSize: 14.5,
+                            fontSize: AppType.body,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -429,7 +433,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
                 variables: {'ago': _syncedLabel(context, git.lastSyncAt)},
               ),
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w600,
                 color: AppColors.successInk,
               ),
@@ -443,7 +447,10 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
               context.t('git.connectedBy', variables: {'name': connectedName}),
             if (git.connectedAt != null) agoSuffixed(git.connectedAt),
           ].where((s) => s.isNotEmpty).join(' · '),
-          style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+          style: TextStyle(
+            fontSize: AppType.caption,
+            color: AppColors.inkFaint,
+          ),
         ),
         _dot(),
         _methodBadge(
@@ -483,7 +490,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
             ],
           ),
           style: TextStyle(
-            fontSize: 12,
+            fontSize: AppType.caption,
             height: 1.55,
             color: AppColors.inkSoft,
           ),
@@ -559,7 +566,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
                       Text(
                         verb,
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -574,7 +581,10 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
                   const SizedBox(height: 2),
                   Text(
                     when,
-                    style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      color: AppColors.inkFaint,
+                    ),
                   ),
                 ],
               ),
@@ -640,7 +650,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
                     Text(
                       target?.name ?? context.t('git.chooseState'),
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: AppType.caption,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -693,7 +703,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
                 Text(
                   s.name,
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -723,14 +733,17 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
                 Text(
                   context.t('git.smartCommits'),
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 2),
                 FoldedHint(
                   context.t('git.smartCommitsDesc'),
-                  style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkFaint,
+                  ),
                 ),
                 if (auto.smartCommits) ...[
                   const SizedBox(height: 10),
@@ -804,14 +817,17 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
             ),
             style: TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               color: AppColors.ink,
             ),
           ),
         ),
         Text(
           explain,
-          style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+          style: TextStyle(
+            fontSize: AppType.caption,
+            color: AppColors.inkFaint,
+          ),
         ),
       ],
     );
@@ -836,7 +852,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
             ],
           ),
           style: TextStyle(
-            fontSize: 12,
+            fontSize: AppType.caption,
             height: 1.55,
             color: AppColors.inkSoft,
           ),
@@ -914,7 +930,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
                 ],
               ),
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 height: 1.55,
                 color: AppColors.accentInk,
               ),
@@ -932,7 +948,10 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
       const SizedBox(width: 8),
       Text(
         label,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        style: const TextStyle(
+          fontSize: AppType.label,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     ],
   );
@@ -964,7 +983,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
           branch,
           style: TextStyle(
             fontFamily: AppTheme.fontMono,
-            fontSize: 11,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w600,
             color: AppColors.accentInk,
           ),
@@ -982,7 +1001,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
     child: Text(
       label.toUpperCase(),
       style: TextStyle(
-        fontSize: 10,
+        fontSize: AppType.caption,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.5,
         color: AppColors.inkSoft,
@@ -1006,7 +1025,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
             label,
             style: TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 11,
+              fontSize: AppType.caption,
               color: AppColors.accentInk,
             ),
           ),

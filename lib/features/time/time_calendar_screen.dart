@@ -39,6 +39,7 @@ import 'time_entry_sheet.dart';
 import 'time_privacy_sheet.dart';
 import 'time_views.dart';
 import 'timer_bar.dart';
+import '../../core/theme/app_type.dart';
 
 /// The module's calendar: a person's own hours, read a day at a time inside a
 /// week, or a month at a time for as far as they care to scroll.
@@ -1039,7 +1040,7 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppType.body,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,
                     ),
@@ -1802,7 +1803,7 @@ class _Day extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 13.5,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
               ),
@@ -1954,7 +1955,7 @@ class _WeekStripDay extends StatelessWidget {
               Text(
                 letter,
                 style: TextStyle(
-                  fontSize: 10.5,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w600,
                   color: AppColors.inkFaint,
                 ),
@@ -1974,7 +1975,7 @@ class _WeekStripDay extends StatelessWidget {
                     child: Text(
                       '${day.day}',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: AppType.body,
                         fontWeight: focused || today
                             ? FontWeight.w800
                             : FontWeight.w600,
@@ -2049,7 +2050,7 @@ class _TruncatedNotice extends StatelessWidget {
         Expanded(
           child: Text(
             context.t('time.calendar.truncated'),
-            style: TextStyle(fontSize: 12.5, color: AppColors.ink),
+            style: TextStyle(fontSize: AppType.label, color: AppColors.ink),
           ),
         ),
       ],

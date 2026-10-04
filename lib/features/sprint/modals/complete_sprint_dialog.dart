@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../sprint_format.dart';
 import 'glass_modal.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Liquid-Glass "Complete sprint" modal. Returns the destination for unfinished
 /// work: a planned sprint id, or `backlog`. Null when dismissed.
@@ -140,7 +141,7 @@ class _CompleteSprintBodyState extends State<_CompleteSprintBody> {
                             variables: {'count': '${widget.openCount}'},
                           ),
                     style: TextStyle(
-                      fontSize: 11.5,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w600,
                       color: AppColors.inkSoft,
                     ),
@@ -215,7 +216,7 @@ class _StatRow extends StatelessWidget {
               style: TextStyle(
                 fontFamily: AppTheme.fontBrand,
                 fontWeight: FontWeight.w700,
-                fontSize: 15,
+                fontSize: AppType.body,
                 color: bubbleInk,
               ),
             ),
@@ -228,13 +229,16 @@ class _StatRow extends StatelessWidget {
                 Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
                   sub,
-                  style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
               ],
             ),
@@ -315,7 +319,7 @@ class _DestOption extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -324,7 +328,7 @@ class _DestOption extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         color: AppColors.inkSoft,
                       ),
                     ),

@@ -7,6 +7,7 @@ import '../../theme/app_colors.dart';
 import '../hive_widgets.dart' show fmtDuration;
 import 'time_grid_model.dart';
 import 'time_month_layout.dart';
+import '../../theme/app_type.dart';
 
 /// A month as weeks × days, scrolling on for as long as somebody keeps
 /// scrolling — the calendar's widest span, and the one the hour canvas cannot
@@ -509,7 +510,7 @@ class MonthWeekdayHeader extends StatelessWidget {
                         narrow[(first + column) % 7],
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: AppType.caption,
                           fontWeight: FontWeight.w600,
                           // The weekend recedes, the way it does in the grid
                           // below.
@@ -659,7 +660,7 @@ class _FailedMonth extends StatelessWidget {
             Text(
               MaterialLocalizations.of(context).formatMonthYear(month),
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
               ),
@@ -670,7 +671,10 @@ class _FailedMonth extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.inkSoft,
+              ),
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 10),
@@ -805,7 +809,7 @@ class _Cell extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w600,
                       color: AppColors.inkSoft,
                     ),
@@ -856,7 +860,7 @@ class _DayLine extends StatelessWidget {
     final number = Text(
       '${day.day}',
       style: TextStyle(
-        fontSize: 13,
+        fontSize: AppType.label,
         fontWeight: today ? FontWeight.w800 : FontWeight.w600,
         color: today
             ? _onAccent
@@ -909,7 +913,7 @@ class _DayLine extends StatelessWidget {
                   textAlign: TextAlign.end,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w700,
                     color: AppColors.inkSoft,
                   ),
@@ -957,7 +961,7 @@ class _Chip extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 10.5,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w600,
                   color: AppColors.ink,
                 ),

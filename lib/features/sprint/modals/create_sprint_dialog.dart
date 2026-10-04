@@ -5,6 +5,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../sprint_format.dart';
 import 'glass_modal.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Result of the create-sprint modal.
 class CreateSprintData {
@@ -114,7 +115,10 @@ class _CreateSprintBodyState extends State<_CreateSprintBody> {
                   label: context.t('sprint.goal'),
                   trailing: Text(
                     context.t('sprint.optional'),
-                    style: TextStyle(fontSize: 11, color: AppColors.inkFaint),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      color: AppColors.inkFaint,
+                    ),
                   ),
                   child: Semantics(
                     label: context.t('sprint.goal'),
@@ -169,7 +173,7 @@ class _CreateSprintBodyState extends State<_CreateSprintBody> {
                         trailing: Text(
                           context.t('sprint.auto'),
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: AppType.caption,
                             color: AppColors.inkFaint,
                           ),
                         ),
@@ -191,7 +195,10 @@ class _CreateSprintBodyState extends State<_CreateSprintBody> {
             '${prettyDate(_start)} → ${prettyDate(_end)}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkSoft,
+            ),
           ),
           onConfirm: _name.text.trim().isEmpty
               ? null
@@ -245,7 +252,7 @@ class _DateButton extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13.5,
+                      fontSize: AppType.label,
                       color: muted ? AppColors.inkSoft : AppColors.ink,
                     ),
                   ),

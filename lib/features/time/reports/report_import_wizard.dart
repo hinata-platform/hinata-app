@@ -18,6 +18,7 @@ import '../../../core/widgets/hive_widgets.dart' show fmtDuration;
 import '../../../core/widgets/person_picker.dart';
 import '../../sprint/modals/glass_modal.dart';
 import 'report_import_cubit.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Time entries from a CSV file (HIN-93), as one glass sheet in three moves:
 /// choose the file, see how its columns were read and every row that fails,
@@ -331,7 +332,10 @@ class _ImportWizardState extends State<_ImportWizard> {
 
   List<Widget> _checked(ImportPreview preview) {
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final caption = TextStyle(fontSize: 12, color: AppColors.inkSoft);
+    final caption = TextStyle(
+      fontSize: AppType.caption,
+      color: AppColors.inkSoft,
+    );
     return [
       const SizedBox(height: 18),
       Semantics(
@@ -342,7 +346,7 @@ class _ImportWizardState extends State<_ImportWizard> {
             variables: {'valid': preview.validRows, 'total': preview.totalRows},
           ),
           style: TextStyle(
-            fontSize: 14,
+            fontSize: AppType.body,
             fontWeight: FontWeight.w700,
             color: AppColors.ink,
           ),
@@ -351,7 +355,7 @@ class _ImportWizardState extends State<_ImportWizard> {
       if (preview.errorCount > 0)
         Text(
           context.t('time.import.errors', count: preview.errorCount),
-          style: TextStyle(fontSize: 13, color: AppColors.dangerInk),
+          style: TextStyle(fontSize: AppType.label, color: AppColors.dangerInk),
         ),
       if (preview.validRows == 0)
         Text(context.t('time.import.nothing'), style: caption),
@@ -402,7 +406,7 @@ class _ImportWizardState extends State<_ImportWizard> {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: AppTheme.fontMono,
-                                  fontSize: 12.5,
+                                  fontSize: AppType.label,
                                   color: AppColors.ink,
                                 ),
                               ),
@@ -419,7 +423,7 @@ class _ImportWizardState extends State<_ImportWizard> {
                                     ? context.t('time.import.ignore')
                                     : context.t(column.labelKey),
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: AppType.label,
                                   fontWeight: column == null
                                       ? FontWeight.w400
                                       : FontWeight.w600,
@@ -473,7 +477,7 @@ class _ImportWizardState extends State<_ImportWizard> {
                                 ?row.issue,
                               ].join(' · '),
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: AppType.label,
                                 color: AppColors.ink,
                               ),
                             ),
@@ -498,7 +502,7 @@ class _ImportWizardState extends State<_ImportWizard> {
                                     child: Text(
                                       row.error!,
                                       style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: AppType.caption,
                                         color: AppColors.dangerInk,
                                       ),
                                     ),
@@ -513,7 +517,7 @@ class _ImportWizardState extends State<_ImportWizard> {
                           fmtDuration(context, row.minutes),
                           style: TextStyle(
                             fontFamily: AppTheme.fontMono,
-                            fontSize: 12.5,
+                            fontSize: AppType.label,
                             color: AppColors.ink,
                           ),
                         ),
@@ -548,7 +552,10 @@ class _ImportWizardState extends State<_ImportWizard> {
                         TextSpan(text: error.message),
                       ],
                     ),
-                    style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                 ),
               if (_moreErrors)

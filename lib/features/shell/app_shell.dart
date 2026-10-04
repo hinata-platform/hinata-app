@@ -65,6 +65,7 @@ import 'swipe_back.dart';
 import '../../core/theme/glass_chrome.dart'
     show kNavGlassDark, kNavGlassLight, kOnAmber;
 import '../../core/widgets/hive_widgets.dart' show backArrow, forwardArrow;
+import '../../core/theme/app_type.dart';
 
 part 'app_shell.wide.dart';
 part 'app_shell.notifications.dart';

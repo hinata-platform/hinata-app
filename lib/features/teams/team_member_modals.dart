@@ -21,6 +21,7 @@ import '../knowledge/team_pages_picker.dart';
 import 'team_members_cubit.dart';
 import 'team_modal_kit.dart';
 import 'team_widgets.dart';
+import '../../core/theme/app_type.dart';
 
 /// Add-members flow (2 steps: pick people, then role, project access and
 /// knowledge access).
@@ -285,7 +286,10 @@ class _AddMembersBodyState extends State<AddMembersBody>
             const SizedBox(height: 14),
             Text(
               _error!,
-              style: TextStyle(color: AppColors.dangerInk, fontSize: 12.5),
+              style: TextStyle(
+                color: AppColors.dangerInk,
+                fontSize: AppType.label,
+              ),
             ),
           ],
         ],
@@ -326,7 +330,10 @@ class _AddMembersBodyState extends State<AddMembersBody>
             _query.trim().isEmpty
                 ? context.t('teams.everyoneOnTeam')
                 : context.t('common.noMatches'),
-            style: TextStyle(fontSize: 12.5, color: AppColors.inkFaint),
+            style: TextStyle(
+              fontSize: AppType.label,
+              color: AppColors.inkFaint,
+            ),
           ),
         )
       else
@@ -372,7 +379,7 @@ class _AddMembersBodyState extends State<AddMembersBody>
                   count: _selected.length,
                 ),
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                   color: AppColors.inkSoft,
                 ),
@@ -391,7 +398,7 @@ class _AddMembersBodyState extends State<AddMembersBody>
               ? 'teams.roleHintAdmin'
               : 'teams.roleHintMember',
         ),
-        style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+        style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
       ),
       const SizedBox(height: 18),
       FieldLabel(context.t('teams.projectAccess')),
@@ -537,7 +544,10 @@ class _ManageMemberBodyState extends State<ManageMemberBody>
                 Expanded(
                   child: Text(
                     context.t('teams.lastAdminHint'),
-                    style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                 ),
               ],
@@ -564,7 +574,10 @@ class _ManageMemberBodyState extends State<ManageMemberBody>
             const SizedBox(height: 14),
             Text(
               _error!,
-              style: TextStyle(color: AppColors.dangerInk, fontSize: 12.5),
+              style: TextStyle(
+                color: AppColors.dangerInk,
+                fontSize: AppType.label,
+              ),
             ),
           ],
         ],
@@ -624,7 +637,7 @@ class _Stepper extends StatelessWidget {
           child: Text(
             '$n',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               color: on ? kOnAmber : AppColors.inkFaint,
             ),
@@ -634,7 +647,7 @@ class _Stepper extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w600,
             color: on ? AppColors.ink : AppColors.inkFaint,
           ),

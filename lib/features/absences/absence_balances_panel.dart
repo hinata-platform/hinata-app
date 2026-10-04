@@ -24,6 +24,7 @@ import 'absence_entitlement_sheets.dart' show LedgerRow;
 import 'absence_labels.dart';
 import 'absence_year_views.dart';
 import '../../core/widgets/folded_hint.dart';
+import '../../core/theme/app_type.dart';
 
 /// Settings → Working hours and absences → your absence balances (HIN-116).
 ///
@@ -298,7 +299,7 @@ class _BalancesPanelState extends State<_BalancesPanel> {
               Text(
                 context.t('absence.balances.title'),
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w700,
                   color: AppColors.inkSoft,
                 ),
@@ -307,7 +308,7 @@ class _BalancesPanelState extends State<_BalancesPanel> {
               FoldedHint(
                 context.t('absence.balances.hint'),
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: AppType.caption,
                   height: 1.4,
                   color: AppColors.textSecondary,
                 ),
@@ -375,7 +376,7 @@ class _BalancesPanelState extends State<_BalancesPanel> {
                 child: Text(
                   context.t('absence.notices.title'),
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w700,
                     color: AppColors.inkSoft,
                   ),
@@ -390,7 +391,7 @@ class _BalancesPanelState extends State<_BalancesPanel> {
                         : 'absence.notices.hint',
                   ),
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: AppType.caption,
                     height: 1.4,
                     color: AppColors.textSecondary,
                   ),
@@ -488,7 +489,7 @@ class _BalancesPanelState extends State<_BalancesPanel> {
               : '${context.t('absence.balances.journal')}  ·  '
                     '${absenceTypeName(context, type)}',
           style: TextStyle(
-            fontSize: 12.5,
+            fontSize: AppType.label,
             fontWeight: FontWeight.w700,
             color: AppColors.inkSoft,
           ),
@@ -639,7 +640,7 @@ class _BalanceCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w700,
                           color: AppColors.ink,
                         ),
@@ -672,7 +673,7 @@ class _BalanceCard extends StatelessWidget {
                     '${context.t('absence.balances.planned')} '
                     '${days(context, balance.plannedMilliDays)}'
               : context.t('absence.balances.noEntries'),
-          style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+          style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
         ),
       ];
     }
@@ -681,7 +682,7 @@ class _BalanceCard extends StatelessWidget {
         Text(
           context.t('absence.balances.notGranted'),
           style: TextStyle(
-            fontSize: 12.5,
+            fontSize: AppType.label,
             fontWeight: FontWeight.w600,
             color: AppColors.inkSoft,
           ),
@@ -690,7 +691,7 @@ class _BalanceCard extends StatelessWidget {
         Text(
           context.t('absence.balances.notGrantedHint'),
           style: TextStyle(
-            fontSize: 11,
+            fontSize: AppType.caption,
             height: 1.35,
             color: AppColors.textSecondary,
           ),
@@ -705,7 +706,7 @@ class _BalanceCard extends StatelessWidget {
           Text(
             days(context, balance.remainingMilliDays),
             style: TextStyle(
-              fontSize: 24,
+              fontSize: AppType.display,
               fontWeight: FontWeight.w800,
               fontFeatures: const [FontFeature.tabularFigures()],
               color: AppColors.ink,
@@ -717,7 +718,10 @@ class _BalanceCard extends StatelessWidget {
               context.t('absence.balances.remaining'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.inkSoft,
+              ),
             ),
           ),
         ],
@@ -729,14 +733,14 @@ class _BalanceCard extends StatelessWidget {
         '${context.t('absence.balances.entitled')} '
         '${daysLabel(context, balance.accruedMilliDays)}'
         '${balance.carriedInMilliDays > 0 ? '  ·  ${context.t('absence.report.carriedIn')} ${days(context, balance.carriedInMilliDays)}' : ''}',
-        style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+        style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
       ),
       Text(
         '${context.t('absence.balances.taken')} '
         '${days(context, balance.takenMilliDays)}  ·  '
         '${context.t('absence.balances.planned')} '
         '${days(context, balance.plannedMilliDays)}',
-        style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+        style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
       ),
       if (balance.expiresOn != null && balance.carriedInMilliDays > 0) ...[
         const SizedBox(height: 4),
@@ -746,7 +750,7 @@ class _BalanceCard extends StatelessWidget {
             variables: {'date': dayMonthLabel(context, balance.expiresOn!)},
           ),
           style: TextStyle(
-            fontSize: 11,
+            fontSize: AppType.caption,
             height: 1.35,
             color: AppColors.textSecondary,
           ),
@@ -766,7 +770,7 @@ class _BalanceCard extends StatelessWidget {
             },
           ),
           style: TextStyle(
-            fontSize: 11,
+            fontSize: AppType.caption,
             height: 1.35,
             color: AppColors.dangerInk,
           ),

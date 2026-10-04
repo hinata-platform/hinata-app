@@ -6,6 +6,7 @@ import '../i18n/i18n.dart';
 import '../models/content_models.dart';
 import '../theme/app_colors.dart';
 import '../widgets/glass_popup_menu.dart';
+import '../theme/app_type.dart';
 
 /// Standard swipe gestures for a notification row, shared by the bell popover
 /// and the full notifications page:
@@ -158,7 +159,7 @@ class _SwipeBackground extends StatelessWidget {
             label,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 12.5,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w700,
             ),
           ),

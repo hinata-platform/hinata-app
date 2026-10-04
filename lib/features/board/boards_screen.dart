@@ -31,6 +31,7 @@ import 'board_list_cubit.dart';
 import 'board_manage_menu.dart';
 import 'create_board_dialog.dart';
 import 'load_when_shown.dart';
+import '../../core/theme/app_type.dart';
 
 // ─────────────────────────── BoardScreen ──────────────────────────────────
 // Shown at /board — lists all boards across projects; can filter by project.
@@ -353,35 +354,44 @@ class _BoardListCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      board.isScrum ? LucideIcons.zap : LucideIcons.columns3,
-                      size: 13,
-                      color: AppColors.navy,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      context.t(
-                        board.isScrum ? 'board.typeScrum' : 'board.typeKanban',
-                      ),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 11,
+              // Gives way before the manage button does on a narrow card.
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        board.isScrum ? LucideIcons.zap : LucideIcons.columns3,
+                        size: 13,
                         color: AppColors.navy,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          context.t(
+                            board.isScrum
+                                ? 'board.typeScrum'
+                                : 'board.typeKanban',
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: AppType.caption,
+                            color: AppColors.navy,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const Spacer(),
@@ -415,7 +425,10 @@ class _BoardListCard extends StatelessWidget {
               board.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                fontSize: AppType.title,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
           if (projectNames.isNotEmpty)
@@ -423,7 +436,10 @@ class _BoardListCard extends StatelessWidget {
               projectNames,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.textSecondary,
+              ),
             ),
           const SizedBox(height: 4),
           Align(

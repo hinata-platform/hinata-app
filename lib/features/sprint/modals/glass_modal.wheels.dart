@@ -330,7 +330,7 @@ class _WheelSeparator extends StatelessWidget {
             // Not const: the ink tokens are theme-aware getters, so a const
             // style would freeze the light-mode colour into the dark theme.
             style: TextStyle(
-              fontSize: 24,
+              fontSize: AppType.display,
               fontWeight: FontWeight.w700,
               color: AppColors.inkSoft,
             ),
@@ -474,7 +474,7 @@ class _TypedValueFieldState<T> extends State<_TypedValueField<T>> {
                 if (widget.parse(_text.text) != null) widget.onSubmitted();
               },
               style: TextStyle(
-                fontSize: 20,
+                fontSize: AppType.heading,
                 fontWeight: FontWeight.w700,
                 fontFeatures: const [ui.FontFeature.tabularFigures()],
                 color: AppColors.ink,

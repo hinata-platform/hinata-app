@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Admin → MCP (Model Context Protocol) server.
 ///
@@ -85,7 +86,7 @@ class _AdminMcpSectionState extends State<AdminMcpSection> {
               controller: _maxPats,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: TextStyle(fontSize: 14, color: AppColors.ink),
+              style: TextStyle(fontSize: AppType.body, color: AppColors.ink),
               decoration: adminInputDecoration(
                 context,
                 label: context.t('admin.mcpMaxPats'),
@@ -122,7 +123,10 @@ class _ReadOnlyRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+              style: TextStyle(
+                fontSize: AppType.label,
+                color: AppColors.inkSoft,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -133,7 +137,7 @@ class _ReadOnlyRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.right,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
                 fontFamily: AppTheme.fontMono,
                 color: AppColors.ink,

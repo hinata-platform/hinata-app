@@ -25,6 +25,7 @@ import '../../../core/util/time_input.dart';
 import '../../../core/widgets/glass_panel.dart';
 import '../../../core/widgets/hive_widgets.dart';
 import '../../search/search_tokens.dart';
+import '../../../core/theme/app_type.dart';
 
 part 'glass_modal.fields.dart';
 part 'glass_modal.wheels.dart';
@@ -186,7 +187,7 @@ Future<bool?> showGlassConfirm(
           child: Text(
             message,
             style: TextStyle(
-              fontSize: 13.5,
+              fontSize: AppType.label,
               height: 1.45,
               color: AppColors.inkSoft,
             ),
@@ -244,7 +245,7 @@ class _GlassConfirmHeader extends StatelessWidget {
                 title,
                 style: const TextStyle(
                   fontFamily: AppTheme.fontBrand,
-                  fontSize: 18,
+                  fontSize: AppType.heading,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.2,
                 ),
@@ -514,7 +515,10 @@ class _OptionsList<T> extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
           child: Text(
             title,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: AppType.body,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
         for (final o in options)
@@ -850,7 +854,7 @@ class _GlassDatePopoverBody extends StatelessWidget {
             child: Text(
               title,
               style: const TextStyle(
-                fontSize: 13.5,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -1155,7 +1159,7 @@ class _GlassDateRangePickerState extends State<_GlassDateRangePicker> {
                     child: Text(
                       label,
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         fontWeight: FontWeight.w600,
                         color: AppColors.inkFaint,
                       ),
@@ -1316,7 +1320,7 @@ class _MonthGrid extends StatelessWidget {
               l.formatMonthYear(month),
               style: const TextStyle(
                 fontFamily: AppTheme.fontBrand,
-                fontSize: 15,
+                fontSize: AppType.body,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.2,
               ),
@@ -1458,7 +1462,7 @@ class _DayCell extends StatelessWidget {
                   child: Text(
                     label,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppType.label,
                       fontWeight: isEndpoint
                           ? FontWeight.w700
                           : FontWeight.w500,
@@ -2064,7 +2068,7 @@ class _GlassToastState extends State<_GlassToast>
                                 child: Text(
                                   widget.message,
                                   style: TextStyle(
-                                    fontSize: 13.5,
+                                    fontSize: AppType.label,
                                     height: 1.35,
                                     // The glass tokens', not `AppColors.ink`:
                                     // that one reads a global written from the
@@ -2093,7 +2097,7 @@ class _GlassToastState extends State<_GlassToast>
                                       child: Text(
                                         widget.actionLabel!,
                                         style: TextStyle(
-                                          fontSize: 13,
+                                          fontSize: AppType.label,
                                           fontWeight: FontWeight.w700,
                                           color: AppColors.accentInk,
                                         ),
@@ -2409,7 +2413,7 @@ class _PresetChip extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
                 color: selected ? AppColors.accentStrong : AppColors.inkSoft,
               ),
@@ -2575,7 +2579,7 @@ class _SegmentButton extends StatelessWidget {
                     label,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                       color: selected
                           ? AppColors.accentStrong

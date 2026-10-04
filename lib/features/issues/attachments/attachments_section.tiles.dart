@@ -102,7 +102,7 @@ class _AttachmentTileState extends State<_AttachmentTile> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -112,7 +112,7 @@ class _AttachmentTileState extends State<_AttachmentTile> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 10.5,
+                        fontSize: AppType.caption,
                         color: AppColors.inkFaint,
                       ),
                     ),
@@ -251,7 +251,7 @@ class _AttachmentTileState extends State<_AttachmentTile> {
                     Text(
                       context.t('issues.attachments.uploadFailed'),
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: AppType.caption,
                         color: AppColors.dangerInk,
                       ),
                     ),
@@ -277,7 +277,7 @@ class _AttachmentTileState extends State<_AttachmentTile> {
                       '${(up.progress * 100).round()}%',
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
-                        fontSize: 11,
+                        fontSize: AppType.caption,
                         fontWeight: FontWeight.w600,
                         color: AppColors.inkSoft,
                       ),
@@ -306,7 +306,7 @@ class _KindTag extends StatelessWidget {
         label.toUpperCase(),
         style: const TextStyle(
           fontFamily: AppTheme.fontMono,
-          fontSize: 9.5,
+          fontSize: AppType.badge,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.4,
           color: Colors.white,
@@ -397,7 +397,7 @@ class _AddButton extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: AppColors.accentInk,
                   ),
@@ -548,7 +548,7 @@ class _DropOverlay extends StatelessWidget {
                 Text(
                   context.t('issues.attachments.dropHere'),
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: AppType.body,
                     fontWeight: FontWeight.w700,
                     color: AppColors.accentInk,
                   ),

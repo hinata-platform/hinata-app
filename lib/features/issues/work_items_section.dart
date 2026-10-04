@@ -26,6 +26,7 @@ import '../time/time_entry_sheet.dart' show showTimeEntrySheet;
 import 'work_item_labels.dart';
 import 'work_items_cubit.dart';
 import 'work_log_sheet.dart';
+import '../../core/theme/app_type.dart';
 
 /// Who may do what to a work item — resolved once by the host from the auth
 /// state, the project's leads and the time policy, so every row and the "all
@@ -286,7 +287,7 @@ class WorkItemRow extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -296,7 +297,7 @@ class WorkItemRow extends StatelessWidget {
                     Text(
                       MaterialLocalizations.of(context).formatShortDate(date),
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         color: AppColors.inkFaint,
                       ),
                     ),
@@ -314,7 +315,10 @@ class WorkItemRow extends StatelessWidget {
                     : '$who · $description',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                style: TextStyle(
+                  fontSize: AppType.caption,
+                  color: AppColors.inkSoft,
+                ),
               ),
             ],
           ),
@@ -445,7 +449,7 @@ class _AllEntriesButton extends StatelessWidget {
               Text(
                 context.t('time.allEntries', variables: {'count': '$count'}),
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                   color: AppColors.accentInk,
                 ),
@@ -636,7 +640,10 @@ class _AllWorkItemsSheetState extends State<AllWorkItemsSheet> {
               Text(
                 context.t(errorKey),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: AppColors.dangerInk),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  color: AppColors.dangerInk,
+                ),
               ),
               const SizedBox(height: 10),
               TextButton.icon(

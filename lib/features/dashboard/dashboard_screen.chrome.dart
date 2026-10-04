@@ -25,7 +25,7 @@ class _CardHead extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 14.5,
+              fontSize: AppType.body,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.1,
               color: AppColors.ink,
@@ -37,7 +37,7 @@ class _CardHead extends StatelessWidget {
             subLabel!,
             style: TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 12,
+              fontSize: AppType.caption,
               color: AppColors.inkFaint,
             ),
           ),
@@ -55,7 +55,7 @@ class _CardHead extends StatelessWidget {
                     Text(
                       actionLabel!,
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                         color: AppColors.accentInk,
                       ),
@@ -128,7 +128,7 @@ class _CustomizeButton extends StatelessWidget {
                     Text(
                       label,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w700,
                         color: fg,
                       ),
@@ -298,7 +298,7 @@ class _EditToolbar extends StatelessWidget {
                 child: Text(
                   context.t('dashboard.editHint'),
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     height: 1.35,
                     color: AppColors.inkSoft,
                   ),
@@ -459,7 +459,7 @@ class _PickerField extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 10.5,
+                          fontSize: AppType.caption,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.2,
                           color: AppColors.inkSoft,
@@ -471,7 +471,7 @@ class _PickerField extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w700,
                           color: AppColors.ink,
                         ),
@@ -667,7 +667,7 @@ class _ChoiceRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13.5,
+                      fontSize: AppType.label,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                       color: AppColors.ink,
                     ),

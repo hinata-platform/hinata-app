@@ -13,6 +13,7 @@ import '../../time/lock_notice.dart';
 import '../../admin/admin_form_helpers.dart';
 import '../../../core/widgets/folded_hint.dart';
 import 'approval_period_preview_cubit.dart';
+import '../../../core/theme/app_type.dart';
 
 /// The next three periods the configured rhythm will cut.
 ///
@@ -144,7 +145,7 @@ class _ApprovalPeriodPreviewState extends State<_ApprovalPeriodPreviewBody> {
             Text(
               context.t('admin.timeTracking.periodPreviewTitle'),
               style: TextStyle(
-                fontSize: 12,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w700,
                 color: AppColors.inkSoft,
               ),
@@ -165,7 +166,7 @@ class _ApprovalPeriodPreviewState extends State<_ApprovalPeriodPreviewBody> {
                       child: Text(
                         formatPeriod(context, period.start, period.end),
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: AppType.label,
                           color: AppColors.inkSoft,
                         ),
                       ),
@@ -177,7 +178,7 @@ class _ApprovalPeriodPreviewState extends State<_ApprovalPeriodPreviewBody> {
             FoldedHint(
               context.t('admin.timeTracking.periodPreviewHint'),
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: AppType.caption,
                 height: 1.45,
                 color: AppColors.textSecondary,
               ),

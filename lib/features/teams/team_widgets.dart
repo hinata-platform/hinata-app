@@ -6,6 +6,7 @@ import '../../core/models/team_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/entity_avatar.dart';
+import '../../core/theme/app_type.dart';
 
 // ════════════════════════════════════════════════════════════════════════
 //  Teams design kit — glyphs, role/access chips, the shared hue palette and
@@ -256,7 +257,7 @@ class RoleBadge extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -314,7 +315,7 @@ class AccessChip extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -389,7 +390,7 @@ class TeamKpi extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: AppTheme.fontBrand,
-                          fontSize: 22,
+                          fontSize: AppType.display,
                           fontWeight: FontWeight.w700,
                           height: 1,
                           color: AppColors.ink,
@@ -401,7 +402,7 @@ class TeamKpi extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           color: AppColors.inkSoft,
                         ),
                       ),
