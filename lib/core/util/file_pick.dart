@@ -135,6 +135,10 @@ class FilePickerPluginBackend implements FilePickBackend {
       type: kind == FilePickKind.image ? fp.FileType.image : fp.FileType.any,
       allowMultiple: allowMultiple,
       withData: withData,
+      // The quality file_picker 8 compressed picked images with by default;
+      // since 10 the default is 0 (no compression), which would upload
+      // photos at full size.
+      compressionQuality: 30,
     );
     if (result == null) return const [];
     return [
