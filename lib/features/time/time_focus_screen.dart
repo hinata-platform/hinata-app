@@ -258,7 +258,7 @@ class _PhaseHeader extends StatelessWidget {
             fontSize: AppType.label,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.4,
-            color: phase.isBreak ? AppColors.inkSoft : AppColors.accentStrong,
+            color: phase.isBreak ? AppColors.inkSoft : AppColors.accentInk,
           ),
         ),
         const SizedBox(height: 8),

@@ -413,7 +413,7 @@ class _SprintColumn extends StatelessWidget {
                                 fontSize: AppType.caption,
                                 fontWeight: FontWeight.w600,
                                 color: overWip
-                                    ? AppColors.danger
+                                    ? AppColors.dangerInk
                                     : AppColors.inkSoft,
                               ),
                             ),
@@ -606,7 +606,7 @@ class _SprintCard extends StatelessWidget {
                                     fontFamily: AppTheme.fontMono,
                                     fontSize: AppType.caption,
                                     color: due.late
-                                        ? AppColors.danger
+                                        ? AppColors.dangerInk
                                         : AppColors.inkFaint,
                                   ),
                                 ),

@@ -757,20 +757,15 @@ class _TimesheetViewState extends State<_TimesheetView> {
                     context.pageGutter,
                     12,
                   ),
-                  child: PageHead(
-                    title: context.t(
-                      widget.moduleView ? 'nav.time' : 'timesheet.title',
-                    ),
-                    actions: [
-                      if (widget.moduleView) ...[
-                        const TimeViewSwitcher(current: TimeView.timesheet),
-                        const SizedBox(width: 8),
-                        const AbsenceMenuButton(),
-                        const SizedBox(width: 8),
-                      ],
-                      _todayButton(),
-                    ],
-                  ),
+                  child: widget.moduleView
+                      ? TimeHead(
+                          current: TimeView.timesheet,
+                          actions: [const AbsenceMenuButton(), _todayButton()],
+                        )
+                      : PageHead(
+                          title: context.t('timesheet.title'),
+                          actions: [_todayButton()],
+                        ),
                 ),
                 Padding(
                   padding: EdgeInsets.fromLTRB(
@@ -1643,9 +1638,7 @@ class _FilterField extends StatelessWidget {
                 Icon(
                   icon,
                   size: 16,
-                  color: active
-                      ? AppColors.accentStrong
-                      : AppColors.textSecondary,
+                  color: active ? AppColors.accentInk : AppColors.textSecondary,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -1829,7 +1822,7 @@ class _FilterPanelState extends State<_FilterPanel> {
             Icon(
               LucideIcons.search,
               size: 16,
-              color: focused ? AppColors.accentStrong : AppColors.textSecondary,
+              color: focused ? AppColors.accentInk : AppColors.textSecondary,
             ),
             const SizedBox(width: 9),
             Expanded(
@@ -2015,7 +2008,7 @@ class _FilterRow extends StatelessWidget {
                 selected ? LucideIcons.circleCheck : LucideIcons.circle,
                 size: 17,
                 color: selected
-                    ? AppColors.accentStrong
+                    ? AppColors.accentInk
                     : AppColors.textSecondary.withValues(alpha: 0.7),
               ),
               const SizedBox(width: 10),
@@ -2088,7 +2081,7 @@ class _PillLabel extends StatelessWidget {
             style: TextStyle(
               fontSize: AppType.label,
               fontWeight: FontWeight.w700,
-              color: active ? AppColors.accentStrong : AppColors.ink,
+              color: active ? AppColors.accentInk : AppColors.ink,
             ),
           ),
           if (chevron) ...[

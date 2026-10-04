@@ -380,7 +380,7 @@ class _StateChip extends StatelessWidget {
         style: TextStyle(
           fontSize: AppType.caption,
           fontWeight: FontWeight.w600,
-          color: lit ? AppColors.accentStrong : AppColors.inkSoft,
+          color: lit ? AppColors.accentInk : AppColors.inkSoft,
         ),
       ),
     );

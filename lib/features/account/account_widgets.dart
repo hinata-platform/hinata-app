@@ -71,7 +71,7 @@ class AccountSection extends StatelessWidget {
                           fontFamily: AppTheme.fontBrand,
                           fontSize: AppType.body,
                           fontWeight: FontWeight.w700,
-                          color: danger ? AppColors.danger : AppColors.ink,
+                          color: danger ? AppColors.dangerInk : AppColors.ink,
                         ),
                       ),
                       if (subtitle != null) ...[

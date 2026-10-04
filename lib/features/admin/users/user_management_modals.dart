@@ -729,7 +729,7 @@ class _InviteModalState extends State<_InviteModal> {
               email,
               style: TextStyle(
                 fontSize: AppType.label,
-                color: invalid ? AppColors.danger : AppColors.ink,
+                color: invalid ? AppColors.dangerInk : AppColors.ink,
               ),
             ),
           ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,6 +13,8 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/gantt_links.dart';
+import '../../core/widgets/glass_filter_bar.dart'
+    show GlassFilterPill, kGlassDockRow;
 import '../../core/widgets/glass_switch_chip.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
@@ -19,6 +23,7 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../issues/issue_detail_sheet.dart';
 import '../search/search_tokens.dart';
+import '../shell/page_chrome.dart';
 import 'gantt_cubit.dart';
 import 'gantt_view_options.dart';
 import '../../core/theme/app_type.dart';
@@ -194,34 +199,58 @@ class _GanttState extends State<_Gantt> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(
-            context.pageGutter,
-            22 + context.topGutter,
-            context.pageGutter,
-            14,
-          ),
-          child: PageHead(
-            title: context.t('gantt.title'),
-            subtitle: context.t('gantt.subtitle'),
-            actions: [
-              if (_projects.isNotEmpty)
-                _ProjectPicker(
-                  projects: _projects,
-                  selected: _projectId,
-                  onChanged: (value) {
-                    _projectId = value;
-                    _load();
-                  },
-                ),
-            ],
-          ),
-        ),
-        Expanded(child: _body(context)),
-      ],
+    final compact = context.isCompact;
+    final scope = _projects.isEmpty
+        ? null
+        : _ProjectScopePill(
+            projects: _projects,
+            selected: _projectId,
+            onChanged: (value) {
+              _projectId = value;
+              _load();
+            },
+          );
+    // One name for the page everywhere: the word the navigation already uses.
+    // On a phone that name is the glass app bar and the project scope docks
+    // under it, in the bar's blur; repeating a head in the body gave the page
+    // two titles in two different words and pushed the scope down the page.
+    // The floating switcher stays where the thumb is, at the bottom.
+    return PageChrome(
+      title: context.t('nav.gantt'),
+      bottom: compact && scope != null
+          ? Padding(
+              padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
+              // The bar hands the reserved height down as a tight constraint;
+              // the Align lets the shorter pill centre in it.
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: scope,
+              ),
+            )
+          : null,
+      bottomHeight: compact && scope != null ? kGlassDockRow : 0,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (compact)
+            SizedBox(height: context.topGutter + context.pageGutter)
+          else
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                context.pageGutter,
+                22 + context.topGutter,
+                context.pageGutter,
+                14,
+              ),
+              child: PageHead(
+                title: context.t('nav.gantt'),
+                subtitle: context.t('gantt.subtitle'),
+                actions: [?scope],
+              ),
+            ),
+          Expanded(child: _body(context)),
+        ],
+      ),
     );
   }
 
@@ -242,7 +271,7 @@ class _GanttState extends State<_Gantt> {
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
           child: HiveEmptyState(
-            title: context.t('gantt.title'),
+            title: context.t('nav.gantt'),
             message: context.t('gantt.empty'),
           ),
         ),
@@ -640,9 +669,13 @@ class _GanttState extends State<_Gantt> {
   }
 }
 
-/// Compact white dropdown for choosing the active project.
-class _ProjectPicker extends StatelessWidget {
-  const _ProjectPicker({
+/// The project the timeline shows, as a glass pill in the docked row (phone)
+/// or beside the page head (wide).
+///
+/// Never washed amber: a timeline always shows exactly one project, so there
+/// is no unscoped state for the wash to tell apart from this one.
+class _ProjectScopePill extends StatelessWidget {
+  const _ProjectScopePill({
     required this.projects,
     required this.selected,
     required this.onChanged,
@@ -650,49 +683,32 @@ class _ProjectPicker extends StatelessWidget {
 
   final List<Project> projects;
   final String? selected;
-  final ValueChanged<String?> onChanged;
+  final ValueChanged<String> onChanged;
 
-  @override
-  Widget build(BuildContext context) {
-    final label = selected != null
-        ? projects.where((p) => p.id == selected).firstOrNull?.name ??
-              projects.first.name
-        : projects.first.name;
-    return GlassPopupMenu<String?>(
-      value: selected,
-      onSelected: onChanged,
+  Project get _current =>
+      projects.where((p) => p.id == selected).firstOrNull ?? projects.first;
+
+  Future<void> _pick(BuildContext context, Rect? anchor) async {
+    // Null means the pill is no longer on screen: nothing to hang a menu off.
+    if (anchor == null) return;
+    final chosen = await showGlassMenu<String>(
+      context: context,
+      anchorRect: anchor,
+      value: _current.id,
       items: [
         for (final p in projects) GlassMenuItem(value: p.id, label: p.name),
       ],
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 220),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(color: AppColors.hairline),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: AppType.label,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(LucideIcons.chevronDown, size: 16, color: AppColors.inkSoft),
-          ],
-        ),
-      ),
     );
+    if (chosen != null && chosen != _current.id) onChanged(chosen);
   }
+
+  @override
+  Widget build(BuildContext context) => GlassFilterPill(
+    icon: LucideIcons.folderKanban,
+    label: _current.name,
+    active: false,
+    onTap: (anchor) => unawaited(_pick(context, anchor)),
+  );
 }
 
 /// Frozen left-column entry: readable id + title, tappable to open the issue.

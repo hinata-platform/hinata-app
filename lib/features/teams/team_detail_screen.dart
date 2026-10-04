@@ -493,7 +493,7 @@ class _Tab extends StatelessWidget {
               Icon(
                 tab.icon,
                 size: 15,
-                color: selected ? AppColors.accentStrong : AppColors.inkFaint,
+                color: selected ? AppColors.accentInk : AppColors.inkFaint,
               ),
               const SizedBox(width: 7),
               Text(

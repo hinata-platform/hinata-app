@@ -376,7 +376,7 @@ class _PhaseLine extends StatelessWidget {
         Icon(
           phase.isBreak ? LucideIcons.coffee : LucideIcons.circleDot,
           size: 11,
-          color: phase.isBreak ? AppColors.inkFaint : AppColors.accentStrong,
+          color: phase.isBreak ? AppColors.inkFaint : AppColors.accentInk,
         ),
         const SizedBox(width: 5),
         Flexible(

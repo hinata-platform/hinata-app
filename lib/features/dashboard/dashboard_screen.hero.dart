@@ -715,36 +715,29 @@ class _Kpis extends StatelessWidget {
         onTap: () => _open(context, 'done'),
       ),
     ];
-    if (context.isCompact) {
-      return SizedBox(
-        height: 104,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          clipBehavior: Clip.none,
-          padding: EdgeInsets.zero,
-          itemCount: items.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 12),
-          itemBuilder: (_, i) => SizedBox(width: 156, child: items[i]),
-        ),
-      );
-    }
+    // Two by two on every width. On a phone this was a sideways carousel that
+    // showed two tiles and a third cut off at the edge, cut their labels
+    // ("Heutige Aufg…") and kept the fourth out of sight behind a scroll that
+    // nothing announced. The grid shows all four at once, as the tablet does.
+    final gap = context.isCompact ? 12.0 : _gap;
+    // IntrinsicHeight: a label that needs a second line (a long language, a
+    // large text scale) makes its tile taller, and its neighbour follows so
+    // the pair stays level instead of the fixed height clipping the text.
+    Widget pair(Widget a, Widget b) => IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: a),
+          SizedBox(width: gap),
+          Expanded(child: b),
+        ],
+      ),
+    );
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(child: items[0]),
-            const SizedBox(width: _gap),
-            Expanded(child: items[1]),
-          ],
-        ),
-        const SizedBox(height: _gap),
-        Row(
-          children: [
-            Expanded(child: items[2]),
-            const SizedBox(width: _gap),
-            Expanded(child: items[3]),
-          ],
-        ),
+        pair(items[0], items[1]),
+        SizedBox(height: gap),
+        pair(items[2], items[3]),
       ],
     );
   }
@@ -788,7 +781,9 @@ class _KpiCard extends StatelessWidget {
               Flexible(
                 child: Text(
                   label,
-                  maxLines: 1,
+                  // Two lines rather than an ellipsis: a tile half a phone
+                  // wide has room for “Heutige Aufgaben” only just.
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: AppType.caption,

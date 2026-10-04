@@ -8,6 +8,8 @@ import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/glass_filter_bar.dart'
+    show GlassSearchButton, GlassSearchDock, kGlassControlHeight, kGlassDockRow;
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../issues/issue_detail_sheet.dart';
@@ -92,6 +94,19 @@ class _KnowledgeScreenState extends State<_KnowledgeBody> {
 
   /// A place change of the open page is on its way to the server.
   bool _placeBusy = false;
+
+  /// The home's search. Kept here rather than in [KnowledgeHome] because a
+  /// phone docks it in the app bar and a wide window draws it in the body, and
+  /// the query must survive a resize across that line.
+  final TextEditingController _search = TextEditingController();
+  bool _searching = false;
+  String _query = '';
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -413,8 +428,28 @@ class _KnowledgeScreenState extends State<_KnowledgeBody> {
     final chromeTitle = _mode == _Mode.article
         ? (_current?.title ?? context.t('knowledge.title'))
         : context.t('knowledge.title');
+    final compact = context.isCompact;
+    final editing = _mode == _Mode.edit || _mode == _Mode.newDoc;
+    final dockSearch = compact && _mode == _Mode.home;
     return PageChrome(
       title: chromeTitle,
+      // A phone's bar has room for one action, and the page's one is a new
+      // article. The editor brings its own back and save, so it has none.
+      actions: compact && !editing
+          ? [
+              PageAction(
+                icon: LucideIcons.plus,
+                label: context.t('knowledge.newArticle'),
+                primary: true,
+                onTap: _newArticle,
+              ),
+            ]
+          : const [],
+      // The search rides in the bar's blur as a pill, the way it does on the
+      // projects page; as a full-width field down the page it was a third row
+      // under a title the bar already showed.
+      bottom: dockSearch ? _dockedSearch(context) : null,
+      bottomHeight: dockSearch ? kGlassDockRow : 0,
       child: KnowledgeScope(
         repo: _store,
         openArticle: _openArticle,
@@ -461,35 +496,88 @@ class _KnowledgeScreenState extends State<_KnowledgeBody> {
         PrimaryButton(
           label: context.t('knowledge.newArticle'),
           icon: lucideIcon('plus'),
-          onPressed: () => setState(() {
-            _pendingParentId = null;
-            _mode = _Mode.newDoc;
-          }),
+          onPressed: () => _newArticle(null),
           collapseToIcon: true,
         ),
       ],
     );
   }
 
+  /// A tear-off for the bar's action, so it compares equal from one build to
+  /// the next and the chrome is not re-published every frame.
+  void _newArticle(Rect? _) => setState(() {
+    _pendingParentId = null;
+    _mode = _Mode.newDoc;
+  });
+
+  /// The phone's one docked row: the search pill, which takes the row over
+  /// while somebody types and hands it back on close.
+  Widget _dockedSearch(BuildContext context) => Padding(
+    padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
+    // The bar hands the reserved height down as a tight constraint; the Align
+    // lets the pill come in under it.
+    child: Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: GlassSearchDock(
+        searching: _searching,
+        controller: _search,
+        hint: context.t('knowledge.searchHint'),
+        onChanged: (value) => setState(() => _query = value),
+        onClose: () => setState(() => _searching = false),
+        controls: SizedBox(
+          height: kGlassControlHeight,
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: GlassSearchButton(
+              tooltip: context.t('knowledge.searchHint'),
+              active: _query.isNotEmpty,
+              onTap: () => setState(() => _searching = true),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
   Widget _mainView(_Bp bp) {
     final showTree = _mode == _Mode.article && bp != _Bp.narrow;
+    final compact = context.isCompact;
     return SingleChildScrollView(
       key: _scrollKey,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(
         context.pageGutter,
-        24 + context.topGutter,
+        (compact ? context.pageGutter : 24) + context.topGutter,
         context.pageGutter,
         context.pageGutter + context.bottomGutter,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _head(),
-          const SizedBox(height: 20),
+          // On a phone the bar names the page and carries "New article", so
+          // the body does not say either again. Inside an article the way back
+          // to all spaces still needs a place, and the bar has no room for it.
+          if (!compact) ...[
+            _head(),
+            const SizedBox(height: 20),
+          ] else if (_mode != _Mode.home) ...[
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: GhostButton(
+                label: context.t('knowledge.allSpaces'),
+                icon: lucideIcon('layout-grid'),
+                onPressed: _home,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           if (_mode == _Mode.home)
             KnowledgeHome(
               repo: _store,
+              search: _search,
+              query: _query,
+              onQueryChanged: (value) => setState(() => _query = value),
+              showSearchField: !compact,
               onOpenArticle: _openArticle,
               onOpenSpace: _openSpace,
               onNewSpace: _createSpace,

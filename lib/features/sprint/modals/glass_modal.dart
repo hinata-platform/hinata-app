@@ -2415,7 +2415,7 @@ class _PresetChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
-                color: selected ? AppColors.accentStrong : AppColors.inkSoft,
+                color: selected ? AppColors.accentInk : AppColors.inkSoft,
               ),
             ),
           ),
@@ -2571,7 +2571,7 @@ class _SegmentButton extends StatelessWidget {
                 Icon(
                   icon,
                   size: 15,
-                  color: selected ? AppColors.accentStrong : AppColors.inkSoft,
+                  color: selected ? AppColors.accentInk : AppColors.inkSoft,
                 ),
                 const SizedBox(width: 8),
                 Flexible(
@@ -2581,9 +2581,7 @@ class _SegmentButton extends StatelessWidget {
                     style: TextStyle(
                       fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
-                      color: selected
-                          ? AppColors.accentStrong
-                          : AppColors.inkSoft,
+                      color: selected ? AppColors.accentInk : AppColors.inkSoft,
                     ),
                   ),
                 ),

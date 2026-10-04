@@ -676,7 +676,7 @@ class _AccountScreenState extends State<_AccountBody> {
                           fontFamily: AppTheme.fontBrand,
                           fontSize: AppType.body,
                           fontWeight: FontWeight.w700,
-                          color: danger ? AppColors.danger : AppColors.ink,
+                          color: danger ? AppColors.dangerInk : AppColors.ink,
                         ),
                       ),
                       const SizedBox(height: 2),

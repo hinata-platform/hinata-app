@@ -80,7 +80,7 @@ class ModalShell extends StatelessWidget {
                   child: Icon(
                     icon,
                     size: 20,
-                    color: iconColor ?? AppColors.accentStrong,
+                    color: iconColor ?? AppColors.accentInk,
                   ),
                 ),
                 const SizedBox(width: 13),
@@ -500,7 +500,7 @@ class IconPicker extends StatelessWidget {
                     child: Icon(
                       teamIcon(name),
                       size: 17,
-                      color: on ? AppColors.accentStrong : AppColors.inkSoft,
+                      color: on ? AppColors.accentInk : AppColors.inkSoft,
                     ),
                   ),
                 ),
@@ -788,7 +788,7 @@ class _ScopeOption extends StatelessWidget {
                     child: Icon(
                       icon,
                       size: 17,
-                      color: on ? AppColors.accentStrong : AppColors.inkSoft,
+                      color: on ? AppColors.accentInk : AppColors.inkSoft,
                     ),
                   ),
                   const SizedBox(width: 12),

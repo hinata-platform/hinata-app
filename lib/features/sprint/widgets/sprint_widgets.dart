@@ -149,7 +149,7 @@ class CapacityBar extends StatelessWidget {
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
                         fontWeight: FontWeight.w600,
-                        color: over ? AppColors.danger : AppColors.ink,
+                        color: over ? AppColors.dangerInk : AppColors.ink,
                       ),
                     ),
                     TextSpan(

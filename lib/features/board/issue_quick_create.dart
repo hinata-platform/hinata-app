@@ -466,7 +466,7 @@ class _QuickComposerState extends State<_QuickComposer> {
       child: Icon(
         LucideIcons.calendarDays,
         size: 17,
-        color: due != null ? AppColors.accentStrong : AppColors.inkSoft,
+        color: due != null ? AppColors.accentInk : AppColors.inkSoft,
       ),
     );
   }

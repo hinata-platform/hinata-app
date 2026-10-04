@@ -99,7 +99,10 @@ class _CustomizeButton extends StatelessWidget {
     final label = context.t(
       editing ? 'dashboard.done_editing' : 'dashboard.customize',
     );
-    final icon = editing ? LucideIcons.check : LucideIcons.settings2;
+    // Not the sliders glyph: the phone's app bar wears that for the global
+    // quick settings, one row above this button. Panels say "arrange this
+    // page", and neither the nav's home grid nor the board field uses them.
+    final icon = editing ? LucideIcons.check : LucideIcons.panelsTopLeft;
     final bg = editing
         ? AppColors.accent
         : (dark
@@ -235,7 +238,7 @@ class _EyeToggle extends StatelessWidget {
               child: Icon(
                 hidden ? LucideIcons.eyeOff : LucideIcons.eye,
                 size: 16,
-                color: hidden ? AppColors.inkSoft : AppColors.accentStrong,
+                color: hidden ? AppColors.inkSoft : AppColors.accentInk,
               ),
             ),
           ),
@@ -655,9 +658,7 @@ class _ChoiceRow extends StatelessWidget {
                   Icon(
                     icon,
                     size: 16,
-                    color: selected
-                        ? AppColors.accentStrong
-                        : AppColors.inkSoft,
+                    color: selected ? AppColors.accentInk : AppColors.inkSoft,
                   ),
                   const SizedBox(width: 10),
                 ],

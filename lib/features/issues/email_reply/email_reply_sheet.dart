@@ -1091,7 +1091,7 @@ class _AttachmentChip extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: AppType.label,
-                color: failed ? AppColors.danger : AppColors.ink,
+                color: failed ? AppColors.dangerInk : AppColors.ink,
               ),
             ),
           ),
