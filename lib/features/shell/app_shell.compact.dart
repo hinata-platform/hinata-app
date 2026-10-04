@@ -474,25 +474,27 @@ class _GlassTopBar extends StatelessWidget {
                       )
                     : Tooltip(
                         message: context.t('nav.dashboard'),
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () => context.go('/dashboard'),
-                          // Bounded to match the actions side. GlassAppBar lays
-                          // the leading slot out loose and then centres the
-                          // title in `width - 2 * max(leading, actions)`, so a
-                          // leading wider than the actions steals from the
-                          // title twice over — and a logo that grew past it
-                          // would shove the title off its own centre.
-                          // Nothing on the leading side: the bar's padding
-                          // already sets the logo on the page's gutter.
-                          child: const Padding(
-                            padding: EdgeInsetsDirectional.only(end: 10),
-                            child: OrgLogo(
-                              height: 24,
-                              maxWidth: 72,
-                              fallback: HexMark(
-                                size: 24,
-                                color: AppColors.accent,
+                        child: Semantics(
+                          button: true,
+                          child: _PressFade(
+                            onTap: () => context.go('/dashboard'),
+                            // Bounded to match the actions side. GlassAppBar lays
+                            // the leading slot out loose and then centres the
+                            // title in `width - 2 * max(leading, actions)`, so a
+                            // leading wider than the actions steals from the
+                            // title twice over — and a logo that grew past it
+                            // would shove the title off its own centre.
+                            // Nothing on the leading side: the bar's padding
+                            // already sets the logo on the page's gutter.
+                            child: const Padding(
+                              padding: EdgeInsetsDirectional.only(end: 10),
+                              child: OrgLogo(
+                                height: 24,
+                                maxWidth: 72,
+                                fallback: HexMark(
+                                  size: 24,
+                                  color: AppColors.accent,
+                                ),
                               ),
                             ),
                           ),
@@ -550,18 +552,20 @@ class _BarTitle extends StatelessWidget {
     );
     final open = onTap;
     if (open == null) return label;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      // The rect of the title itself, so the menu opens under the word it
-      // belongs to instead of under the middle of the bar.
-      onTap: () => open(anchorRectOfContext(context)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(child: label),
-          const SizedBox(width: 3),
-          Icon(LucideIcons.chevronDown, size: 15, color: AppColors.inkSoft),
-        ],
+    return Semantics(
+      button: true,
+      child: _PressFade(
+        // The rect of the title itself, so the menu opens under the word it
+        // belongs to instead of under the middle of the bar.
+        onTap: () => open(anchorRectOfContext(context)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(child: label),
+            const SizedBox(width: 3),
+            Icon(LucideIcons.chevronDown, size: 15, color: AppColors.inkSoft),
+          ],
+        ),
       ),
     );
   }
@@ -737,7 +741,8 @@ class _FrostedCircleButton extends StatelessWidget {
         ),
       ),
     );
-    return tooltip != null ? Tooltip(message: tooltip!, child: button) : button;
+    final named = Semantics(button: true, child: button);
+    return tooltip != null ? Tooltip(message: tooltip!, child: named) : named;
   }
 }
 
@@ -929,6 +934,7 @@ class _MoreSheet extends StatelessWidget {
                       ),
                     ),
                     IconButton(
+                      tooltip: context.t('common.close'),
                       onPressed: () => Navigator.of(context).pop(),
                       icon: Icon(
                         LucideIcons.x,
@@ -1001,46 +1007,52 @@ class _MoreTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final iconColor = active ? AppColors.accentStrong : tokens.inkSoft;
     final badgeBg = active ? AppColors.accentSoft : tokens.field;
-    return Material(
-      type: MaterialType.transparency,
-      borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-      child: InkWell(
-        onTap: onTap,
+    return Semantics(
+      button: true,
+      selected: active,
+      child: Material(
+        type: MaterialType.transparency,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: active ? AppColors.accentSoft.withValues(alpha: 0.35) : null,
-            borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-            border: Border.all(
-              color: active ? AppColors.accentLine : tokens.hairline,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: active
+                  ? AppColors.accentSoft.withValues(alpha: 0.35)
+                  : null,
+              borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+              border: Border.all(
+                color: active ? AppColors.accentLine : tokens.hairline,
+              ),
             ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Icon badge — small rounded square, matches reference design
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: badgeBg,
-                  borderRadius: BorderRadius.circular(10),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icon badge — small rounded square, matches reference design
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: badgeBg,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(destination.icon, size: 20, color: iconColor),
                 ),
-                child: Icon(destination.icon, size: 20, color: iconColor),
-              ),
-              const SizedBox(height: 7),
-              Text(
-                context.t(destination.labelKey),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: iconColor,
+                const SizedBox(height: 7),
+                Text(
+                  context.t(destination.labelKey),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: iconColor,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

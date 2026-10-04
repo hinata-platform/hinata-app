@@ -354,7 +354,10 @@ class _ActivityCard extends StatelessWidget {
               _ActivityRow(activity: acts[i], data: data),
             ],
           if (hasMore) ...[
-            const SizedBox(height: 12),
+            // The button pads itself to a 48-point target (about 9 points of
+            // invisible margin above it), so the gap shrinks by the same and
+            // the button stays where it was drawn.
+            const SizedBox(height: 3),
             Center(
               child: TextButton.icon(
                 onPressed: loadingMore ? null : onLoadMore,
@@ -379,7 +382,6 @@ class _ActivityCard extends StatelessWidget {
                     vertical: 6,
                   ),
                   minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
             ),

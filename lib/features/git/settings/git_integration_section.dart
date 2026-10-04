@@ -243,14 +243,23 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
               TextSpan(text: context.t('git.ctaOauthPrefix')),
               WidgetSpan(
                 alignment: PlaceholderAlignment.middle,
-                child: GestureDetector(
-                  onTap: () => _connect(token: true),
-                  child: Text(
-                    context.t('git.ctaTokenLink'),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.accentStrong,
+                // An inline link in running text: WCAG 2.5.8 exempts it from
+                // the target size, but it still needs the link role and a
+                // pointer cursor.
+                child: Semantics(
+                  link: true,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => _connect(token: true),
+                      child: Text(
+                        context.t('git.ctaTokenLink'),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.accentStrong,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -564,49 +573,57 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
     return Builder(
       builder: (chipContext) => Opacity(
         opacity: enabled ? 1 : 0.5,
-        child: GestureDetector(
-          onTap: enabled
-              ? () => _pickState(
-                  chipContext,
-                  rule,
-                  (id) => onChanged(rule.copyWith(toStateId: id)),
-                )
-              : null,
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(10, 5, 8, 5),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-              border: Border.all(color: AppColors.hairline),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (target != null) ...[
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: hueColor(target.hue),
-                      shape: BoxShape.circle,
+        // The state name inside names the control; the ripple is its
+        // pressed state.
+        child: Semantics(
+          button: true,
+          enabled: enabled,
+          child: Material(
+            color: AppColors.surface,
+            shape: StadiumBorder(side: BorderSide(color: AppColors.hairline)),
+            child: InkWell(
+              onTap: enabled
+                  ? () => _pickState(
+                      chipContext,
+                      rule,
+                      (id) => onChanged(rule.copyWith(toStateId: id)),
+                    )
+                  : null,
+              customBorder: const StadiumBorder(),
+              // One point more than before: the border no longer insets the
+              // content.
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(11, 6, 9, 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (target != null) ...[
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: hueColor(target.hue),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                    ],
+                    Text(
+                      target?.name ?? context.t('git.chooseState'),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 7),
-                ],
-                Text(
-                  target?.name ?? context.t('git.chooseState'),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      LucideIcons.chevronDown,
+                      size: 15,
+                      color: AppColors.inkFaint,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 4),
-                Icon(
-                  LucideIcons.chevronDown,
-                  size: 15,
-                  color: AppColors.inkFaint,
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -952,21 +969,26 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
     ),
   );
 
-  Widget _tokenChip(String label, VoidCallback onTap) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: AppColors.accentSoft,
-        borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-        border: Border.all(color: AppColors.accentLine),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontFamily: AppTheme.fontMono,
-          fontSize: 11,
-          color: AppColors.accentStrong,
+  // The chip text names the control; the ripple is its pressed state.
+  Widget _tokenChip(String label, VoidCallback onTap) => Semantics(
+    button: true,
+    child: Material(
+      color: AppColors.accentSoft,
+      shape: const StadiumBorder(side: BorderSide(color: AppColors.accentLine)),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const StadiumBorder(),
+        // One point more than before: the border no longer insets the content.
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontFamily: AppTheme.fontMono,
+              fontSize: 11,
+              color: AppColors.accentStrong,
+            ),
+          ),
         ),
       ),
     ),
@@ -978,19 +1000,34 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
     required VoidCallback? onTap,
   }) => Tooltip(
     message: tooltip,
-    child: Material(
-      color: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        side: BorderSide(color: AppColors.hairline),
-      ),
-      child: InkWell(
+    child: Semantics(
+      button: true,
+      enabled: onTap != null,
+      // The outer detector catches the 4-point ring around the 40-point face,
+      // which brings the target to 48×48; a tap on the face itself is won by
+      // the InkWell below, so it fires once and still shows its ripple.
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        excludeFromSemantics: true,
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(icon, size: 16, color: AppColors.inkSoft),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Material(
+            color: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              side: BorderSide(color: AppColors.hairline),
+            ),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: Icon(icon, size: 16, color: AppColors.inkSoft),
+              ),
+            ),
+          ),
         ),
       ),
     ),

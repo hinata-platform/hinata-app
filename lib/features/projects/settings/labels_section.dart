@@ -139,8 +139,11 @@ class _LabelChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ink = hueChipText(label.hue);
+    // The colour dot and the remove button reach 24×24 targets (the WCAG
+    // 2.5.8 floor; 48 would double the chip). The chip's padding and gaps give
+    // up exactly what the targets take, so the chip draws as before.
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 4, 6, 4),
+      padding: const EdgeInsets.fromLTRB(5, 2, 4, 2),
       decoration: BoxDecoration(
         color: hueSoft(label.hue),
         borderRadius: BorderRadius.circular(AppTheme.radiusPill),
@@ -150,50 +153,68 @@ class _LabelChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           GlassHuePicker(hue: label.hue, onPick: onPickColor),
-          const SizedBox(width: 8),
+          const SizedBox(width: 3),
           ConstrainedBox(
             constraints: const BoxConstraints(minWidth: 40, maxWidth: 130),
             child: IntrinsicWidth(
-              child: TextField(
-                controller: controller,
-                onChanged: onRename,
-                textCapitalization: TextCapitalization.sentences,
-                inputFormatters: [
-                  LengthLimitingTextInputFormatter(kIssueLabelMaxLength),
-                ],
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: ink,
-                ),
-                // Transparent inside the chip; an underline in the label's own
-                // ink appears on focus (reference `.lbl-in:focus`).
-                decoration: InputDecoration(
-                  isDense: true,
-                  filled: false,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 2),
-                  enabledBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.transparent),
+              // The field shows the label's name and nothing says what it
+              // is; this tells a screen reader.
+              child: Semantics(
+                label: context.t('projectSettings.labelName'),
+                textField: true,
+                child: TextField(
+                  controller: controller,
+                  onChanged: onRename,
+                  textCapitalization: TextCapitalization.sentences,
+                  inputFormatters: [
+                    LengthLimitingTextInputFormatter(kIssueLabelMaxLength),
+                  ],
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: ink,
                   ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: ink, width: 1.2),
+                  // Transparent inside the chip; an underline in the label's own
+                  // ink appears on focus (reference `.lbl-in:focus`).
+                  decoration: InputDecoration(
+                    isDense: true,
+                    filled: false,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 2),
+                    enabledBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.transparent),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: ink, width: 1.2),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 4),
-          InkWell(
-            onTap: onRemove,
-            customBorder: const CircleBorder(),
-            child: Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                color: ink.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
+          const SizedBox(width: 2),
+          Semantics(
+            button: true,
+            label: context.t('projectSettings.removeLabel'),
+            // Its own Material: the chip's fill would cover a ripple drawn on
+            // the card's.
+            child: Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                onTap: onRemove,
+                customBorder: const CircleBorder(),
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: ink.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(LucideIcons.x, size: 13, color: ink),
+                  ),
+                ),
               ),
-              child: Icon(LucideIcons.x, size: 13, color: ink),
             ),
           ),
         ],
@@ -216,17 +237,23 @@ class _AddLabelRow extends StatelessWidget {
       children: [
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 280, minWidth: 180),
-          child: TextField(
-            controller: controller,
-            onSubmitted: (_) => onAdd(),
-            textInputAction: TextInputAction.done,
-            textCapitalization: TextCapitalization.sentences,
-            inputFormatters: [
-              LengthLimitingTextInputFormatter(kIssueLabelMaxLength),
-            ],
-            decoration: settingsInput(
-              context,
-              hint: context.t('projectSettings.addLabelHint'),
+          // Only a hint names this field, and a hint is gone once typing
+          // starts; the label keeps it named for screen readers.
+          child: Semantics(
+            label: context.t('projectSettings.addLabelHint'),
+            textField: true,
+            child: TextField(
+              controller: controller,
+              onSubmitted: (_) => onAdd(),
+              textInputAction: TextInputAction.done,
+              textCapitalization: TextCapitalization.sentences,
+              inputFormatters: [
+                LengthLimitingTextInputFormatter(kIssueLabelMaxLength),
+              ],
+              decoration: settingsInput(
+                context,
+                hint: context.t('projectSettings.addLabelHint'),
+              ),
             ),
           ),
         ),

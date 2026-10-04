@@ -145,6 +145,7 @@ class _AuditDetailSheet extends StatelessWidget {
                         ),
                       ),
                       IconButton(
+                        tooltip: context.t('common.close'),
                         onPressed: () => Navigator.of(context).maybePop(),
                         icon: Icon(
                           LucideIcons.x,
@@ -405,7 +406,8 @@ class _EventIdFooter extends StatelessWidget {
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              // Padded, not shrink-wrapped: the hit area reaches 48 dp while
+              // the visible button keeps its size.
             ),
           ),
         ],

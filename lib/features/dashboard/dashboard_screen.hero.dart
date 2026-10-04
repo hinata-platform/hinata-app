@@ -41,26 +41,34 @@ class _GlassCard extends StatelessWidget {
       child: child,
     );
     if (onTap != null) {
-      content = Stack(
-        // Passthrough, NOT the default loose fit: loose hands the decorated box
-        // `loose(biggest)`, so it shrink-wraps its content and a tappable card
-        // with little to say (the KPI tiles) draws a small pill inside its slot
-        // while the Stack alone fills it. Passthrough forwards the card's own
-        // constraints, exactly as the untappable branch below gets them.
-        fit: StackFit.passthrough,
-        children: [
-          content,
-          Positioned.fill(
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: onTap,
-                borderRadius: BorderRadius.circular(_radius),
-                child: const SizedBox.expand(),
+      // One node for a screen reader: the ink is laid over the content as a
+      // sibling, not wrapped around it, so without the merge the tap had no
+      // name and the label and figure read as unrelated text.
+      content = MergeSemantics(
+        child: Semantics(
+          button: true,
+          child: Stack(
+            // Passthrough, NOT the default loose fit: loose hands the decorated box
+            // `loose(biggest)`, so it shrink-wraps its content and a tappable card
+            // with little to say (the KPI tiles) draws a small pill inside its slot
+            // while the Stack alone fills it. Passthrough forwards the card's own
+            // constraints, exactly as the untappable branch below gets them.
+            fit: StackFit.passthrough,
+            children: [
+              content,
+              Positioned.fill(
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onTap,
+                    borderRadius: BorderRadius.circular(_radius),
+                    child: const SizedBox.expand(),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       );
     }
     // Frosted translucent fill — deliberately NO per-card BackdropFilter. The
@@ -409,44 +417,43 @@ class _SprintHero extends StatelessWidget {
   }
 
   Widget _boardButton(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => context.go(boardLocation(sprint.boardId)),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFE4AC3E), Color(0xFFCE9526)],
-            ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFD9A032).withValues(alpha: .35),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
+    return Semantics(
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.go(boardLocation(sprint.boardId)),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFE4AC3E), Color(0xFFCE9526)],
               ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                LucideIcons.columns3,
-                size: 15,
-                color: Color(0xFF2A2410),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                context.t('dashboard.toBoard'),
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF2A2410),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.accent.withValues(alpha: .35),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
                 ),
-              ),
-            ],
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(LucideIcons.columns3, size: 15, color: kOnAmber),
+                const SizedBox(width: 8),
+                Text(
+                  context.t('dashboard.toBoard'),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: kOnAmber,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -496,7 +503,7 @@ class _SprintEmpty extends StatelessWidget {
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.accent,
-              foregroundColor: const Color(0xFF2A2410),
+              foregroundColor: kOnAmber,
             ),
             onPressed: () => context.go(boardsLocation),
             child: Text(context.t('dashboard.planSprint')),

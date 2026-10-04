@@ -112,7 +112,18 @@ class GlassSwitchChip extends StatelessWidget {
         ),
       ),
     );
-    return compact ? Tooltip(message: label, child: chip) : chip;
+    // A switcher option: a button that says whether it is the chosen one.
+    // The visible label merges in; an icon-only chip is named from [label]
+    // here, so the tooltip is kept out of the tree to avoid reading it twice.
+    final semantic = Semantics(
+      button: true,
+      selected: active,
+      label: compact ? label : null,
+      child: chip,
+    );
+    return compact
+        ? Tooltip(message: label, excludeFromSemantics: true, child: semantic)
+        : semantic;
   }
 }
 

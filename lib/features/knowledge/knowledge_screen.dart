@@ -522,40 +522,44 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
             padding: const EdgeInsets.only(bottom: 14),
             child: Align(
               alignment: AlignmentDirectional.centerStart,
-              child: Material(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-                child: InkWell(
+              // The space name inside names the drawer trigger.
+              child: Semantics(
+                button: true,
+                child: Material(
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-                  onTap: _openTreeDrawer,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 9,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(
-                        KbTokens.radiusControl,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+                    onTap: _openTreeDrawer,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 9,
                       ),
-                      border: Border.all(color: AppColors.hairline),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          lucideIcon('panel-left'),
-                          size: 16,
-                          color: AppColors.inkSoft,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(
+                          KbTokens.radiusControl,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _repo.spaceById(_spaceId)?.name ?? '',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                        border: Border.all(color: AppColors.hairline),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            lucideIcon('panel-left'),
+                            size: 16,
+                            color: AppColors.inkSoft,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 8),
+                          Text(
+                            _repo.spaceById(_spaceId)?.name ?? '',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -646,28 +650,36 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
         children: [
           Row(
             children: [
-              Material(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-                  onTap: () => setState(() {
-                    _pendingParentId = null;
-                    _mode = isNew ? _Mode.home : _Mode.article;
-                  }),
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
+              Tooltip(
+                message: context.t('common.back'),
+                child: Semantics(
+                  button: true,
+                  child: Material(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+                    child: InkWell(
                       borderRadius: BorderRadius.circular(
                         KbTokens.radiusControl,
                       ),
-                      border: Border.all(color: AppColors.hairline),
-                    ),
-                    child: Icon(
-                      lucideIcon('arrow-left'),
-                      size: 18,
-                      color: AppColors.inkSoft,
+                      onTap: () => setState(() {
+                        _pendingParentId = null;
+                        _mode = isNew ? _Mode.home : _Mode.article;
+                      }),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(
+                            KbTokens.radiusControl,
+                          ),
+                          border: Border.all(color: AppColors.hairline),
+                        ),
+                        child: Icon(
+                          lucideIcon('arrow-left'),
+                          size: 18,
+                          color: AppColors.inkSoft,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -730,20 +742,34 @@ class _PanelToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
-      child: Material(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-        child: InkWell(
+      child: Semantics(
+        button: true,
+        // The outer detector catches the 7-point ring around the 34-point
+        // face, which brings the target to 48×48; a tap on the face itself is
+        // won by the InkWell below, so it fires once and still ripples.
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          excludeFromSemantics: true,
           onTap: onTap,
-          borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-          child: Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
+          child: Padding(
+            padding: const EdgeInsets.all(7),
+            child: Material(
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-              border: Border.all(color: AppColors.hairline),
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+                    border: Border.all(color: AppColors.hairline),
+                  ),
+                  child: Icon(icon, size: 17, color: AppColors.inkSoft),
+                ),
+              ),
             ),
-            child: Icon(icon, size: 17, color: AppColors.inkSoft),
           ),
         ),
       ),

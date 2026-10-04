@@ -395,13 +395,17 @@ class _CreatePatModalState extends State<_CreatePatModal> {
               children: [
                 GlassField(
                   label: context.t('pat.create.nameLabel'),
-                  child: TextField(
-                    controller: _name,
-                    autofocus: true,
-                    decoration: glassInputDecoration(
-                      hint: context.t('pat.create.nameHint'),
+                  child: Semantics(
+                    label: context.t('pat.create.nameLabel'),
+                    textField: true,
+                    child: TextField(
+                      controller: _name,
+                      autofocus: true,
+                      decoration: glassInputDecoration(
+                        hint: context.t('pat.create.nameHint'),
+                      ),
+                      onChanged: (_) => setState(() {}),
                     ),
-                    onChanged: (_) => setState(() {}),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -475,51 +479,54 @@ class _SelectableScope extends StatelessWidget {
   Widget build(BuildContext context) {
     final key = patScopeKey(scope);
     final label = context.t(key);
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.accentSoft : AppColors.surface,
-          borderRadius: BorderRadius.circular(9),
-          border: Border.all(
-            color: selected ? AppColors.accentStrong : AppColors.hairline,
+    return Semantics(
+      checked: selected,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.accentSoft : AppColors.surface,
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(
+              color: selected ? AppColors.accentStrong : AppColors.hairline,
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              selected ? LucideIcons.check : LucideIcons.plus,
-              size: 14,
-              color: selected ? AppColors.accentStrong : AppColors.inkFaint,
-            ),
-            const SizedBox(width: 7),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label == key ? scope : label,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: selected ? AppColors.accentStrong : AppColors.ink,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                selected ? LucideIcons.check : LucideIcons.plus,
+                size: 14,
+                color: selected ? AppColors.accentStrong : AppColors.inkFaint,
+              ),
+              const SizedBox(width: 7),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label == key ? scope : label,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: selected ? AppColors.accentStrong : AppColors.ink,
+                    ),
                   ),
-                ),
-                Text(
-                  scope,
-                  style: TextStyle(
-                    fontFamily: AppTheme.fontMono,
-                    fontSize: 10.5,
-                    color: AppColors.inkFaint,
+                  Text(
+                    scope,
+                    style: TextStyle(
+                      fontFamily: AppTheme.fontMono,
+                      fontSize: 10.5,
+                      color: AppColors.inkFaint,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -426,35 +426,38 @@ class _AllEntriesButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              LucideIcons.history,
-              size: 15,
-              color: AppColors.accentStrong,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              context.t('time.allEntries', variables: {'count': '$count'}),
-              style: const TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
+    return Semantics(
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                LucideIcons.history,
+                size: 15,
                 color: AppColors.accentStrong,
               ),
-            ),
-            const SizedBox(width: 2),
-            Icon(
-              forwardChevron(context),
-              size: 14,
-              color: AppColors.accentStrong,
-            ),
-          ],
+              const SizedBox(width: 6),
+              Text(
+                context.t('time.allEntries', variables: {'count': '$count'}),
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.accentStrong,
+                ),
+              ),
+              const SizedBox(width: 2),
+              Icon(
+                forwardChevron(context),
+                size: 14,
+                color: AppColors.accentStrong,
+              ),
+            ],
+          ),
         ),
       ),
     );

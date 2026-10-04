@@ -641,26 +641,34 @@ class _LinkFieldState extends State<_LinkField> {
                         },
                       ),
                     },
-                    child: TextField(
-                      controller: _url,
-                      autofocus: true,
-                      keyboardType: TextInputType.url,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _submit(),
-                      onChanged: (_) {
-                        if (_unsafe) setState(() => _unsafe = false);
-                      },
-                      style: TextStyle(fontSize: 13.5, color: AppColors.ink),
-                      decoration: InputDecoration(
-                        isDense: true,
-                        border: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                        hintText: 'https://',
-                        hintStyle: TextStyle(
-                          fontSize: 13.5,
-                          color: AppColors.inkFaint,
+                    // The link icon beside it is the only visible name, so
+                    // the field carries one for screen readers.
+                    child: Semantics(
+                      label: context.t('md.linkUrl'),
+                      textField: true,
+                      child: TextField(
+                        controller: _url,
+                        autofocus: true,
+                        keyboardType: TextInputType.url,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _submit(),
+                        onChanged: (_) {
+                          if (_unsafe) setState(() => _unsafe = false);
+                        },
+                        style: TextStyle(fontSize: 13.5, color: AppColors.ink),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          border: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                          ),
+                          hintText: 'https://',
+                          hintStyle: TextStyle(
+                            fontSize: 13.5,
+                            color: AppColors.inkFaint,
+                          ),
                         ),
                       ),
                     ),

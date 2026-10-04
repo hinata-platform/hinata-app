@@ -867,6 +867,8 @@ class ReportGroupRow extends StatelessWidget {
           '$label, ${fmtDuration(context, group.minutes)}, '
           '${(share * 100).round()} %',
       excludeSemantics: true,
+      // The excluded subtree takes the InkWell's tap action with it.
+      onTap: onTap,
       child: InkWell(
         onTap: onTap,
         child: ConstrainedBox(

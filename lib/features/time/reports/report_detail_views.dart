@@ -370,109 +370,114 @@ class SavedReportTile extends StatelessWidget {
     ];
     final schedule = report.schedule;
     final locale = Localizations.localeOf(context).toLanguageTag();
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-      child: InkWell(
-        onTap: onOpen,
+    return Semantics(
+      button: true,
+      child: Material(
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.hairline),
-            borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-          ),
-          padding: const EdgeInsets.fromLTRB(16, 12, 4, 12),
-          child: Row(
-            children: [
-              Icon(
-                LucideIcons.fileChartColumn,
-                size: 20,
-                color: AppColors.accentInk,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      report.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.ink,
+        child: InkWell(
+          onTap: onOpen,
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.hairline),
+              borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 12, 4, 12),
+            child: Row(
+              children: [
+                Icon(
+                  LucideIcons.fileChartColumn,
+                  size: 20,
+                  color: AppColors.accentInk,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        report.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      parts.join(' · '),
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: AppColors.inkSoft,
+                      const SizedBox(height: 2),
+                      Text(
+                        parts.join(' · '),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: AppColors.inkSoft,
+                        ),
                       ),
-                    ),
-                    if (report.shared || schedule != null) ...[
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          if (report.shared)
-                            _Badge(
-                              icon: LucideIcons.link,
-                              label: context.t('time.reports.saved.shared'),
-                            ),
-                          if (schedule != null)
-                            _Badge(
-                              icon: LucideIcons.mail,
-                              label: schedule.cadence == ReportCadence.weekly
-                                  ? context.t(
-                                      'time.reports.saved.weeklyOn',
-                                      variables: {
-                                        'day': DateFormat.EEEE(locale).format(
-                                          DateTime(2024, 1, schedule.weekday),
-                                        ),
-                                        'hour': '${schedule.hour}'.padLeft(
-                                          2,
-                                          '0',
-                                        ),
-                                        'count': schedule.recipients.length,
-                                      },
-                                    )
-                                  : context.t(
-                                      'time.reports.saved.monthlyOn',
-                                      variables: {
-                                        'hour': '${schedule.hour}'.padLeft(
-                                          2,
-                                          '0',
-                                        ),
-                                        'count': schedule.recipients.length,
-                                      },
-                                    ),
-                            ),
-                        ],
-                      ),
+                      if (report.shared || schedule != null) ...[
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            if (report.shared)
+                              _Badge(
+                                icon: LucideIcons.link,
+                                label: context.t('time.reports.saved.shared'),
+                              ),
+                            if (schedule != null)
+                              _Badge(
+                                icon: LucideIcons.mail,
+                                label: schedule.cadence == ReportCadence.weekly
+                                    ? context.t(
+                                        'time.reports.saved.weeklyOn',
+                                        variables: {
+                                          'day': DateFormat.EEEE(locale).format(
+                                            DateTime(2024, 1, schedule.weekday),
+                                          ),
+                                          'hour': '${schedule.hour}'.padLeft(
+                                            2,
+                                            '0',
+                                          ),
+                                          'count': schedule.recipients.length,
+                                        },
+                                      )
+                                    : context.t(
+                                        'time.reports.saved.monthlyOn',
+                                        variables: {
+                                          'hour': '${schedule.hour}'.padLeft(
+                                            2,
+                                            '0',
+                                          ),
+                                          'count': schedule.recipients.length,
+                                        },
+                                      ),
+                              ),
+                          ],
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              Builder(
-                builder: (anchor) => IconButton(
-                  tooltip: context.t('time.reports.saved.actions'),
-                  onPressed: () {
-                    final box = anchor.findRenderObject() as RenderBox?;
-                    onMenu(
-                      box == null || !box.hasSize
-                          ? null
-                          : box.localToGlobal(Offset.zero) & box.size,
-                    );
-                  },
-                  icon: Icon(LucideIcons.ellipsis, color: AppColors.inkSoft),
-                  style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
+                Builder(
+                  builder: (anchor) => IconButton(
+                    tooltip: context.t('time.reports.saved.actions'),
+                    onPressed: () {
+                      final box = anchor.findRenderObject() as RenderBox?;
+                      onMenu(
+                        box == null || !box.hasSize
+                            ? null
+                            : box.localToGlobal(Offset.zero) & box.size,
+                      );
+                    },
+                    icon: Icon(LucideIcons.ellipsis, color: AppColors.inkSoft),
+                    style: IconButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -591,49 +591,54 @@ class _BalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colour = absenceColor(context, type?.hue);
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        child: Container(
-          // Sixteen, so the text inside lands where every other row's text in
-          // this section does: the section's own 18 plus this one.
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceMuted,
-            borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-            border: Border.all(
-              color: open ? colour : AppColors.hairline2,
-              width: open ? 1.4 : 1,
+    // The card toggles this type's journal below the grid; its title names it.
+    return Semantics(
+      button: true,
+      expanded: open,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          child: Container(
+            // Sixteen, so the text inside lands where every other row's text in
+            // this section does: the section's own 18 plus this one.
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+              border: Border.all(
+                color: open ? colour : AppColors.hairline2,
+                width: open ? 1.4 : 1,
+              ),
             ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(absenceIcon(type?.icon), size: 15, color: colour),
-                  const SizedBox(width: 7),
-                  Expanded(
-                    child: Text(
-                      type == null
-                          ? context.t('absence.balances.title')
-                          : absenceTypeName(context, type!),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.ink,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(absenceIcon(type?.icon), size: 15, color: colour),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: Text(
+                        type == null
+                            ? context.t('absence.balances.title')
+                            : absenceTypeName(context, type!),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              ..._figures(context),
-            ],
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ..._figures(context),
+              ],
+            ),
           ),
         ),
       ),

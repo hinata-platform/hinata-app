@@ -1585,74 +1585,78 @@ class _FilterField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        onTap: () {
-          final box = context.findRenderObject() as RenderBox?;
-          final rect = box != null && box.hasSize
-              ? box.localToGlobal(Offset.zero) & box.size
-              : Rect.zero;
-          onTap(rect);
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-          decoration: BoxDecoration(
-            color: AppColors.surface.withValues(alpha: 0.7),
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(
-              color: active ? AppColors.accent : AppColors.hairline,
-              width: active ? 1.4 : 1,
+    // The caption and the current value inside name the button.
+    return Semantics(
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          onTap: () {
+            final box = context.findRenderObject() as RenderBox?;
+            final rect = box != null && box.hasSize
+                ? box.localToGlobal(Offset.zero) & box.size
+                : Rect.zero;
+            onTap(rect);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: AppColors.surface.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              border: Border.all(
+                color: active ? AppColors.accent : AppColors.hairline,
+                width: active ? 1.4 : 1,
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: 16,
-                color: active
-                    ? AppColors.accentStrong
-                    : AppColors.textSecondary,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 16,
+                  color: active
+                      ? AppColors.accentStrong
+                      : AppColors.textSecondary,
                 ),
-              ),
-              const SizedBox(width: 6),
-              Icon(
-                LucideIcons.chevronsUpDown,
-                size: 15,
-                color: AppColors.textSecondary,
-              ),
-            ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.2,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Icon(
+                  LucideIcons.chevronsUpDown,
+                  size: 15,
+                  color: AppColors.textSecondary,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1797,47 +1801,60 @@ class _FilterPanelState extends State<_FilterPanel> {
             ),
             const SizedBox(width: 9),
             Expanded(
-              child: TextField(
-                controller: _searchCtrl,
-                focusNode: _focus,
-                onChanged: _onQueryChanged,
-                textInputAction: TextInputAction.search,
-                style: const TextStyle(fontSize: 13.5),
-                cursorColor: AppColors.accentStrong,
-                // Every border state is cleared by hand: the app's input theme
-                // supplies enabled/focused borders and those survive
-                // `isCollapsed`, drawing a second box inside the pill.
-                decoration: InputDecoration(
-                  isCollapsed: true,
-                  filled: false,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
-                  errorBorder: InputBorder.none,
-                  focusedErrorBorder: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 11),
-                  hintText: context.t(widget.searchHintKey),
-                  hintStyle: TextStyle(
-                    fontSize: 13.5,
-                    color: AppColors.textSecondary,
+              // The hint goes when typing starts; the label stays for a screen
+              // reader.
+              child: Semantics(
+                label: context.t(widget.searchHintKey),
+                textField: true,
+                child: TextField(
+                  controller: _searchCtrl,
+                  focusNode: _focus,
+                  onChanged: _onQueryChanged,
+                  textInputAction: TextInputAction.search,
+                  style: const TextStyle(fontSize: 13.5),
+                  cursorColor: AppColors.accentStrong,
+                  // Every border state is cleared by hand: the app's input
+                  // theme supplies enabled/focused borders and those survive
+                  // `isCollapsed`, drawing a second box inside the pill.
+                  decoration: InputDecoration(
+                    isCollapsed: true,
+                    filled: false,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 11),
+                    hintText: context.t(widget.searchHintKey),
+                    hintStyle: TextStyle(
+                      fontSize: 13.5,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ),
             ),
             if (_query.isNotEmpty)
-              InkWell(
-                borderRadius: BorderRadius.circular(999),
-                onTap: () {
-                  _searchCtrl.clear();
-                  _onQueryChanged('');
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Icon(
-                    LucideIcons.x,
-                    size: 14,
-                    color: AppColors.textSecondary,
+              Semantics(
+                button: true,
+                label: context.t('common.clear'),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(999),
+                  onTap: () {
+                    _searchCtrl.clear();
+                    _onQueryChanged('');
+                  },
+                  // A 32 target around the 14 glyph: the extra goes up, down
+                  // and toward the field, so the cross stays where it was and
+                  // the pill keeps its height.
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.fromSTEB(14, 9, 4, 9),
+                    child: Icon(
+                      LucideIcons.x,
+                      size: 14,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ),
@@ -1949,48 +1966,56 @@ class _FilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        child: Row(
-          children: [
-            Icon(
-              selected ? LucideIcons.circleCheck : LucideIcons.circle,
-              size: 17,
-              color: selected
-                  ? AppColors.accentStrong
-                  : AppColors.textSecondary.withValues(alpha: 0.7),
-            ),
-            const SizedBox(width: 10),
-            if (avatar) ...[
-              AppAvatar(
-                name: label,
-                imageUrl: avatarUrl,
-                pronouns: pronouns,
-                radius: 11,
+    // A checked or unchecked choice; the label names it.
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Row(
+            children: [
+              Icon(
+                selected ? LucideIcons.circleCheck : LucideIcons.circle,
+                size: 17,
+                color: selected
+                    ? AppColors.accentStrong
+                    : AppColors.textSecondary.withValues(alpha: 0.7),
               ),
-              const SizedBox(width: 8),
-            ],
-            Expanded(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: AppColors.textPrimary,
+              const SizedBox(width: 10),
+              if (avatar) ...[
+                AppAvatar(
+                  name: label,
+                  imageUrl: avatarUrl,
+                  pronouns: pronouns,
+                  radius: 11,
+                ),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
-            ),
-            if (secondary != null) ...[
-              const SizedBox(width: 8),
-              Text(
-                secondary!,
-                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-              ),
+              if (secondary != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  secondary!,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

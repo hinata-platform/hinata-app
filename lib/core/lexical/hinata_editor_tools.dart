@@ -291,6 +291,7 @@ class _MentionPickerState extends State<_MentionPicker> {
               ),
               IconButton(
                 onPressed: () => Navigator.of(context).maybePop(),
+                tooltip: context.t('common.close'),
                 icon: Icon(LucideIcons.x, size: 18, color: AppColors.inkFaint),
               ),
             ],
@@ -298,11 +299,16 @@ class _MentionPickerState extends State<_MentionPicker> {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(22, 4, 22, 12),
-          child: TextField(
-            controller: _query,
-            autofocus: true,
-            decoration: glassInputDecoration(
-              hint: context.t('md.mentionSearch'),
+          // The sheet's title names the field; the hint alone is not a label.
+          child: Semantics(
+            label: context.t('md.mention'),
+            textField: true,
+            child: TextField(
+              controller: _query,
+              autofocus: true,
+              decoration: glassInputDecoration(
+                hint: context.t('md.mentionSearch'),
+              ),
             ),
           ),
         ),
@@ -332,43 +338,47 @@ class _MentionPickerState extends State<_MentionPicker> {
       'doc' => lucideIcon(item.icon ?? 'file-text'),
       _ => LucideIcons.atSign,
     };
-    return InkWell(
-      onTap: () => Navigator.of(context).pop(item),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-        child: Row(
-          children: [
-            Icon(icon, size: 16, color: item.issueColor ?? AppColors.inkSoft),
-            const SizedBox(width: 10),
-            // Titles are user data of any length, and this has to survive a
-            // 320 px phone.
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (item.sub.isNotEmpty)
+    // The title and subtitle merge in as the button's name.
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: () => Navigator.of(context).pop(item),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: item.issueColor ?? AppColors.inkSoft),
+              const SizedBox(width: 10),
+              // Titles are user data of any length, and this has to survive a
+              // 320 px phone.
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      item.sub,
+                      item.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: AppColors.inkFaint,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                ],
+                    if (item.sub.isNotEmpty)
+                      Text(
+                        item.sub,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: AppColors.inkFaint,
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

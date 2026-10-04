@@ -60,7 +60,8 @@ import 'floating_nav.dart';
 import 'page_chrome.dart';
 import 'shell_nav.dart';
 import 'swipe_back.dart';
-import '../../core/theme/glass_chrome.dart' show kNavGlassDark, kNavGlassLight;
+import '../../core/theme/glass_chrome.dart'
+    show kNavGlassDark, kNavGlassLight, kOnAmber;
 import '../../core/widgets/hive_widgets.dart' show backArrow, forwardArrow;
 
 part 'app_shell.wide.dart';
@@ -249,4 +250,44 @@ void _handleBack(
   } else {
     context.go(subPageBackRoute(location));
   }
+}
+
+/// Pressed feedback for a bare tappable in the bars, the logo and a page title
+/// that opens its menu: neither has a surface an ink could show on, so it dims
+/// while held, the way a bar item does on iOS. The pointer turns to a hand.
+class _PressFade extends StatefulWidget {
+  const _PressFade({required this.onTap, required this.child});
+
+  final VoidCallback onTap;
+  final Widget child;
+
+  @override
+  State<_PressFade> createState() => _PressFadeState();
+}
+
+class _PressFadeState extends State<_PressFade> {
+  bool _down = false;
+
+  void _press(bool down) {
+    if (_down != down) setState(() => _down = down);
+  }
+
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+    cursor: SystemMouseCursors.click,
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) => _press(true),
+      onTapUp: (_) => _press(false),
+      onTapCancel: () => _press(false),
+      onTap: widget.onTap,
+      child: AnimatedOpacity(
+        opacity: _down ? 0.55 : 1,
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 90),
+        child: widget.child,
+      ),
+    ),
+  );
 }

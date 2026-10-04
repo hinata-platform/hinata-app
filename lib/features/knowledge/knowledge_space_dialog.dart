@@ -13,6 +13,18 @@ import '../sprint/modals/glass_modal.dart'
 import 'data/knowledge_models.dart';
 import 'knowledge_tokens.dart';
 
+/// Screen-reader names for the [kLabelHues] swatches.
+const Map<int, String> _kHueNameKeys = {
+  70: 'knowledge.hue.honey',
+  250: 'knowledge.hue.indigo',
+  300: 'knowledge.hue.violet',
+  200: 'knowledge.hue.teal',
+  155: 'knowledge.hue.green',
+  20: 'knowledge.hue.coral',
+  330: 'knowledge.hue.pink',
+  45: 'knowledge.hue.amber',
+};
+
 /// Curated set of space-appropriate Lucide glyphs (all resolvable via
 /// [lucideIcon]) offered in the create-space picker.
 const List<String> _kSpaceIcons = [
@@ -129,27 +141,37 @@ class _CreateSpaceFormState extends State<_CreateSpaceForm> {
             children: [
               GlassField(
                 label: context.t('knowledge.spaceName'),
-                child: TextField(
-                  controller: _name,
-                  autofocus: true,
-                  textCapitalization: TextCapitalization.words,
-                  textInputAction: TextInputAction.next,
-                  decoration: glassInputDecoration(
-                    hint: context.t('knowledge.spaceNameHint'),
+                // The caption above is plain text; tie it to the field for
+                // screen readers.
+                child: Semantics(
+                  label: context.t('knowledge.spaceName'),
+                  textField: true,
+                  child: TextField(
+                    controller: _name,
+                    autofocus: true,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.next,
+                    decoration: glassInputDecoration(
+                      hint: context.t('knowledge.spaceNameHint'),
+                    ),
+                    onSubmitted: (_) => _submit(),
                   ),
-                  onSubmitted: (_) => _submit(),
                 ),
               ),
               const SizedBox(height: 16),
               GlassField(
                 label: context.t('knowledge.spaceDescription'),
-                child: TextField(
-                  controller: _desc,
-                  keyboardType: TextInputType.multiline,
-                  textInputAction: TextInputAction.newline,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: glassInputDecoration(
-                    hint: context.t('knowledge.spaceDescriptionHint'),
+                child: Semantics(
+                  label: context.t('knowledge.spaceDescription'),
+                  textField: true,
+                  child: TextField(
+                    controller: _desc,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: glassInputDecoration(
+                      hint: context.t('knowledge.spaceDescriptionHint'),
+                    ),
                   ),
                 ),
               ),
@@ -199,14 +221,18 @@ class _CreateSpaceFormState extends State<_CreateSpaceForm> {
   }
 
   Widget _iconPicker() {
+    // No Wrap spacing: each tile pads itself by half the old 8-point gap, so
+    // the faces sit as far apart as before and each target is 48×48.
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
       children: [
-        for (final name in _kSpaceIcons)
+        for (final (i, name) in _kSpaceIcons.indexed)
           _PickTile(
             selected: _icon == name,
             hue: _hue,
+            label: context.t(
+              'knowledge.spaceIconOption',
+              variables: {'n': '${i + 1}', 'count': '${_kSpaceIcons.length}'},
+            ),
             onTap: () => setState(() => _icon = name),
             child: Icon(
               lucideIcon(name),
@@ -221,22 +247,34 @@ class _CreateSpaceFormState extends State<_CreateSpaceForm> {
   }
 
   Widget _huePicker() {
+    // No Wrap spacing: each swatch pads itself by half the old 10-point gap,
+    // so the faces sit as far apart as before and each target is 38×38.
     return Wrap(
-      spacing: 10,
-      runSpacing: 10,
       children: [
         for (final h in kLabelHues)
-          GestureDetector(
-            onTap: () => setState(() => _hue = h),
-            child: Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: hueSwatch(h),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: _hue == h ? AppColors.ink : Colors.transparent,
-                  width: 2.5,
+          Semantics(
+            button: true,
+            selected: _hue == h,
+            label: context.t(_kHueNameKeys[h] ?? 'knowledge.spaceColor'),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              excludeFromSemantics: true,
+              onTap: () => setState(() => _hue = h),
+              child: Padding(
+                padding: const EdgeInsets.all(5),
+                child: Material(
+                  color: hueSwatch(h),
+                  shape: CircleBorder(
+                    side: BorderSide(
+                      color: _hue == h ? AppColors.ink : Colors.transparent,
+                      width: 2.5,
+                    ),
+                  ),
+                  child: InkWell(
+                    onTap: () => setState(() => _hue = h),
+                    customBorder: const CircleBorder(),
+                    child: const SizedBox(width: 28, height: 28),
+                  ),
                 ),
               ),
             ),
@@ -251,32 +289,54 @@ class _PickTile extends StatelessWidget {
   const _PickTile({
     required this.selected,
     required this.hue,
+    required this.label,
     required this.onTap,
     required this.child,
   });
 
   final bool selected;
   final int hue;
+  final String label;
   final VoidCallback onTap;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected ? KbTokens.spaceChipBg(hue) : AppColors.surface,
-          borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-          border: Border.all(
-            color: selected ? KbTokens.spaceChipText(hue) : AppColors.hairline,
-            width: selected ? 1.6 : 1,
+    // The 4-point band around the 40-point face is caught by the outer
+    // detector (48×48 in all); a tap on the face is won by the InkWell, which
+    // shows the pressed state.
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        excludeFromSemantics: true,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Material(
+            color: selected ? KbTokens.spaceChipBg(hue) : AppColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+              side: BorderSide(
+                color: selected
+                    ? KbTokens.spaceChipText(hue)
+                    : AppColors.hairline,
+                width: selected ? 1.6 : 1,
+              ),
+            ),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: Center(child: child),
+              ),
+            ),
           ),
         ),
-        child: child,
       ),
     );
   }

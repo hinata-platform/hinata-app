@@ -93,27 +93,35 @@ class _EditProfileModalState extends State<_EditProfileModal> {
               children: [
                 GlassField(
                   label: context.t('account.editModal.displayName'),
-                  child: TextField(
-                    controller: _name,
-                    textCapitalization: TextCapitalization.words,
-                    autofillHints: const [AutofillHints.name],
-                    textInputAction: TextInputAction.next,
-                    decoration: glassInputDecoration(
-                      hint: context.t('account.editModal.nameHint'),
+                  child: Semantics(
+                    label: context.t('account.editModal.displayName'),
+                    textField: true,
+                    child: TextField(
+                      controller: _name,
+                      textCapitalization: TextCapitalization.words,
+                      autofillHints: const [AutofillHints.name],
+                      textInputAction: TextInputAction.next,
+                      decoration: glassInputDecoration(
+                        hint: context.t('account.editModal.nameHint'),
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 14),
                 GlassField(
                   label: context.t('account.editModal.username'),
-                  child: TextField(
-                    enabled: false,
-                    controller: _username,
-                    decoration: glassInputDecoration().copyWith(
-                      prefixIcon: Icon(
-                        LucideIcons.atSign,
-                        size: 16,
-                        color: AppColors.inkFaint,
+                  child: Semantics(
+                    label: context.t('account.editModal.username'),
+                    textField: true,
+                    child: TextField(
+                      enabled: false,
+                      controller: _username,
+                      decoration: glassInputDecoration().copyWith(
+                        prefixIcon: Icon(
+                          LucideIcons.atSign,
+                          size: 16,
+                          color: AppColors.inkFaint,
+                        ),
                       ),
                     ),
                   ),
@@ -121,22 +129,30 @@ class _EditProfileModalState extends State<_EditProfileModal> {
                 const SizedBox(height: 14),
                 GlassField(
                   label: context.t('account.editModal.jobTitle'),
-                  child: TextField(
-                    controller: _title,
-                    textInputAction: TextInputAction.next,
-                    decoration: glassInputDecoration(
-                      hint: context.t('account.editModal.jobTitleHint'),
+                  child: Semantics(
+                    label: context.t('account.editModal.jobTitle'),
+                    textField: true,
+                    child: TextField(
+                      controller: _title,
+                      textInputAction: TextInputAction.next,
+                      decoration: glassInputDecoration(
+                        hint: context.t('account.editModal.jobTitleHint'),
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 14),
                 GlassField(
                   label: context.t('account.editModal.pronouns'),
-                  child: TextField(
-                    controller: _pronouns,
-                    textInputAction: TextInputAction.done,
-                    decoration: glassInputDecoration(
-                      hint: context.t('account.editModal.pronounsHint'),
+                  child: Semantics(
+                    label: context.t('account.editModal.pronouns'),
+                    textField: true,
+                    child: TextField(
+                      controller: _pronouns,
+                      textInputAction: TextInputAction.done,
+                      decoration: glassInputDecoration(
+                        hint: context.t('account.editModal.pronounsHint'),
+                      ),
                     ),
                   ),
                 ),
@@ -252,13 +268,17 @@ class _ChangeEmailModalState extends State<_ChangeEmailModal> {
               const SizedBox(height: 14),
               GlassField(
                 label: context.t('account.emailModal.new'),
-                child: TextField(
-                  controller: _email,
-                  keyboardType: TextInputType.emailAddress,
-                  autofillHints: const [AutofillHints.email],
-                  autocorrect: false,
-                  autofocus: true,
-                  decoration: glassInputDecoration(hint: 'new@example.com'),
+                child: Semantics(
+                  label: context.t('account.emailModal.new'),
+                  textField: true,
+                  child: TextField(
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    autofillHints: const [AutofillHints.email],
+                    autocorrect: false,
+                    autofocus: true,
+                    decoration: glassInputDecoration(hint: 'new@example.com'),
+                  ),
                 ),
               ),
               if (_error != null) ...[
@@ -453,35 +473,38 @@ class _AvatarActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fg = danger ? AppColors.danger : AppColors.ink;
-    return Material(
-      color: AppColors.surface.withValues(alpha: 0.6),
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: InkWell(
-        onTap: onTap,
+    return Semantics(
+      button: true,
+      child: Material(
+        color: AppColors.surface.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(
-              color: danger
-                  ? AppColors.danger.withValues(alpha: 0.35)
-                  : AppColors.hairline,
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 18, color: fg),
-              const SizedBox(width: 12),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: fg,
-                ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              border: Border.all(
+                color: danger
+                    ? AppColors.danger.withValues(alpha: 0.35)
+                    : AppColors.hairline,
               ),
-            ],
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 18, color: fg),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: fg,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -558,16 +581,20 @@ class _DeleteAccountModalState extends State<_DeleteAccountModal> {
             children: [
               GlassField(
                 label: context.t('account.deleteModal.confirmLabel'),
-                child: TextField(
-                  controller: _confirm,
-                  autofocus: true,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z]')),
-                  ],
-                  textCapitalization: TextCapitalization.characters,
-                  decoration: glassInputDecoration(hint: 'DELETE'),
+                child: Semantics(
+                  label: context.t('account.deleteModal.confirmLabel'),
+                  textField: true,
+                  child: TextField(
+                    controller: _confirm,
+                    autofocus: true,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z]')),
+                    ],
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: glassInputDecoration(hint: 'DELETE'),
+                  ),
                 ),
               ),
               if (_error != null) ...[

@@ -357,31 +357,37 @@ class MentionFieldState extends State<MentionField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      key: _fieldKey,
-      controller: _ctrl,
-      focusNode: _focus,
-      scrollController: _scroll,
-      autofocus: widget.autofocus,
-      minLines: widget.expands ? null : widget.minLines,
-      maxLines: widget.expands ? null : widget.maxLines,
-      expands: widget.expands,
-      keyboardType: TextInputType.multiline,
-      textAlignVertical: TextAlignVertical.top,
-      style: _textStyle(),
-      cursorColor: AppColors.accent,
-      decoration: InputDecoration(
-        isCollapsed: true,
-        border: InputBorder.none,
-        enabledBorder: InputBorder.none,
-        focusedBorder: InputBorder.none,
-        filled: false,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 10,
+    // The hint is the field's only caption; the label keeps it named once
+    // the user has typed.
+    return Semantics(
+      label: widget.hintText,
+      textField: true,
+      child: TextField(
+        key: _fieldKey,
+        controller: _ctrl,
+        focusNode: _focus,
+        scrollController: _scroll,
+        autofocus: widget.autofocus,
+        minLines: widget.expands ? null : widget.minLines,
+        maxLines: widget.expands ? null : widget.maxLines,
+        expands: widget.expands,
+        keyboardType: TextInputType.multiline,
+        textAlignVertical: TextAlignVertical.top,
+        style: _textStyle(),
+        cursorColor: AppColors.accent,
+        decoration: InputDecoration(
+          isCollapsed: true,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          filled: false,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 10,
+          ),
+          hintText: widget.hintText,
+          hintStyle: _textStyle().copyWith(color: AppColors.inkFaint),
         ),
-        hintText: widget.hintText,
-        hintStyle: _textStyle().copyWith(color: AppColors.inkFaint),
       ),
     );
   }
@@ -474,63 +480,76 @@ class _MentionMenu extends StatelessWidget {
 
   Widget _row(MentionCandidate it, int i) {
     final isSel = i == selected;
-    return MouseRegion(
-      onEnter: (_) => onHover(i),
-      child: GestureDetector(
-        // onTapDown so we fire before the source field loses focus.
-        onTapDown: (_) => onPick(it),
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          decoration: BoxDecoration(
-            color: isSel ? AppColors.accentSoft : null,
-            borderRadius: BorderRadius.circular(9),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          child: Row(
-            children: [
-              _leading(it),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      it.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+    // The pointer picks on tap-down, which a screen reader cannot send; the
+    // semantic tap gives it the same action. The title inside names the row.
+    return Semantics(
+      button: true,
+      selected: isSel,
+      onTap: () => onPick(it),
+      child: MouseRegion(
+        onEnter: (_) => onHover(i),
+        child: GestureDetector(
+          // onTapDown so we fire before the source field loses focus.
+          onTapDown: (_) => onPick(it),
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            decoration: BoxDecoration(
+              color: isSel ? AppColors.accentSoft : null,
+              borderRadius: BorderRadius.circular(9),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
+              children: [
+                _leading(it),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        it.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    Text(
-                      it.sub,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 11, color: AppColors.inkSoft),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceMuted,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Text(
-                  it.kind.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 9.5,
-                    letterSpacing: 0.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.inkFaint,
+                      Text(
+                        it.sub,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.inkSoft,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceMuted,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Text(
+                    it.kind.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      letterSpacing: 0.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.inkFaint,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

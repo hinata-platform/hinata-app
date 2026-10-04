@@ -32,11 +32,7 @@ class _CircleButton extends StatelessWidget {
     if (send) {
       final decoration = BoxDecoration(
         shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFE7B24A), AppColors.accent, AppColors.accentStrong],
-        ),
+        gradient: kAmberGround,
         boxShadow: [
           BoxShadow(
             color: AppColors.accent.withValues(alpha: 0.5),
@@ -122,17 +118,20 @@ class _EditingBanner extends StatelessWidget {
               ),
             ),
           ),
-          InkWell(
-            onTap: onCancel,
-            borderRadius: BorderRadius.circular(6),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              child: Text(
-                context.t('common.cancel'),
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.accentStrong,
+          Semantics(
+            button: true,
+            child: InkWell(
+              onTap: onCancel,
+              borderRadius: BorderRadius.circular(6),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                child: Text(
+                  context.t('common.cancel'),
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.accentStrong,
+                  ),
                 ),
               ),
             ),
@@ -205,6 +204,7 @@ class _ReplyBanner extends StatelessWidget {
             ),
             IconButton(
               onPressed: onCancel,
+              tooltip: context.t('common.cancel'),
               visualDensity: VisualDensity.compact,
               icon: Icon(LucideIcons.x, size: 16, color: AppColors.inkSoft),
             ),
@@ -314,37 +314,40 @@ class _ActionPopup extends StatelessWidget {
     String label,
     VoidCallback onTap,
   ) {
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(15),
-      child: InkWell(
-        onTap: onTap,
+    return Semantics(
+      button: true,
+      child: Material(
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(15),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 26,
-                child: Icon(icon, size: 22, color: AppColors.inkSoft),
-              ),
-              const SizedBox(width: 14),
-              // Flexible, because the label is a translation: the popover is a
-              // fixed 268 wide and a longer language than German would push the
-              // row past it.
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.ink,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(15),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 26,
+                  child: Icon(icon, size: 22, color: AppColors.inkSoft),
+                ),
+                const SizedBox(width: 14),
+                // Flexible, because the label is a translation: the popover is a
+                // fixed 268 wide and a longer language than German would push the
+                // row past it.
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -366,7 +369,7 @@ class _FormatToolbar extends StatelessWidget {
   /// Supplied by the composer rather than built here, which is what freed this
   /// row from the markdown editing actions it used to be wired to. Underline is
   /// deliberately absent: it is not one of the shapes a comment can carry.
-  final List<(IconData, VoidCallback)> tools;
+  final List<(IconData, String, VoidCallback)> tools;
   final bool canSend;
   final VoidCallback onClose;
   final VoidCallback onSend;
@@ -386,17 +389,31 @@ class _FormatToolbar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              for (final (icon, run) in tools)
+              // 44 dp tall to sit level with the 46 dp circles at either end;
+              // the width shares the row, so each target stays wide enough.
+              for (final (icon, label, run) in tools)
                 Expanded(
-                  child: Material(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(11),
-                    child: InkWell(
-                      onTap: run,
-                      borderRadius: BorderRadius.circular(11),
-                      child: SizedBox(
-                        height: 44,
-                        child: Icon(icon, size: 19, color: AppColors.inkSoft),
+                  child: Tooltip(
+                    message: label,
+                    excludeFromSemantics: true,
+                    child: Semantics(
+                      button: true,
+                      label: label,
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(11),
+                        child: InkWell(
+                          onTap: run,
+                          borderRadius: BorderRadius.circular(11),
+                          child: SizedBox(
+                            height: 44,
+                            child: Icon(
+                              icon,
+                              size: 19,
+                              color: AppColors.inkSoft,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -501,7 +518,18 @@ class _PulsingDotState extends State<_PulsingDot>
   late final AnimationController _c = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1100),
-  )..repeat(reverse: true);
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reduced motion: a steady dot still says "recording" without the pulse.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _c.value = 0;
+    } else if (!_c.isAnimating) {
+      _c.repeat(reverse: true);
+    }
+  }
 
   @override
   void dispose() {

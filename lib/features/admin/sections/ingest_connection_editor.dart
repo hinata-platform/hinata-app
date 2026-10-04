@@ -406,44 +406,50 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
           ),
           const SizedBox(height: 12),
           // Project: searchable, paginated picker instead of a raw id field.
-          InkWell(
-            key: _projectFieldKey,
-            borderRadius: BorderRadius.circular(10),
-            onTap: _pickProject,
-            child: InputDecorator(
-              decoration: InputDecoration(
-                labelText: context.t('admin.ingest.project'),
-                suffixIcon: const Icon(LucideIcons.chevronsUpDown, size: 16),
-              ),
-              child: _project == null
-                  ? Text(
-                      context.t('admin.ingest.pickProject'),
-                      style: TextStyle(fontSize: 14, color: AppColors.inkFaint),
-                    )
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: colorFromHex(_project!.color),
-                            shape: BoxShape.circle,
-                          ),
+          Semantics(
+            button: true,
+            child: InkWell(
+              key: _projectFieldKey,
+              borderRadius: BorderRadius.circular(10),
+              onTap: _pickProject,
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: context.t('admin.ingest.project'),
+                  suffixIcon: const Icon(LucideIcons.chevronsUpDown, size: 16),
+                ),
+                child: _project == null
+                    ? Text(
+                        context.t('admin.ingest.pickProject'),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.inkFaint,
                         ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            '${_project!.key} · ${_project!.name}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.ink,
+                      )
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: colorFromHex(_project!.color),
+                              shape: BoxShape.circle,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              '${_project!.key} · ${_project!.name}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.ink,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -618,15 +624,21 @@ class _ProjectSearchPanelState extends State<_ProjectSearchPanel> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
-          child: TextField(
-            controller: _searchCtrl,
-            autofocus: true,
-            onChanged: _onQueryChanged,
-            textInputAction: TextInputAction.search,
-            decoration: InputDecoration(
-              isDense: true,
-              prefixIcon: const Icon(LucideIcons.search, size: 16),
-              hintText: context.t('admin.ingest.searchProjects'),
+          // The hint is the only caption; name the field for screen readers
+          // too, so it is not announced as a bare text box.
+          child: Semantics(
+            label: context.t('admin.ingest.searchProjects'),
+            textField: true,
+            child: TextField(
+              controller: _searchCtrl,
+              autofocus: true,
+              onChanged: _onQueryChanged,
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                isDense: true,
+                prefixIcon: const Icon(LucideIcons.search, size: 16),
+                hintText: context.t('admin.ingest.searchProjects'),
+              ),
             ),
           ),
         ),
@@ -654,44 +666,47 @@ class _ProjectSearchPanelState extends State<_ProjectSearchPanel> {
                       );
                     }
                     final option = _results[index];
-                    return InkWell(
-                      onTap: () => Navigator.of(context).pop(option),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                color: colorFromHex(option.color),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              option.key,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.inkSoft,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                option.name,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.ink,
+                    return Semantics(
+                      button: true,
+                      child: InkWell(
+                        onTap: () => Navigator.of(context).pop(option),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: colorFromHex(option.color),
+                                  shape: BoxShape.circle,
                                 ),
-                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 10),
+                              Text(
+                                option.key,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.inkSoft,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  option.name,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.ink,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );

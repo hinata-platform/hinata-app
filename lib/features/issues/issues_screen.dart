@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart' show CustomSemanticsAction;
 import 'package:flutter/services.dart';
 import 'package:hinata/core/theme/glass_chrome.dart'
-    show GlassCircleButton, kNavGlassDark, kNavGlassLight;
+    show GlassCircleButton, kNavGlassDark, kNavGlassLight, kOnAmber;
 import 'package:hinata/features/shell/app_shell.dart' show isNativeApp;
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show GlassContainer, LiquidRoundedSuperellipse;

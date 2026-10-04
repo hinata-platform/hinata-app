@@ -503,55 +503,63 @@ class _Tab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = selected ? AppColors.ink : AppColors.inkSoft;
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: selected ? AppColors.accent : Colors.transparent,
-              width: 2.5,
+    // A tab: named by its label (and count) inside, and says which is open.
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: selected ? AppColors.accent : Colors.transparent,
+                width: 2.5,
+              ),
             ),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              tab.icon,
-              size: 15,
-              color: selected ? AppColors.accentStrong : AppColors.inkFaint,
-            ),
-            const SizedBox(width: 7),
-            Text(
-              tab.label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: color,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                tab.icon,
+                size: 15,
+                color: selected ? AppColors.accentStrong : AppColors.inkFaint,
               ),
-            ),
-            if (tab.count != null) ...[
               const SizedBox(width: 7),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                decoration: BoxDecoration(
-                  color: AppColors.canvas2,
-                  borderRadius: BorderRadius.circular(99),
+              Text(
+                tab.label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: color,
                 ),
-                child: Text(
-                  '${tab.count}',
-                  style: TextStyle(
-                    fontFamily: AppTheme.fontMono,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.inkSoft,
+              ),
+              if (tab.count != null) ...[
+                const SizedBox(width: 7),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.canvas2,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    '${tab.count}',
+                    style: TextStyle(
+                      fontFamily: AppTheme.fontMono,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

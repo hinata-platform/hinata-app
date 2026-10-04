@@ -420,42 +420,49 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
       children: [
         GlassField(
           label: context.t('issues.deadline.fixedDate'),
-          child: InkWell(
-            onTap: _pickDate,
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                border: Border.all(color: AppColors.hairline2),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    LucideIcons.calendar,
-                    size: 15,
-                    color: AppColors.inkSoft,
-                  ),
-                  const SizedBox(width: 9),
-                  Expanded(
-                    child: Text(
-                      date == null
-                          ? context.t('issues.noValue')
-                          : MaterialLocalizations.of(
-                              context,
-                            ).formatMediumDate(date),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
-                        color: date == null
-                            ? AppColors.inkFaint
-                            : AppColors.ink,
+          child: Semantics(
+            button: true,
+            label: context.t('issues.deadline.fixedDate'),
+            child: InkWell(
+              onTap: _pickDate,
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 13,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                  border: Border.all(color: AppColors.hairline2),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      LucideIcons.calendar,
+                      size: 15,
+                      color: AppColors.inkSoft,
+                    ),
+                    const SizedBox(width: 9),
+                    Expanded(
+                      child: Text(
+                        date == null
+                            ? context.t('issues.noValue')
+                            : MaterialLocalizations.of(
+                                context,
+                              ).formatMediumDate(date),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                          color: date == null
+                              ? AppColors.inkFaint
+                              : AppColors.ink,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -500,26 +507,30 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
               child: GlassInlineTrack(
                 radius: kGlassPillHeight / 2,
                 child: Center(
-                  child: TextField(
-                    controller: _amount,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontFamily: AppTheme.fontMono,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      height: 1,
+                  child: Semantics(
+                    label: context.t('issues.deadline.amount'),
+                    textField: true,
+                    child: TextField(
+                      controller: _amount,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: AppTheme.fontMono,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        height: 1,
+                      ),
+                      decoration: const InputDecoration(
+                        isCollapsed: true,
+                        filled: false,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                      ),
+                      onChanged: (_) => _scheduleResolve(),
                     ),
-                    decoration: const InputDecoration(
-                      isCollapsed: true,
-                      filled: false,
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                    ),
-                    onChanged: (_) => _scheduleResolve(),
                   ),
                 ),
               ),
@@ -707,7 +718,9 @@ class _Note extends StatelessWidget {
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 6),
                   minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  // Padded: the label stays its small size, the hit area
+                  // grows to 48 dp around it.
+                  tapTargetSize: MaterialTapTargetSize.padded,
                 ),
                 child: Text(action!, style: const TextStyle(fontSize: 12)),
               ),

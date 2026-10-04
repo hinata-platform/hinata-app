@@ -76,6 +76,7 @@ class _Header extends StatelessWidget {
             ),
           ),
           IconButton(
+            tooltip: context.t('common.close'),
             icon: Icon(LucideIcons.x, size: 20, color: AppColors.inkSoft),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
@@ -454,12 +455,18 @@ class _DeleteModalState extends State<_DeleteModal> {
                 style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
               ),
               const SizedBox(height: 8),
-              TextField(
-                controller: _controller,
-                autofocus: true,
-                autocorrect: false,
-                enableSuggestions: false,
-                decoration: glassInputDecoration(hint: 'DELETE'),
+              // The instruction above is the field's caption; give it to
+              // screen readers as the field's name as well.
+              Semantics(
+                label: context.t('admin.um.deleteTypeHint'),
+                textField: true,
+                child: TextField(
+                  controller: _controller,
+                  autofocus: true,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  decoration: glassInputDecoration(hint: 'DELETE'),
+                ),
               ),
             ],
           ],
@@ -583,29 +590,35 @@ class _InviteModalState extends State<_InviteModal> {
                     ConstrainedBox(
                       constraints: const BoxConstraints(minWidth: 160),
                       child: IntrinsicWidth(
-                        child: TextField(
-                          controller: _controller,
-                          focusNode: _focus,
-                          keyboardType: TextInputType.emailAddress,
-                          autocorrect: false,
-                          onChanged: _onChanged,
-                          onSubmitted: (v) {
-                            _commit(v);
-                            _controller.clear();
-                            _focus.requestFocus();
-                          },
-                          decoration: InputDecoration(
-                            isDense: true,
-                            errorBorder: InputBorder.none,
-                            focusedErrorBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            disabledBorder: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            border: InputBorder.none,
-                            filled: false,
-                            hintText: context.t('admin.um.inviteEmailsHint'),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 4,
+                        // GlassField's caption is plain text; name the field
+                        // itself for screen readers.
+                        child: Semantics(
+                          label: context.t('admin.um.inviteEmails'),
+                          textField: true,
+                          child: TextField(
+                            controller: _controller,
+                            focusNode: _focus,
+                            keyboardType: TextInputType.emailAddress,
+                            autocorrect: false,
+                            onChanged: _onChanged,
+                            onSubmitted: (v) {
+                              _commit(v);
+                              _controller.clear();
+                              _focus.requestFocus();
+                            },
+                            decoration: InputDecoration(
+                              isDense: true,
+                              errorBorder: InputBorder.none,
+                              focusedErrorBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              border: InputBorder.none,
+                              filled: false,
+                              hintText: context.t('admin.um.inviteEmailsHint'),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
                             ),
                           ),
                         ),
@@ -632,14 +645,18 @@ class _InviteModalState extends State<_InviteModal> {
             const SizedBox(height: 16),
             GlassField(
               label: context.t('admin.um.inviteMessage'),
-              child: TextField(
-                controller: _message,
-                maxLines: 3,
-                keyboardType: TextInputType.multiline,
-                textCapitalization: TextCapitalization.sentences,
-                textInputAction: TextInputAction.newline,
-                decoration: glassInputDecoration(
-                  hint: context.t('admin.um.inviteMessageHint'),
+              child: Semantics(
+                label: context.t('admin.um.inviteMessage'),
+                textField: true,
+                child: TextField(
+                  controller: _message,
+                  maxLines: 3,
+                  keyboardType: TextInputType.multiline,
+                  textCapitalization: TextCapitalization.sentences,
+                  textInputAction: TextInputAction.newline,
+                  decoration: glassInputDecoration(
+                    hint: context.t('admin.um.inviteMessageHint'),
+                  ),
                 ),
               ),
             ),
@@ -664,8 +681,10 @@ class _InviteModalState extends State<_InviteModal> {
 
   Widget _chip(String email) {
     final invalid = !_re.hasMatch(email);
+    // The chip's end and vertical padding belong to the remove control, so
+    // its hit area spans the chip's height without the chip growing.
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 5, 6, 5),
+      padding: const EdgeInsetsDirectional.only(start: 10),
       decoration: BoxDecoration(
         color: invalid ? AppColors.dangerSoft : AppColors.canvas2,
         borderRadius: BorderRadius.circular(AppTheme.radiusPill),
@@ -686,17 +705,42 @@ class _InviteModalState extends State<_InviteModal> {
             ),
             const SizedBox(width: 4),
           ],
-          Text(
-            email,
-            style: TextStyle(
-              fontSize: 12.5,
-              color: invalid ? AppColors.danger : AppColors.ink,
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: Text(
+              email,
+              style: TextStyle(
+                fontSize: 12.5,
+                color: invalid ? AppColors.danger : AppColors.ink,
+              ),
             ),
           ),
-          const SizedBox(width: 4),
-          GestureDetector(
-            onTap: () => setState(() => _emails.remove(email)),
-            child: Icon(LucideIcons.x, size: 13, color: AppColors.inkFaint),
+          Semantics(
+            button: true,
+            label: context.t(
+              'admin.um.removeEmail',
+              variables: {'email': email},
+            ),
+            child: Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () => setState(() => _emails.remove(email)),
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(4, 5, 6, 5),
+                  child: SizedBox.square(
+                    dimension: 14,
+                    child: Center(
+                      child: Icon(
+                        LucideIcons.x,
+                        size: 13,
+                        color: AppColors.inkFaint,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -756,20 +800,28 @@ class _EditModalState extends State<_EditModal> {
           children: [
             GlassField(
               label: context.t('admin.um.fieldName'),
-              child: TextField(
-                controller: _name,
-                textCapitalization: TextCapitalization.words,
-                textInputAction: TextInputAction.next,
-                decoration: glassInputDecoration(),
+              child: Semantics(
+                label: context.t('admin.um.fieldName'),
+                textField: true,
+                child: TextField(
+                  controller: _name,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  decoration: glassInputDecoration(),
+                ),
               ),
             ),
             const SizedBox(height: 14),
             GlassField(
               label: context.t('admin.um.fieldTitle'),
-              child: TextField(
-                controller: _title,
-                textInputAction: TextInputAction.next,
-                decoration: glassInputDecoration(),
+              child: Semantics(
+                label: context.t('admin.um.fieldTitle'),
+                textField: true,
+                child: TextField(
+                  controller: _title,
+                  textInputAction: TextInputAction.next,
+                  decoration: glassInputDecoration(),
+                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -778,14 +830,18 @@ class _EditModalState extends State<_EditModal> {
               trailing: sso
                   ? Icon(LucideIcons.lock, size: 12, color: AppColors.inkFaint)
                   : null,
-              child: TextField(
-                controller: _email,
-                enabled: !sso,
-                keyboardType: TextInputType.emailAddress,
-                autocorrect: false,
-                textInputAction: TextInputAction.done,
-                decoration: glassInputDecoration(
-                  hint: sso ? context.t('admin.um.emailLockedHint') : null,
+              child: Semantics(
+                label: context.t('admin.um.fieldEmail'),
+                textField: true,
+                child: TextField(
+                  controller: _email,
+                  enabled: !sso,
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  textInputAction: TextInputAction.done,
+                  decoration: glassInputDecoration(
+                    hint: sso ? context.t('admin.um.emailLockedHint') : null,
+                  ),
                 ),
               ),
             ),

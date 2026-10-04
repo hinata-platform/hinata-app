@@ -427,7 +427,7 @@ class GlobalSearchController extends ChangeNotifier {
     var h = hex.replaceAll('#', '').trim();
     if (h.length == 6) h = 'FF$h';
     final value = int.tryParse(h, radix: 16);
-    return value == null ? const Color(0xFF7E81AE) : Color(value);
+    return value == null ? AppColors.stBacklog : Color(value);
   }
 
   static String _relative(DateTime? date) {

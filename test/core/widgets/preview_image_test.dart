@@ -100,8 +100,13 @@ void main() {
     const over = ColoredBox(color: Color(0xFFAABBCC));
 
     double opacityOf(WidgetTester tester) => tester
-        .widgetList<Opacity>(find.byType(Opacity))
-        .map((o) => o.opacity)
+        .widgetList<FadeTransition>(
+          find.descendant(
+            of: find.byType(FadeInOver),
+            matching: find.byType(FadeTransition),
+          ),
+        )
+        .map((o) => o.opacity.value)
         .last;
 
     testWidgets('starts invisible and ends fully opaque', (tester) async {
@@ -133,7 +138,14 @@ void main() {
       // transparent — otherwise the page behind them shows through as a flash.
       expect(find.byWidget(under), findsOneWidget);
       expect(
-        tester.widgetList<Opacity>(find.byType(Opacity)).length,
+        tester
+            .widgetList<FadeTransition>(
+              find.descendant(
+                of: find.byType(FadeInOver),
+                matching: find.byType(FadeTransition),
+              ),
+            )
+            .length,
         1,
         reason: 'only the incoming layer is faded',
       );

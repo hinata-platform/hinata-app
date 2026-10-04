@@ -287,36 +287,41 @@ class _ModeToggle extends StatelessWidget {
   Widget _seg(BuildContext context, bool mode, IconData icon, String label) {
     final on = attachMode == mode;
     return Expanded(
-      child: Material(
-        color: on ? AppColors.surface : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          onTap: () => onChanged(mode),
+      // A segment: named by its label inside, and says which one is chosen.
+      child: Semantics(
+        button: true,
+        selected: on,
+        child: Material(
+          color: on ? AppColors.surface : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 9),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 15,
-                  color: on ? AppColors.ink : AppColors.inkSoft,
-                ),
-                const SizedBox(width: 7),
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: on ? AppColors.ink : AppColors.inkSoft,
+          child: InkWell(
+            onTap: () => onChanged(mode),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    size: 15,
+                    color: on ? AppColors.ink : AppColors.inkSoft,
+                  ),
+                  const SizedBox(width: 7),
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: on ? AppColors.ink : AppColors.inkSoft,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

@@ -115,27 +115,34 @@ class GlassSegmented extends StatelessWidget {
         for (var i = 0; i < labels.length; i++) ...[
           if (i > 0) const SizedBox(width: 6),
           Expanded(
-            child: GestureDetector(
-              onTap: () => onChanged(i),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 130),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: i == selected ? AppColors.navy : null,
-                  borderRadius: GlassFieldStyle.radius,
-                  border: Border.all(
-                    color: i == selected ? AppColors.navy : GlassFieldStyle.rim,
+            child: Semantics(
+              button: true,
+              selected: i == selected,
+              inMutuallyExclusiveGroup: true,
+              child: GestureDetector(
+                onTap: () => onChanged(i),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 130),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: i == selected ? AppColors.navy : null,
+                    borderRadius: GlassFieldStyle.radius,
+                    border: Border.all(
+                      color: i == selected
+                          ? AppColors.navy
+                          : GlassFieldStyle.rim,
+                    ),
                   ),
-                ),
-                child: Text(
-                  labels[i],
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: i == selected ? Colors.white : AppColors.inkSoft,
+                  child: Text(
+                    labels[i],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: i == selected ? Colors.white : AppColors.inkSoft,
+                    ),
                   ),
                 ),
               ),

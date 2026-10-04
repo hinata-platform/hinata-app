@@ -102,63 +102,68 @@ class _LinkRowState extends State<_LinkRow> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
-      child: InkWell(
-        onTap: widget.onOpen == null
-            ? null
-            : () => widget.onOpen!(issue.readableId),
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceMuted,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.hairline),
-          ),
-          child: Row(
-            children: [
-              TypeGlyph(type: issue.type, size: 18),
-              const SizedBox(width: 8),
-              IdMono(issue.readableId),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  issue.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    decoration: done ? TextDecoration.lineThrough : null,
-                    color: done ? AppColors.inkFaint : AppColors.ink,
+      child: Semantics(
+        button: widget.onOpen != null,
+        child: InkWell(
+          onTap: widget.onOpen == null
+              ? null
+              : () => widget.onOpen!(issue.readableId),
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.hairline),
+            ),
+            child: Row(
+              children: [
+                TypeGlyph(type: issue.type, size: 18),
+                const SizedBox(width: 8),
+                IdMono(issue.readableId),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    issue.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      decoration: done ? TextDecoration.lineThrough : null,
+                      color: done ? AppColors.inkFaint : AppColors.ink,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              StateDotBadge(
-                state: issue.state,
-                color: _stateColor(issue.state),
-              ),
-              if (widget.assigneeName != null) ...[
-                const SizedBox(width: 10),
-                HiveAvatar(
-                  name: widget.assigneeName!,
-                  imageUrl: widget.assigneeAvatar,
-                  size: 20,
+                const SizedBox(width: 8),
+                StateDotBadge(
+                  state: issue.state,
+                  color: _stateColor(issue.state),
+                ),
+                if (widget.assigneeName != null) ...[
+                  const SizedBox(width: 10),
+                  HiveAvatar(
+                    name: widget.assigneeName!,
+                    imageUrl: widget.assigneeAvatar,
+                    size: 20,
+                  ),
+                ],
+                const SizedBox(width: 4),
+                // Unlink — always reachable (touch), emphasised on hover (desktop).
+                // Compact 40 dp keeps the link card at its height; it clears
+                // the 24 dp floor (WCAG 2.5.8).
+                IconButton(
+                  tooltip: context.t('issues.links.remove'),
+                  onPressed: widget.onRemove,
+                  visualDensity: VisualDensity.compact,
+                  iconSize: 16,
+                  splashRadius: 18,
+                  icon: Icon(
+                    LucideIcons.unlink,
+                    color: _hover ? AppColors.danger : AppColors.inkFaint,
+                  ),
                 ),
               ],
-              const SizedBox(width: 4),
-              // Unlink — always reachable (touch), emphasised on hover (desktop).
-              IconButton(
-                tooltip: context.t('issues.links.remove'),
-                onPressed: widget.onRemove,
-                visualDensity: VisualDensity.compact,
-                iconSize: 16,
-                splashRadius: 18,
-                icon: Icon(
-                  LucideIcons.unlink,
-                  color: _hover ? AppColors.danger : AppColors.inkFaint,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -510,31 +515,35 @@ class _LinkEditorState extends State<_LinkEditor> {
                       // padding on each side to get the Wrap's content width.
                       SizedBox(
                         width: (_fieldWidth - 20).clamp(120.0, double.infinity),
-                        child: TextField(
-                          controller: _searchCtrl,
-                          focusNode: _focus,
-                          onChanged: (v) {
-                            setState(() => _query = v);
-                            if (!_overlay.isShowing) _overlay.show();
-                            _debounce?.cancel();
-                            _debounce = Timer(_debounceDelay, _search);
-                          },
-                          textInputAction: TextInputAction.search,
-                          style: const TextStyle(fontSize: 13.5),
-                          decoration: InputDecoration(
-                            isDense: true,
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 8,
-                            ),
-                            hintText: _selected.isEmpty
-                                ? context.t('issues.links.fieldHint')
-                                : null,
-                            hintStyle: TextStyle(
-                              color: AppColors.inkFaint,
-                              fontSize: 13.5,
+                        child: Semantics(
+                          label: context.t('issues.links.fieldHint'),
+                          textField: true,
+                          child: TextField(
+                            controller: _searchCtrl,
+                            focusNode: _focus,
+                            onChanged: (v) {
+                              setState(() => _query = v);
+                              if (!_overlay.isShowing) _overlay.show();
+                              _debounce?.cancel();
+                              _debounce = Timer(_debounceDelay, _search);
+                            },
+                            textInputAction: TextInputAction.search,
+                            style: const TextStyle(fontSize: 13.5),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 8,
+                              ),
+                              hintText: _selected.isEmpty
+                                  ? context.t('issues.links.fieldHint')
+                                  : null,
+                              hintStyle: TextStyle(
+                                color: AppColors.inkFaint,
+                                fontSize: 13.5,
+                              ),
                             ),
                           ),
                         ),
@@ -639,35 +648,40 @@ class _TypePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: Container(
-        height: 46,
-        constraints: const BoxConstraints(minWidth: 150, maxWidth: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(color: AppColors.hairline),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: Text(
-                verb,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w600,
+    // 46 dp to line up with the search field beside it.
+    return Semantics(
+      button: true,
+      label: context.t('issues.links.typeTitle'),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        child: Container(
+          height: 46,
+          constraints: const BoxConstraints(minWidth: 150, maxWidth: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+            border: Border.all(color: AppColors.hairline),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  verb,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 6),
-            Icon(LucideIcons.chevronDown, size: 16, color: AppColors.inkSoft),
-          ],
+              const SizedBox(width: 6),
+              Icon(LucideIcons.chevronDown, size: 16, color: AppColors.inkSoft),
+            ],
+          ),
         ),
       ),
     );
@@ -683,8 +697,10 @@ class _LinkChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The × takes a 24 dp hit area (WCAG 2.5.8); the chip's own padding
+    // gives way to it so the chip keeps its size.
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 4, 4, 4),
+      padding: const EdgeInsets.fromLTRB(8, 0.5, 0.5, 0.5),
       decoration: BoxDecoration(
         color: AppColors.accentSoft,
         borderRadius: BorderRadius.circular(AppTheme.radiusPill),
@@ -704,16 +720,23 @@ class _LinkChip extends StatelessWidget {
               fontFeatures: [FontFeature.tabularFigures()],
             ),
           ),
-          const SizedBox(width: 2),
-          InkWell(
-            onTap: onRemove,
-            borderRadius: BorderRadius.circular(99),
-            child: const Padding(
-              padding: EdgeInsets.all(2),
-              child: Icon(
-                LucideIcons.x,
-                size: 13,
-                color: AppColors.accentStrong,
+          Tooltip(
+            message: context.t('common.remove'),
+            excludeFromSemantics: true,
+            child: Semantics(
+              button: true,
+              label: context.t('common.remove'),
+              child: InkWell(
+                onTap: onRemove,
+                borderRadius: BorderRadius.circular(99),
+                child: const Padding(
+                  padding: EdgeInsets.all(5.5),
+                  child: Icon(
+                    LucideIcons.x,
+                    size: 13,
+                    color: AppColors.accentStrong,
+                  ),
+                ),
               ),
             ),
           ),
@@ -737,37 +760,40 @@ class _SuggestionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-        child: Row(
-          children: [
-            TypeGlyph(type: issue.type, size: 18),
-            const SizedBox(width: 9),
-            Text(
-              issue.readableId,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-                color: AppColors.inkSoft,
-                fontFeatures: const [FontFeature.tabularFigures()],
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          child: Row(
+            children: [
+              TypeGlyph(type: issue.type, size: 18),
+              const SizedBox(width: 9),
+              Text(
+                issue.readableId,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.inkSoft,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
               ),
-            ),
-            const SizedBox(width: 9),
-            Expanded(
-              child: Text(
-                issue.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 13.5),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  issue.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 13.5),
+                ),
               ),
-            ),
-            if (alreadyLinked) ...[
-              const SizedBox(width: 8),
-              Icon(LucideIcons.link, size: 14, color: AppColors.inkFaint),
+              if (alreadyLinked) ...[
+                const SizedBox(width: 8),
+                Icon(LucideIcons.link, size: 14, color: AppColors.inkFaint),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

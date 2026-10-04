@@ -103,6 +103,7 @@ Future<Issue?> showIssueForm(
           margin: const EdgeInsetsDirectional.only(end: 12),
           child: IconButton(
             onPressed: () => Navigator.of(modalContext).maybePop(),
+            tooltip: context.t('common.close'),
             icon: Icon(LucideIcons.x, color: AppColors.inkSoft),
           ),
         ),
@@ -166,41 +167,50 @@ class _CreateSaveBar extends StatelessWidget {
               clipBehavior: Clip.antiAlias,
               child: Material(
                 color: Colors.transparent,
-                child: InkWell(
-                  onTap: pressable ? () => controller.submit?.call() : null,
-                  child: Center(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
-                      transitionBuilder: (child, anim) => ScaleTransition(
-                        scale: anim,
-                        child: FadeTransition(opacity: anim, child: child),
+                child: Semantics(
+                  button: true,
+                  enabled: pressable,
+                  // Only the idle face has a text; the loader and the check
+                  // need a name.
+                  label: phase == IssueCreatePhase.idle
+                      ? null
+                      : context.t('common.save'),
+                  child: InkWell(
+                    onTap: pressable ? () => controller.submit?.call() : null,
+                    child: Center(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 250),
+                        transitionBuilder: (child, anim) => ScaleTransition(
+                          scale: anim,
+                          child: FadeTransition(opacity: anim, child: child),
+                        ),
+                        child: switch (phase) {
+                          IssueCreatePhase.saving => const SizedBox(
+                            key: ValueKey('saving'),
+                            width: 22,
+                            height: 22,
+                            child: HiveLoader(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          ),
+                          IssueCreatePhase.success => const Icon(
+                            LucideIcons.check,
+                            key: ValueKey('success'),
+                            size: 26,
+                            color: Colors.white,
+                          ),
+                          IssueCreatePhase.idle => Text(
+                            context.t('common.save'),
+                            key: const ValueKey('idle'),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
+                          ),
+                        },
                       ),
-                      child: switch (phase) {
-                        IssueCreatePhase.saving => const SizedBox(
-                          key: ValueKey('saving'),
-                          width: 22,
-                          height: 22,
-                          child: HiveLoader(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        ),
-                        IssueCreatePhase.success => const Icon(
-                          LucideIcons.check,
-                          key: ValueKey('success'),
-                          size: 26,
-                          color: Colors.white,
-                        ),
-                        IssueCreatePhase.idle => Text(
-                          context.t('common.save'),
-                          key: const ValueKey('idle'),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                          ),
-                        ),
-                      },
                     ),
                   ),
                 ),

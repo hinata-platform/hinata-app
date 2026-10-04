@@ -697,38 +697,46 @@ class EmailReplyComposerState extends State<EmailReplyComposer> {
   Widget _subjectField() {
     return _LabeledField(
       label: context.t('issues.replyEmail.subject'),
-      child: TextField(
-        controller: _subject,
-        onChanged: (_) => _set(() {}),
-        textInputAction: TextInputAction.next,
-        textCapitalization: TextCapitalization.sentences,
-        // Scroll the focused field clear of keyboard + sticky send bar (the
-        // sheet doesn't resize for the keyboard).
-        scrollPadding: EdgeInsets.only(
-          bottom: MediaQuery.viewInsetsOf(context).bottom + 120,
-        ),
-        decoration: _inputDecoration(
-          context.t('issues.replyEmail.subjectHint'),
+      child: Semantics(
+        label: context.t('issues.replyEmail.subject'),
+        textField: true,
+        child: TextField(
+          controller: _subject,
+          onChanged: (_) => _set(() {}),
+          textInputAction: TextInputAction.next,
+          textCapitalization: TextCapitalization.sentences,
+          // Scroll the focused field clear of keyboard + sticky send bar (the
+          // sheet doesn't resize for the keyboard).
+          scrollPadding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(context).bottom + 120,
+          ),
+          decoration: _inputDecoration(
+            context.t('issues.replyEmail.subjectHint'),
+          ),
         ),
       ),
     );
   }
 
   Widget _bodyField({required bool expand}) {
-    final field = TextField(
-      controller: _body,
-      onChanged: (_) => _set(() {}),
-      expands: expand,
-      minLines: expand ? null : 6,
-      maxLines: expand ? null : 12,
-      textAlignVertical: expand ? TextAlignVertical.top : null,
-      keyboardType: TextInputType.multiline,
-      textInputAction: TextInputAction.newline,
-      textCapitalization: TextCapitalization.sentences,
-      scrollPadding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(context).bottom + 120,
+    final field = Semantics(
+      label: context.t('issues.replyEmail.body'),
+      textField: true,
+      child: TextField(
+        controller: _body,
+        onChanged: (_) => _set(() {}),
+        expands: expand,
+        minLines: expand ? null : 6,
+        maxLines: expand ? null : 12,
+        textAlignVertical: expand ? TextAlignVertical.top : null,
+        keyboardType: TextInputType.multiline,
+        textInputAction: TextInputAction.newline,
+        textCapitalization: TextCapitalization.sentences,
+        scrollPadding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom + 120,
+        ),
+        decoration: _inputDecoration(context.t('issues.replyEmail.bodyHint')),
       ),
-      decoration: _inputDecoration(context.t('issues.replyEmail.bodyHint')),
     );
     return _LabeledField(
       label: context.t('issues.replyEmail.body'),
@@ -991,36 +999,39 @@ class _AddChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-          decoration: BoxDecoration(
-            color: AppColors.surface.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(color: AppColors.hairline),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                LucideIcons.paperclip,
-                size: 15,
-                color: AppColors.accentStrong,
-              ),
-              const SizedBox(width: 7),
-              Text(
-                context.t('issues.replyEmail.attach'),
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
+    return Semantics(
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+            decoration: BoxDecoration(
+              color: AppColors.surface.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              border: Border.all(color: AppColors.hairline),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  LucideIcons.paperclip,
+                  size: 15,
                   color: AppColors.accentStrong,
                 ),
-              ),
-            ],
+                const SizedBox(width: 7),
+                Text(
+                  context.t('issues.replyEmail.attach'),
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.accentStrong,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1074,7 +1085,10 @@ class _AttachmentChip extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 2),
+          // 28 dp inside a 44 dp chip; a 48 dp target would grow the chip.
+          // It clears the 24 dp floor (WCAG 2.5.8).
           IconButton(
+            tooltip: context.t('common.remove'),
             visualDensity: VisualDensity.compact,
             constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
             padding: EdgeInsets.zero,

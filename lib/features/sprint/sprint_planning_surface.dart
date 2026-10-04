@@ -411,18 +411,23 @@ class _SprintGroupHeader extends StatelessWidget {
     final compact = context.isCompact;
     final title = Row(
       children: [
-        InkWell(
-          onTap: onToggleCollapse,
-          borderRadius: BorderRadius.circular(6),
-          child: Padding(
-            padding: const EdgeInsets.all(2),
-            child: AnimatedRotation(
-              duration: const Duration(milliseconds: 180),
-              turns: collapsed ? -0.25 : 0,
-              child: Icon(
-                LucideIcons.chevronDown,
-                size: 18,
-                color: AppColors.inkSoft,
+        Semantics(
+          button: true,
+          expanded: !collapsed,
+          label: context.t(collapsed ? 'sprint.expand' : 'sprint.collapse'),
+          child: InkWell(
+            onTap: onToggleCollapse,
+            borderRadius: BorderRadius.circular(6),
+            child: Padding(
+              padding: const EdgeInsets.all(2),
+              child: AnimatedRotation(
+                duration: const Duration(milliseconds: 180),
+                turns: collapsed ? -0.25 : 0,
+                child: Icon(
+                  LucideIcons.chevronDown,
+                  size: 18,
+                  color: AppColors.inkSoft,
+                ),
               ),
             ),
           ),
@@ -645,18 +650,25 @@ class _BacklogGroupState extends State<_BacklogGroup> {
                 padding: const EdgeInsets.fromLTRB(12, 12, 14, 10),
                 child: Row(
                   children: [
-                    InkWell(
-                      onTap: () => setState(() => _collapsed = !_collapsed),
-                      borderRadius: BorderRadius.circular(6),
-                      child: Padding(
-                        padding: const EdgeInsets.all(2),
-                        child: AnimatedRotation(
-                          duration: const Duration(milliseconds: 180),
-                          turns: _collapsed ? -0.25 : 0,
-                          child: Icon(
-                            LucideIcons.chevronDown,
-                            size: 18,
-                            color: AppColors.inkSoft,
+                    Semantics(
+                      button: true,
+                      expanded: !_collapsed,
+                      label: context.t(
+                        _collapsed ? 'sprint.expand' : 'sprint.collapse',
+                      ),
+                      child: InkWell(
+                        onTap: () => setState(() => _collapsed = !_collapsed),
+                        borderRadius: BorderRadius.circular(6),
+                        child: Padding(
+                          padding: const EdgeInsets.all(2),
+                          child: AnimatedRotation(
+                            duration: const Duration(milliseconds: 180),
+                            turns: _collapsed ? -0.25 : 0,
+                            child: Icon(
+                              LucideIcons.chevronDown,
+                              size: 18,
+                              color: AppColors.inkSoft,
+                            ),
                           ),
                         ),
                       ),
@@ -871,6 +883,7 @@ class _Pager extends StatelessWidget {
         children: [
           _pageBtn(
             child: Icon(backChevron(context), size: 18),
+            label: context.t('sprint.pagination.previous'),
             enabled: page > 0,
             onTap: () => onPage(page - 1),
           ),
@@ -878,6 +891,10 @@ class _Pager extends StatelessWidget {
           for (final i in visible) ...[
             _pageBtn(
               child: Text('${i + 1}'),
+              label: context.t(
+                'sprint.pagination.page',
+                variables: {'page': '${i + 1}'},
+              ),
               selected: i == page,
               enabled: true,
               onTap: () => onPage(i),
@@ -897,6 +914,7 @@ class _Pager extends StatelessWidget {
           ),
           _pageBtn(
             child: Icon(forwardChevron(context), size: 18),
+            label: context.t('sprint.pagination.next'),
             enabled: page < pages - 1,
             onTap: () => onPage(page + 1),
           ),
@@ -907,6 +925,7 @@ class _Pager extends StatelessWidget {
 
   Widget _pageBtn({
     required Widget child,
+    required String label,
     required bool enabled,
     required VoidCallback onTap,
     bool selected = false,
@@ -917,30 +936,39 @@ class _Pager extends StatelessWidget {
       child: Material(
         color: selected ? AppColors.navy : AppColors.surface,
         borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          onTap: enabled ? onTap : null,
-          borderRadius: BorderRadius.circular(8),
-          child: Opacity(
-            opacity: enabled ? 1 : 0.4,
-            child: Container(
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: selected ? AppColors.navy : AppColors.hairline,
+        // 32 dp, under the 48 dp goal but over the 24 dp floor: the pager is
+        // a dense row, and bigger hit areas would overlap their neighbours.
+        child: Semantics(
+          button: true,
+          enabled: enabled,
+          selected: selected,
+          label: label,
+          child: InkWell(
+            onTap: enabled ? onTap : null,
+            borderRadius: BorderRadius.circular(8),
+            child: Opacity(
+              opacity: enabled ? 1 : 0.4,
+              child: Container(
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: selected ? AppColors.navy : AppColors.hairline,
+                  ),
                 ),
-              ),
-              child: DefaultTextStyle.merge(
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? Colors.white : AppColors.inkSoft,
-                ),
-                child: IconTheme.merge(
-                  data: IconThemeData(
+                child: DefaultTextStyle.merge(
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
                     color: selected ? Colors.white : AppColors.inkSoft,
                   ),
-                  child: child,
+                  child: IconTheme.merge(
+                    data: IconThemeData(
+                      color: selected ? Colors.white : AppColors.inkSoft,
+                    ),
+                    // The bare number or arrow would only repeat the label.
+                    child: ExcludeSemantics(child: child),
+                  ),
                 ),
               ),
             ),

@@ -404,7 +404,10 @@ class _HoursRow extends StatelessWidget {
               children: [
                 _Arrow(
                   icon: LucideIcons.minus,
-                  tooltip: label,
+                  tooltip: context.t(
+                    'account.stepper.decrease',
+                    variables: {'label': label},
+                  ),
                   onTap: down == minutes ? null : () => onChanged(down),
                 ),
                 ConstrainedBox(
@@ -424,7 +427,10 @@ class _HoursRow extends StatelessWidget {
                 ),
                 _Arrow(
                   icon: LucideIcons.plus,
-                  tooltip: label,
+                  tooltip: context.t(
+                    'account.stepper.increase',
+                    variables: {'label': label},
+                  ),
                   onTap: up == minutes ? null : () => onChanged(up),
                 ),
               ],
@@ -448,18 +454,24 @@ class _Arrow extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: onTap,
-      customBorder: const CircleBorder(),
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Icon(
-          icon,
-          size: 15,
-          semanticLabel: tooltip,
-          color: onTap == null ? AppColors.inkFaint : AppColors.inkSoft,
+  Widget build(BuildContext context) => Tooltip(
+    message: tooltip,
+    child: Semantics(
+      button: true,
+      enabled: onTap != null,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Icon(
+              icon,
+              size: 15,
+              color: onTap == null ? AppColors.inkFaint : AppColors.inkSoft,
+            ),
+          ),
         ),
       ),
     ),

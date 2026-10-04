@@ -229,37 +229,43 @@ class _AbsenceChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tint = accent ? AppColors.accentStrong : AppColors.textSecondary;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-          decoration: BoxDecoration(
-            color: accent
-                ? AppColors.accentStrong.withValues(alpha: 0.10)
-                : AppColors.recess,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
+    // The label names the button. The chip's fills are washes, so the press
+    // shows through them.
+    return Semantics(
+      button: true,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const StadiumBorder(),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+            decoration: BoxDecoration(
               color: accent
-                  ? AppColors.accentStrong.withValues(alpha: 0.28)
-                  : AppColors.hairline2,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 12, color: tint),
-              const SizedBox(width: 5),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
-                  color: tint,
-                ),
+                  ? AppColors.accentStrong.withValues(alpha: 0.10)
+                  : AppColors.recess,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: accent
+                    ? AppColors.accentStrong.withValues(alpha: 0.28)
+                    : AppColors.hairline2,
               ),
-            ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 12, color: tint),
+                const SizedBox(width: 5),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: tint,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

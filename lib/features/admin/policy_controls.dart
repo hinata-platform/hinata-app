@@ -116,27 +116,30 @@ class _EnvDefaultBadge extends StatelessWidget {
       message: context.t('admin.timeTracking.envDefaultHint'),
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(999),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceMuted,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: AppColors.hairline2),
-            ),
-            child: Text(
-              effective == null
-                  ? context.t('admin.timeTracking.envDefault')
-                  : '${context.t('admin.timeTracking.envDefault')}: $effective',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: AppTheme.fontMono,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.inkSoft,
+        child: Semantics(
+          button: true,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: AppColors.hairline2),
+              ),
+              child: Text(
+                effective == null
+                    ? context.t('admin.timeTracking.envDefault')
+                    : '${context.t('admin.timeTracking.envDefault')}: $effective',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: AppTheme.fontMono,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.inkSoft,
+                ),
               ),
             ),
           ),
@@ -169,7 +172,8 @@ class EnvDefaultAction extends StatelessWidget {
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          // Padded, not shrink-wrapped: the visible button stays small while
+          // its hit area grows to the 48 dp minimum.
           foregroundColor: AppColors.inkSoft,
         ),
         icon: const Icon(LucideIcons.rotateCcw, size: 13),
@@ -859,32 +863,37 @@ class _TapField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      key: fieldKey,
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: InputDecorator(
-        decoration: adminInputDecoration(
-          context,
-          label: label,
-          helper: helper,
-        ).copyWith(floatingLabelBehavior: FloatingLabelBehavior.always),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontFamily: muted ? AppTheme.fontMono : null,
-                  color: muted ? AppColors.inkSoft : AppColors.ink,
+    // A button to assistive technology: the decorator's label and the value
+    // merge into its name, and activating it opens the picker.
+    return Semantics(
+      button: true,
+      child: InkWell(
+        key: fieldKey,
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        child: InputDecorator(
+          decoration: adminInputDecoration(
+            context,
+            label: label,
+            helper: helper,
+          ).copyWith(floatingLabelBehavior: FloatingLabelBehavior.always),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: muted ? AppTheme.fontMono : null,
+                    color: muted ? AppColors.inkSoft : AppColors.ink,
+                  ),
                 ),
               ),
-            ),
-            Icon(icon, size: 16, color: AppColors.inkFaint),
-          ],
+              Icon(icon, size: 16, color: AppColors.inkFaint),
+            ],
+          ),
         ),
       ),
     );

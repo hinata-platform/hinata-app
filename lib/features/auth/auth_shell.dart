@@ -514,7 +514,13 @@ class _ImageHero extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image.asset(image, fit: BoxFit.cover, alignment: Alignment.center),
+        // Hero art only; the form beside it carries everything there is to say.
+        Image.asset(
+          image,
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
+          excludeFromSemantics: true,
+        ),
         DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -655,7 +661,13 @@ class _ImageBackdrop extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image.asset(image, fit: BoxFit.cover, alignment: Alignment.center),
+        // Hero art only; the form beside it carries everything there is to say.
+        Image.asset(
+          image,
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
+          excludeFromSemantics: true,
+        ),
         DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(

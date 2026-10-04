@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' show CustomSemanticsAction;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../i18n/i18n.dart';
 import '../models/content_models.dart';
 import '../theme/app_colors.dart';
+import '../widgets/glass_popup_menu.dart';
 
 /// Standard swipe gestures for a notification row, shared by the bell popover
 /// and the full notifications page:
@@ -11,6 +13,10 @@ import '../theme/app_colors.dart';
 /// * swipe **left** (end → start): deletes the notification;
 /// * swipe **right** (start → end): toggles read ⇄ unread — the row snaps
 ///   back instead of dismissing, and the refreshed list reflects the new state.
+///
+/// A swipe is a dragging movement, so both actions are also reachable without
+/// one (WCAG 2.5.7): holding the row or right-clicking it opens a menu with the
+/// same two actions, and a screen reader offers them as custom actions.
 class NotificationSwipe extends StatelessWidget {
   const NotificationSwipe({
     super.key,
@@ -30,39 +36,93 @@ class NotificationSwipe extends StatelessWidget {
 
   final Widget child;
 
+  Future<void> _menu(BuildContext context, String readLabel) async {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null || !box.attached || !box.hasSize) return;
+    final unread = !notification.read;
+    final chosen = await showGlassMenu<String>(
+      context: context,
+      anchorRect: box.localToGlobal(Offset.zero) & box.size,
+      value: '',
+      items: [
+        GlassMenuItem(
+          value: 'read',
+          label: readLabel,
+          leading: Icon(
+            unread ? LucideIcons.mailOpen : LucideIcons.mail,
+            size: 15,
+            color: AppColors.inkSoft,
+          ),
+        ),
+        GlassMenuItem(
+          value: 'delete',
+          label: context.t('notifications.delete'),
+          color: AppColors.danger,
+          leading: const Icon(
+            LucideIcons.trash2,
+            size: 15,
+            color: AppColors.danger,
+          ),
+        ),
+      ],
+    );
+    switch (chosen) {
+      case 'read':
+        await onToggleRead(notification);
+      case 'delete':
+        await onDelete(notification);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final unread = !notification.read;
-    return Dismissible(
-      key: ValueKey('notification-swipe-${notification.id}'),
-      direction: DismissDirection.horizontal,
-      // Read-toggle (right) background.
-      background: _SwipeBackground(
-        alignment: Alignment.centerLeft,
-        color: AppColors.accentStrong,
-        icon: unread ? LucideIcons.mailOpen : LucideIcons.mail,
-        label: context.t(
-          unread ? 'notifications.markRead' : 'notifications.markUnread',
+    final readLabel = context.t(
+      unread ? 'notifications.markRead' : 'notifications.markUnread',
+    );
+    final deleteLabel = context.t('notifications.delete');
+    return Semantics(
+      customSemanticsActions: {
+        CustomSemanticsAction(label: readLabel): () =>
+            onToggleRead(notification),
+        CustomSemanticsAction(label: deleteLabel): () => onDelete(notification),
+      },
+      child: Dismissible(
+        key: ValueKey('notification-swipe-${notification.id}'),
+        direction: DismissDirection.horizontal,
+        // Read-toggle (right) background.
+        background: _SwipeBackground(
+          alignment: Alignment.centerLeft,
+          color: AppColors.accentStrong,
+          icon: unread ? LucideIcons.mailOpen : LucideIcons.mail,
+          label: readLabel,
+        ),
+        // Delete (left) background.
+        secondaryBackground: _SwipeBackground(
+          alignment: Alignment.centerRight,
+          color: AppColors.danger,
+          icon: LucideIcons.trash2,
+          label: deleteLabel,
+        ),
+        confirmDismiss: (direction) async {
+          if (direction == DismissDirection.endToStart) {
+            await onDelete(notification);
+            // The caller reloads its list; the row disappears with the refresh,
+            // so don't also dismiss (the reloaded tree no longer has this key).
+            return false;
+          }
+          await onToggleRead(notification);
+          return false; // snap back — the state flip shows via the refresh
+        },
+        // Builder: the menu anchors on the row's own box.
+        child: Builder(
+          builder: (rowContext) => GestureDetector(
+            onLongPress: () => _menu(rowContext, readLabel),
+            onSecondaryTap: () => _menu(rowContext, readLabel),
+            child: child,
+          ),
         ),
       ),
-      // Delete (left) background.
-      secondaryBackground: _SwipeBackground(
-        alignment: Alignment.centerRight,
-        color: AppColors.danger,
-        icon: LucideIcons.trash2,
-        label: context.t('notifications.delete'),
-      ),
-      confirmDismiss: (direction) async {
-        if (direction == DismissDirection.endToStart) {
-          await onDelete(notification);
-          // The caller reloads its list; the row disappears with the refresh,
-          // so don't also dismiss (the reloaded tree no longer has this key).
-          return false;
-        }
-        await onToggleRead(notification);
-        return false; // snap back — the state flip shows via the refresh
-      },
-      child: child,
     );
   }
 }

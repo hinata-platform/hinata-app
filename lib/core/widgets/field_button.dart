@@ -34,37 +34,46 @@ class FieldButton extends StatelessWidget {
   final bool empty;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: GlassFieldStyle.decoration,
-        child: Row(
-          children: [
-            leading ?? Icon(icon, size: 16, color: AppColors.inkSoft),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: GlassFieldStyle.caption),
-                  const SizedBox(height: 2),
-                  Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: empty
-                        ? GlassFieldStyle.placeholder
-                        : GlassFieldStyle.value,
-                  ),
-                ],
+  // A button to assistive technology; the label and the value merge in as its
+  // name.
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: GlassFieldStyle.decoration,
+          child: Row(
+            children: [
+              leading ?? Icon(icon, size: 16, color: AppColors.inkSoft),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label, style: GlassFieldStyle.caption),
+                    const SizedBox(height: 2),
+                    Text(
+                      value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: empty
+                          ? GlassFieldStyle.placeholder
+                          : GlassFieldStyle.value,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Icon(LucideIcons.chevronRight, size: 15, color: AppColors.inkSoft),
-          ],
+              Icon(
+                LucideIcons.chevronRight,
+                size: 15,
+                color: AppColors.inkSoft,
+              ),
+            ],
+          ),
         ),
       ),
     ),

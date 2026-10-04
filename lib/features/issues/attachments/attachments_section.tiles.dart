@@ -129,11 +129,25 @@ class _AttachmentTileState extends State<_AttachmentTile> {
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       cursor: att != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      child: GestureDetector(
-        onTap: widget.onOpen,
+      // A button to assistive tech, named by the file name inside the tile.
+      child: Semantics(
+        button: widget.onOpen != null,
         child: Stack(
           children: [
             tile,
+            // The press ripple sits on its own transparent layer above the
+            // tile; on the tile's opaque surface it would be painted over.
+            // Hover keeps its border cue only, so the desktop look is unchanged.
+            Positioned.fill(
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                  hoverColor: Colors.transparent,
+                  onTap: widget.onOpen,
+                ),
+              ),
+            ),
             if (showActions)
               Positioned(
                 top: 8,
@@ -316,27 +330,32 @@ class _TileAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 28 dp sits in the tile corner over the preview; a 48 dp hit area would
+    // cover half the thumbnail. It clears the 24 dp floor (WCAG 2.5.8).
     return Tooltip(
       message: tooltip,
-      child: Material(
-        color: AppColors.surface.withValues(alpha: 0.92),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(color: AppColors.hairline.withValues(alpha: 0.6)),
-        ),
-        elevation: 1,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () {
-            onTap();
-          },
-          child: SizedBox(
-            width: 28,
-            height: 28,
-            child: Icon(
-              icon,
-              size: 15,
-              color: danger ? AppColors.danger : AppColors.ink,
+      child: Semantics(
+        button: true,
+        child: Material(
+          color: AppColors.surface.withValues(alpha: 0.92),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: BorderSide(color: AppColors.hairline.withValues(alpha: 0.6)),
+          ),
+          elevation: 1,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () {
+              onTap();
+            },
+            child: SizedBox(
+              width: 28,
+              height: 28,
+              child: Icon(
+                icon,
+                size: 15,
+                color: danger ? AppColors.danger : AppColors.ink,
+              ),
             ),
           ),
         ),
@@ -353,35 +372,38 @@ class _AddButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.accentSoft,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        side: const BorderSide(color: AppColors.accentLine),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                LucideIcons.paperclip,
-                size: 14,
-                color: AppColors.accentStrong,
-              ),
-              const SizedBox(width: 7),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
+    return Semantics(
+      button: true,
+      child: Material(
+        color: AppColors.accentSoft,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          side: const BorderSide(color: AppColors.accentLine),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  LucideIcons.paperclip,
+                  size: 14,
                   color: AppColors.accentStrong,
                 ),
-              ),
-            ],
+                const SizedBox(width: 7),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.accentStrong,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

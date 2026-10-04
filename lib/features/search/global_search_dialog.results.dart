@@ -141,43 +141,52 @@ class _RowShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => onHover(),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Stack(
-          alignment: AlignmentDirectional.centerStart,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: selected ? tokens.selTint : Colors.transparent,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: selected
-                    ? [
-                        BoxShadow(
-                          color: tokens.selEdge,
-                          offset: const Offset(0, 1),
-                          blurRadius: 0,
-                          spreadRadius: -0.5,
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(children: children),
-            ),
-            if (selected)
-              Container(
-                width: 3,
-                height: 18,
-                decoration: BoxDecoration(
-                  color: AppColors.accent,
-                  borderRadius: BorderRadius.circular(3),
+    // The row's title names it; hover moves the selection tint onto it, which
+    // is its pointer feedback.
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: MouseRegion(
+        onEnter: (_) => onHover(),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Stack(
+            alignment: AlignmentDirectional.centerStart,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
                 ),
+                decoration: BoxDecoration(
+                  color: selected ? tokens.selTint : Colors.transparent,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: selected
+                      ? [
+                          BoxShadow(
+                            color: tokens.selEdge,
+                            offset: const Offset(0, 1),
+                            blurRadius: 0,
+                            spreadRadius: -0.5,
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(children: children),
               ),
-          ],
+              if (selected)
+                Container(
+                  width: 3,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

@@ -9,6 +9,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../core/widgets/glass_panel.dart';
 import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_widgets.dart';
@@ -264,30 +265,32 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
           top: top,
           bottom: bottom,
           width: panelWidth,
-          child: AnimatedBuilder(
-            animation: anim,
-            builder: (_, child) {
-              if (reduceMotion) {
-                return Opacity(opacity: anim.value, child: child);
-              }
-              final t = const Cubic(
-                0.34,
-                1.3,
-                0.64,
-                1,
-              ).transform(anim.value.clamp(0.0, 1.0));
-              return Opacity(
-                opacity: (anim.value / 0.6).clamp(0.0, 1.0),
-                child: Transform.scale(
+          // FadeTransition, not Opacity in a builder: the fade only touches
+          // the layer's alpha instead of rebuilding the panel every frame.
+          child: FadeTransition(
+            opacity: reduceMotion
+                ? anim
+                : anim.drive(CurveTween(curve: const Interval(0, 0.6))),
+            child: AnimatedBuilder(
+              animation: anim,
+              builder: (_, child) {
+                if (reduceMotion) return child!;
+                final t = const Cubic(
+                  0.34,
+                  1.3,
+                  0.64,
+                  1,
+                ).transform(anim.value.clamp(0.0, 1.0));
+                return Transform.scale(
                   scale: 0.92 + 0.08 * t,
                   alignment: placeAbove
                       ? Alignment.bottomRight
                       : Alignment.topRight,
                   child: child,
-                ),
-              );
-            },
-            child: panel,
+                );
+              },
+              child: panel,
+            ),
           ),
         ),
       ],
@@ -417,31 +420,38 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
           Icon(LucideIcons.search, size: 18, color: tokens.inkSoft),
           const SizedBox(width: 10),
           Expanded(
-            child: TextField(
-              autofocus: false,
-              cursorColor: tokens.ink,
-              onChanged: (v) => setState(() => _query = v),
-              textInputAction: TextInputAction.search,
-              style: TextStyle(
-                fontSize: 14.5,
-                fontWeight: FontWeight.w500,
-                color: tokens.ink,
+            child: Semantics(
+              label: context.t(
+                'board.filterSearch',
+                variables: {'scope': _scopeLabel(_scope)},
               ),
-              decoration: InputDecoration(
-                isCollapsed: true,
-                border: InputBorder.none,
-                filled: false,
-                errorBorder: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                hintText: context.t(
-                  'board.filterSearch',
-                  variables: {'scope': _scopeLabel(_scope)},
-                ),
-                hintStyle: TextStyle(
+              textField: true,
+              child: TextField(
+                autofocus: false,
+                cursorColor: tokens.ink,
+                onChanged: (v) => setState(() => _query = v),
+                textInputAction: TextInputAction.search,
+                style: TextStyle(
                   fontSize: 14.5,
-                  fontWeight: FontWeight.w400,
-                  color: tokens.inkFaint,
+                  fontWeight: FontWeight.w500,
+                  color: tokens.ink,
+                ),
+                decoration: InputDecoration(
+                  isCollapsed: true,
+                  border: InputBorder.none,
+                  filled: false,
+                  errorBorder: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  hintText: context.t(
+                    'board.filterSearch',
+                    variables: {'scope': _scopeLabel(_scope)},
+                  ),
+                  hintStyle: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w400,
+                    color: tokens.inkFaint,
+                  ),
                 ),
               ),
             ),
@@ -483,8 +493,10 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
 
   Widget _footer(SearchTokens tokens) {
     final count = _filter.activeCount;
+    // No vertical padding: the buttons' padded 48 dp hit areas give the bar
+    // its height now (was 30 + 2 × 8), so the visible bar barely changes.
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 8, 10, 8),
+      padding: const EdgeInsets.fromLTRB(14, 0, 10, 0),
       decoration: BoxDecoration(
         color: tokens.field,
         border: Border(top: BorderSide(color: tokens.hairline)),
@@ -510,7 +522,7 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
                   : tokens.inkSoft,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               minimumSize: const Size(0, 30),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              tapTargetSize: MaterialTapTargetSize.padded,
               textStyle: TextStyle(
                 fontSize: 12,
                 fontWeight: _filter.archivedOnly
@@ -533,7 +545,7 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
                 foregroundColor: AppColors.accentStrong,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 minimumSize: const Size(0, 30),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                tapTargetSize: MaterialTapTargetSize.padded,
                 textStyle: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -574,43 +586,50 @@ class _OptionRowState extends State<_OptionRow> {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 1),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-          decoration: BoxDecoration(
-            color: widget.selected
-                ? t.selTint
-                : (_hover ? t.rowHover : Colors.transparent),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            children: [
-              SizedBox(width: 22, child: Center(child: widget.option.leading)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  widget.option.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    color: t.ink,
+      child: Semantics(
+        button: true,
+        selected: widget.selected,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 1),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+            decoration: BoxDecoration(
+              color: widget.selected
+                  ? t.selTint
+                  : (_hover ? t.rowHover : Colors.transparent),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 22,
+                  child: Center(child: widget.option.leading),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    widget.option.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: t.ink,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                widget.selected
-                    ? LucideIcons.circleCheckBig
-                    : LucideIcons.circle,
-                size: 18,
-                color: widget.selected ? AppColors.accentStrong : t.inkFaint,
-              ),
-            ],
+                const SizedBox(width: 8),
+                Icon(
+                  widget.selected
+                      ? LucideIcons.circleCheckBig
+                      : LucideIcons.circle,
+                  size: 18,
+                  color: widget.selected ? AppColors.accentStrong : t.inkFaint,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -638,54 +657,58 @@ class _ScopeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fg = active ? AppColors.accentStrong : tokens.inkSoft;
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 130),
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-        decoration: BoxDecoration(
-          color: active ? AppColors.accentSoft : tokens.field,
-          borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-          border: Border.all(
-            color: active ? AppColors.accentLine : tokens.hairline,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: fg),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: active ? AppColors.accentStrong : tokens.ink,
-              ),
+    return Semantics(
+      button: true,
+      selected: active,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 130),
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+          decoration: BoxDecoration(
+            color: active ? AppColors.accentSoft : tokens.field,
+            borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+            border: Border.all(
+              color: active ? AppColors.accentLine : tokens.hairline,
             ),
-            if (count > 0) ...[
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: fg),
               const SizedBox(width: 6),
-              Container(
-                constraints: const BoxConstraints(minWidth: 16),
-                height: 16,
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: const BoxDecoration(
-                  color: AppColors.accent,
-                  shape: BoxShape.circle,
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: active ? AppColors.accentStrong : tokens.ink,
                 ),
-                child: Text(
-                  '$count',
-                  style: const TextStyle(
-                    fontFamily: AppTheme.fontMono,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF2A2410),
+              ),
+              if (count > 0) ...[
+                const SizedBox(width: 6),
+                Container(
+                  constraints: const BoxConstraints(minWidth: 16),
+                  height: 16,
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: const BoxDecoration(
+                    color: AppColors.accent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '$count',
+                    style: const TextStyle(
+                      fontFamily: AppTheme.fontMono,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: kOnAmber,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
