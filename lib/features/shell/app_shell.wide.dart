@@ -261,7 +261,7 @@ class _NavRail extends StatelessWidget {
         border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2D2B55).withValues(alpha: 0.34),
+            color: AppColors.navy.withValues(alpha: 0.34),
             blurRadius: 30,
             spreadRadius: -12,
             offset: const Offset(0, 14),
@@ -473,27 +473,30 @@ class _CollapseToggle extends StatelessWidget {
     }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          onTap: onToggle,
+      child: Semantics(
+        button: true,
+        child: Material(
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(8),
-          hoverColor: Colors.white.withValues(alpha: 0.06),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            child: Row(
-              children: [
-                Icon(icon, size: 18, color: AppColors.railFaint),
-                const SizedBox(width: 10),
-                Text(
-                  context.t('nav.collapse'),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.railFaint,
+          child: InkWell(
+            onTap: onToggle,
+            borderRadius: BorderRadius.circular(8),
+            hoverColor: Colors.white.withValues(alpha: 0.06),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              child: Row(
+                children: [
+                  Icon(icon, size: 18, color: AppColors.railFaint),
+                  const SizedBox(width: 10),
+                  Text(
+                    context.t('nav.collapse'),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.railFaint,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -563,62 +566,66 @@ class _RailItem extends StatelessWidget {
                 ),
               ),
             ),
-          Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            child: InkWell(
-              onTap: () => context.go(destination.route),
+          Semantics(
+            button: true,
+            selected: selected,
+            child: Material(
+              color: Colors.transparent,
               borderRadius: BorderRadius.circular(8),
-              hoverColor: Colors.white.withValues(alpha: 0.06),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 160),
-                width: collapsed ? null : double.infinity,
-                padding: EdgeInsets.symmetric(
-                  horizontal: collapsed ? 10 : 12,
-                  vertical: 9,
-                ),
-                decoration: selected
-                    ? BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(8),
-                      )
-                    : null,
-                child: collapsed
-                    ? Tooltip(
-                        message: context.t(destination.labelKey),
-                        preferBelow: false,
-                        child: Icon(
-                          destination.icon,
-                          size: 20,
-                          color: selected
-                              ? AppColors.accent
-                              : AppColors.railFaint,
-                        ),
-                      )
-                    : Row(
-                        children: [
-                          Icon(
+              child: InkWell(
+                onTap: () => context.go(destination.route),
+                borderRadius: BorderRadius.circular(8),
+                hoverColor: Colors.white.withValues(alpha: 0.06),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  width: collapsed ? null : double.infinity,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: collapsed ? 10 : 12,
+                    vertical: 9,
+                  ),
+                  decoration: selected
+                      ? BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                        )
+                      : null,
+                  child: collapsed
+                      ? Tooltip(
+                          message: context.t(destination.labelKey),
+                          preferBelow: false,
+                          child: Icon(
                             destination.icon,
-                            size: 18,
+                            size: 20,
                             color: selected
                                 ? AppColors.accent
                                 : AppColors.railFaint,
                           ),
-                          const SizedBox(width: 10),
-                          Text(
-                            context.t(destination.labelKey),
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: selected
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
+                        )
+                      : Row(
+                          children: [
+                            Icon(
+                              destination.icon,
+                              size: 18,
                               color: selected
-                                  ? AppColors.railInk
+                                  ? AppColors.accent
                                   : AppColors.railFaint,
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(width: 10),
+                            Text(
+                              context.t(destination.labelKey),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: selected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                                color: selected
+                                    ? AppColors.railInk
+                                    : AppColors.railFaint,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
               ),
             ),
           ),
@@ -656,12 +663,13 @@ class _RailIconButton extends StatelessWidget {
           child: Icon(
             icon,
             size: 20,
-            color: amber ? const Color(0xFF2A2410) : AppColors.railFaint,
+            color: amber ? kOnAmber : AppColors.railFaint,
           ),
         ),
       ),
     );
-    return tooltip != null ? Tooltip(message: tooltip!, child: child) : child;
+    final named = Semantics(button: true, selected: active, child: child);
+    return tooltip != null ? Tooltip(message: tooltip!, child: named) : named;
   }
 }
 
@@ -688,7 +696,7 @@ class _GlassFloatingTopBar extends StatelessWidget {
         border: Border.all(color: AppColors.hairline),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2D2B55).withValues(alpha: dark ? .34 : .10),
+            color: AppColors.navy.withValues(alpha: dark ? .34 : .10),
             blurRadius: 26,
             spreadRadius: -10,
             offset: const Offset(0, 12),
@@ -699,10 +707,9 @@ class _GlassFloatingTopBar extends StatelessWidget {
         children: [
           Tooltip(
             message: context.t('nav.dashboard'),
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
+            child: Semantics(
+              button: true,
+              child: _PressFade(
                 onTap: () => context.go('/dashboard'),
                 // Only the signet swaps; the wordmark stays. The shell is the
                 // product you are working in, and the mark beside it says whose
@@ -838,19 +845,22 @@ class _AvatarMenuButtonState extends State<_AvatarMenuButton> {
   Widget build(BuildContext context) {
     return Tooltip(
       message: context.t('account.title'),
-      child: Material(
-        color: Colors.transparent,
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: _openMenu,
-          child: Padding(
-            padding: const EdgeInsets.all(1),
-            child: AppAvatar(
-              key: _avatarKey,
-              name: widget.name,
-              imageUrl: widget.imageUrl,
-              radius: 18,
+      child: Semantics(
+        button: true,
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: _openMenu,
+            child: Padding(
+              padding: const EdgeInsets.all(1),
+              child: AppAvatar(
+                key: _avatarKey,
+                name: widget.name,
+                imageUrl: widget.imageUrl,
+                radius: 18,
+              ),
             ),
           ),
         ),
@@ -980,16 +990,18 @@ class _SubPageTitle extends StatelessWidget {
     if (open == null) return label;
     return Align(
       alignment: AlignmentDirectional.centerStart,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => open(anchorRectOfContext(context)),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(child: label),
-            const SizedBox(width: 3),
-            Icon(LucideIcons.chevronDown, size: 15, color: AppColors.inkSoft),
-          ],
+      child: Semantics(
+        button: true,
+        child: _PressFade(
+          onTap: () => open(anchorRectOfContext(context)),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(child: label),
+              const SizedBox(width: 3),
+              Icon(LucideIcons.chevronDown, size: 15, color: AppColors.inkSoft),
+            ],
+          ),
         ),
       ),
     );
@@ -1062,7 +1074,11 @@ class _WidePageAction extends StatelessWidget {
         type: MaterialType.transparency,
         borderRadius: BorderRadius.circular(AppTheme.radiusPill),
         clipBehavior: Clip.antiAlias,
-        child: InkWell(onTap: action.busy ? null : tap, child: content),
+        child: Semantics(
+          button: true,
+          enabled: !action.busy,
+          child: InkWell(onTap: action.busy ? null : tap, child: content),
+        ),
       ),
     );
   }
@@ -1086,49 +1102,52 @@ class _TopSearchField extends StatelessWidget {
     }
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: 38),
-      child: Material(
-        color: AppColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-          side: BorderSide(color: AppColors.hairline),
-        ),
-        child: InkWell(
-          onTap: () => openGlobalSearch(context),
-          borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-            child: Row(
-              children: [
-                Icon(LucideIcons.search, size: 16, color: AppColors.inkFaint),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: Text(
-                    context.t('appbar.search'),
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
-                  ),
-                ),
-                const SizedBox(width: 9),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceMuted,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: AppColors.hairline),
-                  ),
-                  child: Text(
-                    searchShortcutLabel,
-                    style: TextStyle(
-                      fontFamily: AppTheme.fontMono,
-                      fontSize: 11,
-                      color: AppColors.inkFaint,
+      child: Semantics(
+        button: true,
+        child: Material(
+          color: AppColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+            side: BorderSide(color: AppColors.hairline),
+          ),
+          child: InkWell(
+            onTap: () => openGlobalSearch(context),
+            borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              child: Row(
+                children: [
+                  Icon(LucideIcons.search, size: 16, color: AppColors.inkFaint),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      context.t('appbar.search'),
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 9),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceMuted,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: AppColors.hairline),
+                    ),
+                    child: Text(
+                      searchShortcutLabel,
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontMono,
+                        fontSize: 11,
+                        color: AppColors.inkFaint,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1187,6 +1206,7 @@ class _TopIconButton extends StatelessWidget {
         ),
       ),
     );
-    return tooltip != null ? Tooltip(message: tooltip!, child: button) : button;
+    final named = Semantics(button: true, selected: active, child: button);
+    return tooltip != null ? Tooltip(message: tooltip!, child: named) : named;
   }
 }

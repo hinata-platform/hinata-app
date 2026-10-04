@@ -368,12 +368,17 @@ class _Description extends StatelessWidget {
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
         title: Text(context.t('time.entry.description')),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLength: 2000,
-          decoration: const InputDecoration(counterText: ''),
-          onSubmitted: (value) => Navigator.of(context).pop(value),
+        // The dialog's title is the field's caption; this ties it to the field.
+        content: Semantics(
+          label: context.t('time.entry.description'),
+          textField: true,
+          child: TextField(
+            controller: controller,
+            autofocus: true,
+            maxLength: 2000,
+            decoration: const InputDecoration(counterText: ''),
+            onSubmitted: (value) => Navigator.of(context).pop(value),
+          ),
         ),
         actions: [
           TextButton(
@@ -418,14 +423,18 @@ class _Tappable extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: child,
+  Widget build(BuildContext context) => Semantics(
+    // The text inside names it; without a tap it is plain text.
+    button: onTap != null,
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: child,
+        ),
       ),
     ),
   );

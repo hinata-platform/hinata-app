@@ -372,62 +372,66 @@ class _ImportWizardState extends State<_ImportWizard> {
                       .where((entry) => entry.value == index)
                       .map((entry) => entry.key)
                       .firstOrNull;
-                  return InkWell(
-                    onTap: () {
-                      final box = anchor.findRenderObject() as RenderBox?;
-                      unawaited(
-                        _pickColumn(
-                          index,
-                          box == null || !box.hasSize
-                              ? null
-                              : box.localToGlobal(Offset.zero) & box.size,
+                  // The header and the column it lands in name the button.
+                  return Semantics(
+                    button: true,
+                    child: InkWell(
+                      onTap: () {
+                        final box = anchor.findRenderObject() as RenderBox?;
+                        unawaited(
+                          _pickColumn(
+                            index,
+                            box == null || !box.hasSize
+                                ? null
+                                : box.localToGlobal(Offset.zero) & box.size,
+                          ),
+                        );
+                      },
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 44),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                header,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: AppTheme.fontMono,
+                                  fontSize: 12.5,
+                                  color: AppColors.ink,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              LucideIcons.arrowRight,
+                              size: 14,
+                              color: AppColors.inkSoft,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                column == null
+                                    ? context.t('time.import.ignore')
+                                    : context.t(column.labelKey),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: column == null
+                                      ? FontWeight.w400
+                                      : FontWeight.w600,
+                                  color: column == null
+                                      ? AppColors.inkSoft
+                                      : AppColors.ink,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              LucideIcons.chevronDown,
+                              size: 14,
+                              color: AppColors.inkSoft,
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(minHeight: 44),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              header,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: AppTheme.fontMono,
-                                fontSize: 12.5,
-                                color: AppColors.ink,
-                              ),
-                            ),
-                          ),
-                          Icon(
-                            LucideIcons.arrowRight,
-                            size: 14,
-                            color: AppColors.inkSoft,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              column == null
-                                  ? context.t('time.import.ignore')
-                                  : context.t(column.labelKey),
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: column == null
-                                    ? FontWeight.w400
-                                    : FontWeight.w600,
-                                color: column == null
-                                    ? AppColors.inkSoft
-                                    : AppColors.ink,
-                              ),
-                            ),
-                          ),
-                          Icon(
-                            LucideIcons.chevronDown,
-                            size: 14,
-                            color: AppColors.inkSoft,
-                          ),
-                        ],
                       ),
                     ),
                   );

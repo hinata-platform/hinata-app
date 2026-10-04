@@ -5,6 +5,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../../core/widgets/hive_widgets.dart';
 import '../sprint_format.dart';
 
@@ -40,14 +41,14 @@ class GlassSprintHeader extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(LucideIcons.zap, size: 13, color: Color(0xFF2A2410)),
+          const Icon(LucideIcons.zap, size: 13, color: kOnAmber),
           const SizedBox(width: 4),
           Text(
             context.t('board.active'),
             style: const TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF2A2410),
+              color: kOnAmber,
             ),
           ),
         ],

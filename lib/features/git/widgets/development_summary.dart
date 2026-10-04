@@ -466,42 +466,51 @@ class _DevCat extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          InkWell(
-            onTap: onToggle,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-              child: Row(
-                children: [
-                  DevGlyph(hue: hue, icon: categoryIcon(iconKey), size: 30),
-                  const SizedBox(width: 11),
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+          // The category label names the toggle; `expanded` says whether
+          // its rows are showing.
+          Semantics(
+            button: true,
+            expanded: open,
+            child: InkWell(
+              onTap: onToggle,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 13,
+                  vertical: 11,
+                ),
+                child: Row(
+                  children: [
+                    DevGlyph(hue: hue, icon: categoryIcon(iconKey), size: 30),
+                    const SizedBox(width: 11),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '$count',
-                    style: TextStyle(
-                      fontFamily: AppTheme.fontMono,
-                      fontSize: 11.5,
-                      color: AppColors.inkFaint,
+                    const SizedBox(width: 8),
+                    Text(
+                      '$count',
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontMono,
+                        fontSize: 11.5,
+                        color: AppColors.inkFaint,
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  if (badge != null) ...[badge!, const SizedBox(width: 8)],
-                  AnimatedRotation(
-                    turns: open ? chevronTurn(context) : 0,
-                    duration: const Duration(milliseconds: 180),
-                    child: Icon(
-                      forwardChevron(context),
-                      size: 16,
-                      color: AppColors.inkFaint,
+                    const Spacer(),
+                    if (badge != null) ...[badge!, const SizedBox(width: 8)],
+                    AnimatedRotation(
+                      turns: open ? chevronTurn(context) : 0,
+                      duration: const Duration(milliseconds: 180),
+                      child: Icon(
+                        forwardChevron(context),
+                        size: 16,
+                        color: AppColors.inkFaint,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

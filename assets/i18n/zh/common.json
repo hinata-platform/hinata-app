@@ -280,7 +280,9 @@
       "body": "该链接指向另一台服务器（{{host}}）。要切换过去吗？",
       "confirm": "切换服务器"
     },
-    "ssoProviderFailed": "你所在组织的登录服务未能完成登录。请重试。"
+    "ssoProviderFailed": "你所在组织的登录服务未能完成登录。请重试。",
+    "showPassword": "显示密码",
+    "hidePassword": "隐藏密码"
   },
   "authShell": {
     "heroTitle": "让团队的工作汇聚于此。",
@@ -395,7 +397,9 @@
     "awayToday": "今日缺勤",
     "awayNone": "今天大家都在。",
     "awayMore": "以及另外 {{count}} 人",
-    "awayOpen": "打开团队日历"
+    "awayOpen": "打开团队日历",
+    "showCard": "显示卡片",
+    "hideCard": "隐藏卡片"
   },
   "comments": {
     "actionCamera": "拍摄照片或视频",
@@ -448,6 +452,12 @@
       "closeFormat": "关闭格式",
       "discardRecording": "放弃录音",
       "sendVoice": "发送语音消息"
+    },
+    "moreReactions": "更多表情回应",
+    "voice": {
+      "play": "播放语音消息",
+      "pause": "暂停语音消息",
+      "position": "播放位置"
     }
   },
   "filePicker": {
@@ -885,7 +895,9 @@
     "multiSelectHint": {
       "text": "提示：长按一个事项即可多选并一起编辑，例如为它们设置同一个截止日期。",
       "gotIt": "知道了"
-    }
+    },
+    "editTitle": "编辑标题",
+    "editDescription": "编辑描述"
   },
   "type": {
     "task": "任务",
@@ -1009,7 +1021,8 @@
       "month": "月",
       "truncated": "此时间段的记录多于日历所显示的。缩小时间段即可查看全部。",
       "more": "另外 {{count}} 项",
-      "more_plural": "另外 {{count}} 项"
+      "more_plural": "另外 {{count}} 项",
+      "dayActions": "当天操作"
     },
     "mode": {
       "stopwatch": "秒表",
@@ -2053,6 +2066,18 @@
       "payoutReason": "随最后一次工资折算",
       "done": "已记录",
       "confirmTitle": "{{what}}：{{days}}？"
+    },
+    "hue": {
+      "default": "默认颜色",
+      "red": "红色",
+      "orange": "橙色",
+      "amber": "琥珀色",
+      "green": "绿色",
+      "teal": "青绿色",
+      "cyan": "青色",
+      "blue": "蓝色",
+      "violet": "紫罗兰色",
+      "pink": "粉色"
     }
   },
   "projects": {
@@ -2235,7 +2260,10 @@
       "assignTo": "放入哪一列？",
       "noColumnAvailable": "没有可用的列，每一列都已包含该项目的一个状态。",
       "unassignedHint": "这些状态尚未分配到任何列。处于这些状态的事项不会显示在看板上。",
-      "automatic": "恢复自动"
+      "automatic": "恢复自动",
+      "assignState": "添加到列",
+      "unassignState": "从列中移除",
+      "wipLabel": "在制品上限"
     },
     "searchIssues": "搜索事项…",
     "laneLimit": "还有 {{count}} 张。请搜索或筛选来查找。"
@@ -2405,7 +2433,22 @@
     "emptyMessage": "页面通过项目和团队共享。新页面在放入项目或团队之前一直是私有的。",
     "tree": {
       "truncated": "页面太多，一个列表放不下，因此这里没有显示全部页面。子页面可能因此显示在顶层，尽管其上级页面存在。"
-    }
+    },
+    "hue": {
+      "honey": "蜜色",
+      "indigo": "靛蓝",
+      "violet": "紫罗兰",
+      "teal": "青绿",
+      "green": "绿色",
+      "coral": "珊瑚",
+      "pink": "粉色",
+      "amber": "琥珀色"
+    },
+    "spaceIconOption": "图标 {{n}}/{{count}}",
+    "subpages": "子页面",
+    "moveUnder": "移动到…下",
+    "moveUnderTitle": "移动到哪个页面下？",
+    "pageActions": "页面操作"
   },
   "md": {
     "heading1": "标题 1",
@@ -2494,7 +2537,8 @@
       "thisWeek": "本周",
       "thisMonth": "本月",
       "earlier": "更早"
-    }
+    },
+    "unread": "未读"
   },
   "appbar": {
     "search": "搜索或跳转到…",
@@ -3051,7 +3095,13 @@
       "toastOrgAdminRevoked": "已撤销组织管理员角色",
       "orgAdminConfirmOne": "{{name}} 之后将能看到所有人的工作时间、工时表、缺勤和工时记录。只有在未指定缺勤管理人时才能看到病假，否则仅在 {{name}} 被指定时可见。事项标题和描述仅来自 {{name}} 所在的项目。",
       "orgAdminConfirmMany": "{{names}} 之后将能看到所有人的工作时间、工时表、缺勤和工时记录。只有在未指定缺勤管理人时才能看到病假，否则仅被指定者可见。事项标题和描述仅来自其所在的项目。",
-      "reasonOwnOrgRole": "此角色需由管理团队中的其他人授予你。"
+      "reasonOwnOrgRole": "此角色需由管理团队中的其他人授予你。",
+      "selectUser": "选择 {{name}}",
+      "selectPage": "选择本页所有用户",
+      "previousPage": "上一页",
+      "nextPage": "下一页",
+      "pageNumber": "第 {{n}} 页",
+      "removeEmail": "移除 {{email}}"
     },
     "iosStoreUrl": "iOS App Store URL",
     "androidStoreUrl": "Android Play Store URL",
@@ -3449,7 +3499,13 @@
     "moveOpenMany": "将 {{count}} 个未完成事项移动到",
     "selectedCount": "已选择 {{count}} 项",
     "collapse": "收起",
-    "expand": "展开"
+    "expand": "展开",
+    "pagination": {
+      "previous": "上一页",
+      "next": "下一页",
+      "page": "第 {{page}} 页"
+    },
+    "selectIssue": "选择 {{issue}}"
   },
   "teams": {
     "avatar": {
@@ -3494,7 +3550,9 @@
       "teal": "青绿",
       "green": "绿色",
       "coral": "珊瑚",
-      "custom": "自定义"
+      "custom": "自定义",
+      "pink": "粉色",
+      "amber": "琥珀"
     },
     "role": {
       "admin": "团队管理员",
@@ -3609,6 +3667,18 @@
       "apply": "应用",
       "includedVia": "已通过 {{title}} 包含",
       "truncated": "此列表无法显示全部页面。请通过搜索查找其余页面。"
+    },
+    "icon": {
+      "hexagon": "六边形",
+      "smartphone": "手机",
+      "server": "服务器",
+      "book": "书本",
+      "rocket": "火箭",
+      "palette": "调色板",
+      "shield": "盾牌",
+      "globe": "地球",
+      "code": "代码",
+      "layers": "图层"
     }
   },
   "projectSettings": {
@@ -3708,7 +3778,10 @@
       "copy": "复制项目",
       "dateCleared": "已移除日期。截止日期保持原位，规则也保留。",
       "datesMoved": "已调整 {{count}} 个截止日期。"
-    }
+    },
+    "labelName": "标签名称",
+    "removeLabel": "移除标签",
+    "stateName": "状态名称"
   },
   "account": {
     "title": "我的账户",
@@ -3972,6 +4045,10 @@
       "remindOn": "提醒日",
       "suggested": "组织建议：{{duration}}",
       "useSuggestion": "采用"
+    },
+    "stepper": {
+      "decrease": "减少{{label}}",
+      "increase": "增加{{label}}"
     }
   },
   "twofa": {
@@ -3999,7 +4076,8 @@
     "regenerate": "重新生成",
     "disableTitle": "停用双重验证",
     "disableSubtitle": "输入当前的 6 位验证码或一个恢复码以关闭双重验证。",
-    "disableButton": "停用双重验证"
+    "disableButton": "停用双重验证",
+    "digitLabel": "第 {{n}} 位，共 {{total}} 位"
   },
   "invite": {
     "title": "设置你的账户",

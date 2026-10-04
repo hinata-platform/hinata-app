@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'deadline_basis_field.dart';
+import 'project_hue_label.dart';
 import 'project_key.dart';
 
 import '../../core/api/api_client.dart';
@@ -231,15 +232,21 @@ class _ProjectCreateFieldsState extends State<ProjectCreateFields> {
         const SizedBox(height: 16),
         GlassField(
           label: context.t('projects.descriptionOptional'),
-          child: TextField(
-            controller: widget.draft.description,
-            keyboardType: TextInputType.multiline,
-            textInputAction: TextInputAction.newline,
-            textCapitalization: TextCapitalization.sentences,
-            minLines: 2,
-            maxLines: 4,
-            decoration: glassInputDecoration(
-              hint: context.t('projectSettings.descHint'),
+          // The caption above is plain text; this ties it to the field for
+          // screen readers.
+          child: Semantics(
+            label: context.t('projects.descriptionOptional'),
+            textField: true,
+            child: TextField(
+              controller: widget.draft.description,
+              keyboardType: TextInputType.multiline,
+              textInputAction: TextInputAction.newline,
+              textCapitalization: TextCapitalization.sentences,
+              minLines: 2,
+              maxLines: 4,
+              decoration: glassInputDecoration(
+                hint: context.t('projectSettings.descHint'),
+              ),
             ),
           ),
         ),
@@ -295,13 +302,17 @@ class _ProjectCreateFieldsState extends State<ProjectCreateFields> {
     );
     final nameField = GlassField(
       label: context.t('projects.name'),
-      child: TextField(
-        controller: draft.name,
-        autofocus: widget.autofocus,
-        textCapitalization: TextCapitalization.words,
-        textInputAction: TextInputAction.next,
-        decoration: glassInputDecoration(
-          hint: context.t('projects.namePlaceholder'),
+      child: Semantics(
+        label: context.t('projects.name'),
+        textField: true,
+        child: TextField(
+          controller: draft.name,
+          autofocus: widget.autofocus,
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.next,
+          decoration: glassInputDecoration(
+            hint: context.t('projects.namePlaceholder'),
+          ),
         ),
       ),
     );
@@ -310,16 +321,20 @@ class _ProjectCreateFieldsState extends State<ProjectCreateFields> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextField(
-            controller: draft.key,
-            textCapitalization: TextCapitalization.characters,
-            autocorrect: false,
-            maxLength: 10,
-            style: const TextStyle(fontFamily: AppTheme.fontMono),
-            inputFormatters: const [ProjectKeyFormatter()],
-            decoration: glassInputDecoration(
-              hint: 'BILL',
-            ).copyWith(counterText: ''),
+          Semantics(
+            label: context.t('projects.key'),
+            textField: true,
+            child: TextField(
+              controller: draft.key,
+              textCapitalization: TextCapitalization.characters,
+              autocorrect: false,
+              maxLength: 10,
+              style: const TextStyle(fontFamily: AppTheme.fontMono),
+              inputFormatters: const [ProjectKeyFormatter()],
+              decoration: glassInputDecoration(
+                hint: 'BILL',
+              ).copyWith(counterText: ''),
+            ),
           ),
           // Said here rather than after a round trip that fails.
           if (draft.keyTaken)
@@ -455,13 +470,19 @@ class _AccentSwatches extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 30×30 targets 8 points apart: above the 24-point floor of WCAG 2.5.8.
+    // A 48-point ring would spread the row or push the field below it down.
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
         for (final c in kProjectHues)
-          GestureDetector(
-            onTap: () => onPick(c.hue),
+          Semantics(
+            button: true,
+            selected: c.hue == selected,
+            label: projectHueLabel(context, c.hue),
+            // The fill sits under its own transparent Material so the press
+            // ripple shows on top of the colour rather than under it.
             child: Container(
               width: 30,
               height: 30,
@@ -471,6 +492,13 @@ class _AccentSwatches extends StatelessWidget {
                 border: Border.all(
                   color: c.hue == selected ? AppColors.ink : Colors.transparent,
                   width: 2,
+                ),
+              ),
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  onTap: () => onPick(c.hue),
+                  borderRadius: BorderRadius.circular(9),
                 ),
               ),
             ),

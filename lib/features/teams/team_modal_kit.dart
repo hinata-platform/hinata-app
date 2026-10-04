@@ -5,6 +5,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/team_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../sprint/modals/glass_modal.dart' show showGlassModal;
 import 'team_widgets.dart';
 
@@ -111,6 +112,7 @@ class ModalShell extends StatelessWidget {
                   ),
                 ),
                 IconButton(
+                  tooltip: context.t('common.close'),
                   onPressed: () => Navigator.of(context).maybePop(),
                   visualDensity: VisualDensity.compact,
                   icon: Icon(LucideIcons.x, size: 20, color: AppColors.inkSoft),
@@ -342,11 +344,16 @@ class RoleSegmented extends StatelessWidget {
     bool disabled,
   ) {
     final on = role == value;
+    // The disabled fade is baked into each colour rather than laid over the
+    // segment with an Opacity, which would composite it in a layer of its own.
+    Color fade(Color c) => disabled ? c.withValues(alpha: c.a * 0.4) : c;
     return Expanded(
-      child: Opacity(
-        opacity: disabled ? 0.4 : 1,
+      child: Semantics(
+        button: true,
+        selected: on,
+        enabled: !disabled,
         child: Material(
-          color: on ? AppColors.surface : Colors.transparent,
+          color: on ? fade(AppColors.surface) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           child: InkWell(
             onTap: disabled ? null : () => onChanged(value),
@@ -358,7 +365,9 @@ class RoleSegmented extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
+                          color: Colors.black.withValues(
+                            alpha: disabled ? 0.06 * 0.4 : 0.06,
+                          ),
                           blurRadius: 4,
                           offset: const Offset(0, 1),
                         ),
@@ -371,7 +380,7 @@ class RoleSegmented extends StatelessWidget {
                   Icon(
                     icon,
                     size: 15,
-                    color: on ? AppColors.ink : AppColors.inkSoft,
+                    color: fade(on ? AppColors.ink : AppColors.inkSoft),
                   ),
                   const SizedBox(width: 7),
                   Flexible(
@@ -382,7 +391,7 @@ class RoleSegmented extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
-                        color: on ? AppColors.ink : AppColors.inkSoft,
+                        color: fade(on ? AppColors.ink : AppColors.inkSoft),
                       ),
                     ),
                   ),
@@ -405,13 +414,19 @@ class ColorPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 30×30 targets 8 points apart: above the 24-point floor of WCAG 2.5.8.
+    // A 48-point ring would spread the row.
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
         for (final s in teamSwatches)
-          GestureDetector(
-            onTap: () => onChanged(s.hue),
+          Semantics(
+            button: true,
+            selected: hue == s.hue,
+            label: context.t(s.nameKey),
+            // The fill sits under its own transparent Material so the press
+            // ripple shows on top of the colour rather than under it.
             child: Container(
               width: 30,
               height: 30,
@@ -421,6 +436,13 @@ class ColorPicker extends StatelessWidget {
                 border: Border.all(
                   color: hue == s.hue ? AppColors.ink : Colors.transparent,
                   width: 2,
+                ),
+              ),
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  onTap: () => onChanged(s.hue),
+                  borderRadius: BorderRadius.circular(9),
                 ),
               ),
             ),
@@ -450,25 +472,32 @@ class IconPicker extends StatelessWidget {
         for (final name in teamIconNames)
           () {
             final on = selected == name;
-            return Material(
-              color: on ? AppColors.accentSoft : _fill,
-              borderRadius: BorderRadius.circular(9),
-              child: InkWell(
-                onTap: () => onChanged(name),
+            // 34×34 targets 6 points apart: above the 24-point floor of WCAG
+            // 2.5.8; 48 would turn the grid into a much taller block.
+            return Semantics(
+              button: true,
+              selected: on,
+              label: context.t(teamIconLabelKey(name)),
+              child: Material(
+                color: on ? AppColors.accentSoft : _fill,
                 borderRadius: BorderRadius.circular(9),
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(9),
-                    border: Border.all(
-                      color: on ? AppColors.accent : AppColors.hairline,
+                child: InkWell(
+                  onTap: () => onChanged(name),
+                  borderRadius: BorderRadius.circular(9),
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(
+                        color: on ? AppColors.accent : AppColors.hairline,
+                      ),
                     ),
-                  ),
-                  child: Icon(
-                    teamIcon(name),
-                    size: 17,
-                    color: on ? AppColors.accentStrong : AppColors.inkSoft,
+                    child: Icon(
+                      teamIcon(name),
+                      size: 17,
+                      color: on ? AppColors.accentStrong : AppColors.inkSoft,
+                    ),
                   ),
                 ),
               ),
@@ -498,55 +527,60 @@ class CheckRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: selected ? AppColors.accentSoft : _fill,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: InkWell(
-        onTap: onTap,
+    // A checklist row: the title inside names it, this says it is a check
+    // box and whether it is ticked.
+    return Semantics(
+      checked: selected,
+      child: Material(
+        color: selected ? AppColors.accentSoft : _fill,
         borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(
-              color: selected ? AppColors.accentLine : AppColors.hairline,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              border: Border.all(
+                color: selected ? AppColors.accentLine : AppColors.hairline,
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              leading,
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                    if (subtitle != null)
+            child: Row(
+              children: [
+                leading,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       Text(
-                        subtitle!,
+                        title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.inkSoft,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.ink,
                         ),
                       ),
-                  ],
+                      if (subtitle != null)
+                        Text(
+                          subtitle!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.inkSoft,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              _CheckBox(on: selected),
-            ],
+                const SizedBox(width: 10),
+                _CheckBox(on: selected),
+              ],
+            ),
           ),
         ),
       ),
@@ -569,7 +603,7 @@ class _CheckBox extends StatelessWidget {
         border: Border.all(color: on ? AppColors.accent : AppColors.hairline),
       ),
       child: on
-          ? const Icon(LucideIcons.check, size: 14, color: Color(0xFF2A2410))
+          ? const Icon(LucideIcons.check, size: 14, color: kOnAmber)
           : null,
     );
   }

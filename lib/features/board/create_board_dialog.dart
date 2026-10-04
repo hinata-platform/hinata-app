@@ -8,6 +8,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../core/widgets/project_picker.dart';
 import '../sprint/modals/glass_modal.dart';
 
@@ -150,13 +151,17 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
                 const SizedBox(height: 16),
                 GlassField(
                   label: context.t('board.name'),
-                  child: TextField(
-                    controller: _name,
-                    autofocus: true,
-                    textCapitalization: TextCapitalization.words,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => _save(),
-                    decoration: glassInputDecoration(),
+                  child: Semantics(
+                    label: context.t('board.name'),
+                    textField: true,
+                    child: TextField(
+                      controller: _name,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _save(),
+                      decoration: glassInputDecoration(),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -219,68 +224,73 @@ class _TypeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 130),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.accentSoft
-              : AppColors.surface.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(
-            color: selected ? AppColors.accent : AppColors.hairline,
-            width: 1.5,
+    return Semantics(
+      button: true,
+      selected: selected,
+      inMutuallyExclusiveGroup: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 130),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: selected
+                ? AppColors.accentSoft
+                : AppColors.surface.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+            border: Border.all(
+              color: selected ? AppColors.accent : AppColors.hairline,
+              width: 1.5,
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: selected ? AppColors.accent : AppColors.canvas2,
-                borderRadius: BorderRadius.circular(10),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.accent : AppColors.canvas2,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  size: 19,
+                  color: selected ? kOnAmber : AppColors.inkSoft,
+                ),
               ),
-              child: Icon(
-                icon,
-                size: 19,
-                color: selected ? const Color(0xFF2A2410) : AppColors.inkSoft,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      height: 1.35,
-                      color: AppColors.inkSoft,
+                    const SizedBox(height: 2),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        height: 1.35,
+                        color: AppColors.inkSoft,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            if (selected)
-              const Icon(
-                LucideIcons.circleCheckBig,
-                size: 20,
-                color: AppColors.accentStrong,
-              ),
-          ],
+              if (selected)
+                const Icon(
+                  LucideIcons.circleCheckBig,
+                  size: 20,
+                  color: AppColors.accentStrong,
+                ),
+            ],
+          ),
         ),
       ),
     );

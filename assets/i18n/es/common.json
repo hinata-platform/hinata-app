@@ -280,7 +280,9 @@
       "body": "Este enlace apunta a otro servidor ({{host}}). ¿Quieres cambiar a él?",
       "confirm": "Cambiar de servidor"
     },
-    "ssoProviderFailed": "el servicio de inicio de sesión de tu organización no la completó. Inténtalo de nuevo."
+    "ssoProviderFailed": "el servicio de inicio de sesión de tu organización no la completó. Inténtalo de nuevo.",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña"
   },
   "authShell": {
     "heroTitle": "Donde converge el trabajo de tu equipo.",
@@ -395,7 +397,9 @@
     "awayToday": "Ausentes hoy",
     "awayNone": "Hoy están todos.",
     "awayMore": "y {{count}} más",
-    "awayOpen": "Abrir el calendario del equipo"
+    "awayOpen": "Abrir el calendario del equipo",
+    "showCard": "Mostrar tarjeta",
+    "hideCard": "Ocultar tarjeta"
   },
   "comments": {
     "actionCamera": "Hacer foto o vídeo",
@@ -448,6 +452,12 @@
       "closeFormat": "Cerrar formato",
       "discardRecording": "Descartar grabación",
       "sendVoice": "Enviar mensaje de voz"
+    },
+    "moreReactions": "Más reacciones",
+    "voice": {
+      "play": "Reproducir mensaje de voz",
+      "pause": "Pausar mensaje de voz",
+      "position": "Posición de reproducción"
     }
   },
   "filePicker": {
@@ -885,7 +895,9 @@
     "multiSelectHint": {
       "text": "Consejo: mantén pulsada una incidencia para seleccionar varias y editarlas juntas, por ejemplo para darles a todas la misma fecha límite.",
       "gotIt": "Entendido"
-    }
+    },
+    "editTitle": "Editar título",
+    "editDescription": "Editar descripción"
   },
   "type": {
     "task": "Tarea",
@@ -1009,7 +1021,8 @@
       "month": "Mes",
       "truncated": "Este periodo tiene más entradas de las que muestra el calendario. Redúcelo para verlas todas.",
       "more": "+{{count}} más",
-      "more_plural": "+{{count}} más"
+      "more_plural": "+{{count}} más",
+      "dayActions": "Acciones del día"
     },
     "mode": {
       "stopwatch": "Cronómetro",
@@ -2053,6 +2066,18 @@
       "payoutReason": "Compensado con la última nómina",
       "done": "Registrado",
       "confirmTitle": "¿{{what}} de {{days}}?"
+    },
+    "hue": {
+      "default": "Color predeterminado",
+      "red": "Rojo",
+      "orange": "Naranja",
+      "amber": "Ámbar",
+      "green": "Verde",
+      "teal": "Verde azulado",
+      "cyan": "Cian",
+      "blue": "Azul",
+      "violet": "Violeta",
+      "pink": "Rosa"
     }
   },
   "projects": {
@@ -2235,7 +2260,10 @@
       "assignTo": "¿A qué columna?",
       "noColumnAvailable": "No queda ninguna columna: todas contienen ya un estado de este proyecto.",
       "unassignedHint": "Estos estados todavía no tienen columna. Las incidencias que estén en ellos no aparecerían en el tablero.",
-      "automatic": "Volver a automático"
+      "automatic": "Volver a automático",
+      "assignState": "Añadir a una columna",
+      "unassignState": "Quitar de la columna",
+      "wipLabel": "Límite WIP"
     },
     "searchIssues": "Buscar incidencias…",
     "laneLimit": "{{count}} más. Busca o filtra para encontrarlas."
@@ -2405,7 +2433,22 @@
     "emptyMessage": "Las páginas se comparten a través de proyectos y equipos. Una página nueva es privada hasta que la pongas en un proyecto o un equipo.",
     "tree": {
       "truncated": "Aquí no aparecen todas las páginas porque son demasiadas para una lista. Por eso una subpágina puede aparecer arriba aunque su página superior exista."
-    }
+    },
+    "hue": {
+      "honey": "Miel",
+      "indigo": "Índigo",
+      "violet": "Violeta",
+      "teal": "Turquesa",
+      "green": "Verde",
+      "coral": "Coral",
+      "pink": "Rosa",
+      "amber": "Ámbar"
+    },
+    "spaceIconOption": "Icono {{n}} de {{count}}",
+    "subpages": "Subpáginas",
+    "moveUnder": "Mover debajo de…",
+    "moveUnderTitle": "¿Debajo de qué página?",
+    "pageActions": "Acciones de la página"
   },
   "md": {
     "heading1": "Título 1",
@@ -2494,7 +2537,8 @@
       "thisWeek": "Esta semana",
       "thisMonth": "Este mes",
       "earlier": "Anterior"
-    }
+    },
+    "unread": "No leída"
   },
   "appbar": {
     "search": "Buscar o ir a…",
@@ -3051,7 +3095,13 @@
       "toastOrgAdminRevoked": "Rol de administrador de la organización retirado",
       "orgAdminConfirmOne": "{{name}} verá después los tiempos de trabajo, partes de horas, ausencias y registros de todas las personas. La enfermedad solo mientras nadie esté designado para gestionar ausencias; si no, solo si {{name}} está designada. Títulos y descripciones de incidencias solo de los proyectos de los que {{name}} forma parte.",
       "orgAdminConfirmMany": "{{names}} verán después los tiempos de trabajo, partes de horas, ausencias y registros de todas las personas. La enfermedad solo mientras nadie esté designado para gestionar ausencias; si no, solo quien esté designado. Títulos y descripciones de incidencias solo de sus propios proyectos.",
-      "reasonOwnOrgRole": "Este rol te lo da otra persona de la administración."
+      "reasonOwnOrgRole": "Este rol te lo da otra persona de la administración.",
+      "selectUser": "Seleccionar a {{name}}",
+      "selectPage": "Seleccionar todos los usuarios de esta página",
+      "previousPage": "Página anterior",
+      "nextPage": "Página siguiente",
+      "pageNumber": "Página {{n}}",
+      "removeEmail": "Quitar {{email}}"
     },
     "iosStoreUrl": "URL de la App Store de iOS",
     "androidStoreUrl": "URL de Google Play para Android",
@@ -3449,7 +3499,13 @@
     "moveOpenMany": "Mover {{count}} incidencias sin terminar a",
     "selectedCount": "{{count}} seleccionadas",
     "collapse": "Contraer",
-    "expand": "Desplegar"
+    "expand": "Desplegar",
+    "pagination": {
+      "previous": "Página anterior",
+      "next": "Página siguiente",
+      "page": "Página {{page}}"
+    },
+    "selectIssue": "Seleccionar {{issue}}"
   },
   "teams": {
     "avatar": {
@@ -3494,7 +3550,9 @@
       "teal": "Turquesa",
       "green": "Verde",
       "coral": "Coral",
-      "custom": "Personalizado"
+      "custom": "Personalizado",
+      "pink": "Rosa",
+      "amber": "Ámbar"
     },
     "role": {
       "admin": "Administrador del equipo",
@@ -3609,6 +3667,18 @@
       "apply": "Aplicar",
       "includedVia": "Incluida a través de {{title}}",
       "truncated": "No todas las páginas caben en esta lista. Busca para encontrar las demás."
+    },
+    "icon": {
+      "hexagon": "Hexágono",
+      "smartphone": "Móvil",
+      "server": "Servidor",
+      "book": "Libro",
+      "rocket": "Cohete",
+      "palette": "Paleta",
+      "shield": "Escudo",
+      "globe": "Globo",
+      "code": "Código",
+      "layers": "Capas"
     }
   },
   "projectSettings": {
@@ -3708,7 +3778,10 @@
       "copy": "Copiar proyecto",
       "dateCleared": "Fecha quitada. Los plazos se quedan donde están y conservan su regla.",
       "datesMoved": "{{count}} plazos desplazados."
-    }
+    },
+    "labelName": "Nombre de la etiqueta",
+    "removeLabel": "Quitar etiqueta",
+    "stateName": "Nombre del estado"
   },
   "account": {
     "title": "Mi cuenta",
@@ -3972,6 +4045,10 @@
       "remindOn": "Día del recordatorio",
       "suggested": "Sugerido por tu organización: {{duration}}",
       "useSuggestion": "Usar"
+    },
+    "stepper": {
+      "decrease": "Reducir {{label}}",
+      "increase": "Aumentar {{label}}"
     }
   },
   "twofa": {
@@ -3999,7 +4076,8 @@
     "regenerate": "Regenerar",
     "disableTitle": "Desactivar la verificación en dos pasos",
     "disableSubtitle": "Introduce un código actual de 6 dígitos o uno de recuperación para desactivar la 2FA.",
-    "disableButton": "Desactivar 2FA"
+    "disableButton": "Desactivar 2FA",
+    "digitLabel": "Dígito {{n}} de {{total}}"
   },
   "invite": {
     "title": "Configura tu cuenta",

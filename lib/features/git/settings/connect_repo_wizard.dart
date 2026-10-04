@@ -899,17 +899,26 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               Icon(LucideIcons.search, size: 16, color: AppColors.inkFaint),
               const SizedBox(width: 9),
               Expanded(
-                child: TextField(
-                  autofocus: true,
-                  onChanged: (v) => setState(() => _query = v),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    border: InputBorder.none,
-                    hintText: context.t(
-                      'git.connect.searchHint',
-                      variables: {'unit': '${p.unit}s'},
+                // The hint is the only caption; the label keeps the field
+                // named once the user has typed.
+                child: Semantics(
+                  label: context.t(
+                    'git.connect.searchHint',
+                    variables: {'unit': '${p.unit}s'},
+                  ),
+                  textField: true,
+                  child: TextField(
+                    autofocus: true,
+                    onChanged: (v) => setState(() => _query = v),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      border: InputBorder.none,
+                      hintText: context.t(
+                        'git.connect.searchHint',
+                        variables: {'unit': '${p.unit}s'},
+                      ),
+                      hintStyle: TextStyle(color: AppColors.inkFaint),
                     ),
-                    hintStyle: TextStyle(color: AppColors.inkFaint),
                   ),
                 ),
               ),
@@ -964,29 +973,41 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
         const SizedBox(height: 14),
         GlassField(
           label: context.t('git.connect.repoUrlLabel'),
-          child: TextField(
-            controller: _urlCtrl,
-            autofocus: true,
-            keyboardType: TextInputType.url,
-            autocorrect: false,
-            onChanged: (_) => setState(() {}),
-            decoration: glassInputDecoration(
-              hint: 'https://gitlab.example.com/hinata/hinata-app',
+          // The caption above is plain text; tie it to the field for
+          // screen readers.
+          child: Semantics(
+            label: context.t('git.connect.repoUrlLabel'),
+            textField: true,
+            child: TextField(
+              controller: _urlCtrl,
+              autofocus: true,
+              keyboardType: TextInputType.url,
+              autocorrect: false,
+              onChanged: (_) => setState(() {}),
+              decoration: glassInputDecoration(
+                hint: 'https://gitlab.example.com/hinata/hinata-app',
+              ),
             ),
           ),
         ),
         const SizedBox(height: 14),
         GlassField(
           label: context.t('git.connect.accessTokenLabel'),
-          child: TextField(
-            controller: _tokenCtrl,
-            obscureText: true,
-            autocorrect: false,
-            enableSuggestions: false,
-            onChanged: (_) => setState(() {}),
-            style: const TextStyle(fontFamily: AppTheme.fontMono),
-            decoration: glassInputDecoration(
-              hint: 'glpat-••••••••••••••••••••',
+          // The caption above is plain text; tie it to the field for
+          // screen readers.
+          child: Semantics(
+            label: context.t('git.connect.accessTokenLabel'),
+            textField: true,
+            child: TextField(
+              controller: _tokenCtrl,
+              obscureText: true,
+              autocorrect: false,
+              enableSuggestions: false,
+              onChanged: (_) => setState(() {}),
+              style: const TextStyle(fontFamily: AppTheme.fontMono),
+              decoration: glassInputDecoration(
+                hint: 'glpat-••••••••••••••••••••',
+              ),
             ),
           ),
         ),
@@ -1096,14 +1117,22 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
   InlineSpan _linkSpan(String text, VoidCallback onTap) {
     return WidgetSpan(
       alignment: PlaceholderAlignment.middle,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: AppColors.accentStrong,
+      // An inline link in running text: WCAG 2.5.8 exempts it from the
+      // target size, but it still needs the link role and a pointer cursor.
+      child: Semantics(
+        link: true,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: onTap,
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.accentStrong,
+              ),
+            ),
           ),
         ),
       ),

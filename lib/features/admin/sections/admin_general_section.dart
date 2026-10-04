@@ -304,36 +304,40 @@ class _AdminGeneralSectionState extends State<AdminGeneralSection> {
     final color = danger ? AppColors.danger : AppColors.accentStrong;
     return Material(
       type: MaterialType.transparency,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          decoration: BoxDecoration(
-            color: danger ? AppColors.dangerSoft : AppColors.accentSoft,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: danger
-                  ? AppColors.danger.withValues(alpha: 0.35)
-                  : AppColors.accentLine,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              busy
-                  ? HiveLoader(size: 15, color: color)
-                  : Icon(icon, size: 15, color: color),
-              const SizedBox(width: 7),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
+      child: Semantics(
+        button: true,
+        enabled: onTap != null,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: danger ? AppColors.dangerSoft : AppColors.accentSoft,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: danger
+                    ? AppColors.danger.withValues(alpha: 0.35)
+                    : AppColors.accentLine,
               ),
-            ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                busy
+                    ? HiveLoader(size: 15, color: color)
+                    : Icon(icon, size: 15, color: color),
+                const SizedBox(width: 7),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -486,6 +490,7 @@ class _LogoPreviewState extends State<_LogoPreview> {
           ? SvgPicture.memory(
               bytes,
               fit: BoxFit.contain,
+              semanticsLabel: context.t('admin.logo'),
               placeholderBuilder: (_) =>
                   Icon(LucideIcons.image, size: 22, color: AppColors.inkFaint),
             )
@@ -494,6 +499,7 @@ class _LogoPreviewState extends State<_LogoPreview> {
           : Image.memory(
               bytes,
               fit: BoxFit.contain,
+              semanticLabel: context.t('admin.logo'),
               cacheWidth: (64 * MediaQuery.devicePixelRatioOf(context)).round(),
             ),
     );

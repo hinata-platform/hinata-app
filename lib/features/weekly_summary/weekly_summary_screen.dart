@@ -26,7 +26,7 @@ import '../shell/page_chrome.dart';
 // Exact stat hues, harmonised with the dashboard "Liquid Glass" palette.
 const _cCompleted = Color(0xFF2E8B62);
 const _cCreated = Color(0xFF4E6FD0);
-const _cFocus = Color(0xFFB9831F);
+const _cFocus = AppColors.accentStrong;
 const _cOverdue = Color(0xFFC0392B);
 const _heroInk = Color(0xF2FFFFFF); // ~95% white — text on navy glass
 
@@ -267,28 +267,33 @@ class _GlassCard extends StatelessWidget {
       child: child,
     );
     if (onTap != null) {
-      content = Stack(
-        // Passthrough, NOT the default loose fit: a loose Stack hands its
-        // non-positioned child `loose(biggest)`, so the decorated box would
-        // shrink-wrap its content and a card with little to say (the stat trio)
-        // would draw a small pill floating in its slot instead of filling it —
-        // the surrounding Expanded sizes the Stack, not what you see inside it.
-        // Passthrough forwards the card's own constraints, exactly as the
-        // untappable branch below gets them.
-        fit: StackFit.passthrough,
-        children: [
-          content,
-          Positioned.fill(
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: onTap,
-                borderRadius: BorderRadius.circular(_radius),
-                child: const SizedBox.expand(),
+      // Around the whole stack, so the card's own words name the button: the
+      // ink layer on top holds nothing to read.
+      content = Semantics(
+        button: true,
+        child: Stack(
+          // Passthrough, NOT the default loose fit: a loose Stack hands its
+          // non-positioned child `loose(biggest)`, so the decorated box would
+          // shrink-wrap its content and a card with little to say (the stat trio)
+          // would draw a small pill floating in its slot instead of filling it —
+          // the surrounding Expanded sizes the Stack, not what you see inside it.
+          // Passthrough forwards the card's own constraints, exactly as the
+          // untappable branch below gets them.
+          fit: StackFit.passthrough,
+          children: [
+            content,
+            Positioned.fill(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onTap,
+                  borderRadius: BorderRadius.circular(_radius),
+                  child: const SizedBox.expand(),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     }
     return DecoratedBox(
@@ -296,7 +301,7 @@ class _GlassCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(_radius),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2D2B55).withValues(alpha: dark ? .48 : .22),
+            color: AppColors.navy.withValues(alpha: dark ? .48 : .22),
             blurRadius: 38,
             spreadRadius: -24,
             offset: const Offset(0, 20),
@@ -329,10 +334,13 @@ class _Hero extends StatelessWidget {
 
     return _GlassCard(
       padding: EdgeInsets.all(context.isCompact ? 22 : 28),
-      gradient: const LinearGradient(
+      gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xE01E1C3A), Color(0xD12D2B55)],
+        colors: [
+          AppColors.navyDeep.withAlpha(0xE0),
+          AppColors.navy.withAlpha(0xD1),
+        ],
       ),
       borderColor: Colors.white.withValues(alpha: .14),
       child: Stack(
@@ -1044,74 +1052,78 @@ class _IssueRow extends StatelessWidget {
             DateTime.now().day,
           ),
         );
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        // The modal sheet, not `context.go('/issues/…')`: `go` replaces this
-        // location instead of stacking on it, so the issue page would have
-        // nothing to pop back to and its close button falls through to the
-        // `/dashboard` fallback. The sheet leaves the summary mounted underneath.
-        onTap: () => showIssueDetailSheet(context, issueId: issue.id),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          child: Row(
-            children: [
-              TypeGlyph(type: issue.type, size: 26),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      issue.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.ink,
+    // The title and key inside name the button.
+    return Semantics(
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          // The modal sheet, not `context.go('/issues/…')`: `go` replaces this
+          // location instead of stacking on it, so the issue page would have
+          // nothing to pop back to and its close button falls through to the
+          // `/dashboard` fallback. The sheet leaves the summary mounted underneath.
+          onTap: () => showIssueDetailSheet(context, issueId: issue.id),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+            child: Row(
+              children: [
+                TypeGlyph(type: issue.type, size: 26),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        issue.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.ink,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        IdMono(issue.readableId),
-                        if (showDue && due != null) ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                            LucideIcons.calendar,
-                            size: 11,
-                            color: overdue ? _cOverdue : AppColors.inkFaint,
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            DateFormat.MMMd(
-                              Localizations.localeOf(context).languageCode,
-                            ).format(due.toLocal()),
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: overdue
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
-                              color: overdue ? _cOverdue : AppColors.inkSoft,
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          IdMono(issue.readableId),
+                          if (showDue && due != null) ...[
+                            const SizedBox(width: 8),
+                            Icon(
+                              LucideIcons.calendar,
+                              size: 11,
+                              color: overdue ? _cOverdue : AppColors.inkFaint,
                             ),
-                          ),
+                            const SizedBox(width: 3),
+                            Text(
+                              DateFormat.MMMd(
+                                Localizations.localeOf(context).languageCode,
+                              ).format(due.toLocal()),
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: overdue
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: overdue ? _cOverdue : AppColors.inkSoft,
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              PriorityFlag(priority: issue.priority),
-              const SizedBox(width: 6),
-              Icon(
-                forwardChevron(context),
-                size: 15,
-                color: AppColors.inkFaint,
-              ),
-            ],
+                const SizedBox(width: 8),
+                PriorityFlag(priority: issue.priority),
+                const SizedBox(width: 6),
+                Icon(
+                  forwardChevron(context),
+                  size: 15,
+                  color: AppColors.inkFaint,
+                ),
+              ],
+            ),
           ),
         ),
       ),

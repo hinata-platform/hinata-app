@@ -528,66 +528,69 @@ class _CopyLinkIdState extends State<CopyLinkId> {
         cursor: SystemMouseCursors.click,
         onEnter: (_) => setState(() => _hovering = true),
         onExit: (_) => setState(() => _hovering = false),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: _copy,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.showGlyph) ...[
-                TypeGlyph(type: widget.type, size: widget.glyphSize),
-                const SizedBox(width: 10),
-              ],
-              IdMono(
-                widget.readableId,
-                color: widget.color ?? AppColors.inkSoft,
-                fontSize: widget.fontSize,
-              ),
-              // Reserved fixed-size slot: the icon fades in on hover (or once
-              // copied), so the row width never jumps. Deliberately a plain
-              // fade, NOT an AnimatedSlide/Transform: a translating render object
-              // (RenderFractionalTranslation) asserts `!debugNeedsLayout` when
-              // the web mouse-tracker hit-tests it mid-relayout — while the sheet
-              // is loading comments its layout churns every frame, which turned
-              // that into an assert flood that hung the app on web/desktop.
-              Padding(
-                padding: const EdgeInsetsDirectional.only(start: 4),
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 160),
-                  opacity: visible ? 1 : 0,
-                  child: Tooltip(
-                    message: context.t(
-                      _copied ? 'issues.copied' : 'issues.copyLink',
-                    ),
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: Center(
-                        child: _copied
-                            ? Container(
-                                width: 18,
-                                height: 18,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.success,
-                                  shape: BoxShape.circle,
+        child: Semantics(
+          button: true,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _copy,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.showGlyph) ...[
+                  TypeGlyph(type: widget.type, size: widget.glyphSize),
+                  const SizedBox(width: 10),
+                ],
+                IdMono(
+                  widget.readableId,
+                  color: widget.color ?? AppColors.inkSoft,
+                  fontSize: widget.fontSize,
+                ),
+                // Reserved fixed-size slot: the icon fades in on hover (or once
+                // copied), so the row width never jumps. Deliberately a plain
+                // fade, NOT an AnimatedSlide/Transform: a translating render object
+                // (RenderFractionalTranslation) asserts `!debugNeedsLayout` when
+                // the web mouse-tracker hit-tests it mid-relayout — while the sheet
+                // is loading comments its layout churns every frame, which turned
+                // that into an assert flood that hung the app on web/desktop.
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(start: 4),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 160),
+                    opacity: visible ? 1 : 0,
+                    child: Tooltip(
+                      message: context.t(
+                        _copied ? 'issues.copied' : 'issues.copyLink',
+                      ),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: Center(
+                          child: _copied
+                              ? Container(
+                                  width: 18,
+                                  height: 18,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.success,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    LucideIcons.check,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Icon(
+                                  LucideIcons.link,
+                                  size: 16,
+                                  color: widget.color ?? AppColors.inkSoft,
                                 ),
-                                child: const Icon(
-                                  LucideIcons.check,
-                                  size: 12,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Icon(
-                                LucideIcons.link,
-                                size: 16,
-                                color: widget.color ?? AppColors.inkSoft,
-                              ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -596,57 +599,93 @@ class _CopyLinkIdState extends State<CopyLinkId> {
 }
 
 /// The floating "Link to HIN-39 copied" chip shown under the id on touch.
-class _CopiedHintChip extends StatelessWidget {
+class _CopiedHintChip extends StatefulWidget {
   const _CopiedHintChip({required this.id});
 
   final String id;
 
   @override
+  State<_CopiedHintChip> createState() => _CopiedHintChipState();
+}
+
+class _CopiedHintChipState extends State<_CopiedHintChip>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _in = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 200),
+  );
+  late final CurvedAnimation _t = CurvedAnimation(
+    parent: _in,
+    curve: Curves.easeOut,
+  );
+  late final Animation<Offset> _drop = Tween<Offset>(
+    begin: const Offset(0, -6),
+    end: Offset.zero,
+  ).animate(_t);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reduced motion: the chip is simply there, without the drop-in.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _in.value = 1;
+    } else if (_in.isDismissed) {
+      _in.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _t.dispose();
+    _in.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-      tween: Tween(begin: 0, end: 1),
-      builder: (_, t, child) => Opacity(
-        opacity: t.clamp(0.0, 1.0),
-        child: Transform.translate(
-          offset: Offset(0, (1 - t) * -6),
-          child: child,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-          decoration: BoxDecoration(
-            color: AppColors.navy,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.22),
-                blurRadius: 18,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(LucideIcons.link, size: 16, color: Colors.white),
-              const SizedBox(width: 10),
-              Flexible(
-                child: Text(
-                  context.t('issues.linkCopiedFor', variables: {'id': id}),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+    final id = widget.id;
+    // FadeTransition rather than Opacity in a builder: the fade only touches
+    // the layer's alpha, the chip below is built once.
+    return FadeTransition(
+      opacity: _t,
+      child: AnimatedBuilder(
+        animation: _drop,
+        builder: (_, child) =>
+            Transform.translate(offset: _drop.value, child: child),
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              color: AppColors.navy,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.22),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(LucideIcons.link, size: 16, color: Colors.white),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    context.t('issues.linkCopiedFor', variables: {'id': id}),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

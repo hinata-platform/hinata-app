@@ -19,6 +19,7 @@ import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../../i18n/i18n.dart';
 import '../../theme/app_colors.dart';
 import '../glass_popup_menu.dart';
 import 'time_grid_geometry.dart';
@@ -978,11 +979,16 @@ class _DayHeading extends StatelessWidget {
   Widget build(BuildContext context) {
     final heading = _heading(context);
     if (onMenu == null) return heading;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onLongPress: () => _menu(context),
-      onSecondaryTap: () => _menu(context),
-      child: heading,
+    // The menu hangs off a long press, which a screen reader exposes as an
+    // action of its own; the hint says what that action opens.
+    return Semantics(
+      onLongPressHint: context.t('time.calendar.dayActions'),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onLongPress: () => _menu(context),
+        onSecondaryTap: () => _menu(context),
+        child: heading,
+      ),
     );
   }
 
@@ -1135,25 +1141,30 @@ class _BandRows extends StatelessWidget {
 
   Widget _positioned(int index, int row, Widget child) => Positioned(
     left: index * columnWidth + kTimeGridColumnGutter,
-    // The row's own inset, which is not the column's: the same number,
-    // answering a different question.
-    top: row * kTimeGridBandRow + 3,
+    // The whole row, so a tappable chip can take its insets into the hit
+    // area; the chip draws itself inside them (see [_bandSlot]).
+    top: row * kTimeGridBandRow,
     width: columnWidth - 2 * kTimeGridColumnGutter,
-    height: kTimeGridBandRow - 6,
+    height: kTimeGridBandRow,
     child: child,
   );
 
-  Widget _chip(TimeGridItem item, Color tint) => GestureDetector(
-    onTap: onTap == null ? null : () => onTap!(item),
-    child: Tooltip(
+  Widget _chip(TimeGridItem item, Color tint) {
+    final pill = Tooltip(
       message: item.title,
+      // The title is already the chip's text; read once, not twice.
+      excludeFromSemantics: true,
       child: _bandPill(
         (item.tint ?? tint).withValues(alpha: 0.22),
         item.title,
         AppColors.ink,
       ),
-    ),
-  );
+    );
+    return _bandSlot(
+      onTap: onTap == null ? null : () => onTap!(item),
+      pill: pill,
+    );
+  }
 }
 
 /// One chip in the band strip: a rounded slab of tint with a line of text.
@@ -1249,13 +1260,42 @@ class _MoreChip extends StatelessWidget {
     // A layer nobody can open is a layer whose count has nothing to show: the
     // chips beside it are inert for the same reason, and a popover whose every
     // row silently does nothing is worse than no popover.
-    if (onTap == null) return pill;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => unawaited(_open(context)),
-      child: pill,
+    return _bandSlot(
+      onTap: onTap == null ? null : () => unawaited(_open(context)),
+      pill: pill,
     );
   }
+}
+
+/// One chip in its band row.
+///
+/// The chip is drawn inside the row's insets — the row's own inset, which is
+/// not the column's: the same number, answering a different question. A
+/// tappable chip takes those insets into its hit area, so the target is the
+/// full 26-point row while the chip still looks 20 points tall; it is a button
+/// to assistive technology, named by its text, and its ink shows through the
+/// chip's translucent tint when pressed or hovered.
+Widget _bandSlot({required VoidCallback? onTap, required Widget pill}) {
+  const inset = EdgeInsets.symmetric(vertical: 3);
+  if (onTap == null) return Padding(padding: inset, child: pill);
+  return Semantics(
+    button: true,
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: inset,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(5),
+            child: pill,
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class _Block extends StatelessWidget {

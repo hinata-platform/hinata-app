@@ -222,17 +222,21 @@ class _IssueCloneBodyState extends State<_IssueCloneBody> {
                       color: AppColors.accentStrong,
                     ),
                   ),
-                  child: TextField(
-                    controller: _title,
-                    autofocus: true,
-                    enabled: !_busy,
-                    maxLines: 2,
-                    minLines: 1,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => _canClone ? _clone() : null,
-                    inputFormatters: const [IssueTitleLengthLimit()],
-                    decoration: glassInputDecoration(
-                      hint: context.t('issues.clone.summaryHint'),
+                  child: Semantics(
+                    label: context.t('issues.clone.summary'),
+                    textField: true,
+                    child: TextField(
+                      controller: _title,
+                      autofocus: true,
+                      enabled: !_busy,
+                      maxLines: 2,
+                      minLines: 1,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _canClone ? _clone() : null,
+                      inputFormatters: const [IssueTitleLengthLimit()],
+                      decoration: glassInputDecoration(
+                        hint: context.t('issues.clone.summaryHint'),
+                      ),
                     ),
                   ),
                 ),
@@ -339,33 +343,36 @@ class _ClonePersonField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tap = onTap;
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      onTap: tap == null
-          ? null
-          : () {
-              final box = context.findRenderObject() as RenderBox?;
-              final rect = (box != null && box.hasSize)
-                  ? box.localToGlobal(Offset.zero) & box.size
-                  : Rect.zero;
-              tap(rect);
-            },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.surface.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(color: AppColors.hairline),
-        ),
-        child: Row(
-          children: [
-            Expanded(child: _value(context)),
-            Icon(
-              LucideIcons.chevronsUpDown,
-              size: 16,
-              color: AppColors.inkFaint,
-            ),
-          ],
+    return Semantics(
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        onTap: tap == null
+            ? null
+            : () {
+                final box = context.findRenderObject() as RenderBox?;
+                final rect = (box != null && box.hasSize)
+                    ? box.localToGlobal(Offset.zero) & box.size
+                    : Rect.zero;
+                tap(rect);
+              },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.surface.withValues(alpha: 0.7),
+            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+            border: Border.all(color: AppColors.hairline),
+          ),
+          child: Row(
+            children: [
+              Expanded(child: _value(context)),
+              Icon(
+                LucideIcons.chevronsUpDown,
+                size: 16,
+                color: AppColors.inkFaint,
+              ),
+            ],
+          ),
         ),
       ),
     );

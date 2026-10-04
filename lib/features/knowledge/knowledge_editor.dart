@@ -174,25 +174,31 @@ class _KnowledgeEditorState extends State<KnowledgeEditor> {
         children: [
           ConstrainedBox(
             constraints: const BoxConstraints(minWidth: 140, maxWidth: 380),
-            child: TextField(
-              controller: _title,
-              autofocus: true,
-              textCapitalization: TextCapitalization.sentences,
-              textInputAction: TextInputAction.next,
-              style: const TextStyle(
-                fontFamily: AppTheme.fontBrand,
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.4,
-              ),
-              decoration: InputDecoration(
-                isCollapsed: true,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                filled: false,
-                hintText: context.t('knowledge.articleTitleHint'),
-                hintStyle: TextStyle(color: AppColors.inkFaint),
+            // The hint is the only caption; the label keeps the field named
+            // once a title is typed.
+            child: Semantics(
+              label: context.t('knowledge.articleTitle'),
+              textField: true,
+              child: TextField(
+                controller: _title,
+                autofocus: true,
+                textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.next,
+                style: const TextStyle(
+                  fontFamily: AppTheme.fontBrand,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.4,
+                ),
+                decoration: InputDecoration(
+                  isCollapsed: true,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                  hintText: context.t('knowledge.articleTitleHint'),
+                  hintStyle: TextStyle(color: AppColors.inkFaint),
+                ),
               ),
             ),
           ),

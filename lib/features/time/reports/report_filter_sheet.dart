@@ -269,26 +269,36 @@ class _FilterSheetState extends State<_FilterSheet> {
                         ),
                         const SizedBox(height: 8),
                       ],
-                      TextField(
-                        controller: _activity,
-                        maxLength: 60,
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (_) => _addActivity(),
-                        decoration: glassInputDecoration(
-                          hint: context.t('time.reports.sheet.activityHint'),
-                        ).copyWith(counterText: ''),
+                      // The section's caption is a plain Text; these tie it
+                      // to the field.
+                      Semantics(
+                        label: context.t('time.reports.sheet.activities'),
+                        textField: true,
+                        child: TextField(
+                          controller: _activity,
+                          maxLength: 60,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _addActivity(),
+                          decoration: glassInputDecoration(
+                            hint: context.t('time.reports.sheet.activityHint'),
+                          ).copyWith(counterText: ''),
+                        ),
                       ),
                     ],
                   ),
                 ),
                 _Section(
                   label: context.t('time.reports.sheet.text'),
-                  child: TextField(
-                    controller: _text,
-                    maxLength: 100,
-                    decoration: glassInputDecoration(
-                      hint: context.t('time.reports.sheet.textHint'),
-                    ).copyWith(counterText: ''),
+                  child: Semantics(
+                    label: context.t('time.reports.sheet.text'),
+                    textField: true,
+                    child: TextField(
+                      controller: _text,
+                      maxLength: 100,
+                      decoration: glassInputDecoration(
+                        hint: context.t('time.reports.sheet.textHint'),
+                      ).copyWith(counterText: ''),
+                    ),
                   ),
                 ),
                 if (widget.approvals)

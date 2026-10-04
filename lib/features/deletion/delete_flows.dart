@@ -430,14 +430,22 @@ class _DeleteFlowState extends State<_DeleteFlow> {
             variables: {'name': widget.confirmName},
           ),
         ),
-        TextField(
-          controller: _confirmCtrl,
-          autofocus: true,
-          autocorrect: false,
-          enableSuggestions: false,
-          textInputAction: TextInputAction.done,
-          onChanged: (_) => setState(() {}),
-          decoration: _fieldDecoration(hint: widget.confirmName),
+        // FieldLabel is plain text above; name the field itself as well.
+        Semantics(
+          label: context.t(
+            'delete.confirmLabel',
+            variables: {'name': widget.confirmName},
+          ),
+          textField: true,
+          child: TextField(
+            controller: _confirmCtrl,
+            autofocus: true,
+            autocorrect: false,
+            enableSuggestions: false,
+            textInputAction: TextInputAction.done,
+            onChanged: (_) => setState(() {}),
+            decoration: _fieldDecoration(hint: widget.confirmName),
+          ),
         ),
       ],
     );
@@ -592,48 +600,57 @@ class _Option extends StatelessWidget {
             ? AppColors.accentSoft
             : AppColors.surface.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-              border: Border.all(
-                color: selected ? AppColors.accent : AppColors.hairline,
+        // One choice of two: announced with its selected state.
+        child: Semantics(
+          button: true,
+          selected: selected,
+          enabled: !disabled,
+          inMutuallyExclusiveGroup: true,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                border: Border.all(
+                  color: selected ? AppColors.accent : AppColors.hairline,
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 17,
-                  color: selected ? AppColors.accentStrong : AppColors.inkSoft,
-                ),
-                const SizedBox(width: 11),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        hint,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.inkSoft,
-                        ),
-                      ),
-                    ],
+              child: Row(
+                children: [
+                  Icon(
+                    icon,
+                    size: 17,
+                    color: selected
+                        ? AppColors.accentStrong
+                        : AppColors.inkSoft,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          hint,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.inkSoft,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -660,55 +677,60 @@ class _TargetRow extends StatelessWidget {
           ? AppColors.accentSoft
           : AppColors.surface.withValues(alpha: 0.5),
       borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(
-              color: selected ? AppColors.accentLine : AppColors.hairline2,
+      child: Semantics(
+        button: true,
+        selected: selected,
+        inMutuallyExclusiveGroup: true,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              border: Border.all(
+                color: selected ? AppColors.accentLine : AppColors.hairline2,
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 26,
-                height: 26,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: _hex(target.color),
-                  borderRadius: BorderRadius.circular(7),
-                ),
-                child: Text(
-                  target.key.isNotEmpty ? target.key[0] : '?',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.navy,
+            child: Row(
+              children: [
+                Container(
+                  width: 26,
+                  height: 26,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: _hex(target.color),
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  child: Text(
+                    target.key.isNotEmpty ? target.key[0] : '?',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.navy,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Text(
-                  target.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Text(
+                    target.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-              if (selected)
-                const Icon(
-                  LucideIcons.check,
-                  size: 16,
-                  color: AppColors.accentStrong,
-                ),
-            ],
+                if (selected)
+                  const Icon(
+                    LucideIcons.check,
+                    size: 16,
+                    color: AppColors.accentStrong,
+                  ),
+              ],
+            ),
           ),
         ),
       ),

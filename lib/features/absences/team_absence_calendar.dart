@@ -476,6 +476,9 @@ class _Arrow extends StatelessWidget {
       button: true,
       label: tooltip,
       excludeSemantics: true,
+      // excludeSemantics drops the InkResponse's own tap action with the rest
+      // of the subtree, so the node carries it itself.
+      onTap: onTap,
       child: InkResponse(
         onTap: onTap,
         radius: 20,

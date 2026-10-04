@@ -352,7 +352,8 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
     ),
     const SizedBox(height: 10),
     _iconRow(context),
-    const SizedBox(height: 10),
+    // Six, not ten: the icon grid's last row carries four below it.
+    const SizedBox(height: 6),
     _hueRow(context),
     SettingRow(
       label: context.t('absence.types.paid'),
@@ -632,37 +633,48 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
           color: AppColors.inkFaint,
         ),
       ),
-      const SizedBox(height: 8),
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
+      // Four, not eight: the grid below carries the other four in its padding.
+      const SizedBox(height: 4),
+      _PaddedGrid(
         children: [
           for (final entry in kAbsenceIcons.entries)
             Tooltip(
               message: context.t('absence.icon.${entry.key}'),
-              child: InkWell(
-                onTap: () => setState(() => _icon = entry.key),
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: _icon == entry.key
-                        ? absenceColor(context, _hue).withValues(alpha: 0.14)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                    border: Border.all(
-                      color: _icon == entry.key
-                          ? absenceColor(context, _hue)
-                          : AppColors.hairline,
+              child: Semantics(
+                button: true,
+                selected: _icon == entry.key,
+                child: InkWell(
+                  onTap: () => setState(() => _icon = entry.key),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                  child: Padding(
+                    padding: const EdgeInsets.all(_PaddedGrid.inset),
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: _icon == entry.key
+                            ? absenceColor(
+                                context,
+                                _hue,
+                              ).withValues(alpha: 0.14)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusControl,
+                        ),
+                        border: Border.all(
+                          color: _icon == entry.key
+                              ? absenceColor(context, _hue)
+                              : AppColors.hairline,
+                        ),
+                      ),
+                      child: Icon(
+                        entry.value,
+                        size: 17,
+                        color: _icon == entry.key
+                            ? absenceColor(context, _hue)
+                            : AppColors.inkSoft,
+                      ),
                     ),
-                  ),
-                  child: Icon(
-                    entry.value,
-                    size: 17,
-                    color: _icon == entry.key
-                        ? absenceColor(context, _hue)
-                        : AppColors.inkSoft,
                   ),
                 ),
               ),
@@ -683,10 +695,8 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
           color: AppColors.inkFaint,
         ),
       ),
-      const SizedBox(height: 8),
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
+      const SizedBox(height: 4),
+      _PaddedGrid(
         children: [
           for (final hue in const [
             null,
@@ -700,27 +710,35 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
             265,
             320,
           ])
-            InkWell(
-              onTap: () => setState(() => _hue = hue),
-              borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-              child: Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: absenceColor(context, hue),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: _hue == hue ? AppColors.ink : Colors.transparent,
-                    width: 2,
+            Semantics(
+              button: true,
+              selected: _hue == hue,
+              label: context.t('absence.hue.${_hueNames[hue]}'),
+              child: InkWell(
+                onTap: () => setState(() => _hue = hue),
+                borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+                child: Padding(
+                  padding: const EdgeInsets.all(_PaddedGrid.inset),
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: absenceColor(context, hue),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: _hue == hue ? AppColors.ink : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: hue == null
+                        ? Icon(
+                            LucideIcons.minus,
+                            size: 14,
+                            color: AppColors.surface,
+                          )
+                        : null,
                   ),
                 ),
-                child: hue == null
-                    ? Icon(
-                        LucideIcons.minus,
-                        size: 14,
-                        color: AppColors.surface,
-                      )
-                    : null,
               ),
             ),
         ],
@@ -728,9 +746,46 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
     ],
   );
 
+  /// What a screen reader calls each swatch; the hues have no other name.
+  static const _hueNames = <int?, String>{
+    null: 'default',
+    5: 'red',
+    30: 'orange',
+    45: 'amber',
+    95: 'green',
+    160: 'teal',
+    195: 'cyan',
+    225: 'blue',
+    265: 'violet',
+    320: 'pink',
+  };
+
   /// A day of the year without the year: an anchor repeats every January.
   String _monthDayLabel(BuildContext context, DateTime day) =>
       MaterialLocalizations.of(context).formatShortMonthDay(day);
+}
+
+/// A wrap of small tap tiles whose gaps live inside each tile's padding.
+///
+/// Each tile pads itself by [inset] on every side, so its hit area reaches past
+/// the swatch while the swatches keep their eight apart. The grid is pulled
+/// back by [inset] toward the start, so the first swatch still lines up with
+/// the label above it.
+class _PaddedGrid extends StatelessWidget {
+  const _PaddedGrid({required this.children});
+
+  static const double inset = 4;
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    return Transform.translate(
+      offset: Offset(rtl ? inset : -inset, 0),
+      child: Wrap(children: children),
+    );
+  }
 }
 
 class _Heading extends StatelessWidget {
@@ -822,21 +877,26 @@ class _NumberRowState extends State<_NumberRow> {
     description: widget.description,
     trailing: SizedBox(
       width: 108,
-      child: TextField(
-        controller: _controller,
-        keyboardType: TextInputType.number,
-        textAlign: TextAlign.end,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          isDense: true,
-          suffixText: widget.suffix,
-          suffixStyle: TextStyle(fontSize: 11, color: AppColors.inkFaint),
+      // The row's label is drawn beside the field; this ties it to the field.
+      child: Semantics(
+        label: widget.label,
+        textField: true,
+        child: TextField(
+          controller: _controller,
+          keyboardType: TextInputType.number,
+          textAlign: TextAlign.end,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          decoration: InputDecoration(
+            isDense: true,
+            suffixText: widget.suffix,
+            suffixStyle: TextStyle(fontSize: 11, color: AppColors.inkFaint),
+          ),
+          // Reported when the field is left or submitted, not per keystroke: each
+          // report is a setState on the form, which rebuilds forty rows and two
+          // icon grids. The row holds its own text in the meantime.
+          focusNode: _focus,
+          onSubmitted: (text) => _report(text),
         ),
-        // Reported when the field is left or submitted, not per keystroke: each
-        // report is a setState on the form, which rebuilds forty rows and two
-        // icon grids. The row holds its own text in the meantime.
-        focusNode: _focus,
-        onSubmitted: (text) => _report(text),
       ),
     ),
   );
@@ -894,20 +954,25 @@ class _DaysRowState extends State<_DaysRow> {
     description: widget.description,
     trailing: SizedBox(
       width: 108,
-      child: TextField(
-        controller: _controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        textAlign: TextAlign.end,
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-        ],
-        decoration: InputDecoration(
-          isDense: true,
-          suffixText: context.t('absence.types.daysUnit'),
-          suffixStyle: TextStyle(fontSize: 11, color: AppColors.inkFaint),
+      // The row's label is drawn beside the field; this ties it to the field.
+      child: Semantics(
+        label: widget.label,
+        textField: true,
+        child: TextField(
+          controller: _controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          textAlign: TextAlign.end,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+          ],
+          decoration: InputDecoration(
+            isDense: true,
+            suffixText: context.t('absence.types.daysUnit'),
+            suffixStyle: TextStyle(fontSize: 11, color: AppColors.inkFaint),
+          ),
+          focusNode: _focus,
+          onSubmitted: (text) => widget.onChanged(parseDays(text)),
         ),
-        focusNode: _focus,
-        onSubmitted: (text) => widget.onChanged(parseDays(text)),
       ),
     ),
   );

@@ -6,6 +6,7 @@ import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/hue_colors.dart';
+import '../../../core/widgets/hit_slop.dart';
 import 'settings_common.dart';
 
 /// Workflow states card: reorderable, renamable, colored rows with a Resolved
@@ -172,8 +173,11 @@ class _StateRow extends StatelessWidget {
         children: [
           ReorderableDragStartListener(
             index: index,
+            // No trailing padding: the colour dot's 24-point target takes
+            // that room, and the gap after it shrinks by the rest, so the
+            // name field starts where it did.
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsetsDirectional.only(start: 4),
               child: Icon(
                 LucideIcons.gripVertical,
                 size: 18,
@@ -182,27 +186,33 @@ class _StateRow extends StatelessWidget {
             ),
           ),
           GlassHuePicker(hue: state.hue, onPick: onPickColor, size: 11),
-          const SizedBox(width: 10),
+          const SizedBox(width: 1),
           Expanded(
-            child: TextField(
-              controller: controller,
-              onChanged: onRename,
-              textCapitalization: TextCapitalization.sentences,
-              style: const TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
-              ),
-              // Transparent field; only an accent underline appears on focus,
-              // matching the reference (`.st-in`).
-              decoration: const InputDecoration(
-                isDense: true,
-                filled: false,
-                contentPadding: EdgeInsets.symmetric(vertical: 4),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.transparent),
+            // The field shows the state's name and nothing says what it is;
+            // this tells a screen reader.
+            child: Semantics(
+              label: context.t('projectSettings.stateName'),
+              textField: true,
+              child: TextField(
+                controller: controller,
+                onChanged: onRename,
+                textCapitalization: TextCapitalization.sentences,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
                 ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: AppColors.accent, width: 1.5),
+                // Transparent field; only an accent underline appears on focus,
+                // matching the reference (`.st-in`).
+                decoration: const InputDecoration(
+                  isDense: true,
+                  filled: false,
+                  contentPadding: EdgeInsets.symmetric(vertical: 4),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.transparent),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.accent, width: 1.5),
+                  ),
                 ),
               ),
             ),
@@ -233,37 +243,50 @@ class _ResolvedPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final green = hueChipText(155);
-    return Material(
-      color: on ? hueSoft(155) : AppColors.surface,
-      borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-      child: InkWell(
+    // A toggle, so it says so; the text inside names it. The 30-point pill
+    // takes taps 5 points above and below too, to the row's full 40 points
+    // (48 would make every state row taller).
+    return Semantics(
+      button: true,
+      toggled: on,
+      child: HitSlop(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-        child: Container(
-          height: 30,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Material(
+          color: on ? hueSoft(155) : AppColors.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-            border: Border.all(color: on ? hueBorder(155) : AppColors.hairline),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                on ? LucideIcons.circleCheckBig : LucideIcons.circle,
-                size: 14,
-                color: on ? green : AppColors.inkFaint,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                context.t('projectSettings.resolved'),
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
-                  color: on ? green : AppColors.inkFaint,
+            child: Container(
+              height: 30,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+                border: Border.all(
+                  color: on ? hueBorder(155) : AppColors.hairline,
                 ),
               ),
-            ],
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    on ? LucideIcons.circleCheckBig : LucideIcons.circle,
+                    size: 14,
+                    color: on ? green : AppColors.inkFaint,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    context.t('projectSettings.resolved'),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: on ? green : AppColors.inkFaint,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

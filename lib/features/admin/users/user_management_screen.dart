@@ -723,31 +723,35 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       final active = sort != null && _sortKey == sort;
       return Expanded(
         flex: flex,
-        child: InkWell(
-          onTap: sort == null ? null : () => _sortBy(sort),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 11),
-            child: Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    key.toUpperCase(),
-                    style: TextStyle(
-                      fontFamily: AppTheme.fontMono,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.6,
-                      color: AppColors.inkFaint,
+        child: Semantics(
+          button: sort != null,
+          selected: active,
+          child: InkWell(
+            onTap: sort == null ? null : () => _sortBy(sort),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      key.toUpperCase(),
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontMono,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.6,
+                        color: AppColors.inkFaint,
+                      ),
                     ),
                   ),
-                ),
-                if (active)
-                  Icon(
-                    _desc ? LucideIcons.arrowDown : LucideIcons.arrowUp,
-                    size: 12,
-                    color: AppColors.inkSoft,
-                  ),
-              ],
+                  if (active)
+                    Icon(
+                      _desc ? LucideIcons.arrowDown : LucideIcons.arrowUp,
+                      size: 12,
+                      color: AppColors.inkSoft,
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -765,9 +769,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           _Checkbox(
             checked: allSel,
             mixed: someSel,
+            label: context.t('admin.um.selectPage'),
             onTap: () => _togglePage(pageIds),
           ),
-          const SizedBox(width: 10),
+          // 10 dp of gap, 6 of them inside the checkbox's hit area.
+          const SizedBox(width: 4),
           th(context.t('admin.um.colUser'), UserSortKey.name, 3),
           th(context.t('admin.um.colRole'), UserSortKey.role, 2),
           if (showOrigin)
@@ -856,6 +862,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             const SizedBox(width: 12),
             _PagerButton(
               icon: backChevron(context),
+              tooltip: context.t('admin.um.previousPage'),
               enabled: _pageNum > 1,
               onTap: () => _goToPage(_pageNum - 1),
             ),
@@ -872,6 +879,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     ),
             _PagerButton(
               icon: forwardChevron(context),
+              tooltip: context.t('admin.um.nextPage'),
               enabled: _pageNum < pages,
               onTap: () => _goToPage(_pageNum + 1),
             ),

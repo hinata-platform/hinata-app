@@ -280,7 +280,9 @@
       "body": "This link points to a different server ({{host}}). Switch to it?",
       "confirm": "Switch server"
     },
-    "ssoProviderFailed": "your organization's sign-in service did not complete it. Please try again."
+    "ssoProviderFailed": "your organization's sign-in service did not complete it. Please try again.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "authShell": {
     "heroTitle": "Where your team's work comes together.",
@@ -395,7 +397,9 @@
     "awayToday": "Away today",
     "awayNone": "Everybody is here today.",
     "awayMore": "and {{count}} more",
-    "awayOpen": "Open the team calendar"
+    "awayOpen": "Open the team calendar",
+    "showCard": "Show card",
+    "hideCard": "Hide card"
   },
   "comments": {
     "actionCamera": "Take photo or video",
@@ -448,6 +452,12 @@
       "closeFormat": "Close formatting",
       "discardRecording": "Discard recording",
       "sendVoice": "Send voice message"
+    },
+    "moreReactions": "More reactions",
+    "voice": {
+      "play": "Play voice message",
+      "pause": "Pause voice message",
+      "position": "Playback position"
     }
   },
   "filePicker": {
@@ -885,7 +895,9 @@
     "multiSelectHint": {
       "text": "Tip: Press and hold an issue to select several and edit them together, for example to give them all the same deadline.",
       "gotIt": "Got it"
-    }
+    },
+    "editTitle": "Edit title",
+    "editDescription": "Edit description"
   },
   "type": {
     "task": "Task",
@@ -1009,7 +1021,8 @@
       "month": "Month",
       "truncated": "This range holds more entries than the calendar shows. Narrow it to see them all.",
       "more": "+{{count}} more",
-      "more_plural": "+{{count}} more"
+      "more_plural": "+{{count}} more",
+      "dayActions": "Day actions"
     },
     "mode": {
       "stopwatch": "Stopwatch",
@@ -2053,6 +2066,18 @@
       "payoutReason": "Paid out with the final pay",
       "done": "Booked",
       "confirmTitle": "{{what}} of {{days}}?"
+    },
+    "hue": {
+      "default": "Default colour",
+      "red": "Red",
+      "orange": "Orange",
+      "amber": "Amber",
+      "green": "Green",
+      "teal": "Teal",
+      "cyan": "Cyan",
+      "blue": "Blue",
+      "violet": "Violet",
+      "pink": "Pink"
     }
   },
   "projects": {
@@ -2235,7 +2260,10 @@
       "assignTo": "Which column?",
       "noColumnAvailable": "No column left — each already holds a status of this project.",
       "unassignedHint": "These statuses have no column yet. Issues in them would not appear on the board.",
-      "automatic": "Back to automatic"
+      "automatic": "Back to automatic",
+      "assignState": "Add to a column",
+      "unassignState": "Remove from column",
+      "wipLabel": "WIP limit"
     },
     "searchIssues": "Search issues…",
     "laneLimit": "{{count}} more. Search or filter to find them."
@@ -2405,7 +2433,22 @@
     "emptyMessage": "Pages are shared through projects and teams. A new page stays private until you put it into a project or a team.",
     "tree": {
       "truncated": "Not every page is listed here, as there are too many for one list. A subpage may therefore stand at the top even though its parent page exists."
-    }
+    },
+    "hue": {
+      "honey": "Honey",
+      "indigo": "Indigo",
+      "violet": "Violet",
+      "teal": "Teal",
+      "green": "Green",
+      "coral": "Coral",
+      "pink": "Pink",
+      "amber": "Amber"
+    },
+    "spaceIconOption": "Icon {{n}} of {{count}}",
+    "subpages": "Subpages",
+    "moveUnder": "Move under…",
+    "moveUnderTitle": "Move under which page?",
+    "pageActions": "Page actions"
   },
   "md": {
     "heading1": "Heading 1",
@@ -2494,7 +2537,8 @@
       "thisWeek": "This week",
       "thisMonth": "This month",
       "earlier": "Earlier"
-    }
+    },
+    "unread": "Unread"
   },
   "appbar": {
     "search": "Search or jump to…",
@@ -3051,7 +3095,13 @@
       "toastOrgAdminRevoked": "Organization admin role revoked",
       "orgAdminConfirmOne": "{{name}} will then see working times, timesheets, absences and bookings of all people. Sickness only while nobody is named to keep absences, otherwise only if {{name}} is named. Issue titles and descriptions only from projects {{name}} is part of.",
       "orgAdminConfirmMany": "{{names}} will then see working times, timesheets, absences and bookings of all people. Sickness only while nobody is named to keep absences, otherwise only those who are named. Issue titles and descriptions only from their own projects.",
-      "reasonOwnOrgRole": "Another person from the administration gives you this role."
+      "reasonOwnOrgRole": "Another person from the administration gives you this role.",
+      "selectUser": "Select {{name}}",
+      "selectPage": "Select all users on this page",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "pageNumber": "Page {{n}}",
+      "removeEmail": "Remove {{email}}"
     },
     "iosStoreUrl": "iOS App Store URL",
     "androidStoreUrl": "Android Play Store URL",
@@ -3449,7 +3499,13 @@
     "moveOpenMany": "Move {{count}} unfinished issues to",
     "selectedCount": "{{count}} selected",
     "collapse": "Collapse",
-    "expand": "Expand"
+    "expand": "Expand",
+    "pagination": {
+      "previous": "Previous page",
+      "next": "Next page",
+      "page": "Page {{page}}"
+    },
+    "selectIssue": "Select {{issue}}"
   },
   "teams": {
     "avatar": {
@@ -3494,7 +3550,9 @@
       "teal": "Teal",
       "green": "Green",
       "coral": "Coral",
-      "custom": "Custom"
+      "custom": "Custom",
+      "pink": "Pink",
+      "amber": "Amber"
     },
     "role": {
       "admin": "Team-Admin",
@@ -3609,6 +3667,18 @@
       "apply": "Apply",
       "includedVia": "Included through {{title}}",
       "truncated": "Not every page fits in this list. Search to find the others."
+    },
+    "icon": {
+      "hexagon": "Hexagon",
+      "smartphone": "Smartphone",
+      "server": "Server",
+      "book": "Book",
+      "rocket": "Rocket",
+      "palette": "Palette",
+      "shield": "Shield",
+      "globe": "Globe",
+      "code": "Code",
+      "layers": "Layers"
     }
   },
   "projectSettings": {
@@ -3708,7 +3778,10 @@
       "copy": "Copy project",
       "dateCleared": "Date removed. The deadlines stay where they are and keep their rules.",
       "datesMoved": "{{count}} deadlines moved."
-    }
+    },
+    "labelName": "Label name",
+    "removeLabel": "Remove label",
+    "stateName": "State name"
   },
   "account": {
     "title": "My account",
@@ -3972,6 +4045,10 @@
       "remindOn": "Reminder day",
       "suggested": "Suggested by your organization: {{duration}}",
       "useSuggestion": "Use"
+    },
+    "stepper": {
+      "decrease": "Decrease {{label}}",
+      "increase": "Increase {{label}}"
     }
   },
   "twofa": {
@@ -3999,7 +4076,8 @@
     "regenerate": "Regenerate",
     "disableTitle": "Disable two-factor",
     "disableSubtitle": "Enter a current 6-digit or recovery code to turn 2FA off.",
-    "disableButton": "Disable 2FA"
+    "disableButton": "Disable 2FA",
+    "digitLabel": "Digit {{n}} of {{total}}"
   },
   "invite": {
     "title": "Set up your account",

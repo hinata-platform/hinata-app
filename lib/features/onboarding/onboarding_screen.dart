@@ -36,7 +36,7 @@ class OnboardingScreen extends StatefulWidget {
 
 // ─── design palette (constant across themes — this screen is always dark) ───
 const _amber = AppColors.accent; // #D9A032
-const _amber2 = Color(0xFFB9831F);
+const _amber2 = AppColors.accentStrong;
 const _bgTop = Color(0xFF1D1B38);
 const _bgMid = Color(0xFF11102A);
 const _bgBot = Color(0xFF19152E);
@@ -56,10 +56,22 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   void initState() {
     super.initState();
     // Single long-running clock drives the orb drift + logo glow pulse.
+    // Started in didChangeDependencies, which knows about reduced motion.
     _ambient = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 24),
-    )..repeat();
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Under reduced motion the orbs and the glow hold still where they are.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _ambient.stop();
+    } else if (!_ambient.isAnimating) {
+      _ambient.repeat();
+    }
   }
 
   @override
@@ -72,8 +84,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   bool get _isLast => _index == _total - 1;
 
   void _goTo(int i) {
+    final page = i.clamp(0, _total - 1);
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.jumpToPage(page);
+      return;
+    }
     _controller.animateToPage(
-      i.clamp(0, _total - 1),
+      page,
       duration: const Duration(milliseconds: 480),
       curve: Curves.easeOutCubic,
     );

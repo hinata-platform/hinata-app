@@ -496,7 +496,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     final box = ctx.findRenderObject() as RenderBox?;
     if (box == null || !box.hasSize) return;
     final top = box.localToGlobal(Offset.zero).dy;
-    final screenH = MediaQuery.of(context).size.height;
+    final screenH = MediaQuery.sizeOf(context).height;
     const prefetch = 200.0;
     // The sentinel is (nearly) on-screen when its span overlaps the viewport,
     // grown by a prefetch margin so a page loads just before it is reached.
@@ -1689,9 +1689,12 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       return const SizedBox(height: 260, child: Center(child: HiveLoader()));
     }
     if (_error != null && _issue == null) {
-      return SizedBox(
-        height: 240,
+      // A floor, not a fixed height: the message and button must still fit
+      // at 200 % text scale.
+      return ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 240),
         child: Center(
+          heightFactor: 1,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -2010,10 +2013,15 @@ class IssueDetailBodyState extends State<IssueDetailBody>
             Tooltip(
               message: context.t('issues.editTitleHint'),
               waitDuration: const Duration(milliseconds: 700),
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onDoubleTap: beginTitleEdit,
-                child: Text(issue.title, style: titleStyle),
+              child: Semantics(
+                container: true,
+                onTap: beginTitleEdit,
+                onTapHint: context.t('issues.editTitle'),
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onDoubleTap: beginTitleEdit,
+                  child: Text(issue.title, style: titleStyle),
+                ),
               ),
             ),
           const SizedBox(height: 18),
@@ -2061,25 +2069,32 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           else ...[
             _sectionLabel(context.t('issues.description')),
             const SizedBox(height: 8),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onDoubleTap: _beginDescEdit,
-              // A description the backfill could not convert still has its
-              // markdown; "no description" would be a lie about a row that has
-              // one.
-              child: _describedDoc(issue) != null
-                  ? HinataDocument(
-                      doc: _describedDoc(issue),
-                      fontSize: 14,
-                      onChecked: _saveCheckedDescription,
-                    )
-                  : Text(
-                      context.t('issues.noDescription'),
-                      style: TextStyle(
-                        color: AppColors.inkFaint,
-                        fontStyle: FontStyle.italic,
+            // Double-tap is invisible to assistive tech; the semantic tap opens the
+            // same editor.
+            Semantics(
+              container: true,
+              onTap: _beginDescEdit,
+              onTapHint: context.t('issues.editDescription'),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onDoubleTap: _beginDescEdit,
+                // A description the backfill could not convert still has its
+                // markdown; "no description" would be a lie about a row that has
+                // one.
+                child: _describedDoc(issue) != null
+                    ? HinataDocument(
+                        doc: _describedDoc(issue),
+                        fontSize: 14,
+                        onChecked: _saveCheckedDescription,
+                      )
+                    : Text(
+                        context.t('issues.noDescription'),
+                        style: TextStyle(
+                          color: AppColors.inkFaint,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
-                    ),
+              ),
             ),
           ],
         ],
@@ -2170,12 +2185,15 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       ],
     );
     if (current) return inner;
-    return InkWell(
-      onTap: () => _openLinkedIssue(c.readableId),
-      borderRadius: BorderRadius.circular(6),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-        child: inner,
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: () => _openLinkedIssue(c.readableId),
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+          child: inner,
+        ),
       ),
     );
   }
@@ -2258,60 +2276,79 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     final assignee = child.assigneeId != null
         ? _names[child.assigneeId!]
         : null;
-    return InkWell(
-      onTap: () => _openLinkedIssue(child.readableId),
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 7),
-        child: Row(
-          children: [
-            // Sub-tasks get a quick "done" toggle; epic children open to edit.
-            if (!epic)
-              GestureDetector(
-                onTap: () => _toggleChildState(child),
-                child: Padding(
-                  padding: const EdgeInsetsDirectional.only(end: 8),
-                  child: Icon(
-                    _childDone(child)
-                        ? LucideIcons.checkCheck
-                        : LucideIcons.circle,
-                    size: 17,
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: () => _openLinkedIssue(child.readableId),
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          // The sub-task toggle is 24 dp tall; 4.5 instead of 7 keeps the row
+          // as tall as before.
+          padding: EdgeInsets.symmetric(vertical: epic ? 7 : 4.5),
+          child: Row(
+            children: [
+              // Sub-tasks get a quick "done" toggle; epic children open to edit.
+              if (!epic)
+                Semantics(
+                  container: true,
+                  checked: _childDone(child),
+                  label: context.t('common.done'),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _toggleChildState(child),
+                    child: Padding(
+                      // Vertical padding grows the hit area to 24 dp around the
+                      // 17 dp glyph (WCAG 2.5.8).
+                      padding: const EdgeInsetsDirectional.only(
+                        end: 8,
+                        top: 3.5,
+                        bottom: 3.5,
+                      ),
+                      child: Icon(
+                        _childDone(child)
+                            ? LucideIcons.checkCheck
+                            : LucideIcons.circle,
+                        size: 17,
+                        color: _childDone(child)
+                            ? AppColors.success
+                            : AppColors.inkFaint,
+                      ),
+                    ),
+                  ),
+                )
+              else ...[
+                TypeGlyph(type: child.type, size: 18),
+                const SizedBox(width: 8),
+              ],
+              IdMono(child.readableId),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  child.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    decoration: _childDone(child)
+                        ? TextDecoration.lineThrough
+                        : null,
                     color: _childDone(child)
-                        ? AppColors.success
-                        : AppColors.inkFaint,
+                        ? AppColors.inkFaint
+                        : AppColors.ink,
                   ),
                 ),
-              )
-            else ...[
-              TypeGlyph(type: child.type, size: 18),
-              const SizedBox(width: 8),
-            ],
-            IdMono(child.readableId),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                child.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13,
-                  decoration: _childDone(child)
-                      ? TextDecoration.lineThrough
-                      : null,
-                  color: _childDone(child) ? AppColors.inkFaint : AppColors.ink,
-                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            StateDotBadge(
-              state: child.state,
-              color: _projStateColor(_project, child.state),
-            ),
-            if (assignee != null) ...[
-              const SizedBox(width: 10),
-              HiveAvatar(name: assignee, size: 20),
+              const SizedBox(width: 8),
+              StateDotBadge(
+                state: child.state,
+                color: _projStateColor(_project, child.state),
+              ),
+              if (assignee != null) ...[
+                const SizedBox(width: 10),
+                HiveAvatar(name: assignee, size: 20),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -2451,20 +2488,24 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                   ),
                 if (me != null && !issue.assigneeIds.contains(me.id)) ...[
                   const SizedBox(height: 2),
-                  GestureDetector(
-                    onTap: () => _patch(
-                      multiAssignee
-                          ? {
-                              'assigneeIds': [...issue.assigneeIds, me.id],
-                            }
-                          : {'assigneeId': me.id},
-                    ),
-                    child: Text(
-                      context.t('issues.assignToMe'),
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.stTodo,
+                  Semantics(
+                    button: true,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: () => _patch(
+                        multiAssignee
+                            ? {
+                                'assigneeIds': [...issue.assigneeIds, me.id],
+                              }
+                            : {'assigneeId': me.id},
+                      ),
+                      child: Text(
+                        context.t('issues.assignToMe'),
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.stTodo,
+                        ),
                       ),
                     ),
                   ),
@@ -2628,11 +2669,25 @@ class IssueDetailBodyState extends State<IssueDetailBody>
             color: AppColors.ink,
           ),
         ),
-        const SizedBox(width: 6),
-        GestureDetector(
-          onTap: () =>
-              _patch({isStart ? 'clearStartDate' : 'clearDueDate': true}),
-          child: Icon(LucideIcons.x, size: 15, color: AppColors.inkFaint),
+        // The padding grows the hit area to 24 dp (WCAG 2.5.8) around the
+        // same 15 dp glyph; the narrower gap keeps the glyph where it was.
+        const SizedBox(width: 1.5),
+        Tooltip(
+          message: context.t('common.clear'),
+          excludeFromSemantics: true,
+          child: Semantics(
+            button: true,
+            label: context.t('common.clear'),
+            child: InkResponse(
+              radius: 14,
+              onTap: () =>
+                  _patch({isStart ? 'clearStartDate' : 'clearDueDate': true}),
+              child: Padding(
+                padding: const EdgeInsets.all(4.5),
+                child: Icon(LucideIcons.x, size: 15, color: AppColors.inkFaint),
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -2654,20 +2709,24 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                   ),
                 ),
               ),
-              GestureDetector(
-                onTap: () async {
-                  final logged = await showLogWork(context, issue);
-                  if (logged && mounted) {
-                    _notifyChanged();
-                    await _reloadWorkItems();
-                  }
-                },
-                child: Text(
-                  context.t('issues.logTime'),
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.accentStrong,
+              Semantics(
+                button: true,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(6),
+                  onTap: () async {
+                    final logged = await showLogWork(context, issue);
+                    if (logged && mounted) {
+                      _notifyChanged();
+                      await _reloadWorkItems();
+                    }
+                  },
+                  child: Text(
+                    context.t('issues.logTime'),
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accentStrong,
+                    ),
                   ),
                 ),
               ),
@@ -3429,6 +3488,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       children: [
         IconButton(
           onPressed: _exitSelection,
+          tooltip: context.t('common.cancel'),
           visualDensity: VisualDensity.compact,
           icon: Icon(LucideIcons.x, size: 18, color: AppColors.inkSoft),
         ),

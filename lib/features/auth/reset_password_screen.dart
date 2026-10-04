@@ -163,6 +163,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 hintText: context.t('reset.passwordHint'),
                 prefixIcon: const Icon(LucideIcons.lock),
                 suffixIcon: IconButton(
+                  tooltip: context.t(
+                    _obscure ? 'auth.showPassword' : 'auth.hidePassword',
+                  ),
                   icon: Icon(_obscure ? LucideIcons.eye : LucideIcons.eyeOff),
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),

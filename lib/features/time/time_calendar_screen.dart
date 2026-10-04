@@ -1918,41 +1918,61 @@ class _WeekStripDay extends StatelessWidget {
           ? AppColors.accentStrong
           : (weekend ? AppColors.inkFaint : AppColors.ink);
     }
-    return InkResponse(
+    // Read out as the whole date: the letter and the number alone say "M 6".
+    // The subtree is excluded, so the node carries the tap itself.
+    return Semantics(
+      button: true,
+      selected: focused,
+      label: MaterialLocalizations.of(context).formatFullDate(day),
+      excludeSemantics: true,
       onTap: onTap,
-      radius: 24,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            letter,
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              color: AppColors.inkFaint,
-            ),
-          ),
-          const SizedBox(height: 3),
-          DecoratedBox(
-            decoration: BoxDecoration(color: disc, shape: BoxShape.circle),
-            child: SizedBox(
-              width: 26,
-              height: 26,
-              child: Center(
-                child: Text(
-                  '${day.day}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: focused || today
-                        ? FontWeight.w800
-                        : FontWeight.w600,
-                    color: ink,
+      child: InkResponse(
+        onTap: onTap,
+        radius: 24,
+        // The strip is docked at a fixed height. At a large text scale the
+        // letter and the disc shrink back into it instead of being cut off;
+        // at the usual scale they fit and nothing is scaled.
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                letter,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.inkFaint,
+                ),
+              ),
+              const SizedBox(height: 3),
+              DecoratedBox(
+                decoration: BoxDecoration(color: disc, shape: BoxShape.circle),
+                // At least 26 across, and more when the number grows.
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 26,
+                    minHeight: 26,
+                  ),
+                  child: Align(
+                    widthFactor: 1,
+                    heightFactor: 1,
+                    child: Text(
+                      '${day.day}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: focused || today
+                            ? FontWeight.w800
+                            : FontWeight.w600,
+                        color: ink,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1976,16 +1996,21 @@ class _RoundButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Tooltip(
     message: tooltip,
-    child: Material(
-      color: AppColors.surface,
-      shape: CircleBorder(side: BorderSide(color: AppColors.hairline)),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: 32,
-          height: 32,
-          child: Icon(icon, size: 16, color: AppColors.inkSoft),
+    // The tooltip names it. 32 across, over the 24 of WCAG 2.5.8: the arrows
+    // sit in the header row beside the range, and 48 would push it apart.
+    child: Semantics(
+      button: true,
+      child: Material(
+        color: AppColors.surface,
+        shape: CircleBorder(side: BorderSide(color: AppColors.hairline)),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: SizedBox(
+            width: 32,
+            height: 32,
+            child: Icon(icon, size: 16, color: AppColors.inkSoft),
+          ),
         ),
       ),
     ),

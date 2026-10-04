@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+
 /// Liquid-glass material tokens for the global search palette.
 ///
 /// A 1:1 port of the light/dark token sets in `Design/search/app/search.css`
@@ -80,7 +82,7 @@ class SearchTokens {
     tintStrong: Color.fromRGBO(252, 251, 248, 0.80),
     edge: Color.fromRGBO(255, 255, 255, 0.85),
     edgeSoft: Color.fromRGBO(255, 255, 255, 0.35),
-    ink: Color(0xFF23223F),
+    ink: AppColors.inkLight,
     // Darkened secondary inks for WCAG-AA contrast on the glass. Previous
     // values (#6B6A85 / #9A99B0) failed AA for body/hint text.
     inkSoft: Color(0xFF4C4B64),

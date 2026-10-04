@@ -1074,96 +1074,100 @@ class _EntryRow extends StatelessWidget {
     final interval = entry.startedAt != null && entry.endedAt != null;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onEdit,
-          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-              border: Border.all(color: AppColors.hairline),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        entry.description?.trim().isNotEmpty ?? false
-                            ? entry.description!.trim()
-                            : context.t('time.entry.noDescription'),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w600,
-                          color: entry.description?.trim().isNotEmpty ?? false
-                              ? AppColors.ink
-                              : AppColors.inkFaint,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          _MetaChip(
-                            icon: entry.projectId == null
-                                ? LucideIcons.circleSlash
-                                : LucideIcons.folder,
-                            label: entry.projectId == null
-                                ? context.t('time.placement.none')
-                                : project?.name ??
-                                      context.t('time.placement.assigned'),
+      // The row opens the entry; its description and figures name it.
+      child: Semantics(
+        button: true,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onEdit,
+            borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+                border: Border.all(color: AppColors.hairline),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          entry.description?.trim().isNotEmpty ?? false
+                              ? entry.description!.trim()
+                              : context.t('time.entry.noDescription'),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: entry.description?.trim().isNotEmpty ?? false
+                                ? AppColors.ink
+                                : AppColors.inkFaint,
                           ),
-                          if (interval)
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
                             _MetaChip(
-                              icon: LucideIcons.clock,
-                              label:
-                                  '${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(entry.startedAt!), alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context))} – '
-                                  '${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(entry.endedAt!), alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context))}',
+                              icon: entry.projectId == null
+                                  ? LucideIcons.circleSlash
+                                  : LucideIcons.folder,
+                              label: entry.projectId == null
+                                  ? context.t('time.placement.none')
+                                  : project?.name ??
+                                        context.t('time.placement.assigned'),
                             ),
-                          if (entry.billable)
-                            _MetaChip(
-                              icon: LucideIcons.banknote,
-                              label: context.t('time.billable'),
-                            ),
-                          // The whole sentence on its tooltip, and the reason in
-                          // its word: "Locked" on its own left somebody with
-                          // nothing to do about it.
-                          if (lock != null) LockChip(lock: lock!),
-                          if (lateHint != null) TimeHintChip(hint: lateHint!),
-                          for (final tag in entry.tags)
-                            _MetaChip(icon: LucideIcons.hash, label: tag),
-                        ],
-                      ),
-                    ],
+                            if (interval)
+                              _MetaChip(
+                                icon: LucideIcons.clock,
+                                label:
+                                    '${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(entry.startedAt!), alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context))} – '
+                                    '${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(entry.endedAt!), alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context))}',
+                              ),
+                            if (entry.billable)
+                              _MetaChip(
+                                icon: LucideIcons.banknote,
+                                label: context.t('time.billable'),
+                              ),
+                            // The whole sentence on its tooltip, and the reason in
+                            // its word: "Locked" on its own left somebody with
+                            // nothing to do about it.
+                            if (lock != null) LockChip(lock: lock!),
+                            if (lateHint != null) TimeHintChip(hint: lateHint!),
+                            for (final tag in entry.tags)
+                              _MetaChip(icon: LucideIcons.hash, label: tag),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  fmtDuration(context, entry.durationMinutes),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                    color: AppColors.ink,
+                  const SizedBox(width: 12),
+                  Text(
+                    fmtDuration(context, entry.durationMinutes),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                      color: AppColors.ink,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 4),
-                _RowMenu(
-                  onEdit: onEdit,
-                  onDelete: onDelete,
-                  onContinue: onContinue,
-                  onHistory: onHistory,
-                  locked: lock != null,
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  _RowMenu(
+                    onEdit: onEdit,
+                    onDelete: onDelete,
+                    onContinue: onContinue,
+                    onHistory: onHistory,
+                    locked: lock != null,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

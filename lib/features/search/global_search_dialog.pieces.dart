@@ -38,15 +38,19 @@ class _HexChip extends StatelessWidget {
         clipper: _HexClipper(),
         child: ColoredBox(
           color: color,
+          // The glyph keeps its size; under large text the key shrinks to
+          // fit instead of being clipped.
           child: Center(
-            child: Text(
-              text,
-              maxLines: 1,
-              overflow: TextOverflow.clip,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                text,
+                maxLines: 1,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
@@ -92,43 +96,51 @@ class _ScopeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fg = active ? tokens.ink : tokens.inkSoft;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: active ? tokens.tintStrong : Colors.transparent,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: active ? tokens.edgeSoft : Colors.transparent,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: fg),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: fg,
+    // The label inside names the chip; the ink is its pressed and hover state.
+    return Semantics(
+      button: true,
+      selected: active,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const StadiumBorder(),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: active ? tokens.tintStrong : Colors.transparent,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: active ? tokens.edgeSoft : Colors.transparent,
               ),
             ),
-            if (count != null) ...[
-              const SizedBox(width: 6),
-              Text(
-                '$count',
-                style: TextStyle(
-                  fontFamily: AppTheme.fontMono,
-                  fontSize: 10.5,
-                  color: fg.withValues(alpha: 0.7),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 14, color: fg),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: fg,
+                  ),
                 ),
-              ),
-            ],
-          ],
+                if (count != null) ...[
+                  const SizedBox(width: 6),
+                  Text(
+                    '$count',
+                    style: TextStyle(
+                      fontFamily: AppTheme.fontMono,
+                      fontSize: 10.5,
+                      color: fg.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -151,28 +163,35 @@ class _EscPill extends StatelessWidget {
     // desktop) layout show the boxed `esc` key hint instead — pressing Escape is
     // how you dismiss it there — kept tappable for mouse users.
     if (mobile) {
-      return Tooltip(
-        message: 'esc',
-        child: IconButton(
-          icon: const Icon(LucideIcons.x),
-          color: tokens.inkSoft,
-          onPressed: onTap,
-          style: ButtonStyle(
-            padding: WidgetStateProperty.all(
-              const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-            ),
+      return IconButton(
+        icon: const Icon(LucideIcons.x),
+        tooltip: context.t('common.close'),
+        color: tokens.inkSoft,
+        onPressed: onTap,
+        style: ButtonStyle(
+          padding: WidgetStateProperty.all(
+            const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
           ),
         ),
       );
     }
+    // Read out as "Close" rather than the key cap's "esc"; the semantic tap
+    // stands in for the InkWell's, which the exclusion hides.
     return Tooltip(
       message: 'esc',
-      child: InkWell(
+      excludeFromSemantics: true,
+      child: Semantics(
+        button: true,
+        label: context.t('common.close'),
         onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: _KbdHint(tokens: tokens, text: 'esc'),
+        excludeSemantics: true,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(6),
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: _KbdHint(tokens: tokens, text: 'esc'),
+          ),
         ),
       ),
     );
@@ -250,8 +269,13 @@ class _RecentsHead extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // With the clear action the outer padding gives up what the action's
+    // 24-point target adds, so the header keeps its height and the title
+    // its place.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 14, 12, 7),
+      padding: hasItems
+          ? const EdgeInsetsDirectional.fromSTEB(12, 9, 6, 2)
+          : const EdgeInsets.fromLTRB(12, 14, 12, 7),
       child: Row(
         children: [
           Text(
@@ -265,15 +289,27 @@ class _RecentsHead extends StatelessWidget {
           ),
           const Spacer(),
           if (hasItems)
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onClear,
-              child: Text(
-                context.t('search.recent.clear'),
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
-                  color: tokens.inkSoft,
+            Semantics(
+              button: true,
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  onTap: onClear,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 5,
+                    ),
+                    child: Text(
+                      context.t('search.recent.clear'),
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: tokens.inkSoft,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -302,12 +338,16 @@ class _EmptyDeep extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Opacity(
-            opacity: 0.5,
-            child: icon == null
-                ? const HexMark(size: 40, color: AppColors.accent)
-                : Icon(icon, size: 30, color: tokens.inkFaint),
-          ),
+          // Half-strength glyph, with the alpha in the paint instead of an
+          // Opacity layer.
+          if (icon == null)
+            HexMark(size: 40, color: AppColors.accent.withValues(alpha: 0.5))
+          else
+            Icon(
+              icon,
+              size: 30,
+              color: tokens.inkFaint.withValues(alpha: tokens.inkFaint.a * 0.5),
+            ),
           const SizedBox(height: 12),
           Text(
             title,

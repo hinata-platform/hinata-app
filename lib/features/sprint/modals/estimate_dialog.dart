@@ -6,6 +6,7 @@ import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/responsive/responsive.dart';
+import '../../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../../core/widgets/hive_widgets.dart';
 import '../sprint_tokens.dart';
 import 'glass_modal.dart';
@@ -115,31 +116,36 @@ class _PokerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 130),
-        curve: hiveEase,
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.accent
-              : AppColors.surface.withValues(alpha: 0.62),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected ? AppColors.accentStrong : AppColors.hairline,
-            width: 1.5,
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: muted ? AppTheme.fontUi : AppTheme.fontBrand,
-            fontSize: muted ? 14 : 24,
-            fontWeight: FontWeight.w700,
+    return Semantics(
+      button: true,
+      selected: selected,
+      inMutuallyExclusiveGroup: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 130),
+          curve: hiveEase,
+          decoration: BoxDecoration(
             color: selected
-                ? const Color(0xFF2A2410)
-                : (muted ? AppColors.inkFaint : AppColors.ink),
+                ? AppColors.accent
+                : AppColors.surface.withValues(alpha: 0.62),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? AppColors.accentStrong : AppColors.hairline,
+              width: 1.5,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: muted ? AppTheme.fontUi : AppTheme.fontBrand,
+              fontSize: muted ? 14 : 24,
+              fontWeight: FontWeight.w700,
+              color: selected
+                  ? kOnAmber
+                  : (muted ? AppColors.inkFaint : AppColors.ink),
+            ),
           ),
         ),
       ),

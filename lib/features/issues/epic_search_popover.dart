@@ -259,43 +259,51 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
   Widget _buildSearchField() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-      child: TextField(
-        controller: _searchCtrl,
-        focusNode: _focus,
-        onChanged: _onQueryChanged,
-        textInputAction: TextInputAction.search,
-        style: const TextStyle(fontSize: 14),
-        decoration: InputDecoration(
-          isDense: true,
-          prefixIcon: Icon(
-            LucideIcons.search,
-            size: 17,
-            color: AppColors.inkFaint,
-          ),
-          prefixIconConstraints: const BoxConstraints(
-            minWidth: 38,
-            minHeight: 38,
-          ),
-          hintText: context.t(
-            widget.forSubtask
-                ? 'issues.epicPicker.searchParentsHint'
-                : 'issues.epicPicker.searchHint',
-          ),
-          hintStyle: TextStyle(color: AppColors.inkFaint, fontSize: 14),
-          filled: true,
-          fillColor: AppColors.surface,
-          contentPadding: const EdgeInsets.symmetric(vertical: 10),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            borderSide: BorderSide(color: AppColors.hairline),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            borderSide: BorderSide(color: AppColors.hairline),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            borderSide: const BorderSide(color: AppColors.accent, width: 1.4),
+      child: Semantics(
+        label: context.t(
+          widget.forSubtask
+              ? 'issues.epicPicker.searchParentsHint'
+              : 'issues.epicPicker.searchHint',
+        ),
+        textField: true,
+        child: TextField(
+          controller: _searchCtrl,
+          focusNode: _focus,
+          onChanged: _onQueryChanged,
+          textInputAction: TextInputAction.search,
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            isDense: true,
+            prefixIcon: Icon(
+              LucideIcons.search,
+              size: 17,
+              color: AppColors.inkFaint,
+            ),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 38,
+              minHeight: 38,
+            ),
+            hintText: context.t(
+              widget.forSubtask
+                  ? 'issues.epicPicker.searchParentsHint'
+                  : 'issues.epicPicker.searchHint',
+            ),
+            hintStyle: TextStyle(color: AppColors.inkFaint, fontSize: 14),
+            filled: true,
+            fillColor: AppColors.surface,
+            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              borderSide: BorderSide(color: AppColors.hairline),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              borderSide: BorderSide(color: AppColors.hairline),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              borderSide: const BorderSide(color: AppColors.accent, width: 1.4),
+            ),
           ),
         ),
       ),
@@ -349,19 +357,26 @@ class _ClearRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-        child: Row(
-          children: [
-            Icon(LucideIcons.circleSlash, size: 17, color: AppColors.inkFaint),
-            const SizedBox(width: 10),
-            Text(
-              context.t('issues.epicPicker.clear'),
-              style: TextStyle(fontSize: 13.5, color: AppColors.inkSoft),
-            ),
-          ],
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          child: Row(
+            children: [
+              Icon(
+                LucideIcons.circleSlash,
+                size: 17,
+                color: AppColors.inkFaint,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                context.t('issues.epicPicker.clear'),
+                style: TextStyle(fontSize: 13.5, color: AppColors.inkSoft),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -378,33 +393,36 @@ class _EpicTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-        child: Row(
-          children: [
-            TypeGlyph(type: issue.type, size: 18),
-            const SizedBox(width: 9),
-            Text(
-              issue.readableId,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-                color: AppColors.inkSoft,
-                fontFeatures: const [FontFeature.tabularFigures()],
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          child: Row(
+            children: [
+              TypeGlyph(type: issue.type, size: 18),
+              const SizedBox(width: 9),
+              Text(
+                issue.readableId,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.inkSoft,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
               ),
-            ),
-            const SizedBox(width: 9),
-            Expanded(
-              child: Text(
-                issue.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 13.5),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  issue.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 13.5),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

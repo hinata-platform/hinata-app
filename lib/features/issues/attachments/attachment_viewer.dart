@@ -482,6 +482,11 @@ class _ViewerScaffoldState extends State<_ViewerScaffold>
       _close();
       return;
     }
+    // Reduced motion: no glide back, the stage simply returns to rest.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _drag.value = Offset.zero;
+      return;
+    }
     _snapFrom = Tween<Offset>(begin: _drag.value, end: Offset.zero);
     _snap.forward(from: 0);
   }
@@ -611,30 +616,38 @@ class _ViewerScaffoldState extends State<_ViewerScaffold>
                 ),
               ),
               // Stage.
-              AnimatedBuilder(
-                animation: anim,
-                builder: (context, child) {
-                  final t = anim.value.clamp(0.0, 1.0);
-                  if (reduceMotion) return Opacity(opacity: t, child: child);
-                  final curved = Curves.easeOutCubic.transform(t);
-                  return Opacity(
-                    opacity: (t / 0.6).clamp(0.0, 1.0),
-                    child: Transform.scale(
+              // FadeTransition, not Opacity in a builder: the fade then
+              // repaints the layer's alpha only instead of rebuilding the
+              // subtree on every frame of the route animation.
+              FadeTransition(
+                opacity: reduceMotion
+                    ? anim
+                    : anim.drive(CurveTween(curve: const Interval(0, 0.6))),
+                child: AnimatedBuilder(
+                  animation: anim,
+                  builder: (context, child) {
+                    if (reduceMotion) return child!;
+                    final t = anim.value.clamp(0.0, 1.0);
+                    final curved = Curves.easeOutCubic.transform(t);
+                    return Transform.scale(
                       scale: 0.97 + 0.03 * curved,
                       child: child,
-                    ),
-                  );
-                },
-                child: ValueListenableBuilder<Offset>(
-                  valueListenable: _drag,
-                  builder: (context, drag, child) {
-                    final p = _dismissProgress(drag);
-                    return Transform.translate(
-                      offset: drag,
-                      child: Transform.scale(scale: 1 - 0.08 * p, child: child),
                     );
                   },
-                  child: _stage(),
+                  child: ValueListenableBuilder<Offset>(
+                    valueListenable: _drag,
+                    builder: (context, drag, child) {
+                      final p = _dismissProgress(drag);
+                      return Transform.translate(
+                        offset: drag,
+                        child: Transform.scale(
+                          scale: 1 - 0.08 * p,
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: _stage(),
+                  ),
                 ),
               ),
               // Chrome — fades out with the dismiss drag so the content is alone on

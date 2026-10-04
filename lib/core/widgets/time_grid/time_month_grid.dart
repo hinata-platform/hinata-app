@@ -754,56 +754,65 @@ class _Cell extends StatelessWidget {
     final shown = room < items.length && room > 0 ? room - 1 : room;
     final hidden = items.length - shown;
 
-    final cell = InkWell(
-      // Tapping a day goes to it — that is what a month is for, and the hours
-      // are where an entry gets its time. Holding a day starts one on it
-      // without the detour: the calendar idiom, and the only create gesture a
-      // month cell has room for. A tap here must stay a tap; pairing it with a
-      // double-tap would delay every navigation by three hundred milliseconds.
-      onTap: onTapDay == null ? null : () => onTapDay!(at),
-      onLongPress: onDayMenu != null
-          ? () => _menu(context, at)
-          : onNewOnDay == null
-          ? null
-          : () => onNewOnDay!(at),
-      onSecondaryTap: onDayMenu == null ? null : () => _menu(context, at),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(_kCellPad, 4, _kCellPad, 4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Every date is written in full ink; only the weekend recedes.
-            // Fading the days with nothing logged on them was tried and is
-            // wrong: an empty month — a new account, a month not fetched yet,
-            // a month whose request failed — came out uniformly grey and read
-            // as disabled. What was logged is what the chips are for.
-            _DayLine(
-              day: at,
-              today: isToday,
-              weekend: weekend,
-              minutes: showTotal ? minutes : 0,
-              mark: mark,
-            ),
-            for (final item in items.take(shown))
-              _Chip(item: item, onTap: onTap),
-            if (hidden > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 1),
-                child: Text(
-                  // `count:`, not a string in `variables` — i18next reads the
-                  // plural form off an *int*, and a string silently selects the
-                  // singular in all nine languages.
-                  context.t('time.calendar.more', count: hidden),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.inkSoft,
+    // The cell shows only the day's number; the full date names it for a
+    // screen reader, and the hint says what holding it does.
+    final cell = Semantics(
+      button: onTapDay != null,
+      label: MaterialLocalizations.of(context).formatFullDate(at),
+      onLongPressHint: onDayMenu != null
+          ? context.t('time.calendar.dayActions')
+          : null,
+      child: InkWell(
+        // Tapping a day goes to it — that is what a month is for, and the hours
+        // are where an entry gets its time. Holding a day starts one on it
+        // without the detour: the calendar idiom, and the only create gesture a
+        // month cell has room for. A tap here must stay a tap; pairing it with a
+        // double-tap would delay every navigation by three hundred milliseconds.
+        onTap: onTapDay == null ? null : () => onTapDay!(at),
+        onLongPress: onDayMenu != null
+            ? () => _menu(context, at)
+            : onNewOnDay == null
+            ? null
+            : () => onNewOnDay!(at),
+        onSecondaryTap: onDayMenu == null ? null : () => _menu(context, at),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(_kCellPad, 4, _kCellPad, 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Every date is written in full ink; only the weekend recedes.
+              // Fading the days with nothing logged on them was tried and is
+              // wrong: an empty month — a new account, a month not fetched yet,
+              // a month whose request failed — came out uniformly grey and read
+              // as disabled. What was logged is what the chips are for.
+              _DayLine(
+                day: at,
+                today: isToday,
+                weekend: weekend,
+                minutes: showTotal ? minutes : 0,
+                mark: mark,
+              ),
+              for (final item in items.take(shown))
+                _Chip(item: item, onTap: onTap),
+              if (hidden > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 1),
+                  child: Text(
+                    // `count:`, not a string in `variables` — i18next reads the
+                    // plural form off an *int*, and a string silently selects the
+                    // singular in all nine languages.
+                    context.t('time.calendar.more', count: hidden),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -927,27 +936,31 @@ class _Chip extends StatelessWidget {
       padding: const EdgeInsets.only(top: _kChipGap),
       child: SizedBox(
         height: _kChipRow - _kChipGap,
-        child: InkWell(
-          onTap: onTap == null ? null : () => onTap!(item),
-          borderRadius: BorderRadius.circular(4),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            alignment: AlignmentDirectional.centerStart,
-            decoration: BoxDecoration(
-              color: tint.withValues(alpha: 0.20),
-              borderRadius: BorderRadius.circular(4),
-              border: BorderDirectional(
-                start: BorderSide(color: tint, width: 2),
+        // A button where it opens the entry; the title merges in as its name.
+        child: Semantics(
+          button: onTap != null,
+          child: InkWell(
+            onTap: onTap == null ? null : () => onTap!(item),
+            borderRadius: BorderRadius.circular(4),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              alignment: AlignmentDirectional.centerStart,
+              decoration: BoxDecoration(
+                color: tint.withValues(alpha: 0.20),
+                borderRadius: BorderRadius.circular(4),
+                border: BorderDirectional(
+                  start: BorderSide(color: tint, width: 2),
+                ),
               ),
-            ),
-            child: Text(
-              item.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w600,
-                color: AppColors.ink,
+              child: Text(
+                item.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.ink,
+                ),
               ),
             ),
           ),

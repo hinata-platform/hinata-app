@@ -103,93 +103,96 @@ class _AuditTimelineTile extends StatelessWidget {
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-            border: Border.all(color: AppColors.hairline),
-          ),
-          padding: const EdgeInsets.fromLTRB(13, 11, 11, 11),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      context.t('audit.action.${entry.action}'),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.ink,
-                        height: 1.25,
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+              border: Border.all(color: AppColors.hairline),
+            ),
+            padding: const EdgeInsets.fromLTRB(13, 11, 11, 11),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        context.t('audit.action.${entry.action}'),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                          height: 1.25,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 1),
-                    child: Text(
-                      time,
-                      style: TextStyle(
-                        fontFamily: AppTheme.fontMono,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.inkFaint,
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 1),
+                      child: Text(
+                        time,
+                        style: TextStyle(
+                          fontFamily: AppTheme.fontMono,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.inkFaint,
+                        ),
                       ),
+                    ),
+                  ],
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: AppColors.inkSoft,
+                      height: 1.3,
                     ),
                   ),
                 ],
-              ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: AppColors.inkSoft,
-                    height: 1.3,
-                  ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    _MiniChip(
+                      icon: _categoryIcon(entry.category),
+                      label: context.t('audit.category.${entry.category.name}'),
+                    ),
+                    if (failed)
+                      _MiniChip(
+                        icon: LucideIcons.circleX,
+                        label: context.t('audit.outcome.failure'),
+                        color: AppColors.danger,
+                      )
+                    else if (entry.severity == AuditSeverity.warning)
+                      _MiniChip(
+                        icon: LucideIcons.triangleAlert,
+                        label: context.t('audit.severity.warning'),
+                        color: AppColors.warning,
+                      ),
+                    if (entry.ip != null && entry.ip!.isNotEmpty)
+                      _MiniChip(
+                        icon: LucideIcons.mapPin,
+                        label: entry.ip!,
+                        mono: true,
+                      ),
+                  ],
                 ),
               ],
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  _MiniChip(
-                    icon: _categoryIcon(entry.category),
-                    label: context.t('audit.category.${entry.category.name}'),
-                  ),
-                  if (failed)
-                    _MiniChip(
-                      icon: LucideIcons.circleX,
-                      label: context.t('audit.outcome.failure'),
-                      color: AppColors.danger,
-                    )
-                  else if (entry.severity == AuditSeverity.warning)
-                    _MiniChip(
-                      icon: LucideIcons.triangleAlert,
-                      label: context.t('audit.severity.warning'),
-                      color: AppColors.warning,
-                    ),
-                  if (entry.ip != null && entry.ip!.isNotEmpty)
-                    _MiniChip(
-                      icon: LucideIcons.mapPin,
-                      label: entry.ip!,
-                      mono: true,
-                    ),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),

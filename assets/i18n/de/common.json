@@ -280,7 +280,9 @@
       "body": "Dieser Link verweist auf einen anderen Server ({{host}}). Dorthin wechseln?",
       "confirm": "Server wechseln"
     },
-    "ssoProviderFailed": "Der Anmeldedienst deiner Organisation hat sie nicht abgeschlossen. Bitte versuche es erneut."
+    "ssoProviderFailed": "Der Anmeldedienst deiner Organisation hat sie nicht abgeschlossen. Bitte versuche es erneut.",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen"
   },
   "authShell": {
     "heroTitle": "Wo die Arbeit deines Teams zusammenläuft.",
@@ -395,7 +397,9 @@
     "awayToday": "Heute abwesend",
     "awayNone": "Heute sind alle da.",
     "awayMore": "und {{count}} weitere",
-    "awayOpen": "Teamkalender öffnen"
+    "awayOpen": "Teamkalender öffnen",
+    "showCard": "Karte einblenden",
+    "hideCard": "Karte ausblenden"
   },
   "comments": {
     "actionCamera": "Foto/Video aufnehmen",
@@ -448,6 +452,12 @@
       "closeFormat": "Formatierung schließen",
       "discardRecording": "Aufnahme verwerfen",
       "sendVoice": "Sprachnachricht senden"
+    },
+    "moreReactions": "Weitere Reaktionen",
+    "voice": {
+      "play": "Sprachnachricht abspielen",
+      "pause": "Sprachnachricht anhalten",
+      "position": "Wiedergabeposition"
     }
   },
   "filePicker": {
@@ -885,7 +895,9 @@
     "multiSelectHint": {
       "text": "Tipp: Halte einen Vorgang gedrückt, um mehrere auszuwählen und gemeinsam zu bearbeiten, zum Beispiel um für alle dieselbe Frist zu setzen.",
       "gotIt": "Verstanden"
-    }
+    },
+    "editTitle": "Titel bearbeiten",
+    "editDescription": "Beschreibung bearbeiten"
   },
   "type": {
     "task": "Aufgabe",
@@ -1009,7 +1021,8 @@
       "month": "Monat",
       "truncated": "In diesem Zeitraum liegen mehr Einträge, als der Kalender zeigt. Grenze ihn ein, um alle zu sehen.",
       "more": "+{{count}} weiterer",
-      "more_plural": "+{{count}} weitere"
+      "more_plural": "+{{count}} weitere",
+      "dayActions": "Aktionen für diesen Tag"
     },
     "mode": {
       "stopwatch": "Stoppuhr",
@@ -2053,6 +2066,18 @@
       "payoutReason": "Abgeltung mit der letzten Abrechnung",
       "done": "Gebucht",
       "confirmTitle": "{{what}} über {{days}}?"
+    },
+    "hue": {
+      "default": "Standardfarbe",
+      "red": "Rot",
+      "orange": "Orange",
+      "amber": "Bernstein",
+      "green": "Grün",
+      "teal": "Blaugrün",
+      "cyan": "Cyan",
+      "blue": "Blau",
+      "violet": "Violett",
+      "pink": "Pink"
     }
   },
   "projects": {
@@ -2235,7 +2260,10 @@
       "assignTo": "In welche Spalte?",
       "noColumnAvailable": "Keine Spalte möglich — jede enthält schon einen Status dieses Projekts.",
       "unassignedHint": "Diese Status haben noch keine Spalte. Vorgänge darin würden auf dem Board fehlen.",
-      "automatic": "Zurück zu automatisch"
+      "automatic": "Zurück zu automatisch",
+      "assignState": "Einer Spalte zuordnen",
+      "unassignState": "Aus der Spalte entfernen",
+      "wipLabel": "WIP-Limit"
     },
     "searchIssues": "Vorgänge durchsuchen…",
     "laneLimit": "{{count}} weitere. Suche oder filtere, um sie zu finden."
@@ -2405,7 +2433,22 @@
     "emptyMessage": "Seiten werden über Projekte und Teams geteilt. Eine neue Seite bleibt privat, bis du sie einem Projekt oder Team zuordnest.",
     "tree": {
       "truncated": "Hier stehen nicht alle Seiten, weil es zu viele für eine Liste sind. Eine Unterseite kann deshalb oben stehen, obwohl es ihre übergeordnete Seite gibt."
-    }
+    },
+    "hue": {
+      "honey": "Honig",
+      "indigo": "Indigo",
+      "violet": "Violett",
+      "teal": "Türkis",
+      "green": "Grün",
+      "coral": "Koralle",
+      "pink": "Rosa",
+      "amber": "Bernstein"
+    },
+    "spaceIconOption": "Symbol {{n}} von {{count}}",
+    "subpages": "Unterseiten",
+    "moveUnder": "Verschieben unter…",
+    "moveUnderTitle": "Unter welche Seite verschieben?",
+    "pageActions": "Seitenaktionen"
   },
   "md": {
     "heading1": "Überschrift 1",
@@ -2494,7 +2537,8 @@
       "thisWeek": "Diese Woche",
       "thisMonth": "Dieser Monat",
       "earlier": "Früher"
-    }
+    },
+    "unread": "Ungelesen"
   },
   "appbar": {
     "search": "Suchen oder springen zu…",
@@ -3051,7 +3095,13 @@
       "toastOrgAdminRevoked": "Rolle Organisationsadmin entzogen",
       "orgAdminConfirmOne": "{{name}} sieht danach Arbeitszeiten, Zeitnachweise, Abwesenheiten und Buchungen aller Personen. Krankheit nur, solange niemand für Abwesenheiten benannt ist, sonst nur, wenn {{name}} selbst benannt ist. Titel und Beschreibungen von Vorgängen nur aus Projekten, in denen {{name}} ist.",
       "orgAdminConfirmMany": "{{names}} sehen danach Arbeitszeiten, Zeitnachweise, Abwesenheiten und Buchungen aller Personen. Krankheit nur, solange niemand für Abwesenheiten benannt ist, sonst nur, wer selbst benannt ist. Titel und Beschreibungen von Vorgängen nur aus den eigenen Projekten.",
-      "reasonOwnOrgRole": "Diese Rolle vergibt dir eine andere Person aus der Administration."
+      "reasonOwnOrgRole": "Diese Rolle vergibt dir eine andere Person aus der Administration.",
+      "selectUser": "{{name}} auswählen",
+      "selectPage": "Alle Personen auf dieser Seite auswählen",
+      "previousPage": "Vorherige Seite",
+      "nextPage": "Nächste Seite",
+      "pageNumber": "Seite {{n}}",
+      "removeEmail": "{{email}} entfernen"
     },
     "iosStoreUrl": "iOS App-Store-URL",
     "androidStoreUrl": "Android Play-Store-URL",
@@ -3449,7 +3499,13 @@
     "moveOpenMany": "{{count}} offene Vorgänge verschieben nach",
     "selectedCount": "{{count}} ausgewählt",
     "collapse": "Einklappen",
-    "expand": "Ausklappen"
+    "expand": "Ausklappen",
+    "pagination": {
+      "previous": "Vorherige Seite",
+      "next": "Nächste Seite",
+      "page": "Seite {{page}}"
+    },
+    "selectIssue": "{{issue}} auswählen"
   },
   "teams": {
     "avatar": {
@@ -3494,7 +3550,9 @@
       "teal": "Türkis",
       "green": "Grün",
       "coral": "Koralle",
-      "custom": "Eigene"
+      "custom": "Eigene",
+      "pink": "Rosa",
+      "amber": "Bernstein"
     },
     "role": {
       "admin": "Team-Admin",
@@ -3609,6 +3667,18 @@
       "apply": "Übernehmen",
       "includedVia": "Enthalten über {{title}}",
       "truncated": "Nicht alle Seiten passen in diese Liste. Über die Suche findest du auch die übrigen."
+    },
+    "icon": {
+      "hexagon": "Sechseck",
+      "smartphone": "Smartphone",
+      "server": "Server",
+      "book": "Buch",
+      "rocket": "Rakete",
+      "palette": "Farbpalette",
+      "shield": "Schild",
+      "globe": "Globus",
+      "code": "Code",
+      "layers": "Ebenen"
     }
   },
   "projectSettings": {
@@ -3708,7 +3778,10 @@
       "copy": "Projekt kopieren",
       "dateCleared": "Termin entfernt. Die Fristen bleiben stehen und behalten ihren Versatz.",
       "datesMoved": "{{count}} Fristen verschoben."
-    }
+    },
+    "labelName": "Name des Stichworts",
+    "removeLabel": "Stichwort entfernen",
+    "stateName": "Name des Status"
   },
   "account": {
     "title": "Mein Konto",
@@ -3972,6 +4045,10 @@
       "remindOn": "Wochentag",
       "suggested": "Vorschlag deiner Organisation: {{duration}}",
       "useSuggestion": "Übernehmen"
+    },
+    "stepper": {
+      "decrease": "{{label}} verringern",
+      "increase": "{{label}} erhöhen"
     }
   },
   "twofa": {
@@ -3999,7 +4076,8 @@
     "regenerate": "Neu generieren",
     "disableTitle": "Zwei-Faktor deaktivieren",
     "disableSubtitle": "Gib einen aktuellen 6-stelligen oder einen Wiederherstellungscode ein, um 2FA zu deaktivieren.",
-    "disableButton": "2FA deaktivieren"
+    "disableButton": "2FA deaktivieren",
+    "digitLabel": "Ziffer {{n}} von {{total}}"
   },
   "invite": {
     "title": "Konto einrichten",

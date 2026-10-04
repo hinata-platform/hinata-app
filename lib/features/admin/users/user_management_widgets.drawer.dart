@@ -157,6 +157,7 @@ class UserDrawerBody extends StatelessWidget {
                     ),
                   ),
                   IconButton(
+                    tooltip: context.t('common.close'),
                     onPressed: () => Navigator.of(context).pop(),
                     icon: Icon(
                       LucideIcons.x,
@@ -745,57 +746,67 @@ class _ActRow extends StatelessWidget {
         : AppColors.surfaceMuted;
     return Opacity(
       opacity: enabled ? 1 : 0.45,
-      child: GestureDetector(
-        onTap: enabled ? onTap : null,
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
+      child: Semantics(
+        button: true,
+        enabled: enabled,
+        // Ink, not Container: the fill sits on the Material, so the press
+        // ripple shows above it.
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: enabled ? onTap : null,
             borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(color: AppColors.hairline),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, size: 17, color: tint),
+            child: Ink(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                border: Border.all(color: AppColors.hairline),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                        color: danger ? AppColors.danger : AppColors.ink,
-                      ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: iconBg,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    Text(
-                      enabled ? subtitle : (disabledReason ?? subtitle),
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        height: 1.3,
-                        color: AppColors.inkSoft,
-                      ),
+                    child: Icon(icon, size: 17, color: tint),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: danger ? AppColors.danger : AppColors.ink,
+                          ),
+                        ),
+                        Text(
+                          enabled ? subtitle : (disabledReason ?? subtitle),
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            height: 1.3,
+                            color: AppColors.inkSoft,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  Icon(
+                    forwardChevron(context),
+                    size: 16,
+                    color: AppColors.inkFaint,
+                  ),
+                ],
               ),
-              Icon(
-                forwardChevron(context),
-                size: 16,
-                color: AppColors.inkFaint,
-              ),
-            ],
+            ),
           ),
         ),
       ),

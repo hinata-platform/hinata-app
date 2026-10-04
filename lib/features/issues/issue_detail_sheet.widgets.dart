@@ -279,6 +279,7 @@ class _RouteTopBar extends StatelessWidget {
           children: [
             IconButton(
               onPressed: onClose,
+              tooltip: context.t('common.back'),
               icon: Icon(
                 backArrow(context),
                 size: 20,
@@ -364,20 +365,24 @@ class _InlineTitleEditor extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        TextField(
-          controller: controller,
-          autofocus: true,
-          maxLines: null,
-          textInputAction: TextInputAction.done,
-          textCapitalization: TextCapitalization.sentences,
-          style: const TextStyle(
-            fontFamily: AppTheme.fontBrand,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            height: 1.25,
+        Semantics(
+          label: context.t('issues.title'),
+          textField: true,
+          child: TextField(
+            controller: controller,
+            autofocus: true,
+            maxLines: null,
+            textInputAction: TextInputAction.done,
+            textCapitalization: TextCapitalization.sentences,
+            style: const TextStyle(
+              fontFamily: AppTheme.fontBrand,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              height: 1.25,
+            ),
+            decoration: const InputDecoration(isDense: true),
+            onSubmitted: (_) => onSave(),
           ),
-          decoration: const InputDecoration(isDense: true),
-          onSubmitted: (_) => onSave(),
         ),
         const SizedBox(height: 8),
         Row(
@@ -385,12 +390,14 @@ class _InlineTitleEditor extends StatelessWidget {
           children: [
             _SquareButton(
               icon: LucideIcons.check,
+              label: context.t('common.save'),
               color: AppColors.success,
               onTap: onSave,
             ),
             const SizedBox(width: 8),
             _SquareButton(
               icon: LucideIcons.x,
+              label: context.t('common.cancel'),
               color: AppColors.danger,
               onTap: onCancel,
             ),
@@ -405,30 +412,42 @@ class _InlineTitleEditor extends StatelessWidget {
 class _SquareButton extends StatelessWidget {
   const _SquareButton({
     required this.icon,
+    required this.label,
     required this.color,
     required this.onTap,
   });
 
   final IconData icon;
+  final String label;
   final Color color;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
+    // 34 dp, a pair tucked under the title field; 48 would outweigh the
+    // field. It clears the 24 dp floor (WCAG 2.5.8).
+    return Tooltip(
+      message: label,
+      excludeFromSemantics: true,
+      child: Semantics(
+        button: true,
+        label: label,
+        child: Material(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(8),
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.hairline),
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.hairline),
+              ),
+              child: Icon(icon, size: 18, color: color),
+            ),
           ),
-          child: Icon(icon, size: 18, color: color),
         ),
       ),
     );
@@ -475,7 +494,8 @@ class _LoadMoreTile extends StatelessWidget {
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            // Padded: same pill, 48 dp hit area around it.
+            tapTargetSize: MaterialTapTargetSize.padded,
           ),
         ),
       ),
@@ -521,25 +541,29 @@ class _ActivityTabs extends StatelessWidget {
 
   Widget _seg(BuildContext context, _ActivityFilter filter, String label) {
     final active = value == filter;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => onChanged(filter),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: active ? AppColors.surface : Colors.transparent,
-          borderRadius: BorderRadius.circular(7),
-          border: Border.all(
-            color: active ? AppColors.hairline : Colors.transparent,
+    return Semantics(
+      button: true,
+      selected: active,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => onChanged(filter),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: active ? AppColors.surface : Colors.transparent,
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(
+              color: active ? AppColors.hairline : Colors.transparent,
+            ),
           ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-            color: active ? AppColors.ink : AppColors.inkSoft,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              color: active ? AppColors.ink : AppColors.inkSoft,
+            ),
           ),
         ),
       ),
@@ -824,49 +848,52 @@ class _DocumentedIn extends StatelessWidget {
       child: Material(
         color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-        child: InkWell(
-          onTap: () => onOpen(a.id),
-          borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-              border: Border.all(color: AppColors.hairline),
-            ),
-            child: Row(
-              children: [
-                Icon(lucideIcon(a.icon), size: 17, color: KbTokens.accent),
-                const SizedBox(width: 11),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        a.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (sp != null)
+        child: Semantics(
+          button: true,
+          child: InkWell(
+            onTap: () => onOpen(a.id),
+            borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+                border: Border.all(color: AppColors.hairline),
+              ),
+              child: Row(
+                children: [
+                  Icon(lucideIcon(a.icon), size: 17, color: KbTokens.accent),
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          sp.name,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: AppColors.inkSoft,
+                          a.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                    ],
+                        if (sp != null)
+                          Text(
+                            sp.name,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.inkSoft,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-                Icon(
-                  lucideIcon('chevron-right'),
-                  size: 16,
-                  color: AppColors.inkFaint,
-                ),
-              ],
+                  Icon(
+                    lucideIcon('chevron-right'),
+                    size: 16,
+                    color: AppColors.inkFaint,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -973,23 +1000,27 @@ class _PeoplePickerState extends State<_PeoplePicker> {
       padding: widget.anchored
           ? const EdgeInsets.fromLTRB(12, 12, 12, 8)
           : const EdgeInsets.fromLTRB(16, 14, 16, 10),
-      child: TextField(
-        autofocus: true,
-        onChanged: (v) => setState(() => _query = v),
-        textInputAction: TextInputAction.search,
-        decoration: InputDecoration(
-          isDense: true,
-          prefixIcon: const Icon(LucideIcons.search, size: 18),
-          hintText: context.t('issues.searchPeople'),
-          filled: true,
-          fillColor: AppColors.surfaceMuted,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-            borderSide: BorderSide(color: AppColors.hairline),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-            borderSide: BorderSide(color: AppColors.hairline),
+      child: Semantics(
+        label: context.t('issues.searchPeople'),
+        textField: true,
+        child: TextField(
+          autofocus: true,
+          onChanged: (v) => setState(() => _query = v),
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            isDense: true,
+            prefixIcon: const Icon(LucideIcons.search, size: 18),
+            hintText: context.t('issues.searchPeople'),
+            filled: true,
+            fillColor: AppColors.surfaceMuted,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+              borderSide: BorderSide(color: AppColors.hairline),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+              borderSide: BorderSide(color: AppColors.hairline),
+            ),
           ),
         ),
       ),

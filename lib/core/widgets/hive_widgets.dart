@@ -8,7 +8,7 @@ import '../api/api_client.dart';
 import '../i18n/i18n.dart';
 import '../responsive/responsive.dart';
 import '../theme/app_colors.dart';
-import '../theme/glass_chrome.dart' show GlassCircleButton;
+import '../theme/glass_chrome.dart' show GlassCircleButton, kOnAmber;
 import '../theme/app_theme.dart';
 import '../theme/hue_colors.dart';
 import 'preview_image.dart' show blurHashProviderFor;
@@ -318,7 +318,10 @@ class HiveProgress extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(99),
       child: TweenAnimationBuilder<double>(
-        duration: const Duration(milliseconds: 800),
+        // A fill that slides in is decoration; with reduced motion it lands.
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 800),
         curve: hiveEase,
         tween: Tween(begin: 0, end: value.clamp(0.0, 1.0)),
         builder: (_, v, _) => LinearProgressIndicator(
@@ -664,7 +667,7 @@ class PrimaryButton extends StatelessWidget {
     }
     final style = FilledButton.styleFrom(
       backgroundColor: AppColors.accent,
-      foregroundColor: const Color(0xFF2A2410),
+      foregroundColor: kOnAmber,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
       shape: RoundedRectangleBorder(
@@ -810,45 +813,63 @@ class SegmentedControl extends StatelessWidget {
   }
 
   Widget _segment(BuildContext context, int i) {
-    final segment = GestureDetector(
-      onTap: () => onChanged(i),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: EdgeInsets.symmetric(
-          horizontal: iconsOnly ? 11 : 12,
-          vertical: 6,
-        ),
-        decoration: BoxDecoration(
-          color: i == selected ? AppColors.navy : Colors.transparent,
-          borderRadius: BorderRadius.circular(7),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              items[i].icon,
-              size: 15,
-              color: i == selected ? Colors.white : AppColors.inkSoft,
-            ),
-            if (!iconsOnly) ...[
-              const SizedBox(width: 6),
-              Text(
-                items[i].label,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: i == selected ? Colors.white : AppColors.inkSoft,
-                ),
+    // Ink under the segment's own fill, so a press shows on the resting
+    // segments; the selected one is already filled.
+    final segment = Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: () => onChanged(i),
+        borderRadius: BorderRadius.circular(7),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: EdgeInsets.symmetric(
+            horizontal: iconsOnly ? 11 : 12,
+            vertical: 6,
+          ),
+          decoration: BoxDecoration(
+            color: i == selected ? AppColors.navy : Colors.transparent,
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                items[i].icon,
+                size: 15,
+                color: i == selected ? Colors.white : AppColors.inkSoft,
               ),
+              if (!iconsOnly) ...[
+                const SizedBox(width: 6),
+                Text(
+                  items[i].label,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: i == selected ? Colors.white : AppColors.inkSoft,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
+    // A button that says whether it is the chosen segment. Icon-only, it is
+    // named here and the tooltip stays out of the tree so it is not read twice.
+    final semantic = Semantics(
+      button: true,
+      selected: i == selected,
+      label: iconsOnly ? items[i].label : null,
+      child: segment,
+    );
     // Only when the label is gone — a tooltip repeating visible text is noise.
     return iconsOnly
-        ? Tooltip(message: items[i].label, child: segment)
-        : segment;
+        ? Tooltip(
+            message: items[i].label,
+            excludeFromSemantics: true,
+            child: semantic,
+          )
+        : semantic;
   }
 }
 

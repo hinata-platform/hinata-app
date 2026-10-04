@@ -191,14 +191,17 @@ class SettingRow extends StatelessWidget {
     // ripple. The padding lives inside the InkWell so the ink covers the full
     // row height, and matches the default row's vertical inset + horizontal
     // alignment so a tappable row sits flush with its static siblings.
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 9),
-          child: body,
+    return Semantics(
+      button: true,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            child: body,
+          ),
         ),
       ),
     );
@@ -268,38 +271,42 @@ class AccountActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fg = danger ? AppColors.danger : AppColors.ink;
-    return Material(
-      color: AppColors.surfaceMuted,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: InkWell(
-        onTap: onPressed,
+    return Semantics(
+      button: true,
+      enabled: onPressed != null,
+      child: Material(
+        color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(
-              color: danger
-                  ? AppColors.danger.withValues(alpha: 0.4)
-                  : AppColors.hairline,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 15, color: fg),
-                const SizedBox(width: 7),
-              ],
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: fg,
-                ),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              border: Border.all(
+                color: danger
+                    ? AppColors.danger.withValues(alpha: 0.4)
+                    : AppColors.hairline,
               ),
-            ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 15, color: fg),
+                  const SizedBox(width: 7),
+                ],
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: fg,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

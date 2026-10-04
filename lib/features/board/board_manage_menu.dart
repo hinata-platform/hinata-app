@@ -132,6 +132,13 @@ class _MenuCardState extends State<_MenuCard>
   )..forward();
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reduced motion: the menu is simply there, without the pop-in.
+    if (MediaQuery.disableAnimationsOf(context)) _c.value = 1;
+  }
+
+  @override
   void dispose() {
     _c.dispose();
     super.dispose();
@@ -148,12 +155,12 @@ class _MenuCardState extends State<_MenuCard>
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppTheme.radiusCard),
           border: Border.all(color: AppColors.hairline),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Color(0x222D2B55),
+              color: AppColors.navy.withAlpha(0x22),
               blurRadius: 28,
               spreadRadius: -6,
-              offset: Offset(0, 12),
+              offset: const Offset(0, 12),
             ),
           ],
         ),
@@ -231,23 +238,26 @@ class _MenuRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = danger ? AppColors.danger : AppColors.ink;
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
-        child: Row(
-          children: [
-            Icon(icon, size: 17, color: color),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: color,
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+          child: Row(
+            children: [
+              Icon(icon, size: 17, color: color),
+              const SizedBox(width: 12),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -374,13 +384,17 @@ class _RenameBoardBodyState extends State<_RenameBoardBody> {
               children: [
                 GlassField(
                   label: context.t('board.name'),
-                  child: TextField(
-                    controller: _name,
-                    autofocus: true,
-                    textCapitalization: TextCapitalization.words,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => _save(),
-                    decoration: glassInputDecoration(),
+                  child: Semantics(
+                    label: context.t('board.name'),
+                    textField: true,
+                    child: TextField(
+                      controller: _name,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _save(),
+                      decoration: glassInputDecoration(),
+                    ),
                   ),
                 ),
                 if (_error != null) ...[

@@ -14,6 +14,7 @@ import '../../../core/widgets/glass_panel.dart';
 import '../../../core/widgets/hive_widgets.dart';
 import '../../../core/widgets/soft_card.dart';
 import '../../search/search_tokens.dart';
+import '../project_hue_label.dart';
 import '../../sprint/modals/glass_modal.dart';
 
 /// One settings card: a [SoftCard] with a [SectionHeader] and body, spaced like
@@ -145,37 +146,58 @@ class GlassHuePicker extends StatelessWidget {
   final List<int> hues;
   final double size;
 
+  /// The square the dot answers taps in: the 24-point floor of WCAG 2.5.8.
+  /// The dot sits inside dense rows and chips, where 48 would grow the row;
+  /// callers trim their own spacing by the difference so the dot stays put.
+  static const double target = 24;
+
   @override
   Widget build(BuildContext context) {
-    // Builder gives a context whose RenderObject is this dot, so the popover can
-    // be positioned precisely at the tap point.
+    final side = size > target ? size : target;
+    final inset = (side - size) / 2;
+    // Builder gives a context whose RenderObject is the target square; the
+    // popover is anchored at the dot inside it, [inset] in from each edge.
     return Builder(
-      builder: (dotContext) => GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () async {
-          final box = dotContext.findRenderObject() as RenderBox?;
-          if (box == null) return;
-          final picked = await _showGlassColorPopover(
-            dotContext,
-            anchor: box,
-            current: hue,
-            hues: hues,
-          );
-          if (picked != null) onPick(picked);
-        },
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: hueColor(hue),
-            shape: BoxShape.circle,
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 1,
-                spreadRadius: 0.3,
+      builder: (dotContext) => Semantics(
+        button: true,
+        label: context.t('projectSettings.chooseColor'),
+        value: projectHueLabel(context, hue),
+        child: SizedBox.square(
+          dimension: side,
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkResponse(
+              radius: side / 2,
+              onTap: () async {
+                final box = dotContext.findRenderObject() as RenderBox?;
+                if (box == null) return;
+                final picked = await _showGlassColorPopover(
+                  dotContext,
+                  anchor: box,
+                  inset: inset,
+                  current: hue,
+                  hues: hues,
+                );
+                if (picked != null) onPick(picked);
+              },
+              child: Center(
+                child: Container(
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    color: hueColor(hue),
+                    shape: BoxShape.circle,
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x33000000),
+                        blurRadius: 1,
+                        spreadRadius: 0.3,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -190,11 +212,18 @@ Future<int?> _showGlassColorPopover(
   required RenderBox anchor,
   required int current,
   required List<int> hues,
+  double inset = 0,
 }) {
   final overlay =
       Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
-  final dotTopLeft = anchor.localToGlobal(Offset.zero, ancestor: overlay);
-  final dotSize = anchor.size;
+  final dotTopLeft = anchor.localToGlobal(
+    Offset(inset, inset),
+    ancestor: overlay,
+  );
+  final dotSize = Size(
+    anchor.size.width - 2 * inset,
+    anchor.size.height - 2 * inset,
+  );
   final screen = overlay.size;
 
   const w = 220.0;
@@ -292,8 +321,10 @@ class _GlassColorCard extends StatelessWidget {
                     runSpacing: 12,
                     children: [
                       for (final h in hues)
-                        GestureDetector(
-                          onTap: () => Navigator.of(context).pop(h),
+                        Semantics(
+                          button: true,
+                          selected: h == current,
+                          label: projectHueLabel(context, h),
                           child: Container(
                             width: 34,
                             height: 34,
@@ -307,13 +338,22 @@ class _GlassColorCard extends StatelessWidget {
                                 width: 2.5,
                               ),
                             ),
-                            child: h == current
-                                ? const Icon(
-                                    LucideIcons.check,
-                                    color: Colors.white,
-                                    size: 18,
-                                  )
-                                : null,
+                            // Its own transparent Material over the fill, so
+                            // the press ripple shows on top of the colour.
+                            child: Material(
+                              type: MaterialType.transparency,
+                              child: InkWell(
+                                onTap: () => Navigator.of(context).pop(h),
+                                borderRadius: BorderRadius.circular(8),
+                                child: h == current
+                                    ? const Icon(
+                                        LucideIcons.check,
+                                        color: Colors.white,
+                                        size: 18,
+                                      )
+                                    : null,
+                              ),
+                            ),
                           ),
                         ),
                     ],
@@ -391,19 +431,25 @@ class _MemberPickerState extends State<_MemberPicker> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(22, 0, 22, 12),
-            child: TextField(
-              onChanged: (v) => setState(() => _query = v),
-              textInputAction: TextInputAction.search,
-              decoration:
-                  glassInputDecoration(
-                    hint: context.t('projectSettings.searchPeople'),
-                  ).copyWith(
-                    prefixIcon: Icon(
-                      LucideIcons.search,
-                      size: 18,
-                      color: AppColors.inkSoft,
+            // Only a hint names this field, and a hint is gone once typing
+            // starts; the label keeps it named for screen readers.
+            child: Semantics(
+              label: context.t('projectSettings.searchPeople'),
+              textField: true,
+              child: TextField(
+                onChanged: (v) => setState(() => _query = v),
+                textInputAction: TextInputAction.search,
+                decoration:
+                    glassInputDecoration(
+                      hint: context.t('projectSettings.searchPeople'),
+                    ).copyWith(
+                      prefixIcon: Icon(
+                        LucideIcons.search,
+                        size: 18,
+                        color: AppColors.inkSoft,
+                      ),
                     ),
-                  ),
+              ),
             ),
           ),
           // Flexible is what bounds the list: the modal caps this column's height,
@@ -481,58 +527,64 @@ class _MemberRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: AppColors.surface.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: InkWell(
-          onTap: onTap,
+      // A selectable row: the name inside labels it, this gives it the role
+      // and says whether it is picked.
+      child: Semantics(
+        button: true,
+        selected: selected,
+        child: Material(
+          color: AppColors.surface.withValues(alpha: 0.55),
           borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-              border: Border.all(
-                color: selected ? AppColors.accentLine : AppColors.hairline,
-              ),
-            ),
-            child: Row(
-              children: [
-                HiveAvatar(
-                  name: user.displayName,
-                  imageUrl: user.avatarUrl,
-                  size: 36,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                border: Border.all(
+                  color: selected ? AppColors.accentLine : AppColors.hairline,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user.displayName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                      if (user.title != null)
+              ),
+              child: Row(
+                children: [
+                  HiveAvatar(
+                    name: user.displayName,
+                    imageUrl: user.avatarUrl,
+                    size: 36,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          user.title!,
+                          user.displayName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.inkSoft,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
                           ),
                         ),
-                    ],
+                        if (user.title != null)
+                          Text(
+                            user.title!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.inkSoft,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                _CheckBox(on: selected),
-              ],
+                  const SizedBox(width: 10),
+                  _CheckBox(on: selected),
+                ],
+              ),
             ),
           ),
         ),
@@ -724,50 +776,58 @@ class _TargetRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: selected
-            ? AppColors.accentSoft
-            : AppColors.surface.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: InkWell(
-          onTap: onTap,
+      // A selectable row: the state's name inside labels it, this gives it the
+      // role and says whether it is picked.
+      child: Semantics(
+        button: true,
+        selected: selected,
+        child: Material(
+          color: selected
+              ? AppColors.accentSoft
+              : AppColors.surface.withValues(alpha: 0.55),
           borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-              border: Border.all(
-                color: selected ? AppColors.accentLine : AppColors.hairline,
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 11,
-                  height: 11,
-                  decoration: BoxDecoration(
-                    color: hueColor(state.hue),
-                    shape: BoxShape.circle,
-                  ),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                border: Border.all(
+                  color: selected ? AppColors.accentLine : AppColors.hairline,
                 ),
-                const SizedBox(width: 11),
-                Expanded(
-                  child: Text(
-                    state.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 11,
+                    height: 11,
+                    decoration: BoxDecoration(
+                      color: hueColor(state.hue),
+                      shape: BoxShape.circle,
                     ),
                   ),
-                ),
-                Icon(
-                  selected ? LucideIcons.circleCheckBig : LucideIcons.circle,
-                  size: 18,
-                  color: selected ? AppColors.accentStrong : AppColors.inkFaint,
-                ),
-              ],
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Text(
+                      state.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    selected ? LucideIcons.circleCheckBig : LucideIcons.circle,
+                    size: 18,
+                    color: selected
+                        ? AppColors.accentStrong
+                        : AppColors.inkFaint,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
