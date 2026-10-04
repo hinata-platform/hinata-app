@@ -41,9 +41,11 @@ class AuthHeroImages {
   final String mobileDark;
 }
 
-/// The app's shipped hero set — serene anime scenes (a focused person at work)
-/// in Hinata's navy→amber palette. Light is an airy sunlit studio; dark is a
-/// calm amber-lamp dusk. Swap these four files to re-art-direct the look.
+/// The app's shipped hero set — painted anime landscapes without people, a
+/// city skyline under open sky with the hive's honeycomb faint in the clouds,
+/// in Hinata's navy→amber palette. Light is a sunlit meadow; dark is a hillside
+/// at dusk with the windows lit. Swap these four files to re-art-direct the
+/// look.
 const kAppAuthHero = AuthHeroImages(
   desktopLight: 'assets/backgrounds/auth_hero_desktop_light.webp',
   desktopDark: 'assets/backgrounds/auth_hero_desktop_dark.webp',
