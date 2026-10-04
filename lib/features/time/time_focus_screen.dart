@@ -18,6 +18,7 @@ import '../../core/widgets/glass_switch_chip.dart';
 import '../sprint/modals/glass_modal.dart' show anchorRectOfContext;
 import 'placement_picker.dart';
 import 'timer_bar.dart';
+import '../../core/theme/app_type.dart';
 
 /// The one thing on the screen is the timer.
 ///
@@ -136,7 +137,7 @@ class _TopBar extends StatelessWidget {
         Text(
           context.t('time.focus.title'),
           style: TextStyle(
-            fontSize: 13,
+            fontSize: AppType.label,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.4,
             color: AppColors.inkFaint,
@@ -218,7 +219,7 @@ class _Readout extends StatelessWidget {
       running ? format(shown) : '0:00',
       textAlign: TextAlign.center,
       style: TextStyle(
-        fontSize: 68,
+        fontSize: AppType.giant,
         height: 1.05,
         fontWeight: FontWeight.w300,
         fontFeatures: const [FontFeature.tabularFigures()],
@@ -254,7 +255,7 @@ class _PhaseHeader extends StatelessWidget {
           context.t(phase.labelKey),
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: AppType.label,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.4,
             color: phase.isBreak ? AppColors.inkSoft : AppColors.accentStrong,
@@ -325,7 +326,7 @@ class _Description extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: AppType.body,
               fontWeight: FontWeight.w600,
               color: description == null || description.isEmpty
                   ? AppColors.inkFaint
@@ -350,7 +351,10 @@ class _Description extends StatelessWidget {
                   context.t(
                     unfiled ? 'time.placement.none' : 'time.placement.assigned',
                   ),
-                  style: TextStyle(fontSize: 12, color: AppColors.inkFaint),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkFaint,
+                  ),
                 ),
               ],
             ),
@@ -475,7 +479,7 @@ class _RunningModeLine extends StatelessWidget {
   Widget build(BuildContext context) => Text(
     context.t(timer.mode.labelKey),
     textAlign: TextAlign.center,
-    style: TextStyle(fontSize: 12.5, color: AppColors.inkFaint),
+    style: TextStyle(fontSize: AppType.label, color: AppColors.inkFaint),
   );
 }
 

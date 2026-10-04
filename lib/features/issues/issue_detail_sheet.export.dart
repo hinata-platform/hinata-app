@@ -68,7 +68,7 @@ Future<IssueExportChoice?> showIssueExportMenu(
                 child: Text(
                   context.t(choice.labelKey),
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

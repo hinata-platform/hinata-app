@@ -41,6 +41,7 @@ import 'timeline/board_timeline_cubit.dart';
 import 'wall/board_cards_by_id.dart';
 import 'wall/board_wall_columns.dart';
 import 'wall/board_wall_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 part 'board_screen.header.dart';
 part 'board_screen.cards.dart';

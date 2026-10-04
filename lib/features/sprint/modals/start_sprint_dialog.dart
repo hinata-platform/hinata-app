@@ -5,6 +5,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../sprint_format.dart';
 import 'glass_modal.dart';
+import '../../../core/theme/app_type.dart';
 
 class StartSprintData {
   const StartSprintData({required this.goal, required this.endDate});
@@ -101,7 +102,7 @@ class _StartSprintBodyState extends State<_StartSprintBody> {
                         child: Text.rich(
                           TextSpan(
                             style: TextStyle(
-                              fontSize: 12.5,
+                              fontSize: AppType.label,
                               color: AppColors.inkSoft,
                             ),
                             children: [
@@ -124,7 +125,7 @@ class _StartSprintBodyState extends State<_StartSprintBody> {
                             variables: {'capacity': '${widget.capacityPoints}'},
                           ),
                           style: TextStyle(
-                            fontSize: 11.5,
+                            fontSize: AppType.caption,
                             fontWeight: FontWeight.w700,
                             color: AppColors.dangerInk,
                           ),
@@ -175,7 +176,7 @@ class _StartSprintBodyState extends State<_StartSprintBody> {
                   child: Text.rich(
                     TextSpan(
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         color: AppColors.inkSoft,
                       ),
                       children: [

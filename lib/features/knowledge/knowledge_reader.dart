@@ -16,6 +16,7 @@ import 'knowledge_place_field.dart';
 import 'knowledge_scope.dart';
 import 'knowledge_tokens.dart';
 import 'markdown/smart_link_resolver.dart';
+import '../../core/theme/app_type.dart';
 
 enum AsideMode { side, below, none }
 
@@ -185,7 +186,7 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
                     Text(
                       sp.name,
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         fontWeight: FontWeight.w600,
                         color: KbTokens.spaceChipText(sp.hue),
                       ),
@@ -213,7 +214,7 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
                     child: Text(
                       parent.title,
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         color: AppColors.inkSoft,
                       ),
                     ),
@@ -229,7 +230,7 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
           a.title,
           style: const TextStyle(
             fontFamily: AppTheme.fontBrand,
-            fontSize: 31,
+            fontSize: AppType.hero,
             fontWeight: FontWeight.w800,
             height: 1.12,
             letterSpacing: -0.7,
@@ -254,7 +255,10 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
                 Expanded(
                   child: Text.rich(
                     TextSpan(
-                      style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+                      style: TextStyle(
+                        fontSize: AppType.label,
+                        color: AppColors.inkSoft,
+                      ),
                       children: [
                         TextSpan(
                           text: author?.name ?? '',
@@ -281,7 +285,7 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
                     '${a.reads}',
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: 12,
+                      fontSize: AppType.caption,
                       color: AppColors.inkFaint,
                     ),
                   ),
@@ -393,7 +397,7 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
               Text(
                 context.t('knowledge.linkedIssues'),
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -409,7 +413,7 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
                   '${linkedIds.length}',
                   style: TextStyle(
                     fontFamily: AppTheme.fontMono,
-                    fontSize: 11,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w600,
                     color: AppColors.inkFaint,
                   ),
@@ -453,7 +457,7 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
     child: Text(
       label,
       style: TextStyle(
-        fontSize: 11,
+        fontSize: AppType.caption,
         fontWeight: FontWeight.w600,
         color: AppColors.inkSoft,
       ),
@@ -506,7 +510,7 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
                     repo.userById(id)?.name ?? '?',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12.5),
+                    style: const TextStyle(fontSize: AppType.label),
                   ),
                 ),
               ],
@@ -537,7 +541,7 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 12.5,
+                            fontSize: AppType.label,
                             color: AppColors.inkSoft,
                           ),
                         ),
@@ -564,7 +568,7 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
   Widget _asideHeader(String text) => Text(
     text.toUpperCase(),
     style: TextStyle(
-      fontSize: 10.5,
+      fontSize: AppType.caption,
       letterSpacing: 0.9,
       fontWeight: FontWeight.w700,
       color: AppColors.inkFaint,
@@ -616,14 +620,20 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft)),
+        Text(
+          label,
+          style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
+        ),
         Flexible(
           child: Text(
             value,
             textAlign: TextAlign.right,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: AppType.label,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
@@ -685,7 +695,7 @@ class _IssueCard extends StatelessWidget {
                             id,
                             style: TextStyle(
                               fontFamily: AppTheme.fontMono,
-                              fontSize: 11.5,
+                              fontSize: AppType.caption,
                               fontWeight: FontWeight.w600,
                               color: AppColors.inkSoft,
                             ),
@@ -707,7 +717,7 @@ class _IssueCard extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: AppType.caption,
                                   fontWeight: FontWeight.w600,
                                   color: it.stateColor,
                                 ),
@@ -721,7 +731,10 @@ class _IssueCard extends StatelessWidget {
                         it?.title ?? context.t('knowledge.openIssue'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13, height: 1.3),
+                        style: const TextStyle(
+                          fontSize: AppType.label,
+                          height: 1.3,
+                        ),
                       ),
                     ],
                   ),

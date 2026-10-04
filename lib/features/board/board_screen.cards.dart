@@ -185,7 +185,7 @@ class _BoardColumnState extends State<_BoardColumn> {
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 13,
+                                  fontSize: AppType.label,
                                 ),
                               ),
                             ),
@@ -215,7 +215,7 @@ class _BoardColumnState extends State<_BoardColumn> {
                                 countLabel,
                                 style: TextStyle(
                                   fontFamily: AppTheme.fontMono,
-                                  fontSize: 11.5,
+                                  fontSize: AppType.caption,
                                   fontWeight: FontWeight.w600,
                                   color: overWip
                                       ? AppColors.danger
@@ -401,7 +401,7 @@ class _BoardCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontWeight: FontWeight.w600,
-                          fontSize: 13,
+                          fontSize: AppType.label,
                           height: 1.4,
                         ),
                       ),
@@ -485,7 +485,7 @@ class _MiniMeta extends StatelessWidget {
           text,
           style: TextStyle(
             fontFamily: AppTheme.fontMono,
-            fontSize: 11,
+            fontSize: AppType.caption,
             color: c,
           ),
         ),

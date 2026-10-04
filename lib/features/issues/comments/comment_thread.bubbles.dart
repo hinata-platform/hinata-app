@@ -158,12 +158,18 @@ class CommentBubbleRow extends StatelessWidget {
         if (when.isNotEmpty)
           Text(
             when,
-            style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkFaint,
+            ),
           ),
         if (_c.isEdited)
           Text(
             '· ${context.t('issues.commentEdited')}',
-            style: TextStyle(fontSize: 11, color: AppColors.inkFaint),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkFaint,
+            ),
           ),
       ],
     );
@@ -362,7 +368,7 @@ class _ActionButton extends StatelessWidget {
                   Text(
                     label!,
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                       color: AppColors.inkSoft,
                     ),
@@ -610,7 +616,7 @@ class _ThreadControl extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: AppColors.accentInk,
                   ),
@@ -712,13 +718,13 @@ class _ReactionChips extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(emoji, style: const TextStyle(fontSize: 13)),
+                Text(emoji, style: const TextStyle(fontSize: AppType.label)),
                 if (count > 1) ...[
                   const SizedBox(width: 4),
                   Text(
                     '$count',
                     style: TextStyle(
-                      fontSize: 11.5,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w600,
                       color: selected
                           ? AppColors.accentStrong

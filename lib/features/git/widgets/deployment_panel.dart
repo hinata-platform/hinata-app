@@ -21,6 +21,7 @@ import 'provider_glyph.dart';
 import '../../../core/widgets/hive_widgets.dart'
     show chevronTurn, forwardChevron;
 import '../../../core/widgets/folded_hint.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Issue right-rail quick-actions (`DeploymentPanel`): Create
 /// branch (with a copyable `git checkout -b …` + a branch-template gear) ·
@@ -191,7 +192,7 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
               Text(
                 context.t('git.deployment'),
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.7,
                   color: AppColors.inkSoft,
@@ -212,7 +213,7 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: AppTheme.fontMono,
-                            fontSize: 11,
+                            fontSize: AppType.caption,
                             color: AppColors.inkFaint,
                           ),
                         ),
@@ -270,7 +271,7 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
                         )
                       : context.t('git.branchApplyHeader'),
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.2,
                     height: 1.45,
@@ -308,7 +309,7 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
             FoldedHint(
               context.t('git.tokensHint'),
               style: TextStyle(
-                fontSize: 12,
+                fontSize: AppType.caption,
                 height: 1.5,
                 color: AppColors.inkSoft,
               ),
@@ -339,13 +340,16 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
         children: [
           Text(
             context.t('git.linkCommitsTitle'),
-            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: AppType.label,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 6),
           FoldedHint(
             context.t('git.linkCommitsDesc'),
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppType.caption,
               height: 1.55,
               color: AppColors.inkSoft,
             ),
@@ -383,7 +387,7 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
             foregroundColor: kOnAmber,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             textStyle: const TextStyle(
-              fontSize: 12.5,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w600,
             ),
             shape: RoundedRectangleBorder(
@@ -438,7 +442,7 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -463,7 +467,7 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
     child: Text(
       text,
       style: TextStyle(
-        fontSize: 11,
+        fontSize: AppType.caption,
         fontWeight: FontWeight.w600,
         color: AppColors.inkFaint,
       ),
@@ -486,7 +490,7 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
             label,
             style: TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 11,
+              fontSize: AppType.caption,
               color: AppColors.accentInk,
             ),
           ),
@@ -513,7 +517,11 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
         TextSpan(text: post),
       ],
     ),
-    style: TextStyle(fontSize: 12, height: 1.5, color: AppColors.inkSoft),
+    style: TextStyle(
+      fontSize: AppType.caption,
+      height: 1.5,
+      color: AppColors.inkSoft,
+    ),
   );
 
   Widget _autoHintRich() => Text.rich(
@@ -535,14 +543,18 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
         TextSpan(text: context.t('git.smartCommitsHintSuffix')),
       ],
     ),
-    style: TextStyle(fontSize: 12, height: 1.6, color: AppColors.inkSoft),
+    style: TextStyle(
+      fontSize: AppType.caption,
+      height: 1.6,
+      color: AppColors.inkSoft,
+    ),
   );
 
   InlineSpan _monoChip(String text) => TextSpan(
     text: text,
     style: TextStyle(
       fontFamily: AppTheme.fontMono,
-      fontSize: 11.5,
+      fontSize: AppType.caption,
       color: AppColors.accentInk,
     ),
   );

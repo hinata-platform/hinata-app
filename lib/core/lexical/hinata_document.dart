@@ -18,6 +18,7 @@ import '../../features/knowledge/markdown/smart_link_chip.dart';
 import '../../features/knowledge/markdown/smart_link_resolver.dart';
 import 'hinata_lexical.dart';
 import 'hinata_theme.dart';
+import '../theme/app_type.dart';
 
 /// Resolves what a smart link points at, so a chip can show a live title
 /// instead of the label that was denormalised into the document when it was
@@ -226,7 +227,10 @@ Widget hinataImagePlaceholder(BuildContext context, String src) => Container(
           children: [
             Text(
               context.t('md.imageFailed'),
-              style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+              style: TextStyle(
+                fontSize: AppType.label,
+                color: AppColors.inkSoft,
+              ),
             ),
             const SizedBox(height: 2),
             // The address, not the alt text: when an image will not load, what
@@ -235,7 +239,10 @@ Widget hinataImagePlaceholder(BuildContext context, String src) => Container(
               src,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 11, color: AppColors.inkFaint),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.inkFaint,
+              ),
             ),
           ],
         ),
@@ -420,7 +427,7 @@ class _SmartLinkChip extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: accent,
-                      fontSize: 13,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

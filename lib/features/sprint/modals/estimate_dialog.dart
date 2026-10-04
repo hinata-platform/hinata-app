@@ -10,6 +10,7 @@ import '../../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../../core/widgets/hive_widgets.dart';
 import '../sprint_tokens.dart';
 import 'glass_modal.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Liquid-glass planning-poker picker. Returns the chosen story points on save
 /// (null = cleared); a plain dismissal returns null. Reused for the sprint
@@ -92,7 +93,10 @@ class _EstimateBodyState extends State<_EstimateBody> {
           confirmLabel: context.t('common.save'),
           hint: Text(
             context.t('sprint.fibScale'),
-            style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkSoft,
+            ),
           ),
           onConfirm: () => Navigator.of(context).pop((points: _value)),
         ),

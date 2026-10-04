@@ -10,6 +10,7 @@ import '../../core/storage/app_storage.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hex_mark.dart';
+import '../../core/theme/app_type.dart';
 
 part 'onboarding_screen.chrome.dart';
 part 'onboarding_screen.cards.dart';

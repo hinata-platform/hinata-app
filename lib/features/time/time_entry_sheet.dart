@@ -29,6 +29,7 @@ import 'placement_picker.dart';
 import 'tag_picker.dart';
 import 'time_entry_sheet_cubit.dart';
 import 'time_requests_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// Creates or edits one time entry.
 ///
@@ -948,7 +949,7 @@ class _ModeButton extends StatelessWidget {
                   label,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: selected
                         ? AppColors.accentStrong
@@ -984,7 +985,7 @@ class _PolicyNote extends StatelessWidget {
       Expanded(
         child: Text(
           text,
-          style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+          style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
         ),
       ),
     ],
@@ -1011,7 +1012,10 @@ class _Summary extends StatelessWidget {
           Expanded(
             child: Text(
               context.t(error!),
-              style: TextStyle(fontSize: 12.5, color: AppColors.dangerInk),
+              style: TextStyle(
+                fontSize: AppType.label,
+                color: AppColors.dangerInk,
+              ),
             ),
           ),
         ],
@@ -1024,7 +1028,7 @@ class _Summary extends StatelessWidget {
         Text(
           fmtDuration(context, minutes),
           style: TextStyle(
-            fontSize: 13,
+            fontSize: AppType.label,
             fontWeight: FontWeight.w700,
             color: AppColors.ink,
           ),

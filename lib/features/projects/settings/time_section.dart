@@ -17,6 +17,7 @@ import '../../../core/widgets/hive_widgets.dart' show GhostButton;
 import '../../sprint/modals/glass_modal.dart';
 import 'project_time_settings_cubit.dart';
 import 'settings_common.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Project settings → Zeiterfassung: budget, default billability, whether this
 /// project's timesheets are approved and on what rhythm.
@@ -288,7 +289,7 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
                   Text(
                     context.t(_error!),
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                       color: AppColors.dangerInk,
                     ),
                   ),
@@ -344,11 +345,14 @@ class _LockBeforeRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(fontSize: 13, color: AppColors.ink)),
+              Text(
+                label,
+                style: TextStyle(fontSize: AppType.label, color: AppColors.ink),
+              ),
               Text(
                 helper,
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: AppType.caption,
                   height: 1.4,
                   color: AppColors.textSecondary,
                 ),
@@ -494,7 +498,7 @@ class _PercentChoice extends StatelessWidget {
           child: Text(
             helper,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               height: 1.4,
               color: AppColors.textSecondary,
             ),
@@ -591,14 +595,17 @@ class _ChoiceRow extends StatelessWidget {
                 child: Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
               Text(
                 value,
-                style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  color: AppColors.inkSoft,
+                ),
               ),
               const SizedBox(width: 6),
               Icon(

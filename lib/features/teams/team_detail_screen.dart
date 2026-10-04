@@ -18,6 +18,7 @@ import 'team_widgets.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
 import '../../core/repositories/user_repository.dart';
+import '../../core/theme/app_type.dart';
 
 class TeamDetailScreen extends StatelessWidget {
   const TeamDetailScreen({super.key, required this.teamId});
@@ -269,7 +270,7 @@ class _Header extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: AppTheme.fontBrand,
-                            fontSize: 24,
+                            fontSize: AppType.display,
                             fontWeight: FontWeight.w700,
                             letterSpacing: -0.5,
                             color: AppColors.ink,
@@ -285,7 +286,7 @@ class _Header extends StatelessWidget {
                     Text(
                       team.description!,
                       style: TextStyle(
-                        fontSize: 13.5,
+                        fontSize: AppType.label,
                         height: 1.5,
                         color: AppColors.inkSoft,
                       ),
@@ -374,7 +375,10 @@ class _Header extends StatelessWidget {
     children: [
       Icon(icon, size: 13, color: AppColors.inkFaint),
       const SizedBox(width: 6),
-      Text(text, style: TextStyle(fontSize: 12, color: AppColors.inkFaint)),
+      Text(
+        text,
+        style: TextStyle(fontSize: AppType.caption, color: AppColors.inkFaint),
+      ),
     ],
   );
 
@@ -414,7 +418,7 @@ class _KeyChip extends StatelessWidget {
         label,
         style: TextStyle(
           fontFamily: AppTheme.fontMono,
-          fontSize: 12,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w600,
           color: AppColors.inkSoft,
         ),
@@ -495,7 +499,7 @@ class _Tab extends StatelessWidget {
               Text(
                 tab.label,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                   color: color,
                 ),
@@ -515,7 +519,7 @@ class _Tab extends StatelessWidget {
                     '${tab.count}',
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: 10.5,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w600,
                       color: AppColors.inkSoft,
                     ),

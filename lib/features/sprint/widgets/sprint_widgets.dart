@@ -7,6 +7,7 @@ import '../../../core/models/board_page_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../sprint_tokens.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Workflow bucket used for the point-bucket pills and capacity bar. Done is
 /// driven by the resolved flag; the rest is split heuristically by state name
@@ -71,7 +72,7 @@ class PointBuckets extends StatelessWidget {
         '$v',
         style: const TextStyle(
           fontFamily: AppTheme.fontMono,
-          fontSize: 11.5,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w600,
           color: Colors.white,
         ),
@@ -127,11 +128,19 @@ class CapacityBar extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(
-                context.t('sprint.capacity'),
-                style: TextStyle(fontSize: 10.5, color: AppColors.inkSoft),
+              // The figures always show; on a narrow row the word gives way.
+              Expanded(
+                child: Text(
+                  context.t('sprint.capacity'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkSoft,
+                  ),
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 6),
               Text.rich(
                 TextSpan(
                   children: [
@@ -146,7 +155,7 @@ class CapacityBar extends StatelessWidget {
                     TextSpan(
                       text: cap > 0 ? ' / $cap pts' : ' pts',
                       style: TextStyle(
-                        fontSize: 10.5,
+                        fontSize: AppType.caption,
                         color: AppColors.inkSoft,
                       ),
                     ),

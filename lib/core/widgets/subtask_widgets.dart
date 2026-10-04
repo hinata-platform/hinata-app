@@ -12,6 +12,7 @@ import '../repositories/issue_repository.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'hive_widgets.dart';
+import '../theme/app_type.dart';
 
 /// A compact "has sub-tasks" chip — the list-tree glyph plus a `done/total`
 /// count — shown on issue-list rows and backlog rows so a parent issue is
@@ -55,7 +56,7 @@ class SubtaskBadge extends StatelessWidget {
               '${issue.subtaskDoneCount}/${issue.subtaskCount}',
               style: TextStyle(
                 fontFamily: AppTheme.fontMono,
-                fontSize: 10.5,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w600,
                 color: color,
               ),
@@ -219,7 +220,7 @@ class _SubtaskExpanderState extends State<_SubtaskExpanderBody> {
                     Text(
                       context.t('issues.subtasks'),
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         fontWeight: FontWeight.w600,
                         color: AppColors.inkSoft,
                       ),
@@ -237,7 +238,7 @@ class _SubtaskExpanderState extends State<_SubtaskExpanderBody> {
                       '$done/$total',
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
-                        fontSize: 11,
+                        fontSize: AppType.caption,
                         fontWeight: FontWeight.w600,
                         color: AppColors.inkSoft,
                       ),
@@ -346,7 +347,7 @@ class _SubtaskMiniRow extends StatelessWidget {
               children: [
                 TypeGlyph(type: issue.type, size: 15),
                 const SizedBox(width: 7),
-                IdMono(issue.readableId, fontSize: 10.5),
+                IdMono(issue.readableId, fontSize: AppType.caption),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -354,7 +355,7 @@ class _SubtaskMiniRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

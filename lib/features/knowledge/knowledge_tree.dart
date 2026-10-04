@@ -13,6 +13,7 @@ import '../sprint/modals/glass_modal.dart'
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
 import 'knowledge_tokens.dart';
+import '../../core/theme/app_type.dart';
 
 /// Re-parent callback: move [id] under [parentId] (null = space root) within
 /// [spaceId].
@@ -90,7 +91,7 @@ class KnowledgeTree extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontFamily: 'Sora',
-                        fontSize: 13.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -146,7 +147,7 @@ class _TruncatedNote extends StatelessWidget {
           child: Text(
             context.t('knowledge.tree.truncated'),
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               height: 1.4,
               color: AppColors.inkSoft,
             ),
@@ -205,7 +206,7 @@ class _RootDropZoneState extends State<_RootDropZone> {
             ? Text(
                 context.t('knowledge.moveToTopLevel'),
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w600,
                   color: KbTokens.accent,
                 ),
@@ -435,7 +436,7 @@ class _TreeBranchState extends State<_TreeBranch> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: AppType.label,
                         fontWeight: selected
                             ? FontWeight.w600
                             : FontWeight.w500,
@@ -575,7 +576,7 @@ class _ParentPickerPanel extends StatelessWidget {
             context.t('knowledge.moveUnderTitle'),
             style: const TextStyle(
               fontFamily: 'Sora',
-              fontSize: 14,
+              fontSize: AppType.body,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -615,7 +616,7 @@ class _ParentPickerPanel extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: AppType.label,
                                 color: AppColors.ink,
                               ),
                             ),
@@ -669,7 +670,7 @@ class _DragChip extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                 ),
               ),

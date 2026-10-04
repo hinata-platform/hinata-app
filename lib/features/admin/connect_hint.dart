@@ -10,6 +10,7 @@ import '../../core/storage/app_storage.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../sprint/modals/glass_modal.dart' show showGlassModal;
+import '../../core/theme/app_type.dart';
 
 /// Shows the one-time "get a Hinata Connect licence" hint to an admin who has
 /// just signed in to a self-hosted instance that isn't connected yet — so they
@@ -110,7 +111,7 @@ class _ConnectHintBody extends StatelessWidget {
                     context.t('admin.connectHintTitle'),
                     style: const TextStyle(
                       fontFamily: AppTheme.fontBrand,
-                      fontSize: 18,
+                      fontSize: AppType.heading,
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.2,
                     ),
@@ -131,7 +132,7 @@ class _ConnectHintBody extends StatelessWidget {
           child: Text(
             context.t('admin.connectHintBody'),
             style: TextStyle(
-              fontSize: 13.5,
+              fontSize: AppType.label,
               height: 1.45,
               color: AppColors.inkSoft,
             ),

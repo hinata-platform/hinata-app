@@ -10,6 +10,7 @@ import '../../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../../core/widgets/hive_widgets.dart';
 import '../../../core/widgets/subtask_widgets.dart';
 import '../../../core/widgets/user_pronouns.dart';
+import '../../../core/theme/app_type.dart';
 
 /// One draggable issue row in the planning surface: select checkbox · type
 /// glyph · id · title · first tag · priority · points badge (tap → poker) ·
@@ -80,7 +81,7 @@ class PlanRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 13.5,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -203,7 +204,7 @@ class _PointsBadge extends StatelessWidget {
                 empty ? '—' : '$points',
                 style: TextStyle(
                   fontFamily: AppTheme.fontMono,
-                  fontSize: 11.5,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w700,
                   color: empty ? AppColors.inkFaint : AppColors.ink,
                 ),

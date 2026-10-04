@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/hue_colors.dart';
 import 'settings_common.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Labels card: colored, renamable chips with a recolor picker, plus add. A
 /// label's name stops at [kIssueLabelMaxLength] characters, the longest label
@@ -82,7 +83,7 @@ class _LabelsSectionState extends State<LabelsSection> {
       trailing: Text(
         '${widget.labels.length}',
         style: TextStyle(
-          fontSize: 12,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w600,
           color: AppColors.inkFaint,
         ),
@@ -95,7 +96,10 @@ class _LabelsSectionState extends State<LabelsSection> {
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
                 context.t('projectSettings.noLabels'),
-                style: TextStyle(color: AppColors.inkSoft, fontSize: 12.5),
+                style: TextStyle(
+                  color: AppColors.inkSoft,
+                  fontSize: AppType.label,
+                ),
               ),
             )
           else
@@ -170,7 +174,7 @@ class _LabelChip extends StatelessWidget {
                     LengthLimitingTextInputFormatter(kIssueLabelMaxLength),
                   ],
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: ink,
                   ),

@@ -20,6 +20,7 @@ import '../../features/knowledge/data/knowledge_models.dart' show lucideIcon;
 import '../../features/knowledge/markdown/smart_link_resolver.dart';
 import '../../features/search/search_tokens.dart';
 import 'smart_link_node.dart';
+import '../theme/app_type.dart';
 
 /// The `@` typeahead over [resolver], or null when there is nothing to pick.
 ///
@@ -98,7 +99,7 @@ class _GlassPopover extends StatelessWidget {
                   child: Text(
                     context.t('md.linkTo').toUpperCase(),
                     style: TextStyle(
-                      fontSize: 10.5,
+                      fontSize: AppType.caption,
                       letterSpacing: 0.7,
                       fontWeight: FontWeight.w700,
                       color: AppColors.inkFaint,
@@ -249,7 +250,7 @@ Widget _row(
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
                 color: AppColors.ink,
               ),
@@ -259,7 +260,10 @@ Widget _row(
                 suggestion.subtitle!,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 11, color: AppColors.inkSoft),
+                style: TextStyle(
+                  fontSize: AppType.caption,
+                  color: AppColors.inkSoft,
+                ),
               ),
           ],
         ),
@@ -322,7 +326,7 @@ class _KindBadge extends StatelessWidget {
       child: Text(
         label.toUpperCase(),
         style: TextStyle(
-          fontSize: 9.5,
+          fontSize: AppType.badge,
           letterSpacing: 0.5,
           fontWeight: FontWeight.w700,
           color: AppColors.inkFaint,

@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../../core/widgets/hive_widgets.dart';
 import '../sprint_format.dart';
+import '../../../core/theme/app_type.dart';
 
 /// The active-sprint header — the design's discreet single component: a small
 /// white identity card (Active badge + sprint name + goal) with a thin
@@ -46,7 +47,7 @@ class GlassSprintHeader extends StatelessWidget {
           Text(
             context.t('board.active'),
             style: const TextStyle(
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               color: kOnAmber,
             ),
@@ -65,7 +66,7 @@ class GlassSprintHeader extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             fontFamily: AppTheme.fontBrand,
-            fontSize: 16,
+            fontSize: AppType.title,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.2,
             height: 1.15,
@@ -76,7 +77,7 @@ class GlassSprintHeader extends StatelessWidget {
             sprint.goal!,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+            style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
           ),
       ],
     );
@@ -106,7 +107,7 @@ class GlassSprintHeader extends StatelessWidget {
       ),
       style: TextStyle(
         fontFamily: AppTheme.fontMono,
-        fontSize: 13,
+        fontSize: AppType.label,
         color: AppColors.inkSoft,
       ),
     );

@@ -12,6 +12,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassModal;
 import 'data/knowledge_models.dart';
 import 'knowledge_tokens.dart';
+import '../../core/theme/app_type.dart';
 
 /// Screen-reader names for the [kLabelHues] swatches.
 const Map<int, String> _kHueNameKeys = {
@@ -199,7 +200,7 @@ class _CreateSpaceFormState extends State<_CreateSpaceForm> {
                       child: Text(
                         _error!,
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: AppType.label,
                           color: AppColors.dangerInk,
                         ),
                       ),

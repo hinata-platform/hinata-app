@@ -10,6 +10,7 @@ import '../sprint/modals/glass_modal.dart'
         kGlassPopoverBreakpoint,
         showGlassAnchoredPopover,
         showGlassBottomSheet;
+import '../../core/theme/app_type.dart';
 
 /// Opens the timeline's view options — which connectors to draw and whether to
 /// emphasise the critical path — as a glass popover beside [anchorKey] on wide
@@ -95,7 +96,10 @@ class _GanttOptionsPanelState extends State<_GanttOptionsPanel> {
       children: [
         Text(
           context.t('gantt.options.title'),
-          style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            fontSize: AppType.body,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         const SizedBox(height: 12),
         _OptionRow(
@@ -142,7 +146,7 @@ class _GanttOptionsPanelState extends State<_GanttOptionsPanel> {
                   child: Text(
                     context.t('gantt.conflicts', count: summary.conflicts),
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w600,
                       color: AppColors.dangerInk,
                     ),
@@ -156,7 +160,7 @@ class _GanttOptionsPanelState extends State<_GanttOptionsPanel> {
         Text(
           context.t('gantt.legend.title').toUpperCase(),
           style: TextStyle(
-            fontSize: 10.5,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.6,
             color: AppColors.inkFaint,
@@ -167,7 +171,10 @@ class _GanttOptionsPanelState extends State<_GanttOptionsPanel> {
         const SizedBox(height: 12),
         Text(
           context.t('gantt.focusHint'),
-          style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+          style: TextStyle(
+            fontSize: AppType.caption,
+            color: AppColors.inkFaint,
+          ),
         ),
       ],
     );
@@ -209,7 +216,7 @@ class _OptionRow extends StatelessWidget {
                     Text(
                       label,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -217,7 +224,7 @@ class _OptionRow extends StatelessWidget {
                     Text(
                       hint,
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         color: AppColors.inkSoft,
                       ),
                     ),

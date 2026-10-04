@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/util/dates.dart';
+import '../../core/theme/app_type.dart';
 
 /// The ISO weekdays (1 Monday to 7 Sunday) in the order a week is read in a
 /// locale whose week starts on [firstDayOfWeekIndex] (0 Sunday to 6 Saturday,
@@ -223,7 +224,7 @@ class _DayToggle extends StatelessWidget {
                     maxLines: 1,
                     softWrap: false,
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                       // The deep honey ink in light mode: the amber of
                       // the ring is too pale for text this small.

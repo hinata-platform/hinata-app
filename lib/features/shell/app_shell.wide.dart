@@ -368,7 +368,7 @@ class _NavRail extends StatelessWidget {
                                           ),
                                           textStyle: const TextStyle(
                                             fontWeight: FontWeight.w600,
-                                            fontSize: 13.5,
+                                            fontSize: AppType.label,
                                           ),
                                         ),
                                         icon: const Icon(
@@ -491,7 +491,7 @@ class _CollapseToggle extends StatelessWidget {
                   Text(
                     context.t('nav.collapse'),
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: AppType.label,
                       color: AppColors.railFaint,
                     ),
                   ),
@@ -517,7 +517,7 @@ class _RailGroupLabel extends StatelessWidget {
         label,
         style: const TextStyle(
           fontFamily: AppTheme.fontMono,
-          fontSize: 10,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w500,
           color: AppColors.railFaint,
           letterSpacing: 1.2,
@@ -614,7 +614,7 @@ class _RailItem extends StatelessWidget {
                             Text(
                               context.t(destination.labelKey),
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: AppType.label,
                                 fontWeight: selected
                                     ? FontWeight.w600
                                     : FontWeight.w400,
@@ -733,7 +733,7 @@ class _GlassFloatingTopBar extends StatelessWidget {
                       'hinata',
                       style: TextStyle(
                         fontFamily: AppTheme.fontBrand,
-                        fontSize: 18,
+                        fontSize: AppType.heading,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.4,
                         color: AppColors.ink,
@@ -884,7 +884,10 @@ Widget _menuRow(IconData icon, String label, {bool danger = false}) {
         children: [
           Icon(icon, size: 16, color: color),
           const SizedBox(width: 10),
-          Text(label, style: TextStyle(fontSize: 13.5, color: color)),
+          Text(
+            label,
+            style: TextStyle(fontSize: AppType.label, color: color),
+          ),
         ],
       );
     },
@@ -984,7 +987,7 @@ class _SubPageTitle extends StatelessWidget {
     final label = Text(
       text,
       style: TextStyle(
-        fontSize: 15,
+        fontSize: AppType.body,
         fontWeight: FontWeight.w600,
         color: AppColors.ink,
       ),
@@ -1050,7 +1053,7 @@ class _WidePageAction extends StatelessWidget {
           Text(
             action.label,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w700,
               color: fg,
             ),
@@ -1127,7 +1130,10 @@ class _TopSearchField extends StatelessWidget {
                     child: Text(
                       context.t('appbar.search'),
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
+                      style: TextStyle(
+                        fontSize: AppType.label,
+                        color: AppColors.inkFaint,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 9),
@@ -1145,7 +1151,7 @@ class _TopSearchField extends StatelessWidget {
                       searchShortcutLabel,
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
-                        fontSize: 11,
+                        fontSize: AppType.caption,
                         color: AppColors.inkFaint,
                       ),
                     ),

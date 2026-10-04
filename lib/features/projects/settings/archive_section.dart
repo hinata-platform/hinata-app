@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/hive_widgets.dart';
 import 'settings_common.dart';
 import '../../../core/widgets/folded_hint.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Archive card: a switch to archive / restore the project.
 class ArchiveSection extends StatelessWidget {
@@ -33,7 +34,7 @@ class ArchiveSection extends StatelessWidget {
                       ? context.t('projectSettings.projectArchived')
                       : context.t('projectSettings.projectActive'),
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -41,7 +42,7 @@ class ArchiveSection extends StatelessWidget {
                 FoldedHint(
                   context.t('projectSettings.archiveNote'),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppType.caption,
                     height: 1.45,
                     color: AppColors.inkSoft,
                   ),

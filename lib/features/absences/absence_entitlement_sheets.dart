@@ -27,6 +27,7 @@ import '../sprint/modals/glass_modal.dart';
 import 'absence_entitlement_sheet_cubit.dart';
 import 'absence_labels.dart';
 import '../../core/widgets/folded_hint.dart';
+import '../../core/theme/app_type.dart';
 
 /// Grants [year] of [typeId] to [userIds], after showing what that would do.
 ///
@@ -170,7 +171,7 @@ class _GrantFormState extends State<_GrantForm> {
               FoldedHint(
                 context.t('absence.entitlements.grantHint'),
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: AppType.caption,
                   height: 1.4,
                   color: AppColors.textSecondary,
                 ),
@@ -192,7 +193,7 @@ class _GrantFormState extends State<_GrantForm> {
               Text(
                 context.t('absence.entitlements.preview'),
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w800,
                   color: AppColors.inkSoft,
                 ),
@@ -206,7 +207,10 @@ class _GrantFormState extends State<_GrantForm> {
               else if (_errorKey != null)
                 Text(
                   context.t(_errorKey!),
-                  style: TextStyle(fontSize: 12.5, color: AppColors.dangerInk),
+                  style: TextStyle(
+                    fontSize: AppType.label,
+                    color: AppColors.dangerInk,
+                  ),
                 )
               else
                 // As long as the keeper's selection, which the server caps at
@@ -252,12 +256,15 @@ class _PreviewRow extends StatelessWidget {
             children: [
               Text(
                 name ?? row.userId,
-                style: TextStyle(fontSize: 13, color: AppColors.ink),
+                style: TextStyle(fontSize: AppType.label, color: AppColors.ink),
               ),
               if (row.reason != null && row.reason != 'FULL')
                 Text(
                   context.t('absence.entitlements.reason.${row.reason}'),
-                  style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
             ],
           ),
@@ -268,7 +275,7 @@ class _PreviewRow extends StatelessWidget {
               ? context.t('absence.entitlements.alreadyGranted')
               : daysLabel(context, row.accruedMilliDays),
           style: TextStyle(
-            fontSize: 12.5,
+            fontSize: AppType.label,
             fontWeight: FontWeight.w700,
             fontFeatures: const [FontFeature.tabularFigures()],
             // Somebody who already has the year is not an error and not a
@@ -604,8 +611,11 @@ class _EmploymentFormState extends State<_EmploymentForm> {
 
   Widget _settlementSection(BuildContext context) {
     final rows = _settlement;
-    final label = TextStyle(fontSize: 12, color: AppColors.inkSoft);
-    final figure = TextStyle(fontSize: 13, color: AppColors.ink);
+    final label = TextStyle(
+      fontSize: AppType.caption,
+      color: AppColors.inkSoft,
+    );
+    final figure = TextStyle(fontSize: AppType.label, color: AppColors.ink);
     Widget line(String key, int milliDays, {bool signed = false}) => Padding(
       padding: const EdgeInsets.only(top: 3),
       child: Row(
@@ -627,7 +637,7 @@ class _EmploymentFormState extends State<_EmploymentForm> {
         Text(
           context.t('absence.settlement.title'),
           style: TextStyle(
-            fontSize: 13.5,
+            fontSize: AppType.label,
             fontWeight: FontWeight.w700,
             color: AppColors.ink,
           ),
@@ -639,7 +649,11 @@ class _EmploymentFormState extends State<_EmploymentForm> {
                 ? 'absence.settlement.needsLeftOn'
                 : 'absence.settlement.hint',
           ),
-          style: TextStyle(fontSize: 12, height: 1.4, color: AppColors.inkSoft),
+          style: TextStyle(
+            fontSize: AppType.caption,
+            height: 1.4,
+            color: AppColors.inkSoft,
+          ),
         ),
         if (rows != null)
           for (final row in rows) ...[
@@ -647,7 +661,7 @@ class _EmploymentFormState extends State<_EmploymentForm> {
             Text(
               '${_types.where((type) => type.id == row.typeId).map((type) => absenceTypeName(context, type)).firstOrNull ?? ''} ${row.year}',
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
                 color: AppColors.ink,
               ),
@@ -998,7 +1012,7 @@ class LedgerRow extends StatelessWidget {
               Text(
                 context.t(entry.kind.labelKey),
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                   color: AppColors.ink,
                 ),
@@ -1010,14 +1024,17 @@ class LedgerRow extends StatelessWidget {
                     : MaterialLocalizations.of(
                         context,
                       ).formatMediumDate(entry.effectiveOn!.toLocal()),
-                style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+                style: TextStyle(
+                  fontSize: AppType.caption,
+                  color: AppColors.inkFaint,
+                ),
               ),
               if (entry.reason != null && entry.reason!.isNotEmpty) ...[
                 const SizedBox(height: 3),
                 Text(
                   entry.reason!,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppType.caption,
                     height: 1.35,
                     color: AppColors.inkSoft,
                   ),
@@ -1030,7 +1047,7 @@ class LedgerRow extends StatelessWidget {
         Text(
           signedDaysLabel(context, entry.milliDays),
           style: TextStyle(
-            fontSize: 13,
+            fontSize: AppType.label,
             fontWeight: FontWeight.w700,
             fontFeatures: const [FontFeature.tabularFigures()],
             color: entry.milliDays < 0 ? AppColors.inkSoft : AppColors.ink,

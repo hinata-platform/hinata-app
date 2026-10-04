@@ -67,14 +67,14 @@ class _UserTableRow extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    fontSize: 13.5,
+                                    fontSize: AppType.label,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
                               PronounsLabel(
                                 pronouns: u.pronouns,
-                                fontSize: 11.5,
+                                fontSize: AppType.caption,
                                 leadingGap: 6,
                               ),
                               if (isMe) _YouChip(),
@@ -85,7 +85,7 @@ class _UserTableRow extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 11.5,
+                              fontSize: AppType.caption,
                               color: AppColors.inkSoft,
                             ),
                           ),
@@ -129,7 +129,7 @@ class _UserTableRow extends StatelessWidget {
                           Text(
                             context.t('admin.um.resendInvite'),
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: AppType.caption,
                               fontWeight: FontWeight.w600,
                               color: AppColors.accentInk,
                             ),
@@ -146,7 +146,7 @@ class _UserTableRow extends StatelessWidget {
             child: Text(
               umRelTime(context, u.lastActive),
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 color: idle ? AppColors.inkFaint : AppColors.inkSoft,
               ),
             ),
@@ -240,14 +240,14 @@ class _UserCard extends StatelessWidget {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
-                                      fontSize: 14,
+                                      fontSize: AppType.body,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ),
                                 PronounsLabel(
                                   pronouns: u.pronouns,
-                                  fontSize: 12,
+                                  fontSize: AppType.caption,
                                   leadingGap: 6,
                                 ),
                                 if (isMe) _YouChip(),
@@ -258,7 +258,7 @@ class _UserCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: AppType.caption,
                                 color: AppColors.inkSoft,
                               ),
                             ),
@@ -296,7 +296,10 @@ class _UserCard extends StatelessWidget {
               const SizedBox(width: 5),
               Text(
                 umRelTime(context, u.lastActive),
-                style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                style: TextStyle(
+                  fontSize: AppType.caption,
+                  color: AppColors.inkSoft,
+                ),
               ),
               if (u.inviteExpired) ...[
                 const Spacer(),
@@ -314,7 +317,7 @@ class _UserCard extends StatelessWidget {
                       Text(
                         context.t('admin.um.resendInvite'),
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           fontWeight: FontWeight.w600,
                           color: AppColors.accentInk,
                         ),
@@ -344,7 +347,7 @@ class _YouChip extends StatelessWidget {
       child: Text(
         context.t('admin.um.you'),
         style: TextStyle(
-          fontSize: 10,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w700,
           color: AppColors.accentInk,
         ),
@@ -467,7 +470,7 @@ class _PageNumber extends StatelessWidget {
               child: Text(
                 '$n',
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                   color: active ? Colors.white : AppColors.inkSoft,
                 ),

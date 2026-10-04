@@ -12,6 +12,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../sprint/modals/glass_modal.dart';
+import '../../core/theme/app_type.dart';
 
 /// Who changed this entry, and what they changed.
 ///
@@ -157,7 +158,10 @@ class _Created extends StatelessWidget {
                   'source': context.t('time.source.${entry.source}'),
                 },
               ),
-              style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+              style: TextStyle(
+                fontSize: AppType.label,
+                color: AppColors.inkSoft,
+              ),
             ),
           ),
         ],
@@ -214,7 +218,7 @@ class _HistoryRow extends StatelessWidget {
                 child: Text(
                   context.t('audit.action.${row.action}'),
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
@@ -223,21 +227,24 @@ class _HistoryRow extends StatelessWidget {
               if (when != null)
                 Text(
                   _when(context, when),
-                  style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkFaint,
+                  ),
                 ),
             ],
           ),
           const SizedBox(height: 2),
           Text(
             row.actorLabel ?? context.t('audit.actor.system'),
-            style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+            style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
           ),
           if (sentence != null && sentence.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
               sentence,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 height: 1.45,
                 color: AppColors.ink,
               ),
@@ -247,7 +254,10 @@ class _HistoryRow extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               details.join(' · '),
-              style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.inkFaint,
+              ),
             ),
           ],
         ],

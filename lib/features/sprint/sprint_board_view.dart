@@ -37,6 +37,7 @@ import 'planning/sprint_planning_cubit.dart';
 import 'sprint_active_surface.dart';
 import 'sprint_insights_surface.dart';
 import 'sprint_planning_surface.dart';
+import '../../core/theme/app_type.dart';
 
 /// The Scrum board: Planning · Active sprint · Insights, switched by a
 /// segmented control.
@@ -798,7 +799,7 @@ class _EmptyState extends StatelessWidget {
               title,
               style: const TextStyle(
                 fontFamily: AppTheme.fontBrand,
-                fontSize: 17,
+                fontSize: AppType.title,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -806,7 +807,10 @@ class _EmptyState extends StatelessWidget {
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+              style: TextStyle(
+                fontSize: AppType.label,
+                color: AppColors.inkSoft,
+              ),
             ),
           ],
         ),

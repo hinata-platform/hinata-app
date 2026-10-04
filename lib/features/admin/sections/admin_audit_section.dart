@@ -24,6 +24,7 @@ import '../../sprint/modals/glass_modal.dart'
     show showGlassToast, GlassToastKind;
 import '../../../core/widgets/glass_filter_bar.dart';
 import 'audit_log_cubit.dart';
+import '../../../core/theme/app_type.dart';
 
 part 'admin_audit_section.filters.dart';
 part 'admin_audit_section.timeline.dart';
@@ -384,7 +385,10 @@ class _AdminAuditSectionState extends State<AdminAuditSection> {
             Flexible(
               child: Text(
                 context.t('audit.endOfList'),
-                style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+                style: TextStyle(
+                  fontSize: AppType.caption,
+                  color: AppColors.inkFaint,
+                ),
                 textAlign: TextAlign.center,
               ),
             ),

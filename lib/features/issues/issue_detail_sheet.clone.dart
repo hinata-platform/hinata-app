@@ -221,7 +221,10 @@ class _IssueCloneBodyState extends State<_IssueCloneBody> {
                   label: context.t('issues.clone.summary'),
                   trailing: Text(
                     context.t('issues.clone.required'),
-                    style: TextStyle(fontSize: 11, color: AppColors.accentInk),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      color: AppColors.accentInk,
+                    ),
                   ),
                   child: Semantics(
                     label: context.t('issues.clone.summary'),
@@ -291,7 +294,7 @@ class _IssueCloneBodyState extends State<_IssueCloneBody> {
                   child: FoldedHint(
                     context.t('issues.clone.reporterNote'),
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: AppType.caption,
                       height: 1.35,
                       color: AppColors.inkSoft,
                     ),

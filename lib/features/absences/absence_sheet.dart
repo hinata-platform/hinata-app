@@ -35,6 +35,7 @@ import 'absence_actions.dart';
 import 'absence_request_sheet.dart';
 import 'absence_request_widgets.dart';
 import 'absence_sheet_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// Opens [absence] or [request]. Resolves to true when something about it
 /// changed, so the screen behind can redraw.
@@ -363,7 +364,7 @@ class _AbsenceSheetState extends State<_AbsenceSheet> {
             Text(
               context.t('absence.sheet.history'),
               style: TextStyle(
-                fontSize: 12,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w700,
                 color: AppColors.inkSoft,
               ),

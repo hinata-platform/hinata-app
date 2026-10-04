@@ -32,6 +32,7 @@ import '../../core/repositories/dashboard_repository.dart';
 import '../../core/repositories/meta_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/user_repository.dart';
+import '../../core/theme/app_type.dart';
 
 /// Project insight dashboard: distribution reports (state / priority /
 /// assignee / time-per-activity) rendered as v2 bar cards, with CSV/JSON export.
@@ -581,7 +582,10 @@ class _BurndownCard extends StatelessWidget {
                   'reports.remaining',
                   variables: {'count': '$remaining'},
                 ),
-                style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  color: AppColors.inkSoft,
+                ),
               ),
             ],
           ),
@@ -629,7 +633,7 @@ class _BurndownCard extends StatelessWidget {
                                 : context.t('reports.windowEnd'),
                             style: TextStyle(
                               fontFamily: AppTheme.fontMono,
-                              fontSize: 10,
+                              fontSize: AppType.caption,
                               color: AppColors.inkFaint,
                             ),
                           ),
@@ -721,7 +725,7 @@ class _BarReportCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -740,7 +744,7 @@ class _BarReportCard extends StatelessWidget {
                         textAlign: TextAlign.right,
                         style: TextStyle(
                           fontFamily: AppTheme.fontMono,
-                          fontSize: 12.5,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w600,
                           color: AppColors.ink,
                         ),
@@ -775,7 +779,7 @@ class _SummaryCard extends StatelessWidget {
                   '$total',
                   style: TextStyle(
                     fontFamily: AppTheme.fontBrand,
-                    fontSize: 44,
+                    fontSize: AppType.numeral,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -1,
                     height: 1,
@@ -787,7 +791,10 @@ class _SummaryCard extends StatelessWidget {
                   projectName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.label,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
               ],
             ),
@@ -810,7 +817,7 @@ class _SectionTitle extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
-        fontSize: 14.5,
+        fontSize: AppType.body,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.1,
         color: AppColors.ink,
@@ -862,7 +869,7 @@ class _ExportButton extends StatelessWidget {
             Text(
               context.t('reports.export'),
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
                 color: AppColors.ink,
               ),
@@ -914,7 +921,7 @@ class _ProjectPicker extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                 ),
               ),

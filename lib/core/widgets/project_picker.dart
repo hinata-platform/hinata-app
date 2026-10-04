@@ -19,6 +19,7 @@ import '../../features/sprint/modals/glass_modal.dart'
         kGlassPopoverBreakpoint,
         showGlassAnchoredPopover,
         showGlassBottomSheet;
+import '../theme/app_type.dart';
 
 /// Opens the project picker anchored to [anchorRect] — the searchable,
 /// server-paged counterpart to listing every project inline.
@@ -138,7 +139,7 @@ class ProjectPickerField extends StatelessWidget {
                         child: Text(
                           context.t(placeholderKey),
                           style: TextStyle(
-                            fontSize: 13.5,
+                            fontSize: AppType.label,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -194,13 +195,16 @@ class _ProjectChip extends StatelessWidget {
           const SizedBox(width: 7),
           Text(
             project.name,
-            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: AppType.label,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(width: 6),
           Text(
             project.key,
             style: TextStyle(
-              fontSize: 10.5,
+              fontSize: AppType.caption,
               fontFeatures: const [FontFeature.tabularFigures()],
               color: AppColors.textSecondary,
             ),
@@ -446,7 +450,10 @@ class _ProjectPickerPanelState extends State<_ProjectPickerPanel> {
     padding: const EdgeInsets.fromLTRB(16, 4, 16, 2),
     child: Text(
       context.t(widget.titleKey!),
-      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+      style: const TextStyle(
+        fontSize: AppType.body,
+        fontWeight: FontWeight.w700,
+      ),
     ),
   );
 
@@ -488,7 +495,7 @@ class _ProjectPickerPanelState extends State<_ProjectPickerPanel> {
                   focusNode: _focus,
                   onChanged: _onQueryChanged,
                   textInputAction: TextInputAction.search,
-                  style: const TextStyle(fontSize: 13.5),
+                  style: const TextStyle(fontSize: AppType.label),
                   cursorColor: AppColors.accentStrong,
                   // Every border state is cleared by hand: the app's input theme
                   // supplies `enabledBorder`/`focusedBorder`, and those survive
@@ -506,7 +513,7 @@ class _ProjectPickerPanelState extends State<_ProjectPickerPanel> {
                     contentPadding: const EdgeInsets.symmetric(vertical: 11),
                     hintText: context.t('projects.picker.searchHint'),
                     hintStyle: TextStyle(
-                      fontSize: 13.5,
+                      fontSize: AppType.label,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -553,7 +560,10 @@ class _ProjectPickerPanelState extends State<_ProjectPickerPanel> {
                 'board.projectsSelected',
                 variables: {'count': '${_picked.length}'},
               ),
-              style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
           TextButton.icon(
@@ -578,7 +588,7 @@ class _ProjectPickerPanelState extends State<_ProjectPickerPanel> {
         padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
         child: Text(
           context.t(_error!),
-          style: TextStyle(fontSize: 12.5, color: AppColors.dangerInk),
+          style: TextStyle(fontSize: AppType.label, color: AppColors.dangerInk),
         ),
       );
     }
@@ -624,7 +634,10 @@ class _ProjectPickerPanelState extends State<_ProjectPickerPanel> {
                   ? (widget.emptyLabelKey ?? 'projects.picker.noResults')
                   : 'projects.picker.noResults',
             ),
-            style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+            style: TextStyle(
+              fontSize: AppType.label,
+              color: AppColors.textSecondary,
+            ),
           ),
         ),
       if (_loadingMore)
@@ -656,7 +669,7 @@ class _SectionLabel extends StatelessWidget {
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 10.5,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.6,
           color: AppColors.textSecondary,
@@ -719,7 +732,7 @@ class _ProjectRow extends StatelessWidget {
                   project.name,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                     color: enabled
                         ? AppColors.textPrimary
@@ -730,7 +743,7 @@ class _ProjectRow extends StatelessWidget {
               Text(
                 project.key,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: AppType.caption,
                   fontFeatures: const [FontFeature.tabularFigures()],
                   color: AppColors.textSecondary,
                 ),

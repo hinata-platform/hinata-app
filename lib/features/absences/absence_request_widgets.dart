@@ -14,6 +14,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/soft_card.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'absence_labels.dart';
+import '../../core/theme/app_type.dart';
 
 /// One request, from whichever side the reader is on.
 ///
@@ -77,7 +78,7 @@ class AbsenceRequestCard extends StatelessWidget {
                     Text(
                       inbox ? (request.personName ?? name) : name,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: AppType.body,
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
                       ),
@@ -90,7 +91,7 @@ class AbsenceRequestCard extends StatelessWidget {
                         if (inbox) name,
                       ].join(' · '),
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppType.caption,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -108,7 +109,7 @@ class AbsenceRequestCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 height: 1.4,
                 color: AppColors.inkSoft,
               ),
@@ -224,7 +225,11 @@ class AbsenceNoteLine extends StatelessWidget {
       Expanded(
         child: Text(
           text,
-          style: TextStyle(fontSize: 12, height: 1.4, color: AppColors.inkSoft),
+          style: TextStyle(
+            fontSize: AppType.caption,
+            height: 1.4,
+            color: AppColors.inkSoft,
+          ),
         ),
       ),
     ],
@@ -279,7 +284,11 @@ class _Pill extends StatelessWidget {
     ),
     child: Text(
       label,
-      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: tint),
+      style: TextStyle(
+        fontSize: AppType.caption,
+        fontWeight: FontWeight.w700,
+        color: tint,
+      ),
     ),
   );
 }
@@ -320,7 +329,7 @@ class AbsenceHistoryRow extends StatelessWidget {
                       ? context.t('absence.request.history.shortened')
                       : context.t(to.labelKey),
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),
@@ -331,7 +340,10 @@ class AbsenceHistoryRow extends StatelessWidget {
                   DateFormat.yMMMd(
                     Localizations.localeOf(context).toLanguageTag(),
                   ).add_Hm().format(at),
-                  style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkFaint,
+                  ),
                 ),
             ],
           ),
@@ -340,7 +352,7 @@ class AbsenceHistoryRow extends StatelessWidget {
             Text(
               step.note!,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 height: 1.4,
                 color: AppColors.inkSoft,
               ),

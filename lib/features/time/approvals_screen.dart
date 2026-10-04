@@ -32,6 +32,7 @@ import 'lock_notice.dart';
 import 'time_approval_cubit.dart';
 import 'time_privacy_sheet.dart';
 import 'time_views.dart';
+import '../../core/theme/app_type.dart';
 
 /// Handed-in periods, one's own and the ones waiting for a decision, and the
 /// requests the reader can answer.
@@ -464,7 +465,7 @@ class _ApprovalCard extends StatelessWidget {
                         approval.periodEnd,
                       ),
                       style: TextStyle(
-                        fontSize: 13.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w800,
                         color: AppColors.ink,
                       ),
@@ -473,7 +474,7 @@ class _ApprovalCard extends StatelessWidget {
                     Text(
                       '$name · ${project?.key ?? project?.name ?? context.t('time.fmt.none')}',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppType.caption,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -487,7 +488,7 @@ class _ApprovalCard extends StatelessWidget {
                   Text(
                     fmtDuration(context, approval.totalMinutes),
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w800,
                       fontFeatures: const [FontFeature.tabularFigures()],
                       color: AppColors.ink,
@@ -512,7 +513,7 @@ class _ApprovalCard extends StatelessWidget {
               child: Text(
                 approval.note!,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: AppType.caption,
                   height: 1.45,
                   color: AppColors.inkSoft,
                 ),
@@ -628,7 +629,7 @@ class _History extends StatelessWidget {
                         '${context.t(event.to?.labelKey ?? 'time.approval.status.open')}'
                         '${event.at == null ? '' : ' · ${localizations.formatShortDate(event.at!.toLocal())}'}',
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           color: AppColors.textSecondary,
                         ),
                       ),
@@ -637,7 +638,7 @@ class _History extends StatelessWidget {
                         Text(
                           event.note!,
                           style: TextStyle(
-                            fontSize: 11.5,
+                            fontSize: AppType.caption,
                             height: 1.4,
                             color: AppColors.inkSoft,
                           ),
@@ -716,7 +717,7 @@ Future<void> _showEntries(
                         innerContext.t(state.errorKey ?? 'time.noEntries'),
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppType.label,
                           color: AppColors.textSecondary,
                         ),
                       ),
@@ -774,7 +775,7 @@ Future<void> _showEntries(
                                     rowContext,
                                   ).formatShortDate(entry.date!),
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: AppType.caption,
                               color: AppColors.textSecondary,
                             ),
                           ),
@@ -787,7 +788,7 @@ Future<void> _showEntries(
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 12.5,
+                              fontSize: AppType.label,
                               color: AppColors.ink,
                             ),
                           ),
@@ -796,7 +797,7 @@ Future<void> _showEntries(
                         Text(
                           fmtDuration(rowContext, entry.durationMinutes),
                           style: TextStyle(
-                            fontSize: 12.5,
+                            fontSize: AppType.label,
                             fontWeight: FontWeight.w700,
                             fontFeatures: const [FontFeature.tabularFigures()],
                             color: AppColors.ink,

@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/glass_switch_chip.dart';
 import '../admin/admin_form_helpers.dart';
 import '../projects/deadline_basis_field.dart' show deadlineBasisLabelKey;
+import '../../core/theme/app_type.dart';
 
 /// Organisation → Fristen: what new relative deadlines count in, for every
 /// project of the organisation that does not name a basis of its own.
@@ -45,7 +46,7 @@ class OrgDeadlineBasisCard extends StatelessWidget {
     // screen cannot name: a lit chip would claim an answer it does not have.
     final known = !follows || platformDefault != null;
     final hintStyle = TextStyle(
-      fontSize: 12,
+      fontSize: AppType.caption,
       height: 1.4,
       color: AppColors.inkFaint,
     );

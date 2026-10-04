@@ -18,6 +18,7 @@ import '../sprint/modals/glass_modal.dart'
         kGlassPopoverBreakpoint,
         showGlassAnchoredPopover,
         showGlassBottomSheet;
+import '../../core/theme/app_type.dart';
 
 /// Result of the on-the-fly epic/parent picker.
 ///
@@ -249,7 +250,7 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
           child: Text(
             context.t(headerKey),
             style: TextStyle(
-              fontSize: 11,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.6,
               color: AppColors.inkFaint,
@@ -276,7 +277,7 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
           focusNode: _focus,
           onChanged: _onQueryChanged,
           textInputAction: TextInputAction.search,
-          style: const TextStyle(fontSize: 14),
+          style: const TextStyle(fontSize: AppType.body),
           decoration: InputDecoration(
             isDense: true,
             prefixIcon: Icon(
@@ -293,7 +294,10 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
                   ? 'issues.epicPicker.searchParentsHint'
                   : 'issues.epicPicker.searchHint',
             ),
-            hintStyle: TextStyle(color: AppColors.inkFaint, fontSize: 14),
+            hintStyle: TextStyle(
+              color: AppColors.inkFaint,
+              fontSize: AppType.body,
+            ),
             filled: true,
             fillColor: AppColors.surface,
             contentPadding: const EdgeInsets.symmetric(vertical: 10),
@@ -331,7 +335,7 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
                 ? 'issues.epicPicker.noParentResults'
                 : 'issues.epicPicker.noResults',
           ),
-          style: TextStyle(color: AppColors.inkFaint, fontSize: 13),
+          style: TextStyle(color: AppColors.inkFaint, fontSize: AppType.label),
         ),
       );
     }
@@ -378,7 +382,10 @@ class _ClearRow extends StatelessWidget {
               const SizedBox(width: 10),
               Text(
                 context.t('issues.epicPicker.clear'),
-                style: TextStyle(fontSize: 13.5, color: AppColors.inkSoft),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  color: AppColors.inkSoft,
+                ),
               ),
             ],
           ),
@@ -411,7 +418,7 @@ class _EpicTile extends StatelessWidget {
               Text(
                 issue.readableId,
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w700,
                   color: AppColors.inkSoft,
                   fontFeatures: const [FontFeature.tabularFigures()],
@@ -423,7 +430,7 @@ class _EpicTile extends StatelessWidget {
                   issue.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13.5),
+                  style: const TextStyle(fontSize: AppType.label),
                 ),
               ),
             ],

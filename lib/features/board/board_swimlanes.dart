@@ -14,6 +14,7 @@ import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/read_on_trigger.dart' show ReadOnTrigger;
 import 'board_drag.dart';
+import '../../core/theme/app_type.dart';
 
 /// Swimlane grouping for a board, Jira-style: each group becomes a horizontal
 /// lane that still shows the full set of status columns.
@@ -82,7 +83,7 @@ class BoardGroupByButton extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                   color: ink,
                 ),
@@ -198,7 +199,7 @@ class BoardColumnOwnerMark extends StatelessWidget {
           label,
           style: TextStyle(
             fontFamily: AppTheme.fontMono,
-            fontSize: 10,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w700,
             color: AppColors.inkFaint,
           ),
@@ -238,7 +239,7 @@ class BoardColumnBlockedNote extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
               color: AppColors.dangerInk,
             ),
@@ -503,7 +504,7 @@ Widget _issueLaneHeader(
               children: [
                 TypeGlyph(type: parent.type, size: 20),
                 const SizedBox(width: 8),
-                IdMono(parent.readableId, fontSize: 13),
+                IdMono(parent.readableId, fontSize: AppType.label),
                 const SizedBox(width: 8),
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 280),
@@ -512,7 +513,7 @@ Widget _issueLaneHeader(
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: AppType.body,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -546,7 +547,10 @@ Widget _avatarLaneHeader(
       const SizedBox(width: 9),
       Text(
         name,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+        style: const TextStyle(
+          fontSize: AppType.body,
+          fontWeight: FontWeight.w700,
+        ),
       ),
       const SizedBox(width: 10),
       _laneCount(count),
@@ -563,7 +567,7 @@ Widget _plainLaneHeader(String label, int count, IconData icon) => Padding(
       Text(
         label,
         style: TextStyle(
-          fontSize: 14,
+          fontSize: AppType.body,
           fontWeight: FontWeight.w700,
           color: AppColors.inkSoft,
         ),
@@ -585,7 +589,7 @@ Widget _laneCount(int count) => Container(
     '$count',
     style: TextStyle(
       fontFamily: AppTheme.fontMono,
-      fontSize: 11.5,
+      fontSize: AppType.caption,
       fontWeight: FontWeight.w600,
       color: AppColors.inkSoft,
     ),

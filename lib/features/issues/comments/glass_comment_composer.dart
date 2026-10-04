@@ -29,6 +29,7 @@ import '../../../core/lexical/hinata_markdown_preview.dart'
 import '../../knowledge/markdown/mention_field.dart';
 import '../../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import 'voice/voice_recorder.dart';
+import '../../../core/theme/app_type.dart';
 
 part 'glass_comment_composer.widgets.dart';
 
@@ -581,7 +582,7 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
               showToolbar: false,
               framed: false,
               placeholderKey: 'comments.placeholder',
-              fontSize: 14,
+              fontSize: AppType.body,
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             ),
           ),

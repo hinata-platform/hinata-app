@@ -20,6 +20,7 @@ import '../../core/repositories/user_repository.dart';
 import '../knowledge/data/knowledge_repository.dart';
 import 'issue_create_cubit.dart';
 import 'issue_detail_sheet.dart';
+import '../../core/theme/app_type.dart';
 
 /// Centered create-issue dialog for wider screens — mirrors the issue detail
 /// sheet's modal chrome and width so the two-column create layout has room.
@@ -101,7 +102,7 @@ Future<Issue?> showIssueForm(
           context.t('issues.new'),
           style: const TextStyle(
             fontFamily: AppTheme.fontBrand,
-            fontSize: 16,
+            fontSize: AppType.title,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -221,7 +222,7 @@ class _CreateSaveBar extends StatelessWidget {
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
-                              fontSize: 15,
+                              fontSize: AppType.body,
                             ),
                           ),
                         },

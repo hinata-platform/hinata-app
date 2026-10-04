@@ -26,6 +26,7 @@ import 'absence_entitlement_sheets.dart';
 import 'absence_entitlements_cubit.dart';
 import 'absence_labels.dart';
 import '../../core/widgets/folded_hint.dart';
+import '../../core/theme/app_type.dart';
 
 /// Admin → Entitlements (HIN-116): who has how much of one absence type in one
 /// leave year, and everything a keeper does about it.
@@ -348,7 +349,7 @@ class _EntitlementsViewState extends State<_EntitlementsView> {
                           FoldedHint(
                             context.t('absence.entitlements.intro'),
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: AppType.label,
                               height: 1.45,
                               color: AppColors.textSecondary,
                             ),
@@ -589,7 +590,7 @@ class _EntitlementsViewState extends State<_EntitlementsView> {
         variables: {'count': '${_chosen.length}'},
       ),
       style: TextStyle(
-        fontSize: 12.5,
+        fontSize: AppType.label,
         fontWeight: FontWeight.w600,
         color: AppColors.accentInk,
       ),
@@ -652,7 +653,7 @@ class _StandingCard extends StatelessWidget {
                 Text(
                   name,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: AppType.body,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),
@@ -661,7 +662,10 @@ class _StandingCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     _dates(context),
-                    style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      color: AppColors.inkFaint,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 8),
@@ -710,7 +714,7 @@ class _StandingCard extends StatelessWidget {
       return Text(
         context.t('absence.entitlements.notGranted'),
         style: TextStyle(
-          fontSize: 12.5,
+          fontSize: AppType.label,
           fontWeight: FontWeight.w600,
           color: AppColors.inkSoft,
         ),
@@ -823,7 +827,7 @@ class _Figure extends StatelessWidget {
       Text(
         label,
         style: TextStyle(
-          fontSize: 10.5,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w600,
           color: AppColors.inkFaint,
         ),

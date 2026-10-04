@@ -21,6 +21,7 @@ import '../../core/blocs/app_config_bloc.dart';
 import 'global_search_controller.dart';
 import 'search_models.dart';
 import 'search_tokens.dart';
+import '../../core/theme/app_type.dart';
 
 part 'global_search_dialog.results.dart';
 part 'global_search_dialog.pieces.dart';
@@ -551,7 +552,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
           Text(
             context.t('search.brand'),
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
               color: tokens.inkFaint,
             ),

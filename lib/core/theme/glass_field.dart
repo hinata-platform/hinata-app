@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_theme.dart';
 import 'field_border.dart';
+import 'app_type.dart';
 
 /// How much of the app's paper a form on glass stands on.
 ///
@@ -35,21 +36,21 @@ abstract final class GlassFieldStyle {
 
   /// The caption above a value ("Tag", "Art der Abwesenheit").
   static TextStyle get caption => TextStyle(
-    fontSize: 11.5,
+    fontSize: AppType.caption,
     fontWeight: FontWeight.w600,
     color: AppColors.inkSoft,
   );
 
   /// A chosen value.
   static TextStyle get value => TextStyle(
-    fontSize: 14,
+    fontSize: AppType.body,
     fontWeight: FontWeight.w600,
     color: AppColors.ink,
   );
 
   /// What a field says while nothing is chosen.
   static TextStyle get placeholder => TextStyle(
-    fontSize: 14,
+    fontSize: AppType.body,
     fontWeight: FontWeight.w500,
     color: AppColors.inkSoft,
   );
@@ -81,13 +82,19 @@ abstract final class GlassFieldStyle {
         color: AppColors.inkSoft,
       ),
       floatingLabelStyle: TextStyle(
-        fontSize: 15,
+        fontSize: AppType.body,
         fontWeight: FontWeight.w600,
         color: AppColors.inkSoft,
       ),
       hintStyle: TextStyle(color: AppColors.inkSoft),
-      helperStyle: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
-      counterStyle: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+      helperStyle: TextStyle(
+        fontSize: AppType.caption,
+        color: AppColors.inkSoft,
+      ),
+      counterStyle: TextStyle(
+        fontSize: AppType.caption,
+        color: AppColors.inkSoft,
+      ),
     );
   }
 }

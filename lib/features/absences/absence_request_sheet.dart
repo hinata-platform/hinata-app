@@ -30,6 +30,7 @@ import '../sprint/modals/glass_modal.dart';
 import 'absence_labels.dart';
 import 'absence_request_sheet_cubit.dart';
 import '../../core/widgets/folded_hint.dart';
+import '../../core/theme/app_type.dart';
 
 /// Opens the request form. Resolves to the filed request, or null if dismissed.
 ///
@@ -451,7 +452,7 @@ class _RequestFormState extends State<_RequestForm> {
                 Text(
                   context.t('absence.request.substituteHint'),
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: AppType.caption,
                     height: 1.4,
                     color: AppColors.textSecondary,
                   ),
@@ -500,7 +501,10 @@ class _TypeOption extends StatelessWidget {
         if (balance != null && !balance.unlimited)
           Text(
             daysLabel(context, balance.remainingMilliDays),
-            style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.textSecondary,
+            ),
           ),
       ],
     );
@@ -666,7 +670,7 @@ class _PreviewLine extends StatelessWidget {
               Text(
                 title,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                   color: AppColors.ink,
                 ),
@@ -676,7 +680,7 @@ class _PreviewLine extends StatelessWidget {
                 Text(
                   subtitle,
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: AppType.caption,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -834,7 +838,7 @@ class _SickFormState extends State<_SickForm> {
               FoldedHint(
                 context.t('absence.sick.explainer'),
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: AppType.caption,
                   height: 1.45,
                   color: AppColors.textSecondary,
                 ),

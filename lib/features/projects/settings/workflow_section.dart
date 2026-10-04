@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/hue_colors.dart';
 import '../../../core/widgets/hit_slop.dart';
 import 'settings_common.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Workflow states card: reorderable, renamable, colored rows with a Resolved
 /// toggle. Enforces the >= 2 states guard on delete (UI side).
@@ -84,7 +85,7 @@ class _WorkflowSectionState extends State<WorkflowSection> {
           },
         ),
         style: TextStyle(
-          fontSize: 12,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w600,
           color: AppColors.inkFaint,
         ),
@@ -198,7 +199,7 @@ class _StateRow extends StatelessWidget {
                 onChanged: onRename,
                 textCapitalization: TextCapitalization.sentences,
                 style: const TextStyle(
-                  fontSize: 13.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                 ),
                 // Transparent field; only an accent underline appears on focus,
@@ -279,7 +280,7 @@ class _ResolvedPill extends StatelessWidget {
                   Text(
                     context.t('projectSettings.resolved'),
                     style: TextStyle(
-                      fontSize: 11.5,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w600,
                       color: on ? green : AppColors.inkFaint,
                     ),

@@ -9,6 +9,7 @@ import '../../../core/widgets/app_avatar.dart';
 import '../data/knowledge_models.dart' show lucideIcon;
 import '../knowledge_tokens.dart';
 import 'smart_link_resolver.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Inline, clickable, hoverable smart-link chip rendered from a `{{…}}` token.
 ///
@@ -158,7 +159,7 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
               widget.id,
               style: TextStyle(
                 fontFamily: AppTheme.fontMono,
-                fontSize: 12,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w600,
                 color: AppColors.ink,
               ),
@@ -189,7 +190,7 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: AppType.label,
             fontWeight: bold ? FontWeight.w700 : FontWeight.w600,
             color: color,
           ),
@@ -233,7 +234,7 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
               color: AppColors.dangerInk,
             ),
@@ -260,7 +261,7 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
                 widget.id,
                 style: TextStyle(
                   fontFamily: AppTheme.fontMono,
-                  fontSize: 12,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w600,
                   color: AppColors.inkSoft,
                 ),
@@ -273,7 +274,7 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
           Text(
             it.title,
             style: const TextStyle(
-              fontSize: 14.5,
+              fontSize: AppType.body,
               fontWeight: FontWeight.w600,
               height: 1.3,
               letterSpacing: -0.1,
@@ -331,7 +332,7 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w600,
                     color: a.spaceColor ?? KbTokens.accent,
                   ),
@@ -343,7 +344,7 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
         Text(
           a.title,
           style: const TextStyle(
-            fontSize: 14.5,
+            fontSize: AppType.body,
             fontWeight: FontWeight.w600,
             height: 1.3,
             letterSpacing: -0.1,
@@ -354,7 +355,7 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
           Text(
             '${a.excerpt}…',
             style: TextStyle(
-              fontSize: 12.5,
+              fontSize: AppType.label,
               color: AppColors.inkSoft,
               height: 1.5,
             ),
@@ -413,7 +414,7 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
       Text(
         name,
         style: TextStyle(
-          fontSize: 11.5,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w600,
           color: color,
         ),
@@ -426,7 +427,10 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
     children: [
       leading,
       const SizedBox(width: 5),
-      Text(text, style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft)),
+      Text(
+        text,
+        style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
+      ),
     ],
   );
 
@@ -439,7 +443,7 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
     ),
     child: Text(
       label,
-      style: TextStyle(fontSize: 11, color: AppColors.inkSoft),
+      style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
     ),
   );
 
@@ -462,7 +466,7 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w600,
                 color: KbTokens.accent,
               ),

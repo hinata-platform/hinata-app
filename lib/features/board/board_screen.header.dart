@@ -37,14 +37,20 @@ class _SprintHeader extends StatelessWidget {
           sprint.name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: AppType.label,
+          ),
         ),
         if ((sprint.goal ?? '').isNotEmpty)
           Text(
             sprint.goal!,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkSoft,
+            ),
           ),
       ],
     );
@@ -105,7 +111,7 @@ class _ActivePill extends StatelessWidget {
           Text(
             context.t('board.active'),
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
               color: AppColors.accentInk,
             ),
@@ -143,7 +149,7 @@ class _SprintProgress extends StatelessWidget {
           softWrap: false,
           style: TextStyle(
             fontFamily: AppTheme.fontMono,
-            fontSize: 11.5,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w600,
             color: AppColors.inkSoft,
           ),
@@ -192,7 +198,7 @@ class _SprintSelector extends StatelessWidget {
             Text(
               label,
               style: const TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
               ),
             ),

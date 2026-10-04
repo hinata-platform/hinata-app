@@ -14,6 +14,7 @@ import '../deletion/delete_flows.dart';
 import 'team_form_cubit.dart';
 import 'team_modal_kit.dart';
 import 'team_widgets.dart';
+import '../../core/theme/app_type.dart';
 
 export 'team_member_modals.dart';
 export 'team_project_modal.dart';
@@ -333,7 +334,7 @@ class _TeamFormBodyState extends State<_TeamFormBody> {
                         child: Text(
                           context.t('teams.keyTaken'),
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: AppType.caption,
                             color: AppColors.dangerInk,
                           ),
                         ),
@@ -374,7 +375,10 @@ class _TeamFormBodyState extends State<_TeamFormBody> {
             const SizedBox(height: 14),
             Text(
               _error!,
-              style: TextStyle(color: AppColors.dangerInk, fontSize: 12.5),
+              style: TextStyle(
+                color: AppColors.dangerInk,
+                fontSize: AppType.label,
+              ),
             ),
           ],
         ],

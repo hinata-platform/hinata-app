@@ -21,6 +21,7 @@ import '../issues/issue_detail_sheet.dart';
 import '../search/search_tokens.dart';
 import 'gantt_cubit.dart';
 import 'gantt_view_options.dart';
+import '../../core/theme/app_type.dart';
 
 /// Zoom levels for the timeline. [week] shows individual day ticks under a
 /// month band (Jira "Wochen"); [month] collapses to month columns only.
@@ -365,7 +366,7 @@ class _GanttState extends State<_Gantt> {
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                        fontSize: 11,
+                                        fontSize: AppType.caption,
                                         fontWeight: FontWeight.w700,
                                         letterSpacing: 0.4,
                                         color: AppColors.textSecondary,
@@ -680,7 +681,7 @@ class _ProjectPicker extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -736,7 +737,7 @@ class _TaskLabel extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       text: TextSpan(
-                        style: const TextStyle(fontSize: 12),
+                        style: const TextStyle(fontSize: AppType.caption),
                         children: [
                           TextSpan(
                             text: task.readableId,
@@ -927,7 +928,7 @@ class _DayTick extends StatelessWidget {
     final child = Text(
       '${date.day}',
       style: TextStyle(
-        fontSize: 10,
+        fontSize: AppType.caption,
         fontWeight: isToday || date.day == 1
             ? FontWeight.w800
             : FontWeight.w400,
@@ -1182,7 +1183,7 @@ class _GanttBar extends StatelessWidget {
                   softWrap: false,
                   style: const TextStyle(
                     fontFamily: AppTheme.fontMono,
-                    fontSize: 11,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),

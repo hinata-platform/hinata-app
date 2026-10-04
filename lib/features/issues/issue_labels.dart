@@ -14,6 +14,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassBottomSheet,
         showGlassConfirm,
         showGlassErrorToast;
+import '../../core/theme/app_type.dart';
 
 /// Multi-select label ("Stichwort") picker. On tablet/desktop it opens as an
 /// anchored popover beside the field (like the other detail pickers); on phone
@@ -169,7 +170,7 @@ class _LabelPickerSheetState extends State<_LabelPickerSheet> {
               Text(
                 context.t('issues.labels'),
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: AppType.body,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -209,7 +210,10 @@ class _LabelPickerSheetState extends State<_LabelPickerSheet> {
                   color: AppColors.inkFaint,
                 ),
                 hintText: context.t('issues.addLabel'),
-                hintStyle: TextStyle(color: AppColors.inkFaint, fontSize: 13.5),
+                hintStyle: TextStyle(
+                  color: AppColors.inkFaint,
+                  fontSize: AppType.label,
+                ),
                 filled: true,
                 fillColor: AppColors.surfaceMuted,
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
@@ -237,7 +241,10 @@ class _LabelPickerSheetState extends State<_LabelPickerSheet> {
                 'issues.labelsFull',
                 variables: {'max': '$kIssueMaxLabels'},
               ),
-              style: TextStyle(color: AppColors.inkFaint, fontSize: 12.5),
+              style: TextStyle(
+                color: AppColors.inkFaint,
+                fontSize: AppType.label,
+              ),
             ),
           ),
         Flexible(
@@ -313,7 +320,7 @@ class _CreateRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13.5,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                       color: AppColors.accentInk,
                     ),
@@ -381,7 +388,7 @@ class _LabelChip extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                   color: selected ? AppColors.accentStrong : AppColors.inkSoft,
                 ),

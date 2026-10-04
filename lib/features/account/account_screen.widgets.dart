@@ -123,7 +123,7 @@ class _AccessToggle extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
               color: active ? AppColors.ink : AppColors.inkSoft,
             ),

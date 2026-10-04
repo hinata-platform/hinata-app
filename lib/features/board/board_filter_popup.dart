@@ -15,6 +15,7 @@ import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../search/search_tokens.dart';
 import 'board_filter.dart';
+import '../../core/theme/app_type.dart';
 
 const double _kCompactBreakpoint = 610;
 
@@ -409,7 +410,7 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: tokens.inkFaint,
-                              fontSize: 13,
+                              fontSize: AppType.label,
                             ),
                           ),
                         ],
@@ -465,7 +466,7 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
                 cursorColor: tokens.ink,
                 onChanged: (v) => setState(() => _query = v),
                 style: TextStyle(
-                  fontSize: 14.5,
+                  fontSize: AppType.body,
                   fontWeight: FontWeight.w500,
                   color: tokens.ink,
                 ),
@@ -481,7 +482,7 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
                     variables: {'scope': _scopeLabel(_scope)},
                   ),
                   hintStyle: TextStyle(
-                    fontSize: 14.5,
+                    fontSize: AppType.body,
                     fontWeight: FontWeight.w400,
                     color: tokens.inkFaint,
                   ),
@@ -544,7 +545,7 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
           Text(
             context.t('board.activeFilters', variables: {'count': '$count'}),
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
               color: tokens.inkSoft,
             ),
@@ -559,7 +560,7 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
                 minimumSize: const Size(0, 30),
                 tapTargetSize: MaterialTapTargetSize.padded,
                 textStyle: const TextStyle(
-                  fontSize: 12,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -636,7 +637,7 @@ class _OptionRowState extends State<_OptionRow> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13.5,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                       color: t.ink,
                     ),
@@ -702,7 +703,7 @@ class _ScopeChip extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                   color: active ? AppColors.accentStrong : tokens.ink,
                 ),
@@ -722,7 +723,7 @@ class _ScopeChip extends StatelessWidget {
                     '$count',
                     style: const TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: 10,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w700,
                       color: kOnAmber,
                     ),

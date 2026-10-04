@@ -13,6 +13,7 @@ import '../i18n/i18n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_popup_menu.dart';
+import '../theme/app_type.dart';
 
 /// The language of the code block the caret is in, and whether it is in one.
 ///
@@ -88,7 +89,7 @@ class HinataCodeBar extends StatelessWidget {
             Text(
               context.t('md.codeBlock'),
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.2,
                 color: AppColors.accentInk,
@@ -174,7 +175,7 @@ class _LanguageTrigger extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: 12,
+                      fontSize: AppType.caption,
                       color: chosen ? AppColors.ink : AppColors.inkFaint,
                     ),
                   ),

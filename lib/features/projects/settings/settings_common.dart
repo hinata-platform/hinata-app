@@ -16,6 +16,7 @@ import '../../../core/widgets/soft_card.dart';
 import '../../search/search_tokens.dart';
 import '../project_hue_label.dart';
 import '../../sprint/modals/glass_modal.dart';
+import '../../../core/theme/app_type.dart';
 
 /// One settings card: a [SoftCard] with a [SectionHeader] and body, spaced like
 /// the design's `.ps-block`.
@@ -62,7 +63,7 @@ class SettingsSection extends StatelessWidget {
               note!,
               title: title,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 height: 1.5,
                 color: AppColors.inkSoft,
               ),
@@ -95,7 +96,7 @@ class FieldLabel extends StatelessWidget {
               text,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w600,
                 color: AppColors.inkSoft,
               ),
@@ -114,7 +115,7 @@ class FieldLabel extends StatelessWidget {
                   context.t('projectSettings.required'),
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.4,
                     color: AppColors.accentInk,
@@ -310,7 +311,7 @@ class _GlassColorCard extends StatelessWidget {
                   Text(
                     context.t('projectSettings.chooseColor'),
                     style: TextStyle(
-                      fontSize: 13.5,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w700,
                       color: tokens.ink,
                     ),
@@ -565,7 +566,7 @@ class _MemberRow extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
-                            fontSize: 14,
+                            fontSize: AppType.body,
                           ),
                         ),
                         if (user.title != null)
@@ -574,7 +575,7 @@ class _MemberRow extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: AppType.caption,
                               color: AppColors.inkSoft,
                             ),
                           ),
@@ -714,7 +715,7 @@ class _StateMigrationDialogState extends State<_StateMigrationDialog> {
                     variables: {'name': widget.stateName},
                   ),
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     height: 1.45,
                     color: AppColors.inkSoft,
                   ),
@@ -737,7 +738,7 @@ class _StateMigrationDialogState extends State<_StateMigrationDialog> {
                       child: Text(
                         context.t('projectSettings.migrateManualHint'),
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           height: 1.4,
                           color: AppColors.inkFaint,
                         ),
@@ -814,7 +815,7 @@ class _TargetRow extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 13.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

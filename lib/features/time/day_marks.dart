@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/availability_models.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_type.dart';
 
 /// The words and the mark of a marked day (HIN-91): a holiday, an absence, or a
 /// day without planned hours.
@@ -78,7 +79,7 @@ class DayMarkChip extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textSecondary,
                   ),
@@ -163,7 +164,7 @@ class RequestedDayChip extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w600,
                   color: AppColors.accentInk,
                 ),

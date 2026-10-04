@@ -78,7 +78,7 @@ class _FocusItem extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 13.5,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -92,7 +92,7 @@ class _FocusItem extends StatelessWidget {
                               due.text,
                               style: TextStyle(
                                 fontFamily: AppTheme.fontMono,
-                                fontSize: 11,
+                                fontSize: AppType.caption,
                                 color: due.late
                                     ? AppColors.danger
                                     : AppColors.inkFaint,
@@ -206,7 +206,7 @@ class _CompletionCard extends StatelessWidget {
                           value: donePct,
                           style: TextStyle(
                             fontFamily: AppTheme.fontBrand,
-                            fontSize: 23,
+                            fontSize: AppType.display,
                             fontWeight: FontWeight.w700,
                             height: 1,
                             color: AppColors.ink,
@@ -215,7 +215,7 @@ class _CompletionCard extends StatelessWidget {
                         Text(
                           context.t('dashboard.resolved'),
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: AppType.caption,
                             color: AppColors.inkFaint,
                           ),
                         ),
@@ -247,7 +247,7 @@ class _CompletionCard extends StatelessWidget {
                               label,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 12.5,
+                                fontSize: AppType.label,
                                 color: AppColors.inkSoft,
                               ),
                             ),
@@ -255,7 +255,7 @@ class _CompletionCard extends StatelessWidget {
                           Text(
                             '${total == 0 ? 0 : (value / total * 100).round()}%',
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: AppType.body,
                               fontWeight: FontWeight.w700,
                               color: AppColors.ink,
                             ),
@@ -400,7 +400,7 @@ class _TrackerCardState extends State<_TrackerCard> {
                 child: Text(
                   context.t('dashboard.focusTime'),
                   style: TextStyle(
-                    fontSize: 14.5,
+                    fontSize: AppType.body,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),
@@ -413,7 +413,7 @@ class _TrackerCardState extends State<_TrackerCard> {
                 ),
                 style: TextStyle(
                   fontFamily: AppTheme.fontMono,
-                  fontSize: 12,
+                  fontSize: AppType.caption,
                   color: AppColors.inkSoft,
                 ),
               ),
@@ -522,7 +522,7 @@ class _Bars extends StatelessWidget {
                       overflow: TextOverflow.clip,
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
-                        fontSize: 10.5,
+                        fontSize: AppType.caption,
                         color: b.today
                             ? AppColors.accentStrong
                             : AppColors.inkFaint,
@@ -584,7 +584,7 @@ class _Segmented extends StatelessWidget {
                   child: Text(
                     label,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w600,
                       color: i == index ? kOnAmber : AppColors.inkSoft,
                     ),
@@ -665,7 +665,7 @@ class _GitRow extends StatelessWidget {
                       text: event.ref,
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accentInk,
                       ),
@@ -673,7 +673,7 @@ class _GitRow extends StatelessWidget {
                     TextSpan(
                       text: '  ·  ${event.text}',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                         color: AppColors.ink,
                       ),
@@ -689,7 +689,10 @@ class _GitRow extends StatelessWidget {
                   meta,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkFaint,
+                  ),
                 ),
               ],
             ],
@@ -774,7 +777,7 @@ class _LeaderboardCard extends StatelessWidget {
                             '${i + 1}',
                             style: TextStyle(
                               fontFamily: AppTheme.fontMono,
-                              fontSize: 12,
+                              fontSize: AppType.caption,
                               color: AppColors.inkFaint,
                             ),
                           ),
@@ -795,7 +798,7 @@ class _LeaderboardCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: AppType.label,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -805,7 +808,7 @@ class _LeaderboardCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: AppType.caption,
                               color: AppColors.inkSoft,
                             ),
                           ),
@@ -819,7 +822,7 @@ class _LeaderboardCard extends StatelessWidget {
                     ),
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w700,
                       color: AppColors.accentInk,
                     ),

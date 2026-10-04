@@ -272,7 +272,7 @@ class _NotifPopoverCard extends StatelessWidget {
                   context.t('notifications.title'),
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     color: AppColors.ink,
                   ),
                 ),
@@ -291,7 +291,7 @@ class _NotifPopoverCard extends StatelessWidget {
                         child: Text(
                           context.t('notifications.markAllRead'),
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: AppType.caption,
                             fontWeight: FontWeight.w600,
                             color: AppColors.accentInk,
                           ),
@@ -310,7 +310,10 @@ class _NotifPopoverCard extends StatelessWidget {
               child: Text(
                 context.t('notifications.empty'),
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.inkSoft, fontSize: 13),
+                style: TextStyle(
+                  color: AppColors.inkSoft,
+                  fontSize: AppType.label,
+                ),
               ),
             )
           else
@@ -350,7 +353,7 @@ class _NotifPopoverCard extends StatelessWidget {
                     Text(
                       context.t('notifications.viewAll'),
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                         color: AppColors.inkSoft,
                       ),
@@ -423,7 +426,7 @@ class _NotifRow extends StatelessWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 12.5,
+                                fontSize: AppType.label,
                                 height: 1.4,
                                 color: AppColors.ink,
                                 fontWeight: unread
@@ -437,7 +440,7 @@ class _NotifRow extends StatelessWidget {
                             Text(
                               ago,
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: AppType.caption,
                                 color: AppColors.inkFaint,
                               ),
                             ),
@@ -451,7 +454,7 @@ class _NotifRow extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: AppType.caption,
                             color: AppColors.inkSoft,
                             height: 1.4,
                           ),

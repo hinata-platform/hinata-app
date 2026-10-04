@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../features/sprint/modals/glass_modal.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_type.dart';
 
 /// Opens [message] (under [title], when there is one) beside [anchorContext]:
 /// anchored to it on a wide window, as a glass bottom sheet on a phone.
@@ -99,7 +100,7 @@ class _InfoBody extends StatelessWidget {
           Text(
             title!,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: AppType.body,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
             ),
@@ -109,7 +110,7 @@ class _InfoBody extends StatelessWidget {
         Text(
           message,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: AppType.label,
             height: 1.45,
             color: AppColors.inkSoft,
           ),

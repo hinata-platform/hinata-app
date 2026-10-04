@@ -7,6 +7,7 @@ import '../i18n/i18n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'app_shortcuts.dart';
+import '../theme/app_type.dart';
 
 /// The list of shortcuts that work right now, grouped by what they belong to.
 ///
@@ -56,7 +57,7 @@ class _ShortcutsSheet extends StatelessWidget {
                           context.t('shortcuts.none'),
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: AppType.label,
                             color: AppColors.inkSoft,
                           ),
                         ),
@@ -67,7 +68,7 @@ class _ShortcutsSheet extends StatelessWidget {
                         child: Text(
                           context.t(entry.key),
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: AppType.caption,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.6,
                             color: AppColors.inkFaint,
@@ -101,7 +102,7 @@ class _ShortcutRow extends StatelessWidget {
         Expanded(
           child: Text(
             context.t(shortcut.labelKey),
-            style: TextStyle(fontSize: 13.5, color: AppColors.ink),
+            style: TextStyle(fontSize: AppType.label, color: AppColors.ink),
           ),
         ),
         const SizedBox(width: 12),
@@ -114,7 +115,7 @@ class _ShortcutRow extends StatelessWidget {
           child: Text(
             shortcut.label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               // Tabular so a column of them lines up rather than wobbling with
               // the width of each glyph.

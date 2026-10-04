@@ -8,6 +8,7 @@ import '../../../core/widgets/hive_widgets.dart';
 import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
 import '../policy_controls.dart' show PolicySwitch;
+import '../../../core/theme/app_type.dart';
 
 /// Platform settings served to the apps via /api/v1/meta: the minimum required
 /// app version, the store links, how people sign in, and what this platform
@@ -323,7 +324,7 @@ class _PlatformRow extends StatelessWidget {
             Text(
               title,
               style: TextStyle(
-                fontSize: 14.5,
+                fontSize: AppType.body,
                 fontWeight: FontWeight.w600,
                 color: AppColors.ink,
               ),
@@ -331,7 +332,10 @@ class _PlatformRow extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               description,
-              style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+              style: TextStyle(
+                fontSize: AppType.label,
+                color: AppColors.inkSoft,
+              ),
             ),
           ],
         ),
@@ -374,7 +378,7 @@ class _StateChip extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          fontSize: 11.5,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w600,
           color: lit ? AppColors.accentStrong : AppColors.inkSoft,
         ),

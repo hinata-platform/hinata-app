@@ -113,7 +113,7 @@ class _TopBar extends StatelessWidget {
                 foregroundColor: _white(0.45),
                 textStyle: const TextStyle(
                   fontFamily: AppTheme.fontUi,
-                  fontSize: 14,
+                  fontSize: AppType.body,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -262,7 +262,7 @@ class _CtaButtonState extends State<_CtaButton> {
                   label,
                   style: const TextStyle(
                     fontFamily: AppTheme.fontUi,
-                    fontSize: 15,
+                    fontSize: AppType.body,
                     fontWeight: FontWeight.w600,
                     letterSpacing: -0.15,
                     color: Colors.white,
@@ -492,7 +492,7 @@ class _FeatureSlide extends StatelessWidget {
           context.t(labelKey).toUpperCase(),
           style: TextStyle(
             fontFamily: AppTheme.fontUi,
-            fontSize: 10.5 * scale,
+            fontSize: 11.5 * scale,
             fontWeight: FontWeight.w600,
             letterSpacing: 1.1,
             color: _amber,
