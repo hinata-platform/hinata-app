@@ -54,17 +54,17 @@ class _CardHead extends StatelessWidget {
                   children: [
                     Text(
                       actionLabel!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.accentStrong,
+                        color: AppColors.accentInk,
                       ),
                     ),
                     const SizedBox(width: 3),
                     Icon(
                       forwardArrow(context),
                       size: 13,
-                      color: AppColors.accentStrong,
+                      color: AppColors.accentInk,
                     ),
                   ],
                 ),
@@ -292,11 +292,7 @@ class _EditToolbar extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
-                LucideIcons.sparkles,
-                size: 15,
-                color: AppColors.accentStrong,
-              ),
+              Icon(LucideIcons.sparkles, size: 15, color: AppColors.accentInk),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -451,7 +447,7 @@ class _PickerField extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(icon, size: 16, color: AppColors.accentStrong),
+                Icon(icon, size: 16, color: AppColors.accentInk),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -678,11 +674,7 @@ class _ChoiceRow extends StatelessWidget {
                   ),
                 ),
                 if (selected)
-                  const Icon(
-                    LucideIcons.check,
-                    size: 16,
-                    color: AppColors.accentStrong,
-                  ),
+                  Icon(LucideIcons.check, size: 16, color: AppColors.accentInk),
               ],
             ),
           ),

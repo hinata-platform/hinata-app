@@ -361,7 +361,7 @@ class _MoveWizardBodyState extends State<_MoveWizardBody> {
 
   Widget _errorText() => Text(
     context.t(_error!),
-    style: const TextStyle(color: AppColors.danger, fontSize: 12.5),
+    style: TextStyle(color: AppColors.dangerInk, fontSize: 12.5),
   );
 }
 

@@ -237,10 +237,10 @@ class BoardColumnBlockedNote extends StatelessWidget {
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
-              color: AppColors.danger,
+              color: AppColors.dangerInk,
             ),
           ),
         ),

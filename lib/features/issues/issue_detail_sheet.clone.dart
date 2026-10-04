@@ -221,10 +221,7 @@ class _IssueCloneBodyState extends State<_IssueCloneBody> {
                   label: context.t('issues.clone.summary'),
                   trailing: Text(
                     context.t('issues.clone.required'),
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.accentStrong,
-                    ),
+                    style: TextStyle(fontSize: 11, color: AppColors.accentInk),
                   ),
                   child: Semantics(
                     label: context.t('issues.clone.summary'),

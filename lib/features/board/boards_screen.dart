@@ -18,12 +18,14 @@ import '../../core/repositories/team_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/glass_chrome.dart' show kOnAmber;
-import '../../core/widgets/glass_popup_menu.dart';
+import '../../core/widgets/glass_filter_bar.dart'
+    show GlassFilterChip, kGlassDockRow;
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
+import '../shell/page_chrome.dart';
 import 'board_links.dart';
 import 'board_list_cubit.dart';
 import 'board_manage_menu.dart';
@@ -179,31 +181,79 @@ class _BoardListState extends State<_BoardList> with LoadWhenShown<_BoardList> {
       );
     }
 
+    final compact = context.isCompact;
+    final filter = _projects.isEmpty
+        ? null
+        : _ProjectFilterChip(
+            projects: _projects,
+            selected: _projectFilter,
+            onChanged: (id) {
+              _projectFilter = id;
+              _load();
+            },
+          );
+    // On a phone the title and the one page action ride in the glass app bar
+    // and the project filter docks below them, in the bar's blur: two lines
+    // of chrome, not a second title and a row of controls down the page. On a
+    // wide window the page carries its own head, where the button can show
+    // its name.
+    return PageChrome(
+      title: context.t('board.title'),
+      actions: compact
+          ? [
+              PageAction(
+                icon: LucideIcons.plus,
+                label: context.t('board.newBoard'),
+                primary: true,
+                onTap: (_) => _showCreate(),
+              ),
+            ]
+          : const [],
+      bottom: compact && filter != null
+          ? Padding(
+              padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
+              // The bar hands the reserved height down as a tight constraint;
+              // the Align lets the pill come in under it.
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: filter,
+              ),
+            )
+          : null,
+      bottomHeight: compact && filter != null ? kGlassDockRow : 0,
+      child: _scroller(context, compact: compact, filter: filter),
+    );
+  }
+
+  Widget _scroller(
+    BuildContext context, {
+    required bool compact,
+    required Widget? filter,
+  }) {
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         SliverPadding(
           padding: EdgeInsets.fromLTRB(
             context.pageGutter,
-            16 + context.topGutter,
+            (compact ? 8 : 24) + context.topGutter,
             context.pageGutter,
-            8,
+            compact ? 0 : 8,
           ),
           sliver: SliverToBoxAdapter(
-            child: _BoardsListHeader(
-              title: context.t('board.title'),
-              filter: _projects.isEmpty
-                  ? null
-                  : _ProjectFilterChip(
-                      projects: _projects,
-                      selected: _projectFilter,
-                      onChanged: (id) {
-                        _projectFilter = id;
-                        _load();
-                      },
-                    ),
-              onCreate: _showCreate,
-            ),
+            child: compact
+                ? const SizedBox.shrink()
+                : PageHead(
+                    title: context.t('board.title'),
+                    actions: [
+                      ?filter,
+                      PrimaryButton(
+                        icon: LucideIcons.plus,
+                        label: context.t('board.newBoard'),
+                        onPressed: _showCreate,
+                      ),
+                    ],
+                  ),
           ),
         ),
         if (_boards.isEmpty)
@@ -262,78 +312,6 @@ class _BoardListState extends State<_BoardList> with LoadWhenShown<_BoardList> {
               ),
             ),
           ),
-      ],
-    );
-  }
-}
-
-/// Header for the boards-list screen.
-///
-/// On compact (phone) layouts the title gets a full-width row of its own and the
-/// project filter + create button wrap onto a second row, so the title is never
-/// squeezed to an ellipsis. On wider layouts everything sits inline.
-class _BoardsListHeader extends StatelessWidget {
-  const _BoardsListHeader({
-    required this.title,
-    required this.filter,
-    required this.onCreate,
-  });
-
-  final String title;
-  final Widget? filter;
-  final VoidCallback onCreate;
-
-  @override
-  Widget build(BuildContext context) {
-    final titleText = Text(
-      title,
-      style: Theme.of(
-        context,
-      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-    );
-    final createButton = FilledButton.icon(
-      onPressed: onCreate,
-      style: FilledButton.styleFrom(
-        backgroundColor: AppColors.accent,
-        foregroundColor: kOnAmber,
-        textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-      ),
-      icon: const Icon(LucideIcons.plus, size: 18),
-      label: Text(context.t('board.newBoard')),
-    );
-
-    if (context.isCompact) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          titleText,
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (filter != null)
-                Flexible(child: filter!)
-              else
-                const SizedBox.shrink(),
-              const SizedBox(width: 8),
-              createButton,
-            ],
-          ),
-        ],
-      );
-    }
-
-    return Row(
-      children: [
-        Expanded(child: titleText),
-        if (filter != null)
-          Padding(
-            padding: const EdgeInsetsDirectional.only(end: 8),
-            child: filter!,
-          ),
-        createButton,
       ],
     );
   }
@@ -475,47 +453,18 @@ class _ProjectFilterChip extends StatelessWidget {
   final String? selected;
   final void Function(String?) onChanged;
 
+  /// A glass filter pill, the toolbar idiom of every list page: washed amber
+  /// while it narrows the boards to one project, so a filtered list never
+  /// passes for a short one.
   @override
-  Widget build(BuildContext context) {
-    final label = selected != null
-        ? projects
-              .firstWhere((p) => p.id == selected, orElse: () => projects.first)
-              .name
-        : context.t('board.allProjects');
-
-    return GlassPopupMenu<String?>(
-      value: selected,
-      onSelected: onChanged,
-      items: [
-        GlassMenuItem(value: null, label: context.t('board.allProjects')),
-        ...projects.map((p) => GlassMenuItem(value: p.id, label: p.name)),
-      ],
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceMuted,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.hairline),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(LucideIcons.chevronDown, size: 16, color: AppColors.inkSoft),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => GlassFilterChip<String?>(
+    icon: LucideIcons.folder,
+    label: context.t('board.allProjects'),
+    value: selected,
+    options: [
+      (null, context.t('board.allProjects')),
+      for (final p in projects) (p.id, p.name),
+    ],
+    onChanged: onChanged,
+  );
 }

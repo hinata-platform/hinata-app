@@ -491,11 +491,7 @@ Future<T?> showTimeViewMenu<T extends Object>(
           label: extra.label,
           leading: Icon(extra.icon, size: 16, color: AppColors.inkSoft),
           trailing: extra.selected
-              ? const Icon(
-                  LucideIcons.check,
-                  size: 17,
-                  color: AppColors.accentStrong,
-                )
+              ? Icon(LucideIcons.check, size: 17, color: AppColors.accentInk)
               : null,
           dividerAbove: extra.first,
         ),

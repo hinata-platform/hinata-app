@@ -502,11 +502,7 @@ class _MenuRowState<T> extends State<_MenuRow<T>> {
             ),
             if (widget.selected) ...[
               const SizedBox(width: 8),
-              const Icon(
-                LucideIcons.check,
-                size: 17,
-                color: AppColors.accentStrong,
-              ),
+              Icon(LucideIcons.check, size: 17, color: AppColors.accentInk),
             ] else if (widget.item.trailing != null) ...[
               const SizedBox(width: 8),
               Opacity(opacity: disabled ? 0.4 : 1, child: widget.item.trailing),

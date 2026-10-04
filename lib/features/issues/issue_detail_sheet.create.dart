@@ -399,7 +399,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
                   // ApiFailure.message can be an i18n key (e.g. 'errors.connection');
                   // context.t is idempotent for already-resolved strings.
                   context.t(_error!),
-                  style: const TextStyle(color: AppColors.danger),
+                  style: TextStyle(color: AppColors.dangerInk),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -480,10 +480,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
             ),
             decoration: InputDecoration(
               hintText: context.t('issues.title'),
-              errorStyle: const TextStyle(
-                color: AppColors.danger,
-                fontSize: 12,
-              ),
+              errorStyle: TextStyle(color: AppColors.dangerInk, fontSize: 12),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 8,
                 vertical: 8,

@@ -441,7 +441,7 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
               const SizedBox(height: 12),
               Text(
                 _error!,
-                style: const TextStyle(color: AppColors.danger),
+                style: TextStyle(color: AppColors.dangerInk),
                 textAlign: TextAlign.center,
               ),
             ],

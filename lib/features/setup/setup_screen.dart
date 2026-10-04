@@ -127,7 +127,7 @@ class _SetupScreenState extends State<_SetupForm> {
                         const SizedBox(height: 8),
                         Text(
                           _error!,
-                          style: const TextStyle(color: AppColors.danger),
+                          style: TextStyle(color: AppColors.dangerInk),
                           textAlign: TextAlign.center,
                         ),
                       ],

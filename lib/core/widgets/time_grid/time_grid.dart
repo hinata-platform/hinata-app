@@ -1386,13 +1386,13 @@ class _DragPreview extends StatelessWidget {
       label,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 11,
         // The preview is drawn in the same rect a block gets, down to the same
         // floor, so its line has to fit in the same box.
         height: kTimeGridBlockTitleLine / 11,
         fontWeight: FontWeight.w600,
-        color: AppColors.accentStrong,
+        color: AppColors.accentInk,
       ),
     ),
   );

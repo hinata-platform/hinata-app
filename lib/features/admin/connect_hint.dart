@@ -96,10 +96,10 @@ class _ConnectHintBody extends StatelessWidget {
                   color: AppColors.accentSoft,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   LucideIcons.radioTower,
                   size: 20,
-                  color: AppColors.accentStrong,
+                  color: AppColors.accentInk,
                 ),
               ),
               const SizedBox(width: 12),

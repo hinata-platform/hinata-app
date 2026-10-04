@@ -1011,7 +1011,7 @@ class _Summary extends StatelessWidget {
           Expanded(
             child: Text(
               context.t(error!),
-              style: const TextStyle(fontSize: 12.5, color: AppColors.danger),
+              style: TextStyle(fontSize: 12.5, color: AppColors.dangerInk),
             ),
           ),
         ],

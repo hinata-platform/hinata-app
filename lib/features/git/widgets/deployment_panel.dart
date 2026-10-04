@@ -430,7 +430,7 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
             child: Row(
               children: [
-                Icon(icon, size: 17, color: AppColors.accentStrong),
+                Icon(icon, size: 17, color: AppColors.accentInk),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -484,10 +484,10 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: AppTheme.fontMono,
               fontSize: 11,
-              color: AppColors.accentStrong,
+              color: AppColors.accentInk,
             ),
           ),
         ),
@@ -498,15 +498,11 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
   Widget _autoHint(String pre, String bold, String post) => Text.rich(
     TextSpan(
       children: [
-        const WidgetSpan(
+        WidgetSpan(
           alignment: PlaceholderAlignment.middle,
           child: Padding(
-            padding: EdgeInsetsDirectional.only(end: 5),
-            child: Icon(
-              LucideIcons.zap,
-              size: 12,
-              color: AppColors.accentStrong,
-            ),
+            padding: const EdgeInsetsDirectional.only(end: 5),
+            child: Icon(LucideIcons.zap, size: 12, color: AppColors.accentInk),
           ),
         ),
         TextSpan(text: pre),
@@ -523,15 +519,11 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
   Widget _autoHintRich() => Text.rich(
     TextSpan(
       children: [
-        const WidgetSpan(
+        WidgetSpan(
           alignment: PlaceholderAlignment.middle,
           child: Padding(
-            padding: EdgeInsetsDirectional.only(end: 5),
-            child: Icon(
-              LucideIcons.zap,
-              size: 12,
-              color: AppColors.accentStrong,
-            ),
+            padding: const EdgeInsetsDirectional.only(end: 5),
+            child: Icon(LucideIcons.zap, size: 12, color: AppColors.accentInk),
           ),
         ),
         TextSpan(text: context.t('git.smartCommitsHintPrefix')),
@@ -548,10 +540,10 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
 
   InlineSpan _monoChip(String text) => TextSpan(
     text: text,
-    style: const TextStyle(
+    style: TextStyle(
       fontFamily: AppTheme.fontMono,
       fontSize: 11.5,
-      color: AppColors.accentStrong,
+      color: AppColors.accentInk,
     ),
   );
 }

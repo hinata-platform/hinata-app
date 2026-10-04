@@ -440,25 +440,21 @@ class _AllEntriesButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                LucideIcons.history,
-                size: 15,
-                color: AppColors.accentStrong,
-              ),
+              Icon(LucideIcons.history, size: 15, color: AppColors.accentInk),
               const SizedBox(width: 6),
               Text(
                 context.t('time.allEntries', variables: {'count': '$count'}),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.accentStrong,
+                  color: AppColors.accentInk,
                 ),
               ),
               const SizedBox(width: 2),
               Icon(
                 forwardChevron(context),
                 size: 14,
-                color: AppColors.accentStrong,
+                color: AppColors.accentInk,
               ),
             ],
           ),
@@ -640,7 +636,7 @@ class _AllWorkItemsSheetState extends State<AllWorkItemsSheet> {
               Text(
                 context.t(errorKey),
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13, color: AppColors.danger),
+                style: TextStyle(fontSize: 13, color: AppColors.dangerInk),
               ),
               const SizedBox(height: 10),
               TextButton.icon(

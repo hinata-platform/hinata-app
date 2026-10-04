@@ -322,7 +322,7 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
                       visualDensity: VisualDensity.compact,
                       padding: EdgeInsets.zero,
                       minimumSize: const Size(38, 38),
-                      foregroundColor: AppColors.danger,
+                      foregroundColor: AppColors.dangerInk,
                       side: BorderSide(color: AppColors.hairline),
                     ),
                     child: Icon(lucideIcon('trash-2'), size: 16),

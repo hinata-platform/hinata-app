@@ -765,10 +765,10 @@ class _BalanceCard extends StatelessWidget {
               'week': '$workingDaysPerWeek',
             },
           ),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
             height: 1.35,
-            color: AppColors.danger,
+            color: AppColors.dangerInk,
           ),
         ),
       ],

@@ -76,10 +76,10 @@ class HolidayCalendarCard extends StatelessWidget {
                           ),
                           child: Text(
                             context.t('availability.admin.defaultBadge'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 10.5,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.accentStrong,
+                              color: AppColors.accentInk,
                             ),
                           ),
                         ),

@@ -99,11 +99,7 @@ class _OwnerItem extends StatelessWidget {
               ],
             ),
           ),
-          Icon(
-            forwardChevron(context),
-            size: 18,
-            color: AppColors.accentStrong,
-          ),
+          Icon(forwardChevron(context), size: 18, color: AppColors.accentInk),
         ],
       ),
     );
@@ -217,10 +213,10 @@ class _RepoItem extends StatelessWidget {
           ),
           if (selected) ...[
             const SizedBox(width: 8),
-            const Icon(
+            Icon(
               LucideIcons.circleCheckBig,
               size: 18,
-              color: AppColors.accentStrong,
+              color: AppColors.accentInk,
             ),
           ],
         ],

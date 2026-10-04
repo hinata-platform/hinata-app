@@ -158,18 +158,14 @@ class RequestedDayChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                LucideIcons.hourglass,
-                size: 11,
-                color: AppColors.accentStrong,
-              ),
+              Icon(LucideIcons.hourglass, size: 11, color: AppColors.accentInk),
               const SizedBox(width: 4),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.accentStrong,
+                  color: AppColors.accentInk,
                 ),
               ),
             ],

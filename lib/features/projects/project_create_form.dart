@@ -363,7 +363,7 @@ class _ProjectCreateFieldsBodyState extends State<_ProjectCreateFieldsBody> {
               padding: const EdgeInsets.only(top: 4),
               child: Text(
                 context.t('projects.keyTaken'),
-                style: const TextStyle(fontSize: 11.5, color: AppColors.danger),
+                style: TextStyle(fontSize: 11.5, color: AppColors.dangerInk),
               ),
             ),
         ],

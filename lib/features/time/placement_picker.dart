@@ -383,11 +383,7 @@ class _PlacementRow extends StatelessWidget {
                   ),
                 ),
                 if (selected)
-                  const Icon(
-                    LucideIcons.check,
-                    size: 15,
-                    color: AppColors.accentStrong,
-                  ),
+                  Icon(LucideIcons.check, size: 15, color: AppColors.accentInk),
               ],
             ),
           ),
