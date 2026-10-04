@@ -400,7 +400,7 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
                         LucideIcons.scanSearch,
                         size: 18,
                         color: _canScan
-                            ? AppColors.accentStrong
+                            ? AppColors.accentInk
                             : AppColors.inkFaint,
                       ),
                       onPressed: _scanFolders,

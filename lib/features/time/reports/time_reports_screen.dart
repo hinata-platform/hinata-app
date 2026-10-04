@@ -27,7 +27,7 @@ import '../../../core/widgets/glass_scope_row.dart';
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../../core/widgets/hive_widgets.dart'
-    show GhostButton, PageHead, PrimaryButton;
+    show GhostButton, PrimaryButton;
 import '../../../core/widgets/project_picker.dart';
 import '../../shell/page_chrome.dart';
 import '../../sprint/modals/glass_modal.dart';
@@ -545,10 +545,9 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
                   // about a thousand points; narrower, the three fold into
                   // the menu the phone uses.
                   child: LayoutBuilder(
-                    builder: (context, constraints) => PageHead(
-                      title: context.t('nav.time'),
+                    builder: (context, constraints) => TimeHead(
+                      current: TimeView.reports,
                       actions: [
-                        const TimeViewSwitcher(current: TimeView.reports),
                         if (_tab == ReportTab.absences)
                           // The absence report has one way out: its files.
                           Builder(

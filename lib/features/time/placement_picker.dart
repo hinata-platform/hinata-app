@@ -351,7 +351,7 @@ class _PlacementRow extends StatelessWidget {
                 Icon(
                   icon,
                   size: 16,
-                  color: selected ? AppColors.accentStrong : AppColors.inkSoft,
+                  color: selected ? AppColors.accentInk : AppColors.inkSoft,
                 ),
                 const SizedBox(width: 12),
                 Expanded(

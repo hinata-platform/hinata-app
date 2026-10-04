@@ -461,7 +461,7 @@ class _PageRow extends StatelessWidget {
                 Icon(
                   lucideIcon(icon),
                   size: 15,
-                  color: on ? AppColors.accentStrong : AppColors.inkSoft,
+                  color: on ? AppColors.accentInk : AppColors.inkSoft,
                 ),
                 const SizedBox(width: 9),
                 Expanded(
@@ -536,7 +536,7 @@ class _Check extends StatelessWidget {
           ? Icon(
               LucideIcons.check,
               size: 14,
-              color: on ? kOnAmber : AppColors.accentStrong,
+              color: on ? kOnAmber : AppColors.accentInk,
             )
           : null,
     );

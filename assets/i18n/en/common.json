@@ -1939,7 +1939,8 @@
       },
       "noMatch": "Nothing matches",
       "noMatchMessage": "No absence fits these filters.",
-      "clearFilters": "Clear filters"
+      "clearFilters": "Clear filters",
+      "scopeMenu": "Choose list"
     },
     "team": {
       "group": "Group",
@@ -2448,7 +2449,8 @@
     "subpages": "Subpages",
     "moveUnder": "Move under…",
     "moveUnderTitle": "Move under which page?",
-    "pageActions": "Page actions"
+    "pageActions": "Page actions",
+    "resultCount": "Results: {{count}}"
   },
   "md": {
     "heading1": "Heading 1",

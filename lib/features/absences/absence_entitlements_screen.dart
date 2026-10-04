@@ -839,7 +839,7 @@ class _Figure extends StatelessWidget {
           fontSize: strong ? 14 : 13,
           fontWeight: strong ? FontWeight.w800 : FontWeight.w600,
           fontFeatures: const [FontFeature.tabularFigures()],
-          color: strong ? AppColors.accentStrong : AppColors.ink,
+          color: strong ? AppColors.accentInk : AppColors.ink,
         ),
       ),
     ],

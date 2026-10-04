@@ -726,9 +726,7 @@ class _ReactionChips extends StatelessWidget {
                     style: TextStyle(
                       fontSize: AppType.caption,
                       fontWeight: FontWeight.w600,
-                      color: selected
-                          ? AppColors.accentStrong
-                          : AppColors.inkSoft,
+                      color: selected ? AppColors.accentInk : AppColors.inkSoft,
                     ),
                   ),
                 ],

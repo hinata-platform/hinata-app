@@ -612,7 +612,7 @@ class _GearButton extends StatelessWidget {
               child: Icon(
                 LucideIcons.settings2,
                 size: 14,
-                color: active ? AppColors.accentStrong : AppColors.inkSoft,
+                color: active ? AppColors.accentInk : AppColors.inkSoft,
               ),
             ),
           ),

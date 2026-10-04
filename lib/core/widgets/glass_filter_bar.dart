@@ -34,8 +34,15 @@ const double kGlassPillHeight = 42;
 /// shell hands the reserved height down as a *tight* constraint: a page that
 /// picked its own put an identical row of controls at a different height from
 /// the page beside it. Tall enough for the search field the controls give way
-/// to; shorter controls centre in it (see [GlassSearchDock]).
-const double kGlassDockRow = kGlassPillHeight;
+/// to; shorter controls centre in it (see [GlassSearchDock]). At least
+/// [kGlassMinTarget], so every pill in it can answer a finger on a 44-point
+/// area while it draws at [kGlassControlHeight].
+const double kGlassDockRow = kGlassMinTarget;
+
+/// The smallest area a glass control answers on, whatever it draws: the iOS
+/// minimum for a touch target (HIN-110). A 36-point pill grows its hit area,
+/// not its glass.
+const double kGlassMinTarget = 44;
 
 /// Height of a docked control pill — a chip, a filter, a button.
 ///
@@ -141,15 +148,27 @@ class _PillTapTargetState extends State<_PillTapTarget> {
         onTapDown: (_) => _setPressed(true),
         onTapUp: (_) => _setPressed(false),
         onTapCancel: () => _setPressed(false),
-        child: DecoratedBox(
-          position: DecorationPosition.foreground,
-          decoration: BoxDecoration(
-            color: _pressed
-                ? AppColors.ink.withValues(alpha: 0.06)
-                : Colors.transparent,
-            borderRadius: widget.radius,
+        // The answering area reaches the minimum target around a smaller
+        // pill; the wash stays on the glass the finger pressed.
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: kGlassMinTarget,
+            minHeight: kGlassMinTarget,
           ),
-          child: widget.child,
+          child: Center(
+            widthFactor: 1,
+            heightFactor: 1,
+            child: DecoratedBox(
+              position: DecorationPosition.foreground,
+              decoration: BoxDecoration(
+                color: _pressed
+                    ? AppColors.ink.withValues(alpha: 0.06)
+                    : Colors.transparent,
+                borderRadius: widget.radius,
+              ),
+              child: widget.child,
+            ),
+          ),
         ),
       ),
     ),
@@ -586,34 +605,38 @@ class GlassScopePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      selected: active,
-      child: GlassPill(
-        height: kGlassControlHeight,
-        active: active,
-        onTap: active ? null : onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 13),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 14,
-                color: active ? AppColors.accentStrong : AppColors.inkSoft,
-              ),
-              const SizedBox(width: 7),
-              Text(
-                label,
-                maxLines: 1,
-                style: TextStyle(
-                  fontSize: AppType.label,
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-                  color: active ? AppColors.accentStrong : AppColors.ink,
+    // One node: the pill's own button, its label and the selected state. A
+    // second Semantics around it announced as a button with no name.
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        selected: active,
+        child: GlassPill(
+          height: kGlassControlHeight,
+          active: active,
+          onTap: active ? null : onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 13),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 14,
+                  color: active ? AppColors.accentInk : AppColors.inkSoft,
                 ),
-              ),
-            ],
+                const SizedBox(width: 7),
+                Text(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: AppType.label,
+                    fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+                    color: active ? AppColors.accentInk : AppColors.ink,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -866,7 +889,7 @@ class GlassFilterPill extends StatelessWidget {
                 style: TextStyle(
                   fontSize: AppType.label,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-                  color: active ? AppColors.accentStrong : AppColors.ink,
+                  color: active ? AppColors.accentInk : AppColors.ink,
                 ),
               ),
             ),

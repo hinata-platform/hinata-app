@@ -104,7 +104,7 @@ Widget? _linkMark(BuildContext context, ElementNode node, TextStyle style) {
     child: Icon(
       LucideIcons.link,
       size: size,
-      color: style.color ?? AppColors.accentStrong,
+      color: style.color ?? AppColors.accentInk,
     ),
   );
 }

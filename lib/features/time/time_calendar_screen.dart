@@ -972,11 +972,9 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
         context.pageGutter,
         12,
       ),
-      child: PageHead(
-        title: context.t('nav.time'),
+      child: TimeHead(
+        current: TimeView.calendar,
         actions: [
-          const TimeViewSwitcher(current: TimeView.calendar),
-          const SizedBox(width: 8),
           TimeAddButton(
             onNewEntry: _newEntry,
             absenceFrom: _focused,

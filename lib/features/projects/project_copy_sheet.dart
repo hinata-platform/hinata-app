@@ -510,7 +510,7 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
                     ),
               style: TextStyle(
                 fontSize: AppType.label,
-                color: tooBig ? AppColors.danger : AppColors.inkSoft,
+                color: tooBig ? AppColors.dangerInk : AppColors.inkSoft,
               ),
             ),
           ),

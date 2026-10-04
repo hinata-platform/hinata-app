@@ -501,7 +501,7 @@ class _OverlayButton extends StatelessWidget {
             child: Icon(
               icon,
               size: 16,
-              color: active ? AppColors.accentStrong : AppColors.inkSoft,
+              color: active ? AppColors.accentInk : AppColors.inkSoft,
             ),
           ),
         ),

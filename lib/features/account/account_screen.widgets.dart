@@ -197,7 +197,7 @@ class _ThemeSelector extends StatelessWidget {
                       icon,
                       size: 17,
                       color: m == mode
-                          ? AppColors.accentStrong
+                          ? AppColors.accentInk
                           : AppColors.inkSoft,
                     ),
                   ),

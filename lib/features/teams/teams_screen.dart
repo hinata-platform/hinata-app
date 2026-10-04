@@ -11,6 +11,7 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_filter_bar.dart';
+import '../../core/widgets/hive_empty_state.dart';
 import '../shell/page_chrome.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
@@ -168,6 +169,30 @@ class _TeamsViewState extends State<_TeamsView> {
                     hasScrollBody: false,
                     child: Center(child: HiveLoader()),
                   )
+                // A list emptied by a search is not an empty list: say that
+                // nothing matched, as the projects page does, instead of
+                // offering to create a team to somebody who has several.
+                else if (teams.isEmpty && all.isNotEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        context.pageGutter,
+                        compact ? context.topGutter + 24 : 24,
+                        context.pageGutter,
+                        24,
+                      ),
+                      child: Center(
+                        child: HiveEmptyState(
+                          title: context.t('teams.title'),
+                          message: context.t(
+                            'search.noMatch',
+                            variables: {'q': _query.trim()},
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
                 else
                   SliverLayoutBuilder(
                     builder: (context, room) => SliverPadding(
@@ -192,17 +217,18 @@ class _TeamsViewState extends State<_TeamsView> {
                           crossAxisSpacing: 18,
                           mainAxisExtent: 206,
                         ),
+                        // The dashed tile is the empty state only. Beside
+                        // real teams it was a second way to the action the
+                        // bar's "+" and the head's button already offer.
                         delegate: SliverChildBuilderDelegate((context, index) {
-                          if (index == teams.length) {
-                            return _NewTeamCard(onTap: _create);
-                          }
+                          if (all.isEmpty) return _NewTeamCard(onTap: _create);
                           return _TeamCard(
                             team: teams[index],
                             names: names,
                             avatars: avatars,
                             pronouns: pronouns,
                           );
-                        }, childCount: teams.length + 1),
+                        }, childCount: all.isEmpty ? 1 : teams.length),
                       ),
                     ),
                   ),

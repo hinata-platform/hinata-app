@@ -1939,7 +1939,8 @@
       },
       "noMatch": "Sin resultados",
       "noMatchMessage": "Ninguna ausencia coincide con estos filtros.",
-      "clearFilters": "Quitar filtros"
+      "clearFilters": "Quitar filtros",
+      "scopeMenu": "Elegir lista"
     },
     "team": {
       "group": "Grupo",
@@ -2448,7 +2449,8 @@
     "subpages": "Subpáginas",
     "moveUnder": "Mover debajo de…",
     "moveUnderTitle": "¿Debajo de qué página?",
-    "pageActions": "Acciones de la página"
+    "pageActions": "Acciones de la página",
+    "resultCount": "Resultados: {{count}}"
   },
   "md": {
     "heading1": "Título 1",

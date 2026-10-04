@@ -247,12 +247,7 @@ class _ApprovalsViewState extends State<_ApprovalsView> {
                     context.pageGutter,
                     12,
                   ),
-                  child: PageHead(
-                    title: context.t('nav.time'),
-                    actions: const [
-                      TimeViewSwitcher(current: TimeView.approvals),
-                    ],
-                  ),
+                  child: const TimeHead(current: TimeView.approvals),
                 ),
                 Padding(
                   padding: EdgeInsets.fromLTRB(

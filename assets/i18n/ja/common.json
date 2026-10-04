@@ -1939,7 +1939,8 @@
       },
       "noMatch": "該当なし",
       "noMatchMessage": "条件に合う休暇はありません。",
-      "clearFilters": "フィルターを解除"
+      "clearFilters": "フィルターを解除",
+      "scopeMenu": "リストを選択"
     },
     "team": {
       "group": "グループ",
@@ -2448,7 +2449,8 @@
     "subpages": "サブページ",
     "moveUnder": "…の下に移動",
     "moveUnderTitle": "どのページの下に移動しますか？",
-    "pageActions": "ページの操作"
+    "pageActions": "ページの操作",
+    "resultCount": "結果：{{count}}"
   },
   "md": {
     "heading1": "見出し 1",

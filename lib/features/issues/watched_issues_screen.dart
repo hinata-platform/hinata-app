@@ -11,12 +11,14 @@ import '../../core/repositories/issue_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/responsive/responsive.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_type.dart';
 import '../../core/theme/project_palette.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/status_widgets.dart';
-import 'issues_screen.dart' show IssueRow;
+import 'issues_screen.dart' show IssueRow, issueTableFits;
 import 'watched_issues_cubit.dart';
 
 /// The issues the signed-in user subscribed to — every change on them reaches
@@ -121,58 +123,94 @@ class _WatchedIssuesScreenState extends State<WatchedIssuesScreen> {
     // pages accumulate only the on-screen rows should be built.
     final itemCount =
         1 + (showEmpty ? 1 : issues.length) + (showLoader ? 1 : 0);
-    return ListView.builder(
-      controller: _scroll,
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: context.pagePadding,
-      itemCount: itemCount,
-      itemBuilder: (context, index) {
-        if (index == 0) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              PageHead(
-                title: context.t('watched.title'),
-                subtitle: context.t('watched.subtitle'),
-              ),
-              const SizedBox(height: 14),
-            ],
-          );
-        }
-        final i = index - 1;
-        if (showEmpty) {
-          if (i == 0) {
-            return HiveEmptyState(
-              title: context.t('watched.empty.title'),
-              message: context.t('watched.empty.message'),
-            );
-          }
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Center(child: HiveLoader(size: 30)),
-          );
-        }
-        if (i < issues.length) {
-          final issue = issues[i];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: IssueRow(
-              issue: issue,
-              assignee: issue.assigneeId == null
-                  ? null
-                  : _names[issue.assigneeId],
-              assigneeAvatar: issue.assigneeId == null
-                  ? null
-                  : _avatars[issue.assigneeId],
-              palette: _palette,
-            ),
-          );
-        }
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          child: Center(child: HiveLoader(size: 30)),
+    final compact = context.isCompact;
+    final padding = context.pagePadding;
+    return LayoutBuilder(
+      // The same rule as the issues list, measured on the width the rows
+      // really get: on a tablet the table squeezed seven columns into it and
+      // cut every title to fifteen characters, where the card gives the title
+      // the full width and two lines.
+      builder: (context, constraints) {
+        final table = issueTableFits(
+          context,
+          constraints.maxWidth - padding.horizontal,
+        );
+        return ListView.builder(
+          controller: _scroll,
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: padding,
+          itemCount: itemCount,
+          itemBuilder: (context, index) {
+            if (index == 0) return _head(context, compact: compact);
+            return _item(context, index - 1, issues, showEmpty, table);
+          },
         );
       },
+    );
+  }
+
+  /// On a phone the app bar already says "Watched", so the page keeps only
+  /// the one quiet line that says what the list holds. A wide window draws no
+  /// title for a top-level page, so there the page names itself.
+  Widget _head(BuildContext context, {required bool compact}) {
+    if (compact) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Text(
+          context.t('watched.subtitle'),
+          style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PageHead(
+          title: context.t('watched.title'),
+          subtitle: context.t('watched.subtitle'),
+        ),
+        const SizedBox(height: 14),
+      ],
+    );
+  }
+
+  Widget _item(
+    BuildContext context,
+    int i,
+    List<Issue> issues,
+    bool showEmpty,
+    bool table,
+  ) {
+    if (showEmpty) {
+      if (i == 0) {
+        return HiveEmptyState(
+          title: context.t('watched.empty.title'),
+          message: context.t('watched.empty.message'),
+        );
+      }
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Center(child: HiveLoader(size: 30)),
+      );
+    }
+    if (i < issues.length) {
+      final issue = issues[i];
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: IssueRow(
+          issue: issue,
+          assignee: issue.assigneeId == null ? null : _names[issue.assigneeId],
+          assigneeAvatar: issue.assigneeId == null
+              ? null
+              : _avatars[issue.assigneeId],
+          palette: _palette,
+          table: table,
+        ),
+      );
+    }
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 20),
+      child: Center(child: HiveLoader(size: 30)),
     );
   }
 }

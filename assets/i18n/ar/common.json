@@ -1939,7 +1939,8 @@
       },
       "noMatch": "لا توجد نتائج",
       "noMatchMessage": "لا يوجد غياب يطابق هذه المرشحات.",
-      "clearFilters": "مسح المرشحات"
+      "clearFilters": "مسح المرشحات",
+      "scopeMenu": "اختيار القائمة"
     },
     "team": {
       "group": "المجموعة",
@@ -2448,7 +2449,8 @@
     "subpages": "الصفحات الفرعية",
     "moveUnder": "نقل تحت…",
     "moveUnderTitle": "تحت أي صفحة؟",
-    "pageActions": "إجراءات الصفحة"
+    "pageActions": "إجراءات الصفحة",
+    "resultCount": "النتائج: {{count}}"
   },
   "md": {
     "heading1": "عنوان 1",

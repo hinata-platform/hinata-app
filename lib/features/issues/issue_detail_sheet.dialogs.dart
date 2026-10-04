@@ -42,7 +42,7 @@ class _RemoveIssueConfirm extends StatelessWidget {
                 child: Icon(
                   canDelete ? LucideIcons.trash2 : LucideIcons.archive,
                   size: 20,
-                  color: canDelete ? AppColors.danger : AppColors.accentStrong,
+                  color: canDelete ? AppColors.danger : AppColors.accentInk,
                 ),
               ),
               const SizedBox(width: 13),
@@ -121,7 +121,7 @@ class _RemoveIssueConfirm extends StatelessWidget {
                         ? AppColors.accentSoft
                         : AppColors.accentStrong,
                     foregroundColor: canDelete
-                        ? AppColors.accentStrong
+                        ? AppColors.accentInk
                         : Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
