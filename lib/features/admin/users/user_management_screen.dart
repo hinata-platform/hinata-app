@@ -513,10 +513,10 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
         trailing: c.expiredInvites > 0
             ? Text(
                 ' · ${context.t('admin.um.expiredCount', variables: {'n': '${c.expiredInvites}'})}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.danger,
+                  color: AppColors.dangerInk,
                 ),
               )
             : null,

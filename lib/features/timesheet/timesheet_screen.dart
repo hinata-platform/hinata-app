@@ -1533,7 +1533,7 @@ class _TruncatedRows extends StatelessWidget {
     ),
     child: Row(
       children: [
-        const Icon(LucideIcons.info, size: 15, color: AppColors.accentStrong),
+        Icon(LucideIcons.info, size: 15, color: AppColors.accentInk),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
@@ -1908,7 +1908,7 @@ class _FilterPanelState extends State<_FilterPanel> {
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
             child: Text(
               context.t(state.errorKey!),
-              style: const TextStyle(fontSize: 12.5, color: AppColors.danger),
+              style: TextStyle(fontSize: 12.5, color: AppColors.dangerInk),
             ),
           );
         }

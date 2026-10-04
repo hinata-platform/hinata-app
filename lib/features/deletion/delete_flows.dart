@@ -487,7 +487,7 @@ class _WarnRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(warn.icon, size: 16, color: AppColors.accentStrong),
+          Icon(warn.icon, size: 16, color: AppColors.accentInk),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -731,11 +731,7 @@ class _TargetRow extends StatelessWidget {
                   ),
                 ),
                 if (selected)
-                  const Icon(
-                    LucideIcons.check,
-                    size: 16,
-                    color: AppColors.accentStrong,
-                  ),
+                  Icon(LucideIcons.check, size: 16, color: AppColors.accentInk),
               ],
             ),
           ),
@@ -825,10 +821,10 @@ class _ErrorBody extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12.5,
                 height: 1.4,
-                color: AppColors.danger,
+                color: AppColors.dangerInk,
               ),
             ),
           ),

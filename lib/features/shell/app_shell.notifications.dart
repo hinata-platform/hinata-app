@@ -290,10 +290,10 @@ class _NotifPopoverCard extends StatelessWidget {
                         ),
                         child: Text(
                           context.t('notifications.markAllRead'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.accentStrong,
+                            color: AppColors.accentInk,
                           ),
                         ),
                       ),

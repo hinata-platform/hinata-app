@@ -210,7 +210,7 @@ class _ResetPasswordScreenState extends State<_ResetPasswordScreenBody> {
               const SizedBox(height: 8),
               Text(
                 context.t(_error!),
-                style: const TextStyle(color: AppColors.danger),
+                style: TextStyle(color: AppColors.dangerInk),
                 textAlign: TextAlign.center,
               ),
             ],

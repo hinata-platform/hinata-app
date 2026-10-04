@@ -443,9 +443,9 @@ class _ActivityRow extends StatelessWidget {
                 TextSpan(text: ' $verbText '),
                 TextSpan(
                   text: object,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: AppColors.accentStrong,
+                    color: AppColors.accentInk,
                   ),
                 ),
                 if ((activity.extra ?? '').isNotEmpty)

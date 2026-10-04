@@ -461,11 +461,7 @@ class _MobileNavTile extends StatelessWidget {
                     color: AppColors.accentSoft,
                     borderRadius: BorderRadius.circular(9),
                   ),
-                  child: Icon(
-                    meta.icon,
-                    size: 17,
-                    color: AppColors.accentStrong,
-                  ),
+                  child: Icon(meta.icon, size: 17, color: AppColors.accentInk),
                 ),
                 const SizedBox(width: 14),
                 Expanded(

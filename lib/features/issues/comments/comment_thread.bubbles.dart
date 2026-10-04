@@ -142,8 +142,7 @@ class CommentBubbleRow extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: 7,
       children: [
-        if (pinned)
-          const Icon(LucideIcons.pin, size: 12, color: AppColors.accentStrong),
+        if (pinned) Icon(LucideIcons.pin, size: 12, color: AppColors.accentInk),
         Text(
           name,
           style: TextStyle(
@@ -605,15 +604,15 @@ class _ThreadControl extends StatelessWidget {
                           padding: EdgeInsets.all(1),
                           child: CircularProgressIndicator(strokeWidth: 1.6),
                         )
-                      : Icon(icon, size: 14, color: AppColors.accentStrong),
+                      : Icon(icon, size: 14, color: AppColors.accentInk),
                 ),
                 const SizedBox(width: 6),
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.accentStrong,
+                    color: AppColors.accentInk,
                   ),
                 ),
               ],

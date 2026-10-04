@@ -404,7 +404,7 @@ class _PersonPickerPanelState extends State<_PersonPickerPanel> {
         padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
         child: Text(
           context.t(_error!),
-          style: const TextStyle(fontSize: 12.5, color: AppColors.danger),
+          style: TextStyle(fontSize: 12.5, color: AppColors.dangerInk),
         ),
       );
     }

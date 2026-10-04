@@ -282,7 +282,7 @@ class GlassModalHeader extends StatelessWidget {
               color: AppColors.accentSoft,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, size: 20, color: AppColors.accentStrong),
+            child: Icon(icon, size: 20, color: AppColors.accentInk),
           ),
           const SizedBox(width: 12),
           Expanded(

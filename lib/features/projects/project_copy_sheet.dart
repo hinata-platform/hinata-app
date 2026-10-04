@@ -358,8 +358,8 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
                   const SizedBox(height: 12),
                   Text(
                     _error!,
-                    style: const TextStyle(
-                      color: AppColors.danger,
+                    style: TextStyle(
+                      color: AppColors.dangerInk,
                       fontSize: 12.5,
                     ),
                   ),

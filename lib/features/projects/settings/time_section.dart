@@ -287,9 +287,9 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
                   const SizedBox(height: 12),
                   Text(
                     context.t(_error!),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12.5,
-                      color: AppColors.danger,
+                      color: AppColors.dangerInk,
                     ),
                   ),
                 ],

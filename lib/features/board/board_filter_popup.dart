@@ -221,10 +221,10 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
             _Opt(
               value: id,
               label: widget.sprintNames[id] ?? id,
-              leading: const Icon(
+              leading: Icon(
                 LucideIcons.zap,
                 size: 18,
-                color: AppColors.accentStrong,
+                color: AppColors.accentInk,
               ),
             ),
         ];
@@ -554,7 +554,7 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
             TextButton(
               onPressed: _clear,
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.accentStrong,
+                foregroundColor: AppColors.accentInk,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 minimumSize: const Size(0, 30),
                 tapTargetSize: MaterialTapTargetSize.padded,

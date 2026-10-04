@@ -695,7 +695,7 @@ class _LinkFieldState extends State<_LinkField> {
             padding: const EdgeInsetsDirectional.only(start: 23, bottom: 2),
             child: Text(
               context.t('md.linkUnsafe'),
-              style: const TextStyle(fontSize: 11.5, color: AppColors.danger),
+              style: TextStyle(fontSize: 11.5, color: AppColors.dangerInk),
             ),
           ),
       ],

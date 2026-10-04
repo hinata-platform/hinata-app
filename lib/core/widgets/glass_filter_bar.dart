@@ -714,14 +714,14 @@ class GlassCountPill extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: AppColors.accentStrong),
+            Icon(icon, size: 14, color: AppColors.accentInk),
             const SizedBox(width: 7),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w700,
-                color: AppColors.accentStrong,
+                color: AppColors.accentInk,
               ),
             ),
           ],

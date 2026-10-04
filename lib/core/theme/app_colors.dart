@@ -27,12 +27,19 @@ abstract final class AppColors {
   static const inkDark = Color(0xFFECEBF3);
   static Color get ink => _dark ? inkDark : inkLight; // primary text
 
-  static const inkSoftLight = Color(0xFF6B6A85);
+  // The three tiers are set by contrast, measured with check_contrast.py
+  // (HIN-110) against every surface they are read on: canvas, card, the muted
+  // and the pastel cards, the amber wash. The quietest tier still clears
+  // 4.5:1 there (WCAG 1.4.3): hints, timestamps and placeholders are text
+  // people have to read. Light paper leaves room for only so many greys above
+  // 4.5:1, so secondary sits a clear step darker than hints, and the hierarchy
+  // between them also rides on size and weight, not on fading text out.
+  static const inkSoftLight = Color(0xFF4F4E62); // 7.3:1 on canvas
   static const inkSoftDark = Color(0xFFA8A6C2);
   static Color get inkSoft => _dark ? inkSoftDark : inkSoftLight; // secondary
 
-  static const inkFaintLight = Color(0xFF9A99B0);
-  static const inkFaintDark = Color(0xFF6F6D88);
+  static const inkFaintLight = Color(0xFF666583); // 5.0:1 canvas, 4.6:1 amber
+  static const inkFaintDark = Color(0xFF8C8AA1); // 4.7:1 on the muted surface
   static Color get inkFaint => _dark ? inkFaintDark : inkFaintLight; // hints
 
   // ---- workspace surfaces (theme-aware) ----
@@ -101,7 +108,7 @@ abstract final class AppColors {
   static const rail = Color(0xFF211F3D);
   static const rail2 = Color(0xFF1A1830);
   static const railInk = Color(0xFFC9C7E0);
-  static const railFaint = Color(0xFF807EA0);
+  static const railFaint = Color(0xFF8A88A7); // 4.6:1 on the rail
 
   // ---- signature honey-amber accent (hue 70, constant across themes) ----
   static const accent = Color(0xFFD9A032); // oklch(.74 .135 70)
@@ -131,7 +138,7 @@ abstract final class AppColors {
   static const priUrgent = Color(0xFFD9544B); // hue 22
   static const priHigh = Color(0xFFD98A2B); // hue 45
   static const priNormal = Color(0xFF5B86D6); // hue 250
-  static const priLow = Color(0xFF9A99B0); // muted
+  static const priLow = Color(0xFF8887A2); // muted; 3:1 as an icon (1.4.11)
 
   // ---- semantic ----
   static const danger = Color(0xFFD9544B);
@@ -142,6 +149,10 @@ abstract final class AppColors {
   static Color get dangerInk =>
       _dark ? const Color(0xFFEC7F77) : const Color(0xFFB23A32);
   static const success = Color(0xFF2FA06E);
+
+  /// Success as small text: [success] reaches 3.3:1 on white. The dark
+  /// surface already clears 4.5:1 with it.
+  static Color get successInk => _dark ? success : const Color(0xFF257C56);
   static const warning = Color(0xFFD9A032);
 
   // ---- compatibility aliases (migrate screens progressively) ----
@@ -163,7 +174,11 @@ abstract final class AppColors {
   // on the light cream fill; on dark, where [accentSoft] is only a faint wash
   // over a near-black surface, that same deep amber sinks into the background,
   // so this lifts to the brighter [accent].
-  static Color get accentInk => _dark ? accent : accentStrong;
+  //
+  // In light, [accentStrong] itself reaches only 3.0:1 on the canvas and 2.8:1
+  // on [accentSoft]; read as a label it takes this deeper honey, 4.6:1 on the
+  // amber wash and 5.4:1 on white (HIN-110, measured).
+  static Color get accentInk => _dark ? accent : const Color(0xFF876017);
 
   // The wash behind weekends and holidays in the team absence calendar
   // (HIN-118). In dark mode the recessed canvas is nearly black against a card

@@ -277,9 +277,9 @@ Future<bool> showResendModal(BuildContext context, List<AdminUser> users) {
                 'admin.um.resendExpiredNote',
                 variables: {'n': '$expired'},
               ),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12.5,
-                color: AppColors.danger,
+                color: AppColors.dangerInk,
                 height: 1.4,
               ),
             ),

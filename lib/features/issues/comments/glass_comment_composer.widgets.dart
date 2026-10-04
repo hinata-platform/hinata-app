@@ -102,11 +102,7 @@ class _EditingBanner extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8, left: 4, right: 4),
       child: Row(
         children: [
-          const Icon(
-            LucideIcons.pencil,
-            size: 14,
-            color: AppColors.accentStrong,
-          ),
+          Icon(LucideIcons.pencil, size: 14, color: AppColors.accentInk),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -127,10 +123,10 @@ class _EditingBanner extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 child: Text(
                   context.t('common.cancel'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.accentStrong,
+                    color: AppColors.accentInk,
                   ),
                 ),
               ),
@@ -171,11 +167,7 @@ class _ReplyBanner extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
         child: Row(
           children: [
-            const Icon(
-              LucideIcons.reply,
-              size: 14,
-              color: AppColors.accentStrong,
-            ),
+            Icon(LucideIcons.reply, size: 14, color: AppColors.accentInk),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -184,10 +176,10 @@ class _ReplyBanner extends StatelessWidget {
                 children: [
                   Text(
                     context.t('comments.replyingTo', variables: {'name': name}),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.accentStrong,
+                      color: AppColors.accentInk,
                     ),
                   ),
                   if (preview.isNotEmpty) ...[

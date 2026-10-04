@@ -285,7 +285,7 @@ class _AddMembersBodyState extends State<AddMembersBody>
             const SizedBox(height: 14),
             Text(
               _error!,
-              style: const TextStyle(color: AppColors.danger, fontSize: 12.5),
+              style: TextStyle(color: AppColors.dangerInk, fontSize: 12.5),
             ),
           ],
         ],
@@ -564,7 +564,7 @@ class _ManageMemberBodyState extends State<ManageMemberBody>
             const SizedBox(height: 14),
             Text(
               _error!,
-              style: const TextStyle(color: AppColors.danger, fontSize: 12.5),
+              style: TextStyle(color: AppColors.dangerInk, fontSize: 12.5),
             ),
           ],
         ],

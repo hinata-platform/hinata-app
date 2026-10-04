@@ -128,11 +128,11 @@ class _MemberRow extends StatelessWidget {
                             ),
                             child: Text(
                               context.t('teams.you'),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.4,
-                                color: AppColors.accentStrong,
+                                color: AppColors.accentInk,
                               ),
                             ),
                           ),

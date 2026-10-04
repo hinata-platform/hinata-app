@@ -176,8 +176,8 @@ class _Greeting extends StatelessWidget {
                           'days': '${sprint!.days}',
                         },
                       ),
-                      style: const TextStyle(
-                        color: AppColors.accentStrong,
+                      style: TextStyle(
+                        color: AppColors.accentInk,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -477,11 +477,7 @@ class _SprintEmpty extends StatelessWidget {
               color: AppColors.accent.withValues(alpha: .14),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(
-              LucideIcons.goal,
-              color: AppColors.accentStrong,
-              size: 22,
-            ),
+            child: Icon(LucideIcons.goal, color: AppColors.accentInk, size: 22),
           ),
           const SizedBox(height: 14),
           Text(

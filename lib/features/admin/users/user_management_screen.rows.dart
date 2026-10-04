@@ -120,18 +120,18 @@ class _UserTableRow extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             LucideIcons.send,
                             size: 11,
-                            color: AppColors.accentStrong,
+                            color: AppColors.accentInk,
                           ),
                           const SizedBox(width: 3),
                           Text(
                             context.t('admin.um.resendInvite'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.accentStrong,
+                              color: AppColors.accentInk,
                             ),
                           ),
                         ],
@@ -305,18 +305,18 @@ class _UserCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         LucideIcons.send,
                         size: 12,
-                        color: AppColors.accentStrong,
+                        color: AppColors.accentInk,
                       ),
                       const SizedBox(width: 3),
                       Text(
                         context.t('admin.um.resendInvite'),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.accentStrong,
+                          color: AppColors.accentInk,
                         ),
                       ),
                     ],
@@ -343,10 +343,10 @@ class _YouChip extends StatelessWidget {
       ),
       child: Text(
         context.t('admin.um.you'),
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: AppColors.accentStrong,
+          color: AppColors.accentInk,
         ),
       ),
     ),

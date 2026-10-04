@@ -113,11 +113,11 @@ class FieldLabel extends StatelessWidget {
                 child: Text(
                   context.t('projectSettings.required'),
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.4,
-                    color: AppColors.accentStrong,
+                    color: AppColors.accentInk,
                   ),
                 ),
               ),
