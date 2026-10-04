@@ -117,6 +117,48 @@ class _Sprints implements SprintRepository {
     ];
   }
 
+  /// The sprint changes and reports asked for, by name and arguments.
+  final asked = <List<Object?>>[];
+
+  /// Refuses the sprint changes and reports when set.
+  Object? refusal;
+
+  Future<T> _answer<T>(String name, List<Object?> args, T value) async {
+    asked.add([name, ...args]);
+    final refusal = this.refusal;
+    if (refusal != null) throw refusal;
+    return value;
+  }
+
+  @override
+  Future<Sprint> createSprint({
+    required String boardId,
+    required String name,
+    String? goal,
+    DateTime? startDate,
+    DateTime? endDate,
+    int? capacityPoints,
+  }) => _answer('create', [
+    boardId,
+    name,
+    goal,
+    startDate,
+    endDate,
+    capacityPoints,
+  ], Sprint(id: 's3', name: name));
+
+  @override
+  Future<Sprint> startSprint(String id, {String? goal, DateTime? endDate}) =>
+      _answer('start', [id, goal, endDate], Sprint(id: id, name: 'Sprint'));
+
+  @override
+  Future<void> completeSprint(String id, {required String moveOpenTo}) =>
+      _answer('complete', [id, moveOpenTo], null);
+
+  @override
+  Future<SprintReport> sprintReport(String id) =>
+      _answer('report', [id], SprintReport.fromJson(const {}));
+
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} is not faked');
@@ -653,5 +695,58 @@ void main() {
         );
       },
     );
+  });
+
+  group('sprints', () {
+    test('creates a sprint on the board and hands it back', () async {
+      final planning = planningOver();
+      final start = DateTime.utc(2026, 10, 5);
+      final end = DateTime.utc(2026, 10, 19);
+
+      final sprint = await planning.createSprint(
+        name: 'Sprint 3',
+        goal: 'Ship',
+        startDate: start,
+        endDate: end,
+      );
+
+      expect(sprint.id, 's3');
+      expect(sprints.asked, [
+        ['create', 'b1', 'Sprint 3', 'Ship', start, end, null],
+      ]);
+    });
+
+    test('starts, completes and reports the sprint named', () async {
+      final planning = planningOver();
+      final end = DateTime.utc(2026, 10, 19);
+
+      await planning.startSprint('s1', goal: 'Ship', endDate: end);
+      await planning.completeSprint('s1', moveOpenTo: 's2');
+      final report = await planning.sprintReport('s1');
+
+      expect(report, SprintReport.fromJson(const {}));
+      expect(sprints.asked, [
+        ['start', 's1', 'Ship', end],
+        ['complete', 's1', 's2'],
+        ['report', 's1'],
+      ]);
+    });
+
+    test('passes a refusal on as it came', () async {
+      final planning = planningOver();
+      final refusal = ApiFailure('error.accessDenied');
+      sprints.refusal = refusal;
+
+      await expectLater(
+        planning.createSprint(name: 'Sprint 3'),
+        throwsA(refusal),
+      );
+      await expectLater(planning.startSprint('s1'), throwsA(refusal));
+      await expectLater(
+        planning.completeSprint('s1', moveOpenTo: 'backlog'),
+        throwsA(refusal),
+      );
+      await expectLater(planning.sprintReport('s1'), throwsA(refusal));
+    });
   });
 }

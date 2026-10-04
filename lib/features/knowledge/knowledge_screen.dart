@@ -16,6 +16,7 @@ import '../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassBottomSheet, showGlassConfirm, showGlassToast;
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
+import 'knowledge_cubit.dart';
 import 'knowledge_editor.dart';
 import 'knowledge_home.dart';
 import 'knowledge_space_dialog.dart';
@@ -34,21 +35,40 @@ import '../../core/repositories/user_repository.dart';
 /// `@`-smart-links. Self-contained (seed data + local persistence); a 1:1 port
 /// of the design reference `view_knowledge.jsx`. Internal navigation between
 /// home/space/article/edit/new is managed here (not via the router).
-class KnowledgeScreen extends StatefulWidget {
+class KnowledgeScreen extends StatelessWidget {
   const KnowledgeScreen({super.key, this.initialArticleId});
 
   /// Deep link from `/knowledge/:id` — open straight into this article.
   final String? initialArticleId;
 
   @override
-  State<KnowledgeScreen> createState() => _KnowledgeScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => KnowledgeCubit(
+      context.read<KnowledgeRepository>(),
+      context.read<IssueRepository>(),
+      context.read<UserRepository>(),
+    ),
+    child: _KnowledgeBody(initialArticleId: initialArticleId),
+  );
+}
+
+class _KnowledgeBody extends StatefulWidget {
+  const _KnowledgeBody({this.initialArticleId});
+
+  final String? initialArticleId;
+
+  @override
+  State<_KnowledgeBody> createState() => _KnowledgeScreenState();
 }
 
 enum _Mode { home, article, edit, newDoc }
 
-class _KnowledgeScreenState extends State<KnowledgeScreen> {
-  // Shared app-wide store (provided in app.dart).
-  late final KnowledgeRepository _repo = context.read<KnowledgeRepository>();
+class _KnowledgeScreenState extends State<_KnowledgeBody> {
+  late final KnowledgeCubit _knowledge = context.read<KnowledgeCubit>();
+
+  // Shared app-wide store (provided in app.dart), read synchronously while
+  // the page builds.
+  late final KnowledgeRepository _store = _knowledge.store;
   bool _ready = false;
 
   // Real backend issues + member names so `{{issue:…}}` tokens and the `@`-menu
@@ -60,7 +80,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
   String? _selectedId;
   // Empty when the knowledge base has no spaces yet (fresh workspace); the
   // create-space flow sets it once the first space exists.
-  late String _spaceId = _repo.spaces.isNotEmpty ? _repo.spaces.first.id : '';
+  late String _spaceId = _store.spaces.isNotEmpty ? _store.spaces.first.id : '';
   final _scrollKey = GlobalKey();
 
   // Reader panel collapse (desktop fullscreen reading) + pending parent for the
@@ -77,11 +97,11 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
     super.initState();
     // The shared repo is init'd at app start; re-run is idempotent and ensures
     // persisted edits are overlaid before we gate the first frame.
-    _repo.init().then((_) {
+    _knowledge.init().then((_) {
       if (!mounted) return;
       final initial = widget.initialArticleId;
-      if (initial != null && _repo.articleById(initial) != null) {
-        final a = _repo.articleById(initial)!;
+      if (initial != null && _store.articleById(initial) != null) {
+        final a = _store.articleById(initial)!;
         _selectedId = initial;
         _spaceId = a.spaceId;
         _mode = _Mode.article;
@@ -94,13 +114,10 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
   /// Pulls real issues (across all visible projects) and member names so smart
   /// links and the `@`-mention menu resolve to genuine backend issues.
   Future<void> _loadBackendIssues() async {
-    final issueApi = context.read<IssueRepository>();
-    final userApi = context.read<UserRepository>();
     try {
       // allIssues pages through the whole backend result set so smart links and
       // the `@`-mention menu resolve against every issue, not just the first 100.
-      final issues = await issueApi.allIssues();
-      final users = await userApi.users();
+      final (:issues, :users) = await _knowledge.linkTargets();
       if (!mounted) return;
       setState(() {
         // Keyed by every id an issue ever carried, so a KB article linking a
@@ -117,7 +134,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
   }
 
   SmartLinkResolver _buildResolver() => KnowledgeLinkResolver(
-    repo: _repo,
+    repo: _store,
     issuesByReadable: _issuesByReadable,
     stateColorFor: AppColors.stateColor,
     nameFor: (id) => id == null ? null : _userNames[id],
@@ -126,11 +143,11 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
   );
 
   KbArticle? get _current =>
-      _selectedId == null ? null : _repo.articleById(_selectedId!);
+      _selectedId == null ? null : _store.articleById(_selectedId!);
 
   // ── navigation ──
   void _openArticle(String id) {
-    final a = _repo.articleById(id);
+    final a = _store.articleById(id);
     if (a == null) return;
     setState(() {
       _selectedId = id;
@@ -141,7 +158,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
 
   void _openSpace(String id) {
     // Roots include pages whose parent this person cannot read.
-    final first = _repo.rootsInSpace(id);
+    final first = _store.rootsInSpace(id);
     setState(() {
       _spaceId = id;
       if (first.isNotEmpty) {
@@ -155,13 +172,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
   /// real issue sheet; toasts if there is no matching issue.
   Future<void> _openRealIssue(String readableId) async {
     try {
-      final res = await context.read<IssueRepository>().issues(
-        query: readableId,
-        size: 20,
-      );
-      final match = res.issues
-          .where((i) => i.readableId == readableId)
-          .firstOrNull;
+      final match = await _knowledge.findIssue(readableId);
       if (!mounted) return;
       if (match == null) {
         _toast('Issue $readableId not found', kind: GlassToastKind.error);
@@ -184,7 +195,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
   void _newChild(String parentId) {
     setState(() {
       _pendingParentId = parentId;
-      _spaceId = _repo.articleById(parentId)?.spaceId ?? _spaceId;
+      _spaceId = _store.articleById(parentId)?.spaceId ?? _spaceId;
       _mode = _Mode.newDoc;
     });
   }
@@ -195,7 +206,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
     required String spaceId,
   }) async {
     try {
-      await _repo.moveArticle(id, parentId: parentId, spaceId: spaceId);
+      await _knowledge.moveArticle(id, parentId: parentId, spaceId: spaceId);
       if (mounted) setState(() => _spaceId = spaceId);
     } on ApiFailure catch (failure) {
       if (mounted) _toast(failure.message, kind: GlassToastKind.error);
@@ -206,7 +217,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
   Future<void> _placeArticle(String id, KbPlaceChoice place) async {
     setState(() => _placeBusy = true);
     try {
-      await _repo.placeArticle(
+      await _knowledge.placeArticle(
         id,
         projectId: place.projectId,
         teamId: place.teamId,
@@ -227,7 +238,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
   /// Confirms, then deletes [id]. Used by both the tree row menu and the
   /// reader's delete button so the destructive action always asks first.
   Future<void> _confirmDeleteArticle(String id) async {
-    final article = _repo.articleById(id);
+    final article = _store.articleById(id);
     final confirmed = await showGlassConfirm(
       context,
       icon: lucideIcon('trash-2'),
@@ -245,7 +256,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
 
   Future<void> _deleteArticle(String id) async {
     try {
-      await _repo.deleteArticle(id);
+      await _knowledge.deleteArticle(id);
       if (!mounted) return;
       setState(() {
         if (_selectedId == id) {
@@ -272,7 +283,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
             required String description,
           }) async {
             try {
-              final space = await _repo.createSpace(
+              final space = await _knowledge.createSpace(
                 name: name,
                 icon: icon,
                 hue: hue,
@@ -306,7 +317,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
     );
     if (confirmed != true) return;
     try {
-      await _repo.deleteSpace(id);
+      await _knowledge.deleteSpace(id);
       if (!mounted) return;
       setState(() {});
       _toast(context.t('knowledge.spaceDeleted'), kind: GlassToastKind.success);
@@ -322,7 +333,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
     try {
       if (_mode == _Mode.newDoc) {
         final parentId = _pendingParentId;
-        final a = await _repo.createArticle(
+        final a = await _knowledge.createArticle(
           title: title,
           doc: r.doc,
           spaceId: r.spaceId,
@@ -339,7 +350,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
         });
         _toast(context.t('knowledge.published'), kind: GlassToastKind.success);
       } else if (_current != null) {
-        await _repo.saveEdit(
+        await _knowledge.saveEdit(
           _current!.id,
           title: title,
           doc: r.doc,
@@ -365,7 +376,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
           child: KnowledgeTree(
-            repo: _repo,
+            repo: _store,
             spaceId: _spaceId,
             selectedId: _selectedId,
             onSelect: (id) {
@@ -404,7 +415,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
     return PageChrome(
       title: chromeTitle,
       child: KnowledgeScope(
-        repo: _repo,
+        repo: _store,
         openArticle: _openArticle,
         openUser: (_) {},
         child: SmartLinkScope(
@@ -434,8 +445,8 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
       subtitle: context.t(
         'knowledge.subtitle',
         variables: {
-          'articles': '${_repo.articles.length}',
-          'spaces': '${_repo.spaces.length}',
+          'articles': '${_store.articles.length}',
+          'spaces': '${_store.spaces.length}',
         },
       ),
       actions: [
@@ -477,7 +488,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
           const SizedBox(height: 20),
           if (_mode == _Mode.home)
             KnowledgeHome(
-              repo: _repo,
+              repo: _store,
               onOpenArticle: _openArticle,
               onOpenSpace: _openSpace,
               onNewSpace: _createSpace,
@@ -552,7 +563,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            _repo.spaceById(_spaceId)?.name ?? '',
+                            _store.spaceById(_spaceId)?.name ?? '',
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -578,7 +589,7 @@ class _KnowledgeScreenState extends State<KnowledgeScreen> {
           SizedBox(
             width: KbTokens.treeWidth,
             child: KnowledgeTree(
-              repo: _repo,
+              repo: _store,
               spaceId: _spaceId,
               selectedId: _selectedId,
               onSelect: _openArticle,

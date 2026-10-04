@@ -19,6 +19,7 @@ import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'absence_labels.dart';
 import 'absence_type_sheet.dart';
+import 'absence_types_cubit.dart';
 import '../../core/widgets/folded_hint.dart';
 
 /// Admin → Absence types (HIN-116): the catalogue an operator keeps.
@@ -31,20 +32,30 @@ import '../../core/widgets/folded_hint.dart';
 /// cannot be deleted. They ship *without* a name: the label comes from the
 /// reader's language, so a German instance does not read "Vacation" until
 /// somebody renames three rows.
-class AbsenceTypesScreen extends StatefulWidget {
+class AbsenceTypesScreen extends StatelessWidget {
   const AbsenceTypesScreen({super.key});
 
   @override
-  State<AbsenceTypesScreen> createState() => _AbsenceTypesScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => AbsenceTypesCubit(context.read<AbsenceRepository>()),
+    child: const _TypesView(),
+  );
 }
 
-class _AbsenceTypesScreenState extends State<AbsenceTypesScreen> {
+class _TypesView extends StatefulWidget {
+  const _TypesView();
+
+  @override
+  State<_TypesView> createState() => _TypesViewState();
+}
+
+class _TypesViewState extends State<_TypesView> {
   List<AbsenceType> _types = const [];
   bool _loading = true;
   bool _showInactive = false;
   String? _errorKey;
 
-  AbsenceRepository get _repository => context.read<AbsenceRepository>();
+  AbsenceTypesCubit get _catalogue => context.read<AbsenceTypesCubit>();
 
   @override
   void initState() {
@@ -61,7 +72,7 @@ class _AbsenceTypesScreenState extends State<AbsenceTypesScreen> {
       // Always asked for everything: the switch below filters what is drawn, so
       // flipping it is instant rather than a round trip, and a keeper is the
       // only one the server answers it for anyway.
-      final types = await _repository.types(includeInactive: true);
+      final types = await _catalogue.types();
       if (!mounted) return;
       setState(() {
         _types = types;
@@ -100,7 +111,7 @@ class _AbsenceTypesScreenState extends State<AbsenceTypesScreen> {
     );
     if (confirmed != true || !mounted) return;
     try {
-      await _repository.deleteType(type.id);
+      await _catalogue.delete(type.id);
       if (!mounted) return;
       showGlassToast(context, context.t('absence.types.deleted'));
       unawaited(_load());

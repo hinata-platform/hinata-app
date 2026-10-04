@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
-import '../../core/models/core_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/repositories/issue_repository.dart';
 import '../../core/repositories/project_repository.dart';
@@ -18,6 +17,7 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/status_widgets.dart';
 import 'issues_screen.dart' show IssueRow;
+import 'watched_issues_cubit.dart';
 
 /// The issues the signed-in user subscribed to — every change on them reaches
 /// them as a notification, whether or not they are assignee or reporter.
@@ -33,8 +33,7 @@ class WatchedIssuesScreen extends StatefulWidget {
 }
 
 class _WatchedIssuesScreenState extends State<WatchedIssuesScreen> {
-  late final IssueRepository _repo;
-  late final PagedCubit<Issue> _cubit;
+  late final WatchedIssuesCubit _cubit;
   final ScrollController _scroll = ScrollController();
   StreamSubscription<void>? _watchSub;
 
@@ -48,13 +47,12 @@ class _WatchedIssuesScreenState extends State<WatchedIssuesScreen> {
   @override
   void initState() {
     super.initState();
-    // Resolved once — the fetcher closure outlives this build and every
-    // loadMore would otherwise walk the element tree again.
-    _repo = context.read<IssueRepository>();
-    _cubit = PagedCubit<Issue>(
-      (page, size) => _repo.watchedIssues(page: page, size: size),
-      pageSize: 25,
-      keyOf: (issue) => issue.id,
+    // Resolved once — the fetcher outlives this build and every loadMore
+    // would otherwise walk the element tree again.
+    _cubit = WatchedIssuesCubit(
+      issues: context.read<IssueRepository>(),
+      users: context.read<UserRepository>(),
+      projects: context.read<ProjectRepository>(),
     )..load();
     _scroll.addListener(_onScroll);
     // Watching from the issue sheet broadcasts app-wide; this list is exactly
@@ -82,13 +80,8 @@ class _WatchedIssuesScreenState extends State<WatchedIssuesScreen> {
 
   Future<void> _loadRef() async {
     try {
-      final results = await Future.wait([
-        context.read<UserRepository>().users(),
-        context.read<ProjectRepository>().projects(),
-      ]);
+      final (:users, :projects) = await _cubit.reference();
       if (!mounted) return;
-      final users = results[0] as List<DirectoryUser>;
-      final projects = results[1] as List<Project>;
       setState(() {
         _names = {for (final u in users) u.id: u.displayName};
         _avatars = {

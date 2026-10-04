@@ -8,13 +8,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
-import '../../core/access/project_permissions.dart';
 import '../../core/api/api_client.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/events/board_events.dart';
 import '../../core/i18n/i18n.dart';
-import '../../core/models/team_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
@@ -23,33 +21,47 @@ import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart' show glassWoltSurface;
+import 'board_edit_cubit.dart';
 import 'board_links.dart';
 import 'board_manage_menu.dart';
 import 'load_when_shown.dart';
+import 'project_boards_cubit.dart';
 import '../../core/repositories/board_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
 import '../../core/widgets/hive_widgets.dart' show forwardArrow;
 
 /// Lists all boards for a single project and allows creating new ones.
-class ProjectBoardsScreen extends StatefulWidget {
+class ProjectBoardsScreen extends StatelessWidget {
   const ProjectBoardsScreen({super.key, required this.projectId});
 
   final String projectId;
 
   @override
-  State<ProjectBoardsScreen> createState() => _ProjectBoardsScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => ProjectBoardsCubit(
+      boards: context.read<BoardRepository>(),
+      projects: context.read<ProjectRepository>(),
+      teams: context.read<TeamRepository>(),
+      projectId: projectId,
+      me: () => context.read<AuthBloc>().state.user,
+    ),
+    child: _ProjectBoards(projectId: projectId),
+  );
 }
 
-typedef _BoardsData = ({
-  String projectName,
-  List<AgileBoard> boards,
-  bool canManageProject,
-});
+class _ProjectBoards extends StatefulWidget {
+  const _ProjectBoards({required this.projectId});
 
-class _ProjectBoardsScreenState extends State<ProjectBoardsScreen>
-    with LoadWhenShown<ProjectBoardsScreen> {
-  late final FetchCubit<_BoardsData> _cubit;
+  final String projectId;
+
+  @override
+  State<_ProjectBoards> createState() => _ProjectBoardsState();
+}
+
+class _ProjectBoardsState extends State<_ProjectBoards>
+    with LoadWhenShown<_ProjectBoards> {
+  late final ProjectBoardsCubit _cubit = context.read<ProjectBoardsCubit>();
 
   /// Re-fetch when the set of boards changes anywhere in the app — a board
   /// created or deleted from the overview belongs in this project's list too.
@@ -58,33 +70,12 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen>
   @override
   void initState() {
     super.initState();
-    _cubit = FetchCubit<_BoardsData>(() async {
-      final me = context.read<AuthBloc>().state.user;
-      final results = await Future.wait([
-        context.read<BoardRepository>().boards(projectId: widget.projectId),
-        context.read<ProjectRepository>().project(widget.projectId),
-        context.read<TeamRepository>().teams(),
-      ]);
-      final boards = results[0] as List<AgileBoard>;
-      final project = results[1] as Project;
-      final teams = results[2] as List<Team>;
-      // Project leads and Team-Admins of an owning team may manage every
-      // board of this project; the board owner is handled per-card. The
-      // platform admin role adds nothing.
-      final mayManage = canManageProject(project, me, teams);
-      return (
-        projectName: project.name,
-        boards: boards,
-        canManageProject: mayManage,
-      );
-    });
     _boardSub = BoardEvents.instance.changes.listen((_) => markStale());
   }
 
   @override
   void dispose() {
     _boardSub?.cancel();
-    _cubit.close();
     super.dispose();
   }
 
@@ -103,8 +94,8 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen>
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
           hasTopBarLayer: false,
-          child: RepositoryProvider.value(
-            value: boards,
+          child: BlocProvider(
+            create: (_) => BoardEditCubit(boards),
             child: _CreateBoardBody(
               projectId: widget.projectId,
               projectName: projectName,
@@ -125,7 +116,7 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen>
   @override
   Widget build(BuildContext context) {
     final myId = context.read<AuthBloc>().state.user?.id;
-    return BlocBuilder<FetchCubit<_BoardsData>, FetchState<_BoardsData>>(
+    return BlocBuilder<ProjectBoardsCubit, FetchState<ProjectBoardsData>>(
       bloc: _cubit,
       builder: (context, state) {
         final projectName = state.data?.projectName ?? '';
@@ -482,7 +473,7 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
       _error = null;
     });
     try {
-      final board = await context.read<BoardRepository>().createBoard(
+      final board = await context.read<BoardEditCubit>().create(
         _name.text.trim(),
         [widget.projectId],
       );

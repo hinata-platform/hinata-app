@@ -27,6 +27,8 @@ import 'correction_requests.dart' show OwnCorrectionRequests;
 import 'lock_notice.dart';
 import 'placement_picker.dart';
 import 'tag_picker.dart';
+import 'time_entry_sheet_cubit.dart';
+import 'time_requests_cubit.dart';
 
 /// Creates or edits one time entry.
 ///
@@ -52,10 +54,13 @@ import 'tag_picker.dart';
 /// list and the sheet itself — because they are the same act and a second copy
 /// is how the confirmation wording and the error handling start to disagree.
 /// The caller reloads; this only decides whether there is anything to reload.
+///
+/// [delete] is the caller's cubit doing the removal, read from its own tree.
 Future<bool> confirmAndDeleteTimeEntry(
   BuildContext context,
-  WorkItem entry,
-) async {
+  WorkItem entry, {
+  required Future<void> Function(String entryId) delete,
+}) async {
   final confirmed = await showGlassConfirm(
     context,
     icon: LucideIcons.trash2,
@@ -65,9 +70,8 @@ Future<bool> confirmAndDeleteTimeEntry(
     destructive: true,
   );
   if (confirmed != true || !context.mounted) return false;
-  final time = context.read<TimeRepository>();
   try {
-    await time.delete(entry.id);
+    await delete(entry.id);
     return true;
   } catch (failure) {
     if (context.mounted) {
@@ -134,8 +138,20 @@ Future<SavedTimeEntry?> showTimeEntrySheet(
       );
       return MultiRepositoryProvider(
         providers: providers,
-        child: BlocProvider<TimePolicyCubit>.value(
-          value: policy,
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider<TimePolicyCubit>.value(value: policy),
+            // Inside the carried repositories, so it reads the same ones the
+            // pickers and the lock notice in the sheet read.
+            BlocProvider(
+              create: (context) =>
+                  TimeEntrySheetCubit(context.read<TimeRepository>()),
+            ),
+            BlocProvider(
+              create: (context) =>
+                  TimeRequestsCubit(context.read<TimeRepository>()),
+            ),
+          ],
           child: timerCubit == null
               ? form
               : BlocProvider<TimerCubit>.value(value: timerCubit, child: form),
@@ -386,7 +402,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       _saving = true;
       _error = null;
     });
-    final repository = context.read<TimeRepository>();
+    final entries = context.read<TimeEntrySheetCubit>();
     final interval = _mode == _EntryMode.interval;
     final draft = TimeEntryDraft(
       // Only a create places an entry; see the field above.
@@ -421,8 +437,8 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       final saved = _isTimer
           ? await _stopTimer()
           : _isEdit
-          ? await repository.update(widget.entry!.id, draft)
-          : await repository.create(draft);
+          ? await entries.update(widget.entry!.id, draft)
+          : await entries.create(draft);
       if (!mounted) return;
       // A stop that the server refused answered null and said why in the cubit;
       // the sheet stays open with the sentence rather than closing on nothing.
@@ -724,7 +740,11 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   Future<void> _delete() async {
     final entry = widget.entry;
     if (entry == null) return;
-    final removed = await confirmAndDeleteTimeEntry(context, entry);
+    final removed = await confirmAndDeleteTimeEntry(
+      context,
+      entry,
+      delete: context.read<TimeEntrySheetCubit>().delete,
+    );
     if (!removed || !mounted) return;
     widget.onDeleted?.call();
     Navigator.of(context).pop();
@@ -795,7 +815,12 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       footerAction: GlassPickerAction(
         label: context.t('time.lock.requestOlderDays'),
         icon: LucideIcons.calendarPlus,
-        onTap: () => unawaited(requestOlderDays(context)),
+        onTap: () => unawaited(
+          requestOlderDays(
+            context,
+            requestBackfill: context.read<TimeRequestsCubit>().requestBackfill,
+          ),
+        ),
       ),
       title: context.t('time.entry.day'),
     );

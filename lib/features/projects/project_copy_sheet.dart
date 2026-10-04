@@ -13,6 +13,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'deadline_basis_field.dart';
+import 'project_copy_cubit.dart';
 import 'project_key.dart';
 
 /// Which of the two ways in somebody took.
@@ -47,8 +48,9 @@ Future<ProjectCopyResult?> showProjectCopySheet(
   return showGlassModal<ProjectCopyResult>(
     context,
     width: 560,
-    builder: (modalContext) => RepositoryProvider.value(
-      value: projects,
+    // The sheet is a route of its own and inherits nothing from the page.
+    builder: (modalContext) => BlocProvider(
+      create: (_) => ProjectCopyCubit(projects),
       child: _ProjectCopyBody(
         source: source,
         mode: mode,
@@ -136,7 +138,7 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
 
   Future<void> _loadScope() async {
     try {
-      final scope = await context.read<ProjectRepository>().scopeOfCopy(
+      final scope = await context.read<ProjectCopyCubit>().scopeOfCopy(
         widget.source.id,
       );
       if (!mounted) return;
@@ -173,16 +175,16 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
       _error = null;
     });
     try {
-      final repo = context.read<ProjectRepository>();
+      final copies = context.read<ProjectCopyCubit>();
       final result = _isInstantiate
-          ? await repo.instantiateTemplate(
+          ? await copies.instantiate(
               widget.source.id,
               name: _name.text.trim(),
               key: _key.text.trim(),
               eventDate: _eventDate,
               deadlineBasis: _deadlineBasisToSend,
             )
-          : await repo.copyProject(
+          : await copies.copy(
               widget.source.id,
               name: _name.text.trim(),
               key: _key.text.trim(),

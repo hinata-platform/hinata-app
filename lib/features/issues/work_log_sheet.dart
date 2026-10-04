@@ -12,6 +12,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../sprint/modals/glass_modal.dart'
     show glassWoltSurface, showGlassDatePicker;
+import 'work_log_cubit.dart';
 
 /// Log work on an issue: duration, date and a note.
 ///
@@ -35,8 +36,8 @@ Future<Object?> showWorkLogSheet(
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         hasTopBarLayer: false,
-        child: RepositoryProvider.value(
-          value: repository,
+        child: BlocProvider(
+          create: (_) => WorkLogCubit(repository),
           child: WorkLogForm(issueId: issueId, existing: existing),
         ),
       ),
@@ -44,7 +45,8 @@ Future<Object?> showWorkLogSheet(
   );
 }
 
-/// The sheet's body — public so it can be pumped without the modal around it.
+/// The sheet's body — public so it can be pumped without the modal around it,
+/// under a [WorkLogCubit] that takes what it saves.
 ///
 /// Pops with `true` after a successful write. The date is drawn within the
 /// server's rules (not in the future, at most a year back); an entry older
@@ -214,7 +216,7 @@ class _WorkLogFormState extends State<WorkLogForm> {
       return;
     }
     final note = _note.text.trim();
-    final repository = context.read<IssueRepository>();
+    final cubit = context.read<WorkLogCubit>();
     setState(() {
       _saving = true;
       _error = null;
@@ -222,7 +224,7 @@ class _WorkLogFormState extends State<WorkLogForm> {
     try {
       final existing = _existing;
       if (existing == null) {
-        await repository.addWorkItem(
+        await cubit.log(
           widget.issueId,
           minutes: total,
           description: note.isEmpty ? null : note,
@@ -238,7 +240,7 @@ class _WorkLogFormState extends State<WorkLogForm> {
           if (mounted) Navigator.of(context).pop(false);
           return;
         }
-        final patched = await repository.updateWorkItem(
+        final patched = await cubit.correct(
           existing.id,
           minutes: total == existing.durationMinutes ? null : total,
           description: sameNote ? null : note,

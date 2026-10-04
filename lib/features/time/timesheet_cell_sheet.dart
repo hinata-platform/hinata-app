@@ -16,6 +16,7 @@ import '../../core/util/duration_input.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show fmtDuration;
 import 'lock_notice.dart';
+import 'timesheet_cell_cubit.dart';
 import '../sprint/modals/glass_modal.dart'
     show GlassModalFooter, GlassModalHeader, showGlassModal;
 
@@ -45,8 +46,14 @@ Future<bool> showTimesheetCellSheet(
     width: 460,
     builder: (_) => RepositoryProvider<TimeRepository>.value(
       value: context.read<TimeRepository>(),
-      child: BlocProvider<TimePolicyCubit>.value(
-        value: policy,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<TimePolicyCubit>.value(value: policy),
+          BlocProvider(
+            create: (context) =>
+                TimesheetCellCubit(context.read<TimeRepository>()),
+          ),
+        ],
         child: _CellForm(
           day: day,
           projectId: projectId,
@@ -98,7 +105,7 @@ class _CellFormState extends State<_CellForm> {
 
   Future<void> _load() async {
     try {
-      final page = await context.read<TimeRepository>().entries(
+      final page = await context.read<TimesheetCellCubit>().entries(
         filter: TimeEntryFilter(
           from: widget.day,
           to: widget.day,
@@ -136,7 +143,7 @@ class _CellFormState extends State<_CellForm> {
       _error = null;
     });
     try {
-      await context.read<TimeRepository>().create(
+      await context.read<TimesheetCellCubit>().create(
         TimeEntryDraft(
           projectId: widget.projectId,
           durationMinutes: minutes,
@@ -164,7 +171,7 @@ class _CellFormState extends State<_CellForm> {
   Future<void> _remove(WorkItem entry) async {
     setState(() => _saving = true);
     try {
-      await context.read<TimeRepository>().delete(entry.id);
+      await context.read<TimesheetCellCubit>().delete(entry.id);
       if (!mounted) return;
       _changed = true;
       setState(() => _saving = false);

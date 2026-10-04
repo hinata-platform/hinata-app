@@ -18,6 +18,7 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show fmtDuration;
 import '../sprint/modals/glass_modal.dart';
 import 'account_widgets.dart';
+import 'working_hours_cubit.dart';
 
 /// Settings → Working hours (HIN-91).
 ///
@@ -29,14 +30,25 @@ import 'account_widgets.dart';
 /// The days somebody is away used to be entered here as well. They moved into
 /// the time module (HIN-117), beside the calendar they are planned in; this
 /// section keeps a way there.
-class AvailabilitySection extends StatefulWidget {
+class AvailabilitySection extends StatelessWidget {
   const AvailabilitySection({super.key});
 
   @override
-  State<AvailabilitySection> createState() => _AvailabilitySectionState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) =>
+        WorkingHoursCubit(context.read<AvailabilityRepository>()),
+    child: const _AvailabilityBody(),
+  );
 }
 
-class _AvailabilitySectionState extends State<AvailabilitySection> {
+class _AvailabilityBody extends StatefulWidget {
+  const _AvailabilityBody();
+
+  @override
+  State<_AvailabilityBody> createState() => _AvailabilitySectionState();
+}
+
+class _AvailabilitySectionState extends State<_AvailabilityBody> {
   /// Half an hour, the step the weekday hours move in.
   static const int _step = 30;
 
@@ -66,10 +78,10 @@ class _AvailabilitySectionState extends State<AvailabilitySection> {
       _errorKey = null;
     });
     try {
-      final repository = context.read<AvailabilityRepository>();
+      final hours = context.read<WorkingHoursCubit>();
       // Side by side: neither answer waits for the other.
-      final schedule = repository.schedule();
-      final calendars = repository.calendars(size: 100);
+      final schedule = hours.schedule();
+      final calendars = hours.calendars(size: 100);
       await Future.wait([schedule, calendars]);
       final stored = await schedule;
       final offered = (await calendars).items;
@@ -107,8 +119,8 @@ class _AvailabilitySectionState extends State<AvailabilitySection> {
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      final repository = context.read<AvailabilityRepository>();
-      await repository.saveSchedule(
+      final hours = context.read<WorkingHoursCubit>();
+      await hours.saveSchedule(
         validFrom: _validFrom,
         minutesPerWeekday: _minutes,
         holidayCalendarId: _calendarId,
@@ -116,7 +128,7 @@ class _AvailabilitySectionState extends State<AvailabilitySection> {
       if (!mounted) return;
       showGlassToast(context, context.t('availability.pattern.saved'));
       // Only the pattern is read again: saving it changes no calendar.
-      final schedule = await repository.schedule();
+      final schedule = await hours.schedule();
       if (mounted) setState(() => _adopt(schedule));
     } on ApiFailure catch (failure) {
       if (mounted) showGlassErrorToast(context, context.t(failure.message));

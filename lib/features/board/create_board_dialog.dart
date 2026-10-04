@@ -11,6 +11,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../core/widgets/project_picker.dart';
 import '../sprint/modals/glass_modal.dart';
+import 'board_edit_cubit.dart';
 
 /// Liquid-Glass "Create board" modal. First asks the board type (Kanban —
 /// continuous flow, default; or Scrum — sprint planning), then name + the
@@ -31,9 +32,12 @@ Future<AgileBoard?> showCreateBoardDialog(
   return showGlassModal<AgileBoard>(
     context,
     width: 560,
-    builder: (_) => _CreateBoardBody(
-      projects: projects,
-      initialProjectId: initialProjectId,
+    builder: (_) => BlocProvider(
+      create: (context) => BoardEditCubit(context.read<BoardRepository>()),
+      child: _CreateBoardBody(
+        projects: projects,
+        initialProjectId: initialProjectId,
+      ),
     ),
   );
 }
@@ -94,7 +98,7 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
       _error = null;
     });
     try {
-      final board = await context.read<BoardRepository>().createBoard(
+      final board = await context.read<BoardEditCubit>().create(
         _name.text.trim(),
         [for (final project in _projects) project.id],
         type: _type,

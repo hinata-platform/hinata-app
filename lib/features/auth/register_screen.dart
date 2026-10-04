@@ -15,18 +15,29 @@ import '../legal/legal_links.dart';
 import '../sprint/modals/glass_modal.dart'
     show showGlassToast, showGlassErrorToast, GlassToastKind;
 import 'auth_shell.dart';
+import 'auth_flow_cubit.dart';
 
 /// Public self-registration. Collects the new account's details, then shows a
 /// "confirm your email" state — the account is only usable once the emailed
 /// verification link is opened (see [VerifyEmailScreen]).
-class RegisterScreen extends StatefulWidget {
+class RegisterScreen extends StatelessWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => AuthFlowCubit(context.read<AuthRepository>()),
+    child: const _RegisterScreenBody(),
+  );
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenBody extends StatefulWidget {
+  const _RegisterScreenBody();
+
+  @override
+  State<_RegisterScreenBody> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<_RegisterScreenBody> {
   final _formKey = GlobalKey<FormState>();
   final _displayName = TextEditingController();
   final _email = TextEditingController();
@@ -57,7 +68,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _error = null;
     });
     try {
-      await context.read<AuthRepository>().register(
+      await context.read<AuthFlowCubit>().register(
         email: _email.text.trim(),
         username: _username.text.trim(),
         displayName: _displayName.text.trim(),
@@ -83,7 +94,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _resend() async {
     setState(() => _resending = true);
     try {
-      await context.read<AuthRepository>().resendVerification(
+      await context.read<AuthFlowCubit>().resendVerification(
         _email.text.trim(),
       );
       if (!mounted) return;

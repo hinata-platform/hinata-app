@@ -16,6 +16,7 @@ import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/repositories/admin_repository.dart';
+import '../../core/repositories/meta_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
@@ -25,9 +26,11 @@ import '../../core/responsive/golden_columns.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart'
     show showGlassToast, showGlassErrorToast, GlassToastKind;
+import 'admin_settings_cubit.dart';
 import 'admin_sso_section.dart';
 import 'sections/admin_app_section.dart';
 import 'sections/admin_audit_section.dart';
+import 'sections/audit_log_cubit.dart';
 import 'sections/admin_connect_section.dart';
 import 'sections/admin_email_section.dart';
 import 'sections/admin_general_section.dart';
@@ -124,7 +127,7 @@ const _navItems = <_SectionMeta>[
 
 // ─────────────────────────── Root screen ─────────────────────────────────
 
-class AdminScreen extends StatefulWidget {
+class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key, this.initialSection});
 
   /// Optional section to open on entry (e.g. a deep link `/admin?section=connect`).
@@ -132,15 +135,33 @@ class AdminScreen extends StatefulWidget {
   final String? initialSection;
 
   @override
-  State<AdminScreen> createState() => _AdminScreenState();
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      BlocProvider(
+        create: (context) => AdminSettingsCubit(
+          admin: context.read<AdminRepository>(),
+          meta: context.read<MetaRepository>(),
+        )..load(),
+      ),
+      BlocProvider(
+        create: (context) =>
+            AuditLogCubit.admin(context.read<AdminRepository>()),
+      ),
+    ],
+    child: _AdminView(initialSection: initialSection),
+  );
 }
 
-class _AdminScreenState extends State<AdminScreen> {
-  Map<String, dynamic>? _settings;
-  bool _loading = true;
-  bool _saving = false;
-  String? _error;
+class _AdminView extends StatefulWidget {
+  const _AdminView({this.initialSection});
 
+  final String? initialSection;
+
+  @override
+  State<_AdminView> createState() => _AdminViewState();
+}
+
+class _AdminViewState extends State<_AdminView> {
   // Desktop: which section is shown in the right pane.
   _AdminSection _desktopSection = _AdminSection.general;
 
@@ -151,7 +172,6 @@ class _AdminScreenState extends State<AdminScreen> {
   void initState() {
     super.initState();
     _applyInitialSection();
-    _load();
   }
 
   /// Preselects the section named by [AdminScreen.initialSection] (deep link).
@@ -170,43 +190,11 @@ class _AdminScreenState extends State<AdminScreen> {
     }
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      _settings = await context.read<AdminRepository>().adminSettings();
-      if (!mounted) return;
-      setState(() => _loading = false);
-    } on ApiFailure catch (failure) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = failure.message;
-      });
-    } catch (_) {
-      // A malformed 200 payload (e.g. a cast error, an HTML proxy page) throws
-      // outside ApiFailure — surface the generic error + Retry instead of
-      // getting stuck on the loader forever.
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = 'errors.unexpected';
-      });
-    }
-  }
-
   Future<void> _save() async {
-    if (_settings == null) return;
-    setState(() => _saving = true);
+    final cubit = context.read<AdminSettingsCubit>();
+    if (cubit.state.settings == null) return;
     try {
-      // Without the time-tracking block: it is kept on the Organisation page
-      // now (HIN-129), and for an admin who also holds that role the copy
-      // loaded here would overwrite what was saved there in the meantime.
-      _settings = await context.read<AdminRepository>().updateAdminSettings(
-        {..._settings!}..remove('timeTracking'),
-      );
+      await cubit.save();
       if (mounted) {
         // These settings decide what /meta reports — feature flags above all.
         // Re-read it so the admin sees the nav entry they just switched on
@@ -228,8 +216,6 @@ class _AdminScreenState extends State<AdminScreen> {
       if (mounted) {
         showGlassErrorToast(context, context.t(failure.message));
       }
-    } finally {
-      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -247,10 +233,11 @@ class _AdminScreenState extends State<AdminScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
+    final state = context.watch<AdminSettingsCubit>().state;
+    if (state.status == AdminSettingsStatus.loading) {
       return const Center(child: HiveLoader());
     }
-    if (_error != null) {
+    if (state.status == AdminSettingsStatus.failure) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -258,12 +245,12 @@ class _AdminScreenState extends State<AdminScreen> {
             Icon(LucideIcons.cloudOff, size: 48, color: AppColors.inkFaint),
             const SizedBox(height: 12),
             Text(
-              context.t(_error!),
+              context.t(state.errorKey!),
               style: TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 12),
             OutlinedButton(
-              onPressed: _load,
+              onPressed: context.read<AdminSettingsCubit>().load,
               child: Text(context.t('common.retry')),
             ),
           ],
@@ -271,7 +258,7 @@ class _AdminScreenState extends State<AdminScreen> {
       );
     }
 
-    final settings = _settings!;
+    final settings = state.settings!;
 
     return ResponsiveBuilder(
       builder: (context, size) {
@@ -348,7 +335,7 @@ class _AdminScreenState extends State<AdminScreen> {
         label: context.t('common.save'),
         onTap: (_) => _save(),
         primary: true,
-        busy: _saving,
+        busy: context.read<AdminSettingsCubit>().state.saving,
       ),
     ];
   }

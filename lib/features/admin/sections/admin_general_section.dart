@@ -12,14 +12,13 @@ import '../../../core/blocs/app_config_bloc.dart';
 import '../../../core/branding/org_logo_store.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/util/file_pick.dart';
-import '../../../core/repositories/admin_repository.dart';
-import '../../../core/repositories/meta_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/glass_popup_menu.dart';
 import '../../sprint/modals/glass_modal.dart'
     show showGlassToast, showGlassErrorToast, GlassToastKind;
 import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
+import '../admin_settings_cubit.dart';
 
 /// General organization settings: name, logo, timezone, default language.
 class AdminGeneralSection extends StatefulWidget {
@@ -59,7 +58,7 @@ class _AdminGeneralSectionState extends State<AdminGeneralSection> {
       !url.startsWith('https://');
 
   Future<void> _uploadLogo() async {
-    final repo = context.read<AdminRepository>();
+    final admin = context.read<AdminSettingsCubit>();
     final updated = context.t('admin.logoUpdated');
     final failed = context.t('admin.logoUploadFailed');
 
@@ -90,7 +89,7 @@ class _AdminGeneralSectionState extends State<AdminGeneralSection> {
 
     setState(() => _logoBusy = true);
     try {
-      final url = await repo.uploadOrganizationLogo(multipart);
+      final url = await admin.uploadLogo(multipart);
       if (!mounted) return;
       // Sync the draft so a later "Save" of the settings form doesn't clobber
       // the freshly-uploaded logo, and bump the version to refresh the preview.
@@ -108,13 +107,13 @@ class _AdminGeneralSectionState extends State<AdminGeneralSection> {
   }
 
   Future<void> _removeLogo() async {
-    final repo = context.read<AdminRepository>();
+    final admin = context.read<AdminSettingsCubit>();
     final removed = context.t('admin.logoRemoved');
     final failed = context.t('admin.logoUploadFailed');
 
     setState(() => _logoBusy = true);
     try {
-      await repo.deleteOrganizationLogo();
+      await admin.deleteLogo();
       if (!mounted) return;
       setState(() {
         _general['logoUrl'] = '';
@@ -422,7 +421,7 @@ class _LogoPreviewState extends State<_LogoPreview> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final res = await context.read<MetaRepository>().organizationLogo(
+      final res = await context.read<AdminSettingsCubit>().logo(
         cacheBust: widget.version,
       );
       if (!mounted) return;

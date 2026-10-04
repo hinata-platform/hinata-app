@@ -54,6 +54,7 @@ import 'issue_filter.dart';
 import 'issue_filter_popup.dart';
 import 'issue_form.dart';
 import 'issue_move_wizard.dart';
+import 'issues_cubit.dart';
 import '../../core/repositories/issue_repository.dart';
 import '../../core/repositories/meta_repository.dart';
 import '../../core/repositories/project_repository.dart';
@@ -111,7 +112,11 @@ class _IssuesScreenState extends State<IssuesScreen> {
 
   static const int _pageSize = 100;
 
-  late final PagedCubit<Issue> _issues;
+  late final IssuesListCubit _issues;
+
+  /// Built on the first export, not with the screen: only an export reads the
+  /// server's meta and logo.
+  IssuesExportCubit? _exporter;
   final ScrollController _scroll = ScrollController();
 
   // Reference data (users + projects), loaded once in parallel with page 0.
@@ -262,8 +267,6 @@ class _IssuesScreenState extends State<IssuesScreen> {
       return;
     }
     final ids = _selected.keys.toList();
-    final issueApi = context.read<IssueRepository>();
-    final projectApi = context.read<ProjectRepository>();
     final meta = context.read<AppConfigBloc?>()?.state.meta;
     final projectIds = _selected.values.toSet();
     final project = projectIds.length == 1
@@ -278,13 +281,13 @@ class _IssuesScreenState extends State<IssuesScreen> {
       // Only asked while a rule is on offer, which needs the one project.
       resolve: (offset) async {
         if (project == null) return null;
-        return projectApi.resolveOffset(project.id, offset: offset);
+        return _issues.resolveOffset(project.id, offset: offset);
       },
     );
     if (choice == null || !mounted) return;
     setState(() => _bulkBusy = true);
     try {
-      final updated = await issueApi.bulkSetDeadline(
+      final updated = await _issues.bulkSetDeadline(
         ids,
         // A rule's day is only what the editor showed; the server writes the
         // real one from the rule, so it is not sent alongside.
@@ -391,23 +394,12 @@ class _IssuesScreenState extends State<IssuesScreen> {
       // Changes this screen made itself are already in its rows.
       if (!identical(origin, this)) _reload();
     });
-    _issues = PagedCubit<Issue>(
-      (page, size) async {
-        final result = await context.read<IssueRepository>().issues(
-          projectId: widget.projectId,
-          archived: _filter.archivedOnly,
-          states: _serverStates,
-          priorities: _serverPriorities,
-          types: _serverTypes,
-          assigneeIds: _serverAssignees,
-          sort: _sort.wire,
-          page: page,
-          size: size,
-        );
-        return (items: result.issues, total: result.total);
-      },
+    _issues = IssuesListCubit(
+      issues: context.read<IssueRepository>(),
+      projects: context.read<ProjectRepository>(),
+      users: context.read<UserRepository>(),
+      query: () => _query,
       pageSize: _pageSize,
-      keyOf: (i) => i.id,
     )..load();
     _scroll.addListener(_onScroll);
     _loadRef();
@@ -422,6 +414,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
     _issueSub?.cancel();
     _scroll.dispose();
     _issues.close();
+    _exporter?.close();
     super.dispose();
   }
 
@@ -435,12 +428,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
       });
     }
     try {
-      final results = await Future.wait([
-        context.read<UserRepository>().users(),
-        context.read<ProjectRepository>().projects(),
-      ]);
-      final users = results[0] as List<DirectoryUser>;
-      final projects = results[1] as List<Project>;
+      final (:users, :projects) = await _issues.reference();
       // Workflow-state order (UPPER-CASE), unioned across projects in first-seen
       // order, so status grouping lists columns the way the projects define them.
       final stateOrder = <String>[];
@@ -778,8 +766,10 @@ class _IssuesScreenState extends State<IssuesScreen> {
     // Read inherited blocs / repositories before the first await to avoid using
     // context across async gaps.
     final cachedMeta = context.read<AppConfigBloc>().state.meta;
-    final issueApi = context.read<IssueRepository>();
-    final metaApi = context.read<MetaRepository>();
+    final exporter = _exporter ??= IssuesExportCubit(
+      issues: context.read<IssueRepository>(),
+      meta: context.read<MetaRepository>(),
+    );
     setState(() => _exporting = true);
     try {
       // Export EVERY matching issue, not just the pages scrolled into view:
@@ -787,15 +777,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
       // regardless of how far the user has scrolled.
       final List<Issue> all;
       try {
-        all = await issueApi.allIssues(
-          projectId: widget.projectId,
-          archived: _filter.archivedOnly,
-          states: _serverStates,
-          priorities: _serverPriorities,
-          types: _serverTypes,
-          assigneeIds: _serverAssignees,
-          sort: _sort.wire,
-        );
+        all = await exporter.all(_query);
       } catch (_) {
         if (mounted) {
           _toast(context.t('reports.exportFailed'), kind: GlassToastKind.error);
@@ -808,13 +790,13 @@ class _IssuesScreenState extends State<IssuesScreen> {
       if (format == 'pdf') {
         ServerMeta? meta = cachedMeta;
         try {
-          meta = await metaApi.meta();
+          meta = await exporter.meta();
         } catch (_) {
           meta = cachedMeta;
         }
         Uint8List? logoPng;
         try {
-          final logoAsset = await metaApi.organizationLogo();
+          final logoAsset = await exporter.organizationLogo();
           if (logoAsset != null) {
             logoPng = await logoToPng(
               bytes: logoAsset.bytes,
@@ -1311,6 +1293,17 @@ class _IssuesScreenState extends State<IssuesScreen> {
   // ── server-pushed facets ──────────────────────────────────────────
   // The backend expresses state/priority/type/assignee directly, so a filtered
   // page comes back already reduced and we no longer drain every page for them.
+
+  /// What the list and its export ask the server for, as the head shows it.
+  IssueListQuery get _query => (
+    projectId: widget.projectId,
+    archived: _filter.archivedOnly,
+    states: _serverStates,
+    priorities: _serverPriorities,
+    types: _serverTypes,
+    assigneeIds: _serverAssignees,
+    sort: _sort.wire,
+  );
 
   List<String>? get _serverStates =>
       _filter.states.isEmpty ? null : _filter.states.toList();

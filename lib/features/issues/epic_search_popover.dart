@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/repositories/issue_repository.dart';
+import 'epic_search_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
@@ -99,7 +100,7 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
   static const _debounceDelay = Duration(milliseconds: 180);
   static const _pageSize = 25;
 
-  IssueRepository get _repo => context.read<IssueRepository>();
+  late final EpicSearchCubit _search;
 
   final _searchCtrl = TextEditingController();
   final _focus = FocusNode();
@@ -123,6 +124,10 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
   @override
   void initState() {
     super.initState();
+    _search = EpicSearchCubit(
+      context.read<IssueRepository>(),
+      projectId: widget.projectId,
+    );
     _scroll.addListener(_onScroll);
     // Autofocus so the user can type immediately; page 0 (empty query) is the
     // recency-ordered "recent" list.
@@ -137,6 +142,7 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
     _scroll.dispose();
     _searchCtrl.dispose();
     _focus.dispose();
+    _search.close();
     super.dispose();
   }
 
@@ -178,8 +184,7 @@ class _EpicSearchPanelState extends State<_EpicSearchPanel> {
       // be any *standard* issue (not EPIC/SUBTASK); the search endpoint's `type`
       // param takes a single value, so we query untyped and drop non-standard
       // rows per page. Standard issues dominate a project, so pages stay dense.
-      final res = await _repo.issues(
-        projectId: widget.projectId,
+      final res = await _search.search(
         type: widget.forSubtask ? null : 'EPIC',
         query: query.isEmpty ? null : query,
         page: page,

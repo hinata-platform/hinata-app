@@ -109,10 +109,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   // half-open stream is cycled instead of silently going stale) and a resync on
   // every reconnect to catch up anything missed while it was down.
   late final SseConnection _commentSse = SseConnection(
-    open: (cancelToken) => _commentApi.commentEventStream(
-      widget.issueId,
-      cancelToken: cancelToken,
-    ),
+    open: (cancelToken) =>
+        _detail.commentEventStream(widget.issueId, cancelToken: cancelToken),
     onEvent: (_) => _scheduleCommentResync(),
     onReconnect: _scheduleCommentResync,
   );
@@ -165,7 +163,6 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   // Breadcrumb ancestors + direct children (epic→stories, story→sub-tasks).
   IssueHierarchy _hierarchy = IssueHierarchy.empty;
   List<KbArticle> _documentedIn = const [];
-  KnowledgeRepository get _knowledge => context.read<KnowledgeRepository>();
   // Labels deleted this session — guards against the stale _project list
   // re-suggesting a label that was just removed from the project.
   final Set<String> _deletedLabels = {};
@@ -224,10 +221,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   // up front when an issue is opened.
   _ActivityFilter _activityFilter = _ActivityFilter.comments;
 
-  // Domain repositories, read from the (re-provided) modal scope on each access
-  // — kept as getters so a `context.read` never crosses an async gap in the
-  // load/mutation flows below.
-  IssueRepository get _issueApi => context.read<IssueRepository>();
+  /// Where every request of this body goes. Built once from the (re-provided)
+  /// modal scope in [initState], so no `context.read` ever crosses an async gap
+  /// in the load/mutation flows below.
+  late final IssueDetailCubit _detail;
 
   /// Opens the reply-by-email composer for the current issue, or null when the
   /// action isn't available (not email-sourced, or the admin flag is off).
@@ -236,19 +233,23 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         context.read<AppConfigBloc>().state.meta?.isFlagEnabled('emailReply') ??
         false;
     if (!issue.isEmailSourced || !enabled) return null;
-    return () => showEmailReplySheet(context, issue: issue, repo: _issueApi);
+    return () => showEmailReplySheet(context, issue: issue);
   }
-
-  CommentRepository get _commentApi => context.read<CommentRepository>();
-  ProjectRepository get _projectApi => context.read<ProjectRepository>();
-  UserRepository get _userApi => context.read<UserRepository>();
-  MediaRepository get _mediaApi => context.read<MediaRepository>();
 
   @override
   void initState() {
     super.initState();
+    final issues = context.read<IssueRepository>();
+    _detail = IssueDetailCubit(
+      issues: issues,
+      comments: context.read<CommentRepository>(),
+      projects: context.read<ProjectRepository>(),
+      users: context.read<UserRepository>(),
+      media: context.read<MediaRepository>(),
+      knowledge: context.read<KnowledgeRepository>(),
+    );
     _watch = IssueWatchCubit(
-      repository: _issueApi,
+      repository: issues,
       issueId: widget.issueId,
       userId: context.read<AuthBloc>().state.user?.id,
     );
@@ -292,6 +293,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     _titleCtrl.dispose();
     _descCtrl.dispose();
     _watch.close();
+    _detail.close();
     super.dispose();
   }
 
@@ -335,12 +337,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     try {
       final want = math.max(_comments.length, _commentPageSize);
       final results = await Future.wait([
-        _commentApi.comments(
-          widget.issueId,
-          size: want,
-          sort: _commentSort.api,
-        ),
-        _commentApi.pinnedComments(widget.issueId),
+        _detail.comments(widget.issueId, size: want, sort: _commentSort.api),
+        _detail.pinnedComments(widget.issueId),
       ]);
       if (!mounted) return;
       final page = results[0] as ({List<IssueComment> items, int total});
@@ -368,7 +366,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       if (t == null || !mounted) continue;
       final want = math.max(t.replies.length, _replyPageSize);
       try {
-        final p = await _commentApi.commentReplies(
+        final p = await _detail.commentReplies(
           widget.issueId,
           rootId,
           size: want,
@@ -424,7 +422,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     required bool replace,
   }) async {
     try {
-      final p = await _commentApi.commentReplies(
+      final p = await _detail.commentReplies(
         widget.issueId,
         rootId,
         page: page,
@@ -467,7 +465,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   Future<void> _reloadTopLevelComments() async {
     try {
-      final p = await _commentApi.comments(
+      final p = await _detail.comments(
         widget.issueId,
         size: _commentPageSize,
         sort: _commentSort.api,
@@ -598,7 +596,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       // sprints/hierarchy/canDelete/knowledge). On native (HTTP/1.1, no
       // multiplexing, WAN latency) that fan-out paid a TLS handshake per hop and
       // intermittently failed; collapsing it is the core issue-load speed-up.
-      final detail = await _issueApi.issueDetail(
+      final detail = await _detail.issueDetail(
         widget.issueId,
         commentSize: _commentPageSize,
         commentSort: _commentSort.api,
@@ -664,7 +662,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// best-effort — a slow or failed fetch just leaves that section empty.
   Future<void> _hydrateSecondary(Issue issue) async {
     try {
-      final all = await _userApi.users();
+      final all = await _detail.users();
       if (mounted && all.isNotEmpty) setState(() => _setUsers(all));
     } catch (_) {
       // Keep the referenced-user subset from the aggregate.
@@ -679,8 +677,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       // init() powers the composer's {{doc:…}} mention menu; the issue↔article
       // backlinks come from the dedicated server endpoint (ACL-correct,
       // O(matches)).
-      await _knowledge.init();
-      final docs = await _knowledge.articlesReferencingIssue(issue.readableId);
+      final docs = await _detail.documentedIn(issue.readableId);
       if (mounted) setState(() => _documentedIn = docs);
     } catch (_) {
       if (mounted) setState(() => _documentedIn = const []);
@@ -694,12 +691,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   Future<void> _reloadWorkItems() async {
     try {
       final results = await Future.wait<Object>([
-        _issueApi.workItemsPage(
-          widget.issueId,
-          page: 0,
-          size: _workItemPageSize,
-        ),
-        _issueApi.issue(widget.issueId),
+        _detail.workItemsPage(widget.issueId, page: 0, size: _workItemPageSize),
+        _detail.issue(widget.issueId),
       ]);
       if (!mounted) return;
       final page = results[0] as ({List<WorkItem> items, int total});
@@ -717,7 +710,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     if (!mounted) return;
     setState(() => _busy = true);
     try {
-      final updated = await _issueApi.updateIssue(widget.issueId, patch);
+      final updated = await _detail.updateIssue(widget.issueId, patch);
       if (!mounted) return;
       // Commit now rather than riding along on the `finally` rebuild: the
       // activity refetch and the hierarchy reload below are two more round
@@ -728,7 +721,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       // Refresh the change history so the new entry shows immediately (reset to
       // the newest page).
       try {
-        final p = await _issueApi.issueActivity(widget.issueId);
+        final p = await _detail.issueActivity(widget.issueId);
         _activity = p.items;
         _activityTotal = p.total;
         _activityPage = 0;
@@ -761,7 +754,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// sub-task panels reflect a re-parent, an inline add, or a state toggle.
   Future<void> _reloadHierarchy() async {
     try {
-      final h = await _issueApi.issueHierarchy(widget.issueId);
+      final h = await _detail.issueHierarchy(widget.issueId);
       if (mounted) setState(() => _hierarchy = h);
     } catch (_) {
       // Non-critical; the next full load reflects server truth.
@@ -797,7 +790,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   Future<void> _refreshActivity() async {
     try {
-      final page = await _issueApi.issueActivity(widget.issueId);
+      final page = await _detail.issueActivity(widget.issueId);
       if (mounted) {
         setState(() {
           _activity = page.items;
@@ -866,7 +859,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     _sendingComment = true;
     try {
       final replyTarget = _replyingTo;
-      final created = await _commentApi.addComment(
+      final created = await _detail.addComment(
         widget.issueId,
         text,
         replyToId: replyTarget?.id,
@@ -893,7 +886,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// After a top-level comment: reload the newest window so it appears (top for
   /// newest-first, bottom for oldest-first) and reveal it.
   Future<void> _refreshTopLevelAfterPost() async {
-    final p = await _commentApi.comments(
+    final p = await _detail.comments(
       widget.issueId,
       size: math.max(_comments.length + 1, _commentPageSize),
       sort: _commentSort.api,
@@ -977,7 +970,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     final trimmed = text.trim();
     if (trimmed.isEmpty || trimmed == comment.text) return true;
     try {
-      final updated = await _commentApi.editComment(
+      final updated = await _detail.editComment(
         widget.issueId,
         comment.id,
         trimmed,
@@ -1004,7 +997,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     );
     if (confirmed != true || !mounted) return;
     try {
-      await _commentApi.deleteComment(widget.issueId, comment.id);
+      await _detail.deleteComment(widget.issueId, comment.id);
       if (mounted) {
         setState(() => _removeComment(comment));
       }
@@ -1107,7 +1100,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
     setState(() => _mutateAll(comment.id, toggle));
     try {
-      final updated = await _commentApi.reactToComment(
+      final updated = await _detail.reactToComment(
         widget.issueId,
         comment.id,
         emoji,
@@ -1128,12 +1121,12 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// Pins/unpins a comment (any project member); refreshes pin ordering.
   Future<void> _togglePin(IssueComment comment) async {
     try {
-      final updated = await _commentApi.pinComment(
+      final updated = await _detail.pinComment(
         widget.issueId,
         comment.id,
         !comment.pinned,
       );
-      final pinned = await _commentApi.pinnedComments(widget.issueId);
+      final pinned = await _detail.pinnedComments(widget.issueId);
       if (!mounted) return;
       setState(() {
         _pinned = pinned;
@@ -1174,7 +1167,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   /// Copies a comment's text (or its inline image as real image data).
   Future<void> _copyComment(IssueComment comment) async {
-    final kind = await copyComment(_mediaApi, comment);
+    final kind = await _detail.copyComment(comment);
     if (!mounted) return;
     _toast(
       kind == CommentCopyKind.image
@@ -1189,7 +1182,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     final issue = _issue;
     if (issue == null) return;
     final link =
-        '${issueWebLink(_issueApi.apiBaseUrl, issue.linkId)}?comment=${comment.id}';
+        '${issueWebLink(_detail.apiBaseUrl, issue.linkId)}?comment=${comment.id}';
     await Clipboard.setData(ClipboardData(text: link));
     if (!mounted) return;
     _toast(context.t('comments.linkCopied'), kind: GlassToastKind.success);
@@ -1239,7 +1232,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     var failed = false;
     for (final id in ids) {
       try {
-        await _commentApi.deleteComment(widget.issueId, id);
+        await _detail.deleteComment(widget.issueId, id);
         deleted.add(id);
       } catch (_) {
         failed = true;
@@ -1387,7 +1380,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       // Derive the page from how many are loaded (survives an SSE resync that
       // reset the window), so each pull fetches the next older batch.
       final next = _comments.length ~/ _commentPageSize;
-      final p = await _commentApi.comments(
+      final p = await _detail.comments(
         widget.issueId,
         page: next,
         size: _commentPageSize,
@@ -1427,7 +1420,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     setState(() => _loadingMore = true);
     try {
       final next = _activityPage + 1;
-      final p = await _issueApi.issueActivity(widget.issueId, page: next);
+      final p = await _detail.issueActivity(widget.issueId, page: next);
       if (!mounted) return;
       final existing = {for (final a in _activity) a.id};
       final older = [
@@ -1557,11 +1550,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     // is routinely two or three screens tall, and UIKit refuses a popover
     // anchor that does not fit inside the window. See [shareOriginOf].
     final origin = shareOriginOf(context, preferred: anchor);
-    final api = context.read<ApiClient>();
     setState(() => _busy = true);
     try {
       final extension = choice.extension ?? IssueExportChoice.pdf.extension!;
-      final bytes = await fetchIssueExport(api, issue.id, extension);
+      final bytes = await _detail.export(issue.id, extension);
       if (!mounted) return;
       if (choice == IssueExportChoice.print) {
         // layoutPdf, not sharePdf: this opens the print dialog rather than the
@@ -1636,7 +1628,6 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       context,
       issue: issue,
       users: _users,
-      repository: _issueApi,
       meId: me?.id,
       multiAssignee:
           context.read<AppConfigBloc>().state.meta?.multiAssignee ?? false,
@@ -1741,7 +1732,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 issue: issue,
                 busy: _busy,
                 stateColor: _projStateColor(_project, issue.state),
-                link: issueWebLink(_issueApi.apiBaseUrl, issue.linkId),
+                link: issueWebLink(_detail.apiBaseUrl, issue.linkId),
                 onMinimize: widget.canMinimize ? _minimizeToModal : null,
                 onDelete: () => _confirmDelete(issue),
                 onExport: exportIssue,
@@ -1899,7 +1890,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     final missing = keys.where((k) => !_projectIssues.containsKey(k)).toList();
     if (missing.isEmpty) return;
     try {
-      final resolved = await _issueApi.resolveIssues(missing);
+      final resolved = await _detail.resolveIssues(missing);
       if (!mounted || resolved.isEmpty) return;
       final merged = {
         ..._projectIssues,
@@ -1926,13 +1917,13 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   IssueLinkResolver _buildResolver(Issue issue) => IssueLinkResolver(
     issuesByReadable: {issue.readableId: issue, ..._projectIssues},
     users: _users,
-    knowledgeRepo: _knowledge,
+    knowledgeRepo: _detail.knowledge,
     stateColorFor: (s) =>
         _projStateColor(_project, s) ?? AppColors.stateColor(s),
     onOpenIssue: _openLinkedIssue,
     onOpenDoc: _openArticle,
     searchIssues: (q) =>
-        _issueApi.mentionSearch(projectId: issue.projectId, query: q),
+        _detail.mentionSearch(projectId: issue.projectId, query: q),
   );
 
   /// Opens the real issue for a readable id (e.g. `HIV-208`): tries the loaded
@@ -1942,7 +1933,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     var match = _projectIssues[readableId];
     if (match == null) {
       try {
-        final res = await _issueApi.issues(query: readableId, size: 20);
+        final res = await _detail.searchIssues(readableId, size: 20);
         match = res.issues.where((i) => i.readableId == readableId).firstOrNull;
       } on ApiFailure catch (failure) {
         _toast(failure.message);
@@ -1976,7 +1967,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     if (_documentedIn.isEmpty) return null;
     return _DocumentedIn(
       articles: _documentedIn,
-      knowledge: _knowledge,
+      knowledge: _detail.knowledge,
       onOpen: _openArticle,
     );
   }
@@ -2377,7 +2368,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   Future<bool> _addSubtask(Issue parent, String title) async {
     if (title.trim().isEmpty) return false;
     try {
-      await _issueApi.createIssue({
+      await _detail.createIssue({
         'projectId': parent.projectId,
         'title': title.trim(),
         'type': 'SUBTASK',
@@ -2412,7 +2403,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     }
     if (target == child.state) return;
     try {
-      await _issueApi.updateIssue(child.id, {'state': target});
+      await _detail.updateIssue(child.id, {'state': target});
       await _hierarchyChanged();
     } on ApiFailure catch (failure) {
       _toast(failure.message);
@@ -2833,7 +2824,12 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   }
 
   Future<void> _deleteWorkItem(WorkItem item) async {
-    if (!await confirmDeleteWorkItem(context, item) || !mounted) return;
+    final deleted = await confirmDeleteWorkItem(
+      context,
+      item,
+      delete: _detail.deleteWorkItem,
+    );
+    if (!deleted || !mounted) return;
     _notifyChanged();
     await _reloadWorkItems();
   }
@@ -2990,7 +2986,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
               issue: issue,
               busy: _busy,
               stateColor: _projStateColor(_project, issue.state),
-              link: issueWebLink(_issueApi.apiBaseUrl, issue.linkId),
+              link: issueWebLink(_detail.apiBaseUrl, issue.linkId),
               onMinimize: widget.canMinimize ? _minimizeToModal : null,
               onDelete: () => _confirmDelete(issue),
               onExport: exportIssue,
@@ -3248,9 +3244,19 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   Future<void> _onComposerAttach(ComposerAttach kind) async {
     switch (kind) {
       case ComposerAttach.camera:
-        await insertCommentPhoto(context, _commentActions, ImageSource.camera);
+        await insertCommentPhoto(
+          context,
+          _commentActions,
+          ImageSource.camera,
+          upload: _detail.uploadMedia,
+        );
       case ComposerAttach.gallery:
-        await insertCommentPhoto(context, _commentActions, ImageSource.gallery);
+        await insertCommentPhoto(
+          context,
+          _commentActions,
+          ImageSource.gallery,
+          upload: _detail.uploadMedia,
+        );
       case ComposerAttach.file:
         // Drive the attachments section's own optimistic upload so the new tile
         // appears live (no reload, no dependence on the SSE `added` event).
@@ -3262,6 +3268,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           await attachFileToIssue(
             context,
             widget.issueId,
+            upload: _detail.uploadAttachment,
             onChanged: _notifyChanged,
           );
         }
@@ -3275,7 +3282,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     _sendingComment = true;
     try {
       final replyTarget = _replyingTo;
-      final created = await _commentApi.addVoiceComment(
+      final created = await _detail.addVoiceComment(
         widget.issueId,
         bytes: recording.bytes,
         mime: recording.mime,
@@ -3321,7 +3328,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       avatarFor: (id) => _avatars[id],
       pronounsFor: (id) => _pronouns[id],
       loadVoice: (c) =>
-          () => _commentApi.voiceCommentAudio(widget.issueId, c.id),
+          () => _detail.voiceCommentAudio(widget.issueId, c.id),
       canManage: (c) => me != null && c.authorId == me.id,
       onEdit: _promptEditComment,
       onDelete: _deleteComment,
@@ -3656,7 +3663,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       available: available,
       selected: issue.tags.where((l) => !_deletedLabels.contains(l)).toList(),
       onDelete: (l) async {
-        await _projectApi.deleteProjectLabel(issue.projectId, l);
+        await _detail.deleteProjectLabel(issue.projectId, l);
         _deletedLabels.add(l);
         didDelete = true;
       },
@@ -3667,7 +3674,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       // Dismissed without saving, but a label was deleted server-side — pull
       // the fresh issue so its tag chips reflect the removal.
       try {
-        final fresh = await _issueApi.issue(widget.issueId);
+        final fresh = await _detail.issue(widget.issueId);
         if (mounted) setState(() => _adoptIssue(fresh));
       } catch (_) {
         /* next full load reflects server truth */
@@ -3739,7 +3746,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       anchorRect: anchorRect,
       defaultBasis: _defaultDeadlineBasis,
       resolve: (offset) =>
-          _projectApi.resolveOffset(issue.projectId, offset: offset),
+          _detail.resolveOffset(issue.projectId, offset: offset),
     );
     if (choice == null || !mounted) return;
     if (choice.cleared) {
@@ -3852,7 +3859,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   Future<void> _confirmDelete(Issue issue) async {
     if (issue.archived) {
       try {
-        final restored = await _issueApi.unarchiveIssue(issue.id);
+        final restored = await _detail.unarchiveIssue(issue.id);
         if (!mounted) return;
         setState(() => _adoptIssue(restored));
         _publishHeader(restored);
@@ -3872,9 +3879,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     try {
       switch (action) {
         case _IssueRemovalAction.delete:
-          await _issueApi.deleteIssue(issue.id);
+          await _detail.deleteIssue(issue.id);
         case _IssueRemovalAction.archive:
-          await _issueApi.archiveIssue(issue.id);
+          await _detail.archiveIssue(issue.id);
       }
       _notifyChanged();
       if (!mounted) return;

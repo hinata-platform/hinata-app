@@ -9,6 +9,7 @@ import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/repositories/auth_repository.dart';
 import 'auth_shell.dart';
+import 'auth_flow_cubit.dart';
 
 /// Outcome of every handoff code this process has tried: absent = untouched,
 /// null = a redemption is in flight, true/false = it finished.
@@ -43,7 +44,7 @@ const _handoffTimeout = Duration(seconds: 45);
 /// nothing else will ever move the user off this route. Every failure path here
 /// must therefore navigate to `/login` itself, or the user is left staring at a
 /// spinner forever with the app unusable.
-class SsoCallbackScreen extends StatefulWidget {
+class SsoCallbackScreen extends StatelessWidget {
   const SsoCallbackScreen({
     super.key,
     this.code,
@@ -67,16 +68,41 @@ class SsoCallbackScreen extends StatefulWidget {
   final String? refreshToken;
 
   @override
-  State<SsoCallbackScreen> createState() => _SsoCallbackScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => AuthFlowCubit(context.read<AuthRepository>()),
+    child: _SsoCallbackScreenBody(
+      code: code,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      error: error,
+    ),
+  );
 }
 
-class _SsoCallbackScreenState extends State<SsoCallbackScreen> {
+class _SsoCallbackScreenBody extends StatefulWidget {
+  const _SsoCallbackScreenBody({
+    this.code,
+    required this.accessToken,
+    required this.refreshToken,
+    this.error,
+  });
+
+  final String? code;
+  final String? error;
+  final String? accessToken;
+  final String? refreshToken;
+
+  @override
+  State<_SsoCallbackScreenBody> createState() => _SsoCallbackScreenState();
+}
+
+class _SsoCallbackScreenState extends State<_SsoCallbackScreenBody> {
   // Captured up front so the sign-in never depends on this widget still being
   // mounted: the route can be left while the redeem POST is still in flight,
   // and the tokens it comes back with must still reach the bloc. They belong to
   // the app, not to this screen.
   late final AuthBloc _auth;
-  late final AuthRepository _repository;
+  late final AuthFlowCubit _flow;
   Timer? _watchdog;
 
   @override
@@ -86,7 +112,7 @@ class _SsoCallbackScreenState extends State<SsoCallbackScreen> {
     // would run the lookup on whichever code path touches it first, which may
     // be after this screen was replaced.
     _auth = context.read<AuthBloc>();
-    _repository = context.read<AuthRepository>();
+    _flow = context.read<AuthFlowCubit>();
     // Nothing can hold this screen longer than the timeout, whatever goes wrong
     // below — a redeem that never settles, a bloc that never emits, a server
     // that accepts the connection and then goes quiet.
@@ -102,7 +128,7 @@ class _SsoCallbackScreenState extends State<SsoCallbackScreen> {
   /// redeemed; before, it was dropped, and the one link that carried the
   /// success went nowhere.
   @override
-  void didUpdateWidget(covariant SsoCallbackScreen oldWidget) {
+  void didUpdateWidget(covariant _SsoCallbackScreenBody oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.code != oldWidget.code ||
         widget.error != oldWidget.error ||
@@ -160,7 +186,7 @@ class _SsoCallbackScreenState extends State<SsoCallbackScreen> {
   Future<void> _redeem(String code) async {
     _handoffAttempts[code] = null;
     try {
-      final pair = await _repository.exchangeSso(code);
+      final pair = await _flow.exchangeSso(code);
       _handoffAttempts[code] = true;
       // Deliberately not gated on `mounted`: if a duplicate delivery replaced
       // this screen mid-request, dropping the tokens here would waste the one

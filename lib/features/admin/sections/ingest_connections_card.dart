@@ -16,19 +16,31 @@ import '../../../core/widgets/hive_widgets.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../admin_form_helpers.dart';
 import 'ingest_connection_editor.dart';
+import 'ingest_connections_cubit.dart';
 
 /// E-mail-to-ticket connection management: any number of IMAP mailbox/folder
 /// connections, each feeding a different project. Replaces the former single
 /// fixed mailbox config.
-class IngestConnectionsCard extends StatefulWidget {
+class IngestConnectionsCard extends StatelessWidget {
   const IngestConnectionsCard({super.key});
 
   @override
-  State<IngestConnectionsCard> createState() => _IngestConnectionsCardState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) =>
+        IngestConnectionsCubit(context.read<AdminRepository>()),
+    child: const _IngestConnectionsView(),
+  );
 }
 
-class _IngestConnectionsCardState extends State<IngestConnectionsCard> {
-  AdminRepository get _repo => context.read<AdminRepository>();
+class _IngestConnectionsView extends StatefulWidget {
+  const _IngestConnectionsView();
+
+  @override
+  State<_IngestConnectionsView> createState() => _IngestConnectionsCardState();
+}
+
+class _IngestConnectionsCardState extends State<_IngestConnectionsView> {
+  IngestConnectionsCubit get _ingest => context.read<IngestConnectionsCubit>();
 
   List<IngestConnection> _connections = [];
 
@@ -53,7 +65,7 @@ class _IngestConnectionsCardState extends State<IngestConnectionsCard> {
       _errorKey = null;
     });
     try {
-      final connections = await _repo.ingestConnections();
+      final connections = await _ingest.connections();
       await _resolveProjects(connections);
       if (!mounted) return;
       setState(() {
@@ -81,7 +93,7 @@ class _IngestConnectionsCardState extends State<IngestConnectionsCard> {
     try {
       var page = 0;
       while (missing.isNotEmpty) {
-        final result = await _repo.ingestProjectOptions(page: page, size: 100);
+        final result = await _ingest.projectOptions(page: page, size: 100);
         if (result.items.isEmpty) break;
         for (final option in result.items) {
           _projects[option.id] = option;
@@ -99,9 +111,7 @@ class _IngestConnectionsCardState extends State<IngestConnectionsCard> {
     final index = _connections.indexOf(connection);
     setState(() => _connections[index] = connection.copyWith(enabled: enabled));
     try {
-      final saved = await _repo.updateIngestConnection(
-        connection.copyWith(enabled: enabled),
-      );
+      final saved = await _ingest.update(connection.copyWith(enabled: enabled));
       if (!mounted) return;
       setState(() => _connections[index] = saved);
     } on ApiFailure catch (failure) {
@@ -148,7 +158,7 @@ class _IngestConnectionsCardState extends State<IngestConnectionsCard> {
     );
     if (confirmed != true || !mounted) return;
     try {
-      await _repo.deleteIngestConnection(connection.id!);
+      await _ingest.delete(connection.id!);
       if (!mounted) return;
       setState(
         () => _connections = _connections
@@ -212,7 +222,7 @@ class _IngestConnectionsCardState extends State<IngestConnectionsCard> {
 
     setState(() => _reprocessingId = connection.id);
     try {
-      final result = await _repo.reprocessIngestConnection(
+      final result = await _ingest.reprocess(
         connection.id!,
         createMissing: mode == 'full',
       );

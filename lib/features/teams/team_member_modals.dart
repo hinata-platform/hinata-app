@@ -18,6 +18,7 @@ import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../knowledge/team_pages_picker.dart';
+import 'team_members_cubit.dart';
 import 'team_modal_kit.dart';
 import 'team_widgets.dart';
 
@@ -28,17 +29,18 @@ Future<bool?> showAddMembersModal(
   required Team team,
   required Map<String, Project> projectsById,
 }) {
-  final repo = context.read<TeamRepository>();
-  final userRepo = context.read<UserRepository>();
+  final teams = context.read<TeamRepository>();
+  final users = context.read<UserRepository>();
   final articles = context.read<ArticleRepository>();
   return showTeamModal<bool>(
     context,
-    AddMembersBody(
-      repo: repo,
-      userRepo: userRepo,
-      articles: articles,
-      team: team,
-      projectsById: projectsById,
+    BlocProvider(
+      create: (_) => TeamMembersCubit(teams: teams, users: users),
+      child: AddMembersBody(
+        articles: articles,
+        team: team,
+        projectsById: projectsById,
+      ),
     ),
   );
 }
@@ -52,18 +54,21 @@ Future<bool?> showManageMemberModal(
   required Map<String, Project> projectsById,
   required bool isSelf,
 }) {
-  final repo = context.read<TeamRepository>();
+  final teams = context.read<TeamRepository>();
+  final users = context.read<UserRepository>();
   final articles = context.read<ArticleRepository>();
   return showTeamModal<bool>(
     context,
-    ManageMemberBody(
-      repo: repo,
-      articles: articles,
-      team: team,
-      membership: membership,
-      user: user,
-      projectsById: projectsById,
-      isSelf: isSelf,
+    BlocProvider(
+      create: (_) => TeamMembersCubit(teams: teams, users: users),
+      child: ManageMemberBody(
+        articles: articles,
+        team: team,
+        membership: membership,
+        user: user,
+        projectsById: projectsById,
+        isSelf: isSelf,
+      ),
     ),
     width: 520,
   );
@@ -127,19 +132,18 @@ mixin _KnowledgeDraft<W extends StatefulWidget> on State<W> {
 }
 
 /// The add-members modal's body. Public so tests can pump it without the
-/// modal route.
+/// modal route, under a [TeamMembersCubit].
+///
+/// [articles] is handed on to the knowledge page picker, which takes the
+/// repository itself; the body never reads from it.
 class AddMembersBody extends StatefulWidget {
   const AddMembersBody({
     super.key,
-    required this.repo,
-    required this.userRepo,
     required this.articles,
     required this.team,
     required this.projectsById,
   });
 
-  final TeamRepository repo;
-  final UserRepository userRepo;
   final ArticleRepository articles;
   final Team team;
   final Map<String, Project> projectsById;
@@ -211,7 +215,10 @@ class _AddMembersBodyState extends State<AddMembersBody>
     final query = _query.trim();
     setState(() => _loading = true);
     try {
-      final res = await widget.userRepo.searchUsers(query, size: _pageSize);
+      final res = await context.read<TeamMembersCubit>().searchUsers(
+        query,
+        size: _pageSize,
+      );
       if (!mounted || seq != _reqSeq) return;
       setState(() {
         _results
@@ -236,7 +243,7 @@ class _AddMembersBodyState extends State<AddMembersBody>
       _error = null;
     });
     try {
-      await widget.repo.addTeamMembers(
+      await context.read<TeamMembersCubit>().addMembers(
         widget.team.id,
         _selected.toList(),
         role: _role,
@@ -408,11 +415,13 @@ class _AddMembersBodyState extends State<AddMembersBody>
 }
 
 /// The manage-member modal's body. Public so tests can pump it without the
-/// modal route.
+/// modal route, under a [TeamMembersCubit].
+///
+/// [articles] is handed on to the knowledge page picker, as in
+/// [AddMembersBody].
 class ManageMemberBody extends StatefulWidget {
   const ManageMemberBody({
     super.key,
-    required this.repo,
     required this.articles,
     required this.team,
     required this.membership,
@@ -421,7 +430,6 @@ class ManageMemberBody extends StatefulWidget {
     required this.isSelf,
   });
 
-  final TeamRepository repo;
   final ArticleRepository articles;
   final Team team;
   final TeamMembership membership;
@@ -482,7 +490,7 @@ class _ManageMemberBodyState extends State<ManageMemberBody>
       AccessScope.none => const ProjectAccess.none(),
       AccessScope.some => ProjectAccess.some(_picked),
     };
-    return widget.repo.updateTeamMembership(
+    return context.read<TeamMembersCubit>().updateMembership(
       widget.team.id,
       widget.user.id,
       role: _role,
@@ -493,8 +501,12 @@ class _ManageMemberBodyState extends State<ManageMemberBody>
     );
   });
 
-  Future<void> _remove() =>
-      _run(() => widget.repo.removeTeamMember(widget.team.id, widget.user.id));
+  Future<void> _remove() => _run(
+    () => context.read<TeamMembersCubit>().removeMember(
+      widget.team.id,
+      widget.user.id,
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {

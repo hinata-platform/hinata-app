@@ -8,7 +8,6 @@ import '../../core/api/api_client.dart';
 import '../../core/blocs/my_absences_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/availability_models.dart';
-import '../../core/repositories/availability_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_widgets.dart' show fmtDuration;
 import '../../core/widgets/soft_card.dart';
@@ -16,6 +15,7 @@ import '../../core/models/absence_models.dart';
 import '../absences/absence_actions.dart';
 import '../absences/absence_labels.dart' show absenceTypeName;
 import '../time/day_marks.dart' show formatDaySpan, timeOffIcon;
+import 'timesheet_cubit.dart';
 
 /// The reader's own capacity for the window the timesheet shows, beside what
 /// they booked in it: "32 h of 40 h" (HIN-91).
@@ -78,7 +78,7 @@ class _TimesheetCapacityLineState extends State<TimesheetCapacityLine> {
   Future<void> _load() async {
     final read = ++_read;
     try {
-      final capacity = await context.read<AvailabilityRepository>().capacity(
+      final capacity = await context.read<TimesheetCubit>().capacity(
         widget.from,
         widget.to,
       );

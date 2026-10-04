@@ -14,6 +14,7 @@ import '../../../core/blocs/time_report_cubit.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/absence_report_models.dart';
 import '../../../core/models/time_report_models.dart';
+import '../../../core/repositories/absence_repository.dart';
 import '../../../core/repositories/time_report_repository.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../../core/responsive/responsive.dart';
@@ -32,6 +33,7 @@ import '../../shell/page_chrome.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../time_views.dart';
 import 'absence_report_tab.dart';
+import 'report_absences_cubit.dart';
 import 'report_actions.dart';
 import 'report_controls.dart';
 import 'report_detail_views.dart';
@@ -40,6 +42,7 @@ import 'report_format.dart';
 import 'report_import_wizard.dart';
 import 'report_list_parts.dart';
 import 'report_summary_view.dart';
+import 'time_reports_cubit.dart';
 
 /// The tabs of the report page (HIN-93).
 enum ReportTab {
@@ -68,21 +71,45 @@ enum ReportTab {
 /// head never grows past two rows of pills. Lists put the bottom inset inside
 /// their scroll padding, so the last row scrolls up past the glass navigation
 /// instead of stopping above it (HIN-118).
-class TimeReportsScreen extends StatefulWidget {
+class TimeReportsScreen extends StatelessWidget {
   const TimeReportsScreen({super.key, this.link});
 
   final String? link;
 
   @override
-  State<TimeReportsScreen> createState() => _TimeReportsScreenState();
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      BlocProvider(
+        create: (context) => TimeReportsCubit(
+          context.read<TimeReportRepository>(),
+          context.read<UserRepository>(),
+        ),
+      ),
+      // Read by the absences tab and its export only, and created when they
+      // first ask: a reader who never opens the tab asks absences nothing.
+      BlocProvider(
+        create: (context) =>
+            ReportAbsencesCubit(context.read<AbsenceRepository>()),
+      ),
+    ],
+    child: _TimeReportsView(link: link),
+  );
 }
 
-class _TimeReportsScreenState extends State<TimeReportsScreen> {
-  late final TimeReportRepository _repository = context
-      .read<TimeReportRepository>();
+class _TimeReportsView extends StatefulWidget {
+  const _TimeReportsView({this.link});
+
+  final String? link;
+
+  @override
+  State<_TimeReportsView> createState() => _TimeReportsViewState();
+}
+
+class _TimeReportsViewState extends State<_TimeReportsView> {
+  late final TimeReportsCubit _reports = context.read<TimeReportsCubit>();
   final _query = ReportQueryCubit();
   late final ReportGroupsCubit _groups = ReportGroupsCubit(
-    (page, size) => _repository.summary(
+    (page, size) => _reports.summary(
       _query.state,
       page: page,
       size: size,
@@ -90,7 +117,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
     ),
   );
   late final PagedCubit<ReportEntry> _entries = PagedCubit<ReportEntry>(
-    (page, size) => _repository.detailed(
+    (page, size) => _reports.detailed(
       _query.state,
       page: page,
       size: size,
@@ -99,7 +126,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
     keyOf: (entry) => entry.id,
   );
   late final WorkloadRowsCubit _workload = WorkloadRowsCubit(
-    (page, size) => _repository.workload(
+    (page, size) => _reports.workload(
       _query.state,
       projectId: _workloadProject,
       page: page,
@@ -108,7 +135,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
     ),
   );
   late final PagedCubit<SavedReport> _saved = PagedCubit<SavedReport>(
-    (page, size) => _repository.savedReports(page: page, size: size),
+    (page, size) => _reports.savedReports(page: page, size: size),
     keyOf: (report) => report.id,
   );
   StreamSubscription<ReportQuery>? _querySub;
@@ -229,10 +256,10 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
   Future<void> _openLink(String link) async {
     try {
       final report = switch (link) {
-        _ when link.startsWith('shared:') => await _repository.openShared(
+        _ when link.startsWith('shared:') => await _reports.openShared(
           link.substring('shared:'.length),
         ),
-        _ when link.startsWith('saved:') => await _repository.openSaved(
+        _ when link.startsWith('saved:') => await _reports.openSaved(
           link.substring('saved:'.length),
         ),
         // Nothing this page knows how to open: the reports as they stand.
@@ -271,7 +298,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
     ];
     if (missing.isEmpty) return;
     try {
-      final users = await context.read<UserRepository>().usersByIds(missing);
+      final users = await _reports.usersByIds(missing);
       for (final user in users) {
         _labels[user.id] = user.displayName;
       }
@@ -353,7 +380,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
     );
     if (name == null || !mounted) return;
     try {
-      final saved = await _repository.saveReport(name, _query.state);
+      final saved = await _reports.saveReport(name, _query.state);
       if (!mounted) return;
       setState(() => _opened = saved);
       _fresh.remove(ReportTab.saved);
@@ -367,7 +394,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
     final opened = _opened;
     if (opened == null) return;
     try {
-      final updated = await _repository.updateReport(
+      final updated = await _reports.updateReport(
         opened.id,
         query: _query.state,
       );
@@ -1146,13 +1173,13 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
           );
           if (name == null) return;
           _saved.replaceItem(
-            await _repository.updateReport(report.id, name: name),
+            await _reports.updateReport(report.id, name: name),
           );
         case 'share':
           // A new link every time: the token is shown once and kept only as a
           // hash, so "copy the link again" is "make a new one" — and the old
           // one stops working, which is the point of being able to rotate it.
-          final token = await _repository.shareReport(report.id);
+          final token = await _reports.shareReport(report.id);
           if (!mounted) return;
           final link = appWebLink(
             context.read<ApiClient>().baseUrl,
@@ -1162,7 +1189,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
           _toast('time.reports.saved.linkCopied');
           unawaited(_saved.load());
         case 'unshare':
-          await _repository.unshareReport(report.id);
+          await _reports.unshareReport(report.id);
           _toast('time.reports.saved.unshared');
           unawaited(_saved.load());
         case 'schedule':
@@ -1172,9 +1199,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
               if (!names.containsKey(id)) id,
           ];
           if (missing.isNotEmpty) {
-            for (final user in await context.read<UserRepository>().usersByIds(
-              missing,
-            )) {
+            for (final user in await _reports.usersByIds(missing)) {
               names[user.id] = user.displayName;
             }
           }
@@ -1186,11 +1211,11 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
           );
           if (schedule == null) return;
           _saved.replaceItem(
-            await _repository.scheduleReport(report.id, schedule),
+            await _reports.scheduleReport(report.id, schedule),
           );
           _toast('time.reports.schedule.saved');
         case 'unschedule':
-          _saved.replaceItem(await _repository.unscheduleReport(report.id));
+          _saved.replaceItem(await _reports.unscheduleReport(report.id));
           _toast('time.reports.schedule.ended');
         case 'delete':
           final sure = await showGlassConfirm(
@@ -1205,7 +1230,7 @@ class _TimeReportsScreenState extends State<TimeReportsScreen> {
             destructive: true,
           );
           if (sure != true) return;
-          await _repository.deleteReport(report.id);
+          await _reports.deleteReport(report.id);
           _saved.removeItem(report.id);
           if (_opened?.id == report.id) setState(() => _opened = null);
           _toast('time.reports.saved.deleted');

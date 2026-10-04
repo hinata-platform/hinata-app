@@ -15,39 +15,44 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../../core/widgets/hive_widgets.dart' show forwardChevron;
+import 'notifications_cubit.dart';
 
 /// Full notification centre: the paged feed grouped into time buckets
 /// (today / yesterday / this week / …), rendered as iOS-style inset grouped
 /// cards with per-type icon chips and unread accents.
-class NotificationsScreen extends StatefulWidget {
+class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
   @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) =>
+        NotificationsCubit(context.read<NotificationRepository>())..load(),
+    child: const _NotificationsBody(),
+  );
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen> {
-  late final NotificationRepository _repo;
-  late final PagedCubit<AppNotification> _cubit;
+class _NotificationsBody extends StatefulWidget {
+  const _NotificationsBody();
+
+  @override
+  State<_NotificationsBody> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<_NotificationsBody> {
+  late final NotificationsCubit _cubit;
   final ScrollController _scroll = ScrollController();
   bool _markingAll = false;
 
   @override
   void initState() {
     super.initState();
-    _repo = context.read<NotificationRepository>();
-    _cubit = PagedCubit<AppNotification>(
-      (page, size) => _repo.notificationsPage(page: page, size: size),
-      pageSize: 25,
-      keyOf: (n) => n.id,
-    )..load();
+    _cubit = context.read<NotificationsCubit>();
     _scroll.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _scroll.dispose();
-    _cubit.close();
     super.dispose();
   }
 
@@ -65,7 +70,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (!hasUnread || _markingAll) return;
     setState(() => _markingAll = true);
     try {
-      await _repo.markAllNotificationsRead();
+      await _cubit.markAllRead();
     } catch (_) {
       // Non-critical; the reload below reflects server truth.
     }
@@ -75,7 +80,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _delete(AppNotification notification) async {
     try {
-      await _repo.deleteNotification(notification.id);
+      await _cubit.delete(notification.id);
     } catch (_) {
       // Non-critical; the reload below reflects server truth.
     }
@@ -85,9 +90,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _toggleRead(AppNotification notification) async {
     try {
       if (notification.read) {
-        await _repo.markNotificationUnread(notification.id);
+        await _cubit.markUnread(notification.id);
       } else {
-        await _repo.markNotificationRead(notification.id);
+        await _cubit.markRead(notification.id);
       }
     } catch (_) {
       // Non-critical; the reload below reflects server truth.
@@ -98,7 +103,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _open(AppNotification notification) async {
     if (!notification.read) {
       try {
-        await _repo.markNotificationRead(notification.id);
+        await _cubit.markRead(notification.id);
       } catch (_) {
         // Non-critical; the list refresh below reflects server truth.
       }
@@ -115,10 +120,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<
-      PagedCubit<AppNotification>,
-      PagedState<AppNotification>
-    >(
+    return BlocBuilder<NotificationsCubit, PagedState<AppNotification>>(
       bloc: _cubit,
       builder: (context, state) {
         return RefreshIndicator(

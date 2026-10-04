@@ -11,6 +11,7 @@ import '../../core/models/work_models.dart';
 import '../../core/repositories/board_repository.dart';
 import '../../core/repositories/issue_repository.dart';
 import '../../core/repositories/project_repository.dart';
+import '../../core/repositories/sprint_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -23,6 +24,7 @@ import '../../core/widgets/subtask_widgets.dart';
 import '../issues/issue_detail_sheet.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart' show showGlassErrorToast;
+import '../sprint/planning/sprint_planning_cubit.dart';
 import '../sprint/sprint_board_view.dart';
 import 'board_card_list.dart';
 import 'board_drag.dart';
@@ -48,37 +50,54 @@ part 'board_screen.cards.dart';
 // project's boards. One board: a Kanban wall and its timeline, or the Scrum
 // planning, active sprint and insights.
 
-class KanbanBoardScreen extends StatefulWidget {
+class KanbanBoardScreen extends StatelessWidget {
   const KanbanBoardScreen({super.key, required this.boardId});
 
   final String boardId;
 
   @override
-  State<KanbanBoardScreen> createState() => _KanbanBoardScreenState();
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      BlocProvider<BoardWallCubit>(
+        create: (context) => BoardWallCubit(
+          boards: context.read<BoardRepository>(),
+          issues: context.read<IssueRepository>(),
+          boardId: boardId,
+        ),
+      ),
+      BlocProvider<BoardHeadCubit>(
+        create: (context) => BoardHeadCubit(
+          boards: context.read<BoardRepository>(),
+          boardId: boardId,
+        ),
+      ),
+      // The board's own projects, read once the wall names them.
+      BlocProvider<BoardProjectsCubit>(
+        create: (context) =>
+            BoardProjectsCubit(projects: context.read<ProjectRepository>()),
+      ),
+    ],
+    child: const _BoardScreenBody(),
+  );
 }
 
 /// Which view the kanban screen is showing.
 enum BoardViewMode { board, timeline }
 
+class _BoardScreenBody extends StatefulWidget {
+  const _BoardScreenBody();
+
+  @override
+  State<_BoardScreenBody> createState() => _BoardScreenBodyState();
+}
+
 /// What both kinds of board share: the wall, read page by page and narrowed on
 /// the server, the head, and the board's projects. Once the wall says which
 /// kind the board is, the Kanban or the Scrum view takes over.
-class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
-  late final BoardWallCubit _wall = BoardWallCubit(
-    boards: context.read<BoardRepository>(),
-    issues: context.read<IssueRepository>(),
-    boardId: widget.boardId,
-  );
+class _BoardScreenBodyState extends State<_BoardScreenBody> {
+  late final BoardWallCubit _wall = context.read<BoardWallCubit>();
 
-  late final BoardHeadCubit _head = BoardHeadCubit(
-    boards: context.read<BoardRepository>(),
-    boardId: widget.boardId,
-  );
-
-  /// The board's own projects, read once the wall names them.
-  late final BoardProjectsCubit _projects = BoardProjectsCubit(
-    projects: context.read<ProjectRepository>(),
-  );
+  late final BoardProjectsCubit _projects = context.read<BoardProjectsCubit>();
 
   /// The colours of the projects' states and labels, worked out again only
   /// once other projects are read.
@@ -89,14 +108,6 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
   void initState() {
     super.initState();
     unawaited(_wall.load());
-  }
-
-  @override
-  void dispose() {
-    _wall.close();
-    _head.close();
-    _projects.close();
-    super.dispose();
   }
 
   void _onWall(BuildContext context, BoardWallState wall) {
@@ -121,28 +132,23 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
       showIssueDetailSheet(context, issueId: issue.id);
 
   @override
-  Widget build(BuildContext context) => MultiBlocProvider(
-    providers: [
-      BlocProvider<BoardWallCubit>.value(value: _wall),
-      BlocProvider<BoardHeadCubit>.value(value: _head),
-    ],
-    child: BlocConsumer<BoardWallCubit, BoardWallState>(
-      listenWhen: (previous, next) =>
-          previous.board != next.board ||
-          previous.refreshing != next.refreshing ||
-          previous.errorKey != next.errorKey,
-      listener: _onWall,
-      buildWhen: (previous, next) =>
-          previous.status != next.status ||
-          previous.board != next.board ||
-          previous.columns.length != next.columns.length,
-      builder: (context, wall) =>
-          BlocBuilder<BoardProjectsCubit, BoardProjectsState>(
-            bloc: _projects,
-            builder: (context, projects) => _view(context, wall, projects),
-          ),
-    ),
-  );
+  Widget build(BuildContext context) =>
+      BlocConsumer<BoardWallCubit, BoardWallState>(
+        listenWhen: (previous, next) =>
+            previous.board != next.board ||
+            previous.refreshing != next.refreshing ||
+            previous.errorKey != next.errorKey,
+        listener: _onWall,
+        buildWhen: (previous, next) =>
+            previous.status != next.status ||
+            previous.board != next.board ||
+            previous.columns.length != next.columns.length,
+        builder: (context, wall) =>
+            BlocBuilder<BoardProjectsCubit, BoardProjectsState>(
+              bloc: _projects,
+              builder: (context, projects) => _view(context, wall, projects),
+            ),
+      );
 
   Widget _view(
     BuildContext context,
@@ -166,19 +172,33 @@ class _KanbanBoardScreenState extends State<KanbanBoardScreen> {
     // widen one column early; that costs empty canvas, never a broken layout.
     final fullWidth = wall.columns.length > BoardWall.columnsPerReadingWidth;
     if (board.isScrum) {
-      return ScrumBoardView(
+      return BlocProvider<SprintPlanningCubit>(
+        create: (context) => SprintPlanningCubit(
+          boards: context.read<BoardRepository>(),
+          issues: context.read<IssueRepository>(),
+          sprints: context.read<SprintRepository>(),
+          boardId: board.id,
+        ),
+        child: ScrumBoardView(
+          board: board,
+          fullWidth: fullWidth,
+          projects: projects,
+          onOpenIssue: _openIssue,
+        ),
+      );
+    }
+    return BlocProvider<BoardTimelineCubit>(
+      create: (context) => BoardTimelineCubit(
+        boards: context.read<BoardRepository>(),
+        boardId: board.id,
+      ),
+      child: _KanbanView(
         board: board,
         fullWidth: fullWidth,
         projects: projects,
+        palette: _paletteOf(projects),
         onOpenIssue: _openIssue,
-      );
-    }
-    return _KanbanView(
-      board: board,
-      fullWidth: fullWidth,
-      projects: projects,
-      palette: _paletteOf(projects),
-      onOpenIssue: _openIssue,
+      ),
     );
   }
 }
@@ -213,10 +233,7 @@ class _KanbanViewState extends State<_KanbanView>
   @override
   late final BoardHeadCubit head = context.read<BoardHeadCubit>();
 
-  late final BoardTimelineCubit _timeline = BoardTimelineCubit(
-    boards: context.read<BoardRepository>(),
-    boardId: widget.board.id,
-  );
+  late final BoardTimelineCubit _timeline = context.read<BoardTimelineCubit>();
 
   BoardViewMode _mode = BoardViewMode.board;
 
@@ -244,7 +261,6 @@ class _KanbanViewState extends State<_KanbanView>
   @override
   void dispose() {
     _issueSub?.cancel();
-    _timeline.close();
     super.dispose();
   }
 

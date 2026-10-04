@@ -34,6 +34,7 @@ import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
 import '../absences/absence_actions.dart';
 import '../absences/absence_labels.dart';
 import 'day_marks.dart';
+import 'time_calendar_cubit.dart';
 import 'time_entry_sheet.dart';
 import 'time_privacy_sheet.dart';
 import 'time_views.dart';
@@ -68,11 +69,21 @@ import 'timer_bar.dart';
 /// event carries a zone of its own that is nobody's device — and [TimeGrid]
 /// already takes wall-clock times, so that stage converts on the way in without
 /// touching the grid.
-class TimeCalendarScreen extends StatefulWidget {
+class TimeCalendarScreen extends StatelessWidget {
   const TimeCalendarScreen({super.key});
 
   @override
-  State<TimeCalendarScreen> createState() => _TimeCalendarScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => TimeCalendarCubit(context.read<TimeRepository>()),
+    child: const _TimeCalendarView(),
+  );
+}
+
+class _TimeCalendarView extends StatefulWidget {
+  const _TimeCalendarView();
+
+  @override
+  State<_TimeCalendarView> createState() => _TimeCalendarViewState();
 }
 
 /// How much of the calendar is on screen at once.
@@ -99,7 +110,7 @@ class _MonthWindow {
   final DayMarks marks;
 }
 
-class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
+class _TimeCalendarViewState extends State<_TimeCalendarView> {
   _Span _span = _Span.week;
 
   /// The day the week span is reading — the one the canvas draws and the strip
@@ -409,7 +420,10 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
       DateUtils.getDaysInMonth(month.year, month.month),
     );
     try {
-      final window = await context.read<TimeRepository>().calendar(first, last);
+      final window = await context.read<TimeCalendarCubit>().calendar(
+        first,
+        last,
+      );
       return (
         key: key,
         seq: seq,
@@ -784,7 +798,7 @@ class _TimeCalendarScreenState extends State<TimeCalendarScreen> {
           each.movedTo(span.start, span.end, day: day, keepMinutes: false),
     );
     try {
-      await context.read<TimeRepository>().update(
+      await context.read<TimeCalendarCubit>().update(
         entry.id,
         TimeEntryDraft(
           startedAt: span.start,

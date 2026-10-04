@@ -13,7 +13,6 @@ import '../../../core/api/api_client.dart';
 import '../../../core/blocs/auth_bloc.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/core_models.dart';
-import '../../../core/models/team_models.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
@@ -33,6 +32,7 @@ import 'labels_section.dart';
 import 'members_section.dart';
 import 'settings_common.dart';
 import '../../../core/responsive/golden_columns.dart';
+import 'project_settings_cubit.dart';
 import 'project_settings_layout.dart';
 import 'template_section.dart';
 import 'time_section.dart';
@@ -48,16 +48,33 @@ import '../../../core/repositories/user_repository.dart';
 /// Full project-settings surface: identity, accent, leads & members, colored
 /// labels, colored workflow states, and archive — edited as a draft behind a
 /// sticky save bar with hard validation (mirrors the HTML reference).
-class ProjectSettingsScreen extends StatefulWidget {
+class ProjectSettingsScreen extends StatelessWidget {
   const ProjectSettingsScreen({super.key, required this.projectId});
 
   final String projectId;
 
   @override
-  State<ProjectSettingsScreen> createState() => _ProjectSettingsScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => ProjectSettingsCubit(
+      projectId: projectId,
+      projects: context.read<ProjectRepository>(),
+      users: context.read<UserRepository>(),
+      teams: context.read<TeamRepository>(),
+    ),
+    child: _ProjectSettingsView(projectId: projectId),
+  );
 }
 
-class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
+class _ProjectSettingsView extends StatefulWidget {
+  const _ProjectSettingsView({required this.projectId});
+
+  final String projectId;
+
+  @override
+  State<_ProjectSettingsView> createState() => _ProjectSettingsViewState();
+}
+
+class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
   final _nameCtrl = TextEditingController();
   final _keyCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
@@ -128,17 +145,9 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
       _loadError = null;
     });
     try {
-      final results = await Future.wait([
-        context.read<ProjectRepository>().project(widget.projectId),
-        context.read<UserRepository>().users(),
-        context.read<ProjectRepository>().projectStateUsage(widget.projectId),
-        // One list call: the teams I am in, membership scoped on the server.
-        context.read<TeamRepository>().teams(),
-      ]);
-      final project = results[0] as Project;
-      final users = results[1] as List<DirectoryUser>;
-      final usage = results[2] as Map<String, int>;
-      final teams = results[3] as List<Team>;
+      final (:project, :users, stateUsage: usage, :teams) = await context
+          .read<ProjectSettingsCubit>()
+          .load();
       // Settings are for the leads and the Team-Admins of an owning team; the
       // platform admin role opens nothing here. Anybody else who deep-links
       // here is bounced back to the project's issues (the server also rejects
@@ -426,11 +435,13 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
     if (project == null || _movingEventDate) return;
     setState(() => _movingEventDate = true);
     try {
-      final preview = await context.read<ProjectRepository>().previewSchedule(
-        project.id,
-        eventDate: date,
-        limit: kScheduleMovesShown,
-      );
+      final preview = await context
+          .read<ProjectSettingsCubit>()
+          .previewSchedule(
+            project.id,
+            eventDate: date,
+            limit: kScheduleMovesShown,
+          );
       if (!mounted) return;
       setState(() => _movingEventDate = false);
       if (preview.hasChanges) {
@@ -470,7 +481,7 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
     if (project == null) return false;
     setState(() => _movingEventDate = true);
     try {
-      final result = await context.read<ProjectRepository>().applySchedule(
+      final result = await context.read<ProjectSettingsCubit>().applySchedule(
         project.id,
         eventDate: date,
       );
@@ -542,7 +553,7 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
     final d = _draft;
     if (d == null || !_valid || _saving) return;
     setState(() => _saving = true);
-    final projectApi = context.read<ProjectRepository>();
+    final settings = context.read<ProjectSettingsCubit>();
     try {
       final patch = <String, dynamic>{
         'name': d.name.trim(),
@@ -567,9 +578,9 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
         },
         if (_stateMigrations.isNotEmpty) 'stateMigrations': _stateMigrations,
       };
-      final updated = await projectApi.updateProject(d.id, patch);
+      final updated = await settings.update(d.id, patch);
       // Counts changed once issues were reassigned/deleted.
-      final usage = await projectApi.projectStateUsage(d.id);
+      final usage = await settings.stateUsage(d.id);
       if (!mounted) return;
       setState(() {
         _saved = updated;
@@ -655,12 +666,9 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
       selectedHue: hueForHex(draft.color),
       onHue: _onHue,
       avatarUrl: draft.avatarUrl,
-      onUploadAvatar: (file) => context
-          .read<ProjectRepository>()
-          .uploadProjectAvatar(widget.projectId, file),
-      onRemoveAvatar: () => context
-          .read<ProjectRepository>()
-          .deleteProjectAvatar(widget.projectId),
+      onUploadAvatar: (file) =>
+          context.read<ProjectSettingsCubit>().uploadAvatar(file),
+      onRemoveAvatar: () => context.read<ProjectSettingsCubit>().removeAvatar(),
       onAvatarChanged: _onAvatar,
     );
     final members = MembersSection(

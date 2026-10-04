@@ -22,6 +22,7 @@ import '../search/search_tokens.dart';
 import '../sprint/modals/glass_modal.dart'
     show showGlassErrorToast, showGlassOptions;
 import 'issue_form.dart' show showIssueForm;
+import 'issue_links_cubit.dart';
 
 part 'issue_links_section.parts.dart';
 
@@ -64,7 +65,7 @@ class IssueLinksSection extends StatefulWidget {
 }
 
 class _IssueLinksSectionState extends State<IssueLinksSection> {
-  IssueRepository get _repo => context.read<IssueRepository>();
+  late final IssueLinksCubit _cubit;
 
   List<IssueLink> _links = const [];
   bool _loading = true;
@@ -76,7 +77,7 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
   // liveness detection and reconnect-with-catch-up.
   late final SseConnection _sse = SseConnection(
     open: (cancelToken) =>
-        _repo.issueLinkEventStream(widget.issueId, cancelToken: cancelToken),
+        _cubit.events(widget.issueId, cancelToken: cancelToken),
     onEvent: (_) => _load(),
     onReconnect: _load,
   );
@@ -84,6 +85,7 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
   @override
   void initState() {
     super.initState();
+    _cubit = IssueLinksCubit(context.read<IssueRepository>());
     _load();
     _sse.start();
   }
@@ -91,12 +93,13 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
   @override
   void dispose() {
     _sse.stop();
+    _cubit.close();
     super.dispose();
   }
 
   Future<void> _load() async {
     try {
-      final links = await _repo.issueLinks(widget.issueId);
+      final links = await _cubit.links(widget.issueId);
       if (mounted) {
         setState(() {
           _links = links;
@@ -119,7 +122,7 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
   // ── mutations ──────────────────────────────────────────────────────────────
   Future<void> _submit(IssueLinkOption option, List<String> targetIds) async {
     try {
-      final links = await _repo.addIssueLinks(
+      final links = await _cubit.add(
         widget.issueId,
         type: option.type,
         outward: option.outward,
@@ -147,7 +150,7 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
       ],
     );
     try {
-      final links = await _repo.deleteIssueLink(widget.issueId, link.id);
+      final links = await _cubit.remove(widget.issueId, link.id);
       if (mounted) setState(() => _links = links);
       widget.onChanged?.call();
     } on ApiFailure catch (failure) {
@@ -280,14 +283,17 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
                   child: SizeTransition(sizeFactor: anim, child: child),
                 ),
                 child: _adding
-                    ? _LinkEditor(
+                    ? BlocProvider.value(
                         key: const ValueKey('editor'),
-                        projectId: widget.projectId,
-                        issueId: widget.issueId,
-                        linkedIssueIds: _linkedIssueIds,
-                        project: widget.project,
-                        onSubmit: _submit,
-                        onCancel: () => setState(() => _adding = false),
+                        value: _cubit,
+                        child: _LinkEditor(
+                          projectId: widget.projectId,
+                          issueId: widget.issueId,
+                          linkedIssueIds: _linkedIssueIds,
+                          project: widget.project,
+                          onSubmit: _submit,
+                          onCancel: () => setState(() => _adding = false),
+                        ),
                       )
                     : Align(
                         key: const ValueKey('button'),

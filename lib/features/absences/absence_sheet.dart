@@ -34,6 +34,7 @@ import 'absence_labels.dart';
 import 'absence_actions.dart';
 import 'absence_request_sheet.dart';
 import 'absence_request_widgets.dart';
+import 'absence_sheet_cubit.dart';
 
 /// Opens [absence] or [request]. Resolves to true when something about it
 /// changed, so the screen behind can redraw.
@@ -62,14 +63,23 @@ Future<bool> showAbsenceSheet(
         RepositoryProvider<AvailabilityRepository>.value(value: availability),
         RepositoryProvider<UserRepository>.value(value: users),
       ],
-      child: _AbsenceSheet(
-        absence: absence,
-        request: request,
-        types: types,
-        askable: askable,
-        balances: balances,
-        keeper: keeper,
-        meId: meId,
+      // The repositories stay provided for the request form and the absence
+      // editor this sheet opens on top of itself.
+      child: BlocProvider(
+        create: (_) => AbsenceSheetCubit(
+          absences: absences,
+          availability: availability,
+          users: users,
+        ),
+        child: _AbsenceSheet(
+          absence: absence,
+          request: request,
+          types: types,
+          askable: askable,
+          balances: balances,
+          keeper: keeper,
+          meId: meId,
+        ),
       ),
     ),
   );
@@ -134,7 +144,7 @@ class _AbsenceSheetState extends State<_AbsenceSheet> {
   Future<void> _loadRequest(String id, {bool showLoader = true}) async {
     if (showLoader) setState(() => _loading = true);
     try {
-      final found = await context.read<AbsenceRepository>().request(id);
+      final found = await context.read<AbsenceSheetCubit>().request(id);
       if (!mounted) return;
       setState(() {
         _request = found;
@@ -157,7 +167,7 @@ class _AbsenceSheetState extends State<_AbsenceSheet> {
     final id = _request?.substituteId;
     if (id == null || id.isEmpty) return;
     try {
-      final found = await context.read<UserRepository>().usersByIds([id]);
+      final found = await context.read<AbsenceSheetCubit>().people([id]);
       if (!mounted || found.isEmpty) return;
       final person = found.first;
       setState(
@@ -226,7 +236,7 @@ class _AbsenceSheetState extends State<_AbsenceSheet> {
   }
 
   Future<void> _withdraw(AbsenceRequest request) => _step(
-    () => context.read<AbsenceRepository>().withdraw(request.id),
+    () => context.read<AbsenceSheetCubit>().withdraw(request.id),
     'absence.request.withdrawn',
   );
 
@@ -238,7 +248,7 @@ class _AbsenceSheetState extends State<_AbsenceSheet> {
     );
     if (reason == null || !mounted) return;
     await _step(
-      () => context.read<AbsenceRepository>().cancel(
+      () => context.read<AbsenceSheetCubit>().cancel(
         request.id,
         note: reason.isEmpty ? null : reason,
       ),
@@ -247,7 +257,7 @@ class _AbsenceSheetState extends State<_AbsenceSheet> {
   }
 
   Future<void> _approve(AbsenceRequest request) => _step(
-    () => context.read<AbsenceRepository>().approve(request.id),
+    () => context.read<AbsenceSheetCubit>().approve(request.id),
     'absence.request.approved',
   );
 
@@ -259,7 +269,7 @@ class _AbsenceSheetState extends State<_AbsenceSheet> {
     );
     if (reason == null || !mounted) return;
     await _step(
-      () => context.read<AbsenceRepository>().reject(request.id, note: reason),
+      () => context.read<AbsenceSheetCubit>().reject(request.id, note: reason),
       'absence.request.rejected',
     );
   }
@@ -295,7 +305,7 @@ class _AbsenceSheetState extends State<_AbsenceSheet> {
     );
     if (confirmed != true || !mounted) return;
     await _step(
-      () => context.read<AvailabilityRepository>().deleteTimeOff(id),
+      () => context.read<AbsenceSheetCubit>().deleteEntered(id),
       'availability.timeOff.deleted',
     );
   }

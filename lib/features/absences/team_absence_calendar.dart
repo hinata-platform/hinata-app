@@ -32,19 +32,35 @@ import '../sprint/modals/glass_modal.dart';
 import '../../core/util/dates.dart';
 import 'team_absence_agenda.dart';
 import 'team_absence_band.dart';
+import 'team_absence_calendar_cubit.dart';
 
 /// The calendar with its own controls: which group, which month or quarter,
 /// and — for who plans — the capacity that is left above the rows.
-class TeamAbsenceCalendar extends StatefulWidget {
+class TeamAbsenceCalendar extends StatelessWidget {
   const TeamAbsenceCalendar({super.key, this.padding = EdgeInsets.zero});
 
   final EdgeInsets padding;
 
   @override
-  State<TeamAbsenceCalendar> createState() => _TeamAbsenceCalendarState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => TeamAbsenceCalendarCubit(
+      context.read<AbsenceRepository>(),
+      context.read<TeamRepository>(),
+    ),
+    child: _CalendarView(padding: padding),
+  );
 }
 
-class _TeamAbsenceCalendarState extends State<TeamAbsenceCalendar> {
+class _CalendarView extends StatefulWidget {
+  const _CalendarView({required this.padding});
+
+  final EdgeInsets padding;
+
+  @override
+  State<_CalendarView> createState() => _CalendarViewState();
+}
+
+class _CalendarViewState extends State<_CalendarView> {
   TeamAbsenceScope _scope = TeamAbsenceScope.mine;
   bool _quarter = false;
 
@@ -67,9 +83,9 @@ class _TeamAbsenceCalendarState extends State<TeamAbsenceCalendar> {
   @override
   void initState() {
     super.initState();
-    final repository = context.read<AbsenceRepository>();
+    final calendar = context.read<TeamAbsenceCalendarCubit>();
     _rows = TeamAbsenceRowsCubit(
-      (page, size) => repository.teamCalendar(
+      (page, size) => calendar.rows(
         from: _from,
         to: _to,
         scope: _scope,
@@ -79,24 +95,15 @@ class _TeamAbsenceCalendarState extends State<TeamAbsenceCalendar> {
         size: size,
       ),
     );
-    _band = FetchCubit<CapacityBand?>(() async {
-      try {
-        return await repository.capacityBand(
-          from: _from,
-          to: _to,
-          scope: _scope,
-          // The agenda shows a week per card; the server adds the week up.
-          resolution: _compact
-              ? CapacityResolution.week
-              : CapacityResolution.day,
-        );
-      } on ApiFailure catch (failure) {
-        // Not somebody who plans this group, or a group too small to add up
-        // without showing one person: the band is simply not shown.
-        if (failure.statusCode == 403) return null;
-        rethrow;
-      }
-    });
+    _band = FetchCubit<CapacityBand?>(
+      () => calendar.band(
+        from: _from,
+        to: _to,
+        scope: _scope,
+        // The agenda shows a week per card; the server adds the week up.
+        resolution: _compact ? CapacityResolution.week : CapacityResolution.day,
+      ),
+    );
   }
 
   @override
@@ -140,10 +147,7 @@ class _TeamAbsenceCalendarState extends State<TeamAbsenceCalendar> {
     const project = '@project';
     List<({String id, String name})> teams = const [];
     try {
-      teams = [
-        for (final team in await context.read<TeamRepository>().teams())
-          (id: team.id, name: team.name),
-      ];
+      teams = await context.read<TeamAbsenceCalendarCubit>().teams();
     } on ApiFailure {
       // Without the teams the picker still offers the reader's projects.
     }

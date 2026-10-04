@@ -8,6 +8,7 @@ library;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/repositories/issue_repository.dart';
 import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/issues/issue_detail_sheet.dart';
@@ -105,7 +106,7 @@ void main() {
     test('asks for the format the entry stands for', () async {
       final api = _FakeApi();
 
-      await fetchIssueExport(api, 'i1', 'docx');
+      await IssueRepository(api).export('i1', 'docx');
 
       expect(api.lastPath, '/api/v1/issues/i1/export.docx');
       // A document the server has to render needs longer than a row does.
@@ -120,7 +121,7 @@ void main() {
       );
 
       expect(
-        () => fetchIssueExport(api, 'i1', 'pdf'),
+        () => IssueRepository(api).export('i1', 'pdf'),
         throwsA(
           isA<ApiFailure>()
               .having((f) => f.message, 'message', 'Zu viele Exporte')

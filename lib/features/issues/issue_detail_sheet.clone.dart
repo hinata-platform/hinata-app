@@ -46,33 +46,37 @@ Future<Issue?> showIssueCloneDialog(
   BuildContext context, {
   required Issue issue,
   required List<DirectoryUser> users,
-  required IssueRepository repository,
   String? meId,
   bool multiAssignee = false,
-}) => showGlassModal<Issue>(
-  context,
-  width: 460,
-  builder: (_) => _IssueCloneBody(
-    issue: issue,
-    users: users,
-    repository: repository,
-    meId: meId,
-    multiAssignee: multiAssignee,
-  ),
-);
+}) {
+  // The dialog is a root-navigator route and does not inherit the caller's
+  // providers — the repository is handed across into the dialog's cubit.
+  final repository = context.read<IssueRepository>();
+  return showGlassModal<Issue>(
+    context,
+    width: 460,
+    builder: (_) => BlocProvider(
+      create: (_) => IssueCloneCubit(repository),
+      child: _IssueCloneBody(
+        issue: issue,
+        users: users,
+        meId: meId,
+        multiAssignee: multiAssignee,
+      ),
+    ),
+  );
+}
 
 class _IssueCloneBody extends StatefulWidget {
   const _IssueCloneBody({
     required this.issue,
     required this.users,
-    required this.repository,
     this.meId,
     this.multiAssignee = false,
   });
 
   final Issue issue;
   final List<DirectoryUser> users;
-  final IssueRepository repository;
   final String? meId;
   final bool multiAssignee;
 
@@ -171,7 +175,7 @@ class _IssueCloneBodyState extends State<_IssueCloneBody> {
     if (title.isEmpty || _busy) return;
     setState(() => _busy = true);
     try {
-      final copy = await widget.repository.cloneIssue(
+      final copy = await context.read<IssueCloneCubit>().clone(
         widget.issue.id,
         title: title,
         assigneeIds: _assigneeIds,

@@ -11,7 +11,6 @@ import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/i18n/i18n.dart';
-import '../../core/models/core_models.dart';
 import '../../core/models/team_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
@@ -29,6 +28,7 @@ import '../sprint/modals/glass_modal.dart';
 import 'deadline_basis_field.dart';
 import 'project_copy_sheet.dart';
 import 'project_create_form.dart';
+import 'projects_cubit.dart';
 import '../../core/widgets/hit_slop.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
@@ -37,23 +37,29 @@ import '../../core/repositories/user_repository.dart';
 /// The phone's docked row, the same height every other page's is.
 const double _kProjectsDockHeight = kGlassDockRow;
 
-typedef _ProjectsData = ({
-  List<Project> active,
-  List<Project> archived,
-  Map<String, String> names,
-  Map<String, String> avatars,
-  List<Team> teams,
-});
-
-class ProjectsScreen extends StatefulWidget {
+class ProjectsScreen extends StatelessWidget {
   const ProjectsScreen({super.key});
 
   @override
-  State<ProjectsScreen> createState() => _ProjectsScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => ProjectsCubit(
+      projects: context.read<ProjectRepository>(),
+      users: context.read<UserRepository>(),
+      teams: context.read<TeamRepository>(),
+    )..load(),
+    child: const _ProjectsView(),
+  );
 }
 
-class _ProjectsScreenState extends State<ProjectsScreen> {
-  late final FetchCubit<_ProjectsData> _cubit;
+class _ProjectsView extends StatefulWidget {
+  const _ProjectsView();
+
+  @override
+  State<_ProjectsView> createState() => _ProjectsViewState();
+}
+
+class _ProjectsViewState extends State<_ProjectsView> {
+  ProjectsCubit get _cubit => context.read<ProjectsCubit>();
 
   /// Which of the three lists is on screen: the running projects, the
   /// templates, or the archive. Templates only exist while the module is on.
@@ -67,42 +73,8 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   String _query = '';
 
   @override
-  void initState() {
-    super.initState();
-    _cubit = FetchCubit<_ProjectsData>(() async {
-      final results = await Future.wait([
-        context.read<ProjectRepository>().projects(),
-        context.read<ProjectRepository>().projects(archived: true),
-        context.read<UserRepository>().users(),
-        // The teams I am in, once per load: a Team-Admin of a team owning a
-        // project may open its settings, and the cards ask that of this list
-        // rather than each asking the server.
-        context.read<TeamRepository>().teams(),
-      ]);
-      final active = results[0] as List<Project>;
-      final archived = results[1] as List<Project>;
-      final users = results[2] as List<DirectoryUser>;
-      final teams = results[3] as List<Team>;
-      final names = {for (final u in users) u.id: u.displayName};
-      final avatars = {
-        for (final u in users)
-          if (u.avatarUrl != null && u.avatarUrl!.isNotEmpty)
-            u.id: u.avatarUrl!,
-      };
-      return (
-        active: active,
-        archived: archived,
-        names: names,
-        avatars: avatars,
-        teams: teams,
-      );
-    })..load();
-  }
-
-  @override
   void dispose() {
     _search.dispose();
-    _cubit.close();
     super.dispose();
   }
 
@@ -131,212 +103,206 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _cubit,
-      child: BlocBuilder<FetchCubit<_ProjectsData>, FetchState<_ProjectsData>>(
-        builder: (context, state) {
-          final all = state.data?.active ?? const <Project>[];
-          final archived = state.data?.archived ?? const <Project>[];
-          final names = state.data?.names ?? const <String, String>{};
-          final avatars = state.data?.avatars ?? const <String, String>{};
-          final teams = state.data?.teams ?? const <Team>[];
-          // The list route answers with both kinds unless asked otherwise, so
-          // the split happens here rather than in a second request.
-          final templatesOffered = context.select<AppConfigBloc, bool>(
-            (bloc) => bloc.state.meta?.projectTemplates ?? false,
-          );
-          final templates = templatesOffered
-              ? all.where((p) => p.template).toList(growable: false)
-              : const <Project>[];
-          final active = templatesOffered
-              ? all.where((p) => !p.template).toList(growable: false)
-              : all;
-          // A tab that stopped existing — the flag went off while we were
-          // looking at it — falls back to the running projects rather than to
-          // an empty screen with no way out.
-          final tab = _tab == _ProjectTab.templates && !templatesOffered
-              ? _ProjectTab.active
-              : _tab;
-          final projects = _matching(switch (tab) {
-            _ProjectTab.active => active,
-            _ProjectTab.templates => templates,
-            _ProjectTab.archived => archived,
-          });
-          final compact = context.isCompact;
-          final switcher = _TabSwitcher(
-            current: tab,
-            templates: templatesOffered ? templates.length : null,
-            archived: archived.length,
-            onChanged: (value) => setState(() => _tab = value),
-          );
-          return PageChrome(
-            title: context.t('projects.title'),
-            // A phone's app bar has room for one trailing action, and this page
-            // has exactly one: a new project. On a wide window it is a button in
-            // the page's own head instead, where it can carry its name.
-            actions: compact
-                ? [
-                    PageAction(
-                      icon: LucideIcons.plus,
-                      label: context.t('projects.new'),
-                      primary: true,
-                      onTap: (anchor) => _newOnTab(tab, anchor),
+    return BlocBuilder<ProjectsCubit, FetchState<ProjectsData>>(
+      builder: (context, state) {
+        final all = state.data?.active ?? const <Project>[];
+        final archived = state.data?.archived ?? const <Project>[];
+        final names = state.data?.names ?? const <String, String>{};
+        final avatars = state.data?.avatars ?? const <String, String>{};
+        final teams = state.data?.teams ?? const <Team>[];
+        // The list route answers with both kinds unless asked otherwise, so
+        // the split happens here rather than in a second request.
+        final templatesOffered = context.select<AppConfigBloc, bool>(
+          (bloc) => bloc.state.meta?.projectTemplates ?? false,
+        );
+        final templates = templatesOffered
+            ? all.where((p) => p.template).toList(growable: false)
+            : const <Project>[];
+        final active = templatesOffered
+            ? all.where((p) => !p.template).toList(growable: false)
+            : all;
+        // A tab that stopped existing — the flag went off while we were
+        // looking at it — falls back to the running projects rather than to
+        // an empty screen with no way out.
+        final tab = _tab == _ProjectTab.templates && !templatesOffered
+            ? _ProjectTab.active
+            : _tab;
+        final projects = _matching(switch (tab) {
+          _ProjectTab.active => active,
+          _ProjectTab.templates => templates,
+          _ProjectTab.archived => archived,
+        });
+        final compact = context.isCompact;
+        final switcher = _TabSwitcher(
+          current: tab,
+          templates: templatesOffered ? templates.length : null,
+          archived: archived.length,
+          onChanged: (value) => setState(() => _tab = value),
+        );
+        return PageChrome(
+          title: context.t('projects.title'),
+          // A phone's app bar has room for one trailing action, and this page
+          // has exactly one: a new project. On a wide window it is a button in
+          // the page's own head instead, where it can carry its name.
+          actions: compact
+              ? [
+                  PageAction(
+                    icon: LucideIcons.plus,
+                    label: context.t('projects.new'),
+                    primary: true,
+                    onTap: (anchor) => _newOnTab(tab, anchor),
+                  ),
+                ]
+              : const [],
+          // The pills ride in the app bar's blur, the way the audit log, user
+          // management and the time module all wear them. Down the page they
+          // were a second title under the one the bar already shows.
+          bottom: compact
+              ? _dockedToolbar(
+                  context,
+                  _TabSwitcher(
+                    current: tab,
+                    templates: templatesOffered ? templates.length : null,
+                    archived: archived.length,
+                    onChanged: (value) => setState(() => _tab = value),
+                    dock: true,
+                  ),
+                )
+              : null,
+          bottomHeight: compact ? _kProjectsDockHeight : 0,
+          child: RefreshIndicator(
+            onRefresh: _cubit.load,
+            color: AppColors.accent,
+            edgeOffset: context.topGutter,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                if (!compact)
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      context.pageGutter,
+                      24 + context.topGutter,
+                      context.pageGutter,
+                      16,
                     ),
-                  ]
-                : const [],
-            // The pills ride in the app bar's blur, the way the audit log, user
-            // management and the time module all wear them. Down the page they
-            // were a second title under the one the bar already shows.
-            bottom: compact
-                ? _dockedToolbar(
-                    context,
-                    _TabSwitcher(
-                      current: tab,
-                      templates: templatesOffered ? templates.length : null,
-                      archived: archived.length,
-                      onChanged: (value) => setState(() => _tab = value),
-                      dock: true,
+                    sliver: SliverToBoxAdapter(
+                      child: PageHead(
+                        title: context.t('projects.title'),
+                        subtitle: context.t(
+                          'projects.summary',
+                          variables: {
+                            'active': '${active.length}',
+                            'archived': '${archived.length}',
+                          },
+                        ),
+                        actions: [
+                          _searchField(context),
+                          switcher,
+                          Builder(
+                            builder: (buttonContext) => PrimaryButton(
+                              icon: LucideIcons.plus,
+                              label: context.t(
+                                tab == _ProjectTab.templates
+                                    ? 'projects.copy.makeTemplate'
+                                    : 'projects.new',
+                              ),
+                              onPressed: () => _newOnTab(
+                                tab,
+                                anchorRectOfContext(buttonContext),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  )
-                : null,
-            bottomHeight: compact ? _kProjectsDockHeight : 0,
-            child: RefreshIndicator(
-              onRefresh: _cubit.load,
-              color: AppColors.accent,
-              edgeOffset: context.topGutter,
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  if (!compact)
-                    SliverPadding(
+                  ),
+                if (state.isLoading && projects.isEmpty)
+                  const SliverFillRemaining(child: Center(child: HiveLoader()))
+                else if (projects.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Padding(
                       padding: EdgeInsets.fromLTRB(
                         context.pageGutter,
-                        24 + context.topGutter,
+                        compact ? context.topGutter + 24 : 24,
                         context.pageGutter,
-                        16,
+                        24,
                       ),
-                      sliver: SliverToBoxAdapter(
-                        child: PageHead(
+                      child: Center(
+                        child: HiveEmptyState(
                           title: context.t('projects.title'),
-                          subtitle: context.t(
-                            'projects.summary',
-                            variables: {
-                              'active': '${active.length}',
-                              'archived': '${archived.length}',
-                            },
-                          ),
-                          actions: [
-                            _searchField(context),
-                            switcher,
-                            Builder(
-                              builder: (buttonContext) => PrimaryButton(
-                                icon: LucideIcons.plus,
-                                label: context.t(
-                                  tab == _ProjectTab.templates
-                                      ? 'projects.copy.makeTemplate'
-                                      : 'projects.new',
-                                ),
-                                onPressed: () => _newOnTab(
-                                  tab,
-                                  anchorRectOfContext(buttonContext),
-                                ),
-                              ),
-                            ),
-                          ],
+                          // A list emptied by a search is not an empty list,
+                          // and "create your first project" is the wrong thing
+                          // to say to somebody who has forty and mistyped one.
+                          message: _query.trim().isNotEmpty
+                              ? context.t(
+                                  'search.noMatch',
+                                  variables: {'q': _query.trim()},
+                                )
+                              : switch (tab) {
+                                  _ProjectTab.archived => context.t(
+                                    'projects.emptyArchived',
+                                  ),
+                                  _ProjectTab.templates => context.t(
+                                    'projects.emptyTemplates',
+                                  ),
+                                  _ProjectTab.active => context.t(
+                                    'projects.empty',
+                                  ),
+                                },
                         ),
                       ),
                     ),
-                  if (state.isLoading && projects.isEmpty)
-                    const SliverFillRemaining(
-                      child: Center(child: HiveLoader()),
-                    )
-                  else if (projects.isEmpty)
-                    SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          context.pageGutter,
-                          compact ? context.topGutter + 24 : 24,
-                          context.pageGutter,
-                          24,
-                        ),
-                        child: Center(
-                          child: HiveEmptyState(
-                            title: context.t('projects.title'),
-                            // A list emptied by a search is not an empty list,
-                            // and "create your first project" is the wrong thing
-                            // to say to somebody who has forty and mistyped one.
-                            message: _query.trim().isNotEmpty
-                                ? context.t(
-                                    'search.noMatch',
-                                    variables: {'q': _query.trim()},
-                                  )
-                                : switch (tab) {
-                                    _ProjectTab.archived => context.t(
-                                      'projects.emptyArchived',
-                                    ),
-                                    _ProjectTab.templates => context.t(
-                                      'projects.emptyTemplates',
-                                    ),
-                                    _ProjectTab.active => context.t(
-                                      'projects.empty',
-                                    ),
-                                  },
-                          ),
-                        ),
+                  )
+                else
+                  SliverLayoutBuilder(
+                    builder: (context, room) => SliverPadding(
+                      // On a phone the head is the app bar, and it floats
+                      // over the list: without this clearance the first card
+                      // starts underneath it, which reads as a list that
+                      // opened halfway down and will not scroll back up. On a
+                      // wide window the head sliver above has already spent it.
+                      padding: EdgeInsets.fromLTRB(
+                        context.pageGutter,
+                        compact ? context.topGutter + context.pageGutter : 0,
+                        context.pageGutter,
+                        context.pageGutter + context.bottomGutter,
                       ),
-                    )
-                  else
-                    SliverLayoutBuilder(
-                      builder: (context, room) => SliverPadding(
-                        // On a phone the head is the app bar, and it floats
-                        // over the list: without this clearance the first card
-                        // starts underneath it, which reads as a list that
-                        // opened halfway down and will not scroll back up. On a
-                        // wide window the head sliver above has already spent it.
-                        padding: EdgeInsets.fromLTRB(
-                          context.pageGutter,
-                          compact ? context.topGutter + context.pageGutter : 0,
-                          context.pageGutter,
-                          context.pageGutter + context.bottomGutter,
-                        ),
-                        sliver: SliverGrid(
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: context.gridColumns(
-                                  minTileWidth: 300,
-                                  width: room.crossAxisExtent,
-                                ),
-                                mainAxisSpacing: 18,
-                                crossAxisSpacing: 18,
-                                mainAxisExtent: 210,
-                              ),
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) => _ProjectCard(
-                              project: projects[index],
-                              names: names,
-                              avatars: avatars,
-                              teams: teams,
-                              onSettings: () => _openSettings(projects[index]),
-                              onCopy: templatesOffered
-                                  ? () => _copy(projects[index])
-                                  : null,
-                              onInstantiate:
-                                  templatesOffered && projects[index].template
-                                  ? () => _instantiate(projects[index])
-                                  : null,
-                            ),
-                            childCount: projects.length,
+                      sliver: SliverGrid(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: context.gridColumns(
+                            minTileWidth: 300,
+                            width: room.crossAxisExtent,
                           ),
+                          mainAxisSpacing: 18,
+                          crossAxisSpacing: 18,
+                          mainAxisExtent: 210,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) => _ProjectCard(
+                            project: projects[index],
+                            names: names,
+                            avatars: avatars,
+                            teams: teams,
+                            onSettings: () => _openSettings(projects[index]),
+                            onCopy: templatesOffered
+                                ? () => _copy(projects[index])
+                                : null,
+                            onInstantiate:
+                                templatesOffered && projects[index].template
+                                ? () => _instantiate(projects[index])
+                                : null,
+                          ),
+                          childCount: projects.length,
                         ),
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -392,26 +358,28 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   }
 
   Future<void> _showCreate() async {
-    final projects = context.read<ProjectRepository>();
+    final cubit = _cubit;
     final users = context.read<UserRepository>();
     final meId = context.read<AuthBloc>().state.user?.id;
     final deadlineDefault = offeredDeadlineDefault(context);
     final created = await showGlassModal<Project>(
       context,
       width: 580,
-      builder: (modalContext) => MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider.value(value: projects),
-          RepositoryProvider.value(value: users),
-        ],
-        child: _CreateProjectBody(
-          meId: meId,
-          takenKeys: _takenProjectKeys(),
-          deadlineDefault: deadlineDefault,
+      // The modal is a route of its own: the list's cubit creates the project,
+      // and the users go along for the lead's person picker.
+      builder: (modalContext) => BlocProvider.value(
+        value: cubit,
+        child: RepositoryProvider.value(
+          value: users,
+          child: _CreateProjectBody(
+            meId: meId,
+            takenKeys: _takenProjectKeys(),
+            deadlineDefault: deadlineDefault,
+          ),
         ),
       ),
     );
-    if (created != null) _cubit.load();
+    if (created != null) cubit.load();
   }
 
   Future<void> _openSettings(Project project) async {
@@ -1026,8 +994,8 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
       _error = null;
     });
     try {
-      final repo = context.read<ProjectRepository>();
-      final project = await repo.createProject(
+      final projects = context.read<ProjectsCubit>();
+      final project = await projects.createProject(
         key: _draft.trimmedKey,
         name: _draft.trimmedName,
         description: _draft.trimmedDescription,
@@ -1040,7 +1008,7 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
           context,
           _draft.pendingAvatar,
           EntityAvatarStrings.project,
-          (file) => repo.uploadProjectAvatar(project.id, file),
+          (file) => projects.uploadAvatar(project.id, file),
         );
       }
       if (mounted) Navigator.of(context).pop(project);

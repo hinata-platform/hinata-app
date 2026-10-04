@@ -22,6 +22,7 @@ import '../../../core/widgets/hive_loader.dart';
 import '../../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassToast;
 import 'attachment_kind.dart';
+import 'attachment_viewer_cubit.dart';
 import '../../../core/widgets/hive_widgets.dart'
     show backChevron, forwardChevron;
 
@@ -201,10 +202,13 @@ Future<void> showAttachmentViewer(
     barrierColor: Colors.transparent,
     useRootNavigator: true,
     transitionDuration: const Duration(milliseconds: 300),
-    pageBuilder: (_, _, _) => _ViewerScaffold(
-      items: items,
-      initialIndex: initialIndex.clamp(0, items.length - 1),
-      onDownload: onDownload,
+    pageBuilder: (_, _, _) => BlocProvider(
+      create: (context) => AttachmentViewerCubit(context.read<ApiClient>()),
+      child: _ViewerScaffold(
+        items: items,
+        initialIndex: initialIndex.clamp(0, items.length - 1),
+        onDownload: onDownload,
+      ),
     ),
     transitionBuilder: (_, _, _, child) => child,
   );
