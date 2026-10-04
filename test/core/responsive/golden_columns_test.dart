@@ -84,8 +84,14 @@ void main() {
   test(
     'the project settings end about level with and without time tracking',
     () {
-      expectLevel(projectSettingsGroups(timeTracking: true, templates: false), 'project time');
-      expectLevel(projectSettingsGroups(timeTracking: false, templates: false), 'project');
+      expectLevel(
+        projectSettingsGroups(timeTracking: true, templates: false),
+        'project time',
+      );
+      expectLevel(
+        projectSettingsGroups(timeTracking: false, templates: false),
+        'project',
+      );
     },
   );
 
