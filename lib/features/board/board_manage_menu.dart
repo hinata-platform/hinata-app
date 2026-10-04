@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -12,6 +14,7 @@ import '../../core/widgets/project_picker.dart';
 import '../deletion/delete_flows.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'board_columns_editor.dart';
+import 'board_edit_cubit.dart';
 
 /// Opens the board management menu (Rename · Delete) as an anchored popover at
 /// the trigger and runs the chosen action. Shared by the board overview and the
@@ -270,8 +273,8 @@ Future<bool?> _showRenameBoardModal(BuildContext context, AgileBoard board) {
   return showGlassModal<bool>(
     context,
     width: 460,
-    builder: (_) => RepositoryProvider.value(
-      value: repo,
+    builder: (_) => BlocProvider(
+      create: (_) => BoardEditCubit(repo),
       child: _RenameBoardBody(board: board),
     ),
   );
@@ -305,8 +308,10 @@ Future<bool> _editBoardProjects(BuildContext context, AgileBoard board) async {
       ids.toSet().containsAll(board.projectIds);
   if (ids.isEmpty || unchanged) return false;
 
+  // A flow without a screen of its own: its cubit lives for the one change.
+  final edit = BoardEditCubit(context.read<BoardRepository>());
   try {
-    await context.read<BoardRepository>().updateBoardProjects(board.id, ids);
+    await edit.updateProjects(board.id, ids);
     return true;
   } on ApiFailure catch (failure) {
     if (context.mounted) {
@@ -317,6 +322,8 @@ Future<bool> _editBoardProjects(BuildContext context, AgileBoard board) async {
       );
     }
     return false;
+  } finally {
+    unawaited(edit.close());
   }
 }
 
@@ -356,7 +363,7 @@ class _RenameBoardBodyState extends State<_RenameBoardBody> {
       _error = null;
     });
     try {
-      await context.read<BoardRepository>().renameBoard(widget.board.id, name);
+      await context.read<BoardEditCubit>().rename(widget.board.id, name);
       if (mounted) Navigator.of(context).pop(true);
     } on ApiFailure catch (failure) {
       setState(() {

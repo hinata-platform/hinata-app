@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/models/content_models.dart';
@@ -6,9 +7,11 @@ import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/team_models.dart';
 import 'package:hinata/core/repositories/article_repository.dart';
 import 'package:hinata/core/repositories/team_repository.dart';
+import 'package:hinata/core/repositories/user_repository.dart';
 import 'package:hinata/core/theme/app_colors.dart';
 import 'package:hinata/features/knowledge/team_pages_picker.dart';
 import 'package:hinata/features/teams/team_member_modals.dart';
+import 'package:hinata/features/teams/team_members_cubit.dart';
 import 'package:hinata/features/teams/team_modal_kit.dart';
 
 /// HIN-129: the knowledge base inside team roles. Adding and managing members
@@ -85,18 +88,23 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: ManageMemberBody(
-              repo: TeamRepository(api),
-              articles: ArticleRepository(api),
-              team: team,
-              membership: membership,
-              user: const DirectoryUser(
-                id: 'u1',
-                username: 'u1',
-                displayName: 'Uma',
+            body: BlocProvider(
+              create: (_) => TeamMembersCubit(
+                teams: TeamRepository(api),
+                users: UserRepository(api),
               ),
-              projectsById: const {},
-              isSelf: false,
+              child: ManageMemberBody(
+                articles: ArticleRepository(api),
+                team: team,
+                membership: membership,
+                user: const DirectoryUser(
+                  id: 'u1',
+                  username: 'u1',
+                  displayName: 'Uma',
+                ),
+                projectsById: const {},
+                isSelf: false,
+              ),
             ),
           ),
         ),

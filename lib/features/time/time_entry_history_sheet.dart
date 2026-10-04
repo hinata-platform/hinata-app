@@ -29,21 +29,22 @@ Future<void> showTimeEntryHistorySheet(
   BuildContext context, {
   required WorkItem entry,
 }) {
-  final time = context.read<TimeRepository>();
   return showGlassModal<void>(
     context,
     adaptive: true,
     width: 480,
-    builder: (_) => RepositoryProvider<TimeRepository>.value(
-      value: time,
-      child: BlocProvider(
-        create: (_) => PagedCubit<TimeEntryHistoryEntry>(
+    builder: (_) => BlocProvider(
+      create: (_) {
+        // Read once, from the context that opened the sheet: the modal rides
+        // the root navigator.
+        final time = context.read<TimeRepository>();
+        return PagedCubit<TimeEntryHistoryEntry>(
           (page, size) => time.history(entry.id, page: page, size: size),
           pageSize: 25,
           keyOf: (row) => row.id,
-        )..load(),
-        child: _HistoryBody(entry: entry),
-      ),
+        )..load();
+      },
+      child: _HistoryBody(entry: entry),
     ),
   );
 }

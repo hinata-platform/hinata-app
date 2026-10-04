@@ -5,6 +5,7 @@ import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/models/time_approval_models.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
+import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/core/widgets/hive_widgets.dart' show HiveSwitch;
 import 'package:hinata/features/admin/admin_cards.dart';
@@ -57,10 +58,15 @@ void main() {
     Map<String, dynamic> settings, {
     double width = 900,
     ThemeData? theme,
-  }) => RepositoryProvider<TimeRepository>.value(
-    // The tag catalogue card mounts itself as soon as the module is on, and it
-    // reads the catalogue. An empty one is what a fresh instance has.
-    value: _FakeTagRepository(),
+  }) => MultiRepositoryProvider(
+    providers: [
+      // The tag catalogue card mounts itself as soon as the module is on, and
+      // it reads the catalogue. An empty one is what a fresh instance has.
+      RepositoryProvider<TimeRepository>.value(value: _FakeTagRepository()),
+      // The correction requests card takes it when its cubit is made; with no
+      // requests it is never asked anything.
+      RepositoryProvider<ProjectRepository>.value(value: _NoProjects()),
+    ],
     child: BlocProvider<TimePolicyCubit>(
       // So does the lock-exception card, and it reads the policy the way every
       // screen in the module does — the app provides this cubit once, globally.
@@ -517,3 +523,5 @@ class _FakeTagRepository implements TimeRepository {
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} is not faked');
 }
+
+class _NoProjects extends Fake implements ProjectRepository {}

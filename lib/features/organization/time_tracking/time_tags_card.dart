@@ -14,6 +14,7 @@ import '../../../core/theme/hue_colors.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../../admin/admin_form_helpers.dart';
+import 'time_tags_cubit.dart';
 
 /// The tag catalogue, managed.
 ///
@@ -30,14 +31,24 @@ import '../../admin/admin_form_helpers.dart';
 /// Paged, and never drained: an instance that has been running for two years has
 /// a vocabulary, and a screen that loads all of it is a screen that stops
 /// working on exactly the instances that need it.
-class OrgTimeTagsCard extends StatefulWidget {
+class OrgTimeTagsCard extends StatelessWidget {
   const OrgTimeTagsCard({super.key});
 
   @override
-  State<OrgTimeTagsCard> createState() => _OrgTimeTagsCardState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => TimeTagsCubit(context.read<TimeRepository>()),
+    child: const _OrgTimeTagsBody(),
+  );
 }
 
-class _OrgTimeTagsCardState extends State<OrgTimeTagsCard> {
+class _OrgTimeTagsBody extends StatefulWidget {
+  const _OrgTimeTagsBody();
+
+  @override
+  State<_OrgTimeTagsBody> createState() => _OrgTimeTagsCardState();
+}
+
+class _OrgTimeTagsCardState extends State<_OrgTimeTagsBody> {
   static const int _pageSize = 25;
 
   final _search = TextEditingController();
@@ -67,7 +78,7 @@ class _OrgTimeTagsCardState extends State<OrgTimeTagsCard> {
     super.dispose();
   }
 
-  TimeRepository get _time => context.read<TimeRepository>();
+  TimeTagsCubit get _catalogue => context.read<TimeTagsCubit>();
 
   String? get _query =>
       _search.text.trim().isEmpty ? null : _search.text.trim();
@@ -81,7 +92,7 @@ class _OrgTimeTagsCardState extends State<OrgTimeTagsCard> {
     try {
       // With the counts: this screen is where a rename or a delete is decided,
       // and the number of entries behind a word is the decision.
-      final page = await _time.tags(
+      final page = await _catalogue.tags(
         query: _query,
         page: 0,
         size: _pageSize,
@@ -109,7 +120,7 @@ class _OrgTimeTagsCardState extends State<OrgTimeTagsCard> {
     final seq = _seq;
     setState(() => _loadingMore = true);
     try {
-      final page = await _time.tags(
+      final page = await _catalogue.tags(
         query: _query,
         page: _page + 1,
         size: _pageSize,
@@ -142,7 +153,7 @@ class _OrgTimeTagsCardState extends State<OrgTimeTagsCard> {
   Future<void> _create() async {
     final name = await _askForName(context, title: 'admin.timeTracking.tagNew');
     if (name == null || !mounted) return;
-    await _run(() => _time.createTag(name));
+    await _run(() => _catalogue.create(name));
   }
 
   Future<void> _rename(TimeTag tag) async {
@@ -158,7 +169,7 @@ class _OrgTimeTagsCardState extends State<OrgTimeTagsCard> {
           : context.t('admin.timeTracking.tagUsage', count: tag.entries),
     );
     if (name == null || name == tag.name || !mounted) return;
-    await _run(() => _time.updateTag(tag.id, name: name));
+    await _run(() => _catalogue.rename(tag.id, name));
   }
 
   Future<void> _delete(TimeTag tag) async {
@@ -175,7 +186,7 @@ class _OrgTimeTagsCardState extends State<OrgTimeTagsCard> {
       destructive: true,
     );
     if (confirmed != true || !mounted) return;
-    await _run(() => _time.deleteTag(tag.id));
+    await _run(() => _catalogue.delete(tag.id));
   }
 
   /// Runs one catalogue change and re-reads the list, whatever happened.

@@ -50,7 +50,9 @@ import '../../core/repositories/account_repository.dart';
 import '../../core/widgets/frosted_surface.dart';
 import '../../core/widgets/glass_panel.dart';
 import '../../core/widgets/hive_loader.dart';
+import '../account/account_cubit.dart';
 import '../account/account_modals.dart' show showEditProfile;
+import '../notifications/notifications_cubit.dart';
 import '../search/global_search_dialog.dart';
 import '../search/search_tokens.dart';
 import '../sprint/modals/glass_modal.dart'

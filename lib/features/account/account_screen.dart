@@ -35,6 +35,7 @@ import '../connect/server_switcher.dart';
 import '../legal/legal_links.dart';
 import '../sprint/modals/glass_modal.dart' show showGlassToast, GlassToastKind;
 import '../shell/page_chrome.dart';
+import 'account_cubit.dart';
 import 'account_modals.dart';
 import 'account_widgets.dart';
 import 'availability_section.dart';
@@ -80,7 +81,7 @@ const _settingsMenu = <({_SettingsSection section, IconData icon})>[
 /// The self-service `/me` account surface — profile, email & security, 2FA,
 /// device sessions, notification preferences, access overview, appearance and
 /// the GDPR data/danger zone. Replaces the former lightweight settings screen.
-class AccountScreen extends StatefulWidget {
+class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key, this.section});
 
   /// The open compact sub-page, carried in the URL (`/settings?section=…`) so
@@ -88,7 +89,19 @@ class AccountScreen extends StatefulWidget {
   final String? section;
 
   @override
-  State<AccountScreen> createState() => _AccountScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => AccountCubit(context.read<AccountRepository>()),
+    child: _AccountBody(section: section),
+  );
+}
+
+class _AccountBody extends StatefulWidget {
+  const _AccountBody({this.section});
+
+  final String? section;
+
+  @override
+  State<_AccountBody> createState() => _AccountScreenState();
 }
 
 /// The stable notification taxonomy — ids mirror the server's NOTIF_EVENTS.
@@ -111,8 +124,8 @@ const _notifEvents = <({String id, IconData icon, bool locked})>[
   (id: 'security', icon: LucideIcons.shieldCheck, locked: true),
 ];
 
-class _AccountScreenState extends State<AccountScreen> {
-  AccountRepository get _repo => context.read<AccountRepository>();
+class _AccountScreenState extends State<_AccountBody> {
+  AccountCubit get _account => context.read<AccountCubit>();
 
   /// Whether the embedded MCP server surface (Personal Access Tokens) is exposed
   /// — driven by the server's `mcp` feature flag.
@@ -173,12 +186,12 @@ class _AccountScreenState extends State<AccountScreen> {
     setState(() => _loading = true);
     try {
       final results = await Future.wait([
-        _repo.meAccount(),
-        _repo.sessionsPage(
+        _account.me(),
+        _account.sessionsPage(
           size: _sessionsExpanded ? _sessionsPageSize : _sessionsPreview,
         ),
-        _repo.myTeams(),
-        _repo.myProjects(),
+        _account.myTeams(),
+        _account.myProjects(),
       ]);
       if (!mounted) return;
       final page = results[1] as ({List<DeviceSession> items, int total});
@@ -212,7 +225,7 @@ class _AccountScreenState extends State<AccountScreen> {
   Future<void> _editProfile() async {
     final authBloc = context.read<AuthBloc>();
     final toast = context.t('account.profileUpdated');
-    final saved = await showEditProfile(context, _repo, _me!);
+    final saved = await showEditProfile(context, _account, _me!);
     if (saved != null && mounted) {
       setState(() => _me = saved);
       // Keep the app shell (avatar / name) in sync with the edited profile.
@@ -228,8 +241,8 @@ class _AccountScreenState extends State<AccountScreen> {
   void _setLanguage(String code) {
     context.read<LocaleCubit>().setLocale(code);
     if (_me?.locale == code) return;
-    _repo
-        .updateMyProfile(locale: code)
+    _account
+        .updateProfile(locale: code)
         .then((saved) {
           if (mounted) setState(() => _me = saved);
         })
@@ -272,7 +285,7 @@ class _AccountScreenState extends State<AccountScreen> {
       // The returned URL carries a fresh `?v=` token, so AppAvatar fetches the
       // new picture under a new cache key. Refresh AuthUser so the shell avatar
       // (which reads AuthUser.avatarUrl) updates too.
-      final url = await _repo.uploadAvatar(multipart);
+      final url = await _account.uploadAvatar(multipart);
       if (!mounted) return;
       setState(() => _me = _me!.copyWith(avatarUrl: url));
       authBloc.add(const AuthChecked());
@@ -290,7 +303,7 @@ class _AccountScreenState extends State<AccountScreen> {
     final failed = context.t('account.avatar.failed');
     setState(() => _avatarBusy = true);
     try {
-      await _repo.deleteAvatar();
+      await _account.deleteAvatar();
       if (!mounted) return;
       setState(() => _me = _me!.copyWith(clearAvatar: true));
       authBloc.add(const AuthChecked());
@@ -319,7 +332,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _changeEmail() async {
     final toast = context.t('account.emailModal.sentToast');
-    final sent = await showChangeEmail(context, _repo, _me!);
+    final sent = await showChangeEmail(context, _account, _me!);
     if (sent == true && mounted) {
       _toast(toast);
       _load();
@@ -334,14 +347,14 @@ class _AccountScreenState extends State<AccountScreen> {
       title: context.t('account.passwordModal.title'),
       message: context.t('account.passwordModal.message'),
       confirmLabel: context.t('account.passwordModal.confirm'),
-      onConfirm: () => _repo.sendPasswordReset(),
+      onConfirm: () => _account.sendPasswordReset(),
     );
     if (ok == true) _toast(toast);
   }
 
   Future<void> _enable2fa() async {
     final toast = context.t('twofa.enabledToast');
-    final enabled = await show2faWizard(context, _repo);
+    final enabled = await show2faWizard(context, _account);
     if (enabled == true) {
       _toast(toast);
       _load();
@@ -350,7 +363,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _disable2fa() async {
     final toast = context.t('twofa.disabledToast');
-    final disabled = await show2faDisable(context, _repo);
+    final disabled = await show2faDisable(context, _account);
     if (disabled == true) {
       _toast(toast);
       _load();
@@ -372,7 +385,7 @@ class _AccountScreenState extends State<AccountScreen> {
       ),
       confirmLabel: context.t('account.sessions.signOut'),
       danger: true,
-      onConfirm: () => _repo.revokeSession(s.id),
+      onConfirm: () => _account.revokeSession(s.id),
     );
     if (ok == true) {
       _toast(toast);
@@ -389,7 +402,7 @@ class _AccountScreenState extends State<AccountScreen> {
       message: context.t('account.sessions.revokeOthersMessage'),
       confirmLabel: context.t('account.sessions.revokeOthersConfirm'),
       danger: true,
-      onConfirm: () => _repo.revokeOtherSessions(),
+      onConfirm: () => _account.revokeOtherSessions(),
     );
     if (ok == true) {
       _toast(toast);
@@ -405,13 +418,13 @@ class _AccountScreenState extends State<AccountScreen> {
       title: context.t('account.data.request'),
       message: context.t('account.data.requestModalMessage'),
       confirmLabel: context.t('account.data.requestModalConfirm'),
-      onConfirm: () => _repo.requestDataReport(),
+      onConfirm: () => _account.requestDataReport(),
     );
     if (ok == true) _toast(toast);
   }
 
   Future<void> _deleteAccount() async {
-    final done = await showDeleteAccount(context, _repo);
+    final done = await showDeleteAccount(context, _account);
     if (done == true && mounted) {
       context.read<AuthBloc>().add(const LogoutRequested());
     }
@@ -423,7 +436,7 @@ class _AccountScreenState extends State<AccountScreen> {
     _prefsDebounce?.cancel();
     _prefsDebounce = Timer(const Duration(milliseconds: 450), () async {
       try {
-        final saved = await _repo.saveNotificationPrefs(next);
+        final saved = await _account.saveNotificationPrefs(next);
         if (mounted) setState(() => _prefs = saved);
       } catch (_) {
         if (mounted) _toast(failed, kind: GlassToastKind.error);
@@ -1021,7 +1034,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       label: context.t('account.security.codes'),
                       icon: LucideIcons.keyRound,
                       onPressed: () =>
-                          show2faManage(context, _repo).then((_) => _load()),
+                          show2faManage(context, _account).then((_) => _load()),
                     ),
                     const SizedBox(width: 8),
                     AccountActionButton(
@@ -1090,7 +1103,7 @@ class _AccountScreenState extends State<AccountScreen> {
       // one session and skip another. One page is also all of them in practice
       // — the server caps a page at this size, and an account with more live
       // sessions than that has a problem no expander is going to solve.
-      final page = await _repo.sessionsPage(size: _sessionsPageSize);
+      final page = await _account.sessionsPage(size: _sessionsPageSize);
       if (!mounted) return;
       setState(() {
         _sessions = page.items;

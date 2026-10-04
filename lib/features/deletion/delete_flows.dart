@@ -16,6 +16,7 @@ import '../teams/team_modal_kit.dart' show ModalShell, ModalFooter, FieldLabel;
 import '../../core/repositories/board_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
+import 'deletion_cubit.dart';
 
 // ════════════════════════════════════════════════════════════════════════
 //  Cascading-delete flow for boards, projects and teams. A single Liquid-Glass
@@ -39,13 +40,10 @@ Future<bool?> showDeleteBoardFlow(
       titleKey: 'delete.board.title',
       subtitleKey: 'delete.board.subtitle',
       confirmName: boardName,
-      loadImpact: () => context
-          .read<BoardRepository>()
-          .boardDeletionImpact(boardId)
-          .then(_boardImpact),
-      openStream: (_, cancel) => context
-          .read<BoardRepository>()
-          .boardDeleteStream(boardId, cancelToken: cancel),
+      loadImpact: (deletion) =>
+          deletion.boardImpact(boardId).then(_boardImpact),
+      openStream: (deletion, _, cancel) =>
+          deletion.deleteBoard(boardId, cancelToken: cancel),
     ),
   );
   // Announced here rather than in the repository, as the other board mutations
@@ -69,17 +67,14 @@ Future<bool?> showDeleteProjectFlow(
       titleKey: 'delete.project.title',
       subtitleKey: 'delete.project.subtitle',
       confirmName: projectName,
-      loadImpact: () => context
-          .read<ProjectRepository>()
-          .projectDeletionImpact(projectId)
-          .then(_projectImpact),
-      openStream: (choice, cancel) =>
-          context.read<ProjectRepository>().projectDeleteStream(
-            projectId,
-            strategy: choice.strategy,
-            migrateToProjectId: choice.targetId,
-            cancelToken: cancel,
-          ),
+      loadImpact: (deletion) =>
+          deletion.projectImpact(projectId).then(_projectImpact),
+      openStream: (deletion, choice, cancel) => deletion.deleteProject(
+        projectId,
+        strategy: choice.strategy,
+        migrateToProjectId: choice.targetId,
+        cancelToken: cancel,
+      ),
     ),
   );
 }
@@ -98,13 +93,9 @@ Future<bool?> showDeleteTeamFlow(
       titleKey: 'delete.team.title',
       subtitleKey: 'delete.team.subtitle',
       confirmName: teamName,
-      loadImpact: () => context
-          .read<TeamRepository>()
-          .teamDeletionImpact(teamId)
-          .then(_teamImpact),
-      openStream: (_, cancel) => context
-          .read<TeamRepository>()
-          .teamDeleteStream(teamId, cancelToken: cancel),
+      loadImpact: (deletion) => deletion.teamImpact(teamId).then(_teamImpact),
+      openStream: (deletion, _, cancel) =>
+          deletion.deleteTeam(teamId, cancelToken: cancel),
     ),
   );
 }
@@ -115,7 +106,15 @@ Future<bool?> _show(BuildContext context, _DeleteFlow flow) =>
       width: 480,
       // A delete confirmation is three lines; a full-width sheet overstates it.
       adaptive: false,
-      builder: (_) => flow,
+      // The repositories are the opener's: the modal is a route of its own.
+      builder: (_) => BlocProvider(
+        create: (_) => DeletionCubit(
+          boards: context.read<BoardRepository>(),
+          projects: context.read<ProjectRepository>(),
+          teams: context.read<TeamRepository>(),
+        ),
+        child: flow,
+      ),
     );
 
 // ── impact → view model ─────────────────────────────────────────────────────
@@ -215,8 +214,12 @@ class _DeleteFlow extends StatefulWidget {
   final String titleKey;
   final String subtitleKey;
   final String confirmName;
-  final Future<_Impact> Function() loadImpact;
-  final Future<Stream<List<int>>> Function(_Choice choice, CancelToken cancel)
+  final Future<_Impact> Function(DeletionCubit deletion) loadImpact;
+  final Future<Stream<List<int>>> Function(
+    DeletionCubit deletion,
+    _Choice choice,
+    CancelToken cancel,
+  )
   openStream;
 
   @override
@@ -262,7 +265,7 @@ class _DeleteFlowState extends State<_DeleteFlow> {
 
   Future<void> _load() async {
     try {
-      final impact = await widget.loadImpact();
+      final impact = await widget.loadImpact(context.read<DeletionCubit>());
       if (!mounted) return;
       setState(() {
         _impact = impact;
@@ -305,7 +308,11 @@ class _DeleteFlowState extends State<_DeleteFlow> {
     // used across an async gap.
     final failMsg = context.t('delete.failed');
     try {
-      final bytes = await widget.openStream(_choice, _cancel!);
+      final bytes = await widget.openStream(
+        context.read<DeletionCubit>(),
+        _choice,
+        _cancel!,
+      );
       _sub = parseSse(bytes).listen(
         _onEvent,
         onDone: _onStreamEnded,

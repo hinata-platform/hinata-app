@@ -21,6 +21,7 @@ import '../../shell/page_chrome.dart';
 import '../../sprint/modals/glass_modal.dart'
     show showGlassToast, GlassToastKind;
 import '../../../core/widgets/glass_filter_bar.dart';
+import 'user_management_cubit.dart';
 import 'user_management_modals.dart';
 import 'user_management_widgets.dart';
 import '../../../core/widgets/hive_widgets.dart'
@@ -36,7 +37,7 @@ const double _kUmDockHeight = kGlassDockRow;
 /// Admin **User management** board: a paginated directory of every platform
 /// user with search, role/status/origin filters, sortable columns, a per-user
 /// detail drawer, bulk actions and the full account lifecycle. Admin-gated.
-class UserManagementScreen extends StatefulWidget {
+class UserManagementScreen extends StatelessWidget {
   const UserManagementScreen({super.key, this.focusUserId});
 
   /// When set (e.g. from an admin approval deep-link `?user=<id>`), the matching
@@ -44,10 +45,22 @@ class UserManagementScreen extends StatefulWidget {
   final String? focusUserId;
 
   @override
-  State<UserManagementScreen> createState() => _UserManagementScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => UserManagementCubit(context.read<AdminRepository>()),
+    child: _UserManagementBoard(focusUserId: focusUserId),
+  );
 }
 
-class _UserManagementScreenState extends State<UserManagementScreen> {
+class _UserManagementBoard extends StatefulWidget {
+  const _UserManagementBoard({this.focusUserId});
+
+  final String? focusUserId;
+
+  @override
+  State<_UserManagementBoard> createState() => _UserManagementScreenState();
+}
+
+class _UserManagementScreenState extends State<_UserManagementBoard> {
   AdminUserPage? _page;
   bool _loading = true;
   String? _error;
@@ -83,7 +96,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   /// keep re-opening it.
   bool _focusHandled = false;
 
-  AdminRepository get _repo => context.read<AdminRepository>();
+  UserManagementCubit get _users => context.read<UserManagementCubit>();
   String? get _currentUserId => context.read<AuthBloc>().state.user?.id;
 
   @override
@@ -99,7 +112,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     if (id == null || id.isEmpty || _focusHandled) return;
     _focusHandled = true;
     try {
-      final user = await _repo.adminUser(id);
+      final user = await _users.user(id);
       if (!mounted) return;
       _known[user.id] = user;
       _actions.openDrawer(user);
@@ -122,7 +135,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       _error = null;
     });
     try {
-      final page = await _repo.adminUsersPage(
+      final page = await _users.users(
         query: _query,
         role: _roleF,
         status: _statusF,
@@ -224,7 +237,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         final result = await showEditModal(context, u);
         if (result == null) return;
         await _run(
-          () => _repo.adminUpdateUserDetails(
+          () => _users.updateDetails(
             u.id,
             displayName: result.name,
             title: result.title,
@@ -234,28 +247,25 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         );
       },
       activate: (ids) => _run(
-        () => _repo.adminSetStatus(ids, UserStatus.active),
+        () => _users.setStatus(ids, UserStatus.active),
         ids.length == 1
             ? 'admin.um.toastActivated'
             : 'admin.um.toastActivatedMany',
         clearSel: true,
       ),
-      approve: (ids) => _run(
-        () => _repo.adminApproveUsers(ids),
-        'admin.um.approved',
-        clearSel: true,
-      ),
+      approve: (ids) =>
+          _run(() => _users.approve(ids), 'admin.um.approved', clearSel: true),
       openDeactivate: (ids) async {
         final users = _usersFor(ids);
         if (!await showDeactivateModal(context, users)) return;
         await _run(
-          () => _repo.adminSetStatus(ids, UserStatus.disabled),
+          () => _users.setStatus(ids, UserStatus.disabled),
           'admin.um.toastDeactivated',
           clearSel: true,
         );
       },
       setRole: (ids, role) => _run(
-        () => _repo.adminSetRole(ids, role),
+        () => _users.setRole(ids, role),
         role == AdminRole.admin
             ? 'admin.um.toastPromoted'
             : 'admin.um.toastDemoted',
@@ -268,7 +278,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         }
         if (!mounted) return false;
         try {
-          await _repo.adminSetOrgRole(ids, orgAdmin);
+          await _users.setOrgAdmin(ids, orgAdmin);
         } on ApiFailure catch (failure) {
           _toastRaw(failure.message);
           return false;
@@ -286,7 +296,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         final users = _usersFor(ids);
         if (!await showRevokeAdminModal(context, users)) return;
         await _run(
-          () => _repo.adminSetRole(ids, AdminRole.user),
+          () => _users.setRole(ids, AdminRole.user),
           'admin.um.toastDemoted',
           clearSel: true,
         );
@@ -295,7 +305,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         final users = _usersFor(ids);
         if (!await showResendModal(context, users)) return;
         await _run(
-          () => _repo.adminResendInvites(ids),
+          () => _users.resendInvites(ids),
           'admin.um.toastInviteResent',
           clearSel: true,
         );
@@ -304,13 +314,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         final users = _usersFor(ids);
         if (!await showResetModal(context, users)) return;
         await _run(
-          () => _repo.adminSendPasswordReset(ids),
+          () => _users.sendPasswordReset(ids),
           'admin.um.toastResetSent',
           clearSel: true,
         );
       },
       revokeSessions: (ids) => _run(
-        () => _repo.adminRevokeSessions(ids),
+        () => _users.revokeSessions(ids),
         'admin.um.toastSessionsRevoked',
         clearSel: true,
       ),
@@ -318,7 +328,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         final users = _usersFor(ids);
         if (!await showDeleteModal(context, users)) return;
         await _run(
-          () => _repo.adminDeleteUsers(ids),
+          () => _users.delete(ids),
           'admin.um.toastDeleted',
           clearSel: true,
         );
@@ -333,7 +343,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final result = await showInviteModal(context);
     if (result == null) return;
     try {
-      final sent = await _repo.adminInvite(
+      final sent = await _users.invite(
         emails: result.emails,
         role: result.role,
         message: result.message,

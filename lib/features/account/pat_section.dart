@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/repositories/account_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/personal_access_token.dart';
 import '../../core/theme/app_colors.dart';
@@ -23,6 +22,7 @@ import '../sprint/modals/glass_modal.dart'
         GlassToastKind;
 import 'account_modals.dart' show showConfirm;
 import 'account_widgets.dart';
+import 'account_cubit.dart';
 
 /// The account "Access tokens" section — lists the caller's Personal Access
 /// Tokens (used to authenticate against the embedded MCP server), and mints new
@@ -38,7 +38,7 @@ class PatSection extends StatefulWidget {
 }
 
 class _PatSectionState extends State<PatSection> {
-  AccountRepository get _repo => context.read<AccountRepository>();
+  AccountCubit get _account => context.read<AccountCubit>();
 
   List<PersonalAccessToken>? _tokens;
   bool _loading = true;
@@ -52,7 +52,7 @@ class _PatSectionState extends State<PatSection> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final tokens = await _repo.listPats();
+      final tokens = await _account.pats();
       if (mounted) {
         setState(() {
           _tokens = tokens;
@@ -75,7 +75,7 @@ class _PatSectionState extends State<PatSection> {
   }
 
   Future<void> _create() async {
-    final created = await showCreatePat(context, _repo);
+    final created = await showCreatePat(context, _account);
     if (created == null || !mounted) return;
     await showPatReveal(context, created);
     if (mounted) _load();
@@ -90,7 +90,7 @@ class _PatSectionState extends State<PatSection> {
       message: context.t('pat.revoke.message', variables: {'name': token.name}),
       confirmLabel: context.t('pat.revoke.confirm'),
       danger: true,
-      onConfirm: () => _repo.revokePat(token.id),
+      onConfirm: () => _account.revokePat(token.id),
     );
     if (ok == true) {
       _toast(toast);
@@ -107,7 +107,7 @@ class _PatSectionState extends State<PatSection> {
       message: context.t('pat.delete.message', variables: {'name': token.name}),
       confirmLabel: context.t('pat.delete.confirm'),
       danger: true,
-      onConfirm: () => _repo.deletePat(token.id),
+      onConfirm: () => _account.deletePat(token.id),
     );
     if (ok == true) {
       _toast(toast);
@@ -318,14 +318,11 @@ class _ScopeChip extends StatelessWidget {
 
 /// Opens the "Create token" glass sheet. Resolves to the freshly-minted
 /// [CreatedPat] (with its one-time plaintext) or null if dismissed.
-Future<CreatedPat?> showCreatePat(
-  BuildContext context,
-  AccountRepository repo,
-) {
+Future<CreatedPat?> showCreatePat(BuildContext context, AccountCubit account) {
   return showGlassModal<CreatedPat>(
     context,
     width: 480,
-    builder: (_) => _CreatePatModal(repo: repo),
+    builder: (_) => _CreatePatModal(account: account),
   );
 }
 
@@ -334,9 +331,9 @@ Future<CreatedPat?> showCreatePat(
 const List<int> _kExpiryDays = [30, 90, 365, 0];
 
 class _CreatePatModal extends StatefulWidget {
-  const _CreatePatModal({required this.repo});
+  const _CreatePatModal({required this.account});
 
-  final AccountRepository repo;
+  final AccountCubit account;
 
   @override
   State<_CreatePatModal> createState() => _CreatePatModalState();
@@ -364,7 +361,7 @@ class _CreatePatModalState extends State<_CreatePatModal> {
       _error = null;
     });
     try {
-      final created = await widget.repo.createPat(
+      final created = await widget.account.createPat(
         name: _name.text.trim(),
         scopes: _scopes.toList(),
         ttlDays: _kExpiryDays[_expiryIndex],

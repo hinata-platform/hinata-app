@@ -4,7 +4,7 @@ part of 'app_shell.dart';
 
 /// Bell action with an unread dot and an anchored popover listing the 10 most
 /// recent notifications. The popover footer links to the full list.
-class _NotificationBell extends StatefulWidget {
+class _NotificationBell extends StatelessWidget {
   const _NotificationBell({
     required this.active,
     this.dark = false,
@@ -18,77 +18,84 @@ class _NotificationBell extends StatefulWidget {
   /// (mobile top bar); otherwise the desktop ghost [_TopIconButton].
   final bool dark;
 
-  @override
-  State<_NotificationBell> createState() => _NotificationBellState();
-}
-
-class _NotificationBellState extends State<_NotificationBell> {
   /// The bell preview is capped at 5 entries — full history lives on the
   /// notifications page, and a smaller page keeps the popover build cheap.
   static const _previewCount = 5;
 
-  late final FetchCubit<List<AppNotification>> _cubit;
+  @override
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => NotificationPreviewCubit(
+      context.read<NotificationRepository>(),
+      size: _previewCount,
+    )..load(),
+    child: _NotificationBellBody(active: active, dark: dark, frosted: frosted),
+  );
+}
+
+class _NotificationBellBody extends StatefulWidget {
+  const _NotificationBellBody({
+    required this.active,
+    required this.dark,
+    required this.frosted,
+  });
+
+  final bool frosted;
+  final bool active;
+  final bool dark;
+
+  @override
+  State<_NotificationBellBody> createState() => _NotificationBellState();
+}
+
+class _NotificationBellState extends State<_NotificationBellBody> {
+  NotificationPreviewCubit get _cubit =>
+      context.read<NotificationPreviewCubit>();
   bool _open = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _cubit = FetchCubit(
-      () async =>
-          (await context.read<NotificationRepository>().notificationsPage(
-            size: _previewCount,
-          )).items,
-    )..load();
-  }
-
-  @override
-  void dispose() {
-    _cubit.close();
-    super.dispose();
-  }
-
+  // Each action takes the cubit before its first await, as the field it
+  // replaced was: the context is not read once the bell may have left the tree.
   Future<void> _markAllRead(List<AppNotification> items) async {
     if (!items.any((n) => !n.read)) return;
+    final notifications = _cubit;
     try {
-      await context.read<NotificationRepository>().markAllNotificationsRead();
+      await notifications.markAllRead();
     } catch (_) {
       // Non-critical; the reload below reflects server truth.
     }
-    await _cubit.load();
+    await notifications.load();
   }
 
   Future<void> _deleteNotification(AppNotification notification) async {
+    final notifications = _cubit;
     try {
-      await context.read<NotificationRepository>().deleteNotification(
-        notification.id,
-      );
+      await notifications.delete(notification.id);
     } catch (_) {
       // Non-critical; the reload below reflects server truth.
     }
-    await _cubit.load();
+    await notifications.load();
   }
 
   Future<void> _toggleNotificationRead(AppNotification notification) async {
-    final repository = context.read<NotificationRepository>();
+    final notifications = _cubit;
     try {
       if (notification.read) {
-        await repository.markNotificationUnread(notification.id);
+        await notifications.markUnread(notification.id);
       } else {
-        await repository.markNotificationRead(notification.id);
+        await notifications.markRead(notification.id);
       }
     } catch (_) {
       // Non-critical; the reload below reflects server truth.
     }
-    await _cubit.load();
+    await notifications.load();
   }
 
   Future<void> _openNotification(AppNotification notification) async {
-    final repository = context.read<NotificationRepository>();
+    final notifications = _cubit;
     if (!notification.read) {
       try {
-        await repository.markNotificationRead(notification.id);
+        await notifications.markRead(notification.id);
       } catch (_) {}
-      _cubit.load();
+      notifications.load();
     }
     final link = notification.link;
     // Any in-app route (issues, projects, teams, admin …), not just issues, so
@@ -100,123 +107,110 @@ class _NotificationBellState extends State<_NotificationBell> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _cubit,
-      child:
-          BlocBuilder<
-            FetchCubit<List<AppNotification>>,
-            FetchState<List<AppNotification>>
-          >(
-            builder: (context, state) {
-              final items = state.data ?? const <AppNotification>[];
-              final hasUnread = items.any((n) => !n.read);
-              final showDot = hasUnread && !_open;
-              final screenWidth = MediaQuery.sizeOf(context).width;
-              final tokens = SearchTokens.of(Theme.of(context).brightness);
-              final dark = Theme.of(context).brightness == Brightness.dark;
-              // A touch more opaque than the shared search glass so
-              // notification text reads clearly over busy backgrounds.
-              final glassFill = tokens.glassFill.withValues(
-                alpha: (tokens.glassFill.a + 0.22).clamp(0.0, 0.92),
-              );
-              Widget buildTrigger(VoidCallback toggle) => widget.frosted
-                  ? _FrostedCircleButton(
-                      icon: LucideIcons.bell,
-                      tooltip: context.t('nav.notifications'),
-                      active: widget.active || _open,
-                      onTap: toggle,
-                      overlay: showDot
-                          ? const Positioned(
-                              top: 8,
-                              right: 9,
-                              child: _UnreadDot(),
-                            )
-                          : null,
-                    )
-                  : _TopIconButton(
-                      icon: LucideIcons.bell,
-                      tooltip: context.t('nav.notifications'),
-                      active: widget.active || _open,
-                      onTap: toggle,
-                      child: showDot
-                          ? const Positioned(
-                              top: 7,
-                              right: 8,
-                              child: _UnreadDot(),
-                            )
-                          : null,
-                    );
-              Widget buildNativeButton(VoidCallback toggle) => GlassButton(
-                icon: const Icon(LucideIcons.bell),
-                label: context.t('nav.notifications'),
+    return BlocBuilder<
+      NotificationPreviewCubit,
+      FetchState<List<AppNotification>>
+    >(
+      builder: (context, state) {
+        final items = state.data ?? const <AppNotification>[];
+        final hasUnread = items.any((n) => !n.read);
+        final showDot = hasUnread && !_open;
+        final screenWidth = MediaQuery.sizeOf(context).width;
+        final tokens = SearchTokens.of(Theme.of(context).brightness);
+        final dark = Theme.of(context).brightness == Brightness.dark;
+        // A touch more opaque than the shared search glass so
+        // notification text reads clearly over busy backgrounds.
+        final glassFill = tokens.glassFill.withValues(
+          alpha: (tokens.glassFill.a + 0.22).clamp(0.0, 0.92),
+        );
+        Widget buildTrigger(VoidCallback toggle) => widget.frosted
+            ? _FrostedCircleButton(
+                icon: LucideIcons.bell,
+                tooltip: context.t('nav.notifications'),
+                active: widget.active || _open,
                 onTap: toggle,
-                width: 42,
-                height: 42,
-                iconSize: 18,
-                useOwnLayer: true,
-                settings: widget.dark ? kNavGlassDark : kNavGlassLight,
-                iconColor: widget.dark ? AppColors.inkDark : AppColors.ink,
-                glowColor: AppColors.accent,
+                overlay: showDot
+                    ? const Positioned(top: 8, right: 9, child: _UnreadDot())
+                    : null,
+              )
+            : _TopIconButton(
+                icon: LucideIcons.bell,
+                tooltip: context.t('nav.notifications'),
+                active: widget.active || _open,
+                onTap: toggle,
+                child: showDot
+                    ? const Positioned(top: 7, right: 8, child: _UnreadDot())
+                    : null,
+              );
+        Widget buildNativeButton(VoidCallback toggle) => GlassButton(
+          icon: const Icon(LucideIcons.bell),
+          label: context.t('nav.notifications'),
+          onTap: toggle,
+          width: 42,
+          height: 42,
+          iconSize: 18,
+          useOwnLayer: true,
+          settings: widget.dark ? kNavGlassDark : kNavGlassLight,
+          iconColor: widget.dark ? AppColors.inkDark : AppColors.ink,
+          glowColor: AppColors.accent,
 
-                // Keep the tactile press-scale but damp the liquid drag-follow so the
-                // isolated button doesn't over-stretch on tap.
-                stretch: 0.15,
-              );
-              Widget buildMobileTrigger(VoidCallback toggle) => Tooltip(
-                message: context.t('nav.notifications'),
-                child: Badge(
-                  backgroundColor: AppColors.accent,
-                  smallSize: 10.5,
-                  isLabelVisible: showDot,
-                  child: buildNativeButton(toggle),
-                ),
-              );
-              // iOS-26 liquid morph: the popover grows out of the bell trigger
-              // (same dual-blob metaball pattern as the comment sort button).
-              // GlassPopover ramps the backdrop blur in over the morph
-              // (blurRampDuration) instead of paying its full raster cost from
-              // frame one — the perf fix that used to live in MorphBlurPopover.
-              return GlassPopover(
-                popoverWidth: (screenWidth - 24).clamp(0.0, 340.0),
-                popoverBorderRadius: AppTheme.radiusCard,
-                settings: liquidGlassPanelSettings(
-                  glassFill: glassFill,
-                  dark: dark,
-                  // Pinned to standard for its cost; see liquidGlassPanelSettings.
-                  standard: true,
-                ),
-                quality: GlassQuality.standard,
-                onOpen: () {
-                  _cubit.load(); // refresh contents whenever it opens
-                  setState(() => _open = true);
-                },
-                onClose: () => setState(() => _open = false),
-                // The glass pill is the phone's chrome, where the bell sits on
-                // a translucent bar and needs its own ground to be legible. On a
-                // desktop window the header is opaque already, so the same pill
-                // reads as a milky disc around an icon that needs no disc — the
-                // wide shell's plain icon button is what belongs there.
-                triggerBuilder: (context, toggle) =>
-                    isNativeApp && context.isCompact
-                    ? buildMobileTrigger(toggle)
-                    : buildTrigger(toggle),
-                contentBuilder: (context, close) => _NotifPopoverCard(
-                  items: items,
-                  onMarkAllRead: () => _markAllRead(items),
-                  onDelete: _deleteNotification,
-                  onToggleRead: _toggleNotificationRead,
-                  onTapNotification: (n) {
-                    close();
-                    _openNotification(n);
-                  },
-                  onViewAll: () {
-                    close();
-                    context.go('/notifications');
-                  },
-                ),
-              );
+          // Keep the tactile press-scale but damp the liquid drag-follow so the
+          // isolated button doesn't over-stretch on tap.
+          stretch: 0.15,
+        );
+        Widget buildMobileTrigger(VoidCallback toggle) => Tooltip(
+          message: context.t('nav.notifications'),
+          child: Badge(
+            backgroundColor: AppColors.accent,
+            smallSize: 10.5,
+            isLabelVisible: showDot,
+            child: buildNativeButton(toggle),
+          ),
+        );
+        // iOS-26 liquid morph: the popover grows out of the bell trigger
+        // (same dual-blob metaball pattern as the comment sort button).
+        // GlassPopover ramps the backdrop blur in over the morph
+        // (blurRampDuration) instead of paying its full raster cost from
+        // frame one — the perf fix that used to live in MorphBlurPopover.
+        return GlassPopover(
+          popoverWidth: (screenWidth - 24).clamp(0.0, 340.0),
+          popoverBorderRadius: AppTheme.radiusCard,
+          settings: liquidGlassPanelSettings(
+            glassFill: glassFill,
+            dark: dark,
+            // Pinned to standard for its cost; see liquidGlassPanelSettings.
+            standard: true,
+          ),
+          quality: GlassQuality.standard,
+          onOpen: () {
+            _cubit.load(); // refresh contents whenever it opens
+            setState(() => _open = true);
+          },
+          onClose: () => setState(() => _open = false),
+          // The glass pill is the phone's chrome, where the bell sits on
+          // a translucent bar and needs its own ground to be legible. On a
+          // desktop window the header is opaque already, so the same pill
+          // reads as a milky disc around an icon that needs no disc — the
+          // wide shell's plain icon button is what belongs there.
+          triggerBuilder: (context, toggle) => isNativeApp && context.isCompact
+              ? buildMobileTrigger(toggle)
+              : buildTrigger(toggle),
+          contentBuilder: (context, close) => _NotifPopoverCard(
+            items: items,
+            onMarkAllRead: () => _markAllRead(items),
+            onDelete: _deleteNotification,
+            onToggleRead: _toggleNotificationRead,
+            onTapNotification: (n) {
+              close();
+              _openNotification(n);
+            },
+            onViewAll: () {
+              close();
+              context.go('/notifications');
             },
           ),
+        );
+      },
     );
   }
 }

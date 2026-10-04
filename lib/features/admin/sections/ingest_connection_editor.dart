@@ -8,13 +8,13 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/ingest_models.dart';
-import '../../../core/repositories/admin_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/hue_colors.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../../core/widgets/hive_widgets.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../../../core/widgets/folded_hint.dart';
+import 'ingest_connections_cubit.dart';
 
 /// Result of the connection editor: the saved connection plus the picked
 /// project option (so the list can label it without re-resolving).
@@ -32,9 +32,13 @@ Future<IngestEditResult?> showIngestConnectionEditor(
   IngestConnection? connection,
   IngestProjectOption? initialProject,
 }) {
-  final editor = _IngestConnectionEditor(
-    connection: connection ?? const IngestConnection(),
-    initialProject: initialProject,
+  // The editor opens as its own route, so the card's requests are handed in.
+  final editor = BlocProvider.value(
+    value: context.read<IngestConnectionsCubit>(),
+    child: _IngestConnectionEditor(
+      connection: connection ?? const IngestConnection(),
+      initialProject: initialProject,
+    ),
   );
   final wide = MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint;
   if (wide) {
@@ -65,7 +69,7 @@ class _IngestConnectionEditor extends StatefulWidget {
 }
 
 class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
-  AdminRepository get _repo => context.read<AdminRepository>();
+  IngestConnectionsCubit get _ingest => context.read<IngestConnectionsCubit>();
 
   late final _name = TextEditingController(text: widget.connection.name ?? '');
   late final _host = TextEditingController(text: widget.connection.host);
@@ -149,7 +153,7 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
     if (consented != true || !mounted) return;
     setState(() => _scanning = true);
     try {
-      final folders = await _repo.probeIngestFolders(
+      final folders = await _ingest.probeFolders(
         connectionId: widget.connection.id,
         host: _host.text.trim(),
         port: int.tryParse(_port.text) ?? (_ssl ? 993 : 143),
@@ -205,7 +209,7 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
 
   Future<void> _pickProject() async {
     final anchor = _anchorRect(_projectFieldKey);
-    final panel = _ProjectSearchPanel(repo: _repo);
+    final panel = _ProjectSearchPanel(ingest: _ingest);
     final wide = MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint;
     final picked = wide && anchor != null
         ? await showGlassAnchoredPopover<IngestProjectOption>(
@@ -251,8 +255,8 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
     setState(() => _saving = true);
     try {
       final saved = _isNew
-          ? await _repo.createIngestConnection(draft)
-          : await _repo.updateIngestConnection(draft);
+          ? await _ingest.create(draft)
+          : await _ingest.update(draft);
       if (!mounted) return;
       Navigator.of(context).pop((connection: saved, project: _project!));
     } on ApiFailure catch (failure) {
@@ -523,9 +527,9 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
 /// Searchable, server-paginated project list — the same inline picker UX as
 /// the epic search popover, backed by the admin project-options endpoint.
 class _ProjectSearchPanel extends StatefulWidget {
-  const _ProjectSearchPanel({required this.repo});
+  const _ProjectSearchPanel({required this.ingest});
 
-  final AdminRepository repo;
+  final IngestConnectionsCubit ingest;
 
   @override
   State<_ProjectSearchPanel> createState() => _ProjectSearchPanelState();
@@ -590,7 +594,7 @@ class _ProjectSearchPanelState extends State<_ProjectSearchPanel> {
       }
     });
     try {
-      final result = await widget.repo.ingestProjectOptions(
+      final result = await widget.ingest.projectOptions(
         query: _query,
         page: _page,
         size: _pageSize,

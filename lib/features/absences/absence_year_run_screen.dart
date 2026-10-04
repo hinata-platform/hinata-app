@@ -19,6 +19,7 @@ import '../shell/page_chrome.dart';
 import '../time/reports/report_list_parts.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'absence_labels.dart';
+import 'absence_year_run_cubit.dart';
 import 'absence_year_views.dart';
 import '../../core/widgets/folded_hint.dart';
 
@@ -30,23 +31,33 @@ import '../../core/widgets/folded_hint.dart';
 /// and does the two things the run leaves to a person: sending a notice by
 /// hand, and deciding a proposal with a reason. The server refuses both to
 /// anybody who does not keep absences, and the page says so when it does.
-class AbsenceYearRunScreen extends StatefulWidget {
+class AbsenceYearRunScreen extends StatelessWidget {
   const AbsenceYearRunScreen({super.key});
 
   @override
-  State<AbsenceYearRunScreen> createState() => _AbsenceYearRunScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => AbsenceYearRunCubit(context.read<AbsenceRepository>()),
+    child: const _YearRunView(),
+  );
 }
 
-class _AbsenceYearRunScreenState extends State<AbsenceYearRunScreen> {
-  late final AbsenceRepository _repository = context.read<AbsenceRepository>();
+class _YearRunView extends StatefulWidget {
+  const _YearRunView();
+
+  @override
+  State<_YearRunView> createState() => _YearRunViewState();
+}
+
+class _YearRunViewState extends State<_YearRunView> {
+  late final AbsenceYearRunCubit _yearRun = context.read<AbsenceYearRunCubit>();
   late final PagedCubit<AbsenceMissingNotice> _missing =
       PagedCubit<AbsenceMissingNotice>(
-        (page, size) => _repository.missingNotices(page: page, size: size),
+        (page, size) => _yearRun.missingNotices(page: page, size: size),
         keyOf: (row) => row.key,
       );
   late final PagedCubit<AbsenceProposal> _proposals =
       PagedCubit<AbsenceProposal>(
-        (page, size) => _repository.proposals(page: page, size: size),
+        (page, size) => _yearRun.proposals(page: page, size: size),
         keyOf: (row) => row.id,
       );
   AbsenceYearRun? _run;
@@ -70,14 +81,11 @@ class _AbsenceYearRunScreenState extends State<AbsenceYearRunScreen> {
   Future<void> _load() async {
     setState(() => _errorKey = null);
     try {
-      final answers = await Future.wait([
-        _repository.yearRun(),
-        _repository.types(includeInactive: true),
-      ]);
+      final answers = await _yearRun.overview();
       if (!mounted) return;
       setState(() {
-        _run = answers[0] as AbsenceYearRun;
-        _types = answers[1] as List<AbsenceType>;
+        _run = answers.run;
+        _types = answers.types;
       });
       unawaited(_missing.load());
       unawaited(_proposals.load());
@@ -97,7 +105,7 @@ class _AbsenceYearRunScreenState extends State<AbsenceYearRunScreen> {
   Future<void> _send(AbsenceMissingNotice missing) async {
     setState(() => _busy.add(missing.key));
     try {
-      await _repository.sendNotice(
+      await _yearRun.sendNotice(
         userId: missing.userId,
         typeId: missing.typeId,
         year: missing.year,
@@ -117,8 +125,8 @@ class _AbsenceYearRunScreenState extends State<AbsenceYearRunScreen> {
     final decided = await showGlassModal<bool>(
       context,
       width: 460,
-      builder: (_) => RepositoryProvider.value(
-        value: _repository,
+      builder: (_) => BlocProvider.value(
+        value: _yearRun,
         child: _DecisionForm(
           proposal: proposal,
           typeName: _typeName(proposal.typeId),
@@ -399,13 +407,12 @@ class _DecisionFormState extends State<_DecisionForm> {
       return;
     }
     setState(() => _saving = true);
-    final repository = context.read<AbsenceRepository>();
     try {
-      if (widget.lapse) {
-        await repository.confirmProposal(widget.proposal.id, reason);
-      } else {
-        await repository.dismissProposal(widget.proposal.id, reason);
-      }
+      await context.read<AbsenceYearRunCubit>().decide(
+        widget.proposal.id,
+        lapse: widget.lapse,
+        reason: reason,
+      );
       if (!mounted) return;
       showGlassToast(
         context,

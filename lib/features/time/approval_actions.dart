@@ -5,11 +5,11 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/api/api_client.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_approval_models.dart';
-import '../../core/repositories/time_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassConfirm, showGlassToast;
 import 'lock_notice.dart';
+import 'time_approval_cubit.dart';
 
 /// The five things that can happen to a submission, in one place.
 ///
@@ -19,6 +19,8 @@ import 'lock_notice.dart';
 /// screens that would be ten copies of the error handling, and the part that
 /// would rot first is the one that matters: a rejection's reason is *required*,
 /// and a screen that forgot to ask for it offers a button the server refuses.
+///
+/// The calls go through the [TimeApprovalCubit] the screen provides.
 class ApprovalActions {
   const ApprovalActions._();
 
@@ -42,7 +44,7 @@ class ApprovalActions {
     if (confirmed != true || !context.mounted) return false;
     return _run(
       context,
-      () => context.read<TimeRepository>().submitPeriod(
+      () => context.read<TimeApprovalCubit>().submit(
         periodStart: periodStart,
         periodEnd: periodEnd,
         projectIds: projectIds,
@@ -63,7 +65,7 @@ class ApprovalActions {
     if (confirmed != true || !context.mounted) return false;
     return _run(
       context,
-      () => context.read<TimeRepository>().withdrawApproval(approvalId),
+      () => context.read<TimeApprovalCubit>().withdraw(approvalId),
       successKey: 'time.approval.withdrawn',
     );
   }
@@ -80,7 +82,7 @@ class ApprovalActions {
     if (confirmed != true || !context.mounted) return false;
     return _run(
       context,
-      () => context.read<TimeRepository>().approve(approvalId),
+      () => context.read<TimeApprovalCubit>().approve(approvalId),
       successKey: 'time.approval.approved',
     );
   }
@@ -100,7 +102,7 @@ class ApprovalActions {
     if (note == null || !context.mounted) return false;
     return _run(
       context,
-      () => context.read<TimeRepository>().reject(approvalId, note: note),
+      () => context.read<TimeApprovalCubit>().reject(approvalId, note: note),
       successKey: 'time.approval.rejected',
     );
   }
@@ -116,7 +118,7 @@ class ApprovalActions {
     if (note == null || !context.mounted) return false;
     return _run(
       context,
-      () => context.read<TimeRepository>().reopen(approvalId, note: note),
+      () => context.read<TimeApprovalCubit>().reopen(approvalId, note: note),
       successKey: 'time.approval.reopened',
     );
   }

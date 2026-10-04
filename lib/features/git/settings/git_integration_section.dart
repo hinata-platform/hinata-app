@@ -18,6 +18,7 @@ import '../../sprint/modals/glass_modal.dart';
 import '../widgets/copy_field.dart';
 import '../widgets/provider_glyph.dart';
 import 'connect_repo_wizard.dart';
+import 'git_settings_cubit.dart';
 import '../../../core/widgets/folded_hint.dart';
 
 /// Project-settings section: per-project repository connection + development
@@ -25,7 +26,7 @@ import '../../../core/widgets/folded_hint.dart';
 /// persist immediately (their own endpoints), independent of the settings
 /// draft/save bar — every mutation returns the updated project via
 /// [onProjectChanged].
-class GitIntegrationSection extends StatefulWidget {
+class GitIntegrationSection extends StatelessWidget {
   const GitIntegrationSection({
     super.key,
     required this.project,
@@ -38,21 +39,43 @@ class GitIntegrationSection extends StatefulWidget {
   final ValueChanged<Project> onProjectChanged;
 
   @override
-  State<GitIntegrationSection> createState() => _GitIntegrationSectionState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => GitSettingsCubit(context.read<GitRepository>()),
+    child: _GitIntegrationBody(
+      project: project,
+      users: users,
+      onProjectChanged: onProjectChanged,
+    ),
+  );
 }
 
-class _GitIntegrationSectionState extends State<GitIntegrationSection> {
+class _GitIntegrationBody extends StatefulWidget {
+  const _GitIntegrationBody({
+    required this.project,
+    required this.users,
+    required this.onProjectChanged,
+  });
+
+  final Project project;
+  final Map<String, DirectoryUser> users;
+  final ValueChanged<Project> onProjectChanged;
+
+  @override
+  State<_GitIntegrationBody> createState() => _GitIntegrationSectionState();
+}
+
+class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
   GitAutomation? _automationOverride;
   String? _templateOverride;
   bool _busy = false;
 
-  GitRepository get _repo => context.read<GitRepository>();
+  GitSettingsCubit get _settings => context.read<GitSettingsCubit>();
   GitConnection? get _git => widget.project.git;
   GitProvider? get _provider =>
       _git == null ? null : gitProviderFrom(_git!.provider);
 
   @override
-  void didUpdateWidget(GitIntegrationSection oldWidget) {
+  void didUpdateWidget(_GitIntegrationBody oldWidget) {
     super.didUpdateWidget(oldWidget);
     // A server round-trip landed → drop the optimistic overrides.
     if (widget.project.git?.automation != oldWidget.project.git?.automation) {
@@ -105,7 +128,7 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
     if (confirmed != true) return;
     setState(() => _busy = true);
     try {
-      final updated = await _repo.gitDisconnect(
+      final updated = await _settings.disconnect(
         widget.project.id,
         repoId: repo.id,
       );
@@ -128,7 +151,10 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
   Future<void> _resync(GitConnection repo) async {
     setState(() => _busy = true);
     try {
-      final updated = await _repo.gitResync(widget.project.id, repoId: repo.id);
+      final updated = await _settings.resync(
+        widget.project.id,
+        repoId: repo.id,
+      );
       if (mounted) {
         widget.onProjectChanged(updated);
         _toast(context.t('git.synced'));
@@ -143,7 +169,7 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
   Future<void> _updateAutomation(GitAutomation next) async {
     setState(() => _automationOverride = next);
     try {
-      final updated = await _repo.gitSetAutomation(widget.project.id, next);
+      final updated = await _settings.setAutomation(widget.project.id, next);
       if (mounted) widget.onProjectChanged(updated);
     } catch (e) {
       if (mounted) setState(() => _automationOverride = null);
@@ -154,7 +180,10 @@ class _GitIntegrationSectionState extends State<GitIntegrationSection> {
   Future<void> _updateTemplate(String next) async {
     setState(() => _templateOverride = next);
     try {
-      final updated = await _repo.gitSetBranchTemplate(widget.project.id, next);
+      final updated = await _settings.setBranchTemplate(
+        widget.project.id,
+        next,
+      );
       if (mounted) widget.onProjectChanged(updated);
     } catch (e) {
       if (mounted) setState(() => _templateOverride = null);

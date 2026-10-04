@@ -19,6 +19,7 @@ import '../absences/absence_labels.dart';
 import '../sprint/modals/glass_modal.dart';
 import '../time/day_marks.dart';
 import 'account_widgets.dart';
+import 'time_off_cubit.dart';
 
 /// Opens the form for a new absence, or for [existing]. Resolves to true once
 /// something was saved or deleted. [initialRange] is the span somebody marked
@@ -33,7 +34,9 @@ Future<bool?> showTimeOffSheet(
   TimeOff? existing,
   DateTimeRange? initialRange,
 }) {
-  final repository = context.read<AvailabilityRepository>();
+  // Read here and handed to the form's cubit: the modal is its own route and
+  // does not see the opener's providers.
+  final availability = context.read<AvailabilityRepository>();
   final catalogue = context.read<AbsenceRepository>();
   final absenceManagement =
       context.read<AppConfigBloc>().state.meta?.absenceManagement ?? false;
@@ -41,11 +44,8 @@ Future<bool?> showTimeOffSheet(
     context,
     adaptive: true,
     width: 440,
-    builder: (sheetContext) => MultiRepositoryProvider(
-      providers: [
-        RepositoryProvider<AvailabilityRepository>.value(value: repository),
-        RepositoryProvider<AbsenceRepository>.value(value: catalogue),
-      ],
+    builder: (sheetContext) => BlocProvider(
+      create: (_) => TimeOffCubit(availability, catalogue),
       child: _TimeOffForm(
         existing: existing,
         initialRange: initialRange,
@@ -126,7 +126,7 @@ class _TimeOffFormState extends State<_TimeOffForm> {
   /// is a working form rather than an error over a list somebody may not need.
   Future<void> _loadCatalogue() async {
     try {
-      final offered = await context.read<AbsenceRepository>().types();
+      final offered = await context.read<TimeOffCubit>().types();
       if (!mounted) return;
       // Only what may be entered directly. A type somebody approves goes
       // through a request, and offering it here would be offering a refusal —
@@ -261,12 +261,12 @@ class _TimeOffFormState extends State<_TimeOffForm> {
       note: _note.text,
     );
     try {
-      final repository = context.read<AvailabilityRepository>();
+      final timeOff = context.read<TimeOffCubit>();
       final existing = widget.existing;
       if (existing?.id == null) {
-        await repository.createTimeOff(draft);
+        await timeOff.create(draft);
       } else {
-        await repository.updateTimeOff(existing!.id!, draft);
+        await timeOff.update(existing!.id!, draft);
       }
       if (!mounted) return;
       showGlassToast(context, context.t('availability.timeOff.saved'));
@@ -291,7 +291,7 @@ class _TimeOffFormState extends State<_TimeOffForm> {
     );
     if (confirmed != true || !mounted) return;
     try {
-      await context.read<AvailabilityRepository>().deleteTimeOff(id);
+      await context.read<TimeOffCubit>().delete(id);
       if (!mounted) return;
       showGlassToast(context, context.t('availability.timeOff.deleted'));
       Navigator.of(context).pop(true);

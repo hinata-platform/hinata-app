@@ -13,22 +13,36 @@ import '../../core/util/server_link.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
 import 'auth_shell.dart';
+import 'auth_flow_cubit.dart';
 
 /// Lands here from the invitation deep link (web URL or `hinata://invite`).
 /// Validates the invitation, lets the invitee set a password in the app's UI,
 /// then signs them in. [server] (carried by the link) points a freshly opened
 /// web/app at the right backend.
-class AcceptInviteScreen extends StatefulWidget {
+class AcceptInviteScreen extends StatelessWidget {
   const AcceptInviteScreen({super.key, required this.token, this.server});
 
   final String token;
   final String? server;
 
   @override
-  State<AcceptInviteScreen> createState() => _AcceptInviteScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => AuthFlowCubit(context.read<AuthRepository>()),
+    child: _AcceptInviteScreenBody(token: token, server: server),
+  );
 }
 
-class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
+class _AcceptInviteScreenBody extends StatefulWidget {
+  const _AcceptInviteScreenBody({required this.token, this.server});
+
+  final String token;
+  final String? server;
+
+  @override
+  State<_AcceptInviteScreenBody> createState() => _AcceptInviteScreenState();
+}
+
+class _AcceptInviteScreenState extends State<_AcceptInviteScreenBody> {
   final _formKey = GlobalKey<FormState>();
   final _password = TextEditingController();
 
@@ -73,9 +87,7 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
       _loadError = null;
     });
     try {
-      final info = await context.read<AuthRepository>().inviteInfo(
-        widget.token,
-      );
+      final info = await context.read<AuthFlowCubit>().inviteInfo(widget.token);
       if (!mounted) return;
       setState(() {
         _email = info.email;
@@ -97,7 +109,7 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
       _submitError = null;
     });
     try {
-      final tokens = await context.read<AuthRepository>().acceptInvite(
+      final tokens = await context.read<AuthFlowCubit>().acceptInvite(
         widget.token,
         _password.text,
       );

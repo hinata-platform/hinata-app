@@ -19,6 +19,7 @@ import '../../core/widgets/glass_filter_bar.dart' show GlassStepperPill;
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/read_on_trigger.dart';
+import 'absence_balances_cubit.dart';
 import 'absence_entitlement_sheets.dart' show LedgerRow;
 import 'absence_labels.dart';
 import 'absence_year_views.dart';
@@ -38,14 +39,25 @@ import '../../core/widgets/folded_hint.dart';
 /// **Absent when the module is off**, and silently: the routes do not exist for
 /// this client then, and a card that spun forever would be the only thing on the
 /// page that ignored the switch.
-class AbsenceBalancesPanel extends StatefulWidget {
+class AbsenceBalancesPanel extends StatelessWidget {
   const AbsenceBalancesPanel({super.key});
 
   @override
-  State<AbsenceBalancesPanel> createState() => _AbsenceBalancesPanelState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) =>
+        AbsenceBalancesCubit(context.read<AbsenceRepository>()),
+    child: const _BalancesPanel(),
+  );
 }
 
-class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
+class _BalancesPanel extends StatefulWidget {
+  const _BalancesPanel();
+
+  @override
+  State<_BalancesPanel> createState() => _BalancesPanelState();
+}
+
+class _BalancesPanelState extends State<_BalancesPanel> {
   int _year = DateTime.now().year;
   AbsenceBalances? _balances;
   List<AbsenceType> _types = const [];
@@ -87,7 +99,7 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
   void _loadNotices() {
     final cubit = _notices ??= PagedCubit<AbsenceNotice>(
       (page, size) =>
-          context.read<AbsenceRepository>().notices(page: page, size: size),
+          context.read<AbsenceBalancesCubit>().notices(page: page, size: size),
       pageSize: 10,
       keyOf: (notice) => notice.id,
     );
@@ -141,7 +153,7 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
       _errorKey = null;
     });
     try {
-      final standing = await context.read<AbsenceRepository>().balances(
+      final standing = await context.read<AbsenceBalancesCubit>().balances(
         year: _year,
       );
       if (!mounted) return;
@@ -185,7 +197,7 @@ class _AbsenceBalancesPanelState extends State<AbsenceBalancesPanel> {
     if (typeId == null) return;
     unawaited(_entries?.close());
     final cubit = PagedCubit<AbsenceLedgerEntry>(
-      (page, size) => context.read<AbsenceRepository>().ledger(
+      (page, size) => context.read<AbsenceBalancesCubit>().ledger(
         userId: _balances?.userId ?? '',
         typeId: typeId,
         year: _year,

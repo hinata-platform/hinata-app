@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../blocs/subtask_expander_cubit.dart';
 import '../events/issue_events.dart';
 import '../i18n/i18n.dart';
 import '../models/work_models.dart';
@@ -80,7 +81,7 @@ class SubtaskBadge extends StatelessWidget {
 /// deleted in the issue detail would otherwise leave this list showing what it
 /// read the first time it was opened. An expanded section re-fetches right away;
 /// a collapsed one just drops its cache and re-fetches on the next open.
-class SubtaskExpander extends StatefulWidget {
+class SubtaskExpander extends StatelessWidget {
   const SubtaskExpander({
     super.key,
     required this.issue,
@@ -94,10 +95,24 @@ class SubtaskExpander extends StatefulWidget {
   final void Function(Issue child) onOpenChild;
 
   @override
-  State<SubtaskExpander> createState() => _SubtaskExpanderState();
+  Widget build(BuildContext context) => BlocProvider<SubtaskExpanderCubit>(
+    // Created on the first expand, so a card that is never opened costs none.
+    create: (context) => SubtaskExpanderCubit(context.read<IssueRepository>()),
+    child: _SubtaskExpanderBody(issue: issue, onOpenChild: onOpenChild),
+  );
 }
 
-class _SubtaskExpanderState extends State<SubtaskExpander> {
+class _SubtaskExpanderBody extends StatefulWidget {
+  const _SubtaskExpanderBody({required this.issue, required this.onOpenChild});
+
+  final Issue issue;
+  final void Function(Issue child) onOpenChild;
+
+  @override
+  State<_SubtaskExpanderBody> createState() => _SubtaskExpanderState();
+}
+
+class _SubtaskExpanderState extends State<_SubtaskExpanderBody> {
   bool _expanded = false;
   bool _loading = false;
   bool _failed = false;
@@ -148,12 +163,12 @@ class _SubtaskExpanderState extends State<SubtaskExpander> {
       _failed = false;
     });
     try {
-      final hierarchy = await context.read<IssueRepository>().issueHierarchy(
+      final children = await context.read<SubtaskExpanderCubit>().children(
         widget.issue.id,
       );
       if (!mounted) return;
       setState(() {
-        _children = hierarchy.children;
+        _children = children;
         _loading = false;
       });
     } catch (_) {

@@ -10,12 +10,12 @@ import 'package:printing/printing.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/time_report_models.dart';
-import '../../../core/repositories/time_report_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/util/file_download.dart';
 import '../../../core/util/share_origin.dart';
 import '../../../core/widgets/person_picker.dart';
 import '../../sprint/modals/glass_modal.dart';
+import 'time_reports_cubit.dart';
 
 /// What the head of the report page does with a report (HIN-93): take it out
 /// as a file or on paper, keep it under a name, mail it on a schedule.
@@ -91,7 +91,8 @@ Future<ReportFile?> showReportFileMenu(
 );
 
 /// Takes the report out as [file]: a download, a share sheet, or the print
-/// dialog. Says what happened, and that a file was cut short when it was.
+/// dialog. Says what happened, and that a file was cut short when it was. The
+/// file comes through the [TimeReportsCubit] the report page provides.
 Future<void> exportReport(
   BuildContext context, {
   required ReportQuery query,
@@ -99,12 +100,12 @@ Future<void> exportReport(
   required int weekStart,
   Rect? anchor,
 }) async {
-  final repository = context.read<TimeReportRepository>();
+  final reports = context.read<TimeReportsCubit>();
   final origin = shareOriginOf(context, preferred: anchor);
   final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
   try {
     if (file == ReportFile.print) {
-      final pdf = await repository.export(query, 'pdf', weekStart: weekStart);
+      final pdf = await reports.export(query, 'pdf', weekStart: weekStart);
       // layoutPdf opens the print dialog; the bytes are handed back on every
       // page-format change instead of being rendered again on the server.
       await Printing.layoutPdf(
@@ -117,7 +118,7 @@ Future<void> exportReport(
     var truncated = false;
     final DownloadResult result;
     if (kIsWeb) {
-      final bytes = await repository.export(
+      final bytes = await reports.export(
         query,
         file.extension!,
         weekStart: weekStart,
@@ -133,7 +134,7 @@ Future<void> exportReport(
       // Straight to disk: a hundred thousand rows are tens of megabytes a phone
       // should not have to hold in memory to save them.
       result = await downloadFile(name, file.mimeType!, (path) async {
-        truncated = await repository.exportTo(
+        truncated = await reports.exportTo(
           query,
           file.extension!,
           path,

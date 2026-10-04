@@ -29,6 +29,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassConfirm, showGlassToast;
 import 'attachment_grid.dart';
+import 'attachments_cubit.dart';
 import 'attachment_kind.dart';
 import 'attachment_viewer.dart';
 import 'upload_source_sheet.dart';
@@ -96,12 +97,14 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
   // liveness detection + reconnect-with-catch-up (see [_reconcile]).
   late final SseConnection _sse = SseConnection(
     open: (cancelToken) =>
-        _repo.attachmentEventStream(widget.issueId, cancelToken: cancelToken),
+        _cubit.events(widget.issueId, cancelToken: cancelToken),
     onEvent: _onSseEvent,
     onReconnect: _reconcile,
   );
 
-  IssueRepository get _repo => context.read<IssueRepository>();
+  /// Where the section's requests go; built once in [initState], so none of
+  /// the upload, delete or download flows reads the context after an await.
+  late final AttachmentsCubit _cubit;
 
   UploadLimits get _limits {
     try {
@@ -115,6 +118,10 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
   @override
   void initState() {
     super.initState();
+    _cubit = AttachmentsCubit(
+      issues: context.read<IssueRepository>(),
+      api: context.read<ApiClient>(),
+    );
     _sse.start();
   }
 
@@ -125,6 +132,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
     for (final u in _uploads) {
       if (!u.cancel.isCancelled) u.cancel.cancel();
     }
+    _cubit.close();
     super.dispose();
   }
 
@@ -134,7 +142,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
   /// only deltas (`added`/`removed`), which a dropped connection would miss.
   Future<void> _reconcile() async {
     try {
-      final issue = await _repo.issue(widget.issueId);
+      final issue = await _cubit.issue(widget.issueId);
       if (_disposed || !mounted) return;
       setState(() => _server = List.of(issue.attachments));
     } catch (_) {
@@ -359,7 +367,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
   Future<void> _startUpload(_Upload u) async {
     try {
       final file = await _multipart(u.src);
-      final issue = await _repo.uploadAttachment(
+      final issue = await _cubit.upload(
         widget.issueId,
         file,
         cancelToken: u.cancel,
@@ -447,7 +455,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
     // an anchor that does not fit inside the window rather than clamping it.
     final origin = shareOriginOf(context);
     try {
-      final res = await context.read<ApiClient>().getBytes(path);
+      final res = await _cubit.download(path);
       if (res == null) {
         if (mounted) _toast(context.t('errors.unexpected'));
         return;
@@ -512,7 +520,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
         '-attachments.zip';
     try {
       await _fetchAndSave(
-        _repo.attachmentsArchivePath(widget.issueId),
+        _cubit.archivePath(widget.issueId),
         archiveName,
         fallbackMime: 'application/zip',
       );
@@ -549,7 +557,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
     );
     widget.onChanged?.call();
     try {
-      await _repo.deleteAttachments(widget.issueId, ids.toList());
+      await _cubit.deleteAll(widget.issueId, ids.toList());
     } on ApiFailure catch (e) {
       if (_disposed || !mounted) return;
       setState(() => _server = prev);
@@ -573,7 +581,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
     setState(() => _server = _server.where((x) => x.id != a.id).toList());
     widget.onChanged?.call();
     try {
-      await _repo.deleteAttachment(widget.issueId, a.id);
+      await _cubit.delete(widget.issueId, a.id);
     } on ApiFailure catch (e) {
       if (_disposed || !mounted) return;
       setState(() => _server = prev);

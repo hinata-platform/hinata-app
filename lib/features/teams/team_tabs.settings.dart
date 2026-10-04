@@ -243,7 +243,7 @@ class _TeamAvatarSettingState extends State<_TeamAvatarSetting> {
   @override
   Widget build(BuildContext context) {
     final team = widget.team;
-    final repo = context.read<TeamRepository>();
+    final detail = context.read<TeamDetailCubit>();
     return Row(
       children: [
         EntityAvatarField(
@@ -257,8 +257,8 @@ class _TeamAvatarSettingState extends State<_TeamAvatarSetting> {
             size: 64,
             radius: 18,
           ),
-          onUpload: (file) => repo.uploadTeamAvatar(team.id, file),
-          onRemove: () => repo.deleteTeamAvatar(team.id),
+          onUpload: (file) => detail.uploadAvatar(team.id, file),
+          onRemove: () => detail.removeAvatar(team.id),
           onChanged: (url) {
             setState(() {
               _url = url;

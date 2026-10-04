@@ -9,18 +9,30 @@ import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
 import 'auth_shell.dart';
+import 'auth_flow_cubit.dart';
 
 /// Public "forgot password" entry point (logged-out). Emails a reset link that
 /// deep-links back into [ResetPasswordScreen]. The confirmation is intentionally
 /// neutral (doesn't reveal whether the address exists).
-class ForgotPasswordScreen extends StatefulWidget {
+class ForgotPasswordScreen extends StatelessWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => AuthFlowCubit(context.read<AuthRepository>()),
+    child: const _ForgotPasswordScreenBody(),
+  );
 }
 
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+class _ForgotPasswordScreenBody extends StatefulWidget {
+  const _ForgotPasswordScreenBody();
+
+  @override
+  State<_ForgotPasswordScreenBody> createState() =>
+      _ForgotPasswordScreenState();
+}
+
+class _ForgotPasswordScreenState extends State<_ForgotPasswordScreenBody> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
 
@@ -41,7 +53,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _error = null;
     });
     try {
-      await context.read<AuthRepository>().requestPasswordReset(
+      await context.read<AuthFlowCubit>().requestPasswordReset(
         _email.text.trim(),
       );
       if (!mounted) return;

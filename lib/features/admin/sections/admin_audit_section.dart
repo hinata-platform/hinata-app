@@ -8,7 +8,6 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show GlassContainer, LiquidRoundedSuperellipse;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../core/repositories/admin_repository.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/audit_models.dart';
 import '../../../core/responsive/responsive.dart';
@@ -24,21 +23,11 @@ import '../../shell/page_chrome.dart';
 import '../../sprint/modals/glass_modal.dart'
     show showGlassToast, GlassToastKind;
 import '../../../core/widgets/glass_filter_bar.dart';
+import 'audit_log_cubit.dart';
 
 part 'admin_audit_section.filters.dart';
 part 'admin_audit_section.timeline.dart';
 part 'admin_audit_section.detail.dart';
-
-/// Reads one filtered page of an audit feed.
-typedef AuditLoader =
-    Future<AuditPage> Function({
-      String query,
-      AuditCategory? category,
-      AuditSeverity? severity,
-      String? outcome,
-      int page,
-      int perPage,
-    });
 
 /// Docked-toolbar height on compact: one row, tall enough for the search field
 /// the chips give way to. One and not two, because the blurred band above a
@@ -56,22 +45,18 @@ const double _kAuditDockHeight = kGlassDockRow;
 /// entries are grouped under day headers and rendered as a vertical timeline
 /// with severity-tinted glyphs. Tapping a row opens a liquid-glass detail sheet.
 ///
-/// The Organisation page shows the same timeline over its own feed: pass
-/// [load] and [titleKey] for that.
+/// The feed comes from the [AuditLogCubit] above it: the admin screen provides
+/// the platform's, the Organisation page its own, and passes [titleKey] too.
 class AdminAuditSection extends StatefulWidget {
   const AdminAuditSection({
     super.key,
     this.onBack,
-    this.load,
     this.titleKey = 'admin.auditLog',
   });
 
   /// Compact only: the shell back handler. When set, the section owns its own
   /// [PageChrome] so it can dock the filter bar into the glass app bar.
   final VoidCallback? onBack;
-
-  /// Reads one page of the feed. The admin feed when null.
-  final AuditLoader? load;
 
   /// The title of the section's own [PageChrome] on compact.
   final String titleKey;
@@ -160,8 +145,7 @@ class _AdminAuditSectionState extends State<AdminAuditSection> {
     }
 
     try {
-      final load = widget.load ?? context.read<AdminRepository>().auditLog;
-      final result = await load(
+      final result = await context.read<AuditLogCubit>().entries(
         query: _query,
         category: _category,
         severity: _severity,

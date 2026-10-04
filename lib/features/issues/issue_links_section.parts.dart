@@ -176,7 +176,6 @@ class _LinkRowState extends State<_LinkRow> {
 /// dropdown (right), plus create / link / cancel actions.
 class _LinkEditor extends StatefulWidget {
   const _LinkEditor({
-    super.key,
     required this.projectId,
     required this.issueId,
     required this.linkedIssueIds,
@@ -201,7 +200,7 @@ class _LinkEditorState extends State<_LinkEditor> {
   static const _debounceDelay = Duration(milliseconds: 220);
   static const _searchSize = 25;
 
-  IssueRepository get _repo => context.read<IssueRepository>();
+  IssueLinksCubit get _links => context.read<IssueLinksCubit>();
 
   IssueLinkOption _option = kIssueLinkOptions.first;
   final List<Issue> _selected = [];
@@ -262,8 +261,8 @@ class _LinkEditorState extends State<_LinkEditor> {
     // on the very first load so typing doesn't flash the dropdown empty.
     if (_candidates.isEmpty) setState(() => _loadingCandidates = true);
     try {
-      final res = await _repo.issues(
-        projectId: widget.projectId,
+      final res = await _links.candidates(
+        widget.projectId,
         query: query.isEmpty ? null : query,
         size: _searchSize,
       );

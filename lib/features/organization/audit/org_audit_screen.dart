@@ -6,6 +6,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/repositories/org_settings_repository.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../admin/sections/admin_audit_section.dart';
+import '../../admin/sections/audit_log_cubit.dart';
 import '../../shell/page_chrome.dart';
 
 /// Organisation → Protokoll (HIN-129): the organisation's own audit records.
@@ -20,22 +21,26 @@ class OrgAuditScreen extends StatelessWidget {
   static const _titleKey = 'org.audit.title';
 
   @override
-  Widget build(BuildContext context) {
-    final load = context.read<OrgSettingsRepository>().auditLog;
-    // Compact: the section docks its filter bar into its own app bar.
-    if (context.isCompact) {
-      return AdminAuditSection(
-        load: load,
-        titleKey: _titleKey,
-        onBack: () => context.go('/organization'),
-      );
-    }
-    return PageChrome(
-      title: context.t(_titleKey),
-      child: Padding(
-        padding: EdgeInsets.only(top: context.topGutter + 14),
-        child: AdminAuditSection(load: load, titleKey: _titleKey),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) =>
+        AuditLogCubit.organization(context.read<OrgSettingsRepository>()),
+    child: Builder(
+      builder: (context) {
+        // Compact: the section docks its filter bar into its own app bar.
+        if (context.isCompact) {
+          return AdminAuditSection(
+            titleKey: _titleKey,
+            onBack: () => context.go('/organization'),
+          );
+        }
+        return PageChrome(
+          title: context.t(_titleKey),
+          child: Padding(
+            padding: EdgeInsets.only(top: context.topGutter + 14),
+            child: const AdminAuditSection(titleKey: _titleKey),
+          ),
+        );
+      },
+    ),
+  );
 }
