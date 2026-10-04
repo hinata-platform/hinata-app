@@ -24,6 +24,7 @@ import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/read_on_trigger.dart';
 import '../sprint/modals/glass_modal.dart';
+import 'absence_entitlement_sheet_cubit.dart';
 import 'absence_labels.dart';
 import '../../core/widgets/folded_hint.dart';
 
@@ -45,8 +46,8 @@ Future<bool?> showAbsenceGrantSheet(
   return showGlassModal<bool>(
     context,
     width: 520,
-    builder: (sheetContext) => RepositoryProvider.value(
-      value: repository,
+    builder: (sheetContext) => BlocProvider(
+      create: (_) => AbsenceEntitlementSheetCubit(repository),
       child: _GrantForm(
         typeId: typeId,
         typeName: typeName,
@@ -96,12 +97,14 @@ class _GrantFormState extends State<_GrantForm> {
       _errorKey = null;
     });
     try {
-      final preview = await context.read<AbsenceRepository>().previewGrant(
-        typeId: widget.typeId,
-        year: widget.year,
-        userIds: widget.userIds,
-        allowanceMilliDays: _override > 0 ? _override : null,
-      );
+      final preview = await context
+          .read<AbsenceEntitlementSheetCubit>()
+          .previewGrant(
+            typeId: widget.typeId,
+            year: widget.year,
+            userIds: widget.userIds,
+            allowanceMilliDays: _override > 0 ? _override : null,
+          );
       if (!mounted) return;
       setState(() {
         _preview = preview;
@@ -119,12 +122,14 @@ class _GrantFormState extends State<_GrantForm> {
   Future<void> _grant() async {
     setState(() => _saving = true);
     try {
-      final written = await context.read<AbsenceRepository>().grantMany(
-        typeId: widget.typeId,
-        year: widget.year,
-        userIds: widget.userIds,
-        allowanceMilliDays: _override > 0 ? _override : null,
-      );
+      final written = await context
+          .read<AbsenceEntitlementSheetCubit>()
+          .grantMany(
+            typeId: widget.typeId,
+            year: widget.year,
+            userIds: widget.userIds,
+            allowanceMilliDays: _override > 0 ? _override : null,
+          );
       if (!mounted) return;
       showGlassToast(
         context,
@@ -293,8 +298,8 @@ Future<bool?> showAbsenceAdjustSheet(
   return showGlassModal<bool>(
     context,
     width: 460,
-    builder: (sheetContext) => RepositoryProvider.value(
-      value: repository,
+    builder: (sheetContext) => BlocProvider(
+      create: (_) => AbsenceEntitlementSheetCubit(repository),
       child: _AdjustForm(
         userId: userId,
         name: name,
@@ -368,7 +373,7 @@ class _AdjustFormState extends State<_AdjustForm> {
     }
     setState(() => _saving = true);
     try {
-      await context.read<AbsenceRepository>().adjust(
+      await context.read<AbsenceEntitlementSheetCubit>().adjust(
         userId: widget.userId,
         typeId: widget.typeId,
         year: widget.year,
@@ -468,8 +473,8 @@ Future<bool?> showAbsenceEmploymentSheet(
   return showGlassModal<bool>(
     context,
     width: 460,
-    builder: (sheetContext) => RepositoryProvider.value(
-      value: repository,
+    builder: (sheetContext) => BlocProvider(
+      create: (_) => AbsenceEntitlementSheetCubit(repository),
       child: _EmploymentForm(userId: userId, name: name),
     ),
   );
@@ -515,9 +520,9 @@ class _EmploymentFormState extends State<_EmploymentForm> {
 
   Future<void> _load() async {
     try {
-      final dates = await context.read<AbsenceRepository>().employment(
-        widget.userId,
-      );
+      final dates = await context
+          .read<AbsenceEntitlementSheetCubit>()
+          .employment(widget.userId);
       if (!mounted) return;
       setState(() {
         _hiredOn = dates.hiredOn;
@@ -534,16 +539,14 @@ class _EmploymentFormState extends State<_EmploymentForm> {
   }
 
   Future<void> _loadSettlement() async {
-    final repository = context.read<AbsenceRepository>();
     try {
-      final answers = await Future.wait([
-        repository.settlement(widget.userId),
-        repository.types(includeInactive: true),
-      ]);
+      final answers = await context
+          .read<AbsenceEntitlementSheetCubit>()
+          .settlement(widget.userId);
       if (!mounted) return;
       setState(() {
-        _settlement = answers[0] as List<AbsenceSettlement>;
-        _types = answers[1] as List<AbsenceType>;
+        _settlement = answers.settlement;
+        _types = answers.types;
       });
     } on ApiFailure catch (failure) {
       if (!mounted) return;
@@ -572,10 +575,10 @@ class _EmploymentFormState extends State<_EmploymentForm> {
     );
     if (sure != true || !mounted) return;
     setState(() => _booking = true);
-    final repository = context.read<AbsenceRepository>();
+    final sheet = context.read<AbsenceEntitlementSheetCubit>();
     try {
       if (payout) {
-        await repository.payout(
+        await sheet.payout(
           userId: widget.userId,
           typeId: row.typeId,
           year: row.year,
@@ -583,7 +586,7 @@ class _EmploymentFormState extends State<_EmploymentForm> {
           reason: context.t('absence.settlement.payoutReason'),
         );
       } else {
-        await repository.adjust(
+        await sheet.adjust(
           userId: widget.userId,
           typeId: row.typeId,
           year: row.year,
@@ -709,7 +712,7 @@ class _EmploymentFormState extends State<_EmploymentForm> {
     }
     setState(() => _saving = true);
     try {
-      await context.read<AbsenceRepository>().saveEmployment(
+      await context.read<AbsenceEntitlementSheetCubit>().saveEmployment(
         userId: widget.userId,
         hiredOn: _hiredOn,
         leftOn: _leftOn,
@@ -850,8 +853,8 @@ Future<void> showAbsenceLedgerSheet(
   return showGlassModal<void>(
     context,
     width: 520,
-    builder: (sheetContext) => RepositoryProvider.value(
-      value: repository,
+    builder: (sheetContext) => BlocProvider(
+      create: (_) => AbsenceEntitlementSheetCubit(repository),
       child: _LedgerSheet(
         userId: userId,
         name: name,
@@ -882,7 +885,7 @@ class _LedgerSheet extends StatefulWidget {
 class _LedgerSheetState extends State<_LedgerSheet> {
   late final PagedCubit<AbsenceLedgerEntry> _entries =
       PagedCubit<AbsenceLedgerEntry>(
-        (page, size) => context.read<AbsenceRepository>().ledger(
+        (page, size) => context.read<AbsenceEntitlementSheetCubit>().ledger(
           userId: widget.userId,
           typeId: widget.typeId,
           year: widget.year,

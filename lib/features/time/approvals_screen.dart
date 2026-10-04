@@ -26,8 +26,10 @@ import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart'
     show GlassModalHeader, showGlassModal;
 import 'approval_actions.dart';
+import 'approvals_cubit.dart';
 import 'correction_requests.dart';
 import 'lock_notice.dart';
+import 'time_approval_cubit.dart';
 import 'time_privacy_sheet.dart';
 import 'time_views.dart';
 
@@ -42,14 +44,35 @@ import 'time_views.dart';
 /// empty inbox, and an empty inbox is an honest answer rather than a hidden
 /// feature. The third lists the correction requests and the requests for older
 /// days that reach this reader.
-class ApprovalsScreen extends StatefulWidget {
+class ApprovalsScreen extends StatelessWidget {
   const ApprovalsScreen({super.key});
 
   @override
-  State<ApprovalsScreen> createState() => _ApprovalsScreenState();
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      BlocProvider(
+        create: (context) => ApprovalsCubit(
+          context.read<TimeRepository>(),
+          context.read<UserRepository>(),
+          context.read<ProjectRepository>(),
+        ),
+      ),
+      BlocProvider(
+        create: (context) => TimeApprovalCubit(context.read<TimeRepository>()),
+      ),
+    ],
+    child: const _ApprovalsView(),
+  );
 }
 
-class _ApprovalsScreenState extends State<ApprovalsScreen> {
+class _ApprovalsView extends StatefulWidget {
+  const _ApprovalsView();
+
+  @override
+  State<_ApprovalsView> createState() => _ApprovalsViewState();
+}
+
+class _ApprovalsViewState extends State<_ApprovalsView> {
   final _scroll = ScrollController();
   late final PagedCubit<TimesheetApproval> _approvals;
 
@@ -80,7 +103,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
   void initState() {
     super.initState();
     _approvals = PagedCubit<TimesheetApproval>(
-      (page, size) => context.read<TimeRepository>().approvals(
+      (page, size) => context.read<ApprovalsCubit>().approvals(
         scope: _approvalScope,
         page: page,
         size: size,
@@ -174,7 +197,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
   Future<Map<String, DirectoryUser>?> _resolveUsers(Set<String> ids) async {
     if (ids.isEmpty) return const {};
     try {
-      final users = await context.read<UserRepository>().usersByIds(
+      final users = await context.read<ApprovalsCubit>().usersByIds(
         ids.toList(),
       );
       return {for (final user in users) user.id: user};
@@ -186,7 +209,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
   Future<Map<String, Project>?> _resolveProjects(Set<String> ids) async {
     if (ids.isEmpty) return const {};
     try {
-      final projects = await context.read<ProjectRepository>().resolveProjects(
+      final projects = await context.read<ApprovalsCubit>().resolveProjects(
         ids.toList(),
       );
       return {for (final project in projects) project.id: project};
@@ -647,15 +670,17 @@ Future<void> _showEntries(
   context,
   width: 560,
   builder: (modalContext) => BlocProvider(
-    create: (_) => PagedCubit<WorkItem>(
-      (page, size) => context.read<TimeRepository>().approvalEntries(
-        approval.id,
-        page: page,
-        size: size,
-      ),
-      pageSize: _entriesPage,
-      keyOf: (entry) => entry.id,
-    )..load(),
+    create: (_) {
+      // Read once, from the page that opened the modal: the modal rides the
+      // root navigator.
+      final time = context.read<TimeRepository>();
+      return PagedCubit<WorkItem>(
+        (page, size) =>
+            time.approvalEntries(approval.id, page: page, size: size),
+        pageSize: _entriesPage,
+        keyOf: (entry) => entry.id,
+      )..load();
+    },
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [

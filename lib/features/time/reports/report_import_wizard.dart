@@ -17,6 +17,7 @@ import '../../../core/util/file_pick.dart';
 import '../../../core/widgets/hive_widgets.dart' show fmtDuration;
 import '../../../core/widgets/person_picker.dart';
 import '../../sprint/modals/glass_modal.dart';
+import 'report_import_cubit.dart';
 
 /// Time entries from a CSV file (HIN-93), as one glass sheet in three moves:
 /// choose the file, see how its columns were read and every row that fails,
@@ -32,7 +33,11 @@ Future<int?> showTimeImportWizard(
 }) => showGlassModal<int>(
   context,
   width: 640,
-  builder: (_) => _ImportWizard(admin: admin),
+  builder: (_) => BlocProvider(
+    create: (context) =>
+        ReportImportCubit(context.read<TimeReportRepository>()),
+    child: _ImportWizard(admin: admin),
+  ),
 );
 
 class _ImportWizard extends StatefulWidget {
@@ -58,8 +63,9 @@ class _ImportWizardState extends State<_ImportWizard> {
   String? _failure;
   DirectoryUser? _target;
   bool _committed = false;
-  late final TimeReportRepository _repository = context
-      .read<TimeReportRepository>();
+  // Read once and kept: [dispose] throws the check away through it, and a
+  // disposing state may no longer look up the tree.
+  late final ReportImportCubit _import = context.read<ReportImportCubit>();
 
   @override
   void dispose() {
@@ -67,7 +73,7 @@ class _ImportWizardState extends State<_ImportWizard> {
     // Closed without importing: the server may forget the checked rows now
     // rather than in a day.
     if (preview != null && !_committed) {
-      unawaited(_repository.discardImport(preview.importId).catchError((_) {}));
+      unawaited(_import.discardImport(preview.importId).catchError((_) {}));
     }
     super.dispose();
   }
@@ -94,7 +100,7 @@ class _ImportWizardState extends State<_ImportWizard> {
     });
     try {
       final previous = _preview;
-      final preview = await _repository.previewImport(
+      final preview = await _import.previewImport(
         fileName: file.name,
         bytes: file.bytes,
         path: file.path,
@@ -102,9 +108,7 @@ class _ImportWizardState extends State<_ImportWizard> {
         userId: _target?.id,
       );
       if (previous != null) {
-        unawaited(
-          _repository.discardImport(previous.importId).catchError((_) {}),
-        );
+        unawaited(_import.discardImport(previous.importId).catchError((_) {}));
       }
       if (!mounted) return;
       setState(() {
@@ -125,7 +129,7 @@ class _ImportWizardState extends State<_ImportWizard> {
     final preview = _preview;
     if (preview == null) return;
     try {
-      final page = await _repository.importErrors(
+      final page = await _import.importErrors(
         preview.importId,
         page: _errors.length ~/ 20,
       );
@@ -148,7 +152,7 @@ class _ImportWizardState extends State<_ImportWizard> {
       _failure = null;
     });
     try {
-      final inserted = await _repository.commitImport(preview.importId);
+      final inserted = await _import.commitImport(preview.importId);
       _committed = true;
       if (mounted) Navigator.of(context).pop(inserted);
     } on ApiFailure catch (failure) {

@@ -28,6 +28,7 @@ import '../../core/widgets/person_picker.dart';
 import '../account/account_widgets.dart' show SettingRow;
 import '../sprint/modals/glass_modal.dart';
 import 'absence_labels.dart';
+import 'absence_request_sheet_cubit.dart';
 import '../../core/widgets/folded_hint.dart';
 
 /// Opens the request form. Resolves to the filed request, or null if dismissed.
@@ -61,13 +62,17 @@ Future<AbsenceRequest?> showAbsenceRequestSheet(
         RepositoryProvider<AbsenceRepository>.value(value: repository),
         RepositoryProvider<UserRepository>.value(value: users),
       ],
-      child: _RequestForm(
-        types: types,
-        balances: balances,
-        initialFrom: initialFrom,
-        initialTo: initialTo,
-        existing: existing,
-        template: existing ?? template,
+      // The repositories stay provided for the person picker the form opens.
+      child: BlocProvider(
+        create: (_) => AbsenceRequestSheetCubit(repository, users),
+        child: _RequestForm(
+          types: types,
+          balances: balances,
+          initialFrom: initialFrom,
+          initialTo: initialTo,
+          existing: existing,
+          template: existing ?? template,
+        ),
       ),
     ),
   );
@@ -88,8 +93,8 @@ Future<SickReport?> showSickReportSheet(
   return showGlassModal<SickReport>(
     context,
     width: 460,
-    builder: (sheetContext) => RepositoryProvider<AbsenceRepository>.value(
-      value: repository,
+    builder: (sheetContext) => BlocProvider(
+      create: (_) => SickReportCubit(repository),
       child: _SickForm(
         types: types,
         initialFrom: initialFrom,
@@ -182,7 +187,7 @@ class _RequestFormState extends State<_RequestForm> {
   /// request keeps only the id.
   Future<void> _loadSubstitute(String id) async {
     try {
-      final found = await context.read<UserRepository>().usersByIds([id]);
+      final found = await context.read<AbsenceRequestSheetCubit>().people([id]);
       if (!mounted || found.isEmpty) return;
       setState(() => _substitute = found.first);
     } on ApiFailure {
@@ -253,7 +258,9 @@ class _RequestFormState extends State<_RequestForm> {
       _errorKey = null;
     });
     try {
-      final preview = await context.read<AbsenceRepository>().preview(_draft);
+      final preview = await context.read<AbsenceRequestSheetCubit>().preview(
+        _draft,
+      );
       if (!mounted) return;
       setState(() {
         _preview = preview;
@@ -325,11 +332,11 @@ class _RequestFormState extends State<_RequestForm> {
   Future<void> _submit() async {
     setState(() => _saving = true);
     try {
-      final repository = context.read<AbsenceRepository>();
       final existing = widget.existing;
-      final filed = existing == null
-          ? await repository.submit(_draft)
-          : await repository.edit(existing.id, _draft);
+      final filed = await context.read<AbsenceRequestSheetCubit>().file(
+        _draft,
+        existingId: existing?.id,
+      );
       if (!mounted) return;
       showGlassToast(
         context,
@@ -736,7 +743,7 @@ class _SickFormState extends State<_SickForm> {
   Future<void> _report() async {
     setState(() => _saving = true);
     try {
-      final reported = await context.read<AbsenceRepository>().reportSick(
+      final reported = await context.read<SickReportCubit>().reportSick(
         from: _from,
         to: _to,
         halfDay: _halfDay,

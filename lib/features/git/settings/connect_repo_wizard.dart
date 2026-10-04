@@ -14,6 +14,7 @@ import '../../../core/widgets/hex_mark.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../git_tokens.dart';
 import '../widgets/provider_glyph.dart';
+import 'git_settings_cubit.dart';
 import '../../../core/widgets/hive_widgets.dart' show backArrow, forwardChevron;
 
 part 'connect_repo_wizard.data.dart';
@@ -29,8 +30,11 @@ Future<Project?> showConnectRepoWizard(
   return showGlassModal<Project>(
     context,
     width: 640,
-    builder: (modalContext) =>
-        _ConnectRepoWizard(project: project, startToken: startToken),
+    // The modal is its own route and does not inherit the opener's providers.
+    builder: (modalContext) => BlocProvider(
+      create: (context) => GitSettingsCubit(context.read<GitRepository>()),
+      child: _ConnectRepoWizard(project: project, startToken: startToken),
+    ),
   );
 }
 
@@ -69,7 +73,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
   final _urlCtrl = TextEditingController();
   final _tokenCtrl = TextEditingController();
 
-  GitRepository get _repoApi => context.read<GitRepository>();
+  GitSettingsCubit get _git => context.read<GitSettingsCubit>();
   String get _pid => widget.project.id;
 
   @override
@@ -107,7 +111,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
       // Real server-brokered OAuth: get the provider consent URL + session state,
       // open it in the browser, then poll until the callback has exchanged the
       // code for a token. Owners/repos are then fetched with the real token.
-      final start = await _repoApi.gitOAuthStart(_pid, provider.id);
+      final start = await _git.oauthStart(_pid, provider.id);
       if (!mounted) return;
       if (!start.available ||
           start.authorizeUrl == null ||
@@ -146,7 +150,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
         setState(() => _awaiting = false);
         return;
       }
-      final owners = await _repoApi.gitOwners(_pid, provider.id, state: _state);
+      final owners = await _git.owners(_pid, provider.id, state: _state);
       if (!mounted) return;
       _awaiting = false;
       if (owners.length == 1) {
@@ -179,7 +183,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
       await Future<void>.delayed(const Duration(milliseconds: 1500));
       if (!mounted) return false;
       try {
-        final status = await _repoApi.gitOAuthSession(state);
+        final status = await _git.oauthSession(state);
         if (status.authorized) return true;
         if (status.failed) return false;
       } catch (_) {
@@ -206,7 +210,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
 
   Future<void> _loadRepos() async {
     final provider = _provider!;
-    final repos = await _repoApi.gitRepos(
+    final repos = await _git.repos(
       _pid,
       provider.id,
       _owner!.id,
@@ -222,7 +226,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
     if (provider == null || owner == null || repo == null) return;
     setState(() => _busy = true);
     try {
-      final updated = await _repoApi.gitConnect(
+      final updated = await _git.connect(
         _pid,
         provider: provider.id,
         owner: owner.id,
@@ -242,11 +246,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
     if (url.isEmpty || token.isEmpty) return;
     setState(() => _busy = true);
     try {
-      final updated = await _repoApi.gitConnectToken(
-        _pid,
-        repoUrl: url,
-        token: token,
-      );
+      final updated = await _git.connectToken(_pid, repoUrl: url, token: token);
       if (mounted) Navigator.of(context).pop(updated);
     } catch (e) {
       _toast(_message(e));

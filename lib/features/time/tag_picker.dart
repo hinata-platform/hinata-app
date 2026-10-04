@@ -15,6 +15,7 @@ import '../sprint/modals/glass_modal.dart'
         kGlassPopoverBreakpoint,
         showGlassAnchoredPopover,
         showGlassBottomSheet;
+import 'tag_picker_cubit.dart';
 
 /// Picks the tags on an entry: an anchored glass popover on a wide window, a
 /// glass sheet on a phone.
@@ -37,7 +38,11 @@ Future<List<String>?> showTimeTagPicker(
   required List<String> selected,
   required bool canCreate,
 }) {
-  final body = _TagPickerBody(selected: selected, canCreate: canCreate);
+  // The route rides the root navigator, so the picker brings its own cubit.
+  final body = BlocProvider(
+    create: (context) => TagPickerCubit(context.read<TimeRepository>()),
+    child: _TagPickerBody(selected: selected, canCreate: canCreate),
+  );
   final wide =
       anchorRect != null &&
       MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint;
@@ -114,7 +119,7 @@ class _TagPickerBodyState extends State<_TagPickerBody> {
     final seq = ++_seq;
     setState(() => _loading = true);
     try {
-      final page = await context.read<TimeRepository>().tags(
+      final page = await context.read<TagPickerCubit>().tags(
         query: query.trim().isEmpty ? null : query.trim(),
         size: 30,
       );
@@ -148,7 +153,7 @@ class _TagPickerBodyState extends State<_TagPickerBody> {
   Future<void> _create(String name) async {
     setState(() => _creating = true);
     try {
-      final tag = await context.read<TimeRepository>().createTag(name);
+      final tag = await context.read<TagPickerCubit>().createTag(name);
       if (!mounted) return;
       setState(() {
         _creating = false;

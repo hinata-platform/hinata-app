@@ -15,6 +15,7 @@ import '../../../core/widgets/hive_loader.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
+import 'admin_connect_cubit.dart';
 
 /// Admin → Connect (Hinata Connect enrolment).
 ///
@@ -23,15 +24,26 @@ import '../admin_form_helpers.dart';
 /// portal, shows the live enrolment + domain-verification state, and can drop
 /// the local enrolment. Push works as soon as the instance is enrolled; the
 /// deep-link web fallback additionally requires the domain proof to pass.
-class AdminConnectSection extends StatefulWidget {
+class AdminConnectSection extends StatelessWidget {
   const AdminConnectSection({super.key});
 
   @override
-  State<AdminConnectSection> createState() => _AdminConnectSectionState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => AdminConnectCubit(context.read<AdminRepository>()),
+    child: const _AdminConnectView(),
+  );
 }
 
-class _AdminConnectSectionState extends State<AdminConnectSection> {
-  late final AdminRepository _repo = context.read<AdminRepository>();
+class _AdminConnectView extends StatefulWidget {
+  const _AdminConnectView();
+
+  @override
+  State<_AdminConnectView> createState() => _AdminConnectSectionState();
+}
+
+class _AdminConnectSectionState extends State<_AdminConnectView> {
+  // Read once: the polling timer calls it on its own schedule.
+  late final AdminConnectCubit _connect = context.read<AdminConnectCubit>();
   final TextEditingController _token = TextEditingController();
 
   Map<String, dynamic>? _status;
@@ -67,7 +79,7 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
       _errorKey = null;
     });
     try {
-      final status = await _repo.connectStatus();
+      final status = await _connect.status();
       if (!mounted) return;
       setState(() {
         _status = status;
@@ -94,7 +106,7 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
   Future<void> _startHandshake() async {
     setState(() => _handshakeStarting = true);
     try {
-      final res = await _repo.connectHandshakeStart();
+      final res = await _connect.startHandshake();
       final url = res['portalUrl'] as String?;
       if (!mounted) return;
       if (url == null || url.isEmpty) {
@@ -138,7 +150,7 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
 
   Future<void> _pollOnce() async {
     try {
-      final status = await _repo.connectStatus();
+      final status = await _connect.status();
       if (!mounted) return;
       final enrolled = status['enrolled'] == true;
       final pending = status['handshakePending'] == true;
@@ -176,7 +188,7 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
     _pollTimer = null;
     setState(() => _busy = true);
     try {
-      final status = await _repo.connectHandshakeCancel();
+      final status = await _connect.cancelHandshake();
       if (!mounted) return;
       setState(() {
         _status = status;
@@ -199,7 +211,7 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
     if (token.isEmpty) return;
     setState(() => _busy = true);
     try {
-      final status = await _repo.connectEnroll(token);
+      final status = await _connect.enroll(token);
       if (!mounted) return;
       _token.clear();
       setState(() => _status = status);
@@ -219,7 +231,7 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
   Future<void> _refresh() async {
     setState(() => _busy = true);
     try {
-      final status = await _repo.connectStatus();
+      final status = await _connect.status();
       if (!mounted) return;
       setState(() => _status = status);
       if (status['domainVerified'] == true) {
@@ -242,7 +254,7 @@ class _AdminConnectSectionState extends State<AdminConnectSection> {
   Future<void> _disconnect() async {
     setState(() => _busy = true);
     try {
-      final status = await _repo.connectDisconnect();
+      final status = await _connect.disconnect();
       if (!mounted) return;
       setState(() => _status = status);
       showGlassToast(context, context.t('admin.connectDisconnectedToast'));

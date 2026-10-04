@@ -18,6 +18,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../core/widgets/hive_widgets.dart';
 import '../sprint/modals/glass_modal.dart';
+import 'issue_quick_create_cubit.dart';
 import 'package:hinata/core/widgets/user_pronouns.dart';
 
 /// Issue types the quick composer offers. Mirrors the full create form minus
@@ -86,7 +87,7 @@ class IssueQuickCreateSeed {
 /// The composer closes on every successful create (the new card lands in the
 /// column behind it) and reports the created issue via [onCreated] so the host
 /// can reload.
-class IssueQuickCreate extends StatefulWidget {
+class IssueQuickCreate extends StatelessWidget {
   const IssueQuickCreate({
     super.key,
     required this.label,
@@ -104,10 +105,39 @@ class IssueQuickCreate extends StatefulWidget {
   final bool dimmed;
 
   @override
-  State<IssueQuickCreate> createState() => _IssueQuickCreateState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => IssueQuickCreateCubit(
+      issues: context.read<IssueRepository>(),
+      users: context.read<UserRepository>(),
+    ),
+    child: _QuickComposer(
+      label: label,
+      seed: seed,
+      onCreated: onCreated,
+      dimmed: dimmed,
+    ),
+  );
 }
 
-class _IssueQuickCreateState extends State<IssueQuickCreate> {
+/// The composer itself, below the cubit [IssueQuickCreate] provides.
+class _QuickComposer extends StatefulWidget {
+  const _QuickComposer({
+    required this.label,
+    required this.seed,
+    required this.onCreated,
+    required this.dimmed,
+  });
+
+  final String label;
+  final IssueQuickCreateSeed seed;
+  final ValueChanged<Issue> onCreated;
+  final bool dimmed;
+
+  @override
+  State<_QuickComposer> createState() => _QuickComposerState();
+}
+
+class _QuickComposerState extends State<_QuickComposer> {
   final _titleCtrl = TextEditingController();
   late final FocusNode _titleFocus = FocusNode(onKeyEvent: _onTitleKey);
 
@@ -126,7 +156,7 @@ class _IssueQuickCreateState extends State<IssueQuickCreate> {
   String? _assigneeAvatarUrl;
   DateTime? _dueDate;
 
-  IssueRepository get _issueApi => context.read<IssueRepository>();
+  IssueQuickCreateCubit get _composer => context.read<IssueQuickCreateCubit>();
 
   @override
   void initState() {
@@ -222,7 +252,7 @@ class _IssueQuickCreateState extends State<IssueQuickCreate> {
     final assigneeId = _assigneeId;
     final dueDate = _dueDate;
     try {
-      final created = await _issueApi.createIssue({
+      final created = await _composer.create({
         'projectId': projectId,
         'title': title,
         'type': _type,
@@ -506,23 +536,25 @@ class _IssueQuickCreateState extends State<IssueQuickCreate> {
     final wide = MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint;
     final me = context.read<AuthBloc>().state.user;
     // The picker is pushed on the root navigator, which sits above the
-    // repository providers — hand it the directory rather than let it look one
-    // up through a context that no longer reaches them.
-    final directory = context.read<UserRepository>();
-    Widget picker(BuildContext hostContext) => _QuickPeoplePicker(
-      directory: directory,
-      anchored: wide,
-      meId: me?.id,
-      selectedId: _assigneeId,
-      onPicked: (user) {
-        Navigator.of(hostContext).pop();
-        if (!mounted) return;
-        setState(() {
-          _assigneeId = user?.id;
-          _assigneeName = user?.displayName;
-          _assigneeAvatarUrl = user?.avatarUrl;
-        });
-      },
+    // composer's cubit — hand it on rather than let the picker look it up
+    // through a context that no longer reaches it.
+    final composer = _composer;
+    Widget picker(BuildContext hostContext) => BlocProvider.value(
+      value: composer,
+      child: _QuickPeoplePicker(
+        anchored: wide,
+        meId: me?.id,
+        selectedId: _assigneeId,
+        onPicked: (user) {
+          Navigator.of(hostContext).pop();
+          if (!mounted) return;
+          setState(() {
+            _assigneeId = user?.id;
+            _assigneeName = user?.displayName;
+            _assigneeAvatarUrl = user?.avatarUrl;
+          });
+        },
+      ),
     );
 
     await _withPicker(
@@ -667,16 +699,11 @@ class _QuickToolState extends State<_QuickTool> {
 /// stays usable in a large organisation.
 class _QuickPeoplePicker extends StatefulWidget {
   const _QuickPeoplePicker({
-    required this.directory,
     required this.anchored,
     required this.meId,
     required this.selectedId,
     required this.onPicked,
   });
-
-  /// Passed in rather than read off the context: this picker lives on the root
-  /// navigator, above the repository providers.
-  final UserRepository directory;
 
   /// Wide screens host this in an anchored popover, which sizes itself; phones
   /// host it in a bottom sheet, which needs the picker to claim a height.
@@ -742,7 +769,7 @@ class _QuickPeoplePickerState extends State<_QuickPeoplePicker> {
       _error = null;
     });
     try {
-      final res = await widget.directory.searchUsers(
+      final res = await context.read<IssueQuickCreateCubit>().searchUsers(
         _query.trim(),
         size: _pageSize,
       );
@@ -766,7 +793,7 @@ class _QuickPeoplePickerState extends State<_QuickPeoplePicker> {
     final gen = _gen;
     setState(() => _loadingMore = true);
     try {
-      final res = await widget.directory.searchUsers(
+      final res = await context.read<IssueQuickCreateCubit>().searchUsers(
         _query.trim(),
         page: _page + 1,
         size: _pageSize,

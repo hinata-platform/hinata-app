@@ -27,6 +27,7 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/user_pronouns.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../absences/away_today_list.dart';
+import '../admin/connect_hint_cubit.dart';
 import '../admin/connect_hint.dart';
 import '../board/board_links.dart';
 import '../issues/issue_detail_sheet.dart';
@@ -39,9 +40,11 @@ import '../sprint/modals/glass_modal.dart'
         GlassToastKind,
         showGlassErrorToast,
         showGlassToast;
+import '../../core/repositories/admin_repository.dart';
 import '../../core/repositories/dashboard_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
+import 'dashboard_cubit.dart';
 
 part 'dashboard_screen.hero.dart';
 part 'dashboard_screen.panels.dart';
@@ -80,7 +83,21 @@ class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => const _DashboardView();
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      BlocProvider(
+        create: (context) => DashboardCubit(
+          context.read<DashboardRepository>(),
+          context.read<ProjectRepository>(),
+          context.read<TeamRepository>(),
+        ),
+      ),
+      BlocProvider(
+        create: (context) => ConnectHintCubit(context.read<AdminRepository>()),
+      ),
+    ],
+    child: const _DashboardView(),
+  );
 }
 
 class _DashboardView extends StatefulWidget {
@@ -91,11 +108,7 @@ class _DashboardView extends StatefulWidget {
 }
 
 class _DashboardViewState extends State<_DashboardView> {
-  late final FetchCubit<DashboardData> _cubit;
-
-  DashboardRepository get _dashboardApi => context.read<DashboardRepository>();
-  ProjectRepository get _projectApi => context.read<ProjectRepository>();
-  TeamRepository get _teamApi => context.read<TeamRepository>();
+  late final DashboardCubit _cubit;
 
   bool _editing = false;
   bool _saving = false;
@@ -121,9 +134,9 @@ class _DashboardViewState extends State<_DashboardView> {
   @override
   void initState() {
     super.initState();
-    _cubit = FetchCubit<DashboardData>(
-      () => _dashboardApi.dashboard(override: _editing ? _draft : null),
-    )..load();
+    _cubit = context.read<DashboardCubit>()
+      ..previewSource = (() => _editing ? _draft : null)
+      ..load();
     _issueSub = IssueEvents.instance.changes.listen((_) => _cubit.load());
     _boardSub = BoardEvents.instance.changes.listen((_) => _cubit.load());
     _loadPickerData();
@@ -135,14 +148,17 @@ class _DashboardViewState extends State<_DashboardView> {
     }
     // One-time nudge for admins on a not-yet-connected self-hosted instance.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) maybeShowConnectHint(context);
+      if (!mounted) return;
+      maybeShowConnectHint(
+        context,
+        connectStatus: context.read<ConnectHintCubit>().connectStatus,
+      );
     });
   }
 
   Future<void> _loadPickerData() async {
     try {
-      final projects = await _projectApi.projects();
-      final teams = await _teamApi.teams();
+      final (:projects, :teams) = await _cubit.pickerData();
       if (!mounted) return;
       setState(() {
         _projects = projects;
@@ -157,7 +173,6 @@ class _DashboardViewState extends State<_DashboardView> {
   void dispose() {
     _issueSub?.cancel();
     _boardSub?.cancel();
-    _cubit.close();
     super.dispose();
   }
 
@@ -171,7 +186,7 @@ class _DashboardViewState extends State<_DashboardView> {
   Future<void> _finishEdit() async {
     setState(() => _saving = true);
     try {
-      await _dashboardApi.saveDashboardPrefs(_draft);
+      await _cubit.savePrefs(_draft);
       if (!mounted) return;
       setState(() {
         _editing = false;
@@ -218,26 +233,22 @@ class _DashboardViewState extends State<_DashboardView> {
     );
     return PageChrome(
       contentMax: goldenContentMax,
-      child: BlocProvider.value(
-        value: _cubit,
-        child:
-            BlocBuilder<FetchCubit<DashboardData>, FetchState<DashboardData>>(
-              builder: (context, state) {
-                return RefreshIndicator(
-                  color: AppColors.accent,
-                  backgroundColor: AppColors.surface,
-                  edgeOffset: context.topGutter,
-                  onRefresh: () => _cubit.load(),
-                  child: AsyncView(
-                    isLoading: state.isLoading,
-                    hasData: state.hasData,
-                    errorKey: state.errorKey,
-                    onRetry: () => _cubit.load(),
-                    builder: (context) => _content(context, state.data!),
-                  ),
-                );
-              },
+      child: BlocBuilder<DashboardCubit, FetchState<DashboardData>>(
+        builder: (context, state) {
+          return RefreshIndicator(
+            color: AppColors.accent,
+            backgroundColor: AppColors.surface,
+            edgeOffset: context.topGutter,
+            onRefresh: () => _cubit.load(),
+            child: AsyncView(
+              isLoading: state.isLoading,
+              hasData: state.hasData,
+              errorKey: state.errorKey,
+              onRetry: () => _cubit.load(),
+              builder: (context) => _content(context, state.data!),
             ),
+          );
+        },
       ),
     );
   }

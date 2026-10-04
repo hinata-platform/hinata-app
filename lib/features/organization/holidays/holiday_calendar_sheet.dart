@@ -5,11 +5,11 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/availability_models.dart';
-import '../../../core/repositories/availability_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/hive_widgets.dart' show HiveSwitch;
 import '../../account/account_widgets.dart';
 import '../../sprint/modals/glass_modal.dart';
+import 'org_holidays_cubit.dart';
 import '../../../core/widgets/folded_hint.dart';
 
 /// Opens the form for a new holiday calendar, or for [existing]. Resolves to
@@ -18,13 +18,14 @@ Future<bool?> showHolidayCalendarSheet(
   BuildContext context, {
   HolidayCalendar? existing,
 }) {
-  final repository = context.read<AvailabilityRepository>();
+  // The form opens as its own route, so the page's requests are handed in.
+  final holidays = context.read<OrgHolidaysCubit>();
   return showGlassModal<bool>(
     context,
     adaptive: true,
     width: 460,
-    builder: (sheetContext) => RepositoryProvider.value(
-      value: repository,
+    builder: (sheetContext) => BlocProvider.value(
+      value: holidays,
       child: _CalendarForm(existing: existing),
     ),
   );
@@ -67,18 +68,18 @@ class _CalendarFormState extends State<_CalendarForm> {
     }
     setState(() => _saving = true);
     try {
-      final repository = context.read<AvailabilityRepository>();
+      final holidays = context.read<OrgHolidaysCubit>();
       final existing = widget.existing;
       final feed = _feed.text.trim();
       if (existing == null) {
-        await repository.createCalendar(
+        await holidays.createCalendar(
           name: _name.text.trim(),
           region: _region.text.trim(),
           icsUrl: feed.isEmpty ? null : feed,
           defaultCalendar: _default,
         );
       } else {
-        await repository.updateCalendar(
+        await holidays.updateCalendar(
           existing.id,
           name: _name.text.trim(),
           region: _region.text.trim(),

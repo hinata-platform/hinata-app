@@ -1,14 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_client.dart' show ApiFailure;
 import '../../../core/i18n/i18n.dart';
 import '../../../core/widgets/markdown_toolbar.dart';
-import '../../../core/repositories/issue_repository.dart';
-import '../../../core/repositories/media_repository.dart';
 import '../../../core/util/file_pick.dart';
 import '../../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassErrorToast, showGlassToast;
@@ -19,15 +16,16 @@ import '../../sprint/modals/glass_modal.dart'
 /// issue attachment (the comment model itself is text-only, so files ride on
 /// the issue's attachment list, which already streams updates live).
 
-/// Camera / gallery photo → uploaded as inline Markdown media, then dropped at
-/// the caret as `![name](url)` (placeholder swaps in when the upload returns).
+/// Camera / gallery photo → uploaded as inline Markdown media through
+/// [upload], then dropped at the caret as `![name](url)` (placeholder swaps in
+/// when the upload returns).
 Future<void> insertCommentPhoto(
   BuildContext context,
   MarkdownEditingActions actions,
-  ImageSource source,
-) async {
-  final mediaApi = context.read<MediaRepository>();
-
+  ImageSource source, {
+  required Future<({String url, String? blurHash})> Function(MultipartFile file)
+  upload,
+}) async {
   // Where the gallery is only a file dialog anyway — Linux — take the seam's
   // dialog instead of image_picker's. Both end up in the same GTK chooser, but
   // image_picker_linux passes a hard-coded English `Images` filter and no
@@ -47,8 +45,8 @@ Future<void> insertCommentPhoto(
 
   final token = actions.beginImageUpload(name);
   try {
-    final upload = await mediaApi.uploadMedia(multipart);
-    actions.completeImageUpload(token, upload.url, name);
+    final media = await upload(multipart);
+    actions.completeImageUpload(token, media.url, name);
   } on ApiFailure catch (e) {
     actions.failImageUpload(token);
     if (context.mounted) showGlassErrorToast(context, context.t(e.message));
@@ -111,15 +109,15 @@ Future<ChosenFile?> _pickPhotoFromDisk(BuildContext context) async {
   return picked.isEmpty ? null : picked.first;
 }
 
-/// "Anhang" → pick any file and upload it as an attachment on the issue. Shows
-/// a brief "uploading" toast; the issue's attachments section refreshes live.
+/// "Anhang" → pick any file and upload it through [upload] as an attachment on
+/// the issue. Shows a brief "uploading" toast; the issue's attachments section
+/// refreshes live.
 Future<void> attachFileToIssue(
   BuildContext context,
   String issueId, {
+  required Future<void> Function(String issueId, MultipartFile file) upload,
   VoidCallback? onChanged,
 }) async {
-  final issueApi = context.read<IssueRepository>();
-
   final List<ChosenFile> picked;
   try {
     // Web has no file paths, so we always need the bytes there.
@@ -149,7 +147,7 @@ Future<void> attachFileToIssue(
     showGlassToast(context, context.t('comments.attaching'));
   }
   try {
-    await issueApi.uploadAttachment(issueId, multipart);
+    await upload(issueId, multipart);
     onChanged?.call();
     if (context.mounted) {
       showGlassToast(

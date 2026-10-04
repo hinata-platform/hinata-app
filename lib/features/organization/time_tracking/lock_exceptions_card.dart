@@ -20,6 +20,7 @@ import '../../sprint/modals/glass_modal.dart'
         showGlassToast;
 import '../../time/lock_notice.dart';
 import '../../admin/admin_form_helpers.dart';
+import 'lock_exceptions_cubit.dart';
 
 /// The way back out of the lock date.
 ///
@@ -39,14 +40,24 @@ import '../../admin/admin_form_helpers.dart';
 /// inconsistency with the policies above it: an exception is an *event* with an
 /// author and a timestamp, not a setting, and a draft that vanished when somebody
 /// navigated away would lose a reason they had typed.
-class OrgLockExceptionsCard extends StatefulWidget {
+class OrgLockExceptionsCard extends StatelessWidget {
   const OrgLockExceptionsCard({super.key});
 
   @override
-  State<OrgLockExceptionsCard> createState() => _OrgLockExceptionsCardState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => LockExceptionsCubit(context.read<TimeRepository>()),
+    child: const _OrgLockExceptionsBody(),
+  );
 }
 
-class _OrgLockExceptionsCardState extends State<OrgLockExceptionsCard> {
+class _OrgLockExceptionsBody extends StatefulWidget {
+  const _OrgLockExceptionsBody();
+
+  @override
+  State<_OrgLockExceptionsBody> createState() => _OrgLockExceptionsCardState();
+}
+
+class _OrgLockExceptionsCardState extends State<_OrgLockExceptionsBody> {
   /// What the instance currently has open. Null until the policy has answered —
   /// different from "answered, and there are none", which is an empty list.
   List<TimeLockException>? _exceptions;
@@ -90,7 +101,7 @@ class _OrgLockExceptionsCardState extends State<OrgLockExceptionsCard> {
     );
     if (note == null || !mounted) return;
     await _run(
-      () => context.read<TimeRepository>().addLockException(
+      () => context.read<LockExceptionsCubit>().add(
         from: span.start,
         to: span.end,
         note: note,
@@ -112,9 +123,7 @@ class _OrgLockExceptionsCardState extends State<OrgLockExceptionsCard> {
       confirmLabel: context.t('common.delete'),
     );
     if (confirmed != true || !mounted) return;
-    await _run(
-      () => context.read<TimeRepository>().removeLockException(exception.id),
-    );
+    await _run(() => context.read<LockExceptionsCubit>().remove(exception.id));
   }
 
   Future<void> _run(Future<List<TimeLockException>> Function() call) async {

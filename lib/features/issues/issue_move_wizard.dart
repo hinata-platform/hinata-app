@@ -15,6 +15,7 @@ import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/project_picker.dart';
 import '../sprint/modals/glass_modal.dart';
+import 'issue_move_cubit.dart';
 
 /// Moves one or more issues into another project.
 ///
@@ -34,6 +35,9 @@ Future<bool?> showIssueMoveWizard(
   required List<String> issueIds,
   String? currentProjectId,
 }) {
+  // The wizard is a root-navigator route and inherits none of the caller's
+  // providers: the repositories are handed across, for the wizard's cubit and
+  // for the project picker inside it.
   final issueRepo = context.read<IssueRepository>();
   final projectRepo = context.read<ProjectRepository>();
   return showGlassModal<bool>(
@@ -44,9 +48,12 @@ Future<bool?> showIssueMoveWizard(
         RepositoryProvider.value(value: issueRepo),
         RepositoryProvider.value(value: projectRepo),
       ],
-      child: _MoveWizardBody(
-        issueIds: issueIds,
-        currentProjectId: currentProjectId,
+      child: BlocProvider(
+        create: (context) => IssueMoveCubit(context.read<IssueRepository>()),
+        child: _MoveWizardBody(
+          issueIds: issueIds,
+          currentProjectId: currentProjectId,
+        ),
       ),
     ),
   );
@@ -91,7 +98,7 @@ class _MoveWizardBodyState extends State<_MoveWizardBody> {
       _error = null;
     });
     try {
-      final result = await context.read<IssueRepository>().movePreflight(
+      final result = await context.read<IssueMoveCubit>().analyse(
         widget.issueIds,
         target,
         includeEpicChildren: _includeEpicChildren,
@@ -124,7 +131,7 @@ class _MoveWizardBodyState extends State<_MoveWizardBody> {
       _error = null;
     });
     try {
-      await context.read<IssueRepository>().moveIssues(
+      await context.read<IssueMoveCubit>().move(
         widget.issueIds,
         target,
         stateMap: _stateMap,

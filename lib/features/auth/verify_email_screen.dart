@@ -11,24 +11,38 @@ import '../../core/util/server_link.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
 import 'auth_shell.dart';
+import 'auth_flow_cubit.dart';
 
 /// Lands here from the email-verification deep link (web URL or
 /// `hinata://verify-email`). Confirms the token, then either signs the user in
 /// (normal flow) or shows a "waiting for admin approval" state. [server] (carried
 /// by the link) points a freshly opened web/app at the right backend.
-class VerifyEmailScreen extends StatefulWidget {
+class VerifyEmailScreen extends StatelessWidget {
   const VerifyEmailScreen({super.key, required this.token, this.server});
 
   final String token;
   final String? server;
 
   @override
-  State<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => AuthFlowCubit(context.read<AuthRepository>()),
+    child: _VerifyEmailScreenBody(token: token, server: server),
+  );
+}
+
+class _VerifyEmailScreenBody extends StatefulWidget {
+  const _VerifyEmailScreenBody({required this.token, this.server});
+
+  final String token;
+  final String? server;
+
+  @override
+  State<_VerifyEmailScreenBody> createState() => _VerifyEmailScreenState();
 }
 
 enum _Phase { verifying, pending, invalid }
 
-class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
+class _VerifyEmailScreenState extends State<_VerifyEmailScreenBody> {
   _Phase _phase = _Phase.verifying;
 
   @override
@@ -47,7 +61,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     await applyServerFromLink(context, widget.server);
     if (!mounted) return;
     try {
-      final result = await context.read<AuthRepository>().verifyEmail(
+      final result = await context.read<AuthFlowCubit>().verifyEmail(
         widget.token,
       );
       if (!mounted) return;

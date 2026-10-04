@@ -79,11 +79,10 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
   // `@`-menu and resolve `{{issue:…}}` chips in the preview; KB articles come
   // from the shared seed. Reloaded whenever the selected project changes.
   Map<String, Issue> _projectIssues = const {};
-  KnowledgeRepository get _knowledge => context.read<KnowledgeRepository>();
-  IssueRepository get _issueApi => context.read<IssueRepository>();
-  ProjectRepository get _projectApi => context.read<ProjectRepository>();
-  SprintRepository get _sprintApi => context.read<SprintRepository>();
-  UserRepository get _userApi => context.read<UserRepository>();
+
+  /// Where every request of the form goes — provided by [showIssueForm], read
+  /// once in [initState] so no lookup crosses an async gap.
+  late final IssueCreateCubit _create;
 
   String? _projectId;
   String? _state;
@@ -135,6 +134,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
   @override
   void initState() {
     super.initState();
+    _create = context.read<IssueCreateCubit>();
     _projectId = widget.projectId;
     _state = widget.initialState;
     _sprintId = widget.initialSprintId;
@@ -164,10 +164,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
       _error = null;
     });
     try {
-      final results = await Future.wait([
-        _projectApi.projects(),
-        _userApi.users(),
-      ]);
+      final results = await Future.wait([_create.projects(), _create.users()]);
       _projects = results[0] as List<Project>;
       _users = results[1] as List<DirectoryUser>;
       _projectId ??= _projects.firstOrNull?.id;
@@ -175,7 +172,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
       // resolve it once so its chip renders without a project-wide drain.
       if (widget.parentId != null) {
         try {
-          _parentIssue = await _issueApi.issue(widget.parentId!);
+          _parentIssue = await _create.issue(widget.parentId!);
         } catch (_) {
           /* the parent row falls back to a placeholder */
         }
@@ -213,14 +210,14 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     final gen = ++_projectLoadGen;
     if (pid == null) return;
     try {
-      final sprints = await _sprintApi.sprintsForProject(pid);
+      final sprints = await _create.sprintsForProject(pid);
       if (gen != _projectLoadGen) return; // a newer project won the race
       _sprints = sprints;
     } catch (_) {
       if (gen == _projectLoadGen) _sprints = const [];
     }
     try {
-      await _knowledge.init();
+      await _create.seedKnowledge();
     } catch (_) {
       /* smart-link doc resolution falls back to "not found" */
     }
@@ -241,7 +238,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     final missing = keys.where((k) => !_projectIssues.containsKey(k)).toList();
     if (missing.isEmpty) return;
     try {
-      final resolved = await _issueApi.resolveIssues(missing);
+      final resolved = await _create.resolveIssues(missing);
       if (!mounted || resolved.isEmpty) return;
       setState(() {
         _projectIssues = {
@@ -295,7 +292,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     widget.controller.phase = IssueCreatePhase.saving;
     setState(() => _error = null);
     try {
-      final created = await _issueApi.createIssue({
+      final created = await _create.createIssue({
         'projectId': _projectId,
         'title': title,
         'descriptionDoc': _descCtrl.doc,
@@ -422,13 +419,12 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
   IssueLinkResolver _buildResolver() => IssueLinkResolver(
     issuesByReadable: _projectIssues,
     users: _users,
-    knowledgeRepo: _knowledge,
+    knowledgeRepo: _create.knowledge,
     stateColorFor: (s) =>
         _projStateColor(_project, s) ?? AppColors.stateColor(s),
     onOpenIssue: _openLinkedIssue,
     onOpenDoc: _openArticle,
-    searchIssues: (q) =>
-        _issueApi.mentionSearch(projectId: _projectId, query: q),
+    searchIssues: (q) => _create.mentionSearch(projectId: _projectId, query: q),
   );
 
   /// Opens the real issue for a readable id (e.g. `HIN-12`): tries the loaded
@@ -437,7 +433,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     var match = _projectIssues[readableId];
     if (match == null) {
       try {
-        final res = await _issueApi.issues(query: readableId, size: 20);
+        final res = await _create.searchIssues(readableId, size: 20);
         match = res.issues.where((i) => i.readableId == readableId).firstOrNull;
       } on ApiFailure {
         return;
@@ -819,11 +815,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     // drained whole-project list.
     List<Issue> epics;
     try {
-      final res = await _issueApi.issues(
-        projectId: pid,
-        types: const ['EPIC'],
-        size: 100,
-      );
+      final res = await _create.epics(pid, size: 100);
       epics = res.issues.toList()
         ..sort((a, b) => a.readableId.compareTo(b.readableId));
     } on ApiFailure {
@@ -886,7 +878,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
           ? null
           : (l) async {
               try {
-                await _projectApi.deleteProjectLabel(pid, l);
+                await _create.deleteProjectLabel(pid, l);
               } on ApiFailure catch (failure) {
                 if (mounted) {
                   showGlassErrorToast(context, context.t(failure.message));
@@ -1029,7 +1021,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
       eventDate: _project?.eventDate,
       anchorRect: anchorRect,
       defaultBasis: _defaultDeadlineBasis,
-      resolve: (offset) => _projectApi.resolveOffset(projectId, offset: offset),
+      resolve: (offset) => _create.resolveOffset(projectId, offset: offset),
     );
     if (choice == null || !mounted) return;
     setState(() {

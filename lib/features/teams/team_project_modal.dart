@@ -17,6 +17,7 @@ import '../../core/widgets/entity_avatar_editor.dart';
 import '../projects/deadline_basis_field.dart';
 import '../projects/project_create_form.dart';
 import 'team_modal_kit.dart';
+import 'team_project_cubit.dart';
 import 'team_widgets.dart';
 
 /// Add-project modal: attach an existing project or create a new one.
@@ -32,7 +33,8 @@ Future<bool?> showAddProjectModal(
   required String currentUserId,
   Set<String> takenKeys = const {},
 }) {
-  final repo = context.read<TeamRepository>();
+  final teams = context.read<TeamRepository>();
+  final projects = context.read<ProjectRepository>();
   final deadlineDefault = offeredDeadlineDefault(context);
   // Attaching a project to a team is for its leads alone; the server refuses
   // anybody else, platform admins included. Offering the rest would only
@@ -43,21 +45,22 @@ Future<bool?> showAddProjectModal(
       .toList(growable: false);
   return showTeamModal<bool>(
     context,
-    _AddProjectBody(
-      repo: repo,
-      team: team,
-      available: attachable,
-      leadCandidates: leadCandidates,
-      currentUserId: currentUserId,
-      takenKeys: takenKeys,
-      deadlineDefault: deadlineDefault,
+    BlocProvider(
+      create: (_) => TeamProjectCubit(teams: teams, projects: projects),
+      child: _AddProjectBody(
+        team: team,
+        available: attachable,
+        leadCandidates: leadCandidates,
+        currentUserId: currentUserId,
+        takenKeys: takenKeys,
+        deadlineDefault: deadlineDefault,
+      ),
     ),
   );
 }
 
 class _AddProjectBody extends StatefulWidget {
   const _AddProjectBody({
-    required this.repo,
     required this.team,
     required this.available,
     required this.leadCandidates,
@@ -66,7 +69,6 @@ class _AddProjectBody extends StatefulWidget {
     this.deadlineDefault,
   });
 
-  final TeamRepository repo;
   final Team team;
   final List<Project> available;
 
@@ -133,11 +135,15 @@ class _AddProjectBodyState extends State<_AddProjectBody> {
   }
 
   Future<void> _attach() => _run(
-    () => widget.repo.attachTeamProjects(widget.team.id, _selected.toList()),
+    () => context.read<TeamProjectCubit>().attach(
+      widget.team.id,
+      _selected.toList(),
+    ),
   );
 
   Future<void> _create() => _run(() async {
-    final created = await widget.repo.createTeamProject(
+    final teamProjects = context.read<TeamProjectCubit>();
+    final created = await teamProjects.create(
       widget.team.id,
       key: _draft.trimmedKey,
       name: _draft.trimmedName,
@@ -147,13 +153,12 @@ class _AddProjectBodyState extends State<_AddProjectBody> {
       deadlineBasis: _draft.deadlineBasisToSend,
     );
     if (!mounted) return;
-    final repo = context.read<ProjectRepository>();
     if (mounted) {
       await uploadPendingAvatar(
         context,
         _draft.pendingAvatar,
         EntityAvatarStrings.project,
-        (file) => repo.uploadProjectAvatar(created.id, file),
+        (file) => teamProjects.uploadProjectAvatar(created.id, file),
       );
     }
   });

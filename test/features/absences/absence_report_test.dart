@@ -20,6 +20,7 @@ import 'package:hinata/features/absences/absence_report_view.dart';
 import 'package:hinata/features/absences/absence_year_run_screen.dart';
 import 'package:hinata/features/absences/absence_year_views.dart';
 import 'package:hinata/features/time/reports/absence_report_tab.dart';
+import 'package:hinata/features/time/reports/report_absences_cubit.dart';
 
 void main() {
   setUp(() => AppColors.brightness = Brightness.light);
@@ -45,8 +46,11 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Widget tab(ValueNotifier<AbsenceReportQuery> query) =>
-      AbsenceReportTab(query: query, padding: const EdgeInsets.all(16));
+  // The report page provides the tab's cubit; the tab alone needs it here.
+  Widget tab(ValueNotifier<AbsenceReportQuery> query) => BlocProvider(
+    create: (context) => ReportAbsencesCubit(context.read<AbsenceRepository>()),
+    child: AbsenceReportTab(query: query, padding: const EdgeInsets.all(16)),
+  );
 
   testWidgets('an empty year says so instead of drawing an empty ring', (
     tester,

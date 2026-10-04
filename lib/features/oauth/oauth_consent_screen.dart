@@ -18,6 +18,7 @@ import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/soft_card.dart';
 import '../sprint/modals/glass_modal.dart' show showGlassErrorToast;
+import 'oauth_consent_cubit.dart';
 
 /// The OAuth 2.1 consent screen an AI client (e.g. Claude) lands the user on
 /// when it starts an authorization flow against their Hinata instance.
@@ -29,17 +30,29 @@ import '../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 /// pending request, shows the requesting client + scopes, and on Allow/Deny
 /// hard-navigates the browser to the `redirectUri` the backend returns (the AI
 /// client's callback). Web-only — the connector flow runs in a browser.
-class OAuthConsentScreen extends StatefulWidget {
+class OAuthConsentScreen extends StatelessWidget {
   const OAuthConsentScreen({super.key, required this.requestId});
 
   final String requestId;
 
   @override
-  State<OAuthConsentScreen> createState() => _OAuthConsentScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => OAuthConsentCubit(context.read<AuthRepository>()),
+    child: _OAuthConsentScreenBody(requestId: requestId),
+  );
 }
 
-class _OAuthConsentScreenState extends State<OAuthConsentScreen> {
-  AuthRepository get _repo => context.read<AuthRepository>();
+class _OAuthConsentScreenBody extends StatefulWidget {
+  const _OAuthConsentScreenBody({required this.requestId});
+
+  final String requestId;
+
+  @override
+  State<_OAuthConsentScreenBody> createState() => _OAuthConsentScreenState();
+}
+
+class _OAuthConsentScreenState extends State<_OAuthConsentScreenBody> {
+  OAuthConsentCubit get _consent => context.read<OAuthConsentCubit>();
 
   OAuthConsentInfo? _info;
   bool _loading = true;
@@ -71,7 +84,7 @@ class _OAuthConsentScreenState extends State<OAuthConsentScreen> {
       _failed = false;
     });
     try {
-      final info = await _repo.oauthConsentInfo(widget.requestId);
+      final info = await _consent.info(widget.requestId);
       if (mounted) {
         setState(() {
           _info = info;
@@ -95,7 +108,7 @@ class _OAuthConsentScreenState extends State<OAuthConsentScreen> {
     if (info == null || _deciding) return;
     setState(() => _deciding = true);
     try {
-      final redirectUri = await _repo.oauthConsentDecision(
+      final redirectUri = await _consent.decide(
         info.requestId,
         approved: approved,
         grantedScopes: info.scopes,

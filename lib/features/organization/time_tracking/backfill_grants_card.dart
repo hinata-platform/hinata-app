@@ -17,44 +17,36 @@ import '../../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassConfirm, showGlassToast;
 import '../../time/lock_notice.dart' show formatPeriod;
 import '../../admin/admin_form_helpers.dart';
+import 'backfill_grants_cubit.dart';
 
 /// Admin → Time tracking: the days opened for single people that are still open.
 ///
 /// Under the requests they answer. Each opening closes by itself after two weeks;
 /// this is where an administrator closes one sooner, which is recorded like the
 /// opening was.
-class OrgBackfillGrantsCard extends StatefulWidget {
+class OrgBackfillGrantsCard extends StatelessWidget {
   const OrgBackfillGrantsCard({super.key});
 
   @override
-  State<OrgBackfillGrantsCard> createState() => _OrgBackfillGrantsCardState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) =>
+        BackfillGrantsCubit(context.read<TimeRepository>())..load(),
+    child: const _OrgBackfillGrantsBody(),
+  );
 }
 
-class _OrgBackfillGrantsCardState extends State<OrgBackfillGrantsCard> {
-  late final PagedCubit<TimeBackfillGrant> _grants =
-      PagedCubit<TimeBackfillGrant>(
-        (page, size) => context.read<TimeRepository>().backfillGrants(
-          page: page,
-          size: size,
-        ),
-        pageSize: 25,
-        keyOf: (grant) => grant.id,
-      );
+class _OrgBackfillGrantsBody extends StatefulWidget {
+  const _OrgBackfillGrantsBody();
 
   @override
-  void initState() {
-    super.initState();
-    unawaited(_grants.load());
-  }
+  State<_OrgBackfillGrantsBody> createState() => _OrgBackfillGrantsCardState();
+}
 
-  @override
-  void dispose() {
-    unawaited(_grants.close());
-    super.dispose();
-  }
+class _OrgBackfillGrantsCardState extends State<_OrgBackfillGrantsBody> {
+  BackfillGrantsCubit get _grants => context.read<BackfillGrantsCubit>();
 
   Future<void> _revoke(TimeBackfillGrant grant) async {
-    final repository = context.read<TimeRepository>();
+    final grants = _grants;
     final confirmed = await showGlassConfirm(
       context,
       icon: LucideIcons.calendarX,
@@ -74,9 +66,9 @@ class _OrgBackfillGrantsCardState extends State<OrgBackfillGrantsCard> {
     );
     if (confirmed != true || !mounted) return;
     try {
-      await repository.revokeBackfillGrant(grant.id);
+      await grants.revoke(grant.id);
       if (!mounted) return;
-      _grants.removeItem(grant.id);
+      grants.removeItem(grant.id);
       showGlassToast(
         context,
         context.t('admin.timeTracking.grantRevoked'),
@@ -98,8 +90,7 @@ class _OrgBackfillGrantsCardState extends State<OrgBackfillGrantsCard> {
     title: context.t('admin.timeTracking.grantsTitle'),
     subtitle: context.t('admin.timeTracking.grantsHint'),
     children: [
-      BlocBuilder<PagedCubit<TimeBackfillGrant>, PagedState<TimeBackfillGrant>>(
-        bloc: _grants,
+      BlocBuilder<BackfillGrantsCubit, PagedState<TimeBackfillGrant>>(
         builder: (context, state) {
           final quiet = TextStyle(
             fontSize: 12.5,

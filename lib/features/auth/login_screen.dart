@@ -20,12 +20,23 @@ import '../connect/server_switcher.dart';
 import '../legal/legal_links.dart';
 import '../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import 'auth_shell.dart';
+import 'auth_flow_cubit.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => AuthFlowCubit(context.read<AuthRepository>()),
+    child: const _LoginScreenBody(),
+  );
+}
+
+class _LoginScreenBody extends StatefulWidget {
+  const _LoginScreenBody();
+
+  @override
+  State<_LoginScreenBody> createState() => _LoginScreenState();
 }
 
 /// How the SSO provider list is doing. The buttons come from a *second*
@@ -33,7 +44,8 @@ class LoginScreen extends StatefulWidget {
 /// the second one may be presented as a problem.
 enum _SsoDiscovery { loading, done, failed }
 
-class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
+class _LoginScreenState extends State<_LoginScreenBody>
+    with WidgetsBindingObserver {
   /// Attempts spent on discovering the SSO providers before giving up, and how
   /// long to wait before each of them.
   static const List<Duration> _ssoRetryDelays = [
@@ -128,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
   Future<void> _loadProviders() async {
     final load = ++_ssoLoad;
     // Read the tree before the first await — the context may be gone after one.
-    final repository = context.read<AuthRepository>();
+    final flow = context.read<AuthFlowCubit>();
     final server = context.read<AppStorage>().serverUrl;
     if (_ssoDiscovery != _SsoDiscovery.loading) {
       setState(() => _ssoDiscovery = _SsoDiscovery.loading);
@@ -138,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
       if (delay > Duration.zero) await Future<void>.delayed(delay);
       if (!mounted || load != _ssoLoad) return;
       try {
-        final providers = await repository.ssoProviders();
+        final providers = await flow.ssoProviders();
         if (!mounted || load != _ssoLoad) return;
         setState(() {
           _providers = providers;

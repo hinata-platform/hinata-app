@@ -15,6 +15,7 @@ import '../sprint/modals/glass_modal.dart'
         kGlassPopoverBreakpoint,
         showGlassAnchoredPopover,
         showGlassBottomSheet;
+import 'placement_picker_cubit.dart';
 
 /// Where an entry is filed: a project, an issue inside one, or nothing at all.
 ///
@@ -66,9 +67,13 @@ Future<TimePlacement?> showTimePlacementPicker(
   required TimePlacement current,
   bool projectsOnly = false,
 }) {
-  final body = _PlacementPickerBody(
-    current: current,
-    projectsOnly: projectsOnly,
+  // The route rides the root navigator, so the picker brings its own cubit.
+  final body = BlocProvider(
+    create: (context) => PlacementPickerCubit(
+      context.read<ProjectRepository>(),
+      context.read<IssueRepository>(),
+    ),
+    child: _PlacementPickerBody(current: current, projectsOnly: projectsOnly),
   );
   final wide =
       anchorRect != null &&
@@ -148,18 +153,17 @@ class _PlacementPickerBodyState extends State<_PlacementPickerBody> {
   Future<void> _search(String query) async {
     final seq = ++_seq;
     setState(() => _loading = true);
-    final projects = context.read<ProjectRepository>();
-    final issues = context.read<IssueRepository>();
+    final search = context.read<PlacementPickerCubit>();
     try {
       // Both searches at once: they are independent, and running them in
       // sequence would double the wait for every keystroke.
-      final found = await projects.searchProjects(
+      final found = await search.searchProjects(
         query: query,
         size: widget.projectsOnly ? 20 : 8,
       );
       final matched = widget.projectsOnly
           ? const <Issue>[]
-          : (await issues.issues(
+          : (await search.searchIssues(
               query: query.isEmpty ? null : query,
               size: 12,
             )).issues;

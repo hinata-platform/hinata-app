@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../api/api_client.dart';
+import '../blocs/person_picker_cubit.dart';
 import '../i18n/i18n.dart';
 import '../models/core_models.dart';
 import '../repositories/user_repository.dart';
@@ -38,10 +39,10 @@ Future<DirectoryUser?> showPersonPicker(
   String? meId,
 }) {
   // The popover is a root-navigator route and so inherits none of the caller's
-  // providers — hand the repository across explicitly.
+  // providers — hand the repository across explicitly, to the picker's cubit.
   final repo = context.read<UserRepository>();
-  Widget panel(bool sheet) => RepositoryProvider<UserRepository>.value(
-    value: repo,
+  Widget panel(bool sheet) => BlocProvider<PersonPickerCubit>(
+    create: (_) => PersonPickerCubit(repo),
     child: _PersonPickerPanel(selectedId: selectedId, meId: meId),
   );
 
@@ -159,7 +160,7 @@ String _nameOf(BuildContext context, DirectoryUser user, bool isMe) {
 
 /// Picker body: search field over a paged directory, one row per person.
 ///
-/// Pages [UserRepository.searchUsers] rather than draining `/users`: a picker
+/// Pages [PersonPickerCubit.search] rather than draining `/users`: a picker
 /// that downloads every account in the org to fill a list is a list that stops
 /// working exactly when the org is big enough to need a search.
 class _PersonPickerPanel extends StatefulWidget {
@@ -263,7 +264,7 @@ class _PersonPickerPanelState extends State<_PersonPickerPanel> {
     });
 
     try {
-      final result = await context.read<UserRepository>().searchUsers(
+      final result = await context.read<PersonPickerCubit>().search(
         query,
         page: page,
         size: _pageSize,

@@ -14,6 +14,7 @@ import '../../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassToast;
 import '../git_tokens.dart';
 import 'dev_rows.dart';
+import 'development_cubit.dart';
 import '../../../core/widgets/hive_widgets.dart'
     show chevronTurn, forwardChevron;
 
@@ -22,7 +23,7 @@ import '../../../core/widgets/hive_widgets.dart'
 /// its own [DevInfo]; PR/MR merge & ready actions run real optimistic
 /// transitions reconciled against the server (which applies the project's
 /// automation rules).
-class DevelopmentSummary extends StatefulWidget {
+class DevelopmentSummary extends StatelessWidget {
   const DevelopmentSummary({
     super.key,
     required this.issue,
@@ -39,16 +40,44 @@ class DevelopmentSummary extends StatefulWidget {
   final ValueChanged<Issue> onIssueChanged;
 
   @override
-  State<DevelopmentSummary> createState() => _DevelopmentSummaryState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => DevelopmentCubit(context.read<GitRepository>()),
+    child: _DevelopmentSummaryBody(
+      issue: issue,
+      project: project,
+      names: names,
+      avatars: avatars,
+      onIssueChanged: onIssueChanged,
+    ),
+  );
 }
 
-class _DevelopmentSummaryState extends State<DevelopmentSummary> {
+class _DevelopmentSummaryBody extends StatefulWidget {
+  const _DevelopmentSummaryBody({
+    required this.issue,
+    required this.project,
+    required this.names,
+    required this.avatars,
+    required this.onIssueChanged,
+  });
+
+  final Issue issue;
+  final Project project;
+  final Map<String, String> names;
+  final Map<String, String> avatars;
+  final ValueChanged<Issue> onIssueChanged;
+
+  @override
+  State<_DevelopmentSummaryBody> createState() => _DevelopmentSummaryState();
+}
+
+class _DevelopmentSummaryState extends State<_DevelopmentSummaryBody> {
   DevInfo? _info;
   bool _loading = true;
   bool _busy = false;
   String? _openKey;
 
-  GitRepository get _repo => context.read<GitRepository>();
+  DevelopmentCubit get _development => context.read<DevelopmentCubit>();
   GitProvider get _prov =>
       gitProviderFrom(widget.project.git?.provider) ?? GitProvider.github;
 
@@ -59,7 +88,7 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
   }
 
   @override
-  void didUpdateWidget(DevelopmentSummary oldWidget) {
+  void didUpdateWidget(_DevelopmentSummaryBody oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.issue.readableId != widget.issue.readableId) _fetch();
   }
@@ -67,7 +96,7 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
   Future<void> _fetch() async {
     setState(() => _loading = true);
     try {
-      final info = await _repo.gitDevInfo(widget.issue.readableId);
+      final info = await _development.devInfo(widget.issue.readableId);
       if (!mounted) return;
       setState(() {
         _info = info;
@@ -151,7 +180,7 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
   Future<void> _merge(GitPullRequest pr) => _prAction(
     pr,
     PrState.merged,
-    () => _repo.gitMergePr(widget.issue.readableId, pr.number),
+    () => _development.mergePr(widget.issue.readableId, pr.number),
     _transitionNote(widget.project.git!.automation.prMerged),
     'git.prMergedToast',
   );
@@ -159,7 +188,7 @@ class _DevelopmentSummaryState extends State<DevelopmentSummary> {
   Future<void> _ready(GitPullRequest pr) => _prAction(
     pr,
     PrState.open,
-    () => _repo.gitReadyPr(widget.issue.readableId, pr.number),
+    () => _development.readyPr(widget.issue.readableId, pr.number),
     _transitionNote(widget.project.git!.automation.prOpened),
     'git.prReadyToast',
   );

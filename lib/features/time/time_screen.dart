@@ -39,6 +39,7 @@ import 'time_entry_history_sheet.dart';
 import 'time_entry_sheet.dart';
 import 'time_hints.dart';
 import 'time_privacy_sheet.dart';
+import 'time_screen_cubit.dart';
 import 'time_views.dart';
 import 'timer_bar.dart';
 
@@ -50,14 +51,28 @@ import 'timer_bar.dart';
 /// else's hours is what the timesheet and the reports are for, each with a rule
 /// of its own; this page is "my time", which is what R2 of the epic makes the
 /// default.
-class TimeScreen extends StatefulWidget {
+class TimeScreen extends StatelessWidget {
   const TimeScreen({super.key});
 
   @override
-  State<TimeScreen> createState() => _TimeScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => TimeScreenCubit(
+      context.read<TimeRepository>(),
+      context.read<AvailabilityRepository>(),
+      context.read<ProjectRepository>(),
+    ),
+    child: const _TimeView(),
+  );
 }
 
-class _TimeScreenState extends State<TimeScreen> {
+class _TimeView extends StatefulWidget {
+  const _TimeView();
+
+  @override
+  State<_TimeView> createState() => _TimeViewState();
+}
+
+class _TimeViewState extends State<_TimeView> {
   final _scroll = ScrollController();
   late final PagedCubit<WorkItem> _entries;
   final _searchController = TextEditingController();
@@ -98,7 +113,7 @@ class _TimeScreenState extends State<TimeScreen> {
   void initState() {
     super.initState();
     _entries = PagedCubit<WorkItem>(
-      (page, size) => context.read<TimeRepository>().entries(
+      (page, size) => context.read<TimeScreenCubit>().entries(
         filter: _filter,
         page: page,
         size: size,
@@ -192,7 +207,7 @@ class _TimeScreenState extends State<TimeScreen> {
     final count = _entries.state.items.length;
     if (!fresh && count == _hintedCount) return;
     _hintedCount = count;
-    final repository = context.read<TimeRepository>();
+    final screen = context.read<TimeScreenCubit>();
     final generation = fresh ? ++_hintGeneration : _hintGeneration;
     final windows = <DateTime>{
       for (final entry in _entries.state.items)
@@ -209,7 +224,7 @@ class _TimeScreenState extends State<TimeScreen> {
     }
     _hintWindows.addAll(windows);
     final answers = await Future.wait([
-      for (final start in windows) _hintsOf(repository, start, generation),
+      for (final start in windows) _hintsOf(screen, start, generation),
     ]);
     if (!mounted || generation != _hintGeneration) return;
     final late = fresh ? <String, TimeHint>{} : {..._lateHints};
@@ -234,13 +249,13 @@ class _TimeScreenState extends State<TimeScreen> {
 
   /// One window's hints, or none when it could not be read.
   Future<List<TimeHint>> _hintsOf(
-    TimeRepository repository,
+    TimeScreenCubit screen,
     DateTime start,
     int generation,
   ) async {
     final end = start.add(const Duration(days: _hintWindowDays - 1));
     try {
-      return await repository.hints(
+      return await screen.hints(
         DateTime(start.year, start.month, start.day),
         DateTime(end.year, end.month, end.day),
       );
@@ -304,22 +319,21 @@ class _TimeScreenState extends State<TimeScreen> {
       _markWindows.addAll(windows);
     }
     if (windows.isEmpty) return;
-    final repository = context.read<AvailabilityRepository>();
+    final screen = context.read<TimeScreenCubit>();
     await Future.wait([
-      for (final start in windows)
-        _loadMarkWindow(repository, start, generation),
+      for (final start in windows) _loadMarkWindow(screen, start, generation),
     ]);
   }
 
   /// One window's markings, folded in when they arrive.
   Future<void> _loadMarkWindow(
-    AvailabilityRepository repository,
+    TimeScreenCubit screen,
     DateTime start,
     int generation,
   ) async {
     final end = start.add(const Duration(days: _markWindowDays - 1));
     try {
-      final capacity = await repository.capacity(
+      final capacity = await screen.capacity(
         DateTime(start.year, start.month, start.day),
         DateTime(end.year, end.month, end.day),
       );
@@ -351,7 +365,7 @@ class _TimeScreenState extends State<TimeScreen> {
     }..removeWhere(_projects.containsKey);
     if (ids.isEmpty) return;
     try {
-      final resolved = await context.read<ProjectRepository>().resolveProjects(
+      final resolved = await context.read<TimeScreenCubit>().resolveProjects(
         ids.toList(),
       );
       if (!mounted) return;
@@ -865,7 +879,12 @@ class _TimeScreenState extends State<TimeScreen> {
   Future<void> _deleteEntry(WorkItem entry) async {
     // The same one the sheet offers — see confirmAndDeleteTimeEntry for why
     // there is only one.
-    if (await confirmAndDeleteTimeEntry(context, entry) && mounted) {
+    final removed = await confirmAndDeleteTimeEntry(
+      context,
+      entry,
+      delete: context.read<TimeScreenCubit>().delete,
+    );
+    if (removed && mounted) {
       unawaited(_reload());
     }
   }

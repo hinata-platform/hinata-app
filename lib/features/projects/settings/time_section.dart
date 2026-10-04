@@ -15,6 +15,7 @@ import '../../../core/util/duration_input.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../../core/widgets/hive_widgets.dart' show GhostButton;
 import '../../sprint/modals/glass_modal.dart';
+import 'project_time_settings_cubit.dart';
 import 'settings_common.dart';
 
 /// Project settings → Zeiterfassung: budget, default billability, whether this
@@ -33,16 +34,32 @@ import 'settings_common.dart';
 /// What a period <em>covers</em> is the server's arithmetic (HIN-88). This
 /// screen chooses the rhythm and nothing more; no week or month is computed
 /// here.
-class ProjectTimeSection extends StatefulWidget {
+class ProjectTimeSection extends StatelessWidget {
   const ProjectTimeSection({super.key, required this.projectId});
 
   final String projectId;
 
+  // Its own cubit, for the same reason it has its own save: the settings live
+  // behind their own route, and the screen's draft knows nothing of them.
   @override
-  State<ProjectTimeSection> createState() => _ProjectTimeSectionState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => ProjectTimeSettingsCubit(
+      context.read<TimeRepository>(),
+      projectId: projectId,
+    ),
+    child: const _ProjectTimeSectionBody(),
+  );
 }
 
-class _ProjectTimeSectionState extends State<ProjectTimeSection> {
+class _ProjectTimeSectionBody extends StatefulWidget {
+  const _ProjectTimeSectionBody();
+
+  @override
+  State<_ProjectTimeSectionBody> createState() =>
+      _ProjectTimeSectionBodyState();
+}
+
+class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
   static const _periods = <String>[
     'WEEKLY',
     'BIWEEKLY',
@@ -96,9 +113,7 @@ class _ProjectTimeSectionState extends State<ProjectTimeSection> {
 
   Future<void> _load() async {
     try {
-      final settings = await context.read<TimeRepository>().projectSettings(
-        widget.projectId,
-      );
+      final settings = await context.read<ProjectTimeSettingsCubit>().load();
       if (!mounted) return;
       setState(() {
         _saved = settings;
@@ -130,8 +145,7 @@ class _ProjectTimeSectionState extends State<ProjectTimeSection> {
       _error = null;
     });
     try {
-      final settings = await context.read<TimeRepository>().saveProjectSettings(
-        widget.projectId,
+      final settings = await context.read<ProjectTimeSettingsCubit>().save(
         _draft.copyWith(
           budgetMinutes: _budgetMinutes,
           clearBudget: _budgetMinutes == null,

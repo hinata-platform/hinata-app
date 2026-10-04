@@ -27,6 +27,8 @@ import '../sprint/modals/glass_modal.dart'
 import '../time/lock_notice.dart' show requestOlderDays;
 import '../time/time_privacy_sheet.dart';
 import 'account_widgets.dart';
+import 'time_export_cubit.dart';
+import '../time/time_requests_cubit.dart';
 import '../../core/widgets/folded_hint.dart';
 
 /// Settings → Time tracking: the person's own rhythm.
@@ -45,6 +47,23 @@ import '../../core/widgets/folded_hint.dart';
 /// module's data, and somebody looking for them looks where the module is.
 class TimePreferencesSection extends StatelessWidget {
   const TimePreferencesSection({super.key});
+
+  @override
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      BlocProvider(
+        create: (context) => TimeExportCubit(context.read<TimeRepository>()),
+      ),
+      BlocProvider(
+        create: (context) => TimeRequestsCubit(context.read<TimeRepository>()),
+      ),
+    ],
+    child: const _TimePreferencesBody(),
+  );
+}
+
+class _TimePreferencesBody extends StatelessWidget {
+  const _TimePreferencesBody();
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +184,14 @@ class TimePreferencesSection extends StatelessWidget {
           trailing: AccountActionButton(
             label: context.t('account.timeTracking.requestDays'),
             icon: LucideIcons.calendarPlus,
-            onPressed: () => unawaited(requestOlderDays(context)),
+            onPressed: () => unawaited(
+              requestOlderDays(
+                context,
+                requestBackfill: context
+                    .read<TimeRequestsCubit>()
+                    .requestBackfill,
+              ),
+            ),
           ),
         ),
       ],
@@ -178,12 +204,12 @@ class TimePreferencesSection extends StatelessWidget {
   /// a copy that silently stopped at some date would not be one. The server caps
   /// it far beyond any real career of entries.
   static Future<void> _exportCsv(BuildContext context) async {
-    final repository = context.read<TimeRepository>();
+    final export = context.read<TimeExportCubit>();
     try {
       final DownloadResult result;
       var truncated = false;
       if (kIsWeb) {
-        final file = await repository.exportCsv();
+        final file = await export.csv();
         truncated = file.truncated;
         result = await downloadBytes(
           'time-entries.csv',
@@ -196,7 +222,7 @@ class TimePreferencesSection extends StatelessWidget {
         result = await downloadFile('time-entries.csv', 'text/csv', (
           path,
         ) async {
-          truncated = await repository.exportCsvTo(path);
+          truncated = await export.csvTo(path);
         });
       }
       if (!context.mounted || result.outcome == DownloadOutcome.dismissed) {

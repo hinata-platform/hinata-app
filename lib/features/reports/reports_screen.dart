@@ -27,6 +27,7 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import 'logo_raster.dart';
 import 'report_pdf.dart';
+import 'reports_cubit.dart';
 import '../../core/repositories/dashboard_repository.dart';
 import '../../core/repositories/meta_repository.dart';
 import '../../core/repositories/project_repository.dart';
@@ -34,14 +35,29 @@ import '../../core/repositories/user_repository.dart';
 
 /// Project insight dashboard: distribution reports (state / priority /
 /// assignee / time-per-activity) rendered as v2 bar cards, with CSV/JSON export.
-class ReportsScreen extends StatefulWidget {
+class ReportsScreen extends StatelessWidget {
   const ReportsScreen({super.key});
 
   @override
-  State<ReportsScreen> createState() => _ReportsScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => ReportsCubit(
+      projects: context.read<ProjectRepository>(),
+      users: context.read<UserRepository>(),
+      dashboard: context.read<DashboardRepository>(),
+      meta: context.read<MetaRepository>(),
+    ),
+    child: const _ReportsView(),
+  );
 }
 
-class _ReportsScreenState extends State<ReportsScreen> {
+class _ReportsView extends StatefulWidget {
+  const _ReportsView();
+
+  @override
+  State<_ReportsView> createState() => _ReportsViewState();
+}
+
+class _ReportsViewState extends State<_ReportsView> {
   List<Project> _projects = const [];
   Map<String, String> _userNames = const {};
   String? _projectId;
@@ -71,12 +87,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
       _error = null;
     });
     try {
-      final results = await Future.wait([
-        context.read<ProjectRepository>().projects(),
-        context.read<UserRepository>().users(),
-      ]);
-      _projects = results[0] as List<Project>;
-      final users = results[1] as List<DirectoryUser>;
+      final (:projects, :users) = await context
+          .read<ReportsCubit>()
+          .projectsAndUsers();
+      _projects = projects;
       _userNames = {for (final u in users) u.id: u.displayName};
       if (_projects.isEmpty) {
         setState(() => _loading = false);
@@ -103,6 +117,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         .toIso8601String()
         .substring(0, 10);
     final to = now.toIso8601String().substring(0, 10);
+    final reports = context.read<ReportsCubit>();
     try {
       final futures = _reportNames.map((name) {
         final query = <String, dynamic>{'projectId': _projectId};
@@ -110,14 +125,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
           query['from'] = from;
           query['to'] = to;
         }
-        return context.read<DashboardRepository>().report(name, query);
+        return reports.report(name, query);
       }).toList();
       final results = await Future.wait([
         Future.wait(futures),
-        context.read<DashboardRepository>().createdVsResolved(
-          _projectId!,
-          days: 30,
-        ),
+        reports.createdVsResolved(_projectId!, days: 30),
       ]);
       final maps = results[0] as List<Map<String, int>>;
       _trend = results[1] as List<TrendPoint>;
@@ -180,11 +192,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
     if (format == 'pdf') {
       // Pull the freshest branding so a logo configured after app start is
       // picked up; fall back to whatever was cached at launch.
-      final metaApi = context.read<MetaRepository>();
+      final reports = context.read<ReportsCubit>();
       final cached = context.read<AppConfigBloc>().state.meta;
       ServerMeta? meta = cached;
       try {
-        meta = await metaApi.meta();
+        meta = await reports.meta();
       } catch (_) {
         meta = cached;
       }
@@ -195,7 +207,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       // asked for silently does not happen.
       Uint8List? logoPng;
       try {
-        final logoAsset = await metaApi.organizationLogo();
+        final logoAsset = await reports.organizationLogo();
         if (logoAsset != null) {
           logoPng = await logoToPng(
             bytes: logoAsset.bytes,

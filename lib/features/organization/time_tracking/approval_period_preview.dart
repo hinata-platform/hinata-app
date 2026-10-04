@@ -12,6 +12,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../time/lock_notice.dart';
 import '../../admin/admin_form_helpers.dart';
 import '../../../core/widgets/folded_hint.dart';
+import 'approval_period_preview_cubit.dart';
 
 /// The next three periods the configured rhythm will cut.
 ///
@@ -25,7 +26,7 @@ import '../../../core/widgets/folded_hint.dart';
 /// A note rather than a refusal when the rhythm has no grid: under FREE the
 /// person submitting picks their own span, so there are no periods to preview and
 /// saying so is the preview.
-class ApprovalPeriodPreview extends StatefulWidget {
+class ApprovalPeriodPreview extends StatelessWidget {
   const ApprovalPeriodPreview({super.key, required this.rhythm});
 
   /// The type currently chosen in the form.
@@ -36,10 +37,24 @@ class ApprovalPeriodPreview extends StatefulWidget {
   final String? rhythm;
 
   @override
-  State<ApprovalPeriodPreview> createState() => _ApprovalPeriodPreviewState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) =>
+        ApprovalPeriodPreviewCubit(context.read<TimeRepository>()),
+    child: _ApprovalPeriodPreviewBody(rhythm: rhythm),
+  );
 }
 
-class _ApprovalPeriodPreviewState extends State<ApprovalPeriodPreview> {
+class _ApprovalPeriodPreviewBody extends StatefulWidget {
+  const _ApprovalPeriodPreviewBody({required this.rhythm});
+
+  final String? rhythm;
+
+  @override
+  State<_ApprovalPeriodPreviewBody> createState() =>
+      _ApprovalPeriodPreviewState();
+}
+
+class _ApprovalPeriodPreviewState extends State<_ApprovalPeriodPreviewBody> {
   List<ApprovalPeriod>? _periods;
   bool _failed = false;
 
@@ -50,7 +65,7 @@ class _ApprovalPeriodPreviewState extends State<ApprovalPeriodPreview> {
   }
 
   @override
-  void didUpdateWidget(ApprovalPeriodPreview old) {
+  void didUpdateWidget(_ApprovalPeriodPreviewBody old) {
     super.didUpdateWidget(old);
     // The saved rhythm is what the server answers about, so the preview is only
     // correct after a save — which is exactly what the note below says. Re-asking
@@ -79,7 +94,7 @@ class _ApprovalPeriodPreviewState extends State<ApprovalPeriodPreview> {
       // three quarters — and no wider. The route pays for the window it is given:
       // an aggregation over the reader's entries and a status per project per
       // period, all but three of which this widget throws away.
-      final periods = await context.read<TimeRepository>().approvalPeriods(
+      final periods = await context.read<ApprovalPeriodPreviewCubit>().periods(
         from: DateTime(today.year, today.month, 1),
         to: DateTime(today.year, today.month + 9, 1),
       );

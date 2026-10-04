@@ -752,9 +752,13 @@ class _GlassFloatingTopBar extends StatelessWidget {
           const SizedBox(width: 6),
           _NotificationBell(active: location.startsWith('/notifications')),
           const SizedBox(width: 10),
-          _AvatarMenuButton(
-            name: user?.displayName ?? '?',
-            imageUrl: user?.avatarUrl,
+          BlocProvider(
+            create: (context) =>
+                AccountCubit(context.read<AccountRepository>()),
+            child: _AvatarMenuButton(
+              name: user?.displayName ?? '?',
+              imageUrl: user?.avatarUrl,
+            ),
           ),
         ],
       ),
@@ -817,12 +821,12 @@ class _AvatarMenuButtonState extends State<_AvatarMenuButton> {
   /// keeps the shell avatar / name in sync on save — mirrors the account
   /// screen's edit flow so both entry points behave identically.
   Future<void> _editProfile() async {
-    final repo = context.read<AccountRepository>();
+    final account = context.read<AccountCubit>();
     final authBloc = context.read<AuthBloc>();
     final savedToast = context.t('account.profileUpdated');
     final Me me;
     try {
-      me = await repo.meAccount();
+      me = await account.me();
     } on ApiFailure catch (failure) {
       if (mounted) {
         showGlassToast(
@@ -834,7 +838,7 @@ class _AvatarMenuButtonState extends State<_AvatarMenuButton> {
       return;
     }
     if (!mounted) return;
-    final saved = await showEditProfile(context, repo, me);
+    final saved = await showEditProfile(context, account, me);
     if (saved != null && mounted) {
       authBloc.add(const AuthChecked());
       showGlassToast(context, savedToast);

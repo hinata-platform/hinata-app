@@ -15,6 +15,7 @@ import '../account/account_widgets.dart';
 import '../sprint/modals/glass_modal.dart';
 import '../../core/widgets/folded_hint.dart';
 import 'absence_labels.dart';
+import 'absence_types_cubit.dart';
 
 /// Opens the editor for a new absence type, or for [existing]. Resolves to true
 /// once something was saved.
@@ -26,8 +27,8 @@ Future<bool?> showAbsenceTypeSheet(
   return showGlassModal<bool>(
     context,
     width: 520,
-    builder: (sheetContext) => RepositoryProvider.value(
-      value: repository,
+    builder: (sheetContext) => BlocProvider(
+      create: (_) => AbsenceTypesCubit(repository),
       child: _AbsenceTypeForm(existing: existing),
     ),
   );
@@ -247,13 +248,10 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
     }
     setState(() => _saving = true);
     try {
-      final repository = context.read<AbsenceRepository>();
-      final existing = widget.existing;
-      if (existing == null) {
-        await repository.createType(_draft);
-      } else {
-        await repository.updateType(existing.id, _draft);
-      }
+      await context.read<AbsenceTypesCubit>().save(
+        _draft,
+        existingId: widget.existing?.id,
+      );
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } on ApiFailure catch (failure) {

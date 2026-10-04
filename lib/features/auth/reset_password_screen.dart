@@ -13,22 +13,36 @@ import '../../core/util/server_link.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
 import 'auth_shell.dart';
+import 'auth_flow_cubit.dart';
 
 /// Lands here from the reset deep link (web URL or `hinata://reset-password`).
 /// Lets the user choose a new password in the app's UI, then signs them in.
 /// [server] (carried by the link) points a freshly opened web/app at the right
 /// backend.
-class ResetPasswordScreen extends StatefulWidget {
+class ResetPasswordScreen extends StatelessWidget {
   const ResetPasswordScreen({super.key, required this.token, this.server});
 
   final String token;
   final String? server;
 
   @override
-  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => AuthFlowCubit(context.read<AuthRepository>()),
+    child: _ResetPasswordScreenBody(token: token, server: server),
+  );
 }
 
-class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+class _ResetPasswordScreenBody extends StatefulWidget {
+  const _ResetPasswordScreenBody({required this.token, this.server});
+
+  final String token;
+  final String? server;
+
+  @override
+  State<_ResetPasswordScreenBody> createState() => _ResetPasswordScreenState();
+}
+
+class _ResetPasswordScreenState extends State<_ResetPasswordScreenBody> {
   final _formKey = GlobalKey<FormState>();
   final _password = TextEditingController();
   final _confirm = TextEditingController();
@@ -65,7 +79,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       _error = null;
     });
     try {
-      final tokens = await context.read<AuthRepository>().acceptPasswordReset(
+      final tokens = await context.read<AuthFlowCubit>().acceptPasswordReset(
         widget.token,
         _password.text,
       );

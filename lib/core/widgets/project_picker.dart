@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../api/api_client.dart';
+import '../blocs/project_picker_cubit.dart';
 import '../i18n/i18n.dart';
 import '../models/work_models.dart';
 import '../repositories/project_repository.dart';
@@ -43,10 +44,10 @@ Future<List<Project>?> showProjectPicker(
   String? emptyLabelKey,
 }) {
   // The popover is a root-navigator route, so it does not inherit the caller's
-  // providers — hand the repository across explicitly.
+  // providers — hand the repository across explicitly, to the picker's cubit.
   final repo = context.read<ProjectRepository>();
-  Widget panel(bool sheet) => RepositoryProvider<ProjectRepository>.value(
-    value: repo,
+  Widget panel(bool sheet) => BlocProvider<ProjectPickerCubit>(
+    create: (_) => ProjectPickerCubit(repo),
     child: _ProjectPickerPanel(
       selected: selected,
       multi: multi,
@@ -317,7 +318,7 @@ class _ProjectPickerPanelState extends State<_ProjectPickerPanel> {
     final missing = _picked.where((id) => !_known.containsKey(id));
     if (missing.isEmpty) return;
     try {
-      final resolved = await context.read<ProjectRepository>().resolveProjects(
+      final resolved = await context.read<ProjectPickerCubit>().resolve(
         missing.toList(),
       );
       if (!mounted || resolved.isEmpty) return;
@@ -366,7 +367,7 @@ class _ProjectPickerPanelState extends State<_ProjectPickerPanel> {
     });
 
     try {
-      final result = await context.read<ProjectRepository>().searchProjects(
+      final result = await context.read<ProjectPickerCubit>().search(
         query: query.isEmpty ? null : query,
         page: page,
         size: _pageSize,

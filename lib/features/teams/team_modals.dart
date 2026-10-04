@@ -11,6 +11,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/util/keys.dart';
 import '../../core/widgets/entity_avatar_editor.dart';
 import '../deletion/delete_flows.dart';
+import 'team_form_cubit.dart';
 import 'team_modal_kit.dart';
 import 'team_widgets.dart';
 
@@ -24,10 +25,13 @@ Future<Team?> showCreateTeamModal(
   BuildContext context, {
   Set<String> takenKeys = const {},
 }) {
-  final repo = context.read<TeamRepository>();
+  final teams = context.read<TeamRepository>();
   return showTeamModal<Team>(
     context,
-    _TeamFormBody(repo: repo, takenKeys: takenKeys),
+    BlocProvider(
+      create: (_) => TeamFormCubit(teams),
+      child: _TeamFormBody(takenKeys: takenKeys),
+    ),
     width: 580,
   );
 }
@@ -38,10 +42,13 @@ Future<bool?> showEditTeamModal(
   Team team, {
   Set<String> takenKeys = const {},
 }) {
-  final repo = context.read<TeamRepository>();
+  final teams = context.read<TeamRepository>();
   return showTeamModal<bool>(
     context,
-    _TeamFormBody(repo: repo, existing: team, takenKeys: takenKeys),
+    BlocProvider(
+      create: (_) => TeamFormCubit(teams),
+      child: _TeamFormBody(existing: team, takenKeys: takenKeys),
+    ),
     width: 580,
   );
 }
@@ -53,13 +60,8 @@ Future<bool?> showDeleteTeamModal(BuildContext context, Team team) {
 }
 
 class _TeamFormBody extends StatefulWidget {
-  const _TeamFormBody({
-    required this.repo,
-    this.existing,
-    this.takenKeys = const {},
-  });
+  const _TeamFormBody({this.existing, this.takenKeys = const {}});
 
-  final TeamRepository repo;
   final Team? existing;
 
   /// Keys already in use — best effort, the server still answers 409 for one
@@ -179,9 +181,10 @@ class _TeamFormBodyState extends State<_TeamFormBody> {
       _busy = true;
       _error = null;
     });
+    final form = context.read<TeamFormCubit>();
     try {
       if (_isEdit) {
-        await widget.repo.updateTeam(widget.existing!.id, {
+        await form.update(widget.existing!.id, {
           'name': name,
           'key': _effectiveKey.isEmpty ? widget.existing!.key : _effectiveKey,
           'description': _desc.text.trim(),
@@ -190,7 +193,7 @@ class _TeamFormBodyState extends State<_TeamFormBody> {
         });
         if (mounted) Navigator.of(context).pop(true);
       } else {
-        final created = await widget.repo.createTeam(
+        final created = await form.create(
           name: name,
           key: _effectiveKey,
           description: _desc.text.trim().isEmpty ? null : _desc.text.trim(),
@@ -202,7 +205,7 @@ class _TeamFormBodyState extends State<_TeamFormBody> {
             context,
             _pendingAvatar,
             EntityAvatarStrings.team,
-            (file) => widget.repo.uploadTeamAvatar(created.id, file),
+            (file) => form.uploadAvatar(created.id, file),
           );
         }
         if (mounted) Navigator.of(context).pop(created);
@@ -249,8 +252,9 @@ class _TeamFormBodyState extends State<_TeamFormBody> {
       radius: 15,
       strings: EntityAvatarStrings.team,
       fallback: preview,
-      onUpload: (file) => widget.repo.uploadTeamAvatar(team.id, file),
-      onRemove: () => widget.repo.deleteTeamAvatar(team.id),
+      onUpload: (file) =>
+          context.read<TeamFormCubit>().uploadAvatar(team.id, file),
+      onRemove: () => context.read<TeamFormCubit>().removeAvatar(team.id),
       onChanged: (url) => setState(() => _avatarUrl = url),
     );
   }
