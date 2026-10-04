@@ -6,21 +6,33 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 void main() {
   group('iOS 27 glass', () {
-    test('the neutral chrome is Apple\'s glass without the frost', () {
-      for (final (chrome, apple) in [
-        (kNavGlassLight, LiquidGlassSettings.ios27Light),
-        (kNavGlassDark, LiquidGlassSettings.ios27Dark),
-      ]) {
-        // Frost is a blur pass per surface per scrolled frame; the rim stays.
-        expect(chrome.frost, 0);
-        expect(chrome.rimShade, apple.rimShade);
-        expect(chrome.rimLight, apple.rimLight);
-        expect(chrome.lensModel, GlassLensModel.paraxial);
-        expect(chrome.glassColor, apple.glassColor);
-      }
-      expect(navGlass(false), same(kNavGlassLight));
-      expect(navGlass(true), same(kNavGlassDark));
-    });
+    test(
+      'the neutral chrome is Apple\'s glass, clear and without the frost',
+      () {
+        for (final (chrome, apple) in [
+          (kNavGlassLight, LiquidGlassSettings.ios27Light),
+          (kNavGlassDark, LiquidGlassSettings.ios27Dark),
+        ]) {
+          // Frost is a blur pass per surface per scrolled frame; the rim stays.
+          expect(chrome.frost, 0);
+          expect(chrome.rimShade, apple.rimShade);
+          expect(chrome.rimLight, apple.rimLight);
+          expect(chrome.lensModel, GlassLensModel.paraxial);
+          // No white tint: clear glass, not a milky film.
+          expect(chrome.glassColor.a, 0);
+        }
+        for (final standard in [
+          navGlass(false, standard: true),
+          navGlass(true, standard: true),
+        ]) {
+          expect(standard.glassColor.a, 0);
+          expect(standard.saturation, 1);
+          expect(standard.ambientStrength, 0);
+        }
+        expect(navGlass(false), same(kNavGlassLight));
+        expect(navGlass(true), same(kNavGlassDark));
+      },
+    );
 
     for (final dark in const [false, true]) {
       final mode = dark ? 'dark' : 'light';
@@ -31,7 +43,11 @@ void main() {
       test('tinted surfaces share the rim and the lens ($mode)', () {
         for (final settings in [
           amberFrost(dark),
-          liquidGlassPanelSettings(glassFill: Colors.white, dark: dark),
+          liquidGlassPanelSettings(
+            glassFill: Colors.white,
+            dark: dark,
+            standard: false,
+          ),
         ]) {
           expect(settings.lensModel, GlassLensModel.paraxial);
           expect(settings.rimShade, base.rimShade);
@@ -48,15 +64,27 @@ void main() {
         expect(amber.glassColor.a, greaterThan(0));
       });
 
-      test('panels frost and leave the shadow to themselves ($mode)', () {
+      test('panels frost on premium and leave the shadow to themselves '
+          '($mode)', () {
         final panel = liquidGlassPanelSettings(
           glassFill: Colors.white,
           dark: dark,
+          standard: false,
         );
         expect(panel.frost, base.frost);
         expect(panel.shadowElevation, 0);
       });
     }
+
+    test('panels render on standard by default, for their cost', () {
+      expect(kPanelGlassQuality, GlassQuality.standard);
+      final panel = liquidGlassPanelSettings(
+        glassFill: Colors.white,
+        dark: false,
+      );
+      expect(panel.frost, 0);
+      expect(panel.lightIntensity, greaterThan(0));
+    });
 
     test('surfaces pinned to standard keep a lit edge', () {
       for (final dark in const [false, true]) {

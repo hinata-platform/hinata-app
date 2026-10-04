@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
+    show GlassContainer, LiquidRoundedSuperellipse;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
@@ -261,7 +261,7 @@ class _GlassColorCard extends StatelessWidget {
       shadows: tokens.panelShadow,
       child: GlassContainer(
         useOwnLayer: true,
-        quality: GlassQuality.premium,
+        quality: kPanelGlassQuality,
         clipBehavior: Clip.antiAlias,
         shape: const LiquidRoundedSuperellipse(borderRadius: 20),
         settings: liquidGlassPanelSettings(

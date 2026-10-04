@@ -4,7 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
+    show GlassContainer, LiquidRoundedSuperellipse;
 
 import '../theme/app_colors.dart';
 import '../../features/search/search_tokens.dart';
@@ -388,7 +388,7 @@ class _GlassPopupMenuDialog<T> extends StatelessWidget {
     );
     return GlassContainer(
       useOwnLayer: true,
-      quality: GlassQuality.premium,
+      quality: kPanelGlassQuality,
       clipBehavior: Clip.antiAlias,
       shape: const LiquidRoundedSuperellipse(borderRadius: _radius),
       settings: liquidGlassPanelSettings(

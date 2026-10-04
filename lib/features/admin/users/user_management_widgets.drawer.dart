@@ -60,7 +60,7 @@ Future<void> showUserDrawer(
                       shadows: tokens.panelShadow,
                       child: GlassContainer(
                         useOwnLayer: true,
-                        quality: GlassQuality.premium,
+                        quality: kPanelGlassQuality,
                         clipBehavior: Clip.antiAlias,
                         shape: const LiquidRoundedSuperellipse(
                           borderRadius: 26,

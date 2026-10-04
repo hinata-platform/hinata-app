@@ -32,7 +32,11 @@ final kNavGlassLight = _withoutFrost(LiquidGlassSettings.ios27Light);
 
 const _chromeBlur = 3.0;
 
-/// [preset] without the frost pass, for the chrome that sits over scrolling content.
+/// No tint at all: the chrome is clear glass in both themes.
+const _clearGlass = Color(0x00FFFFFF);
+
+/// [preset] without the frost pass and without its white tint, for the chrome
+/// that sits over scrolling content: clear glass, no milky veil.
 ///
 /// Measured on the iPhone simulator with real frames (hin-130-review/perf): the
 /// frost is a blur pass of its own on every surface, and the bar, its round
@@ -43,9 +47,14 @@ const _chromeBlur = 3.0;
 /// light and lens that make the glass read as
 /// iOS 27 stay. Menus, popovers and sheets keep their frost: they open over
 /// still content, where the pass is paid once, not per frame.
+///
+/// The preset's tint (53 % white in light, 12 % in dark) is dropped too: over
+/// the warm paper it read as a milky film on every bar and button. What is
+/// behind the chrome now shows through in its own colours, and the rim shade,
+/// rim light and lens alone draw the edge.
 LiquidGlassSettings _withoutFrost(LiquidGlassSettings preset) =>
     LiquidGlassSettings(
-      glassColor: preset.glassColor,
+      glassColor: _clearGlass,
       saturation: preset.saturation,
       // The blur the chrome always had. The preset's own 0.6 counts on the
       // frost to diffuse what is behind; without it, a list row's text stood
@@ -75,8 +84,13 @@ const _stdBlur = 3.0;
 const _stdChromaticAberration = 0.3;
 const _stdLightIntensity = 0.6;
 const _stdRefractiveIndex = 1.59;
-const _stdSaturation = 0.7;
 const _stdAmbientStrength = 1.0;
+
+/// The neutral chrome on the standard tier is clear like the premium one: no
+/// white tint, no desaturation and no ambient lift, the three things that
+/// turned it into frosted milk. The amber button keeps the tuned recipe above.
+const _stdClearSaturation = 1.0;
+const _stdClearAmbientStrength = 0.0;
 
 /// 0.75π — the key light the standard tier is lit from.
 const _stdLightAngle = 2.356194490192345;
@@ -88,10 +102,10 @@ const kNavGlassStandardDark = LiquidGlassSettings(
   chromaticAberration: _stdChromaticAberration,
   lightIntensity: _stdLightIntensity,
   refractiveIndex: _stdRefractiveIndex,
-  saturation: _stdSaturation,
-  ambientStrength: _stdAmbientStrength,
+  saturation: _stdClearSaturation,
+  ambientStrength: _stdClearAmbientStrength,
   lightAngle: _stdLightAngle,
-  glassColor: Color(0x4D0A0A0A),
+  glassColor: _clearGlass,
 );
 
 /// Neutral chrome on the standard tier, light.
@@ -101,10 +115,10 @@ const kNavGlassStandardLight = LiquidGlassSettings(
   chromaticAberration: _stdChromaticAberration,
   lightIntensity: _stdLightIntensity,
   refractiveIndex: _stdRefractiveIndex,
-  saturation: _stdSaturation,
-  ambientStrength: _stdAmbientStrength,
+  saturation: _stdClearSaturation,
+  ambientStrength: _stdClearAmbientStrength,
   lightAngle: _stdLightAngle,
-  glassColor: Color(0x3DFFFFFF),
+  glassColor: _clearGlass,
 );
 
 /// iOS 27 glass in the app's own [glassColor].

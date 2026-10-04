@@ -10,7 +10,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:lexical_editor_flutter/lexical_editor_flutter.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
+    show GlassContainer, LiquidRoundedSuperellipse;
 
 import '../i18n/i18n.dart';
 import '../theme/app_colors.dart';
@@ -75,7 +75,7 @@ class _GlassPopover extends StatelessWidget {
       shadows: tokens.panelShadow,
       child: GlassContainer(
         useOwnLayer: true,
-        quality: GlassQuality.premium,
+        quality: kPanelGlassQuality,
         clipBehavior: Clip.antiAlias,
         shape: const LiquidRoundedSuperellipse(borderRadius: _radius),
         settings: liquidGlassPanelSettings(
