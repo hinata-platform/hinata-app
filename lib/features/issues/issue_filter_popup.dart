@@ -542,7 +542,7 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
             TextButton(
               onPressed: _clear,
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.accentStrong,
+                foregroundColor: AppColors.accentInk,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 minimumSize: const Size(0, 30),
                 tapTargetSize: MaterialTapTargetSize.padded,

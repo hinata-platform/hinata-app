@@ -345,7 +345,7 @@ class _AdminConnectSectionState extends State<_AdminConnectView> {
                   TextButton.icon(
                     onPressed: _busy ? null : _disconnect,
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.danger,
+                      foregroundColor: AppColors.dangerInk,
                     ),
                     icon: const Icon(LucideIcons.unplug, size: 16),
                     label: Text(context.t('admin.connectDisconnect')),

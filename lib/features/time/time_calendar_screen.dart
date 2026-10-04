@@ -2044,7 +2044,7 @@ class _TruncatedNotice extends StatelessWidget {
     ),
     child: Row(
       children: [
-        const Icon(LucideIcons.info, size: 15, color: AppColors.accentStrong),
+        Icon(LucideIcons.info, size: 15, color: AppColors.accentInk),
         const SizedBox(width: 8),
         Expanded(
           child: Text(

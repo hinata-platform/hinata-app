@@ -135,10 +135,10 @@ class TeamSettingsTab extends StatelessWidget {
             children: [
               Text(
                 context.t('teams.dangerZone'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.danger,
+                  color: AppColors.dangerInk,
                 ),
               ),
               const SizedBox(height: 12),
@@ -334,7 +334,7 @@ class _PermRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: AppColors.accentStrong),
+        Icon(icon, size: 16, color: AppColors.accentInk),
         const SizedBox(width: 12),
         Expanded(
           child: Column(

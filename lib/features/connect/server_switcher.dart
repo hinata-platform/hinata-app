@@ -56,11 +56,7 @@ class ServerSelectorButton extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(
-                  LucideIcons.server,
-                  size: 20,
-                  color: AppColors.accentStrong,
-                ),
+                Icon(LucideIcons.server, size: 20, color: AppColors.accentInk),
                 const SizedBox(width: 11),
                 Expanded(
                   child: Column(
@@ -98,10 +94,10 @@ class ServerSelectorButton extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Icon(
+                Icon(
                   LucideIcons.chevronDown,
                   size: 19,
-                  color: AppColors.accentStrong,
+                  color: AppColors.accentInk,
                 ),
               ],
             ),
@@ -152,10 +148,10 @@ class ServerCard extends StatelessWidget {
                     color: AppColors.accent.withValues(alpha: 0.32),
                   ),
                 ),
-                child: const Icon(
+                child: Icon(
                   LucideIcons.server,
                   size: 22,
-                  color: AppColors.accentStrong,
+                  color: AppColors.accentInk,
                 ),
               ),
               const SizedBox(width: 13),
@@ -205,7 +201,7 @@ class ServerCard extends StatelessWidget {
               onPressed: () => showServerManager(btnContext),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size.fromHeight(46),
-                foregroundColor: AppColors.accentStrong,
+                foregroundColor: AppColors.accentInk,
                 side: BorderSide(
                   color: AppColors.accent.withValues(alpha: 0.4),
                 ),

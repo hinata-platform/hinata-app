@@ -283,10 +283,10 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
                       onTap: () => _connect(token: true),
                       child: Text(
                         context.t('git.ctaTokenLink'),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.accentStrong,
+                          color: AppColors.accentInk,
                         ),
                       ),
                     ),
@@ -428,10 +428,10 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
                 'git.syncedAgo',
                 variables: {'ago': _syncedLabel(context, git.lastSyncAt)},
               ),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
-                color: AppColors.success,
+                color: AppColors.successInk,
               ),
             ),
           ],
@@ -794,8 +794,8 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
                 const TextSpan(text: ' '),
                 TextSpan(
                   text: cmd,
-                  style: const TextStyle(
-                    color: AppColors.accentStrong,
+                  style: TextStyle(
+                    color: AppColors.accentInk,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -894,13 +894,9 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 1),
-            child: Icon(
-              LucideIcons.info,
-              size: 16,
-              color: AppColors.accentStrong,
-            ),
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(LucideIcons.info, size: 16, color: AppColors.accentInk),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -917,10 +913,10 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
                   ),
                 ],
               ),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12.5,
                 height: 1.55,
-                color: AppColors.accentStrong,
+                color: AppColors.accentInk,
               ),
             ),
           ),
@@ -932,7 +928,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
   // ── small shared bits ─────────────────────────────────────────────────────
   Widget _subHeader(IconData icon, String label) => Row(
     children: [
-      Icon(icon, size: 16, color: AppColors.accentStrong),
+      Icon(icon, size: 16, color: AppColors.accentInk),
       const SizedBox(width: 8),
       Text(
         label,
@@ -949,7 +945,7 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
       color: AppColors.accentSoft,
       borderRadius: BorderRadius.circular(8),
     ),
-    child: Icon(icon, size: 16, color: AppColors.accentStrong),
+    child: Icon(icon, size: 16, color: AppColors.accentInk),
   );
 
   Widget _branchChip(String branch) => Container(
@@ -962,19 +958,15 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(
-          LucideIcons.gitBranch,
-          size: 12,
-          color: AppColors.accentStrong,
-        ),
+        Icon(LucideIcons.gitBranch, size: 12, color: AppColors.accentInk),
         const SizedBox(width: 5),
         Text(
           branch,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: AppTheme.fontMono,
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: AppColors.accentStrong,
+            color: AppColors.accentInk,
           ),
         ),
       ],
@@ -1012,10 +1004,10 @@ class _GitIntegrationSectionState extends State<_GitIntegrationBody> {
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: AppTheme.fontMono,
               fontSize: 11,
-              color: AppColors.accentStrong,
+              color: AppColors.accentInk,
             ),
           ),
         ),

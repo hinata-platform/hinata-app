@@ -123,10 +123,10 @@ class _StartSprintBodyState extends State<_StartSprintBody> {
                             'sprint.overCapacity',
                             variables: {'capacity': '${widget.capacityPoints}'},
                           ),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.danger,
+                            color: AppColors.dangerInk,
                           ),
                         ),
                     ],

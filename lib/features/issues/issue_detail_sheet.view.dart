@@ -2713,10 +2713,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                   },
                   child: Text(
                     context.t('issues.logTime'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.accentStrong,
+                      color: AppColors.accentInk,
                     ),
                   ),
                 ),
@@ -3513,8 +3513,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           ),
           label: Text(
             context.t('common.delete'),
-            style: const TextStyle(
-              color: AppColors.danger,
+            style: TextStyle(
+              color: AppColors.dangerInk,
               fontWeight: FontWeight.w600,
             ),
           ),

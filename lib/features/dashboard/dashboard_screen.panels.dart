@@ -663,11 +663,11 @@ class _GitRow extends StatelessWidget {
                   children: [
                     TextSpan(
                       text: event.ref,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: AppTheme.fontMono,
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.accentStrong,
+                        color: AppColors.accentInk,
                       ),
                     ),
                     TextSpan(
@@ -765,10 +765,10 @@ class _LeaderboardCard extends StatelessWidget {
                   SizedBox(
                     width: 20,
                     child: i == 0
-                        ? const Icon(
+                        ? Icon(
                             LucideIcons.star,
                             size: 14,
-                            color: AppColors.accentStrong,
+                            color: AppColors.accentInk,
                           )
                         : Text(
                             '${i + 1}',
@@ -817,11 +817,11 @@ class _LeaderboardCard extends StatelessWidget {
                       'dashboard.pointsShort',
                       variables: {'count': '${entry.points}'},
                     ),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: AppTheme.fontMono,
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.accentStrong,
+                      color: AppColors.accentInk,
                     ),
                   ),
                 ],

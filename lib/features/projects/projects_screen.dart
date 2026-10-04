@@ -967,8 +967,8 @@ class _CreateProjectBodyState extends State<_CreateProjectBody> {
                   const SizedBox(height: 12),
                   Text(
                     _error!,
-                    style: const TextStyle(
-                      color: AppColors.danger,
+                    style: TextStyle(
+                      color: AppColors.dangerInk,
                       fontSize: 12.5,
                     ),
                   ),

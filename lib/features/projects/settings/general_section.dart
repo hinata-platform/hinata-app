@@ -222,7 +222,7 @@ class _NameField extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             context.t('projectSettings.nameEmpty'),
-            style: const TextStyle(fontSize: 11.5, color: AppColors.danger),
+            style: TextStyle(fontSize: 11.5, color: AppColors.dangerInk),
           ),
         ],
       ],

@@ -118,7 +118,7 @@ class _ForgotPasswordScreenState extends State<_ForgotPasswordScreenBody> {
             const SizedBox(height: 12),
             Text(
               context.t(_error!),
-              style: const TextStyle(color: AppColors.danger),
+              style: TextStyle(color: AppColors.dangerInk),
               textAlign: TextAlign.center,
             ),
           ],
@@ -148,11 +148,7 @@ class _ForgotPasswordScreenState extends State<_ForgotPasswordScreenBody> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Icon(
-          LucideIcons.mailCheck,
-          size: 40,
-          color: AppColors.accentStrong,
-        ),
+        Icon(LucideIcons.mailCheck, size: 40, color: AppColors.accentInk),
         const SizedBox(height: 16),
         Text(
           context.t('forgotPassword.sentTitle'),

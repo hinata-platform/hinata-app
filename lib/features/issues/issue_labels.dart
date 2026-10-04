@@ -177,7 +177,7 @@ class _LabelPickerSheetState extends State<_LabelPickerSheet> {
               TextButton(
                 onPressed: _confirm,
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.accentStrong,
+                  foregroundColor: AppColors.accentInk,
                 ),
                 child: Text(
                   context.t('common.save'),
@@ -305,21 +305,17 @@ class _CreateRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               children: [
-                const Icon(
-                  LucideIcons.plus,
-                  size: 18,
-                  color: AppColors.accentStrong,
-                ),
+                Icon(LucideIcons.plus, size: 18, color: AppColors.accentInk),
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
                     context.t('issues.createLabel', variables: {'name': label}),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.accentStrong,
+                      color: AppColors.accentInk,
                     ),
                   ),
                 ),

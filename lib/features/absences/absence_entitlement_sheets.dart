@@ -206,10 +206,7 @@ class _GrantFormState extends State<_GrantForm> {
               else if (_errorKey != null)
                 Text(
                   context.t(_errorKey!),
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    color: AppColors.danger,
-                  ),
+                  style: TextStyle(fontSize: 12.5, color: AppColors.dangerInk),
                 )
               else
                 // As long as the keeper's selection, which the server caps at

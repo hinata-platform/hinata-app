@@ -588,10 +588,10 @@ class _EntitlementsViewState extends State<_EntitlementsView> {
         count: _chosen.length,
         variables: {'count': '${_chosen.length}'},
       ),
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 12.5,
         fontWeight: FontWeight.w600,
-        color: AppColors.accentStrong,
+        color: AppColors.accentInk,
       ),
     ),
   );

@@ -341,7 +341,7 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
             const SizedBox(height: 6),
             Text(
               context.t(_error!),
-              style: const TextStyle(color: AppColors.danger, fontSize: 12.5),
+              style: TextStyle(color: AppColors.dangerInk, fontSize: 12.5),
             ),
           ],
         ],

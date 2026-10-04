@@ -563,7 +563,7 @@ class _AbsenceSheetState extends State<_AbsenceSheet> {
     onPressed: onPressed,
     style: danger
         ? OutlinedButton.styleFrom(
-            foregroundColor: AppColors.danger,
+            foregroundColor: AppColors.dangerInk,
             side: BorderSide(color: AppColors.danger.withValues(alpha: 0.5)),
           )
         : null,

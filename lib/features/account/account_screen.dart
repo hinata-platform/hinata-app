@@ -1969,15 +1969,15 @@ class _SessionsExpander extends StatelessWidget {
               Icon(
                 expanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
                 size: 16,
-                color: AppColors.accentStrong,
+                color: AppColors.accentInk,
               ),
             const SizedBox(width: 8),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: AppColors.accentStrong,
+                color: AppColors.accentInk,
               ),
             ),
           ],

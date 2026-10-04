@@ -87,11 +87,11 @@ class HinataCodeBar extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               context.t('md.codeBlock'),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.2,
-                color: AppColors.accentStrong,
+                color: AppColors.accentInk,
               ),
             ),
             const SizedBox(width: 10),

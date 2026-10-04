@@ -305,7 +305,7 @@ class _ImportWizardState extends State<_ImportWizard> {
                     liveRegion: true,
                     child: Text(
                       context.t(_failure!),
-                      style: const TextStyle(color: AppColors.danger),
+                      style: TextStyle(color: AppColors.dangerInk),
                     ),
                   ),
                 ],
@@ -351,7 +351,7 @@ class _ImportWizardState extends State<_ImportWizard> {
       if (preview.errorCount > 0)
         Text(
           context.t('time.import.errors', count: preview.errorCount),
-          style: const TextStyle(fontSize: 13, color: AppColors.danger),
+          style: TextStyle(fontSize: 13, color: AppColors.dangerInk),
         ),
       if (preview.validRows == 0)
         Text(context.t('time.import.nothing'), style: caption),
@@ -497,9 +497,9 @@ class _ImportWizardState extends State<_ImportWizard> {
                                   Expanded(
                                     child: Text(
                                       row.error!,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
-                                        color: AppColors.danger,
+                                        color: AppColors.dangerInk,
                                       ),
                                     ),
                                   ),

@@ -288,18 +288,14 @@ class _ResultRow extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  LucideIcons.archive,
-                  size: 10,
-                  color: AppColors.accentStrong,
-                ),
+                Icon(LucideIcons.archive, size: 10, color: AppColors.accentInk),
                 const SizedBox(width: 4),
                 Text(
                   context.t('issues.filterArchived'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.accentStrong,
+                    color: AppColors.accentInk,
                   ),
                 ),
               ],

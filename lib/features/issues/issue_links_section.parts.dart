@@ -712,11 +712,11 @@ class _LinkChip extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             issue.readableId,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: AppColors.accentStrong,
-              fontFeatures: [FontFeature.tabularFigures()],
+              color: AppColors.accentInk,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
           Tooltip(
@@ -728,12 +728,12 @@ class _LinkChip extends StatelessWidget {
               child: InkWell(
                 onTap: onRemove,
                 borderRadius: BorderRadius.circular(99),
-                child: const Padding(
-                  padding: EdgeInsets.all(5.5),
+                child: Padding(
+                  padding: const EdgeInsets.all(5.5),
                   child: Icon(
                     LucideIcons.x,
                     size: 13,
-                    color: AppColors.accentStrong,
+                    color: AppColors.accentInk,
                   ),
                 ),
               ),
