@@ -505,11 +505,7 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
         (kAbsenceScopeBalances, LucideIcons.wallet),
         if (team) (kAbsenceScopeTeam, LucideIcons.usersRound),
       ])
-        (
-          key: scope,
-          icon: icon,
-          label: context.t('absence.view.scope.$scope'),
-        ),
+        (key: scope, icon: icon, label: context.t('absence.view.scope.$scope')),
     ],
     active: _shownScope,
     onSelected: _switchScope,

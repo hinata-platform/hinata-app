@@ -99,9 +99,12 @@ void main() {
   ) async {
     await tester.pumpWidget(
       host(
-        preview: SchedulePreview(moved: 2, named: 1, manual: 3, moves: [
-          move('Task 1', 1),
-        ]),
+        preview: SchedulePreview(
+          moved: 2,
+          named: 1,
+          manual: 3,
+          moves: [move('Task 1', 1)],
+        ),
       ),
     );
     await open(tester);

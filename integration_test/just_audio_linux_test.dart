@@ -114,8 +114,12 @@ Uint8List _silentWav({required int seconds, int sampleRate = 8000}) {
 
   final bytes = BytesBuilder();
   void ascii(String s) => bytes.add(s.codeUnits);
-  void u32(int v) => bytes.add(Uint8List(4)..buffer.asByteData().setUint32(0, v, Endian.little));
-  void u16(int v) => bytes.add(Uint8List(2)..buffer.asByteData().setUint16(0, v, Endian.little));
+  void u32(int v) => bytes.add(
+    Uint8List(4)..buffer.asByteData().setUint32(0, v, Endian.little),
+  );
+  void u16(int v) => bytes.add(
+    Uint8List(2)..buffer.asByteData().setUint16(0, v, Endian.little),
+  );
 
   ascii('RIFF');
   u32(36 + dataBytes);
