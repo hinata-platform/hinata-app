@@ -103,7 +103,10 @@ dependencies:
   # lib/core/util/file_pick.dart. file_picker covers Android, iOS, macOS, Windows
   # and web — it is the only one of the two with an Android implementation, and
   # everywhere else the two land in the same system dialog anyway.
-  file_picker: ^8.1.2
+  # 10.3.8 renamed its iOS class FileUtils, which clashed with one of the same
+  # name in Apple's OSAnalytics ("Class FileUtils is implemented in both").
+  # 11 moves to static methods, a bigger change for no gain here.
+  file_picker: ^10.3.10
   # Linux uses file_selector instead, and the difference is not cosmetic:
   # file_picker's Linux "implementation" is pure Dart and shells out to zenity,
   # qarma or kdialog. A snap under strict confinement has none of them on $PATH,
