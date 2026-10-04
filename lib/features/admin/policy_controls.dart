@@ -16,6 +16,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassDurationPicker,
         showGlassOptions;
 import 'admin_form_helpers.dart';
+import '../../core/theme/app_type.dart';
 
 /// Controls for an operator *policy* — a setting with three states rather than
 /// two.
@@ -136,7 +137,7 @@ class _EnvDefaultBadge extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontFamily: AppTheme.fontMono,
-                  fontSize: 11,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w600,
                   color: AppColors.inkSoft,
                 ),
@@ -179,7 +180,7 @@ class EnvDefaultAction extends StatelessWidget {
         icon: const Icon(LucideIcons.rotateCcw, size: 13),
         label: Text(
           context.t('admin.timeTracking.useEnvDefault'),
-          style: const TextStyle(fontSize: 12),
+          style: const TextStyle(fontSize: AppType.caption),
         ),
       ),
     );
@@ -230,13 +231,13 @@ class _PolicyRow extends StatelessWidget {
                 child: TitledHint(
                   title: title,
                   titleStyle: TextStyle(
-                    fontSize: 14.5,
+                    fontSize: AppType.body,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
                   hint: description,
                   hintStyle: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     height: 1.35,
                     color: AppColors.inkSoft,
                   ),
@@ -730,7 +731,7 @@ class _PolicyNumberState extends State<PolicyNumber> {
             controller: _controller,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: TextStyle(fontSize: 14, color: AppColors.ink),
+            style: TextStyle(fontSize: AppType.body, color: AppColors.ink),
             decoration: adminInputDecoration(
               context,
               label: widget.label,
@@ -816,7 +817,7 @@ class _PolicyTextState extends State<PolicyText> {
             controller: _controller,
             maxLines: widget.maxLines,
             maxLength: widget.maxLength,
-            style: TextStyle(fontSize: 14, color: AppColors.ink),
+            style: TextStyle(fontSize: AppType.body, color: AppColors.ink),
             decoration: adminInputDecoration(
               context,
               label: widget.label,
@@ -885,7 +886,7 @@ class _TapField extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: AppType.body,
                     fontFamily: muted ? AppTheme.fontMono : null,
                     color: muted ? AppColors.inkSoft : AppColors.ink,
                   ),
@@ -910,7 +911,7 @@ class _OptionLabel extends StatelessWidget {
   Widget build(BuildContext context) => Text(
     text,
     style: TextStyle(
-      fontSize: 13,
+      fontSize: AppType.label,
       fontFamily: muted ? AppTheme.fontMono : null,
       color: muted ? AppColors.inkSoft : AppColors.ink,
     ),

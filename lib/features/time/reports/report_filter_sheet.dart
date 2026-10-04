@@ -15,6 +15,7 @@ import '../../../core/widgets/project_picker.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../tag_picker.dart';
 import 'report_filter_cubit.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Names of the ids a report filters by, so a chip says "Apollo" rather than
 /// an id. Kept by the page; the sheet adds what it learns.
@@ -466,7 +467,7 @@ class _Token extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 13, color: AppColors.ink),
+              style: TextStyle(fontSize: AppType.label, color: AppColors.ink),
             ),
           ),
           IconButton(
@@ -528,7 +529,7 @@ class _Choices<T> extends StatelessWidget {
                 child: Text(
                   label,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: selected.contains(value)
                         ? FontWeight.w700
                         : FontWeight.w500,

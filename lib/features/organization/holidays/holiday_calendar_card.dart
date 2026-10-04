@@ -6,6 +6,7 @@ import '../../../core/models/availability_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../../core/widgets/soft_card.dart';
+import '../../../core/theme/app_type.dart';
 
 /// One holiday calendar on the admin page: its name and region, where its
 /// holidays come from, how the last import went, and what can be done with it.
@@ -59,7 +60,7 @@ class HolidayCalendarCard extends StatelessWidget {
                       Text(
                         calendar.name,
                         style: TextStyle(
-                          fontSize: 14.5,
+                          fontSize: AppType.body,
                           fontWeight: FontWeight.w700,
                           color: AppColors.ink,
                         ),
@@ -77,7 +78,7 @@ class HolidayCalendarCard extends StatelessWidget {
                           child: Text(
                             context.t('availability.admin.defaultBadge'),
                             style: TextStyle(
-                              fontSize: 10.5,
+                              fontSize: AppType.caption,
                               fontWeight: FontWeight.w700,
                               color: AppColors.accentInk,
                             ),
@@ -89,7 +90,7 @@ class HolidayCalendarCard extends StatelessWidget {
                     Text(
                       calendar.region!,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppType.caption,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -101,14 +102,17 @@ class HolidayCalendarCard extends StatelessWidget {
                             'availability.admin.feedFrom',
                             variables: {'host': calendar.feedHost!},
                           ),
-                    style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                   if (status != null) ...[
                     const SizedBox(height: 2),
                     Text(
                       status,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppType.caption,
                         height: 1.35,
                         color: calendar.importFailed
                             ? AppColors.danger

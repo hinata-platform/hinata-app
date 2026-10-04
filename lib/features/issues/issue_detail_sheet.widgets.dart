@@ -376,7 +376,7 @@ class _InlineTitleEditor extends StatelessWidget {
             textCapitalization: TextCapitalization.sentences,
             style: const TextStyle(
               fontFamily: AppTheme.fontBrand,
-              fontSize: 20,
+              fontSize: AppType.heading,
               fontWeight: FontWeight.w700,
               height: 1.25,
             ),
@@ -486,7 +486,7 @@ class _LoadMoreTile extends StatelessWidget {
           label: Text(
             label,
             style: TextStyle(
-              fontSize: 12.5,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w600,
               color: AppColors.inkSoft,
             ),
@@ -560,7 +560,7 @@ class _ActivityTabs extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 12.5,
+              fontSize: AppType.label,
               fontWeight: active ? FontWeight.w700 : FontWeight.w500,
               color: active ? AppColors.ink : AppColors.inkSoft,
             ),
@@ -650,7 +650,7 @@ class _ActivityTile extends StatelessWidget {
               ],
             ),
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppType.label,
               height: 1.4,
               color: AppColors.inkSoft,
             ),
@@ -664,7 +664,10 @@ class _ActivityTile extends StatelessWidget {
                 MaterialLocalizations.of(
                   context,
                 ).formatShortDate(activity.createdAt!.toLocal()),
-                style: TextStyle(fontSize: 10.5, color: AppColors.inkFaint),
+                style: TextStyle(
+                  fontSize: AppType.caption,
+                  color: AppColors.inkFaint,
+                ),
               ),
             ),
           ],
@@ -772,7 +775,7 @@ class _ChangeChip extends StatelessWidget {
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 11.5,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w600,
           color: AppColors.ink,
         ),
@@ -810,7 +813,7 @@ class _DocumentedIn extends StatelessWidget {
               Text(
                 context.t('knowledge.documentedIn'),
                 style: const TextStyle(
-                  fontSize: 14.5,
+                  fontSize: AppType.body,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -826,7 +829,7 @@ class _DocumentedIn extends StatelessWidget {
                   '${articles.length}',
                   style: TextStyle(
                     fontFamily: AppTheme.fontMono,
-                    fontSize: 11,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w600,
                     color: AppColors.inkFaint,
                   ),
@@ -872,7 +875,7 @@ class _DocumentedIn extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: AppType.label,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -880,7 +883,7 @@ class _DocumentedIn extends StatelessWidget {
                           Text(
                             sp.name,
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: AppType.caption,
                               color: AppColors.inkSoft,
                             ),
                           ),
@@ -918,7 +921,7 @@ Widget _person(
   if (name == null || name.isEmpty) {
     return Text(
       fallback,
-      style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
+      style: TextStyle(fontSize: AppType.label, color: AppColors.inkFaint),
     );
   }
   return Row(
@@ -931,7 +934,10 @@ Widget _person(
           name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            fontSize: AppType.label,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     ],

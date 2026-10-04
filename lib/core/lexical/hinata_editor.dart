@@ -23,6 +23,7 @@ import 'hinata_lexical.dart';
 import 'hinata_mentions.dart';
 import 'hinata_selection_toolbar.dart';
 import 'hinata_theme.dart';
+import '../theme/app_type.dart';
 
 /// One toolbar button: what it does, and whether it currently looks pressed.
 class _Action {
@@ -828,7 +829,10 @@ class _BlockPicker extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     label,
-                    style: TextStyle(fontSize: 13, color: AppColors.ink),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      color: AppColors.ink,
+                    ),
                   ),
                   const SizedBox(width: 6),
                 ] else

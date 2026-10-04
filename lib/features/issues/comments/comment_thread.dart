@@ -20,6 +20,7 @@ import '../../../core/widgets/user_pronouns.dart';
 import '../../../core/lexical/hinata_document.dart';
 import '../../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import 'voice/voice_player.dart';
+import '../../../core/theme/app_type.dart';
 
 part 'comment_thread.bubbles.dart';
 part 'comment_thread.menus.dart';
@@ -125,7 +126,7 @@ class CommentSortButton extends StatelessWidget {
                       Text(
                         label,
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w600,
                           color: AppColors.inkSoft,
                         ),

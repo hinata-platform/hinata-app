@@ -33,6 +33,7 @@ import '../../core/util/dates.dart';
 import 'team_absence_agenda.dart';
 import 'team_absence_band.dart';
 import 'team_absence_calendar_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// The calendar with its own controls: which group, which month or quarter,
 /// and — for who plans — the capacity that is left above the rows.
@@ -352,7 +353,7 @@ class _CalendarViewState extends State<_CalendarView> {
 
   Widget _truncatedNote(BuildContext context) => Text(
     context.t('absence.team.truncated'),
-    style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+    style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
   );
 
   Widget _content(PagedState<TeamAbsenceRow> rows) {
@@ -440,7 +441,7 @@ class _PeriodNav extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 12.5,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
             ),

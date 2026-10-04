@@ -14,6 +14,7 @@ import '../../search/search_tokens.dart';
 import '../data/knowledge_models.dart' show lucideIcon;
 import '../knowledge_tokens.dart';
 import 'smart_link_resolver.dart';
+import '../../../core/theme/app_type.dart';
 
 /// A `TextField` with a Jira/Confluence-style `@`-mention autocomplete.
 ///
@@ -441,7 +442,7 @@ class _MentionMenu extends StatelessWidget {
                     child: Text(
                       'LINK TO…',
                       style: TextStyle(
-                        fontSize: 10.5,
+                        fontSize: AppType.caption,
                         letterSpacing: 0.7,
                         fontWeight: FontWeight.w700,
                         color: AppColors.inkFaint,
@@ -456,7 +457,7 @@ class _MentionMenu extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: AppColors.inkFaint,
-                          fontSize: 13,
+                          fontSize: AppType.label,
                         ),
                       ),
                     ),
@@ -512,7 +513,7 @@ class _MentionMenu extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -521,7 +522,7 @@ class _MentionMenu extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: AppType.caption,
                           color: AppColors.inkSoft,
                         ),
                       ),
@@ -541,7 +542,7 @@ class _MentionMenu extends StatelessWidget {
                   child: Text(
                     it.kind.toUpperCase(),
                     style: TextStyle(
-                      fontSize: 9.5,
+                      fontSize: AppType.badge,
                       letterSpacing: 0.5,
                       fontWeight: FontWeight.w700,
                       color: AppColors.inkFaint,

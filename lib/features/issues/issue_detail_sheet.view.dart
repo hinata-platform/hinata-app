@@ -1975,7 +1975,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   Widget _contentCard(Issue issue) {
     const titleStyle = TextStyle(
       fontFamily: AppTheme.fontBrand,
-      fontSize: 20,
+      fontSize: AppType.heading,
       fontWeight: FontWeight.w700,
       height: 1.25,
     );
@@ -2027,7 +2027,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 const SizedBox(height: 8),
                 HinataEditor(
                   controller: _descCtrl,
-                  fontSize: 14,
+                  fontSize: AppType.body,
                   minHeight: 140,
                   autofocus: true,
                   // Image upload and the mention picker: the two authoring
@@ -2075,7 +2075,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 child: _describedDoc(issue) != null
                     ? HinataDocument(
                         doc: _describedDoc(issue),
-                        fontSize: 14,
+                        fontSize: AppType.body,
                         onChecked: _saveCheckedDescription,
                       )
                     : Text(
@@ -2101,7 +2101,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   Widget _sectionLabel(String text) => Text(
     text.toUpperCase(),
     style: TextStyle(
-      fontSize: 11,
+      fontSize: AppType.caption,
       fontWeight: FontWeight.w700,
       letterSpacing: 0.8,
       color: AppColors.inkFaint,
@@ -2146,7 +2146,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
             padding: const EdgeInsets.symmetric(horizontal: 5),
             child: Text(
               '/',
-              style: TextStyle(color: AppColors.inkFaint, fontSize: 13),
+              style: TextStyle(
+                color: AppColors.inkFaint,
+                fontSize: AppType.label,
+              ),
             ),
           ),
         );
@@ -2170,7 +2173,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         const SizedBox(width: 5),
         IdMono(
           c.readableId,
-          fontSize: 12.5,
+          fontSize: AppType.label,
           color: current ? AppColors.ink : AppColors.stTodo,
         ),
       ],
@@ -2220,7 +2223,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
               Text(
                 context.t(isEpic ? 'issues.childIssues' : 'issues.subtasks'),
                 style: const TextStyle(
-                  fontSize: 14.5,
+                  fontSize: AppType.body,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -2231,7 +2234,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                     'issues.progressDone',
                     variables: {'done': '$done', 'total': '${children.length}'},
                   ),
-                  style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
             ],
           ),
@@ -2247,7 +2253,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
               child: Text(
                 context.t(isEpic ? 'issues.noChildren' : 'issues.noSubtasks'),
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   color: AppColors.inkFaint,
                   fontStyle: FontStyle.italic,
                 ),
@@ -2319,7 +2325,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     decoration: _childDone(child)
                         ? TextDecoration.lineThrough
                         : null,
@@ -2430,7 +2436,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         children: [
           Text(
             context.t('issues.details'),
-            style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: AppType.body,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 6),
           // Status
@@ -2493,7 +2502,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                       child: Text(
                         context.t('issues.assignToMe'),
                         style: const TextStyle(
-                          fontSize: 12.5,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w600,
                           color: AppColors.stTodo,
                         ),
@@ -2532,7 +2541,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
             child: issue.tags.isEmpty
                 ? Text(
                     context.t('issues.noLabels'),
-                    style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      color: AppColors.inkFaint,
+                    ),
                   )
                 : Wrap(
                     spacing: 6,
@@ -2550,7 +2562,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
             child: Text(
               sprintName ?? context.t('issues.noSprint'),
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
                 color: sprintName != null
                     ? AppColors.stTodo
@@ -2622,14 +2634,14 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     if (points == null) {
       return Text(
         context.t('issues.noValue'),
-        style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
+        style: TextStyle(fontSize: AppType.label, color: AppColors.inkFaint),
       );
     }
     return Text(
       '$points',
       style: const TextStyle(
         fontFamily: AppTheme.fontMono,
-        fontSize: 13,
+        fontSize: AppType.label,
         fontWeight: FontWeight.w700,
       ),
     );
@@ -2646,7 +2658,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     if (date == null) {
       return Text(
         context.t('issues.noValue'),
-        style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
+        style: TextStyle(fontSize: AppType.label, color: AppColors.inkFaint),
       );
     }
     return Row(
@@ -2655,7 +2667,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         Text(
           MaterialLocalizations.of(context).formatMediumDate(date),
           style: TextStyle(
-            fontSize: 13,
+            fontSize: AppType.label,
             fontWeight: FontWeight.w600,
             color: AppColors.ink,
           ),
@@ -2695,7 +2707,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 child: Text(
                   context.t('issues.timeline'),
                   style: const TextStyle(
-                    fontSize: 14.5,
+                    fontSize: AppType.body,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -2714,7 +2726,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                   child: Text(
                     context.t('issues.logTime'),
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                       color: AppColors.accentInk,
                     ),
@@ -2761,7 +2773,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 padding: const EdgeInsets.only(bottom: 2),
                 child: Text(
                   '${rule.label}: ${offsetSentence(context, rule.offset)}',
-                  style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
               ),
           ],
@@ -2774,7 +2789,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 'estimate': fmtDuration(context, issue.estimateMinutes),
               },
             ),
-            style: TextStyle(color: AppColors.inkSoft, fontSize: 13),
+            style: TextStyle(color: AppColors.inkSoft, fontSize: AppType.label),
           ),
           WorkItemList(
             items: _workItems,
@@ -2872,7 +2887,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         Expanded(
           child: Text(
             text,
-            style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+            style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
           ),
         ),
       ],
@@ -3175,7 +3190,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         children: [
           Text(
             context.t('issues.activity'),
-            style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: AppType.body,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 12),
           // Filter tabs (All · Comments · History) + comment sort selector.
@@ -3501,7 +3519,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         ),
         Text(
           context.t('comments.selectedCount', count: _selectedIds.length),
-          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            fontSize: AppType.label,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const Spacer(),
         TextButton.icon(
@@ -3533,7 +3554,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         Text(
           context.t('comments.pinnedSection'),
           style: TextStyle(
-            fontSize: 11.5,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.2,
             color: AppColors.inkFaint,
@@ -3548,7 +3569,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     child: Center(
       child: Text(
         message,
-        style: TextStyle(color: AppColors.inkFaint, fontSize: 13),
+        style: TextStyle(color: AppColors.inkFaint, fontSize: AppType.label),
       ),
     ),
   );
@@ -3609,7 +3630,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       child: parent == null
           ? Text(
               issue.isSubtask ? '—' : context.t('issues.noEpic'),
-              style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
+              style: TextStyle(
+                fontSize: AppType.label,
+                color: AppColors.inkFaint,
+              ),
             )
           : _parentChip(parent),
     );
@@ -3625,7 +3649,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           '${parent.readableId}  ${parent.title}',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            fontSize: AppType.label,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     ],

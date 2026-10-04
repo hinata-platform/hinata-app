@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../sprint/modals/glass_modal.dart';
 import 'user_management_widgets.dart';
+import '../../../core/theme/app_type.dart';
 
 // ════════════════════════════════════════════════════════════════════════
 //  Liquid-Glass modals for the User-management board. Each collects input /
@@ -63,14 +64,17 @@ class _Header extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     fontFamily: AppTheme.fontBrand,
-                    fontSize: 18,
+                    fontSize: AppType.heading,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.label,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
               ],
             ),
@@ -174,7 +178,7 @@ Widget _previewList(BuildContext context, List<AdminUser> users) {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -183,7 +187,7 @@ Widget _previewList(BuildContext context, List<AdminUser> users) {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         color: AppColors.inkSoft,
                       ),
                     ),
@@ -203,7 +207,10 @@ Widget _previewList(BuildContext context, List<AdminUser> users) {
                 'admin.um.andMore',
                 variables: {'n': '${users.length - 6}'},
               ),
-              style: TextStyle(fontSize: 12, color: AppColors.inkFaint),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.inkFaint,
+              ),
             ),
           ),
         ),
@@ -278,7 +285,7 @@ Future<bool> showResendModal(BuildContext context, List<AdminUser> users) {
                 variables: {'n': '$expired'},
               ),
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 color: AppColors.dangerInk,
                 height: 1.4,
               ),
@@ -305,7 +312,11 @@ Future<bool> showDeactivateModal(BuildContext context, List<AdminUser> users) {
       children: [
         Text(
           context.t('admin.um.deactivateWarn', variables: {'n': '$sessions'}),
-          style: TextStyle(fontSize: 13, height: 1.5, color: AppColors.ink),
+          style: TextStyle(
+            fontSize: AppType.label,
+            height: 1.5,
+            color: AppColors.ink,
+          ),
         ),
         const SizedBox(height: 12),
         _previewList(context, users),
@@ -444,7 +455,11 @@ class _DeleteModalState extends State<_DeleteModal> {
           children: [
             Text(
               context.t('admin.um.deleteWarn'),
-              style: TextStyle(fontSize: 13, height: 1.5, color: AppColors.ink),
+              style: TextStyle(
+                fontSize: AppType.label,
+                height: 1.5,
+                color: AppColors.ink,
+              ),
             ),
             const SizedBox(height: 12),
             _previewList(context, widget.users),
@@ -452,7 +467,10 @@ class _DeleteModalState extends State<_DeleteModal> {
               const SizedBox(height: 14),
               Text(
                 context.t('admin.um.deleteTypeHint'),
-                style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  color: AppColors.inkSoft,
+                ),
               ),
               const SizedBox(height: 8),
               // The instruction above is the field's caption; give it to
@@ -710,7 +728,7 @@ class _InviteModalState extends State<_InviteModal> {
             child: Text(
               email,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 color: invalid ? AppColors.danger : AppColors.ink,
               ),
             ),

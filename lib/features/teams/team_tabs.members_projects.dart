@@ -37,7 +37,7 @@ class TeamMembersTab extends StatelessWidget {
                   },
                 ),
                 style: TextStyle(
-                  fontSize: 13.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                   color: AppColors.inkSoft,
                 ),
@@ -109,7 +109,7 @@ class _MemberRow extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 13.5,
+                              fontSize: AppType.label,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -129,7 +129,7 @@ class _MemberRow extends StatelessWidget {
                             child: Text(
                               context.t('teams.you'),
                               style: TextStyle(
-                                fontSize: 9.5,
+                                fontSize: AppType.badge,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.4,
                                 color: AppColors.accentInk,
@@ -146,7 +146,7 @@ class _MemberRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           color: AppColors.inkSoft,
                         ),
                       ),
@@ -269,7 +269,7 @@ class TeamProjectsTab extends StatelessWidget {
                   count: data.team.projectIds.length,
                 ),
                 style: TextStyle(
-                  fontSize: 13.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                   color: AppColors.inkSoft,
                 ),
@@ -291,7 +291,10 @@ class TeamProjectsTab extends StatelessWidget {
               child: Center(
                 child: Text(
                   context.t('teams.noProjectsYet'),
-                  style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
+                  style: TextStyle(
+                    fontSize: AppType.label,
+                    color: AppColors.inkFaint,
+                  ),
                 ),
               ),
             ),
@@ -375,7 +378,7 @@ class _ProjectRow extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: AppType.body,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -391,7 +394,7 @@ class _ProjectRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           color: AppColors.inkSoft,
                         ),
                       ),

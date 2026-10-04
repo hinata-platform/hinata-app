@@ -10,6 +10,7 @@ import '../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassConfirm, showGlassToast;
 import 'lock_notice.dart';
 import 'time_approval_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// The five things that can happen to a submission, in one place.
 ///
@@ -199,7 +200,7 @@ class ApprovalStatusChip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               color: tint,
             ),

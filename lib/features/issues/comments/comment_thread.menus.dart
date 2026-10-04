@@ -35,7 +35,7 @@ class _ContextMenuCard extends StatelessWidget {
                 Text(
                   r.label,
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: AppType.body,
                     fontWeight: FontWeight.w500,
                     color: color,
                   ),
@@ -96,7 +96,10 @@ class _QuickReactionsBar extends StatelessWidget {
             child: Center(
               widthFactor: 1,
               heightFactor: 1,
-              child: Text(emoji, style: const TextStyle(fontSize: 22)),
+              child: Text(
+                emoji,
+                style: const TextStyle(fontSize: AppType.display),
+              ),
             ),
           ),
         ),

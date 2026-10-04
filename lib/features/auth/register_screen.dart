@@ -16,6 +16,7 @@ import '../sprint/modals/glass_modal.dart'
     show showGlassToast, showGlassErrorToast, GlassToastKind;
 import 'auth_shell.dart';
 import 'auth_flow_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// Public self-registration. Collects the new account's details, then shows a
 /// "confirm your email" state — the account is only usable once the emailed
@@ -279,7 +280,10 @@ class _RegisterScreenState extends State<_RegisterScreenBody> {
             Text(
               context.t('auth.legalNotice'),
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: AppType.caption,
+              ),
             ),
             const SizedBox(height: 8),
             const LegalLinks(),
@@ -356,7 +360,7 @@ class _InfoNote extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontSize: 13, color: AppColors.ink),
+              style: TextStyle(fontSize: AppType.label, color: AppColors.ink),
             ),
           ),
         ],

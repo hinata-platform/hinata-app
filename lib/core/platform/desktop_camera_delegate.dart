@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../features/sprint/modals/glass_modal.dart' show showGlassConfirm;
 import '../i18n/i18n.dart';
+import '../theme/app_type.dart';
 
 /// Camera capture for the desktop platforms.
 ///
@@ -356,7 +357,7 @@ class _CaptureError extends StatelessWidget {
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 16,
+              fontSize: AppType.title,
               fontWeight: FontWeight.w600,
             ),
           ),

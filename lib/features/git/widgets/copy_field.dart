@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_type.dart';
 
 /// A single-line, horizontally-scrollable mono command box with a copy button
 /// that ticks green — the reference `.cf`. The command **never wraps or clips**
@@ -73,7 +74,7 @@ class _CopyFieldState extends State<CopyField> {
                   softWrap: false,
                   style: TextStyle(
                     fontFamily: AppTheme.fontMono,
-                    fontSize: 12,
+                    fontSize: AppType.caption,
                     color: AppColors.ink,
                   ),
                 ),

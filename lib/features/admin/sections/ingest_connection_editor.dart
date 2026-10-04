@@ -15,6 +15,7 @@ import '../../../core/widgets/hive_widgets.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../../../core/widgets/folded_hint.dart';
 import 'ingest_connections_cubit.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Result of the connection editor: the saved connection plus the picked
 /// project option (so the list can label it without re-resolving).
@@ -182,7 +183,10 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
                   const SizedBox(width: 8),
                   Text(
                     folder,
-                    style: TextStyle(fontSize: 13, color: AppColors.ink),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ],
               ),
@@ -289,7 +293,7 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
                   ),
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 15,
+                    fontSize: AppType.body,
                     color: AppColors.ink,
                   ),
                 ),
@@ -330,7 +334,7 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
                         child: Text(
                           'SSL/TLS',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: AppType.body,
                             fontWeight: FontWeight.w600,
                             color: AppColors.ink,
                           ),
@@ -380,7 +384,7 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
                     : context.t('admin.ingest.folderHint'),
                 title: context.t('admin.ingest.folder'),
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: AppType.caption,
                   height: 1.35,
                   color: AppColors.inkFaint,
                 ),
@@ -421,7 +425,7 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
                     ? Text(
                         context.t('admin.ingest.pickProject'),
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: AppType.body,
                           color: AppColors.inkFaint,
                         ),
                       )
@@ -441,7 +445,7 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
                             child: Text(
                               '${_project!.key} · ${_project!.name}',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: AppType.body,
                                 color: AppColors.ink,
                               ),
                               overflow: TextOverflow.ellipsis,
@@ -649,7 +653,10 @@ class _ProjectSearchPanelState extends State<_ProjectSearchPanel> {
               ? Center(
                   child: Text(
                     context.t('common.noMatches'),
-                    style: TextStyle(fontSize: 13, color: AppColors.inkFaint),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      color: AppColors.inkFaint,
+                    ),
                   ),
                 )
               : ListView.builder(
@@ -689,7 +696,7 @@ class _ProjectSearchPanelState extends State<_ProjectSearchPanel> {
                               Text(
                                 option.key,
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: AppType.caption,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.inkSoft,
                                 ),
@@ -699,7 +706,7 @@ class _ProjectSearchPanelState extends State<_ProjectSearchPanel> {
                                 child: Text(
                                   option.name,
                                   style: TextStyle(
-                                    fontSize: 13,
+                                    fontSize: AppType.label,
                                     color: AppColors.ink,
                                   ),
                                   overflow: TextOverflow.ellipsis,

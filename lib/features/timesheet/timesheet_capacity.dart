@@ -16,6 +16,7 @@ import '../absences/absence_actions.dart';
 import '../absences/absence_labels.dart' show absenceTypeName;
 import '../time/day_marks.dart' show formatDaySpan, timeOffIcon;
 import 'timesheet_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// The reader's own capacity for the window the timesheet shows, beside what
 /// they booked in it: "32 h of 40 h" (HIN-91).
@@ -171,7 +172,7 @@ class _TimesheetCapacityLineState extends State<TimesheetCapacityLine> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),
@@ -195,7 +196,7 @@ class _TimesheetCapacityLineState extends State<TimesheetCapacityLine> {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.end,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w800,
                     fontFeatures: const [FontFeature.tabularFigures()],
                     color: AppColors.ink,
@@ -259,7 +260,7 @@ class _AbsenceChip extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w600,
                     color: tint,
                   ),

@@ -46,6 +46,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassAnchoredPopover,
         showGlassBottomSheet,
         showGlassDateRangePicker;
+import '../../core/theme/app_type.dart';
 
 /// Weekly timesheet matrix (user × project × day).
 ///
@@ -848,7 +849,7 @@ class _TimesheetViewState extends State<_TimesheetView> {
                 label: Text(
                   _windowLabel(localizations),
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -995,7 +996,7 @@ class _TimesheetViewState extends State<_TimesheetView> {
                   Text(
                     _rhythmLabel() ?? '',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: AppType.caption,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -1177,7 +1178,7 @@ class _TimesheetViewState extends State<_TimesheetView> {
                 child: Text(
                   formatPeriod(context, period.start, period.end),
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w800,
                     color: AppColors.ink,
                   ),
@@ -1186,7 +1187,7 @@ class _TimesheetViewState extends State<_TimesheetView> {
               Text(
                 fmtDuration(context, period.minutes),
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w800,
                   fontFeatures: const [FontFeature.tabularFigures()],
                   color: AppColors.ink,
@@ -1199,7 +1200,7 @@ class _TimesheetViewState extends State<_TimesheetView> {
             Text(
               context.t('time.approval.gridClamped'),
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: AppType.caption,
                 height: 1.45,
                 color: AppColors.textSecondary,
               ),
@@ -1210,7 +1211,7 @@ class _TimesheetViewState extends State<_TimesheetView> {
             Text(
               context.t('time.approval.nothingToSubmit'),
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: AppType.caption,
                 height: 1.45,
                 color: AppColors.textSecondary,
               ),
@@ -1230,7 +1231,7 @@ class _TimesheetViewState extends State<_TimesheetView> {
                             project.projectName ??
                             context.t('time.fmt.none'),
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textSecondary,
                         ),
@@ -1329,7 +1330,7 @@ class _TimesheetViewState extends State<_TimesheetView> {
         child: DataTable(
           headingTextStyle: TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 12,
+            fontSize: AppType.caption,
             color: AppColors.textPrimary,
           ),
           columns: [
@@ -1381,7 +1382,7 @@ class _TimesheetViewState extends State<_TimesheetView> {
         Text(
           DateFormat.E(locale).format(day),
           style: TextStyle(
-            fontSize: 10.5,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w700,
             color: weekend ? AppColors.inkFaint : AppColors.textSecondary,
           ),
@@ -1541,7 +1542,7 @@ class _TruncatedRows extends StatelessWidget {
               'timesheet.truncated',
               variables: {'shown': '$shown', 'total': '$total'},
             ),
-            style: TextStyle(fontSize: 12.5, color: AppColors.ink),
+            style: TextStyle(fontSize: AppType.label, color: AppColors.ink),
           ),
         ),
       ],
@@ -1657,7 +1658,7 @@ class _FilterField extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 10.5,
+                          fontSize: AppType.caption,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.2,
                           color: AppColors.textSecondary,
@@ -1669,7 +1670,7 @@ class _FilterField extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
@@ -1793,7 +1794,10 @@ class _FilterPanelState extends State<_FilterPanel> {
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 2),
             child: Text(
               context.t(widget.titleKey!),
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                fontSize: AppType.body,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         _searchField(),
@@ -1839,7 +1843,7 @@ class _FilterPanelState extends State<_FilterPanel> {
                   focusNode: _focus,
                   onChanged: _onQueryChanged,
                   textInputAction: TextInputAction.search,
-                  style: const TextStyle(fontSize: 13.5),
+                  style: const TextStyle(fontSize: AppType.label),
                   cursorColor: AppColors.accentStrong,
                   // Every border state is cleared by hand: the app's input
                   // theme supplies enabled/focused borders and those survive
@@ -1856,7 +1860,7 @@ class _FilterPanelState extends State<_FilterPanel> {
                     contentPadding: const EdgeInsets.symmetric(vertical: 11),
                     hintText: context.t(widget.searchHintKey),
                     hintStyle: TextStyle(
-                      fontSize: 13.5,
+                      fontSize: AppType.label,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -1908,7 +1912,10 @@ class _FilterPanelState extends State<_FilterPanel> {
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
             child: Text(
               context.t(state.errorKey!),
-              style: TextStyle(fontSize: 12.5, color: AppColors.dangerInk),
+              style: TextStyle(
+                fontSize: AppType.label,
+                color: AppColors.dangerInk,
+              ),
             ),
           );
         }
@@ -1961,7 +1968,7 @@ class _FilterPanelState extends State<_FilterPanel> {
               child: Text(
                 context.t('common.noMatches'),
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: AppType.label,
                   color: AppColors.textSecondary,
                 ),
               ),
@@ -2026,7 +2033,7 @@ class _FilterRow extends StatelessWidget {
                   label,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                     color: AppColors.textPrimary,
                   ),
@@ -2037,7 +2044,7 @@ class _FilterRow extends StatelessWidget {
                 Text(
                   secondary!,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: AppType.caption,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -2079,7 +2086,7 @@ class _PillLabel extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w700,
               color: active ? AppColors.accentStrong : AppColors.ink,
             ),

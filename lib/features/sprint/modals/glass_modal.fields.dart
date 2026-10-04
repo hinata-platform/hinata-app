@@ -75,7 +75,10 @@ ButtonStyle get glassQuietActionStyle => TextButton.styleFrom(
   foregroundColor: AppColors.inkSoft,
   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
   minimumSize: const Size(0, 34),
-  textStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+  textStyle: const TextStyle(
+    fontSize: AppType.label,
+    fontWeight: FontWeight.w600,
+  ),
   shape: RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(AppTheme.radiusControl),
   ),
@@ -89,7 +92,10 @@ ButtonStyle get glassCompactPrimaryStyle => FilledButton.styleFrom(
   foregroundColor: Colors.white,
   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
   minimumSize: const Size(0, 34),
-  textStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+  textStyle: const TextStyle(
+    fontSize: AppType.label,
+    fontWeight: FontWeight.w700,
+  ),
   shape: RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(AppTheme.radiusControl),
   ),
@@ -139,7 +145,7 @@ class GlassSegmented extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                       color: i == selected ? Colors.white : AppColors.inkSoft,
                     ),
@@ -216,7 +222,7 @@ class GlassOptionRow extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -224,7 +230,7 @@ class GlassOptionRow extends StatelessWidget {
                 Text(
                   subtitle,
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: AppType.caption,
                     height: 1.35,
                     color: AppColors.textSecondary,
                   ),
@@ -298,7 +304,7 @@ class GlassModalHeader extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontFamily: AppTheme.fontBrand,
-                    fontSize: 18,
+                    fontSize: AppType.heading,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.2,
                   ),
@@ -308,7 +314,10 @@ class GlassModalHeader extends StatelessWidget {
                   subtitle,
                   maxLines: subtitleMaxLines,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.label,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
               ],
             ),

@@ -59,7 +59,7 @@ class _RemoveIssueConfirm extends StatelessWidget {
                       ),
                       style: TextStyle(
                         fontFamily: AppTheme.fontBrand,
-                        fontSize: 17,
+                        fontSize: AppType.title,
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
                       ),
@@ -71,7 +71,7 @@ class _RemoveIssueConfirm extends StatelessWidget {
                         variables: {'id': issue.readableId},
                       ),
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         height: 1.4,
                         color: AppColors.inkSoft,
                       ),
@@ -128,7 +128,7 @@ class _RemoveIssueConfirm extends StatelessWidget {
                       vertical: 13,
                     ),
                     textStyle: const TextStyle(
-                      fontSize: 13,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                     ),
                     shape: RoundedRectangleBorder(
@@ -153,7 +153,7 @@ class _RemoveIssueConfirm extends StatelessWidget {
                         vertical: 13,
                       ),
                       textStyle: const TextStyle(
-                        fontSize: 13,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                       ),
                       shape: RoundedRectangleBorder(
@@ -223,7 +223,7 @@ class _DeleteCommentConfirm extends StatelessWidget {
                           : context.t('issues.deleteCommentTitle'),
                       style: TextStyle(
                         fontFamily: AppTheme.fontBrand,
-                        fontSize: 17,
+                        fontSize: AppType.title,
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
                       ),
@@ -237,7 +237,7 @@ class _DeleteCommentConfirm extends StatelessWidget {
                             )
                           : context.t('issues.deleteCommentBody'),
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         height: 1.4,
                         color: AppColors.inkSoft,
                       ),
@@ -283,7 +283,7 @@ class _DeleteCommentConfirm extends StatelessWidget {
                       vertical: 13,
                     ),
                     textStyle: const TextStyle(
-                      fontSize: 13,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                     ),
                     shape: RoundedRectangleBorder(
@@ -351,7 +351,10 @@ class _DetailRow extends StatelessWidget {
                 width: 104,
                 child: Text(
                   label,
-                  style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.label,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -452,7 +455,7 @@ class _SubtaskQuickAddState extends State<_SubtaskQuickAdd> {
                 Text(
                   context.t('issues.addSubtask'),
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: AppColors.stTodo,
                   ),
@@ -513,13 +516,13 @@ class _SubtaskQuickAddState extends State<_SubtaskQuickAdd> {
                 },
                 textInputAction: TextInputAction.done,
                 textCapitalization: TextCapitalization.sentences,
-                style: const TextStyle(fontSize: 13.5),
+                style: const TextStyle(fontSize: AppType.label),
                 decoration: InputDecoration(
                   isDense: true,
                   border: InputBorder.none,
                   hintText: context.t('issues.subtaskHint'),
                   hintStyle: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     color: AppColors.inkFaint,
                   ),
                 ),

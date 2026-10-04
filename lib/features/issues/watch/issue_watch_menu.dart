@@ -14,6 +14,7 @@ import '../../sprint/modals/glass_modal.dart'
         showGlassAnchoredPopover,
         showGlassBottomSheet;
 import 'issue_watch_cubit.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Everything the issue's watch popover needs: the cubit holding the roster,
 /// who is asking, and how to resolve the people on it.
@@ -157,7 +158,7 @@ class IssueWatchPanel extends StatelessWidget {
                       child: Text(
                         context.t(hintKey),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: AppType.caption,
                           height: 1.35,
                           color: tokens.inkFaint,
                         ),
@@ -176,7 +177,7 @@ class IssueWatchPanel extends StatelessWidget {
               child: Text(
                 context.t('issues.watch.watchersTitle'),
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.2,
                   color: tokens.inkFaint,
@@ -188,7 +189,10 @@ class IssueWatchPanel extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
                 child: Text(
                   context.t('issues.watch.noWatchers'),
-                  style: TextStyle(fontSize: 12.5, color: tokens.inkFaint),
+                  style: TextStyle(
+                    fontSize: AppType.label,
+                    color: tokens.inkFaint,
+                  ),
                 ),
               )
             else
@@ -284,7 +288,7 @@ class _ToggleRowState extends State<_ToggleRow> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: t.ink.withValues(alpha: disabled ? 0.4 : 1),
                   ),
@@ -358,7 +362,7 @@ class _WatcherRow extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 13.5,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
                 color: tokens.ink,
               ),

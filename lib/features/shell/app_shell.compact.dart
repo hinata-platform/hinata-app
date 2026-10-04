@@ -544,7 +544,7 @@ class _BarTitle extends StatelessWidget {
       textAlign: leading ? TextAlign.start : TextAlign.center,
       style: TextStyle(
         fontFamily: AppTheme.fontBrand,
-        fontSize: 17,
+        fontSize: AppType.title,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.3,
         color: AppColors.ink,
@@ -918,7 +918,7 @@ class _MoreSheet extends StatelessWidget {
                             user?.displayName ?? '',
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
-                              fontSize: 15,
+                              fontSize: AppType.body,
                               color: tokens.ink,
                             ),
                           ),
@@ -926,7 +926,7 @@ class _MoreSheet extends StatelessWidget {
                             Text(
                               subtitle,
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: AppType.caption,
                                 color: tokens.inkSoft,
                               ),
                             ),
@@ -1043,7 +1043,7 @@ class _MoreTile extends StatelessWidget {
                 Text(
                   context.t(destination.labelKey),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w500,
                     color: iconColor,
                   ),

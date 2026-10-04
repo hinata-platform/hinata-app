@@ -133,7 +133,7 @@ class UserDrawerBody extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: AppTheme.fontBrand,
-                                  fontSize: 18,
+                                  fontSize: AppType.heading,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.ink,
                                 ),
@@ -141,7 +141,7 @@ class UserDrawerBody extends StatelessWidget {
                             ),
                             PronounsLabel(
                               pronouns: u.pronouns,
-                              fontSize: 12.5,
+                              fontSize: AppType.label,
                               leadingGap: 7,
                             ),
                           ],
@@ -149,7 +149,7 @@ class UserDrawerBody extends StatelessWidget {
                         Text(
                           u.email,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: AppType.label,
                             color: AppColors.inkSoft,
                           ),
                         ),
@@ -228,7 +228,7 @@ class UserDrawerBody extends StatelessWidget {
       Text(
         text,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.3,
           color: AppColors.inkSoft,
@@ -264,7 +264,10 @@ class UserDrawerBody extends StatelessWidget {
                   child: Text(
                     k,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 11, color: AppColors.inkFaint),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      color: AppColors.inkFaint,
+                    ),
                   ),
                 ),
               ],
@@ -273,7 +276,7 @@ class UserDrawerBody extends StatelessWidget {
             Text(
               v,
               style: TextStyle(
-                fontSize: 13.5,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
               ),
@@ -336,7 +339,11 @@ class UserDrawerBody extends StatelessWidget {
                 'name': u.name.split(' ').first,
               },
             ),
-            style: TextStyle(fontSize: 12.5, height: 1.4, color: AppColors.ink),
+            style: TextStyle(
+              fontSize: AppType.label,
+              height: 1.4,
+              color: AppColors.ink,
+            ),
           ),
         ),
       ],
@@ -539,7 +546,7 @@ class UserDrawerBody extends StatelessWidget {
                       Text(
                         entries[i].$1,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w600,
                           color: AppColors.ink,
                         ),
@@ -547,7 +554,7 @@ class UserDrawerBody extends StatelessWidget {
                       Text(
                         entries[i].$2,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           color: AppColors.inkFaint,
                         ),
                       ),
@@ -652,7 +659,7 @@ class _OrgAdminToggleState extends State<OrgAdminToggle> {
                         child: Text(
                           title,
                           style: TextStyle(
-                            fontSize: 13.5,
+                            fontSize: AppType.label,
                             fontWeight: FontWeight.w700,
                             color: AppColors.ink,
                           ),
@@ -677,7 +684,7 @@ class _OrgAdminToggleState extends State<OrgAdminToggle> {
                           : 'admin.um.reasonOwnOrgRole',
                     ),
                     style: TextStyle(
-                      fontSize: 11.5,
+                      fontSize: AppType.caption,
                       height: 1.3,
                       color: AppColors.inkSoft,
                     ),
@@ -783,7 +790,7 @@ class _ActRow extends StatelessWidget {
                         Text(
                           title,
                           style: TextStyle(
-                            fontSize: 13.5,
+                            fontSize: AppType.label,
                             fontWeight: FontWeight.w700,
                             color: danger ? AppColors.danger : AppColors.ink,
                           ),
@@ -791,7 +798,7 @@ class _ActRow extends StatelessWidget {
                         Text(
                           enabled ? subtitle : (disabledReason ?? subtitle),
                           style: TextStyle(
-                            fontSize: 11.5,
+                            fontSize: AppType.caption,
                             height: 1.3,
                             color: AppColors.inkSoft,
                           ),

@@ -22,6 +22,7 @@ import '../../core/widgets/status_widgets.dart';
 import '../board/board_links.dart';
 import '../issues/issue_detail_sheet.dart';
 import '../shell/page_chrome.dart';
+import '../../core/theme/app_type.dart';
 
 // Exact stat hues, harmonised with the dashboard "Liquid Glass" palette.
 const _cCompleted = Color(0xFF2E8B62);
@@ -414,7 +415,7 @@ class _Hero extends StatelessWidget {
               range,
               style: const TextStyle(
                 fontFamily: AppTheme.fontMono,
-                fontSize: 11,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.3,
                 color: Color(0xFFEBCF8F),
@@ -433,7 +434,7 @@ class _Hero extends StatelessWidget {
               ),
         style: const TextStyle(
           fontFamily: AppTheme.fontBrand,
-          fontSize: 15,
+          fontSize: AppType.body,
           fontWeight: FontWeight.w600,
           color: _heroInk,
         ),
@@ -513,7 +514,7 @@ class _Hero extends StatelessWidget {
           label,
           style: const TextStyle(
             fontFamily: AppTheme.fontMono,
-            fontSize: 11.5,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w500,
             color: _heroInk,
           ),
@@ -545,7 +546,7 @@ class _SectionLabel extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontFamily: AppTheme.fontBrand,
-              fontSize: 17,
+              fontSize: AppType.title,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.3,
               color: AppColors.ink,
@@ -640,7 +641,7 @@ class _StatCard extends StatelessWidget {
               value,
               style: TextStyle(
                 fontFamily: AppTheme.fontBrand,
-                fontSize: 26,
+                fontSize: AppType.display,
                 fontWeight: FontWeight.w800,
                 height: 1,
                 letterSpacing: -0.5,
@@ -654,7 +655,7 @@ class _StatCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w500,
               color: AppColors.inkSoft,
             ),
@@ -704,7 +705,7 @@ class _SprintCard extends StatelessWidget {
                       context.t('weeklySummary.activeSprint').toUpperCase(),
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
-                        fontSize: 10,
+                        fontSize: AppType.caption,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.6,
                         color: AppColors.accentInk,
@@ -717,7 +718,7 @@ class _SprintCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: AppTheme.fontBrand,
-                        fontSize: 16,
+                        fontSize: AppType.title,
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
                       ),
@@ -745,7 +746,7 @@ class _SprintCard extends StatelessWidget {
                     ),
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: 11,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w700,
                       color: AppColors.accentInk,
                     ),
@@ -764,7 +765,7 @@ class _SprintCard extends StatelessWidget {
                 '${(pct * 100).round()}%',
                 style: TextStyle(
                   fontFamily: AppTheme.fontBrand,
-                  fontSize: 14,
+                  fontSize: AppType.body,
                   fontWeight: FontWeight.w800,
                   color: AppColors.ink,
                 ),
@@ -780,7 +781,7 @@ class _SprintCard extends StatelessWidget {
                 'total': '${sprint.issuesTotal}',
               },
             ),
-            style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+            style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
           ),
         ],
       ),
@@ -841,7 +842,7 @@ class _ContributorRow extends StatelessWidget {
             '$rank',
             style: TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 12,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               color: rank <= 3 ? AppColors.accentStrong : AppColors.inkFaint,
             ),
@@ -863,7 +864,7 @@ class _ContributorRow extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 13.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                   color: AppColors.ink,
                 ),
@@ -888,7 +889,7 @@ class _ContributorRow extends StatelessWidget {
             variables: {'count': '${contributor.completed}'},
           ),
           style: TextStyle(
-            fontSize: 12,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w600,
             color: AppColors.inkSoft,
           ),
@@ -960,7 +961,7 @@ class _UpcomingCard extends StatelessWidget {
                       variables: {'count': '${upcoming.total}'},
                     ),
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                       color: AppColors.inkSoft,
                     ),
@@ -982,7 +983,7 @@ class _UpcomingCard extends StatelessWidget {
                         variables: {'count': '${upcoming.overdue}'},
                       ),
                       style: const TextStyle(
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         fontWeight: FontWeight.w700,
                         color: _cOverdue,
                       ),
@@ -1012,7 +1013,7 @@ class _UpcomingCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: AppType.caption,
                             color: AppColors.inkFaint,
                           ),
                         )
@@ -1078,7 +1079,7 @@ class _IssueRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13.5,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w600,
                           color: AppColors.ink,
                         ),
@@ -1100,7 +1101,7 @@ class _IssueRow extends StatelessWidget {
                                 Localizations.localeOf(context).languageCode,
                               ).format(due.toLocal()),
                               style: TextStyle(
-                                fontSize: 11.5,
+                                fontSize: AppType.caption,
                                 fontWeight: overdue
                                     ? FontWeight.w700
                                     : FontWeight.w500,
@@ -1149,7 +1150,7 @@ class _CardTitle extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 13.5,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
             ),

@@ -17,6 +17,7 @@ import '../../core/repositories/board_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
 import 'deletion_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 // ════════════════════════════════════════════════════════════════════════
 //  Cascading-delete flow for boards, projects and teams. A single Liquid-Glass
@@ -497,7 +498,7 @@ class _WarnRow extends StatelessWidget {
                 count: warn.vars['count'] as int?,
               ),
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 height: 1.4,
                 color: AppColors.inkSoft,
               ),
@@ -642,14 +643,14 @@ class _Option extends StatelessWidget {
                         Text(
                           title,
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: AppType.label,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         Text(
                           hint,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: AppType.caption,
                             color: AppColors.inkSoft,
                           ),
                         ),
@@ -712,7 +713,7 @@ class _TargetRow extends StatelessWidget {
                   child: Text(
                     target.key.isNotEmpty ? target.key[0] : '?',
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w700,
                       color: AppColors.navy,
                     ),
@@ -725,7 +726,7 @@ class _TargetRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -768,7 +769,7 @@ class _ProgressBody extends StatelessWidget {
                 child: Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -788,7 +789,10 @@ class _ProgressBody extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             context.t('delete.progressNote'),
-            style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkFaint,
+            ),
           ),
         ],
       ),
@@ -822,7 +826,7 @@ class _ErrorBody extends StatelessWidget {
             child: Text(
               message,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 height: 1.4,
                 color: AppColors.dangerInk,
               ),

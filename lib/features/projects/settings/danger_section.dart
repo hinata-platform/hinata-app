@@ -5,6 +5,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import 'settings_common.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Danger zone: permanently delete the project. The actual cascade (boards,
 /// issues, etc.) runs in the streamed [showDeleteProjectFlow] modal; this card
@@ -28,7 +29,7 @@ class DangerSection extends StatelessWidget {
                 Text(
                   context.t('projectSettings.deleteTitle'),
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -36,7 +37,7 @@ class DangerSection extends StatelessWidget {
                 Text(
                   context.t('projectSettings.deleteNote'),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppType.caption,
                     height: 1.45,
                     color: AppColors.inkSoft,
                   ),
@@ -52,7 +53,7 @@ class DangerSection extends StatelessWidget {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
               textStyle: const TextStyle(
-                fontSize: 13,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
               ),
               shape: RoundedRectangleBorder(

@@ -43,6 +43,7 @@ import 'report_import_wizard.dart';
 import 'report_list_parts.dart';
 import 'report_summary_view.dart';
 import 'time_reports_cubit.dart';
+import '../../../core/theme/app_type.dart';
 
 /// The tabs of the report page (HIN-93).
 enum ReportTab {
@@ -1037,7 +1038,7 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
                           context.t('time.reports.workload.truncated'),
                       ].join(' '),
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         color: AppColors.inkSoft,
                       ),
                     ),
@@ -1289,7 +1290,7 @@ class _Note extends StatelessWidget {
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
                 color: AppColors.ink,
               ),

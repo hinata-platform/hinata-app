@@ -9,6 +9,7 @@ import '../../core/widgets/project_picker.dart';
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
 import 'knowledge_tree.dart' show KbPlaceGlyph;
+import '../../core/theme/app_type.dart';
 
 /// Where a page should live: a project, a team, or (both null) only its
 /// author.
@@ -233,7 +234,7 @@ class _KnowledgePlaceFieldState extends State<KnowledgePlaceField> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
                 color: AppColors.ink,
               ),
@@ -265,7 +266,7 @@ class _KnowledgePlaceFieldState extends State<KnowledgePlaceField> {
       children: [
         Text(
           caption,
-          style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+          style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
         ),
         pill,
       ],

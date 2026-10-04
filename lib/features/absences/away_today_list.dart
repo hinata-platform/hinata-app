@@ -11,6 +11,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveAvatar;
 import 'team_absence_style.dart';
+import '../../core/theme/app_type.dart';
 
 /// Who is away today, as the dashboard card lists it (HIN-118): the names of
 /// the page it is handed, then how many more the day holds.
@@ -57,7 +58,7 @@ class AwayTodayList extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -73,7 +74,7 @@ class AwayTodayList extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.end,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: AppType.caption,
                           color: AppColors.inkSoft,
                         ),
                       ),
@@ -87,7 +88,10 @@ class AwayTodayList extends StatelessWidget {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               context.t('dashboard.awayMore', variables: {'count': '$more'}),
-              style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+              style: TextStyle(
+                fontSize: AppType.label,
+                color: AppColors.inkSoft,
+              ),
             ),
           ),
       ],

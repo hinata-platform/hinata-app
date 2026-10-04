@@ -11,6 +11,7 @@ import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/soft_card.dart';
 import 'server_switcher.dart';
 import '../../core/widgets/hive_widgets.dart' show forwardChevron;
+import '../../core/theme/app_type.dart';
 
 /// First screen: the app cannot run without a server, so we ask for its URL
 /// and only continue once /api/v1/meta answers.
@@ -149,7 +150,10 @@ class _ConnectScreenState extends State<ConnectScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
               context.t('server.saved'),
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: AppType.label,
+              ),
             ),
           ),
           const Expanded(child: Divider()),
@@ -172,7 +176,10 @@ class _ConnectScreenState extends State<ConnectScreen> {
           ),
           subtitle: Text(
             server.host,
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: AppType.caption,
+            ),
           ),
           trailing: Icon(forwardChevron(context), size: 18),
           onTap: connecting ? null : () => switchToServer(context, server.url),

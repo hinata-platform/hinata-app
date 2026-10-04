@@ -16,6 +16,7 @@ import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../../core/widgets/hive_widgets.dart' show forwardChevron;
 import 'notifications_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// Full notification centre: the paged feed grouped into time buckets
 /// (today / yesterday / this week / …), rendered as iOS-style inset grouped
@@ -170,7 +171,7 @@ class _NotificationsScreenState extends State<_NotificationsBody> {
                                 variables: {'count': '$unreadCount'},
                               ),
                               style: TextStyle(
-                                fontSize: 12.5,
+                                fontSize: AppType.label,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.accentInk,
                               ),
@@ -309,7 +310,7 @@ class _GroupLabel extends StatelessWidget {
       child: Text(
         label.toUpperCase(),
         style: TextStyle(
-          fontSize: 11.5,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.8,
           color: AppColors.inkSoft,
@@ -368,7 +369,7 @@ class _NotificationTile extends StatelessWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 13.5,
+                                fontSize: AppType.label,
                                 height: 1.35,
                                 color: AppColors.ink,
                                 fontWeight: unread
@@ -382,7 +383,7 @@ class _NotificationTile extends StatelessWidget {
                             Text(
                               ago,
                               style: TextStyle(
-                                fontSize: 11.5,
+                                fontSize: AppType.caption,
                                 color: AppColors.inkFaint,
                               ),
                             ),
@@ -410,7 +411,7 @@ class _NotificationTile extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 12.5,
+                            fontSize: AppType.label,
                             height: 1.4,
                             color: AppColors.inkSoft,
                           ),

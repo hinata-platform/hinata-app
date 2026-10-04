@@ -24,6 +24,7 @@ import '../../theme/app_colors.dart';
 import '../glass_popup_menu.dart';
 import 'time_grid_geometry.dart';
 import 'time_grid_model.dart';
+import '../../theme/app_type.dart';
 
 /// Width of the hour axis down the leading edge.
 const double kTimeGridGutter = 56;
@@ -695,7 +696,10 @@ class _TimeGridState extends State<TimeGrid> {
                     layer.label ?? '',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 10, color: AppColors.inkFaint),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      color: AppColors.inkFaint,
+                    ),
                   ),
                 ),
               ),
@@ -1000,7 +1004,7 @@ class _DayHeading extends StatelessWidget {
         Text(
           localizations.narrowWeekdays[day.weekday % 7],
           style: TextStyle(
-            fontSize: 11,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w600,
             color: today ? AppColors.accentStrong : AppColors.inkFaint,
           ),
@@ -1023,7 +1027,7 @@ class _DayHeading extends StatelessWidget {
               child: Text(
                 '${day.day}',
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                   color: today ? AppColors.accentStrong : AppColors.ink,
                 ),
@@ -1061,7 +1065,10 @@ class _HourAxis extends StatelessWidget {
                 TimeOfDay(hour: hour, minute: 0),
                 alwaysUse24HourFormat: use24,
               ),
-              style: TextStyle(fontSize: 10, color: AppColors.inkFaint),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.inkFaint,
+              ),
             ),
           ),
       ],
@@ -1179,7 +1186,7 @@ Widget _bandPill(Color background, String label, Color ink) => Container(
     label,
     maxLines: 1,
     overflow: TextOverflow.ellipsis,
-    style: TextStyle(fontSize: 10, color: ink),
+    style: TextStyle(fontSize: AppType.caption, color: ink),
   ),
 );
 
@@ -1340,10 +1347,10 @@ class _Block extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: AppType.caption,
                     // Explicit, so the line box is the number the geometry
                     // above reserves rather than whatever the font asks for.
-                    height: kTimeGridBlockTitleLine / 11,
+                    height: kTimeGridBlockTitleLine / AppType.caption,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
@@ -1355,8 +1362,8 @@ class _Block extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 10,
-                      height: kTimeGridBlockSubLine / 10,
+                      fontSize: AppType.caption,
+                      height: kTimeGridBlockSubLine / AppType.caption,
                       color: AppColors.inkSoft,
                     ),
                   ),
@@ -1387,10 +1394,10 @@ class _DragPreview extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
-        fontSize: 11,
+        fontSize: AppType.caption,
         // The preview is drawn in the same rect a block gets, down to the same
         // floor, so its line has to fit in the same box.
-        height: kTimeGridBlockTitleLine / 11,
+        height: kTimeGridBlockTitleLine / AppType.caption,
         fontWeight: FontWeight.w600,
         color: AppColors.accentInk,
       ),

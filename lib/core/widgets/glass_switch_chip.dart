@@ -5,6 +5,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'glass_filter_bar.dart' show kGlassControlHeight, kGlassPillHeight;
 import 'glass_panel.dart';
+import '../theme/app_type.dart';
 
 /// One segment of a switcher that rides on glass.
 ///
@@ -102,7 +103,7 @@ class GlassSwitchChip extends StatelessWidget {
                   overflow: TextOverflow.clip,
                   softWrap: false,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w700,
                     color: fg,
                   ),

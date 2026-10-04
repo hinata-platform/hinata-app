@@ -98,6 +98,7 @@ import 'issue_labels.dart';
 import 'issue_link_resolver.dart';
 import 'work_items_section.dart';
 import '../../core/widgets/folded_hint.dart';
+import '../../core/theme/app_type.dart';
 
 part 'issue_detail_sheet.view.dart';
 part 'issue_detail_sheet.dialogs.dart';
@@ -219,7 +220,7 @@ Future<void> showIssueDetailSheet(
                     readableId: issue.readableId,
                     link: issueWebLink(apiBaseUrl, issue.linkId),
                     glyphSize: 24,
-                    fontSize: 16,
+                    fontSize: AppType.title,
                   ),
                 ),
         ),
@@ -680,7 +681,7 @@ class _CopiedHintChipState extends State<_CopiedHintChip>
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 14,
+                      fontSize: AppType.body,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

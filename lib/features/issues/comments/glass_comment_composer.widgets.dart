@@ -108,7 +108,7 @@ class _EditingBanner extends StatelessWidget {
             child: Text(
               context.t('comments.editingComment'),
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
                 color: AppColors.inkSoft,
               ),
@@ -124,7 +124,7 @@ class _EditingBanner extends StatelessWidget {
                 child: Text(
                   context.t('common.cancel'),
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: AppColors.accentInk,
                   ),
@@ -177,7 +177,7 @@ class _ReplyBanner extends StatelessWidget {
                   Text(
                     context.t('comments.replyingTo', variables: {'name': name}),
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w700,
                       color: AppColors.accentInk,
                     ),
@@ -188,7 +188,10 @@ class _ReplyBanner extends StatelessWidget {
                       preview,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                      style: TextStyle(
+                        fontSize: AppType.caption,
+                        color: AppColors.inkSoft,
+                      ),
                     ),
                   ],
                 ],
@@ -332,7 +335,7 @@ class _ActionPopup extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: AppType.body,
                       fontWeight: FontWeight.w500,
                       color: AppColors.ink,
                     ),
@@ -475,7 +478,7 @@ class _RecordingBar extends StatelessWidget {
                   time,
                   style: TextStyle(
                     fontFamily: AppTheme.fontMono,
-                    fontSize: 14,
+                    fontSize: AppType.body,
                     color: AppColors.ink,
                   ),
                 ),

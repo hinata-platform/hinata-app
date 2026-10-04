@@ -21,6 +21,7 @@ import 'absence_labels.dart';
 import 'absence_type_sheet.dart';
 import 'absence_types_cubit.dart';
 import '../../core/widgets/folded_hint.dart';
+import '../../core/theme/app_type.dart';
 
 /// Admin → Absence types (HIN-116): the catalogue an operator keeps.
 ///
@@ -177,7 +178,7 @@ class _TypesViewState extends State<_TypesView> {
           FoldedHint(
             context.t('absence.types.intro'),
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppType.label,
               height: 1.45,
               color: AppColors.textSecondary,
             ),
@@ -221,7 +222,7 @@ class _TypesViewState extends State<_TypesView> {
         Expanded(
           child: Text(
             context.t('absence.types.showInactive'),
-            style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+            style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
           ),
         ),
         HiveSwitch(
@@ -276,7 +277,7 @@ class _TypeCard extends StatelessWidget {
                     Text(
                       absenceTypeName(context, type),
                       style: TextStyle(
-                        fontSize: 14.5,
+                        fontSize: AppType.body,
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
                       ),
@@ -294,7 +295,7 @@ class _TypeCard extends StatelessWidget {
                 Text(
                   _summary(context),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppType.caption,
                     height: 1.35,
                     color: AppColors.inkSoft,
                   ),
@@ -354,7 +355,7 @@ class _Badge extends StatelessWidget {
     child: Text(
       text,
       style: TextStyle(
-        fontSize: 10.5,
+        fontSize: AppType.caption,
         fontWeight: FontWeight.w700,
         color: tone ?? AppColors.accentStrong,
       ),

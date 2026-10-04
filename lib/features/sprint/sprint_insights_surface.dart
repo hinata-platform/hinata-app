@@ -11,6 +11,7 @@ import '../../core/widgets/hive_widgets.dart';
 import 'sprint_format.dart';
 import 'sprint_tokens.dart';
 import 'widgets/burndown_chart.dart';
+import '../../core/theme/app_type.dart';
 
 /// Insights surface: summary stats, an animated burndown, velocity history,
 /// per-assignee work breakdown and the scope-change log — all from the
@@ -217,7 +218,7 @@ class _SectionHead extends StatelessWidget {
               title,
               style: const TextStyle(
                 fontFamily: AppTheme.fontBrand,
-                fontSize: 15,
+                fontSize: AppType.body,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -225,7 +226,10 @@ class _SectionHead extends StatelessWidget {
           if (trailing != null)
             Text(
               trailing!,
-              style: TextStyle(fontSize: 12, color: AppColors.inkFaint),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.inkFaint,
+              ),
             ),
         ],
       ),
@@ -266,7 +270,7 @@ class _StatCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w500,
                     color: AppColors.inkSoft,
                   ),
@@ -279,7 +283,7 @@ class _StatCard extends StatelessWidget {
             value,
             style: TextStyle(
               fontFamily: AppTheme.fontBrand,
-              fontSize: 28,
+              fontSize: AppType.hero,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.5,
               color: valueColor ?? AppColors.ink,
@@ -290,7 +294,10 @@ class _StatCard extends StatelessWidget {
             sub,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkFaint,
+            ),
           ),
         ],
       ),
@@ -355,7 +362,10 @@ class _BurndownCard extends StatelessWidget {
               : ColoredBox(color: color),
         ),
         const SizedBox(width: 6),
-        Text(label, style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft)),
+        Text(
+          label,
+          style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
+        ),
       ],
     );
   }
@@ -365,7 +375,7 @@ class _BurndownCard extends StatelessWidget {
     child: Center(
       child: Text(
         context.t('sprint.noBurndown'),
-        style: TextStyle(fontSize: 12.5, color: AppColors.inkFaint),
+        style: TextStyle(fontSize: AppType.label, color: AppColors.inkFaint),
       ),
     ),
   );
@@ -420,7 +430,7 @@ class _VelocityCard extends StatelessWidget {
                     child: Text(
                       context.t('sprint.noVelocity'),
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         color: AppColors.inkFaint,
                       ),
                     ),
@@ -509,7 +519,7 @@ class _VelocityBar extends StatelessWidget {
           overflow: TextOverflow.clip,
           style: TextStyle(
             fontFamily: AppTheme.fontMono,
-            fontSize: 10.5,
+            fontSize: AppType.caption,
             color: AppColors.inkSoft,
           ),
         ),
@@ -536,7 +546,10 @@ class _BreakdownCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 18),
               child: Text(
                 context.t('sprint.noBreakdown'),
-                style: TextStyle(fontSize: 12.5, color: AppColors.inkFaint),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  color: AppColors.inkFaint,
+                ),
               ),
             )
           else
@@ -570,7 +583,7 @@ class _BreakdownCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -587,7 +600,7 @@ class _BreakdownCard extends StatelessWidget {
                       '${a.done}/${a.total} pts',
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         color: AppColors.ink,
                       ),
                     ),
@@ -618,7 +631,10 @@ class _ScopeCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 18),
               child: Text(
                 context.t('sprint.noScope'),
-                style: TextStyle(fontSize: 12.5, color: AppColors.inkFaint),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  color: AppColors.inkFaint,
+                ),
               ),
             )
           else ...[
@@ -633,7 +649,7 @@ class _ScopeCard extends StatelessWidget {
                         c.date != null ? shortDate(c.date!) : '—',
                         style: TextStyle(
                           fontFamily: AppTheme.fontMono,
-                          fontSize: 11,
+                          fontSize: AppType.caption,
                           color: AppColors.inkFaint,
                         ),
                       ),
@@ -644,7 +660,7 @@ class _ScopeCard extends StatelessWidget {
                         '${c.delta > 0 ? '+' : ''}${c.delta}',
                         style: TextStyle(
                           fontFamily: AppTheme.fontMono,
-                          fontSize: 12,
+                          fontSize: AppType.caption,
                           fontWeight: FontWeight.w700,
                           // Added scope = red (more work); removed = green.
                           color: c.delta > 0
@@ -659,7 +675,7 @@ class _ScopeCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: AppType.label,
                           color: AppColors.inkSoft,
                         ),
                       ),
@@ -673,7 +689,10 @@ class _ScopeCard extends StatelessWidget {
                 'sprint.netScope',
                 variables: {'delta': '${net > 0 ? '+' : ''}$net'},
               ),
-              style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.inkFaint,
+              ),
             ),
           ],
         ],

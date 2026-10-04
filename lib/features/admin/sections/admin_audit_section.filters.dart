@@ -170,7 +170,7 @@ class _FilterChip extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 fontWeight: active ? FontWeight.w700 : FontWeight.w600,
                 color: active ? AppColors.accentStrong : AppColors.ink,
               ),

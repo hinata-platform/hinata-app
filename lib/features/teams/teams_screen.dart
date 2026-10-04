@@ -20,6 +20,7 @@ import 'team_widgets.dart';
 import 'teams_cubit.dart';
 import '../../core/repositories/team_repository.dart';
 import '../../core/repositories/user_repository.dart';
+import '../../core/theme/app_type.dart';
 
 /// The phone's docked row, the same height every other page's is.
 const double _kTeamsDockHeight = kGlassDockRow;
@@ -281,7 +282,7 @@ class _TeamCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 15.5,
+                        fontSize: AppType.body,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -292,7 +293,7 @@ class _TeamCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         color: AppColors.inkFaint,
                       ),
                     ),
@@ -312,7 +313,7 @@ class _TeamCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 12.8,
+                fontSize: AppType.label,
                 height: 1.5,
                 color: AppColors.inkSoft,
               ),
@@ -335,7 +336,7 @@ class _TeamCard extends StatelessWidget {
               Text(
                 '${team.projectIds.length}',
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w600,
                   color: AppColors.inkSoft,
                 ),
@@ -387,7 +388,7 @@ class _NewTeamCard extends StatelessWidget {
                 Text(
                   context.t('teams.new'),
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: AppType.body,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),
@@ -401,7 +402,7 @@ class _NewTeamCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 11.5,
+                      fontSize: AppType.caption,
                       height: 1.4,
                       color: AppColors.inkFaint,
                     ),

@@ -8,6 +8,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/soft_card.dart';
 import 'absence_labels.dart';
+import '../../core/theme/app_type.dart';
 
 /// The turn of the leave year as widgets that draw what they are given
 /// (HIN-119): the person's card that says what lapses when, the notices they
@@ -60,7 +61,7 @@ class AbsenceExpiryCard extends StatelessWidget {
                       },
                     ),
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppType.body,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,
                     ),
@@ -72,7 +73,7 @@ class AbsenceExpiryCard extends StatelessWidget {
                       variables: {'days': daysLabel(context, milliDays)},
                     ),
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppType.label,
                       height: 1.4,
                       color: AppColors.ink,
                     ),
@@ -132,7 +133,10 @@ class AbsenceNoticeTile extends StatelessWidget {
                         'days': daysLabel(context, notice.remainingMilliDays),
                       },
                     ),
-                    style: TextStyle(fontSize: 13.5, color: AppColors.ink),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      color: AppColors.ink,
+                    ),
                   ),
                   const SizedBox(height: 3),
                   Text(
@@ -147,7 +151,10 @@ class AbsenceNoticeTile extends StatelessWidget {
                         ),
                       context.t('absence.notices.kind.${notice.kind}'),
                     ].join(' · '),
-                    style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                 ],
               ),
@@ -189,7 +196,7 @@ class AbsenceYearRunCard extends StatelessWidget {
                 Text(
                   context.t(key),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w600,
                     color: AppColors.inkSoft,
                   ),
@@ -199,7 +206,7 @@ class AbsenceYearRunCard extends StatelessWidget {
                   '$value',
                   style: TextStyle(
                     fontFamily: AppTheme.fontMono,
-                    fontSize: 20,
+                    fontSize: AppType.heading,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
@@ -236,7 +243,7 @@ class AbsenceYearRunCard extends StatelessWidget {
                           variables: {'date': dayMonthLabel(context, day)},
                         ),
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: AppType.body,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),
@@ -248,7 +255,7 @@ class AbsenceYearRunCard extends StatelessWidget {
           Text(
             context.t('absence.yearRun.explain'),
             style: TextStyle(
-              fontSize: 12.5,
+              fontSize: AppType.label,
               height: 1.4,
               color: AppColors.inkSoft,
             ),
@@ -314,7 +321,7 @@ class AbsenceMissingRow extends StatelessWidget {
                   Text(
                     missing.name ?? '—',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppType.body,
                       fontWeight: FontWeight.w600,
                       color: AppColors.ink,
                     ),
@@ -329,7 +336,10 @@ class AbsenceMissingRow extends StatelessWidget {
                         'days': daysLabel(context, missing.milliDays),
                       },
                     ),
-                    style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                   if (deadline != null) ...[
                     const SizedBox(height: 6),
@@ -355,7 +365,7 @@ class AbsenceMissingRow extends StatelessWidget {
                               },
                             ),
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: AppType.caption,
                               fontWeight: FontWeight.w600,
                               color: chipInk,
                             ),
@@ -418,7 +428,7 @@ class AbsenceProposalRow extends StatelessWidget {
                   Text(
                     proposal.name ?? '—',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppType.body,
                       fontWeight: FontWeight.w600,
                       color: AppColors.ink,
                     ),
@@ -433,7 +443,10 @@ class AbsenceProposalRow extends StatelessWidget {
                         'days': daysLabel(context, proposal.milliDays),
                       },
                     ),
-                    style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                   if (from != null && to != null && proposal.sickDays != null)
                     Padding(
@@ -447,7 +460,7 @@ class AbsenceProposalRow extends StatelessWidget {
                           },
                         ),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: AppType.caption,
                           color: AppColors.inkSoft,
                         ),
                       ),

@@ -23,6 +23,7 @@ import '../../core/util/dates.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveAvatar;
 import '../../core/widgets/soft_card.dart';
 import 'team_absence_style.dart';
+import '../../core/theme/app_type.dart';
 
 /// The three states and the wash, named once under the chart. Colour never
 /// carries the meaning alone: each swatch has its word beside it.
@@ -37,7 +38,10 @@ class TeamAbsenceLegend extends StatelessWidget {
       children: [
         swatch,
         const SizedBox(width: 6),
-        Text(label, style: TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+        Text(
+          label,
+          style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
+        ),
       ],
     );
     return Wrap(
@@ -450,7 +454,7 @@ class _CornerLabel extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 11,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.4,
             color: AppColors.textSecondary,
@@ -461,7 +465,10 @@ class _CornerLabel extends StatelessWidget {
             detail!,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 11, color: AppColors.inkFaint),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkFaint,
+            ),
           ),
       ],
     ),
@@ -489,7 +496,7 @@ class _PersonLabel extends StatelessWidget {
             maxLines: lines,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w600,
               color: AppColors.ink,
             ),
@@ -571,7 +578,7 @@ class _DayHead extends StatelessWidget {
             overflow: TextOverflow.clip,
             softWrap: false,
             style: TextStyle(
-              fontSize: 9.5,
+              fontSize: AppType.badge,
               fontWeight: FontWeight.w700,
               color: AppColors.inkSoft,
             ),
@@ -587,13 +594,16 @@ class _DayHead extends StatelessWidget {
             child: Text(
               '${day.day}',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: AppType.caption,
                 fontWeight: today ? FontWeight.w800 : FontWeight.w600,
                 color: today ? AppColors.textOnDark : color,
               ),
             ),
           ),
-          Text(weekday, style: TextStyle(fontSize: 9.5, color: color)),
+          Text(
+            weekday,
+            style: TextStyle(fontSize: AppType.badge, color: color),
+          ),
         ],
       ),
     );
@@ -746,8 +756,11 @@ class _PersonRow extends StatelessWidget {
     );
   }
 
-  static TextStyle _labelStyle(Color ink) =>
-      TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: ink);
+  static TextStyle _labelStyle(Color ink) => TextStyle(
+    fontSize: AppType.caption,
+    fontWeight: FontWeight.w600,
+    color: ink,
+  );
 
   static bool _fits(BuildContext context, String label, double room) {
     if (room <= 0) return false;

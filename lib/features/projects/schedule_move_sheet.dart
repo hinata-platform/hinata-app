@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_widgets.dart' show forwardChevron;
 import '../sprint/modals/glass_modal.dart';
+import '../../core/theme/app_type.dart';
 
 /// How many moved deadlines the sheet names before it only counts the rest.
 ///
@@ -75,7 +76,7 @@ class _ScheduleMoveBody extends StatelessWidget {
                     variables: {'count': '${preview.moved}'},
                   ),
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -90,7 +91,10 @@ class _ScheduleMoveBody extends StatelessWidget {
                         'projects.schedule.andMore',
                         variables: {'count': '$rest'},
                       ),
-                      style: TextStyle(fontSize: 12, color: AppColors.inkFaint),
+                      style: TextStyle(
+                        fontSize: AppType.caption,
+                        color: AppColors.inkFaint,
+                      ),
                     ),
                   ),
                 if (preview.manual > 0) ...[
@@ -167,7 +171,7 @@ class _DateChange extends StatelessWidget {
             day(from),
             style: TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 13,
+              fontSize: AppType.label,
               color: AppColors.inkSoft,
             ),
           ),
@@ -176,7 +180,7 @@ class _DateChange extends StatelessWidget {
             day(to),
             style: const TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 13,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -188,7 +192,10 @@ class _DateChange extends StatelessWidget {
                     : 'projects.schedule.earlier',
                 variables: {'count': '${shiftDays!.abs()}'},
               ),
-              style: TextStyle(fontSize: 12, color: AppColors.inkFaint),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.inkFaint,
+              ),
             ),
         ],
       ),
@@ -214,7 +221,7 @@ class _MoveRow extends StatelessWidget {
               move.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 13),
+              style: const TextStyle(fontSize: AppType.label),
             ),
           ),
           const SizedBox(width: 10),
@@ -222,7 +229,7 @@ class _MoveRow extends StatelessWidget {
             move.from == null ? '·' : formats.formatShortDate(move.from!),
             style: TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               color: AppColors.inkFaint,
             ),
           ),
@@ -233,7 +240,7 @@ class _MoveRow extends StatelessWidget {
             move.to == null ? '·' : formats.formatShortDate(move.to!),
             style: const TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -260,7 +267,10 @@ class _Note extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkSoft,
+            ),
           ),
         ),
       ],

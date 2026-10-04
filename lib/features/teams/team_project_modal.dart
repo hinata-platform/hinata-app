@@ -19,6 +19,7 @@ import '../projects/project_create_form.dart';
 import 'team_modal_kit.dart';
 import 'team_project_cubit.dart';
 import 'team_widgets.dart';
+import '../../core/theme/app_type.dart';
 
 /// Add-project modal: attach an existing project or create a new one.
 ///
@@ -186,7 +187,10 @@ class _AddProjectBodyState extends State<_AddProjectBody> {
             const SizedBox(height: 14),
             Text(
               _error!,
-              style: TextStyle(color: AppColors.dangerInk, fontSize: 12.5),
+              style: TextStyle(
+                color: AppColors.dangerInk,
+                fontSize: AppType.label,
+              ),
             ),
           ],
         ],
@@ -213,7 +217,10 @@ class _AddProjectBodyState extends State<_AddProjectBody> {
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Text(
             context.t('teams.allProjectsAttached'),
-            style: TextStyle(fontSize: 12.5, color: AppColors.inkFaint),
+            style: TextStyle(
+              fontSize: AppType.label,
+              color: AppColors.inkFaint,
+            ),
           ),
         ),
       ];
@@ -319,7 +326,7 @@ class _ModeToggle extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                         color: on ? AppColors.ink : AppColors.inkSoft,
                       ),

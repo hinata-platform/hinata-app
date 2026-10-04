@@ -38,6 +38,7 @@ import 'sections/admin_git_section.dart';
 import 'sections/admin_mcp_section.dart';
 import 'sections/admin_security_section.dart';
 import '../../core/widgets/hive_widgets.dart' show forwardChevron;
+import '../../core/theme/app_type.dart';
 
 // ─────────────────────────── Section enum ────────────────────────────────
 
@@ -385,7 +386,10 @@ class _MobileListView extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(20, 16 + context.topGutter, 20, 0),
             child: Text(
               context.t('admin.subtitle'),
-              style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+              style: TextStyle(
+                fontSize: AppType.label,
+                color: AppColors.inkSoft,
+              ),
             ),
           ),
         ),
@@ -397,7 +401,7 @@ class _MobileListView extends StatelessWidget {
                 context.t('admin.${entry.key}').toUpperCase(),
                 style: TextStyle(
                   fontFamily: AppTheme.fontMono,
-                  fontSize: 10,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w600,
                   color: AppColors.inkFaint,
                   letterSpacing: 1.2,
@@ -468,7 +472,7 @@ class _MobileNavTile extends StatelessWidget {
                   child: Text(
                     context.t(meta.labelKey),
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: AppType.body,
                       fontWeight: FontWeight.w500,
                       color: AppColors.ink,
                     ),
@@ -740,7 +744,7 @@ class _AdminNavRail extends StatelessWidget {
                             context.t('admin.title'),
                             style: TextStyle(
                               fontFamily: AppTheme.fontBrand,
-                              fontSize: 15.5,
+                              fontSize: AppType.body,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.2,
                               color: tokens.ink,
@@ -752,7 +756,7 @@ class _AdminNavRail extends StatelessWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: AppType.caption,
                               height: 1.25,
                               color: tokens.inkSoft,
                             ),
@@ -808,7 +812,7 @@ class _NavGroup extends StatelessWidget {
         label.toUpperCase(),
         style: TextStyle(
           fontFamily: AppTheme.fontMono,
-          fontSize: 10,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w600,
           color: color ?? AppColors.inkFaint,
           letterSpacing: 1.2,
@@ -880,7 +884,7 @@ class _NavItem extends StatelessWidget {
                     child: Text(
                       context.t(meta.labelKey),
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: AppType.label,
                         fontWeight: active ? FontWeight.w600 : FontWeight.w500,
                         color: active ? AppColors.accentStrong : tokens.ink,
                       ),

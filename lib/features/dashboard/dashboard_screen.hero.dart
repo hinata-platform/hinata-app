@@ -162,7 +162,7 @@ class _Greeting extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         DefaultTextStyle(
-          style: TextStyle(fontSize: 13.5, color: AppColors.inkSoft),
+          style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
           child: (sprint != null && sprint!.isSprint && sprint!.days > 0)
               ? Wrap(
                   crossAxisAlignment: WrapCrossAlignment.center,
@@ -299,7 +299,7 @@ class _SprintHero extends StatelessWidget {
             ),
             style: const TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 10.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
               color: Color(0xFFEBCF8F),
@@ -321,7 +321,7 @@ class _SprintHero extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             fontFamily: AppTheme.fontBrand,
-            fontSize: 23,
+            fontSize: AppType.display,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.4,
             color: _heroInk,
@@ -334,7 +334,7 @@ class _SprintHero extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppType.label,
               height: 1.4,
               color: Colors.white.withValues(alpha: .72),
             ),
@@ -406,7 +406,7 @@ class _SprintHero extends StatelessWidget {
             label,
             style: const TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w500,
               color: _heroInk,
             ),
@@ -447,7 +447,7 @@ class _SprintHero extends StatelessWidget {
                 Text(
                   context.t('dashboard.toBoard'),
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w700,
                     color: kOnAmber,
                   ),
@@ -484,7 +484,7 @@ class _SprintEmpty extends StatelessWidget {
             context.t('dashboard.noSprint'),
             style: TextStyle(
               fontFamily: AppTheme.fontBrand,
-              fontSize: 16,
+              fontSize: AppType.title,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
             ),
@@ -493,7 +493,7 @@ class _SprintEmpty extends StatelessWidget {
           Text(
             context.t('dashboard.noSprintMessage'),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+            style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
           ),
           const SizedBox(height: 16),
           FilledButton(
@@ -557,7 +557,7 @@ class _AvatarStack extends StatelessWidget {
                   child: Text(
                     '+$extra',
                     style: const TextStyle(
-                      fontSize: 11,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w700,
                       color: _heroInk,
                     ),
@@ -618,7 +618,7 @@ class _ProgressRing extends StatelessWidget {
                 Text(
                   context.t('dashboard.sprintCompleted'),
                   style: TextStyle(
-                    fontSize: 10.5,
+                    fontSize: AppType.caption,
                     color: Colors.white.withValues(alpha: .7),
                   ),
                 ),
@@ -791,7 +791,7 @@ class _KpiCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w500,
                     color: AppColors.inkSoft,
                   ),
@@ -808,7 +808,7 @@ class _KpiCard extends StatelessWidget {
                 value: value,
                 style: TextStyle(
                   fontFamily: AppTheme.fontBrand,
-                  fontSize: 31,
+                  fontSize: AppType.hero,
                   fontWeight: FontWeight.w700,
                   height: 1,
                   letterSpacing: -0.5,

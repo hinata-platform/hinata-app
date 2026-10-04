@@ -48,7 +48,7 @@ class _HexChip extends StatelessWidget {
                 maxLines: 1,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 11,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -122,7 +122,7 @@ class _ScopeChip extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: fg,
                   ),
@@ -133,7 +133,7 @@ class _ScopeChip extends StatelessWidget {
                     '$count',
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: 10.5,
+                      fontSize: AppType.caption,
                       color: fg.withValues(alpha: 0.7),
                     ),
                   ),
@@ -216,7 +216,7 @@ class _KbdHint extends StatelessWidget {
         text,
         style: TextStyle(
           fontFamily: AppTheme.fontMono,
-          fontSize: 11,
+          fontSize: AppType.caption,
           color: tokens.inkSoft,
         ),
       ),
@@ -245,7 +245,7 @@ class _GroupLabel extends StatelessWidget {
           Text(
             label.toUpperCase(),
             style: TextStyle(
-              fontSize: 10.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.8,
               color: tokens.inkFaint,
@@ -281,7 +281,7 @@ class _RecentsHead extends StatelessWidget {
           Text(
             context.t('search.recent.title').toUpperCase(),
             style: TextStyle(
-              fontSize: 10.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.8,
               color: tokens.inkFaint,
@@ -304,7 +304,7 @@ class _RecentsHead extends StatelessWidget {
                     child: Text(
                       context.t('search.recent.clear'),
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         fontWeight: FontWeight.w600,
                         color: tokens.inkSoft,
                       ),
@@ -353,7 +353,7 @@ class _EmptyDeep extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: AppType.body,
               fontWeight: FontWeight.w600,
               color: tokens.inkSoft,
             ),
@@ -364,7 +364,7 @@ class _EmptyDeep extends StatelessWidget {
             child: Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12.5, color: tokens.inkFaint),
+              style: TextStyle(fontSize: AppType.label, color: tokens.inkFaint),
             ),
           ),
         ],
@@ -392,7 +392,10 @@ class _FootHint extends StatelessWidget {
           _Cap(tokens: tokens, text: c),
           const SizedBox(width: 6),
         ],
-        Text(label, style: TextStyle(fontSize: 11.5, color: tokens.inkSoft)),
+        Text(
+          label,
+          style: TextStyle(fontSize: AppType.caption, color: tokens.inkSoft),
+        ),
       ],
     );
   }
@@ -418,7 +421,7 @@ class _Cap extends StatelessWidget {
         textAlign: TextAlign.center,
         style: TextStyle(
           fontFamily: AppTheme.fontMono,
-          fontSize: 11,
+          fontSize: AppType.caption,
           color: tokens.ink,
         ),
       ),

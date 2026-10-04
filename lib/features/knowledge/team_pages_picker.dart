@@ -18,6 +18,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassAnchoredPopover,
         showGlassBottomSheet;
 import 'data/knowledge_models.dart' show lucideIcon;
+import '../../core/theme/app_type.dart';
 
 /// Opens the picker for the knowledge pages of [teamId] a member may read —
 /// the "selected pages" half of a team membership's knowledge access.
@@ -245,7 +246,10 @@ class _TeamPagesPickerPanelState extends State<TeamPagesPickerPanel> {
               Expanded(
                 child: Text(
                   context.t('teams.knowledge.pickerNote'),
-                  style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
               ),
             ],
@@ -266,7 +270,7 @@ class _TeamPagesPickerPanelState extends State<TeamPagesPickerPanel> {
                   MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint,
               onChanged: _onQueryChanged,
               textInputAction: TextInputAction.search,
-              style: const TextStyle(fontSize: 14),
+              style: const TextStyle(fontSize: AppType.body),
               decoration: InputDecoration(
                 isDense: true,
                 prefixIcon: Icon(
@@ -279,7 +283,10 @@ class _TeamPagesPickerPanelState extends State<TeamPagesPickerPanel> {
                   minHeight: 38,
                 ),
                 hintText: context.t('teams.knowledge.searchPages'),
-                hintStyle: TextStyle(color: AppColors.inkFaint, fontSize: 14),
+                hintStyle: TextStyle(
+                  color: AppColors.inkFaint,
+                  fontSize: AppType.body,
+                ),
                 filled: true,
                 fillColor: AppColors.surface,
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
@@ -308,7 +315,10 @@ class _TeamPagesPickerPanelState extends State<TeamPagesPickerPanel> {
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
             child: Text(
               context.t('teams.knowledge.truncated'),
-              style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.inkSoft,
+              ),
             ),
           ),
         // Takes the height the popover or sheet leaves, and builds only the
@@ -339,7 +349,7 @@ class _TeamPagesPickerPanelState extends State<TeamPagesPickerPanel> {
                       ? 'teams.knowledge.noPages'
                       : 'teams.knowledge.noPageMatches',
                 ),
-          style: TextStyle(color: AppColors.inkFaint, fontSize: 13),
+          style: TextStyle(color: AppColors.inkFaint, fontSize: AppType.label),
         ),
       );
     }
@@ -383,7 +393,10 @@ class _TeamPagesPickerPanelState extends State<TeamPagesPickerPanel> {
                       variables: {'count': '${_picked.length}'},
                       count: _picked.length,
                     ),
-              style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.inkSoft,
+              ),
             ),
           ),
           FilledButton(
@@ -461,7 +474,7 @@ class _PageRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13.5,
+                          fontSize: AppType.label,
                           fontWeight: picked
                               ? FontWeight.w600
                               : FontWeight.w400,
@@ -479,7 +492,7 @@ class _PageRow extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: AppType.caption,
                             color: AppColors.inkSoft,
                           ),
                         ),

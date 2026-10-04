@@ -17,6 +17,7 @@ import 'dev_rows.dart';
 import 'development_cubit.dart';
 import '../../../core/widgets/hive_widgets.dart'
     show chevronTurn, forwardChevron;
+import '../../../core/theme/app_type.dart';
 
 /// Issue main-column summary: the auto-linked git activity for the issue,
 /// categorised into Branches · Commits · Pull/Merge requests · Builds. Fetches
@@ -261,7 +262,7 @@ class _DevelopmentSummaryState extends State<_DevelopmentSummaryBody> {
               Text(
                 context.t('git.development'),
                 style: const TextStyle(
-                  fontSize: 14.5,
+                  fontSize: AppType.body,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -316,7 +317,7 @@ class _DevelopmentSummaryState extends State<_DevelopmentSummaryBody> {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 12,
+              fontSize: AppType.caption,
               color: AppColors.inkSoft,
             ),
           ),
@@ -385,7 +386,7 @@ class _DevelopmentSummaryState extends State<_DevelopmentSummaryBody> {
               ),
               style: TextStyle(
                 fontFamily: AppTheme.fontMono,
-                fontSize: 11.5,
+                fontSize: AppType.caption,
                 color: AppColors.inkFaint,
               ),
             )
@@ -514,7 +515,7 @@ class _DevCat extends StatelessWidget {
                     Text(
                       label,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -523,7 +524,7 @@ class _DevCat extends StatelessWidget {
                       '$count',
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         color: AppColors.inkFaint,
                       ),
                     ),

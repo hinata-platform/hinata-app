@@ -66,7 +66,7 @@ class _OwnerItem extends StatelessWidget {
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
-                fontSize: 13,
+                fontSize: AppType.label,
               ),
             ),
           ),
@@ -81,7 +81,7 @@ class _OwnerItem extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -94,7 +94,10 @@ class _OwnerItem extends StatelessWidget {
                       'unit': '${provider.unit}s',
                     },
                   ),
-                  style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkFaint,
+                  ),
                 ),
               ],
             ),
@@ -151,7 +154,7 @@ class _RepoItem extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -182,7 +185,7 @@ class _RepoItem extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           color: AppColors.inkFaint,
                         ),
                       ),
@@ -204,7 +207,7 @@ class _RepoItem extends StatelessWidget {
                   ? context.t('git.connect.private')
                   : context.t('git.connect.public'),
               style: TextStyle(
-                fontSize: 10,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.4,
                 color: AppColors.inkFaint,

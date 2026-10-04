@@ -21,6 +21,7 @@ import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
 import 'correction_requests_cubit.dart';
 import 'lock_notice.dart';
 import 'time_requests_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// The requests the reader can answer, newest first (Art. 16 DSGVO): frozen
 /// entries to correct, and older days to open.
@@ -249,7 +250,7 @@ class _CorrectionRequestsViewState extends State<_CorrectionRequestsView> {
               ? Text(
                   context.t('time.correction.empty'),
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     height: 1.5,
                     color: AppColors.textSecondary,
                   ),
@@ -380,7 +381,7 @@ class _CorrectionCard extends StatelessWidget {
                 child: Text(
                   request.requesterLabel ?? context.t('time.deletedUser'),
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),
@@ -389,7 +390,10 @@ class _CorrectionCard extends StatelessWidget {
               if (at != null)
                 Text(
                   DateFormat.yMMMd(locale).add_Hm().format(at.toLocal()),
-                  style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkFaint,
+                  ),
                 ),
             ],
           ),
@@ -397,7 +401,10 @@ class _CorrectionCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               details.join(' · '),
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.textSecondary,
+              ),
             ),
           ],
           if (request.note != null) ...[
@@ -405,7 +412,7 @@ class _CorrectionCard extends StatelessWidget {
             Text(
               request.note!,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppType.label,
                 height: 1.45,
                 color: AppColors.ink,
               ),
@@ -434,7 +441,7 @@ class _CorrectionCard extends StatelessWidget {
                       },
                     ),
                     style: TextStyle(
-                      fontSize: 11.5,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textSecondary,
                     ),
@@ -444,7 +451,7 @@ class _CorrectionCard extends StatelessWidget {
                     Text(
                       answer.note!,
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         height: 1.45,
                         color: AppColors.ink,
                       ),
@@ -532,11 +539,15 @@ class _OwnCorrectionRequestsViewState
     if (request == null) return const SizedBox.shrink();
     final answer = request.answer;
     final label = TextStyle(
-      fontSize: 11.5,
+      fontSize: AppType.caption,
       fontWeight: FontWeight.w600,
       color: AppColors.textSecondary,
     );
-    final body = TextStyle(fontSize: 12.5, height: 1.45, color: AppColors.ink);
+    final body = TextStyle(
+      fontSize: AppType.label,
+      height: 1.45,
+      color: AppColors.ink,
+    );
     return Padding(
       padding: const EdgeInsets.only(top: 10),
       child: Container(

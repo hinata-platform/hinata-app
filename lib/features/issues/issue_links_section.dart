@@ -23,6 +23,7 @@ import '../sprint/modals/glass_modal.dart'
     show showGlassErrorToast, showGlassOptions;
 import 'issue_form.dart' show showIssueForm;
 import 'issue_links_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 part 'issue_links_section.parts.dart';
 
@@ -200,7 +201,7 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
               Text(
                 context.t('issues.links.title'),
                 style: const TextStyle(
-                  fontSize: 14.5,
+                  fontSize: AppType.body,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -208,7 +209,10 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
               if (hasLinks)
                 Text(
                   '${_links.length}',
-                  style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.label,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
             ],
           ),
@@ -232,7 +236,7 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
                     child: Text(
                       context.t('issues.links.loadFailed'),
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         color: AppColors.inkSoft,
                       ),
                     ),

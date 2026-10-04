@@ -23,6 +23,7 @@ import '../sprint/modals/glass_modal.dart'
 import 'account_modals.dart' show showConfirm;
 import 'account_widgets.dart';
 import 'account_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// The account "Access tokens" section — lists the caller's Personal Access
 /// Tokens (used to authenticate against the embedded MCP server), and mints new
@@ -210,7 +211,7 @@ class _PatRow extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 13.5,
+                            fontSize: AppType.label,
                             fontWeight: FontWeight.w600,
                             color: AppColors.ink,
                           ),
@@ -234,7 +235,7 @@ class _PatRow extends StatelessWidget {
                     token.prefix,
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: 12,
+                      fontSize: AppType.caption,
                       color: AppColors.inkSoft,
                     ),
                   ),
@@ -252,7 +253,10 @@ class _PatRow extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     meta,
-                    style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      color: AppColors.inkFaint,
+                    ),
                     softWrap: true,
                   ),
                 ],
@@ -308,7 +312,7 @@ class _ScopeChip extends StatelessWidget {
       ),
       child: Text(
         label == key ? scope : label,
-        style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+        style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
       ),
     );
   }
@@ -507,7 +511,7 @@ class _SelectableScope extends StatelessWidget {
                   Text(
                     label == key ? scope : label,
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                       color: selected ? AppColors.accentStrong : AppColors.ink,
                     ),
@@ -516,7 +520,7 @@ class _SelectableScope extends StatelessWidget {
                     scope,
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: 10.5,
+                      fontSize: AppType.caption,
                       color: AppColors.inkFaint,
                     ),
                   ),
@@ -560,7 +564,7 @@ Future<void> showPatReveal(BuildContext context, CreatedPat created) {
                 Text(
                   context.t('pat.created.tokenLabel'),
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w600,
                     color: AppColors.inkSoft,
                   ),

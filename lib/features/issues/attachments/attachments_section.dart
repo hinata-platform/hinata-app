@@ -33,6 +33,7 @@ import 'attachments_cubit.dart';
 import 'attachment_kind.dart';
 import 'attachment_viewer.dart';
 import 'upload_source_sheet.dart';
+import '../../../core/theme/app_type.dart';
 
 part 'attachments_section.tiles.dart';
 
@@ -682,7 +683,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
         Text(
           context.t('issues.attachments.title').toUpperCase(),
           style: TextStyle(
-            fontSize: 11,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.8,
             color: AppColors.inkFaint,
@@ -701,7 +702,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
               '$count',
               style: TextStyle(
                 fontFamily: AppTheme.fontMono,
-                fontSize: 11,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w600,
                 color: AppColors.inkSoft,
               ),
@@ -762,7 +763,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
                       Text(
                         context.t('issues.attachments.emptyTitle'),
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -775,7 +776,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           color: AppColors.inkFaint,
                         ),
                       ),

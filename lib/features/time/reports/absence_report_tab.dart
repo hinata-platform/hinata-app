@@ -27,6 +27,7 @@ import '../../sprint/modals/glass_modal.dart';
 import 'report_absences_cubit.dart';
 import 'report_actions.dart';
 import 'report_list_parts.dart';
+import '../../../core/theme/app_type.dart';
 
 /// The tab "absences" of the report page (HIN-119): balances per person or per
 /// type for one leave year, with the ring of the year at the top.
@@ -307,7 +308,7 @@ class _AbsenceReportTabState extends State<AbsenceReportTab> {
                     child: Text(
                       context.t('absence.report.leadHint'),
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         color: AppColors.inkSoft,
                       ),
                     ),

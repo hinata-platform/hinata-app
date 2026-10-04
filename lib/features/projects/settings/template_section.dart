@@ -9,6 +9,7 @@ import '../../../core/widgets/hive_widgets.dart';
 import '../deadline_basis_field.dart';
 import 'settings_common.dart';
 import '../../../core/widgets/folded_hint.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Templates, the project's event date and how its deadlines count: the marker that decides where the
 /// project is listed, the date its relative deadlines hang off, and the way to
@@ -82,7 +83,10 @@ class TemplateSection extends StatelessWidget {
           const SizedBox(height: 6),
           FoldedHint(
             context.t('projectSettings.templates.eventDateHint'),
-            style: TextStyle(fontSize: 12, color: AppColors.inkFaint),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkFaint,
+            ),
           ),
           const SizedBox(height: 18),
           FieldLabel(text: context.t('projects.deadlineBasis.label')),
@@ -104,14 +108,17 @@ class TemplateSection extends StatelessWidget {
                     Text(
                       context.t('projectSettings.templates.markTitle'),
                       style: const TextStyle(
-                        fontSize: 13.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 2),
                     FoldedHint(
                       context.t('projectSettings.templates.markHint'),
-                      style: TextStyle(fontSize: 12, color: AppColors.inkFaint),
+                      style: TextStyle(
+                        fontSize: AppType.caption,
+                        color: AppColors.inkFaint,
+                      ),
                     ),
                   ],
                 ),
@@ -197,7 +204,7 @@ class _EventDateRow extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 13.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                         color: date == null
                             ? AppColors.inkFaint
