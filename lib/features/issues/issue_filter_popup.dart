@@ -4,7 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
+    show GlassContainer, LiquidRoundedSuperellipse;
 
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
@@ -321,7 +321,7 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
     );
     return GlassContainer(
       useOwnLayer: true,
-      quality: GlassQuality.premium,
+      quality: kPanelGlassQuality,
       clipBehavior: Clip.antiAlias,
       shape: const LiquidRoundedSuperellipse(borderRadius: 20),
       settings: liquidGlassPanelSettings(

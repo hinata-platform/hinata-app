@@ -17,18 +17,28 @@ import '../theme/glass_chrome.dart' show ios27Glass;
 /// NOT from an opaque tint fill — the package's own default `glassColor` is
 /// fully transparent. Passing a heavy fill (e.g. a 0.62-alpha tint) buries the
 /// lens and the surface reads as a flat card. So always feed a *light*
-/// [glassFill] and pair this with `quality: GlassQuality.premium` on the
-/// `GlassContainer` (texture capture + chromatic aberration on Impeller; it
-/// falls back gracefully on Skia/Web).
+/// [glassFill] and pair this with `quality: kPanelGlassQuality` on the
+/// `GlassContainer`.
 
-/// The app's standard liquid-glass settings for panels/overlays: the iOS 27
-/// material (see [ios27Glass]) in the panel's own [glassFill], frosted the way
-/// iOS menus and popovers are. The fill still decides legibility; the frost
-/// only calms what shows through it.
+/// The tier every glass panel renders at: standard.
+///
+/// Measured in a profile build on an iPhone Air at 120 Hz (8.33 ms a frame):
+/// the "More" sheet with the frosted iOS 27 recipe on premium missed the
+/// budget on 149 of 446 frames while it slid in and out, 15.1 ms raster at
+/// the 90th percentile, because the frost blurs the whole panel again on every
+/// frame it moves or its content scrolls. On standard it missed 6 of 507, at
+/// 4.4 ms. The notification popover had already been pinned to standard for
+/// the same reason. Neutral chrome stays premium: it does not frost.
+const kPanelGlassQuality = GlassQuality.standard;
+
+/// The app's liquid-glass settings for panels/overlays in the panel's own
+/// [glassFill]: the recipe tuned for the standard tier ([kPanelGlassQuality]),
+/// or, with [standard] false, the iOS 27 material (see [ios27Glass]) frosted
+/// the way iOS menus and popovers are. The fill decides legibility either way.
 LiquidGlassSettings liquidGlassPanelSettings({
   required Color glassFill,
   required bool dark,
-  bool standard = false,
+  bool standard = kPanelGlassQuality == GlassQuality.standard,
 }) => standard
     ? LiquidGlassSettings(
         // The standard tier cannot draw the iOS 27 rim; this is the recipe it
@@ -84,7 +94,7 @@ class GlassFloatingSurface extends StatelessWidget {
       shadows: tokens.panelShadow,
       child: GlassContainer(
         useOwnLayer: true,
-        quality: GlassQuality.premium,
+        quality: kPanelGlassQuality,
         clipBehavior: Clip.antiAlias,
         shape: LiquidRoundedSuperellipse(borderRadius: radius),
         settings: liquidGlassPanelSettings(

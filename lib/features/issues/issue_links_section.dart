@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
+    show GlassContainer, LiquidRoundedSuperellipse;
 
 import '../../core/api/api_client.dart';
 import '../../core/repositories/issue_repository.dart';

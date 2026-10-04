@@ -6,7 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
+    show GlassContainer, LiquidRoundedSuperellipse;
 
 import '../../core/repositories/search_repository.dart';
 import '../../core/i18n/i18n.dart';
@@ -368,11 +368,9 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
     // `glassColor: tokens.tint` (alpha 0.62), a near-opaque warm fill that
     // buried the glass and read as a flat card. We now feed a very light tint
     // (just enough warmth + text contrast) and let the lens do the work.
-    // `premium` quality enables texture capture + chromatic aberration on
-    // Impeller (falls back gracefully on Skia/Web).
     final glass = GlassContainer(
       useOwnLayer: true,
-      quality: GlassQuality.premium,
+      quality: kPanelGlassQuality,
       clipBehavior: Clip.antiAlias,
       shape: LiquidRoundedSuperellipse(borderRadius: mobile ? 0 : radius),
       settings: liquidGlassPanelSettings(

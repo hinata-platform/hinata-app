@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show GlassContainer, GlassQuality, LiquidRoundedSuperellipse;
+    show GlassContainer, LiquidRoundedSuperellipse;
 import '../../core/widgets/hive_loader.dart';
 import '../../core/branding/org_logo.dart';
 import '../../core/widgets/hex_mark.dart';
@@ -716,7 +716,7 @@ class _AdminNavRail extends StatelessWidget {
       shadows: dark ? _kRailShadowDark : _kRailShadowLight,
       child: GlassContainer(
         useOwnLayer: true,
-        quality: GlassQuality.premium,
+        quality: kPanelGlassQuality,
         clipBehavior: Clip.antiAlias,
         shape: const LiquidRoundedSuperellipse(borderRadius: 24),
         settings: liquidGlassPanelSettings(

@@ -324,7 +324,7 @@ class _GlassBottomSheet extends StatelessWidget {
         shadows: tokens.panelShadow,
         child: GlassContainer(
           useOwnLayer: true,
-          quality: GlassQuality.premium,
+          quality: kPanelGlassQuality,
           clipBehavior: Clip.antiAlias,
           shape: LiquidRoundedSuperellipse(borderRadius: radius),
           settings: liquidGlassPanelSettings(
@@ -594,7 +594,7 @@ class _AnchoredPanel extends StatelessWidget {
         shadows: tokens.panelShadow,
         child: GlassContainer(
           useOwnLayer: true,
-          quality: GlassQuality.premium,
+          quality: kPanelGlassQuality,
           clipBehavior: Clip.antiAlias,
           shape: const LiquidRoundedSuperellipse(borderRadius: _radius),
           settings: liquidGlassPanelSettings(
@@ -1585,7 +1585,7 @@ class _GlassModalScaffoldState extends State<_GlassModalScaffold> {
         shadows: tokens.panelShadow,
         child: GlassContainer(
           useOwnLayer: true,
-          quality: GlassQuality.premium,
+          quality: kPanelGlassQuality,
           clipBehavior: Clip.antiAlias,
           shape: const LiquidRoundedSuperellipse(borderRadius: 26),
           settings: liquidGlassPanelSettings(
@@ -2004,7 +2004,7 @@ class _GlassToastState extends State<_GlassToast>
                       shadows: tokens.panelShadow,
                       child: GlassContainer(
                         useOwnLayer: true,
-                        quality: GlassQuality.premium,
+                        quality: kPanelGlassQuality,
                         clipBehavior: Clip.antiAlias,
                         shape: const LiquidRoundedSuperellipse(
                           borderRadius: 16,
