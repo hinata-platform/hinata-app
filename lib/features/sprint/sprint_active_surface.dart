@@ -19,6 +19,7 @@ import '../board/issue_quick_create.dart';
 import '../board/wall/board_wall_columns.dart';
 import '../board/wall/board_wall_cubit.dart';
 import 'widgets/glass_sprint_header.dart';
+import '../../core/theme/app_type.dart';
 
 /// Active-sprint surface: the Liquid-Glass sprint header above a sprint-scoped
 /// Kanban board (To Do → In Progress → In Review → Done, WIP limits, drag).
@@ -382,7 +383,7 @@ class _SprintColumn extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
-                                fontSize: 13,
+                                fontSize: AppType.label,
                               ),
                             ),
                           ),
@@ -409,7 +410,7 @@ class _SprintColumn extends StatelessWidget {
                               countLabel,
                               style: TextStyle(
                                 fontFamily: AppTheme.fontMono,
-                                fontSize: 11.5,
+                                fontSize: AppType.caption,
                                 fontWeight: FontWeight.w600,
                                 color: overWip
                                     ? AppColors.danger
@@ -580,7 +581,7 @@ class _SprintCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontWeight: FontWeight.w600,
-                          fontSize: 13,
+                          fontSize: AppType.label,
                           height: 1.4,
                         ),
                       ),
@@ -603,7 +604,7 @@ class _SprintCard extends StatelessWidget {
                                   due.text,
                                   style: TextStyle(
                                     fontFamily: AppTheme.fontMono,
-                                    fontSize: 11,
+                                    fontSize: AppType.caption,
                                     color: due.late
                                         ? AppColors.danger
                                         : AppColors.inkFaint,
@@ -663,7 +664,7 @@ class _PointsPill extends StatelessWidget {
         points == null ? '—' : '$points',
         style: TextStyle(
           fontFamily: AppTheme.fontMono,
-          fontSize: 11,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w700,
           color: points == null ? AppColors.inkFaint : AppColors.ink,
         ),

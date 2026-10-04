@@ -41,7 +41,7 @@ class TeamSettingsTab extends StatelessWidget {
               Text(
                 context.t('teams.adminsOnly'),
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: AppType.body,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -49,7 +49,10 @@ class TeamSettingsTab extends StatelessWidget {
               Text(
                 context.t('teams.adminsOnlyHint'),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  color: AppColors.inkSoft,
+                ),
               ),
             ],
           ),
@@ -95,7 +98,10 @@ class TeamSettingsTab extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       _hueName(context, team.colorHue),
-                      style: TextStyle(fontSize: 13, color: AppColors.ink),
+                      style: TextStyle(
+                        fontSize: AppType.label,
+                        color: AppColors.ink,
+                      ),
                     ),
                   ],
                 ),
@@ -136,7 +142,7 @@ class TeamSettingsTab extends StatelessWidget {
               Text(
                 context.t('teams.dangerZone'),
                 style: TextStyle(
-                  fontSize: 13.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w700,
                   color: AppColors.dangerInk,
                 ),
@@ -152,7 +158,7 @@ class TeamSettingsTab extends StatelessWidget {
                       Text(
                         context.t('teams.deleteThis'),
                         style: const TextStyle(
-                          fontSize: 13.5,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -160,7 +166,7 @@ class TeamSettingsTab extends StatelessWidget {
                       Text(
                         context.t('teams.deleteThisHint'),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: AppType.caption,
                           color: AppColors.inkSoft,
                         ),
                       ),
@@ -271,7 +277,10 @@ class _TeamAvatarSettingState extends State<_TeamAvatarSetting> {
         Expanded(
           child: FoldedHint(
             context.t('teams.avatar.hint'),
-            style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkSoft,
+            ),
           ),
         ),
       ],
@@ -298,7 +307,7 @@ class _SettingRow extends StatelessWidget {
             child: Text(
               k,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
                 color: AppColors.inkSoft,
               ),
@@ -311,7 +320,7 @@ class _SettingRow extends StatelessWidget {
                 Text(
                   v ?? '',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontFamily: mono ? AppTheme.fontMono : null,
                     color: AppColors.ink,
                   ),
@@ -343,7 +352,7 @@ class _PermRow extends StatelessWidget {
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -351,7 +360,7 @@ class _PermRow extends StatelessWidget {
               Text(
                 body,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: AppType.caption,
                   height: 1.45,
                   color: AppColors.inkSoft,
                 ),

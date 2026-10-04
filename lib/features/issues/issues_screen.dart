@@ -60,6 +60,7 @@ import '../../core/repositories/meta_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/widgets/user_pronouns.dart';
+import '../../core/theme/app_type.dart';
 
 part 'issues_screen.toolbar.dart';
 part 'issues_screen.rows.dart';

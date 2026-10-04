@@ -11,6 +11,7 @@ import '../sprint/modals/glass_modal.dart'
     show showGlassModal, GlassModalHeader, GlassField, glassInputDecoration;
 import 'account_cubit.dart';
 import 'account_widgets.dart';
+import '../../core/theme/app_type.dart';
 
 /// Edit display name / job title / locale → PATCH /me. Returns the saved [Me].
 Future<Me?> showEditProfile(BuildContext context, AccountCubit account, Me me) {
@@ -494,7 +495,7 @@ class _AvatarActionTile extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: AppType.body,
                     fontWeight: FontWeight.w600,
                     color: fg,
                   ),

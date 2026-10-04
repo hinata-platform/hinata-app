@@ -13,6 +13,7 @@ import '../../../core/widgets/read_on_trigger.dart';
 import '../board_drag.dart';
 import '../board_feedback.dart';
 import 'board_wall_cubit.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Dims the wall while a new read of it is under way. Only the dimming is
 /// rebuilt when that starts or ends, never the cards under it.
@@ -249,7 +250,10 @@ class _BoardLaneFooterState extends State<BoardLaneFooter> {
                   variables: {'count': '${column.remaining}'},
                 ),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                style: TextStyle(
+                  fontSize: AppType.caption,
+                  color: AppColors.inkSoft,
+                ),
               ),
             );
           }

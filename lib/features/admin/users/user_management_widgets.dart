@@ -16,6 +16,7 @@ import '../../../core/widgets/info_circle_button.dart';
 import '../../../core/widgets/user_pronouns.dart';
 import '../../search/search_tokens.dart';
 import '../../sprint/modals/glass_modal.dart' show showGlassBottomSheet;
+import '../../../core/theme/app_type.dart';
 
 part 'user_management_widgets.drawer.dart';
 
@@ -175,7 +176,7 @@ class _Badge extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               color: fg,
             ),
@@ -275,7 +276,7 @@ class OriginTag extends StatelessWidget {
         Text(
           originLabel(context, origin),
           style: TextStyle(
-            fontSize: 12,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w600,
             color: AppColors.inkSoft,
           ),
@@ -292,7 +293,7 @@ class OriginTag extends StatelessWidget {
               'SSO',
               style: TextStyle(
                 fontFamily: AppTheme.fontMono,
-                fontSize: 9,
+                fontSize: AppType.badge,
                 fontWeight: FontWeight.w700,
                 color: AppColors.inkFaint,
               ),
@@ -380,7 +381,7 @@ class UmKpiCard extends StatelessWidget {
                       value,
                       style: TextStyle(
                         fontFamily: AppTheme.fontBrand,
-                        fontSize: 22,
+                        fontSize: AppType.display,
                         fontWeight: FontWeight.w800,
                         color: AppColors.ink,
                         height: 1.05,
@@ -389,7 +390,7 @@ class UmKpiCard extends StatelessWidget {
                     const SizedBox(height: 1),
                     DefaultTextStyle(
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         color: AppColors.inkSoft,
                       ),
                       child: trailing == null

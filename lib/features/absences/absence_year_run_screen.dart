@@ -22,6 +22,7 @@ import 'absence_labels.dart';
 import 'absence_year_run_cubit.dart';
 import 'absence_year_views.dart';
 import '../../core/widgets/folded_hint.dart';
+import '../../core/theme/app_type.dart';
 
 /// The yearly run, for the people who keep absences (HIN-119): what it did last
 /// night, who would lose days without having been told, and the lapses it
@@ -187,7 +188,7 @@ class _YearRunViewState extends State<_YearRunView> {
                 child: FoldedHint(
                   context.t('absence.yearRun.intro'),
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     height: 1.45,
                     color: AppColors.inkSoft,
                   ),
@@ -279,7 +280,7 @@ class _YearRunViewState extends State<_YearRunView> {
                   Text(
                     context.t(titleKey),
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: AppType.body,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,
                     ),
@@ -288,7 +289,7 @@ class _YearRunViewState extends State<_YearRunView> {
                   Text(
                     context.t(hintKey),
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                       height: 1.4,
                       color: AppColors.inkSoft,
                     ),

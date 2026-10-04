@@ -21,6 +21,7 @@ import '../../core/widgets/glass_filter_bar.dart';
 import '../../core/widgets/glass_switch_chip.dart';
 import '../../core/widgets/hive_widgets.dart' show SegmentItem;
 import '../sprint/modals/glass_modal.dart' show anchorRectOfContext;
+import '../../core/theme/app_type.dart';
 
 /// How tall a board's docked row is on a phone.
 const double kBoardDockHeight = kGlassDockRow;
@@ -106,7 +107,7 @@ class BoardFilterPill extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: ink,
                   ),
@@ -142,7 +143,7 @@ class _CountBadge extends StatelessWidget {
       '$count',
       style: const TextStyle(
         fontFamily: AppTheme.fontMono,
-        fontSize: 11,
+        fontSize: AppType.caption,
         fontWeight: FontWeight.w700,
         color: kOnAmber,
       ),

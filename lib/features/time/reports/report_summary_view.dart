@@ -11,6 +11,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/hive_widgets.dart' show fmtDuration;
 import '../../../core/widgets/soft_card.dart';
 import 'report_format.dart';
+import '../../../core/theme/app_type.dart';
 
 /// The summary of a time report (HIN-93): the totals, one chart and the groups
 /// it is drawn from. Dumb views — they draw what they are handed.
@@ -137,7 +138,7 @@ class _Figure extends StatelessWidget {
                   Text(
                     label,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w600,
                       color: AppColors.inkSoft,
                     ),
@@ -231,7 +232,10 @@ class ReportChartCard extends StatelessWidget {
               child: Text(
                 context.t('time.reports.chartEmpty'),
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.inkSoft, fontSize: 13),
+                style: TextStyle(
+                  color: AppColors.inkSoft,
+                  fontSize: AppType.label,
+                ),
               ),
             )
           else
@@ -343,7 +347,10 @@ class _Bars extends StatelessWidget {
                       groupLabel(context, groupBy, group),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13, color: AppColors.ink),
+                      style: TextStyle(
+                        fontSize: AppType.label,
+                        color: AppColors.ink,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -370,7 +377,7 @@ class _Bars extends StatelessWidget {
                     fmtDuration(context, group.minutes),
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                       color: AppColors.ink,
                     ),
@@ -520,7 +527,7 @@ FlTitlesData _titles(
   final step = math.max(1, (groups.length / (narrow ? 4 : 7)).ceil());
   final style = TextStyle(
     fontFamily: AppTheme.fontMono,
-    fontSize: 10,
+    fontSize: AppType.caption,
     color: AppColors.inkSoft,
   );
   return FlTitlesData(
@@ -638,14 +645,17 @@ class _Donut extends StatelessWidget {
                     fmtDuration(context, totalMinutes),
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: 15,
+                      fontSize: AppType.body,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,
                     ),
                   ),
                   Text(
                     context.t('time.reports.total'),
-                    style: TextStyle(fontSize: 11, color: AppColors.inkSoft),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                 ],
               ),
@@ -681,7 +691,7 @@ class _Donut extends StatelessWidget {
                               '  ${(100 * slice.minutes / totalMinutes).round()} %',
                           style: TextStyle(
                             fontFamily: AppTheme.fontMono,
-                            fontSize: 12,
+                            fontSize: AppType.caption,
                             color: AppColors.inkSoft,
                           ),
                         ),
@@ -689,7 +699,10 @@ class _Donut extends StatelessWidget {
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, color: AppColors.ink),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -697,7 +710,7 @@ class _Donut extends StatelessWidget {
                   fmtDuration(context, slice.minutes),
                   style: TextStyle(
                     fontFamily: AppTheme.fontMono,
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
@@ -755,7 +768,7 @@ class ReportGroupRow extends StatelessWidget {
       fmtDuration(context, group.minutes),
       style: TextStyle(
         fontFamily: AppTheme.fontMono,
-        fontSize: 13,
+        fontSize: AppType.label,
         fontWeight: FontWeight.w600,
         color: AppColors.ink,
       ),
@@ -776,7 +789,7 @@ class ReportGroupRow extends StatelessWidget {
             detail,
             style: TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
               color: AppColors.inkSoft,
             ),
@@ -788,7 +801,7 @@ class ReportGroupRow extends StatelessWidget {
             label,
             maxLines: compact ? 2 : 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 14, color: AppColors.ink),
+            style: TextStyle(fontSize: AppType.body, color: AppColors.ink),
           ),
         ),
       ],
@@ -796,7 +809,7 @@ class ReportGroupRow extends StatelessWidget {
     final bar = _ShareBar(share: share, color: color);
     final secondary = TextStyle(
       fontFamily: AppTheme.fontMono,
-      fontSize: 12,
+      fontSize: AppType.caption,
       color: AppColors.inkSoft,
     );
     final row = compact
@@ -889,7 +902,7 @@ class ReportGroupHead extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = TextStyle(
-      fontSize: 11.5,
+      fontSize: AppType.caption,
       fontWeight: FontWeight.w700,
       letterSpacing: 0.3,
       color: AppColors.inkSoft,

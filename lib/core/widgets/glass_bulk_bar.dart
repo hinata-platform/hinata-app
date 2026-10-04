@@ -6,6 +6,7 @@ import '../i18n/i18n.dart';
 import '../responsive/responsive.dart';
 import '../theme/app_colors.dart';
 import 'glass_panel.dart';
+import '../theme/app_type.dart';
 
 /// Docks a [GlassBulkBar] just above whatever sits at the bottom of the page:
 /// the floating nav on a phone, the window edge (plus its safe area) elsewhere.
@@ -105,7 +106,7 @@ class GlassBulkBar extends StatelessWidget {
                   style: TextStyle(
                     color: tokens.ink,
                     fontWeight: FontWeight.w700,
-                    fontSize: 13,
+                    fontSize: AppType.label,
                   ),
                 ),
               ),
@@ -177,7 +178,10 @@ class GlassBulkAction extends StatelessWidget {
         foregroundColor: color,
         overlayColor: tokens.rowHover,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5),
+        textStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: AppType.label,
+        ),
       ),
       icon: Icon(icon, size: 15, color: color),
       label: Text(label),

@@ -9,6 +9,7 @@ import '../../../core/theme/hue_colors.dart';
 import '../../git/widgets/provider_glyph.dart';
 import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Admin → Git integration.
 ///
@@ -168,7 +169,7 @@ class _GitProviderBlock extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: 14,
+                          fontSize: AppType.body,
                           color: AppColors.ink,
                         ),
                       ),
@@ -177,7 +178,7 @@ class _GitProviderBlock extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: AppType.caption,
                           color: AppColors.inkFaint,
                           fontFamily: AppTheme.fontMono,
                         ),
@@ -254,7 +255,7 @@ class _StatusPill extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w700,
                 color: hueChipText(hue),
               ),
@@ -283,7 +284,7 @@ class _ScopeRow extends StatelessWidget {
           context.t('admin.gitScopes'),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+          style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
         ),
         const SizedBox(height: 8),
         Wrap(
@@ -301,7 +302,7 @@ class _ScopeRow extends StatelessWidget {
                 child: Text(
                   scope,
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: AppType.caption,
                     fontFamily: AppTheme.fontMono,
                     color: AppColors.inkSoft,
                   ),
@@ -337,7 +338,10 @@ class _TokenSecretStatus extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkSoft,
+            ),
           ),
         ),
       ],

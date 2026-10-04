@@ -17,6 +17,7 @@ import '../sprint/modals/glass_modal.dart'
     show GlassToastKind, anchorRectOfContext, showGlassToast;
 import 'placement_picker.dart';
 import 'time_entry_sheet.dart';
+import '../../core/theme/app_type.dart';
 
 /// How much room the compact bar takes above the floating nav when a timer is
 /// running.
@@ -124,7 +125,7 @@ class _TimerBarBody extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: running ? AppColors.ink : AppColors.inkSoft,
                   ),
@@ -387,7 +388,7 @@ class _PhaseLine extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               color: phase.isBreak ? AppColors.inkFaint : AppColors.inkSoft,
             ),
           ),
@@ -442,7 +443,10 @@ class _PlacementLine extends StatelessWidget {
                   : context.t('time.placement.assigned'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.inkFaint,
+              ),
             ),
           ),
         ],
@@ -522,7 +526,7 @@ class _ElapsedReadout extends StatelessWidget {
       child: Text(
         format(elapsed),
         style: TextStyle(
-          fontSize: 17,
+          fontSize: AppType.title,
           fontWeight: FontWeight.w700,
           fontFeatures: const [FontFeature.tabularFigures()],
           // The one number on this page that moves, so it gets the primary ink:

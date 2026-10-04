@@ -15,6 +15,7 @@ import '../sprint/modals/glass_modal.dart';
 import 'deadline_basis_field.dart';
 import 'project_copy_cubit.dart';
 import 'project_key.dart';
+import '../../core/theme/app_type.dart';
 
 /// Which of the two ways in somebody took.
 enum ProjectCopyMode {
@@ -315,7 +316,7 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
                   Text(
                     context.t('projects.copy.include'),
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -360,7 +361,7 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
                     _error!,
                     style: TextStyle(
                       color: AppColors.dangerInk,
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                     ),
                   ),
                 ],
@@ -420,7 +421,7 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13.5,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                       color: date == null ? AppColors.inkFaint : AppColors.ink,
                     ),
@@ -465,7 +466,10 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
           const SizedBox(width: 9),
           Text(
             context.t('projects.copy.counting'),
-            style: TextStyle(fontSize: 12.5, color: AppColors.inkFaint),
+            style: TextStyle(
+              fontSize: AppType.label,
+              color: AppColors.inkFaint,
+            ),
           ),
         ],
       );
@@ -505,7 +509,7 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
                       },
                     ),
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 color: tooBig ? AppColors.danger : AppColors.inkSoft,
               ),
             ),
@@ -549,7 +553,7 @@ class _Toggle extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: enabled ? AppColors.ink : AppColors.inkFaint,
                   ),
@@ -557,7 +561,10 @@ class _Toggle extends StatelessWidget {
                 if (detail != null)
                   Text(
                     detail!,
-                    style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      color: AppColors.inkFaint,
+                    ),
                   ),
               ],
             ),

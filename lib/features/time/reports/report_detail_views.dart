@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/hive_widgets.dart' show fmtDuration;
 import 'report_format.dart';
+import '../../../core/theme/app_type.dart';
 
 /// The rows of the detailed, workload and saved tabs (HIN-93). Dumb views.
 
@@ -27,7 +28,7 @@ class ReportDayHead extends StatelessWidget {
         child: Text(
           DateFormat.yMMMMEEEEd(locale).format(day),
           style: TextStyle(
-            fontSize: 12.5,
+            fontSize: AppType.label,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.2,
             color: AppColors.inkSoft,
@@ -77,7 +78,7 @@ class ReportEntryRow extends StatelessWidget {
           fmtDuration(context, entry.roundedMinutes),
           style: TextStyle(
             fontFamily: AppTheme.fontMono,
-            fontSize: 13,
+            fontSize: AppType.label,
             fontWeight: FontWeight.w600,
             color: AppColors.ink,
           ),
@@ -88,11 +89,14 @@ class ReportEntryRow extends StatelessWidget {
               'time.reports.recordedAs',
               variables: {'duration': fmtDuration(context, entry.minutes)},
             ),
-            style: TextStyle(fontSize: 11, color: AppColors.inkSoft),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkSoft,
+            ),
           ),
       ],
     );
-    final meta = TextStyle(fontSize: 12, color: AppColors.inkSoft);
+    final meta = TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft);
     final title = Text(
       description.isEmpty
           ? context.t('time.reports.noDescription')
@@ -100,7 +104,7 @@ class ReportEntryRow extends StatelessWidget {
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
-        fontSize: 14,
+        fontSize: AppType.body,
         fontStyle: description.isEmpty ? FontStyle.italic : FontStyle.normal,
         color: description.isEmpty ? AppColors.inkSoft : AppColors.ink,
       ),
@@ -169,7 +173,10 @@ class ReportEntryRow extends StatelessWidget {
                     entry.userName ?? context.t('time.otherMember'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, color: AppColors.ink),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
               ],
@@ -215,11 +222,14 @@ class WorkloadRowView extends StatelessWidget {
         : (row.bookedMinutes / capacity).clamp(0.0, 1.0);
     final figure = TextStyle(
       fontFamily: AppTheme.fontMono,
-      fontSize: 13,
+      fontSize: AppType.label,
       fontWeight: FontWeight.w600,
       color: AppColors.ink,
     );
-    final label = TextStyle(fontSize: 11.5, color: AppColors.inkSoft);
+    final label = TextStyle(
+      fontSize: AppType.caption,
+      color: AppColors.inkSoft,
+    );
     // On a phone the three figures spread across the row: the first keeps to
     // the start, the middle to the centre, the last to the end.
     Widget cell(
@@ -280,7 +290,7 @@ class WorkloadRowView extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: AppType.body,
             fontWeight: FontWeight.w600,
             color: AppColors.ink,
           ),
@@ -401,7 +411,7 @@ class SavedReportTile extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 14.5,
+                          fontSize: AppType.body,
                           fontWeight: FontWeight.w700,
                           color: AppColors.ink,
                         ),
@@ -410,7 +420,7 @@ class SavedReportTile extends StatelessWidget {
                       Text(
                         parts.join(' · '),
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: AppType.label,
                           color: AppColors.inkSoft,
                         ),
                       ),
@@ -512,7 +522,7 @@ class _Badge extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
               color: ink,
             ),

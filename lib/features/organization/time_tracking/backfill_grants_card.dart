@@ -18,6 +18,7 @@ import '../../sprint/modals/glass_modal.dart'
 import '../../time/lock_notice.dart' show formatPeriod;
 import '../../admin/admin_form_helpers.dart';
 import 'backfill_grants_cubit.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Admin → Time tracking: the days opened for single people that are still open.
 ///
@@ -93,7 +94,7 @@ class _OrgBackfillGrantsCardState extends State<_OrgBackfillGrantsBody> {
       BlocBuilder<BackfillGrantsCubit, PagedState<TimeBackfillGrant>>(
         builder: (context, state) {
           final quiet = TextStyle(
-            fontSize: 12.5,
+            fontSize: AppType.label,
             height: 1.5,
             color: AppColors.textSecondary,
           );
@@ -189,7 +190,7 @@ class _GrantRow extends StatelessWidget {
                 Text(
                   grant.userLabel ?? context.t('time.deletedUser'),
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),
@@ -198,7 +199,7 @@ class _GrantRow extends StatelessWidget {
                 Text(
                   details.join(' · '),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppType.caption,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -207,7 +208,7 @@ class _GrantRow extends StatelessWidget {
                   Text(
                     note,
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                       height: 1.45,
                       color: AppColors.ink,
                     ),

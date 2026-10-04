@@ -9,6 +9,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
 import '../theme/app_colors.dart';
 import '../../features/search/search_tokens.dart';
 import 'glass_panel.dart';
+import '../theme/app_type.dart';
 
 /// One selectable row in a [GlassPopupMenu].
 class GlassMenuItem<T> {
@@ -479,7 +480,7 @@ class _MenuRowState<T> extends State<_MenuRow<T>> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13.5,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                       color: ink,
                     ),
@@ -492,7 +493,7 @@ class _MenuRowState<T> extends State<_MenuRow<T>> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: AppType.caption,
                           color: t.ink.withValues(alpha: 0.4),
                         ),
                       ),

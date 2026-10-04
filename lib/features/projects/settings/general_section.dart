@@ -12,6 +12,7 @@ import '../project_hue_label.dart';
 import '../project_key.dart';
 import 'settings_common.dart';
 import '../../../core/widgets/folded_hint.dart';
+import '../../../core/theme/app_type.dart';
 
 /// General card: picture, name (required), key (required, uppercase),
 /// description, accent.
@@ -172,7 +173,7 @@ class _AvatarRow extends StatelessWidget {
               style: TextStyle(
                 fontFamily: AppTheme.fontMono,
                 fontWeight: FontWeight.w700,
-                fontSize: 16,
+                fontSize: AppType.title,
                 color: hueChipText(hue),
               ),
             ),
@@ -185,7 +186,10 @@ class _AvatarRow extends StatelessWidget {
         Expanded(
           child: FoldedHint(
             context.t('projectSettings.avatar.hint'),
-            style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkSoft,
+            ),
           ),
         ),
       ],
@@ -222,7 +226,10 @@ class _NameField extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             context.t('projectSettings.nameEmpty'),
-            style: TextStyle(fontSize: 11.5, color: AppColors.dangerInk),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.dangerInk,
+            ),
           ),
         ],
       ],
@@ -313,7 +320,10 @@ class _KeyField extends StatelessWidget {
         Text.rich(
           TextSpan(
             text: '${context.t('projectSettings.issuesReadLike')} ',
-            style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkFaint,
+            ),
             children: [
               TextSpan(
                 text: '${controller.text.isEmpty ? 'KEY' : controller.text}-42',
@@ -379,7 +389,7 @@ class _Swatches extends StatelessWidget {
           child: Text(
             projectHueLabel(context, selectedHue),
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
               color: AppColors.inkSoft,
             ),

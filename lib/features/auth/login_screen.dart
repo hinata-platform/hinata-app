@@ -21,6 +21,7 @@ import '../legal/legal_links.dart';
 import '../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import 'auth_shell.dart';
 import 'auth_flow_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -416,7 +417,7 @@ class _LoginScreenState extends State<_LoginScreenBody>
                           context.t('auth.ssoLoadFailed'),
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 12.5,
+                            fontSize: AppType.label,
                             color: AppColors.textSecondary,
                           ),
                         ),

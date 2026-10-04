@@ -16,6 +16,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassAnchoredPopover,
         showGlassBottomSheet;
 import 'placement_picker_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// Where an entry is filed: a project, an issue inside one, or nothing at all.
 ///
@@ -285,7 +286,7 @@ class _PlacementPickerBodyState extends State<_PlacementPickerBody> {
                           context.t('search.noMatch'),
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: AppType.label,
                             color: AppColors.inkSoft,
                           ),
                         ),
@@ -309,7 +310,7 @@ class _SectionLabel extends StatelessWidget {
     child: Text(
       text.toUpperCase(),
       style: TextStyle(
-        fontSize: 10.5,
+        fontSize: AppType.caption,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.8,
         color: AppColors.inkFaint,
@@ -362,7 +363,7 @@ class _PlacementRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13.5,
+                          fontSize: AppType.label,
                           fontWeight: selected
                               ? FontWeight.w700
                               : FontWeight.w600,
@@ -375,7 +376,7 @@ class _PlacementRow extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 11.5,
+                            fontSize: AppType.caption,
                             color: AppColors.inkFaint,
                           ),
                         ),

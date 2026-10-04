@@ -45,6 +45,7 @@ import '../../core/repositories/dashboard_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
 import 'dashboard_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 part 'dashboard_screen.hero.dart';
 part 'dashboard_screen.panels.dart';

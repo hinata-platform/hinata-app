@@ -564,7 +564,7 @@ class _CountBadge extends StatelessWidget {
         '$count',
         style: const TextStyle(
           fontFamily: AppTheme.fontMono,
-          fontSize: 11,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w700,
           color: kOnAmber,
         ),
@@ -823,7 +823,7 @@ class _ToolPill extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
                 color: ink,
               ),

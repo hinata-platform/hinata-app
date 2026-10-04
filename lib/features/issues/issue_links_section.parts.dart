@@ -37,7 +37,7 @@ class _LinkGroup extends StatelessWidget {
         Text(
           _verbLabel(context, verbKey, links.first.verb),
           style: const TextStyle(
-            fontSize: 12.5,
+            fontSize: AppType.label,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.1,
           ),
@@ -128,7 +128,7 @@ class _LinkRowState extends State<_LinkRow> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppType.label,
                       decoration: done ? TextDecoration.lineThrough : null,
                       color: done ? AppColors.inkFaint : AppColors.ink,
                     ),
@@ -322,7 +322,10 @@ class _LinkEditorState extends State<_LinkEditor> {
                 kIssueLinkOptions[i].verbKey,
                 kIssueLinkOptions[i].verb,
               ),
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                fontSize: AppType.body,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
       ],
@@ -527,7 +530,7 @@ class _LinkEditorState extends State<_LinkEditor> {
                               _debounce = Timer(_debounceDelay, _search);
                             },
                             textInputAction: TextInputAction.search,
-                            style: const TextStyle(fontSize: 13.5),
+                            style: const TextStyle(fontSize: AppType.label),
                             decoration: InputDecoration(
                               isDense: true,
                               border: InputBorder.none,
@@ -541,7 +544,7 @@ class _LinkEditorState extends State<_LinkEditor> {
                                   : null,
                               hintStyle: TextStyle(
                                 color: AppColors.inkFaint,
-                                fontSize: 13.5,
+                                fontSize: AppType.label,
                               ),
                             ),
                           ),
@@ -602,7 +605,7 @@ class _LinkEditorState extends State<_LinkEditor> {
           child: Text(
             context.t('issues.links.suggestionsTitle'),
             style: TextStyle(
-              fontSize: 11,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.6,
               color: AppColors.inkFaint,
@@ -614,7 +617,10 @@ class _LinkEditorState extends State<_LinkEditor> {
             padding: const EdgeInsets.fromLTRB(14, 6, 14, 16),
             child: Text(
               context.t('issues.links.noMatches'),
-              style: TextStyle(color: AppColors.inkFaint, fontSize: 13),
+              style: TextStyle(
+                color: AppColors.inkFaint,
+                fontSize: AppType.label,
+              ),
             ),
           )
         else
@@ -672,7 +678,7 @@ class _TypePill extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -713,7 +719,7 @@ class _LinkChip extends StatelessWidget {
           Text(
             issue.readableId,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               color: AppColors.accentInk,
               fontFeatures: const [FontFeature.tabularFigures()],
@@ -772,7 +778,7 @@ class _SuggestionTile extends StatelessWidget {
               Text(
                 issue.readableId,
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w700,
                   color: AppColors.inkSoft,
                   fontFeatures: const [FontFeature.tabularFigures()],
@@ -784,7 +790,7 @@ class _SuggestionTile extends StatelessWidget {
                   issue.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13.5),
+                  style: const TextStyle(fontSize: AppType.label),
                 ),
               ),
               if (alreadyLinked) ...[

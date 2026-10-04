@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_type.dart';
 
 /// The app's legal documents are hosted centrally on the project website so
 /// they are reachable independently of any server instance (store listings
@@ -50,7 +51,7 @@ class LegalLinks extends StatelessWidget {
   Widget build(BuildContext context) {
     final linkStyle = TextStyle(
       color: AppColors.textSecondary,
-      fontSize: 13,
+      fontSize: AppType.label,
       decoration: TextDecoration.underline,
       decorationColor: AppColors.textSecondary,
     );

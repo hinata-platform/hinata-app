@@ -15,6 +15,7 @@ import '../deletion/delete_flows.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'board_columns_editor.dart';
 import 'board_edit_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// Opens the board management menu (Rename · Delete) as an anchored popover at
 /// the trigger and runs the chosen action. Shared by the board overview and the
@@ -254,7 +255,7 @@ class _MenuRow extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: AppType.body,
                   fontWeight: FontWeight.w600,
                   color: color,
                 ),
@@ -410,7 +411,7 @@ class _RenameBoardBodyState extends State<_RenameBoardBody> {
                     _error!,
                     style: TextStyle(
                       color: AppColors.dangerInk,
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                     ),
                   ),
                 ],

@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/folded_hint.dart';
+import '../../core/theme/app_type.dart';
 
 /// A titled card section used down the account screen. Header carries an amber
 /// icon tile + title/subtitle and an optional trailing widget.
@@ -68,7 +69,7 @@ class AccountSection extends StatelessWidget {
                         title,
                         style: TextStyle(
                           fontFamily: AppTheme.fontBrand,
-                          fontSize: 15.5,
+                          fontSize: AppType.body,
                           fontWeight: FontWeight.w700,
                           color: danger ? AppColors.danger : AppColors.ink,
                         ),
@@ -78,7 +79,7 @@ class AccountSection extends StatelessWidget {
                         Text(
                           subtitle!,
                           style: TextStyle(
-                            fontSize: 12.5,
+                            fontSize: AppType.label,
                             height: 1.35,
                             color: AppColors.inkSoft,
                           ),
@@ -135,13 +136,13 @@ class SettingRow extends StatelessWidget {
     final text = TitledHint(
       title: label,
       titleStyle: TextStyle(
-        fontSize: 13.5,
+        fontSize: AppType.label,
         fontWeight: FontWeight.w600,
         color: AppColors.ink,
       ),
       hint: description,
       hintStyle: TextStyle(
-        fontSize: 12,
+        fontSize: AppType.caption,
         height: 1.35,
         color: AppColors.inkSoft,
       ),
@@ -242,7 +243,7 @@ class AccountPill extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               color: fg,
             ),
@@ -300,7 +301,7 @@ class AccountActionButton extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: fg,
                   ),
@@ -350,7 +351,7 @@ class AccountNote extends StatelessWidget {
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 height: 1.4,
                 color: AppColors.ink,
                 fontWeight: FontWeight.w500,

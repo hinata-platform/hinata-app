@@ -30,6 +30,7 @@ import 'account_widgets.dart';
 import 'time_export_cubit.dart';
 import '../time/time_requests_cubit.dart';
 import '../../core/widgets/folded_hint.dart';
+import '../../core/theme/app_type.dart';
 
 /// Settings → Time tracking: the person's own rhythm.
 ///
@@ -304,7 +305,7 @@ class _RemindersState extends State<_Reminders> {
           child: FoldedHint(
             context.t('account.timeTracking.remindersHint'),
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppType.caption,
               height: 1.4,
               color: AppColors.textSecondary,
             ),
@@ -532,7 +533,7 @@ class _GroupLabel extends StatelessWidget {
     child: Text(
       text,
       style: TextStyle(
-        fontSize: 11,
+        fontSize: AppType.caption,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.6,
         color: AppColors.inkFaint,
@@ -635,7 +636,7 @@ class _StepperRow extends StatelessWidget {
                 format(value),
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                   fontFeatures: const [FontFeature.tabularFigures()],
                   color: AppColors.ink,

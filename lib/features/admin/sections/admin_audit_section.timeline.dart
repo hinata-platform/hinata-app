@@ -30,7 +30,7 @@ class _DayHeaderRow extends StatelessWidget {
             _label(context).toUpperCase(),
             style: TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 10.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.8,
               color: AppColors.inkFaint,
@@ -126,7 +126,7 @@ class _AuditTimelineTile extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: AppType.body,
                           fontWeight: FontWeight.w700,
                           color: AppColors.ink,
                           height: 1.25,
@@ -140,7 +140,7 @@ class _AuditTimelineTile extends StatelessWidget {
                         time,
                         style: TextStyle(
                           fontFamily: AppTheme.fontMono,
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           fontWeight: FontWeight.w600,
                           color: AppColors.inkFaint,
                         ),
@@ -155,7 +155,7 @@ class _AuditTimelineTile extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                       color: AppColors.inkSoft,
                       height: 1.3,
                     ),
@@ -285,7 +285,10 @@ class _ErrorView extends StatelessWidget {
             Text(
               context.t('audit.error'),
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.inkSoft, fontSize: 14),
+              style: TextStyle(
+                color: AppColors.inkSoft,
+                fontSize: AppType.body,
+              ),
             ),
             const SizedBox(height: 16),
             OutlinedButton.icon(

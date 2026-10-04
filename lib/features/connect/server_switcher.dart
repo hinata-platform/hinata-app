@@ -9,6 +9,7 @@ import '../../core/storage/app_storage.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import 'server_manager.dart';
+import '../../core/theme/app_type.dart';
 
 /// Switches the app to an already-saved [url]: points the storage at it and asks
 /// AppConfig to re-verify the new backend. Auth is re-checked centrally once the
@@ -72,7 +73,7 @@ class ServerSelectorButton extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 15,
+                                fontSize: AppType.body,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -86,7 +87,7 @@ class ServerSelectorButton extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: AppTheme.fontMono,
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           color: AppColors.inkFaint,
                         ),
                       ),
@@ -129,7 +130,7 @@ class ServerCard extends StatelessWidget {
           Text(
             context.t('server.activeConnected').toUpperCase(),
             style: TextStyle(
-              fontSize: 10.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.6,
               color: AppColors.inkFaint,
@@ -164,7 +165,7 @@ class ServerCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: AppType.title,
                         fontWeight: FontWeight.w600,
                         letterSpacing: -0.1,
                       ),
@@ -181,7 +182,7 @@ class ServerCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: AppTheme.fontMono,
-                              fontSize: 12,
+                              fontSize: AppType.caption,
                               color: AppColors.inkFaint,
                             ),
                           ),

@@ -12,6 +12,7 @@ import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../core/widgets/project_picker.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'board_edit_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// Liquid-Glass "Create board" modal. First asks the board type (Kanban —
 /// continuous flow, default; or Scrum — sprint planning), then name + the
@@ -177,7 +178,7 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
                       variables: {'count': '${_projects.length}'},
                     ),
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: AppType.caption,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -193,7 +194,7 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
                     context.t(_error!),
                     style: TextStyle(
                       color: AppColors.dangerInk,
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                     ),
                   ),
                 ],
@@ -271,7 +272,7 @@ class _TypeCard extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: AppType.body,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -279,7 +280,7 @@ class _TypeCard extends StatelessWidget {
                     Text(
                       description,
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         height: 1.35,
                         color: AppColors.inkSoft,
                       ),

@@ -28,6 +28,7 @@ import '../../features/sprint/modals/glass_modal.dart';
 import 'hinata_editing.dart';
 import 'hinata_editor_controller.dart';
 import 'hinata_lexical.dart';
+import '../theme/app_type.dart';
 
 /// The two trailing buttons every rich-text host wants.
 ///
@@ -298,7 +299,7 @@ class _MentionPickerState extends State<_MentionPicker> {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontFamily: AppTheme.fontBrand,
-                    fontSize: 17,
+                    fontSize: AppType.title,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.2,
                   ),
@@ -333,7 +334,10 @@ class _MentionPickerState extends State<_MentionPicker> {
                   padding: const EdgeInsets.fromLTRB(22, 4, 22, 24),
                   child: Text(
                     context.t('common.noMatches'),
-                    style: TextStyle(color: AppColors.inkFaint, fontSize: 13),
+                    style: TextStyle(
+                      color: AppColors.inkFaint,
+                      fontSize: AppType.label,
+                    ),
                   ),
                 )
               : ListView.builder(
@@ -375,7 +379,7 @@ class _MentionPickerState extends State<_MentionPicker> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 13.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -385,7 +389,7 @@ class _MentionPickerState extends State<_MentionPicker> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           color: AppColors.inkFaint,
                         ),
                       ),

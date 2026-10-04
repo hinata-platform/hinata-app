@@ -8,6 +8,7 @@ import '../../core/widgets/hive_empty_state.dart';
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
 import 'knowledge_tokens.dart';
+import '../../core/theme/app_type.dart';
 
 /// KB home: search + a card grid of spaces + a "recently updated" list.
 class KnowledgeHome extends StatefulWidget {
@@ -123,7 +124,7 @@ class _KnowledgeHomeState extends State<KnowledgeHome> {
                 controller: _search,
                 textInputAction: TextInputAction.search,
                 onChanged: (v) => setState(() => _query = v),
-                style: const TextStyle(fontSize: 15),
+                style: const TextStyle(fontSize: AppType.body),
                 decoration: InputDecoration(
                   isCollapsed: true,
                   border: InputBorder.none,
@@ -249,7 +250,7 @@ class _KnowledgeHomeState extends State<KnowledgeHome> {
   Widget _sectionHeader(String text) => Text(
     text.toUpperCase(),
     style: TextStyle(
-      fontSize: 12,
+      fontSize: AppType.caption,
       letterSpacing: 0.8,
       fontWeight: FontWeight.w700,
       color: AppColors.inkFaint,
@@ -359,7 +360,7 @@ class _SpaceCard extends StatelessWidget {
                         space.name,
                         style: const TextStyle(
                           fontFamily: AppTheme.fontBrand,
-                          fontSize: 16,
+                          fontSize: AppType.title,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.2,
                         ),
@@ -368,7 +369,7 @@ class _SpaceCard extends StatelessWidget {
                       Text(
                         space.desc,
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: AppType.label,
                           height: 1.45,
                           color: AppColors.inkSoft,
                         ),
@@ -381,7 +382,7 @@ class _SpaceCard extends StatelessWidget {
                         ),
                         style: TextStyle(
                           fontFamily: AppTheme.fontMono,
-                          fontSize: 11,
+                          fontSize: AppType.caption,
                           color: AppColors.inkFaint,
                         ),
                       ),
@@ -441,7 +442,7 @@ class _NewSpaceCard extends StatelessWidget {
                     context.t('knowledge.newSpace'),
                     style: TextStyle(
                       fontFamily: AppTheme.fontBrand,
-                      fontSize: 15,
+                      fontSize: AppType.body,
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.2,
                       color: AppColors.inkSoft,
@@ -513,7 +514,7 @@ class _KbHit extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: AppType.body,
                           fontWeight: FontWeight.w600,
                           letterSpacing: -0.1,
                         ),
@@ -524,7 +525,7 @@ class _KbHit extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           color: AppColors.inkSoft,
                         ),
                       ),
@@ -545,7 +546,7 @@ class _KbHit extends StatelessWidget {
                       '${article.reads}',
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         color: AppColors.inkFaint,
                       ),
                     ),

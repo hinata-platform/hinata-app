@@ -18,6 +18,7 @@ import 'planning/sprint_planning_cubit.dart';
 import 'sprint_format.dart';
 import 'widgets/plan_row.dart';
 import 'widgets/sprint_widgets.dart';
+import '../../core/theme/app_type.dart';
 
 /// Planning (backlog) surface: stacked sprint containers above the paginated
 /// product backlog. Drag issues between any container; multi-select + bulk
@@ -440,7 +441,7 @@ class _SprintGroupHeader extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontFamily: AppTheme.fontBrand,
-              fontSize: 15,
+              fontSize: AppType.body,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.1,
             ),
@@ -454,7 +455,7 @@ class _SprintGroupHeader extends StatelessWidget {
             dateRange(sprint.startDate, sprint.endDate),
             style: TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 11,
+              fontSize: AppType.caption,
               color: AppColors.inkFaint,
             ),
           ),
@@ -469,7 +470,7 @@ class _SprintGroupHeader extends StatelessWidget {
               'sprint.issuesMany',
               variables: {'count': '${container.total}'},
             ),
-      style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+      style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
     );
     // Over every card of the sprint, not only the ones loaded.
     final points = bucketSummary(container.summary);
@@ -539,7 +540,7 @@ class _SprintGroupHeader extends StatelessWidget {
       sprint.goal!,
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
-      style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+      style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
     ),
   );
 }
@@ -569,7 +570,7 @@ class _StateBadge extends StatelessWidget {
           Text(
             context.t(active ? 'board.active' : 'sprint.planned'),
             style: TextStyle(
-              fontSize: 11,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
               color: active ? AppColors.accentStrong : AppColors.inkSoft,
             ),
@@ -678,7 +679,7 @@ class _BacklogGroupState extends State<_BacklogGroup> {
                       context.t('sprint.backlog'),
                       style: const TextStyle(
                         fontFamily: AppTheme.fontBrand,
-                        fontSize: 15,
+                        fontSize: AppType.body,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -699,7 +700,7 @@ class _BacklogGroupState extends State<_BacklogGroup> {
                         '${widget.total}',
                         style: TextStyle(
                           fontFamily: AppTheme.fontMono,
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           fontWeight: FontWeight.w600,
                           color: AppColors.inkSoft,
                         ),
@@ -845,7 +846,7 @@ class _EmptyDropHint extends StatelessWidget {
       child: Text(
         text,
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 12.5, color: AppColors.inkFaint),
+        style: TextStyle(fontSize: AppType.label, color: AppColors.inkFaint),
       ),
     );
   }
@@ -906,7 +907,7 @@ class _Pager extends StatelessWidget {
             child: Text(
               '$from–$to ${context.t('common.of')} $total',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: AppType.caption,
                 color: AppColors.inkSoft,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
@@ -958,7 +959,7 @@ class _Pager extends StatelessWidget {
                 ),
                 child: DefaultTextStyle.merge(
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: selected ? Colors.white : AppColors.inkSoft,
                   ),
@@ -1014,13 +1015,16 @@ class _BulkBar extends StatelessWidget {
             child: DropdownButton<String>(
               hint: Text(
                 context.t('sprint.moveTo'),
-                style: TextStyle(color: tokens.inkSoft, fontSize: 12.5),
+                style: TextStyle(
+                  color: tokens.inkSoft,
+                  fontSize: AppType.label,
+                ),
               ),
               dropdownColor: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
               isDense: true,
               iconEnabledColor: tokens.inkSoft,
-              style: TextStyle(color: tokens.ink, fontSize: 12.5),
+              style: TextStyle(color: tokens.ink, fontSize: AppType.label),
               items: [
                 for (final s in sprints)
                   DropdownMenuItem(value: s.id, child: Text(s.name)),

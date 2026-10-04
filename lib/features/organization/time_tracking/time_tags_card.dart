@@ -15,6 +15,7 @@ import '../../../core/widgets/hive_loader.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../../admin/admin_form_helpers.dart';
 import 'time_tags_cubit.dart';
+import '../../../core/theme/app_type.dart';
 
 /// The tag catalogue, managed.
 ///
@@ -306,7 +307,7 @@ class _TagRow extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 13.5,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
                 color: AppColors.ink,
               ),
@@ -315,7 +316,10 @@ class _TagRow extends StatelessWidget {
           if (tag.entries != null)
             Text(
               context.t('admin.timeTracking.tagUsage', count: tag.entries),
-              style: TextStyle(fontSize: 11.5, color: AppColors.inkFaint),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.inkFaint,
+              ),
             ),
           IconButton(
             tooltip: context.t('common.rename'),

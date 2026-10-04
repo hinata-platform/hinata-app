@@ -133,7 +133,7 @@ class _SelectHint extends StatelessWidget {
                     child: Text(
                       context.t('issues.multiSelectHint.text'),
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: AppType.label,
                         height: 1.35,
                         color: AppColors.ink,
                       ),
@@ -149,7 +149,7 @@ class _SelectHint extends StatelessWidget {
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.accentInk,
                   textStyle: const TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

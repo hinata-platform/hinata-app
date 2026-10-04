@@ -14,6 +14,7 @@ import 'data/knowledge_repository.dart';
 import 'knowledge_place_field.dart';
 import 'knowledge_scope.dart';
 import 'knowledge_tokens.dart';
+import '../../core/theme/app_type.dart';
 
 /// Result handed back to the shell on Save / Publish.
 class EditorResult {
@@ -186,7 +187,7 @@ class _KnowledgeEditorState extends State<KnowledgeEditor> {
                 textInputAction: TextInputAction.next,
                 style: const TextStyle(
                   fontFamily: AppTheme.fontBrand,
-                  fontSize: 22,
+                  fontSize: AppType.display,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.4,
                 ),
@@ -226,7 +227,7 @@ class _KnowledgeEditorState extends State<KnowledgeEditor> {
                 Text(
                   repo.spaceById(_spaceId)?.name ?? '',
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),

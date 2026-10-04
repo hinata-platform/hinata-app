@@ -21,6 +21,7 @@ import 'holiday_calendar_sheet.dart';
 import 'holiday_sheet.dart';
 import 'org_holidays_cubit.dart';
 import '../../../core/widgets/folded_hint.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Organisation → Holidays (HIN-91; under Organisation since HIN-129): the
 /// instance's holiday calendars and their days.
@@ -285,7 +286,7 @@ class _OrgHolidaysScreenState extends State<_OrgHolidaysView> {
                   FoldedHint(
                     context.t('availability.admin.intro'),
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppType.label,
                       height: 1.45,
                       color: AppColors.textSecondary,
                     ),
@@ -351,7 +352,7 @@ class _OrgHolidaysScreenState extends State<_OrgHolidaysView> {
                 variables: {'name': calendar.name},
               ),
               style: TextStyle(
-                fontSize: 15,
+                fontSize: AppType.body,
                 fontWeight: FontWeight.w800,
                 color: AppColors.ink,
               ),
@@ -452,7 +453,7 @@ class _HolidayRow extends StatelessWidget {
                 child: Text(
                   date,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontFeatures: const [FontFeature.tabularFigures()],
                     color: AppColors.inkSoft,
                   ),
@@ -465,7 +466,7 @@ class _HolidayRow extends StatelessWidget {
                     Text(
                       holiday.name,
                       style: TextStyle(
-                        fontSize: 13.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                         color: AppColors.ink,
                       ),
@@ -479,7 +480,7 @@ class _HolidayRow extends StatelessWidget {
                             context.t('availability.admin.imported'),
                         ].join(' · '),
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           color: AppColors.textSecondary,
                         ),
                       ),

@@ -7,6 +7,7 @@ import '../../../core/lexical/hinata_markdown_preview.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/folded_hint.dart';
+import '../../../core/theme/app_type.dart';
 
 /// The operator's privacy notice for the time-tracking module, as Markdown with
 /// a live preview.
@@ -81,7 +82,7 @@ class _OrgPrivacyNoticeFieldState extends State<OrgPrivacyNoticeField> {
               context.t('admin.timeTracking.privacyNoticeHint'),
               title: context.t('admin.timeTracking.privacyNoticeLabel'),
               style: TextStyle(
-                fontSize: 12,
+                fontSize: AppType.caption,
                 height: 1.35,
                 color: AppColors.inkFaint,
               ),
@@ -94,7 +95,7 @@ class _OrgPrivacyNoticeFieldState extends State<OrgPrivacyNoticeField> {
           Text(
             context.t('admin.timeTracking.privacyNoticePreview'),
             style: TextStyle(
-              fontSize: 11,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.4,
               color: AppColors.inkFaint,
@@ -108,7 +109,10 @@ class _OrgPrivacyNoticeFieldState extends State<OrgPrivacyNoticeField> {
               borderRadius: BorderRadius.circular(AppTheme.radiusControl),
               border: Border.all(color: AppColors.hairline2),
             ),
-            child: HinataMarkdownPreview(markdown: _preview, fontSize: 13.5),
+            child: HinataMarkdownPreview(
+              markdown: _preview,
+              fontSize: AppType.label,
+            ),
           ),
         ],
       ],

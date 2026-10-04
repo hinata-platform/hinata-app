@@ -19,6 +19,7 @@ import '../../core/widgets/hive_widgets.dart' show fmtDuration;
 import '../sprint/modals/glass_modal.dart';
 import 'account_widgets.dart';
 import 'working_hours_cubit.dart';
+import '../../core/theme/app_type.dart';
 
 /// Settings → Working hours (HIN-91).
 ///
@@ -294,7 +295,7 @@ class _AvailabilitySectionState extends State<_AvailabilityBody> {
               child: Text(
                 context.t('availability.pattern.validFromHint'),
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: AppType.caption,
                   height: 1.4,
                   color: AppColors.textSecondary,
                 ),
@@ -334,7 +335,7 @@ class _Label extends StatelessWidget {
           child: Text(
             text,
             style: TextStyle(
-              fontSize: 12.5,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w700,
               color: AppColors.inkSoft,
             ),
@@ -344,7 +345,7 @@ class _Label extends StatelessWidget {
           Text(
             trailing!,
             style: TextStyle(
-              fontSize: 12.5,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w700,
               fontFeatures: const [FontFeature.tabularFigures()],
               color: AppColors.inkSoft,
@@ -366,7 +367,7 @@ class _Hint extends StatelessWidget {
     child: Text(
       text,
       style: TextStyle(
-        fontSize: 11.5,
+        fontSize: AppType.caption,
         height: 1.4,
         color: AppColors.textSecondary,
       ),
@@ -402,7 +403,7 @@ class _HoursRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: TextStyle(fontSize: 13.5, color: AppColors.ink),
+              style: TextStyle(fontSize: AppType.label, color: AppColors.ink),
             ),
           ),
           Container(
@@ -428,7 +429,7 @@ class _HoursRow extends StatelessWidget {
                     minutes == 0 ? free : fmtDuration(context, minutes),
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                       fontFeatures: const [FontFeature.tabularFigures()],
                       color: minutes == 0
@@ -509,7 +510,7 @@ class _PickedValue extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.end,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w600,
               color: AppColors.inkSoft,
             ),

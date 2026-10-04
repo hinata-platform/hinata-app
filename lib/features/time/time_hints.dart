@@ -5,6 +5,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/time_privacy_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_widgets.dart' show fmtDuration;
+import '../../core/theme/app_type.dart';
 
 /// One self-hint as a small chip, with the whole sentence on its tooltip.
 ///
@@ -47,7 +48,7 @@ class TimeHintChip extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                 ),

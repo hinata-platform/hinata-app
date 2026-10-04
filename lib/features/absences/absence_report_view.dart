@@ -11,6 +11,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/soft_card.dart';
 import '../time/reports/report_format.dart';
 import 'absence_labels.dart';
+import '../../core/theme/app_type.dart';
 
 /// The report "absences and balances" (HIN-119) as widgets that only draw what
 /// they are given: the year at a glance, a row per person or type, and the chip
@@ -106,7 +107,7 @@ class AbsenceReportOverview extends StatelessWidget {
               count: head.people,
               variables: {'count': head.people},
             ),
-            style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+            style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
           );
           if (!wide) {
             return Column(
@@ -195,7 +196,7 @@ class _Figure extends StatelessWidget {
                     Text(
                       label,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppType.caption,
                         fontWeight: FontWeight.w600,
                         color: AppColors.inkSoft,
                       ),
@@ -205,7 +206,7 @@ class _Figure extends StatelessWidget {
                       value,
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
-                        fontSize: 18,
+                        fontSize: AppType.heading,
                         fontWeight: FontWeight.w600,
                         color: AppColors.ink,
                         height: 1.15,
@@ -287,7 +288,7 @@ class _YearRing extends StatelessWidget {
                       days(context, left),
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
-                        fontSize: 22,
+                        fontSize: AppType.display,
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
                       ),
@@ -303,7 +304,10 @@ class _YearRing extends StatelessWidget {
                           ),
                         },
                       ),
-                      style: TextStyle(fontSize: 11, color: AppColors.inkSoft),
+                      style: TextStyle(
+                        fontSize: AppType.caption,
+                        color: AppColors.inkSoft,
+                      ),
                     ),
                   ],
                 ),
@@ -351,7 +355,7 @@ class AbsenceExpiryChip extends StatelessWidget {
                       },
                     ),
               style: TextStyle(
-                fontSize: 12,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w600,
                 color: ink,
               ),
@@ -418,7 +422,7 @@ class AbsenceReportColumns extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = TextStyle(
-      fontSize: 12,
+      fontSize: AppType.caption,
       fontWeight: FontWeight.w600,
       color: AppColors.inkSoft,
     );
@@ -515,7 +519,7 @@ class AbsenceReportRowView extends StatelessWidget {
     final factor = textFactor(context);
     final figure = TextStyle(
       fontFamily: AppTheme.fontMono,
-      fontSize: 13,
+      fontSize: AppType.label,
       color: AppColors.ink,
     );
     final strong = figure.copyWith(fontWeight: FontWeight.w700);
@@ -524,7 +528,7 @@ class AbsenceReportRowView extends StatelessWidget {
       maxLines: compact ? 2 : 1,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
-        fontSize: 14,
+        fontSize: AppType.body,
         fontWeight: FontWeight.w600,
         color: AppColors.ink,
       ),
@@ -533,7 +537,10 @@ class AbsenceReportRowView extends StatelessWidget {
         ? AbsenceExpiryChip(figures: figures)
         : null;
     if (compact) {
-      final small = TextStyle(fontSize: 12, color: AppColors.inkSoft);
+      final small = TextStyle(
+        fontSize: AppType.caption,
+        color: AppColors.inkSoft,
+      );
       return MergeSemantics(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -649,7 +656,7 @@ class AbsenceReportLegend extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           context.t(key),
-          style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+          style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
         ),
       ],
     );

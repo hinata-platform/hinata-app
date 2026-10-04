@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../sprint/modals/glass_modal.dart' show showGlassModal;
 import 'team_widgets.dart';
+import '../../core/theme/app_type.dart';
 
 // ════════════════════════════════════════════════════════════════════════
 //  Shared building blocks for the Teams modals. Every modal is presented on
@@ -92,7 +93,7 @@ class ModalShell extends StatelessWidget {
                         title,
                         style: TextStyle(
                           fontFamily: AppTheme.fontBrand,
-                          fontSize: 17,
+                          fontSize: AppType.title,
                           fontWeight: FontWeight.w700,
                           color: AppColors.ink,
                         ),
@@ -102,7 +103,7 @@ class ModalShell extends StatelessWidget {
                         Text(
                           subtitle!,
                           style: TextStyle(
-                            fontSize: 12.5,
+                            fontSize: AppType.label,
                             height: 1.35,
                             color: AppColors.inkSoft,
                           ),
@@ -233,7 +234,7 @@ class ModalFooter extends StatelessWidget {
                   vertical: 13,
                 ),
                 textStyle: const TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                 ),
                 shape: RoundedRectangleBorder(
@@ -274,7 +275,7 @@ class FieldLabel extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
               color: AppColors.inkSoft,
             ),
@@ -283,7 +284,10 @@ class FieldLabel extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               '· ${context.t('teams.optional')}',
-              style: TextStyle(fontSize: 12, color: AppColors.inkFaint),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.inkFaint,
+              ),
             ),
           ],
         ],
@@ -389,7 +393,7 @@ class RoleSegmented extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
                         color: fade(on ? AppColors.ink : AppColors.inkSoft),
                       ),
@@ -559,7 +563,7 @@ class CheckRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppType.label,
                           fontWeight: FontWeight.w600,
                           color: AppColors.ink,
                         ),
@@ -570,7 +574,7 @@ class CheckRow extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: AppType.caption,
                             color: AppColors.inkSoft,
                           ),
                         ),
@@ -686,7 +690,7 @@ class AccessPicker extends StatelessWidget {
                     child: Text(
                       context.t('teams.noProjectsYet'),
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         color: AppColors.inkFaint,
                       ),
                     ),
@@ -704,7 +708,7 @@ class AccessPicker extends StatelessWidget {
                             avatarUrl: projectAvatar?.call(projects[i]),
                             size: 30,
                             radius: 8,
-                            fontSize: 11,
+                            fontSize: AppType.caption,
                           ),
                           title: projectName(projects[i]),
                         ),
@@ -798,7 +802,7 @@ class _ScopeOption extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: AppType.label,
                             fontWeight: FontWeight.w600,
                             color: AppColors.ink,
                           ),
@@ -808,7 +812,7 @@ class _ScopeOption extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: AppType.caption,
                             color: AppColors.inkSoft,
                           ),
                         ),
@@ -867,7 +871,10 @@ class KnowledgeAccessPicker extends StatelessWidget {
               Expanded(
                 child: Text(
                   context.t('teams.knowledge.adminReadsAll'),
-                  style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
               ),
             ],
@@ -950,7 +957,7 @@ class _PagesField extends StatelessWidget {
                 child: Text(
                   label,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: count == 0 ? AppColors.inkSoft : AppColors.ink,
                   ),
@@ -1021,7 +1028,7 @@ class KnowledgeAccessChip extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
               color: color,
             ),

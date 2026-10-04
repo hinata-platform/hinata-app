@@ -10,6 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/glass_filter_bar.dart';
 import '../../sprint/modals/glass_modal.dart';
 import 'report_format.dart';
+import '../../../core/theme/app_type.dart';
 
 /// The row of glass pills over a report (HIN-93): the window, the filters,
 /// the grouping, and a way to clear the filters.
@@ -186,7 +187,7 @@ class _OptionLabel extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: AppType.body,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               color: AppColors.ink,
             ),

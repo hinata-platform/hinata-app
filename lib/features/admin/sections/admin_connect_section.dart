@@ -16,6 +16,7 @@ import '../../sprint/modals/glass_modal.dart';
 import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
 import 'admin_connect_cubit.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Admin → Connect (Hinata Connect enrolment).
 ///
@@ -282,7 +283,10 @@ class _AdminConnectSectionState extends State<_AdminConnectView> {
             children: [
               Text(
                 context.t(_errorKey!),
-                style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  color: AppColors.inkSoft,
+                ),
               ),
               const SizedBox(height: 12),
               TextButton.icon(
@@ -369,7 +373,7 @@ class _AdminConnectSectionState extends State<_AdminConnectView> {
                       child: Text(
                         context.t('admin.connectWaiting'),
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: AppType.label,
                           color: AppColors.inkSoft,
                         ),
                       ),
@@ -501,7 +505,7 @@ class _StatusRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+            style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
           ),
         ),
         Container(
@@ -523,7 +527,7 @@ class _StatusRow extends StatelessWidget {
               Text(
                 ok ? okText : pendingText,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w700,
                   color: color,
                 ),
@@ -557,7 +561,10 @@ class _MonoRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+              style: TextStyle(
+                fontSize: AppType.label,
+                color: AppColors.inkSoft,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -568,7 +575,7 @@ class _MonoRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.right,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
                 fontFamily: AppTheme.fontMono,
                 color: AppColors.ink,

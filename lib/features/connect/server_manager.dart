@@ -21,6 +21,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassAnchoredPopover,
         showGlassBottomSheet,
         showGlassConfirm;
+import '../../core/theme/app_type.dart';
 
 /// Opens the Liquid-Glass **server manager** — lists every saved backend with a
 /// live status dot + ping, lets the user switch or (in edit mode) forget
@@ -231,7 +232,7 @@ class _ServerManagerSheetState extends State<_ServerManagerSheet> {
                       context.t('server.manageTitle'),
                       style: const TextStyle(
                         fontFamily: AppTheme.fontBrand,
-                        fontSize: 20,
+                        fontSize: AppType.heading,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.3,
                       ),
@@ -240,7 +241,7 @@ class _ServerManagerSheetState extends State<_ServerManagerSheet> {
                     Text(
                       context.t('server.manageSubtitle'),
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         height: 1.4,
                         color: AppColors.inkSoft,
                       ),
@@ -485,7 +486,7 @@ class _ServerRow extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 15,
+                                  fontSize: AppType.body,
                                   fontWeight: FontWeight.w600,
                                   letterSpacing: -0.1,
                                 ),
@@ -511,7 +512,7 @@ class _ServerRow extends StatelessWidget {
                             Text(
                               statusText,
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: AppType.caption,
                                 fontWeight: FontWeight.w600,
                                 color: statusColor,
                               ),
@@ -524,7 +525,7 @@ class _ServerRow extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: AppTheme.fontMono,
-                                  fontSize: 12,
+                                  fontSize: AppType.caption,
                                   color: AppColors.inkFaint,
                                 ),
                               ),
@@ -607,7 +608,7 @@ class _AddServerButton extends StatelessWidget {
                 Text(
                   context.t('server.addServer'),
                   style: const TextStyle(
-                    fontSize: 15,
+                    fontSize: AppType.body,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -724,7 +725,7 @@ class _AddServerPageState extends State<_AddServerPage> {
                       context.t('server.addTitle'),
                       style: const TextStyle(
                         fontFamily: AppTheme.fontBrand,
-                        fontSize: 19,
+                        fontSize: AppType.heading,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.3,
                       ),
@@ -733,7 +734,7 @@ class _AddServerPageState extends State<_AddServerPage> {
                     Text(
                       context.t('server.addSubtitle'),
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         color: AppColors.inkSoft,
                       ),
                     ),
@@ -751,7 +752,7 @@ class _AddServerPageState extends State<_AddServerPage> {
               Text(
                 context.t('connect.serverUrl'),
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w600,
                   color: AppColors.inkSoft,
                 ),
@@ -770,7 +771,7 @@ class _AddServerPageState extends State<_AddServerPage> {
                   textInputAction: TextInputAction.done,
                   style: const TextStyle(
                     fontFamily: AppTheme.fontMono,
-                    fontSize: 14,
+                    fontSize: AppType.body,
                   ),
                   decoration: glassInputDecoration(hint: 'server.hinata.com')
                       .copyWith(
@@ -807,7 +808,7 @@ class _AddServerPageState extends State<_AddServerPage> {
                     Text(
                       context.t('server.testing'),
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: AppType.body,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -816,7 +817,7 @@ class _AddServerPageState extends State<_AddServerPage> {
                       context.t('server.testingHint'),
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
-                        fontSize: 11.5,
+                        fontSize: AppType.caption,
                         color: AppColors.inkFaint,
                       ),
                     ),
@@ -852,7 +853,7 @@ class _AddServerPageState extends State<_AddServerPage> {
                   Text(
                     context.t('server.reachable'),
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppType.body,
                       fontWeight: FontWeight.w700,
                       color: AppColors.successInk,
                     ),
@@ -864,7 +865,7 @@ class _AddServerPageState extends State<_AddServerPage> {
                     context.t('server.ms', variables: {'n': probe.ms}),
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: 12,
+                      fontSize: AppType.caption,
                       color: AppColors.inkSoft,
                     ),
                   ),
@@ -883,14 +884,17 @@ class _AddServerPageState extends State<_AddServerPage> {
                     probe.tls
                         ? context.t('server.tlsValid')
                         : context.t('server.tlsNone'),
-                    style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                   const SizedBox(width: 18),
                   Text(
                     'hinata ${probe.version}',
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: 12.5,
+                      fontSize: AppType.label,
                       color: AppColors.inkSoft,
                     ),
                   ),
@@ -900,7 +904,7 @@ class _AddServerPageState extends State<_AddServerPage> {
               Text(
                 context.t('server.displayName'),
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: AppType.caption,
                   fontWeight: FontWeight.w600,
                   color: AppColors.inkSoft,
                 ),
@@ -936,7 +940,7 @@ class _AddServerPageState extends State<_AddServerPage> {
                     Text(
                       context.t('server.notReachable'),
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: AppType.body,
                         fontWeight: FontWeight.w700,
                         color: AppColors.dangerInk,
                       ),
@@ -945,7 +949,7 @@ class _AddServerPageState extends State<_AddServerPage> {
                     Text(
                       context.t('server.notReachableHint'),
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         height: 1.45,
                         color: AppColors.inkSoft,
                       ),
@@ -1004,7 +1008,10 @@ class _AddServerPageState extends State<_AddServerPage> {
     backgroundColor: AppColors.accent,
     foregroundColor: const Color(0xFF211603),
     minimumSize: const Size.fromHeight(52),
-    textStyle: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700),
+    textStyle: const TextStyle(
+      fontSize: AppType.body,
+      fontWeight: FontWeight.w700,
+    ),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
   );
 }

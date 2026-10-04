@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import '../i18n/i18n.dart';
 import '../models/work_models.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_type.dart';
 
 /// Half the footprint of a milestone diamond, in pixels — the anchor a
 /// connector aims at instead of a bar edge. A [GanttMilestone] of the default
@@ -567,7 +568,10 @@ class GanttLinkLegend extends StatelessWidget {
                 Expanded(
                   child: Text(
                     context.t(key),
-                    style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                 ),
               ],

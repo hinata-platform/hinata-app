@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/hue_colors.dart';
 import '../../../core/widgets/hive_widgets.dart';
 import '../git_tokens.dart';
+import '../../../core/theme/app_type.dart';
 
 /// A hue-tinted rounded glyph tile used at the head of each development row.
 class DevGlyph extends StatelessWidget {
@@ -71,7 +72,7 @@ class StatePill extends StatelessWidget {
               softWrap: false,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 10.5,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w700,
                 color: fg,
               ),
@@ -104,7 +105,7 @@ class _MiniChecks extends StatelessWidget {
             softWrap: false,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 10.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
               color: c,
             ),
@@ -160,8 +161,10 @@ class _DevRow extends StatelessWidget {
   }
 }
 
-Widget _subText(String text) =>
-    Text(text, style: TextStyle(fontSize: 11, color: AppColors.inkFaint));
+Widget _subText(String text) => Text(
+  text,
+  style: TextStyle(fontSize: AppType.caption, color: AppColors.inkFaint),
+);
 
 Widget _avatar(
   String? id,
@@ -197,7 +200,7 @@ class BranchRow extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontFamily: AppTheme.fontMono,
-          fontSize: 12.5,
+          fontSize: AppType.label,
           fontWeight: FontWeight.w600,
           color: AppColors.ink,
         ),
@@ -226,7 +229,7 @@ class BranchRow extends StatelessWidget {
           ),
           style: TextStyle(
             fontFamily: AppTheme.fontMono,
-            fontSize: 10.5,
+            fontSize: AppType.caption,
             color: AppColors.inkSoft,
           ),
         ),
@@ -276,14 +279,17 @@ class CommitRow extends StatelessWidget {
         commit.message,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+        style: const TextStyle(
+          fontSize: AppType.label,
+          fontWeight: FontWeight.w600,
+        ),
       ),
       sub: [
         Text(
           commit.sha,
           style: TextStyle(
             fontFamily: AppTheme.fontMono,
-            fontSize: 11,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w600,
             color: AppColors.accentInk,
           ),
@@ -300,7 +306,10 @@ class CommitRow extends StatelessWidget {
               const SizedBox(width: 3),
               Text(
                 context.t('git.verified'),
-                style: TextStyle(fontSize: 11, color: AppColors.successInk),
+                style: TextStyle(
+                  fontSize: AppType.caption,
+                  color: AppColors.successInk,
+                ),
               ),
             ],
           ),
@@ -326,7 +335,10 @@ class CommitRow extends StatelessWidget {
                   ),
               ],
             ),
-            style: const TextStyle(fontFamily: AppTheme.fontMono, fontSize: 11),
+            style: const TextStyle(
+              fontFamily: AppTheme.fontMono,
+              fontSize: AppType.caption,
+            ),
           ),
       ],
     );
@@ -370,7 +382,7 @@ class PrRow extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -380,7 +392,7 @@ class PrRow extends StatelessWidget {
             '#${pr.number}',
             style: TextStyle(
               fontFamily: AppTheme.fontMono,
-              fontSize: 11,
+              fontSize: AppType.caption,
               color: AppColors.inkFaint,
             ),
           ),
@@ -403,7 +415,7 @@ class PrRow extends StatelessWidget {
                 Text(
                   '✓${pr.approvals}',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w700,
                     color: AppColors.successInk,
                   ),
@@ -414,7 +426,7 @@ class PrRow extends StatelessWidget {
                 Text(
                   '±${pr.changesRequested}',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w700,
                     color: AppColors.dangerInk,
                   ),
@@ -461,14 +473,17 @@ class BuildRow extends StatelessWidget {
         run.name,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+        style: const TextStyle(
+          fontSize: AppType.label,
+          fontWeight: FontWeight.w600,
+        ),
       ),
       sub: [
         Text(
           run.workflow,
           style: TextStyle(
             fontFamily: AppTheme.fontMono,
-            fontSize: 11,
+            fontSize: AppType.caption,
             color: AppColors.inkFaint,
           ),
         ),
@@ -542,7 +557,7 @@ class GitEmptyBox extends StatelessWidget {
           DefaultTextStyle.merge(
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppType.caption,
               height: 1.5,
               color: AppColors.inkSoft,
             ),
@@ -579,7 +594,10 @@ class _GhostAction extends StatelessWidget {
             : Icon(icon, size: 13, color: AppColors.ink),
         label: Text(
           label,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            fontSize: AppType.caption,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );

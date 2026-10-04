@@ -16,6 +16,7 @@ import '../../../core/util/share_origin.dart';
 import '../../../core/widgets/person_picker.dart';
 import '../../sprint/modals/glass_modal.dart';
 import 'time_reports_cubit.dart';
+import '../../../core/theme/app_type.dart';
 
 /// What the head of the report page does with a report (HIN-93): take it out
 /// as a file or on paper, keep it under a name, mail it on a schedule.
@@ -79,7 +80,7 @@ Future<ReportFile?> showReportFileMenu(
               child: Text(
                 context.t(file.labelKey),
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -305,7 +306,7 @@ class _ScheduleFormState extends State<_ScheduleForm> {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppType.label,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               color: AppColors.ink,
             ),
@@ -433,7 +434,7 @@ class _ScheduleFormState extends State<_ScheduleForm> {
                     child: Text(
                       context.t('time.reports.schedule.noRecipients'),
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         color: AppColors.inkSoft,
                       ),
                     ),

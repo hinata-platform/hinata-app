@@ -30,6 +30,7 @@ import '../../core/repositories/board_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
 import '../../core/widgets/hive_widgets.dart' show forwardArrow;
+import '../../core/theme/app_type.dart';
 
 /// Lists all boards for a single project and allows creating new ones.
 class ProjectBoardsScreen extends StatelessWidget {
@@ -158,7 +159,7 @@ class _ProjectBoardsState extends State<_ProjectBoards>
                             foregroundColor: kOnAmber,
                             textStyle: const TextStyle(
                               fontWeight: FontWeight.w600,
-                              fontSize: 13,
+                              fontSize: AppType.label,
                             ),
                           ),
                           icon: const Icon(LucideIcons.plus, size: 18),
@@ -313,7 +314,7 @@ class _BoardCard extends StatelessWidget {
                       context.t('board.boardLabel'),
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
-                        fontSize: 11,
+                        fontSize: AppType.caption,
                         color: AppColors.navy,
                       ),
                     ),
@@ -348,7 +349,10 @@ class _BoardCard extends StatelessWidget {
             board.name,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            style: const TextStyle(
+              fontSize: AppType.title,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const Spacer(),
           Row(
@@ -423,7 +427,10 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
                   'board.forProject',
                   variables: {'project': widget.projectName},
                 ),
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ],
             const SizedBox(height: 20),

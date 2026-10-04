@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_type.dart';
 
 /// Warm-surface card used for every dashboard/list block in the design.
 /// Crisp 14 px radius with a hairline border; zero elevation.
@@ -88,7 +89,10 @@ class SectionHeader extends StatelessWidget {
             style: TextButton.styleFrom(foregroundColor: AppColors.accentInk),
             child: Text(
               actionLabel!,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                fontSize: AppType.caption,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
       ],

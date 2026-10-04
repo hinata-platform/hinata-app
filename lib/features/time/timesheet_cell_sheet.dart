@@ -19,6 +19,7 @@ import 'lock_notice.dart';
 import 'timesheet_cell_cubit.dart';
 import '../sprint/modals/glass_modal.dart'
     show GlassModalFooter, GlassModalHeader, showGlassModal;
+import '../../core/theme/app_type.dart';
 
 /// One cell of the timesheet, opened.
 ///
@@ -246,7 +247,7 @@ class _CellFormState extends State<_CellForm> {
                         context.t('timesheet.cell.none'),
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppType.label,
                           color: AppColors.inkFaint,
                         ),
                       ),
@@ -266,7 +267,7 @@ class _CellFormState extends State<_CellForm> {
                         Text(
                           context.t('timesheet.total'),
                           style: TextStyle(
-                            fontSize: 12.5,
+                            fontSize: AppType.label,
                             color: AppColors.inkSoft,
                           ),
                         ),
@@ -274,7 +275,7 @@ class _CellFormState extends State<_CellForm> {
                         Text(
                           fmtDuration(context, _total),
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: AppType.label,
                             fontWeight: FontWeight.w800,
                             color: AppColors.ink,
                           ),
@@ -303,7 +304,7 @@ class _CellFormState extends State<_CellForm> {
                           child: Text(
                             context.t(missing),
                             style: TextStyle(
-                              fontSize: 12.5,
+                              fontSize: AppType.label,
                               color: AppColors.inkSoft,
                             ),
                           ),
@@ -339,7 +340,7 @@ class _CellFormState extends State<_CellForm> {
                     Text(
                       context.t(_error!),
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppType.label,
                         color: AppColors.dangerInk,
                       ),
                     ),
@@ -380,14 +381,14 @@ class _EntryRow extends StatelessWidget {
                   : description,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 13, color: AppColors.ink),
+              style: TextStyle(fontSize: AppType.label, color: AppColors.ink),
             ),
           ),
           const SizedBox(width: 10),
           Text(
             fmtDuration(context, entry.durationMinutes),
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
             ),

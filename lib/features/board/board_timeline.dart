@@ -9,6 +9,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/gantt_links.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
+import '../../core/theme/app_type.dart';
 
 DateTime _dayOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 DateTime _firstOfMonth(DateTime d) => DateTime(d.year, d.month, 1);
@@ -276,7 +277,7 @@ class _BoardTimelineState extends State<BoardTimeline> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: AppType.caption,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.4,
                                   color: AppColors.textSecondary,
@@ -451,7 +452,7 @@ class _BoardTimelineState extends State<BoardTimeline> {
           Text(
             context.t('board.timelineNoDates').toUpperCase(),
             style: TextStyle(
-              fontSize: 10.5,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.6,
               color: AppColors.inkFaint,
@@ -498,7 +499,7 @@ class _BoardTimelineState extends State<BoardTimeline> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 12.5,
+                                  fontSize: AppType.label,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -547,7 +548,7 @@ class _TaskLabel extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     text: TextSpan(
-                      style: const TextStyle(fontSize: 12),
+                      style: const TextStyle(fontSize: AppType.caption),
                       children: [
                         TextSpan(
                           text: task.readableId,
@@ -682,7 +683,7 @@ class _MonthCell extends StatelessWidget {
           overflow: TextOverflow.clip,
           softWrap: false,
           style: TextStyle(
-            fontSize: 11,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w700,
             color: AppColors.ink,
           ),
@@ -709,7 +710,7 @@ class _DayTick extends StatelessWidget {
     final child = Text(
       '${date.day}',
       style: TextStyle(
-        fontSize: 10,
+        fontSize: AppType.caption,
         fontWeight: isToday || date.day == 1
             ? FontWeight.w800
             : FontWeight.w400,
@@ -866,7 +867,7 @@ class _TimelineBar extends StatelessWidget {
                   softWrap: false,
                   style: const TextStyle(
                     fontFamily: AppTheme.fontMono,
-                    fontSize: 11,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),

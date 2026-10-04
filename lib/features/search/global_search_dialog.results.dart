@@ -260,7 +260,7 @@ class _ResultRow extends StatelessWidget {
           entry.title,
           query,
           TextStyle(
-            fontSize: 14,
+            fontSize: AppType.body,
             fontWeight: FontWeight.w600,
             color: tokens.ink,
             letterSpacing: -0.1,
@@ -293,7 +293,7 @@ class _ResultRow extends StatelessWidget {
                 Text(
                   context.t('issues.filterArchived'),
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: AppType.caption,
                     fontWeight: FontWeight.w700,
                     color: AppColors.accentInk,
                   ),
@@ -321,7 +321,7 @@ class _ResultRow extends StatelessWidget {
                   overflow: TextOverflow.clip,
                   style: TextStyle(
                     fontFamily: AppTheme.fontMono,
-                    fontSize: 11,
+                    fontSize: AppType.caption,
                     color: tokens.inkSoft,
                   ),
                 ),
@@ -341,7 +341,10 @@ class _ResultRow extends StatelessWidget {
                   entry.statusName ?? '',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11.5, color: tokens.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: tokens.inkSoft,
+                  ),
                 ),
               ),
             ],
@@ -363,7 +366,7 @@ class _ResultRow extends StatelessWidget {
           entry.subtitle!,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: 11.5, color: tokens.inkSoft),
+          style: TextStyle(fontSize: AppType.caption, color: tokens.inkSoft),
         ),
       ],
     );
@@ -404,7 +407,7 @@ class _ResultRow extends StatelessWidget {
           '↵',
           style: TextStyle(
             fontFamily: AppTheme.fontMono,
-            fontSize: 12,
+            fontSize: AppType.caption,
             color: tokens.inkFaint,
           ),
         ),
@@ -447,7 +450,7 @@ class _RecentRow extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: AppType.body,
               fontWeight: FontWeight.w600,
               color: tokens.ink,
             ),

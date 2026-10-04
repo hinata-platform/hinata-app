@@ -5,6 +5,7 @@ import '../i18n/i18n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'hive_loader.dart';
+import '../theme/app_type.dart';
 
 /// Small rounded pill, e.g. "High Priority" or a workflow state.
 class PillChip extends StatelessWidget {
@@ -32,7 +33,7 @@ class PillChip extends StatelessWidget {
         label,
         style: TextStyle(
           color: foreground ?? AppColors.inkSoft,
-          fontSize: 11,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w600,
         ),
         overflow: TextOverflow.ellipsis,
@@ -61,7 +62,7 @@ class StateBadge extends StatelessWidget {
         state.replaceAll('_', ' '),
         style: TextStyle(
           fontFamily: AppTheme.fontMono,
-          fontSize: 10,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w500,
           color: color,
         ),

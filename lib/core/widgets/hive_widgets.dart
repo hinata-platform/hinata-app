@@ -14,6 +14,7 @@ import '../theme/hue_colors.dart';
 import 'preview_image.dart' show blurHashProviderFor;
 import 'app_avatar.dart';
 import 'user_pronouns.dart';
+import '../theme/app_type.dart';
 
 /// App-wide toggle — Cupertino style (the product's switch convention), tinted
 /// with the honey accent when on. Use this instead of Material [Switch].
@@ -196,7 +197,7 @@ class StateDotBadge extends StatelessWidget {
             stateLabel(state),
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 12.5,
+              fontSize: AppType.label,
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -232,7 +233,7 @@ class _Pill extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: AppType.caption,
                 fontWeight: FontWeight.w600,
                 color: color,
               ),
@@ -268,7 +269,7 @@ class LabelTag extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 11,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w500,
           color: h == null ? AppColors.inkSoft : hueChipText(h),
         ),
@@ -594,7 +595,7 @@ class PageHead extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontFamily: AppTheme.fontBrand,
-                    fontSize: 26,
+                    fontSize: AppType.display,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.5,
                     color: AppColors.ink,
@@ -608,7 +609,10 @@ class PageHead extends StatelessWidget {
                   subtitle!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 13.5, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.label,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
               ],
             ],
@@ -669,7 +673,10 @@ class PrimaryButton extends StatelessWidget {
       backgroundColor: AppColors.accent,
       foregroundColor: kOnAmber,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      textStyle: const TextStyle(
+        fontSize: AppType.label,
+        fontWeight: FontWeight.w600,
+      ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusControl),
       ),
@@ -745,7 +752,10 @@ class GhostButton extends StatelessWidget {
       foregroundColor: AppColors.ink,
       side: BorderSide(color: AppColors.hairline),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      textStyle: const TextStyle(
+        fontSize: AppType.label,
+        fontWeight: FontWeight.w600,
+      ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusControl),
       ),
@@ -843,7 +853,7 @@ class SegmentedControl extends StatelessWidget {
                 Text(
                   items[i].label,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: i == selected ? Colors.white : AppColors.inkSoft,
                   ),

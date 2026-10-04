@@ -19,6 +19,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../i18n/i18n.dart';
 import '../theme/app_colors.dart';
 import '../widgets/glass_panel.dart';
+import '../theme/app_type.dart';
 
 /// Wraps an editable and floats hinata's quick actions over its selection.
 ///
@@ -655,7 +656,10 @@ class _LinkFieldState extends State<_LinkField> {
                         onChanged: (_) {
                           if (_unsafe) setState(() => _unsafe = false);
                         },
-                        style: TextStyle(fontSize: 13.5, color: AppColors.ink),
+                        style: TextStyle(
+                          fontSize: AppType.label,
+                          color: AppColors.ink,
+                        ),
                         decoration: InputDecoration(
                           isDense: true,
                           border: InputBorder.none,
@@ -666,7 +670,7 @@ class _LinkFieldState extends State<_LinkField> {
                           ),
                           hintText: 'https://',
                           hintStyle: TextStyle(
-                            fontSize: 13.5,
+                            fontSize: AppType.label,
                             color: AppColors.inkFaint,
                           ),
                         ),
@@ -695,7 +699,10 @@ class _LinkFieldState extends State<_LinkField> {
             padding: const EdgeInsetsDirectional.only(start: 23, bottom: 2),
             child: Text(
               context.t('md.linkUnsafe'),
-              style: TextStyle(fontSize: 11.5, color: AppColors.dangerInk),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                color: AppColors.dangerInk,
+              ),
             ),
           ),
       ],

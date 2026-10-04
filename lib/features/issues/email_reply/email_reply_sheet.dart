@@ -20,6 +20,7 @@ import '../../../core/widgets/hive_widgets.dart' show backArrow;
 import '../../sprint/modals/glass_modal.dart'
     show GlassToastKind, glassWoltSurface, showGlassErrorToast, showGlassToast;
 import 'email_reply_cubit.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Opens the "Reply by email" composer for an email-sourced issue, presented the
 /// same way as the issue detail itself — a Liquid-Glass [WoltModalSheet] (a wide
@@ -230,7 +231,7 @@ class _EmailSheetTitle extends StatelessWidget {
           context.t('issues.replyEmail.title'),
           style: const TextStyle(
             fontFamily: AppTheme.fontBrand,
-            fontSize: 16,
+            fontSize: AppType.title,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.2,
           ),
@@ -686,7 +687,7 @@ class EmailReplyComposerState extends State<EmailReplyComposer> {
       icon: LucideIcons.atSign,
       child: RichText(
         text: TextSpan(
-          style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+          style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
           children: [
             TextSpan(text: '${context.t('issues.replyEmail.to')} '),
             TextSpan(
@@ -790,7 +791,7 @@ class _LabeledField extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 11.5,
+            fontSize: AppType.caption,
             fontWeight: FontWeight.w600,
             color: AppColors.inkSoft,
           ),
@@ -938,7 +939,7 @@ class _EmailRouteTopBar extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontFamily: AppTheme.fontBrand,
-                      fontSize: 16,
+                      fontSize: AppType.title,
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.2,
                     ),
@@ -947,7 +948,10 @@ class _EmailRouteTopBar extends StatelessWidget {
                     recipient,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                 ],
               ),
@@ -1032,7 +1036,7 @@ class _AddChip extends StatelessWidget {
                 Text(
                   context.t('issues.replyEmail.attach'),
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: AppColors.accentInk,
                   ),
@@ -1086,7 +1090,7 @@ class _AttachmentChip extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppType.label,
                 color: failed ? AppColors.danger : AppColors.ink,
               ),
             ),

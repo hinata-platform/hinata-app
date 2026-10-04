@@ -21,6 +21,7 @@ import '../../core/widgets/hive_widgets.dart' show HiveAvatar;
 import '../../core/widgets/soft_card.dart';
 import '../../core/util/dates.dart';
 import 'team_absence_style.dart';
+import '../../core/theme/app_type.dart';
 
 /// One week of the window: Monday to Sunday, cut at the window's edges.
 class _Week {
@@ -142,7 +143,7 @@ class _WeekCard extends StatelessWidget {
                 child: Text(
                   '${dayMonth.format(week.from)} – ${dayMonth.format(week.to)}',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: AppType.body,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),
@@ -161,7 +162,7 @@ class _WeekCard extends StatelessWidget {
                   child: Text(
                     context.t('absence.team.thisWeek'),
                     style: const TextStyle(
-                      fontSize: 11,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textOnDark,
                     ),
@@ -176,7 +177,10 @@ class _WeekCard extends StatelessWidget {
                 'absence.team.capacityWeek',
                 variables: {'left': hours(left), 'planned': hours(planned)},
               ),
-              style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+              style: TextStyle(
+                fontSize: AppType.label,
+                color: AppColors.inkSoft,
+              ),
             ),
             const SizedBox(height: 6),
             _Meter(share: planned == 0 ? 1 : left / planned),
@@ -190,7 +194,10 @@ class _WeekCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     holiday,
-                    style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                 ),
               ],
@@ -200,7 +207,10 @@ class _WeekCard extends StatelessWidget {
           if (people.isEmpty)
             Text(
               context.t('absence.team.everybodyHere'),
-              style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+              style: TextStyle(
+                fontSize: AppType.label,
+                color: AppColors.inkSoft,
+              ),
             )
           else
             for (final (index, item) in people.indexed) ...[
@@ -287,14 +297,17 @@ class _AgendaRow extends StatelessWidget {
                 Text(
                   row.name,
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
                 ),
                 Text(
                   entry.halfDay ? '$span · ½' : span,
-                  style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
               ],
             ),
@@ -318,7 +331,7 @@ class _AgendaRow extends StatelessWidget {
                         teamAbsenceLabelWithState(context, entry),
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppType.caption,
                           fontWeight: FontWeight.w600,
                           color: visuals.ink,
                         ),

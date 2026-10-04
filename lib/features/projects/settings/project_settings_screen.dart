@@ -44,6 +44,7 @@ import '../../sprint/modals/glass_modal.dart'
 import '../project_copy_sheet.dart';
 import '../schedule_move_sheet.dart';
 import '../../../core/repositories/user_repository.dart';
+import '../../../core/theme/app_type.dart';
 
 /// Full project-settings surface: identity, accent, leads & members, colored
 /// labels, colored workflow states, and archive — edited as a draft behind a
@@ -898,7 +899,7 @@ class _Header extends StatelessWidget {
               style: TextStyle(
                 fontFamily: AppTheme.fontMono,
                 fontWeight: FontWeight.w700,
-                fontSize: 15,
+                fontSize: AppType.body,
                 color: hueChipText(hue),
               ),
             ),
@@ -920,7 +921,7 @@ class _Header extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 22,
+                        fontSize: AppType.display,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -938,7 +939,7 @@ class _Header extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontFamily: AppTheme.fontMono,
-                  fontSize: 13,
+                  fontSize: AppType.label,
                   color: AppColors.inkSoft,
                 ),
               ),
@@ -968,7 +969,7 @@ class _ArchivedBadge extends StatelessWidget {
           Text(
             context.t('projectSettings.archived'),
             style: TextStyle(
-              fontSize: 11,
+              fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               color: AppColors.inkSoft,
             ),
@@ -1051,7 +1052,7 @@ class _SaveBar extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
                     color: tokens.inkSoft,
                   ),

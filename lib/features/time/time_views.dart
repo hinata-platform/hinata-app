@@ -18,6 +18,7 @@ import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/glass_switch_chip.dart';
 import '../absences/absence_actions.dart';
 import 'timer_bar.dart';
+import '../../core/theme/app_type.dart';
 
 /// The extended time module's ways of looking at the same hours.
 ///
@@ -306,7 +307,10 @@ class TimeAddButton extends StatelessWidget {
           foregroundColor: kOnAmber,
           padding: padding,
           minimumSize: const Size(40, 44),
-          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(
+            fontSize: AppType.label,
+            fontWeight: FontWeight.w600,
+          ),
           shape: RoundedRectangleBorder(borderRadius: radius),
         );
     const radius = Radius.circular(AppTheme.radiusControl);
