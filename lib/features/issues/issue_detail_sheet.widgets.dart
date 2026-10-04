@@ -101,10 +101,10 @@ class _IssueActionsMenu extends StatelessWidget {
           GlassMenuItem(
             value: _IssueMenuAction.reply,
             label: context.t('issues.replyEmail.action'),
-            leading: const Icon(
+            leading: Icon(
               LucideIcons.mail,
               size: 16,
-              color: AppColors.accentStrong,
+              color: AppColors.accentInk,
             ),
             dividerAbove: afterWatch,
           ),
@@ -1035,11 +1035,7 @@ class _PeoplePickerState extends State<_PeoplePicker> {
         ListTile(
           leading: CircleAvatar(
             backgroundColor: AppColors.accentSoft,
-            child: const Icon(
-              LucideIcons.user,
-              color: AppColors.accentStrong,
-              size: 18,
-            ),
+            child: Icon(LucideIcons.user, color: AppColors.accentInk, size: 18),
           ),
           title: Text(
             context.t('issues.assignToMe'),

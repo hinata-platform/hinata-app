@@ -230,7 +230,7 @@ class _AcceptInviteScreenState extends State<_AcceptInviteScreenBody> {
               const SizedBox(height: 8),
               Text(
                 context.t(_submitError!),
-                style: const TextStyle(color: AppColors.danger),
+                style: TextStyle(color: AppColors.dangerInk),
                 textAlign: TextAlign.center,
               ),
             ],

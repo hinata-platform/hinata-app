@@ -377,10 +377,10 @@ class _NewTeamCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   alignment: Alignment.center,
-                  child: const Icon(
+                  child: Icon(
                     LucideIcons.plus,
                     size: 22,
-                    color: AppColors.accentStrong,
+                    color: AppColors.accentInk,
                   ),
                 ),
                 const SizedBox(height: 10),

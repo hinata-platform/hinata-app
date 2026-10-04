@@ -281,11 +281,11 @@ class CommitRow extends StatelessWidget {
       sub: [
         Text(
           commit.sha,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: AppTheme.fontMono,
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: AppColors.accentStrong,
+            color: AppColors.accentInk,
           ),
         ),
         if (commit.verified)
@@ -300,7 +300,7 @@ class CommitRow extends StatelessWidget {
               const SizedBox(width: 3),
               Text(
                 context.t('git.verified'),
-                style: const TextStyle(fontSize: 11, color: AppColors.success),
+                style: TextStyle(fontSize: 11, color: AppColors.successInk),
               ),
             ],
           ),
@@ -315,14 +315,14 @@ class CommitRow extends StatelessWidget {
                 if (commit.additions > 0)
                   TextSpan(
                     text: '+${commit.additions}',
-                    style: const TextStyle(color: AppColors.success),
+                    style: TextStyle(color: AppColors.successInk),
                   ),
                 if (commit.additions > 0 && commit.deletions > 0)
                   const TextSpan(text: ' '),
                 if (commit.deletions > 0)
                   TextSpan(
                     text: '−${commit.deletions}',
-                    style: const TextStyle(color: AppColors.danger),
+                    style: TextStyle(color: AppColors.dangerInk),
                   ),
               ],
             ),
@@ -402,10 +402,10 @@ class PrRow extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   '✓${pr.approvals}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.success,
+                    color: AppColors.successInk,
                   ),
                 ),
               ],
@@ -413,10 +413,10 @@ class PrRow extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   '±${pr.changesRequested}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.danger,
+                    color: AppColors.dangerInk,
                   ),
                 ),
               ],

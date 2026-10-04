@@ -100,14 +100,14 @@ class _ActivePill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(LucideIcons.zap, size: 13, color: AppColors.accentStrong),
+          Icon(LucideIcons.zap, size: 13, color: AppColors.accentInk),
           const SizedBox(width: 4),
           Text(
             context.t('board.active'),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
-              color: AppColors.accentStrong,
+              color: AppColors.accentInk,
             ),
           ),
         ],

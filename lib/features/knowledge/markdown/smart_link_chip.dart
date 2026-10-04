@@ -232,10 +232,10 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.danger,
+              color: AppColors.dangerInk,
             ),
           ),
         ),

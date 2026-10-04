@@ -141,10 +141,10 @@ class _GanttOptionsPanelState extends State<_GanttOptionsPanel> {
                 Expanded(
                   child: Text(
                     context.t('gantt.conflicts', count: summary.conflicts),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.danger,
+                      color: AppColors.dangerInk,
                     ),
                   ),
                 ),

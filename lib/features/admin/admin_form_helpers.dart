@@ -167,7 +167,7 @@ class AdminSectionCard extends StatelessWidget {
                     color: AppColors.accentSoft,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, size: 18, color: AppColors.accentStrong),
+                  child: Icon(icon, size: 18, color: AppColors.accentInk),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

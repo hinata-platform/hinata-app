@@ -169,10 +169,10 @@ class _NotificationsScreenState extends State<_NotificationsBody> {
                                 'notifications.unreadCount',
                                 variables: {'count': '$unreadCount'},
                               ),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.accentStrong,
+                                color: AppColors.accentInk,
                               ),
                             ),
                           ),

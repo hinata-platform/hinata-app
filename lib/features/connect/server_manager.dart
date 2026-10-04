@@ -602,11 +602,7 @@ class _AddServerButton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  LucideIcons.plus,
-                  size: 19,
-                  color: AppColors.accentStrong,
-                ),
+                Icon(LucideIcons.plus, size: 19, color: AppColors.accentInk),
                 const SizedBox(width: 9),
                 Text(
                   context.t('server.addServer'),
@@ -855,18 +851,14 @@ class _AddServerPageState extends State<_AddServerPage> {
                   const SizedBox(width: 10),
                   Text(
                     context.t('server.reachable'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.success,
+                      color: AppColors.successInk,
                     ),
                   ),
                   const Spacer(),
-                  const Icon(
-                    LucideIcons.zap,
-                    size: 13,
-                    color: AppColors.accentStrong,
-                  ),
+                  Icon(LucideIcons.zap, size: 13, color: AppColors.accentInk),
                   const SizedBox(width: 4),
                   Text(
                     context.t('server.ms', variables: {'n': probe.ms}),
@@ -943,10 +935,10 @@ class _AddServerPageState extends State<_AddServerPage> {
                   children: [
                     Text(
                       context.t('server.notReachable'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.danger,
+                        color: AppColors.dangerInk,
                       ),
                     ),
                     const SizedBox(height: 3),

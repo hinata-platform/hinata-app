@@ -191,8 +191,8 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
                   const SizedBox(height: 12),
                   Text(
                     context.t(_error!),
-                    style: const TextStyle(
-                      color: AppColors.danger,
+                    style: TextStyle(
+                      color: AppColors.dangerInk,
                       fontSize: 12.5,
                     ),
                   ),
@@ -288,10 +288,10 @@ class _TypeCard extends StatelessWidget {
                 ),
               ),
               if (selected)
-                const Icon(
+                Icon(
                   LucideIcons.circleCheckBig,
                   size: 20,
-                  color: AppColors.accentStrong,
+                  color: AppColors.accentInk,
                 ),
             ],
           ),

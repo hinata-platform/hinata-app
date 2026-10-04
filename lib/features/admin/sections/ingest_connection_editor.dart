@@ -278,11 +278,7 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
         children: [
           Row(
             children: [
-              const Icon(
-                LucideIcons.inbox,
-                size: 18,
-                color: AppColors.accentStrong,
-              ),
+              Icon(LucideIcons.inbox, size: 18, color: AppColors.accentInk),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

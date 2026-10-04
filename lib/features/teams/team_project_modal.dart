@@ -186,7 +186,7 @@ class _AddProjectBodyState extends State<_AddProjectBody> {
             const SizedBox(height: 14),
             Text(
               _error!,
-              style: const TextStyle(color: AppColors.danger, fontSize: 12.5),
+              style: TextStyle(color: AppColors.dangerInk, fontSize: 12.5),
             ),
           ],
         ],

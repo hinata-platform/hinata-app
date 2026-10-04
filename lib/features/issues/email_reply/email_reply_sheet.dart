@@ -223,11 +223,7 @@ class _EmailSheetTitle extends StatelessWidget {
             color: AppColors.accentSoft,
             borderRadius: BorderRadius.circular(9),
           ),
-          child: const Icon(
-            LucideIcons.mail,
-            size: 16,
-            color: AppColors.accentStrong,
-          ),
+          child: Icon(LucideIcons.mail, size: 16, color: AppColors.accentInk),
         ),
         const SizedBox(width: 10),
         Text(
@@ -924,10 +920,10 @@ class _EmailRouteTopBar extends StatelessWidget {
                 color: AppColors.accentSoft,
                 borderRadius: BorderRadius.circular(9),
               ),
-              child: const Icon(
+              child: Icon(
                 LucideIcons.mail,
                 size: 16,
-                color: AppColors.accentStrong,
+                color: AppColors.accentInk,
               ),
             ),
             const SizedBox(width: 11),
@@ -1027,18 +1023,18 @@ class _AddChip extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   LucideIcons.paperclip,
                   size: 15,
-                  color: AppColors.accentStrong,
+                  color: AppColors.accentInk,
                 ),
                 const SizedBox(width: 7),
                 Text(
                   context.t('issues.replyEmail.attach'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.accentStrong,
+                    color: AppColors.accentInk,
                   ),
                 ),
               ],

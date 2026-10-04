@@ -338,9 +338,9 @@ class _CellFormState extends State<_CellForm> {
                     const SizedBox(height: 10),
                     Text(
                       context.t(_error!),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12.5,
-                        color: AppColors.danger,
+                        color: AppColors.dangerInk,
                       ),
                     ),
                   ],

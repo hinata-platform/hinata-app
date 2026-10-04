@@ -534,7 +534,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: AppColors.accentStrong),
+        Icon(icon, size: 16, color: AppColors.accentInk),
         const SizedBox(width: 8),
         // A heading is one line: it truncates rather than shoving its own row
         // past the column edge when a translation runs long on a narrow screen.
@@ -689,10 +689,10 @@ class _SprintCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 alignment: Alignment.center,
-                child: const Icon(
+                child: Icon(
                   LucideIcons.goal,
                   size: 18,
-                  color: AppColors.accentStrong,
+                  color: AppColors.accentInk,
                 ),
               ),
               const SizedBox(width: 12),
@@ -702,12 +702,12 @@ class _SprintCard extends StatelessWidget {
                   children: [
                     Text(
                       context.t('weeklySummary.activeSprint').toUpperCase(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: AppTheme.fontMono,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.6,
-                        color: AppColors.accentStrong,
+                        color: AppColors.accentInk,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -743,11 +743,11 @@ class _SprintCard extends StatelessWidget {
                         'days': '${sprint.days}',
                       },
                     ),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: AppTheme.fontMono,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.accentStrong,
+                      color: AppColors.accentInk,
                     ),
                   ),
                 ),
@@ -1141,7 +1141,7 @@ class _CardTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 15, color: AppColors.accentStrong),
+        Icon(icon, size: 15, color: AppColors.accentInk),
         const SizedBox(width: 8),
         Flexible(
           child: Text(

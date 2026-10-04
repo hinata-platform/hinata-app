@@ -250,9 +250,9 @@ class _AttachmentTileState extends State<_AttachmentTile> {
                     const SizedBox(height: 8),
                     Text(
                       context.t('issues.attachments.uploadFailed'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.danger,
+                        color: AppColors.dangerInk,
                       ),
                     ),
                   ],
@@ -388,18 +388,18 @@ class _AddButton extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   LucideIcons.paperclip,
                   size: 14,
-                  color: AppColors.accentStrong,
+                  color: AppColors.accentInk,
                 ),
                 const SizedBox(width: 7),
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.accentStrong,
+                    color: AppColors.accentInk,
                   ),
                 ),
               ],
@@ -538,19 +538,19 @@ class _DropOverlay extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     LucideIcons.cloudUpload,
                     size: 22,
-                    color: AppColors.accentStrong,
+                    color: AppColors.accentInk,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   context.t('issues.attachments.dropHere'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.accentStrong,
+                    color: AppColors.accentInk,
                   ),
                 ),
               ],

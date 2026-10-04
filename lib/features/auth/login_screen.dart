@@ -488,11 +488,7 @@ class _LoginScreenState extends State<_LoginScreenBody>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(
-            LucideIcons.shieldCheck,
-            size: 30,
-            color: AppColors.accentStrong,
-          ),
+          Icon(LucideIcons.shieldCheck, size: 30, color: AppColors.accentInk),
           const SizedBox(height: 14),
           Text(
             context.t('auth.twoFactorTitle'),

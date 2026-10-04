@@ -332,9 +332,9 @@ class _TeamFormBodyState extends State<_TeamFormBody> {
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           context.t('teams.keyTaken'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: AppColors.danger,
+                            color: AppColors.dangerInk,
                           ),
                         ),
                       ),
@@ -374,7 +374,7 @@ class _TeamFormBodyState extends State<_TeamFormBody> {
             const SizedBox(height: 14),
             Text(
               _error!,
-              style: const TextStyle(color: AppColors.danger, fontSize: 12.5),
+              style: TextStyle(color: AppColors.dangerInk, fontSize: 12.5),
             ),
           ],
         ],

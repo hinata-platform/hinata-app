@@ -246,7 +246,7 @@ class _RegisterScreenState extends State<_RegisterScreenBody> {
               const SizedBox(height: 12),
               Text(
                 context.t(_error!),
-                style: const TextStyle(color: AppColors.danger),
+                style: TextStyle(color: AppColors.dangerInk),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -294,11 +294,7 @@ class _RegisterScreenState extends State<_RegisterScreenBody> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Icon(
-          LucideIcons.mailCheck,
-          size: 40,
-          color: AppColors.accentStrong,
-        ),
+        Icon(LucideIcons.mailCheck, size: 40, color: AppColors.accentInk),
         const SizedBox(height: 16),
         Text(
           context.t('register.checkEmailTitle'),
@@ -355,7 +351,7 @@ class _InfoNote extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(LucideIcons.info, size: 18, color: AppColors.accentStrong),
+          Icon(LucideIcons.info, size: 18, color: AppColors.accentInk),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

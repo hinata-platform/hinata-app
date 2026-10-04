@@ -306,10 +306,10 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               color: AppColors.accentSoft,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               LucideIcons.gitBranch,
               size: 20,
-              color: AppColors.accentStrong,
+              color: AppColors.accentInk,
             ),
           ),
           const SizedBox(width: 12),
@@ -542,13 +542,13 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               color: AppColors.accentSoft,
               borderRadius: BorderRadius.circular(AppTheme.radiusPill),
             ),
-            child: const Text(
+            child: Text(
               'OAuth',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.5,
-                color: AppColors.accentStrong,
+                color: AppColors.accentInk,
               ),
             ),
           ),
@@ -1106,7 +1106,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: AppColors.accentStrong),
+          Icon(icon, size: 16, color: AppColors.accentInk),
           const SizedBox(width: 9),
           Expanded(child: child),
         ],
@@ -1127,10 +1127,10 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
             onTap: onTap,
             child: Text(
               text,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.accentStrong,
+                color: AppColors.accentInk,
               ),
             ),
           ),

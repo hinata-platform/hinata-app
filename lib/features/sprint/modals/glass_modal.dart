@@ -2092,10 +2092,10 @@ class _GlassToastState extends State<_GlassToast>
                                       ),
                                       child: Text(
                                         widget.actionLabel!,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w700,
-                                          color: AppColors.accentStrong,
+                                          color: AppColors.accentInk,
                                         ),
                                       ),
                                     ),

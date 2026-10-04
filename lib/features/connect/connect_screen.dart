@@ -95,7 +95,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                             Text(
                               context.t(state.errorKey!),
                               textAlign: TextAlign.center,
-                              style: const TextStyle(color: AppColors.danger),
+                              style: TextStyle(color: AppColors.dangerInk),
                             ),
                           ],
                           const SizedBox(height: 24),
@@ -161,10 +161,10 @@ class _ConnectScreenState extends State<ConnectScreen> {
           dense: true,
           enabled: !connecting,
           contentPadding: EdgeInsets.zero,
-          leading: const Icon(
+          leading: Icon(
             LucideIcons.server,
             size: 18,
-            color: AppColors.accentStrong,
+            color: AppColors.accentInk,
           ),
           title: Text(
             server.displayName,
