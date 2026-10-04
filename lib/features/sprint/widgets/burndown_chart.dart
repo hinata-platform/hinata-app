@@ -34,6 +34,14 @@ class _BurndownChartState extends State<BurndownChart>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reduced motion paints the finished chart; stop the draw-in from
+    // ticking rebuilds nobody sees.
+    if (MediaQuery.disableAnimationsOf(context)) _controller.value = 1;
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();

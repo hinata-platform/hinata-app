@@ -258,7 +258,11 @@ class CommitRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(onTap: onOpen, child: _row(context));
+    // The commit message inside names the row.
+    return Semantics(
+      button: true,
+      child: InkWell(onTap: onOpen, child: _row(context)),
+    );
   }
 
   Widget _row(BuildContext context) {
@@ -485,15 +489,15 @@ class _OpenButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: IconButton(
-        onPressed: onTap,
-        visualDensity: VisualDensity.compact,
-        iconSize: 15,
-        constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
-        icon: Icon(LucideIcons.externalLink, color: AppColors.inkFaint),
-      ),
+    // 30 points on a desktop pointer; on touch platforms the theme's padded
+    // tap target size grows the hit area to 48 around the same face.
+    return IconButton(
+      onPressed: onTap,
+      tooltip: tooltip,
+      visualDensity: VisualDensity.compact,
+      iconSize: 15,
+      constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+      icon: Icon(LucideIcons.externalLink, color: AppColors.inkFaint),
     );
   }
 }

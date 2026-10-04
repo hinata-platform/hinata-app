@@ -104,12 +104,16 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
         setState(() => _hovered = false);
         _removePreview();
       },
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: _open,
-        onLongPress: _showPreview,
-        onLongPressUp: _removePreview,
-        child: chip,
+      // An inline link in running text; the chip's own label names it.
+      child: Semantics(
+        link: true,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _open,
+          onLongPress: _showPreview,
+          onLongPressUp: _removePreview,
+          child: chip,
+        ),
       ),
     );
   }
@@ -517,16 +521,16 @@ class _SmartPreviewState extends State<_SmartPreview>
       ),
     );
     if (reduce) return card;
-    return AnimatedBuilder(
-      animation: _c,
-      builder: (context, child) => Opacity(
-        opacity: _c.value,
-        child: Transform.translate(
+    return FadeTransition(
+      opacity: _c,
+      child: AnimatedBuilder(
+        animation: _c,
+        builder: (context, child) => Transform.translate(
           offset: Offset(0, -4 * (1 - _c.value)),
           child: child,
         ),
+        child: card,
       ),
-      child: card,
     );
   }
 }

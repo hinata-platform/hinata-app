@@ -133,20 +133,31 @@ class _DockedSelectionToggle extends StatelessWidget {
         label: label,
         excludeSemantics: true,
         onTap: onTap,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onTap,
-          child: _GlassControlSurface(
-            radius: _kSegmentedRadius,
-            child: SizedBox.square(
-              dimension: _kDockedButton,
-              child: Icon(
-                active ? LucideIcons.listX : LucideIcons.listChecks,
-                size: 18,
-                color: active ? AppColors.accentStrong : AppColors.ink,
+        // The ripple rides a transparent layer above the glass: painted on a
+        // Material beneath it, the glass would hide the press state.
+        child: Stack(
+          children: [
+            _GlassControlSurface(
+              radius: _kSegmentedRadius,
+              child: SizedBox.square(
+                dimension: _kDockedButton,
+                child: Icon(
+                  active ? LucideIcons.listX : LucideIcons.listChecks,
+                  size: 18,
+                  color: active ? AppColors.accentStrong : AppColors.ink,
+                ),
               ),
             ),
-          ),
+            Positioned.fill(
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(_kSegmentedRadius),
+                  onTap: onTap,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -278,6 +289,7 @@ class _SegmentCell extends StatelessWidget {
     required this.label,
     required this.active,
     this.badge,
+    this.tooltip = true,
   });
 
   final IconData icon;
@@ -288,47 +300,49 @@ class _SegmentCell extends StatelessWidget {
   final bool active;
   final Widget? badge;
 
+  /// False when the caller wraps the cell in the tooltip itself, e.g. because
+  /// a ripple layer above the cell takes the hover.
+  final bool tooltip;
+
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return Tooltip(
-      message: label,
-      child: Padding(
-        // Inset so the active fill floats inside the housing, clear of the glass
-        // rim and the neighbouring dividers.
-        padding: const EdgeInsets.all(_kSegmentInset),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: badge == null ? 13 : 11,
-            vertical: 7,
-          ),
-          decoration: active
-              ? BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: dark ? 0.30 : 0.20),
-                  // Concentric with the housing (radius − inset), so a pill
-                  // housing gives a pill indicator; clamps to a stadium when the
-                  // fill is shorter than twice the radius.
-                  borderRadius: BorderRadius.circular(
-                    _kSegmentedRadius - _kSegmentInset,
-                  ),
-                )
-              : null,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 18,
-                color: active
-                    ? (dark ? AppColors.accent : AppColors.accentStrong)
-                    : AppColors.inkSoft,
-              ),
-              if (badge != null) ...[const SizedBox(width: 6), badge!],
-            ],
-          ),
+    final cell = Padding(
+      // Inset so the active fill floats inside the housing, clear of the glass
+      // rim and the neighbouring dividers.
+      padding: const EdgeInsets.all(_kSegmentInset),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: badge == null ? 13 : 11,
+          vertical: 7,
+        ),
+        decoration: active
+            ? BoxDecoration(
+                color: AppColors.accent.withValues(alpha: dark ? 0.30 : 0.20),
+                // Concentric with the housing (radius − inset), so a pill
+                // housing gives a pill indicator; clamps to a stadium when the
+                // fill is shorter than twice the radius.
+                borderRadius: BorderRadius.circular(
+                  _kSegmentedRadius - _kSegmentInset,
+                ),
+              )
+            : null,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: active
+                  ? (dark ? AppColors.accent : AppColors.accentStrong)
+                  : AppColors.inkSoft,
+            ),
+            if (badge != null) ...[const SizedBox(width: 6), badge!],
+          ],
         ),
       ),
     );
+    return tooltip ? Tooltip(message: label, child: cell) : cell;
   }
 }
 
@@ -487,14 +501,33 @@ class _FilterButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final active = count > 0;
     if (segmented) {
-      return GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: _SegmentCell(
-          icon: LucideIcons.slidersHorizontal,
-          label: context.t('board.filterButton'),
-          active: active,
-          badge: active ? _CountBadge(count: count) : null,
+      // Named by the cell's tooltip; the ripple sits above the cell so the
+      // glass housing does not hide the press state. The ripple layer takes
+      // the hover, so the hover tooltip moves out here with it.
+      return Tooltip(
+        message: context.t('board.filterButton'),
+        child: Semantics(
+          button: true,
+          child: Stack(
+            children: [
+              _SegmentCell(
+                icon: LucideIcons.slidersHorizontal,
+                label: context.t('board.filterButton'),
+                active: active,
+                badge: active ? _CountBadge(count: count) : null,
+                tooltip: false,
+              ),
+              Positioned.fill(
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(_kSegmentedRadius),
+                    onTap: onTap,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -533,7 +566,7 @@ class _CountBadge extends StatelessWidget {
           fontFamily: AppTheme.fontMono,
           fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF2A2410),
+          color: kOnAmber,
         ),
       ),
     );

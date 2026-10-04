@@ -10,6 +10,7 @@ import '../../core/models/team_models.dart';
 import '../../core/repositories/article_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../core/widgets/hive_loader.dart';
 import '../sprint/modals/glass_modal.dart'
     show
@@ -252,44 +253,50 @@ class _TeamPagesPickerPanelState extends State<TeamPagesPickerPanel> {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-          child: TextField(
-            controller: _search,
-            // On a phone the keyboard would cover half the tree before anyone
-            // asked to search; the popover beside a wide form may take focus.
-            autofocus:
-                MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint,
-            onChanged: _onQueryChanged,
-            textInputAction: TextInputAction.search,
-            style: const TextStyle(fontSize: 14),
-            decoration: InputDecoration(
-              isDense: true,
-              prefixIcon: Icon(
-                LucideIcons.search,
-                size: 17,
-                color: AppColors.inkFaint,
-              ),
-              prefixIconConstraints: const BoxConstraints(
-                minWidth: 38,
-                minHeight: 38,
-              ),
-              hintText: context.t('teams.knowledge.searchPages'),
-              hintStyle: TextStyle(color: AppColors.inkFaint, fontSize: 14),
-              filled: true,
-              fillColor: AppColors.surface,
-              contentPadding: const EdgeInsets.symmetric(vertical: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                borderSide: BorderSide(color: AppColors.hairline),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                borderSide: BorderSide(color: AppColors.hairline),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                borderSide: const BorderSide(
-                  color: AppColors.accent,
-                  width: 1.4,
+          // The hint is the only caption; the label keeps the field named
+          // once the user has typed.
+          child: Semantics(
+            label: context.t('teams.knowledge.searchPages'),
+            textField: true,
+            child: TextField(
+              controller: _search,
+              // On a phone the keyboard would cover half the tree before anyone
+              // asked to search; the popover beside a wide form may take focus.
+              autofocus:
+                  MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint,
+              onChanged: _onQueryChanged,
+              textInputAction: TextInputAction.search,
+              style: const TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                isDense: true,
+                prefixIcon: Icon(
+                  LucideIcons.search,
+                  size: 17,
+                  color: AppColors.inkFaint,
+                ),
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 38,
+                  minHeight: 38,
+                ),
+                hintText: context.t('teams.knowledge.searchPages'),
+                hintStyle: TextStyle(color: AppColors.inkFaint, fontSize: 14),
+                filled: true,
+                fillColor: AppColors.surface,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                  borderSide: BorderSide(color: AppColors.hairline),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                  borderSide: BorderSide(color: AppColors.hairline),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                  borderSide: const BorderSide(
+                    color: AppColors.accent,
+                    width: 1.4,
+                  ),
                 ),
               ),
             ),
@@ -516,7 +523,7 @@ class _Check extends StatelessWidget {
           ? Icon(
               LucideIcons.check,
               size: 14,
-              color: on ? const Color(0xFF2A2410) : AppColors.accentStrong,
+              color: on ? kOnAmber : AppColors.accentStrong,
             )
           : null,
     );

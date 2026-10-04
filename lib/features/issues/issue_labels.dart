@@ -189,38 +189,42 @@ class _LabelPickerSheetState extends State<_LabelPickerSheet> {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-          child: TextField(
-            controller: _controller,
-            autofocus: true,
-            onChanged: (v) => setState(() => _query = v),
-            onSubmitted: canCreate ? _create : null,
-            textInputAction: TextInputAction.done,
-            inputFormatters: [
-              LengthLimitingTextInputFormatter(kIssueLabelMaxLength),
-            ],
-            decoration: InputDecoration(
-              isDense: true,
-              prefixIcon: Icon(
-                LucideIcons.search,
-                size: 18,
-                color: AppColors.inkFaint,
-              ),
-              hintText: context.t('issues.addLabel'),
-              hintStyle: TextStyle(color: AppColors.inkFaint, fontSize: 13.5),
-              filled: true,
-              fillColor: AppColors.surfaceMuted,
-              contentPadding: const EdgeInsets.symmetric(vertical: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                borderSide: BorderSide(color: AppColors.hairline),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                borderSide: BorderSide(color: AppColors.hairline),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                borderSide: const BorderSide(color: AppColors.accentLine),
+          child: Semantics(
+            label: context.t('issues.addLabel'),
+            textField: true,
+            child: TextField(
+              controller: _controller,
+              autofocus: true,
+              onChanged: (v) => setState(() => _query = v),
+              onSubmitted: canCreate ? _create : null,
+              textInputAction: TextInputAction.done,
+              inputFormatters: [
+                LengthLimitingTextInputFormatter(kIssueLabelMaxLength),
+              ],
+              decoration: InputDecoration(
+                isDense: true,
+                prefixIcon: Icon(
+                  LucideIcons.search,
+                  size: 18,
+                  color: AppColors.inkFaint,
+                ),
+                hintText: context.t('issues.addLabel'),
+                hintStyle: TextStyle(color: AppColors.inkFaint, fontSize: 13.5),
+                filled: true,
+                fillColor: AppColors.surfaceMuted,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                  borderSide: BorderSide(color: AppColors.hairline),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                  borderSide: BorderSide(color: AppColors.hairline),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                  borderSide: const BorderSide(color: AppColors.accentLine),
+                ),
               ),
             ),
           ),
@@ -292,32 +296,35 @@ class _CreateRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            children: [
-              const Icon(
-                LucideIcons.plus,
-                size: 18,
-                color: AppColors.accentStrong,
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  context.t('issues.createLabel', variables: {'name': label}),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.accentStrong,
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                const Icon(
+                  LucideIcons.plus,
+                  size: 18,
+                  color: AppColors.accentStrong,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    context.t('issues.createLabel', variables: {'name': label}),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accentStrong,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -340,62 +347,76 @@ class _LabelChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 130),
-        padding: EdgeInsets.fromLTRB(11, 7, onDelete != null ? 5 : 11, 7),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.accentSoft : AppColors.surfaceMuted,
-          borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-          border: Border.all(
-            color: selected ? AppColors.accentLine : AppColors.hairline2,
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 130),
+          // With a delete button the padding gives way to its 24 dp hit area
+          // (WCAG 2.5.8), so the chip keeps its size and the × its place.
+          padding: onDelete != null
+              ? const EdgeInsets.fromLTRB(11, 3.5, 1.5, 3.5)
+              : const EdgeInsets.fromLTRB(11, 7, 11, 7),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.accentSoft : AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+            border: Border.all(
+              color: selected ? AppColors.accentLine : AppColors.hairline2,
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 130),
-              child: selected
-                  ? Icon(
-                      LucideIcons.check,
-                      size: 14,
-                      color: selected
-                          ? AppColors.accentStrong
-                          : AppColors.inkFaint,
-                    )
-                  : const SizedBox.shrink(),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: selected ? AppColors.accentStrong : AppColors.inkSoft,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 130),
+                child: selected
+                    ? Icon(
+                        LucideIcons.check,
+                        size: 14,
+                        color: selected
+                            ? AppColors.accentStrong
+                            : AppColors.inkFaint,
+                      )
+                    : const SizedBox.shrink(),
               ),
-            ),
-            if (onDelete != null) ...[
-              const SizedBox(width: 4),
-              GestureDetector(
-                onTap: onDelete,
-                behavior: HitTestBehavior.opaque,
-                child: Tooltip(
-                  message: context.t('issues.deleteLabel'),
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(shape: BoxShape.circle),
-                    child: const Icon(
-                      LucideIcons.x,
-                      size: 13,
-                      color: AppColors.danger,
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? AppColors.accentStrong : AppColors.inkSoft,
+                ),
+              ),
+              if (onDelete != null) ...[
+                const SizedBox(width: 0.5),
+                Semantics(
+                  container: true,
+                  button: true,
+                  label: context.t('issues.deleteLabel'),
+                  child: GestureDetector(
+                    onTap: onDelete,
+                    behavior: HitTestBehavior.opaque,
+                    child: Tooltip(
+                      message: context.t('issues.deleteLabel'),
+                      excludeFromSemantics: true,
+                      child: Container(
+                        padding: const EdgeInsets.all(5.5),
+                        decoration: const BoxDecoration(shape: BoxShape.circle),
+                        child: const Icon(
+                          LucideIcons.x,
+                          size: 13,
+                          color: AppColors.danger,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

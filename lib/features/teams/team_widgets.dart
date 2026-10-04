@@ -56,6 +56,20 @@ const _iconMap = <String, IconData>{
 
 IconData teamIcon(String name) => _iconMap[name] ?? LucideIcons.hexagon;
 
+/// The i18n key naming a team icon for screen readers in the icon picker.
+String teamIconLabelKey(String name) => switch (name) {
+  'smartphone' => 'teams.icon.smartphone',
+  'server' => 'teams.icon.server',
+  'book-open' => 'teams.icon.book',
+  'rocket' => 'teams.icon.rocket',
+  'palette' => 'teams.icon.palette',
+  'shield' => 'teams.icon.shield',
+  'globe' => 'teams.icon.globe',
+  'code-xml' => 'teams.icon.code',
+  'layers' => 'teams.icon.layers',
+  _ => 'teams.icon.hexagon',
+};
+
 /// Ink color for a team/palette hue (≈ oklch(0.55 0.13 hue)). Known palette
 /// hues are mapped to hand-tuned tokens; anything else falls back to HSL.
 Color teamHueColor(int hue) => switch (hue) {
@@ -334,57 +348,69 @@ class TeamKpi extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = teamHueColor(hue);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+    // The fill moved onto a Material and the InkWell out around the padding:
+    // the whole card is the target (it was only the 40-point row inside the
+    // padding), and the ripple is drawn above the fill instead of under it.
+    return Semantics(
+      button: onTap != null,
+      child: Material(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.hairline),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.soft(color),
-                borderRadius: BorderRadius.circular(11),
-              ),
-              alignment: Alignment.center,
-              child: Icon(icon, size: 18, color: color),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+              border: Border.all(color: AppColors.hairline),
             ),
-            const SizedBox(width: 13),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: AppTheme.fontBrand,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      height: 1,
-                      color: AppColors.ink,
-                    ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.soft(color),
+                    borderRadius: BorderRadius.circular(11),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
+                  alignment: Alignment.center,
+                  child: Icon(icon, size: 18, color: color),
+                ),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: AppTheme.fontBrand,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          height: 1,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: AppColors.inkSoft,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

@@ -42,26 +42,33 @@ class _CardHead extends StatelessWidget {
             ),
           ),
         if (actionLabel != null && onAction != null)
-          GestureDetector(
-            onTap: onAction,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  actionLabel!,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.accentStrong,
-                  ),
+          Semantics(
+            button: true,
+            child: Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                onTap: onAction,
+                borderRadius: BorderRadius.circular(6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      actionLabel!,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.accentStrong,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Icon(
+                      forwardArrow(context),
+                      size: 13,
+                      color: AppColors.accentStrong,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 3),
-                Icon(
-                  forwardArrow(context),
-                  size: 13,
-                  color: AppColors.accentStrong,
-                ),
-              ],
+              ),
             ),
           ),
       ],
@@ -98,7 +105,7 @@ class _CustomizeButton extends StatelessWidget {
         : (dark
               ? Colors.white.withValues(alpha: .09)
               : Colors.white.withValues(alpha: .6));
-    final fg = editing ? const Color(0xFF2A2410) : AppColors.ink;
+    final fg = editing ? kOnAmber : AppColors.ink;
     final border = editing
         ? Colors.transparent
         : (dark
@@ -206,20 +213,31 @@ class _EyeToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return Material(
-      color: dark
-          ? const Color(0xFF232140).withValues(alpha: .82)
-          : Colors.white.withValues(alpha: .9),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(7),
-          child: Icon(
-            hidden ? LucideIcons.eyeOff : LucideIcons.eye,
-            size: 16,
-            color: hidden ? AppColors.inkSoft : AppColors.accentStrong,
+    final label = context.t(
+      hidden ? 'dashboard.showCard' : 'dashboard.hideCard',
+    );
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        child: Material(
+          color: dark
+              ? const Color(0xFF232140).withValues(alpha: .82)
+              : Colors.white.withValues(alpha: .9),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(7),
+              child: Icon(
+                hidden ? LucideIcons.eyeOff : LucideIcons.eye,
+                size: 16,
+                color: hidden ? AppColors.inkSoft : AppColors.accentStrong,
+              ),
+            ),
           ),
         ),
       ),
@@ -405,67 +423,74 @@ class _PickerField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          final box = context.findRenderObject() as RenderBox?;
-          final rect = box != null && box.hasSize
-              ? box.localToGlobal(Offset.zero) & box.size
-              : Rect.zero;
-          onTap(rect);
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          decoration: BoxDecoration(
-            color: dark
-                ? Colors.white.withValues(alpha: .05)
-                : Colors.white.withValues(alpha: .55),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
+    return Semantics(
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            final box = context.findRenderObject() as RenderBox?;
+            final rect = box != null && box.hasSize
+                ? box.localToGlobal(Offset.zero) & box.size
+                : Rect.zero;
+            onTap(rect);
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
               color: dark
-                  ? Colors.white.withValues(alpha: .1)
-                  : Colors.white.withValues(alpha: .7),
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 16, color: AppColors.accentStrong),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
-                        color: AppColors.inkSoft,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                  ],
-                ),
+                  ? Colors.white.withValues(alpha: .05)
+                  : Colors.white.withValues(alpha: .55),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: dark
+                    ? Colors.white.withValues(alpha: .1)
+                    : Colors.white.withValues(alpha: .7),
               ),
-              const SizedBox(width: 10),
-              Icon(LucideIcons.chevronDown, size: 15, color: AppColors.inkSoft),
-            ],
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 16, color: AppColors.accentStrong),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.2,
+                          color: AppColors.inkSoft,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Icon(
+                  LucideIcons.chevronDown,
+                  size: 15,
+                  color: AppColors.inkSoft,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -608,52 +633,58 @@ class _ChoiceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 3),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.accentSoft : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: selected
-                  ? AppColors.accent.withValues(alpha: .5)
-                  : AppColors.hairline,
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 3),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            decoration: BoxDecoration(
+              color: selected ? AppColors.accentSoft : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: selected
+                    ? AppColors.accent.withValues(alpha: .5)
+                    : AppColors.hairline,
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              if (showIcon && icon != null) ...[
-                Icon(
-                  icon,
-                  size: 16,
-                  color: selected ? AppColors.accentStrong : AppColors.inkSoft,
-                ),
-                const SizedBox(width: 10),
-              ],
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    color: AppColors.ink,
+            child: Row(
+              children: [
+                if (showIcon && icon != null) ...[
+                  Icon(
+                    icon,
+                    size: 16,
+                    color: selected
+                        ? AppColors.accentStrong
+                        : AppColors.inkSoft,
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
-              ),
-              if (selected)
-                const Icon(
-                  LucideIcons.check,
-                  size: 16,
-                  color: AppColors.accentStrong,
-                ),
-            ],
+                if (selected)
+                  const Icon(
+                    LucideIcons.check,
+                    size: 16,
+                    color: AppColors.accentStrong,
+                  ),
+              ],
+            ),
           ),
         ),
       ),

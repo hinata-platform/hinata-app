@@ -181,55 +181,64 @@ class _SubtaskExpanderState extends State<SubtaskExpander> {
         Container(height: 1, color: AppColors.hairline),
         Material(
           color: Colors.transparent,
-          child: InkWell(
-            onTap: _toggle,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              child: Row(
-                children: [
-                  Icon(
-                    LucideIcons.listTree,
-                    size: 14,
-                    color: AppColors.inkSoft,
-                  ),
-                  const SizedBox(width: 7),
-                  Text(
-                    context.t('issues.subtasks'),
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
+          // Expands the sub-task list; says whether it is open. The label and the
+          // count merge in.
+          child: Semantics(
+            button: true,
+            expanded: _expanded,
+            child: InkWell(
+              onTap: _toggle,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 9,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      LucideIcons.listTree,
+                      size: 14,
                       color: AppColors.inkSoft,
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: HiveProgress(
-                      value: total == 0 ? 0 : done / total,
-                      color: barColor,
-                      height: 5,
+                    const SizedBox(width: 7),
+                    Text(
+                      context.t('issues.subtasks'),
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.inkSoft,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    '$done/$total',
-                    style: TextStyle(
-                      fontFamily: AppTheme.fontMono,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.inkSoft,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: HiveProgress(
+                        value: total == 0 ? 0 : done / total,
+                        color: barColor,
+                        height: 5,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  AnimatedRotation(
-                    turns: _expanded ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 180),
-                    child: Icon(
-                      LucideIcons.chevronDown,
-                      size: 16,
-                      color: AppColors.inkFaint,
+                    const SizedBox(width: 10),
+                    Text(
+                      '$done/$total',
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontMono,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.inkSoft,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 4),
+                    AnimatedRotation(
+                      turns: _expanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 180),
+                      child: Icon(
+                        LucideIcons.chevronDown,
+                        size: 16,
+                        color: AppColors.inkFaint,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -269,7 +278,8 @@ class _SubtaskExpanderState extends State<SubtaskExpander> {
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              // Padded tap target: the button looks the same, the 48-point
+              // hit area around it is invisible.
             ),
             icon: const Icon(LucideIcons.refreshCw, size: 14),
             label: Text(context.t('common.retry')),
@@ -309,38 +319,42 @@ class _SubtaskMiniRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
-          child: Row(
-            children: [
-              TypeGlyph(type: issue.type, size: 15),
-              const SizedBox(width: 7),
-              IdMono(issue.readableId, fontSize: 10.5),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  issue.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+      // Opens the sub-task; its id and title merge in as the name.
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+            child: Row(
+              children: [
+                TypeGlyph(type: issue.type, size: 15),
+                const SizedBox(width: 7),
+                IdMono(issue.readableId, fontSize: 10.5),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    issue.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: AppColors.stateColor(issue.state.toUpperCase()),
-                  shape: BoxShape.circle,
+                const SizedBox(width: 8),
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: AppColors.stateColor(issue.state.toUpperCase()),
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -412,16 +412,19 @@ Future<T?> showGlassOptions<T>(
         shrinkWrap: true,
         children: [
           for (final o in options)
-            InkWell(
-              onTap: () => Navigator.of(popoverContext).pop(o.value),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 11,
-                ),
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: o.child,
+            Semantics(
+              button: true,
+              child: InkWell(
+                onTap: () => Navigator.of(popoverContext).pop(o.value),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 11,
+                  ),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: o.child,
+                  ),
                 ),
               ),
             ),
@@ -515,13 +518,19 @@ class _OptionsList<T> extends StatelessWidget {
           ),
         ),
         for (final o in options)
-          InkWell(
-            onTap: () => Navigator.of(context).pop(o.value),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: o.child,
+          Semantics(
+            button: true,
+            child: InkWell(
+              onTap: () => Navigator.of(context).pop(o.value),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: o.child,
+                ),
               ),
             ),
           ),
@@ -667,30 +676,33 @@ class _AnchoredPanel extends StatelessWidget {
           top: top,
           bottom: bottom,
           width: panelWidth,
-          child: AnimatedBuilder(
-            animation: anim,
-            builder: (_, child) {
-              if (reduceMotion) {
-                return Opacity(opacity: anim.value, child: child);
-              }
-              final t = const Cubic(
-                0.34,
-                1.3,
-                0.64,
-                1,
-              ).transform(anim.value.clamp(0.0, 1.0));
-              return Opacity(
-                opacity: (anim.value / 0.6).clamp(0.0, 1.0),
-                child: Transform.scale(
-                  scale: 0.92 + 0.08 * t,
-                  alignment: placeAbove
-                      ? Alignment.bottomLeft
-                      : Alignment.topLeft,
-                  child: child,
-                ),
-              );
-            },
-            child: panel,
+          // FadeTransition fades on the compositor; an Opacity rebuilt every
+          // frame would repaint the glass panel each tick.
+          child: FadeTransition(
+            opacity: reduceMotion
+                ? anim
+                : anim.drive(CurveTween(curve: const Interval(0, 0.6))),
+            child: reduceMotion
+                ? panel
+                : AnimatedBuilder(
+                    animation: anim,
+                    builder: (_, child) {
+                      final t = const Cubic(
+                        0.34,
+                        1.3,
+                        0.64,
+                        1,
+                      ).transform(anim.value.clamp(0.0, 1.0));
+                      return Transform.scale(
+                        scale: 0.92 + 0.08 * t,
+                        alignment: placeAbove
+                            ? Alignment.bottomLeft
+                            : Alignment.topLeft,
+                        child: child,
+                      );
+                    },
+                    child: panel,
+                  ),
           ),
         ),
       ],
@@ -1275,6 +1287,7 @@ class _MonthGrid extends StatelessWidget {
         _DayCell(
           size: cell,
           label: '$dayNum',
+          semanticLabel: l.formatFullDate(date),
           disabled: disabled,
           isToday: date == today,
           isStart: isStart,
@@ -1346,6 +1359,7 @@ class _DayCell extends StatelessWidget {
   const _DayCell({
     required this.size,
     required this.label,
+    required this.semanticLabel,
     required this.disabled,
     required this.isToday,
     required this.isStart,
@@ -1357,6 +1371,9 @@ class _DayCell extends StatelessWidget {
 
   final double size;
   final String label;
+
+  /// The whole date: the bare day number says nothing without its month.
+  final String semanticLabel;
   final bool disabled;
   final bool isToday;
   final bool isStart;
@@ -1411,37 +1428,47 @@ class _DayCell extends StatelessWidget {
       textColor = AppColors.ink;
     }
 
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: size,
-        height: size,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            if (band != null) Positioned.fill(child: band),
-            Container(
-              width: size - 8,
-              height: size - 8,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isEndpoint ? colors.disc : null,
-                border: isToday && !isEndpoint
-                    ? Border.all(color: AppColors.accent, width: 1.5)
-                    : null,
-              ),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isEndpoint ? FontWeight.w700 : FontWeight.w500,
-                  color: textColor,
+    return Semantics(
+      button: true,
+      enabled: !disabled,
+      selected: isEndpoint,
+      label: semanticLabel,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (band != null) Positioned.fill(child: band),
+              Container(
+                width: size - 8,
+                height: size - 8,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isEndpoint ? colors.disc : null,
+                  border: isToday && !isEndpoint
+                      ? Border.all(color: AppColors.accent, width: 1.5)
+                      : null,
+                ),
+                child: ExcludeSemantics(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isEndpoint
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: textColor,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1891,6 +1918,16 @@ class _GlassToastState extends State<_GlassToast>
     _dismissTimer = Timer(widget.duration, _close);
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reduced motion: the pill appears and leaves without sliding.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.duration = Duration.zero;
+      if (!_closing) _controller.value = 1;
+    }
+  }
+
   Future<void> _close() async {
     if (_closing || !mounted) return;
     _closing = true;
@@ -2043,20 +2080,23 @@ class _GlassToastState extends State<_GlassToast>
                               ],
                               if (widget.actionLabel != null) ...[
                                 const SizedBox(width: 12),
-                                InkWell(
-                                  borderRadius: BorderRadius.circular(8),
-                                  onTap: _handleAction,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    child: Text(
-                                      widget.actionLabel!,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.accentStrong,
+                                Semantics(
+                                  button: true,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(8),
+                                    onTap: _handleAction,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      child: Text(
+                                        widget.actionLabel!,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.accentStrong,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -2349,26 +2389,30 @@ class _PresetChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.accentSoft
-                : AppColors.hairline.withValues(alpha: 0.35),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: selected ? AppColors.accentLine : Colors.transparent,
+      child: Semantics(
+        button: true,
+        selected: selected,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(999),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: selected
+                  ? AppColors.accentSoft
+                  : AppColors.hairline.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: selected ? AppColors.accentLine : Colors.transparent,
+              ),
             ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: selected ? AppColors.accentStrong : AppColors.inkSoft,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: selected ? AppColors.accentStrong : AppColors.inkSoft,
+              ),
             ),
           ),
         ),
@@ -2501,41 +2545,46 @@ class _SegmentButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.accentSoft : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(
-              color: selected ? AppColors.accentLine : AppColors.hairline,
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 15,
-                color: selected ? AppColors.accentStrong : AppColors.inkSoft,
+      child: Semantics(
+        button: true,
+        selected: selected,
+        inMutuallyExclusiveGroup: true,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: selected ? AppColors.accentSoft : Colors.transparent,
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              border: Border.all(
+                color: selected ? AppColors.accentLine : AppColors.hairline,
               ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  label,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: selected
-                        ? AppColors.accentStrong
-                        : AppColors.inkSoft,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 15,
+                  color: selected ? AppColors.accentStrong : AppColors.inkSoft,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: selected
+                          ? AppColors.accentStrong
+                          : AppColors.inkSoft,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

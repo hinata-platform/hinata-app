@@ -209,30 +209,42 @@ class _PlayButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.accent,
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: loading
-              ? const Padding(
-                  padding: EdgeInsets.all(11),
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Color(0xFF2A2410),
-                  ),
-                )
-              : Icon(
-                  failed
-                      ? LucideIcons.rotateCw
-                      : (playing ? LucideIcons.pause : LucideIcons.play),
-                  size: 18,
-                  color: const Color(0xFF2A2410),
-                ),
+    final label = failed
+        ? context.t('common.retry')
+        : context.t(playing ? 'comments.voice.pause' : 'comments.voice.play');
+    // 40 dp keeps the voice bubble compact; it clears the 24 dp floor.
+    return Semantics(
+      button: true,
+      label: label,
+      child: Tooltip(
+        message: label,
+        excludeFromSemantics: true,
+        child: Material(
+          color: AppColors.accent,
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: loading
+                  ? const Padding(
+                      padding: EdgeInsets.all(11),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: kOnAmber,
+                      ),
+                    )
+                  : Icon(
+                      failed
+                          ? LucideIcons.rotateCw
+                          : (playing ? LucideIcons.pause : LucideIcons.play),
+                      size: 18,
+                      color: kOnAmber,
+                    ),
+            ),
+          ),
         ),
       ),
     );
@@ -264,17 +276,28 @@ class _Waveform extends StatelessWidget {
         // enclosing AnimatedBuilder ticks many times a second during playback,
         // but only `progress` changes, so the painter just repaints the fill
         // instead of reconstructing ~36 Container widgets each frame.
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: (d) => seekAt(d.localPosition.dx),
-          onHorizontalDragUpdate: (d) => seekAt(d.localPosition.dx),
-          child: CustomPaint(
-            size: Size.infinite,
-            painter: _WaveformPainter(
-              bars: bars,
-              progress: progress,
-              fill: AppColors.accent,
-              idle: idle,
+        // A slider to assistive tech: swipe up or down to seek in tenths.
+        String pct(double v) => '${(v.clamp(0.0, 1.0) * 100).round()}%';
+        return Semantics(
+          slider: true,
+          label: context.t('comments.voice.position'),
+          value: pct(progress),
+          increasedValue: pct(progress + 0.1),
+          decreasedValue: pct(progress - 0.1),
+          onIncrease: () => onSeek((progress + 0.1).clamp(0.0, 1.0)),
+          onDecrease: () => onSeek((progress - 0.1).clamp(0.0, 1.0)),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (d) => seekAt(d.localPosition.dx),
+            onHorizontalDragUpdate: (d) => seekAt(d.localPosition.dx),
+            child: CustomPaint(
+              size: Size.infinite,
+              painter: _WaveformPainter(
+                bars: bars,
+                progress: progress,
+                fill: AppColors.accent,
+                idle: idle,
+              ),
             ),
           ),
         );

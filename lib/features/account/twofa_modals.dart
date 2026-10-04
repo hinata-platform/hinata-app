@@ -9,6 +9,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/account_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../sprint/modals/glass_modal.dart'
     show showGlassModal, GlassModalHeader, showGlassToast, GlassToastKind;
 import 'account_widgets.dart';
@@ -131,43 +132,50 @@ class _OtpInputState extends State<OtpInput> {
                     _emit();
                   }
                 },
-                child: TextField(
-                  controller: _controllers[i],
-                  focusNode: _nodes[i],
-                  autofocus: widget.autofocus && i == 0,
-                  textAlign: TextAlign.center,
-                  keyboardType: TextInputType.number,
-                  maxLength: i == 0 ? _length : 1,
-                  autofillHints: const [AutofillHints.oneTimeCode],
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  style: const TextStyle(
-                    fontFamily: AppTheme.fontMono,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+                child: Semantics(
+                  label: context.t(
+                    'twofa.digitLabel',
+                    variables: {'n': i + 1, 'total': _length},
                   ),
-                  decoration: InputDecoration(
-                    counterText: '',
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                    filled: true,
-                    fillColor: AppColors.surface.withValues(alpha: 0.7),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppTheme.radiusControl,
-                      ),
-                      borderSide: BorderSide(color: AppColors.hairline),
+                  textField: true,
+                  child: TextField(
+                    controller: _controllers[i],
+                    focusNode: _nodes[i],
+                    autofocus: widget.autofocus && i == 0,
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.number,
+                    maxLength: i == 0 ? _length : 1,
+                    autofillHints: const [AutofillHints.oneTimeCode],
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    style: const TextStyle(
+                      fontFamily: AppTheme.fontMono,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppTheme.radiusControl,
+                    decoration: InputDecoration(
+                      counterText: '',
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                      filled: true,
+                      fillColor: AppColors.surface.withValues(alpha: 0.7),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusControl,
+                        ),
+                        borderSide: BorderSide(color: AppColors.hairline),
                       ),
-                      borderSide: const BorderSide(
-                        color: AppColors.accent,
-                        width: 1.6,
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusControl,
+                        ),
+                        borderSide: const BorderSide(
+                          color: AppColors.accent,
+                          width: 1.6,
+                        ),
                       ),
                     ),
+                    onChanged: (v) => _onChanged(i, v),
                   ),
-                  onChanged: (v) => _onChanged(i, v),
                 ),
               ),
             ),
@@ -332,10 +340,7 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
                     width: 180,
                     height: 180,
                     child: CustomPaint(
-                      painter: _QrPainter(
-                        setup.otpauthUri,
-                        const Color(0xFF1A1830),
-                      ),
+                      painter: _QrPainter(setup.otpauthUri, AppColors.rail2),
                     ),
                   ),
           ),
@@ -435,23 +440,30 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: InkWell(
-                onTap: () => setState(() => _saved = !_saved),
-                child: Row(
-                  children: [
-                    _MiniCheck(on: _saved),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        context.t('twofa.saved'),
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.ink,
+              child: Semantics(
+                checked: _saved,
+                child: InkWell(
+                  onTap: () => setState(() => _saved = !_saved),
+                  // The row grows to a full touch target; the box keeps its size.
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 48),
+                    child: Row(
+                      children: [
+                        _MiniCheck(on: _saved),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            context.t('twofa.saved'),
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.ink,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -797,6 +809,7 @@ class _CopyField extends StatelessWidget {
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
+            tooltip: context.t('common.copy'),
             icon: Icon(LucideIcons.copy, size: 16, color: AppColors.inkSoft),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: copyValue));
@@ -828,7 +841,7 @@ class _MiniCheck extends StatelessWidget {
         border: Border.all(color: on ? AppColors.accent : AppColors.hairline),
       ),
       child: on
-          ? const Icon(LucideIcons.check, size: 13, color: Color(0xFF2A2410))
+          ? const Icon(LucideIcons.check, size: 13, color: kOnAmber)
           : null,
     );
   }

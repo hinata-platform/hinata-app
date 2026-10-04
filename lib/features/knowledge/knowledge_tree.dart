@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RendererBinding;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/glass_popup_menu.dart';
+import '../sprint/modals/glass_modal.dart'
+    show
+        kGlassPopoverBreakpoint,
+        showGlassAnchoredPopover,
+        showGlassBottomSheet;
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
 import 'knowledge_tokens.dart';
@@ -15,7 +21,8 @@ typedef ArticleMove =
 
 /// Space switcher + nested, folder-style article tree. Pages can be dragged onto
 /// one another to nest (Confluence-style), dropped on the root zone to un-nest,
-/// and each row offers add-sub-page / move-to-root / delete. Rendered in the
+/// and each row offers add-sub-page / move-under / move-to-root / delete, so
+/// every move dragging does is also a tap away (WCAG 2.5.7). Rendered in the
 /// reader's left sidebar (≥ 720 px) and inside the phone drawer.
 class KnowledgeTree extends StatelessWidget {
   const KnowledgeTree({
@@ -239,13 +246,66 @@ class _TreeBranch extends StatefulWidget {
 class _TreeBranchState extends State<_TreeBranch> {
   bool _open = true;
 
-  /// Glass action menu for a tree row: move-to-root + delete.
+  /// The pages [widget.article] may move under, in tree order: everything in
+  /// its space except itself, its own subpages and its current parent.
+  List<({KbArticle page, int depth})> _parentCandidates() {
+    final article = widget.article;
+    final children = <String?, List<KbArticle>>{};
+    final ids = {for (final a in widget.inSpace) a.id};
+    for (final a in widget.inSpace) {
+      final parent = ids.contains(a.parentId) ? a.parentId : null;
+      children.putIfAbsent(parent, () => []).add(a);
+    }
+    final out = <({KbArticle page, int depth})>[];
+    void walk(String? parent, int depth) {
+      for (final a in children[parent] ?? const <KbArticle>[]) {
+        // A page's own subtree is no place for it, and so not offered.
+        if (widget.repo.isSelfOrAncestor(article.id, a.id)) continue;
+        if (a.id != article.parentId) out.add((page: a, depth: depth));
+        walk(a.id, depth + 1);
+      }
+    }
+
+    walk(null, 0);
+    return out;
+  }
+
+  /// The tap alternative to dropping this page onto another one.
+  Future<void> _moveUnder(BuildContext context) async {
+    final box = context.findRenderObject() as RenderBox?;
+    final anchor = box == null
+        ? Rect.zero
+        : box.localToGlobal(Offset.zero) & box.size;
+    final panel = _ParentPickerPanel(rows: _parentCandidates());
+    final parentId = MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint
+        ? await showGlassAnchoredPopover<String>(
+            context,
+            anchorRect: anchor,
+            width: 320,
+            builder: (_) => panel,
+          )
+        : await showGlassBottomSheet<String>(
+            context,
+            builder: (_) => SizedBox(height: 420, child: panel),
+          );
+    if (parentId == null) return;
+    widget.onMove(
+      widget.article.id,
+      parentId: parentId,
+      spaceId: widget.article.spaceId,
+    );
+  }
+
+  /// Glass action menu for a tree row: move-under, move-to-root + delete.
   Widget _rowMenu(BuildContext context, bool canDelete) {
+    final canMoveUnder = _parentCandidates().isNotEmpty;
     return GlassPopupMenu<String>(
       value: '',
       width: 240,
       onSelected: (v) {
-        if (v == 'root') {
+        if (v == 'under') {
+          _moveUnder(context);
+        } else if (v == 'root') {
           widget.onMove(
             widget.article.id,
             parentId: null,
@@ -256,6 +316,16 @@ class _TreeBranchState extends State<_TreeBranch> {
         }
       },
       items: [
+        if (canMoveUnder)
+          GlassMenuItem(
+            value: 'under',
+            label: context.t('knowledge.moveUnder'),
+            leading: Icon(
+              LucideIcons.cornerDownRight,
+              size: 16,
+              color: AppColors.inkSoft,
+            ),
+          ),
         if (widget.article.parentId != null)
           GlassMenuItem(
             value: 'root',
@@ -273,7 +343,7 @@ class _TreeBranchState extends State<_TreeBranch> {
               : context.t('knowledge.deleteHasChildren'),
           enabled: canDelete,
           color: AppColors.danger,
-          dividerAbove: widget.article.parentId != null,
+          dividerAbove: canMoveUnder || widget.article.parentId != null,
           leading: Icon(
             lucideIcon('trash-2'),
             size: 16,
@@ -281,12 +351,15 @@ class _TreeBranchState extends State<_TreeBranch> {
           ),
         ),
       ],
-      child: Padding(
-        padding: const EdgeInsets.all(4),
-        child: Icon(
-          lucideIcon('ellipsis'),
-          size: 15,
-          color: AppColors.inkFaint,
+      child: Tooltip(
+        message: context.t('knowledge.pageActions'),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Icon(
+            lucideIcon('ellipsis'),
+            size: 15,
+            color: AppColors.inkFaint,
+          ),
         ),
       ),
     );
@@ -294,6 +367,9 @@ class _TreeBranchState extends State<_TreeBranch> {
 
   bool _hover = false;
   bool _dropHover = false;
+
+  static bool get _mouseConnected =>
+      RendererBinding.instance.mouseTracker.mouseIsConnected;
 
   @override
   Widget build(BuildContext context) {
@@ -305,70 +381,93 @@ class _TreeBranchState extends State<_TreeBranch> {
     final row = MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
-      child: Material(
-        color: _dropHover
-            ? AppColors.accentSoft
-            : selected
-            ? AppColors.accentSoft
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
+      // The page title inside names the row; `selected` marks the open page.
+      child: Semantics(
+        button: true,
+        selected: selected,
+        child: Material(
+          color: _dropHover
+              ? AppColors.accentSoft
+              : selected
+              ? AppColors.accentSoft
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
-          onTap: () => widget.onSelect(widget.article.id),
-          child: Container(
-            decoration: _dropHover
-                ? BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.accentLine),
-                  )
-                : null,
-            padding: EdgeInsets.fromLTRB(8 + widget.depth * 14, 5, 4, 5),
-            child: Row(
-              children: [
-                if (kids.isNotEmpty)
-                  GestureDetector(
-                    onTap: () => setState(() => _open = !_open),
-                    child: Icon(
-                      lucideIcon(_open ? 'chevron-down' : 'chevron-right'),
-                      size: 15,
-                      color: AppColors.inkFaint,
-                    ),
-                  )
-                else
-                  const SizedBox(width: 15),
-                const SizedBox(width: 6),
-                Icon(
-                  lucideIcon(widget.article.icon),
-                  size: 15,
-                  color: selected ? KbTokens.accent : AppColors.inkSoft,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    widget.article.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                      color: selected ? AppColors.ink : AppColors.inkSoft,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => widget.onSelect(widget.article.id),
+            child: Container(
+              decoration: _dropHover
+                  ? BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.accentLine),
+                    )
+                  : null,
+              padding: EdgeInsets.fromLTRB(8 + widget.depth * 14, 5, 4, 5),
+              child: Row(
+                children: [
+                  if (kids.isNotEmpty)
+                    Semantics(
+                      button: true,
+                      expanded: _open,
+                      label: context.t('knowledge.subpages'),
+                      child: InkWell(
+                        onTap: () => setState(() => _open = !_open),
+                        borderRadius: BorderRadius.circular(4),
+                        child: Icon(
+                          lucideIcon(_open ? 'chevron-down' : 'chevron-right'),
+                          size: 15,
+                          color: AppColors.inkFaint,
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox(width: 15),
+                  const SizedBox(width: 6),
+                  Icon(
+                    lucideIcon(widget.article.icon),
+                    size: 15,
+                    color: selected ? KbTokens.accent : AppColors.inkSoft,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.article.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                        color: selected ? AppColors.ink : AppColors.inkSoft,
+                      ),
                     ),
                   ),
-                ),
-                // Where a top-level page lives; its subpages live there too, so
-                // repeating it on every row would only add noise.
-                if (widget.depth == 0)
-                  KbPlaceGlyph(place: widget.article.place),
-                // Row actions (reveal on hover; always present for touch).
-                if (_hover) ...[
-                  _RowAction(
-                    icon: 'plus',
-                    tooltip: context.t('knowledge.addSubPage'),
-                    onTap: () => widget.onNewChild(widget.article.id),
+                  // Where a top-level page lives; its subpages live there too, so
+                  // repeating it on every row would only add noise.
+                  if (widget.depth == 0)
+                    KbPlaceGlyph(place: widget.article.place),
+                  // Row actions: shown on hover and on the open page with a
+                  // mouse, always without one, since a finger cannot hover.
+                  // Kept in the tree while hidden, so a screen reader and the
+                  // keyboard reach them on every row.
+                  Opacity(
+                    opacity: _hover || selected || !_mouseConnected ? 1 : 0,
+                    alwaysIncludeSemantics: true,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _RowAction(
+                          icon: 'plus',
+                          tooltip: context.t('knowledge.addSubPage'),
+                          onTap: () => widget.onNewChild(widget.article.id),
+                        ),
+                        _rowMenu(context, kids.isEmpty),
+                      ],
+                    ),
                   ),
-                  _rowMenu(context, kids.isEmpty),
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -443,14 +542,94 @@ class _RowAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: Icon(lucideIcon(icon), size: 15, color: AppColors.inkFaint),
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(6),
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Icon(lucideIcon(icon), size: 15, color: AppColors.inkFaint),
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// The pages a page can move under, indented as in the tree. Tapping one
+/// closes the picker with its id.
+class _ParentPickerPanel extends StatelessWidget {
+  const _ParentPickerPanel({required this.rows});
+
+  final List<({KbArticle page, int depth})> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+          child: Text(
+            context.t('knowledge.moveUnderTitle'),
+            style: const TextStyle(
+              fontFamily: 'Sora',
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Flexible(
+          child: ListView.builder(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+            itemCount: rows.length,
+            itemBuilder: (context, i) {
+              final row = rows[i];
+              return Semantics(
+                button: true,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => Navigator.of(context).pop(row.page.id),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 44),
+                    child: Padding(
+                      padding: EdgeInsetsDirectional.fromSTEB(
+                        8 + row.depth * 14,
+                        8,
+                        8,
+                        8,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            lucideIcon(row.page.icon),
+                            size: 15,
+                            color: AppColors.inkSoft,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              row.page.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

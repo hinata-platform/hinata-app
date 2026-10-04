@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 
@@ -94,20 +95,26 @@ class _CopyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          width: 36,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            border: Border(left: BorderSide(color: AppColors.hairline)),
-          ),
-          child: Icon(
-            done ? LucideIcons.check : LucideIcons.copy,
-            size: 15,
-            color: done ? AppColors.success : AppColors.inkSoft,
+    // 36×38 inside the 38-point field: above the 24-point floor, and a full
+    // 48 would make the whole field taller.
+    return Semantics(
+      button: true,
+      label: context.t(done ? 'common.copied' : 'common.copy'),
+      child: Material(
+        color: AppColors.surface,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            width: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              border: Border(left: BorderSide(color: AppColors.hairline)),
+            ),
+            child: Icon(
+              done ? LucideIcons.check : LucideIcons.copy,
+              size: 15,
+              color: done ? AppColors.success : AppColors.inkSoft,
+            ),
           ),
         ),
       ),

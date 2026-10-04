@@ -2,6 +2,8 @@ import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+
 /// App-wide ambient backdrop for the v2 "Liquid Glass" shell: a warm-paper (or
 /// deep-navy in dark mode) vertical gradient with two soft, heavily-blurred
 /// amber/navy glow blobs. Rendered once behind the whole app (rail + topbar +
@@ -43,14 +45,14 @@ class AmbientBackground extends StatelessWidget {
                 left: -140,
                 top: -180,
                 size: 560,
-                color: const Color(0xFFD9A032),
+                color: AppColors.accent,
                 opacity: dark ? .20 : .34,
               ),
               _blob(
                 right: -200,
                 top: 260,
                 size: 640,
-                color: dark ? const Color(0xFF5E58BE) : const Color(0xFF2D2B55),
+                color: dark ? const Color(0xFF5E58BE) : AppColors.navy,
                 opacity: dark ? .26 : .20,
               ),
             ],

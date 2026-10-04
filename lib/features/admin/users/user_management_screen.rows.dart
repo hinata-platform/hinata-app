@@ -33,55 +33,67 @@ class _UserTableRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _Checkbox(checked: selected, mixed: false, onTap: onToggle),
-          const SizedBox(width: 10),
+          _Checkbox(
+            checked: selected,
+            mixed: false,
+            label: context.t(
+              'admin.um.selectUser',
+              variables: {'name': u.name},
+            ),
+            onTap: onToggle,
+          ),
+          // 10 dp of gap, 6 of them inside the checkbox's hit area.
+          const SizedBox(width: 4),
           Expanded(
             flex: 3,
-            child: InkWell(
-              onTap: () => actions.openDrawer(u),
-              child: Row(
-                children: [
-                  UserAvatar(name: u.name, imageUrl: u.avatarUrl, size: 34),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                u.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w700,
+            child: Semantics(
+              button: true,
+              child: InkWell(
+                onTap: () => actions.openDrawer(u),
+                child: Row(
+                  children: [
+                    UserAvatar(name: u.name, imageUrl: u.avatarUrl, size: 34),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  u.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
-                            ),
-                            PronounsLabel(
-                              pronouns: u.pronouns,
-                              fontSize: 11.5,
-                              leadingGap: 6,
-                            ),
-                            if (isMe) _YouChip(),
-                          ],
-                        ),
-                        Text(
-                          u.email,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            color: AppColors.inkSoft,
+                              PronounsLabel(
+                                pronouns: u.pronouns,
+                                fontSize: 11.5,
+                                leadingGap: 6,
+                              ),
+                              if (isMe) _YouChip(),
+                            ],
                           ),
-                        ),
-                      ],
+                          Text(
+                            u.email,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: AppColors.inkSoft,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -101,10 +113,10 @@ class _UserTableRow extends StatelessWidget {
               children: [
                 StatusBadge(u),
                 if (u.inviteExpired)
-                  GestureDetector(
-                    onTap: () => actions.openResend([u.id]),
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 3),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 3),
+                    child: _InlineAction(
+                      onTap: () => actions.openResend([u.id]),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -193,10 +205,24 @@ class _UserCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _Checkbox(checked: selected, mixed: false, onTap: onToggle),
-              const SizedBox(width: 10),
+              // Lifted by the 3 dp of hit area above the box, so the box keeps
+              // its place on the card's top edge.
+              Transform.translate(
+                offset: const Offset(0, -3),
+                child: _Checkbox(
+                  checked: selected,
+                  mixed: false,
+                  label: context.t(
+                    'admin.um.selectUser',
+                    variables: {'name': u.name},
+                  ),
+                  onTap: onToggle,
+                ),
+              ),
+              // 10 dp of gap, 6 of them inside the checkbox's hit area.
+              const SizedBox(width: 4),
               Expanded(
-                child: GestureDetector(
+                child: _InlineAction(
                   onTap: () => actions.openDrawer(u),
                   child: Row(
                     children: [
@@ -274,7 +300,7 @@ class _UserCard extends StatelessWidget {
               ),
               if (u.inviteExpired) ...[
                 const Spacer(),
-                GestureDetector(
+                _InlineAction(
                   onTap: () => actions.openResend([u.id]),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -331,34 +357,49 @@ class _Checkbox extends StatelessWidget {
   const _Checkbox({
     required this.checked,
     required this.mixed,
+    required this.label,
     required this.onTap,
   });
   final bool checked;
   final bool mixed;
+
+  /// What ticking it selects, for screen readers.
+  final String label;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final on = checked || mixed;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 18,
-        height: 18,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: on ? AppColors.navy : Colors.transparent,
-          borderRadius: BorderRadius.circular(5),
-          border: Border.all(
-            color: on ? AppColors.navy : AppColors.hairline,
-            width: 1.5,
+    // The box is 18 dp; the padding takes the hit area to the 24 dp floor
+    // (WCAG 2.5.8). A full 48 would grow every table row.
+    return Semantics(
+      checked: checked,
+      mixed: mixed,
+      label: label,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(0, 3, 6, 3),
+          child: Container(
+            width: 18,
+            height: 18,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: on ? AppColors.navy : Colors.transparent,
+              borderRadius: BorderRadius.circular(5),
+              border: Border.all(
+                color: on ? AppColors.navy : AppColors.hairline,
+                width: 1.5,
+              ),
+            ),
+            child: checked
+                ? const Icon(LucideIcons.check, size: 13, color: Colors.white)
+                : (mixed
+                      ? Container(width: 8, height: 2, color: Colors.white)
+                      : null),
           ),
         ),
-        child: checked
-            ? const Icon(LucideIcons.check, size: 13, color: Colors.white)
-            : (mixed
-                  ? Container(width: 8, height: 2, color: Colors.white)
-                  : null),
       ),
     );
   }
@@ -367,16 +408,19 @@ class _Checkbox extends StatelessWidget {
 class _PagerButton extends StatelessWidget {
   const _PagerButton({
     required this.icon,
+    required this.tooltip,
     required this.enabled,
     required this.onTap,
   });
   final IconData icon;
+  final String tooltip;
   final bool enabled;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
+      tooltip: tooltip,
       onPressed: enabled ? onTap : null,
       icon: Icon(icon, size: 16),
       color: AppColors.inkSoft,
@@ -397,25 +441,64 @@ class _PageNumber extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        width: 30,
-        height: 30,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: active ? AppColors.navy : Colors.transparent,
+    // The hit area takes in the 2 dp margins and reaches the height of the
+    // pager's arrow buttons (40 dp): 34 x 40 without moving a pixel.
+    return Semantics(
+      button: true,
+      selected: active,
+      label: context.t('admin.um.pageNumber', variables: {'n': '$n'}),
+      excludeSemantics: true,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(8),
-          border: active ? null : Border.all(color: AppColors.hairline),
-        ),
-        child: Text(
-          '$n',
-          style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w600,
-            color: active ? Colors.white : AppColors.inkSoft,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
+            child: Container(
+              width: 30,
+              height: 30,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: active ? AppColors.navy : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                border: active ? null : Border.all(color: AppColors.hairline),
+              ),
+              child: Text(
+                '$n',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: active ? Colors.white : AppColors.inkSoft,
+                ),
+              ),
+            ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A small tappable that is not a button to look at — a text link, a card's
+/// name block. It gets the button role and an ink response on a transparent
+/// Material, so the press shows over whatever the parent paints.
+class _InlineAction extends StatelessWidget {
+  const _InlineAction({required this.onTap, required this.child});
+
+  final VoidCallback onTap;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(6),
+          child: child,
         ),
       ),
     );

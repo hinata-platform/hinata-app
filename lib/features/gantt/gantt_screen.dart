@@ -710,53 +710,56 @@ class _TaskLabel extends StatelessWidget {
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 160),
         opacity: dimmed ? 0.35 : 1,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Row(
-              children: [
-                TypeGlyph(type: task.type, size: 18),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: RichText(
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    text: TextSpan(
-                      style: const TextStyle(fontSize: 12),
-                      children: [
-                        TextSpan(
-                          text: task.readableId,
-                          style: TextStyle(
-                            fontFamily: AppTheme.fontMono,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.inkSoft,
+        child: Semantics(
+          button: true,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Row(
+                children: [
+                  TypeGlyph(type: task.type, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: RichText(
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      text: TextSpan(
+                        style: const TextStyle(fontSize: 12),
+                        children: [
+                          TextSpan(
+                            text: task.readableId,
+                            style: TextStyle(
+                              fontFamily: AppTheme.fontMono,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.inkSoft,
+                            ),
                           ),
-                        ),
-                        const TextSpan(text: '  '),
-                        TextSpan(
-                          text: task.title,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.ink,
+                          const TextSpan(text: '  '),
+                          TextSpan(
+                            text: task.title,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.ink,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                if (conflict) ...[
-                  const SizedBox(width: 6),
-                  Tooltip(
-                    message: context.t('gantt.conflictHint'),
-                    child: const Icon(
-                      LucideIcons.triangleAlert,
-                      size: 14,
-                      color: AppColors.danger,
+                  if (conflict) ...[
+                    const SizedBox(width: 6),
+                    Tooltip(
+                      message: context.t('gantt.conflictHint'),
+                      child: const Icon(
+                        LucideIcons.triangleAlert,
+                        size: 14,
+                        color: AppColors.danger,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -1062,17 +1065,20 @@ class _FocusableBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        onLongPress: onOpen,
-        onDoubleTap: onOpen,
-        child: Tooltip(
-          message: hint,
-          waitDuration: const Duration(milliseconds: 350),
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 160),
-            opacity: dimmed ? 0.26 : 1,
-            child: child,
+      child: Semantics(
+        button: true,
+        child: GestureDetector(
+          onTap: onTap,
+          onLongPress: onOpen,
+          onDoubleTap: onOpen,
+          child: Tooltip(
+            message: hint,
+            waitDuration: const Duration(milliseconds: 350),
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 160),
+              opacity: dimmed ? 0.26 : 1,
+              child: child,
+            ),
           ),
         ),
       ),

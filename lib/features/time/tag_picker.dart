@@ -192,16 +192,22 @@ class _TagPickerBodyState extends State<_TagPickerBody> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
-          child: TextField(
-            controller: _controller,
-            autofocus: true,
-            maxLength: 40,
-            onChanged: _onChanged,
-            decoration: InputDecoration(
-              isDense: true,
-              counterText: '',
-              hintText: context.t('time.tags.search'),
-              prefixIcon: const Icon(LucideIcons.tag, size: 16),
+          // The hint goes when typing starts; the label stays for a screen
+          // reader.
+          child: Semantics(
+            label: context.t('time.tags.search'),
+            textField: true,
+            child: TextField(
+              controller: _controller,
+              autofocus: true,
+              maxLength: 40,
+              onChanged: _onChanged,
+              decoration: InputDecoration(
+                isDense: true,
+                counterText: '',
+                hintText: context.t('time.tags.search'),
+                prefixIcon: const Icon(LucideIcons.tag, size: 16),
+              ),
             ),
           ),
         ),
@@ -312,32 +318,46 @@ class _TagRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          children: [
-            if (busy)
-              const SizedBox(width: 16, height: 16, child: HiveLoader(size: 16))
-            else
-              Icon(icon ?? LucideIcons.tag, size: 16, color: hueColor(hue)),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                  color: AppColors.ink,
+    // The tag's name names the button. The row stays 38 high: a full-width
+    // target in a dense popover list, well over the 24 of WCAG 2.5.8.
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              if (busy)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: HiveLoader(size: 16),
+                )
+              else
+                Icon(icon ?? LucideIcons.tag, size: 16, color: hueColor(hue)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                    color: AppColors.ink,
+                  ),
                 ),
               ),
-            ),
-            if (selected)
-              const Icon(LucideIcons.check, size: 16, color: AppColors.accent),
-          ],
+              if (selected)
+                const Icon(
+                  LucideIcons.check,
+                  size: 16,
+                  color: AppColors.accent,
+                ),
+            ],
+          ),
         ),
       ),
     );

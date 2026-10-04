@@ -239,18 +239,26 @@ class MarkdownToolbar extends StatelessWidget {
     VoidCallback? onTap,
     double size,
   ) {
+    final label = context.t(tooltip);
+    // Named here, so the tooltip stays out of the tree and is not read twice.
     return Tooltip(
-      message: context.t(tooltip),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(7),
-        child: SizedBox(
-          width: size,
-          height: size,
-          child: Icon(
-            icon,
-            size: dense ? 16 : 17,
-            color: onTap != null ? AppColors.inkSoft : AppColors.inkFaint,
+      message: label,
+      excludeFromSemantics: true,
+      child: Semantics(
+        button: true,
+        enabled: onTap != null,
+        label: label,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(7),
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: Icon(
+              icon,
+              size: dense ? 16 : 17,
+              color: onTap != null ? AppColors.inkSoft : AppColors.inkFaint,
+            ),
           ),
         ),
       ),

@@ -278,15 +278,19 @@ class _TeamFormBodyState extends State<_TeamFormBody> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     FieldLabel(context.t('teams.name')),
-                    TextField(
-                      controller: _name,
-                      autofocus: true,
-                      onChanged: (_) => setState(() {}),
-                      textCapitalization: TextCapitalization.words,
-                      textInputAction: TextInputAction.next,
-                      decoration: teamFieldDecoration(
-                        context,
-                        hint: context.t('teams.namePlaceholder'),
+                    Semantics(
+                      label: context.t('teams.name'),
+                      textField: true,
+                      child: TextField(
+                        controller: _name,
+                        autofocus: true,
+                        onChanged: (_) => setState(() {}),
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.next,
+                        decoration: teamFieldDecoration(
+                          context,
+                          hint: context.t('teams.namePlaceholder'),
+                        ),
                       ),
                     ),
                   ],
@@ -299,20 +303,24 @@ class _TeamFormBodyState extends State<_TeamFormBody> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     FieldLabel(context.t('teams.key')),
-                    TextField(
-                      controller: _key,
-                      textCapitalization: TextCapitalization.characters,
-                      autocorrect: false,
-                      maxLength: 5,
-                      buildCounter:
-                          (
-                            _, {
-                            required currentLength,
-                            required isFocused,
-                            maxLength,
-                          }) => null,
-                      style: const TextStyle(fontFamily: AppTheme.fontMono),
-                      decoration: teamFieldDecoration(context, hint: 'CORE'),
+                    Semantics(
+                      label: context.t('teams.key'),
+                      textField: true,
+                      child: TextField(
+                        controller: _key,
+                        textCapitalization: TextCapitalization.characters,
+                        autocorrect: false,
+                        maxLength: 5,
+                        buildCounter:
+                            (
+                              _, {
+                              required currentLength,
+                              required isFocused,
+                              maxLength,
+                            }) => null,
+                        style: const TextStyle(fontFamily: AppTheme.fontMono),
+                        decoration: teamFieldDecoration(context, hint: 'CORE'),
+                      ),
                     ),
                     // Said here rather than after a round trip that fails.
                     if (_keyTaken)
@@ -333,16 +341,20 @@ class _TeamFormBodyState extends State<_TeamFormBody> {
           ),
           const SizedBox(height: 16),
           FieldLabel(context.t('teams.description'), optional: true),
-          TextField(
-            controller: _desc,
-            keyboardType: TextInputType.multiline,
-            textInputAction: TextInputAction.newline,
-            textCapitalization: TextCapitalization.sentences,
-            minLines: 2,
-            maxLines: 4,
-            decoration: teamFieldDecoration(
-              context,
-              hint: context.t('teams.descriptionPlaceholder'),
+          Semantics(
+            label: context.t('teams.description'),
+            textField: true,
+            child: TextField(
+              controller: _desc,
+              keyboardType: TextInputType.multiline,
+              textInputAction: TextInputAction.newline,
+              textCapitalization: TextCapitalization.sentences,
+              minLines: 2,
+              maxLines: 4,
+              decoration: teamFieldDecoration(
+                context,
+                hint: context.t('teams.descriptionPlaceholder'),
+              ),
             ),
           ),
           const SizedBox(height: 18),

@@ -402,26 +402,32 @@ class _NoteDialogState extends State<_NoteDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
-              controller: _note,
-              autofocus: true,
-              minLines: 3,
-              maxLines: 6,
-              maxLength: TimeLockInfo.noteMaxLength,
-              textInputAction: TextInputAction.newline,
-              // Only the empty/non-empty flip matters to the button, so the
-              // dialog is rebuilt when that changes and not once per keystroke.
-              onChanged: widget.required
-                  ? (text) {
-                      final canSend = text.trim().isNotEmpty;
-                      if (canSend != _canSend) {
-                        setState(() => _canSend = canSend);
+            // The header's title is the field's caption; this ties it to the
+            // field.
+            Semantics(
+              label: context.t(widget.titleKey),
+              textField: true,
+              child: TextField(
+                controller: _note,
+                autofocus: true,
+                minLines: 3,
+                maxLines: 6,
+                maxLength: TimeLockInfo.noteMaxLength,
+                textInputAction: TextInputAction.newline,
+                // Only the empty/non-empty flip matters to the button, so the
+                // dialog is rebuilt when that changes and not once per keystroke.
+                onChanged: widget.required
+                    ? (text) {
+                        final canSend = text.trim().isNotEmpty;
+                        if (canSend != _canSend) {
+                          setState(() => _canSend = canSend);
+                        }
                       }
-                    }
-                  : null,
-              // No hint text: the header right above already says what to
-              // write, and repeating it in the field printed it twice.
-              decoration: const InputDecoration(counterText: ''),
+                    : null,
+                // No hint text: the header right above already says what to
+                // write, and repeating it in the field printed it twice.
+                decoration: const InputDecoration(counterText: ''),
+              ),
             ),
             const SizedBox(height: 14),
             // Wrap, not Row: two buttons whose labels come from a bundle can be

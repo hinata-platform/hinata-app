@@ -17,6 +17,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/glass_chrome.dart' show kAmberGround, kOnAmber;
 import 'package:lexical_editor_flutter/lexical_editor_flutter.dart'
     show TextFormat;
 
@@ -93,7 +94,7 @@ Widget _composerSurface({
   );
 }
 
-const Color _onAccent = Color(0xFF2A2410);
+const Color _onAccent = kOnAmber;
 
 /// Round composer button size. On phones it's a fat 52 touch target; on the
 /// wider tablet/desktop/web layouts (macOS + Web included) the composer is
@@ -188,17 +189,41 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
   ///
   /// Same icons, same row, same design — they dispatch document commands now
   /// instead of splicing markdown characters into a string.
-  List<(IconData, VoidCallback)> get _docTools {
+  List<(IconData, String, VoidCallback)> get _docTools {
     void format(TextFormat f) => _docKey.currentState?.format(f);
     void block(BlockKind kind) => _docKey.currentState?.block(kind);
     return [
-      (LucideIcons.bold, () => format(TextFormat.bold)),
-      (LucideIcons.italic, () => format(TextFormat.italic)),
-      (LucideIcons.strikethrough, () => format(TextFormat.strikethrough)),
-      (LucideIcons.link, () => _docKey.currentState?.editLink()),
-      (LucideIcons.code, () => format(TextFormat.code)),
-      (LucideIcons.list, () => block(BlockKind.bulletList)),
-      (LucideIcons.listOrdered, () => block(BlockKind.numberList)),
+      (LucideIcons.bold, context.t('md.bold'), () => format(TextFormat.bold)),
+      (
+        LucideIcons.italic,
+        context.t('md.italic'),
+        () => format(TextFormat.italic),
+      ),
+      (
+        LucideIcons.strikethrough,
+        context.t('md.strikethrough'),
+        () => format(TextFormat.strikethrough),
+      ),
+      (
+        LucideIcons.link,
+        context.t('md.link'),
+        () => _docKey.currentState?.editLink(),
+      ),
+      (
+        LucideIcons.code,
+        context.t('md.inlineCode'),
+        () => format(TextFormat.code),
+      ),
+      (
+        LucideIcons.list,
+        context.t('md.bulletList'),
+        () => block(BlockKind.bulletList),
+      ),
+      (
+        LucideIcons.listOrdered,
+        context.t('md.numberedList'),
+        () => block(BlockKind.numberList),
+      ),
     ];
   }
 
@@ -515,14 +540,13 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
   /// handle up while the toolbar stays put.
   Widget _formatEditor(BuildContext context) {
     final dark = AppColors.brightness == Brightness.dark;
-    final media = MediaQuery.of(context);
     // Cap the field so the editor can't overrun its region — the phone sticky
     // bar or the desktop comment panel, whose height tracks the same viewport
     // fraction (mind the keyboard).
-    final maxField = (media.size.height * 0.34 - media.viewInsets.bottom).clamp(
-      140.0,
-      360.0,
-    );
+    final maxField =
+        (MediaQuery.sizeOf(context).height * 0.34 -
+                MediaQuery.viewInsetsOf(context).bottom)
+            .clamp(140.0, 360.0);
     final fieldHeight = _formatHeight.clamp(140.0, maxField);
     final canSend = _doc?.hasContent ?? false;
 

@@ -146,7 +146,7 @@ class _BottomNav extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
-          colors: [_navFade, Color(0x00000000)],
+          colors: [_navFade, Colors.transparent],
           stops: [0.45, 1.0],
         ),
       ),
@@ -216,54 +216,57 @@ class _CtaButtonState extends State<_CtaButton> {
       isLast ? 'onboarding.getStarted' : 'onboarding.continue',
     );
 
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _down = true),
-      onTapUp: (_) => setState(() => _down = false),
-      onTapCancel: () => setState(() => _down = false),
-      onTap: widget.onTap,
-      child: AnimatedScale(
-        scale: _down ? 0.97 : 1,
-        duration: const Duration(milliseconds: 120),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
-          child: BackdropFilter(
-            filter: isLast
-                ? ImageFilter.blur()
-                : ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              height: 56,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
-                gradient: isLast
-                    ? const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [_amber, _amber2],
-                      )
-                    : null,
-                color: isLast ? null : _white(0.10),
-                border: Border.all(
-                  color: isLast ? Colors.transparent : _white(0.16),
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _down = true),
+        onTapUp: (_) => setState(() => _down = false),
+        onTapCancel: () => setState(() => _down = false),
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _down ? 0.97 : 1,
+          duration: const Duration(milliseconds: 120),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(15),
+            child: BackdropFilter(
+              filter: isLast
+                  ? ImageFilter.blur()
+                  : ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                height: 56,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15),
+                  gradient: isLast
+                      ? const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [_amber, _amber2],
+                        )
+                      : null,
+                  color: isLast ? null : _white(0.10),
+                  border: Border.all(
+                    color: isLast ? Colors.transparent : _white(0.16),
+                  ),
+                  boxShadow: isLast
+                      ? [
+                          BoxShadow(
+                            color: _amber.withValues(alpha: 0.40),
+                            blurRadius: 30,
+                            offset: const Offset(0, 8),
+                          ),
+                        ]
+                      : null,
                 ),
-                boxShadow: isLast
-                    ? [
-                        BoxShadow(
-                          color: _amber.withValues(alpha: 0.40),
-                          blurRadius: 30,
-                          offset: const Offset(0, 8),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontFamily: AppTheme.fontUi,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.15,
-                  color: Colors.white,
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontFamily: AppTheme.fontUi,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.15,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -314,28 +317,21 @@ class _WelcomeSlide extends StatelessWidget {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // pulsing amber glow
-                  AnimatedBuilder(
-                    animation: glow,
-                    builder: (context, child) {
-                      final p =
-                          0.5 + 0.5 * math.sin(glow.value * 2 * math.pi * 6.7);
-                      return Opacity(
-                        opacity: 0.7 + 0.3 * p,
-                        child: Transform.scale(
-                          scale: 1 + 0.13 * p,
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: glowSize,
-                      height: glowSize,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [Color(0x47D9A032), Color(0x00D9A032)],
-                          stops: [0.0, 0.65],
+                  // Pulsing amber glow, as transitions: it is re-composited as
+                  // it breathes instead of rebuilt every frame.
+                  FadeTransition(
+                    opacity: glow.drive(const _Pulse(0.7, 1)),
+                    child: ScaleTransition(
+                      scale: glow.drive(const _Pulse(1, 1.13)),
+                      child: Container(
+                        width: glowSize,
+                        height: glowSize,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [Color(0x47D9A032), Color(0x00D9A032)],
+                            stops: [0.0, 0.65],
+                          ),
                         ),
                       ),
                     ),
@@ -389,6 +385,13 @@ class _FeatureSlide extends StatelessWidget {
   final String bodyKey;
   final Widget card;
 
+  /// The mini-UI card is a picture of the product with made-up content, drawn
+  /// to a fixed design: a screen reader skips it (the text beside it says what
+  /// it shows), and its type keeps the picture's own scale, since its tiny
+  /// avatars and chips cannot grow with the reader's text size.
+  Widget get _illustration =>
+      ExcludeSemantics(child: MediaQuery.withNoTextScaling(child: card));
+
   @override
   Widget build(BuildContext context) {
     return switch (context.layoutSize) {
@@ -415,7 +418,7 @@ class _FeatureSlide extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               cardWidth == null
-                  ? _GlassCard(child: card)
+                  ? _GlassCard(child: _illustration)
                   : _scaledCard(maxWidth: cardWidth),
               SizedBox(height: 28 * scale),
               _text(context, scale: scale, align: TextAlign.center),
@@ -469,7 +472,7 @@ class _FeatureSlide extends StatelessWidget {
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: FittedBox(
         fit: BoxFit.contain,
-        child: SizedBox(width: 360, child: _GlassCard(child: card)),
+        child: SizedBox(width: 360, child: _GlassCard(child: _illustration)),
       ),
     );
   }
@@ -524,5 +527,20 @@ class _FeatureSlide extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// The welcome glow's breathing, read off the ambient clock: a sine running
+/// 6.7 beats per loop, mapped onto [begin]..[end].
+class _Pulse extends Animatable<double> {
+  const _Pulse(this.begin, this.end);
+
+  final double begin;
+  final double end;
+
+  @override
+  double transform(double t) {
+    final p = 0.5 + 0.5 * math.sin(t * 2 * math.pi * 6.7);
+    return begin + (end - begin) * p;
   }
 }

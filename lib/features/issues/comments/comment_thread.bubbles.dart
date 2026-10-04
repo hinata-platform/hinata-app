@@ -120,10 +120,13 @@ class CommentBubbleRow extends StatelessWidget {
 
     // In selection mode the whole row toggles the checkbox for own comments.
     if (selectionMode && _canManage) {
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => onToggleSelected?.call(_c),
-        child: row,
+      return Semantics(
+        checked: selected,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => onToggleSelected?.call(_c),
+          child: row,
+        ),
       );
     }
     return row;
@@ -340,31 +343,34 @@ class _ActionButton extends StatelessWidget {
     final child = Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        hoverColor: AppColors.accent.withValues(alpha: 0.10),
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: label != null ? 8 : 6,
-            vertical: 5,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 15, color: AppColors.inkSoft),
-              if (label != null) ...[
-                const SizedBox(width: 5),
-                Text(
-                  label!,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.inkSoft,
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          hoverColor: AppColors.accent.withValues(alpha: 0.10),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: label != null ? 8 : 6,
+              vertical: 5,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 15, color: AppColors.inkSoft),
+                if (label != null) ...[
+                  const SizedBox(width: 5),
+                  Text(
+                    label!,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -581,34 +587,37 @@ class _ThreadControl extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: loading ? null : onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 14,
-                height: 14,
-                child: loading
-                    ? const Padding(
-                        padding: EdgeInsets.all(1),
-                        child: CircularProgressIndicator(strokeWidth: 1.6),
-                      )
-                    : Icon(icon, size: 14, color: AppColors.accentStrong),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.accentStrong,
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: loading ? null : onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: loading
+                      ? const Padding(
+                          padding: EdgeInsets.all(1),
+                          child: CircularProgressIndicator(strokeWidth: 1.6),
+                        )
+                      : Icon(icon, size: 14, color: AppColors.accentStrong),
                 ),
-              ),
-            ],
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.accentStrong,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -636,7 +645,7 @@ class _SelectDot extends StatelessWidget {
         ),
       ),
       child: selected
-          ? const Icon(LucideIcons.check, size: 13, color: Color(0xFF2A2410))
+          ? const Icon(LucideIcons.check, size: 13, color: kOnAmber)
           : null,
     );
   }
@@ -681,41 +690,45 @@ class _ReactionChips extends StatelessWidget {
     required bool selected,
     required bool dark,
   }) {
-    return Material(
-      color: Colors.transparent,
-      shape: const StadiumBorder(),
-      child: InkWell(
-        onTap: () => onTap(emoji),
-        customBorder: const StadiumBorder(),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.accent.withValues(alpha: dark ? 0.26 : 0.18)
-                : (dark ? const Color(0xFF23222F) : AppColors.surface),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: selected ? AppColors.accentLine : AppColors.hairline,
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Material(
+        color: Colors.transparent,
+        shape: const StadiumBorder(),
+        child: InkWell(
+          onTap: () => onTap(emoji),
+          customBorder: const StadiumBorder(),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: selected
+                  ? AppColors.accent.withValues(alpha: dark ? 0.26 : 0.18)
+                  : (dark ? const Color(0xFF23222F) : AppColors.surface),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: selected ? AppColors.accentLine : AppColors.hairline,
+              ),
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(emoji, style: const TextStyle(fontSize: 13)),
-              if (count > 1) ...[
-                const SizedBox(width: 4),
-                Text(
-                  '$count',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                    color: selected
-                        ? AppColors.accentStrong
-                        : AppColors.inkSoft,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(emoji, style: const TextStyle(fontSize: 13)),
+                if (count > 1) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    '$count',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: selected
+                          ? AppColors.accentStrong
+                          : AppColors.inkSoft,
+                    ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

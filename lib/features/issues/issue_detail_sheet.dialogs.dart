@@ -81,6 +81,7 @@ class _RemoveIssueConfirm extends StatelessWidget {
               ),
               IconButton(
                 onPressed: () => Navigator.of(context).maybePop(),
+                tooltip: context.t('common.close'),
                 visualDensity: VisualDensity.compact,
                 icon: Icon(LucideIcons.x, size: 20, color: AppColors.inkSoft),
               ),
@@ -246,6 +247,7 @@ class _DeleteCommentConfirm extends StatelessWidget {
               ),
               IconButton(
                 onPressed: () => Navigator.of(context).maybePop(),
+                tooltip: context.t('common.close'),
                 visualDensity: VisualDensity.compact,
                 icon: Icon(LucideIcons.x, size: 20, color: AppColors.inkSoft),
               ),
@@ -323,47 +325,50 @@ class _DetailRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tap = onTap;
-    return InkWell(
-      onTap: tap == null
-          ? null
-          : () {
-              final box = context.findRenderObject() as RenderBox?;
-              final rect = (box != null && box.hasSize)
-                  ? box.localToGlobal(Offset.zero) & box.size
-                  : Rect.zero;
-              tap(rect);
-            },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          border: last
-              ? null
-              : Border(bottom: BorderSide(color: AppColors.hairline2)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 104,
-              child: Text(
-                label,
-                style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+    return Semantics(
+      button: tap != null,
+      child: InkWell(
+        onTap: tap == null
+            ? null
+            : () {
+                final box = context.findRenderObject() as RenderBox?;
+                final rect = (box != null && box.hasSize)
+                    ? box.localToGlobal(Offset.zero) & box.size
+                    : Rect.zero;
+                tap(rect);
+              },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            border: last
+                ? null
+                : Border(bottom: BorderSide(color: AppColors.hairline2)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 104,
+                child: Text(
+                  label,
+                  style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: child,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: child,
+                ),
               ),
-            ),
-            if (onTap != null)
-              Icon(
-                LucideIcons.chevronsUpDown,
-                size: 16,
-                color: AppColors.inkFaint,
-              ),
-          ],
+              if (onTap != null)
+                Icon(
+                  LucideIcons.chevronsUpDown,
+                  size: 16,
+                  color: AppColors.inkFaint,
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -433,24 +438,27 @@ class _SubtaskQuickAddState extends State<_SubtaskQuickAdd> {
   @override
   Widget build(BuildContext context) {
     if (!_open) {
-      return InkWell(
-        onTap: _expand,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 7),
-          child: Row(
-            children: [
-              const Icon(LucideIcons.plus, size: 16, color: AppColors.stTodo),
-              const SizedBox(width: 8),
-              Text(
-                context.t('issues.addSubtask'),
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.stTodo,
+      return Semantics(
+        button: true,
+        child: InkWell(
+          onTap: _expand,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 7),
+            child: Row(
+              children: [
+                const Icon(LucideIcons.plus, size: 16, color: AppColors.stTodo),
+                const SizedBox(width: 8),
+                Text(
+                  context.t('issues.addSubtask'),
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.stTodo,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -468,8 +476,11 @@ class _SubtaskQuickAddState extends State<_SubtaskQuickAdd> {
             ),
           )
         else
+          // 32 dp keeps the open row as tall as the closed "Add sub-task"
+          // link it replaces; it clears the 24 dp floor (WCAG 2.5.8).
           IconButton(
             onPressed: _submit,
+            tooltip: context.t('issues.addSubtask'),
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -489,28 +500,36 @@ class _SubtaskQuickAddState extends State<_SubtaskQuickAdd> {
               }
               return KeyEventResult.ignored;
             },
-            child: TextField(
-              controller: _ctrl,
-              focusNode: _focus,
-              autofocus: true,
-              onSubmitted: (_) => _submit(),
-              onTapOutside: (_) {
-                if (_ctrl.text.trim().isEmpty) _collapse();
-              },
-              textInputAction: TextInputAction.done,
-              textCapitalization: TextCapitalization.sentences,
-              style: const TextStyle(fontSize: 13.5),
-              decoration: InputDecoration(
-                isDense: true,
-                border: InputBorder.none,
-                hintText: context.t('issues.subtaskHint'),
-                hintStyle: TextStyle(fontSize: 13.5, color: AppColors.inkFaint),
+            child: Semantics(
+              label: context.t('issues.addSubtask'),
+              textField: true,
+              child: TextField(
+                controller: _ctrl,
+                focusNode: _focus,
+                autofocus: true,
+                onSubmitted: (_) => _submit(),
+                onTapOutside: (_) {
+                  if (_ctrl.text.trim().isEmpty) _collapse();
+                },
+                textInputAction: TextInputAction.done,
+                textCapitalization: TextCapitalization.sentences,
+                style: const TextStyle(fontSize: 13.5),
+                decoration: InputDecoration(
+                  isDense: true,
+                  border: InputBorder.none,
+                  hintText: context.t('issues.subtaskHint'),
+                  hintStyle: TextStyle(
+                    fontSize: 13.5,
+                    color: AppColors.inkFaint,
+                  ),
+                ),
               ),
             ),
           ),
         ),
         IconButton(
           onPressed: _collapse,
+          tooltip: context.t('common.cancel'),
           visualDensity: VisualDensity.compact,
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),

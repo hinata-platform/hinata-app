@@ -29,6 +29,7 @@ import '../sprint/modals/glass_modal.dart';
 import 'deadline_basis_field.dart';
 import 'project_copy_sheet.dart';
 import 'project_create_form.dart';
+import '../../core/widgets/hit_slop.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
 import '../../core/repositories/user_repository.dart';
@@ -786,7 +787,9 @@ class _ProjectCard extends StatelessWidget {
       children: [
         card,
         if (compact && canManage)
-          Positioned(top: 10, right: 10, child: _GearButton(onTap: onSettings)),
+          // Placed 9 px further out than the visible box: the gear pads its
+          // 30-point face to a 48-point target, so the face stays where it was.
+          Positioned(top: 1, right: 1, child: _GearButton(onTap: onSettings)),
       ],
     );
 
@@ -808,19 +811,37 @@ class _GearButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surfaceMuted,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(9),
-        side: BorderSide(color: AppColors.hairline),
-      ),
-      child: InkWell(
+    // Its own named node for the same reason as [_SettingsButton]: the card
+    // is tappable and would otherwise swallow it as an unnamed "button".
+    return Semantics(
+      container: true,
+      button: true,
+      label: context.t('projects.settings'),
+      onTap: onTap,
+      excludeSemantics: true,
+      // A 9-point ring around the 30-point face: a 48×48 target.
+      child: HitSlop(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(9),
-        child: SizedBox(
-          width: 30,
-          height: 30,
-          child: Icon(LucideIcons.settings, size: 15, color: AppColors.inkSoft),
+        padding: const EdgeInsets.all(9),
+        child: Material(
+          color: AppColors.surfaceMuted,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(9),
+            side: BorderSide(color: AppColors.hairline),
+          ),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(9),
+            child: SizedBox(
+              width: 30,
+              height: 30,
+              child: Icon(
+                LucideIcons.settings,
+                size: 15,
+                color: AppColors.inkSoft,
+              ),
+            ),
+          ),
         ),
       ),
     );

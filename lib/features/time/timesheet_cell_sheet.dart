@@ -385,10 +385,10 @@ class _EntryRow extends StatelessWidget {
               color: AppColors.ink,
             ),
           ),
+          // The theme's density: compact under a mouse, a full 48 to touch.
           IconButton(
             onPressed: onDelete,
             iconSize: 15,
-            visualDensity: VisualDensity.compact,
             tooltip: context.t('common.delete'),
             icon: Icon(LucideIcons.trash2, color: AppColors.inkFaint),
           ),

@@ -34,7 +34,7 @@ abstract final class KbTokens {
   static Color get inlineCodeBg => AppColors.surfaceMuted;
 
   // ── code block: bg #1E1C3A, ink #E7E5F5 ──
-  static const Color codeBlockBg = Color(0xFF1E1C3A);
+  static const Color codeBlockBg = AppColors.navyDeep;
   static const Color codeBlockInk = Color(0xFFE7E5F5);
   static const Color codeBlockFaint = Color(0xFF9C99C4);
 

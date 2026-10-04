@@ -168,19 +168,25 @@ class _ProjectTimeSectionState extends State<ProjectTimeSection> {
               children: [
                 FieldLabel(text: context.t('projectSettings.time.budget')),
                 const SizedBox(height: 6),
-                TextField(
-                  controller: _budget,
-                  // The save button depends on whether the field differs from
-                  // what is stored, which flips two or three times in an entry —
-                  // not thirty. Rebuilding the card on every character would
-                  // repaint four pickers and a loader to move one boolean.
-                  onChanged: _budgetChanged,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    hintText: context.t('projectSettings.time.budgetHint'),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppTheme.radiusControl,
+                // The label above is plain text; this ties it to the field for
+                // screen readers.
+                Semantics(
+                  label: context.t('projectSettings.time.budget'),
+                  textField: true,
+                  child: TextField(
+                    controller: _budget,
+                    // The save button depends on whether the field differs from
+                    // what is stored, which flips two or three times in an entry —
+                    // not thirty. Rebuilding the card on every character would
+                    // repaint four pickers and a loader to move one boolean.
+                    onChanged: _budgetChanged,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      hintText: context.t('projectSettings.time.budgetHint'),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusControl,
+                        ),
                       ),
                     ),
                   ),
@@ -557,29 +563,37 @@ class _ChoiceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w600,
+    // Opens a picker: a button, named by the label and value inside.
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-            Text(
-              value,
-              style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
-            ),
-            const SizedBox(width: 6),
-            Icon(LucideIcons.chevronDown, size: 15, color: AppColors.inkFaint),
-          ],
+              Text(
+                value,
+                style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                LucideIcons.chevronDown,
+                size: 15,
+                color: AppColors.inkFaint,
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -7,7 +7,7 @@ import '../../core/theme/app_colors.dart';
 /// header). Theme-aware where it matters so dark mode stays legible.
 abstract final class SprintTokens {
   // Point-bucket / capacity-bar segment colours (todo · in-progress · done).
-  static const todo = Color(0xFF7E81AE); // indigo-grey, hue 255
+  static const todo = AppColors.stBacklog; // indigo-grey, hue 255
   static const progress = AppColors.accent; // honey
   static const done = Color(0xFF34A878); // oklch(0.66 0.13 155)
   static const over = AppColors.danger;

@@ -25,7 +25,7 @@ ImageProvider<Object>? blurHashProviderFor(String url) {
 ///
 /// Both layers are given the same box, so the caller's constraints decide the
 /// size and this can never introduce an overflow of its own.
-class FadeInOver extends StatelessWidget {
+class FadeInOver extends StatefulWidget {
   const FadeInOver({
     super.key,
     required this.under,
@@ -44,18 +44,48 @@ class FadeInOver extends StatelessWidget {
   final Curve curve;
 
   @override
+  State<FadeInOver> createState() => _FadeInOverState();
+}
+
+class _FadeInOverState extends State<FadeInOver>
+    with SingleTickerProviderStateMixin {
+  // A transition rather than a rebuilt `Opacity`: the fade only updates the
+  // layer's alpha each frame, and avatars fade in by the dozen in a list.
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: widget.duration,
+  );
+  late final Animation<double> _opacity = CurvedAnimation(
+    parent: _controller,
+    curve: widget.curve,
+  );
+  bool _started = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+    // With reduced motion the picture simply appears.
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+      _controller.value = 1;
+    } else {
+      _controller.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) => Stack(
     fit: StackFit.passthrough,
     children: [
-      under,
-      TweenAnimationBuilder<double>(
-        tween: Tween<double>(begin: 0, end: 1),
-        duration: duration,
-        curve: curve,
-        builder: (context, value, child) =>
-            Opacity(opacity: value, child: child),
-        child: child,
-      ),
+      widget.under,
+      FadeTransition(opacity: _opacity, child: widget.child),
     ],
   );
 }

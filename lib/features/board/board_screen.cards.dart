@@ -370,92 +370,95 @@ class _BoardCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          onTap: dragging ? null : onOpen,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(height: 2, color: accent),
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        TypeGlyph(type: issue.type, size: 18),
-                        const SizedBox(width: 8),
-                        IdMono(issue.readableId),
-                        const Spacer(),
-                        PriorityFlag(priority: issue.priority),
-                      ],
-                    ),
-                    const SizedBox(height: 9),
-                    Text(
-                      issue.title,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                        height: 1.4,
-                      ),
-                    ),
-                    if (issue.tags.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 5,
-                        runSpacing: 5,
+        child: Semantics(
+          button: true,
+          child: InkWell(
+            onTap: dragging ? null : onOpen,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(height: 2, color: accent),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
                         children: [
-                          for (final t in issue.tags.take(3))
-                            LabelTag(t, hue: palette.labelHue(t)),
+                          TypeGlyph(type: issue.type, size: 18),
+                          const SizedBox(width: 8),
+                          IdMono(issue.readableId),
+                          const Spacer(),
+                          PriorityFlag(priority: issue.priority),
+                        ],
+                      ),
+                      const SizedBox(height: 9),
+                      Text(
+                        issue.title,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          height: 1.4,
+                        ),
+                      ),
+                      if (issue.tags.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 5,
+                          runSpacing: 5,
+                          children: [
+                            for (final t in issue.tags.take(3))
+                              LabelTag(t, hue: palette.labelHue(t)),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 11),
+                      Row(
+                        children: [
+                          if (issue.estimateMinutes != null &&
+                              issue.estimateMinutes! > 0)
+                            _MiniMeta(
+                              icon: LucideIcons.timer,
+                              text: fmtDuration(context, issue.spentMinutes),
+                            ),
+                          if (due != null) ...[
+                            if (issue.estimateMinutes != null)
+                              const SizedBox(width: 10),
+                            _MiniMeta(
+                              // A deadline that follows the project's event date
+                              // gets the clock glyph, so a card says the date
+                              // will move without spending a second line on it.
+                              icon: issue.dueOffset == null
+                                  ? LucideIcons.calendar
+                                  : LucideIcons.calendarClock,
+                              text: due.text,
+                              color: due.late ? AppColors.danger : null,
+                            ),
+                          ],
+                          const Spacer(),
+                          if (issue.assigneeId != null)
+                            HiveAvatar(
+                              name: assigneeName ?? issue.assigneeId!,
+                              imageUrl: assigneeAvatar,
+                              pronouns: assigneePronouns,
+                              size: 24,
+                            ),
                         ],
                       ),
                     ],
-                    const SizedBox(height: 11),
-                    Row(
-                      children: [
-                        if (issue.estimateMinutes != null &&
-                            issue.estimateMinutes! > 0)
-                          _MiniMeta(
-                            icon: LucideIcons.timer,
-                            text: fmtDuration(context, issue.spentMinutes),
-                          ),
-                        if (due != null) ...[
-                          if (issue.estimateMinutes != null)
-                            const SizedBox(width: 10),
-                          _MiniMeta(
-                            // A deadline that follows the project's event date
-                            // gets the clock glyph, so a card says the date
-                            // will move without spending a second line on it.
-                            icon: issue.dueOffset == null
-                                ? LucideIcons.calendar
-                                : LucideIcons.calendarClock,
-                            text: due.text,
-                            color: due.late ? AppColors.danger : null,
-                          ),
-                        ],
-                        const Spacer(),
-                        if (issue.assigneeId != null)
-                          HiveAvatar(
-                            name: assigneeName ?? issue.assigneeId!,
-                            imageUrl: assigneeAvatar,
-                            pronouns: assigneePronouns,
-                            size: 24,
-                          ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              // On-demand sub-task list + progress, full card width below the
-              // body. Only on the interactive card (onOpenIssue set, not
-              // dragging) — never the drag ghost/placeholder.
-              if (!dragging && onOpenIssue != null && issue.hasSubtasks)
-                SubtaskExpander(issue: issue, onOpenChild: onOpenIssue!),
-            ],
+                // On-demand sub-task list + progress, full card width below the
+                // body. Only on the interactive card (onOpenIssue set, not
+                // dragging) — never the drag ghost/placeholder.
+                if (!dragging && onOpenIssue != null && issue.hasSubtasks)
+                  SubtaskExpander(issue: issue, onOpenChild: onOpenIssue!),
+              ],
+            ),
           ),
         ),
       ),

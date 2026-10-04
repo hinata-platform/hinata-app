@@ -199,11 +199,25 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
                 size: 14,
                 color: AppColors.inkFaint,
               ),
-              GestureDetector(
-                onTap: () => KnowledgeScope.of(context).openArticle(parent.id),
-                child: Text(
-                  parent.title,
-                  style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+              // A link to the parent page; the 4-point band above and below
+              // brings the target to the 24-point floor without growing the
+              // breadcrumb line past the space chip beside it.
+              Semantics(
+                link: true,
+                child: InkWell(
+                  onTap: () =>
+                      KnowledgeScope.of(context).openArticle(parent.id),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text(
+                      parent.title,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: AppColors.inkSoft,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -503,26 +517,33 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
           _asideHeader(context.t('knowledge.relatedArticles')),
           const SizedBox(height: 6),
           for (final d in related)
-            InkWell(
-              onTap: () => KnowledgeScope.of(context).openArticle(d.id),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Row(
-                  children: [
-                    Icon(lucideIcon(d.icon), size: 15, color: KbTokens.accent),
-                    const SizedBox(width: 9),
-                    Expanded(
-                      child: Text(
-                        d.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: AppColors.inkSoft,
+            Semantics(
+              link: true,
+              child: InkWell(
+                onTap: () => KnowledgeScope.of(context).openArticle(d.id),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    children: [
+                      Icon(
+                        lucideIcon(d.icon),
+                        size: 15,
+                        color: KbTokens.accent,
+                      ),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Text(
+                          d.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: AppColors.inkSoft,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -552,32 +573,37 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
 
   Widget _tocRow(OutlineEntry t) {
     final on = _activeToc == t.nodeKey;
-    return InkWell(
-      onTap: () => _jump(t),
-      child: Transform.translate(
-        offset: const Offset(-2, 0),
-        child: Container(
-          padding: EdgeInsets.fromLTRB(
-            t.level == 1 ? 12.0 : (t.level == 2 ? 22.0 : 32.0),
-            5,
-            8,
-            5,
-          ),
-          decoration: BoxDecoration(
-            border: Border(
-              left: BorderSide(
-                color: on ? AppColors.accent : Colors.transparent,
-                width: 2,
+    // The heading text names the entry; `selected` marks the one in view.
+    return Semantics(
+      button: true,
+      selected: on,
+      child: InkWell(
+        onTap: () => _jump(t),
+        child: Transform.translate(
+          offset: const Offset(-2, 0),
+          child: Container(
+            padding: EdgeInsets.fromLTRB(
+              t.level == 1 ? 12.0 : (t.level == 2 ? 22.0 : 32.0),
+              5,
+              8,
+              5,
+            ),
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(
+                  color: on ? AppColors.accent : Colors.transparent,
+                  width: 2,
+                ),
               ),
             ),
-          ),
-          child: Text(
-            t.text,
-            style: TextStyle(
-              fontSize: t.level == 3 ? 12 : 12.5,
-              height: 1.35,
-              fontWeight: on ? FontWeight.w600 : FontWeight.w400,
-              color: on ? KbTokens.accent : AppColors.inkSoft,
+            child: Text(
+              t.text,
+              style: TextStyle(
+                fontSize: t.level == 3 ? 12 : 12.5,
+                height: 1.35,
+                fontWeight: on ? FontWeight.w600 : FontWeight.w400,
+                color: on ? KbTokens.accent : AppColors.inkSoft,
+              ),
             ),
           ),
         ),
@@ -617,90 +643,94 @@ class _IssueCard extends StatelessWidget {
     final resolver = SmartLinkScope.of(context);
     final it = resolver.issue(id);
     final color = it?.typeColor ?? KbTokens.accent;
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(KbTokens.radiusCard),
-      child: InkWell(
-        onTap: () => resolver.openIssue(id),
+    // The issue id and title inside name the card.
+    return Semantics(
+      button: true,
+      child: Material(
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(KbTokens.radiusCard),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(KbTokens.radiusCard),
-            border: Border.all(color: AppColors.hairline),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: () => resolver.openIssue(id),
+          borderRadius: BorderRadius.circular(KbTokens.radiusCard),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(KbTokens.radiusCard),
+              border: Border.all(color: AppColors.hairline),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    lucideIcon(it?.typeIcon ?? 'circle-check'),
+                    size: 16,
+                    color: color,
+                  ),
                 ),
-                alignment: Alignment.center,
-                child: Icon(
-                  lucideIcon(it?.typeIcon ?? 'circle-check'),
-                  size: 16,
-                  color: color,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          id,
-                          style: TextStyle(
-                            fontFamily: AppTheme.fontMono,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.inkSoft,
-                          ),
-                        ),
-                        if (it != null) ...[
-                          const SizedBox(width: 9),
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: it.stateColor,
-                              shape: BoxShape.circle,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            id,
+                            style: TextStyle(
+                              fontFamily: AppTheme.fontMono,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.inkSoft,
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              it.stateName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
+                          if (it != null) ...[
+                            const SizedBox(width: 9),
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
                                 color: it.stateColor,
+                                shape: BoxShape.circle,
                               ),
                             ),
-                          ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                it.stateName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: it.stateColor,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      it?.title ?? 'Open issue',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13, height: 1.3),
-                    ),
-                  ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        it?.title ?? context.t('knowledge.openIssue'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 13, height: 1.3),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              if (it?.assigneeName != null)
-                AppAvatar(name: it!.assigneeName!, radius: 11),
-            ],
+                const SizedBox(width: 10),
+                if (it?.assigneeName != null)
+                  AppAvatar(name: it!.assigneeName!, radius: 11),
+              ],
+            ),
           ),
         ),
       ),

@@ -468,28 +468,35 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
       children: [
         _sectionLabel(context.t('issues.title')),
         const SizedBox(height: 8),
-        TextFormField(
-          controller: _titleCtrl,
-          maxLines: null,
-          textInputAction: TextInputAction.next,
-          textCapitalization: TextCapitalization.sentences,
-          style: const TextStyle(
-            fontFamily: AppTheme.fontBrand,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            // height: 1.25,
-          ),
-          decoration: InputDecoration(
-            hintText: context.t('issues.title'),
-            errorStyle: const TextStyle(color: AppColors.danger, fontSize: 12),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 8,
+        Semantics(
+          label: context.t('issues.title'),
+          textField: true,
+          child: TextFormField(
+            controller: _titleCtrl,
+            maxLines: null,
+            textInputAction: TextInputAction.next,
+            textCapitalization: TextCapitalization.sentences,
+            style: const TextStyle(
+              fontFamily: AppTheme.fontBrand,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              // height: 1.25,
             ),
+            decoration: InputDecoration(
+              hintText: context.t('issues.title'),
+              errorStyle: const TextStyle(
+                color: AppColors.danger,
+                fontSize: 12,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 8,
+              ),
+            ),
+            validator: (value) => (value == null || value.trim().isEmpty)
+                ? context.t('errors.required')
+                : null,
           ),
-          validator: (value) => (value == null || value.trim().isEmpty)
-              ? context.t('errors.required')
-              : null,
         ),
         const SizedBox(height: 18),
         // Same authoring surface as the issue detail and the knowledge base.
@@ -689,18 +696,32 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
             color: AppColors.ink,
           ),
         ),
-        const SizedBox(width: 6),
-        GestureDetector(
-          onTap: () => setState(() {
-            if (isStart) {
-              _startDate = null;
-              _startOffset = null;
-            } else {
-              _dueDate = null;
-              _dueOffset = null;
-            }
-          }),
-          child: Icon(LucideIcons.x, size: 15, color: AppColors.inkFaint),
+        // The padding grows the hit area to 24 dp (WCAG 2.5.8) around the
+        // same 15 dp glyph; the narrower gap keeps the glyph where it was.
+        const SizedBox(width: 1.5),
+        Tooltip(
+          message: context.t('common.clear'),
+          excludeFromSemantics: true,
+          child: Semantics(
+            button: true,
+            label: context.t('common.clear'),
+            child: InkResponse(
+              radius: 14,
+              onTap: () => setState(() {
+                if (isStart) {
+                  _startDate = null;
+                  _startOffset = null;
+                } else {
+                  _dueDate = null;
+                  _dueOffset = null;
+                }
+              }),
+              child: Padding(
+                padding: const EdgeInsets.all(4.5),
+                child: Icon(LucideIcons.x, size: 15, color: AppColors.inkFaint),
+              ),
+            ),
+          ),
         ),
       ],
     );

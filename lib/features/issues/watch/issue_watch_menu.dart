@@ -246,45 +246,52 @@ class _ToggleRowState extends State<_ToggleRow> {
   Widget build(BuildContext context) {
     final t = widget.tokens;
     final disabled = widget.onTap == null;
-    final row = GestureDetector(
-      onTap: widget.onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
-          color: _hover && !disabled ? t.rowHover : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 22,
-              child: Center(
-                child: Icon(
-                  widget.watching ? LucideIcons.eye : LucideIcons.eyeOff,
-                  size: 17,
-                  color: widget.watching
-                      ? AppColors.accentStrong
-                      : t.ink.withValues(alpha: disabled ? 0.4 : 1),
+    final row = Semantics(
+      button: true,
+      toggled: widget.watching,
+      enabled: !disabled,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          decoration: BoxDecoration(
+            color: _hover && !disabled ? t.rowHover : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 22,
+                child: Center(
+                  child: Icon(
+                    widget.watching ? LucideIcons.eye : LucideIcons.eyeOff,
+                    size: 17,
+                    color: widget.watching
+                        ? AppColors.accentStrong
+                        : t.ink.withValues(alpha: disabled ? 0.4 : 1),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                context.t(
-                  widget.watching ? 'issues.watch.stop' : 'issues.watch.start',
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w600,
-                  color: t.ink.withValues(alpha: disabled ? 0.4 : 1),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  context.t(
+                    widget.watching
+                        ? 'issues.watch.stop'
+                        : 'issues.watch.start',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: t.ink.withValues(alpha: disabled ? 0.4 : 1),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

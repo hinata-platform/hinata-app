@@ -379,44 +379,48 @@ class AdminToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: () => onChanged(!value),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                    if (subtitle != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 3),
-                        child: Text(
-                          subtitle!,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            height: 1.35,
-                            color: AppColors.inkSoft,
-                          ),
+      // One node for the whole row: the label and the switch's on/off state
+      // are announced together, and a double tap anywhere flips it.
+      child: MergeSemantics(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () => onChanged(!value),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: AppColors.ink,
                         ),
                       ),
-                  ],
+                      if (subtitle != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 3),
+                          child: Text(
+                            subtitle!,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              height: 1.35,
+                              color: AppColors.inkSoft,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 14),
-              HiveSwitch(value: value, onChanged: onChanged),
-            ],
+                const SizedBox(width: 14),
+                HiveSwitch(value: value, onChanged: onChanged),
+              ],
+            ),
           ),
         ),
       ),

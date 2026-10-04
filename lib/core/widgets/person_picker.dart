@@ -95,53 +95,57 @@ class PersonPickerField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final picked = person;
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      onTap: () {
-        final box = context.findRenderObject() as RenderBox?;
-        final rect = (box != null && box.hasSize)
-            ? box.localToGlobal(Offset.zero) & box.size
-            : Rect.zero;
-        onTap(rect);
-      },
-      child: Container(
-        // Nine points of vertical padding around a 26-point face is the same
-        // 44-point row the text fields beside it stand in, so a row of fields
-        // stays a row.
-        padding: const EdgeInsets.fromLTRB(11, 9, 11, 9),
-        decoration: GlassFieldStyle.decoration,
-        child: Row(
-          children: [
-            if (picked != null) ...[
-              HiveAvatar(
-                name: picked.displayName.isEmpty
-                    ? picked.username
-                    : picked.displayName,
-                imageUrl: picked.avatarUrl,
-                pronouns: picked.pronouns,
-                size: 26,
+    // Opens the picker; the chosen name or the placeholder merges in.
+    return Semantics(
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        onTap: () {
+          final box = context.findRenderObject() as RenderBox?;
+          final rect = (box != null && box.hasSize)
+              ? box.localToGlobal(Offset.zero) & box.size
+              : Rect.zero;
+          onTap(rect);
+        },
+        child: Container(
+          // Nine points of vertical padding around a 26-point face is the same
+          // 44-point row the text fields beside it stand in, so a row of fields
+          // stays a row.
+          padding: const EdgeInsets.fromLTRB(11, 9, 11, 9),
+          decoration: GlassFieldStyle.decoration,
+          child: Row(
+            children: [
+              if (picked != null) ...[
+                HiveAvatar(
+                  name: picked.displayName.isEmpty
+                      ? picked.username
+                      : picked.displayName,
+                  imageUrl: picked.avatarUrl,
+                  pronouns: picked.pronouns,
+                  size: 26,
+                ),
+                const SizedBox(width: 9),
+              ],
+              Expanded(
+                child: Text(
+                  picked == null
+                      ? context.t(placeholderKey)
+                      : _nameOf(context, picked, isMe),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: picked == null
+                      ? GlassFieldStyle.placeholder
+                      : GlassFieldStyle.value,
+                ),
               ),
-              const SizedBox(width: 9),
+              const SizedBox(width: 8),
+              Icon(
+                LucideIcons.chevronsUpDown,
+                size: 16,
+                color: AppColors.textSecondary,
+              ),
             ],
-            Expanded(
-              child: Text(
-                picked == null
-                    ? context.t(placeholderKey)
-                    : _nameOf(context, picked, isMe),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: picked == null
-                    ? GlassFieldStyle.placeholder
-                    : GlassFieldStyle.value,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              LucideIcons.chevronsUpDown,
-              size: 16,
-              color: AppColors.textSecondary,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -326,47 +330,58 @@ class _PersonPickerPanelState extends State<_PersonPickerPanel> {
             ),
             const SizedBox(width: 9),
             Expanded(
-              child: TextField(
-                controller: _searchCtrl,
-                focusNode: _focus,
-                onChanged: _onQueryChanged,
-                textInputAction: TextInputAction.search,
-                style: const TextStyle(fontSize: 13.5),
-                cursorColor: AppColors.accentStrong,
-                // Every border state is cleared by hand: the app's input theme
-                // supplies `enabledBorder`/`focusedBorder`, and those survive
-                // `isCollapsed` — that is what drew a second box in the pill.
-                decoration: InputDecoration(
-                  isCollapsed: true,
-                  filled: false,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
-                  errorBorder: InputBorder.none,
-                  focusedErrorBorder: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 11),
-                  hintText: context.t('issues.searchPeople'),
-                  hintStyle: TextStyle(
-                    fontSize: 13.5,
-                    color: AppColors.textSecondary,
+              // The hint is the only name the field shows, and a hint is not a label.
+              child: Semantics(
+                label: context.t('issues.searchPeople'),
+                textField: true,
+                child: TextField(
+                  controller: _searchCtrl,
+                  focusNode: _focus,
+                  onChanged: _onQueryChanged,
+                  textInputAction: TextInputAction.search,
+                  style: const TextStyle(fontSize: 13.5),
+                  cursorColor: AppColors.accentStrong,
+                  // Every border state is cleared by hand: the app's input theme
+                  // supplies `enabledBorder`/`focusedBorder`, and those survive
+                  // `isCollapsed` — that is what drew a second box in the pill.
+                  decoration: InputDecoration(
+                    isCollapsed: true,
+                    filled: false,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 11),
+                    hintText: context.t('issues.searchPeople'),
+                    hintStyle: TextStyle(
+                      fontSize: 13.5,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ),
             ),
             if (_query.isNotEmpty)
-              InkWell(
-                borderRadius: BorderRadius.circular(999),
-                onTap: () {
-                  _searchCtrl.clear();
-                  _onQueryChanged('');
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Icon(
-                    LucideIcons.x,
-                    size: 14,
-                    color: AppColors.textSecondary,
+              // Named for screen readers; the padding gives a 32-point target around
+              // the same 14-point glyph.
+              Semantics(
+                button: true,
+                label: context.t('common.clear'),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(999),
+                  onTap: () {
+                    _searchCtrl.clear();
+                    _onQueryChanged('');
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(9),
+                    child: Icon(
+                      LucideIcons.x,
+                      size: 14,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ),
@@ -442,54 +457,61 @@ class _PersonRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = user.displayName.isEmpty ? user.username : user.displayName;
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        child: Row(
-          children: [
-            Icon(
-              selected ? LucideIcons.circleCheck : LucideIcons.circle,
-              size: 18,
-              color: selected
-                  ? AppColors.accentStrong
-                  : AppColors.textSecondary.withValues(alpha: 0.7),
-            ),
-            const SizedBox(width: 10),
-            HiveAvatar(
-              name: name,
-              imageUrl: user.avatarUrl,
-              pronouns: user.pronouns,
-              size: 28,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _nameOf(context, user, isMe),
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  if ((user.title ?? '').isNotEmpty)
+    // A choice that says whether it is picked; the name merges in.
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Row(
+            children: [
+              Icon(
+                selected ? LucideIcons.circleCheck : LucideIcons.circle,
+                size: 18,
+                color: selected
+                    ? AppColors.accentStrong
+                    : AppColors.textSecondary.withValues(alpha: 0.7),
+              ),
+              const SizedBox(width: 10),
+              HiveAvatar(
+                name: name,
+                imageUrl: user.avatarUrl,
+                pronouns: user.pronouns,
+                size: 28,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      user.title!,
+                      _nameOf(context, user, isMe),
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
+                        fontSize: 13.5,
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                ],
+                    if ((user.title ?? '').isNotEmpty)
+                      Text(
+                        user.title!,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

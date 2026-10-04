@@ -280,7 +280,9 @@
       "body": "このリンクは別のサーバー（{{host}}）を指しています。切り替えますか?",
       "confirm": "サーバーを切り替える"
     },
-    "ssoProviderFailed": "組織のログインサービスで完了しませんでした。もう一度お試しください。"
+    "ssoProviderFailed": "組織のログインサービスで完了しませんでした。もう一度お試しください。",
+    "showPassword": "パスワードを表示",
+    "hidePassword": "パスワードを隠す"
   },
   "authShell": {
     "heroTitle": "チームの仕事が、ひとつになる場所。",
@@ -395,7 +397,9 @@
     "awayToday": "本日の不在",
     "awayNone": "今日は全員そろっています。",
     "awayMore": "ほか{{count}}人",
-    "awayOpen": "チームカレンダーを開く"
+    "awayOpen": "チームカレンダーを開く",
+    "showCard": "カードを表示",
+    "hideCard": "カードを非表示"
   },
   "comments": {
     "actionCamera": "写真または動画を撮影",
@@ -448,6 +452,12 @@
       "closeFormat": "書式を閉じる",
       "discardRecording": "録音を破棄",
       "sendVoice": "ボイスメッセージを送信"
+    },
+    "moreReactions": "その他のリアクション",
+    "voice": {
+      "play": "ボイスメッセージを再生",
+      "pause": "ボイスメッセージを一時停止",
+      "position": "再生位置"
     }
   },
   "filePicker": {
@@ -885,7 +895,9 @@
     "multiSelectHint": {
       "text": "ヒント：課題を長押しすると複数選択でき、まとめて編集できます。たとえば、すべてに同じ期限を設定できます。",
       "gotIt": "OK"
-    }
+    },
+    "editTitle": "タイトルを編集",
+    "editDescription": "説明を編集"
   },
   "type": {
     "task": "タスク",
@@ -1009,7 +1021,8 @@
       "month": "月",
       "truncated": "この期間にはカレンダーに表示しきれない記録があります。期間を狭めるとすべて表示されます。",
       "more": "他 {{count}} 件",
-      "more_plural": "他 {{count}} 件"
+      "more_plural": "他 {{count}} 件",
+      "dayActions": "この日の操作"
     },
     "mode": {
       "stopwatch": "ストップウォッチ",
@@ -2053,6 +2066,18 @@
       "payoutReason": "最終給与で買い取り",
       "done": "記帳しました",
       "confirmTitle": "{{days}}の{{what}}？"
+    },
+    "hue": {
+      "default": "既定の色",
+      "red": "赤",
+      "orange": "オレンジ",
+      "amber": "琥珀色",
+      "green": "緑",
+      "teal": "ティール",
+      "cyan": "シアン",
+      "blue": "青",
+      "violet": "紫",
+      "pink": "ピンク"
     }
   },
   "projects": {
@@ -2235,7 +2260,10 @@
       "assignTo": "どの列にしますか?",
       "noColumnAvailable": "空いている列がありません。どの列もこのプロジェクトのステータスをすでに持っています。",
       "unassignedHint": "これらのステータスにはまだ列がありません。該当する課題はボードに表示されません。",
-      "automatic": "自動に戻す"
+      "automatic": "自動に戻す",
+      "assignState": "列に追加",
+      "unassignState": "列から外す",
+      "wipLabel": "WIP 上限"
     },
     "searchIssues": "課題を検索…",
     "laneLimit": "ほかに {{count}} 件あります。検索や絞り込みで見つけてください。"
@@ -2405,7 +2433,22 @@
     "emptyMessage": "ページはプロジェクトとチームを通じて共有されます。新しいページは、プロジェクトかチームに入れるまで非公開のままです。",
     "tree": {
       "truncated": "ページが多すぎて一覧に収まらないため、ここにはすべてのページが表示されていません。そのため、親ページがあってもサブページが最上位に表示されることがあります。"
-    }
+    },
+    "hue": {
+      "honey": "ハニー",
+      "indigo": "インディゴ",
+      "violet": "バイオレット",
+      "teal": "ティール",
+      "green": "グリーン",
+      "coral": "コーラル",
+      "pink": "ピンク",
+      "amber": "アンバー"
+    },
+    "spaceIconOption": "アイコン {{n}}/{{count}}",
+    "subpages": "サブページ",
+    "moveUnder": "…の下に移動",
+    "moveUnderTitle": "どのページの下に移動しますか？",
+    "pageActions": "ページの操作"
   },
   "md": {
     "heading1": "見出し 1",
@@ -2494,7 +2537,8 @@
       "thisWeek": "今週",
       "thisMonth": "今月",
       "earlier": "それ以前"
-    }
+    },
+    "unread": "未読"
   },
   "appbar": {
     "search": "検索、またはページへ移動…",
@@ -3051,7 +3095,13 @@
       "toastOrgAdminRevoked": "組織管理者のロールを外しました",
       "orgAdminConfirmOne": "{{name}} さんは今後、全員の勤務時間、タイムシート、不在、記録を見られるようになります。病気は不在管理者が誰も指名されていない間だけ、指名後は {{name}} さんが指名されている場合だけです。課題のタイトルと説明は {{name}} さんが参加しているプロジェクトのものだけです。",
       "orgAdminConfirmMany": "{{names}} は今後、全員の勤務時間、タイムシート、不在、記録を見られるようになります。病気は不在管理者が誰も指名されていない間だけ、指名後は指名された人だけです。課題のタイトルと説明は自分が参加しているプロジェクトのものだけです。",
-      "reasonOwnOrgRole": "この役割は、管理者の別の人があなたに付与します。"
+      "reasonOwnOrgRole": "この役割は、管理者の別の人があなたに付与します。",
+      "selectUser": "{{name}} を選択",
+      "selectPage": "このページのユーザーをすべて選択",
+      "previousPage": "前のページ",
+      "nextPage": "次のページ",
+      "pageNumber": "{{n}} ページ",
+      "removeEmail": "{{email}} を削除"
     },
     "iosStoreUrl": "iOS App Store の URL",
     "androidStoreUrl": "Android Play ストアの URL",
@@ -3449,7 +3499,13 @@
     "moveOpenMany": "終わらなかった {{count}} 件の課題の移動先",
     "selectedCount": "{{count}} 件選択中",
     "collapse": "折りたたむ",
-    "expand": "展開"
+    "expand": "展開",
+    "pagination": {
+      "previous": "前のページ",
+      "next": "次のページ",
+      "page": "{{page}} ページ"
+    },
+    "selectIssue": "{{issue}} を選択"
   },
   "projectSettings": {
     "avatar": {
@@ -3548,7 +3604,10 @@
       "copy": "プロジェクトを複製",
       "dateCleared": "日付を削除しました。期限はそのままで、ルールも残ります。",
       "datesMoved": "{{count}} 件の期限を移動しました。"
-    }
+    },
+    "labelName": "ラベル名",
+    "removeLabel": "ラベルを削除",
+    "stateName": "ステータス名"
   },
   "teams": {
     "avatar": {
@@ -3593,7 +3652,9 @@
       "teal": "ティール",
       "green": "グリーン",
       "coral": "コーラル",
-      "custom": "カスタム"
+      "custom": "カスタム",
+      "pink": "ピンク",
+      "amber": "アンバー"
     },
     "role": {
       "admin": "チーム管理者",
@@ -3708,6 +3769,18 @@
       "apply": "適用",
       "includedVia": "{{title}} に含まれています",
       "truncated": "すべてのページはこの一覧に収まりません。残りは検索で見つけてください。"
+    },
+    "icon": {
+      "hexagon": "六角形",
+      "smartphone": "スマートフォン",
+      "server": "サーバー",
+      "book": "本",
+      "rocket": "ロケット",
+      "palette": "パレット",
+      "shield": "盾",
+      "globe": "地球儀",
+      "code": "コード",
+      "layers": "レイヤー"
     }
   },
   "account": {
@@ -3972,6 +4045,10 @@
       "remindOn": "通知する曜日",
       "suggested": "組織からの提案: {{duration}}",
       "useSuggestion": "使用する"
+    },
+    "stepper": {
+      "decrease": "{{label}}を減らす",
+      "increase": "{{label}}を増やす"
     }
   },
   "twofa": {
@@ -3999,7 +4076,8 @@
     "regenerate": "再生成",
     "disableTitle": "二要素認証を無効にする",
     "disableSubtitle": "二要素認証をオフにするには、現在の 6 桁のコードかリカバリーコードを入力してください。",
-    "disableButton": "二要素認証を無効にする"
+    "disableButton": "二要素認証を無効にする",
+    "digitLabel": "{{total}}桁中{{n}}桁目"
   },
   "invite": {
     "title": "アカウントを設定",

@@ -15,6 +15,7 @@ import '../../core/repositories/issue_repository.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../core/widgets/hive_widgets.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'package:hinata/core/widgets/user_pronouns.dart';
@@ -282,37 +283,41 @@ class _IssueQuickCreateState extends State<IssueQuickCreate> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
-              controller: _titleCtrl,
-              focusNode: _titleFocus,
-              // Opens two lines tall so a title of any normal length has its
-              // room already claimed — the card grows from there rather than
-              // jolting the toolbar down on the first wrap. Past eight lines
-              // the field scrolls instead of pushing the column apart.
-              minLines: 2,
-              maxLines: 8,
-              keyboardType: TextInputType.multiline,
-              textCapitalization: TextCapitalization.sentences,
-              // readOnly, not disabled: a disabled field drops focus, and a
-              // failed create would hand the draft back with the caret gone.
-              readOnly: _saving,
-              onChanged: (_) => setState(() {}),
-              style: const TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
-                height: 1.35,
-              ),
-              decoration: InputDecoration(
-                isDense: true,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-                hintText: context.t('board.quickCreateHint'),
-                hintStyle: TextStyle(
+            Semantics(
+              label: context.t('board.quickCreateHint'),
+              textField: true,
+              child: TextField(
+                controller: _titleCtrl,
+                focusNode: _titleFocus,
+                // Opens two lines tall so a title of any normal length has its
+                // room already claimed — the card grows from there rather than
+                // jolting the toolbar down on the first wrap. Past eight lines
+                // the field scrolls instead of pushing the column apart.
+                minLines: 2,
+                maxLines: 8,
+                keyboardType: TextInputType.multiline,
+                textCapitalization: TextCapitalization.sentences,
+                // readOnly, not disabled: a disabled field drops focus, and a
+                // failed create would hand the draft back with the caret gone.
+                readOnly: _saving,
+                onChanged: (_) => setState(() {}),
+                style: const TextStyle(
                   fontSize: 13.5,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.inkFaint,
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                ),
+                decoration: InputDecoration(
+                  isDense: true,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                  hintText: context.t('board.quickCreateHint'),
+                  hintStyle: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.inkFaint,
+                  ),
                 ),
               ),
             ),
@@ -546,29 +551,31 @@ class _IssueQuickCreateState extends State<IssueQuickCreate> {
       child: Material(
         color: enabled ? AppColors.accent : AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: InkWell(
-          onTap: enabled ? () => unawaited(_submit()) : null,
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          child: SizedBox(
-            width: 38,
-            height: 30,
-            child: Center(
-              child: _saving
-                  ? SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.inkSoft,
+        child: Semantics(
+          button: true,
+          enabled: enabled,
+          child: InkWell(
+            onTap: enabled ? () => unawaited(_submit()) : null,
+            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+            child: SizedBox(
+              width: 38,
+              height: 30,
+              child: Center(
+                child: _saving
+                    ? SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.inkSoft,
+                        ),
+                      )
+                    : Icon(
+                        LucideIcons.cornerDownLeft,
+                        size: 16,
+                        color: enabled ? kOnAmber : AppColors.inkFaint,
                       ),
-                    )
-                  : Icon(
-                      LucideIcons.cornerDownLeft,
-                      size: 16,
-                      color: enabled
-                          ? const Color(0xFF2A2410)
-                          : AppColors.inkFaint,
-                    ),
+              ),
             ),
           ),
         ),
@@ -602,6 +609,13 @@ class _QuickToolState extends State<_QuickTool> {
   final _key = GlobalKey();
   bool _hovered = false;
 
+  // Touch has no hover: the hover outline doubles as the pressed state.
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (_pressed != value) setState(() => _pressed = value);
+  }
+
   Rect get _anchor {
     final box = _key.currentContext?.findRenderObject() as RenderBox?;
     if (box == null || !box.hasSize) return Rect.zero;
@@ -611,7 +625,7 @@ class _QuickToolState extends State<_QuickTool> {
   @override
   Widget build(BuildContext context) {
     final enabled = widget.onTap != null;
-    final border = widget.active || _hovered
+    final border = widget.active || _hovered || _pressed
         ? AppColors.accentLine
         : Colors.transparent;
     return Tooltip(
@@ -620,18 +634,27 @@ class _QuickToolState extends State<_QuickTool> {
         cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),
-        child: GestureDetector(
-          onTap: enabled ? () => widget.onTap!(_anchor) : null,
-          behavior: HitTestBehavior.opaque,
-          child: Container(
-            key: _key,
-            padding: widget.padding,
-            decoration: BoxDecoration(
-              color: widget.active ? AppColors.accentSoft : Colors.transparent,
-              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-              border: Border.all(color: border),
+        child: Semantics(
+          button: true,
+          enabled: enabled,
+          child: GestureDetector(
+            onTap: enabled ? () => widget.onTap!(_anchor) : null,
+            onTapDown: enabled ? (_) => _setPressed(true) : null,
+            onTapUp: enabled ? (_) => _setPressed(false) : null,
+            onTapCancel: enabled ? () => _setPressed(false) : null,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              key: _key,
+              padding: widget.padding,
+              decoration: BoxDecoration(
+                color: widget.active
+                    ? AppColors.accentSoft
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                border: Border.all(color: border),
+              ),
+              child: widget.child,
             ),
-            child: widget.child,
           ),
         ),
       ),
@@ -783,23 +806,27 @@ class _QuickPeoplePickerState extends State<_QuickPeoplePicker> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-          child: TextField(
-            autofocus: true,
-            onChanged: _onQueryChanged,
-            textInputAction: TextInputAction.search,
-            decoration: InputDecoration(
-              isDense: true,
-              prefixIcon: const Icon(LucideIcons.search, size: 18),
-              hintText: context.t('issues.searchPeople'),
-              filled: true,
-              fillColor: AppColors.surfaceMuted,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-                borderSide: BorderSide(color: AppColors.hairline),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-                borderSide: BorderSide(color: AppColors.hairline),
+          child: Semantics(
+            label: context.t('issues.searchPeople'),
+            textField: true,
+            child: TextField(
+              autofocus: true,
+              onChanged: _onQueryChanged,
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                isDense: true,
+                prefixIcon: const Icon(LucideIcons.search, size: 18),
+                hintText: context.t('issues.searchPeople'),
+                filled: true,
+                fillColor: AppColors.surfaceMuted,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+                  borderSide: BorderSide(color: AppColors.hairline),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+                  borderSide: BorderSide(color: AppColors.hairline),
+                ),
               ),
             ),
           ),
@@ -940,37 +967,40 @@ class _DottedAddButtonState extends State<DottedAddButton> {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: InkWell(
-        onTap: widget.onTap,
-        borderRadius: radius,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          curve: Curves.easeOut,
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            color: _hovered ? AppColors.accentSoft : null,
-          ),
-          child: CustomPaint(
-            painter: _DashedBorderPainter(
-              color: _hovered ? AppColors.accent : AppColors.hairline,
-              radius: AppTheme.radiusControl,
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: radius,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            curve: Curves.easeOut,
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              color: _hovered ? AppColors.accentSoft : null,
             ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 9),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(LucideIcons.plus, size: 15, color: accent),
-                  const SizedBox(width: 7),
-                  Text(
-                    widget.label,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: accent,
+            child: CustomPaint(
+              painter: _DashedBorderPainter(
+                color: _hovered ? AppColors.accent : AppColors.hairline,
+                radius: AppTheme.radiusControl,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 9),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(LucideIcons.plus, size: 15, color: accent),
+                    const SizedBox(width: 7),
+                    Text(
+                      widget.label,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: accent,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

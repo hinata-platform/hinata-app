@@ -257,30 +257,31 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
         ),
       ),
     );
-    return AnimatedBuilder(
-      animation: anim,
-      builder: (_, child) {
-        if (reduceMotion) return Opacity(opacity: anim.value, child: child);
-        final curved = const Cubic(
-          0.34,
-          1.56,
-          0.64,
-          1,
-        ).transform(anim.value.clamp(0.0, 1.0));
-        final fade = (anim.value / 0.6).clamp(0.0, 1.0);
-        return Opacity(
-          opacity: fade,
-          child: Transform.translate(
+    if (reduceMotion) return FadeTransition(opacity: anim, child: panel);
+    // The fade runs on the compositor and is done by 60 % of the entrance;
+    // only the spring's offset and scale need a rebuild per frame.
+    return FadeTransition(
+      opacity: anim.drive(CurveTween(curve: const Interval(0, 0.6))),
+      child: AnimatedBuilder(
+        animation: anim,
+        builder: (_, child) {
+          final curved = const Cubic(
+            0.34,
+            1.56,
+            0.64,
+            1,
+          ).transform(anim.value.clamp(0.0, 1.0));
+          return Transform.translate(
             offset: Offset(0, (1 - curved) * -14),
             child: Transform.scale(
               scale: 0.965 + 0.035 * curved,
               alignment: Alignment.topCenter,
               child: child,
             ),
-          ),
-        );
-      },
-      child: panel,
+          );
+        },
+        child: panel,
+      ),
     );
   }
 
@@ -299,10 +300,10 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
         _glassPanel(tokens, radius: 26, mobile: true),
       ),
     );
+    if (reduceMotion) return FadeTransition(opacity: anim, child: panel);
     return AnimatedBuilder(
       animation: anim,
       builder: (_, child) {
-        if (reduceMotion) return Opacity(opacity: anim.value, child: child);
         final eased = const Cubic(
           0.22,
           1,
@@ -430,32 +431,38 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
           Icon(LucideIcons.search, size: 22, color: tokens.inkSoft),
           const SizedBox(width: 14),
           Expanded(
-            child: TextField(
-              controller: _text,
-              focusNode: _fieldNode,
-              autofocus: true,
-              textInputAction: TextInputAction.search,
-              cursorColor: tokens.ink,
-              onChanged: _c.setQuery,
-              style: TextStyle(
-                fontSize: mobile ? 19 : 20,
-                fontWeight: FontWeight.w500,
-                letterSpacing: -0.2,
-                color: tokens.ink,
-              ),
-              decoration: InputDecoration(
-                isCollapsed: true,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                errorBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                fillColor: Colors.transparent,
-                hoverColor: Colors.transparent,
-                hintText: context.t('search.placeholder'),
-                hintStyle: TextStyle(
+            // The hint is the only caption; the label keeps the field named
+            // once the user has typed.
+            child: Semantics(
+              label: context.t('search.placeholder'),
+              textField: true,
+              child: TextField(
+                controller: _text,
+                focusNode: _fieldNode,
+                autofocus: true,
+                textInputAction: TextInputAction.search,
+                cursorColor: tokens.ink,
+                onChanged: _c.setQuery,
+                style: TextStyle(
                   fontSize: mobile ? 19 : 20,
-                  fontWeight: FontWeight.w400,
-                  color: tokens.inkFaint,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -0.2,
+                  color: tokens.ink,
+                ),
+                decoration: InputDecoration(
+                  isCollapsed: true,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  fillColor: Colors.transparent,
+                  hoverColor: Colors.transparent,
+                  hintText: context.t('search.placeholder'),
+                  hintStyle: TextStyle(
+                    fontSize: mobile ? 19 : 20,
+                    fontWeight: FontWeight.w400,
+                    color: tokens.inkFaint,
+                  ),
                 ),
               ),
             ),
