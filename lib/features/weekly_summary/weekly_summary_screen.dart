@@ -48,7 +48,13 @@ class WeeklySummaryScreen extends StatelessWidget {
   const WeeklySummaryScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => const _WeeklySummaryView();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) {
+      final summaries = context.read<WeeklySummaryRepository>();
+      return FetchCubit<WeeklySummary>(summaries.summary);
+    },
+    child: const _WeeklySummaryView(),
+  );
 }
 
 class _WeeklySummaryView extends StatefulWidget {
@@ -64,15 +70,8 @@ class _WeeklySummaryViewState extends State<_WeeklySummaryView> {
   @override
   void initState() {
     super.initState();
-    _cubit = FetchCubit<WeeklySummary>(
-      () => context.read<WeeklySummaryRepository>().summary(),
-    )..load();
-  }
-
-  @override
-  void dispose() {
-    _cubit.close();
-    super.dispose();
+    // Closed by the provider above, not here.
+    _cubit = context.read<FetchCubit<WeeklySummary>>()..load();
   }
 
   @override

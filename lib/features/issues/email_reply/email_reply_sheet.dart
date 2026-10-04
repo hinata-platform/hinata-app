@@ -19,6 +19,7 @@ import '../../../core/widgets/hive_loader.dart';
 import '../../../core/widgets/hive_widgets.dart' show backArrow;
 import '../../sprint/modals/glass_modal.dart'
     show GlassToastKind, glassWoltSurface, showGlassErrorToast, showGlassToast;
+import 'email_reply_cubit.dart';
 
 /// Opens the "Reply by email" composer for an email-sourced issue, presented the
 /// same way as the issue detail itself — a Liquid-Glass [WoltModalSheet] (a wide
@@ -31,12 +32,18 @@ import '../../sprint/modals/glass_modal.dart'
 /// renders inside the app shell exactly like a maximized issue — via the top-bar
 /// button; closing it (send, cancel, back) returns to the issue. [initialDraft]
 /// restores what was typed/attached when minimizing back.
+///
+/// The sheet is a root-navigator route and inherits none of the caller's
+/// providers, so the repository is handed across into the composer's cubit:
+/// [repo] when the caller holds one (a context that may be gone by the time
+/// the sheet opens), else read from [context].
 Future<void> showEmailReplySheet(
   BuildContext context, {
   required Issue issue,
-  required IssueRepository repo,
+  IssueRepository? repo,
   EmailReplyDraft? initialDraft,
 }) {
+  final repository = repo ?? context.read<IssueRepository>();
   final composerKey = GlobalKey<EmailReplyComposerState>();
   // Bumped by the composer whenever the send button's enabled/busy state can
   // change (field edits, attachment progress) so the sticky action bar — a
@@ -121,12 +128,14 @@ Future<void> showEmailReplySheet(
         ),
         child: _OwnsRevision(
           revision: rev,
-          child: EmailReplyComposer(
-            key: composerKey,
-            issue: issue,
-            repo: repo,
-            initialDraft: initialDraft,
-            revision: rev,
+          child: BlocProvider(
+            create: (_) => EmailReplyCubit(repository),
+            child: EmailReplyComposer(
+              key: composerKey,
+              issue: issue,
+              initialDraft: initialDraft,
+              revision: rev,
+            ),
           ),
         ),
       ),
@@ -322,13 +331,15 @@ class _EmailReplyScreenState extends State<EmailReplyScreen> {
                   child: Padding(
                     // Clear the floating send bar at the bottom.
                     padding: const EdgeInsets.only(bottom: 72),
-                    child: EmailReplyComposer(
-                      key: composerKey,
-                      issue: issue,
-                      repo: repo,
-                      initialDraft: widget.initialDraft,
-                      revision: rev,
-                      expandBody: true,
+                    child: BlocProvider(
+                      create: (_) => EmailReplyCubit(repo),
+                      child: EmailReplyComposer(
+                        key: composerKey,
+                        issue: issue,
+                        initialDraft: widget.initialDraft,
+                        revision: rev,
+                        expandBody: true,
+                      ),
                     ),
                   ),
                 ),
@@ -400,14 +411,12 @@ class EmailReplyComposer extends StatefulWidget {
   const EmailReplyComposer({
     super.key,
     required this.issue,
-    required this.repo,
     this.initialDraft,
     this.revision,
     this.expandBody = false,
   });
 
   final Issue issue;
-  final IssueRepository repo;
   final EmailReplyDraft? initialDraft;
 
   /// Bumped whenever [canSend]/[sending] can change, so a host sticky bar can
@@ -434,6 +443,8 @@ class _Draft {
 }
 
 class EmailReplyComposerState extends State<EmailReplyComposer> {
+  EmailReplyCubit get _cubit => context.read<EmailReplyCubit>();
+
   late final TextEditingController _subject = TextEditingController(
     text: widget.initialDraft?.subject ?? _prefillSubject(),
   );
@@ -503,7 +514,7 @@ class EmailReplyComposerState extends State<EmailReplyComposer> {
     FocusManager.instance.primaryFocus?.unfocus();
     _set(() => _sending = true);
     try {
-      await widget.repo.replyEmail(
+      await _cubit.send(
         widget.issue.id,
         subject: _subject.text.trim(),
         body: _body.text.trim(),
@@ -571,14 +582,14 @@ class EmailReplyComposerState extends State<EmailReplyComposer> {
   }
 
   Future<void> _upload(_Draft draft, ChosenFile file) async {
+    // Taken before the file is read: that is an async gap, and the upload
+    // still goes out if the composer closes meanwhile.
+    final cubit = _cubit;
     try {
       final multipart = kIsWeb || file.path == null
           ? MultipartFile.fromBytes(file.bytes ?? const [], filename: file.name)
           : await MultipartFile.fromFile(file.path!, filename: file.name);
-      final saved = await widget.repo.uploadAttachment(
-        widget.issue.id,
-        multipart,
-      );
+      final saved = await cubit.attach(widget.issue.id, multipart);
       // The just-added attachment is the newest one on the returned issue.
       final id = saved.attachments.isNotEmpty
           ? saved.attachments.last.id
@@ -604,7 +615,7 @@ class EmailReplyComposerState extends State<EmailReplyComposer> {
     // doesn't linger. Ignore failures — the reply simply won't reference it.
     if (draft.id != null) {
       try {
-        await widget.repo.deleteAttachment(widget.issue.id, draft.id!);
+        await _cubit.detach(widget.issue.id, draft.id!);
       } catch (_) {}
     }
   }

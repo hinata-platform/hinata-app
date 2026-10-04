@@ -13,6 +13,12 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../sprint/modals/glass_modal.dart'
     show glassWoltSurface, showGlassConfirm;
+import '../../core/repositories/issue_repository.dart';
+import '../../core/repositories/project_repository.dart';
+import '../../core/repositories/sprint_repository.dart';
+import '../../core/repositories/user_repository.dart';
+import '../knowledge/data/knowledge_repository.dart';
+import 'issue_create_cubit.dart';
 import 'issue_detail_sheet.dart';
 
 /// Centered create-issue dialog for wider screens — mirrors the issue detail
@@ -110,15 +116,24 @@ Future<Issue?> showIssueForm(
         stickyActionBar: _CreateSaveBar(controller: controller),
         child: MultiRepositoryProvider(
           providers: domainRepositoryProviders(context),
-          child: IssueCreateBody(
-            controller: controller,
-            projectId: projectId,
-            initialState: initialState,
-            initialSprintId: initialSprintId,
-            parentId: parentId,
-            forcedType: forcedType,
-            initialAssigneeId: initialAssigneeId,
-            onCreated: (issue) => Navigator.of(modalContext).pop(issue),
+          child: BlocProvider(
+            create: (context) => IssueCreateCubit(
+              issues: context.read<IssueRepository>(),
+              projects: context.read<ProjectRepository>(),
+              sprints: context.read<SprintRepository>(),
+              users: context.read<UserRepository>(),
+              knowledge: context.read<KnowledgeRepository>(),
+            ),
+            child: IssueCreateBody(
+              controller: controller,
+              projectId: projectId,
+              initialState: initialState,
+              initialSprintId: initialSprintId,
+              parentId: parentId,
+              forcedType: forcedType,
+              initialAssigneeId: initialAssigneeId,
+              onCreated: (issue) => Navigator.of(modalContext).pop(issue),
+            ),
           ),
         ),
       ),

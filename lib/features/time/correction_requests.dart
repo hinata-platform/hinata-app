@@ -18,7 +18,9 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
+import 'correction_requests_cubit.dart';
 import 'lock_notice.dart';
+import 'time_requests_cubit.dart';
 
 /// The requests the reader can answer, newest first (Art. 16 DSGVO): frozen
 /// entries to correct, and older days to open.
@@ -32,7 +34,7 @@ import 'lock_notice.dart';
 /// Two homes. As its own tab in Approvals it is a page with its own scroll; in
 /// the admin area it sits inside a card and pages with a button, because a
 /// scroll inside a scroll is a scroll nobody finds the end of.
-class CorrectionRequestsList extends StatefulWidget {
+class CorrectionRequestsList extends StatelessWidget {
   const CorrectionRequestsList({
     super.key,
     this.embedded = false,
@@ -46,16 +48,35 @@ class CorrectionRequestsList extends StatefulWidget {
   final EdgeInsets padding;
 
   @override
-  State<CorrectionRequestsList> createState() => _CorrectionRequestsListState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => CorrectionRequestsCubit(
+      context.read<TimeRepository>(),
+      context.read<ProjectRepository>(),
+    ),
+    child: _CorrectionRequestsView(embedded: embedded, padding: padding),
+  );
 }
 
-class _CorrectionRequestsListState extends State<CorrectionRequestsList> {
+class _CorrectionRequestsView extends StatefulWidget {
+  const _CorrectionRequestsView({
+    required this.embedded,
+    required this.padding,
+  });
+
+  final bool embedded;
+  final EdgeInsets padding;
+
+  @override
+  State<_CorrectionRequestsView> createState() =>
+      _CorrectionRequestsViewState();
+}
+
+class _CorrectionRequestsViewState extends State<_CorrectionRequestsView> {
   late final PagedCubit<TimeCorrectionRequest> _requests =
       PagedCubit<TimeCorrectionRequest>(
-        (page, size) => context.read<TimeRepository>().correctionRequests(
-          page: page,
-          size: size,
-        ),
+        (page, size) => context
+            .read<CorrectionRequestsCubit>()
+            .correctionRequests(page: page, size: size),
         pageSize: 25,
         keyOf: (request) => request.id,
       );
@@ -106,9 +127,9 @@ class _CorrectionRequestsListState extends State<CorrectionRequestsList> {
     if (ids.isEmpty) return;
     _askedProjects.addAll(ids);
     try {
-      final resolved = await context.read<ProjectRepository>().resolveProjects(
-        ids.toList(),
-      );
+      final resolved = await context
+          .read<CorrectionRequestsCubit>()
+          .resolveProjects(ids.toList());
       if (!mounted) return;
       setState(
         () => _projects = {
@@ -134,7 +155,7 @@ class _CorrectionRequestsListState extends State<CorrectionRequestsList> {
     required bool grant,
   }) async {
     if (_sending.contains(request.id)) return;
-    final repository = context.read<TimeRepository>();
+    final requests = context.read<CorrectionRequestsCubit>();
     final note = await showGlassNoteDialog(
       context,
       titleKey: grant
@@ -152,8 +173,8 @@ class _CorrectionRequestsListState extends State<CorrectionRequestsList> {
     setState(() => _sending.add(request.id));
     try {
       final answered = grant
-          ? await repository.grantCorrection(request.id, note)
-          : await repository.answerCorrection(request.id, note);
+          ? await requests.grant(request.id, note)
+          : await requests.answer(request.id, note);
       if (!mounted) return;
       // In place rather than reloaded: the list keeps its scroll position, and
       // the answer appears where the buttons were.
@@ -461,16 +482,30 @@ class _CorrectionCard extends StatelessWidget {
 /// Under the lock in the entry's sheet, because that is where somebody who asked
 /// comes back to look. Loaded when the sheet shows a lock and only then, and
 /// silent when there is nothing to show: the notice above still says what to do.
-class OwnCorrectionRequests extends StatefulWidget {
+class OwnCorrectionRequests extends StatelessWidget {
   const OwnCorrectionRequests({super.key, required this.entryId});
 
   final String entryId;
 
   @override
-  State<OwnCorrectionRequests> createState() => _OwnCorrectionRequestsState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => TimeRequestsCubit(context.read<TimeRepository>()),
+    child: _OwnCorrectionRequestsView(entryId: entryId),
+  );
 }
 
-class _OwnCorrectionRequestsState extends State<OwnCorrectionRequests> {
+class _OwnCorrectionRequestsView extends StatefulWidget {
+  const _OwnCorrectionRequestsView({required this.entryId});
+
+  final String entryId;
+
+  @override
+  State<_OwnCorrectionRequestsView> createState() =>
+      _OwnCorrectionRequestsViewState();
+}
+
+class _OwnCorrectionRequestsViewState
+    extends State<_OwnCorrectionRequestsView> {
   TimeCorrectionRequest? _latest;
 
   @override
@@ -482,7 +517,7 @@ class _OwnCorrectionRequestsState extends State<OwnCorrectionRequests> {
   Future<void> _load() async {
     try {
       final found = await context
-          .read<TimeRepository>()
+          .read<TimeRequestsCubit>()
           .entryCorrectionRequests(widget.entryId);
       if (mounted && found.isNotEmpty) setState(() => _latest = found.first);
     } catch (_) {

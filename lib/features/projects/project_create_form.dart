@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'deadline_basis_field.dart';
 import 'project_hue_label.dart';
 import 'project_key.dart';
+import 'project_lead_cubit.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/i18n/i18n.dart';
@@ -162,7 +163,7 @@ class ProjectDraft extends ChangeNotifier {
 /// Brings no header, no footer and no submit — a caller wraps it in whatever
 /// modal it already has and decides what "create" means (a project of its own,
 /// or one that belongs to a team).
-class ProjectCreateFields extends StatefulWidget {
+class ProjectCreateFields extends StatelessWidget {
   const ProjectCreateFields({
     super.key,
     required this.draft,
@@ -175,11 +176,31 @@ class ProjectCreateFields extends StatefulWidget {
   /// the caret first — a tab strip the user may still be choosing between.
   final bool autofocus;
 
+  // The form brings its own lookup of the lead, so every modal that hosts it
+  // (a project of its own, one that belongs to a team) needs nothing but the
+  // user repository it already provides for the person picker.
   @override
-  State<ProjectCreateFields> createState() => _ProjectCreateFieldsState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => ProjectLeadCubit(context.read<UserRepository>()),
+    child: _ProjectCreateFieldsBody(draft: draft, autofocus: autofocus),
+  );
 }
 
-class _ProjectCreateFieldsState extends State<ProjectCreateFields> {
+class _ProjectCreateFieldsBody extends StatefulWidget {
+  const _ProjectCreateFieldsBody({
+    required this.draft,
+    required this.autofocus,
+  });
+
+  final ProjectDraft draft;
+  final bool autofocus;
+
+  @override
+  State<_ProjectCreateFieldsBody> createState() =>
+      _ProjectCreateFieldsBodyState();
+}
+
+class _ProjectCreateFieldsBodyState extends State<_ProjectCreateFieldsBody> {
   @override
   void initState() {
     super.initState();
@@ -204,7 +225,7 @@ class _ProjectCreateFieldsState extends State<ProjectCreateFields> {
     final meId = widget.draft.meId;
     if (meId == null || widget.draft.lead != null) return;
     try {
-      final found = await context.read<UserRepository>().usersByIds([meId]);
+      final found = await context.read<ProjectLeadCubit>().usersByIds([meId]);
       if (mounted && found.isNotEmpty) widget.draft.setLead(found.first);
     } on ApiFailure {
       // The field stays empty and the picker is still one tap away.

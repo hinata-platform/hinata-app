@@ -24,6 +24,7 @@ import '../sprint/modals/glass_modal.dart'
 import '../time/placement_picker.dart' show TimePlacement;
 import '../time/time_entry_sheet.dart' show showTimeEntrySheet;
 import 'work_item_labels.dart';
+import 'work_items_cubit.dart';
 import 'work_log_sheet.dart';
 
 /// Who may do what to a work item — resolved once by the host from the auth
@@ -130,11 +131,14 @@ Future<WorkItem?> showEditWorkItem(
   return saved?.entry;
 }
 
-/// Asks, then deletes. True when the entry is gone; a refused or failed
-/// delete answers false — the failure (a 403 for someone else's entry, say)
-/// is already localized by the server and shown as it came.
-Future<bool> confirmDeleteWorkItem(BuildContext context, WorkItem item) async {
-  final repository = context.read<IssueRepository>();
+/// Asks, then deletes through [delete]. True when the entry is gone; a refused
+/// or failed delete answers false — the failure (a 403 for someone else's
+/// entry, say) is already localized by the server and shown as it came.
+Future<bool> confirmDeleteWorkItem(
+  BuildContext context,
+  WorkItem item, {
+  required Future<void> Function(String id) delete,
+}) async {
   final date = item.date;
   final deleted = context.t('time.deleted');
   final confirmed = await showGlassConfirm(
@@ -156,7 +160,7 @@ Future<bool> confirmDeleteWorkItem(BuildContext context, WorkItem item) async {
   );
   if (confirmed != true) return false;
   try {
-    await repository.deleteWorkItem(item.id);
+    await delete(item.id);
   } on ApiFailure catch (failure) {
     if (context.mounted) {
       showGlassErrorToast(context, context.t(failure.message));
@@ -519,21 +523,18 @@ class AllWorkItemsSheet extends StatefulWidget {
 }
 
 class _AllWorkItemsSheetState extends State<AllWorkItemsSheet> {
-  late final IssueRepository _repository;
-  late final PagedCubit<WorkItem> _cubit;
+  late final WorkItemsPageCubit _cubit;
   final ScrollController _scroll = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    // Resolved once — the fetcher closure outlives this build and every
-    // loadMore would otherwise walk the element tree again.
-    _repository = context.read<IssueRepository>();
-    _cubit = PagedCubit<WorkItem>(
-      (page, size) =>
-          _repository.workItemsPage(widget.issue.id, page: page, size: size),
+    // Resolved once — the fetcher outlives this build and every loadMore
+    // would otherwise walk the element tree again.
+    _cubit = WorkItemsPageCubit(
+      context.read<IssueRepository>(),
+      issueId: widget.issue.id,
       pageSize: widget.pageSize,
-      keyOf: (item) => item.id,
     )..load();
     _scroll.addListener(_onScroll);
   }
@@ -578,7 +579,9 @@ class _AllWorkItemsSheetState extends State<AllWorkItemsSheet> {
   }
 
   Future<void> _delete(WorkItem item) async {
-    if (!await confirmDeleteWorkItem(context, item)) return;
+    if (!await confirmDeleteWorkItem(context, item, delete: _cubit.delete)) {
+      return;
+    }
     _cubit.removeItem(item.id);
     widget.onChanged();
   }

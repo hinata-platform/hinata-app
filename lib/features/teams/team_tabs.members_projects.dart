@@ -239,10 +239,10 @@ class TeamProjectsTab extends StatelessWidget {
       destructive: true,
     );
     if (confirmed != true || !context.mounted) return;
-    final repo = context.read<TeamRepository>();
+    final detail = context.read<TeamDetailCubit>();
     final errText = context.t('errors.unexpected');
     try {
-      await repo.detachTeamProject(data.team.id, project.id);
+      await detail.detachProject(data.team.id, project.id);
       await onReload();
     } catch (_) {
       if (!context.mounted) return;

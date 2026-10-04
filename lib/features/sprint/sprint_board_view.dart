@@ -9,9 +9,6 @@ import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/board_page_models.dart';
 import '../../core/models/work_models.dart';
-import '../../core/repositories/board_repository.dart';
-import '../../core/repositories/issue_repository.dart';
-import '../../core/repositories/sprint_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -85,14 +82,10 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
   @override
   late final BoardHeadCubit head = context.read<BoardHeadCubit>();
 
-  late final BoardRepository _boardApi = context.read<BoardRepository>();
-  late final SprintRepository _sprintApi = context.read<SprintRepository>();
-  late final SprintPlanningCubit _planning = SprintPlanningCubit(
-    boards: _boardApi,
-    issues: context.read<IssueRepository>(),
-    sprints: _sprintApi,
-    boardId: widget.board.id,
-  );
+  /// The planning, and the sprints' own changes and reports, provided by the
+  /// board screen.
+  late final SprintPlanningCubit _planning = context
+      .read<SprintPlanningCubit>();
 
   /// The planning lists every issue type over the whole board, and its filter
   /// offers what those hold.
@@ -139,7 +132,6 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
   @override
   void dispose() {
     _issueSub?.cancel();
-    _planning.close();
     super.dispose();
   }
 
@@ -221,7 +213,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
       _reportError = null;
     });
     try {
-      final report = await _sprintApi.sprintReport(id);
+      final report = await _planning.sprintReport(id);
       if (!mounted) return;
       setState(() {
         _report = report;
@@ -369,8 +361,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
     );
     if (data == null) return;
     try {
-      await _sprintApi.createSprint(
-        boardId: widget.board.id,
+      await _planning.createSprint(
         name: data.name,
         goal: data.goal,
         startDate: data.start,
@@ -425,7 +416,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
     );
     if (data == null) return;
     try {
-      await _sprintApi.startSprint(
+      await _planning.startSprint(
         sprint.id,
         goal: data.goal,
         endDate: data.endDate,
@@ -464,7 +455,7 @@ class _ScrumBoardViewState extends State<ScrumBoardView>
     );
     if (dest == null) return;
     try {
-      await _sprintApi.completeSprint(sprint.id, moveOpenTo: dest);
+      await _planning.completeSprint(sprint.id, moveOpenTo: dest);
       _report = null;
       _toastKey(
         'sprint.toast.completed',

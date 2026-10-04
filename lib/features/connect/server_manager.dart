@@ -13,6 +13,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../../core/widgets/hive_widgets.dart' show backArrow, forwardChevron;
+import 'server_probe_cubit.dart';
 import '../sprint/modals/glass_modal.dart'
     show
         glassInputDecoration,
@@ -38,11 +39,14 @@ Future<void> showServerManager(
   bool startOnAdd = false,
   Rect? anchor,
 }) {
-  Widget builder(BuildContext _) => _ServerManagerSheet(
-    repo: context.read<MetaRepository>(),
-    storage: context.read<AppStorage>(),
-    appConfig: context.read<AppConfigBloc>(),
-    startOnAdd: startOnAdd,
+  final meta = context.read<MetaRepository>();
+  Widget builder(BuildContext _) => BlocProvider(
+    create: (_) => ServerProbeCubit(meta),
+    child: _ServerManagerSheet(
+      storage: context.read<AppStorage>(),
+      appConfig: context.read<AppConfigBloc>(),
+      startOnAdd: startOnAdd,
+    ),
   );
   final wide = MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint;
   final rect = anchor ?? _anchorOf(context);
@@ -84,13 +88,11 @@ class _RowStatus {
 
 class _ServerManagerSheet extends StatefulWidget {
   const _ServerManagerSheet({
-    required this.repo,
     required this.storage,
     required this.appConfig,
     required this.startOnAdd,
   });
 
-  final MetaRepository repo;
   final AppStorage storage;
   final AppConfigBloc appConfig;
   final bool startOnAdd;
@@ -133,9 +135,10 @@ class _ServerManagerSheetState extends State<_ServerManagerSheet> {
   /// Fires a reachability probe at every saved server in parallel; each row
   /// flips from "checking" to its real ping (or "offline") as results arrive.
   void _probeAll() {
+    final probes = context.read<ServerProbeCubit>();
     for (final server in _servers) {
       _status[server.url] = const _RowStatus.checking();
-      widget.repo.probeServer(server.url).then((probe) {
+      probes.probe(server.url).then((probe) {
         if (!mounted) return;
         setState(() {
           _status[server.url] = probe == null
@@ -201,7 +204,6 @@ class _ServerManagerSheetState extends State<_ServerManagerSheet> {
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
       child: _page == _Page.add
           ? _AddServerPage(
-              repo: widget.repo,
               onBack: () => setState(() => _page = _Page.manage),
               onSave: _saveAndConnect,
             )
@@ -628,13 +630,8 @@ enum _Phase { input, testing, ok, error }
 /// The "add server" page: enter a URL, test the connection (real
 /// `/api/v1/meta` probe), then confirm a display name and connect.
 class _AddServerPage extends StatefulWidget {
-  const _AddServerPage({
-    required this.repo,
-    required this.onBack,
-    required this.onSave,
-  });
+  const _AddServerPage({required this.onBack, required this.onSave});
 
-  final MetaRepository repo;
   final VoidCallback onBack;
   final Future<void> Function(String url, String name) onSave;
 
@@ -675,7 +672,7 @@ class _AddServerPageState extends State<_AddServerPage> {
       _phase = _Phase.testing;
       _probe = null;
     });
-    final probe = await widget.repo.probeServer(url);
+    final probe = await context.read<ServerProbeCubit>().probe(url);
     if (!mounted) return;
     if (probe == null) {
       setState(() => _phase = _Phase.error);

@@ -17,6 +17,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassDateRangePicker,
         showGlassModal,
         showGlassToast;
+import 'time_requests_cubit.dart';
 
 /// Why an entry is frozen, who can lift it, and what to do about it — one
 /// component for every reason there is.
@@ -67,6 +68,15 @@ class LockNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Its own provider, because the notice sits in sheets, rows and screens
+    // that know nothing about asking. Lazy: nothing is read until somebody asks.
+    return BlocProvider(
+      create: (context) => TimeRequestsCubit(context.read<TimeRepository>()),
+      child: Builder(builder: _notice),
+    );
+  }
+
+  Widget _notice(BuildContext context) {
     final action = _asksForDay
         ? GhostButton(
             icon: LucideIcons.calendarPlus,
@@ -171,15 +181,15 @@ class LockNotice extends StatelessWidget {
   }
 
   Future<void> _askForCorrection(BuildContext context) async {
-    // Read before the await: the repository comes from the tree, the way every
+    // Read before the await: the cubit comes from the tree, the way every
     // other caller in the module gets it.
-    final repository = context.read<TimeRepository>();
+    final requests = context.read<TimeRequestsCubit>();
     final sent = await sendReasonedRequest(
       context,
       titleKey: 'time.lock.requestTitle',
       hintKey: 'time.lock.requestHint',
       sentKey: 'time.lock.requestSent',
-      send: (note) => repository.requestCorrection(lock.entryId!, note),
+      send: (note) => requests.requestCorrection(lock.entryId!, note),
     );
     if (sent) onRequested?.call();
   }
@@ -189,14 +199,13 @@ class LockNotice extends StatelessWidget {
   /// A request, not a way past the limit: the day opens when an administrator
   /// opens it for this person, which is recorded with its reason.
   Future<void> _askForDay(BuildContext context, DateTime day) async {
-    final repository = context.read<TimeRepository>();
+    final requests = context.read<TimeRequestsCubit>();
     await sendReasonedRequest(
       context,
       titleKey: 'time.lock.requestDaysTitle',
       hintKey: 'time.lock.requestDaysHint',
       sentKey: 'time.lock.requestDaysSent',
-      send: (note) =>
-          repository.requestBackfill(from: day, to: day, note: note),
+      send: (note) => requests.requestBackfill(from: day, to: day, note: note),
     );
   }
 }
@@ -246,9 +255,17 @@ Future<bool> sendReasonedRequest(
 ///
 /// The way out for a day the pickers do not offer, because it lies beyond the
 /// limit and nothing opened it yet. Reached from the date picker's footer and
-/// from Settings → Time tracking.
-Future<void> requestOlderDays(BuildContext context) async {
-  final repository = context.read<TimeRepository>();
+/// from Settings → Time tracking. [requestBackfill] sends the ask, usually
+/// [TimeRequestsCubit.requestBackfill] of the caller's screen.
+Future<void> requestOlderDays(
+  BuildContext context, {
+  required Future<void> Function({
+    required DateTime from,
+    required DateTime to,
+    required String note,
+  })
+  requestBackfill,
+}) async {
   final today = DateUtils.dateOnly(DateTime.now());
   final range = await showGlassDateRangePicker(
     context,
@@ -263,11 +280,8 @@ Future<void> requestOlderDays(BuildContext context) async {
     titleKey: 'time.lock.requestDaysTitle',
     hintKey: 'time.lock.requestDaysHint',
     sentKey: 'time.lock.requestDaysSent',
-    send: (note) => repository.requestBackfill(
-      from: range.start,
-      to: range.end,
-      note: note,
-    ),
+    send: (note) =>
+        requestBackfill(from: range.start, to: range.end, note: note),
   );
 }
 

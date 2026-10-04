@@ -19,6 +19,7 @@ import '../../sprint/modals/glass_modal.dart';
 import 'holiday_calendar_card.dart';
 import 'holiday_calendar_sheet.dart';
 import 'holiday_sheet.dart';
+import 'org_holidays_cubit.dart';
 import '../../../core/widgets/folded_hint.dart';
 
 /// Organisation → Holidays (HIN-91; under Organisation since HIN-129): the
@@ -32,14 +33,25 @@ import '../../../core/widgets/folded_hint.dart';
 /// An import runs on the server and answers at once, so this page reads the
 /// calendars again every two seconds while one is importing, and stops after a
 /// minute whatever the state.
-class OrgHolidaysScreen extends StatefulWidget {
+class OrgHolidaysScreen extends StatelessWidget {
   const OrgHolidaysScreen({super.key});
 
   @override
-  State<OrgHolidaysScreen> createState() => _OrgHolidaysScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) =>
+        OrgHolidaysCubit(context.read<AvailabilityRepository>()),
+    child: const _OrgHolidaysView(),
+  );
 }
 
-class _OrgHolidaysScreenState extends State<OrgHolidaysScreen> {
+class _OrgHolidaysView extends StatefulWidget {
+  const _OrgHolidaysView();
+
+  @override
+  State<_OrgHolidaysView> createState() => _OrgHolidaysScreenState();
+}
+
+class _OrgHolidaysScreenState extends State<_OrgHolidaysView> {
   static const _pollEvery = Duration(seconds: 2);
   static const _pollRoundsMax = 30;
 
@@ -53,8 +65,7 @@ class _OrgHolidaysScreenState extends State<OrgHolidaysScreen> {
   Timer? _poll;
   int _pollRounds = 0;
 
-  AvailabilityRepository get _repository =>
-      context.read<AvailabilityRepository>();
+  OrgHolidaysCubit get _cubit => context.read<OrgHolidaysCubit>();
 
   @override
   void initState() {
@@ -83,7 +94,7 @@ class _OrgHolidaysScreenState extends State<OrgHolidaysScreen> {
         if (calendar.importing) calendar.id,
     };
     try {
-      final page = await _repository.calendars(size: 100);
+      final page = await _cubit.calendars(size: 100);
       if (!mounted) return;
       final previousSelection = _selectedId;
       setState(() {
@@ -130,7 +141,7 @@ class _OrgHolidaysScreenState extends State<OrgHolidaysScreen> {
     }
     setState(() => _holidaysLoading = true);
     try {
-      final holidays = await _repository.holidays(id, year: _year);
+      final holidays = await _cubit.holidays(id, year: _year);
       if (!mounted || id != _selectedId) return;
       setState(() {
         _holidays = holidays;
@@ -170,14 +181,14 @@ class _OrgHolidaysScreenState extends State<OrgHolidaysScreen> {
     );
     if (confirmed != true || !mounted) return;
     await _run(() async {
-      await _repository.deleteCalendar(calendar.id);
+      await _cubit.deleteCalendar(calendar.id);
       if (_selectedId == calendar.id) _selectedId = null;
       await _load(quiet: true);
     });
   }
 
   Future<void> _import(HolidayCalendar calendar) => _run(() async {
-    final updated = await _repository.importHolidays(calendar.id, year: _year);
+    final updated = await _cubit.importHolidays(calendar.id, year: _year);
     if (!mounted) return;
     setState(() {
       _calendars = [
@@ -211,7 +222,7 @@ class _OrgHolidaysScreenState extends State<OrgHolidaysScreen> {
     );
     if (confirmed != true || !mounted) return;
     await _run(() async {
-      await _repository.deleteHoliday(holiday.id);
+      await _cubit.deleteHoliday(holiday.id);
       await _loadHolidays();
     });
   }

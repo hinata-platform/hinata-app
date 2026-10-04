@@ -534,6 +534,36 @@ class SprintPlanningCubit extends Cubit<SprintPlanningState>
     return null;
   }
 
+  /// Adds a sprint to the board. The planning is read again by whoever asked,
+  /// once it has said so.
+  Future<Sprint> createSprint({
+    required String name,
+    String? goal,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) => _sprints.createSprint(
+    boardId: boardId,
+    name: name,
+    goal: goal,
+    startDate: startDate,
+    endDate: endDate,
+  );
+
+  /// Starts the sprint [sprintId] on the board.
+  Future<Sprint> startSprint(
+    String sprintId, {
+    String? goal,
+    DateTime? endDate,
+  }) => _sprints.startSprint(sprintId, goal: goal, endDate: endDate);
+
+  /// Completes the sprint [sprintId], moving its open cards to [moveOpenTo].
+  Future<void> completeSprint(String sprintId, {required String moveOpenTo}) =>
+      _sprints.completeSprint(sprintId, moveOpenTo: moveOpenTo);
+
+  /// The insights the server works out for the sprint [sprintId].
+  Future<SprintReport> sprintReport(String sprintId) =>
+      _sprints.sprintReport(sprintId);
+
   /// Every card of the sprint [sprintId] by state, whatever the planning is
   /// narrowed to: what starting or completing the sprint acts on. The sprint's
   /// head counts exactly that while nothing narrows it, so only a narrowed

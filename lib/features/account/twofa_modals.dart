@@ -4,7 +4,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:qr/qr.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/repositories/account_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/account_models.dart';
 import '../../core/theme/app_colors.dart';
@@ -14,6 +13,7 @@ import '../sprint/modals/glass_modal.dart'
     show showGlassModal, GlassModalHeader, showGlassToast, GlassToastKind;
 import 'account_widgets.dart';
 import '../../core/widgets/hive_widgets.dart' show forwardArrow;
+import 'account_cubit.dart';
 
 /// Renders a QR matrix for an `otpauth://` URI using the pure-Dart [qr]
 /// package — no network, no platform channel.
@@ -187,17 +187,17 @@ class _OtpInputState extends State<OtpInput> {
 
 /// The 3-step enrolment wizard (Scan → Verify → Recovery). Returns true when
 /// 2FA was enabled.
-Future<bool?> show2faWizard(BuildContext context, AccountRepository repo) {
+Future<bool?> show2faWizard(BuildContext context, AccountCubit account) {
   return showGlassModal<bool>(
     context,
     width: 460,
-    builder: (_) => _TwoFactorWizard(repo: repo),
+    builder: (_) => _TwoFactorWizard(account: account),
   );
 }
 
 class _TwoFactorWizard extends StatefulWidget {
-  const _TwoFactorWizard({required this.repo});
-  final AccountRepository repo;
+  const _TwoFactorWizard({required this.account});
+  final AccountCubit account;
 
   @override
   State<_TwoFactorWizard> createState() => _TwoFactorWizardState();
@@ -223,7 +223,7 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
   Future<void> _begin() async {
     setState(() => _busy = true);
     try {
-      final setup = await widget.repo.beginTotpSetup();
+      final setup = await widget.account.beginTotpSetup();
       if (mounted) setState(() => _setup = setup);
     } on ApiFailure catch (f) {
       if (mounted) setState(() => _error = f.message);
@@ -239,7 +239,7 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
       _error = null;
     });
     try {
-      final codes = await widget.repo.verifyTotpSetup(_code);
+      final codes = await widget.account.verifyTotpSetup(_code);
       if (mounted) {
         setState(() {
           _recoveryCodes = codes;
@@ -551,36 +551,36 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
 
 /// Manage modal: shows remaining recovery codes count + regenerate (requires a
 /// current code). Returns the new remaining count if regenerated.
-Future<void> show2faManage(BuildContext context, AccountRepository repo) {
+Future<void> show2faManage(BuildContext context, AccountCubit account) {
   return showGlassModal<void>(
     context,
     width: 440,
     builder: (_) => _CodeGatedAction(
-      repo: repo,
+      account: account,
       icon: LucideIcons.keyRound,
       title: context.t('twofa.manageTitle'),
       subtitle: context.t('twofa.manageSubtitle'),
       confirmLabel: context.t('twofa.regenerate'),
-      onConfirm: (code) => repo.regenerateRecoveryCodes(code),
+      onConfirm: (code) => account.regenerateRecoveryCodes(code),
       showCodes: true,
     ),
   );
 }
 
 /// Disable modal: requires a current TOTP/recovery code. Returns true when off.
-Future<bool?> show2faDisable(BuildContext context, AccountRepository repo) {
+Future<bool?> show2faDisable(BuildContext context, AccountCubit account) {
   return showGlassModal<bool>(
     context,
     width: 440,
     builder: (_) => _CodeGatedAction(
-      repo: repo,
+      account: account,
       icon: LucideIcons.shieldOff,
       title: context.t('twofa.disableTitle'),
       subtitle: context.t('twofa.disableSubtitle'),
       confirmLabel: context.t('twofa.disableButton'),
       danger: true,
       onConfirm: (code) async {
-        await repo.disableTotp(code);
+        await account.disableTotp(code);
         return const <String>[];
       },
     ),
@@ -590,7 +590,7 @@ Future<bool?> show2faDisable(BuildContext context, AccountRepository repo) {
 /// Shared body for the "enter a code to do X" management modals.
 class _CodeGatedAction extends StatefulWidget {
   const _CodeGatedAction({
-    required this.repo,
+    required this.account,
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -600,7 +600,7 @@ class _CodeGatedAction extends StatefulWidget {
     this.showCodes = false,
   });
 
-  final AccountRepository repo;
+  final AccountCubit account;
   final IconData icon;
   final String title;
   final String subtitle;

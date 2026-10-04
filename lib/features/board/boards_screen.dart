@@ -25,6 +25,7 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
 import 'board_links.dart';
+import 'board_list_cubit.dart';
 import 'board_manage_menu.dart';
 import 'create_board_dialog.dart';
 import 'load_when_shown.dart';
@@ -33,15 +34,28 @@ import 'load_when_shown.dart';
 // Shown at /board — lists all boards across projects; can filter by project.
 // Tapping a board card opens it at /board/:id, on top of this list.
 
-class BoardScreen extends StatefulWidget {
+class BoardScreen extends StatelessWidget {
   const BoardScreen({super.key});
 
   @override
-  State<BoardScreen> createState() => _BoardScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => BoardListCubit(
+      boards: context.read<BoardRepository>(),
+      projects: context.read<ProjectRepository>(),
+      teams: context.read<TeamRepository>(),
+    ),
+    child: const _BoardList(),
+  );
 }
 
-class _BoardScreenState extends State<BoardScreen>
-    with LoadWhenShown<BoardScreen> {
+class _BoardList extends StatefulWidget {
+  const _BoardList();
+
+  @override
+  State<_BoardList> createState() => _BoardListState();
+}
+
+class _BoardListState extends State<_BoardList> with LoadWhenShown<_BoardList> {
   List<AgileBoard> _boards = const [];
   List<Project> _projects = const [];
   List<Team> _teams = const [];
@@ -104,10 +118,11 @@ class _BoardScreenState extends State<BoardScreen>
       _error = null;
     });
     try {
+      final list = context.read<BoardListCubit>();
       final results = await Future.wait([
-        context.read<ProjectRepository>().projects(),
-        context.read<BoardRepository>().boards(projectId: _projectFilter),
-        context.read<TeamRepository>().teams(),
+        list.projects(),
+        list.boards(projectId: _projectFilter),
+        list.teams(),
       ]);
       _projects = results[0] as List<Project>;
       _boards = results[1] as List<AgileBoard>;

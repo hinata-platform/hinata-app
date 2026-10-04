@@ -13,6 +13,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/project_picker.dart' show projectAccent;
 import '../sprint/modals/glass_modal.dart';
+import 'board_columns_editor_cubit.dart';
 
 /// Arranges a board's columns by hand.
 ///
@@ -31,16 +32,19 @@ import '../sprint/modals/glass_modal.dart';
 ///
 /// Returns true when the layout was saved or reset, so the caller can reload.
 Future<bool?> showBoardColumnsEditor(BuildContext context, AgileBoard board) {
+  // The modal is a route of its own, above the repository providers: the
+  // repositories are handed to its cubit from here.
   final boardRepo = context.read<BoardRepository>();
   final projectRepo = context.read<ProjectRepository>();
   return showGlassModal<bool>(
     context,
     width: 640,
-    builder: (_) => MultiRepositoryProvider(
-      providers: [
-        RepositoryProvider.value(value: boardRepo),
-        RepositoryProvider.value(value: projectRepo),
-      ],
+    builder: (_) => BlocProvider(
+      create: (_) => BoardColumnsEditorCubit(
+        boards: boardRepo,
+        projects: projectRepo,
+        boardId: board.id,
+      ),
       child: _ColumnsEditorBody(board: board),
     ),
   );
@@ -97,13 +101,10 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
   /// hand-made layout was stored. Asked for without cards, since the editor
   /// arranges columns and never shows what is in them.
   Future<void> _load() async {
-    final boardRepo = context.read<BoardRepository>();
-    final projectRepo = context.read<ProjectRepository>();
+    final editor = context.read<BoardColumnsEditorCubit>();
     try {
-      final view = await boardRepo.wall(widget.board.id, size: 0);
-      final projects = await projectRepo.resolveProjects(
-        widget.board.projectIds,
-      );
+      final view = await editor.layout();
+      final projects = await editor.projects(widget.board.projectIds);
       if (!mounted) return;
       setState(() {
         _projects = projects;
@@ -234,16 +235,14 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
       _error = null;
     });
     try {
-      await context
-          .read<BoardRepository>()
-          .updateBoardColumns(widget.board.id, [
-            for (final column in _columns)
-              BoardColumnLayout(
-                name: column.controller.text.trim(),
-                states: column.states,
-                wipLimit: column.wipLimit,
-              ),
-          ]);
+      await context.read<BoardColumnsEditorCubit>().save([
+        for (final column in _columns)
+          BoardColumnLayout(
+            name: column.controller.text.trim(),
+            states: column.states,
+            wipLimit: column.wipLimit,
+          ),
+      ]);
       if (mounted) Navigator.of(context).pop(true);
     } on ApiFailure catch (failure) {
       if (!mounted) return;
@@ -261,7 +260,7 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
       _error = null;
     });
     try {
-      await context.read<BoardRepository>().resetBoardColumns(widget.board.id);
+      await context.read<BoardColumnsEditorCubit>().reset();
       if (mounted) Navigator.of(context).pop(true);
     } on ApiFailure catch (failure) {
       if (!mounted) return;

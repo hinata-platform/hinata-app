@@ -3,7 +3,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/repositories/team_repository.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/core_models.dart';
@@ -19,7 +18,7 @@ import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/user_pronouns.dart';
 import '../sprint/modals/glass_modal.dart'
     show showGlassConfirm, showGlassErrorToast;
-import 'team_detail_screen.dart' show TeamDetailData;
+import 'team_detail_cubit.dart';
 import 'team_modals.dart';
 import 'team_modal_kit.dart' show KnowledgeAccessChip;
 import 'team_widgets.dart';

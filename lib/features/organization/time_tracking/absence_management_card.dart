@@ -13,6 +13,7 @@ import '../../../core/widgets/hive_widgets.dart' show HiveAvatar;
 import '../../../core/widgets/person_picker.dart';
 import '../../admin/admin_form_helpers.dart';
 import '../../admin/policy_controls.dart';
+import 'absence_managers_cubit.dart';
 import '../../../core/widgets/folded_hint.dart';
 
 /// Admin → Zeiterfassung → Abwesenheitsmanagement 2.0.
@@ -34,7 +35,7 @@ import '../../../core/widgets/folded_hint.dart';
 /// three belong to the extended time-tracking module. With that off this stays
 /// stored but cannot take effect, and the note says so rather than letting
 /// somebody wonder why nothing appeared.
-class OrgAbsenceManagementCard extends StatefulWidget {
+class OrgAbsenceManagementCard extends StatelessWidget {
   const OrgAbsenceManagementCard({
     super.key,
     required this.enabled,
@@ -74,11 +75,25 @@ class OrgAbsenceManagementCard extends StatefulWidget {
   final ValueChanged<List<String>> onManagersChanged;
 
   @override
-  State<OrgAbsenceManagementCard> createState() =>
+  Widget build(BuildContext context) => BlocProvider(
+    // Created on the first name to look up: a card without keepers asks for
+    // nobody.
+    create: (context) => AbsenceManagersCubit(context.read<UserRepository>()),
+    child: _OrgAbsenceManagementBody(card: this),
+  );
+}
+
+class _OrgAbsenceManagementBody extends StatefulWidget {
+  const _OrgAbsenceManagementBody({required this.card});
+
+  final OrgAbsenceManagementCard card;
+
+  @override
+  State<_OrgAbsenceManagementBody> createState() =>
       _OrgAbsenceManagementCardState();
 }
 
-class _OrgAbsenceManagementCardState extends State<OrgAbsenceManagementCard> {
+class _OrgAbsenceManagementCardState extends State<_OrgAbsenceManagementBody> {
   /// Names for the ids we hold, so a chip reads as a person rather than as an
   /// object id. Filled from the directory once and topped up by the picker.
   final Map<String, DirectoryUser> _people = {};
@@ -91,19 +106,19 @@ class _OrgAbsenceManagementCardState extends State<OrgAbsenceManagementCard> {
   }
 
   @override
-  void didUpdateWidget(OrgAbsenceManagementCard oldWidget) {
+  void didUpdateWidget(_OrgAbsenceManagementBody oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.managers != widget.managers) _loadNames();
+    if (oldWidget.card.managers != widget.card.managers) _loadNames();
   }
 
   Future<void> _loadNames() async {
-    final missing = widget.managers
+    final missing = widget.card.managers
         .where((id) => !_people.containsKey(id))
         .toList(growable: false);
     if (missing.isEmpty || _loading) return;
     setState(() => _loading = true);
     try {
-      final found = await context.read<UserRepository>().usersByIds(missing);
+      final found = await context.read<AbsenceManagersCubit>().people(missing);
       if (!mounted) return;
       setState(() {
         for (final person in found) {
@@ -120,13 +135,13 @@ class _OrgAbsenceManagementCardState extends State<OrgAbsenceManagementCard> {
 
   Future<void> _add(BuildContext context, Rect anchor) async {
     final picked = await showPersonPicker(context, anchorRect: anchor);
-    if (picked == null || widget.managers.contains(picked.id)) return;
+    if (picked == null || widget.card.managers.contains(picked.id)) return;
     _people[picked.id] = picked;
-    widget.onManagersChanged([...widget.managers, picked.id]);
+    widget.card.onManagersChanged([...widget.card.managers, picked.id]);
   }
 
-  void _remove(String id) => widget.onManagersChanged(
-    widget.managers.where((each) => each != id).toList(growable: false),
+  void _remove(String id) => widget.card.onManagersChanged(
+    widget.card.managers.where((each) => each != id).toList(growable: false),
   );
 
   @override
@@ -139,16 +154,16 @@ class _OrgAbsenceManagementCardState extends State<OrgAbsenceManagementCard> {
         PolicySwitch(
           title: context.t('admin.absence.enabledTitle'),
           description: context.t('admin.absence.enabledHint'),
-          value: widget.enabled,
-          effective: widget.effective,
-          onChanged: widget.onEnabledChanged,
+          value: widget.card.enabled,
+          effective: widget.card.effective,
+          onChanged: widget.card.onEnabledChanged,
           // § 87 Abs. 1 Nr. 5 BetrVG rather than Nr. 6: holiday principles and
           // the holiday plan are co-determined in their own right, and the note
           // has to say the same paragraph the description above it argues.
           monitoring: true,
           codeterminationKey: 'admin.absence.codetermination',
         ),
-        if (!widget.advancedOn)
+        if (!widget.card.advancedOn)
           Padding(
             padding: const EdgeInsets.only(top: 4, bottom: 4),
             child: AdminNote(
@@ -157,20 +172,20 @@ class _OrgAbsenceManagementCardState extends State<OrgAbsenceManagementCard> {
               text: context.t('admin.absence.needsAdvanced'),
             ),
           ),
-        if (widget.onCalendarChanged != null) ...[
+        if (widget.card.onCalendarChanged != null) ...[
           const SizedBox(height: 8),
           // The team calendar sits under the module: with the module off the
           // level is stored and does nothing, like the switch above it.
           PolicyChoice(
             label: context.t('admin.absence.calendarTitle'),
             helper: context.t('admin.absence.calendarHint'),
-            value: widget.calendar,
-            effective: widget.calendarEffective,
+            value: widget.card.calendar,
+            effective: widget.card.calendarEffective,
             options: {
               for (final level in AbsenceCalendarLevel.values)
                 level.wire: level.labelKey,
             },
-            onChanged: widget.onCalendarChanged!,
+            onChanged: widget.card.onCalendarChanged!,
           ),
           // A calendar of who is away when is a holiday plan: Nr. 5, not Nr. 6.
           const CodeterminationNote(
@@ -183,7 +198,7 @@ class _OrgAbsenceManagementCardState extends State<OrgAbsenceManagementCard> {
         // buttons live on the module's own routes, so with the switch stored
         // but not yet saved — or saved but the module above it off — they would
         // answer 404 and the buttons would be a way to a page that is not there.
-        if (widget.effective == true) ...[
+        if (widget.card.effective == true) ...[
           const SizedBox(height: 14),
           _links(context),
         ],
@@ -235,11 +250,11 @@ class _OrgAbsenceManagementCardState extends State<OrgAbsenceManagementCard> {
         runSpacing: 8,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          for (final id in widget.managers) _chip(context, id),
+          for (final id in widget.card.managers) _chip(context, id),
           _addButton(context),
         ],
       ),
-      if (widget.managers.isEmpty) ...[
+      if (widget.card.managers.isEmpty) ...[
         const SizedBox(height: 10),
         AdminNote(
           icon: LucideIcons.shieldCheck,

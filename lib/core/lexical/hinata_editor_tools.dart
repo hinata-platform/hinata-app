@@ -16,6 +16,7 @@ import 'package:lexical_editor_flutter/lexical_editor_flutter.dart'
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../api/api_client.dart';
+import '../blocs/media_upload_cubit.dart';
 import '../i18n/i18n.dart';
 import '../repositories/media_repository.dart';
 import '../util/file_pick.dart';
@@ -91,20 +92,34 @@ class HinataToolButton extends StatelessWidget {
 }
 
 /// Picks an image, uploads it, and drops it at the caret.
-class HinataImageButton extends StatefulWidget {
+class HinataImageButton extends StatelessWidget {
   const HinataImageButton({required this.controller, super.key});
 
   final HinataEditorController controller;
 
   @override
-  State<HinataImageButton> createState() => _HinataImageButtonState();
+  Widget build(BuildContext context) => BlocProvider<MediaUploadCubit>(
+    // Created on the first tap, as the repository used to be read then: a host
+    // without uploads still draws the toolbar.
+    create: (context) => MediaUploadCubit(context.read<MediaRepository>()),
+    child: _HinataImageButtonBody(controller: controller),
+  );
 }
 
-class _HinataImageButtonState extends State<HinataImageButton> {
+class _HinataImageButtonBody extends StatefulWidget {
+  const _HinataImageButtonBody({required this.controller});
+
+  final HinataEditorController controller;
+
+  @override
+  State<_HinataImageButtonBody> createState() => _HinataImageButtonState();
+}
+
+class _HinataImageButtonState extends State<_HinataImageButtonBody> {
   bool _busy = false;
 
   Future<void> _pick() async {
-    final repo = context.read<MediaRepository>();
+    final uploads = context.read<MediaUploadCubit>();
 
     final List<ChosenFile> picked;
     try {
@@ -143,7 +158,7 @@ class _HinataImageButtonState extends State<HinataImageButton> {
 
     setState(() => _busy = true);
     try {
-      final upload = await repo.uploadMedia(multipart);
+      final upload = await uploads.upload(multipart);
       // The package's own insert: it puts the image where the caret is and
       // wraps it in a paragraph when that turns out to be the root, which is
       // the shape every other Lexical client writes.

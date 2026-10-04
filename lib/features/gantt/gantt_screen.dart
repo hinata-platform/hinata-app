@@ -19,6 +19,7 @@ import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../issues/issue_detail_sheet.dart';
 import '../search/search_tokens.dart';
+import 'gantt_cubit.dart';
 import 'gantt_view_options.dart';
 
 /// Zoom levels for the timeline. [week] shows individual day ticks under a
@@ -45,14 +46,24 @@ int _daysInMonth(DateTime d) => DateTime(d.year, d.month + 1, 0).day;
 
 /// Interactive project timeline. Bars sit on a continuous day grid; the
 /// floating switcher (bottom-right) toggles zoom and jumps to today.
-class GanttScreen extends StatefulWidget {
+class GanttScreen extends StatelessWidget {
   const GanttScreen({super.key});
 
   @override
-  State<GanttScreen> createState() => _GanttScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => GanttCubit(context.read<ProjectRepository>()),
+    child: const _Gantt(),
+  );
 }
 
-class _GanttScreenState extends State<GanttScreen> {
+class _Gantt extends StatefulWidget {
+  const _Gantt();
+
+  @override
+  State<_Gantt> createState() => _GanttState();
+}
+
+class _GanttState extends State<_Gantt> {
   List<Project> _projects = const [];
   String? _projectId;
   List<GanttTask> _tasks = const [];
@@ -117,16 +128,16 @@ class _GanttScreenState extends State<GanttScreen> {
       if (!preserveView) _loading = true;
       _error = null;
     });
-    final repository = context.read<ProjectRepository>();
+    final timeline = context.read<GanttCubit>();
     try {
-      _projects = await repository.projects();
+      _projects = await timeline.projects();
       if (!mounted) return;
       if (_projects.isEmpty) {
         setState(() => _loading = false);
         return;
       }
       _projectId ??= _projects.first.id;
-      final view = await repository.gantt(_projectId!);
+      final view = await timeline.gantt(_projectId!);
       if (!mounted) return;
       // Chronological order keeps most connectors running downwards, the way a
       // Gantt chart is read; the server returns insertion order.

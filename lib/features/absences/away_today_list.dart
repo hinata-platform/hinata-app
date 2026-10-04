@@ -97,61 +97,47 @@ class AwayTodayList extends StatelessWidget {
 
 /// Reads who is away today and shows it: one page of [shown], and the server's
 /// total for the rest. The dashboard card is this inside its glass.
-class AwayToday extends StatefulWidget {
+class AwayToday extends StatelessWidget {
   const AwayToday({super.key});
 
   /// How many names a card has room for; the rest is a count.
   static const shown = 5;
 
   @override
-  State<AwayToday> createState() => _AwayTodayState();
-}
-
-class _AwayTodayState extends State<AwayToday> {
-  late final FetchCubit<TeamAbsencePage> _today;
-
-  @override
-  void initState() {
-    super.initState();
-    final day = DateUtils.dateOnly(DateTime.now());
-    final repository = context.read<AbsenceRepository>();
-    _today = FetchCubit<TeamAbsencePage>(
-      () => repository.teamCalendar(
-        from: day,
-        to: day,
-        awayOnly: true,
-        size: AwayToday.shown,
-      ),
-    );
-    unawaited(_today.load());
-  }
-
-  @override
-  void dispose() {
-    unawaited(_today.close());
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) =>
-      BlocBuilder<FetchCubit<TeamAbsencePage>, FetchState<TeamAbsencePage>>(
-        bloc: _today,
-        builder: (context, state) {
-          final page = state.data;
-          if (page != null) return AwayTodayList(page: page);
-          if (state.errorKey != null) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              child: Text(
-                context.t(state.errorKey!),
-                style: TextStyle(color: AppColors.inkSoft),
-              ),
-            );
-          }
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 14),
-            child: Center(child: HiveLoader(size: 24)),
-          );
-        },
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) {
+      final day = DateUtils.dateOnly(DateTime.now());
+      final repository = context.read<AbsenceRepository>();
+      final today = FetchCubit<TeamAbsencePage>(
+        () => repository.teamCalendar(
+          from: day,
+          to: day,
+          awayOnly: true,
+          size: AwayToday.shown,
+        ),
       );
+      unawaited(today.load());
+      return today;
+    },
+    child:
+        BlocBuilder<FetchCubit<TeamAbsencePage>, FetchState<TeamAbsencePage>>(
+          builder: (context, state) {
+            final page = state.data;
+            if (page != null) return AwayTodayList(page: page);
+            if (state.errorKey != null) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                child: Text(
+                  context.t(state.errorKey!),
+                  style: TextStyle(color: AppColors.inkSoft),
+                ),
+              );
+            }
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 14),
+              child: Center(child: HiveLoader(size: 24)),
+            );
+          },
+        ),
+  );
 }

@@ -13,7 +13,6 @@ import '../../../core/blocs/paged_cubit.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/absence_models.dart';
 import '../../../core/models/absence_report_models.dart';
-import '../../../core/repositories/absence_repository.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/util/file_download.dart';
@@ -25,6 +24,7 @@ import '../../../core/widgets/project_picker.dart';
 import '../../absences/absence_labels.dart';
 import '../../absences/absence_report_view.dart';
 import '../../sprint/modals/glass_modal.dart';
+import 'report_absences_cubit.dart';
 import 'report_actions.dart';
 import 'report_list_parts.dart';
 
@@ -53,10 +53,11 @@ class AbsenceReportTab extends StatefulWidget {
 }
 
 class _AbsenceReportTabState extends State<AbsenceReportTab> {
-  late final AbsenceRepository _repository = context.read<AbsenceRepository>();
+  late final ReportAbsencesCubit _absences = context
+      .read<ReportAbsencesCubit>();
   late final AbsenceReportCubit _rows = AbsenceReportCubit(
     (page, size) =>
-        _repository.report(widget.query.value, page: page, size: size),
+        _absences.report(widget.query.value, page: page, size: size),
   );
   List<AbsenceType> _types = const [];
   bool _keeper = false;
@@ -81,8 +82,8 @@ class _AbsenceReportTabState extends State<AbsenceReportTab> {
   Future<void> _start() async {
     try {
       final answers = await Future.wait([
-        _repository.types(),
-        _repository.isKeeper(),
+        _absences.types(),
+        _absences.isKeeper(),
       ]);
       if (!mounted) return;
       setState(() {
@@ -404,19 +405,20 @@ class _AbsenceReportTabState extends State<AbsenceReportTab> {
 }
 
 /// Takes the absence report out as [file]: a download, a share sheet, or the
-/// print dialog — the same ways out as the time report.
+/// print dialog — the same ways out as the time report. The file comes through
+/// the [ReportAbsencesCubit] the report page provides.
 Future<void> exportAbsenceReport(
   BuildContext context, {
   required AbsenceReportQuery query,
   required ReportFile file,
   Rect? anchor,
 }) async {
-  final repository = context.read<AbsenceRepository>();
+  final absences = context.read<ReportAbsencesCubit>();
   final origin = shareOriginOf(context, preferred: anchor);
   final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
   try {
     if (file == ReportFile.print) {
-      final pdf = await repository.exportReport(query, 'pdf');
+      final pdf = await absences.exportReport(query, 'pdf');
       await Printing.layoutPdf(
         onLayout: (_) async => pdf.bytes,
         name: 'absences-$today.pdf',
@@ -427,7 +429,7 @@ Future<void> exportAbsenceReport(
     var truncated = false;
     final DownloadResult result;
     if (kIsWeb) {
-      final bytes = await repository.exportReport(query, file.extension!);
+      final bytes = await absences.exportReport(query, file.extension!);
       truncated = bytes.truncated;
       result = await downloadBytes(
         name,
@@ -437,11 +439,7 @@ Future<void> exportAbsenceReport(
       );
     } else {
       result = await downloadFile(name, file.mimeType!, (path) async {
-        truncated = await repository.exportReportTo(
-          query,
-          file.extension!,
-          path,
-        );
+        truncated = await absences.exportReportTo(query, file.extension!, path);
       }, sharePositionOrigin: origin);
     }
     if (!context.mounted || result.outcome == DownloadOutcome.dismissed) return;

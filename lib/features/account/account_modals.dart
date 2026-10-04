@@ -3,31 +3,27 @@ import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/repositories/account_repository.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/account_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../sprint/modals/glass_modal.dart'
     show showGlassModal, GlassModalHeader, GlassField, glassInputDecoration;
+import 'account_cubit.dart';
 import 'account_widgets.dart';
 
 /// Edit display name / job title / locale → PATCH /me. Returns the saved [Me].
-Future<Me?> showEditProfile(
-  BuildContext context,
-  AccountRepository repo,
-  Me me,
-) {
+Future<Me?> showEditProfile(BuildContext context, AccountCubit account, Me me) {
   return showGlassModal<Me>(
     context,
     width: 480,
-    builder: (_) => _EditProfileModal(repo: repo, me: me),
+    builder: (_) => _EditProfileModal(account: account, me: me),
   );
 }
 
 class _EditProfileModal extends StatefulWidget {
-  const _EditProfileModal({required this.repo, required this.me});
-  final AccountRepository repo;
+  const _EditProfileModal({required this.account, required this.me});
+  final AccountCubit account;
   final Me me;
 
   @override
@@ -62,7 +58,7 @@ class _EditProfileModalState extends State<_EditProfileModal> {
       // No locale here: the language lives in Settings → Sprache, which applies
       // it to the UI *and* persists it (and `GET /me` re-syncs the stored locale
       // from Accept-Language on every start-up anyway).
-      final saved = await widget.repo.updateMyProfile(
+      final saved = await widget.account.updateProfile(
         displayName: _name.text.trim(),
         title: _title.text.trim(),
         pronouns: _pronouns.text.trim(),
@@ -182,19 +178,19 @@ class _EditProfileModalState extends State<_EditProfileModal> {
 /// Change email → POST /me/email-change (double opt-in). Returns true if sent.
 Future<bool?> showChangeEmail(
   BuildContext context,
-  AccountRepository repo,
+  AccountCubit account,
   Me me,
 ) {
   return showGlassModal<bool>(
     context,
     width: 460,
-    builder: (_) => _ChangeEmailModal(repo: repo, me: me),
+    builder: (_) => _ChangeEmailModal(account: account, me: me),
   );
 }
 
 class _ChangeEmailModal extends StatefulWidget {
-  const _ChangeEmailModal({required this.repo, required this.me});
-  final AccountRepository repo;
+  const _ChangeEmailModal({required this.account, required this.me});
+  final AccountCubit account;
   final Me me;
 
   @override
@@ -223,7 +219,7 @@ class _ChangeEmailModalState extends State<_ChangeEmailModal> {
       _error = null;
     });
     try {
-      await widget.repo.requestEmailChange(value);
+      await widget.account.requestEmailChange(value);
       if (mounted) Navigator.of(context).maybePop(true);
     } on ApiFailure catch (f) {
       if (mounted) setState(() => _error = f.message);
@@ -513,17 +509,17 @@ class _AvatarActionTile extends StatelessWidget {
 }
 
 /// Type-DELETE-to-confirm account erasure (Art. 17). Returns true on success.
-Future<bool?> showDeleteAccount(BuildContext context, AccountRepository repo) {
+Future<bool?> showDeleteAccount(BuildContext context, AccountCubit account) {
   return showGlassModal<bool>(
     context,
     width: 460,
-    builder: (_) => _DeleteAccountModal(repo: repo),
+    builder: (_) => _DeleteAccountModal(account: account),
   );
 }
 
 class _DeleteAccountModal extends StatefulWidget {
-  const _DeleteAccountModal({required this.repo});
-  final AccountRepository repo;
+  const _DeleteAccountModal({required this.account});
+  final AccountCubit account;
 
   @override
   State<_DeleteAccountModal> createState() => _DeleteAccountModalState();
@@ -555,7 +551,7 @@ class _DeleteAccountModalState extends State<_DeleteAccountModal> {
       _error = null;
     });
     try {
-      await widget.repo.deleteMyAccount();
+      await widget.account.deleteAccount();
       if (mounted) Navigator.of(context).maybePop(true);
     } on ApiFailure catch (f) {
       if (mounted) setState(() => _error = f.message);

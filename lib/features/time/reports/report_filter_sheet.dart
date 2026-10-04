@@ -14,6 +14,7 @@ import '../../../core/widgets/person_picker.dart';
 import '../../../core/widgets/project_picker.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../tag_picker.dart';
+import 'report_filter_cubit.dart';
 
 /// Names of the ids a report filters by, so a chip says "Apollo" rather than
 /// an id. Kept by the page; the sheet adds what it learns.
@@ -35,11 +36,14 @@ Future<ReportQuery?> showReportFilterSheet(
 }) => showGlassModal<ReportQuery>(
   context,
   width: 580,
-  builder: (_) => _FilterSheet(
-    query: query,
-    labels: labels,
-    people: people,
-    approvals: approvals,
+  builder: (_) => BlocProvider(
+    create: (context) => ReportFilterCubit(context.read<TeamRepository>()),
+    child: _FilterSheet(
+      query: query,
+      labels: labels,
+      people: people,
+      approvals: approvals,
+    ),
   ),
 );
 
@@ -116,7 +120,7 @@ class _FilterSheetState extends State<_FilterSheet> {
     List<({String id, String name})> teams = const [];
     try {
       teams = [
-        for (final team in await context.read<TeamRepository>().teams())
+        for (final team in await context.read<ReportFilterCubit>().teams())
           (id: team.id, name: team.name),
       ];
     } on ApiFailure {

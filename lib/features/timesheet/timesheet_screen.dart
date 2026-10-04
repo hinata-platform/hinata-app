@@ -15,6 +15,7 @@ import '../../core/models/core_models.dart';
 import '../../core/models/time_approval_models.dart';
 import '../../core/models/time_policy_models.dart';
 import '../../core/models/work_models.dart';
+import '../../core/repositories/availability_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/time_repository.dart';
 import '../../core/repositories/timesheet_repository.dart';
@@ -35,8 +36,10 @@ import '../time/lock_notice.dart';
 import '../time/time_views.dart';
 import '../time/time_entry_sheet.dart';
 import '../time/time_privacy_sheet.dart';
+import '../time/time_approval_cubit.dart';
 import '../time/timesheet_cell_sheet.dart';
 import 'timesheet_capacity.dart';
+import 'timesheet_cubit.dart';
 import '../sprint/modals/glass_modal.dart'
     show
         kGlassPopoverBreakpoint,
@@ -55,7 +58,7 @@ import '../sprint/modals/glass_modal.dart'
 /// parameters, so the narrowing happens in the database rather than by hiding
 /// rows that were already fetched. Everyone else sees only their own time (the
 /// server refuses another user's), so a filter would have nothing to offer.
-class TimesheetScreen extends StatefulWidget {
+class TimesheetScreen extends StatelessWidget {
   const TimesheetScreen({super.key, this.moduleView = false});
 
   /// Whether this is the extended module's `/time/timesheet` rather than the
@@ -70,10 +73,35 @@ class TimesheetScreen extends StatefulWidget {
   final bool moduleView;
 
   @override
-  State<TimesheetScreen> createState() => _TimesheetScreenState();
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      BlocProvider(
+        create: (context) => TimesheetCubit(
+          time: context.read<TimeRepository>(),
+          timesheets: context.read<TimesheetRepository>(),
+          users: context.read<UserRepository>(),
+          projects: context.read<ProjectRepository>(),
+          availability: context.read<AvailabilityRepository>(),
+        ),
+      ),
+      BlocProvider(
+        create: (context) => TimeApprovalCubit(context.read<TimeRepository>()),
+      ),
+    ],
+    child: _TimesheetView(moduleView: moduleView),
+  );
 }
 
-class _TimesheetScreenState extends State<TimesheetScreen> {
+class _TimesheetView extends StatefulWidget {
+  const _TimesheetView({required this.moduleView});
+
+  final bool moduleView;
+
+  @override
+  State<_TimesheetView> createState() => _TimesheetViewState();
+}
+
+class _TimesheetViewState extends State<_TimesheetView> {
   /// Width of a filter field and of the popover it opens, so the dropdown lines
   /// up with the field instead of hanging off it.
   static const double _filterWidth = 232;
@@ -240,7 +268,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     };
     if (ids.isEmpty) return const {};
     try {
-      final projects = await context.read<ProjectRepository>().resolveProjects(
+      final projects = await context.read<TimesheetCubit>().resolveProjects(
         ids.toList(),
       );
       return {for (final project in projects) project.id: project};
@@ -281,7 +309,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
       final List<TimesheetRow> rows;
       final int total;
       if (widget.moduleView) {
-        final page = await context.read<TimeRepository>().timesheet(
+        final page = await context.read<TimesheetCubit>().moduleRows(
           from: _from,
           to: _to,
           userId: _userFilter,
@@ -291,7 +319,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
         rows = page.items;
         total = page.total;
       } else {
-        rows = await context.read<TimesheetRepository>().timesheet(
+        rows = await context.read<TimesheetCubit>().rows(
           _from,
           _to,
           userId: _userFilter,
@@ -338,7 +366,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     };
     if (ids.isEmpty) return const {};
     try {
-      final users = await context.read<UserRepository>().usersByIds(
+      final users = await context.read<TimesheetCubit>().usersByIds(
         ids.toList(),
       );
       return {for (final user in users) user.id: user};
@@ -377,7 +405,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     final from = span?.start ?? anchor;
     final to = span?.end ?? anchor;
     try {
-      final periods = await context.read<TimeRepository>().approvalPeriods(
+      final periods = await context.read<TimesheetCubit>().approvalPeriods(
         from: DateTime(from.year, from.month, from.day),
         to: DateTime(to.year, to.month, to.day),
         projectId: _projectFilter,
@@ -551,7 +579,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// assignee pickers use, so a large org never loads every account to filter
   /// one week.
   Future<_FilterPage> _searchUsers(String query, int page) async {
-    final result = await context.read<UserRepository>().searchUsers(
+    final result = await context.read<TimesheetCubit>().searchUsers(
       query,
       page: page,
       size: _filterPageSize,
@@ -577,7 +605,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   /// project an admin can see — with its workflow states, its labels and its
   /// colours — to fill one dropdown.
   Future<_FilterPage> _searchProjects(String query, int page) async {
-    final result = await context.read<ProjectRepository>().searchProjects(
+    final result = await context.read<TimesheetCubit>().searchProjects(
       query: query,
       page: page,
       size: _filterPageSize,

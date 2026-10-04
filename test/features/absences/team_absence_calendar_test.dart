@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/repositories/absence_repository.dart';
+import 'package:hinata/core/repositories/team_repository.dart';
 import 'package:hinata/core/models/team_absence_models.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/models/time_privacy_models.dart';
@@ -283,8 +284,11 @@ void main() {
         );
 
         await tester.pumpWidget(
-          RepositoryProvider<AbsenceRepository>.value(
-            value: repository,
+          MultiRepositoryProvider(
+            providers: [
+              RepositoryProvider<AbsenceRepository>.value(value: repository),
+              RepositoryProvider<TeamRepository>.value(value: _UnusedTeams()),
+            ],
             child: app(
               const TeamAbsenceCalendar(),
               size: const Size(1200, 800),
@@ -314,8 +318,11 @@ void main() {
       );
 
       await tester.pumpWidget(
-        RepositoryProvider<AbsenceRepository>.value(
-          value: repository,
+        MultiRepositoryProvider(
+          providers: [
+            RepositoryProvider<AbsenceRepository>.value(value: repository),
+            RepositoryProvider<TeamRepository>.value(value: _UnusedTeams()),
+          ],
           child: app(const TeamAbsenceCalendar(), size: const Size(390, 800)),
         ),
       );
@@ -477,4 +484,12 @@ class _FakeCalendar implements AbsenceRepository {
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// The calendar's group picker reads teams only when it is opened, which no
+/// test here does; the page still needs one to hand to its cubit.
+class _UnusedTeams implements TeamRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not faked');
 }

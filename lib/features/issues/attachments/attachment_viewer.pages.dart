@@ -11,18 +11,18 @@ final Map<String, Uint8List> _bytesCache = {};
 int _bytesCacheSize = 0;
 const int _kBytesCacheMaxBytes = 48 * 1024 * 1024;
 
-/// Fetches an attachment's raw bytes through the authenticated [ApiClient] from
-/// the server's `/download` endpoint, caching them so paging back to an already
-/// viewed item is instant. The object store is internal-only, so the client
-/// never talks to it directly; [ViewerItem.url] holds the relative API download
-/// path, not a storage URL.
+/// Fetches an attachment's raw bytes through the viewer's
+/// [AttachmentViewerCubit] from the server's `/download` endpoint, caching them
+/// so paging back to an already viewed item is instant. The object store is
+/// internal-only, so the client never talks to it directly; [ViewerItem.url]
+/// holds the relative API download path, not a storage URL.
 Future<Uint8List> _fetchBytes(BuildContext context, String path) async {
   final cached = _bytesCache.remove(path);
   if (cached != null) {
     _bytesCache[path] = cached; // move to most-recently-used
     return cached;
   }
-  final res = await context.read<ApiClient>().getBytes(path);
+  final res = await context.read<AttachmentViewerCubit>().download(path);
   final bytes = Uint8List.fromList(res?.bytes ?? const []);
   if (bytes.isNotEmpty) {
     _bytesCache[path] = bytes;

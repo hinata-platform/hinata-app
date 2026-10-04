@@ -23,6 +23,7 @@ import '../../core/widgets/soft_card.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'absence_entitlement_sheets.dart';
+import 'absence_entitlements_cubit.dart';
 import 'absence_labels.dart';
 import '../../core/widgets/folded_hint.dart';
 
@@ -38,15 +39,27 @@ import '../../core/widgets/folded_hint.dart';
 /// different quotas, different accrual and different carryover, and a table that
 /// showed all of them at once would be a spreadsheet nobody could grant from.
 /// The type is picked once at the top and the whole page follows it.
-class AbsenceEntitlementsScreen extends StatefulWidget {
+class AbsenceEntitlementsScreen extends StatelessWidget {
   const AbsenceEntitlementsScreen({super.key});
 
   @override
-  State<AbsenceEntitlementsScreen> createState() =>
-      _AbsenceEntitlementsScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => AbsenceEntitlementsCubit(
+      context.read<AbsenceRepository>(),
+      context.read<UserRepository>(),
+    ),
+    child: const _EntitlementsView(),
+  );
 }
 
-class _AbsenceEntitlementsScreenState extends State<AbsenceEntitlementsScreen> {
+class _EntitlementsView extends StatefulWidget {
+  const _EntitlementsView();
+
+  @override
+  State<_EntitlementsView> createState() => _EntitlementsViewState();
+}
+
+class _EntitlementsViewState extends State<_EntitlementsView> {
   /// How many people arrive per page. The server caps it at a hundred.
   static const int _pageSize = 25;
 
@@ -79,13 +92,15 @@ class _AbsenceEntitlementsScreenState extends State<AbsenceEntitlementsScreen> {
         (page, size) async {
           final type = _type;
           if (type == null) return (items: <AbsenceStanding>[], total: 0);
-          final result = await context.read<AbsenceRepository>().overview(
-            typeId: type.id,
-            year: _year,
-            query: _query,
-            page: page,
-            size: size,
-          );
+          final result = await context
+              .read<AbsenceEntitlementsCubit>()
+              .overview(
+                typeId: type.id,
+                year: _year,
+                query: _query,
+                page: page,
+                size: size,
+              );
           // Not awaited: the overview is the page, and the names are a
           // decoration that fills in a moment later. Awaiting it here made
           // every page and every "read on" two round trips end to end.
@@ -116,9 +131,7 @@ class _AbsenceEntitlementsScreenState extends State<AbsenceEntitlementsScreen> {
       _errorKey = null;
     });
     try {
-      final types = await context.read<AbsenceRepository>().types(
-        includeInactive: true,
-      );
+      final types = await context.read<AbsenceEntitlementsCubit>().types();
       if (!mounted) return;
       // Only the types that have something to grant: an unlimited type has no
       // quota and one that does not count against a balance has nothing to
@@ -149,7 +162,9 @@ class _AbsenceEntitlementsScreenState extends State<AbsenceEntitlementsScreen> {
         .toList(growable: false);
     if (missing.isEmpty) return;
     try {
-      final found = await context.read<UserRepository>().usersByIds(missing);
+      final found = await context.read<AbsenceEntitlementsCubit>().people(
+        missing,
+      );
       if (!mounted) return;
       setState(() {
         for (final person in found) {

@@ -44,6 +44,7 @@ import '../absences/team_absence_calendar.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'day_marks.dart' show timeOffIcon;
+import 'time_absences_cubit.dart';
 import 'time_views.dart';
 
 /// The reader's own absences.
@@ -65,7 +66,7 @@ const String kAbsenceScopeBalances = 'balances';
 /// team calendar on; otherwise the pill is not there and the scope falls back.
 const String kAbsenceScopeTeam = 'team';
 
-class TimeAbsencesScreen extends StatefulWidget {
+class TimeAbsencesScreen extends StatelessWidget {
   const TimeAbsencesScreen({super.key, this.scope});
 
   /// Which list the page opens on — a notification about somebody's request
@@ -74,10 +75,25 @@ class TimeAbsencesScreen extends StatefulWidget {
   final String? scope;
 
   @override
-  State<TimeAbsencesScreen> createState() => _TimeAbsencesScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => TimeAbsencesCubit(
+      context.read<AvailabilityRepository>(),
+      context.read<AbsenceRepository>(),
+    ),
+    child: _TimeAbsencesView(scope: scope),
+  );
 }
 
-class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
+class _TimeAbsencesView extends StatefulWidget {
+  const _TimeAbsencesView({this.scope});
+
+  final String? scope;
+
+  @override
+  State<_TimeAbsencesView> createState() => _TimeAbsencesViewState();
+}
+
+class _TimeAbsencesViewState extends State<_TimeAbsencesView> {
   final _scroll = ScrollController();
   final _search = TextEditingController();
   Timer? _searchDebounce;
@@ -137,7 +153,7 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
   void initState() {
     super.initState();
     _absences = PagedCubit<TimeOff>(
-      (page, size) => context.read<AvailabilityRepository>().timeOff(
+      (page, size) => context.read<TimeAbsencesCubit>().timeOff(
         from: _range?.start,
         to: _range?.end,
         query: _query,
@@ -152,13 +168,13 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
     );
     _myRequests = PagedCubit<AbsenceRequest>(
       (page, size) =>
-          context.read<AbsenceRepository>().myRequests(page: page, size: size),
+          context.read<TimeAbsencesCubit>().myRequests(page: page, size: size),
       pageSize: 25,
       keyOf: (request) => request.id,
     );
     _inbox = PagedCubit<AbsenceRequest>(
       (page, size) =>
-          context.read<AbsenceRepository>().inbox(page: page, size: size),
+          context.read<TimeAbsencesCubit>().inbox(page: page, size: size),
       pageSize: 25,
       keyOf: (request) => request.id,
     );
@@ -169,7 +185,7 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
   }
 
   @override
-  void didUpdateWidget(covariant TimeAbsencesScreen oldWidget) {
+  void didUpdateWidget(covariant _TimeAbsencesView oldWidget) {
     super.didUpdateWidget(oldWidget);
     // A notification tapped while the page is open: the route stays, the
     // scope it names changes.
@@ -371,7 +387,7 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
     );
     if (reason == null || !mounted) return;
     await _decide(
-      () => context.read<AbsenceRepository>().reject(request.id, note: reason),
+      () => context.read<TimeAbsencesCubit>().reject(request.id, note: reason),
       'absence.request.rejected',
     );
   }
@@ -385,7 +401,7 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
     );
     if (reason == null || !mounted) return;
     await _decide(
-      () => context.read<AbsenceRepository>().cancel(
+      () => context.read<TimeAbsencesCubit>().cancel(
         request.id,
         note: reason.isEmpty ? null : reason,
       ),
@@ -712,7 +728,7 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
                 onWithdraw: () => unawaited(
                   _decide(
                     () =>
-                        context.read<AbsenceRepository>().withdraw(request.id),
+                        context.read<TimeAbsencesCubit>().withdraw(request.id),
                     'absence.request.withdrawn',
                   ),
                 ),
@@ -886,7 +902,7 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
                       itemCount: state.items.length,
                       itemBuilder: (context, index) {
                         final request = state.items[index];
-                        final repository = context.read<AbsenceRepository>();
+                        final absences = context.read<TimeAbsencesCubit>();
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: AbsenceRequestCard(
@@ -904,14 +920,14 @@ class _TimeAbsencesScreenState extends State<TimeAbsencesScreen> {
                             ),
                             onApprove: () => unawaited(
                               _decide(
-                                () => repository.approve(request.id),
+                                () => absences.approve(request.id),
                                 'absence.request.approved',
                               ),
                             ),
                             onReject: () => unawaited(_reject(request)),
                             onWithdraw: () => unawaited(
                               _decide(
-                                () => repository.withdraw(request.id),
+                                () => absences.withdraw(request.id),
                                 'absence.request.withdrawn',
                               ),
                             ),

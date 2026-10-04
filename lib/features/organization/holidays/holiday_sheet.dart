@@ -5,11 +5,11 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/availability_models.dart';
-import '../../../core/repositories/availability_repository.dart';
 import '../../../core/widgets/field_button.dart';
 import '../../../core/widgets/hive_widgets.dart' show HiveSwitch;
 import '../../account/account_widgets.dart';
 import '../../sprint/modals/glass_modal.dart';
+import 'org_holidays_cubit.dart';
 
 /// Opens the form for a new holiday of the calendar [calendarId] in [year], or
 /// for [existing]. Resolves to true once it was saved.
@@ -19,13 +19,14 @@ Future<bool?> showHolidaySheet(
   required int year,
   Holiday? existing,
 }) {
-  final repository = context.read<AvailabilityRepository>();
+  // The form opens as its own route, so the page's requests are handed in.
+  final holidays = context.read<OrgHolidaysCubit>();
   return showGlassModal<bool>(
     context,
     adaptive: true,
     width: 420,
-    builder: (sheetContext) => RepositoryProvider.value(
-      value: repository,
+    builder: (sheetContext) => BlocProvider.value(
+      value: holidays,
       child: _HolidayForm(
         calendarId: calendarId,
         year: year,
@@ -90,17 +91,17 @@ class _HolidayFormState extends State<_HolidayForm> {
     }
     setState(() => _saving = true);
     try {
-      final repository = context.read<AvailabilityRepository>();
+      final holidays = context.read<OrgHolidaysCubit>();
       final existing = widget.existing;
       if (existing == null) {
-        await repository.addHoliday(
+        await holidays.addHoliday(
           calendarId: widget.calendarId,
           date: _date,
           name: _name.text.trim(),
           halfDay: _halfDay,
         );
       } else {
-        await repository.updateHoliday(
+        await holidays.updateHoliday(
           existing.id,
           date: _date,
           name: _name.text.trim(),

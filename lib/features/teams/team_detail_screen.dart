@@ -5,76 +5,43 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/i18n/i18n.dart';
-import '../../core/models/core_models.dart';
 import '../../core/models/team_models.dart';
-import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../shell/page_chrome.dart';
+import 'team_detail_cubit.dart';
 import 'team_tabs.dart';
 import 'team_widgets.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
 import '../../core/repositories/user_repository.dart';
 
-/// Bundles everything the detail tabs need in one fetch (team + directory +
-/// projects + activity), so the panels render without further round-trips.
-typedef TeamDetailData = ({
-  Team team,
-  Map<String, DirectoryUser> usersById,
-  Map<String, Project> projectsById,
-  List<TeamActivity> activity,
-  int activityTotal,
-});
-
-class TeamDetailScreen extends StatefulWidget {
+class TeamDetailScreen extends StatelessWidget {
   const TeamDetailScreen({super.key, required this.teamId});
 
   final String teamId;
 
   @override
-  State<TeamDetailScreen> createState() => _TeamDetailScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => TeamDetailCubit(
+      teamId: teamId,
+      teams: context.read<TeamRepository>(),
+      users: context.read<UserRepository>(),
+      projects: context.read<ProjectRepository>(),
+    )..load(),
+    child: const _TeamDetailView(),
+  );
 }
 
-class _TeamDetailScreenState extends State<TeamDetailScreen> {
-  late final FetchCubit<TeamDetailData> _cubit;
-
-  @override
-  void initState() {
-    super.initState();
-    _cubit = FetchCubit<TeamDetailData>(() async {
-      final results = await Future.wait([
-        context.read<TeamRepository>().team(widget.teamId),
-        context.read<UserRepository>().users(),
-        context.read<ProjectRepository>().projects(),
-        context.read<TeamRepository>().teamActivityPage(widget.teamId),
-      ]);
-      final team = results[0] as Team;
-      final users = results[1] as List<DirectoryUser>;
-      final projects = results[2] as List<Project>;
-      final activity = results[3] as ({List<TeamActivity> items, int total});
-      return (
-        team: team,
-        usersById: {for (final u in users) u.id: u},
-        projectsById: {for (final p in projects) p.id: p},
-        activity: activity.items,
-        activityTotal: activity.total,
-      );
-    })..load();
-  }
-
-  @override
-  void dispose() {
-    _cubit.close();
-    super.dispose();
-  }
+class _TeamDetailView extends StatelessWidget {
+  const _TeamDetailView();
 
   /// Team-Admins of this team only. The platform admin role manages no team it
   /// is not an admin of; the server refuses those writes too.
-  bool _canManage(Team team) {
+  bool _canManage(BuildContext context, Team team) {
     final user = context.read<AuthBloc>().state.user;
     if (user == null) return false;
     return team.membershipOf(user.id)?.isAdmin ?? false;
@@ -82,36 +49,33 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _cubit,
-      child: BlocBuilder<FetchCubit<TeamDetailData>, FetchState<TeamDetailData>>(
-        builder: (context, state) {
-          final data = state.data;
-          // The shell bar shows back + the generic section title; the team
-          // name lives only in the in-page _Header (avoids a doubled header).
-          return PageChrome(
-            title: context.t('teams.title'),
-            child: () {
-              if (data == null) {
-                if (state.errorKey != null) {
-                  return Center(
-                    child: Text(
-                      context.t(state.errorKey!),
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                  );
-                }
-                return const Center(child: HiveLoader());
+    return BlocBuilder<TeamDetailCubit, FetchState<TeamDetailData>>(
+      builder: (context, state) {
+        final data = state.data;
+        // The shell bar shows back + the generic section title; the team
+        // name lives only in the in-page _Header (avoids a doubled header).
+        return PageChrome(
+          title: context.t('teams.title'),
+          child: () {
+            if (data == null) {
+              if (state.errorKey != null) {
+                return Center(
+                  child: Text(
+                    context.t(state.errorKey!),
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                );
               }
-              return _TeamDetailContent(
-                data: data,
-                manage: _canManage(data.team),
-                onReload: _cubit.load,
-              );
-            }(),
-          );
-        },
-      ),
+              return const Center(child: HiveLoader());
+            }
+            return _TeamDetailContent(
+              data: data,
+              manage: _canManage(context, data.team),
+              onReload: context.read<TeamDetailCubit>().load,
+            );
+          }(),
+        );
+      },
     );
   }
 }
@@ -159,7 +123,7 @@ class _TeamDetailContentState extends State<_TeamDetailContent> {
     setState(() => _loadingMoreActivity = true);
     try {
       final next = _activityPage + 1;
-      final p = await context.read<TeamRepository>().teamActivityPage(
+      final p = await context.read<TeamDetailCubit>().activityPage(
         widget.data.team.id,
         page: next,
       );

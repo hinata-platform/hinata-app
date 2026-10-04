@@ -6,7 +6,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/api/api_client.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
-import '../../core/repositories/admin_repository.dart';
 import '../../core/storage/app_storage.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -20,7 +19,12 @@ import '../sprint/modals/glass_modal.dart' show showGlassModal;
 /// A no-op for non-admins, for instances that are already enrolled or mid-
 /// handshake, or when Connect is disabled. Both call-to-actions route to
 /// Adminbereich → Connect, where the automated and manual paths both live.
-Future<void> maybeShowConnectHint(BuildContext context) async {
+/// [connectStatus] asks the server where the enrolment stands, usually
+/// [ConnectHintCubit.connectStatus] of the screen that shows the hint.
+Future<void> maybeShowConnectHint(
+  BuildContext context, {
+  required Future<Map<String, dynamic>> Function() connectStatus,
+}) async {
   final isAdmin = context.read<AuthBloc>().state.user?.isAdmin ?? false;
   if (!isAdmin) return;
 
@@ -30,7 +34,7 @@ Future<void> maybeShowConnectHint(BuildContext context) async {
   // Silent status probe — don't nag on a transient error (retry next launch).
   final Map<String, dynamic> status;
   try {
-    status = await context.read<AdminRepository>().connectStatus();
+    status = await connectStatus();
   } on ApiFailure {
     return;
   }

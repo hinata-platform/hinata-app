@@ -12,6 +12,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../../core/widgets/soft_card.dart';
+import '../settings/git_settings_cubit.dart';
 import '../../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassToast;
 import 'copy_field.dart';
@@ -26,7 +27,7 @@ import '../../../core/widgets/folded_hint.dart';
 /// Create commit (copy key + example commit). Popovers reveal **inline** (no
 /// floating overlay) so nothing can overflow the narrow rail at any width; the
 /// command fields are single-line and horizontally scrollable.
-class DeploymentPanel extends StatefulWidget {
+class DeploymentPanel extends StatelessWidget {
   const DeploymentPanel({
     super.key,
     required this.issue,
@@ -41,21 +42,46 @@ class DeploymentPanel extends StatefulWidget {
   final ValueChanged<Project> onProjectChanged;
 
   @override
-  State<DeploymentPanel> createState() => _DeploymentPanelState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => GitSettingsCubit(context.read<GitRepository>()),
+    child: _DeploymentPanelBody(
+      issue: issue,
+      project: project,
+      onConnectInSettings: onConnectInSettings,
+      onProjectChanged: onProjectChanged,
+    ),
+  );
 }
 
-class _DeploymentPanelState extends State<DeploymentPanel> {
+class _DeploymentPanelBody extends StatefulWidget {
+  const _DeploymentPanelBody({
+    required this.issue,
+    required this.project,
+    required this.onConnectInSettings,
+    required this.onProjectChanged,
+  });
+
+  final Issue issue;
+  final Project project;
+  final VoidCallback onConnectInSettings;
+  final ValueChanged<Project> onProjectChanged;
+
+  @override
+  State<_DeploymentPanelBody> createState() => _DeploymentPanelState();
+}
+
+class _DeploymentPanelState extends State<_DeploymentPanelBody> {
   bool _open = true;
   String? _pop; // 'branch' | 'commit'
   bool _gear = false;
   String? _templateOverride;
 
-  GitRepository get _repo => context.read<GitRepository>();
+  GitSettingsCubit get _settings => context.read<GitSettingsCubit>();
   GitConnection? get _git => widget.project.git;
   GitProvider? get _provider => gitProviderFrom(_git?.provider);
 
   @override
-  void didUpdateWidget(DeploymentPanel oldWidget) {
+  void didUpdateWidget(_DeploymentPanelBody oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.project.git?.branchTemplate !=
         oldWidget.project.git?.branchTemplate) {
@@ -94,7 +120,10 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
   Future<void> _setTemplate(String next) async {
     setState(() => _templateOverride = next);
     try {
-      final updated = await _repo.gitSetBranchTemplate(widget.project.id, next);
+      final updated = await _settings.setBranchTemplate(
+        widget.project.id,
+        next,
+      );
       if (mounted) widget.onProjectChanged(updated);
     } catch (e) {
       if (!mounted) return;

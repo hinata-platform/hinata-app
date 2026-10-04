@@ -9,16 +9,27 @@ import '../../core/blocs/app_config_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/soft_card.dart';
+import 'setup_cubit.dart';
 
 /// Rocket.Chat-style first-run wizard: organization + first admin account.
-class SetupScreen extends StatefulWidget {
+class SetupScreen extends StatelessWidget {
   const SetupScreen({super.key});
 
   @override
-  State<SetupScreen> createState() => _SetupScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => SetupCubit(context.read<MetaRepository>()),
+    child: const _SetupForm(),
+  );
 }
 
-class _SetupScreenState extends State<SetupScreen> {
+class _SetupForm extends StatefulWidget {
+  const _SetupForm();
+
+  @override
+  State<_SetupForm> createState() => _SetupScreenState();
+}
+
+class _SetupScreenState extends State<_SetupForm> {
   final _formKey = GlobalKey<FormState>();
   final _organization = TextEditingController();
   final _email = TextEditingController();
@@ -185,7 +196,7 @@ class _SetupScreenState extends State<SetupScreen> {
       _error = null;
     });
     try {
-      await context.read<MetaRepository>().completeSetup(
+      await context.read<SetupCubit>().complete(
         organizationName: _organization.text.trim(),
         adminEmail: _email.text.trim(),
         adminUsername: _username.text.trim(),
