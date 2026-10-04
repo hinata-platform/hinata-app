@@ -721,57 +721,61 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
   }
 
   Widget _empty() {
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-      onTap: _add,
-      child: DottedBorderBox(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.canvas2,
-                  borderRadius: BorderRadius.circular(11),
+    // The whole empty card is the upload control; its title names it.
+    return Semantics(
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+        onTap: _add,
+        child: DottedBorderBox(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.canvas2,
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Icon(
+                    LucideIcons.paperclip,
+                    size: 18,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
-                child: Icon(
-                  LucideIcons.paperclip,
-                  size: 18,
-                  color: AppColors.inkSoft,
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        context.t('issues.attachments.emptyTitle'),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        context.t(
+                          'issues.attachments.emptyHint',
+                          variables: {'size': _limits.maxFileMb},
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: AppColors.inkFaint,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 13),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      context.t('issues.attachments.emptyTitle'),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      context.t(
-                        'issues.attachments.emptyHint',
-                        variables: {'size': _limits.maxFileMb},
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: AppColors.inkFaint,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -280,7 +280,9 @@
       "body": "Ce lien pointe vers un autre serveur ({{host}}). Voulez-vous y basculer ?",
       "confirm": "Changer de serveur"
     },
-    "ssoProviderFailed": "le service de connexion de votre organisation ne l’a pas finalisée. Réessayez."
+    "ssoProviderFailed": "le service de connexion de votre organisation ne l’a pas finalisée. Réessayez.",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
   },
   "authShell": {
     "heroTitle": "Là où le travail de votre équipe se rassemble.",
@@ -395,7 +397,9 @@
     "awayToday": "Absents aujourd'hui",
     "awayNone": "Tout le monde est là aujourd'hui.",
     "awayMore": "et {{count}} autres",
-    "awayOpen": "Ouvrir le calendrier de l'équipe"
+    "awayOpen": "Ouvrir le calendrier de l'équipe",
+    "showCard": "Afficher la carte",
+    "hideCard": "Masquer la carte"
   },
   "comments": {
     "actionCamera": "Prendre une photo ou une vidéo",
@@ -448,6 +452,12 @@
       "closeFormat": "Fermer la mise en forme",
       "discardRecording": "Supprimer l’enregistrement",
       "sendVoice": "Envoyer le message vocal"
+    },
+    "moreReactions": "Plus de réactions",
+    "voice": {
+      "play": "Écouter le message vocal",
+      "pause": "Mettre le message vocal en pause",
+      "position": "Position de lecture"
     }
   },
   "filePicker": {
@@ -885,7 +895,9 @@
     "multiSelectHint": {
       "text": "Astuce : maintiens un ticket appuyé pour en sélectionner plusieurs et les modifier ensemble, par exemple pour leur donner à tous la même échéance.",
       "gotIt": "Compris"
-    }
+    },
+    "editTitle": "Modifier le titre",
+    "editDescription": "Modifier la description"
   },
   "type": {
     "task": "Tâche",
@@ -1009,7 +1021,8 @@
       "month": "Mois",
       "truncated": "Cette période contient plus d’entrées que le calendrier n’en affiche. Réduisez-la pour toutes les voir.",
       "more": "+{{count}} autre",
-      "more_plural": "+{{count}} autres"
+      "more_plural": "+{{count}} autres",
+      "dayActions": "Actions du jour"
     },
     "mode": {
       "stopwatch": "Chronomètre",
@@ -2053,6 +2066,18 @@
       "payoutReason": "Indemnisé avec le dernier salaire",
       "done": "Enregistré",
       "confirmTitle": "{{what}} de {{days}} ?"
+    },
+    "hue": {
+      "default": "Couleur par défaut",
+      "red": "Rouge",
+      "orange": "Orange",
+      "amber": "Ambre",
+      "green": "Vert",
+      "teal": "Bleu-vert",
+      "cyan": "Cyan",
+      "blue": "Bleu",
+      "violet": "Violet",
+      "pink": "Rose"
     }
   },
   "projects": {
@@ -2235,7 +2260,10 @@
       "assignTo": "Quelle colonne ?",
       "noColumnAvailable": "Plus aucune colonne disponible — chacune contient déjà un statut de ce projet.",
       "unassignedHint": "Ces statuts n'ont pas encore de colonne. Les tickets qui s'y trouvent n'apparaîtraient pas sur le tableau.",
-      "automatic": "Revenir à l'automatique"
+      "automatic": "Revenir à l'automatique",
+      "assignState": "Ajouter à une colonne",
+      "unassignState": "Retirer de la colonne",
+      "wipLabel": "Limite WIP"
     },
     "searchIssues": "Rechercher des tickets…",
     "laneLimit": "{{count}} de plus. Recherchez ou filtrez pour les trouver."
@@ -2405,7 +2433,22 @@
     "emptyMessage": "Les pages se partagent via les projets et les équipes. Une nouvelle page reste privée jusqu’à ce que tu la places dans un projet ou une équipe.",
     "tree": {
       "truncated": "Toutes les pages ne sont pas listées ici, car il y en a trop pour une seule liste. Une sous-page peut donc apparaître en haut alors que sa page parente existe."
-    }
+    },
+    "hue": {
+      "honey": "Miel",
+      "indigo": "Indigo",
+      "violet": "Violet",
+      "teal": "Turquoise",
+      "green": "Vert",
+      "coral": "Corail",
+      "pink": "Rose",
+      "amber": "Ambre"
+    },
+    "spaceIconOption": "Icône {{n}} sur {{count}}",
+    "subpages": "Sous-pages",
+    "moveUnder": "Déplacer sous…",
+    "moveUnderTitle": "Sous quelle page déplacer ?",
+    "pageActions": "Actions de la page"
   },
   "md": {
     "heading1": "Titre 1",
@@ -2494,7 +2537,8 @@
       "thisWeek": "Cette semaine",
       "thisMonth": "Ce mois-ci",
       "earlier": "Plus tôt"
-    }
+    },
+    "unread": "Non lue"
   },
   "appbar": {
     "search": "Rechercher ou accéder à…",
@@ -3051,7 +3095,13 @@
       "toastOrgAdminRevoked": "Rôle d'administrateur de l'organisation retiré",
       "orgAdminConfirmOne": "{{name}} verra ensuite les temps de travail, feuilles de temps, absences et saisies de toutes les personnes. La maladie seulement tant que personne n'est désigné pour gérer les absences, sinon seulement si {{name}} est désigné. Titres et descriptions des tickets uniquement pour les projets dont {{name}} fait partie.",
       "orgAdminConfirmMany": "{{names}} verront ensuite les temps de travail, feuilles de temps, absences et saisies de toutes les personnes. La maladie seulement tant que personne n'est désigné pour gérer les absences, sinon seulement pour qui est désigné. Titres et descriptions des tickets uniquement pour leurs propres projets.",
-      "reasonOwnOrgRole": "Ce rôle t’est attribué par une autre personne de l’administration."
+      "reasonOwnOrgRole": "Ce rôle t’est attribué par une autre personne de l’administration.",
+      "selectUser": "Sélectionner {{name}}",
+      "selectPage": "Sélectionner tous les utilisateurs de cette page",
+      "previousPage": "Page précédente",
+      "nextPage": "Page suivante",
+      "pageNumber": "Page {{n}}",
+      "removeEmail": "Retirer {{email}}"
     },
     "iosStoreUrl": "URL de l'App Store iOS",
     "androidStoreUrl": "URL du Play Store Android",
@@ -3449,7 +3499,13 @@
     "moveOpenMany": "Déplacer {{count}} tickets inachevés vers",
     "selectedCount": "{{count}} sélectionnés",
     "collapse": "Réduire",
-    "expand": "Déployer"
+    "expand": "Déployer",
+    "pagination": {
+      "previous": "Page précédente",
+      "next": "Page suivante",
+      "page": "Page {{page}}"
+    },
+    "selectIssue": "Sélectionner {{issue}}"
   },
   "teams": {
     "avatar": {
@@ -3494,7 +3550,9 @@
       "teal": "Turquoise",
       "green": "Vert",
       "coral": "Corail",
-      "custom": "Personnalisée"
+      "custom": "Personnalisée",
+      "pink": "Rose",
+      "amber": "Ambre"
     },
     "role": {
       "admin": "Administrateur d'équipe",
@@ -3609,6 +3667,18 @@
       "apply": "Appliquer",
       "includedVia": "Incluse via {{title}}",
       "truncated": "Toutes les pages ne tiennent pas dans cette liste. Utilise la recherche pour trouver les autres."
+    },
+    "icon": {
+      "hexagon": "Hexagone",
+      "smartphone": "Smartphone",
+      "server": "Serveur",
+      "book": "Livre",
+      "rocket": "Fusée",
+      "palette": "Palette",
+      "shield": "Bouclier",
+      "globe": "Globe",
+      "code": "Code",
+      "layers": "Calques"
     }
   },
   "projectSettings": {
@@ -3708,7 +3778,10 @@
       "copy": "Copier le projet",
       "dateCleared": "Date retirée. Les échéances restent en place et gardent leur règle.",
       "datesMoved": "{{count}} échéances déplacées."
-    }
+    },
+    "labelName": "Nom de l’étiquette",
+    "removeLabel": "Supprimer l’étiquette",
+    "stateName": "Nom du statut"
   },
   "account": {
     "title": "Mon compte",
@@ -3972,6 +4045,10 @@
       "remindOn": "Jour du rappel",
       "suggested": "Proposé par votre organisation : {{duration}}",
       "useSuggestion": "Utiliser"
+    },
+    "stepper": {
+      "decrease": "Diminuer {{label}}",
+      "increase": "Augmenter {{label}}"
     }
   },
   "twofa": {
@@ -3999,7 +4076,8 @@
     "regenerate": "Régénérer",
     "disableTitle": "Désactiver la double authentification",
     "disableSubtitle": "Saisissez un code à 6 chiffres valide ou un code de récupération pour désactiver la 2FA.",
-    "disableButton": "Désactiver la 2FA"
+    "disableButton": "Désactiver la 2FA",
+    "digitLabel": "Chiffre {{n}} sur {{total}}"
   },
   "invite": {
     "title": "Configurez votre compte",

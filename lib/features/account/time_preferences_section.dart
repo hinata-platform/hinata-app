@@ -597,6 +597,10 @@ class _StepperRow extends StatelessWidget {
           children: [
             _Arrow(
               icon: LucideIcons.minus,
+              tooltip: context.t(
+                'account.stepper.decrease',
+                variables: {'label': label},
+              ),
               onTap: down == value ? null : () => onChanged(down),
             ),
             ConstrainedBox(
@@ -614,6 +618,10 @@ class _StepperRow extends StatelessWidget {
             ),
             _Arrow(
               icon: LucideIcons.plus,
+              tooltip: context.t(
+                'account.stepper.increase',
+                variables: {'label': label},
+              ),
               onTap: up == value ? null : () => onChanged(up),
             ),
           ],
@@ -624,23 +632,35 @@ class _StepperRow extends StatelessWidget {
 }
 
 class _Arrow extends StatelessWidget {
-  const _Arrow({required this.icon, required this.onTap});
+  const _Arrow({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
 
   final IconData icon;
+  final String tooltip;
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: onTap,
-      customBorder: const CircleBorder(),
-      child: Padding(
-        padding: const EdgeInsets.all(9),
-        child: Icon(
-          icon,
-          size: 15,
-          color: onTap == null ? AppColors.inkFaint : AppColors.inkSoft,
+  Widget build(BuildContext context) => Tooltip(
+    message: tooltip,
+    child: Semantics(
+      button: true,
+      enabled: onTap != null,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Padding(
+            padding: const EdgeInsets.all(9),
+            child: Icon(
+              icon,
+              size: 15,
+              color: onTap == null ? AppColors.inkFaint : AppColors.inkSoft,
+            ),
+          ),
         ),
       ),
     ),

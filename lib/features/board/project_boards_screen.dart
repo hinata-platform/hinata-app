@@ -18,6 +18,7 @@ import '../../core/models/team_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../shell/page_chrome.dart';
@@ -163,7 +164,7 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen>
                           onPressed: _showCreate,
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.accent,
-                            foregroundColor: const Color(0xFF2A2410),
+                            foregroundColor: kOnAmber,
                             textStyle: const TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
@@ -217,7 +218,7 @@ class _ProjectBoardsScreenState extends State<ProjectBoardsScreen>
                             onPressed: _showCreate,
                             style: FilledButton.styleFrom(
                               backgroundColor: AppColors.accent,
-                              foregroundColor: const Color(0xFF2A2410),
+                              foregroundColor: kOnAmber,
                             ),
                             icon: const Icon(LucideIcons.plus, size: 18),
                             label: Text(context.t('board.newBoard')),
@@ -458,16 +459,13 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.accent,
-                foregroundColor: const Color(0xFF2A2410),
+                foregroundColor: kOnAmber,
               ),
               child: _saving
                   ? const SizedBox(
                       width: 22,
                       height: 22,
-                      child: HiveLoader(
-                        strokeWidth: 2,
-                        color: Color(0xFF2A2410),
-                      ),
+                      child: HiveLoader(strokeWidth: 2, color: kOnAmber),
                     )
                   : Text(context.t('common.create')),
             ),

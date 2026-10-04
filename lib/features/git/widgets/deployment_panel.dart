@@ -10,6 +10,7 @@ import '../../../core/models/git_dev_info.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../../core/widgets/soft_card.dart';
 import '../../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassToast;
@@ -137,55 +138,61 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
   }
 
   Widget _header(bool connected) {
-    return InkWell(
-      onTap: () => setState(() => _open = !_open),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            AnimatedRotation(
-              turns: _open ? chevronTurn(context) : 0,
-              duration: const Duration(milliseconds: 180),
-              child: Icon(
-                forwardChevron(context),
-                size: 15,
-                color: AppColors.inkFaint,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              context.t('git.deployment'),
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.7,
-                color: AppColors.inkSoft,
-              ),
-            ),
-            const Spacer(),
-            if (connected)
-              Flexible(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ProviderGlyph(provider: _provider!, size: 15),
-                    const SizedBox(width: 5),
-                    Flexible(
-                      child: Text(
-                        _git!.repo,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: AppTheme.fontMono,
-                          fontSize: 11,
-                          color: AppColors.inkFaint,
-                        ),
-                      ),
-                    ),
-                  ],
+    // The section title names the toggle; `expanded` tells a screen reader
+    // whether the body below is showing.
+    return Semantics(
+      button: true,
+      expanded: _open,
+      child: InkWell(
+        onTap: () => setState(() => _open = !_open),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              AnimatedRotation(
+                turns: _open ? chevronTurn(context) : 0,
+                duration: const Duration(milliseconds: 180),
+                child: Icon(
+                  forwardChevron(context),
+                  size: 15,
+                  color: AppColors.inkFaint,
                 ),
               ),
-          ],
+              const SizedBox(width: 8),
+              Text(
+                context.t('git.deployment'),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.7,
+                  color: AppColors.inkSoft,
+                ),
+              ),
+              const Spacer(),
+              if (connected)
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ProviderGlyph(provider: _provider!, size: 15),
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          _git!.repo,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: AppTheme.fontMono,
+                            fontSize: 11,
+                            color: AppColors.inkFaint,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -344,7 +351,7 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
           onPressed: widget.onConnectInSettings,
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.accent,
-            foregroundColor: const Color(0xFF2A2410),
+            foregroundColor: kOnAmber,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             textStyle: const TextStyle(
               fontSize: 12.5,
@@ -381,31 +388,35 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
     required VoidCallback onTap,
     bool open = false,
   }) {
-    return Material(
-      color: open ? AppColors.surfaceMuted : Colors.transparent,
-      borderRadius: BorderRadius.circular(9),
-      child: InkWell(
-        onTap: onTap,
+    return Semantics(
+      button: true,
+      expanded: open,
+      child: Material(
+        color: open ? AppColors.surfaceMuted : Colors.transparent,
         borderRadius: BorderRadius.circular(9),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
-          child: Row(
-            children: [
-              Icon(icon, size: 17, color: AppColors.accentStrong),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(9),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+            child: Row(
+              children: [
+                Icon(icon, size: 17, color: AppColors.accentStrong),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-              trailing,
-            ],
+                trailing,
+              ],
+            ),
           ),
         ),
       ),
@@ -430,21 +441,26 @@ class _DeploymentPanelState extends State<DeploymentPanel> {
     ),
   );
 
-  Widget _chip(String label, VoidCallback onTap) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: AppColors.accentSoft,
-        borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-        border: Border.all(color: AppColors.accentLine),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontFamily: AppTheme.fontMono,
-          fontSize: 11,
-          color: AppColors.accentStrong,
+  // The chip text names the control; the ripple is its pressed state.
+  Widget _chip(String label, VoidCallback onTap) => Semantics(
+    button: true,
+    child: Material(
+      color: AppColors.accentSoft,
+      shape: const StadiumBorder(side: BorderSide(color: AppColors.accentLine)),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const StadiumBorder(),
+        // One point more than before: the border no longer insets the content.
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontFamily: AppTheme.fontMono,
+              fontSize: 11,
+              color: AppColors.accentStrong,
+            ),
+          ),
         ),
       ),
     ),
@@ -539,26 +555,32 @@ class _GearButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 26 points clears the 24-point floor; a 48-point target would push the
+    // header line it sits on apart.
     return Tooltip(
       message: context.t('git.branchTemplateTooltip'),
-      child: Material(
-        color: active ? AppColors.accentSoft : AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(7),
-        child: InkWell(
-          onTap: onTap,
+      child: Semantics(
+        button: true,
+        selected: active,
+        child: Material(
+          color: active ? AppColors.accentSoft : AppColors.surfaceMuted,
           borderRadius: BorderRadius.circular(7),
-          child: Container(
-            width: 26,
-            height: 26,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(7),
-              border: Border.all(color: AppColors.hairline),
-            ),
-            child: Icon(
-              LucideIcons.settings2,
-              size: 14,
-              color: active ? AppColors.accentStrong : AppColors.inkSoft,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(7),
+            child: Container(
+              width: 26,
+              height: 26,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(7),
+                border: Border.all(color: AppColors.hairline),
+              ),
+              child: Icon(
+                LucideIcons.settings2,
+                size: 14,
+                color: active ? AppColors.accentStrong : AppColors.inkSoft,
+              ),
             ),
           ),
         ),

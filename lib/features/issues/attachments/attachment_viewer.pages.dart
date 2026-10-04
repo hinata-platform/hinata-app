@@ -419,7 +419,12 @@ class _ImagePageState extends State<_ImagePage>
       begin: _view.value.clone(),
       end: matrix,
     ).animate(_zoomCurve);
-    _zoomAnim.forward(from: 0);
+    // Reduced motion: jump straight to the end frame instead of gliding there.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _zoomAnim.value = 1;
+    } else {
+      _zoomAnim.forward(from: 0);
+    }
   }
 
   void _onDoubleTap() {
@@ -523,6 +528,7 @@ class _ImagePageState extends State<_ImagePage>
                           item.thumbnailUrl!,
                           api: context.read<ApiClient>(),
                         ),
+                        semanticLabel: item.name,
                         fit: BoxFit.contain,
                         errorBuilder: (_, _, _) => const SizedBox.shrink(),
                       ),
@@ -531,6 +537,7 @@ class _ImagePageState extends State<_ImagePage>
                     Center(
                       child: Image.memory(
                         bytes,
+                        semanticLabel: item.name,
                         fit: BoxFit.contain,
                         cacheWidth: decodeWidth,
                         filterQuality: FilterQuality.medium,

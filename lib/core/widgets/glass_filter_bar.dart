@@ -99,12 +99,60 @@ class GlassPill extends StatelessWidget {
 
     surface = SizedBox(height: height, child: surface);
     if (onTap == null) return surface;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: surface,
-    );
+    return _PillTapTarget(onTap: onTap!, radius: br, child: surface);
   }
+}
+
+/// The tappable form of a [GlassPill]: a button to assistive technology (named
+/// by the text or tooltip the pill carries), a click cursor on hover and a
+/// faint ink wash while pressed. The glass itself has no pressed state, and a
+/// splash would paint under it where nobody sees it.
+class _PillTapTarget extends StatefulWidget {
+  const _PillTapTarget({
+    required this.onTap,
+    required this.radius,
+    required this.child,
+  });
+
+  final VoidCallback onTap;
+  final BorderRadius radius;
+  final Widget child;
+
+  @override
+  State<_PillTapTarget> createState() => _PillTapTargetState();
+}
+
+class _PillTapTargetState extends State<_PillTapTarget> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (_pressed != value) setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    child: MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        onTapDown: (_) => _setPressed(true),
+        onTapUp: (_) => _setPressed(false),
+        onTapCancel: () => _setPressed(false),
+        child: DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: BoxDecoration(
+            color: _pressed
+                ? AppColors.ink.withValues(alpha: 0.06)
+                : Colors.transparent,
+            borderRadius: widget.radius,
+          ),
+          child: widget.child,
+        ),
+      ),
+    ),
+  );
 }
 
 /// A glass search field for a docked toolbar — the pill surface wrapping a bare,
@@ -142,28 +190,39 @@ class GlassSearchField extends StatelessWidget {
             Icon(LucideIcons.search, size: 17, color: AppColors.inkSoft),
             const SizedBox(width: 9),
             Expanded(
-              child: TextField(
-                controller: controller,
-                onChanged: onChanged,
-                autofocus: autofocus,
-                inputFormatters: [LengthLimitingTextInputFormatter(maxLength)],
-                textInputAction: TextInputAction.search,
-                style: TextStyle(fontSize: 14, color: AppColors.ink),
-                cursorColor: AppColors.accentStrong,
-                // The pill itself is the surface — strip every field border/fill
-                // so the theme's amber focus outline can't bleed through.
-                decoration: InputDecoration(
-                  isCollapsed: true,
-                  filled: false,
-                  hintText: hint,
-                  hintStyle: TextStyle(fontSize: 14, color: AppColors.inkFaint),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  errorBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
-                  focusedErrorBorder: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
+              // The hint is the only words the field shows; it names the field
+              // for screen readers too, since a hint alone is not a label.
+              child: Semantics(
+                label: hint,
+                textField: true,
+                child: TextField(
+                  controller: controller,
+                  onChanged: onChanged,
+                  autofocus: autofocus,
+                  inputFormatters: [
+                    LengthLimitingTextInputFormatter(maxLength),
+                  ],
+                  textInputAction: TextInputAction.search,
+                  style: TextStyle(fontSize: 14, color: AppColors.ink),
+                  cursorColor: AppColors.accentStrong,
+                  // The pill itself is the surface — strip every field border/fill
+                  // so the theme's amber focus outline can't bleed through.
+                  decoration: InputDecoration(
+                    isCollapsed: true,
+                    filled: false,
+                    hintText: hint,
+                    hintStyle: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.inkFaint,
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
                 ),
               ),
             ),
@@ -618,12 +677,17 @@ class _StepperArrow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Tooltip(
     message: tooltip,
-    child: InkResponse(
-      onTap: onTap,
-      radius: 20,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Center(child: Icon(icon, size: 18, color: AppColors.inkSoft)),
+    // The tooltip names it; this gives it the role. 38 by the pill's height is
+    // as wide as the arrow can get without widening the pill itself.
+    child: Semantics(
+      button: true,
+      child: InkResponse(
+        onTap: onTap,
+        radius: 20,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Center(child: Icon(icon, size: 18, color: AppColors.inkSoft)),
+        ),
       ),
     ),
   );

@@ -114,6 +114,84 @@ void main() {
     });
   });
 
+  group('moving without dragging', () {
+    Future<List<(String, String?)>> pumpTree(
+      WidgetTester tester,
+      KnowledgeRepository repo,
+    ) async {
+      final moves = <(String, String?)>[];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: KnowledgeTree(
+                repo: repo,
+                spaceId: 'Docs',
+                selectedId: null,
+                onSelect: (_) {},
+                onSpaceChange: (_) {},
+                onNewChild: (_) {},
+                onMove: (id, {parentId, required spaceId}) =>
+                    moves.add((id, parentId)),
+                onDelete: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      return moves;
+    }
+
+    testWidgets('a page moves under another one from its row menu', (
+      tester,
+    ) async {
+      late KnowledgeRepository repo;
+      await tester.runAsync(() async {
+        repo = (await loaded([
+          page('top'),
+          page('child', parentId: 'top'),
+          page('other'),
+        ])).$1;
+      });
+      final moves = await pumpTree(tester, repo);
+
+      // Rows in tree order: top, child, other. Without a mouse the row
+      // actions are on screen for every row.
+      await tester.tap(find.byTooltip('knowledge.pageActions').at(2));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('knowledge.moveUnder'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Page child').last);
+      await tester.pumpAndSettle();
+
+      expect(moves, [('other', 'child')]);
+    });
+
+    testWidgets('a page is not offered its own subpages or itself', (
+      tester,
+    ) async {
+      late KnowledgeRepository repo;
+      await tester.runAsync(() async {
+        repo = (await loaded([
+          page('top'),
+          page('child', parentId: 'top'),
+          page('other'),
+        ])).$1;
+      });
+      await pumpTree(tester, repo);
+
+      await tester.tap(find.byTooltip('knowledge.pageActions').at(0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('knowledge.moveUnder'));
+      await tester.pumpAndSettle();
+
+      // The tree shows each title once; the picker adds only 'other'.
+      expect(find.text('Page other'), findsNWidgets(2));
+      expect(find.text('Page child'), findsOneWidget);
+      expect(find.text('Page top'), findsOneWidget);
+    });
+  });
+
   group('truncated list', () {
     test('the repository remembers the server cut the list', () async {
       final (full, _) = await loaded([page('top')]);

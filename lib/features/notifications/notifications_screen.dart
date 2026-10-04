@@ -328,101 +328,106 @@ class _NotificationTile extends StatelessWidget {
     final unread = !notification.read;
     final (icon, tint) = notificationVisual(notification.type);
     final ago = notificationTimeAgo(notification.createdAt);
-    return Material(
-      color: unread ? AppColors.accentSoft : Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        hoverColor: AppColors.surfaceMuted,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: AppColors.soft(tint),
-                  shape: BoxShape.circle,
+    return Semantics(
+      button: true,
+      // Unread shows only as weight and tint; say it too.
+      value: unread ? context.t('notifications.unread') : null,
+      child: Material(
+        color: unread ? AppColors.accentSoft : Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          hoverColor: AppColors.surfaceMuted,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: AppColors.soft(tint),
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(icon, size: 17, color: tint),
                 ),
-                alignment: Alignment.center,
-                child: Icon(icon, size: 17, color: tint),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            notification.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              height: 1.35,
-                              color: AppColors.ink,
-                              fontWeight: unread
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        if (ago != null) ...[
-                          const SizedBox(width: 10),
-                          Text(
-                            ago,
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              color: AppColors.inkFaint,
-                            ),
-                          ),
-                        ],
-                        if (unread) ...[
-                          const SizedBox(width: 8),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 5),
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: AppColors.accentStrong,
-                                shape: BoxShape.circle,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              notification.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                height: 1.35,
+                                color: AppColors.ink,
+                                fontWeight: unread
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
                               ),
                             ),
                           ),
+                          if (ago != null) ...[
+                            const SizedBox(width: 10),
+                            Text(
+                              ago,
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: AppColors.inkFaint,
+                              ),
+                            ),
+                          ],
+                          if (unread) ...[
+                            const SizedBox(width: 8),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 5),
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.accentStrong,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
-                    ),
-                    if ((notification.body ?? '').isNotEmpty) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        notification.body!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          height: 1.4,
-                          color: AppColors.inkSoft,
-                        ),
                       ),
+                      if ((notification.body ?? '').isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          notification.body!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            height: 1.4,
+                            color: AppColors.inkSoft,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 6),
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Icon(
-                  forwardChevron(context),
-                  size: 15,
-                  color: AppColors.inkFaint,
+                const SizedBox(width: 6),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Icon(
+                    forwardChevron(context),
+                    size: 15,
+                    color: AppColors.inkFaint,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

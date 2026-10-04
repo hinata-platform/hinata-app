@@ -197,6 +197,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 hintText: context.t('register.passwordHint'),
                 prefixIcon: const Icon(LucideIcons.lock),
                 suffixIcon: IconButton(
+                  tooltip: context.t(
+                    _obscure ? 'auth.showPassword' : 'auth.hidePassword',
+                  ),
                   icon: Icon(_obscure ? LucideIcons.eye : LucideIcons.eyeOff),
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),

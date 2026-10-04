@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/hue_colors.dart';
 import '../../../core/util/keys.dart';
 import '../../../core/widgets/entity_avatar_editor.dart';
+import '../project_hue_label.dart';
 import '../project_key.dart';
 import 'settings_common.dart';
 import '../../../core/widgets/folded_hint.dart';
@@ -98,16 +99,22 @@ class GeneralSection extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           FieldLabel(text: context.t('issues.description')),
-          TextField(
-            controller: descController,
-            keyboardType: TextInputType.multiline,
-            textInputAction: TextInputAction.newline,
-            textCapitalization: TextCapitalization.sentences,
-            minLines: 2,
-            maxLines: 5,
-            decoration: settingsInput(
-              context,
-              hint: context.t('projectSettings.descHint'),
+          // The label above is plain text; this ties it to the field for
+          // screen readers.
+          Semantics(
+            label: context.t('issues.description'),
+            textField: true,
+            child: TextField(
+              controller: descController,
+              keyboardType: TextInputType.multiline,
+              textInputAction: TextInputAction.newline,
+              textCapitalization: TextCapitalization.sentences,
+              minLines: 2,
+              maxLines: 5,
+              decoration: settingsInput(
+                context,
+                hint: context.t('projectSettings.descHint'),
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -197,14 +204,18 @@ class _NameField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         FieldLabel(text: context.t('projects.name'), required: true),
-        TextField(
-          controller: controller,
-          textCapitalization: TextCapitalization.words,
-          textInputAction: TextInputAction.next,
-          decoration: settingsInput(
-            context,
-            hint: context.t('projects.name'),
-            error: error,
+        Semantics(
+          label: context.t('projects.name'),
+          textField: true,
+          child: TextField(
+            controller: controller,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.next,
+            decoration: settingsInput(
+              context,
+              hint: context.t('projects.name'),
+              error: error,
+            ),
           ),
         ),
         if (error) ...[
@@ -259,35 +270,44 @@ class _KeyField extends StatelessWidget {
               ),
             ),
             const Spacer(),
+            // 24×24, the WCAG 2.5.8 floor: it shares the line with the field
+            // label, and a 48-point target would push the field down.
             Tooltip(
               message: context.t('projectSettings.keyFromName'),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(6),
-                onTap: _generate,
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Icon(
-                    LucideIcons.wandSparkles,
-                    size: 14,
-                    color: AppColors.inkSoft,
+              child: Semantics(
+                button: true,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(6),
+                  onTap: _generate,
+                  child: Padding(
+                    padding: const EdgeInsets.all(5),
+                    child: Icon(
+                      LucideIcons.wandSparkles,
+                      size: 14,
+                      color: AppColors.inkSoft,
+                    ),
                   ),
                 ),
               ),
             ),
           ],
         ),
-        TextField(
-          controller: controller,
-          textCapitalization: TextCapitalization.characters,
-          autocorrect: false,
-          maxLength: 10,
-          style: const TextStyle(fontFamily: AppTheme.fontMono),
-          inputFormatters: const [ProjectKeyFormatter()],
-          decoration: settingsInput(
-            context,
-            hint: 'KEY',
-            error: error,
-          ).copyWith(counterText: ''),
+        Semantics(
+          label: context.t('projects.key'),
+          textField: true,
+          child: TextField(
+            controller: controller,
+            textCapitalization: TextCapitalization.characters,
+            autocorrect: false,
+            maxLength: 10,
+            style: const TextStyle(fontFamily: AppTheme.fontMono),
+            inputFormatters: const [ProjectKeyFormatter()],
+            decoration: settingsInput(
+              context,
+              hint: 'KEY',
+              error: error,
+            ).copyWith(counterText: ''),
+          ),
         ),
         const SizedBox(height: 6),
         Text.rich(
@@ -323,9 +343,15 @@ class _Swatches extends StatelessWidget {
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
+        // 30×30 targets 8 points apart: above the 24-point floor of WCAG
+        // 2.5.8. A 48-point ring would spread the row.
         for (final c in kProjectHues)
-          GestureDetector(
-            onTap: () => onHue(c.hue),
+          Semantics(
+            button: true,
+            selected: c.hue == selectedHue,
+            label: projectHueLabel(context, c.hue),
+            // The fill sits under its own transparent Material so the press
+            // ripple shows on top of the colour rather than under it.
             child: Container(
               width: 30,
               height: 30,
@@ -339,12 +365,19 @@ class _Swatches extends StatelessWidget {
                   width: 2,
                 ),
               ),
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  onTap: () => onHue(c.hue),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+              ),
             ),
           ),
         Padding(
           padding: const EdgeInsetsDirectional.only(start: 4),
           child: Text(
-            hueName(selectedHue),
+            projectHueLabel(context, selectedHue),
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,

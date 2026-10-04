@@ -210,15 +210,23 @@ class _OrgTimeTagsCardState extends State<OrgTimeTagsCard> {
         Row(
           children: [
             Expanded(
-              child: TextField(
-                controller: _search,
-                onChanged: _onSearchChanged,
-                decoration: InputDecoration(
-                  isDense: true,
-                  hintText: context.t('time.tags.search'),
-                  prefixIcon: const Icon(LucideIcons.search, size: 16),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              // The hint is the only caption; name the field for screen
+              // readers too.
+              child: Semantics(
+                label: context.t('time.tags.search'),
+                textField: true,
+                child: TextField(
+                  controller: _search,
+                  onChanged: _onSearchChanged,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    hintText: context.t('time.tags.search'),
+                    prefixIcon: const Icon(LucideIcons.search, size: 16),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.radiusControl,
+                      ),
+                    ),
                   ),
                 ),
               ),

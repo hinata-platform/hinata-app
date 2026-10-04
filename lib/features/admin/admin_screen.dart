@@ -458,39 +458,46 @@ class _MobileNavTile extends StatelessWidget {
     final isUsers = meta.section == _AdminSection.users;
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-          child: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: AppColors.accentSoft,
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Icon(meta.icon, size: 17, color: AppColors.accentStrong),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  context.t(meta.labelKey),
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.ink,
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: AppColors.accentSoft,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(
+                    meta.icon,
+                    size: 17,
+                    color: AppColors.accentStrong,
                   ),
                 ),
-              ),
-              Icon(
-                isUsers ? LucideIcons.externalLink : forwardChevron(context),
-                size: 18,
-                color: AppColors.inkFaint,
-              ),
-            ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    context.t(meta.labelKey),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                ),
+                Icon(
+                  isUsers ? LucideIcons.externalLink : forwardChevron(context),
+                  size: 18,
+                  color: AppColors.inkFaint,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -851,54 +858,60 @@ class _NavItem extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(11),
-        child: InkWell(
-          onTap: () => onTap(meta.section),
-          borderRadius: BorderRadius.circular(11),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 140),
-            padding: const EdgeInsets.fromLTRB(9, 9, 12, 9),
-            decoration: BoxDecoration(
-              color: active
-                  ? AppColors.accent.withValues(alpha: dark ? 0.22 : 0.15)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: Row(
-              children: [
-                // A short amber bar flags the active section.
-                Container(
-                  width: 3,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: active ? AppColors.accentStrong : Colors.transparent,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Icon(
-                  meta.icon,
-                  size: 17,
-                  color: active ? AppColors.accentStrong : tokens.inkSoft,
-                ),
-                const SizedBox(width: 11),
-                Expanded(
-                  child: Text(
-                    context.t(meta.labelKey),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-                      color: active ? AppColors.accentStrong : tokens.ink,
+        child: Semantics(
+          button: true,
+          selected: active,
+          child: InkWell(
+            onTap: () => onTap(meta.section),
+            borderRadius: BorderRadius.circular(11),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 140),
+              padding: const EdgeInsets.fromLTRB(9, 9, 12, 9),
+              decoration: BoxDecoration(
+                color: active
+                    ? AppColors.accent.withValues(alpha: dark ? 0.22 : 0.15)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Row(
+                children: [
+                  // A short amber bar flags the active section.
+                  Container(
+                    width: 3,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: active
+                          ? AppColors.accentStrong
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                if (isUsers)
+                  const SizedBox(width: 10),
                   Icon(
-                    LucideIcons.externalLink,
-                    size: 12,
-                    color: tokens.inkFaint,
+                    meta.icon,
+                    size: 17,
+                    color: active ? AppColors.accentStrong : tokens.inkSoft,
                   ),
-              ],
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Text(
+                      context.t(meta.labelKey),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+                        color: active ? AppColors.accentStrong : tokens.ink,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (isUsers)
+                    Icon(
+                      LucideIcons.externalLink,
+                      size: 12,
+                      color: tokens.inkFaint,
+                    ),
+                ],
+              ),
             ),
           ),
         ),

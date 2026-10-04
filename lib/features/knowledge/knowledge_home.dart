@@ -114,37 +114,62 @@ class _KnowledgeHomeState extends State<KnowledgeHome> {
           Icon(lucideIcon('search'), size: 19, color: AppColors.inkFaint),
           const SizedBox(width: 12),
           Expanded(
-            child: TextField(
-              controller: _search,
-              textInputAction: TextInputAction.search,
-              onChanged: (v) => setState(() => _query = v),
-              style: const TextStyle(fontSize: 15),
-              decoration: InputDecoration(
-                isCollapsed: true,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                filled: false,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                hintText: context.t('knowledge.searchHint'),
-                hintStyle: TextStyle(color: AppColors.inkFaint),
+            // The hint is the only caption; the label keeps the field named
+            // once the user has typed.
+            child: Semantics(
+              label: context.t('knowledge.searchHint'),
+              textField: true,
+              child: TextField(
+                controller: _search,
+                textInputAction: TextInputAction.search,
+                onChanged: (v) => setState(() => _query = v),
+                style: const TextStyle(fontSize: 15),
+                decoration: InputDecoration(
+                  isCollapsed: true,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  hintText: context.t('knowledge.searchHint'),
+                  hintStyle: TextStyle(color: AppColors.inkFaint),
+                ),
               ),
             ),
           ),
-          if (_query.isNotEmpty)
-            GestureDetector(
-              onTap: () => setState(() {
-                _query = '';
-                _search.clear();
-              }),
-              child: Container(
+          if (_query.isNotEmpty) _clearButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _clearButton() {
+    void clear() => setState(() {
+      _query = '';
+      _search.clear();
+    });
+    // The outer detector catches an 11-point band above, below and before
+    // the 26-point face (37×48 in all; the end side stays flush so the face
+    // keeps its place). A tap on the face itself is won by the InkWell, so it
+    // fires once and still shows its ripple.
+    return Semantics(
+      button: true,
+      label: context.t('common.clear'),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        excludeFromSemantics: true,
+        onTap: clear,
+        child: Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(11, 11, 0, 11),
+          child: Material(
+            color: AppColors.surfaceMuted,
+            shape: const CircleBorder(),
+            child: InkWell(
+              onTap: clear,
+              customBorder: const CircleBorder(),
+              child: SizedBox(
                 width: 26,
                 height: 26,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceMuted,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
                 child: Icon(
                   lucideIcon('x'),
                   size: 14,
@@ -152,7 +177,8 @@ class _KnowledgeHomeState extends State<KnowledgeHome> {
                 ),
               ),
             ),
-        ],
+          ),
+        ),
       ),
     );
   }
@@ -247,104 +273,123 @@ class _SpaceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(KbTokens.radiusCard),
-      child: InkWell(
-        onTap: onTap,
+    // The space name inside names the card.
+    return Semantics(
+      button: true,
+      child: Material(
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(KbTokens.radiusCard),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(KbTokens.radiusCard),
-            border: Border.all(color: AppColors.hairline),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Stack(
-            children: [
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                child: Container(width: 4, color: hueSwatch(space.hue)),
-              ),
-              if (onDelete != null)
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(KbTokens.radiusCard),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(KbTokens.radiusCard),
+              border: Border.all(color: AppColors.hairline),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              children: [
                 Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Tooltip(
-                    message: context.t('knowledge.deleteSpace'),
-                    child: InkWell(
-                      onTap: onDelete,
-                      borderRadius: BorderRadius.circular(
-                        KbTokens.radiusControl,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Icon(
-                          lucideIcon('trash-2'),
-                          size: 15,
-                          color: AppColors.inkFaint,
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: Container(width: 4, color: hueSwatch(space.hue)),
+                ),
+                if (onDelete != null)
+                  // Anchored in the corner with an 8-point band around the
+                  // 27-point face (43×43 in all), so the face stays where it
+                  // was. A tap on the face is won by the InkWell and ripples; a
+                  // tap in the band is caught by the outer detector.
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: Tooltip(
+                      message: context.t('knowledge.deleteSpace'),
+                      child: Semantics(
+                        button: true,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          excludeFromSemantics: true,
+                          onTap: onDelete,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: InkWell(
+                              onTap: onDelete,
+                              borderRadius: BorderRadius.circular(
+                                KbTokens.radiusControl,
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(6),
+                                child: Icon(
+                                  lucideIcon('trash-2'),
+                                  size: 15,
+                                  color: AppColors.inkFaint,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 20, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: KbTokens.spaceChipBg(space.hue),
-                        borderRadius: BorderRadius.circular(
-                          KbTokens.radiusControl,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 20, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: KbTokens.spaceChipBg(space.hue),
+                          borderRadius: BorderRadius.circular(
+                            KbTokens.radiusControl,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          lucideIcon(space.icon),
+                          size: 22,
+                          color: KbTokens.spaceChipText(space.hue),
                         ),
                       ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        lucideIcon(space.icon),
-                        size: 22,
-                        color: KbTokens.spaceChipText(space.hue),
+                      const SizedBox(height: 14),
+                      Text(
+                        space.name,
+                        style: const TextStyle(
+                          fontFamily: AppTheme.fontBrand,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.2,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      space.name,
-                      style: const TextStyle(
-                        fontFamily: AppTheme.fontBrand,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.2,
+                      const SizedBox(height: 7),
+                      Text(
+                        space.desc,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          height: 1.45,
+                          color: AppColors.inkSoft,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 7),
-                    Text(
-                      space.desc,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        height: 1.45,
-                        color: AppColors.inkSoft,
+                      const SizedBox(height: 8),
+                      Text(
+                        context.t(
+                          'knowledge.articleCount',
+                          variables: {'count': '$count'},
+                        ),
+                        style: TextStyle(
+                          fontFamily: AppTheme.fontMono,
+                          fontSize: 11,
+                          color: AppColors.inkFaint,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      context.t(
-                        'knowledge.articleCount',
-                        variables: {'count': '$count'},
-                      ),
-                      style: TextStyle(
-                        fontFamily: AppTheme.fontMono,
-                        fontSize: 11,
-                        color: AppColors.inkFaint,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -360,48 +405,51 @@ class _NewSpaceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(KbTokens.radiusCard),
-      child: InkWell(
-        onTap: onTap,
+    return Semantics(
+      button: true,
+      child: Material(
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(KbTokens.radiusCard),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(KbTokens.radiusCard),
-            border: Border.all(color: AppColors.hairline2),
-          ),
-          padding: const EdgeInsets.fromLTRB(24, 20, 20, 20),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceMuted,
-                  borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  lucideIcon('folder-plus'),
-                  size: 22,
-                  color: AppColors.inkSoft,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  context.t('knowledge.newSpace'),
-                  style: TextStyle(
-                    fontFamily: AppTheme.fontBrand,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.2,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(KbTokens.radiusCard),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(KbTokens.radiusCard),
+              border: Border.all(color: AppColors.hairline2),
+            ),
+            padding: const EdgeInsets.fromLTRB(24, 20, 20, 20),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceMuted,
+                    borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    lucideIcon('folder-plus'),
+                    size: 22,
                     color: AppColors.inkSoft,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    context.t('knowledge.newSpace'),
+                    style: TextStyle(
+                      fontFamily: AppTheme.fontBrand,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.2,
+                      color: AppColors.inkSoft,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -424,79 +472,87 @@ class _KbHit extends StatelessWidget {
     final sp = repo.spaceById(article.spaceId);
     final author = repo.userById(article.authorId);
     final hue = sp?.hue ?? 250;
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(KbTokens.radiusCard),
-      child: InkWell(
-        onTap: () => onTap(article.id),
+    // The article title inside names the row.
+    return Semantics(
+      button: true,
+      child: Material(
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(KbTokens.radiusCard),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(KbTokens.radiusCard),
-            border: Border.all(color: AppColors.hairline),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: KbTokens.spaceChipBg(hue),
-                  borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+        child: InkWell(
+          onTap: () => onTap(article.id),
+          borderRadius: BorderRadius.circular(KbTokens.radiusCard),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(KbTokens.radiusCard),
+              border: Border.all(color: AppColors.hairline),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: KbTokens.spaceChipBg(hue),
+                    borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    lucideIcon(article.icon),
+                    size: 19,
+                    color: KbTokens.spaceChipText(hue),
+                  ),
                 ),
-                alignment: Alignment.center,
-                child: Icon(
-                  lucideIcon(article.icon),
-                  size: 19,
-                  color: KbTokens.spaceChipText(hue),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      article.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.1,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        article.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.1,
+                        ),
                       ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${sp?.name ?? ''} · ${context.t('knowledge.updatedAgo', variables: {'when': article.updated})} · ${author?.name ?? ''}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: AppColors.inkSoft,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      lucideIcon('eye'),
+                      size: 13,
+                      color: AppColors.inkFaint,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(width: 5),
                     Text(
-                      '${sp?.name ?? ''} · ${context.t('knowledge.updatedAgo', variables: {'when': article.updated})} · ${author?.name ?? ''}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      '${article.reads}',
                       style: TextStyle(
+                        fontFamily: AppTheme.fontMono,
                         fontSize: 11.5,
-                        color: AppColors.inkSoft,
+                        color: AppColors.inkFaint,
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(lucideIcon('eye'), size: 13, color: AppColors.inkFaint),
-                  const SizedBox(width: 5),
-                  Text(
-                    '${article.reads}',
-                    style: TextStyle(
-                      fontFamily: AppTheme.fontMono,
-                      fontSize: 11.5,
-                      color: AppColors.inkFaint,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

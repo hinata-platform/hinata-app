@@ -83,13 +83,23 @@ class _SwipeBackGestureState extends State<SwipeBackGesture>
       // the settle reads as a hand-off rather than a snap-back.
       widget.onBack();
     }
-    _progress.animateBack(0, curve: Curves.easeOutCubic);
+    _settle();
   }
 
   void _onCancel() {
     if (!_dragging) return;
     _dragging = false;
-    _progress.animateBack(0, curve: Curves.easeOutCubic);
+    _settle();
+  }
+
+  /// Slides the page home, or puts it there at once under reduced motion: the
+  /// drag itself follows the finger, the glide back is the app's own motion.
+  void _settle() {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _progress.value = 0;
+    } else {
+      _progress.animateBack(0, curve: Curves.easeOutCubic);
+    }
   }
 
   @override

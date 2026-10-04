@@ -61,7 +61,7 @@ const Map<CalloutKind, CalloutStyle> calloutStyles = {
 LexicalImageStyle hinataImageStyle() => LexicalImageStyle(
   accent: AppColors.accent,
   handleFill: AppColors.accentStrong,
-  handleBorder: _dark ? const Color(0xFF1C1B25) : const Color(0xFFFFFFFF),
+  handleBorder: _dark ? AppColors.surfaceDark : AppColors.surfaceLight,
   handleSize: 11,
   handleRadius: 3.5,
   outlineWidth: 1.5,

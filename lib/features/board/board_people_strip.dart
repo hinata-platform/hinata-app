@@ -139,46 +139,61 @@ class _PersonAvatar extends StatelessWidget {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => onEnter(),
       onExit: (_) => onExit(),
-      child: GestureDetector(
-        // opaque so a tap still registers even though the animated avatar below
-        // is wrapped in IgnorePointer (see below).
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Tooltip(
-          // This row is faces only — the tooltip is the sole place the name
-          // and pronouns appear, so both ride in this one message rather than
-          // nesting a second tooltip inside the avatar.
-          message: personTooltip(name: name, pronouns: pronouns),
-          waitDuration: const Duration(milliseconds: 400),
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 150),
-            opacity: dimmed ? 0.45 : 1,
-            child: IgnorePointer(
-              // Keep the hover-lift as a paint-only effect: don't let the web
-              // mouse-tracker hit-test down into the translating render object.
-              // RenderFractionalTranslation asserts `!debugNeedsLayout` when
-              // hit-tested mid-relayout — the same assert-flood that hung the
-              // issue sheet on web. Hover/tap are handled by the MouseRegion +
-              // opaque GestureDetector above, so nothing is lost.
-              child: AnimatedSlide(
-                duration: const Duration(milliseconds: 150),
-                curve: hiveEase,
-                offset: Offset(0, lift / size),
-                child: Container(
-                  width: size,
-                  height: size,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      if (selected)
-                        const BoxShadow(
-                          color: AppColors.accentStrong,
-                          spreadRadius: 3.2,
-                        ),
-                      BoxShadow(color: AppColors.surface, spreadRadius: 1.6),
-                    ],
+      // Faces only: the name rides in the label, and the selected ring is
+      // announced as the selected state of a filter toggle.
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: personTooltip(name: name, pronouns: pronouns),
+        child: GestureDetector(
+          // opaque so a tap still registers even though the animated avatar below
+          // is wrapped in IgnorePointer (see below).
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Tooltip(
+            // This row is faces only — the tooltip is the sole place the name
+            // and pronouns appear, so both ride in this one message rather than
+            // nesting a second tooltip inside the avatar.
+            message: personTooltip(name: name, pronouns: pronouns),
+            waitDuration: const Duration(milliseconds: 400),
+            excludeFromSemantics: true,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 150),
+              opacity: dimmed ? 0.45 : 1,
+              child: IgnorePointer(
+                // Keep the hover-lift as a paint-only effect: don't let the web
+                // mouse-tracker hit-test down into the translating render object.
+                // RenderFractionalTranslation asserts `!debugNeedsLayout` when
+                // hit-tested mid-relayout — the same assert-flood that hung the
+                // issue sheet on web. Hover/tap are handled by the MouseRegion +
+                // opaque GestureDetector above, so nothing is lost.
+                child: AnimatedSlide(
+                  duration: const Duration(milliseconds: 150),
+                  curve: hiveEase,
+                  offset: Offset(0, lift / size),
+                  child: Container(
+                    width: size,
+                    height: size,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        if (selected)
+                          const BoxShadow(
+                            color: AppColors.accentStrong,
+                            spreadRadius: 3.2,
+                          ),
+                        BoxShadow(color: AppColors.surface, spreadRadius: 1.6),
+                      ],
+                    ),
+                    // The initials would repeat the name the label already says.
+                    child: ExcludeSemantics(
+                      child: HiveAvatar(
+                        name: name,
+                        imageUrl: imageUrl,
+                        size: size,
+                      ),
+                    ),
                   ),
-                  child: HiveAvatar(name: name, imageUrl: imageUrl, size: size),
                 ),
               ),
             ),

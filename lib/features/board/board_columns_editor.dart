@@ -389,6 +389,7 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
                 _StateChip(
                   group: group,
                   icon: LucideIcons.plus,
+                  actionLabel: context.t('board.columns.assignState'),
                   onAction: () => _assign(group),
                 ),
             ],
@@ -429,24 +430,30 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
                 ),
               ),
               Expanded(
-                child: TextField(
-                  controller: column.controller,
-                  onChanged: (_) => setState(() {}),
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  decoration: InputDecoration(
-                    isCollapsed: true,
-                    filled: false,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                    hintText: context.t('board.columns.namePlaceholder'),
-                    hintStyle: TextStyle(
+                // The hint vanishes once a name is typed; the label keeps the
+                // field named for screen readers.
+                child: Semantics(
+                  label: context.t('board.columns.namePlaceholder'),
+                  textField: true,
+                  child: TextField(
+                    controller: column.controller,
+                    onChanged: (_) => setState(() {}),
+                    style: const TextStyle(
                       fontSize: 13.5,
-                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    decoration: InputDecoration(
+                      isCollapsed: true,
+                      filled: false,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                      hintText: context.t('board.columns.namePlaceholder'),
+                      hintStyle: TextStyle(
+                        fontSize: 13.5,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 ),
@@ -488,6 +495,7 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
                           // and stays removable.
                           group: _groupFor(state) ?? _StateGroup(state),
                           icon: LucideIcons.x,
+                          actionLabel: context.t('board.columns.unassignState'),
                           onAction: () => _unassignState(column, state),
                         ),
                     ],
@@ -524,11 +532,15 @@ class _StateChip extends StatelessWidget {
   const _StateChip({
     required this.group,
     required this.icon,
+    required this.actionLabel,
     required this.onAction,
   });
 
   final _StateGroup group;
   final IconData icon;
+
+  /// What [onAction] does, for screen readers and the hover tooltip.
+  final String actionLabel;
   final VoidCallback onAction;
 
   @override
@@ -567,12 +579,20 @@ class _StateChip extends StatelessWidget {
             style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
           ),
           const SizedBox(width: 2),
-          InkWell(
-            borderRadius: BorderRadius.circular(999),
-            onTap: onAction,
-            child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: Icon(icon, size: 13, color: AppColors.textSecondary),
+          Semantics(
+            button: true,
+            label: actionLabel,
+            child: Tooltip(
+              message: actionLabel,
+              excludeFromSemantics: true,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(999),
+                onTap: onAction,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(icon, size: 13, color: AppColors.textSecondary),
+                ),
+              ),
             ),
           ),
         ],
@@ -613,39 +633,51 @@ class _WipFieldState extends State<_WipField> {
       message: context.t('board.columns.wipTooltip'),
       child: SizedBox(
         width: 74,
-        child: TextField(
-          controller: _controller,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12.5),
-          onChanged: (raw) {
-            widget.onChanged(int.tryParse(raw));
-            setState(() {});
-          },
-          decoration: InputDecoration(
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(vertical: 7),
-            prefixText: hasLimit ? context.t('board.columns.wipPrefix') : null,
-            prefixStyle: TextStyle(
-              fontSize: 10.5,
-              color: AppColors.textSecondary,
-            ),
-            hintText: context.t('board.columns.wipHint'),
-            hintStyle: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-            filled: true,
-            fillColor: AppColors.surface.withValues(alpha: 0.5),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.hairline),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.hairline),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.accent, width: 1.4),
+        child: Semantics(
+          label: context.t('board.columns.wipLabel'),
+          textField: true,
+          child: TextField(
+            controller: _controller,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12.5),
+            onChanged: (raw) {
+              widget.onChanged(int.tryParse(raw));
+              setState(() {});
+            },
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(vertical: 7),
+              prefixText: hasLimit
+                  ? context.t('board.columns.wipPrefix')
+                  : null,
+              prefixStyle: TextStyle(
+                fontSize: 10.5,
+                color: AppColors.textSecondary,
+              ),
+              hintText: context.t('board.columns.wipHint'),
+              hintStyle: TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
+              filled: true,
+              fillColor: AppColors.surface.withValues(alpha: 0.5),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.hairline),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.hairline),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: AppColors.accent,
+                  width: 1.4,
+                ),
+              ),
             ),
           ),
         ),

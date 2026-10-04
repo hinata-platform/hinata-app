@@ -491,31 +491,34 @@ Widget _issueLaneHeader(
   padding: const EdgeInsets.only(bottom: 8, top: 4),
   child: Row(
     children: [
-      InkWell(
-        onTap: () => onOpenIssue(parent),
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TypeGlyph(type: parent.type, size: 20),
-              const SizedBox(width: 8),
-              IdMono(parent.readableId, fontSize: 13),
-              const SizedBox(width: 8),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 280),
-                child: Text(
-                  parent.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+      Semantics(
+        button: true,
+        child: InkWell(
+          onTap: () => onOpenIssue(parent),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TypeGlyph(type: parent.type, size: 20),
+                const SizedBox(width: 8),
+                IdMono(parent.readableId, fontSize: 13),
+                const SizedBox(width: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 280),
+                  child: Text(
+                    parent.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -804,27 +807,31 @@ class _BoardSwimlanesState extends State<BoardSwimlanes> {
 
   Widget _laneHeaderBar(BoardLane lane) {
     final collapsed = _collapsed.contains(lane.key);
-    return InkWell(
-      onTap: () => setState(() {
-        if (!_collapsed.remove(lane.key)) _collapsed.add(lane.key);
-      }),
-      borderRadius: BorderRadius.circular(8),
-      child: Row(
-        children: [
-          Padding(
-            padding: const EdgeInsetsDirectional.only(end: 2),
-            child: AnimatedRotation(
-              turns: collapsed ? -0.25 : 0,
-              duration: const Duration(milliseconds: 160),
-              child: Icon(
-                LucideIcons.chevronDown,
-                size: 18,
-                color: AppColors.inkSoft,
+    return Semantics(
+      button: true,
+      expanded: !collapsed,
+      child: InkWell(
+        onTap: () => setState(() {
+          if (!_collapsed.remove(lane.key)) _collapsed.add(lane.key);
+        }),
+        borderRadius: BorderRadius.circular(8),
+        child: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 2),
+              child: AnimatedRotation(
+                turns: collapsed ? -0.25 : 0,
+                duration: const Duration(milliseconds: 160),
+                child: Icon(
+                  LucideIcons.chevronDown,
+                  size: 18,
+                  color: AppColors.inkSoft,
+                ),
               ),
             ),
-          ),
-          Flexible(child: lane.header),
-        ],
+            Flexible(child: lane.header),
+          ],
+        ),
       ),
     );
   }

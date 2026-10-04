@@ -40,68 +40,71 @@ class ServerSelectorButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profile = _currentProfile(context.read<AppStorage>());
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => showServerManager(context),
-        borderRadius: BorderRadius.circular(16),
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: AppColors.accentSoft,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.accentLine),
-          ),
-          child: Row(
-            children: [
-              const Icon(
-                LucideIcons.server,
-                size: 20,
-                color: AppColors.accentStrong,
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const _Dot(),
-                        const SizedBox(width: 7),
-                        Flexible(
-                          child: Text(
-                            profile.displayName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
+    return Semantics(
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => showServerManager(context),
+          borderRadius: BorderRadius.circular(16),
+          child: Ink(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.accentSoft,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.accentLine),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  LucideIcons.server,
+                  size: 20,
+                  color: AppColors.accentStrong,
+                ),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const _Dot(),
+                          const SizedBox(width: 7),
+                          Flexible(
+                            child: Text(
+                              profile.displayName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      profile.host,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontFamily: AppTheme.fontMono,
-                        fontSize: 11.5,
-                        color: AppColors.inkFaint,
+                        ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 2),
+                      Text(
+                        profile.host,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: AppTheme.fontMono,
+                          fontSize: 11.5,
+                          color: AppColors.inkFaint,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(
-                LucideIcons.chevronDown,
-                size: 19,
-                color: AppColors.accentStrong,
-              ),
-            ],
+                const SizedBox(width: 8),
+                const Icon(
+                  LucideIcons.chevronDown,
+                  size: 19,
+                  color: AppColors.accentStrong,
+                ),
+              ],
+            ),
           ),
         ),
       ),

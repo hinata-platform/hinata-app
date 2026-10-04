@@ -68,10 +68,23 @@ class _HiveLoaderState extends State<HiveLoader>
   @override
   void initState() {
     super.initState();
+    // Started in didChangeDependencies, which knows the reduced-motion setting.
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
-    )..repeat();
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // With reduced motion the comet holds still, a quarter of the way round,
+    // so the loader still reads as one instead of looping without end.
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+      _controller.value = 0.25;
+    } else if (!_controller.isAnimating) {
+      _controller.repeat();
+    }
   }
 
   @override

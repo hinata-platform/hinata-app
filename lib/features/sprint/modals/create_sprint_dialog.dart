@@ -97,12 +97,16 @@ class _CreateSprintBodyState extends State<_CreateSprintBody> {
               children: [
                 GlassField(
                   label: context.t('sprint.name'),
-                  child: TextField(
-                    controller: _name,
-                    autofocus: true,
-                    textCapitalization: TextCapitalization.words,
-                    textInputAction: TextInputAction.next,
-                    decoration: glassInputDecoration(),
+                  child: Semantics(
+                    label: context.t('sprint.name'),
+                    textField: true,
+                    child: TextField(
+                      controller: _name,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      decoration: glassInputDecoration(),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -112,15 +116,19 @@ class _CreateSprintBodyState extends State<_CreateSprintBody> {
                     context.t('sprint.optional'),
                     style: TextStyle(fontSize: 11, color: AppColors.inkFaint),
                   ),
-                  child: TextField(
-                    controller: _goal,
-                    keyboardType: TextInputType.multiline,
-                    textInputAction: TextInputAction.newline,
-                    textCapitalization: TextCapitalization.sentences,
-                    minLines: 2,
-                    maxLines: 4,
-                    decoration: glassInputDecoration(
-                      hint: context.t('sprint.goalHint'),
+                  child: Semantics(
+                    label: context.t('sprint.goal'),
+                    textField: true,
+                    child: TextField(
+                      controller: _goal,
+                      keyboardType: TextInputType.multiline,
+                      textInputAction: TextInputAction.newline,
+                      textCapitalization: TextCapitalization.sentences,
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: glassInputDecoration(
+                        hint: context.t('sprint.goalHint'),
+                      ),
                     ),
                   ),
                 ),
@@ -213,33 +221,43 @@ class _DateButton extends StatelessWidget {
     return Material(
       color: AppColors.surface.withValues(alpha: muted ? 0.4 : 0.7),
       borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          height: 44,
-          padding: const EdgeInsets.symmetric(horizontal: 13),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.hairline),
-          ),
-          alignment: AlignmentDirectional.centerStart,
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    color: muted ? AppColors.inkSoft : AppColors.ink,
+      child: Semantics(
+        button: true,
+        enabled: onTap != null,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            // A floor, not a fixed height: a large text size grows the field
+            // instead of clipping the date.
+            constraints: const BoxConstraints(minHeight: 44),
+            padding: const EdgeInsets.symmetric(horizontal: 13),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.hairline),
+            ),
+            alignment: AlignmentDirectional.centerStart,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      color: muted ? AppColors.inkSoft : AppColors.ink,
+                    ),
                   ),
                 ),
-              ),
-              if (!muted)
-                Icon(LucideIcons.calendar, size: 15, color: AppColors.inkSoft),
-            ],
+                if (!muted)
+                  Icon(
+                    LucideIcons.calendar,
+                    size: 15,
+                    color: AppColors.inkSoft,
+                  ),
+              ],
+            ),
           ),
         ),
       ),

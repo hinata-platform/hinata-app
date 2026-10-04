@@ -23,6 +23,7 @@ import '../../core/responsive/golden_columns.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../core/util/file_pick.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/app_avatar.dart';
@@ -630,59 +631,62 @@ class _AccountScreenState extends State<AccountScreen> {
     final accentBg = danger
         ? AppColors.danger.withValues(alpha: 0.12)
         : AppColors.accentSoft;
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-          child: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: accentBg,
-                  borderRadius: BorderRadius.circular(10),
+    return Semantics(
+      button: true,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: accentBg,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(icon, size: 18, color: accent),
                 ),
-                alignment: Alignment.center,
-                child: Icon(icon, size: 18, color: accent),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontFamily: AppTheme.fontBrand,
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
-                        color: danger ? AppColors.danger : AppColors.ink,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontFamily: AppTheme.fontBrand,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          color: danger ? AppColors.danger : AppColors.ink,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1.35,
-                        color: AppColors.inkSoft,
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.35,
+                          color: AppColors.inkSoft,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                forwardChevron(context),
-                size: 18,
-                color: AppColors.inkFaint,
-              ),
-            ],
+                const SizedBox(width: 8),
+                Icon(
+                  forwardChevron(context),
+                  size: 18,
+                  color: AppColors.inkFaint,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1566,61 +1570,74 @@ class _AccountScreenState extends State<AccountScreen> {
     required String role,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 9),
-        child: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: color.withValues(alpha: 0.4)),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                glyph.isEmpty
-                    ? '?'
-                    : glyph.substring(0, glyph.length >= 3 ? 3 : glyph.length),
-                style: TextStyle(
-                  fontFamily: AppTheme.fontMono,
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w700,
-                  color: color,
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 9),
+          child: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: color.withValues(alpha: 0.4)),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  glyph.isEmpty
+                      ? '?'
+                      : glyph.substring(
+                          0,
+                          glyph.length >= 3 ? 3 : glyph.length,
+                        ),
+                  style: TextStyle(
+                    fontFamily: AppTheme.fontMono,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.ink,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.ink,
+                      ),
                     ),
-                  ),
-                  Text(
-                    meta,
-                    style: TextStyle(fontSize: 11.5, color: AppColors.inkSoft),
-                  ),
-                ],
+                    Text(
+                      meta,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.inkSoft,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            AccountPill(label: role),
-            const SizedBox(width: 4),
-            Icon(forwardChevron(context), size: 16, color: AppColors.inkFaint),
-          ],
+              const SizedBox(width: 8),
+              AccountPill(label: role),
+              const SizedBox(width: 4),
+              Icon(
+                forwardChevron(context),
+                size: 16,
+                color: AppColors.inkFaint,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1699,6 +1716,7 @@ class _AccountScreenState extends State<AccountScreen> {
           label: context.t('legal.privacyPolicy'),
           icon: LucideIcons.shieldAlert,
           trailing: IconButton(
+            tooltip: context.t('legal.privacyPolicy'),
             icon: const Icon(LucideIcons.externalLink, size: 18),
             onPressed: () => openPrivacyPolicy(context),
           ),
@@ -1708,6 +1726,7 @@ class _AccountScreenState extends State<AccountScreen> {
           label: context.t('legal.termsOfService'),
           icon: LucideIcons.scrollText,
           trailing: IconButton(
+            tooltip: context.t('legal.termsOfService'),
             icon: const Icon(LucideIcons.externalLink, size: 18),
             onPressed: () => openTermsOfService(context),
           ),
@@ -1720,6 +1739,7 @@ class _AccountScreenState extends State<AccountScreen> {
             label: context.t('settings.privacyPolicyExternal'),
             icon: LucideIcons.externalLink,
             trailing: IconButton(
+              tooltip: context.t('settings.privacyPolicyExternal'),
               icon: const Icon(LucideIcons.externalLink, size: 17),
               onPressed: () => launchUrl(
                 Uri.parse(config.meta!.privacyPolicyUrl),
@@ -1919,32 +1939,36 @@ class _SessionsExpander extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: busy ? null : onPressed,
-    borderRadius: BorderRadius.circular(8),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (busy)
-            const HiveLoader(size: 16, strokeWidth: 2)
-          else
-            Icon(
-              expanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
-              size: 16,
-              color: AppColors.accentStrong,
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    enabled: !busy,
+    child: InkWell(
+      onTap: busy ? null : onPressed,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (busy)
+              const HiveLoader(size: 16, strokeWidth: 2)
+            else
+              Icon(
+                expanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                size: 16,
+                color: AppColors.accentStrong,
+              ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.accentStrong,
+              ),
             ),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.accentStrong,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     ),
   );

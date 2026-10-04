@@ -191,18 +191,28 @@ class _PlacementPickerBodyState extends State<_PlacementPickerBody> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
-          child: TextField(
-            controller: _controller,
-            autofocus: true,
-            onChanged: _onChanged,
-            decoration: InputDecoration(
-              isDense: true,
-              hintText: context.t(
-                widget.projectsOnly
-                    ? 'time.placement.searchProjects'
-                    : 'time.placement.search',
+          // The hint goes when typing starts; the label stays for a screen
+          // reader.
+          child: Semantics(
+            label: context.t(
+              widget.projectsOnly
+                  ? 'time.placement.searchProjects'
+                  : 'time.placement.search',
+            ),
+            textField: true,
+            child: TextField(
+              controller: _controller,
+              autofocus: true,
+              onChanged: _onChanged,
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: context.t(
+                  widget.projectsOnly
+                      ? 'time.placement.searchProjects'
+                      : 'time.placement.search',
+                ),
+                prefixIcon: const Icon(LucideIcons.search, size: 16),
               ),
-              prefixIcon: const Icon(LucideIcons.search, size: 16),
             ),
           ),
         ),
@@ -321,57 +331,61 @@ class _PlacementRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-          color: selected ? AppColors.accentSoft : Colors.transparent,
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: 16,
-                color: selected ? AppColors.accentStrong : AppColors.inkSoft,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: selected
-                            ? FontWeight.w700
-                            : FontWeight.w600,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                    if (subtitle != null)
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+            color: selected ? AppColors.accentSoft : Colors.transparent,
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 16,
+                  color: selected ? AppColors.accentStrong : AppColors.inkSoft,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        subtitle!,
+                        title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11.5,
-                          color: AppColors.inkFaint,
+                          fontSize: 13.5,
+                          fontWeight: selected
+                              ? FontWeight.w700
+                              : FontWeight.w600,
+                          color: AppColors.ink,
                         ),
                       ),
-                  ],
+                      if (subtitle != null)
+                        Text(
+                          subtitle!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: AppColors.inkFaint,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              if (selected)
-                const Icon(
-                  LucideIcons.check,
-                  size: 15,
-                  color: AppColors.accentStrong,
-                ),
-            ],
+                if (selected)
+                  const Icon(
+                    LucideIcons.check,
+                    size: 15,
+                    color: AppColors.accentStrong,
+                  ),
+              ],
+            ),
           ),
         ),
       ),

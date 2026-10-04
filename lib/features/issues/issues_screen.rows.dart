@@ -18,25 +18,29 @@ class _CollapsibleHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: 6, bottom: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Row(
-          children: [
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: 2),
-              child: AnimatedRotation(
-                turns: collapsed ? -chevronTurn(context) : 0,
-                duration: const Duration(milliseconds: 160),
-                child: Icon(
-                  LucideIcons.chevronDown,
-                  size: 18,
-                  color: AppColors.inkSoft,
+      child: Semantics(
+        button: true,
+        expanded: !collapsed,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Row(
+            children: [
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 2),
+                child: AnimatedRotation(
+                  turns: collapsed ? -chevronTurn(context) : 0,
+                  duration: const Duration(milliseconds: 160),
+                  child: Icon(
+                    LucideIcons.chevronDown,
+                    size: 18,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
               ),
-            ),
-            Flexible(child: header),
-          ],
+              Flexible(child: header),
+            ],
+          ),
         ),
       ),
     );

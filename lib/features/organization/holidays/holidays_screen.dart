@@ -428,61 +428,64 @@ class _HolidayRow extends StatelessWidget {
     final date = MaterialLocalizations.of(
       context,
     ).formatMediumDate(holiday.date);
-    return InkWell(
-      onTap: onEdit,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 6, 6, 6),
-        child: Row(
-          children: [
-            SizedBox(
-              width: context.isCompact ? 96 : 130,
-              child: Text(
-                date,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                  color: AppColors.inkSoft,
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: onEdit,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 6, 6, 6),
+          child: Row(
+            children: [
+              SizedBox(
+                width: context.isCompact ? 96 : 130,
+                child: Text(
+                  date,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                    color: AppColors.inkSoft,
+                  ),
                 ),
               ),
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    holiday.name,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                  if (holiday.halfDay || holiday.imported)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      [
-                        if (holiday.halfDay)
-                          context.t('availability.admin.halfDay'),
-                        if (holiday.imported)
-                          context.t('availability.admin.imported'),
-                      ].join(' · '),
+                      holiday.name,
                       style: TextStyle(
-                        fontSize: 11.5,
-                        color: AppColors.textSecondary,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.ink,
                       ),
                     ),
-                ],
+                    if (holiday.halfDay || holiday.imported)
+                      Text(
+                        [
+                          if (holiday.halfDay)
+                            context.t('availability.admin.halfDay'),
+                          if (holiday.imported)
+                            context.t('availability.admin.imported'),
+                        ].join(' · '),
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
-            IconButton(
-              tooltip: context.t('availability.admin.deleteHoliday'),
-              onPressed: onDelete,
-              icon: Icon(
-                LucideIcons.trash2,
-                size: 16,
-                color: AppColors.inkFaint,
+              IconButton(
+                tooltip: context.t('availability.admin.deleteHoliday'),
+                onPressed: onDelete,
+                icon: Icon(
+                  LucideIcons.trash2,
+                  size: 16,
+                  color: AppColors.inkFaint,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

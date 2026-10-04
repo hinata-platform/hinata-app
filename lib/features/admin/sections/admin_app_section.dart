@@ -285,12 +285,15 @@ class _PlatformLink extends StatelessWidget {
     // InkWell with the Material below it ripples where nobody can see it.
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        onTap: onOpen,
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
-          child: row,
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: onOpen,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: row,
+          ),
         ),
       ),
     );

@@ -14,6 +14,7 @@ import '../../core/models/team_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../knowledge/team_pages_picker.dart';
@@ -613,7 +614,7 @@ class _Stepper extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: on ? const Color(0xFF2A2410) : AppColors.inkFaint,
+              color: on ? kOnAmber : AppColors.inkFaint,
             ),
           ),
         ),
@@ -637,21 +638,27 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      autofocus: true,
-      onChanged: onChanged,
-      textInputAction: TextInputAction.search,
-      decoration:
-          teamFieldDecoration(
-            context,
-            hint: context.t('teams.searchPeople'),
-          ).copyWith(
-            prefixIcon: Icon(
-              LucideIcons.search,
-              size: 18,
-              color: AppColors.inkFaint,
+    // Only a hint names this field, and a hint is gone once typing starts;
+    // the label keeps it named for screen readers.
+    return Semantics(
+      label: context.t('teams.searchPeople'),
+      textField: true,
+      child: TextField(
+        autofocus: true,
+        onChanged: onChanged,
+        textInputAction: TextInputAction.search,
+        decoration:
+            teamFieldDecoration(
+              context,
+              hint: context.t('teams.searchPeople'),
+            ).copyWith(
+              prefixIcon: Icon(
+                LucideIcons.search,
+                size: 18,
+                color: AppColors.inkFaint,
+              ),
             ),
-          ),
+      ),
     );
   }
 }

@@ -93,7 +93,8 @@ class DayMarkChip extends StatelessWidget {
 }
 
 /// A chip that opens something when there is something to open, and stays a
-/// plain label otherwise — with the pointer that says which.
+/// plain label otherwise — with the pointer, the press and the role that say
+/// which.
 class _Tappable extends StatelessWidget {
   const _Tappable({required this.onTap, required this.child});
 
@@ -104,9 +105,22 @@ class _Tappable extends StatelessWidget {
   Widget build(BuildContext context) {
     final tap = onTap;
     if (tap == null) return child;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(onTap: tap, child: child),
+    // The chip's own words name the button. The hit area is at least 24 high
+    // (WCAG 2.5.8) with the chip centred in it: a full 48 would push the date
+    // row apart for a hint chip that sits inline beside the date.
+    return Semantics(
+      button: true,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: tap,
+          customBorder: const StadiumBorder(),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 24),
+            child: Align(widthFactor: 1, heightFactor: 1, child: child),
+          ),
+        ),
+      ),
     );
   }
 }

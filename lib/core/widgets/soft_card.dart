@@ -41,10 +41,14 @@ class SoftCard extends StatelessWidget {
         ),
         child: onTap == null
             ? Padding(padding: padding, child: child)
-            : InkWell(
-                onTap: onTap,
-                borderRadius: r,
-                child: Padding(padding: padding, child: child),
+            // A tappable card is a button; its content merges in as the name.
+            : Semantics(
+                button: true,
+                child: InkWell(
+                  onTap: onTap,
+                  borderRadius: r,
+                  child: Padding(padding: padding, child: child),
+                ),
               ),
       ),
     );

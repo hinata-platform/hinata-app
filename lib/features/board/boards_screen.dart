@@ -17,6 +17,7 @@ import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
@@ -206,7 +207,7 @@ class _BoardScreenState extends State<BoardScreen>
                     onPressed: _showCreate,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.accent,
-                      foregroundColor: const Color(0xFF2A2410),
+                      foregroundColor: kOnAmber,
                     ),
                     icon: const Icon(LucideIcons.plus, size: 18),
                     label: Text(context.t('board.newBoard')),
@@ -281,7 +282,7 @@ class _BoardsListHeader extends StatelessWidget {
       onPressed: onCreate,
       style: FilledButton.styleFrom(
         backgroundColor: AppColors.accent,
-        foregroundColor: const Color(0xFF2A2410),
+        foregroundColor: kOnAmber,
         textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
       ),
       icon: const Icon(LucideIcons.plus, size: 18),

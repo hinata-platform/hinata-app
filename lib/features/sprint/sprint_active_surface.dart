@@ -547,91 +547,94 @@ class _SprintCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          onTap: onOpen,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(height: 2, color: accent),
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        TypeGlyph(type: issue.type, size: 18),
-                        const SizedBox(width: 8),
-                        IdMono(issue.readableId),
-                        const Spacer(),
-                        PriorityFlag(priority: issue.priority),
-                        const SizedBox(width: 8),
-                        _PointsPill(points: issue.storyPoints),
-                      ],
-                    ),
-                    const SizedBox(height: 9),
-                    Text(
-                      issue.title,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                        height: 1.4,
+        child: Semantics(
+          button: true,
+          child: InkWell(
+            onTap: onOpen,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(height: 2, color: accent),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          TypeGlyph(type: issue.type, size: 18),
+                          const SizedBox(width: 8),
+                          IdMono(issue.readableId),
+                          const Spacer(),
+                          PriorityFlag(priority: issue.priority),
+                          const SizedBox(width: 8),
+                          _PointsPill(points: issue.storyPoints),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 11),
-                    Row(
-                      children: [
-                        if (due != null)
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                LucideIcons.calendar,
-                                size: 13,
-                                color: due.late
-                                    ? AppColors.danger
-                                    : AppColors.inkFaint,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                due.text,
-                                style: TextStyle(
-                                  fontFamily: AppTheme.fontMono,
-                                  fontSize: 11,
+                      const SizedBox(height: 9),
+                      Text(
+                        issue.title,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 11),
+                      Row(
+                        children: [
+                          if (due != null)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  LucideIcons.calendar,
+                                  size: 13,
                                   color: due.late
                                       ? AppColors.danger
                                       : AppColors.inkFaint,
                                 ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  due.text,
+                                  style: TextStyle(
+                                    fontFamily: AppTheme.fontMono,
+                                    fontSize: 11,
+                                    color: due.late
+                                        ? AppColors.danger
+                                        : AppColors.inkFaint,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          const Spacer(),
+                          if (issue.assigneeId != null)
+                            Tooltip(
+                              message: personTooltip(
+                                name: assigneeName ?? issue.assigneeId!,
+                                pronouns: assigneePronouns,
                               ),
-                            ],
-                          ),
-                        const Spacer(),
-                        if (issue.assigneeId != null)
-                          Tooltip(
-                            message: personTooltip(
-                              name: assigneeName ?? issue.assigneeId!,
-                              pronouns: assigneePronouns,
+                              child: HiveAvatar(
+                                name: assigneeName ?? issue.assigneeId!,
+                                imageUrl: assigneeAvatar,
+                                size: 24,
+                              ),
                             ),
-                            child: HiveAvatar(
-                              name: assigneeName ?? issue.assigneeId!,
-                              imageUrl: assigneeAvatar,
-                              size: 24,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              // On-demand sub-task list + progress below the body. Only on the
-              // interactive card (onOpenIssue set) — never the drag ghost.
-              if (onOpenIssue != null && issue.hasSubtasks)
-                SubtaskExpander(issue: issue, onOpenChild: onOpenIssue!),
-            ],
+                // On-demand sub-task list + progress below the body. Only on the
+                // interactive card (onOpenIssue set) — never the drag ghost.
+                if (onOpenIssue != null && issue.hasSubtasks)
+                  SubtaskExpander(issue: issue, onOpenChild: onOpenIssue!),
+              ],
+            ),
           ),
         ),
       ),

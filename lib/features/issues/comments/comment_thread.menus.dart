@@ -18,27 +18,30 @@ class _ContextMenuCard extends StatelessWidget {
 
   Widget _row(BuildContext context, _MenuRowData r) {
     final color = r.danger ? AppColors.danger : AppColors.ink;
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(15),
-      child: InkWell(
-        onTap: r.onTap,
+    return Semantics(
+      button: true,
+      child: Material(
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(15),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-          child: Row(
-            children: [
-              Icon(r.icon, size: 18, color: color),
-              const SizedBox(width: 12),
-              Text(
-                r.label,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: color,
+        child: InkWell(
+          onTap: r.onTap,
+          borderRadius: BorderRadius.circular(15),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            child: Row(
+              children: [
+                Icon(r.icon, size: 18, color: color),
+                const SizedBox(width: 12),
+                Text(
+                  r.label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: color,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -74,19 +77,27 @@ class _QuickReactionsBar extends StatelessWidget {
   }
 
   Widget _emojiButton(String emoji, bool active, VoidCallback onTap) {
-    return Material(
-      color: active
-          ? AppColors.accent.withValues(alpha: 0.22)
-          : Colors.transparent,
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Center(
-            child: Text(emoji, style: const TextStyle(fontSize: 22)),
+    return Semantics(
+      button: true,
+      selected: active,
+      child: Material(
+        color: active
+            ? AppColors.accent.withValues(alpha: 0.22)
+            : Colors.transparent,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          // A floor, not a fixed box: the emoji follows the text scale and must
+          // not be clipped by the circle at 200 %. 40 dp in a seven-wide pill;
+          // 48 would widen the popover, so the row stays at the 24 dp floor.
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            child: Center(
+              widthFactor: 1,
+              heightFactor: 1,
+              child: Text(emoji, style: const TextStyle(fontSize: 22)),
+            ),
           ),
         ),
       ),
@@ -95,16 +106,28 @@ class _QuickReactionsBar extends StatelessWidget {
 
   Widget _moreButton(BuildContext context) {
     final dark = AppColors.brightness == Brightness.dark;
-    return Material(
-      color: dark ? Colors.white10 : Colors.black12,
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onMore,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(LucideIcons.ellipsis, size: 18, color: AppColors.inkSoft),
+    return Semantics(
+      button: true,
+      label: context.t('comments.moreReactions'),
+      child: Tooltip(
+        message: context.t('comments.moreReactions'),
+        excludeFromSemantics: true,
+        child: Material(
+          color: dark ? Colors.white10 : Colors.black12,
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onMore,
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Icon(
+                LucideIcons.ellipsis,
+                size: 18,
+                color: AppColors.inkSoft,
+              ),
+            ),
+          ),
         ),
       ),
     );

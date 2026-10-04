@@ -111,7 +111,7 @@ class _NotificationBellState extends State<_NotificationBell> {
               final items = state.data ?? const <AppNotification>[];
               final hasUnread = items.any((n) => !n.read);
               final showDot = hasUnread && !_open;
-              final media = MediaQuery.of(context);
+              final screenWidth = MediaQuery.sizeOf(context).width;
               final tokens = SearchTokens.of(Theme.of(context).brightness);
               final dark = Theme.of(context).brightness == Brightness.dark;
               // A touch more opaque than the shared search glass so
@@ -177,7 +177,7 @@ class _NotificationBellState extends State<_NotificationBell> {
               // (blurRampDuration) instead of paying its full raster cost from
               // frame one — the perf fix that used to live in MorphBlurPopover.
               return GlassPopover(
-                popoverWidth: (media.size.width - 24).clamp(0.0, 340.0),
+                popoverWidth: (screenWidth - 24).clamp(0.0, 340.0),
                 popoverBorderRadius: AppTheme.radiusCard,
                 settings: liquidGlassPanelSettings(
                   glassFill: glassFill,
@@ -257,8 +257,7 @@ class _NotifPopoverCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final media = MediaQuery.of(context);
-    final maxListHeight = media.size.height * 0.5;
+    final maxListHeight = MediaQuery.sizeOf(context).height * 0.5;
     final latest = items;
     final hasUnread = items.any((n) => !n.read);
 
@@ -285,20 +284,23 @@ class _NotifPopoverCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 if (hasUnread)
-                  InkWell(
-                    onTap: onMarkAllRead,
-                    borderRadius: BorderRadius.circular(6),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      child: Text(
-                        context.t('notifications.markAllRead'),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.accentStrong,
+                  Semantics(
+                    button: true,
+                    child: InkWell(
+                      onTap: onMarkAllRead,
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        child: Text(
+                          context.t('notifications.markAllRead'),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.accentStrong,
+                          ),
                         ),
                       ),
                     ),
@@ -342,28 +344,31 @@ class _NotifPopoverCard extends StatelessWidget {
             ),
           Divider(height: 1, color: AppColors.hairline2),
           // Fixed footer → full notifications page
-          InkWell(
-            onTap: onViewAll,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    context.t('notifications.viewAll'),
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
+          Semantics(
+            button: true,
+            child: InkWell(
+              onTap: onViewAll,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      context.t('notifications.viewAll'),
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.inkSoft,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(
+                      forwardArrow(context),
+                      size: 15,
                       color: AppColors.inkSoft,
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  Icon(
-                    forwardArrow(context),
-                    size: 15,
-                    color: AppColors.inkSoft,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -384,80 +389,85 @@ class _NotifRow extends StatelessWidget {
     final unread = !notification.read;
     final (icon, tint) = notificationVisual(notification.type);
     final ago = notificationTimeAgo(notification.createdAt);
-    return Material(
-      // Transparent read rows let the glass panel show through; unread keep a
-      // soft accent wash.
-      color: unread ? AppColors.accentSoft : Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        hoverColor: AppColors.surfaceMuted,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: AppColors.soft(tint),
-                  shape: BoxShape.circle,
+    return Semantics(
+      button: true,
+      // Unread shows only as weight and tint; say it too.
+      value: unread ? context.t('notifications.unread') : null,
+      child: Material(
+        // Transparent read rows let the glass panel show through; unread keep a
+        // soft accent wash.
+        color: unread ? AppColors.accentSoft : Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          hoverColor: AppColors.surfaceMuted,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: AppColors.soft(tint),
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(icon, size: 16, color: tint),
                 ),
-                alignment: Alignment.center,
-                child: Icon(icon, size: 16, color: tint),
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            notification.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              height: 1.4,
-                              color: AppColors.ink,
-                              fontWeight: unread
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              notification.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                height: 1.4,
+                                color: AppColors.ink,
+                                fontWeight: unread
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
                             ),
                           ),
-                        ),
-                        if (ago != null) ...[
-                          const SizedBox(width: 8),
-                          Text(
-                            ago,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppColors.inkFaint,
+                          if (ago != null) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              ago,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.inkFaint,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
-                    ),
-                    if ((notification.body ?? '').isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        notification.body!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.inkSoft,
-                          height: 1.4,
-                        ),
                       ),
+                      if ((notification.body ?? '').isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          notification.body!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.inkSoft,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

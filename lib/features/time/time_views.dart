@@ -12,6 +12,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../core/widgets/hive_widgets.dart' show GhostButton;
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/glass_switch_chip.dart';
@@ -302,7 +303,7 @@ class TimeAddButton extends StatelessWidget {
     ButtonStyle half(BorderRadius radius, EdgeInsets padding) =>
         FilledButton.styleFrom(
           backgroundColor: AppColors.accent,
-          foregroundColor: const Color(0xFF2A2410),
+          foregroundColor: kOnAmber,
           padding: padding,
           minimumSize: const Size(40, 44),
           textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),

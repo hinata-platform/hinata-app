@@ -250,29 +250,41 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
               children: [
                 GlassField(
                   label: context.t('projects.copy.name'),
-                  child: TextField(
-                    controller: _name,
-                    autofocus: true,
-                    decoration: glassInputDecoration(),
-                    onChanged: (_) => setState(() {}),
+                  // The caption above is plain text; this ties it to the field
+                  // for screen readers.
+                  child: Semantics(
+                    label: context.t('projects.copy.name'),
+                    textField: true,
+                    child: TextField(
+                      controller: _name,
+                      autofocus: true,
+                      decoration: glassInputDecoration(),
+                      onChanged: (_) => setState(() {}),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
                 GlassField(
                   label: context.t('projects.copy.key'),
-                  child: TextField(
-                    controller: _key,
-                    textCapitalization: TextCapitalization.characters,
-                    inputFormatters: [
-                      LengthLimitingTextInputFormatter(10),
-                      const ProjectKeyFormatter(),
-                    ],
-                    style: const TextStyle(
-                      fontFamily: AppTheme.fontMono,
-                      fontWeight: FontWeight.w700,
+                  child: Semantics(
+                    label: context.t('projects.copy.key'),
+                    textField: true,
+                    child: TextField(
+                      controller: _key,
+                      textCapitalization: TextCapitalization.characters,
+                      inputFormatters: [
+                        LengthLimitingTextInputFormatter(10),
+                        const ProjectKeyFormatter(),
+                      ],
+                      style: const TextStyle(
+                        fontFamily: AppTheme.fontMono,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      decoration: glassInputDecoration(
+                        hint: scope?.suggestedKey,
+                      ),
+                      onChanged: (_) => setState(() {}),
                     ),
-                    decoration: glassInputDecoration(hint: scope?.suggestedKey),
-                    onChanged: (_) => setState(() {}),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -372,39 +384,67 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
 
   Widget _dateRow() {
     final date = _eventDate;
-    return InkWell(
-      onTap: _pickEventDate,
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(color: AppColors.hairline2),
-        ),
-        child: Row(
-          children: [
-            Icon(LucideIcons.calendar, size: 15, color: AppColors.inkSoft),
-            const SizedBox(width: 9),
-            Expanded(
-              child: Text(
-                date == null
-                    ? context.t('projects.copy.noEventDate')
-                    : MaterialLocalizations.of(context).formatMediumDate(date),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w600,
-                  color: date == null ? AppColors.inkFaint : AppColors.ink,
+    // The vertical padding sits on the row's children rather than on the box,
+    // so the clear button can take the field's full height as its target
+    // instead of the bare 15-point glyph.
+    // Both nodes are containers: the clear button inside stays a node of its
+    // own instead of merging its tap into the row's.
+    return Semantics(
+      container: true,
+      button: true,
+      label: context.t('projects.copy.eventDate'),
+      child: InkWell(
+        onTap: _pickEventDate,
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        child: Container(
+          padding: EdgeInsets.only(left: 13, right: date == null ? 13 : 0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+            border: Border.all(color: AppColors.hairline2),
+          ),
+          child: Row(
+            children: [
+              Icon(LucideIcons.calendar, size: 15, color: AppColors.inkSoft),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    date == null
+                        ? context.t('projects.copy.noEventDate')
+                        : MaterialLocalizations.of(
+                            context,
+                          ).formatMediumDate(date),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: date == null ? AppColors.inkFaint : AppColors.ink,
+                    ),
+                  ),
                 ),
               ),
-            ),
-            if (date != null)
-              GestureDetector(
-                onTap: () => setState(() => _eventDate = null),
-                child: Icon(LucideIcons.x, size: 15, color: AppColors.inkFaint),
-              ),
-          ],
+              if (date != null)
+                Semantics(
+                  container: true,
+                  button: true,
+                  label: context.t('common.clear'),
+                  child: InkResponse(
+                    onTap: () => setState(() => _eventDate = null),
+                    radius: 20,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 13, 12),
+                      child: Icon(
+                        LucideIcons.x,
+                        size: 15,
+                        color: AppColors.inkFaint,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

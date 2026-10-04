@@ -401,24 +401,29 @@ class _BoardTimelineState extends State<BoardTimeline> {
       height: _rowHeight,
       width: width,
       child: Center(
-        child: GestureDetector(
-          onTap: () => widget.onOpen(task),
-          child: Tooltip(
-            message: conflict
-                ? '${task.readableId} · ${stateLabel(task.state)}'
-                      '\n⚠ ${context.t('gantt.conflictHint')}'
-                : '${task.readableId} · ${stateLabel(task.state)}',
-            child: slot.isMilestone
-                ? GanttMilestone(
-                    color: conflict ? AppColors.danger : color,
-                    outlined: !task.resolved,
-                  )
-                : _TimelineBar(
-                    task: task,
-                    width: width,
-                    fraction: fraction.toDouble(),
-                    conflict: conflict,
-                  ),
+        // The task's row label opens the same issue; the bar is the pointer
+        // shortcut, named by its tooltip.
+        child: Semantics(
+          button: true,
+          child: GestureDetector(
+            onTap: () => widget.onOpen(task),
+            child: Tooltip(
+              message: conflict
+                  ? '${task.readableId} · ${stateLabel(task.state)}'
+                        '\n⚠ ${context.t('gantt.conflictHint')}'
+                  : '${task.readableId} · ${stateLabel(task.state)}',
+              child: slot.isMilestone
+                  ? GanttMilestone(
+                      color: conflict ? AppColors.danger : color,
+                      outlined: !task.resolved,
+                    )
+                  : _TimelineBar(
+                      task: task,
+                      width: width,
+                      fraction: fraction.toDouble(),
+                      conflict: conflict,
+                    ),
+            ),
           ),
         ),
       ),
@@ -458,38 +463,49 @@ class _BoardTimelineState extends State<BoardTimeline> {
             runSpacing: 8,
             children: [
               for (final issue in undated)
-                GestureDetector(
-                  onTap: () => widget.onOpen(issue),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
+                // Ink paints the pill onto the Material, so the press ripple
+                // shows on top of it instead of hiding underneath.
+                Semantics(
+                  button: true,
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: InkWell(
+                      onTap: () => widget.onOpen(issue),
                       borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-                      border: Border.all(color: AppColors.hairline),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TypeGlyph(type: issue.type, size: 16),
-                        const SizedBox(width: 7),
-                        IdMono(issue.readableId),
-                        const SizedBox(width: 7),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 180),
-                          child: Text(
-                            issue.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                      child: Ink(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 7,
                         ),
-                      ],
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusPill,
+                          ),
+                          border: Border.all(color: AppColors.hairline),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TypeGlyph(type: issue.type, size: 16),
+                            const SizedBox(width: 7),
+                            IdMono(issue.readableId),
+                            const SizedBox(width: 7),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 180),
+                              child: Text(
+                                issue.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -516,42 +532,45 @@ class _TaskLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: height,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: Row(
-            children: [
-              TypeGlyph(type: task.type, size: 18),
-              const SizedBox(width: 10),
-              Expanded(
-                child: RichText(
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  text: TextSpan(
-                    style: const TextStyle(fontSize: 12),
-                    children: [
-                      TextSpan(
-                        text: task.readableId,
-                        style: TextStyle(
-                          fontFamily: AppTheme.fontMono,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.inkSoft,
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(
+              children: [
+                TypeGlyph(type: task.type, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: RichText(
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    text: TextSpan(
+                      style: const TextStyle(fontSize: 12),
+                      children: [
+                        TextSpan(
+                          text: task.readableId,
+                          style: TextStyle(
+                            fontFamily: AppTheme.fontMono,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.inkSoft,
+                          ),
                         ),
-                      ),
-                      const TextSpan(text: '  '),
-                      TextSpan(
-                        text: task.title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.ink,
+                        const TextSpan(text: '  '),
+                        TextSpan(
+                          text: task.title,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.ink,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

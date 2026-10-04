@@ -52,66 +52,69 @@ class _FocusItem extends StatelessWidget {
         ? (issue.spentMinutes / issue.estimateMinutes!).clamp(0.0, 1.0)
         : 0.0;
     final due = dueLabel(context, issue.dueDate);
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        // No onChanged: the detail sheet broadcasts on IssueEvents, which the
-        // dashboard already listens to — passing both reloads twice.
-        onTap: () => showIssueDetailSheet(context, issueId: issue.id),
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-          decoration: _innerTile(dark),
-          child: Row(
-            children: [
-              TypeGlyph(type: issue.type, size: 30),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      issue.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
+    return Semantics(
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          // No onChanged: the detail sheet broadcasts on IssueEvents, which the
+          // dashboard already listens to — passing both reloads twice.
+          onTap: () => showIssueDetailSheet(context, issueId: issue.id),
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            decoration: _innerTile(dark),
+            child: Row(
+              children: [
+                TypeGlyph(type: issue.type, size: 30),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        issue.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        IdMono(issue.readableId),
-                        if (due != null) ...[
-                          const SizedBox(width: 8),
-                          Text(
-                            due.text,
-                            style: TextStyle(
-                              fontFamily: AppTheme.fontMono,
-                              fontSize: 11,
-                              color: due.late
-                                  ? AppColors.danger
-                                  : AppColors.inkFaint,
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          IdMono(issue.readableId),
+                          if (due != null) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              due.text,
+                              style: TextStyle(
+                                fontFamily: AppTheme.fontMono,
+                                fontSize: 11,
+                                color: due.late
+                                    ? AppColors.danger
+                                    : AppColors.inkFaint,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              if (!compact && hasEstimate) ...[
+                if (!compact && hasEstimate) ...[
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 64,
+                    child: HiveProgress(value: progress, height: 5),
+                  ),
+                ],
                 const SizedBox(width: 10),
-                SizedBox(
-                  width: 64,
-                  child: HiveProgress(value: progress, height: 5),
-                ),
+                if (issue.assigneeId != null) _Assignee(issue: issue),
               ],
-              const SizedBox(width: 10),
-              if (issue.assigneeId != null) _Assignee(issue: issue),
-            ],
+            ),
           ),
         ),
       ),
@@ -561,27 +564,30 @@ class _Segmented extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           for (final (i, label) in options.indexed)
-            GestureDetector(
-              onTap: () => onChanged(i),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: hiveEase,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: i == index ? AppColors.accent : Colors.transparent,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: i == index
-                        ? const Color(0xFF2A2410)
-                        : AppColors.inkSoft,
+            Semantics(
+              button: true,
+              selected: i == index,
+              inMutuallyExclusiveGroup: true,
+              child: GestureDetector(
+                onTap: () => onChanged(i),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: hiveEase,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: i == index ? AppColors.accent : Colors.transparent,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: i == index ? kOnAmber : AppColors.inkSoft,
+                    ),
                   ),
                 ),
               ),

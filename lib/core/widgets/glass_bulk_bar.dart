@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../features/search/search_tokens.dart';
+import '../i18n/i18n.dart';
 import '../responsive/responsive.dart';
 import '../theme/app_colors.dart';
 import 'glass_panel.dart';
@@ -75,8 +76,11 @@ class GlassBulkBar extends StatelessWidget {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final tokens = SearchTokens.of(dark ? Brightness.dark : Brightness.light);
 
+    // Named even when the caller passes no tooltip: an icon alone is nothing
+    // to a screen reader.
     final close = IconButton(
       onPressed: onClear,
+      tooltip: clearTooltip ?? context.t('common.close'),
       icon: Icon(LucideIcons.x, size: 18, color: tokens.inkSoft),
       visualDensity: VisualDensity.compact,
     );
@@ -121,9 +125,7 @@ class GlassBulkBar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 2),
-            clearTooltip != null
-                ? Tooltip(message: clearTooltip!, child: close)
-                : close,
+            close,
           ],
         ),
       ),

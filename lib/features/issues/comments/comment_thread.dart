@@ -14,6 +14,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../../core/widgets/hive_widgets.dart';
 import '../../../core/widgets/user_pronouns.dart';
 import '../../../core/lexical/hinata_document.dart';
@@ -95,46 +96,49 @@ class CommentSortButton extends StatelessWidget {
       popoverBorderRadius: 18,
       settings: _navGlass(dark),
       quality: GlassQuality.standard,
-      triggerBuilder: (context, toggle) => Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(9),
-        child: InkWell(
-          onTap: toggle,
+      triggerBuilder: (context, toggle) => Semantics(
+        button: true,
+        child: Material(
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(9),
-          // Only attach a tooltip in the icon-only (compact) layout — the wide
-          // layout shows the label inline, so an empty-message tooltip there
-          // would pop a blank grey bubble on hover.
-          child: _CompactTooltip(
-            enabled: compact,
-            message: label,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    LucideIcons.arrowUpDown,
-                    size: compact ? 16 : 14,
-                    color: AppColors.inkSoft,
-                  ),
-                  if (!compact) ...[
-                    const SizedBox(width: 6),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.inkSoft,
-                      ),
-                    ),
-                    const SizedBox(width: 3),
+          child: InkWell(
+            onTap: toggle,
+            borderRadius: BorderRadius.circular(9),
+            // Only attach a tooltip in the icon-only (compact) layout — the wide
+            // layout shows the label inline, so an empty-message tooltip there
+            // would pop a blank grey bubble on hover.
+            child: _CompactTooltip(
+              enabled: compact,
+              message: label,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Icon(
-                      LucideIcons.chevronDown,
-                      size: 14,
+                      LucideIcons.arrowUpDown,
+                      size: compact ? 16 : 14,
                       color: AppColors.inkSoft,
                     ),
+                    if (!compact) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.inkSoft,
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      Icon(
+                        LucideIcons.chevronDown,
+                        size: 14,
+                        color: AppColors.inkSoft,
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),

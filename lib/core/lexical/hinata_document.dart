@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
+import 'package:flutter/material.dart' show InkWell, Material;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart' show ReadContext;
 import 'package:lexical_editor_flutter/lexical_editor_flutter.dart';
@@ -384,37 +385,48 @@ class _SmartLinkChip extends StatelessWidget {
     final text = label ?? targetId;
     const accent = AppColors.accent;
 
-    return GestureDetector(
-      onTap: onTap == null ? null : () => onTap!(kind, targetId),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: accent.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(_icon, size: 12, color: accent),
-              const SizedBox(width: 4),
-              // A chip sits in a line of prose and must never be wider than it.
-              // The label is a title or a readable key, which fits; the fallback
-              // is a raw id, which on a narrow screen does not — so it shrinks
-              // and ellipsizes rather than overflowing the line it lives in.
-              Flexible(
-                child: Text(
-                  text,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: accent,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+    final radius = BorderRadius.circular(6);
+    // A link role so a screen reader announces it as one; the label merges in
+    // from the Text below. The ink sits on a Material of the chip's own tint,
+    // so the pressed and hover states show without changing the resting look.
+    // The hit area stays inline-sized: a chip inside running text is exempt
+    // from the target-size minimum (WCAG 2.5.8, inline exception).
+    return Semantics(
+      link: onTap != null,
+      child: Material(
+        color: accent.withValues(alpha: 0.12),
+        borderRadius: radius,
+        // Keep the surrounding prose style; Material would reset it to the
+        // theme's body style.
+        textStyle: DefaultTextStyle.of(context).style,
+        child: InkWell(
+          onTap: onTap == null ? null : () => onTap!(kind, targetId),
+          borderRadius: radius,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(_icon, size: 12, color: accent),
+                const SizedBox(width: 4),
+                // A chip sits in a line of prose and must never be wider than it.
+                // The label is a title or a readable key, which fits; the fallback
+                // is a raw id, which on a narrow screen does not — so it shrinks
+                // and ellipsizes rather than overflowing the line it lives in.
+                Flexible(
+                  child: Text(
+                    text,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: accent,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

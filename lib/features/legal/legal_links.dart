@@ -59,14 +59,23 @@ class LegalLinks extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: 10,
       children: [
-        InkWell(
-          onTap: () => openTermsOfService(context),
-          child: Text(context.t('auth.termsOfService'), style: linkStyle),
+        Semantics(
+          link: true,
+          child: InkWell(
+            onTap: () => openTermsOfService(context),
+            child: Text(context.t('auth.termsOfService'), style: linkStyle),
+          ),
         ),
-        Text('·', style: TextStyle(color: AppColors.textSecondary)),
-        InkWell(
-          onTap: () => openPrivacyPolicy(context),
-          child: Text(context.t('auth.privacyPolicy'), style: linkStyle),
+        // A visual separator only; a screen reader would read "middle dot".
+        ExcludeSemantics(
+          child: Text('·', style: TextStyle(color: AppColors.textSecondary)),
+        ),
+        Semantics(
+          link: true,
+          child: InkWell(
+            onTap: () => openPrivacyPolicy(context),
+            child: Text(context.t('auth.privacyPolicy'), style: linkStyle),
+          ),
         ),
       ],
     );

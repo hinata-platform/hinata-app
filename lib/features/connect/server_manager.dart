@@ -301,7 +301,39 @@ class _StatusDotState extends State<_StatusDot>
   late final AnimationController _c = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1500),
-  )..repeat();
+  );
+  late final Animation<double> _ringOpacity = _c.drive(
+    Tween(begin: 0.8, end: 0.0),
+  );
+  late final Animation<double> _ringScale = _c.drive(
+    Tween(begin: 0.6, end: 2.4),
+  );
+
+  /// Whether the ring is on screen. The clock only runs while it is: a
+  /// repeating controller asks for a frame every vsync whether anything
+  /// listens or not, and a list of servers kept the whole sheet rendering at
+  /// full rate under reduced motion and for the offline rows too.
+  bool get _ring => widget.pulse && !MediaQuery.disableAnimationsOf(context);
+
+  void _syncClock() {
+    if (_ring) {
+      if (!_c.isAnimating) _c.repeat();
+    } else {
+      _c.stop();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncClock();
+  }
+
+  @override
+  void didUpdateWidget(_StatusDot oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncClock();
+  }
 
   @override
   void dispose() {
@@ -311,8 +343,7 @@ class _StatusDotState extends State<_StatusDot>
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final ring = widget.pulse && !reduceMotion;
+    final ring = _ring;
     return SizedBox(
       width: 9,
       height: 9,
@@ -321,17 +352,14 @@ class _StatusDotState extends State<_StatusDot>
         alignment: Alignment.center,
         children: [
           if (ring)
-            AnimatedBuilder(
-              animation: _c,
-              builder: (_, _) => Opacity(
-                opacity: 0.8 * (1 - _c.value),
-                child: Transform.scale(
-                  scale: 0.6 + 1.8 * _c.value,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: widget.color,
-                      shape: BoxShape.circle,
-                    ),
+            FadeTransition(
+              opacity: _ringOpacity,
+              child: ScaleTransition(
+                scale: _ringScale,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: widget.color,
+                    shape: BoxShape.circle,
                   ),
                 ),
               ),
@@ -400,106 +428,114 @@ class _ServerRow extends StatelessWidget {
 
     return Opacity(
       opacity: offline && !editing ? 0.62 : 1,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: tappable ? onTap : null,
-          borderRadius: BorderRadius.circular(18),
-          child: Ink(
-            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
-            decoration: BoxDecoration(
-              color: active ? AppColors.accentSoft : AppColors.surface,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: active ? AppColors.accentLine : AppColors.hairline,
+      child: Semantics(
+        button: true,
+        enabled: tappable,
+        selected: active,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: tappable ? onTap : null,
+            borderRadius: BorderRadius.circular(18),
+            child: Ink(
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+              decoration: BoxDecoration(
+                color: active ? AppColors.accentSoft : AppColors.surface,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: active ? AppColors.accentLine : AppColors.hairline,
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: active
-                        ? AppColors.accent.withValues(alpha: 0.16)
-                        : AppColors.surfaceMuted,
-                    borderRadius: BorderRadius.circular(13),
-                    border: Border.all(
+              child: Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
                       color: active
-                          ? AppColors.accent.withValues(alpha: 0.32)
-                          : AppColors.hairline2,
+                          ? AppColors.accent.withValues(alpha: 0.16)
+                          : AppColors.surfaceMuted,
+                      borderRadius: BorderRadius.circular(13),
+                      border: Border.all(
+                        color: active
+                            ? AppColors.accent.withValues(alpha: 0.32)
+                            : AppColors.hairline2,
+                      ),
+                    ),
+                    child: Icon(
+                      LucideIcons.server,
+                      size: 21,
+                      color: active
+                          ? AppColors.accentStrong
+                          : AppColors.inkSoft,
                     ),
                   ),
-                  child: Icon(
-                    LucideIcons.server,
-                    size: 21,
-                    color: active ? AppColors.accentStrong : AppColors.inkSoft,
-                  ),
-                ),
-                const SizedBox(width: 13),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              server.displayName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: -0.1,
+                  const SizedBox(width: 13),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                server.displayName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: -0.1,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          PillChip(
-                            label: server.isCloud
-                                ? context.t('server.cloud')
-                                : context.t('server.self'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          _StatusDot(
-                            color: statusColor,
-                            pulse: connecting || status.reach != _Reach.offline,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            statusText,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                            const SizedBox(width: 8),
+                            PillChip(
+                              label: server.isCloud
+                                  ? context.t('server.cloud')
+                                  : context.t('server.self'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            _StatusDot(
                               color: statusColor,
+                              pulse:
+                                  connecting || status.reach != _Reach.offline,
                             ),
-                          ),
-                          const SizedBox(width: 9),
-                          Flexible(
-                            child: Text(
-                              server.host,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            const SizedBox(width: 6),
+                            Text(
+                              statusText,
                               style: TextStyle(
-                                fontFamily: AppTheme.fontMono,
                                 fontSize: 12,
-                                color: AppColors.inkFaint,
+                                fontWeight: FontWeight.w600,
+                                color: statusColor,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            const SizedBox(width: 9),
+                            Flexible(
+                              child: Text(
+                                server.host,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: AppTheme.fontMono,
+                                  fontSize: 12,
+                                  color: AppColors.inkFaint,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                _trailing(context),
-              ],
+                  const SizedBox(width: 8),
+                  _trailing(context),
+                ],
+              ),
             ),
           ),
         ),
@@ -547,35 +583,38 @@ class _AddServerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Ink(
-          height: 52,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceMuted,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.hairline),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                LucideIcons.plus,
-                size: 19,
-                color: AppColors.accentStrong,
-              ),
-              const SizedBox(width: 9),
-              Text(
-                context.t('server.addServer'),
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+    return Semantics(
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Ink(
+            height: 52,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.hairline),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  LucideIcons.plus,
+                  size: 19,
+                  color: AppColors.accentStrong,
                 ),
-              ),
-            ],
+                const SizedBox(width: 9),
+                Text(
+                  context.t('server.addServer'),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -679,6 +718,7 @@ class _AddServerPageState extends State<_AddServerPage> {
             children: [
               IconButton(
                 onPressed: widget.onBack,
+                tooltip: context.t('common.back'),
                 visualDensity: VisualDensity.compact,
                 icon: Icon(backArrow(context), size: 20),
               ),
@@ -724,24 +764,28 @@ class _AddServerPageState extends State<_AddServerPage> {
                 ),
               ),
               const SizedBox(height: 7),
-              TextField(
-                controller: _url,
-                autofocus: true,
-                enabled: _phase != _Phase.testing,
-                keyboardType: TextInputType.url,
-                autofillHints: const [AutofillHints.url],
-                autocorrect: false,
-                textInputAction: TextInputAction.done,
-                style: const TextStyle(
-                  fontFamily: AppTheme.fontMono,
-                  fontSize: 14,
+              Semantics(
+                label: context.t('connect.serverUrl'),
+                textField: true,
+                child: TextField(
+                  controller: _url,
+                  autofocus: true,
+                  enabled: _phase != _Phase.testing,
+                  keyboardType: TextInputType.url,
+                  autofillHints: const [AutofillHints.url],
+                  autocorrect: false,
+                  textInputAction: TextInputAction.done,
+                  style: const TextStyle(
+                    fontFamily: AppTheme.fontMono,
+                    fontSize: 14,
+                  ),
+                  decoration: glassInputDecoration(hint: 'server.hinata.com')
+                      .copyWith(
+                        prefixIcon: const Icon(LucideIcons.server, size: 18),
+                      ),
+                  onChanged: (_) => _onUrlChanged(),
+                  onSubmitted: (_) => _test(),
                 ),
-                decoration: glassInputDecoration(hint: 'server.hinata.com')
-                    .copyWith(
-                      prefixIcon: const Icon(LucideIcons.server, size: 18),
-                    ),
-                onChanged: (_) => _onUrlChanged(),
-                onSubmitted: (_) => _test(),
               ),
               const SizedBox(height: 14),
               _result(context),
@@ -873,7 +917,14 @@ class _AddServerPageState extends State<_AddServerPage> {
                 ),
               ),
               const SizedBox(height: 7),
-              TextField(controller: _name, decoration: glassInputDecoration()),
+              Semantics(
+                label: context.t('server.displayName'),
+                textField: true,
+                child: TextField(
+                  controller: _name,
+                  decoration: glassInputDecoration(),
+                ),
+              ),
             ],
           ),
         );

@@ -154,22 +154,28 @@ class _EventDateRow extends StatelessWidget {
     final label = date == null
         ? context.t('projectSettings.templates.noEventDate')
         : MaterialLocalizations.of(context).formatMediumDate(date!);
+    final canClear = !busy && date != null;
     // Named, and a node of its own. An InkWell around an icon and a Text is a
     // button with no name to a screen reader, and the clear × inside it had no
     // name either — so the row reached assistive technology as "button" twice.
     // `container: true` is what makes it a node rather than an annotation the
-    // card above merges into itself.
+    // card above merges into itself. The text is excluded rather than the
+    // whole subtree, so the clear button stays a node of its own inside it.
+    //
+    // The vertical padding sits on the row's children rather than on the box,
+    // so the clear button can take the field's full height as its target
+    // instead of the bare 15-point glyph.
     return Semantics(
       container: true,
       button: true,
       label: label,
       onTap: busy ? null : onTap,
-      excludeSemantics: true,
       child: InkWell(
         onTap: busy ? null : onTap,
+        excludeFromSemantics: true,
         borderRadius: BorderRadius.circular(AppTheme.radiusControl),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+          padding: EdgeInsets.only(left: 13, right: canClear ? 0 : 13),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppTheme.radiusControl),
             border: Border.all(color: AppColors.hairline2),
@@ -183,14 +189,21 @@ class _EventDateRow extends StatelessWidget {
               ),
               const SizedBox(width: 9),
               Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    color: date == null ? AppColors.inkFaint : AppColors.ink,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: ExcludeSemantics(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: date == null
+                            ? AppColors.inkFaint
+                            : AppColors.ink,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -200,19 +213,23 @@ class _EventDateRow extends StatelessWidget {
                   height: 14,
                   child: CircularProgressIndicator(strokeWidth: 1.6),
                 )
-              else if (date != null)
+              else if (canClear)
                 Semantics(
                   container: true,
                   button: true,
                   label: context.t('common.clear'),
                   onTap: onClear,
                   excludeSemantics: true,
-                  child: GestureDetector(
+                  child: InkResponse(
                     onTap: onClear,
-                    child: Icon(
-                      LucideIcons.x,
-                      size: 15,
-                      color: AppColors.inkFaint,
+                    radius: 20,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 13, 12),
+                      child: Icon(
+                        LucideIcons.x,
+                        size: 15,
+                        color: AppColors.inkFaint,
+                      ),
                     ),
                   ),
                 ),

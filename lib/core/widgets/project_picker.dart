@@ -109,52 +109,56 @@ class ProjectPickerField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      onTap: () {
-        final box = context.findRenderObject() as RenderBox?;
-        final rect = (box != null && box.hasSize)
-            ? box.localToGlobal(Offset.zero) & box.size
-            : Rect.zero;
-        onTap(rect);
-      },
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(11, 9, 11, 9),
-        decoration: BoxDecoration(
-          color: AppColors.surface.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(color: AppColors.hairline),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: projects.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 3),
-                      child: Text(
-                        context.t(placeholderKey),
-                        style: TextStyle(
-                          fontSize: 13.5,
-                          color: AppColors.textSecondary,
+    // Opens the picker; the chosen projects or the placeholder merge in.
+    return Semantics(
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        onTap: () {
+          final box = context.findRenderObject() as RenderBox?;
+          final rect = (box != null && box.hasSize)
+              ? box.localToGlobal(Offset.zero) & box.size
+              : Rect.zero;
+          onTap(rect);
+        },
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(11, 9, 11, 9),
+          decoration: BoxDecoration(
+            color: AppColors.surface.withValues(alpha: 0.7),
+            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+            border: Border.all(color: AppColors.hairline),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: projects.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: Text(
+                          context.t(placeholderKey),
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
+                      )
+                    : Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          for (final project in projects)
+                            _ProjectChip(project: project),
+                        ],
                       ),
-                    )
-                  : Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        for (final project in projects)
-                          _ProjectChip(project: project),
-                      ],
-                    ),
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              LucideIcons.chevronsUpDown,
-              size: 16,
-              color: AppColors.textSecondary,
-            ),
-          ],
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                LucideIcons.chevronsUpDown,
+                size: 16,
+                color: AppColors.textSecondary,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -474,48 +478,59 @@ class _ProjectPickerPanelState extends State<_ProjectPickerPanel> {
             ),
             const SizedBox(width: 9),
             Expanded(
-              child: TextField(
-                controller: _searchCtrl,
-                focusNode: _focus,
-                onChanged: _onQueryChanged,
-                textInputAction: TextInputAction.search,
-                style: const TextStyle(fontSize: 13.5),
-                cursorColor: AppColors.accentStrong,
-                // Every border state is cleared by hand: the app's input theme
-                // supplies `enabledBorder`/`focusedBorder`, and those survive
-                // `InputDecoration.collapsed` (which only clears `border`) —
-                // that is what drew a second rounded box inside the pill.
-                decoration: InputDecoration(
-                  isCollapsed: true,
-                  filled: false,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
-                  errorBorder: InputBorder.none,
-                  focusedErrorBorder: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 11),
-                  hintText: context.t('projects.picker.searchHint'),
-                  hintStyle: TextStyle(
-                    fontSize: 13.5,
-                    color: AppColors.textSecondary,
+              // The hint is the only name the field shows, and a hint is not a label.
+              child: Semantics(
+                label: context.t('projects.picker.searchHint'),
+                textField: true,
+                child: TextField(
+                  controller: _searchCtrl,
+                  focusNode: _focus,
+                  onChanged: _onQueryChanged,
+                  textInputAction: TextInputAction.search,
+                  style: const TextStyle(fontSize: 13.5),
+                  cursorColor: AppColors.accentStrong,
+                  // Every border state is cleared by hand: the app's input theme
+                  // supplies `enabledBorder`/`focusedBorder`, and those survive
+                  // `InputDecoration.collapsed` (which only clears `border`) —
+                  // that is what drew a second rounded box inside the pill.
+                  decoration: InputDecoration(
+                    isCollapsed: true,
+                    filled: false,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 11),
+                    hintText: context.t('projects.picker.searchHint'),
+                    hintStyle: TextStyle(
+                      fontSize: 13.5,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ),
             ),
             if (_query.isNotEmpty)
-              InkWell(
-                borderRadius: BorderRadius.circular(999),
-                onTap: () {
-                  _searchCtrl.clear();
-                  _onQueryChanged('');
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Icon(
-                    LucideIcons.x,
-                    size: 14,
-                    color: AppColors.textSecondary,
+              // Named for screen readers; the padding gives a 32-point target around
+              // the same 14-point glyph.
+              Semantics(
+                button: true,
+                label: context.t('common.clear'),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(999),
+                  onTap: () {
+                    _searchCtrl.clear();
+                    _onQueryChanged('');
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(9),
+                    child: Icon(
+                      LucideIcons.x,
+                      size: 14,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ),
@@ -670,51 +685,57 @@ class _ProjectRow extends StatelessWidget {
     final IconData mark = multi
         ? (selected ? LucideIcons.squareCheck : LucideIcons.square)
         : (selected ? LucideIcons.circleCheck : LucideIcons.circle);
-    return InkWell(
-      onTap: enabled ? onTap : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-        child: Row(
-          children: [
-            Icon(
-              mark,
-              size: 18,
-              color: selected
-                  ? AppColors.accentStrong
-                  : AppColors.textSecondary.withValues(alpha: 0.7),
-            ),
-            const SizedBox(width: 10),
-            Container(
-              width: 9,
-              height: 9,
-              decoration: BoxDecoration(
-                color: projectAccent(project),
-                shape: BoxShape.circle,
+    // A choice that says whether it is picked; the name merges in.
+    return Semantics(
+      button: true,
+      selected: selected,
+      enabled: enabled,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          child: Row(
+            children: [
+              Icon(
+                mark,
+                size: 18,
+                color: selected
+                    ? AppColors.accentStrong
+                    : AppColors.textSecondary.withValues(alpha: 0.7),
               ),
-            ),
-            const SizedBox(width: 9),
-            Expanded(
-              child: Text(
-                project.name,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                  color: enabled
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
+              const SizedBox(width: 10),
+              Container(
+                width: 9,
+                height: 9,
+                decoration: BoxDecoration(
+                  color: projectAccent(project),
+                  shape: BoxShape.circle,
                 ),
               ),
-            ),
-            Text(
-              project.key,
-              style: TextStyle(
-                fontSize: 11,
-                fontFeatures: const [FontFeature.tabularFigures()],
-                color: AppColors.textSecondary,
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  project.name,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                    color: enabled
+                        ? AppColors.textPrimary
+                        : AppColors.textSecondary,
+                  ),
+                ),
               ),
-            ),
-          ],
+              Text(
+                project.key,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

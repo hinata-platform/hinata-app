@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/hive_widgets.dart';
 import '../../../core/widgets/user_pronouns.dart';
+import '../../../core/widgets/hit_slop.dart';
 import 'settings_common.dart';
 
 /// Leads & members card: member rows with a star→lead toggle and remove.
@@ -140,41 +141,57 @@ class _LeadStar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: isLead ? AppColors.accentSoft : Colors.transparent,
-      borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-      child: InkWell(
+    // A toggle named "Lead" whether or not the word is showing; the visible
+    // word is excluded so it is not read twice, and the tap is restated here
+    // because the exclusion would take the InkWell's with it. The 30-point
+    // pill takes taps 5 points above and below too, to the row's full 40
+    // points (48 would make every member row taller).
+    return Semantics(
+      button: true,
+      toggled: isLead,
+      label: context.t('projectSettings.lead'),
+      onTap: onTap,
+      excludeSemantics: true,
+      child: HitSlop(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-        child: Container(
-          height: 30,
-          padding: const EdgeInsets.symmetric(horizontal: 11),
-          decoration: BoxDecoration(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Material(
+          color: isLead ? AppColors.accentSoft : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-            border: Border.all(
-              color: isLead ? AppColors.accentLine : AppColors.hairline,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                isLead ? LucideIcons.star : LucideIcons.star,
-                size: 15,
-                color: isLead ? AppColors.accentStrong : AppColors.inkFaint,
-              ),
-              if (isLead) ...[
-                const SizedBox(width: 6),
-                Text(
-                  context.t('projectSettings.lead'),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.accentStrong,
-                  ),
+            child: Container(
+              height: 30,
+              padding: const EdgeInsets.symmetric(horizontal: 11),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+                border: Border.all(
+                  color: isLead ? AppColors.accentLine : AppColors.hairline,
                 ),
-              ],
-            ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isLead ? LucideIcons.star : LucideIcons.star,
+                    size: 15,
+                    color: isLead ? AppColors.accentStrong : AppColors.inkFaint,
+                  ),
+                  if (isLead) ...[
+                    const SizedBox(width: 6),
+                    Text(
+                      context.t('projectSettings.lead'),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.accentStrong,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
       ),

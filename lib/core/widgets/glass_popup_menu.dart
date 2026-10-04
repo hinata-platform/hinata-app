@@ -211,10 +211,19 @@ class _GlassPopupMenuState<T> extends State<GlassPopupMenu<T>> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _open,
-      behavior: HitTestBehavior.opaque,
-      child: KeyedSubtree(key: _anchorKey, child: widget.child),
+    // The anchor is drawn by the caller, so the role comes from here: a
+    // button that opens a menu, named by whatever text the anchor shows. The
+    // click cursor is the hover cue; the anchor keeps its own resting look.
+    return Semantics(
+      button: true,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: _open,
+          behavior: HitTestBehavior.opaque,
+          child: KeyedSubtree(key: _anchorKey, child: widget.child),
+        ),
+      ),
     );
   }
 }
@@ -294,31 +303,26 @@ class _GlassPopupMenuDialog<T> extends StatelessWidget {
           top: top,
           bottom: bottom,
           width: panelWidth,
-          child: AnimatedBuilder(
-            animation: anim,
-            builder: (_, child) {
-              if (reduceMotion) {
-                return Opacity(opacity: anim.value, child: child);
-              }
-              final t = const Cubic(
-                0.34,
-                1.3,
-                0.64,
-                1,
-              ).transform(anim.value.clamp(0.0, 1.0));
-              return Opacity(
-                opacity: (anim.value / 0.6).clamp(0.0, 1.0),
-                child: Transform.scale(
-                  scale: 0.92 + 0.08 * t,
-                  alignment: placeAbove
-                      ? Alignment.bottomLeft
-                      : Alignment.topLeft,
-                  child: child,
+          // Fade and scale run as transitions, so each frame only updates the
+          // compositor instead of rebuilding the panel.
+          child: reduceMotion
+              ? FadeTransition(opacity: anim, child: panel)
+              : FadeTransition(
+                  opacity: anim.drive(
+                    CurveTween(curve: const Interval(0, 0.6)),
+                  ),
+                  child: ScaleTransition(
+                    scale: anim
+                        .drive(
+                          CurveTween(curve: const Cubic(0.34, 1.3, 0.64, 1)),
+                        )
+                        .drive(Tween<double>(begin: 0.92, end: 1)),
+                    alignment: placeAbove
+                        ? Alignment.bottomLeft
+                        : Alignment.topLeft,
+                    child: panel,
+                  ),
                 ),
-              );
-            },
-            child: panel,
-          ),
         ),
       ],
     );
@@ -420,6 +424,13 @@ class _MenuRow<T> extends StatefulWidget {
 class _MenuRowState<T> extends State<_MenuRow<T>> {
   bool _hover = false;
 
+  /// Down on a touch screen, where there is no hover to show the row is live.
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (_pressed != value) setState(() => _pressed = value);
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = widget.tokens;
@@ -429,6 +440,9 @@ class _MenuRowState<T> extends State<_MenuRow<T>> {
         : (widget.item.color ?? t.ink);
     final row = GestureDetector(
       onTap: widget.onTap,
+      onTapDown: disabled ? null : (_) => _setPressed(true),
+      onTapUp: disabled ? null : (_) => _setPressed(false),
+      onTapCancel: disabled ? null : () => _setPressed(false),
       behavior: HitTestBehavior.opaque,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 1),
@@ -436,7 +450,9 @@ class _MenuRowState<T> extends State<_MenuRow<T>> {
         decoration: BoxDecoration(
           color: widget.selected
               ? t.selTint
-              : (_hover && !disabled ? t.rowHover : Colors.transparent),
+              : ((_hover || _pressed) && !disabled
+                    ? t.rowHover
+                    : Colors.transparent),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -499,12 +515,20 @@ class _MenuRowState<T> extends State<_MenuRow<T>> {
         ),
       ),
     );
-    if (disabled) return row;
+    // A menu item: the label (and the reason, when disabled) merge in as its
+    // name; disabled rows stay readable but announce that they are inert.
+    final semantic = Semantics(
+      button: true,
+      enabled: !disabled,
+      selected: widget.selected,
+      child: row,
+    );
+    if (disabled) return semantic;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
-      child: row,
+      child: semantic,
     );
   }
 }

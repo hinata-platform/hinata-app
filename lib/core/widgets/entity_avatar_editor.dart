@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../i18n/i18n.dart';
 import '../util/file_pick.dart';
 import '../theme/app_colors.dart';
+import '../theme/glass_chrome.dart' show kOnAmber;
 import '../../features/account/account_modals.dart'
     show AvatarAction, showAvatarActions;
 import '../../features/sprint/modals/glass_modal.dart'
@@ -78,6 +79,28 @@ const Widget _cameraBadge = Positioned(
   child: _CameraBadge(),
 );
 
+/// The tap target over a picture field, laid on top of the picture so the
+/// pressed and hover ink show on it rather than underneath where the image
+/// hides them. Last in the stack, so a tap on the badge lands here too.
+class _PressInk extends StatelessWidget {
+  const _PressInk({required this.radius, required this.onTap});
+
+  final double radius;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Positioned.fill(
+    child: Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(radius),
+        child: const SizedBox.expand(),
+      ),
+    ),
+  );
+}
+
 class _CameraBadge extends StatelessWidget {
   const _CameraBadge();
 
@@ -90,7 +113,7 @@ class _CameraBadge extends StatelessWidget {
       shape: BoxShape.circle,
       border: Border.all(color: AppColors.surface, width: 2),
     ),
-    child: const Icon(LucideIcons.camera, size: 12, color: Color(0xFF2A2410)),
+    child: const Icon(LucideIcons.camera, size: 12, color: kOnAmber),
   );
 }
 
@@ -208,25 +231,23 @@ class _EntityAvatarFieldState extends State<EntityAvatarField> {
     return Semantics(
       button: true,
       label: context.t(widget.strings.title),
-      child: GestureDetector(
-        onTap: _edit,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            avatar,
-            if (_busy)
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.45),
-                    borderRadius: BorderRadius.circular(widget.radius),
-                  ),
-                  child: const Center(child: HiveLoader(size: 22)),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          avatar,
+          if (_busy)
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(widget.radius),
                 ),
+                child: const Center(child: HiveLoader(size: 22)),
               ),
-            _cameraBadge,
-          ],
-        ),
+            ),
+          _cameraBadge,
+          _PressInk(radius: widget.radius, onTap: _edit),
+        ],
       ),
     );
   }
@@ -367,35 +388,36 @@ class PendingAvatarField extends StatelessWidget {
     return Semantics(
       button: true,
       label: context.t(strings.title),
-      child: GestureDetector(
-        onTap: () => _edit(context),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            SizedBox(
-              width: size,
-              height: size,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(radius),
-                child: image == null
-                    ? fallback
-                    // Decoded at the size it is drawn at. Without this a 12 MP
-                    // photo decodes full-resolution into a 52 px tile — tens of
-                    // megabytes of bitmap for a thumbnail, and an OOM on a
-                    // modest phone.
-                    : Image.memory(
-                        image.bytes,
-                        width: size,
-                        height: size,
-                        fit: BoxFit.cover,
-                        cacheWidth: _decodePx(context, size),
-                        cacheHeight: _decodePx(context, size),
-                      ),
-              ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          SizedBox(
+            width: size,
+            height: size,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(radius),
+              child: image == null
+                  ? fallback
+                  // Decoded at the size it is drawn at. Without this a 12 MP
+                  // photo decodes full-resolution into a 52 px tile — tens of
+                  // megabytes of bitmap for a thumbnail, and an OOM on a
+                  // modest phone.
+                  : Image.memory(
+                      image.bytes,
+                      width: size,
+                      height: size,
+                      fit: BoxFit.cover,
+                      cacheWidth: _decodePx(context, size),
+                      cacheHeight: _decodePx(context, size),
+                      // The button around it is already named; the
+                      // preview adds nothing a screen reader can use.
+                      excludeFromSemantics: true,
+                    ),
             ),
-            _cameraBadge,
-          ],
-        ),
+          ),
+          _cameraBadge,
+          _PressInk(radius: radius, onTap: () => _edit(context)),
+        ],
       ),
     );
   }
